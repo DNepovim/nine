@@ -16,7 +16,11 @@ export const Targets: React.FC<TargetsProps> = ({ intervalSeconds }) => {
   const { increaseScore, decreaseLives } = useGameStore();
 
   const generateNewTarget = () => {
-    const maxSum = gameSum(state);
+    const maxSum = gameSum([
+      [9, 9, 9],
+      [9, 9, 9],
+      [9, 9, 9],
+    ]);
     let newTarget;
     do {
       newTarget = Math.floor(Math.random() * (maxSum + 1));
@@ -54,7 +58,7 @@ export const Targets: React.FC<TargetsProps> = ({ intervalSeconds }) => {
 
   useEffect(() => {
     const checkSum = setInterval(() => {
-      const currentSum = gameSum(state);
+      const currentSum = gameSum(state.numbers);
       if (currentSum === target && isVisible) {
         setIsVisible(false);
         increaseScore(1);

@@ -6,7 +6,7 @@ import { gameSum } from "../utils/gameSum";
 export const Game = () => {
   const { score, lives } = useGameStore();
   const state = useGameStore();
-  const sum = gameSum(state);
+  const sum = gameSum(state.numbers);
 
   return (
     <div className="h-screen flex flex-col bg-gray-100 touch-none overflow-hidden">
