@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="512" height="512" rx="128" fill="#4B5563"/>
+  <text x="50%" y="50%" text-anchor="middle" dominant-baseline="middle" fill="white" font-family="Arial" font-weight="bold" font-size="384" style="font-family: Arial, sans-serif;">9</text>
+  <style>
+    @media (prefers-color-scheme: dark) {
+      rect { fill: #1F2937; }
+      text { fill: #E5E7EB; }
+    }
+  </style>
+</svg>
