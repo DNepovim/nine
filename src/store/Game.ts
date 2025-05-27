@@ -1,13 +1,18 @@
 import { create } from "zustand";
 
+export type GameScreen = "start" | "game" | "over";
+
 export interface GameState {
   numbers: number[][];
   score: number;
   lives: number;
+  screen: GameScreen;
   increaseNumber: (row: number, col: number) => void;
   decreaseNumber: (row: number, col: number) => void;
   increaseScore: (points: number) => void;
   decreaseLives: () => void;
+  setScreen: (screen: GameScreen) => void;
+  resetGame: () => void;
 }
 
 export const useGameStore = create<GameState>((set) => ({
@@ -18,6 +23,7 @@ export const useGameStore = create<GameState>((set) => ({
   ],
   score: 0,
   lives: 3,
+  screen: "start",
   increaseNumber: (row: number, col: number) =>
     set((state) => ({
       numbers: state.numbers.map((r, rowIndex) =>
@@ -43,7 +49,23 @@ export const useGameStore = create<GameState>((set) => ({
       score: state.score + points,
     })),
   decreaseLives: () =>
-    set((state) => ({
-      lives: state.lives - 1,
-    })),
+    set((state) => {
+      const newLives = state.lives - 1;
+      return {
+        lives: newLives,
+        screen: newLives < 0 ? "over" : state.screen,
+      };
+    }),
+  setScreen: (screen: GameScreen) => set({ screen }),
+  resetGame: () =>
+    set({
+      numbers: [
+        [1, 2, 3],
+        [4, 5, 6],
+        [7, 8, 9],
+      ],
+      score: 0,
+      lives: 3,
+      screen: "game",
+    }),
 }));
