@@ -7,7 +7,9 @@ export interface TargetsProps {
 }
 
 export const Targets: React.FC<TargetsProps> = ({ intervalSeconds }) => {
-  const [target, setTarget] = useState<number>(0);
+  const [target, setTarget] = useState<number>(
+    Math.floor(Math.random() * 101) + 200
+  );
   const [position, setPosition] = useState({ x: 0, y: 0 });
   const [scale, setScale] = useState(1);
   const [isVisible, setIsVisible] = useState(true);
