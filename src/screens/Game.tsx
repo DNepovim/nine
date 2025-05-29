@@ -4,14 +4,17 @@ import { useGameStore } from "../store/Game";
 import { gameSum } from "../utils/gameSum";
 
 export const Game = () => {
-  const { score, lives } = useGameStore();
+  const { score, lives, bestScore } = useGameStore();
   const state = useGameStore();
   const sum = gameSum(state.numbers);
 
   return (
     <div className="h-screen flex flex-col bg-gray-100 touch-none overflow-hidden">
       <div className="h-12 text-2xl font-bold p-4 flex justify-between items-center">
-        <span className="text-gray-600">Score: {score}</span>
+        <div className="flex flex-col">
+          <span className="text-gray-600">Score: {score}</span>
+          <span className="text-sm text-gray-400">Best Score: {bestScore}</span>
+        </div>
         <span className="text-4xl">{sum}</span>
         <span className="text-gray-600">Lives: {lives}</span>
       </div>
