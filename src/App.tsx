@@ -7,12 +7,12 @@ function App() {
   const screen = useGameStore((state) => state.screen);
 
   switch (screen) {
-    case "start":
-      return <Start />;
     case "game":
       return <Game />;
     case "over":
       return <Over />;
+    default:
+      return <Start />;
   }
 }
 
