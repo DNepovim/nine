@@ -28,7 +28,6 @@ const initialState = {
   score: 0,
   lives: 3,
   screen: "start" as GameScreen,
-  bestScore: 0,
   targets: [] as Target[],
   gameTime: 0,
   startTime: 0,
@@ -70,6 +69,7 @@ export const useGameStore = create<GameState>()(
   persist(
     immer((set) => ({
       ...initialState,
+      bestScore: 0,
       updateNumber: (row, col, action) =>
         set((state) => {
           const currentValue = state.numbers[row][col];
@@ -113,6 +113,7 @@ export const useGameStore = create<GameState>()(
           });
 
           if (state.lives < 1) {
+            state.bestScore = Math.max(state.bestScore, state.score);
             state.screen = "over";
           }
         }),
