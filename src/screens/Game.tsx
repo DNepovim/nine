@@ -51,7 +51,7 @@ export const Game = () => {
   }, [startTime, updateGame]);
 
   return (
-    <div className="h-screen flex flex-col bg-gray-100 touch-none overflow-hidden">
+    <div className="h-screen flex flex-col bg-gray-200 touch-none overflow-hidden">
       <div className="h-12 text-2xl font-bold p-4 flex justify-between items-center">
         <div className="flex flex-col">
           <span className="text-gray-600">Score: {score}</span>

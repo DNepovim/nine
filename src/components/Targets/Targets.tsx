@@ -5,7 +5,7 @@ interface TargetsProps {
 }
 
 export const Targets: React.FC<TargetsProps> = ({ targets }) => (
-  <div className="relative w-full h-full rounded-sm border-gray-200 border-2">
+  <div className="relative w-full h-full rounded-md border-gray-200 border-2 bg-white">
     {targets.map((target, index) => (
       <div
         key={index}
