@@ -62,11 +62,11 @@ export const Game = () => {
       </div>
       <div
         ref={containerRef}
-        className="h-[calc(50vh-3rem)] p-4 targets-container"
+        className="h-[calc(50vh-3rem)] p-4 flex items-center justify-center"
       >
         <Targets targets={targets} />
       </div>
-      <div className="h-[calc(50vh-3rem)] flex items-center justify-center">
+      <div className="h-[calc(50vh-3rem)]">
         <NumPad />
       </div>
     </div>

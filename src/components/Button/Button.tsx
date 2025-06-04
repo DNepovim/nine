@@ -13,7 +13,7 @@ export const Button: React.FC<ButtonProps> = ({
   <button
     onClick={onClick}
     onTouchStart={onTouchStart}
-    className="w-16 h-16 rounded-full bg-gray-200 hover:bg-gray-300 active:bg-gray-400 transition-colors text-2xl font-bold"
+    className="aspect-square w-full h-full rounded-full bg-gray-200 hover:bg-gray-300 active:bg-gray-400 transition-colors text-2xl font-bold"
   >
     {children}
   </button>
