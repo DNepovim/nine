@@ -34,7 +34,7 @@ export const NumPad: React.FC<NumPadProps> = ({ children }) => {
   };
 
   return (
-    <div className="grid grid-cols-3 gap-2 mt-4 max-w-full max-h-[min(100%,14rem)] aspect-square m-auto">
+    <div className="grid grid-cols-3 gap-2 mt-4 max-w-full max-h-[min(100%,18rem)] aspect-square m-auto">
       {numbers.map((row, rowIndex) =>
         row.map((number, colIndex) => (
           <Button
