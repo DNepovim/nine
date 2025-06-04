@@ -11,7 +11,7 @@ export type GameScreen = "start" | "game" | "over";
 export const TARGETS_CREATION_INTERVAL = 2;
 
 export interface Target {
-  value: number;
+  value: 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9;
   createdTime: number;
   position: { x: number; y: number };
 }
