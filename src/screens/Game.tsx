@@ -56,9 +56,9 @@ export const Game = () => {
         </div>
         <span className="text-4xl flex-1 flex justify-center">{sum}</span>
         <span className="text-gray-600 flex-1 flex justify-end">
-          {Array.from({ length: lives }, (_, i) => (
+          {Array.from({ length: 3 }, (_, i) => (
             <span key={i} className="mx-0.5">
-              ♥
+              {i < 3 - lives ? "♡" : "♥"}
             </span>
           ))}
         </span>
