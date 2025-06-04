@@ -14,7 +14,7 @@ export const Button: React.FC<ButtonProps> = ({
   <button
     onClick={onClick}
     onTouchStart={onTouchStart}
-    className="aspect-square w-full h-full rounded-full  transition-colors text-2xl font-bold"
+    className="aspect-square w-full h-full rounded-full transition-colors text-2xl font-bold"
     style={{
       backgroundColor: `${colorInterpolation(
         children,

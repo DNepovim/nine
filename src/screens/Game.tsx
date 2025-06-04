@@ -46,7 +46,7 @@ export const Game = () => {
   }, [updateGame, startGame, isGameRunning]);
 
   return (
-    <div className="h-screen flex flex-col bg-gray-200 touch-none overflow-hidden">
+    <div className="h-[100dvh] flex flex-col bg-gray-200 touch-none overflow-hidden p-4">
       <div className="h-12 text-2xl font-bold px-4 flex justify-between items-center">
         <div className="flex flex-col flex-1">
           <div className="text-gray-600">
@@ -65,7 +65,7 @@ export const Game = () => {
       </div>
       <div
         ref={containerRef}
-        className="h-[calc(50vh-3rem)] p-4 flex items-center justify-center"
+        className="h-[calc(50vh-3rem)] flex items-center justify-center"
       >
         <Targets targets={targets} />
       </div>
