@@ -7,7 +7,6 @@ export const Game = () => {
   const {
     score,
     lives,
-    startTime,
     targets,
     sum,
     bestScore,
@@ -19,25 +18,21 @@ export const Game = () => {
   const animationFrameId = useRef<number | null>(null);
 
   useEffect(() => {
-    if (!containerRef.current) {
-      return;
-    }
-
-    startGame(
-      Date.now(),
-      containerRef.current.clientWidth,
-      containerRef.current.clientHeight
-    );
-  }, []);
-
-  useEffect(() => {
-    if (!isGameRunning) {
-      return;
-    }
-
     const updateTime = (timestamp: number) => {
-      const elapsedTime = (timestamp - startTime) / 1000;
-      updateGame(elapsedTime);
+      if (!isGameRunning) {
+        if (!containerRef.current) {
+          return;
+        }
+
+        startGame(
+          timestamp,
+          containerRef.current.clientWidth,
+          containerRef.current.clientHeight
+        );
+        return;
+      }
+
+      updateGame(timestamp);
       animationFrameId.current = requestAnimationFrame(updateTime);
     };
 
@@ -48,21 +43,21 @@ export const Game = () => {
         cancelAnimationFrame(animationFrameId.current);
       }
     };
-  }, [startTime, updateGame]);
+  }, [updateGame, startGame, isGameRunning]);
 
   return (
     <div className="h-screen flex flex-col bg-gray-200 touch-none overflow-hidden">
       <div className="h-12 text-2xl font-bold px-4 flex justify-between items-center">
         <div className="flex flex-col flex-1">
-          <span className="text-gray-600">{score}</span>
-          <span className="text-sm text-gray-400">{bestScore}</span>
+          <div className="text-gray-600">
+            {score}&nbsp;
+            <span className="text-sm text-gray-400">/&nbsp;{bestScore}</span>
+          </div>
         </div>
-        <span className="text-4xl flex-1 flex justify-center text-red-950">
-          {sum}
-        </span>
+        <span className="text-4xl flex-1 flex justify-center">{sum}</span>
         <span className="text-gray-600 flex-1 flex justify-end">
           {Array.from({ length: lives }, (_, i) => (
-            <span key={i} className="text-purple-500 mx-0.5">
+            <span key={i} className="mx-0.5">
               ♥
             </span>
           ))}

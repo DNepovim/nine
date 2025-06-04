@@ -1,5 +1,6 @@
 import { type Target } from "../../store/Game";
 import { useGameStore } from "../../store/Game";
+import { TARGETS_CREATION_INTERVAL } from "../../store/Game";
 
 interface TargetsProps {
   targets: Target[];
@@ -11,8 +12,12 @@ export const Targets: React.FC<TargetsProps> = ({ targets }) => {
   return (
     <div className="relative w-full h-full rounded-md border-gray-300 border-2 bg-white">
       {targets.map((target, index) => {
-        const timeLeft = target.createdTime + 2 - gameTime;
-        const progress = Math.max(0, (timeLeft / 2) * 100);
+        const timeLeft =
+          TARGETS_CREATION_INTERVAL - (gameTime - target.createdTime) / 1000;
+        const progress = Math.max(
+          0,
+          (timeLeft / TARGETS_CREATION_INTERVAL) * 100
+        );
 
         return (
           <div

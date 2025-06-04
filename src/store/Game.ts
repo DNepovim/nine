@@ -6,12 +6,10 @@ import { createNewTarget } from "./utils";
 
 export type GameScreen = "start" | "game" | "over";
 
-// todo: inital target has wrong timestamp
-
-export const TARGETS_CREATION_INTERVAL = 2;
+export const TARGETS_CREATION_INTERVAL = 5;
 
 export interface Target {
-  value: 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9;
+  value: number;
   createdTime: number;
   position: { x: number; y: number };
 }
@@ -30,9 +28,7 @@ const initialState = {
   screen: "start" as GameScreen,
   targets: [] as Target[],
   gameTime: 0,
-  startTime: 0,
   isGameRunning: false,
-  lastTargetCreationTime: 0,
   containerWidth: 0,
   containerHeight: 0,
 };
@@ -46,9 +42,7 @@ export interface GameState {
   bestScore: number;
   targets: Target[];
   gameTime: number;
-  startTime: number;
   isGameRunning: boolean;
-  lastTargetCreationTime: number;
   containerWidth: number;
   containerHeight: number;
   updateNumber: (
@@ -83,11 +77,15 @@ export const useGameStore = create<GameState>()(
         }),
       startGame: (time, width, height) =>
         set((state) => {
-          state.startTime = time;
           state.containerWidth = width;
           state.containerHeight = height;
           state.targets = [
-            createNewTarget(state, { min: maxSum * 0.25, max: maxSum * 0.75 }),
+            createNewTarget({
+              createdTime: time,
+              position: { min: maxSum * 0.25, max: maxSum * 0.75 },
+              containerWidth: width,
+              containerHeight: height,
+            }),
           ];
           state.isGameRunning = true;
         }),
@@ -95,7 +93,13 @@ export const useGameStore = create<GameState>()(
         set((state) => {
           state.gameTime = time;
           if (state.targets.length === 0) {
-            state.targets.push(createNewTarget(state));
+            state.targets.push(
+              createNewTarget({
+                createdTime: time,
+                containerWidth: state.containerWidth,
+                containerHeight: state.containerHeight,
+              })
+            );
           }
 
           state.targets.forEach((target, index) => {
@@ -105,14 +109,17 @@ export const useGameStore = create<GameState>()(
               return;
             }
 
-            if (time - target.createdTime > TARGETS_CREATION_INTERVAL) {
+            if (
+              (time - target.createdTime) / 1000 >
+              TARGETS_CREATION_INTERVAL
+            ) {
               state.targets.splice(index, 1);
               state.lives--;
               return;
             }
           });
 
-          if (state.lives < 1) {
+          if (state.lives < 0) {
             state.bestScore = Math.max(state.bestScore, state.score);
             state.screen = "over";
           }
