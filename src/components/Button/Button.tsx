@@ -1,4 +1,3 @@
-import type { PropsWithChildren } from "react";
 import { colorInterpolation } from "../../store/utils";
 
 export interface ButtonProps {

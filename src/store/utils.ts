@@ -1,5 +1,4 @@
 import { maxSum } from "../utils/gameSum";
-import type { GameState } from "./Game";
 
 export const createNewTarget = (options: {
   createdTime: number;
