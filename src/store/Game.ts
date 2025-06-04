@@ -6,7 +6,7 @@ import { createNewTarget } from "./utils";
 
 export type GameScreen = "start" | "game" | "over";
 
-export const TARGETS_CREATION_INTERVAL = 5;
+export const TARGETS_CREATION_INTERVAL = 9;
 
 export interface Target {
   value: number;
