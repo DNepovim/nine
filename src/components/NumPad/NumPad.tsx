@@ -5,14 +5,13 @@ import { useGameStore } from "../../store/Game";
 export interface NumPadProps extends PropsWithChildren {}
 
 export const NumPad: React.FC<NumPadProps> = ({ children }) => {
-  const { numbers, increaseNumber, decreaseNumber } = useGameStore();
+  const { numbers, updateNumber } = useGameStore();
 
   const handleTouchStart = (
     e: React.TouchEvent,
     rowIndex: number,
     colIndex: number
   ) => {
-    e.preventDefault();
     const startY = e.touches[0].clientY;
 
     const handleTouchEnd = (e: TouchEvent) => {
@@ -21,11 +20,11 @@ export const NumPad: React.FC<NumPadProps> = ({ children }) => {
       const diff = endY - startY;
 
       if (Math.abs(diff) < 10) {
-        increaseNumber(rowIndex, colIndex);
+        updateNumber(rowIndex, colIndex, "increase");
       } else if (diff > 50) {
-        decreaseNumber(rowIndex, colIndex);
+        updateNumber(rowIndex, colIndex, "decrease");
       } else if (diff < -50) {
-        increaseNumber(rowIndex, colIndex);
+        updateNumber(rowIndex, colIndex, "increase");
       }
 
       document.removeEventListener("touchend", handleTouchEnd);
@@ -40,7 +39,7 @@ export const NumPad: React.FC<NumPadProps> = ({ children }) => {
         row.map((number, colIndex) => (
           <Button
             key={`${rowIndex}-${colIndex}`}
-            onClick={() => increaseNumber(rowIndex, colIndex)}
+            onClick={() => updateNumber(rowIndex, colIndex, "increase")}
             onTouchStart={(e) => handleTouchStart(e, rowIndex, colIndex)}
           >
             {number}

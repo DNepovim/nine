@@ -12,3 +12,9 @@ export const gameSum = (state: GameState["numbers"]): number => {
     );
   }, 0);
 };
+
+export const maxSum = gameSum([
+  [9, 9, 9],
+  [9, 9, 9],
+  [9, 9, 9],
+]);

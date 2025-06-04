@@ -1,92 +1,131 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
+import { gameSum, maxSum } from "../utils/gameSum";
+import { immer } from "zustand/middleware/immer";
+import { createNewTarget } from "./utils";
 
 export type GameScreen = "start" | "game" | "over";
 
+// todo: inital target has wrong timestamp
+
+export const TARGETS_CREATION_INTERVAL = 2;
+
+export interface Target {
+  value: number;
+  createdTime: number;
+  position: { x: number; y: number };
+}
+
+const initialNumbers = [
+  [1, 2, 3],
+  [4, 5, 6],
+  [7, 8, 9],
+];
+
+const initialState = {
+  numbers: initialNumbers,
+  sum: gameSum(initialNumbers),
+  score: 0,
+  lives: 3,
+  screen: "start" as GameScreen,
+  bestScore: 0,
+  targets: [] as Target[],
+  gameTime: 0,
+  startTime: 0,
+  isGameRunning: false,
+  lastTargetCreationTime: 0,
+  containerWidth: 0,
+  containerHeight: 0,
+};
+
 export interface GameState {
   numbers: number[][];
+  sum: number;
   score: number;
   lives: number;
   screen: GameScreen;
   bestScore: number;
-  increaseNumber: (row: number, col: number) => void;
-  decreaseNumber: (row: number, col: number) => void;
-  increaseScore: (points: number) => void;
-  decreaseLives: () => void;
+  targets: Target[];
+  gameTime: number;
+  startTime: number;
+  isGameRunning: boolean;
+  lastTargetCreationTime: number;
+  containerWidth: number;
+  containerHeight: number;
+  updateNumber: (
+    row: number,
+    col: number,
+    action: "increase" | "decrease"
+  ) => void;
+  startGame: (time: number, width: number, height: number) => void;
+  updateGame: (time: number) => void;
   setScreen: (screen: GameScreen) => void;
   resetGame: () => void;
-  setBestScore: (score: number) => void;
 }
+
+const increaseNumber = (num: number) => (num === 9 ? 0 : num + 1);
+const decreaseNumber = (num: number) => (num === 0 ? 9 : num - 1);
 
 export const useGameStore = create<GameState>()(
   persist(
-    (set) => ({
-      numbers: [
-        [1, 2, 3],
-        [4, 5, 6],
-        [7, 8, 9],
-      ],
-      score: 0,
-      lives: 3,
-      screen: "start",
-      bestScore: 0,
-      increaseNumber: (row: number, col: number) =>
-        set((state) => ({
-          numbers: state.numbers.map((r, rowIndex) =>
-            rowIndex === row
-              ? r.map((num, colIndex) =>
-                  colIndex === col ? (num === 9 ? 0 : num + 1) : num
-                )
-              : r
-          ),
-        })),
-      decreaseNumber: (row: number, col: number) =>
-        set((state) => ({
-          numbers: state.numbers.map((r, rowIndex) =>
-            rowIndex === row
-              ? r.map((num, colIndex) =>
-                  colIndex === col ? (num === 0 ? 9 : num - 1) : num
-                )
-              : r
-          ),
-        })),
-      increaseScore: (points: number) =>
-        set((state) => ({
-          score: state.score + points,
-        })),
-      decreaseLives: () =>
+    immer((set) => ({
+      ...initialState,
+      updateNumber: (row, col, action) =>
         set((state) => {
-          const newLives = state.lives - 1;
-          if (newLives < 1) {
-            state.setScreen("over");
-            return {};
+          const currentValue = state.numbers[row][col];
+          const newValue =
+            action === "increase"
+              ? increaseNumber(currentValue)
+              : decreaseNumber(currentValue);
+
+          state.numbers[row][col] = newValue;
+          state.sum = gameSum(state.numbers);
+        }),
+      startGame: (time, width, height) =>
+        set((state) => {
+          state.startTime = time;
+          state.containerWidth = width;
+          state.containerHeight = height;
+          state.targets = [
+            createNewTarget(state, { min: maxSum * 0.25, max: maxSum * 0.75 }),
+          ];
+          state.isGameRunning = true;
+        }),
+      updateGame: (time) =>
+        set((state) => {
+          state.gameTime = time;
+          if (state.targets.length === 0) {
+            state.targets.push(createNewTarget(state));
           }
 
-          return {
-            lives: newLives,
-          };
-        }),
-      setScreen: (screen: GameScreen) =>
-        set((state) => {
-          if (screen === "over" && state.score > state.bestScore) {
-            console.log(state.score, state.bestScore);
-            return { screen, bestScore: state.score };
+          state.targets.forEach((target, index) => {
+            if (target.value === state.sum) {
+              state.targets.splice(index, 1);
+              state.score++;
+              return;
+            }
+
+            if (time - target.createdTime > TARGETS_CREATION_INTERVAL) {
+              state.targets.splice(index, 1);
+              state.lives--;
+              return;
+            }
+          });
+
+          if (state.lives < 1) {
+            state.screen = "over";
           }
-          return { screen };
+        }),
+      setScreen: (screen) =>
+        set((state) => {
+          state.isGameRunning = false;
+          state.screen = screen;
         }),
       resetGame: () =>
-        set({
-          numbers: [
-            [1, 2, 3],
-            [4, 5, 6],
-            [7, 8, 9],
-          ],
-          score: 0,
-          lives: 3,
-          screen: "game",
+        set((state) => {
+          Object.assign(state, initialState, { screen: "game" });
         }),
-      setBestScore: (score: number) => set({ bestScore: score }),
-    }),
+    })),
     {
       name: "game-storage",
     }
