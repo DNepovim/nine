@@ -5,6 +5,7 @@ import { Gesture, GestureDetector } from "react-native-gesture-handler";
 import Animated, {
   cancelAnimation,
   Easing,
+  interpolateColor,
   runOnJS,
   useAnimatedProps,
   useAnimatedStyle,
@@ -32,7 +33,25 @@ import {
 
 const mono = Fonts!.mono;
 const APP_BLUE = "#4C7EFF";
+const APP_RED = "#E5534B";
 const SWIPE_THRESHOLD = 20;
+
+// Dial buttons tint by value (0 → 9), transitioning across an on-brand cool
+// gradient. Light: pale lavender → periwinkle blue. Dark: deep navy → app blue.
+const DIAL_COLORS = {
+  light: { low: "#ECEAF7", high: "#8296FF" },
+  dark: { low: "#1E2036", high: "#4C7EFF" },
+};
+
+// The score above the dial transitions from the target numbers' background color
+// (APP_BLUE, the pie fill) up to the standard text color.
+const SCORE_COLORS = {
+  light: { low: APP_BLUE, high: "#1C1928" },
+  dark: { low: APP_BLUE, high: "#D8D2F4" },
+};
+
+// Maps a numeric value to its tint progress (0 → 1) across the 0..MAX_TARGET range.
+const valueProgress = (v: number) => Math.min(1, Math.max(0, v / MAX_TARGET));
 const MAX_TARGET = 324; // 9 × (sum of row×col weights)
 const PIE_SIZE = 80;
 const CARD_W = PIE_SIZE;
@@ -67,9 +86,13 @@ function PieCountdown({
   const trackColor = isDark ? "#2A2B44" : "#D4D0C8";
 
   useEffect(() => {
-    progress.value = withTiming(0, { duration, easing: Easing.linear }, finished => {
-      if (finished) runOnJS(onComplete)();
-    });
+    progress.value = withTiming(
+      0,
+      { duration, easing: Easing.linear },
+      (finished) => {
+        if (finished) runOnJS(onComplete)();
+      },
+    );
   }, []);
 
   useEffect(() => {
@@ -77,9 +100,17 @@ function PieCountdown({
     cancelAnimation(progress);
   }, [active]);
 
-  // strokeDashoffset 0 = full disc, CIRCUMFERENCE = empty
+  // strokeDashoffset 0 = full disc, CIRCUMFERENCE = empty.
   const animatedProps = useAnimatedProps(() => ({
     strokeDashoffset: CIRCUMFERENCE * (1 - progress.value),
+  }));
+
+  // A red arc layered over the blue one, fading in as time runs out (progress
+  // 1 → 0). Uses only numeric animated props (opacity), which animate reliably
+  // on SVG across platforms — unlike an animated `stroke` color string.
+  const redProps = useAnimatedProps(() => ({
+    strokeDashoffset: CIRCUMFERENCE * (1 - progress.value),
+    opacity: 1 - progress.value,
   }));
 
   const cx = PIE_SIZE / 2;
@@ -89,8 +120,15 @@ function PieCountdown({
     <View style={{ width: PIE_SIZE, height: PIE_SIZE }}>
       <Svg width={PIE_SIZE} height={PIE_SIZE}>
         {/* Track disc */}
-        <Circle cx={cx} cy={cy} r={PIE_RADIUS} stroke={trackColor} strokeWidth={PIE_STROKE} fill="none" />
-        {/* Progress disc — rotated so it starts at 12 o'clock */}
+        <Circle
+          cx={cx}
+          cy={cy}
+          r={PIE_RADIUS}
+          stroke={trackColor}
+          strokeWidth={PIE_STROKE}
+          fill="none"
+        />
+        {/* Progress disc (blue) — rotated so it starts at 12 o'clock */}
         <AnimatedCircle
           cx={cx}
           cy={cy}
@@ -102,10 +140,37 @@ function PieCountdown({
           animatedProps={animatedProps}
           transform={`rotate(-90, ${cx}, ${cy})`}
         />
+        {/* Red arc over the blue one, fading in as the timer runs out */}
+        <AnimatedCircle
+          cx={cx}
+          cy={cy}
+          r={PIE_RADIUS}
+          stroke={APP_RED}
+          strokeWidth={PIE_STROKE}
+          fill="none"
+          strokeDasharray={CIRCUMFERENCE}
+          animatedProps={redProps}
+          transform={`rotate(-90, ${cx}, ${cy})`}
+        />
       </Svg>
-      {/* Number centered */}
-      <View style={{ position: "absolute", inset: 0, justifyContent: "center", alignItems: "center" }}>
-        <Text selectable={false} style={{ fontSize: 18, fontWeight: "700", fontFamily: mono, color: isDark ? "#D8D2F4" : "#1C1928" }}>
+      {/* Number centered — high-contrast against the blue/red disc and track */}
+      <View
+        style={{
+          position: "absolute",
+          inset: 0,
+          justifyContent: "center",
+          alignItems: "center",
+        }}
+      >
+        <Text
+          selectable={false}
+          style={{
+            fontSize: 22,
+            fontWeight: "800",
+            fontFamily: mono,
+            color: isDark ? "#FFFFFF" : "#171421",
+          }}
+        >
           {value}
         </Text>
       </View>
@@ -118,7 +183,11 @@ function PieCountdown({
 type Position = { x: number; y: number };
 type DisplayTarget = Target & { exiting: boolean; position: Position };
 
-function findPosition(existing: DisplayTarget[], containerW: number, containerH: number): Position {
+function findPosition(
+  existing: DisplayTarget[],
+  containerW: number,
+  containerH: number,
+): Position {
   const maxX = containerW - CARD_W - CARD_GAP;
   const maxY = containerH - CARD_H - CARD_GAP;
   if (maxX <= 0 || maxY <= 0) return { x: CARD_GAP, y: CARD_GAP };
@@ -127,16 +196,19 @@ function findPosition(existing: DisplayTarget[], containerW: number, containerH:
     const x = CARD_GAP + Math.random() * (maxX - CARD_GAP);
     const y = CARD_GAP + Math.random() * (maxY - CARD_GAP);
     const overlaps = existing.some(
-      t =>
+      (t) =>
         !t.exiting &&
         x < t.position.x + CARD_W &&
         x + CARD_W > t.position.x &&
         y < t.position.y + CARD_H &&
-        y + CARD_H > t.position.y
+        y + CARD_H > t.position.y,
     );
     if (!overlaps) return { x, y };
   }
-  return { x: CARD_GAP + Math.random() * maxX, y: CARD_GAP + Math.random() * maxY };
+  return {
+    x: CARD_GAP + Math.random() * maxX,
+    y: CARD_GAP + Math.random() * maxY,
+  };
 }
 
 function TargetCard({
@@ -174,8 +246,23 @@ function TargetCard({
   }));
 
   return (
-    <Animated.View style={[{ position: "absolute", left: target.position.x, top: target.position.y }, animStyle]}>
-      <PieCountdown value={target.value} isDark={isDark} active={!target.exiting} duration={duration} onComplete={onExpire} />
+    <Animated.View
+      style={[
+        {
+          position: "absolute",
+          left: target.position.x,
+          top: target.position.y,
+        },
+        animStyle,
+      ]}
+    >
+      <PieCountdown
+        value={target.value}
+        isDark={isDark}
+        active={!target.exiting}
+        duration={duration}
+        onComplete={onExpire}
+      />
     </Animated.View>
   );
 }
@@ -186,14 +273,25 @@ function ScoreDigit({
   digit,
   direction,
   isDark,
+  progress,
 }: {
   digit: string;
   direction: 1 | -1;
   isDark: boolean;
+  progress: number;
 }) {
   const prevDigit = useRef(digit);
   const translateY = useSharedValue(0);
   const opacity = useSharedValue(1);
+  const colorProgress = useSharedValue(progress);
+
+  // Animate the tint as the sum changes.
+  useEffect(() => {
+    colorProgress.value = withTiming(progress, {
+      duration: 260,
+      easing: Easing.out(Easing.quad),
+    });
+  }, [progress]);
 
   useEffect(() => {
     if (digit === prevDigit.current) return;
@@ -212,9 +310,15 @@ function ScoreDigit({
     );
   }, [digit]);
 
+  const palette = isDark ? SCORE_COLORS.dark : SCORE_COLORS.light;
   const animStyle = useAnimatedStyle(() => ({
     transform: [{ translateY: translateY.value }],
     opacity: opacity.value,
+    color: interpolateColor(
+      colorProgress.value,
+      [0, 1],
+      [palette.high, palette.low],
+    ),
   }));
 
   return (
@@ -226,7 +330,6 @@ function ScoreDigit({
           fontWeight: "700",
           fontFamily: mono,
           letterSpacing: 2,
-          color: isDark ? "#D8D2F4" : "#1C1928",
         },
         animStyle,
       ]}
@@ -242,16 +345,27 @@ function DialButton({
   value,
   isDark,
   onDelta,
+  onSet,
 }: {
   value: number;
   isDark: boolean;
   onDelta: (delta: 1 | -1) => void;
+  onSet: (value: number) => void;
 }) {
   const scale = useSharedValue(1);
   const translateY = useSharedValue(0);
   const numTranslateY = useSharedValue(0);
   const numOpacity = useSharedValue(1);
   const numScale = useSharedValue(1);
+  const colorProgress = useSharedValue(value / 9);
+
+  // Animate the button tint whenever its value changes.
+  useEffect(() => {
+    colorProgress.value = withTiming(value / 9, {
+      duration: 260,
+      easing: Easing.out(Easing.quad),
+    });
+  }, [value]);
 
   const animateSwipe = (delta: 1 | -1) => {
     "worklet";
@@ -276,6 +390,29 @@ function DialButton({
     );
   };
 
+  // Left/right swipe sets an absolute value (left → 0, right → 9), animated the
+  // same way as an up/down swipe. exitDir: -1 = up (increase), 1 = down (decrease).
+  const animateSet = (newValue: number, exitDir: 1 | -1) => {
+    "worklet";
+    translateY.value = withSequence(
+      withTiming(exitDir * 7, { duration: 100 }),
+      withSpring(0, { damping: 18, stiffness: 120, mass: 0.8 }),
+    );
+
+    numOpacity.value = withTiming(0, { duration: 110 });
+    numTranslateY.value = withTiming(
+      exitDir * 18,
+      { duration: 110 },
+      (finished) => {
+        if (!finished) return;
+        runOnJS(onSet)(newValue);
+        numTranslateY.value = exitDir * -18;
+        numTranslateY.value = withSpring(0, { damping: 22, stiffness: 160 });
+        numOpacity.value = withTiming(1, { duration: 130 });
+      },
+    );
+  };
+
   const animateTap = () => {
     "worklet";
     numScale.value = withSequence(
@@ -293,17 +430,33 @@ function DialButton({
     })
     .onEnd((e) => {
       "worklet";
-      if (e.translationY < -SWIPE_THRESHOLD) animateSwipe(1);
-      else if (e.translationY > SWIPE_THRESHOLD) animateSwipe(-1);
-      else animateTap();
+      // Dominant axis decides the gesture: horizontal sets 0/9, vertical ±1.
+      // Skip the number animation when the value wouldn't change (already 0/9).
+      if (Math.abs(e.translationX) > Math.abs(e.translationY)) {
+        if (e.translationX < -SWIPE_THRESHOLD) {
+          if (value !== 0) animateSet(0, 1);
+        } else if (e.translationX > SWIPE_THRESHOLD) {
+          if (value !== 9) animateSet(9, -1);
+        } else animateTap();
+      } else {
+        if (e.translationY < -SWIPE_THRESHOLD) animateSwipe(1);
+        else if (e.translationY > SWIPE_THRESHOLD) animateSwipe(-1);
+        else animateTap();
+      }
     })
     .onFinalize(() => {
       "worklet";
       scale.value = withSpring(1, { damping: 16, stiffness: 140 });
     });
 
+  const palette = isDark ? DIAL_COLORS.dark : DIAL_COLORS.light;
   const btnStyle = useAnimatedStyle(() => ({
     transform: [{ scale: scale.value }, { translateY: translateY.value }],
+    backgroundColor: interpolateColor(
+      colorProgress.value,
+      [0, 1],
+      [palette.low, palette.high],
+    ),
   }));
 
   const numStyle = useAnimatedStyle(() => ({
@@ -321,7 +474,6 @@ function DialButton({
               borderRadius: 999,
               justifyContent: "center" as const,
               alignItems: "center" as const,
-              backgroundColor: isDark ? "#1C1D30" : "#FDFCFA",
               shadowColor: isDark ? "#04040C" : "#1C1928",
               shadowOpacity: isDark ? 0.9 : 0.13,
               shadowOffset: { width: 0, height: 6 },
@@ -357,11 +509,20 @@ const TOGGLE_W = 96;
 const TOGGLE_H = 40;
 const KNOB = TOGGLE_H - 8;
 
-function ThemeToggle({ isDark, onToggle }: { isDark: boolean; onToggle: () => void }) {
+function ThemeToggle({
+  isDark,
+  onToggle,
+}: {
+  isDark: boolean;
+  onToggle: () => void;
+}) {
   const knobX = useSharedValue(isDark ? TOGGLE_W - KNOB - 4 : 4);
 
   useEffect(() => {
-    knobX.value = withSpring(isDark ? TOGGLE_W - KNOB - 4 : 4, { damping: 18, stiffness: 200 });
+    knobX.value = withSpring(isDark ? TOGGLE_W - KNOB - 4 : 4, {
+      damping: 18,
+      stiffness: 200,
+    });
   }, [isDark]);
 
   const knobStyle = useAnimatedStyle(() => ({
@@ -374,17 +535,64 @@ function ThemeToggle({ isDark, onToggle }: { isDark: boolean; onToggle: () => vo
 
   return (
     <Pressable onPress={onToggle}>
-      <View style={{ width: TOGGLE_W, height: TOGGLE_H, borderRadius: TOGGLE_H / 2, backgroundColor: trackDim, flexDirection: "row", alignItems: "center", alignSelf: "center" }}>
+      <View
+        style={{
+          width: TOGGLE_W,
+          height: TOGGLE_H,
+          borderRadius: TOGGLE_H / 2,
+          backgroundColor: trackDim,
+          flexDirection: "row",
+          alignItems: "center",
+          alignSelf: "center",
+        }}
+      >
         {/* Moon — left */}
-        <View style={{ position: "absolute", left: 10, justifyContent: "center", alignItems: "center" }}>
-          <Ionicons name="moon" size={15} color={isDark ? iconDim : iconActive} />
+        <View
+          style={{
+            position: "absolute",
+            left: 10,
+            justifyContent: "center",
+            alignItems: "center",
+          }}
+        >
+          <Ionicons
+            name="moon"
+            size={15}
+            color={isDark ? iconDim : iconActive}
+          />
         </View>
         {/* Sun — right */}
-        <View style={{ position: "absolute", right: 10, justifyContent: "center", alignItems: "center" }}>
-          <Ionicons name="sunny" size={15} color={isDark ? iconActive : iconDim} />
+        <View
+          style={{
+            position: "absolute",
+            right: 10,
+            justifyContent: "center",
+            alignItems: "center",
+          }}
+        >
+          <Ionicons
+            name="sunny"
+            size={15}
+            color={isDark ? iconActive : iconDim}
+          />
         </View>
         {/* Knob */}
-        <Animated.View style={[{ position: "absolute", width: KNOB, height: KNOB, borderRadius: KNOB / 2, backgroundColor: isDark ? "#1C1D30" : "#FDFCFA", shadowColor: "#000", shadowOpacity: 0.2, shadowOffset: { width: 0, height: 2 }, shadowRadius: 4 }, knobStyle]} />
+        <Animated.View
+          style={[
+            {
+              position: "absolute",
+              width: KNOB,
+              height: KNOB,
+              borderRadius: KNOB / 2,
+              backgroundColor: isDark ? "#1C1D30" : "#FDFCFA",
+              shadowColor: "#000",
+              shadowOpacity: 0.2,
+              shadowOffset: { width: 0, height: 2 },
+              shadowRadius: 4,
+            },
+            knobStyle,
+          ]}
+        />
       </View>
     </Pressable>
   );
@@ -428,7 +636,11 @@ function MenuOverlay({
           hitSlop={12}
           style={{ position: "absolute", top: 16, right: 16 }}
         >
-          <AntDesign name="close" size={26} color={isDark ? "#2A2B44" : "#D4D0C8"} />
+          <AntDesign
+            name="close"
+            size={26}
+            color={isDark ? "#2A2B44" : "#D4D0C8"}
+          />
         </Pressable>
       )}
       <Text
@@ -442,11 +654,18 @@ function MenuOverlay({
       {/* Difficulty selector — only on the intro/home menu */}
       {!canContinue && (
         <View className="items-center mb-6">
-          <Text selectable={false} className={`text-[9px] font-bold tracking-[1.8px] mb-2 ${dimText}`} style={{ fontFamily: mono }}>
+          <Text
+            selectable={false}
+            className={`text-[9px] font-bold tracking-[1.8px] mb-2 ${dimText}`}
+            style={{ fontFamily: mono }}
+          >
             DIFFICULTY
           </Text>
-          <View className="flex-row flex-wrap justify-center gap-2 px-6" style={{ maxWidth: 320 }}>
-            {DIFFICULTY_ORDER.map(d => {
+          <View
+            className="flex-row flex-wrap justify-center gap-2 px-6"
+            style={{ maxWidth: 320 }}
+          >
+            {DIFFICULTY_ORDER.map((d) => {
               const selected = d === difficulty;
               return (
                 <Pressable
@@ -469,10 +688,18 @@ function MenuOverlay({
       )}
 
       <View className={`px-8 py-3 rounded-2xl items-center mb-10 ${cardBg}`}>
-        <Text selectable={false} className={`text-[9px] font-bold tracking-[1.8px] ${dimText}`} style={{ fontFamily: mono }}>
+        <Text
+          selectable={false}
+          className={`text-[9px] font-bold tracking-[1.8px] ${dimText}`}
+          style={{ fontFamily: mono }}
+        >
           {`BEST · ${DIFFICULTIES[difficulty].label}`}
         </Text>
-        <Text selectable={false} className={`text-[32px] font-black leading-tight ${primaryText}`} style={{ fontFamily: mono }}>
+        <Text
+          selectable={false}
+          className={`text-[32px] font-black leading-tight ${primaryText}`}
+          style={{ fontFamily: mono }}
+        >
           {bestScore}
         </Text>
       </View>
@@ -482,9 +709,18 @@ function MenuOverlay({
           <Pressable
             onPress={onContinue}
             className={`py-4 rounded-2xl items-center ${cardBg}`}
-            style={{ shadowColor: "#000", shadowOpacity: 0.2, shadowOffset: { width: 0, height: 4 }, shadowRadius: 10 }}
+            style={{
+              shadowColor: "#000",
+              shadowOpacity: 0.2,
+              shadowOffset: { width: 0, height: 4 },
+              shadowRadius: 10,
+            }}
           >
-            <Text selectable={false} className={`text-[13px] font-black tracking-[2px] ${primaryText}`} style={{ fontFamily: mono }}>
+            <Text
+              selectable={false}
+              className={`text-[13px] font-black tracking-[2px] ${primaryText}`}
+              style={{ fontFamily: mono }}
+            >
               CONTINUE
             </Text>
           </Pressable>
@@ -492,9 +728,18 @@ function MenuOverlay({
         <Pressable
           onPress={onPlay}
           className={`py-4 rounded-2xl items-center ${btnBg}`}
-          style={{ shadowColor: "#000", shadowOpacity: 0.3, shadowOffset: { width: 0, height: 6 }, shadowRadius: 12 }}
+          style={{
+            shadowColor: "#000",
+            shadowOpacity: 0.3,
+            shadowOffset: { width: 0, height: 6 },
+            shadowRadius: 12,
+          }}
         >
-          <Text selectable={false} className="text-[13px] font-black tracking-[2px] text-[#D8D2F4]" style={{ fontFamily: mono }}>
+          <Text
+            selectable={false}
+            className="text-[13px] font-black tracking-[2px] text-[#D8D2F4]"
+            style={{ fontFamily: mono }}
+          >
             {canContinue ? "NEW GAME" : "PLAY GAME"}
           </Text>
         </Pressable>
@@ -516,8 +761,12 @@ export default function GameScreen() {
   // Load persisted per-difficulty best scores once on mount.
   useEffect(() => {
     AsyncStorage.getItem(BEST_SCORES_KEY)
-      .then(raw => {
-        if (raw) send({ type: "HYDRATE_BEST", bestScores: JSON.parse(raw) as BestScores });
+      .then((raw) => {
+        if (raw)
+          send({
+            type: "HYDRATE_BEST",
+            bestScores: JSON.parse(raw) as BestScores,
+          });
       })
       .catch(() => {});
   }, []);
@@ -525,7 +774,9 @@ export default function GameScreen() {
   // Persist best scores whenever they change.
   const bestScores = state.context.bestScores;
   useEffect(() => {
-    AsyncStorage.setItem(BEST_SCORES_KEY, JSON.stringify(bestScores)).catch(() => {});
+    AsyncStorage.setItem(BEST_SCORES_KEY, JSON.stringify(bestScores)).catch(
+      () => {},
+    );
   }, [bestScores]);
 
   const score = computeSum(state.context.grid);
@@ -540,7 +791,11 @@ export default function GameScreen() {
   // Spawn targets every 5 seconds (first one immediately), only while playing
   useEffect(() => {
     if (!isPlaying) return;
-    const spawn = () => send({ type: "ADD_TARGET", value: Math.floor(Math.random() * (MAX_TARGET + 1)) });
+    const spawn = () =>
+      send({
+        type: "ADD_TARGET",
+        value: Math.floor(Math.random() * (MAX_TARGET + 1)),
+      });
     spawn();
     const interval = setInterval(spawn, 5000);
     return () => clearInterval(interval);
@@ -549,6 +804,10 @@ export default function GameScreen() {
   // Sync displayed targets with machine (to allow exit animations)
   const [displayedTargets, setDisplayedTargets] = useState<DisplayTarget[]>([]);
   const containerSize = useRef({ width: 0, height: 0 });
+
+  // Dial pad is a square sized to fit its container (min of width/height),
+  // so it never overflows over the score above it.
+  const [dialSize, setDialSize] = useState(0);
 
   useEffect(() => {
     const machineIds = new Set(state.context.targets.map((t) => t.id));
@@ -562,7 +821,11 @@ export default function GameScreen() {
       const incoming = state.context.targets
         .filter((t) => !displayedIds.has(t.id))
         .map((t) => {
-          const position = findPosition(placed, containerSize.current.width, containerSize.current.height);
+          const position = findPosition(
+            placed,
+            containerSize.current.width,
+            containerSize.current.height,
+          );
           const entry = { ...t, exiting: false, position };
           placed.push(entry);
           return entry;
@@ -603,12 +866,18 @@ export default function GameScreen() {
           </Text>
           <View className="flex-row items-center gap-3">
             <View className="flex-row gap-1">
-              {[0, 1, 2].map(i => (
+              {[0, 1, 2].map((i) => (
                 <AntDesign
                   key={i}
                   name="heart"
                   size={22}
-                  color={i >= (3 - state.context.lives) ? "#E5534B" : (isDark ? "#1C1D30" : "#FDFCFA")}
+                  color={
+                    i >= 3 - state.context.lives
+                      ? "#E5534B"
+                      : isDark
+                        ? "#1C1D30"
+                        : "#FDFCFA"
+                  }
                 />
               ))}
             </View>
@@ -643,7 +912,7 @@ export default function GameScreen() {
         {/* Target numbers */}
         <View
           className="flex-1"
-          onLayout={e => {
+          onLayout={(e) => {
             containerSize.current = {
               width: e.nativeEvent.layout.width,
               height: e.nativeEvent.layout.height,
@@ -674,20 +943,33 @@ export default function GameScreen() {
                 digit={digit}
                 direction={direction}
                 isDark={isDark}
+                progress={valueProgress(score)}
               />
             ))}
         </View>
       </View>
 
       {/* ── Dial pad — bottom two thirds ── */}
-      <View className="flex-1 p-2 justify-center">
-        <View className="flex-row flex-wrap">
+      <View
+        className="flex-1 items-center justify-center"
+        onLayout={(e) => {
+          const { width, height } = e.nativeEvent.layout;
+          setDialSize(Math.min(width, height));
+        }}
+      >
+        <View
+          style={{ width: dialSize, height: dialSize }}
+          className="flex-row flex-wrap"
+        >
           {state.context.grid.flat().map((value, index) => (
             <DialButton
               key={index}
               value={value}
               isDark={isDark}
               onDelta={(delta) => send({ type: "PRESS", index, delta })}
+              onSet={(cellValue) =>
+                send({ type: "SET_CELL", index, value: cellValue })
+              }
             />
           ))}
         </View>
@@ -702,7 +984,9 @@ export default function GameScreen() {
           canContinue={isPaused}
           onPlay={() => send({ type: isPaused ? "MENU" : "START" })}
           onContinue={() => send({ type: "RESUME" })}
-          onSetDifficulty={(difficulty) => send({ type: "SET_DIFFICULTY", difficulty })}
+          onSetDifficulty={(difficulty) =>
+            send({ type: "SET_DIFFICULTY", difficulty })
+          }
           onToggleTheme={toggleTheme}
         />
       )}
@@ -721,7 +1005,9 @@ export default function GameScreen() {
             GAME OVER
           </Text>
 
-          <View className={`px-8 py-5 rounded-2xl items-center mb-3 ${isDark ? "bg-[#16172A]" : "bg-[#E8E4DC]"}`}>
+          <View
+            className={`px-8 py-5 rounded-2xl items-center mb-3 ${isDark ? "bg-[#16172A]" : "bg-[#E8E4DC]"}`}
+          >
             <Text
               selectable={false}
               className={`text-[9px] font-bold tracking-[1.8px] ${isDark ? "text-[#504E6E]" : "text-[#AAA69E]"}`}
@@ -756,16 +1042,21 @@ export default function GameScreen() {
           </View>
 
           <Pressable
-            onPress={() => send({ type: "RESTART" })}
+            onPress={() => send({ type: "MENU" })}
             className={`px-10 py-4 rounded-2xl ${isDark ? "bg-[#1C1D30]" : "bg-[#1C1928]"}`}
-            style={{ shadowColor: "#000", shadowOpacity: 0.3, shadowOffset: { width: 0, height: 6 }, shadowRadius: 12 }}
+            style={{
+              shadowColor: "#000",
+              shadowOpacity: 0.3,
+              shadowOffset: { width: 0, height: 6 },
+              shadowRadius: 12,
+            }}
           >
             <Text
               selectable={false}
               className="text-[15px] font-black tracking-[3px] text-[#D8D2F4]"
               style={{ fontFamily: mono }}
             >
-              PLAY AGAIN
+              NEW GAME
             </Text>
           </Pressable>
         </View>

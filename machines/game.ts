@@ -49,6 +49,7 @@ type Event =
   | { type: 'SET_DIFFICULTY'; difficulty: Difficulty }
   | { type: 'HYDRATE_BEST'; bestScores: BestScores }
   | { type: 'PRESS'; index: number; delta: 1 | -1 }
+  | { type: 'SET_CELL'; index: number; value: number }
   | { type: 'ADD_TARGET'; value: number }
   | { type: 'TARGET_EXPIRED'; id: number };
 
@@ -61,6 +62,23 @@ const freshGame = () => ({
   targets: [] as Target[],
   nextTargetId: 0,
 });
+
+// Applies a new grid: clears any targets matching the new sum, scores the
+// matches, and keeps the per-difficulty best score up to date.
+function applyGrid(context: Context, newGrid: Grid) {
+  const newSum = computeSum(newGrid);
+  const matched = context.targets.filter(t => t.value === newSum);
+  const gameScore = context.gameScore + matched.length;
+  return {
+    grid: newGrid,
+    targets: context.targets.filter(t => t.value !== newSum),
+    gameScore,
+    bestScores: {
+      ...context.bestScores,
+      [context.difficulty]: Math.max(context.bestScores[context.difficulty], gameScore),
+    },
+  };
+}
 
 export const gameMachine = createMachine({
   types: {} as { context: Context; events: Event },
@@ -110,20 +128,18 @@ export const gameMachine = createMachine({
                 return ((v + event.delta) % 10 + 10) % 10;
               })
             ) as Grid;
-            const newSum = computeSum(newGrid);
-            const matched = context.targets.filter(t => t.value === newSum);
-            const gameScore = context.gameScore + matched.length;
-            return {
-              grid: newGrid,
-              targets: context.targets.filter(t => t.value !== newSum),
-              gameScore,
-              // Track the best per difficulty continuously so endless (trainee)
-              // sessions still record a high score without a game-over.
-              bestScores: {
-                ...context.bestScores,
-                [context.difficulty]: Math.max(context.bestScores[context.difficulty], gameScore),
-              },
-            };
+            return applyGrid(context, newGrid);
+          }),
+        },
+        // Absolute set (swipe left → 0, swipe right → 9).
+        SET_CELL: {
+          actions: assign(({ context, event }: { context: Context; event: Extract<Event, { type: 'SET_CELL' }> }) => {
+            const row = Math.floor(event.index / 3);
+            const col = event.index % 3;
+            const newGrid = context.grid.map((r, ri) =>
+              r.map((v, ci) => (ri === row && ci === col ? event.value : v))
+            ) as Grid;
+            return applyGrid(context, newGrid);
           }),
         },
         TARGET_EXPIRED: [
@@ -178,6 +194,8 @@ export const gameMachine = createMachine({
     },
     gameOver: {
       on: {
+        // "New game" returns to the intro menu (choose difficulty, then play).
+        MENU: { target: 'menu' },
         RESTART: {
           target: 'playing',
           actions: assign((_args: { context: Context; event: Extract<Event, { type: 'RESTART' }> }) => freshGame()),
