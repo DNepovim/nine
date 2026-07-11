@@ -164,10 +164,14 @@ function PieCountdown({
       >
         <Text
           selectable={false}
+          numberOfLines={1}
           style={{
-            fontSize: 22,
+            // Scale by digit count so the number fills almost the whole circle
+            // (targets are 0..324, i.e. 1–3 digits) while staying on one line.
+            fontSize: String(value).length >= 3 ? 36 : String(value).length === 2 ? 50 : 58,
             fontWeight: "800",
             fontFamily: mono,
+            includeFontPadding: false,
             color: isDark ? "#FFFFFF" : "#171421",
           }}
         >
