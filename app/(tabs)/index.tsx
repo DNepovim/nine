@@ -786,18 +786,16 @@ function MenuOverlay({
         <ThemeToggle isDark={isDark} onToggle={onToggleTheme} />
       </View>
 
-      {/* Advanced options link — intro/home menu only */}
-      {!canContinue && (
-        <Pressable onPress={onOpenAdvanced} hitSlop={10} className="mt-8">
-          <Text
-            selectable={false}
-            className={`text-[10px] font-bold tracking-[1.8px] underline ${dimText}`}
-            style={{ fontFamily: mono }}
-          >
-            ADVANCED OPTIONS
-          </Text>
-        </Pressable>
-      )}
+      {/* Advanced options link — available on both the intro and pause menus */}
+      <Pressable onPress={onOpenAdvanced} hitSlop={10} className="mt-8">
+        <Text
+          selectable={false}
+          className={`text-[10px] font-bold tracking-[1.8px] underline ${dimText}`}
+          style={{ fontFamily: mono }}
+        >
+          ADVANCED OPTIONS
+        </Text>
+      </Pressable>
     </View>
   );
 }
@@ -1196,7 +1194,7 @@ export default function GameScreen() {
 
       {/* ── Menu / Pause overlay ── */}
       {(isMenu || isPaused) &&
-        (isMenu && advancedOpen ? (
+        (advancedOpen ? (
           <AdvancedOptionsOverlay
             isDark={isDark}
             showSum={showSum}
