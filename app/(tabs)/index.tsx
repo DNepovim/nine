@@ -15,11 +15,20 @@ import Animated, {
 } from "react-native-reanimated";
 
 import { AntDesign, Ionicons } from "@expo/vector-icons";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import Svg, { Circle } from "react-native-svg";
 
 import { Fonts } from "@/constants/theme";
 import { useTheme } from "@/hooks/use-theme";
-import { computeSum, gameMachine, type Target } from "@/machines/game";
+import {
+  computeSum,
+  DIFFICULTIES,
+  DIFFICULTY_ORDER,
+  gameMachine,
+  type BestScores,
+  type Difficulty,
+  type Target,
+} from "@/machines/game";
 
 const mono = Fonts!.mono;
 const APP_BLUE = "#4C7EFF";
@@ -29,7 +38,7 @@ const PIE_SIZE = 80;
 const CARD_W = PIE_SIZE;
 const CARD_H = PIE_SIZE;
 const CARD_GAP = 10;
-const TARGET_DURATION = 10000;
+const BEST_SCORES_KEY = "nine.bestScores.v1";
 
 // ─── Pie Countdown ──────────────────────────────────────────────────────────
 
@@ -45,18 +54,20 @@ function PieCountdown({
   value,
   isDark,
   active,
+  duration,
   onComplete,
 }: {
   value: number;
   isDark: boolean;
   active: boolean;
+  duration: number;
   onComplete: () => void;
 }) {
   const progress = useSharedValue(1); // 1 = full, 0 = empty
   const trackColor = isDark ? "#2A2B44" : "#D4D0C8";
 
   useEffect(() => {
-    progress.value = withTiming(0, { duration: TARGET_DURATION, easing: Easing.linear }, finished => {
+    progress.value = withTiming(0, { duration, easing: Easing.linear }, finished => {
       if (finished) runOnJS(onComplete)();
     });
   }, []);
@@ -131,11 +142,13 @@ function findPosition(existing: DisplayTarget[], containerW: number, containerH:
 function TargetCard({
   target,
   isDark,
+  duration,
   onExpire,
   onExitComplete,
 }: {
   target: DisplayTarget;
   isDark: boolean;
+  duration: number;
   onExpire: () => void;
   onExitComplete: () => void;
 }) {
@@ -162,7 +175,7 @@ function TargetCard({
 
   return (
     <Animated.View style={[{ position: "absolute", left: target.position.x, top: target.position.y }, animStyle]}>
-      <PieCountdown value={target.value} isDark={isDark} active={!target.exiting} onComplete={onExpire} />
+      <PieCountdown value={target.value} isDark={isDark} active={!target.exiting} duration={duration} onComplete={onExpire} />
     </Animated.View>
   );
 }
@@ -381,22 +394,27 @@ function ThemeToggle({ isDark, onToggle }: { isDark: boolean; onToggle: () => vo
 
 function MenuOverlay({
   isDark,
-  bestScore,
+  bestScores,
+  difficulty,
   canContinue,
   onPlay,
   onContinue,
+  onSetDifficulty,
   onToggleTheme,
 }: {
   isDark: boolean;
-  bestScore: number;
+  bestScores: BestScores;
+  difficulty: Difficulty;
   canContinue: boolean;
   onPlay: () => void;
   onContinue: () => void;
+  onSetDifficulty: (difficulty: Difficulty) => void;
   onToggleTheme: () => void;
 }) {
   const dimText = isDark ? "text-[#504E6E]" : "text-[#AAA69E]";
   const primaryText = isDark ? "text-[#D8D2F4]" : "text-[#1C1928]";
   const btnBg = isDark ? "bg-[#1C1D30]" : "bg-[#1C1928]";
+  const bestScore = bestScores[difficulty];
   const cardBg = isDark ? "bg-[#16172A]" : "bg-[#E8E4DC]";
 
   return (
@@ -421,18 +439,43 @@ function MenuOverlay({
         NINE
       </Text>
 
-      {bestScore > 0 && (
-        <View className={`px-8 py-3 rounded-2xl items-center mb-10 ${cardBg}`}>
-          <Text selectable={false} className={`text-[9px] font-bold tracking-[1.8px] ${dimText}`} style={{ fontFamily: mono }}>
-            BEST
+      {/* Difficulty selector — only on the intro/home menu */}
+      {!canContinue && (
+        <View className="items-center mb-6">
+          <Text selectable={false} className={`text-[9px] font-bold tracking-[1.8px] mb-2 ${dimText}`} style={{ fontFamily: mono }}>
+            DIFFICULTY
           </Text>
-          <Text selectable={false} className={`text-[32px] font-black leading-tight ${primaryText}`} style={{ fontFamily: mono }}>
-            {bestScore}
-          </Text>
+          <View className="flex-row flex-wrap justify-center gap-2 px-6" style={{ maxWidth: 320 }}>
+            {DIFFICULTY_ORDER.map(d => {
+              const selected = d === difficulty;
+              return (
+                <Pressable
+                  key={d}
+                  onPress={() => onSetDifficulty(d)}
+                  className={`px-3.5 py-2 rounded-xl ${selected ? btnBg : cardBg}`}
+                >
+                  <Text
+                    selectable={false}
+                    className={`text-[11px] font-black tracking-[1.5px] ${selected ? "text-[#D8D2F4]" : dimText}`}
+                    style={{ fontFamily: mono }}
+                  >
+                    {DIFFICULTIES[d].label}
+                  </Text>
+                </Pressable>
+              );
+            })}
+          </View>
         </View>
       )}
 
-      {!bestScore && <View className="mb-10" />}
+      <View className={`px-8 py-3 rounded-2xl items-center mb-10 ${cardBg}`}>
+        <Text selectable={false} className={`text-[9px] font-bold tracking-[1.8px] ${dimText}`} style={{ fontFamily: mono }}>
+          {`BEST · ${DIFFICULTIES[difficulty].label}`}
+        </Text>
+        <Text selectable={false} className={`text-[32px] font-black leading-tight ${primaryText}`} style={{ fontFamily: mono }}>
+          {bestScore}
+        </Text>
+      </View>
 
       <View className="gap-3 w-56">
         {canContinue && (
@@ -469,6 +512,21 @@ export default function GameScreen() {
   const { colorScheme, toggleTheme } = useTheme();
   const isDark = colorScheme === "dark";
   const [state, send] = useMachine(gameMachine);
+
+  // Load persisted per-difficulty best scores once on mount.
+  useEffect(() => {
+    AsyncStorage.getItem(BEST_SCORES_KEY)
+      .then(raw => {
+        if (raw) send({ type: "HYDRATE_BEST", bestScores: JSON.parse(raw) as BestScores });
+      })
+      .catch(() => {});
+  }, []);
+
+  // Persist best scores whenever they change.
+  const bestScores = state.context.bestScores;
+  useEffect(() => {
+    AsyncStorage.setItem(BEST_SCORES_KEY, JSON.stringify(bestScores)).catch(() => {});
+  }, [bestScores]);
 
   const score = computeSum(state.context.grid);
   const prevScoreRef = useRef(score);
@@ -597,6 +655,7 @@ export default function GameScreen() {
               key={target.id}
               target={target}
               isDark={isDark}
+              duration={DIFFICULTIES[state.context.difficulty].duration}
               onExpire={() => send({ type: "TARGET_EXPIRED", id: target.id })}
               onExitComplete={() => removeDisplayed(target.id)}
             />
@@ -638,10 +697,12 @@ export default function GameScreen() {
       {(isMenu || isPaused) && (
         <MenuOverlay
           isDark={isDark}
-          bestScore={state.context.bestScore}
+          bestScores={state.context.bestScores}
+          difficulty={state.context.difficulty}
           canContinue={isPaused}
-          onPlay={() => send({ type: "START" })}
+          onPlay={() => send({ type: isPaused ? "MENU" : "START" })}
           onContinue={() => send({ type: "RESUME" })}
+          onSetDifficulty={(difficulty) => send({ type: "SET_DIFFICULTY", difficulty })}
           onToggleTheme={toggleTheme}
         />
       )}
@@ -690,7 +751,7 @@ export default function GameScreen() {
               className={`text-[28px] font-black ${isDark ? "text-[#504E6E]" : "text-[#AAA69E]"}`}
               style={{ fontFamily: mono }}
             >
-              {state.context.bestScore}
+              {state.context.bestScores[state.context.difficulty]}
             </Text>
           </View>
 
