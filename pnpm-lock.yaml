@@ -7,6 +7,11 @@ settings:
 overrides:
   lightningcss: 1.30.1
 
+patchedDependencies:
+  '@expo/router-server@55.0.18':
+    hash: 0d729c6c0c1cac9e843ffe74d81f512b9ea43c1c5cfc24db7950b850c3617781
+    path: patches/@expo__router-server@55.0.18.patch
+
 importers:
 
   .:
@@ -7274,7 +7279,7 @@ snapshots:
       '@expo/plist': 0.5.4
       '@expo/prebuild-config': 55.0.11(expo@55.0.9)(typescript@5.9.3)
       '@expo/require-utils': 55.0.3(typescript@5.9.3)
-      '@expo/router-server': 55.0.18(@expo/metro-runtime@6.1.2)(expo-constants@55.0.9)(expo-font@55.0.4)(expo-router@55.0.8)(expo-server@55.0.6)(expo@55.0.9)(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
+      '@expo/router-server': 55.0.18(patch_hash=0d729c6c0c1cac9e843ffe74d81f512b9ea43c1c5cfc24db7950b850c3617781)(@expo/metro-runtime@6.1.2)(expo-constants@55.0.9)(expo-font@55.0.4)(expo-router@55.0.8)(expo-server@55.0.6)(expo@55.0.9)(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
       '@expo/schema-utils': 55.0.4
       '@expo/spawn-async': 1.7.2
       '@expo/ws-tunnel': 1.0.6
@@ -7605,7 +7610,7 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@expo/router-server@55.0.18(@expo/metro-runtime@6.1.2)(expo-constants@55.0.9)(expo-font@55.0.4)(expo-router@55.0.8)(expo-server@55.0.6)(expo@55.0.9)(react-dom@19.2.0(react@19.2.0))(react@19.2.0)':
+  '@expo/router-server@55.0.18(patch_hash=0d729c6c0c1cac9e843ffe74d81f512b9ea43c1c5cfc24db7950b850c3617781)(@expo/metro-runtime@6.1.2)(expo-constants@55.0.9)(expo-font@55.0.4)(expo-router@55.0.8)(expo-server@55.0.6)(expo@55.0.9)(react-dom@19.2.0(react@19.2.0))(react@19.2.0)':
     dependencies:
       debug: 4.4.3
       expo: 55.0.9(@babel/core@7.29.0)(@expo/dom-webview@55.0.3)(@expo/metro-runtime@6.1.2)(expo-router@55.0.8)(react-dom@19.2.0(react@19.2.0))(react-native@0.83.4(@babel/core@7.29.0)(@react-native/metro-config@0.84.1(@babel/core@7.29.0))(@types/react@19.2.14)(react@19.2.0))(react@19.2.0)(typescript@5.9.3)

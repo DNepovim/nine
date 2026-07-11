@@ -1,0 +1,17 @@
+diff --git a/build/typed-routes/index.js b/build/typed-routes/index.js
+index 52289a13ee7ba16b36d73463857753928ed81c62..1ac0750a21add1f1cbcd102c0cc7d60fa423d793 100644
+--- a/build/typed-routes/index.js
++++ b/build/typed-routes/index.js
+@@ -24,6 +24,12 @@ function getWatchHandler(outputDir, { ctx = defaultCtx, regenerateFn = exports.r
+ ) {
+     const routeFiles = new Set(ctx.keys().filter((key) => (0, routing_1.isTypedRoute)(key)));
+     return async function callback(filePath, type) {
++        // Compat: newer @expo/cli passes the raw watch event object
++        // ({ type, filePath, metadata }) instead of (filePath, type).
++        if (filePath && typeof filePath === 'object') {
++            type = filePath.type;
++            filePath = filePath.filePath;
++        }
+         // Sanity check that we are in an Expo Router project
+         if (!process.env.EXPO_ROUTER_APP_ROOT)
+             return;
