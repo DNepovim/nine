@@ -8,7 +8,7 @@
     "android": "expo start --android",
     "ios": "expo start --ios",
     "web": "expo start --web",
-    "build:web": "expo export --platform web && pnpm exec workbox generateSW workbox-config.js",
+    "build:web": "EXPO_PUBLIC_BUILD_ID=$(git rev-parse --short HEAD)-$(date +%y%m%d.%H%M) expo export --platform web && pnpm exec workbox generateSW workbox-config.js",
     "deploy": "pnpm run build:web && pnpm dlx eas-cli@latest deploy",
     "lint": "expo lint"
   },

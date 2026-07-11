@@ -17,6 +17,7 @@ import Animated, {
 
 import { AntDesign, Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import Constants from "expo-constants";
 import Svg, { Circle } from "react-native-svg";
 
 import { Fonts } from "@/constants/theme";
@@ -60,6 +61,10 @@ const CARD_GAP = 10;
 const BEST_SCORES_KEY = "nine.bestScores.v1";
 const DIFFICULTY_KEY = "nine.difficulty.v1";
 const OPTIONS_KEY = "nine.options.v1";
+
+// Build identifier shown on the intro screen. EXPO_PUBLIC_BUILD_ID is injected
+// at build time (git sha + timestamp); falls back to "dev" during `expo start`.
+const BUILD_LABEL = `v${Constants.expoConfig?.version ?? "?"} · ${process.env.EXPO_PUBLIC_BUILD_ID ?? "dev"}`;
 
 // ─── Pie Countdown ──────────────────────────────────────────────────────────
 
@@ -796,6 +801,17 @@ function MenuOverlay({
           ADVANCED OPTIONS
         </Text>
       </Pressable>
+
+      {/* Build identifier — intro screen only */}
+      {!canContinue && (
+        <Text
+          selectable={false}
+          className={`text-[9px] font-bold tracking-[1px] ${dimText}`}
+          style={{ position: "absolute", bottom: 24, fontFamily: mono }}
+        >
+          {BUILD_LABEL}
+        </Text>
+      )}
     </View>
   );
 }
