@@ -58,6 +58,8 @@ const CARD_W = PIE_SIZE;
 const CARD_H = PIE_SIZE;
 const CARD_GAP = 10;
 const BEST_SCORES_KEY = "nine.bestScores.v1";
+const DIFFICULTY_KEY = "nine.difficulty.v1";
+const OPTIONS_KEY = "nine.options.v1";
 
 // ─── Pie Countdown ──────────────────────────────────────────────────────────
 
@@ -349,12 +351,18 @@ function DialButton({
   value,
   isDark,
   size,
+  weight,
+  showSum,
+  showFactor,
   onDelta,
   onSet,
 }: {
   value: number;
   isDark: boolean;
   size: number;
+  weight: number;
+  showSum: boolean;
+  showFactor: boolean;
   onDelta: (delta: 1 | -1) => void;
   onSet: (value: number) => void;
 }) {
@@ -490,6 +498,26 @@ function DialButton({
             btnStyle,
           ]}
         >
+          {/* Factor (row×col multiplier) — small, pinned near the top */}
+          {showFactor && (
+            <View
+              style={{ position: "absolute", top: Math.round(size * 0.1), left: 0, right: 0, alignItems: "center" }}
+              pointerEvents="none"
+            >
+              <Text
+                selectable={false}
+                style={{
+                  fontSize: Math.max(10, Math.round(size * 0.14)),
+                  fontFamily: mono,
+                  fontWeight: "700",
+                  includeFontPadding: false,
+                  color: isDark ? "#6E6A92" : "#9A96A8",
+                }}
+              >
+                {weight}
+              </Text>
+            </View>
+          )}
           <Animated.Text
             selectable={false}
             style={[
@@ -503,7 +531,7 @@ function DialButton({
               numStyle,
             ]}
           >
-            {value}
+            {showSum ? value * weight : value}
           </Animated.Text>
         </Animated.View>
       </View>
@@ -617,6 +645,7 @@ function MenuOverlay({
   onContinue,
   onSetDifficulty,
   onToggleTheme,
+  onOpenAdvanced,
 }: {
   isDark: boolean;
   bestScores: BestScores;
@@ -626,6 +655,7 @@ function MenuOverlay({
   onContinue: () => void;
   onSetDifficulty: (difficulty: Difficulty) => void;
   onToggleTheme: () => void;
+  onOpenAdvanced: () => void;
 }) {
   const dimText = isDark ? "text-[#504E6E]" : "text-[#AAA69E]";
   const primaryText = isDark ? "text-[#D8D2F4]" : "text-[#1C1928]";
@@ -755,6 +785,132 @@ function MenuOverlay({
         {/* Theme toggle */}
         <ThemeToggle isDark={isDark} onToggle={onToggleTheme} />
       </View>
+
+      {/* Advanced options link — intro/home menu only */}
+      {!canContinue && (
+        <Pressable onPress={onOpenAdvanced} hitSlop={10} className="mt-8">
+          <Text
+            selectable={false}
+            className={`text-[10px] font-bold tracking-[1.8px] underline ${dimText}`}
+            style={{ fontFamily: mono }}
+          >
+            ADVANCED OPTIONS
+          </Text>
+        </Pressable>
+      )}
+    </View>
+  );
+}
+
+// ─── Advanced options overlay ────────────────────────────────────────────────
+
+function AdvancedOptionsOverlay({
+  isDark,
+  showSum,
+  showFactor,
+  onToggleSum,
+  onToggleFactor,
+  onClose,
+}: {
+  isDark: boolean;
+  showSum: boolean;
+  showFactor: boolean;
+  onToggleSum: () => void;
+  onToggleFactor: () => void;
+  onClose: () => void;
+}) {
+  const dimText = isDark ? "text-[#504E6E]" : "text-[#AAA69E]";
+  const primaryText = isDark ? "text-[#D8D2F4]" : "text-[#1C1928]";
+  const cardBg = isDark ? "bg-[#16172A]" : "bg-[#E8E4DC]";
+  const boxOn = isDark ? "bg-[#1C1D30]" : "bg-[#1C1928]";
+
+  const Option = ({
+    checked,
+    label,
+    description,
+    onToggle,
+  }: {
+    checked: boolean;
+    label: string;
+    description: string;
+    onToggle: () => void;
+  }) => (
+    <Pressable
+      onPress={onToggle}
+      className="flex-row items-center gap-3 py-3"
+      style={{ width: 300 }}
+    >
+      <View
+        className={`w-7 h-7 rounded-lg items-center justify-center ${checked ? boxOn : cardBg}`}
+      >
+        {checked && <AntDesign name="check" size={17} color="#D8D2F4" />}
+      </View>
+      <View className="flex-1">
+        <Text
+          selectable={false}
+          className={`text-[13px] font-black tracking-[1px] ${primaryText}`}
+          style={{ fontFamily: mono }}
+        >
+          {label}
+        </Text>
+        <Text
+          selectable={false}
+          className={`text-[10px] font-bold tracking-[0.5px] mt-0.5 ${dimText}`}
+          style={{ fontFamily: mono }}
+        >
+          {description}
+        </Text>
+      </View>
+    </Pressable>
+  );
+
+  return (
+    <View
+      style={{ position: "absolute", inset: 0 }}
+      className={`items-center justify-center ${isDark ? "bg-[#0B0C14]" : "bg-[#F3EFE9]"}`}
+    >
+      <Pressable
+        onPress={onClose}
+        hitSlop={12}
+        style={{ position: "absolute", top: 16, right: 16 }}
+      >
+        <AntDesign name="close" size={26} color={isDark ? "#2A2B44" : "#D4D0C8"} />
+      </Pressable>
+
+      <Text
+        selectable={false}
+        className={`text-[20px] font-black tracking-[3px] mb-8 ${primaryText}`}
+        style={{ fontFamily: mono }}
+      >
+        ADVANCED
+      </Text>
+
+      <Option
+        checked={showSum}
+        label="SHOW SUM IN BUTTONS"
+        description="Display value × row × column"
+        onToggle={onToggleSum}
+      />
+      <Option
+        checked={showFactor}
+        label="SHOW FACTOR"
+        description="Small multiplier at the top of each button"
+        onToggle={onToggleFactor}
+      />
+
+      <Pressable
+        onPress={onClose}
+        className={`mt-8 py-4 rounded-2xl items-center ${boxOn}`}
+        style={{ width: 224 }}
+      >
+        <Text
+          selectable={false}
+          className="text-[13px] font-black tracking-[2px] text-[#D8D2F4]"
+          style={{ fontFamily: mono }}
+        >
+          DONE
+        </Text>
+      </Pressable>
     </View>
   );
 }
@@ -786,6 +942,57 @@ export default function GameScreen() {
       () => {},
     );
   }, [bestScores]);
+
+  // Restore the last chosen difficulty on mount (machine starts in `menu`,
+  // where SET_DIFFICULTY is handled).
+  const difficultyHydrated = useRef(false);
+  useEffect(() => {
+    AsyncStorage.getItem(DIFFICULTY_KEY)
+      .then((raw) => {
+        if (raw && (DIFFICULTY_ORDER as string[]).includes(raw)) {
+          send({ type: "SET_DIFFICULTY", difficulty: raw as Difficulty });
+        }
+      })
+      .catch(() => {})
+      .finally(() => {
+        difficultyHydrated.current = true;
+      });
+  }, []);
+
+  // Persist the difficulty when it changes (but not the default before restore).
+  const difficulty = state.context.difficulty;
+  useEffect(() => {
+    if (!difficultyHydrated.current) return;
+    AsyncStorage.setItem(DIFFICULTY_KEY, difficulty).catch(() => {});
+  }, [difficulty]);
+
+  // Advanced display options (persisted).
+  const [showSum, setShowSum] = useState(false);
+  const [showFactor, setShowFactor] = useState(false);
+  const [advancedOpen, setAdvancedOpen] = useState(false);
+
+  const optionsHydrated = useRef(false);
+  useEffect(() => {
+    AsyncStorage.getItem(OPTIONS_KEY)
+      .then((raw) => {
+        if (!raw) return;
+        const o = JSON.parse(raw);
+        if (typeof o?.showSum === "boolean") setShowSum(o.showSum);
+        if (typeof o?.showFactor === "boolean") setShowFactor(o.showFactor);
+      })
+      .catch(() => {})
+      .finally(() => {
+        optionsHydrated.current = true;
+      });
+  }, []);
+
+  useEffect(() => {
+    if (!optionsHydrated.current) return;
+    AsyncStorage.setItem(
+      OPTIONS_KEY,
+      JSON.stringify({ showSum, showFactor }),
+    ).catch(() => {});
+  }, [showSum, showFactor]);
 
   const score = computeSum(state.context.grid);
   const prevScoreRef = useRef(score);
@@ -975,6 +1182,9 @@ export default function GameScreen() {
               value={value}
               isDark={isDark}
               size={Math.floor(dialSize / 3)}
+              weight={(Math.floor(index / 3) + 1) * ((index % 3) + 1)}
+              showSum={showSum}
+              showFactor={showFactor}
               onDelta={(delta) => send({ type: "PRESS", index, delta })}
               onSet={(cellValue) =>
                 send({ type: "SET_CELL", index, value: cellValue })
@@ -985,20 +1195,31 @@ export default function GameScreen() {
       </View>
 
       {/* ── Menu / Pause overlay ── */}
-      {(isMenu || isPaused) && (
-        <MenuOverlay
-          isDark={isDark}
-          bestScores={state.context.bestScores}
-          difficulty={state.context.difficulty}
-          canContinue={isPaused}
-          onPlay={() => send({ type: isPaused ? "MENU" : "START" })}
-          onContinue={() => send({ type: "RESUME" })}
-          onSetDifficulty={(difficulty) =>
-            send({ type: "SET_DIFFICULTY", difficulty })
-          }
-          onToggleTheme={toggleTheme}
-        />
-      )}
+      {(isMenu || isPaused) &&
+        (isMenu && advancedOpen ? (
+          <AdvancedOptionsOverlay
+            isDark={isDark}
+            showSum={showSum}
+            showFactor={showFactor}
+            onToggleSum={() => setShowSum((v) => !v)}
+            onToggleFactor={() => setShowFactor((v) => !v)}
+            onClose={() => setAdvancedOpen(false)}
+          />
+        ) : (
+          <MenuOverlay
+            isDark={isDark}
+            bestScores={state.context.bestScores}
+            difficulty={state.context.difficulty}
+            canContinue={isPaused}
+            onPlay={() => send({ type: isPaused ? "MENU" : "START" })}
+            onContinue={() => send({ type: "RESUME" })}
+            onSetDifficulty={(difficulty) =>
+              send({ type: "SET_DIFFICULTY", difficulty })
+            }
+            onToggleTheme={toggleTheme}
+            onOpenAdvanced={() => setAdvancedOpen(true)}
+          />
+        ))}
 
       {/* ── Game Over overlay ── */}
       {isGameOver && (
