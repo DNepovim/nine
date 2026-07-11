@@ -1,5 +1,4 @@
 import React, { createContext, useContext, useState } from 'react';
-import { useColorScheme as useSystemColorScheme } from 'react-native';
 import { runOnJS, useSharedValue, withTiming } from 'react-native-reanimated';
 import type { SharedValue } from 'react-native-reanimated';
 
@@ -16,15 +15,16 @@ const ThemeContext = createContext<{
 } | null>(null);
 
 export function AppThemeProvider({ children }: { children: React.ReactNode }) {
-  const system = useSystemColorScheme() ?? 'light';
-  const [override, setOverride] = useState<ColorScheme | null>(null);
+  // Always start in light mode (deterministic across static render + client
+  // hydration), then let the user toggle manually. Reading the OS preference
+  // here caused an inconsistent first paint where some components rendered dark.
+  const [colorScheme, setColorScheme] = useState<ColorScheme>('light');
   const [transitionColor, setTransitionColor] = useState(BG_DARK);
 
-  const colorScheme = override ?? system;
   const transitionOpacity = useSharedValue(0);
 
   const applyToggle = () => {
-    setOverride(prev => (prev ?? system) === 'dark' ? 'light' : 'dark');
+    setColorScheme(prev => (prev === 'dark' ? 'light' : 'dark'));
   };
 
   const toggleTheme = () => {

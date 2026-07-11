@@ -348,11 +348,13 @@ function ScoreDigit({
 function DialButton({
   value,
   isDark,
+  size,
   onDelta,
   onSet,
 }: {
   value: number;
   isDark: boolean;
+  size: number;
   onDelta: (delta: 1 | -1) => void;
   onSet: (value: number) => void;
 }) {
@@ -470,7 +472,9 @@ function DialButton({
 
   return (
     <GestureDetector gesture={gesture}>
-      <View className="w-1/3 aspect-square p-2.5">
+      {/* Explicit pixel size (not w-1/3 + aspect-square): iOS WebKit fails to
+          derive height from aspect-ratio on wrapping flex children. */}
+      <View style={{ width: size, height: size, padding: 10 }}>
         <Animated.View
           style={[
             {
@@ -970,6 +974,7 @@ export default function GameScreen() {
               key={index}
               value={value}
               isDark={isDark}
+              size={Math.floor(dialSize / 3)}
               onDelta={(delta) => send({ type: "PRESS", index, delta })}
               onSet={(cellValue) =>
                 send({ type: "SET_CELL", index, value: cellValue })

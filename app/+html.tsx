@@ -23,8 +23,12 @@ export default function Root({ children }: PropsWithChildren) {
         <meta name="apple-mobile-web-app-title" content="nine" />
         <link rel="apple-touch-icon" href="/pwa-192.png" />
 
-        {/* Register the Workbox-generated service worker for offline support. */}
-        <script dangerouslySetInnerHTML={{ __html: sw }} />
+        {/* Register the Workbox service worker — only in production builds,
+            where `expo export` actually generates /sw.js (it doesn't exist
+            under `expo start`, which would otherwise 404 on registration). */}
+        {process.env.NODE_ENV === 'production' && (
+          <script dangerouslySetInnerHTML={{ __html: sw }} />
+        )}
 
         {/*
           Disable body scrolling on web. This makes ScrollView components work closer to how they do on native.
