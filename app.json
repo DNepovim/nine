@@ -55,6 +55,12 @@
         "projectId": "16846547-652e-48ad-8fce-bb9e0bc0d5d8"
       }
     },
-    "owner": "ruprd"
+    "owner": "ruprd",
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/16846547-652e-48ad-8fce-bb9e0bc0d5d8"
+    }
   }
 }

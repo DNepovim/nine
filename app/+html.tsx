@@ -1,0 +1,48 @@
+import { ScrollViewStyleReset } from 'expo-router/html';
+import type { PropsWithChildren } from 'react';
+
+// This file is web-only and used to configure the root HTML for every
+// web page during static rendering.
+// The contents of this function only run in Node.js environments and
+// do not have access to the DOM or browser APIs.
+export default function Root({ children }: PropsWithChildren) {
+  return (
+    <html lang="en">
+      <head>
+        <meta charSet="utf-8" />
+        <meta httpEquiv="X-UA-Compatible" content="IE=edge" />
+        <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
+
+        {/* PWA manifest and theming. */}
+        <link rel="manifest" href="/manifest.json" />
+        <meta name="theme-color" content="#0a7ea4" />
+
+        {/* iOS standalone / add-to-home-screen support. */}
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+        <meta name="apple-mobile-web-app-title" content="nine" />
+        <link rel="apple-touch-icon" href="/pwa-192.png" />
+
+        {/* Register the Workbox-generated service worker for offline support. */}
+        <script dangerouslySetInnerHTML={{ __html: sw }} />
+
+        {/*
+          Disable body scrolling on web. This makes ScrollView components work closer to how they do on native.
+          However, body scrolling is often nice to have for mobile web. If you want to enable it, remove this line.
+        */}
+        <ScrollViewStyleReset />
+      </head>
+      <body>{children}</body>
+    </html>
+  );
+}
+
+const sw = `
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js').catch((error) => {
+      console.error('Service Worker registration failed:', error);
+    });
+  });
+}
+`;
