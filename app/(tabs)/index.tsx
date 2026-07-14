@@ -963,8 +963,8 @@ function FloatingPoints({
       withTiming(0, { duration: 200 }),
     );
     ty.value = withSequence(
-      withTiming(0, { duration: 160 }), // hold below the box — readable
-      withTiming(-56, { duration: 480, easing: Easing.out(Easing.quad) }), // rise into the box
+      withTiming(0, { duration: 160 }), // hold below the block — readable
+      withTiming(-32, { duration: 480, easing: Easing.out(Easing.quad) }), // rise into the block
     );
     sc.value = withSequence(
       withSpring(bonus ? 1.3 : 1, { damping: 9, stiffness: 220 }),
@@ -984,7 +984,7 @@ function FloatingPoints({
     <Animated.View
       pointerEvents="none"
       style={[
-        { position: "absolute", top: 60, left: 0, right: 0, alignItems: "center", flexDirection: "row", justifyContent: "center", gap: 4 },
+        { position: "absolute", top: 34, left: 0, right: 0, alignItems: "center", flexDirection: "row", justifyContent: "center", gap: 4 },
         style,
       ]}
     >
@@ -1250,21 +1250,70 @@ export default function GameScreen() {
     <>
       {/* ── Game board — top third ── */}
       <View className="flex-1 px-4 pt-1 pb-2.5">
-        <View className="flex-row justify-between items-center mb-3">
-          <Text
-            selectable={false}
-            className={`text-[30px] font-black tracking-[8px] ${isDark ? "text-[#D8D2F4]" : "text-[#1C1928]"}`}
-            style={{ fontFamily: mono }}
-          >
-            NINE
-          </Text>
-          <View className="flex-row items-center gap-3">
+        <View className="mb-3">
+          <View className="flex-row items-center">
+          {/* Score / Hits — left */}
+          <View className="flex-1">
+          <View style={{ position: "relative", alignSelf: "flex-start" }}>
+            <View>
+              {(
+                [
+                  ["SCORE", displayScore],
+                  ["HITS", state.context.hits],
+                ] as const
+              ).map(([label, value], i) => (
+                <View
+                  key={label}
+                  style={{ flexDirection: "row", alignItems: "baseline", marginTop: i === 0 ? 0 : 2 }}
+                >
+                  <Text
+                    selectable={false}
+                    className={`text-[12px] font-normal ${isDark ? "text-[#504E6E]" : "text-[#AAA69E]"}`}
+                    style={{ fontFamily: mono, width: 44, textAlign: "right" }}
+                  >
+                    {label}
+                  </Text>
+                  <Text
+                    selectable={false}
+                    className={`text-[12px] font-black ${isDark ? "text-[#D8D2F4]" : "text-[#1C1928]"}`}
+                    style={{ fontFamily: mono, width: 64, marginLeft: 6 }}
+                  >
+                    {value}
+                  </Text>
+                </View>
+              ))}
+            </View>
+            {floats.map((f) => (
+              <FloatingPoints
+                key={f.id}
+                points={f.points}
+                progress={f.progress}
+                bonus={f.bonus}
+                onDone={() => removeFloat(f.id)}
+              />
+            ))}
+          </View>
+          </View>
+
+          {/* NINE — centered; tap to pause */}
+          <Pressable onPress={() => send({ type: "PAUSE" })} hitSlop={12}>
+            <Text
+              selectable={false}
+              className="text-center text-[30px] font-black tracking-[8px]"
+              style={{ fontFamily: mono, color: isDark ? "#2A2B44" : "#D4D0C8" }}
+            >
+              NINE
+            </Text>
+          </Pressable>
+
+          {/* Hearts — right, centered in its zone */}
+          <View className="flex-1 items-center">
             <View className="flex-row gap-1">
               {[0, 1, 2].map((i) => (
                 <AntDesign
                   key={i}
                   name="heart"
-                  size={22}
+                  size={20}
                   color={
                     i >= 3 - state.context.lives
                       ? "#E5534B"
@@ -1275,50 +1324,9 @@ export default function GameScreen() {
                 />
               ))}
             </View>
-            <View style={{ position: "relative" }}>
-              <View
-                className={`px-3.5 py-1.5 rounded-[10px] items-center min-w-[76px] ${isDark ? "bg-[#16172A]" : "bg-[#E8E4DC]"}`}
-              >
-                <Text
-                  selectable={false}
-                  className={`text-[9px] font-bold tracking-[1.8px] ${isDark ? "text-[#504E6E]" : "text-[#AAA69E]"}`}
-                  style={{ fontFamily: mono }}
-                >
-                  SCORE
-                </Text>
-                <Text
-                  selectable={false}
-                  className={`text-xl font-extrabold mt-px ${isDark ? "text-[#D8D2F4]" : "text-[#1C1928]"}`}
-                  style={{ fontFamily: mono }}
-                >
-                  {displayScore}
-                </Text>
-                <Text
-                  selectable={false}
-                  className={`text-[9px] font-bold tracking-[1.2px] ${isDark ? "text-[#504E6E]" : "text-[#AAA69E]"}`}
-                  style={{ fontFamily: mono }}
-                >
-                  {`HITS ${state.context.hits}`}
-                </Text>
-              </View>
-              {floats.map((f) => (
-                <FloatingPoints
-                  key={f.id}
-                  points={f.points}
-                  progress={f.progress}
-                  bonus={f.bonus}
-                  onDone={() => removeFloat(f.id)}
-                />
-              ))}
-            </View>
-            <Pressable onPress={() => send({ type: "PAUSE" })} hitSlop={10}>
-              <AntDesign
-                name="bars"
-                size={26}
-                color={isDark ? "#2A2B44" : "#D4D0C8"}
-              />
-            </Pressable>
           </View>
+          </View>
+
         </View>
 
         {/* Target numbers */}
