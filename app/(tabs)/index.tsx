@@ -18,6 +18,7 @@ import Animated, {
 import { AntDesign, Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import Constants from "expo-constants";
+import * as Haptics from "expo-haptics";
 import Svg, { Circle } from "react-native-svg";
 
 import { Fonts } from "@/constants/theme";
@@ -27,8 +28,9 @@ import {
   DIFFICULTIES,
   DIFFICULTY_ORDER,
   gameMachine,
-  type BestScores,
   type Difficulty,
+  type HitInfo,
+  type Stats,
   type Target,
 } from "@/machines/game";
 
@@ -58,7 +60,8 @@ const PIE_SIZE = 80;
 const CARD_W = PIE_SIZE;
 const CARD_H = PIE_SIZE;
 const CARD_GAP = 10;
-const BEST_SCORES_KEY = "nine.bestScores.v1";
+const STATS_KEY = "nine.stats.v2";
+const LEGACY_BEST_SCORES_KEY = "nine.bestScores.v1"; // migrated → hits seed
 const DIFFICULTY_KEY = "nine.difficulty.v1";
 const OPTIONS_KEY = "nine.options.v1";
 
@@ -643,7 +646,7 @@ function ThemeToggle({
 
 function MenuOverlay({
   isDark,
-  bestScores,
+  stats,
   difficulty,
   canContinue,
   onPlay,
@@ -653,7 +656,7 @@ function MenuOverlay({
   onOpenAdvanced,
 }: {
   isDark: boolean;
-  bestScores: BestScores;
+  stats: Stats;
   difficulty: Difficulty;
   canContinue: boolean;
   onPlay: () => void;
@@ -665,7 +668,7 @@ function MenuOverlay({
   const dimText = isDark ? "text-[#504E6E]" : "text-[#AAA69E]";
   const primaryText = isDark ? "text-[#D8D2F4]" : "text-[#1C1928]";
   const btnBg = isDark ? "bg-[#1C1D30]" : "bg-[#1C1928]";
-  const bestScore = bestScores[difficulty];
+  const best = stats[difficulty];
   const cardBg = isDark ? "bg-[#16172A]" : "bg-[#E8E4DC]";
 
   return (
@@ -743,7 +746,14 @@ function MenuOverlay({
           className={`text-[32px] font-black leading-tight ${primaryText}`}
           style={{ fontFamily: mono }}
         >
-          {bestScore}
+          {best.score}
+        </Text>
+        <Text
+          selectable={false}
+          className={`text-[9px] font-bold tracking-[1.2px] ${dimText}`}
+          style={{ fontFamily: mono }}
+        >
+          {`${best.hits} HITS`}
         </Text>
       </View>
 
@@ -929,6 +939,67 @@ function AdvancedOptionsOverlay({
   );
 }
 
+// ─── Floating hit points ─────────────────────────────────────────────────────
+
+function FloatingPoints({
+  points,
+  progress,
+  bonus,
+  onDone,
+}: {
+  points: number;
+  progress: number;
+  bonus: boolean;
+  onDone: () => void;
+}) {
+  const ty = useSharedValue(0);
+  const op = useSharedValue(0);
+  const sc = useSharedValue(bonus ? 0.5 : 0.9);
+
+  useEffect(() => {
+    op.value = withSequence(
+      withTiming(1, { duration: 90 }),
+      withTiming(1, { duration: 330 }),
+      withTiming(0, { duration: 200 }),
+    );
+    ty.value = withSequence(
+      withTiming(0, { duration: 160 }), // hold below the box — readable
+      withTiming(-56, { duration: 480, easing: Easing.out(Easing.quad) }), // rise into the box
+    );
+    sc.value = withSequence(
+      withSpring(bonus ? 1.3 : 1, { damping: 9, stiffness: 220 }),
+      withTiming(bonus ? 1.18 : 1, { duration: 220 }),
+    );
+    const t = setTimeout(onDone, 660);
+    return () => clearTimeout(t);
+  }, []);
+
+  const style = useAnimatedStyle(() => ({
+    transform: [{ translateY: ty.value }, { scale: sc.value }],
+    opacity: op.value,
+  }));
+  const color = interpolateColor(progress, [0, 1], [APP_RED, APP_BLUE]);
+
+  return (
+    <Animated.View
+      pointerEvents="none"
+      style={[
+        { position: "absolute", top: 60, left: 0, right: 0, alignItems: "center", flexDirection: "row", justifyContent: "center", gap: 4 },
+        style,
+      ]}
+    >
+      <Text selectable={false} style={{ fontFamily: mono, fontWeight: "900", fontSize: bonus ? 20 : 15, color }}>
+        +{points}
+      </Text>
+      {bonus && (
+        <Text selectable={false} style={{ fontFamily: mono, fontWeight: "900", fontSize: 11, color: "#E7B44C" }}>
+          ×2
+        </Text>
+      )}
+    </Animated.View>
+  );
+}
+
 // ─── Screen ─────────────────────────────────────────────────────────────────
 
 export default function GameScreen() {
@@ -936,26 +1007,40 @@ export default function GameScreen() {
   const isDark = colorScheme === "dark";
   const [state, send] = useMachine(gameMachine);
 
-  // Load persisted per-difficulty best scores once on mount.
+  // Load persisted per-difficulty stats once on mount, migrating the legacy
+  // hit-count key (nine.bestScores.v1) into the new {score, hits} shape.
+  const statsHydrated = useRef(false);
   useEffect(() => {
-    AsyncStorage.getItem(BEST_SCORES_KEY)
-      .then((raw) => {
-        if (raw)
-          send({
-            type: "HYDRATE_BEST",
-            bestScores: JSON.parse(raw) as BestScores,
-          });
-      })
-      .catch(() => {});
+    (async () => {
+      try {
+        const raw = await AsyncStorage.getItem(STATS_KEY);
+        if (raw) {
+          send({ type: "HYDRATE_STATS", stats: JSON.parse(raw) as Partial<Stats> });
+          return;
+        }
+        const legacy = await AsyncStorage.getItem(LEGACY_BEST_SCORES_KEY);
+        if (legacy) {
+          const old = JSON.parse(legacy) as Record<string, number>;
+          const seeded: Partial<Stats> = {};
+          for (const d of DIFFICULTY_ORDER) {
+            if (typeof old[d] === "number") seeded[d] = { score: 0, hits: old[d] };
+          }
+          send({ type: "HYDRATE_STATS", stats: seeded });
+        }
+      } catch {
+        // ignore — start fresh
+      } finally {
+        statsHydrated.current = true;
+      }
+    })();
   }, []);
 
-  // Persist best scores whenever they change.
-  const bestScores = state.context.bestScores;
+  // Persist stats whenever they change (after hydration, so defaults don't clobber).
+  const stats = state.context.stats;
   useEffect(() => {
-    AsyncStorage.setItem(BEST_SCORES_KEY, JSON.stringify(bestScores)).catch(
-      () => {},
-    );
-  }, [bestScores]);
+    if (!statsHydrated.current) return;
+    AsyncStorage.setItem(STATS_KEY, JSON.stringify(stats)).catch(() => {});
+  }, [stats]);
 
   // Restore the last chosen difficulty on mount (machine starts in `menu`,
   // where SET_DIFFICULTY is handled).
@@ -1017,18 +1102,98 @@ export default function GameScreen() {
 
   const isPlaying = state.matches("playing");
 
-  // Spawn targets every 5 seconds (first one immediately), only while playing
+  // Spawn targets every 5s (first immediately) while playing; clearing the board
+  // spawns the next one right away and restarts the 5s cadence.
+  const spawnTimer = useRef<ReturnType<typeof setInterval> | null>(null);
+  const spawnTarget = React.useCallback(() => {
+    send({
+      type: "ADD_TARGET",
+      value: Math.floor(Math.random() * (MAX_TARGET + 1)),
+      at: Date.now(),
+    });
+  }, [send]);
+  const restartCadence = React.useCallback(() => {
+    if (spawnTimer.current) clearInterval(spawnTimer.current);
+    spawnTimer.current = setInterval(spawnTarget, 5000);
+  }, [spawnTarget]);
+
   useEffect(() => {
-    if (!isPlaying) return;
-    const spawn = () =>
-      send({
-        type: "ADD_TARGET",
-        value: Math.floor(Math.random() * (MAX_TARGET + 1)),
-      });
-    spawn();
-    const interval = setInterval(spawn, 5000);
-    return () => clearInterval(interval);
-  }, [isPlaying]);
+    if (!isPlaying) {
+      if (spawnTimer.current) clearInterval(spawnTimer.current);
+      return;
+    }
+    spawnTarget();
+    restartCadence();
+    return () => {
+      if (spawnTimer.current) clearInterval(spawnTimer.current);
+    };
+  }, [isPlaying, spawnTarget, restartCadence]);
+
+  // Immediate respawn when a hit clears the board mid-game. Reset the tracker
+  // whenever we're not playing so a fresh game's targets→0 reset isn't mistaken
+  // for a cleared board (which would spawn an extra target on start).
+  const prevTargetCount = useRef(0);
+  useEffect(() => {
+    if (!isPlaying) {
+      prevTargetCount.current = 0;
+      return;
+    }
+    const count = state.context.targets.length;
+    if (prevTargetCount.current > 0 && count === 0) {
+      spawnTarget();
+      restartCadence();
+    }
+    prevTargetCount.current = count;
+  }, [state.context.targets.length, isPlaying, spawnTarget, restartCadence]);
+
+  // Score counts up to the machine's Score as the floating "+points" merge in.
+  const composite = state.context.score;
+  const [displayScore, setDisplayScore] = useState(0);
+  const displayScoreRef = useRef(0);
+  useEffect(() => {
+    const from = displayScoreRef.current;
+    const to = composite;
+    if (from === to) return;
+    if (to < from) {
+      displayScoreRef.current = to;
+      setDisplayScore(to);
+      return;
+    }
+    const start = Date.now();
+    const dur = 400;
+    let raf: number;
+    const tick = () => {
+      const t = Math.min(1, (Date.now() - start) / dur);
+      const v = Math.round(from + (to - from) * t);
+      displayScoreRef.current = v;
+      setDisplayScore(v);
+      if (t < 1) raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [composite]);
+
+  // Floating "+points" feedback, driven by the machine's hit batch.
+  type Float = { id: number } & HitInfo;
+  const [floats, setFloats] = useState<Float[]>([]);
+  const floatId = useRef(0);
+  const lastHitSeq = useRef(0);
+  useEffect(() => {
+    const batch = state.context.hitBatch;
+    if (batch.seq === lastHitSeq.current || batch.hits.length === 0) return;
+    lastHitSeq.current = batch.seq;
+    setFloats((prev) => [
+      ...prev,
+      ...batch.hits.map((h) => ({ id: ++floatId.current, ...h })),
+    ]);
+    if (batch.hits.some((h) => h.bonus) && Platform.OS !== "web") {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(
+        () => {},
+      );
+    }
+  }, [state.context.hitBatch]);
+  const removeFloat = (id: number) =>
+    setFloats((prev) => prev.filter((f) => f.id !== id));
 
   // Sync displayed targets with machine (to allow exit animations)
   const [displayedTargets, setDisplayedTargets] = useState<DisplayTarget[]>([]);
@@ -1110,23 +1275,41 @@ export default function GameScreen() {
                 />
               ))}
             </View>
-            <View
-              className={`px-3.5 py-1.5 rounded-[10px] items-center min-w-[64px] ${isDark ? "bg-[#16172A]" : "bg-[#E8E4DC]"}`}
-            >
-              <Text
-                selectable={false}
-                className={`text-[9px] font-bold tracking-[1.8px] ${isDark ? "text-[#504E6E]" : "text-[#AAA69E]"}`}
-                style={{ fontFamily: mono }}
+            <View style={{ position: "relative" }}>
+              <View
+                className={`px-3.5 py-1.5 rounded-[10px] items-center min-w-[76px] ${isDark ? "bg-[#16172A]" : "bg-[#E8E4DC]"}`}
               >
-                SCORE
-              </Text>
-              <Text
-                selectable={false}
-                className={`text-xl font-extrabold mt-px ${isDark ? "text-[#D8D2F4]" : "text-[#1C1928]"}`}
-                style={{ fontFamily: mono }}
-              >
-                {state.context.gameScore}
-              </Text>
+                <Text
+                  selectable={false}
+                  className={`text-[9px] font-bold tracking-[1.8px] ${isDark ? "text-[#504E6E]" : "text-[#AAA69E]"}`}
+                  style={{ fontFamily: mono }}
+                >
+                  SCORE
+                </Text>
+                <Text
+                  selectable={false}
+                  className={`text-xl font-extrabold mt-px ${isDark ? "text-[#D8D2F4]" : "text-[#1C1928]"}`}
+                  style={{ fontFamily: mono }}
+                >
+                  {displayScore}
+                </Text>
+                <Text
+                  selectable={false}
+                  className={`text-[9px] font-bold tracking-[1.2px] ${isDark ? "text-[#504E6E]" : "text-[#AAA69E]"}`}
+                  style={{ fontFamily: mono }}
+                >
+                  {`HITS ${state.context.hits}`}
+                </Text>
+              </View>
+              {floats.map((f) => (
+                <FloatingPoints
+                  key={f.id}
+                  points={f.points}
+                  progress={f.progress}
+                  bonus={f.bonus}
+                  onDone={() => removeFloat(f.id)}
+                />
+              ))}
             </View>
             <Pressable onPress={() => send({ type: "PAUSE" })} hitSlop={10}>
               <AntDesign
@@ -1199,9 +1382,11 @@ export default function GameScreen() {
               weight={(Math.floor(index / 3) + 1) * ((index % 3) + 1)}
               showSum={showSum}
               showFactor={showFactor}
-              onDelta={(delta) => send({ type: "PRESS", index, delta })}
+              onDelta={(delta) =>
+                send({ type: "PRESS", index, delta, now: Date.now() })
+              }
               onSet={(cellValue) =>
-                send({ type: "SET_CELL", index, value: cellValue })
+                send({ type: "SET_CELL", index, value: cellValue, now: Date.now() })
               }
             />
           ))}
@@ -1222,7 +1407,7 @@ export default function GameScreen() {
         ) : (
           <MenuOverlay
             isDark={isDark}
-            bestScores={state.context.bestScores}
+            stats={state.context.stats}
             difficulty={state.context.difficulty}
             canContinue={isPaused}
             onPlay={() => send({ type: isPaused ? "MENU" : "START" })}
@@ -1264,7 +1449,14 @@ export default function GameScreen() {
               className={`text-[48px] font-black leading-tight ${isDark ? "text-[#D8D2F4]" : "text-[#1C1928]"}`}
               style={{ fontFamily: mono }}
             >
-              {state.context.gameScore}
+              {state.context.score}
+            </Text>
+            <Text
+              selectable={false}
+              className={`text-[10px] font-bold tracking-[1.2px] ${isDark ? "text-[#504E6E]" : "text-[#AAA69E]"}`}
+              style={{ fontFamily: mono }}
+            >
+              {`${state.context.hits} HITS`}
             </Text>
           </View>
 
@@ -1281,7 +1473,7 @@ export default function GameScreen() {
               className={`text-[28px] font-black ${isDark ? "text-[#504E6E]" : "text-[#AAA69E]"}`}
               style={{ fontFamily: mono }}
             >
-              {state.context.bestScores[state.context.difficulty]}
+              {state.context.stats[state.context.difficulty].score}
             </Text>
           </View>
 
