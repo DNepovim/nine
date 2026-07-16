@@ -258,8 +258,14 @@ export const gameMachine = createMachine({
     },
     gameOver: {
       on: {
-        // "New game" returns to the intro menu (choose difficulty, then play).
         MENU: { target: 'menu' },
+        // The game-over screen reuses the intro layout, so difficulty can be
+        // changed here before playing again.
+        SET_DIFFICULTY: {
+          actions: assign(({ event }: { event: Extract<Event, { type: 'SET_DIFFICULTY' }> }) => ({
+            difficulty: event.difficulty,
+          })),
+        },
         RESTART: {
           target: 'playing',
           actions: assign((_args: { context: Context; event: Extract<Event, { type: 'RESTART' }> }) => freshGame()),

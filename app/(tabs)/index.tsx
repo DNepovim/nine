@@ -13,11 +13,13 @@ import Animated, {
   withSequence,
   withSpring,
   withTiming,
+  type SharedValue,
 } from "react-native-reanimated";
 
 import { AntDesign, Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import Constants from "expo-constants";
+import { useFonts } from "expo-font";
 import * as Haptics from "expo-haptics";
 import Svg, { Circle } from "react-native-svg";
 
@@ -644,61 +646,133 @@ function ThemeToggle({
 
 // ─── Menu / Pause overlay ────────────────────────────────────────────────────
 
+// ─── Screen wrapper — consistent padding for every screen ────────────────────
+// `overlay` screens fill the viewport with the theme background and center their
+// content; the plain (game) screen is a padded flex column.
+function Screen({
+  children,
+  isDark,
+  overlay = false,
+}: {
+  children: React.ReactNode;
+  isDark: boolean;
+  overlay?: boolean;
+}) {
+  return (
+    <View
+      style={overlay ? { position: "absolute", inset: 0 } : { flex: 1 }}
+      className={`py-2 px-4 ${overlay ? `items-center justify-center ${isDark ? "bg-[#0B0C14]" : "bg-[#F3EFE9]"}` : ""}`}
+    >
+      {children}
+    </View>
+  );
+}
+
 function MenuOverlay({
   isDark,
+  mode,
   stats,
   difficulty,
-  canContinue,
+  currentScore,
+  currentHits,
+  dsegLoaded,
   onPlay,
   onContinue,
+  onNewGame,
   onSetDifficulty,
-  onToggleTheme,
   onOpenAdvanced,
 }: {
   isDark: boolean;
+  mode: "menu" | "paused" | "gameOver";
   stats: Stats;
   difficulty: Difficulty;
-  canContinue: boolean;
+  currentScore: number;
+  currentHits: number;
+  dsegLoaded: boolean;
   onPlay: () => void;
   onContinue: () => void;
+  onNewGame: () => void;
   onSetDifficulty: (difficulty: Difficulty) => void;
-  onToggleTheme: () => void;
   onOpenAdvanced: () => void;
 }) {
   const dimText = isDark ? "text-[#504E6E]" : "text-[#AAA69E]";
   const primaryText = isDark ? "text-[#D8D2F4]" : "text-[#1C1928]";
   const btnBg = isDark ? "bg-[#1C1D30]" : "bg-[#1C1928]";
-  const best = stats[difficulty];
   const cardBg = isDark ? "bg-[#16172A]" : "bg-[#E8E4DC]";
+  const best = stats[difficulty];
+
+  const isPaused = mode === "paused";
+  const isGameOver = mode === "gameOver";
+  const showConfig = mode === "menu" || isGameOver; // difficulty + best + build
+  const title = isGameOver ? "GAME OVER" : isPaused ? "PAUSED" : "NINE";
+
+  const shadow = {
+    shadowColor: "#000",
+    shadowOpacity: 0.3,
+    shadowOffset: { width: 0, height: 6 },
+    shadowRadius: 12,
+  };
 
   return (
-    <View
-      style={{ position: "absolute", inset: 0 }}
-      className={`items-center justify-center ${isDark ? "bg-[#0B0C14]" : "bg-[#F3EFE9]"}`}
-    >
-      {canContinue && (
-        <Pressable
-          onPress={onContinue}
-          hitSlop={12}
-          style={{ position: "absolute", top: 16, right: 16 }}
+    <Screen overlay isDark={isDark}>
+      {/* MENU label beside the persistent menu button (dots → cross) on pause */}
+      {isPaused && (
+        <Text
+          selectable={false}
+          className="text-[14px] font-black tracking-[3px]"
+          style={{
+            position: "absolute",
+            top: 15,
+            right: 46,
+            fontFamily: mono,
+            color: isDark ? "#2A2B44" : "#D4D0C8",
+          }}
         >
-          <AntDesign
-            name="close"
-            size={26}
-            color={isDark ? "#2A2B44" : "#D4D0C8"}
-          />
-        </Pressable>
+          MENU
+        </Text>
       )}
+
+      {/* Current run's score — above the title on pause & game over */}
+      {(isPaused || isGameOver) && (
+        <View className="items-center gap-2 mb-5">
+          <Text
+            selectable={false}
+            className={`text-[9px] font-bold tracking-[1.8px] ${dimText}`}
+            style={{ fontFamily: mono }}
+          >
+            SCORE
+          </Text>
+          <Text
+            selectable={false}
+            style={{
+              fontFamily: dsegLoaded ? "DSEG7" : mono,
+              fontSize: 44,
+              letterSpacing: 1,
+              color: isDark ? "#2FB35A" : "#147A32",
+            }}
+          >
+            {currentScore}
+          </Text>
+          <Text
+            selectable={false}
+            className={`text-[9px] font-bold tracking-[1.2px] ${dimText}`}
+            style={{ fontFamily: mono }}
+          >
+            {`${currentHits} HITS`}
+          </Text>
+        </View>
+      )}
+
       <Text
         selectable={false}
-        className={`text-[48px] font-black tracking-[10px] mb-2 ${primaryText}`}
+        className={`font-black mb-4 ${primaryText} ${mode === "menu" ? "text-[48px] tracking-[10px]" : "text-[30px] tracking-[4px]"}`}
         style={{ fontFamily: mono }}
       >
-        NINE
+        {title}
       </Text>
 
-      {/* Difficulty selector — only on the intro/home menu */}
-      {!canContinue && (
+      {/* Difficulty selector — menu & game over */}
+      {showConfig && (
         <View className="items-center mb-6">
           <Text
             selectable={false}
@@ -733,75 +807,82 @@ function MenuOverlay({
         </View>
       )}
 
-      <View className={`px-8 py-3 rounded-2xl items-center mb-10 ${cardBg}`}>
-        <Text
-          selectable={false}
-          className={`text-[9px] font-bold tracking-[1.8px] ${dimText}`}
-          style={{ fontFamily: mono }}
-        >
-          {`BEST · ${DIFFICULTIES[difficulty].label}`}
-        </Text>
-        <Text
-          selectable={false}
-          className={`text-[32px] font-black leading-tight ${primaryText}`}
-          style={{ fontFamily: mono }}
-        >
-          {best.score}
-        </Text>
-        <Text
-          selectable={false}
-          className={`text-[9px] font-bold tracking-[1.2px] ${dimText}`}
-          style={{ fontFamily: mono }}
-        >
-          {`${best.hits} HITS`}
-        </Text>
-      </View>
+      {/* Best — menu & game over */}
+      {showConfig && (
+        <View className={`px-8 py-3 rounded-2xl items-center mb-8 ${cardBg}`}>
+          <Text
+            selectable={false}
+            className={`text-[9px] font-bold tracking-[1.8px] ${dimText}`}
+            style={{ fontFamily: mono }}
+          >
+            {`BEST · ${DIFFICULTIES[difficulty].label}`}
+          </Text>
+          <Text
+            selectable={false}
+            className={`text-[28px] font-black leading-tight ${primaryText}`}
+            style={{ fontFamily: mono }}
+          >
+            {best.score}
+          </Text>
+          <Text
+            selectable={false}
+            className={`text-[9px] font-bold tracking-[1.2px] ${dimText}`}
+            style={{ fontFamily: mono }}
+          >
+            {`${best.hits} HITS`}
+          </Text>
+        </View>
+      )}
 
+      {/* Buttons */}
       <View className="gap-3 w-56">
-        {canContinue && (
+        {isPaused ? (
+          <>
+            {/* CONTINUE is the highlighted primary action */}
+            <Pressable
+              onPress={onContinue}
+              className={`py-4 rounded-2xl items-center ${btnBg}`}
+              style={shadow}
+            >
+              <Text
+                selectable={false}
+                className="text-[13px] font-black tracking-[2px] text-[#D8D2F4]"
+                style={{ fontFamily: mono }}
+              >
+                CONTINUE
+              </Text>
+            </Pressable>
+            <Pressable
+              onPress={onNewGame}
+              className={`py-4 rounded-2xl items-center ${cardBg}`}
+            >
+              <Text
+                selectable={false}
+                className={`text-[13px] font-black tracking-[2px] ${primaryText}`}
+                style={{ fontFamily: mono }}
+              >
+                NEW GAME
+              </Text>
+            </Pressable>
+          </>
+        ) : (
           <Pressable
-            onPress={onContinue}
-            className={`py-4 rounded-2xl items-center ${cardBg}`}
-            style={{
-              shadowColor: "#000",
-              shadowOpacity: 0.2,
-              shadowOffset: { width: 0, height: 4 },
-              shadowRadius: 10,
-            }}
+            onPress={onPlay}
+            className={`py-4 rounded-2xl items-center ${btnBg}`}
+            style={shadow}
           >
             <Text
               selectable={false}
-              className={`text-[13px] font-black tracking-[2px] ${primaryText}`}
+              className="text-[13px] font-black tracking-[2px] text-[#D8D2F4]"
               style={{ fontFamily: mono }}
             >
-              CONTINUE
+              PLAY GAME
             </Text>
           </Pressable>
         )}
-        <Pressable
-          onPress={onPlay}
-          className={`py-4 rounded-2xl items-center ${btnBg}`}
-          style={{
-            shadowColor: "#000",
-            shadowOpacity: 0.3,
-            shadowOffset: { width: 0, height: 6 },
-            shadowRadius: 12,
-          }}
-        >
-          <Text
-            selectable={false}
-            className="text-[13px] font-black tracking-[2px] text-[#D8D2F4]"
-            style={{ fontFamily: mono }}
-          >
-            {canContinue ? "NEW GAME" : "PLAY GAME"}
-          </Text>
-        </Pressable>
-
-        {/* Theme toggle */}
-        <ThemeToggle isDark={isDark} onToggle={onToggleTheme} />
       </View>
 
-      {/* Advanced options link — available on both the intro and pause menus */}
+      {/* Advanced options link */}
       <Pressable onPress={onOpenAdvanced} hitSlop={10} className="mt-8">
         <Text
           selectable={false}
@@ -812,8 +893,8 @@ function MenuOverlay({
         </Text>
       </Pressable>
 
-      {/* Build identifier — intro screen only */}
-      {!canContinue && (
+      {/* Build identifier */}
+      {showConfig && (
         <Text
           selectable={false}
           className={`text-[9px] font-bold tracking-[1px] ${dimText}`}
@@ -822,7 +903,7 @@ function MenuOverlay({
           {BUILD_LABEL}
         </Text>
       )}
-    </View>
+    </Screen>
   );
 }
 
@@ -834,6 +915,7 @@ function AdvancedOptionsOverlay({
   showFactor,
   onToggleSum,
   onToggleFactor,
+  onToggleTheme,
   onClose,
 }: {
   isDark: boolean;
@@ -841,6 +923,7 @@ function AdvancedOptionsOverlay({
   showFactor: boolean;
   onToggleSum: () => void;
   onToggleFactor: () => void;
+  onToggleTheme: () => void;
   onClose: () => void;
 }) {
   const dimText = isDark ? "text-[#504E6E]" : "text-[#AAA69E]";
@@ -889,10 +972,7 @@ function AdvancedOptionsOverlay({
   );
 
   return (
-    <View
-      style={{ position: "absolute", inset: 0 }}
-      className={`items-center justify-center ${isDark ? "bg-[#0B0C14]" : "bg-[#F3EFE9]"}`}
-    >
+    <Screen overlay isDark={isDark}>
       <Pressable
         onPress={onClose}
         hitSlop={12}
@@ -922,6 +1002,21 @@ function AdvancedOptionsOverlay({
         onToggle={onToggleFactor}
       />
 
+      {/* Theme */}
+      <View
+        className="flex-row items-center justify-between py-3"
+        style={{ width: 300 }}
+      >
+        <Text
+          selectable={false}
+          className={`text-[13px] font-black tracking-[1px] ${primaryText}`}
+          style={{ fontFamily: mono }}
+        >
+          THEME
+        </Text>
+        <ThemeToggle isDark={isDark} onToggle={onToggleTheme} />
+      </View>
+
       <Pressable
         onPress={onClose}
         className={`mt-8 py-4 rounded-2xl items-center ${boxOn}`}
@@ -935,7 +1030,7 @@ function AdvancedOptionsOverlay({
           DONE
         </Text>
       </Pressable>
-    </View>
+    </Screen>
   );
 }
 
@@ -964,7 +1059,7 @@ function FloatingPoints({
     );
     ty.value = withSequence(
       withTiming(0, { duration: 160 }), // hold below the block — readable
-      withTiming(-32, { duration: 480, easing: Easing.out(Easing.quad) }), // rise into the block
+      withTiming(-20, { duration: 480, easing: Easing.out(Easing.quad) }), // rise into the block
     );
     sc.value = withSequence(
       withSpring(bonus ? 1.3 : 1, { damping: 9, stiffness: 220 }),
@@ -984,7 +1079,7 @@ function FloatingPoints({
     <Animated.View
       pointerEvents="none"
       style={[
-        { position: "absolute", top: 34, left: 0, right: 0, alignItems: "center", flexDirection: "row", justifyContent: "center", gap: 4 },
+        { position: "absolute", top: 24, left: 0, right: 0, alignItems: "center", flexDirection: "row", justifyContent: "center", gap: 4 },
         style,
       ]}
     >
@@ -1000,12 +1095,125 @@ function FloatingPoints({
   );
 }
 
+// ─── Menu button ─────────────────────────────────────────────────────────────
+// A single persistent button that morphs between the 3×3 grid (playing) and a
+// 5-dot cross of center + corners (paused). Tapping converges every dot to the
+// center, toggles pause at the peak, then springs the shape back out — so the
+// same element stays in place across the game/pause transition.
+
+function MenuDot({
+  collapse,
+  present,
+  baseX,
+  baseY,
+  dx,
+  dy,
+  d,
+  color,
+}: {
+  collapse: SharedValue<number>;
+  present: SharedValue<number>; // 1 = at its position, 0 = merged + hidden at center
+  baseX: number;
+  baseY: number;
+  dx: number;
+  dy: number;
+  d: number;
+  color: string;
+}) {
+  const style = useAnimatedStyle(() => {
+    // factor: 0 = at grid position, 1 = merged at the center dot.
+    const factor = 1 - present.value * (1 - collapse.value);
+    return {
+      transform: [{ translateX: dx * factor }, { translateY: dy * factor }],
+      opacity: present.value,
+    };
+  });
+  return (
+    <Animated.View
+      style={[
+        { position: "absolute", left: baseX, top: baseY, width: d, height: d, borderRadius: d / 2, backgroundColor: color },
+        style,
+      ]}
+    />
+  );
+}
+
+function MenuButton({
+  visible,
+  paused,
+  onToggle,
+  color,
+  size = 22,
+  style,
+}: {
+  visible: boolean;
+  paused: boolean;
+  onToggle: () => void;
+  color: string;
+  size?: number;
+  style?: object;
+}) {
+  const D = 4;
+  const coords = [0, (size - D) / 2, size - D];
+  const center = (size - D) / 2;
+  const collapse = useSharedValue(0);
+  // Edge dots are shown in the grid, merged+hidden at the center in the cross.
+  const edge = useSharedValue(paused ? 0 : 1);
+  const always = useSharedValue(1);
+
+  useEffect(() => {
+    edge.value = withTiming(paused ? 0 : 1, {
+      duration: 300,
+      easing: Easing.out(Easing.back(2)),
+    });
+  }, [paused]);
+
+  const trigger = () => {
+    collapse.value = withSequence(
+      withTiming(1, { duration: 160, easing: Easing.in(Easing.quad) }),
+      withTiming(0, { duration: 340, easing: Easing.out(Easing.back(2)) }),
+    );
+    setTimeout(onToggle, 160); // toggle at the peak; edges morph via the paused effect
+  };
+
+  if (!visible) return null;
+  return (
+    <Pressable onPress={trigger} hitSlop={14} style={style}>
+      <View style={{ width: size, height: size }}>
+        {coords.map((y, r) =>
+          coords.map((x, c) => {
+            const isEdge = (r === 1) !== (c === 1); // exactly one axis centered
+            return (
+              <MenuDot
+                key={`${r}-${c}`}
+                collapse={collapse}
+                present={isEdge ? edge : always}
+                baseX={x}
+                baseY={y}
+                dx={center - x}
+                dy={center - y}
+                d={D}
+                color={color}
+              />
+            );
+          }),
+        )}
+      </View>
+    </Pressable>
+  );
+}
+
 // ─── Screen ─────────────────────────────────────────────────────────────────
 
 export default function GameScreen() {
   const { colorScheme, toggleTheme } = useTheme();
   const isDark = colorScheme === "dark";
   const [state, send] = useMachine(gameMachine);
+
+  // Seven-segment font for the digital score readout.
+  const [dsegLoaded] = useFonts({
+    DSEG7: require("../../assets/fonts/DSEG7Classic-Bold.ttf"),
+  });
 
   // Load persisted per-difficulty stats once on mount, migrating the legacy
   // hit-count key (nine.bestScores.v1) into the new {score, hits} shape.
@@ -1248,74 +1456,43 @@ export default function GameScreen() {
 
   return (
     <>
-      {/* ── Game board — top third ── */}
-      <View className="flex-1 px-4 pt-1 pb-2.5">
+      {/* ── Game screen (single padded wrapper) ── */}
+      <Screen isDark={isDark}>
         <View className="mb-3">
-          <View className="flex-row items-center">
-          {/* Score / Hits — left */}
-          <View className="flex-1">
-          <View style={{ position: "relative", alignSelf: "flex-start" }}>
-            <View>
-              {(
-                [
-                  ["SCORE", displayScore],
-                  ["HITS", state.context.hits],
-                ] as const
-              ).map(([label, value], i) => (
-                <View
-                  key={label}
-                  style={{ flexDirection: "row", alignItems: "baseline", marginTop: i === 0 ? 0 : 2 }}
-                >
-                  <Text
-                    selectable={false}
-                    className={`text-[12px] font-normal ${isDark ? "text-[#504E6E]" : "text-[#AAA69E]"}`}
-                    style={{ fontFamily: mono, width: 44, textAlign: "right" }}
-                  >
-                    {label}
-                  </Text>
-                  <Text
-                    selectable={false}
-                    className={`text-[12px] font-black ${isDark ? "text-[#D8D2F4]" : "text-[#1C1928]"}`}
-                    style={{ fontFamily: mono, width: 64, marginLeft: 6 }}
-                  >
-                    {value}
-                  </Text>
-                </View>
-              ))}
-            </View>
-            {floats.map((f) => (
-              <FloatingPoints
-                key={f.id}
-                points={f.points}
-                progress={f.progress}
-                bonus={f.bonus}
-                onDone={() => removeFloat(f.id)}
-              />
-            ))}
-          </View>
-          </View>
-
-          {/* NINE — centered; tap to pause */}
-          <Pressable onPress={() => send({ type: "PAUSE" })} hitSlop={12}>
+          {/* Row 1 — NINE (left) + MENU label (right). The dots icon is the
+              absolute overlay at top-right, so reserve room for it. */}
+          <View
+            className="flex-row items-center justify-between mb-1"
+            style={{ paddingRight: 32 }}
+          >
             <Text
               selectable={false}
-              className="text-center text-[30px] font-black tracking-[8px]"
+              className="text-[30px] font-black tracking-[8px]"
               style={{ fontFamily: mono, color: isDark ? "#2A2B44" : "#D4D0C8" }}
             >
               NINE
             </Text>
-          </Pressable>
+            <Text
+              selectable={false}
+              className="text-[14px] font-black tracking-[3px]"
+              style={{ fontFamily: mono, color: isDark ? "#2A2B44" : "#D4D0C8" }}
+            >
+              MENU
+            </Text>
+          </View>
 
-          {/* Hearts — right, centered in its zone */}
-          <View className="flex-1 items-center">
+          {/* Row 2 — hearts + score, right-aligned under the menu */}
+          <View
+            className="flex-row items-center justify-between gap-2.5 mt-1.5"
+          >
             <View className="flex-row gap-1">
               {[0, 1, 2].map((i) => (
                 <AntDesign
                   key={i}
                   name="heart"
-                  size={20}
+                  size={22}
                   color={
-                    i >= 3 - state.context.lives
+                    i < state.context.lives
                       ? "#E5534B"
                       : isDark
                         ? "#1C1D30"
@@ -1324,9 +1501,29 @@ export default function GameScreen() {
                 />
               ))}
             </View>
+            <View className="realtive">
+              <Text
+                selectable={false}
+                style={{
+                  fontFamily: dsegLoaded ? "DSEG7" : mono,
+                  fontSize: 17,
+                  letterSpacing: 1,
+                  color: isDark ? "#2FB35A" : "#147A32",
+                }}
+              >
+                {displayScore}
+              </Text>
+              {floats.map((f) => (
+                <FloatingPoints
+                  key={f.id}
+                  points={f.points}
+                  progress={f.progress}
+                  bonus={f.bonus}
+                  onDone={() => removeFloat(f.id)}
+                />
+              ))}
+            </View>
           </View>
-          </View>
-
         </View>
 
         {/* Target numbers */}
@@ -1350,10 +1547,9 @@ export default function GameScreen() {
             />
           ))}
         </View>
-      </View>
 
-      {/* ── Score above dial ── */}
-      <View className="items-center py-1.5">
+        {/* ── Score above dial ── */}
+        <View className="items-center py-1.5">
         <View className="flex-row">
           {String(score)
             .split("")
@@ -1400,9 +1596,10 @@ export default function GameScreen() {
           ))}
         </View>
       </View>
+      </Screen>
 
-      {/* ── Menu / Pause overlay ── */}
-      {(isMenu || isPaused) &&
+      {/* ── Menu / Pause / Game-over overlay (shared layout) ── */}
+      {(isMenu || isPaused || isGameOver) &&
         (advancedOpen ? (
           <AdvancedOptionsOverlay
             isDark={isDark}
@@ -1410,101 +1607,36 @@ export default function GameScreen() {
             showFactor={showFactor}
             onToggleSum={() => setShowSum((v) => !v)}
             onToggleFactor={() => setShowFactor((v) => !v)}
+            onToggleTheme={toggleTheme}
             onClose={() => setAdvancedOpen(false)}
           />
         ) : (
           <MenuOverlay
             isDark={isDark}
+            mode={isGameOver ? "gameOver" : isPaused ? "paused" : "menu"}
             stats={state.context.stats}
             difficulty={state.context.difficulty}
-            canContinue={isPaused}
-            onPlay={() => send({ type: isPaused ? "MENU" : "START" })}
+            dsegLoaded={dsegLoaded}
+            currentScore={state.context.score}
+            currentHits={state.context.hits}
+            onPlay={() => send({ type: isGameOver ? "RESTART" : "START" })}
             onContinue={() => send({ type: "RESUME" })}
+            onNewGame={() => send({ type: "MENU" })}
             onSetDifficulty={(difficulty) =>
               send({ type: "SET_DIFFICULTY", difficulty })
             }
-            onToggleTheme={toggleTheme}
             onOpenAdvanced={() => setAdvancedOpen(true)}
           />
         ))}
 
-      {/* ── Game Over overlay ── */}
-      {isGameOver && (
-        <View
-          style={{ position: "absolute", inset: 0 }}
-          className={`items-center justify-center ${isDark ? "bg-[#0B0C14]" : "bg-[#F3EFE9]"}`}
-        >
-          <Text
-            selectable={false}
-            className={`text-[40px] font-black tracking-[6px] mb-8 ${isDark ? "text-[#D8D2F4]" : "text-[#1C1928]"}`}
-            style={{ fontFamily: mono }}
-          >
-            GAME OVER
-          </Text>
-
-          <View
-            className={`px-8 py-5 rounded-2xl items-center mb-3 ${isDark ? "bg-[#16172A]" : "bg-[#E8E4DC]"}`}
-          >
-            <Text
-              selectable={false}
-              className={`text-[9px] font-bold tracking-[1.8px] ${isDark ? "text-[#504E6E]" : "text-[#AAA69E]"}`}
-              style={{ fontFamily: mono }}
-            >
-              YOUR SCORE
-            </Text>
-            <Text
-              selectable={false}
-              className={`text-[48px] font-black leading-tight ${isDark ? "text-[#D8D2F4]" : "text-[#1C1928]"}`}
-              style={{ fontFamily: mono }}
-            >
-              {state.context.score}
-            </Text>
-            <Text
-              selectable={false}
-              className={`text-[10px] font-bold tracking-[1.2px] ${isDark ? "text-[#504E6E]" : "text-[#AAA69E]"}`}
-              style={{ fontFamily: mono }}
-            >
-              {`${state.context.hits} HITS`}
-            </Text>
-          </View>
-
-          <View className="items-center mb-10">
-            <Text
-              selectable={false}
-              className={`text-[9px] font-bold tracking-[1.8px] ${isDark ? "text-[#504E6E]" : "text-[#AAA69E]"}`}
-              style={{ fontFamily: mono }}
-            >
-              BEST
-            </Text>
-            <Text
-              selectable={false}
-              className={`text-[28px] font-black ${isDark ? "text-[#504E6E]" : "text-[#AAA69E]"}`}
-              style={{ fontFamily: mono }}
-            >
-              {state.context.stats[state.context.difficulty].score}
-            </Text>
-          </View>
-
-          <Pressable
-            onPress={() => send({ type: "MENU" })}
-            className={`px-10 py-4 rounded-2xl ${isDark ? "bg-[#1C1D30]" : "bg-[#1C1928]"}`}
-            style={{
-              shadowColor: "#000",
-              shadowOpacity: 0.3,
-              shadowOffset: { width: 0, height: 6 },
-              shadowRadius: 12,
-            }}
-          >
-            <Text
-              selectable={false}
-              className="text-[15px] font-black tracking-[3px] text-[#D8D2F4]"
-              style={{ fontFamily: mono }}
-            >
-              NEW GAME
-            </Text>
-          </Pressable>
-        </View>
-      )}
+      {/* Persistent menu button — same spot in game & pause; morphs grid↔cross */}
+      <MenuButton
+        visible={isPlaying || isPaused}
+        paused={isPaused}
+        onToggle={() => send({ type: isPaused ? "RESUME" : "PAUSE" })}
+        color={isDark ? "#2A2B44" : "#D4D0C8"}
+        style={{ position: "absolute", top: 12, right: 18, zIndex: 20 }}
+      />
     </>
   );
 }
