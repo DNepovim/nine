@@ -1,4 +1,5 @@
-import { createContext, useContext, useState, type ReactNode } from 'react'
+import { createContext, useContext, useEffect, useState, type ReactNode } from 'react'
+import { Appearance, Platform } from 'react-native'
 import { useSharedValue, withTiming } from 'react-native-reanimated'
 import type { SharedValue } from 'react-native-reanimated'
 import { scheduleOnRN } from 'react-native-worklets'
@@ -23,6 +24,20 @@ export function AppThemeProvider({ children }: { children: ReactNode }) {
   const [transitionColor, setTransitionColor] = useState(BG_DARK)
 
   const transitionOpacity = useSharedValue(0)
+
+  // Drive the token color scheme. On web, react-native-web has no
+  // Appearance.setColorScheme, so toggle the `.dark` class on the document root
+  // (which activates the class-based dark CSS). On native, set the Appearance
+  // scheme (react-native-css resolves `.dark:root` variables from it).
+  useEffect(() => {
+    if (Platform.OS === 'web') {
+      if (typeof document !== 'undefined') {
+        document.documentElement.classList.toggle('dark', colorScheme === 'dark')
+      }
+    } else {
+      Appearance.setColorScheme(colorScheme)
+    }
+  }, [colorScheme])
 
   const applyToggle = () => {
     setColorScheme((prev) => (prev === 'dark' ? 'light' : 'dark'))

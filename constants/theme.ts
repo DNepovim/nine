@@ -2,7 +2,7 @@
 
 import { Platform } from 'react-native'
 
-export const Fonts = Platform.select({
+const Fonts = Platform.select({
   ios: {
     /** iOS `UIFontDescriptorSystemDesignDefault` */
     sans: 'system-ui',
@@ -27,3 +27,6 @@ export const Fonts = Platform.select({
     mono: "SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace",
   },
 })
+
+// Monospace family used across the game's numeric UI.
+export const mono = Fonts.mono

@@ -52,7 +52,7 @@ const emptyStats = (): Stats => ({
 
 // One hit's worth of feedback for the UI's floating "+points" animation.
 export type HitInfo = { points: number; progress: number; bonus: boolean }
-type HitBatch = { seq: number; hits: HitInfo[] }
+export type HitBatch = { seq: number; hits: HitInfo[] }
 
 export function computeSum(grid: Grid): number {
   return grid.reduce(
@@ -91,6 +91,9 @@ type Event =
   | { type: 'SET_CELL'; index: number; value: number; now: number }
   | { type: 'ADD_TARGET'; value: number; at: number }
   | { type: 'TARGET_EXPIRED'; id: number }
+
+// The machine's `send` function, for hooks that dispatch events.
+export type GameSend = (event: Event) => void
 
 // Per-game reset; difficulty, stats and hitBatch are intentionally omitted so
 // assign leaves them untouched (hitBatch.seq stays monotonic across games).

@@ -3,3 +3,47 @@
 @import 'tailwindcss/utilities.css';
 
 @import 'nativewind/theme';
+
+/* Semantic color tokens — light values are the defaults; the `.dark:root`
+   block below overrides them when the app is in dark mode. react-native-css
+   applies `.dark:root` variables per color scheme on native, and per the
+   `.dark` class on the web root (toggled in AppThemeProvider). */
+@theme {
+  --color-surface: #f3efe9; /* screen background */
+  --color-card: #e8e4dc; /* raised cards, pills, toggle track */
+  --color-strong: #1c1928; /* primary buttons / active pills */
+  --color-elevated: #fdfcfa; /* empty hearts, toggle knob */
+  --color-muted: #d4d0c8; /* faint labels, dot menu, pie track */
+  --color-dim: #aaa69e; /* secondary text */
+  --color-primary: #1c1928; /* primary text */
+  --color-score: #147a32; /* digital score readout */
+  --color-dial: #1c1928; /* dial button numerals */
+  --color-factor: #9a96a8; /* dial button factor */
+  --color-pie: #171421; /* countdown numerals */
+  --color-on-strong: #d8d2f4; /* text on strong buttons (static) */
+}
+
+.dark:root {
+  --color-surface: #0b0c14;
+  --color-card: #16172a;
+  --color-strong: #1c1d30;
+  --color-elevated: #1c1d30;
+  --color-muted: #2a2b44;
+  --color-dim: #504e6e;
+  --color-primary: #d8d2f4;
+  --color-score: #2fb35a;
+  --color-dial: #c8c2e8;
+  --color-factor: #6e6a92;
+  --color-pie: #ffffff;
+  --color-on-strong: #d8d2f4;
+}
+
+/* Match the monospace family to the app's previous per-platform values. */
+:root {
+  @media ios {
+    --font-mono: ui-monospace;
+  }
+  @media android {
+    --font-mono: monospace;
+  }
+}
