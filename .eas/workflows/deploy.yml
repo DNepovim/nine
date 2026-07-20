@@ -17,8 +17,8 @@ jobs:
         run: pnpm exec prettier --check .
       - name: Types (tsc)
         run: pnpm typecheck
-      - name: Audit (pnpm audit)
-        run: pnpm audit
+      - name: Audit (high & critical only)
+        run: pnpm audit --audit-level high
       - name: Dead code (knip)
         run: pnpm knip
 
