@@ -1,0 +1,34 @@
+name: Deploy web to EAS Hosting
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  check:
+    name: Static checks
+    steps:
+      - uses: eas/checkout
+      - uses: eas/install_node_modules
+      - name: Lint (eslint)
+        run: pnpm lint
+      - name: Format (prettier)
+        run: pnpm exec prettier --check .
+      - name: Types (tsc)
+        run: pnpm typecheck
+      - name: Audit (pnpm audit)
+        run: pnpm audit
+      - name: Dead code (knip)
+        run: pnpm knip
+
+  deploy:
+    name: Deploy to production
+    needs: [check]
+    steps:
+      - uses: eas/checkout
+      - uses: eas/install_node_modules
+      - name: Build web (export + service worker)
+        run: pnpm run build:web
+      - name: Deploy to EAS Hosting (production)
+        run: eas deploy --prod --non-interactive
