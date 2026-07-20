@@ -19,6 +19,7 @@ Two goals, sequenced:
    friends leaderboard and multiplayer.
 
 Confirmed decisions during brainstorming:
+
 - Leaderboard = **global only** for v1, **per difficulty** for Easy/Medium/Hard/Extreme
   (Trainee is endless practice → no board).
 - Ranked by **Score**, with **Hits** shown alongside.
@@ -33,16 +34,19 @@ Confirmed decisions during brainstorming:
 Ships independently of the backend and should be built first.
 
 ### Two counters per game
+
 - **Hits** — `+1` for every matched target (identical to today's `gameScore`).
 - **Score** — accumulates per-hit points blending **accuracy (⅔)** and **speed (⅓)**.
 
 ### Tracked per target
+
 For each active target we track, relative to its **reference moment**:
+
 - **reference grid** — the dial snapshot at the reference moment.
 - **userSteps** — count of button changes (a `PRESS` ±1, or a `SET_CELL` →0/→9) since the reference.
 - **par** — minimum steps from the reference grid to the target (computed below), fixed at reference time.
 
-**Reference moment** of a target = the later of *(the target spawned, the last time any target was hit)*.
+**Reference moment** of a target = the later of _(the target spawned, the last time any target was hit)_.
 Hitting any target **resets the reference grid + userSteps of every still-active target** to "now".
 
 ### `par` — optimal steps (exact, cheap)
@@ -91,6 +95,7 @@ Hits  += 1
 - `BASE` is a single tuning constant.
 
 **Worked example** — fresh dial, `target = 12`, medium (`duration = 15`):
+
 - `par = 2` (e.g. bottom-right w9 →1 [cost 1] + a w3 button →1 [cost 1]; no single button reaches 12 at cost 1).
 - Clean: `userSteps=2`, `timeLeft=9` → `accuracy = 1 − 0/4 = 1.0`, `speed = 0.6` →
   `hitPoints = 1000·(0.667·1 + 0.333·0.6) = 867`.
@@ -98,7 +103,9 @@ Hits  += 1
   `hitPoints = 1000·(0.667·0.25 + 0.333·0.2) = 233`.
 
 ### Clear-the-board bonus + immediate respawn
+
 When a hit removes the **last active target** (0 remain after the match):
+
 1. **Immediate respawn** — spawn the next target right away instead of waiting for the 5s tick, and
    restart the 5s spawn cadence from that moment (no near-instant double spawn).
 2. **Double points** — `clearBonus = true` for that hit → `Score += 2 · hitPoints`. `Hits` still `+1`.
@@ -107,21 +114,26 @@ If one press matches multiple same-valued targets and empties the board, the dou
 points earned by that clearing press.
 
 ### Persistence (local)
+
 New versioned key **`nine.stats.v2`**:
+
 ```
 { easy: { score, hits }, medium: { score, hits }, hard: { score, hits }, extreme: { score, hits }, trainee: { score, hits } }
 ```
+
 `score` = best composite Score for that difficulty; `hits` = Hits from that same best-Score run.
 After a game, update a difficulty's entry only when the new **Score** beats the stored `score`.
 Migration: if `nine.bestScores.v1` exists, seed each `hits` from it (best-effort) so nothing is lost.
 (Trainee is tracked locally but never uploaded — see Phase 2.)
 
 ### UI changes
+
 - In-game header: show **Score** prominently and **Hits** secondary (both live).
 - Game Over: show final Score and Hits, and the per-difficulty best (by Score).
 - Menu "BEST" card: show best Score (and its Hits) for the selected difficulty.
 
 #### Score feedback animation (required)
+
 - On each hit, a floating **`+{hitPoints}`** element spawns just **below the Score readout** in the
   top bar and animates **upward + fades** toward the Score. When it arrives it disappears and the
   **Score counter increments** by that amount — so the Score visibly ticks up as each float merges.
@@ -134,18 +146,22 @@ Migration: if `nine.bestScores.v1` exists, seed each `hits` from it (best-effort
   keep the machine value authoritative and animate the displayed number up to it.
 
 #### Clear-bonus flourish (×2)
+
 When a hit clears the board, its float shows the **doubled** value and is emphasized:
+
 - Larger/bolder number with a gold **"×2"** badge and a **scale-pop** as it launches; it keeps the
   time-based color of the hit.
 - **Success haptic on native** (`expo-haptics`, already a dependency); no-op on web.
 - Kept subtle and on-brand (no screen shake/flash).
 
 ### Edge cases
+
 - Target already satisfied at spawn (`par = 0`) → `effectivePar = 1`; a 1-step hit scores full accuracy.
 - `userSteps < effectivePar` can't happen in practice (a hit needs ≥1 press); `excess` is clamped ≥ 0.
 - Pause: timers already stop; `userSteps`/reference are unaffected by pausing.
 
 ### Phase 1 verification
+
 - Unit-test `cost(a,f)` against hand-computed values, and `par` via the DP against small worked cases
   (incl. `target = 0`, `target = 324`, already-satisfied).
 - Machine tests: reference reset on hit; `userSteps` counting across PRESS/SET_CELL; clear bonus doubles
@@ -159,12 +175,14 @@ When a hit clears the board, its float shows the **doubled** value and is emphas
 Built after Phase 1. Cross-platform via `@supabase/supabase-js` (same code web + native).
 
 ### Identity
+
 - First launch → `supabase.auth.signInAnonymously()`; Supabase mints a `uuid` user + JWT, persisted
   (AsyncStorage session storage). Stable, server-verified, zero-signup identity.
 - Later (out of scope): `linkIdentity` with Apple / Google to sync across devices — additive, no data migration.
 - All writes carry the JWT; RLS ensures a player writes only their own rows.
 
 ### Data model
+
 - **`profiles`**: `id uuid PK (= auth.users.id)`, `nickname citext unique`, `friend_code text unique`
   (short, generated now for future "add by code"), `created_at`.
 - **`scores`**: PK `(user_id, difficulty)`, `best_score int`, `hits int`, `updated_at timestamptz`;
@@ -173,6 +191,7 @@ Built after Phase 1. Cross-platform via `@supabase/supabase-js` (same code web +
   `auth.uid() = user_id` (scores) / `= id` (profiles). Nickname + friend_code uniqueness via unique indexes.
 
 ### Ranking (global now, friends-ready)
+
 - SQL function `leaderboard(p_difficulty text, p_limit int, p_user_ids uuid[] default null)`:
   ranks with `rank() over (order by best_score desc, updated_at asc)`, joins `profiles.nickname`,
   and — when `p_user_ids` is non-null — filters to that set. Global passes `null`; a future friends
@@ -180,30 +199,36 @@ Built after Phase 1. Cross-platform via `@supabase/supabase-js` (same code web +
 - A "my rank" query returns the current user's rank + surrounding rows.
 
 ### Nickname flow
+
 - Plays offline exactly as today. The first time a Score would publish (or when opening the board),
   prompt for a nickname — validated for length/allowed chars, **server-unique** (friendly "taken"),
   light profanity denylist (client + server). Editable in Settings. No nickname → boards are view-only,
   the player's score is not published.
 
 ### Submission (offline-first)
+
 - Local `nine.stats.v2` remains the source of truth for the player's own numbers.
 - When online + authenticated + nickname set, upsert `{ best_score, hits }` for the difficulty after a
   game (or when local best improves). Offline → queue and submit next launch. Best-effort; a failure
   never blocks gameplay. Trainee is never uploaded.
 
 ### Anti-cheat / limits (minimal)
+
 - Authenticated writes + RLS + a light submit throttle (e.g. reject updates faster than a small
   interval, or rely on Supabase rate limits). Client Score trusted; determined cheating accepted for now.
 
 ### Config
+
 - `EXPO_PUBLIC_SUPABASE_URL`, `EXPO_PUBLIC_SUPABASE_ANON_KEY` (anon key is public by design; RLS protects data).
 
 ### Future (non-binding)
+
 - `friendships` table (edges between profile ids) + friend-filtered `leaderboard()` call.
 - Supabase Realtime (Presence / Broadcast / Postgres changes) as the base for turn-based or light
   real-time multiplayer; authoritative real-time would add a dedicated server later.
 
 ### Phase 2 verification
+
 - Anonymous session persists across launches; RLS blocks writing another user's row (manual + SQL check).
 - Nickname uniqueness + validation paths (taken, invalid, profanity).
 - `leaderboard()` returns correct ranks/ties; "my rank" pins correctly when outside top-N.
@@ -212,8 +237,10 @@ Built after Phase 1. Cross-platform via `@supabase/supabase-js` (same code web +
 ---
 
 ## Sequencing
+
 1. **Phase 1** (scoring model) — its own implementation plan, shippable alone.
 2. **Phase 2** (Supabase leaderboard) — its own plan, depends on Phase 1's Score/Hits + `nine.stats.v2`.
 
 ## Out of scope (for now)
+
 Friends leaderboards, account linking (Apple/Google), multiplayer, achievements, Trainee board.

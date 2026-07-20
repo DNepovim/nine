@@ -1,12 +1,16 @@
-import { useMachine } from "@xstate/react";
-import React, { useEffect, useRef, useState } from "react";
-import { Platform, Pressable, SafeAreaView, Text, View } from "react-native";
-import { Gesture, GestureDetector } from "react-native-gesture-handler";
+import { AntDesign, Ionicons } from '@expo/vector-icons'
+import AsyncStorage from '@react-native-async-storage/async-storage'
+import { useMachine } from '@xstate/react'
+import Constants from 'expo-constants'
+import { useFonts } from 'expo-font'
+import * as Haptics from 'expo-haptics'
+import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
+import { Platform, Pressable, Text, View } from 'react-native'
+import { Gesture, GestureDetector } from 'react-native-gesture-handler'
 import Animated, {
   cancelAnimation,
   Easing,
   interpolateColor,
-  runOnJS,
   useAnimatedProps,
   useAnimatedStyle,
   useSharedValue,
@@ -14,17 +18,13 @@ import Animated, {
   withSpring,
   withTiming,
   type SharedValue,
-} from "react-native-reanimated";
+} from 'react-native-reanimated'
+import Svg, { Circle } from 'react-native-svg'
+import { scheduleOnRN } from 'react-native-worklets'
 
-import { AntDesign, Ionicons } from "@expo/vector-icons";
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import Constants from "expo-constants";
-import { useFonts } from "expo-font";
-import * as Haptics from "expo-haptics";
-import Svg, { Circle } from "react-native-svg";
-
-import { Fonts } from "@/constants/theme";
-import { useTheme } from "@/hooks/use-theme";
+import DSEG7Font from '@/assets/fonts/DSEG7Classic-Bold.ttf'
+import { Fonts } from '@/constants/theme'
+import { useTheme } from '@/hooks/use-theme'
 import {
   computeSum,
   DIFFICULTIES,
@@ -34,52 +34,52 @@ import {
   type HitInfo,
   type Stats,
   type Target,
-} from "@/machines/game";
+} from '@/machines/game'
 
-const mono = Fonts!.mono;
-const APP_BLUE = "#4C7EFF";
-const APP_RED = "#E5534B";
-const SWIPE_THRESHOLD = 20;
+const mono = Fonts.mono
+const APP_BLUE = '#4C7EFF'
+const APP_RED = '#E5534B'
+const SWIPE_THRESHOLD = 20
 
 // Dial buttons tint by value (0 → 9), transitioning across an on-brand cool
 // gradient. Light: pale lavender → periwinkle blue. Dark: deep navy → app blue.
 const DIAL_COLORS = {
-  light: { low: "#ECEAF7", high: "#8296FF" },
-  dark: { low: "#1E2036", high: "#4C7EFF" },
-};
+  light: { low: '#ECEAF7', high: '#8296FF' },
+  dark: { low: '#1E2036', high: '#4C7EFF' },
+}
 
 // The score above the dial transitions from the target numbers' background color
 // (APP_BLUE, the pie fill) up to the standard text color.
 const SCORE_COLORS = {
-  light: { low: APP_BLUE, high: "#1C1928" },
-  dark: { low: APP_BLUE, high: "#D8D2F4" },
-};
+  light: { low: APP_BLUE, high: '#1C1928' },
+  dark: { low: APP_BLUE, high: '#D8D2F4' },
+}
 
 // Maps a numeric value to its tint progress (0 → 1) across the 0..MAX_TARGET range.
-const valueProgress = (v: number) => Math.min(1, Math.max(0, v / MAX_TARGET));
-const MAX_TARGET = 324; // 9 × (sum of row×col weights)
-const PIE_SIZE = 80;
-const CARD_W = PIE_SIZE;
-const CARD_H = PIE_SIZE;
-const CARD_GAP = 10;
-const STATS_KEY = "nine.stats.v2";
-const LEGACY_BEST_SCORES_KEY = "nine.bestScores.v1"; // migrated → hits seed
-const DIFFICULTY_KEY = "nine.difficulty.v1";
-const OPTIONS_KEY = "nine.options.v1";
+const valueProgress = (v: number) => Math.min(1, Math.max(0, v / MAX_TARGET))
+const MAX_TARGET = 324 // 9 × (sum of row×col weights)
+const PIE_SIZE = 80
+const CARD_W = PIE_SIZE
+const CARD_H = PIE_SIZE
+const CARD_GAP = 10
+const STATS_KEY = 'nine.stats.v2'
+const LEGACY_BEST_SCORES_KEY = 'nine.bestScores.v1' // migrated → hits seed
+const DIFFICULTY_KEY = 'nine.difficulty.v1'
+const OPTIONS_KEY = 'nine.options.v1'
 
 // Build identifier shown on the intro screen. EXPO_PUBLIC_BUILD_ID is injected
 // at build time (git sha + timestamp); falls back to "dev" during `expo start`.
-const BUILD_LABEL = `v${Constants.expoConfig?.version ?? "?"} · ${process.env.EXPO_PUBLIC_BUILD_ID ?? "dev"}`;
+const BUILD_LABEL = `v${Constants.expoConfig?.version ?? '?'} · ${process.env.EXPO_PUBLIC_BUILD_ID ?? 'dev'}`
 
 // ─── Pie Countdown ──────────────────────────────────────────────────────────
 
-const AnimatedCircle = Animated.createAnimatedComponent(Circle);
+const AnimatedCircle = Animated.createAnimatedComponent(Circle)
 
 // Thick-stroke trick: radius = SIZE/4, strokeWidth = SIZE/2
 // → stroke spans from center to edge, looks like a filled disc
-const PIE_RADIUS = PIE_SIZE / 4;
-const PIE_STROKE = PIE_SIZE / 2;
-const CIRCUMFERENCE = 2 * Math.PI * PIE_RADIUS;
+const PIE_RADIUS = PIE_SIZE / 4
+const PIE_STROKE = PIE_SIZE / 2
+const CIRCUMFERENCE = 2 * Math.PI * PIE_RADIUS
 
 function PieCountdown({
   value,
@@ -88,34 +88,30 @@ function PieCountdown({
   duration,
   onComplete,
 }: {
-  value: number;
-  isDark: boolean;
-  active: boolean;
-  duration: number;
-  onComplete: () => void;
+  value: number
+  isDark: boolean
+  active: boolean
+  duration: number
+  onComplete: () => void
 }) {
-  const progress = useSharedValue(1); // 1 = full, 0 = empty
-  const trackColor = isDark ? "#2A2B44" : "#D4D0C8";
+  const progress = useSharedValue(1) // 1 = full, 0 = empty
+  const trackColor = isDark ? '#2A2B44' : '#D4D0C8'
 
   useEffect(() => {
-    progress.value = withTiming(
-      0,
-      { duration, easing: Easing.linear },
-      (finished) => {
-        if (finished) runOnJS(onComplete)();
-      },
-    );
-  }, []);
+    progress.value = withTiming(0, { duration, easing: Easing.linear }, (finished) => {
+      if (finished) scheduleOnRN(onComplete)
+    })
+  }, [])
 
   useEffect(() => {
-    if (active) return;
-    cancelAnimation(progress);
-  }, [active]);
+    if (active) return
+    cancelAnimation(progress)
+  }, [active])
 
   // strokeDashoffset 0 = full disc, CIRCUMFERENCE = empty.
   const animatedProps = useAnimatedProps(() => ({
     strokeDashoffset: CIRCUMFERENCE * (1 - progress.value),
-  }));
+  }))
 
   // A red arc layered over the blue one, fading in as time runs out (progress
   // 1 → 0). Uses only numeric animated props (opacity), which animate reliably
@@ -123,10 +119,10 @@ function PieCountdown({
   const redProps = useAnimatedProps(() => ({
     strokeDashoffset: CIRCUMFERENCE * (1 - progress.value),
     opacity: 1 - progress.value,
-  }));
+  }))
 
-  const cx = PIE_SIZE / 2;
-  const cy = PIE_SIZE / 2;
+  const cx = PIE_SIZE / 2
+  const cy = PIE_SIZE / 2
 
   return (
     <View style={{ width: PIE_SIZE, height: PIE_SIZE }}>
@@ -168,10 +164,10 @@ function PieCountdown({
       {/* Number centered — high-contrast against the blue/red disc and track */}
       <View
         style={{
-          position: "absolute",
+          position: 'absolute',
           inset: 0,
-          justifyContent: "center",
-          alignItems: "center",
+          justifyContent: 'center',
+          alignItems: 'center',
         }}
       >
         <Text
@@ -180,37 +176,38 @@ function PieCountdown({
           style={{
             // Scale by digit count so the number fills almost the whole circle
             // (targets are 0..324, i.e. 1–3 digits) while staying on one line.
-            fontSize: String(value).length >= 3 ? 36 : String(value).length === 2 ? 50 : 58,
-            fontWeight: "800",
+            fontSize:
+              String(value).length >= 3 ? 36 : String(value).length === 2 ? 50 : 58,
+            fontWeight: '800',
             fontFamily: mono,
             includeFontPadding: false,
-            color: isDark ? "#FFFFFF" : "#171421",
+            color: isDark ? '#FFFFFF' : '#171421',
           }}
         >
           {value}
         </Text>
       </View>
     </View>
-  );
+  )
 }
 
 // ─── Target Card ────────────────────────────────────────────────────────────
 
-type Position = { x: number; y: number };
-type DisplayTarget = Target & { exiting: boolean; position: Position };
+type Position = { x: number; y: number }
+type DisplayTarget = Target & { exiting: boolean; position: Position }
 
 function findPosition(
   existing: DisplayTarget[],
   containerW: number,
   containerH: number,
 ): Position {
-  const maxX = containerW - CARD_W - CARD_GAP;
-  const maxY = containerH - CARD_H - CARD_GAP;
-  if (maxX <= 0 || maxY <= 0) return { x: CARD_GAP, y: CARD_GAP };
+  const maxX = containerW - CARD_W - CARD_GAP
+  const maxY = containerH - CARD_H - CARD_GAP
+  if (maxX <= 0 || maxY <= 0) return { x: CARD_GAP, y: CARD_GAP }
 
   for (let attempt = 0; attempt < 60; attempt++) {
-    const x = CARD_GAP + Math.random() * (maxX - CARD_GAP);
-    const y = CARD_GAP + Math.random() * (maxY - CARD_GAP);
+    const x = CARD_GAP + Math.random() * (maxX - CARD_GAP)
+    const y = CARD_GAP + Math.random() * (maxY - CARD_GAP)
     const overlaps = existing.some(
       (t) =>
         !t.exiting &&
@@ -218,13 +215,13 @@ function findPosition(
         x + CARD_W > t.position.x &&
         y < t.position.y + CARD_H &&
         y + CARD_H > t.position.y,
-    );
-    if (!overlaps) return { x, y };
+    )
+    if (!overlaps) return { x, y }
   }
   return {
     x: CARD_GAP + Math.random() * maxX,
     y: CARD_GAP + Math.random() * maxY,
-  };
+  }
 }
 
 function TargetCard({
@@ -234,38 +231,38 @@ function TargetCard({
   onExpire,
   onExitComplete,
 }: {
-  target: DisplayTarget;
-  isDark: boolean;
-  duration: number;
-  onExpire: () => void;
-  onExitComplete: () => void;
+  target: DisplayTarget
+  isDark: boolean
+  duration: number
+  onExpire: () => void
+  onExitComplete: () => void
 }) {
-  const scale = useSharedValue(0.6);
-  const opacity = useSharedValue(0);
+  const scale = useSharedValue(0.6)
+  const opacity = useSharedValue(0)
 
   useEffect(() => {
-    scale.value = withSpring(1, { damping: 14, stiffness: 200 });
-    opacity.value = withTiming(1, { duration: 180 });
-  }, []);
+    scale.value = withSpring(1, { damping: 14, stiffness: 200 })
+    opacity.value = withTiming(1, { duration: 180 })
+  }, [])
 
   useEffect(() => {
-    if (!target.exiting) return;
-    scale.value = withSpring(1.15, { damping: 10, stiffness: 300 });
+    if (!target.exiting) return
+    scale.value = withSpring(1.15, { damping: 10, stiffness: 300 })
     opacity.value = withTiming(0, { duration: 250 }, (finished) => {
-      if (finished) runOnJS(onExitComplete)();
-    });
-  }, [target.exiting]);
+      if (finished) scheduleOnRN(onExitComplete)
+    })
+  }, [target.exiting])
 
   const animStyle = useAnimatedStyle(() => ({
     transform: [{ scale: scale.value }],
     opacity: opacity.value,
-  }));
+  }))
 
   return (
     <Animated.View
       style={[
         {
-          position: "absolute",
+          position: 'absolute',
           left: target.position.x,
           top: target.position.y,
         },
@@ -280,7 +277,7 @@ function TargetCard({
         onComplete={onExpire}
       />
     </Animated.View>
-  );
+  )
 }
 
 // ─── Score Digit ────────────────────────────────────────────────────────────
@@ -291,51 +288,47 @@ function ScoreDigit({
   isDark,
   progress,
 }: {
-  digit: string;
-  direction: 1 | -1;
-  isDark: boolean;
-  progress: number;
+  digit: string
+  direction: 1 | -1
+  isDark: boolean
+  progress: number
 }) {
-  const prevDigit = useRef(digit);
-  const translateY = useSharedValue(0);
-  const opacity = useSharedValue(1);
-  const colorProgress = useSharedValue(progress);
+  const prevDigit = useRef(digit)
+  const translateY = useSharedValue(0)
+  const opacity = useSharedValue(1)
+  const colorProgress = useSharedValue(progress)
 
   // Animate the tint as the sum changes.
   useEffect(() => {
     colorProgress.value = withTiming(progress, {
       duration: 260,
       easing: Easing.out(Easing.quad),
-    });
-  }, [progress]);
+    })
+  }, [progress])
 
   useEffect(() => {
-    if (digit === prevDigit.current) return;
-    prevDigit.current = digit;
+    if (digit === prevDigit.current) return
+    prevDigit.current = digit
 
-    const exitDir = direction === 1 ? -1 : 1;
+    const exitDir = direction === 1 ? -1 : 1
 
     opacity.value = withSequence(
       withTiming(0, { duration: 80 }),
       withTiming(1, { duration: 110 }),
-    );
+    )
     translateY.value = withSequence(
       withTiming(exitDir * 10, { duration: 80 }),
       withTiming(exitDir * -10, { duration: 0 }),
       withSpring(0, { damping: 18, stiffness: 180 }),
-    );
-  }, [digit]);
+    )
+  }, [digit])
 
-  const palette = isDark ? SCORE_COLORS.dark : SCORE_COLORS.light;
+  const palette = isDark ? SCORE_COLORS.dark : SCORE_COLORS.light
   const animStyle = useAnimatedStyle(() => ({
     transform: [{ translateY: translateY.value }],
     opacity: opacity.value,
-    color: interpolateColor(
-      colorProgress.value,
-      [0, 1],
-      [palette.high, palette.low],
-    ),
-  }));
+    color: interpolateColor(colorProgress.value, [0, 1], [palette.high, palette.low]),
+  }))
 
   return (
     <Animated.Text
@@ -343,7 +336,7 @@ function ScoreDigit({
       style={[
         {
           fontSize: 42,
-          fontWeight: "700",
+          fontWeight: '700',
           fontFamily: mono,
           letterSpacing: 2,
         },
@@ -352,7 +345,7 @@ function ScoreDigit({
     >
       {digit}
     </Animated.Text>
-  );
+  )
 }
 
 // ─── Dial Button ────────────────────────────────────────────────────────────
@@ -367,113 +360,105 @@ function DialButton({
   onDelta,
   onSet,
 }: {
-  value: number;
-  isDark: boolean;
-  size: number;
-  weight: number;
-  showSum: boolean;
-  showFactor: boolean;
-  onDelta: (delta: 1 | -1) => void;
-  onSet: (value: number) => void;
+  value: number
+  isDark: boolean
+  size: number
+  weight: number
+  showSum: boolean
+  showFactor: boolean
+  onDelta: (delta: 1 | -1) => void
+  onSet: (value: number) => void
 }) {
-  const scale = useSharedValue(1);
-  const translateY = useSharedValue(0);
-  const numTranslateY = useSharedValue(0);
-  const numOpacity = useSharedValue(1);
-  const numScale = useSharedValue(1);
-  const colorProgress = useSharedValue(value / 9);
+  const scale = useSharedValue(1)
+  const translateY = useSharedValue(0)
+  const numTranslateY = useSharedValue(0)
+  const numOpacity = useSharedValue(1)
+  const numScale = useSharedValue(1)
+  const colorProgress = useSharedValue(value / 9)
 
   // Animate the button tint whenever its value changes.
   useEffect(() => {
     colorProgress.value = withTiming(value / 9, {
       duration: 260,
       easing: Easing.out(Easing.quad),
-    });
-  }, [value]);
+    })
+  }, [value])
 
   const animateSwipe = (delta: 1 | -1) => {
-    "worklet";
-    const exitDir = delta === 1 ? -1 : 1;
+    'worklet'
+    const exitDir = delta === 1 ? -1 : 1
 
     translateY.value = withSequence(
       withTiming(exitDir * 7, { duration: 100 }),
       withSpring(0, { damping: 18, stiffness: 120, mass: 0.8 }),
-    );
+    )
 
-    numOpacity.value = withTiming(0, { duration: 110 });
-    numTranslateY.value = withTiming(
-      exitDir * 18,
-      { duration: 110 },
-      (finished) => {
-        if (!finished) return;
-        runOnJS(onDelta)(delta);
-        numTranslateY.value = exitDir * -18;
-        numTranslateY.value = withSpring(0, { damping: 22, stiffness: 160 });
-        numOpacity.value = withTiming(1, { duration: 130 });
-      },
-    );
-  };
+    numOpacity.value = withTiming(0, { duration: 110 })
+    numTranslateY.value = withTiming(exitDir * 18, { duration: 110 }, (finished) => {
+      if (!finished) return
+      scheduleOnRN(onDelta, delta)
+      numTranslateY.value = exitDir * -18
+      numTranslateY.value = withSpring(0, { damping: 22, stiffness: 160 })
+      numOpacity.value = withTiming(1, { duration: 130 })
+    })
+  }
 
   // Left/right swipe sets an absolute value (left → 0, right → 9), animated the
   // same way as an up/down swipe. exitDir: -1 = up (increase), 1 = down (decrease).
   const animateSet = (newValue: number, exitDir: 1 | -1) => {
-    "worklet";
+    'worklet'
     translateY.value = withSequence(
       withTiming(exitDir * 7, { duration: 100 }),
       withSpring(0, { damping: 18, stiffness: 120, mass: 0.8 }),
-    );
+    )
 
-    numOpacity.value = withTiming(0, { duration: 110 });
-    numTranslateY.value = withTiming(
-      exitDir * 18,
-      { duration: 110 },
-      (finished) => {
-        if (!finished) return;
-        runOnJS(onSet)(newValue);
-        numTranslateY.value = exitDir * -18;
-        numTranslateY.value = withSpring(0, { damping: 22, stiffness: 160 });
-        numOpacity.value = withTiming(1, { duration: 130 });
-      },
-    );
-  };
+    numOpacity.value = withTiming(0, { duration: 110 })
+    numTranslateY.value = withTiming(exitDir * 18, { duration: 110 }, (finished) => {
+      if (!finished) return
+      scheduleOnRN(onSet, newValue)
+      numTranslateY.value = exitDir * -18
+      numTranslateY.value = withSpring(0, { damping: 22, stiffness: 160 })
+      numOpacity.value = withTiming(1, { duration: 130 })
+    })
+  }
 
   const animateTap = () => {
-    "worklet";
+    'worklet'
     numScale.value = withSequence(
       withTiming(1.15, { duration: 90 }),
       withSpring(1, { damping: 18, stiffness: 160 }),
-    );
-    runOnJS(onDelta)(1);
-  };
+    )
+    scheduleOnRN(onDelta, 1)
+  }
 
   const gesture = Gesture.Pan()
     .minDistance(0)
     .onBegin(() => {
-      "worklet";
-      scale.value = withSpring(0.94, { damping: 20, stiffness: 260 });
+      'worklet'
+      scale.value = withSpring(0.94, { damping: 20, stiffness: 260 })
     })
     .onEnd((e) => {
-      "worklet";
+      'worklet'
       // Dominant axis decides the gesture: horizontal sets 0/9, vertical ±1.
       // Skip the number animation when the value wouldn't change (already 0/9).
       if (Math.abs(e.translationX) > Math.abs(e.translationY)) {
         if (e.translationX < -SWIPE_THRESHOLD) {
-          if (value !== 0) animateSet(0, 1);
+          if (value !== 0) animateSet(0, 1)
         } else if (e.translationX > SWIPE_THRESHOLD) {
-          if (value !== 9) animateSet(9, -1);
-        } else animateTap();
+          if (value !== 9) animateSet(9, -1)
+        } else animateTap()
       } else {
-        if (e.translationY < -SWIPE_THRESHOLD) animateSwipe(1);
-        else if (e.translationY > SWIPE_THRESHOLD) animateSwipe(-1);
-        else animateTap();
+        if (e.translationY < -SWIPE_THRESHOLD) animateSwipe(1)
+        else if (e.translationY > SWIPE_THRESHOLD) animateSwipe(-1)
+        else animateTap()
       }
     })
     .onFinalize(() => {
-      "worklet";
-      scale.value = withSpring(1, { damping: 16, stiffness: 140 });
-    });
+      'worklet'
+      scale.value = withSpring(1, { damping: 16, stiffness: 140 })
+    })
 
-  const palette = isDark ? DIAL_COLORS.dark : DIAL_COLORS.light;
+  const palette = isDark ? DIAL_COLORS.dark : DIAL_COLORS.light
   const btnStyle = useAnimatedStyle(() => ({
     transform: [{ scale: scale.value }, { translateY: translateY.value }],
     backgroundColor: interpolateColor(
@@ -481,12 +466,12 @@ function DialButton({
       [0, 1],
       [palette.low, palette.high],
     ),
-  }));
+  }))
 
   const numStyle = useAnimatedStyle(() => ({
     transform: [{ translateY: numTranslateY.value }, { scale: numScale.value }],
     opacity: numOpacity.value,
-  }));
+  }))
 
   return (
     <GestureDetector gesture={gesture}>
@@ -498,9 +483,9 @@ function DialButton({
             {
               flex: 1,
               borderRadius: 999,
-              justifyContent: "center" as const,
-              alignItems: "center" as const,
-              shadowColor: isDark ? "#04040C" : "#1C1928",
+              justifyContent: 'center' as const,
+              alignItems: 'center' as const,
+              shadowColor: isDark ? '#04040C' : '#1C1928',
               shadowOpacity: isDark ? 0.9 : 0.13,
               shadowOffset: { width: 0, height: 6 },
               shadowRadius: 10,
@@ -511,7 +496,13 @@ function DialButton({
           {/* Factor (row×col multiplier) — small, pinned near the top */}
           {showFactor && (
             <View
-              style={{ position: "absolute", top: Math.round(size * 0.1), left: 0, right: 0, alignItems: "center" }}
+              style={{
+                position: 'absolute',
+                top: Math.round(size * 0.1),
+                left: 0,
+                right: 0,
+                alignItems: 'center',
+              }}
               pointerEvents="none"
             >
               <Text
@@ -519,9 +510,9 @@ function DialButton({
                 style={{
                   fontSize: Math.max(10, Math.round(size * 0.14)),
                   fontFamily: mono,
-                  fontWeight: "700",
+                  fontWeight: '700',
                   includeFontPadding: false,
-                  color: isDark ? "#6E6A92" : "#9A96A8",
+                  color: isDark ? '#6E6A92' : '#9A96A8',
                 }}
               >
                 {weight}
@@ -534,9 +525,9 @@ function DialButton({
               {
                 fontSize: 30,
                 fontFamily: mono,
-                fontWeight: "500" as const,
+                fontWeight: '500' as const,
                 includeFontPadding: false,
-                color: isDark ? "#C8C2E8" : "#1C1928",
+                color: isDark ? '#C8C2E8' : '#1C1928',
               },
               numStyle,
             ]}
@@ -546,38 +537,32 @@ function DialButton({
         </Animated.View>
       </View>
     </GestureDetector>
-  );
+  )
 }
 
 // ─── Theme Toggle ────────────────────────────────────────────────────────────
 
-const TOGGLE_W = 96;
-const TOGGLE_H = 40;
-const KNOB = TOGGLE_H - 8;
+const TOGGLE_W = 96
+const TOGGLE_H = 40
+const KNOB = TOGGLE_H - 8
 
-function ThemeToggle({
-  isDark,
-  onToggle,
-}: {
-  isDark: boolean;
-  onToggle: () => void;
-}) {
-  const knobX = useSharedValue(isDark ? TOGGLE_W - KNOB - 4 : 4);
+function ThemeToggle({ isDark, onToggle }: { isDark: boolean; onToggle: () => void }) {
+  const knobX = useSharedValue(isDark ? TOGGLE_W - KNOB - 4 : 4)
 
   useEffect(() => {
     knobX.value = withSpring(isDark ? TOGGLE_W - KNOB - 4 : 4, {
       damping: 18,
       stiffness: 200,
-    });
-  }, [isDark]);
+    })
+  }, [isDark])
 
   const knobStyle = useAnimatedStyle(() => ({
     transform: [{ translateX: knobX.value }],
-  }));
+  }))
 
-  const trackDim = isDark ? "#16172A" : "#E8E4DC";
-  const iconDim = isDark ? "#504E6E" : "#AAA69E";
-  const iconActive = isDark ? "#D8D2F4" : "#1C1928";
+  const trackDim = isDark ? '#16172A' : '#E8E4DC'
+  const iconDim = isDark ? '#504E6E' : '#AAA69E'
+  const iconActive = isDark ? '#D8D2F4' : '#1C1928'
 
   return (
     <Pressable onPress={onToggle}>
@@ -587,51 +572,43 @@ function ThemeToggle({
           height: TOGGLE_H,
           borderRadius: TOGGLE_H / 2,
           backgroundColor: trackDim,
-          flexDirection: "row",
-          alignItems: "center",
-          alignSelf: "center",
+          flexDirection: 'row',
+          alignItems: 'center',
+          alignSelf: 'center',
         }}
       >
         {/* Moon — left */}
         <View
           style={{
-            position: "absolute",
+            position: 'absolute',
             left: 10,
-            justifyContent: "center",
-            alignItems: "center",
+            justifyContent: 'center',
+            alignItems: 'center',
           }}
         >
-          <Ionicons
-            name="moon"
-            size={15}
-            color={isDark ? iconDim : iconActive}
-          />
+          <Ionicons name="moon" size={15} color={isDark ? iconDim : iconActive} />
         </View>
         {/* Sun — right */}
         <View
           style={{
-            position: "absolute",
+            position: 'absolute',
             right: 10,
-            justifyContent: "center",
-            alignItems: "center",
+            justifyContent: 'center',
+            alignItems: 'center',
           }}
         >
-          <Ionicons
-            name="sunny"
-            size={15}
-            color={isDark ? iconActive : iconDim}
-          />
+          <Ionicons name="sunny" size={15} color={isDark ? iconActive : iconDim} />
         </View>
         {/* Knob */}
         <Animated.View
           style={[
             {
-              position: "absolute",
+              position: 'absolute',
               width: KNOB,
               height: KNOB,
               borderRadius: KNOB / 2,
-              backgroundColor: isDark ? "#1C1D30" : "#FDFCFA",
-              shadowColor: "#000",
+              backgroundColor: isDark ? '#1C1D30' : '#FDFCFA',
+              shadowColor: '#000',
               shadowOpacity: 0.2,
               shadowOffset: { width: 0, height: 2 },
               shadowRadius: 4,
@@ -641,7 +618,7 @@ function ThemeToggle({
         />
       </View>
     </Pressable>
-  );
+  )
 }
 
 // ─── Menu / Pause overlay ────────────────────────────────────────────────────
@@ -654,18 +631,20 @@ function Screen({
   isDark,
   overlay = false,
 }: {
-  children: React.ReactNode;
-  isDark: boolean;
-  overlay?: boolean;
+  children: ReactNode
+  isDark: boolean
+  overlay?: boolean
 }) {
+  const bg = isDark ? 'bg-[#0B0C14]' : 'bg-[#F3EFE9]'
+  const overlayClasses = overlay ? `items-center justify-center ${bg}` : ''
   return (
     <View
-      style={overlay ? { position: "absolute", inset: 0 } : { flex: 1 }}
-      className={`py-2 px-4 ${overlay ? `items-center justify-center ${isDark ? "bg-[#0B0C14]" : "bg-[#F3EFE9]"}` : ""}`}
+      style={overlay ? { position: 'absolute', inset: 0 } : { flex: 1 }}
+      className={`px-4 py-2 ${overlayClasses}`}
     >
       {children}
     </View>
-  );
+  )
 }
 
 function MenuOverlay({
@@ -682,36 +661,36 @@ function MenuOverlay({
   onSetDifficulty,
   onOpenAdvanced,
 }: {
-  isDark: boolean;
-  mode: "menu" | "paused" | "gameOver";
-  stats: Stats;
-  difficulty: Difficulty;
-  currentScore: number;
-  currentHits: number;
-  dsegLoaded: boolean;
-  onPlay: () => void;
-  onContinue: () => void;
-  onNewGame: () => void;
-  onSetDifficulty: (difficulty: Difficulty) => void;
-  onOpenAdvanced: () => void;
+  isDark: boolean
+  mode: 'menu' | 'paused' | 'gameOver'
+  stats: Stats
+  difficulty: Difficulty
+  currentScore: number
+  currentHits: number
+  dsegLoaded: boolean
+  onPlay: () => void
+  onContinue: () => void
+  onNewGame: () => void
+  onSetDifficulty: (difficulty: Difficulty) => void
+  onOpenAdvanced: () => void
 }) {
-  const dimText = isDark ? "text-[#504E6E]" : "text-[#AAA69E]";
-  const primaryText = isDark ? "text-[#D8D2F4]" : "text-[#1C1928]";
-  const btnBg = isDark ? "bg-[#1C1D30]" : "bg-[#1C1928]";
-  const cardBg = isDark ? "bg-[#16172A]" : "bg-[#E8E4DC]";
-  const best = stats[difficulty];
+  const dimText = isDark ? 'text-[#504E6E]' : 'text-[#AAA69E]'
+  const primaryText = isDark ? 'text-[#D8D2F4]' : 'text-[#1C1928]'
+  const btnBg = isDark ? 'bg-[#1C1D30]' : 'bg-[#1C1928]'
+  const cardBg = isDark ? 'bg-[#16172A]' : 'bg-[#E8E4DC]'
+  const best = stats[difficulty]
 
-  const isPaused = mode === "paused";
-  const isGameOver = mode === "gameOver";
-  const showConfig = mode === "menu" || isGameOver; // difficulty + best + build
-  const title = isGameOver ? "GAME OVER" : isPaused ? "PAUSED" : "NINE";
+  const isPaused = mode === 'paused'
+  const isGameOver = mode === 'gameOver'
+  const showConfig = mode === 'menu' || isGameOver // difficulty + best + build
+  const title = isGameOver ? 'GAME OVER' : isPaused ? 'PAUSED' : 'NINE'
 
   const shadow = {
-    shadowColor: "#000",
+    shadowColor: '#000',
     shadowOpacity: 0.3,
     shadowOffset: { width: 0, height: 6 },
     shadowRadius: 12,
-  };
+  }
 
   return (
     <Screen overlay isDark={isDark}>
@@ -721,11 +700,11 @@ function MenuOverlay({
           selectable={false}
           className="text-[14px] font-black tracking-[3px]"
           style={{
-            position: "absolute",
+            position: 'absolute',
             top: 15,
             right: 46,
             fontFamily: mono,
-            color: isDark ? "#2A2B44" : "#D4D0C8",
+            color: isDark ? '#2A2B44' : '#D4D0C8',
           }}
         >
           MENU
@@ -745,10 +724,10 @@ function MenuOverlay({
           <Text
             selectable={false}
             style={{
-              fontFamily: dsegLoaded ? "DSEG7" : mono,
+              fontFamily: dsegLoaded ? 'DSEG7' : mono,
               fontSize: 44,
               letterSpacing: 1,
-              color: isDark ? "#2FB35A" : "#147A32",
+              color: isDark ? '#2FB35A' : '#147A32',
             }}
           >
             {currentScore}
@@ -765,7 +744,7 @@ function MenuOverlay({
 
       <Text
         selectable={false}
-        className={`font-black mb-4 ${primaryText} ${mode === "menu" ? "text-[48px] tracking-[10px]" : "text-[30px] tracking-[4px]"}`}
+        className={`font-black mb-4 ${primaryText} ${mode === 'menu' ? 'text-[48px] tracking-[10px]' : 'text-[30px] tracking-[4px]'}`}
         style={{ fontFamily: mono }}
       >
         {title}
@@ -786,22 +765,24 @@ function MenuOverlay({
             style={{ maxWidth: 320 }}
           >
             {DIFFICULTY_ORDER.map((d) => {
-              const selected = d === difficulty;
+              const selected = d === difficulty
               return (
                 <Pressable
                   key={d}
-                  onPress={() => onSetDifficulty(d)}
+                  onPress={() => {
+                    onSetDifficulty(d)
+                  }}
                   className={`px-3.5 py-2 rounded-xl ${selected ? btnBg : cardBg}`}
                 >
                   <Text
                     selectable={false}
-                    className={`text-[11px] font-black tracking-[1.5px] ${selected ? "text-[#D8D2F4]" : dimText}`}
+                    className={`text-[11px] font-black tracking-[1.5px] ${selected ? 'text-[#D8D2F4]' : dimText}`}
                     style={{ fontFamily: mono }}
                   >
                     {DIFFICULTIES[d].label}
                   </Text>
                 </Pressable>
-              );
+              )
             })}
           </View>
         </View>
@@ -898,13 +879,13 @@ function MenuOverlay({
         <Text
           selectable={false}
           className={`text-[9px] font-bold tracking-[1px] ${dimText}`}
-          style={{ position: "absolute", bottom: 24, fontFamily: mono }}
+          style={{ position: 'absolute', bottom: 24, fontFamily: mono }}
         >
           {BUILD_LABEL}
         </Text>
       )}
     </Screen>
-  );
+  )
 }
 
 // ─── Advanced options overlay ────────────────────────────────────────────────
@@ -918,18 +899,18 @@ function AdvancedOptionsOverlay({
   onToggleTheme,
   onClose,
 }: {
-  isDark: boolean;
-  showSum: boolean;
-  showFactor: boolean;
-  onToggleSum: () => void;
-  onToggleFactor: () => void;
-  onToggleTheme: () => void;
-  onClose: () => void;
+  isDark: boolean
+  showSum: boolean
+  showFactor: boolean
+  onToggleSum: () => void
+  onToggleFactor: () => void
+  onToggleTheme: () => void
+  onClose: () => void
 }) {
-  const dimText = isDark ? "text-[#504E6E]" : "text-[#AAA69E]";
-  const primaryText = isDark ? "text-[#D8D2F4]" : "text-[#1C1928]";
-  const cardBg = isDark ? "bg-[#16172A]" : "bg-[#E8E4DC]";
-  const boxOn = isDark ? "bg-[#1C1D30]" : "bg-[#1C1928]";
+  const dimText = isDark ? 'text-[#504E6E]' : 'text-[#AAA69E]'
+  const primaryText = isDark ? 'text-[#D8D2F4]' : 'text-[#1C1928]'
+  const cardBg = isDark ? 'bg-[#16172A]' : 'bg-[#E8E4DC]'
+  const boxOn = isDark ? 'bg-[#1C1D30]' : 'bg-[#1C1928]'
 
   const Option = ({
     checked,
@@ -937,10 +918,10 @@ function AdvancedOptionsOverlay({
     description,
     onToggle,
   }: {
-    checked: boolean;
-    label: string;
-    description: string;
-    onToggle: () => void;
+    checked: boolean
+    label: string
+    description: string
+    onToggle: () => void
   }) => (
     <Pressable
       onPress={onToggle}
@@ -969,16 +950,16 @@ function AdvancedOptionsOverlay({
         </Text>
       </View>
     </Pressable>
-  );
+  )
 
   return (
     <Screen overlay isDark={isDark}>
       <Pressable
         onPress={onClose}
         hitSlop={12}
-        style={{ position: "absolute", top: 16, right: 16 }}
+        style={{ position: 'absolute', top: 16, right: 16 }}
       >
-        <AntDesign name="close" size={26} color={isDark ? "#2A2B44" : "#D4D0C8"} />
+        <AntDesign name="close" size={26} color={isDark ? '#2A2B44' : '#D4D0C8'} />
       </Pressable>
 
       <Text
@@ -1003,10 +984,7 @@ function AdvancedOptionsOverlay({
       />
 
       {/* Theme */}
-      <View
-        className="flex-row items-center justify-between py-3"
-        style={{ width: 300 }}
-      >
+      <View className="flex-row items-center justify-between py-3" style={{ width: 300 }}>
         <Text
           selectable={false}
           className={`text-[13px] font-black tracking-[1px] ${primaryText}`}
@@ -1031,7 +1009,7 @@ function AdvancedOptionsOverlay({
         </Text>
       </Pressable>
     </Screen>
-  );
+  )
 }
 
 // ─── Floating hit points ─────────────────────────────────────────────────────
@@ -1042,57 +1020,74 @@ function FloatingPoints({
   bonus,
   onDone,
 }: {
-  points: number;
-  progress: number;
-  bonus: boolean;
-  onDone: () => void;
+  points: number
+  progress: number
+  bonus: boolean
+  onDone: () => void
 }) {
-  const ty = useSharedValue(0);
-  const op = useSharedValue(0);
-  const sc = useSharedValue(bonus ? 0.5 : 0.9);
+  const ty = useSharedValue(0)
+  const op = useSharedValue(0)
+  const sc = useSharedValue(bonus ? 0.5 : 0.9)
 
   useEffect(() => {
     op.value = withSequence(
       withTiming(1, { duration: 90 }),
       withTiming(1, { duration: 330 }),
       withTiming(0, { duration: 200 }),
-    );
+    )
     ty.value = withSequence(
       withTiming(0, { duration: 160 }), // hold below the block — readable
       withTiming(-20, { duration: 480, easing: Easing.out(Easing.quad) }), // rise into the block
-    );
+    )
     sc.value = withSequence(
       withSpring(bonus ? 1.3 : 1, { damping: 9, stiffness: 220 }),
       withTiming(bonus ? 1.18 : 1, { duration: 220 }),
-    );
-    const t = setTimeout(onDone, 660);
-    return () => clearTimeout(t);
-  }, []);
+    )
+    const t = setTimeout(onDone, 660)
+    return () => {
+      clearTimeout(t)
+    }
+  }, [])
 
   const style = useAnimatedStyle(() => ({
     transform: [{ translateY: ty.value }, { scale: sc.value }],
     opacity: op.value,
-  }));
-  const color = interpolateColor(progress, [0, 1], [APP_RED, APP_BLUE]);
+  }))
+  const color = interpolateColor(progress, [0, 1], [APP_RED, APP_BLUE])
 
   return (
     <Animated.View
       pointerEvents="none"
       style={[
-        { position: "absolute", top: 24, left: 0, right: 0, alignItems: "center", flexDirection: "row", justifyContent: "center", gap: 4 },
+        {
+          position: 'absolute',
+          top: 24,
+          left: 0,
+          right: 0,
+          alignItems: 'center',
+          flexDirection: 'row',
+          justifyContent: 'center',
+          gap: 4,
+        },
         style,
       ]}
     >
-      <Text selectable={false} style={{ fontFamily: mono, fontWeight: "900", fontSize: bonus ? 20 : 15, color }}>
+      <Text
+        selectable={false}
+        style={{ fontFamily: mono, fontWeight: '900', fontSize: bonus ? 20 : 15, color }}
+      >
         +{points}
       </Text>
       {bonus && (
-        <Text selectable={false} style={{ fontFamily: mono, fontWeight: "900", fontSize: 11, color: "#E7B44C" }}>
+        <Text
+          selectable={false}
+          style={{ fontFamily: mono, fontWeight: '900', fontSize: 11, color: '#E7B44C' }}
+        >
           ×2
         </Text>
       )}
     </Animated.View>
-  );
+  )
 }
 
 // ─── Menu button ─────────────────────────────────────────────────────────────
@@ -1111,31 +1106,39 @@ function MenuDot({
   d,
   color,
 }: {
-  collapse: SharedValue<number>;
-  present: SharedValue<number>; // 1 = at its position, 0 = merged + hidden at center
-  baseX: number;
-  baseY: number;
-  dx: number;
-  dy: number;
-  d: number;
-  color: string;
+  collapse: SharedValue<number>
+  present: SharedValue<number> // 1 = at its position, 0 = merged + hidden at center
+  baseX: number
+  baseY: number
+  dx: number
+  dy: number
+  d: number
+  color: string
 }) {
   const style = useAnimatedStyle(() => {
     // factor: 0 = at grid position, 1 = merged at the center dot.
-    const factor = 1 - present.value * (1 - collapse.value);
+    const factor = 1 - present.value * (1 - collapse.value)
     return {
       transform: [{ translateX: dx * factor }, { translateY: dy * factor }],
       opacity: present.value,
-    };
-  });
+    }
+  })
   return (
     <Animated.View
       style={[
-        { position: "absolute", left: baseX, top: baseY, width: d, height: d, borderRadius: d / 2, backgroundColor: color },
+        {
+          position: 'absolute',
+          left: baseX,
+          top: baseY,
+          width: d,
+          height: d,
+          borderRadius: d / 2,
+          backgroundColor: color,
+        },
         style,
       ]}
     />
-  );
+  )
 }
 
 function MenuButton({
@@ -1146,43 +1149,43 @@ function MenuButton({
   size = 22,
   style,
 }: {
-  visible: boolean;
-  paused: boolean;
-  onToggle: () => void;
-  color: string;
-  size?: number;
-  style?: object;
+  visible: boolean
+  paused: boolean
+  onToggle: () => void
+  color: string
+  size?: number
+  style?: object
 }) {
-  const D = 4;
-  const coords = [0, (size - D) / 2, size - D];
-  const center = (size - D) / 2;
-  const collapse = useSharedValue(0);
+  const D = 4
+  const coords = [0, (size - D) / 2, size - D]
+  const center = (size - D) / 2
+  const collapse = useSharedValue(0)
   // Edge dots are shown in the grid, merged+hidden at the center in the cross.
-  const edge = useSharedValue(paused ? 0 : 1);
-  const always = useSharedValue(1);
+  const edge = useSharedValue(paused ? 0 : 1)
+  const always = useSharedValue(1)
 
   useEffect(() => {
     edge.value = withTiming(paused ? 0 : 1, {
       duration: 300,
       easing: Easing.out(Easing.back(2)),
-    });
-  }, [paused]);
+    })
+  }, [paused])
 
   const trigger = () => {
     collapse.value = withSequence(
       withTiming(1, { duration: 160, easing: Easing.in(Easing.quad) }),
       withTiming(0, { duration: 340, easing: Easing.out(Easing.back(2)) }),
-    );
-    setTimeout(onToggle, 160); // toggle at the peak; edges morph via the paused effect
-  };
+    )
+    setTimeout(onToggle, 160) // toggle at the peak; edges morph via the paused effect
+  }
 
-  if (!visible) return null;
+  if (!visible) return null
   return (
     <Pressable onPress={trigger} hitSlop={14} style={style}>
       <View style={{ width: size, height: size }}>
         {coords.map((y, r) =>
           coords.map((x, c) => {
-            const isEdge = (r === 1) !== (c === 1); // exactly one axis centered
+            const isEdge = (r === 1) !== (c === 1) // exactly one axis centered
             return (
               <MenuDot
                 key={`${r}-${c}`}
@@ -1195,231 +1198,233 @@ function MenuButton({
                 d={D}
                 color={color}
               />
-            );
+            )
           }),
         )}
       </View>
     </Pressable>
-  );
+  )
 }
 
 // ─── Screen ─────────────────────────────────────────────────────────────────
 
 export default function GameScreen() {
-  const { colorScheme, toggleTheme } = useTheme();
-  const isDark = colorScheme === "dark";
-  const [state, send] = useMachine(gameMachine);
+  const { colorScheme, toggleTheme } = useTheme()
+  const isDark = colorScheme === 'dark'
+  const [state, send] = useMachine(gameMachine)
 
   // Seven-segment font for the digital score readout.
-  const [dsegLoaded] = useFonts({
-    DSEG7: require("../../assets/fonts/DSEG7Classic-Bold.ttf"),
-  });
+  const [dsegLoaded] = useFonts({ DSEG7: DSEG7Font })
 
   // Load persisted per-difficulty stats once on mount, migrating the legacy
   // hit-count key (nine.bestScores.v1) into the new {score, hits} shape.
-  const statsHydrated = useRef(false);
+  const statsHydrated = useRef(false)
   useEffect(() => {
-    (async () => {
+    void (async () => {
       try {
-        const raw = await AsyncStorage.getItem(STATS_KEY);
+        const raw = await AsyncStorage.getItem(STATS_KEY)
         if (raw) {
-          send({ type: "HYDRATE_STATS", stats: JSON.parse(raw) as Partial<Stats> });
-          return;
+          send({ type: 'HYDRATE_STATS', stats: JSON.parse(raw) as Partial<Stats> })
+          return
         }
-        const legacy = await AsyncStorage.getItem(LEGACY_BEST_SCORES_KEY);
+        const legacy = await AsyncStorage.getItem(LEGACY_BEST_SCORES_KEY)
         if (legacy) {
-          const old = JSON.parse(legacy) as Record<string, number>;
-          const seeded: Partial<Stats> = {};
+          const old = JSON.parse(legacy) as Record<string, number | undefined>
+          const seeded: Partial<Stats> = {}
           for (const d of DIFFICULTY_ORDER) {
-            if (typeof old[d] === "number") seeded[d] = { score: 0, hits: old[d] };
+            const hits = old[d]
+            if (typeof hits === 'number') seeded[d] = { score: 0, hits }
           }
-          send({ type: "HYDRATE_STATS", stats: seeded });
+          send({ type: 'HYDRATE_STATS', stats: seeded })
         }
       } catch {
         // ignore — start fresh
       } finally {
-        statsHydrated.current = true;
+        statsHydrated.current = true
       }
-    })();
-  }, []);
+    })()
+  }, [])
 
   // Persist stats whenever they change (after hydration, so defaults don't clobber).
-  const stats = state.context.stats;
+  const stats = state.context.stats
   useEffect(() => {
-    if (!statsHydrated.current) return;
-    AsyncStorage.setItem(STATS_KEY, JSON.stringify(stats)).catch(() => {});
-  }, [stats]);
+    if (!statsHydrated.current) return
+    AsyncStorage.setItem(STATS_KEY, JSON.stringify(stats)).catch(() => {})
+  }, [stats])
 
   // Restore the last chosen difficulty on mount (machine starts in `menu`,
   // where SET_DIFFICULTY is handled).
-  const difficultyHydrated = useRef(false);
+  const difficultyHydrated = useRef(false)
   useEffect(() => {
     AsyncStorage.getItem(DIFFICULTY_KEY)
       .then((raw) => {
         if (raw && (DIFFICULTY_ORDER as string[]).includes(raw)) {
-          send({ type: "SET_DIFFICULTY", difficulty: raw as Difficulty });
+          send({ type: 'SET_DIFFICULTY', difficulty: raw as Difficulty })
         }
       })
       .catch(() => {})
       .finally(() => {
-        difficultyHydrated.current = true;
-      });
-  }, []);
+        difficultyHydrated.current = true
+      })
+  }, [])
 
   // Persist the difficulty when it changes (but not the default before restore).
-  const difficulty = state.context.difficulty;
+  const difficulty = state.context.difficulty
   useEffect(() => {
-    if (!difficultyHydrated.current) return;
-    AsyncStorage.setItem(DIFFICULTY_KEY, difficulty).catch(() => {});
-  }, [difficulty]);
+    if (!difficultyHydrated.current) return
+    AsyncStorage.setItem(DIFFICULTY_KEY, difficulty).catch(() => {})
+  }, [difficulty])
 
   // Advanced display options (persisted).
-  const [showSum, setShowSum] = useState(false);
-  const [showFactor, setShowFactor] = useState(false);
-  const [advancedOpen, setAdvancedOpen] = useState(false);
+  const [showSum, setShowSum] = useState(false)
+  const [showFactor, setShowFactor] = useState(false)
+  const [advancedOpen, setAdvancedOpen] = useState(false)
 
-  const optionsHydrated = useRef(false);
+  const optionsHydrated = useRef(false)
   useEffect(() => {
     AsyncStorage.getItem(OPTIONS_KEY)
       .then((raw) => {
-        if (!raw) return;
-        const o = JSON.parse(raw);
-        if (typeof o?.showSum === "boolean") setShowSum(o.showSum);
-        if (typeof o?.showFactor === "boolean") setShowFactor(o.showFactor);
+        if (!raw) return
+        const o = JSON.parse(raw) as {
+          showSum?: boolean
+          showFactor?: boolean
+        }
+        if (typeof o.showSum === 'boolean') setShowSum(o.showSum)
+        if (typeof o.showFactor === 'boolean') setShowFactor(o.showFactor)
       })
       .catch(() => {})
       .finally(() => {
-        optionsHydrated.current = true;
-      });
-  }, []);
+        optionsHydrated.current = true
+      })
+  }, [])
 
   useEffect(() => {
-    if (!optionsHydrated.current) return;
-    AsyncStorage.setItem(
-      OPTIONS_KEY,
-      JSON.stringify({ showSum, showFactor }),
-    ).catch(() => {});
-  }, [showSum, showFactor]);
+    if (!optionsHydrated.current) return
+    AsyncStorage.setItem(OPTIONS_KEY, JSON.stringify({ showSum, showFactor })).catch(
+      () => {},
+    )
+  }, [showSum, showFactor])
 
-  const score = computeSum(state.context.grid);
-  const prevScoreRef = useRef(score);
-  const direction: 1 | -1 = score >= prevScoreRef.current ? 1 : -1;
+  const score = computeSum(state.context.grid)
+  const prevScoreRef = useRef(score)
+  const direction: 1 | -1 = score >= prevScoreRef.current ? 1 : -1
   useEffect(() => {
-    prevScoreRef.current = score;
-  }, [score]);
+    prevScoreRef.current = score
+  }, [score])
 
-  const isPlaying = state.matches("playing");
+  const isPlaying = state.matches('playing')
 
   // Spawn targets every 5s (first immediately) while playing; clearing the board
   // spawns the next one right away and restarts the 5s cadence.
-  const spawnTimer = useRef<ReturnType<typeof setInterval> | null>(null);
-  const spawnTarget = React.useCallback(() => {
+  const spawnTimer = useRef<ReturnType<typeof setInterval> | null>(null)
+  const spawnTarget = useCallback(() => {
     send({
-      type: "ADD_TARGET",
+      type: 'ADD_TARGET',
       value: Math.floor(Math.random() * (MAX_TARGET + 1)),
       at: Date.now(),
-    });
-  }, [send]);
-  const restartCadence = React.useCallback(() => {
-    if (spawnTimer.current) clearInterval(spawnTimer.current);
-    spawnTimer.current = setInterval(spawnTarget, 5000);
-  }, [spawnTarget]);
+    })
+  }, [send])
+  const restartCadence = useCallback(() => {
+    if (spawnTimer.current) clearInterval(spawnTimer.current)
+    spawnTimer.current = setInterval(spawnTarget, 5000)
+  }, [spawnTarget])
 
   useEffect(() => {
     if (!isPlaying) {
-      if (spawnTimer.current) clearInterval(spawnTimer.current);
-      return;
+      if (spawnTimer.current) clearInterval(spawnTimer.current)
+      return
     }
-    spawnTarget();
-    restartCadence();
+    spawnTarget()
+    restartCadence()
     return () => {
-      if (spawnTimer.current) clearInterval(spawnTimer.current);
-    };
-  }, [isPlaying, spawnTarget, restartCadence]);
+      if (spawnTimer.current) clearInterval(spawnTimer.current)
+    }
+  }, [isPlaying, spawnTarget, restartCadence])
 
   // Immediate respawn when a hit clears the board mid-game. Reset the tracker
   // whenever we're not playing so a fresh game's targets→0 reset isn't mistaken
   // for a cleared board (which would spawn an extra target on start).
-  const prevTargetCount = useRef(0);
+  const prevTargetCount = useRef(0)
   useEffect(() => {
     if (!isPlaying) {
-      prevTargetCount.current = 0;
-      return;
+      prevTargetCount.current = 0
+      return
     }
-    const count = state.context.targets.length;
+    const count = state.context.targets.length
     if (prevTargetCount.current > 0 && count === 0) {
-      spawnTarget();
-      restartCadence();
+      spawnTarget()
+      restartCadence()
     }
-    prevTargetCount.current = count;
-  }, [state.context.targets.length, isPlaying, spawnTarget, restartCadence]);
+    prevTargetCount.current = count
+  }, [state.context.targets.length, isPlaying, spawnTarget, restartCadence])
 
   // Score counts up to the machine's Score as the floating "+points" merge in.
-  const composite = state.context.score;
-  const [displayScore, setDisplayScore] = useState(0);
-  const displayScoreRef = useRef(0);
+  const composite = state.context.score
+  const [displayScore, setDisplayScore] = useState(0)
+  const displayScoreRef = useRef(0)
   useEffect(() => {
-    const from = displayScoreRef.current;
-    const to = composite;
-    if (from === to) return;
+    const from = displayScoreRef.current
+    const to = composite
+    if (from === to) return
     if (to < from) {
-      displayScoreRef.current = to;
-      setDisplayScore(to);
-      return;
+      displayScoreRef.current = to
+      setDisplayScore(to)
+      return
     }
-    const start = Date.now();
-    const dur = 400;
-    let raf: number;
+    const start = Date.now()
+    const dur = 400
+    let raf: number
     const tick = () => {
-      const t = Math.min(1, (Date.now() - start) / dur);
-      const v = Math.round(from + (to - from) * t);
-      displayScoreRef.current = v;
-      setDisplayScore(v);
-      if (t < 1) raf = requestAnimationFrame(tick);
-    };
-    raf = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(raf);
-  }, [composite]);
+      const t = Math.min(1, (Date.now() - start) / dur)
+      const v = Math.round(from + (to - from) * t)
+      displayScoreRef.current = v
+      setDisplayScore(v)
+      if (t < 1) raf = requestAnimationFrame(tick)
+    }
+    raf = requestAnimationFrame(tick)
+    return () => {
+      cancelAnimationFrame(raf)
+    }
+  }, [composite])
 
   // Floating "+points" feedback, driven by the machine's hit batch.
-  type Float = { id: number } & HitInfo;
-  const [floats, setFloats] = useState<Float[]>([]);
-  const floatId = useRef(0);
-  const lastHitSeq = useRef(0);
+  type Float = { id: number } & HitInfo
+  const [floats, setFloats] = useState<Float[]>([])
+  const floatId = useRef(0)
+  const lastHitSeq = useRef(0)
   useEffect(() => {
-    const batch = state.context.hitBatch;
-    if (batch.seq === lastHitSeq.current || batch.hits.length === 0) return;
-    lastHitSeq.current = batch.seq;
+    const batch = state.context.hitBatch
+    if (batch.seq === lastHitSeq.current || batch.hits.length === 0) return
+    lastHitSeq.current = batch.seq
     setFloats((prev) => [
       ...prev,
       ...batch.hits.map((h) => ({ id: ++floatId.current, ...h })),
-    ]);
-    if (batch.hits.some((h) => h.bonus) && Platform.OS !== "web") {
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(
-        () => {},
-      );
+    ])
+    if (batch.hits.some((h) => h.bonus) && Platform.OS !== 'web') {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {})
     }
-  }, [state.context.hitBatch]);
-  const removeFloat = (id: number) =>
-    setFloats((prev) => prev.filter((f) => f.id !== id));
+  }, [state.context.hitBatch])
+  const removeFloat = (id: number) => {
+    setFloats((prev) => prev.filter((f) => f.id !== id))
+  }
 
   // Sync displayed targets with machine (to allow exit animations)
-  const [displayedTargets, setDisplayedTargets] = useState<DisplayTarget[]>([]);
-  const containerSize = useRef({ width: 0, height: 0 });
+  const [displayedTargets, setDisplayedTargets] = useState<DisplayTarget[]>([])
+  const containerSize = useRef({ width: 0, height: 0 })
 
   // Dial pad is a square sized to fit its container (min of width/height),
   // so it never overflows over the score above it.
-  const [dialSize, setDialSize] = useState(0);
+  const [dialSize, setDialSize] = useState(0)
 
   useEffect(() => {
-    const machineIds = new Set(state.context.targets.map((t) => t.id));
+    const machineIds = new Set(state.context.targets.map((t) => t.id))
     setDisplayedTargets((prev) => {
       const updated = prev.map((t) => ({
         ...t,
         exiting: t.exiting || !machineIds.has(t.id),
-      }));
-      const displayedIds = new Set(prev.map((t) => t.id));
-      const placed = [...updated];
+      }))
+      const displayedIds = new Set(prev.map((t) => t.id))
+      const placed = [...updated]
       const incoming = state.context.targets
         .filter((t) => !displayedIds.has(t.id))
         .map((t) => {
@@ -1427,32 +1432,33 @@ export default function GameScreen() {
             placed,
             containerSize.current.width,
             containerSize.current.height,
-          );
-          const entry = { ...t, exiting: false, position };
-          placed.push(entry);
-          return entry;
-        });
-      return [...updated, ...incoming];
-    });
-  }, [state.context.targets]);
+          )
+          const entry = { ...t, exiting: false, position }
+          placed.push(entry)
+          return entry
+        })
+      return [...updated, ...incoming]
+    })
+  }, [state.context.targets])
 
-  const removeDisplayed = (id: number) =>
-    setDisplayedTargets((prev) => prev.filter((t) => t.id !== id));
+  const removeDisplayed = (id: number) => {
+    setDisplayedTargets((prev) => prev.filter((t) => t.id !== id))
+  }
 
   // Clear displayed targets when starting a fresh game
-  const prevStateRef = useRef(state.value);
+  const prevStateRef = useRef(state.value)
   useEffect(() => {
-    const prev = prevStateRef.current;
-    const wasMenuOrGameOver = prev === "menu" || prev === "gameOver";
-    if (wasMenuOrGameOver && state.matches("playing")) {
-      setDisplayedTargets([]);
+    const prev = prevStateRef.current
+    const wasMenuOrGameOver = prev === 'menu' || prev === 'gameOver'
+    if (wasMenuOrGameOver && state.matches('playing')) {
+      setDisplayedTargets([])
     }
-    prevStateRef.current = state.value;
-  }, [state.value]);
+    prevStateRef.current = state.value
+  }, [state.value])
 
-  const isMenu = state.matches("menu");
-  const isPaused = state.matches("paused");
-  const isGameOver = state.matches("gameOver");
+  const isMenu = state.matches('menu')
+  const isPaused = state.matches('paused')
+  const isGameOver = state.matches('gameOver')
 
   return (
     <>
@@ -1468,23 +1474,21 @@ export default function GameScreen() {
             <Text
               selectable={false}
               className="text-[30px] font-black tracking-[8px]"
-              style={{ fontFamily: mono, color: isDark ? "#2A2B44" : "#D4D0C8" }}
+              style={{ fontFamily: mono, color: isDark ? '#2A2B44' : '#D4D0C8' }}
             >
               NINE
             </Text>
             <Text
               selectable={false}
               className="text-[14px] font-black tracking-[3px]"
-              style={{ fontFamily: mono, color: isDark ? "#2A2B44" : "#D4D0C8" }}
+              style={{ fontFamily: mono, color: isDark ? '#2A2B44' : '#D4D0C8' }}
             >
               MENU
             </Text>
           </View>
 
           {/* Row 2 — hearts + score, right-aligned under the menu */}
-          <View
-            className="flex-row items-center justify-between gap-2.5 mt-1.5"
-          >
+          <View className="flex-row items-center justify-between gap-2.5 mt-1.5">
             <View className="flex-row gap-1">
               {[0, 1, 2].map((i) => (
                 <AntDesign
@@ -1492,11 +1496,7 @@ export default function GameScreen() {
                   name="heart"
                   size={22}
                   color={
-                    i < state.context.lives
-                      ? "#E5534B"
-                      : isDark
-                        ? "#1C1D30"
-                        : "#FDFCFA"
+                    i < state.context.lives ? '#E5534B' : isDark ? '#1C1D30' : '#FDFCFA'
                   }
                 />
               ))}
@@ -1505,10 +1505,10 @@ export default function GameScreen() {
               <Text
                 selectable={false}
                 style={{
-                  fontFamily: dsegLoaded ? "DSEG7" : mono,
+                  fontFamily: dsegLoaded ? 'DSEG7' : mono,
                   fontSize: 17,
                   letterSpacing: 1,
-                  color: isDark ? "#2FB35A" : "#147A32",
+                  color: isDark ? '#2FB35A' : '#147A32',
                 }}
               >
                 {displayScore}
@@ -1519,7 +1519,9 @@ export default function GameScreen() {
                   points={f.points}
                   progress={f.progress}
                   bonus={f.bonus}
-                  onDone={() => removeFloat(f.id)}
+                  onDone={() => {
+                    removeFloat(f.id)
+                  }}
                 />
               ))}
             </View>
@@ -1533,7 +1535,7 @@ export default function GameScreen() {
             containerSize.current = {
               width: e.nativeEvent.layout.width,
               height: e.nativeEvent.layout.height,
-            };
+            }
           }}
         >
           {displayedTargets.map((target) => (
@@ -1542,60 +1544,64 @@ export default function GameScreen() {
               target={target}
               isDark={isDark}
               duration={DIFFICULTIES[state.context.difficulty].duration}
-              onExpire={() => send({ type: "TARGET_EXPIRED", id: target.id })}
-              onExitComplete={() => removeDisplayed(target.id)}
+              onExpire={() => {
+                send({ type: 'TARGET_EXPIRED', id: target.id })
+              }}
+              onExitComplete={() => {
+                removeDisplayed(target.id)
+              }}
             />
           ))}
         </View>
 
         {/* ── Score above dial ── */}
         <View className="items-center py-1.5">
-        <View className="flex-row">
-          {String(score)
-            .split("")
-            .map((digit, i, arr) => (
-              <ScoreDigit
-                key={arr.length - 1 - i}
-                digit={digit}
-                direction={direction}
+          <View className="flex-row">
+            {String(score)
+              .split('')
+              .map((digit, i, arr) => (
+                <ScoreDigit
+                  key={arr.length - 1 - i}
+                  digit={digit}
+                  direction={direction}
+                  isDark={isDark}
+                  progress={valueProgress(score)}
+                />
+              ))}
+          </View>
+        </View>
+
+        {/* ── Dial pad — bottom two thirds ── */}
+        <View
+          className="flex-1 items-center justify-center"
+          onLayout={(e) => {
+            const { width, height } = e.nativeEvent.layout
+            setDialSize(Math.min(width, height))
+          }}
+        >
+          <View
+            style={{ width: dialSize, height: dialSize }}
+            className="flex-row flex-wrap"
+          >
+            {state.context.grid.flat().map((value, index) => (
+              <DialButton
+                key={index}
+                value={value}
                 isDark={isDark}
-                progress={valueProgress(score)}
+                size={Math.floor(dialSize / 3)}
+                weight={(Math.floor(index / 3) + 1) * ((index % 3) + 1)}
+                showSum={showSum}
+                showFactor={showFactor}
+                onDelta={(delta) => {
+                  send({ type: 'PRESS', index, delta, now: Date.now() })
+                }}
+                onSet={(cellValue) => {
+                  send({ type: 'SET_CELL', index, value: cellValue, now: Date.now() })
+                }}
               />
             ))}
+          </View>
         </View>
-      </View>
-
-      {/* ── Dial pad — bottom two thirds ── */}
-      <View
-        className="flex-1 items-center justify-center"
-        onLayout={(e) => {
-          const { width, height } = e.nativeEvent.layout;
-          setDialSize(Math.min(width, height));
-        }}
-      >
-        <View
-          style={{ width: dialSize, height: dialSize }}
-          className="flex-row flex-wrap"
-        >
-          {state.context.grid.flat().map((value, index) => (
-            <DialButton
-              key={index}
-              value={value}
-              isDark={isDark}
-              size={Math.floor(dialSize / 3)}
-              weight={(Math.floor(index / 3) + 1) * ((index % 3) + 1)}
-              showSum={showSum}
-              showFactor={showFactor}
-              onDelta={(delta) =>
-                send({ type: "PRESS", index, delta, now: Date.now() })
-              }
-              onSet={(cellValue) =>
-                send({ type: "SET_CELL", index, value: cellValue, now: Date.now() })
-              }
-            />
-          ))}
-        </View>
-      </View>
       </Screen>
 
       {/* ── Menu / Pause / Game-over overlay (shared layout) ── */}
@@ -1605,27 +1611,41 @@ export default function GameScreen() {
             isDark={isDark}
             showSum={showSum}
             showFactor={showFactor}
-            onToggleSum={() => setShowSum((v) => !v)}
-            onToggleFactor={() => setShowFactor((v) => !v)}
+            onToggleSum={() => {
+              setShowSum((v) => !v)
+            }}
+            onToggleFactor={() => {
+              setShowFactor((v) => !v)
+            }}
             onToggleTheme={toggleTheme}
-            onClose={() => setAdvancedOpen(false)}
+            onClose={() => {
+              setAdvancedOpen(false)
+            }}
           />
         ) : (
           <MenuOverlay
             isDark={isDark}
-            mode={isGameOver ? "gameOver" : isPaused ? "paused" : "menu"}
+            mode={isGameOver ? 'gameOver' : isPaused ? 'paused' : 'menu'}
             stats={state.context.stats}
             difficulty={state.context.difficulty}
             dsegLoaded={dsegLoaded}
             currentScore={state.context.score}
             currentHits={state.context.hits}
-            onPlay={() => send({ type: isGameOver ? "RESTART" : "START" })}
-            onContinue={() => send({ type: "RESUME" })}
-            onNewGame={() => send({ type: "MENU" })}
-            onSetDifficulty={(difficulty) =>
-              send({ type: "SET_DIFFICULTY", difficulty })
-            }
-            onOpenAdvanced={() => setAdvancedOpen(true)}
+            onPlay={() => {
+              send({ type: isGameOver ? 'RESTART' : 'START' })
+            }}
+            onContinue={() => {
+              send({ type: 'RESUME' })
+            }}
+            onNewGame={() => {
+              send({ type: 'MENU' })
+            }}
+            onSetDifficulty={(difficulty) => {
+              send({ type: 'SET_DIFFICULTY', difficulty })
+            }}
+            onOpenAdvanced={() => {
+              setAdvancedOpen(true)
+            }}
           />
         ))}
 
@@ -1633,10 +1653,12 @@ export default function GameScreen() {
       <MenuButton
         visible={isPlaying || isPaused}
         paused={isPaused}
-        onToggle={() => send({ type: isPaused ? "RESUME" : "PAUSE" })}
-        color={isDark ? "#2A2B44" : "#D4D0C8"}
-        style={{ position: "absolute", top: 12, right: 18, zIndex: 20 }}
+        onToggle={() => {
+          send({ type: isPaused ? 'RESUME' : 'PAUSE' })
+        }}
+        color={isDark ? '#2A2B44' : '#D4D0C8'}
+        style={{ position: 'absolute', top: 12, right: 18, zIndex: 20 }}
       />
     </>
-  );
+  )
 }

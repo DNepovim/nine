@@ -11,4 +11,4 @@ module.exports = {
   navigateFallback: '/index.html',
   // Avoid precaching the service worker file itself.
   globIgnores: ['sw.js'],
-};
+}
