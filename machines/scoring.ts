@@ -46,28 +46,29 @@ export function computePar(grid: Grid, target: number): number {
 }
 
 // Gentler difference-based accuracy: 1 at optimal, decaying with wasted steps.
-function accuracyFactor(par: number, userSteps: number): number {
+export function accuracyFactor(par: number, userSteps: number): number {
   const effectivePar = Math.max(par, 1)
   const excess = Math.max(0, userSteps - effectivePar)
   return Math.max(0, 1 - excess / (effectivePar + 2))
 }
 
 // 1 = hit instantly, 0 = hit at the buzzer.
-function speedFactor(timeLeft: number, duration: number): number {
+export function speedFactor(timeLeft: number, duration: number): number {
   if (duration <= 0) return 0
   return Math.min(1, Math.max(0, timeLeft / duration))
 }
 
-// Points for a single hit, blending accuracy (2/3) and speed (1/3).
+// Points for a single hit, blending accuracy and speed per the mode's weights.
 export function computeHitPoints(opts: {
   par: number
   userSteps: number
   timeLeft: number
   duration: number
+  weights: { acc: number; spd: number }
   base?: number
 }): number {
-  const { par, userSteps, timeLeft, duration, base = SCORE_BASE } = opts
+  const { par, userSteps, timeLeft, duration, weights, base = SCORE_BASE } = opts
   const acc = accuracyFactor(par, userSteps)
   const spd = speedFactor(timeLeft, duration)
-  return Math.round(base * ((2 / 3) * acc + (1 / 3) * spd))
+  return Math.round(base * (weights.acc * acc + weights.spd * spd))
 }

@@ -1,6 +1,28 @@
 import { assign, createMachine } from 'xstate'
 
-import { computeHitPoints, computePar } from './scoring'
+import {
+  DIFFICULTIES,
+  effectiveTimeout,
+  MODES,
+  streakMultiplier,
+  type Difficulty,
+  type Mode,
+} from './modes'
+import { accuracyFactor, computeHitPoints, computePar, speedFactor } from './scoring'
+
+export type { Difficulty, Mode } from './modes'
+export {
+  ARCADE_TEASER,
+  DIFFICULTIES,
+  DIFFICULTY_COLORS,
+  DIFFICULTY_ORDER,
+  MODE_COLORS,
+  MODE_DESCRIPTIONS,
+  MODE_ORDER,
+  MODES,
+  effectiveTimeout,
+  streakMultiplier,
+} from './modes'
 
 export type Grid = [
   [number, number, number],
@@ -18,40 +40,29 @@ export type Target = {
   userSteps: number // button changes since the reference moment
 }
 
-export type Difficulty = 'trainee' | 'easy' | 'medium' | 'hard' | 'extreme'
-
-export const DIFFICULTY_ORDER: Difficulty[] = [
-  'trainee',
-  'easy',
-  'medium',
-  'hard',
-  'extreme',
-]
-
-export const DIFFICULTIES: Record<
-  Difficulty,
-  { label: string; duration: number; loseLives: boolean }
-> = {
-  trainee: { label: 'TRAINEE', duration: 20000, loseLives: false },
-  easy: { label: 'EASY', duration: 20000, loseLives: true },
-  medium: { label: 'MEDIUM', duration: 15000, loseLives: true },
-  hard: { label: 'HARD', duration: 10000, loseLives: true },
-  extreme: { label: 'EXTREME', duration: 7000, loseLives: true },
-}
-
 type DifficultyStats = { score: number; hits: number }
-export type Stats = Record<Difficulty, DifficultyStats>
+export type Stats = Record<Mode, Record<Difficulty, DifficultyStats>>
 
-const emptyStats = (): Stats => ({
-  trainee: { score: 0, hits: 0 },
+const emptyDifficultyStats = (): Record<Difficulty, DifficultyStats> => ({
   easy: { score: 0, hits: 0 },
   medium: { score: 0, hits: 0 },
   hard: { score: 0, hits: 0 },
   extreme: { score: 0, hits: 0 },
 })
 
+const emptyStats = (): Stats => ({
+  trainee: emptyDifficultyStats(),
+  accuracy: emptyDifficultyStats(),
+  speed: emptyDifficultyStats(),
+})
+
 // One hit's worth of feedback for the UI's floating "+points" animation.
-export type HitInfo = { points: number; progress: number; bonus: boolean }
+export type HitInfo = {
+  points: number
+  progress: number
+  bonus: boolean
+  multiplier: number
+}
 export type HitBatch = { seq: number; hits: HitInfo[] }
 
 export function computeSum(grid: Grid): number {
@@ -71,9 +82,13 @@ type Context = {
   grid: Grid
   hits: number
   score: number
-  stats: Stats // best { score, hits } per difficulty (best by score)
+  stats: Stats // best { score, hits } per mode × difficulty (best by score)
+  mode: Mode
   difficulty: Difficulty
   lives: number
+  streak: number
+  accSum: number
+  spdSum: number
   targets: Target[]
   nextTargetId: number
   hitBatch: HitBatch
@@ -85,6 +100,7 @@ type Event =
   | { type: 'RESUME' }
   | { type: 'RESTART' }
   | { type: 'MENU' }
+  | { type: 'SET_MODE'; mode: Mode }
   | { type: 'SET_DIFFICULTY'; difficulty: Difficulty }
   | { type: 'HYDRATE_STATS'; stats: Partial<Stats> }
   | { type: 'PRESS'; index: number; delta: 1 | -1; now: number }
@@ -95,13 +111,16 @@ type Event =
 // The machine's `send` function, for hooks that dispatch events.
 export type GameSend = (event: Event) => void
 
-// Per-game reset; difficulty, stats and hitBatch are intentionally omitted so
+// Per-game reset; mode, difficulty, stats and hitBatch are intentionally omitted so
 // assign leaves them untouched (hitBatch.seq stays monotonic across games).
-const freshGame = () => ({
+const freshGame = (mode: Mode) => ({
   grid: initialGrid,
   hits: 0,
   score: 0,
-  lives: 3,
+  lives: MODES[mode].lives,
+  streak: 0,
+  accSum: 0,
+  spdSum: 0,
   targets: [] as Target[],
   nextTargetId: 0,
 })
@@ -113,30 +132,66 @@ const bestByScore = (
 ): DifficultyStats => (score > prev.score ? { score, hits } : prev)
 
 // Applies a new grid: scores any targets whose value equals the new sum, resets
-// the reference for surviving targets when a hit happened, doubles points when
-// the board is cleared, and emits a hit batch for the UI.
+// the reference for surviving targets when a hit happened, applies streak multiplier,
+// and emits a hit batch for the UI.
 function applyGrid(context: Context, newGrid: Grid, now: number) {
   const newSum = computeSum(newGrid)
   const matched = context.targets.filter((t) => t.value === newSum)
   const remaining = context.targets.filter((t) => t.value !== newSum)
   const anyHit = matched.length > 0
   const clearedBoard = anyHit && remaining.length === 0
-  const duration = DIFFICULTIES[context.difficulty].duration
 
-  let addedScore = 0
-  const hitInfos: HitInfo[] = []
+  const mode = MODES[context.mode]
+  const duration = effectiveTimeout(context.mode, context.difficulty)
+
+  let rawScore = 0
+  let allOptimal = matched.length > 0
+  let accAdded = 0
+  let spdAdded = 0
+  const perTarget: { points: number; progress: number }[] = []
+
   for (const t of matched) {
-    const userSteps = t.userSteps + 1 // the press that completed the match counts
+    const userSteps = t.userSteps + 1
     const timeLeft = Math.max(0, duration - (now - t.spawnedAt))
-    let pts = computeHitPoints({ par: t.par, userSteps, timeLeft, duration })
-    if (clearedBoard) pts *= 2
-    addedScore += pts
-    hitInfos.push({
-      points: pts,
-      progress: duration > 0 ? Math.min(1, Math.max(0, timeLeft / duration)) : 0,
-      bonus: clearedBoard,
+    const progress = duration > 0 ? Math.min(1, Math.max(0, timeLeft / duration)) : 0
+    const pts = computeHitPoints({
+      par: t.par,
+      userSteps,
+      timeLeft,
+      duration,
+      weights: mode.weights,
     })
+    if (userSteps !== t.par) allOptimal = false
+    accAdded += accuracyFactor(t.par, userSteps)
+    spdAdded += speedFactor(timeLeft, duration)
+    rawScore += pts
+    perTarget.push({ points: pts, progress })
   }
+
+  const triggered =
+    mode.streak === 'optimal'
+      ? anyHit && allOptimal
+      : mode.streak === 'clear'
+        ? clearedBoard
+        : false
+  let streak = context.streak
+  let multiplier = 1
+  if (mode.streak === 'none') {
+    multiplier = clearedBoard ? 2 : 1 // legacy trainee behavior
+  } else if (triggered) {
+    streak = context.streak + 1
+    multiplier = streakMultiplier(streak)
+  } else if (mode.streak === 'optimal' && anyHit) {
+    streak = 0 // a matching but non-optimal hit resets accuracy streak
+  } // speed non-clearing hit, or any miss: streak unchanged, multiplier stays 1
+
+  const addedScore = Math.round(rawScore * multiplier)
+  const hitInfos: HitInfo[] = perTarget.map((p) => ({
+    points: Math.round(p.points * multiplier),
+    progress: p.progress,
+    bonus: multiplier > 1,
+    multiplier,
+  }))
 
   const hits = context.hits + matched.length
   const score = context.score + addedScore
@@ -158,7 +213,14 @@ function applyGrid(context: Context, newGrid: Grid, now: number) {
   const stats = anyHit
     ? {
         ...context.stats,
-        [context.difficulty]: bestByScore(context.stats[context.difficulty], score, hits),
+        [context.mode]: {
+          ...context.stats[context.mode],
+          [context.difficulty]: bestByScore(
+            context.stats[context.mode][context.difficulty],
+            score,
+            hits,
+          ),
+        },
       }
     : context.stats
 
@@ -166,7 +228,17 @@ function applyGrid(context: Context, newGrid: Grid, now: number) {
     ? { seq: context.hitBatch.seq + 1, hits: hitInfos }
     : context.hitBatch
 
-  return { grid: newGrid, targets, hits, score, stats, hitBatch }
+  return {
+    grid: newGrid,
+    targets,
+    hits,
+    score,
+    streak,
+    accSum: context.accSum + accAdded,
+    spdSum: context.spdSum + spdAdded,
+    stats,
+    hitBatch,
+  }
 }
 
 export const gameMachine = createMachine({
@@ -179,14 +251,18 @@ export const gameMachine = createMachine({
     hits: 0,
     score: 0,
     stats: emptyStats(),
-    difficulty: 'easy' as Difficulty,
+    mode: 'accuracy' as Mode,
+    difficulty: 'medium' as Difficulty,
     lives: 3,
+    streak: 0,
+    accSum: 0,
+    spdSum: 0,
     targets: [] as Target[],
     nextTargetId: 0,
     hitBatch: { seq: 0, hits: [] as HitInfo[] },
   } satisfies Context,
   on: {
-    // Load persisted per-difficulty stats on app start.
+    // Load persisted per-mode×difficulty stats on app start.
     HYDRATE_STATS: {
       actions: assign(
         ({
@@ -196,7 +272,11 @@ export const gameMachine = createMachine({
           context: Context
           event: Extract<Event, { type: 'HYDRATE_STATS' }>
         }) => ({
-          stats: { ...context.stats, ...event.stats },
+          stats: {
+            trainee: { ...context.stats.trainee, ...event.stats.trainee },
+            accuracy: { ...context.stats.accuracy, ...event.stats.accuracy },
+            speed: { ...context.stats.speed, ...event.stats.speed },
+          },
         }),
       ),
     },
@@ -206,9 +286,13 @@ export const gameMachine = createMachine({
       on: {
         START: {
           target: 'playing',
+          actions: assign(({ context }: { context: Context }) => freshGame(context.mode)),
+        },
+        SET_MODE: {
           actions: assign(
-            (_args: { context: Context; event: Extract<Event, { type: 'START' }> }) =>
-              freshGame(),
+            ({ event }: { event: Extract<Event, { type: 'SET_MODE' }> }) => ({
+              mode: event.mode,
+            }),
           ),
         },
         SET_DIFFICULTY: {
@@ -265,9 +349,9 @@ export const gameMachine = createMachine({
         },
         TARGET_EXPIRED: [
           {
-            // No-life-loss difficulties (trainee): just clear the target, keep playing.
+            // No-life-loss modes (trainee): just clear the target, keep playing.
             guard: ({ context }: { context: Context }) =>
-              !DIFFICULTIES[context.difficulty].loseLives,
+              MODES[context.mode].lives === Number.POSITIVE_INFINITY,
             actions: assign(
               ({
                 context,
@@ -277,6 +361,7 @@ export const gameMachine = createMachine({
                 event: Extract<Event, { type: 'TARGET_EXPIRED' }>
               }) => ({
                 targets: context.targets.filter((t) => t.id !== event.id),
+                streak: 0,
               }),
             ),
           },
@@ -293,6 +378,7 @@ export const gameMachine = createMachine({
               }) => ({
                 targets: context.targets.filter((t) => t.id !== event.id),
                 lives: 0,
+                streak: 0,
               }),
             ),
           },
@@ -307,12 +393,14 @@ export const gameMachine = createMachine({
               }) => ({
                 targets: context.targets.filter((t) => t.id !== event.id),
                 lives: context.lives - 1,
+                streak: 0,
               }),
             ),
           },
         ],
         ADD_TARGET: {
-          guard: ({ context }: { context: Context }) => context.targets.length < 5,
+          guard: ({ context }: { context: Context }) =>
+            context.targets.length < DIFFICULTIES[context.difficulty].maxTargets,
           actions: assign(
             ({
               context,
@@ -363,8 +451,13 @@ export const gameMachine = createMachine({
     gameOver: {
       on: {
         MENU: { target: 'menu' },
-        // The game-over screen reuses the intro layout, so difficulty can be
-        // changed here before playing again.
+        SET_MODE: {
+          actions: assign(
+            ({ event }: { event: Extract<Event, { type: 'SET_MODE' }> }) => ({
+              mode: event.mode,
+            }),
+          ),
+        },
         SET_DIFFICULTY: {
           actions: assign(
             ({ event }: { event: Extract<Event, { type: 'SET_DIFFICULTY' }> }) => ({
@@ -374,10 +467,7 @@ export const gameMachine = createMachine({
         },
         RESTART: {
           target: 'playing',
-          actions: assign(
-            (_args: { context: Context; event: Extract<Event, { type: 'RESTART' }> }) =>
-              freshGame(),
-          ),
+          actions: assign(({ context }: { context: Context }) => freshGame(context.mode)),
         },
       },
     },
