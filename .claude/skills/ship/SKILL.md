@@ -46,8 +46,16 @@ If the working tree contains **logically separate** changes, propose **multiple
 commits** (each a coherent Conventional Commit with the files it covers) rather
 than one catch-all. Otherwise propose a single commit.
 
-Present the proposed message(s) (and, in branch mode, the branch name — see
-Step 2) and **ask the user to confirm or edit**. Only continue once confirmed.
+Present the proposed message(s) (and, in branch mode, the branch name) using
+**`AskUserQuestion`** with these choices:
+
+- **"Ship it"** — proceed as-is (Recommended)
+- **"Edit message"** — user will type a replacement; apply it and ship
+- **"Cancel"** — stop, do not commit
+
+Only continue once the user picks "Ship it" or provides an edited message.
+Do **not** ask in plain text — always use `AskUserQuestion` so the session
+stays unblocked.
 
 Every commit message must end with the footer:
 
