@@ -12,9 +12,11 @@
     "deploy": "pnpm run build:web && pnpm dlx eas-cli@latest deploy",
     "lint": "eslint .",
     "format": "prettier --write .",
+    "test": "vitest run",
+    "test:watch": "vitest",
     "knip": "knip",
     "typecheck": "tsc --noEmit",
-    "check": "eslint . && prettier --check . && tsc --noEmit && knip"
+    "check": "eslint . && prettier --check . && tsc --noEmit && knip && vitest run"
   },
   "dependencies": {
     "@expo/vector-icons": "^15.1.1",
@@ -62,6 +64,7 @@
     "tailwindcss": "^4.2.2",
     "typescript": "~5.9.3",
     "typescript-eslint": "^8.64.0",
+    "vitest": "^4.1.10",
     "workbox-cli": "^7.4.1"
   },
   "private": true,

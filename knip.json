@@ -1,6 +1,11 @@
 {
   "$schema": "https://unpkg.com/knip@6/schema.json",
-  "entry": ["app/**/*.{ts,tsx}", "workbox-config.js", "scripts/**/*.{js,ts}"],
+  "entry": [
+    "app/**/*.{ts,tsx}",
+    "workbox-config.js",
+    "scripts/**/*.{js,ts}",
+    "**/*.test.ts"
+  ],
   "project": ["**/*.{ts,tsx}"],
   "ignoreDependencies": ["babel-preset-expo"]
 }
