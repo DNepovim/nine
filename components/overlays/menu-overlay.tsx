@@ -1,12 +1,20 @@
+import { useState } from 'react'
 import { Pressable, Text, View } from 'react-native'
 
 import { Screen } from '@/components/screen'
 import { BUILD_LABEL } from '@/constants/game'
 import { mono } from '@/constants/theme'
 import {
+  ARCADE_TEASER,
   DIFFICULTIES,
+  DIFFICULTY_COLORS,
   DIFFICULTY_ORDER,
+  MODE_COLORS,
+  MODE_DESCRIPTIONS,
+  MODE_ORDER,
+  MODES,
   type Difficulty,
+  type Mode,
   type Stats,
 } from '@/machines/game'
 
@@ -27,34 +35,43 @@ const titleFor = (mode: MenuMode): string => {
 
 export function MenuOverlay({
   mode,
+  gameMode,
   stats,
   difficulty,
   currentScore,
   currentHits,
+  avgAccuracy,
+  avgSpeed,
   dsegLoaded,
   onPlay,
   onContinue,
   onNewGame,
+  onSetMode,
   onSetDifficulty,
   onOpenAdvanced,
 }: {
   mode: MenuMode
+  gameMode: Mode
   stats: Stats
   difficulty: Difficulty
   currentScore: number
   currentHits: number
+  avgAccuracy: number
+  avgSpeed: number
   dsegLoaded: boolean
   onPlay: () => void
   onContinue: () => void
   onNewGame: () => void
+  onSetMode: (mode: Mode) => void
   onSetDifficulty: (difficulty: Difficulty) => void
   onOpenAdvanced: () => void
 }) {
-  const best = stats[difficulty]
+  const [focused, setFocused] = useState<Mode | 'arcade'>(gameMode)
+  const best = stats[gameMode][difficulty]
 
   const isPaused = mode === 'paused'
   const isGameOver = mode === 'gameOver'
-  const showConfig = mode === 'menu' || isGameOver // difficulty + best + build
+  const showConfig = mode === 'menu' || isGameOver // mode + difficulty + best + build
 
   return (
     <Screen overlay>
@@ -90,6 +107,12 @@ export function MenuOverlay({
           >
             {`${currentHits} HITS`}
           </Text>
+          <Text
+            selectable={false}
+            className="font-mono text-[9px] font-bold tracking-[1.2px] text-dim"
+          >
+            {`ACC ${avgAccuracy}%   SPD ${avgSpeed}%`}
+          </Text>
         </View>
       )}
 
@@ -99,6 +122,79 @@ export function MenuOverlay({
       >
         {titleFor(mode)}
       </Text>
+
+      {/* Mode selector — menu & game over */}
+      {showConfig && (
+        <View className="mb-3 items-center">
+          <Text
+            selectable={false}
+            className="mb-2 font-mono text-[9px] font-bold tracking-[1.8px] text-dim"
+          >
+            MODE
+          </Text>
+          <View
+            className="flex-row flex-wrap justify-center gap-2 px-6"
+            style={{ maxWidth: 340 }}
+          >
+            {MODE_ORDER.map((m) => {
+              const selected = m === gameMode
+              return (
+                <Pressable
+                  key={m}
+                  onPress={() => {
+                    setFocused(m)
+                    onSetMode(m)
+                  }}
+                  className="rounded-xl px-3.5 py-2"
+                  style={
+                    selected
+                      ? { backgroundColor: MODE_COLORS[m] }
+                      : { backgroundColor: 'transparent' }
+                  }
+                >
+                  <Text
+                    selectable={false}
+                    className="font-mono text-[11px] font-black tracking-[1.5px]"
+                    style={{ color: selected ? '#FFFFFF' : MODE_COLORS[m] }}
+                  >
+                    {MODES[m].label}
+                  </Text>
+                </Pressable>
+              )
+            })}
+            {/* Locked Arcade teaser */}
+            <Pressable
+              onPress={() => {
+                setFocused('arcade')
+              }}
+              className="flex-row items-center gap-1.5 rounded-xl bg-card px-3.5 py-2 opacity-60"
+            >
+              <Text
+                selectable={false}
+                className="font-mono text-[11px] font-black tracking-[1.5px]"
+                style={{ color: ARCADE_TEASER.color }}
+              >
+                {ARCADE_TEASER.label}
+              </Text>
+              <Text
+                selectable={false}
+                className="font-mono text-[8px] font-black tracking-[1px] text-dim"
+              >
+                {ARCADE_TEASER.tag}
+              </Text>
+            </Pressable>
+          </View>
+          {/* Description of the focused mode */}
+          <Text
+            selectable={false}
+            className="mt-3 px-8 text-center font-mono text-[10px] font-bold tracking-[0.5px] text-dim"
+          >
+            {focused === 'arcade'
+              ? ARCADE_TEASER.description
+              : MODE_DESCRIPTIONS[focused]}
+          </Text>
+        </View>
+      )}
 
       {/* Difficulty selector — menu & game over */}
       {showConfig && (
@@ -121,11 +217,17 @@ export function MenuOverlay({
                   onPress={() => {
                     onSetDifficulty(d)
                   }}
-                  className={`rounded-xl px-3.5 py-2 ${selected ? 'bg-strong' : 'bg-card'}`}
+                  className="rounded-xl px-3.5 py-2"
+                  style={
+                    selected
+                      ? { backgroundColor: DIFFICULTY_COLORS[d] }
+                      : { backgroundColor: 'transparent' }
+                  }
                 >
                   <Text
                     selectable={false}
-                    className={`font-mono text-[11px] font-black tracking-[1.5px] ${selected ? 'text-on-strong' : 'text-dim'}`}
+                    className="font-mono text-[11px] font-black tracking-[1.5px]"
+                    style={{ color: selected ? '#FFFFFF' : DIFFICULTY_COLORS[d] }}
                   >
                     {DIFFICULTIES[d].label}
                   </Text>
@@ -143,7 +245,7 @@ export function MenuOverlay({
             selectable={false}
             className="font-mono text-[9px] font-bold tracking-[1.8px] text-dim"
           >
-            {`BEST · ${DIFFICULTIES[difficulty].label}`}
+            {`BEST · ${MODES[gameMode].label} · ${DIFFICULTIES[difficulty].label}`}
           </Text>
           <Text
             selectable={false}

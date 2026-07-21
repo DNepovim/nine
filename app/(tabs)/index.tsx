@@ -19,12 +19,21 @@ import { useDisplayScore } from '@/hooks/use-display-score'
 import { useDisplayedTargets } from '@/hooks/use-displayed-targets'
 import { useFloatingPoints } from '@/hooks/use-floating-points'
 import { usePersistedDifficulty } from '@/hooks/use-persisted-difficulty'
+import { usePersistedMode } from '@/hooks/use-persisted-mode'
 import { usePersistedStats } from '@/hooks/use-persisted-stats'
 import { useScoreDirection } from '@/hooks/use-score-direction'
 import { useTargetSpawner } from '@/hooks/use-target-spawner'
 import { useTheme } from '@/hooks/use-theme'
 import { valueProgress } from '@/lib/value-progress'
-import { computeSum, DIFFICULTIES, gameMachine } from '@/machines/game'
+import {
+  computeSum,
+  DIFFICULTIES,
+  effectiveTimeout,
+  gameMachine,
+  MODE_COLORS,
+  MODES,
+  streakMultiplier,
+} from '@/machines/game'
 
 export default function GameScreen() {
   const { colorScheme, toggleTheme } = useTheme()
@@ -34,7 +43,19 @@ export default function GameScreen() {
   // Seven-segment font for the digital score readout.
   const [dsegLoaded] = useFonts({ DSEG7: DSEG7Font })
 
-  const { grid, lives, targets, difficulty, stats, hitBatch } = state.context
+  const {
+    grid,
+    lives,
+    targets,
+    mode,
+    difficulty,
+    stats,
+    hitBatch,
+    streak,
+    accSum,
+    spdSum,
+    hits,
+  } = state.context
   const isPlaying = state.matches('playing')
   const isMenu = state.matches('menu')
   const isPaused = state.matches('paused')
@@ -42,6 +63,7 @@ export default function GameScreen() {
 
   usePersistedStats(stats, send)
   usePersistedDifficulty(difficulty, send)
+  usePersistedMode(mode, send)
   const { showSum, showFactor, toggleSum, toggleFactor } = useDisplayOptions()
   const [advancedOpen, setAdvancedOpen] = useState(false)
 
@@ -59,7 +81,7 @@ export default function GameScreen() {
         ? 'paused'
         : 'gameOver'
 
-  useTargetSpawner({ isPlaying, targetCount: targets.length, send })
+  useTargetSpawner({ isPlaying, targetCount: targets.length, difficulty, send })
   const { floats, removeFloat } = useFloatingPoints(hitBatch)
   const { displayedTargets, removeDisplayed, onContainerLayout } = useDisplayedTargets({
     machineTargets: targets,
@@ -73,51 +95,83 @@ export default function GameScreen() {
 
   const menuMode: MenuMode = isGameOver ? 'gameOver' : isPaused ? 'paused' : 'menu'
 
+  const currentMultiplier = streakMultiplier(streak)
+  const duration = effectiveTimeout(mode, difficulty)
+
+  const avgAccuracy = hits > 0 ? Math.round((100 * accSum) / hits) : 0
+  const avgSpeed = hits > 0 ? Math.round((100 * spdSum) / hits) : 0
+
   return (
     <>
       {/* ── Game screen (single padded wrapper) ── */}
       <Screen>
         <View className="mb-3">
-          {/* Row 1 — NINE (left) + MENU label (right). The dots icon is the
-              absolute overlay at top-right, so reserve room for it. */}
-          <View
-            className="mb-1 flex-row items-center justify-between"
-            style={{ paddingRight: 32 }}
-          >
+          {/* Row 1 — mode/difficulty left, NINE centered, spacer right */}
+          <View className="mb-1 flex-row items-center" style={{ paddingRight: 32 }}>
+            {/* left: mode (colored, caps) + difficulty (dim, lowercase) */}
+            <View className="flex-1">
+              <Text
+                selectable={false}
+                className="font-mono text-[13px] font-black tracking-[2px]"
+                style={{ color: MODE_COLORS[mode] }}
+              >
+                {MODES[mode].label}
+              </Text>
+              <Text
+                selectable={false}
+                className="font-mono text-[10px] font-bold tracking-[1px] text-dim"
+              >
+                {DIFFICULTIES[difficulty].label.toLowerCase()}
+              </Text>
+            </View>
+            {/* center: NINE */}
             <Text
               selectable={false}
-              className="font-mono text-[30px] font-black tracking-[8px] text-muted"
+              className="font-mono text-[24px] font-black tracking-[8px] text-muted"
             >
               NINE
             </Text>
-            <Text
-              selectable={false}
-              className="font-mono text-[14px] font-black tracking-[3px] text-muted"
-            >
-              MENU
-            </Text>
+            {/* right: spacer balancing the absolute dots menu button */}
+            <View className="flex-1" />
           </View>
 
-          {/* Row 2 — hearts + score, right-aligned under the menu */}
-          <View className="flex-row items-center justify-between gap-2.5 mt-1.5">
-            <View className="flex-row gap-1">
-              {[0, 1, 2].map((i) => (
-                <AntDesign
-                  key={i}
-                  name="heart"
-                  size={22}
-                  color={i < lives ? '#E5534B' : isDark ? '#1C1D30' : '#FDFCFA'}
-                />
-              ))}
-            </View>
-            <View className="relative">
-              <Text
-                selectable={false}
-                className="text-[17px] tracking-[1px] text-score"
-                style={{ fontFamily: dsegLoaded ? 'DSEG7' : mono }}
-              >
-                {displayScore}
-              </Text>
+          {/* Row 2 — hearts + score cluster */}
+          <View className="mt-1.5 flex-row items-center justify-between gap-2.5">
+            {/* Hearts — hidden for trainee (infinite lives) */}
+            {MODES[mode].lives !== Number.POSITIVE_INFINITY ? (
+              <View className="flex-row gap-1">
+                {[0, 1, 2].map((i) => (
+                  <AntDesign
+                    key={i}
+                    name="heart"
+                    size={22}
+                    color={i < lives ? '#E5534B' : isDark ? '#1C1D30' : '#FDFCFA'}
+                  />
+                ))}
+              </View>
+            ) : (
+              <View />
+            )}
+
+            {/* Score cluster: digital readout + streak multiplier badge */}
+            <View className="relative items-end">
+              <View className="flex-row items-baseline gap-1.5">
+                <Text
+                  selectable={false}
+                  className="text-[17px] tracking-[1px] text-score"
+                  style={{ fontFamily: dsegLoaded ? 'DSEG7' : mono }}
+                >
+                  {displayScore}
+                </Text>
+                {streak > 0 && (
+                  <Text
+                    selectable={false}
+                    className="font-mono text-[11px] font-black tracking-[1px] text-score"
+                  >
+                    {`×${currentMultiplier}`}
+                  </Text>
+                )}
+              </View>
               {floats.map((f) => (
                 <FloatingPoints
                   key={f.id}
@@ -140,7 +194,7 @@ export default function GameScreen() {
               key={target.id}
               target={target}
               isDark={isDark}
-              duration={DIFFICULTIES[difficulty].duration}
+              duration={duration}
               onExpire={() => {
                 send({ type: 'TARGET_EXPIRED', id: target.id })
               }}
@@ -218,11 +272,14 @@ export default function GameScreen() {
         ) : (
           <MenuOverlay
             mode={menuMode}
+            gameMode={mode}
             stats={stats}
             difficulty={difficulty}
             dsegLoaded={dsegLoaded}
             currentScore={state.context.score}
             currentHits={state.context.hits}
+            avgAccuracy={avgAccuracy}
+            avgSpeed={avgSpeed}
             onPlay={() => {
               send({ type: isGameOver ? 'RESTART' : 'START' })
             }}
@@ -231,6 +288,9 @@ export default function GameScreen() {
             }}
             onNewGame={() => {
               send({ type: 'MENU' })
+            }}
+            onSetMode={(next) => {
+              send({ type: 'SET_MODE', mode: next })
             }}
             onSetDifficulty={(next) => {
               send({ type: 'SET_DIFFICULTY', difficulty: next })

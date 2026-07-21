@@ -4,8 +4,8 @@
 
 `nine` currently has a single game loop with one scoring model and a five-entry
 `DIFFICULTIES` table (`trainee`, `easy`, `medium`, `hard`, `extreme`). `trainee`
-is really a *flavor* (no life loss, long timer) sitting in the same list as a
-*difficulty curve* (shorter timers). Scoring is fixed: `computeHitPoints =
+is really a _flavor_ (no life loss, long timer) sitting in the same list as a
+_difficulty curve_ (shorter timers). Scoring is fixed: `computeHitPoints =
 1000 × (⅔·accuracy + ⅓·speed)`, with a flat ×2 bonus when a hit clears the board.
 The loop, scoring, and persistence all live around `machines/game.ts`,
 `machines/scoring.ts`, and the per-difficulty `stats: Record<Difficulty,
@@ -20,7 +20,7 @@ as a first-class axis, orthogonal to difficulty.
 **Accuracy**, **Speed** — each playable at four difficulties.
 
 **Out of scope (own specs later):** **Arcade** (levels, bonuses, sidequests) is a
-much larger subsystem; Trainee's detailed *learning aids* are deferred to a
+much larger subsystem; Trainee's detailed _learning aids_ are deferred to a
 follow-up spec. Trainee ships in Spec 1 as the framework mode (endless, no life
 loss, long timer) without special aids yet. Additional future modes are listed
 in the appendix.
@@ -32,9 +32,9 @@ modes.
 
 Two orthogonal descriptors, both read from machine context:
 
-- **Mode** owns *character*: scoring weights, base timeout, life rule, and the
+- **Mode** owns _character_: scoring weights, base timeout, life rule, and the
   streak-multiplier trigger.
-- **Difficulty** owns *pressure*: it scales the timeout and controls how many
+- **Difficulty** owns _pressure_: it scales the timeout and controls how many
   targets are on screen and how fast they spawn.
 
 **Effective per-target timeout** = `round(mode.baseTimeout × difficulty.timeoutScale)`.
@@ -155,7 +155,7 @@ stats: Record<Mode, Record<Difficulty, { score: number; hits: number }>>
 
 - **Timeout:** replace `DIFFICULTIES[difficulty].duration` with
   `effectiveTimeout(mode, difficulty)` wherever duration is used (countdown ring
-  + `computeHitPoints`).
+  - `computeHitPoints`).
 - **`use-target-spawner`:** spawn interval from `difficulty.spawnInterval`; the
   `ADD_TARGET` concurrency cap from `difficulty.maxTargets` (was fixed `< 5`).
 - **Persistence hooks:** `use-persisted-stats` reads/writes the nested shape
@@ -226,7 +226,7 @@ dimmed); selecting it is a no-op, though its teaser description still shows.
 
 ## Files touched
 
-- `machines/modes.ts` *(new)* — `Mode`, `MODES`, `MODE_ORDER`, streak-trigger
+- `machines/modes.ts` _(new)_ — `Mode`, `MODES`, `MODE_ORDER`, streak-trigger
   type, `effectiveTimeout`.
 - `machines/game.ts` — context (`mode`, `streak`, nested `stats`), `SET_MODE`,
   `applyGrid` streak/weights, `TARGET_EXPIRED`/`freshGame` mode-based lives.
@@ -259,9 +259,9 @@ Captured so the framework leaves room; each is its own future spec.
 
 - **Daily Challenge** — one fixed daily seed, identical target sequence for
   everyone, one attempt/day, global leaderboard. Strong social/replay hook;
-  pairs with the planned backend. *(Recommended next.)*
+  pairs with the planned backend. _(Recommended next.)_
 - **Blitz** — fixed 60s, no lives, maximize score. Small, leaderboard-friendly.
-  *(Recommended next.)*
+  _(Recommended next.)_
 - **Survival** — one life, no difficulty pick, continuously ramping timeout.
 - **Puzzle** — untimed, curated/generated boards solved in ≤ par steps.
 - **Arcade** — levels, bonuses, sidequests. Its own large spec.

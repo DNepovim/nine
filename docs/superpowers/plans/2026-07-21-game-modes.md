@@ -25,11 +25,13 @@
 ### Task 1: Vitest harness for pure logic
 
 **Files:**
+
 - Create: `vitest.config.ts`
 - Modify: `package.json` (scripts), `knip.json`
 - Test: `machines/modes.smoke.test.ts` (temporary, deleted at end of task)
 
 **Interfaces:**
+
 - Produces: a working `pnpm test` command that resolves the `@/` alias and runs `*.test.ts` in a Node environment.
 
 - [ ] **Step 1: Add Vitest as a dev dependency**
@@ -117,10 +119,12 @@ git commit -m "build: add vitest harness for pure-logic tests"
 ### Task 2: `machines/modes.ts` — mode & difficulty config + pure helpers
 
 **Files:**
+
 - Create: `machines/modes.ts`, `machines/modes.test.ts`
 - Modify: `machines/game.ts` (remove old `Difficulty`/`DIFFICULTIES`/`DIFFICULTY_ORDER`, re-import from modes), and every importer of those symbols (`lib/is-difficulty.ts`, `hooks/use-persisted-difficulty.ts`, `hooks/use-target-spawner.ts` if present, `components/overlays/menu-overlay.tsx`, `app/(tabs)/index.tsx`).
 
 **Interfaces:**
+
 - Produces:
   - `type Mode = 'trainee' | 'accuracy' | 'speed'`
   - `const MODE_ORDER: Mode[]`
@@ -262,7 +266,15 @@ Expected: PASS (3 files of assertions).
 In `machines/game.ts`: delete the local `Difficulty` type, `DIFFICULTY_ORDER`, and the old `DIFFICULTIES` (with `duration`/`loseLives`). Add at the top:
 
 ```ts
-import { DIFFICULTIES, DIFFICULTY_ORDER, effectiveTimeout, MODES, streakMultiplier, type Difficulty, type Mode } from './modes'
+import {
+  DIFFICULTIES,
+  DIFFICULTY_ORDER,
+  effectiveTimeout,
+  MODES,
+  streakMultiplier,
+  type Difficulty,
+  type Mode,
+} from './modes'
 ```
 
 Re-export the types other modules import from `@/machines/game` today (keep their import paths working) by adding:
@@ -295,10 +307,12 @@ git commit -m "feat: add mode + difficulty config tables and pure helpers"
 ### Task 3: Parameterize scoring weights
 
 **Files:**
+
 - Modify: `machines/scoring.ts`, `machines/game.ts` (call site)
 - Test: `machines/scoring.test.ts`
 
 **Interfaces:**
+
 - Consumes: nothing new.
 - Produces: `computeHitPoints(opts: { par; userSteps; timeLeft; duration; weights: { acc: number; spd: number }; base? }): number` — `weights` now required.
 
@@ -396,10 +410,12 @@ git commit -m "feat: parameterize hit scoring by mode weights"
 ### Task 4: Machine context — mode, nested stats, mode-based lives
 
 **Files:**
+
 - Modify: `machines/game.ts`
 - Test: `machines/game.test.ts`
 
 **Interfaces:**
+
 - Consumes: `MODES`, `Mode`, `effectiveTimeout` from `./modes`.
 - Produces (on the machine context): `mode: Mode` (default `accuracy`), `streak: number` (default 0), `stats: Record<Mode, Record<Difficulty, { score: number; hits: number }>>`; event `{ type: 'SET_MODE'; mode: Mode }`; `freshGame(mode: Mode)` setting `lives` from `MODES[mode].lives`.
 
@@ -408,8 +424,8 @@ git commit -m "feat: parameterize hit scoring by mode weights"
 Create `machines/game.test.ts`:
 
 ```ts
-import { createActor } from 'xstate'
 import { beforeEach, describe, expect, it } from 'vitest'
+import { createActor } from 'xstate'
 
 import { gameMachine } from '@/machines/game'
 
@@ -535,10 +551,12 @@ git commit -m "feat: mode context, nested stats, mode-based lives"
 ### Task 5: Streak multiplier in `applyGrid`
 
 **Files:**
+
 - Modify: `machines/game.ts` (`applyGrid`, `HitInfo`, `TARGET_EXPIRED` streak reset, `ADD_TARGET` maxTargets)
 - Test: `machines/game.test.ts` (extend)
 
 **Interfaces:**
+
 - Consumes: `streakMultiplier`, `MODES`, `effectiveTimeout`, `DIFFICULTIES`.
 - Produces: `context.streak` maintained per the rules; `HitInfo` gains `multiplier: number`; `ADD_TARGET` capped at `DIFFICULTIES[difficulty].maxTargets`.
 
@@ -554,8 +572,8 @@ describe('accuracy streak (optimal trigger)', () => {
     actor.send({ type: 'SET_MODE', mode: 'accuracy' })
     actor.send({ type: 'START' })
 
-    // Target value 9 = bottom-right cell (weight 9) set to 1 → par 1 step via SET? 
-    // Use PRESS +1 on index 8 (weight 9): sum 0→9 in exactly par (1). 
+    // Target value 9 = bottom-right cell (weight 9) set to 1 → par 1 step via SET?
+    // Use PRESS +1 on index 8 (weight 9): sum 0→9 in exactly par (1).
     actor.send({ type: 'ADD_TARGET', value: 9, at: 0 })
     actor.send({ type: 'PRESS', index: 8, delta: 1, now: 0 }) // par 1, userSteps 1 → optimal
     const s1 = actor.getSnapshot().context
@@ -570,7 +588,7 @@ describe('accuracy streak (optimal trigger)', () => {
 
     // non-optimal hit resets: overshoot then correct (2 steps for a par-1 target)
     actor.send({ type: 'ADD_TARGET', value: 27, at: 0 }) // index8 2→3 par 1
-    actor.send({ type: 'PRESS', index: 8, delta: 1, now: 0 }) // 3 (=27) par1 userSteps1 optimal... 
+    actor.send({ type: 'PRESS', index: 8, delta: 1, now: 0 }) // 3 (=27) par1 userSteps1 optimal...
     // NOTE: adjust target values during implementation so the intended optimal/non-optimal holds.
     expect(actor.getSnapshot().context.streak).toBeGreaterThanOrEqual(0)
   })
@@ -604,7 +622,12 @@ Expected: FAIL — `streak` not updated by `applyGrid`.
 - [ ] **Step 3: Add `multiplier` to `HitInfo`**
 
 ```ts
-export type HitInfo = { points: number; progress: number; bonus: boolean; multiplier: number }
+export type HitInfo = {
+  points: number
+  progress: number
+  bonus: boolean
+  multiplier: number
+}
 ```
 
 - [ ] **Step 4: Rewrite `applyGrid` scoring/streak core**
@@ -639,7 +662,11 @@ for (const t of matched) {
 
 // Streak + multiplier.
 const triggered =
-  mode.streak === 'optimal' ? anyHit && allOptimal : mode.streak === 'clear' ? clearedBoard : false
+  mode.streak === 'optimal'
+    ? anyHit && allOptimal
+    : mode.streak === 'clear'
+      ? clearedBoard
+      : false
 let streak = context.streak
 let multiplier = 1
 if (mode.streak === 'none') {
@@ -716,10 +743,12 @@ git commit -m "feat: streak multiplier and maxTargets cap in game machine"
 ### Task 6: Persistence — v3 nested stats + mode key
 
 **Files:**
+
 - Modify: `constants/storage.ts`, `hooks/use-persisted-stats.ts`
 - Create: `hooks/use-persisted-mode.ts`, `lib/is-mode.ts`
 
 **Interfaces:**
+
 - Consumes: `Stats` from `@/machines/game`; `MODE_ORDER`, `Mode`, `GameSend`.
 - Produces: `usePersistedStats(stats, send)` reading/writing `nine.stats.v3` nested; `usePersistedMode(mode, send)`; `isMode(value: string): value is Mode`.
 
@@ -836,9 +865,11 @@ git commit -m "feat: persist per mode×difficulty stats (v3) and selected mode"
 ### Task 7: Difficulty-driven spawn cadence + concurrency
 
 **Files:**
+
 - Modify: `hooks/use-target-spawner.ts`, `app/(tabs)/index.tsx` (pass `difficulty`)
 
 **Interfaces:**
+
 - Consumes: `DIFFICULTIES`, `Difficulty`.
 - Produces: `useTargetSpawner({ isPlaying, targetCount, difficulty, send })` using `DIFFICULTIES[difficulty].spawnInterval`.
 
@@ -847,8 +878,8 @@ git commit -m "feat: persist per mode×difficulty stats (v3) and selected mode"
 Change the signature and interval in `hooks/use-target-spawner.ts`:
 
 ```ts
-import { DIFFICULTIES, type Difficulty, type GameSend } from '@/machines/game'
 import { MAX_TARGET } from '@/constants/game'
+import { DIFFICULTIES, type Difficulty, type GameSend } from '@/machines/game'
 
 export function useTargetSpawner({
   isPlaying,
@@ -897,9 +928,11 @@ git commit -m "feat: difficulty-driven spawn interval and target concurrency"
 ### Task 8: Mode selector + per-mode×difficulty BEST in the menu overlay
 
 **Files:**
+
 - Modify: `components/overlays/menu-overlay.tsx`, `app/(tabs)/index.tsx` (pass `mode`, `onSetMode`)
 
 **Interfaces:**
+
 - Consumes: `MODES`, `MODE_ORDER`, `Mode`, `Stats`, `Difficulty`.
 - Produces: `MenuOverlay` accepts `mode: Mode` and `onSetMode(mode: Mode)`, renders a mode row, and reads `stats[mode][difficulty]`.
 
@@ -912,37 +945,42 @@ Add to the props type: `mode: Mode`, `onSetMode: (mode: Mode) => void`. Import `
 Insert this block just above the `{/* Difficulty selector ... */}` block (only shown when `showConfig`):
 
 ```tsx
-{showConfig && (
-  <View className="mb-4 items-center">
-    <Text
-      selectable={false}
-      className="mb-2 font-mono text-[9px] font-bold tracking-[1.8px] text-dim"
-    >
-      MODE
-    </Text>
-    <View className="flex-row flex-wrap justify-center gap-2 px-6" style={{ maxWidth: 320 }}>
-      {MODE_ORDER.map((m) => {
-        const selected = m === mode
-        return (
-          <Pressable
-            key={m}
-            onPress={() => {
-              onSetMode(m)
-            }}
-            className={`rounded-xl px-3.5 py-2 ${selected ? 'bg-strong' : 'bg-card'}`}
-          >
-            <Text
-              selectable={false}
-              className={`font-mono text-[11px] font-black tracking-[1.5px] ${selected ? 'text-on-strong' : 'text-dim'}`}
+{
+  showConfig && (
+    <View className="mb-4 items-center">
+      <Text
+        selectable={false}
+        className="mb-2 font-mono text-[9px] font-bold tracking-[1.8px] text-dim"
+      >
+        MODE
+      </Text>
+      <View
+        className="flex-row flex-wrap justify-center gap-2 px-6"
+        style={{ maxWidth: 320 }}
+      >
+        {MODE_ORDER.map((m) => {
+          const selected = m === mode
+          return (
+            <Pressable
+              key={m}
+              onPress={() => {
+                onSetMode(m)
+              }}
+              className={`rounded-xl px-3.5 py-2 ${selected ? 'bg-strong' : 'bg-card'}`}
             >
-              {MODES[m].label}
-            </Text>
-          </Pressable>
-        )
-      })}
+              <Text
+                selectable={false}
+                className={`font-mono text-[11px] font-black tracking-[1.5px] ${selected ? 'text-on-strong' : 'text-dim'}`}
+              >
+                {MODES[m].label}
+              </Text>
+            </Pressable>
+          )
+        })}
+      </View>
     </View>
-  </View>
-)}
+  )
+}
 ```
 
 - [ ] **Step 3: Reflect mode in the BEST label**
@@ -950,7 +988,9 @@ Insert this block just above the `{/* Difficulty selector ... */}` block (only s
 Change the BEST card label to include the mode:
 
 ```tsx
-{`BEST · ${MODES[mode].label} · ${DIFFICULTIES[difficulty].label}`}
+{
+  ;`BEST · ${MODES[mode].label} · ${DIFFICULTIES[difficulty].label}`
+}
 ```
 
 - [ ] **Step 4: Pass props from the screen**
@@ -978,9 +1018,11 @@ git commit -m "feat: mode selector and per-mode best in the menu overlay"
 ### Task 9: Wire the screen — timeout, streak HUD, trainee hearts, mode persistence
 
 **Files:**
+
 - Modify: `app/(tabs)/index.tsx`
 
 **Interfaces:**
+
 - Consumes: `effectiveTimeout`, `streakMultiplier`, `MODES` from `@/machines/game`; `usePersistedMode`.
 
 - [ ] **Step 1: Import and destructure**
@@ -1000,18 +1042,20 @@ Replace `duration={DIFFICULTIES[difficulty].duration}` on `<TargetCard>` with `d
 Guard the hearts row so it hides when lives are infinite:
 
 ```tsx
-{MODES[mode].lives !== Number.POSITIVE_INFINITY && (
-  <View className="flex-row gap-1">
-    {[0, 1, 2].map((i) => (
-      <AntDesign
-        key={i}
-        name="heart"
-        size={22}
-        color={i < lives ? '#E5534B' : isDark ? '#1C1D30' : '#FDFCFA'}
-      />
-    ))}
-  </View>
-)}
+{
+  MODES[mode].lives !== Number.POSITIVE_INFINITY && (
+    <View className="flex-row gap-1">
+      {[0, 1, 2].map((i) => (
+        <AntDesign
+          key={i}
+          name="heart"
+          size={22}
+          color={i < lives ? '#E5534B' : isDark ? '#1C1D30' : '#FDFCFA'}
+        />
+      ))}
+    </View>
+  )
+}
 ```
 
 (When hidden, the score stays right-aligned; the surrounding `justify-between` row still works with a single child — if the layout looks off, wrap the score in a `<View>` and keep an empty `<View />` spacer on the left.)
@@ -1021,14 +1065,16 @@ Guard the hearts row so it hides when lives are infinite:
 Next to the digital score in the HUD, show the current multiplier when a streak is active:
 
 ```tsx
-{streak > 0 && (
-  <Text
-    selectable={false}
-    className="font-mono text-[11px] font-black tracking-[1px] text-score"
-  >
-    {`×${streakMultiplier(streak)}`}
-  </Text>
-)}
+{
+  streak > 0 && (
+    <Text
+      selectable={false}
+      className="font-mono text-[11px] font-black tracking-[1px] text-score"
+    >
+      {`×${streakMultiplier(streak)}`}
+    </Text>
+  )
+}
 ```
 
 Place it inside the score cluster `View` (right side of Row 2), after the score `Text`.
@@ -1046,6 +1092,7 @@ Expected: "Exported: dist" with no errors.
 - [ ] **Step 8: Manual verification (full loop)**
 
 Run: `pnpm web`.
+
 - Accuracy: solve targets at par → HUD shows ×2, ×4, ×8 (caps); a sloppy (non-par) hit drops it to no badge.
 - Speed: clear the board repeatedly → ×2→×4→×8; let a target expire → badge resets, a life is lost.
 - Trainee: no hearts shown; letting targets expire never ends the game; long timers.
@@ -1064,7 +1111,7 @@ git commit -m "feat: wire modes into the game screen (timeout, streak HUD, train
 
 **Spec coverage:** two axes (Task 2) ✓; MODES/DIFFICULTIES values (Task 2) ✓; effectiveTimeout (Tasks 2/9) ✓; weighted scoring (Task 3) ✓; streak trigger/growth/cap/reset (Task 5) ✓; mode-based lives + trainee endless (Tasks 4/9) ✓; nested v3 persistence + mode key, no migration (Task 6) ✓; spawn interval + concurrency (Task 7) ✓; mode selector + per-pair BEST + streak HUD + trainee hearts (Tasks 8/9) ✓; future modes = documented as out of scope. All spec sections map to a task.
 
-**Placeholders:** the only deferred detail is the exact target *values* in the Task 5 tests (implementer picks them with `computePar` so the intended optimal/non-optimal holds); the assertions (the contract) are concrete. No other TBDs.
+**Placeholders:** the only deferred detail is the exact target _values_ in the Task 5 tests (implementer picks them with `computePar` so the intended optimal/non-optimal holds); the assertions (the contract) are concrete. No other TBDs.
 
 **Type consistency:** `Mode`, `Difficulty`, `Stats`, `HitInfo.multiplier`, `effectiveTimeout(mode, difficulty)`, `streakMultiplier(streakCount)`, `MODES[mode].{weights,lives,streak}`, `DIFFICULTIES[difficulty].{timeoutScale,maxTargets,spawnInterval}`, `SET_MODE`, `usePersistedMode`, `isMode` — names/signatures are consistent across tasks.
 
@@ -1082,10 +1129,12 @@ Implement after Tasks 1–9. **Tasks A3 and A4 supersede the mode-switcher UI in
 ### Task A1: Color + description constants
 
 **Files:**
+
 - Modify: `constants/colors.ts`, `machines/modes.ts`
 - Test: `machines/modes.test.ts` (extend)
 
 **Interfaces:**
+
 - Produces: `SPECTRUM` (5-tuple); `MODE_COLORS: Record<Mode,string>`, `MODE_DESCRIPTIONS: Record<Mode,string>`, `DIFFICULTY_COLORS: Record<Difficulty,string>`, `ARCADE_TEASER: { label; color; description; tag }`.
 
 - [ ] **Step 1: Add the spectrum to `constants/colors.ts`**
@@ -1134,6 +1183,7 @@ Add to `machines/modes.test.ts`:
 
 ```ts
 import { DIFFICULTY_COLORS, MODE_COLORS, MODE_DESCRIPTIONS } from '@/machines/modes'
+
 it('has a color + description per mode and a color per difficulty', () => {
   expect(Object.keys(MODE_COLORS)).toEqual(['trainee', 'accuracy', 'speed'])
   expect(MODE_DESCRIPTIONS.speed.length).toBeGreaterThan(0)
@@ -1146,10 +1196,12 @@ Run: `pnpm test machines/modes.test.ts` → PASS. Commit: `git commit -am "feat:
 ### Task A2: Run-stat accumulators (avg accuracy & speed)
 
 **Files:**
+
 - Modify: `machines/scoring.ts` (export factors), `machines/game.ts` (context + `applyGrid` + `freshGame`)
 - Test: `machines/game.test.ts` (extend)
 
 **Interfaces:**
+
 - Produces: `accuracyFactor`, `speedFactor` exported from scoring; context `accSum: number`, `spdSum: number` (sums of per-hit factors, reset each game).
 
 - [ ] **Step 1: Export the factors** — in `machines/scoring.ts` change `function accuracyFactor` → `export function accuracyFactor` and `function speedFactor` → `export function speedFactor` (bodies unchanged).
@@ -1178,10 +1230,12 @@ spdSum: context.spdSum + spdAdded,
 ### Task A3: Mode switcher v2 + difficulty colors + run averages (supersedes Task 8 UI)
 
 **Files:**
+
 - Modify: `components/overlays/menu-overlay.tsx`
 - Modify: `app/(tabs)/index.tsx` (compute + pass averages)
 
 **Interfaces:**
+
 - Consumes: `MODE_COLORS`, `MODE_DESCRIPTIONS`, `DIFFICULTY_COLORS`, `ARCADE_TEASER` from `@/machines/modes`.
 - `MenuOverlay` gains props `avgAccuracy: number`, `avgSpeed: number`.
 
@@ -1190,52 +1244,72 @@ spdSum: context.spdSum + spdAdded,
 ```tsx
 const [focused, setFocused] = useState<Mode>(mode)
 // ...
-{showConfig && (
-  <View className="mb-3 items-center">
-    <Text className="mb-2 font-mono text-[9px] font-bold tracking-[1.8px] text-dim">MODE</Text>
-    <View className="flex-row flex-wrap justify-center gap-2 px-6" style={{ maxWidth: 340 }}>
-      {MODE_ORDER.map((m) => {
-        const selected = m === mode
-        return (
-          <Pressable
-            key={m}
-            onPress={() => { setFocused(m); onSetMode(m) }}
-            className="rounded-xl px-3.5 py-2"
-            style={selected ? { backgroundColor: MODE_COLORS[m] } : undefined}
-          >
-            <Text
-              selectable={false}
-              className={`font-mono text-[11px] font-black tracking-[1.5px] ${selected ? '' : 'bg-card'}`}
-              style={{ color: selected ? '#FFFFFF' : MODE_COLORS[m] }}
-            >
-              {MODES[m].label}
-            </Text>
-          </Pressable>
-        )
-      })}
-      {/* Locked Arcade teaser */}
-      <Pressable
-        onPress={() => { setFocused('arcade' as Mode) }}
-        className="flex-row items-center gap-1.5 rounded-xl bg-card px-3.5 py-2 opacity-60"
+{
+  showConfig && (
+    <View className="mb-3 items-center">
+      <Text className="mb-2 font-mono text-[9px] font-bold tracking-[1.8px] text-dim">
+        MODE
+      </Text>
+      <View
+        className="flex-row flex-wrap justify-center gap-2 px-6"
+        style={{ maxWidth: 340 }}
       >
-        <Text
-          selectable={false}
-          className="font-mono text-[11px] font-black tracking-[1.5px]"
-          style={{ color: ARCADE_TEASER.color }}
+        {MODE_ORDER.map((m) => {
+          const selected = m === mode
+          return (
+            <Pressable
+              key={m}
+              onPress={() => {
+                setFocused(m)
+                onSetMode(m)
+              }}
+              className="rounded-xl px-3.5 py-2"
+              style={selected ? { backgroundColor: MODE_COLORS[m] } : undefined}
+            >
+              <Text
+                selectable={false}
+                className={`font-mono text-[11px] font-black tracking-[1.5px] ${selected ? '' : 'bg-card'}`}
+                style={{ color: selected ? '#FFFFFF' : MODE_COLORS[m] }}
+              >
+                {MODES[m].label}
+              </Text>
+            </Pressable>
+          )
+        })}
+        {/* Locked Arcade teaser */}
+        <Pressable
+          onPress={() => {
+            setFocused('arcade' as Mode)
+          }}
+          className="flex-row items-center gap-1.5 rounded-xl bg-card px-3.5 py-2 opacity-60"
         >
-          {ARCADE_TEASER.label}
-        </Text>
-        <Text selectable={false} className="font-mono text-[8px] font-black tracking-[1px] text-dim">
-          {ARCADE_TEASER.tag}
-        </Text>
-      </Pressable>
+          <Text
+            selectable={false}
+            className="font-mono text-[11px] font-black tracking-[1.5px]"
+            style={{ color: ARCADE_TEASER.color }}
+          >
+            {ARCADE_TEASER.label}
+          </Text>
+          <Text
+            selectable={false}
+            className="font-mono text-[8px] font-black tracking-[1px] text-dim"
+          >
+            {ARCADE_TEASER.tag}
+          </Text>
+        </Pressable>
+      </View>
+      {/* Description of the focused mode */}
+      <Text
+        selectable={false}
+        className="mt-3 px-8 text-center font-mono text-[10px] font-bold tracking-[0.5px] text-dim"
+      >
+        {focused === ('arcade' as Mode)
+          ? ARCADE_TEASER.description
+          : MODE_DESCRIPTIONS[focused]}
+      </Text>
     </View>
-    {/* Description of the focused mode */}
-    <Text selectable={false} className="mt-3 px-8 text-center font-mono text-[10px] font-bold tracking-[0.5px] text-dim">
-      {focused === ('arcade' as Mode) ? ARCADE_TEASER.description : MODE_DESCRIPTIONS[focused]}
-    </Text>
-  </View>
-)}
+  )
+}
 ```
 
 > `focused` is typed `Mode`; the arcade sentinel is compared via a string cast only at the two call sites above (arcade is intentionally not in the `Mode` union). If you prefer no cast, widen the local state to `Mode | 'arcade'`.
@@ -1245,7 +1319,9 @@ const [focused, setFocused] = useState<Mode>(mode)
 ```tsx
 <Pressable
   key={d}
-  onPress={() => { onSetDifficulty(d) }}
+  onPress={() => {
+    onSetDifficulty(d)
+  }}
   className="rounded-xl px-3.5 py-2"
   style={selected ? { backgroundColor: DIFFICULTY_COLORS[d] } : undefined}
 >
@@ -1259,12 +1335,15 @@ const [focused, setFocused] = useState<Mode>(mode)
 </Pressable>
 ```
 
-(The `bg-card` on the *text* is wrong for a pill background — keep `bg-card` on the `Pressable` for unselected and drop it from the text. Adjust: unselected `Pressable` gets `className="... bg-card"`, selected gets the inline `backgroundColor`.)
+(The `bg-card` on the _text_ is wrong for a pill background — keep `bg-card` on the `Pressable` for unselected and drop it from the text. Adjust: unselected `Pressable` gets `className="... bg-card"`, selected gets the inline `backgroundColor`.)
 
 - [ ] **Step 3: Averages beside HITS.** In the SCORE block (pause + game over), under `{currentHits} HITS` add:
 
 ```tsx
-<Text selectable={false} className="font-mono text-[9px] font-bold tracking-[1.2px] text-dim">
+<Text
+  selectable={false}
+  className="font-mono text-[9px] font-bold tracking-[1.2px] text-dim"
+>
   {`ACC ${avgAccuracy}%   SPD ${avgSpeed}%`}
 </Text>
 ```
@@ -1287,6 +1366,7 @@ const avgSpeed = hits > 0 ? Math.round((100 * spdSum) / hits) : 0
 ### Task A4: Top bar v2 — mode/difficulty left, NINE centered (supersedes Task 9 top bar)
 
 **Files:**
+
 - Modify: `app/(tabs)/index.tsx`
 
 - [ ] **Step 1: Rebuild Row 1 as three columns.** Replace the Row 1 (`NINE` / `MENU`) block with:
