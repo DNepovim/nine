@@ -31,4 +31,4 @@ jobs:
       - name: Build web (export + service worker)
         run: pnpm run build:web
       - name: Deploy to EAS Hosting (production)
-        run: eas deploy --prod --non-interactive
+        run: pnpm dlx eas-cli@latest deploy --prod --non-interactive
