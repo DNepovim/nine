@@ -107,7 +107,7 @@ export default function GameScreen() {
       <Screen>
         <View className="mb-3">
           {/* Row 1 — mode/difficulty left, NINE centered, spacer right */}
-          <View className="mb-1 flex-row items-center" style={{ paddingRight: 32 }}>
+          <View className="mb-1 flex-row items-center">
             {/* left: mode (colored, caps) + difficulty (dim, lowercase) */}
             <View className="flex-1">
               <Text

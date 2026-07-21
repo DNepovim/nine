@@ -4,7 +4,7 @@ export const APP_BLUE = '#4C7EFF'
 export const APP_RED = '#E5534B'
 
 // Five-stop blue→red spectrum sampled from the countdown pie (APP_BLUE → APP_RED).
-export const SPECTRUM = ['#4C7EFF', '#7273D2', '#9969A5', '#BF5E78', '#E5534B'] as const
+export const SPECTRUM = ['#7273D2', '#8874cc', '#9969A5', '#c36282', '#E5534B'] as const
 
 type Palette = { low: string; high: string }
 

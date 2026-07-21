@@ -1,5 +1,16 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Pressable, Text, View } from 'react-native'
+import Animated, {
+  Easing,
+  interpolateColor,
+  useAnimatedStyle,
+  useSharedValue,
+  withDelay,
+  withRepeat,
+  withSequence,
+  withSpring,
+  withTiming,
+} from 'react-native-reanimated'
 
 import { Screen } from '@/components/screen'
 import { BUILD_LABEL } from '@/constants/game'
@@ -19,6 +30,124 @@ import {
 } from '@/machines/game'
 
 export type MenuMode = 'menu' | 'paused' | 'gameOver'
+
+// Vibrant off-spectrum intermediates that create a hue-spin feel for each
+// mode pair — chosen to be as far from the app's blue-purple-red palette as
+// possible so the spin sweeps visibly through foreign territory.
+const MID_COLORS: Record<string, string> = {
+  'trainee->accuracy': '#00D4FF', // cyan
+  'trainee->speed': '#AAFF00', // lime
+  'accuracy->trainee': '#FF00CC', // hot-pink
+  'accuracy->speed': '#FF7700', // orange
+  'speed->trainee': '#00FFCC', // mint
+  'speed->accuracy': '#DD00FF', // violet
+}
+
+function getMidColor(from: Mode, to: Mode): string {
+  return MID_COLORS[`${from}->${to}`] ?? '#FFFFFF'
+}
+
+const STAGGER_MS = 80
+// Different half-periods per letter → organic async float with no staggered start pop
+const FLOAT_HALF_PERIODS = [800, 950, 750, 900]
+const FLOAT_AMPLITUDE = 2
+
+// Reverse-lookup: hex color → Mode (used inside AnimatedLetter to resolve mid colors)
+const modeByColor = Object.fromEntries(
+  (Object.entries(MODE_COLORS) as [Mode, string][]).map(([m, c]) => [c, m]),
+) as Record<string, Mode>
+
+function AnimatedLetter({
+  char,
+  color,
+  delay,
+  floatHalfPeriod,
+}: {
+  char: string
+  color: string
+  delay: number
+  floatHalfPeriod: number
+}) {
+  const prevColorRef = useRef(color)
+  const canAnimateRef = useRef(false)
+  const progress = useSharedValue(1)
+  const translateYFloat = useSharedValue(0)
+  const translateYBounce = useSharedValue(0)
+  const from = useSharedValue(color)
+  const to = useSharedValue(color)
+  const mid = useSharedValue('#FFFFFF')
+
+  // Allow animations only after persistence has settled (avoids init pop when
+  // the saved mode differs from the machine's default 'accuracy').
+  useEffect(() => {
+    const id = setTimeout(() => {
+      canAnimateRef.current = true
+    }, 500)
+    return () => {
+      clearTimeout(id)
+    }
+  }, [])
+
+  // Idle float — starts immediately with no delay; each letter has its own period
+  useEffect(() => {
+    translateYFloat.value = withRepeat(
+      withTiming(-FLOAT_AMPLITUDE, {
+        duration: floatHalfPeriod,
+        easing: Easing.inOut(Easing.sin),
+      }),
+      -1,
+      true,
+    )
+  }, [])
+
+  // Mode-change — hue-spin + wave bounce (stagger delay gives the left-to-right sweep)
+  useEffect(() => {
+    if (color === prevColorRef.current) return
+    const prev = prevColorRef.current
+    prevColorRef.current = color
+    if (!canAnimateRef.current) {
+      // Instant color switch during init — no animation
+      from.value = color
+      to.value = color
+      progress.value = 1
+      return
+    }
+    from.value = prev
+    to.value = color
+    mid.value = getMidColor(
+      modeByColor[prev] ?? 'accuracy',
+      modeByColor[color] ?? 'accuracy',
+    )
+    progress.value = 0
+    progress.value = withDelay(delay, withTiming(1, { duration: 460 }))
+    translateYBounce.value = withDelay(
+      delay,
+      withSequence(
+        withSpring(-14, { damping: 5, stiffness: 350 }),
+        withSpring(0, { damping: 12, stiffness: 200 }),
+      ),
+    )
+  }, [color, delay])
+
+  const style = useAnimatedStyle(() => ({
+    color: interpolateColor(
+      progress.value,
+      [0, 0.5, 1],
+      [from.value, mid.value, to.value],
+    ),
+    transform: [{ translateY: translateYFloat.value + translateYBounce.value }],
+  }))
+
+  return (
+    <Animated.Text
+      selectable={false}
+      className="font-mono text-[56px] font-black tracking-[10px]"
+      style={style}
+    >
+      {char}
+    </Animated.Text>
+  )
+}
 
 const shadow = {
   shadowColor: '#000',
@@ -116,12 +245,26 @@ export function MenuOverlay({
         </View>
       )}
 
-      <Text
-        selectable={false}
-        className={`mb-4 font-mono font-black text-primary ${mode === 'menu' ? 'text-[48px] tracking-[10px]' : 'text-[30px] tracking-[4px]'}`}
-      >
-        {titleFor(mode)}
-      </Text>
+      {mode === 'menu' ? (
+        <View className="mb-4 flex-row">
+          {(['N', 'I', 'N', 'E'] as const).map((char, i) => (
+            <AnimatedLetter
+              key={i}
+              char={char}
+              color={MODE_COLORS[gameMode]}
+              delay={i * STAGGER_MS}
+              floatHalfPeriod={FLOAT_HALF_PERIODS[i] ?? 800}
+            />
+          ))}
+        </View>
+      ) : (
+        <Text
+          selectable={false}
+          className="mb-4 font-mono text-[30px] font-black tracking-[4px] text-primary"
+        >
+          {titleFor(mode)}
+        </Text>
+      )}
 
       {/* Mode selector — menu & game over */}
       {showConfig && (
