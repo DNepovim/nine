@@ -1,17 +1,19 @@
 import { useCallback, useEffect, useRef } from 'react'
 
-import { MAX_TARGET, SPAWN_INTERVAL } from '@/constants/game'
-import { type GameSend } from '@/machines/game'
+import { MAX_TARGET } from '@/constants/game'
+import { DIFFICULTIES, type Difficulty, type GameSend } from '@/machines/game'
 
-// Spawns targets every SPAWN_INTERVAL (first immediately) while playing; clearing
-// the board spawns the next one right away and restarts the cadence.
+// Spawns targets every difficulty.spawnInterval (first immediately) while playing;
+// clearing the board spawns the next one right away and restarts the cadence.
 export function useTargetSpawner({
   isPlaying,
   targetCount,
+  difficulty,
   send,
 }: {
   isPlaying: boolean
   targetCount: number
+  difficulty: Difficulty
   send: GameSend
 }) {
   const spawnTimer = useRef<ReturnType<typeof setInterval> | null>(null)
@@ -26,8 +28,8 @@ export function useTargetSpawner({
 
   const restartCadence = useCallback(() => {
     if (spawnTimer.current) clearInterval(spawnTimer.current)
-    spawnTimer.current = setInterval(spawnTarget, SPAWN_INTERVAL)
-  }, [spawnTarget])
+    spawnTimer.current = setInterval(spawnTarget, DIFFICULTIES[difficulty].spawnInterval)
+  }, [spawnTarget, difficulty])
 
   useEffect(() => {
     if (!isPlaying) {
