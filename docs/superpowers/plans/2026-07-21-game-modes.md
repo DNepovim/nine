@@ -1072,3 +1072,259 @@ git commit -m "feat: wire modes into the game screen (timeout, streak HUD, train
 
 - **Tests scope:** Vitest covers pure logic (`machines/modes`, `machines/scoring`, `machines/game` reducers via `createActor`). Hooks/components are gated on `pnpm check` + the manual steps above (no RN test harness in scope). If you prefer zero new test tooling, skip Task 1 and drop the `*.test.ts` steps + the `vitest run` in `check`; each task still ends with `pnpm check` + manual verification.
 - No prod deploy is part of this plan. Shipping is a separate, explicit step (`/ship prod`).
+
+---
+
+## Addendum — UI v2 (top bar, color system, run stats, arcade teaser)
+
+Implement after Tasks 1–9. **Tasks A3 and A4 supersede the mode-switcher UI in Task 8 and the top-bar/HUD in Task 9** — do Tasks 8–9 as written, then apply these on top.
+
+### Task A1: Color + description constants
+
+**Files:**
+- Modify: `constants/colors.ts`, `machines/modes.ts`
+- Test: `machines/modes.test.ts` (extend)
+
+**Interfaces:**
+- Produces: `SPECTRUM` (5-tuple); `MODE_COLORS: Record<Mode,string>`, `MODE_DESCRIPTIONS: Record<Mode,string>`, `DIFFICULTY_COLORS: Record<Difficulty,string>`, `ARCADE_TEASER: { label; color; description; tag }`.
+
+- [ ] **Step 1: Add the spectrum to `constants/colors.ts`**
+
+```ts
+// Five-stop blue→red spectrum sampled from the countdown pie (APP_BLUE → APP_RED).
+export const SPECTRUM = ['#4C7EFF', '#7273D2', '#9969A5', '#BF5E78', '#E5534B'] as const
+```
+
+- [ ] **Step 2: Add color/description maps to `machines/modes.ts`**
+
+```ts
+import { SPECTRUM } from '@/constants/colors'
+
+export const MODE_COLORS: Record<Mode, string> = {
+  trainee: SPECTRUM[0],
+  accuracy: SPECTRUM[1],
+  speed: SPECTRUM[4],
+}
+
+export const MODE_DESCRIPTIONS: Record<Mode, string> = {
+  trainee: 'Learn the ropes — no lives, no rush.',
+  accuracy: 'Fewest moves win. Precision over speed.',
+  speed: 'Race the clock. Fast hits build big combos.',
+}
+
+export const DIFFICULTY_COLORS: Record<Difficulty, string> = {
+  easy: SPECTRUM[0],
+  medium: SPECTRUM[1],
+  hard: SPECTRUM[3],
+  extreme: SPECTRUM[4],
+}
+
+// Locked, UI-only teaser — NOT a playable Mode yet.
+export const ARCADE_TEASER = {
+  label: 'ARCADE',
+  color: SPECTRUM[2],
+  description: 'Levels, bonuses, sidequests.',
+  tag: 'SOON',
+} as const
+```
+
+- [ ] **Step 3: Test + commit**
+
+Add to `machines/modes.test.ts`:
+
+```ts
+import { DIFFICULTY_COLORS, MODE_COLORS, MODE_DESCRIPTIONS } from '@/machines/modes'
+it('has a color + description per mode and a color per difficulty', () => {
+  expect(Object.keys(MODE_COLORS)).toEqual(['trainee', 'accuracy', 'speed'])
+  expect(MODE_DESCRIPTIONS.speed.length).toBeGreaterThan(0)
+  expect(DIFFICULTY_COLORS.extreme).toBe('#E5534B')
+})
+```
+
+Run: `pnpm test machines/modes.test.ts` → PASS. Commit: `git commit -am "feat: spectrum palette, mode/difficulty colors, descriptions"`.
+
+### Task A2: Run-stat accumulators (avg accuracy & speed)
+
+**Files:**
+- Modify: `machines/scoring.ts` (export factors), `machines/game.ts` (context + `applyGrid` + `freshGame`)
+- Test: `machines/game.test.ts` (extend)
+
+**Interfaces:**
+- Produces: `accuracyFactor`, `speedFactor` exported from scoring; context `accSum: number`, `spdSum: number` (sums of per-hit factors, reset each game).
+
+- [ ] **Step 1: Export the factors** — in `machines/scoring.ts` change `function accuracyFactor` → `export function accuracyFactor` and `function speedFactor` → `export function speedFactor` (bodies unchanged).
+
+- [ ] **Step 2: Add context fields** — in `machines/game.ts` add `accSum: number` and `spdSum: number` to `Context`, initialize both to `0` in the initial context, and add `accSum: 0, spdSum: 0` to `freshGame`'s return.
+
+- [ ] **Step 3: Accumulate in `applyGrid`** — inside the existing `matched` loop (from Task 5), add the running sums and return them:
+
+```ts
+import { accuracyFactor, computeHitPoints, computePar, speedFactor } from './scoring'
+// ...in applyGrid, alongside rawScore accumulation:
+let accAdded = 0
+let spdAdded = 0
+// per matched target (same loop that computes points):
+accAdded += accuracyFactor(t.par, userSteps)
+spdAdded += speedFactor(timeLeft, duration)
+// ...in the return object:
+accSum: context.accSum + accAdded,
+spdSum: context.spdSum + spdAdded,
+```
+
+(Averages are cumulative over the whole run — no reset on expiry, only on `freshGame`.)
+
+- [ ] **Step 4: Test** — extend `machines/game.test.ts` to assert that after a par hit `accSum` is ≈1 and `spdSum` is between 0 and 1; run `pnpm test machines/game.test.ts` → PASS. Commit: `git commit -am "feat: accumulate accuracy/speed factors for run averages"`.
+
+### Task A3: Mode switcher v2 + difficulty colors + run averages (supersedes Task 8 UI)
+
+**Files:**
+- Modify: `components/overlays/menu-overlay.tsx`
+- Modify: `app/(tabs)/index.tsx` (compute + pass averages)
+
+**Interfaces:**
+- Consumes: `MODE_COLORS`, `MODE_DESCRIPTIONS`, `DIFFICULTY_COLORS`, `ARCADE_TEASER` from `@/machines/modes`.
+- `MenuOverlay` gains props `avgAccuracy: number`, `avgSpeed: number`.
+
+- [ ] **Step 1: Colored mode pills + arcade teaser + description.** Replace the Task 8 mode row. Track a local `focused` mode (defaults to `mode`) so tapping the locked Arcade chip can preview its description without selecting it:
+
+```tsx
+const [focused, setFocused] = useState<Mode>(mode)
+// ...
+{showConfig && (
+  <View className="mb-3 items-center">
+    <Text className="mb-2 font-mono text-[9px] font-bold tracking-[1.8px] text-dim">MODE</Text>
+    <View className="flex-row flex-wrap justify-center gap-2 px-6" style={{ maxWidth: 340 }}>
+      {MODE_ORDER.map((m) => {
+        const selected = m === mode
+        return (
+          <Pressable
+            key={m}
+            onPress={() => { setFocused(m); onSetMode(m) }}
+            className="rounded-xl px-3.5 py-2"
+            style={selected ? { backgroundColor: MODE_COLORS[m] } : undefined}
+          >
+            <Text
+              selectable={false}
+              className={`font-mono text-[11px] font-black tracking-[1.5px] ${selected ? '' : 'bg-card'}`}
+              style={{ color: selected ? '#FFFFFF' : MODE_COLORS[m] }}
+            >
+              {MODES[m].label}
+            </Text>
+          </Pressable>
+        )
+      })}
+      {/* Locked Arcade teaser */}
+      <Pressable
+        onPress={() => { setFocused('arcade' as Mode) }}
+        className="flex-row items-center gap-1.5 rounded-xl bg-card px-3.5 py-2 opacity-60"
+      >
+        <Text
+          selectable={false}
+          className="font-mono text-[11px] font-black tracking-[1.5px]"
+          style={{ color: ARCADE_TEASER.color }}
+        >
+          {ARCADE_TEASER.label}
+        </Text>
+        <Text selectable={false} className="font-mono text-[8px] font-black tracking-[1px] text-dim">
+          {ARCADE_TEASER.tag}
+        </Text>
+      </Pressable>
+    </View>
+    {/* Description of the focused mode */}
+    <Text selectable={false} className="mt-3 px-8 text-center font-mono text-[10px] font-bold tracking-[0.5px] text-dim">
+      {focused === ('arcade' as Mode) ? ARCADE_TEASER.description : MODE_DESCRIPTIONS[focused]}
+    </Text>
+  </View>
+)}
+```
+
+> `focused` is typed `Mode`; the arcade sentinel is compared via a string cast only at the two call sites above (arcade is intentionally not in the `Mode` union). If you prefer no cast, widen the local state to `Mode | 'arcade'`.
+
+- [ ] **Step 2: Difficulty pills tinted.** In the existing difficulty pill map, color selected pills with the difficulty color and tint unselected labels:
+
+```tsx
+<Pressable
+  key={d}
+  onPress={() => { onSetDifficulty(d) }}
+  className="rounded-xl px-3.5 py-2"
+  style={selected ? { backgroundColor: DIFFICULTY_COLORS[d] } : undefined}
+>
+  <Text
+    selectable={false}
+    className={`font-mono text-[11px] font-black tracking-[1.5px] ${selected ? '' : 'bg-card'}`}
+    style={{ color: selected ? '#FFFFFF' : DIFFICULTY_COLORS[d] }}
+  >
+    {DIFFICULTIES[d].label}
+  </Text>
+</Pressable>
+```
+
+(The `bg-card` on the *text* is wrong for a pill background — keep `bg-card` on the `Pressable` for unselected and drop it from the text. Adjust: unselected `Pressable` gets `className="... bg-card"`, selected gets the inline `backgroundColor`.)
+
+- [ ] **Step 3: Averages beside HITS.** In the SCORE block (pause + game over), under `{currentHits} HITS` add:
+
+```tsx
+<Text selectable={false} className="font-mono text-[9px] font-bold tracking-[1.2px] text-dim">
+  {`ACC ${avgAccuracy}%   SPD ${avgSpeed}%`}
+</Text>
+```
+
+Add `avgAccuracy` and `avgSpeed` to `MenuOverlay`'s props type.
+
+- [ ] **Step 4: Compute + pass averages from the screen.** In `app/(tabs)/index.tsx`:
+
+```tsx
+const { accSum, spdSum } = state.context
+const avgAccuracy = hits > 0 ? Math.round((100 * accSum) / hits) : 0
+const avgSpeed = hits > 0 ? Math.round((100 * spdSum) / hits) : 0
+// ...on <MenuOverlay ... avgAccuracy={avgAccuracy} avgSpeed={avgSpeed} />
+```
+
+(`hits` is `state.context.hits`.)
+
+- [ ] **Step 5: Check + manual + commit.** `pnpm check` → 0. `pnpm web`: mode pills are colored (trainee blue, accuracy indigo, speed red), Arcade is a dim `SOON` chip that only updates the description, difficulty pills are the cool→hot ramp, and pause/game-over show `ACC n%  SPD n%`. Commit: `git commit -am "feat: colored mode/difficulty switchers, arcade teaser, run averages"`.
+
+### Task A4: Top bar v2 — mode/difficulty left, NINE centered (supersedes Task 9 top bar)
+
+**Files:**
+- Modify: `app/(tabs)/index.tsx`
+
+- [ ] **Step 1: Rebuild Row 1 as three columns.** Replace the Row 1 (`NINE` / `MENU`) block with:
+
+```tsx
+<View className="mb-1 flex-row items-center" style={{ paddingRight: 32 }}>
+  {/* left: mode (colored, caps) + difficulty (dim, lowercase) */}
+  <View className="flex-1">
+    <Text
+      selectable={false}
+      className="font-mono text-[13px] font-black tracking-[2px]"
+      style={{ color: MODE_COLORS[mode] }}
+    >
+      {MODES[mode].label}
+    </Text>
+    <Text
+      selectable={false}
+      className="font-mono text-[10px] font-bold tracking-[1px] text-dim"
+    >
+      {DIFFICULTIES[difficulty].label.toLowerCase()}
+    </Text>
+  </View>
+  {/* center: NINE */}
+  <Text
+    selectable={false}
+    className="font-mono text-[24px] font-black tracking-[8px] text-muted"
+  >
+    NINE
+  </Text>
+  {/* right: spacer balancing the absolute dots menu button (top-right) */}
+  <View className="flex-1" />
+</View>
+```
+
+Import `MODE_COLORS` (and `MODES`, `DIFFICULTIES` if not already) from `@/machines/modes`. The equal `flex-1` sides keep `NINE` centered; the dots `MenuButton` stays absolutely positioned at top-right as today.
+
+- [ ] **Step 2: Check + manual + commit.** `pnpm check` → 0. `pnpm web`: top-left shows e.g. `ACCURACY` (indigo) over `medium`; `NINE` centered; dots menu top-right; switching mode recolors the label. Commit: `git commit -am "feat: top bar with mode/difficulty left and NINE centered"`.
+
+## Addendum self-review
+
+- Top bar (A4) ✓ · avg accuracy/speed on pause+gameover (A2+A3) ✓ · 5-color spectrum + per-mode colors + mode color in top bar (A1+A3+A4) ✓ · arcade locked teaser chip with tag (A3) ✓ · mode description under switcher (A3) ✓ · per-difficulty colors (A1+A3) ✓. Types: `accSum`/`spdSum`, `MODE_COLORS`/`DIFFICULTY_COLORS`/`MODE_DESCRIPTIONS`/`ARCADE_TEASER`, `avgAccuracy`/`avgSpeed` consistent across tasks. The only cast is the intentional `'arcade' as Mode` sentinel (documented; alternative given).

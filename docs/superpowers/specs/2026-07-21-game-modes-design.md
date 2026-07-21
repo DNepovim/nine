@@ -174,6 +174,56 @@ stats: Record<Mode, Record<Difficulty, { score: number; hits: number }>>
 - **Trainee HUD:** hearts hidden (or shown as ∞) since lives are infinite.
 - Selecting a mode/difficulty persists it; both restore on next launch.
 
+## Top bar (in-game)
+
+Row 1 becomes a three-column layout: **left** = the active mode label in
+UPPERCASE tinted with the mode's accent color, with the difficulty beneath it in
+lowercase dim text; **center** = `NINE` (muted); **right** = the dots menu button.
+Row 2 is unchanged — hearts on the left (hidden in Trainee), digital score +
+streak badge on the right.
+
+Example left cluster: `ACCURACY` (indigo) over `medium` (dim, lowercase).
+
+## Run stats (accuracy & speed averages)
+
+Alongside `hits`, the machine accumulates per-hit accuracy and speed factors so
+the pause / game-over screens show run averages:
+
+- Context adds `accSum` and `spdSum` (running sums of `accuracyFactor` and
+  `speedFactor` over the run's hits), reset each game.
+- Averages = `hits > 0 ? round(100 × sum / hits) : 0`, shown as `ACC {n}%` and
+  `SPD {n}%` beside the existing `{hits} HITS` on the pause and game-over overlays.
+- `machines/scoring.ts` exports `accuracyFactor` and `speedFactor` for the sums.
+
+## Color system
+
+A five-stop blue→red spectrum sampled from the countdown pie's transition
+(`APP_BLUE → APP_RED`):
+
+`SPECTRUM = ['#4C7EFF', '#7273D2', '#9969A5', '#BF5E78', '#E5534B']`
+
+- **Mode accent** (mode pill + top-bar mode label): trainee `#4C7EFF`, accuracy
+  `#7273D2`, speed `#E5534B`, arcade `#9969A5` (dimmed while locked).
+- **Difficulty accent** (difficulty pill): easy `#4C7EFF`, medium `#7273D2`, hard
+  `#BF5E78`, extreme `#E5534B` — cool→hot, echoing the countdown (harder = redder).
+
+These are dynamic per-item colors, applied as inline `color`/`backgroundColor`
+(not token classes). Modes and difficulties intentionally share the one spectrum.
+
+## Mode descriptions & Arcade placeholder
+
+Each mode has a one-line description shown under the mode switcher on the
+intro / game-over screen (reflecting the selected item):
+
+- trainee — "Learn the ropes — no lives, no rush."
+- accuracy — "Fewest moves win. Precision over speed."
+- speed — "Race the clock. Fast hits build big combos."
+- arcade — "Levels, bonuses, sidequests."
+
+**Arcade** appears in the mode switcher as a **disabled** chip with a `SOON` tag.
+It is **not** a `Mode` in the machine — it's a UI-only display entry (accent
+dimmed); selecting it is a no-op, though its teaser description still shows.
+
 ## Files touched
 
 - `machines/modes.ts` *(new)* — `Mode`, `MODES`, `MODE_ORDER`, streak-trigger
