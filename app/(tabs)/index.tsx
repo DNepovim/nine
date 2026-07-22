@@ -1,7 +1,7 @@
 import { AntDesign } from '@expo/vector-icons'
 import { useMachine } from '@xstate/react'
 import { useFonts } from 'expo-font'
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Text, View } from 'react-native'
 
 import DSEG7Font from '@/assets/fonts/DSEG7Classic-Bold.ttf'
@@ -12,6 +12,7 @@ import { ScoreDigit } from '@/components/game/score-digit'
 import { TargetCard } from '@/components/game/target-card'
 import { AdvancedOptionsOverlay } from '@/components/overlays/advanced-options-overlay'
 import { MenuOverlay, type MenuMode } from '@/components/overlays/menu-overlay'
+import { NicknameModal } from '@/components/overlays/nickname-modal'
 import { Screen } from '@/components/screen'
 import { mono } from '@/constants/theme'
 import { useDisplayOptions } from '@/hooks/use-display-options'
@@ -22,6 +23,8 @@ import { usePersistedDifficulty } from '@/hooks/use-persisted-difficulty'
 import { usePersistedMode } from '@/hooks/use-persisted-mode'
 import { usePersistedStats } from '@/hooks/use-persisted-stats'
 import { useScoreDirection } from '@/hooks/use-score-direction'
+import { useScoreSubmission } from '@/hooks/use-score-submission'
+import { useSupabaseAuth } from '@/hooks/use-supabase-auth'
 import { useTargetSpawner } from '@/hooks/use-target-spawner'
 import { useTheme } from '@/hooks/use-theme'
 import { valueProgress } from '@/lib/value-progress'
@@ -67,6 +70,30 @@ export default function GameScreen() {
   usePersistedMode(mode, send)
   const { showSum, showFactor, toggleSum, toggleFactor } = useDisplayOptions()
   const [advancedOpen, setAdvancedOpen] = useState(false)
+
+  const { userId, nickname, isReady, updateNickname } = useSupabaseAuth()
+  const { submit: submitScore } = useScoreSubmission(userId, nickname, isReady)
+  const [showNicknameModal, setShowNicknameModal] = useState(false)
+
+  // Trigger score submission on each game-over transition.
+  const prevIsGameOverRef = useRef(false)
+  useEffect(() => {
+    if (isGameOver === prevIsGameOverRef.current) return
+    prevIsGameOverRef.current = isGameOver
+    if (isGameOver && mode !== 'trainee') {
+      submitScore(mode, difficulty, state.context.score, state.context.hits)
+      if (isReady && !nickname) setShowNicknameModal(true)
+    }
+  }, [
+    isGameOver,
+    isReady,
+    nickname,
+    mode,
+    difficulty,
+    state.context.score,
+    state.context.hits,
+    submitScore,
+  ])
 
   // The dial sum drives the score above the dial; the machine's composite score
   // drives the digital HUD readout.
@@ -278,8 +305,9 @@ export default function GameScreen() {
           <MenuOverlay
             mode={menuMode}
             gameMode={mode}
-            stats={stats}
             difficulty={difficulty}
+            userId={userId}
+            nickname={nickname}
             currentScore={state.context.score}
             currentHits={state.context.hits}
             avgAccuracy={avgAccuracy}
@@ -304,6 +332,18 @@ export default function GameScreen() {
             }}
           />
         ))}
+
+      <NicknameModal
+        visible={showNicknameModal}
+        onSave={async (name) => {
+          const res = await updateNickname(name)
+          if (!res.error) setShowNicknameModal(false)
+          return res
+        }}
+        onSkip={() => {
+          setShowNicknameModal(false)
+        }}
+      />
 
       {/* Persistent menu button — same spot in game & pause; morphs grid↔cross */}
       <MenuButton

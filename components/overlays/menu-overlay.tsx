@@ -9,7 +9,6 @@ import {
   MODE_GRADIENT,
   type Difficulty,
   type Mode,
-  type Stats,
 } from '@/machines/game'
 
 import { AnimatedLetter } from './animated-letter'
@@ -35,8 +34,9 @@ const titleFor = (mode: MenuMode): string => {
 export function MenuOverlay({
   mode,
   gameMode,
-  stats,
   difficulty,
+  userId,
+  nickname,
   currentScore,
   currentHits,
   avgAccuracy,
@@ -50,8 +50,9 @@ export function MenuOverlay({
 }: {
   mode: MenuMode
   gameMode: Mode
-  stats: Stats
   difficulty: Difficulty
+  userId: string | null
+  nickname: string | null
   currentScore: number
   currentHits: number
   avgAccuracy: number
@@ -156,7 +157,14 @@ export function MenuOverlay({
         />
       )}
 
-      {showConfig && <HighScores gameMode={gameMode} stats={stats} />}
+      {showConfig && focused !== 'trainee' && focused !== 'arcade' && (
+        <HighScores
+          gameMode={gameMode}
+          difficulty={difficulty}
+          userId={userId}
+          nickname={nickname}
+        />
+      )}
 
       {/* Buttons */}
       <View className="w-56 gap-3">

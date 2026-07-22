@@ -1,59 +1,29 @@
 import { useRef, useState } from 'react'
-import { Pressable, ScrollView, Text, useWindowDimensions, View } from 'react-native'
-
 import {
-  DIFFICULTY_ORDER,
-  MODE_GRADIENT,
-  MODE_ORDER,
-  type Mode,
-  type Stats,
-} from '@/machines/game'
+  ActivityIndicator,
+  Pressable,
+  ScrollView,
+  Text,
+  useWindowDimensions,
+  View,
+} from 'react-native'
 
-type Tab = 'today' | 'week' | 'forever'
+import { useLeaderboard } from '@/hooks/use-leaderboard'
+import type { LeaderboardState } from '@/hooks/use-leaderboard'
+import { type LeaderboardTab } from '@/lib/leaderboard'
+import { MODE_GRADIENT, type Difficulty, type Mode } from '@/machines/game'
+
+const TABS: { key: LeaderboardTab; label: string }[] = [
+  { key: 'today', label: 'TODAY' },
+  { key: 'week', label: 'THIS WEEK' },
+  { key: 'forever', label: 'FOREVER' },
+]
 
 type ScoreEntry = {
   rank: number
   nickname: string
   score: number
   isUser?: boolean
-}
-
-const TABS: { key: Tab; label: string }[] = [
-  { key: 'today', label: 'TODAY' },
-  { key: 'week', label: 'THIS WEEK' },
-  { key: 'forever', label: 'FOREVER' },
-]
-
-// Placeholder leaderboard data — replace with live API responses per tab
-const MOCK_TOP5: Record<Tab, ScoreEntry[]> = {
-  today: [
-    { rank: 1, nickname: 'DOMINO', score: 184 },
-    { rank: 2, nickname: 'SPEEDY', score: 162 },
-    { rank: 3, nickname: 'ACE_9', score: 143 },
-    { rank: 4, nickname: 'BLAZE', score: 128 },
-    { rank: 5, nickname: 'NOVA', score: 105 },
-  ],
-  week: [
-    { rank: 1, nickname: 'ACE_9', score: 982 },
-    { rank: 2, nickname: 'DOMINO', score: 874 },
-    { rank: 3, nickname: 'SPEEDY', score: 761 },
-    { rank: 4, nickname: 'BLAZE', score: 639 },
-    { rank: 5, nickname: 'KIRO', score: 508 },
-  ],
-  forever: [
-    { rank: 1, nickname: 'ACE_9', score: 4820 },
-    { rank: 2, nickname: 'DOMINO', score: 4180 },
-    { rank: 3, nickname: 'SPEEDY', score: 3560 },
-    { rank: 4, nickname: 'BLAZE', score: 2890 },
-    { rank: 5, nickname: 'KIRO', score: 2210 },
-  ],
-}
-
-// Placeholder user ranks per tab — will come from the API
-const MOCK_USER_RANK: Record<Tab, number> = {
-  today: 7,
-  week: 12,
-  forever: 42,
 }
 
 function ScoreRow({ entry, accentColor }: { entry: ScoreEntry; accentColor: string }) {
@@ -89,23 +59,109 @@ function ScoreRow({ entry, accentColor }: { entry: ScoreEntry; accentColor: stri
   )
 }
 
-export function HighScores({ gameMode, stats }: { gameMode: Mode; stats: Stats }) {
+function SkeletonRow() {
+  return (
+    <View className="flex-row items-center px-2 py-1.5">
+      <View className="mr-1 h-2.5 w-5 rounded-sm bg-dim/20" />
+      <View className="mr-1 h-2.5 flex-1 rounded-sm bg-dim/20" />
+      <View className="h-2.5 w-10 rounded-sm bg-dim/20" />
+    </View>
+  )
+}
+
+function TabPanel({
+  data,
+  accentColor,
+  nickname,
+  width,
+}: {
+  data: LeaderboardState
+  accentColor: string
+  nickname: string | null
+  width: number
+}) {
+  if (data.loading) {
+    return (
+      <View style={{ width }} className="items-center py-4">
+        <ActivityIndicator size="small" color={accentColor} />
+        {[1, 2, 3, 4, 5].map((i) => (
+          <SkeletonRow key={i} />
+        ))}
+      </View>
+    )
+  }
+
+  if (data.error) {
+    return (
+      <View style={{ width }} className="items-center py-6">
+        <Text selectable={false} className="font-mono text-[9px] font-bold text-dim">
+          COULD NOT LOAD
+        </Text>
+      </View>
+    )
+  }
+
+  const top5 = data.rows
+  const myRank = data.myRank
+  const userIsInTop5 = myRank !== null && myRank.rank <= top5.length
+
+  return (
+    <View style={{ width }}>
+      {top5.map((row) => (
+        <ScoreRow
+          key={row.user_id}
+          entry={{ rank: row.rank, nickname: row.nickname, score: row.best_score }}
+          accentColor={accentColor}
+        />
+      ))}
+      {myRank !== null && !userIsInTop5 && nickname !== null && (
+        <>
+          <View className="items-center py-1">
+            <Text
+              selectable={false}
+              className="font-mono text-[11px] tracking-[6px] text-dim"
+            >
+              ⋯
+            </Text>
+          </View>
+          <ScoreRow
+            entry={{
+              rank: myRank.rank,
+              nickname,
+              score: myRank.best_score,
+              isUser: true,
+            }}
+            accentColor={accentColor}
+          />
+        </>
+      )}
+    </View>
+  )
+}
+
+export function HighScores({
+  gameMode,
+  difficulty,
+  userId,
+  nickname,
+}: {
+  gameMode: Mode
+  difficulty: Difficulty
+  userId: string | null
+  nickname: string | null
+}) {
   const { width: windowWidth } = useWindowDimensions()
   const [panelWidth, setPanelWidth] = useState(0)
-  const [activeTab, setActiveTab] = useState<Tab>('today')
+  const [activeTab, setActiveTab] = useState<LeaderboardTab>('today')
   const scrollRef = useRef<ScrollView>(null)
 
   const accentColor = MODE_GRADIENT[gameMode][0]
-  // Fall back to window width minus Screen's px-4 padding until onLayout fires
   const effectiveWidth = panelWidth > 0 ? panelWidth : windowWidth - 32
 
-  // User's all-time best across every mode × difficulty
-  const userScore = Math.max(
-    0,
-    ...DIFFICULTY_ORDER.flatMap((d) => MODE_ORDER.map((m) => stats[m][d].score)),
-  )
+  const { today, week, forever } = useLeaderboard(gameMode, difficulty, userId)
+  const dataByTab: Record<LeaderboardTab, LeaderboardState> = { today, week, forever }
 
-  const goToTab = (key: Tab) => {
+  const goToTab = (key: LeaderboardTab) => {
     const index = TABS.findIndex((t) => t.key === key)
     setActiveTab(key)
     scrollRef.current?.scrollTo({ x: index * effectiveWidth, animated: true })
@@ -135,7 +191,7 @@ export function HighScores({ gameMode, stats }: { gameMode: Mode; stats: Stats }
         ))}
       </View>
 
-      {/* Column headers — fixed above the sliding panels */}
+      {/* Column headers */}
       <View className="mb-1 flex-row px-2">
         <Text
           selectable={false}
@@ -157,7 +213,7 @@ export function HighScores({ gameMode, stats }: { gameMode: Mode; stats: Stats }
         </Text>
       </View>
 
-      {/* Paging scroll view — each page is one tab's data; swipe or tap tabs to navigate */}
+      {/* Paging scroll view — swipe or tap tabs to navigate */}
       <View
         className="w-full"
         onLayout={(e) => {
@@ -176,36 +232,15 @@ export function HighScores({ gameMode, stats }: { gameMode: Mode; stats: Stats }
             if (tab) setActiveTab(tab.key)
           }}
         >
-          {TABS.map(({ key }) => {
-            const top5 = MOCK_TOP5[key]
-            const userInTop5 = top5.some((e) => e.isUser)
-            const userEntry: ScoreEntry = {
-              rank: MOCK_USER_RANK[key],
-              nickname: 'YOU',
-              score: userScore,
-              isUser: true,
-            }
-            return (
-              <View key={key} style={{ width: effectiveWidth }}>
-                {top5.map((entry) => (
-                  <ScoreRow key={entry.rank} entry={entry} accentColor={accentColor} />
-                ))}
-                {!userInTop5 && (
-                  <>
-                    <View className="items-center py-1">
-                      <Text
-                        selectable={false}
-                        className="font-mono text-[11px] tracking-[6px] text-dim"
-                      >
-                        ⋯
-                      </Text>
-                    </View>
-                    <ScoreRow entry={userEntry} accentColor={accentColor} />
-                  </>
-                )}
-              </View>
-            )
-          })}
+          {TABS.map(({ key }) => (
+            <TabPanel
+              key={key}
+              data={dataByTab[key]}
+              accentColor={accentColor}
+              nickname={nickname}
+              width={effectiveWidth}
+            />
+          ))}
         </ScrollView>
       </View>
     </View>
