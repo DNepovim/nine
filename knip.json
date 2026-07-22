@@ -7,5 +7,6 @@
     "**/*.test.ts"
   ],
   "project": ["**/*.{ts,tsx}"],
-  "ignoreDependencies": ["babel-preset-expo"]
+  "ignoreDependencies": ["babel-preset-expo"],
+  "ignore": ["**/*.web.ts"]
 }
