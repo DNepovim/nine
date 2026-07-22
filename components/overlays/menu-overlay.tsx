@@ -1,6 +1,7 @@
 import { LinearGradient } from 'expo-linear-gradient'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Pressable, Text, View } from 'react-native'
+import { Easing, useSharedValue, withRepeat, withTiming } from 'react-native-reanimated'
 
 import { Screen } from '@/components/screen'
 import {
@@ -66,6 +67,23 @@ export function MenuOverlay({
 }) {
   const [focused, setFocused] = useState<Mode | 'arcade'>(gameMode)
 
+  const gradPhase = useSharedValue(0)
+  const gradStartSv = useSharedValue<string>(MODE_GRADIENT[gameMode][0])
+  const gradEndSv = useSharedValue<string>(MODE_GRADIENT[gameMode][1])
+
+  useEffect(() => {
+    gradPhase.value = withRepeat(
+      withTiming(1, { duration: 2000, easing: Easing.linear }),
+      -1,
+      false,
+    )
+  }, [gradPhase])
+
+  useEffect(() => {
+    gradStartSv.value = MODE_GRADIENT[gameMode][0]
+    gradEndSv.value = MODE_GRADIENT[gameMode][1]
+  }, [gameMode, gradStartSv, gradEndSv])
+
   const isPaused = mode === 'paused'
   const isGameOver = mode === 'gameOver'
   const showConfig = mode === 'menu' || isGameOver
@@ -124,6 +142,10 @@ export function MenuOverlay({
                 MODE_GRADIENT[gameMode][1],
                 i / 3,
               )}
+              tBase={i / 3}
+              gradStart={gradStartSv}
+              gradEnd={gradEndSv}
+              gradPhase={gradPhase}
               mode={gameMode}
               delay={i * 80}
               letterIndex={i}
@@ -142,6 +164,7 @@ export function MenuOverlay({
       {showConfig && (
         <ModeSelector
           focused={focused}
+          gradPhase={gradPhase}
           onSelect={(m) => {
             setFocused(m)
             if (m !== 'arcade') onSetMode(m)
@@ -153,6 +176,7 @@ export function MenuOverlay({
         <DifficultySelector
           gameMode={gameMode}
           difficulty={difficulty}
+          gradPhase={gradPhase}
           onSetDifficulty={onSetDifficulty}
         />
       )}

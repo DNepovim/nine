@@ -4,6 +4,7 @@ import Animated, {
   useSharedValue,
   withDelay,
   withTiming,
+  type SharedValue,
 } from 'react-native-reanimated'
 
 import { type Mode } from '@/machines/game'
@@ -41,15 +42,23 @@ function lerpHexWl(a: string, b: string, t: number): string {
 export function AnimatedLetter({
   char,
   color,
+  tBase,
   mode,
   delay,
   letterIndex,
+  gradStart,
+  gradEnd,
+  gradPhase,
 }: {
   char: string
   color: string
+  tBase: number
   mode: Mode
   delay: number
   letterIndex: number
+  gradStart: SharedValue<string>
+  gradEnd: SharedValue<string>
+  gradPhase: SharedValue<number>
 }) {
   const prevColorRef = useRef(color)
   const prevModeRef = useRef(mode)
@@ -89,9 +98,14 @@ export function AnimatedLetter({
     progress.value = withDelay(delay, withTiming(1, { duration: 500 }))
   }, [color, delay, mode])
 
-  // Two-segment lerp: from→mid over first half, mid→to over second half.
   const style = useAnimatedStyle(() => {
     const p = progress.value
+    if (p >= 1) {
+      // Idle: each letter tracks its phase-offset position in the moving gradient.
+      const t = (((tBase + gradPhase.value) % 1) + 1) % 1
+      return { color: lerpHexWl(gradStart.value, gradEnd.value, t) }
+    }
+    // Mode switch: two-segment lerp from→mid over first half, mid→to over second half.
     const clr =
       p <= 0.5
         ? lerpHexWl(from.value, mid.value, p * 2)

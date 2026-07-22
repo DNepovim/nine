@@ -1,5 +1,14 @@
 import { LinearGradient } from 'expo-linear-gradient'
+import { useEffect, useRef, useState } from 'react'
 import { Pressable, Text, View } from 'react-native'
+import Animated, {
+  useAnimatedStyle,
+  useSharedValue,
+  withDelay,
+  withSpring,
+  withTiming,
+  type SharedValue,
+} from 'react-native-reanimated'
 
 import {
   ARCADE_TEASER,
@@ -10,13 +19,74 @@ import {
   type Mode,
 } from '@/machines/game'
 
+const MODE_ITEMS = [...MODE_ORDER, 'arcade'] as (Mode | 'arcade')[]
+
+function pillColors(f: Mode | 'arcade'): [string, string] {
+  return f === 'arcade'
+    ? [ARCADE_TEASER.color, ARCADE_TEASER.color]
+    : (MODE_GRADIENT[f] as [string, string])
+}
+
 export function ModeSelector({
   focused,
   onSelect,
+  gradPhase,
 }: {
   focused: Mode | 'arcade'
   onSelect: (m: Mode | 'arcade') => void
+  gradPhase: SharedValue<number>
 }) {
+  const tabLayouts = useRef<{ x: number; width: number }[]>([])
+  const bgLeft = useSharedValue(-999)
+  const bgRight = useSharedValue(-999)
+  const [fromColors, setFromColors] = useState<[string, string]>(() =>
+    pillColors(focused),
+  )
+  const [toColors, setToColors] = useState<[string, string]>(() => pillColors(focused))
+  const prevFocusedRef = useRef<Mode | 'arcade'>(focused)
+  const colorFade = useSharedValue(1)
+
+  const bgStyle = useAnimatedStyle(() => ({
+    transform: [{ translateX: bgLeft.value }],
+    width: Math.max(0, bgRight.value - bgLeft.value),
+  }))
+
+  const innerGradStyle = useAnimatedStyle(() => ({
+    transform: [{ translateX: Math.sin(gradPhase.value * Math.PI * 2) * 12 }],
+  }))
+
+  const fromGradStyle = useAnimatedStyle(() => ({ opacity: 1 - colorFade.value }))
+  const toGradStyle = useAnimatedStyle(() => ({ opacity: colorFade.value }))
+
+  useEffect(() => {
+    const index = MODE_ITEMS.findIndex((m) => m === focused)
+    const layout = tabLayouts.current[index]
+    if (layout) {
+      const newLeft = layout.x
+      const newRight = layout.x + layout.width
+      const spring = { damping: 40, stiffness: 300 }
+      if (bgLeft.value < -900) {
+        bgLeft.value = newLeft
+        bgRight.value = newRight
+      } else if (newLeft >= bgLeft.value) {
+        bgRight.value = withSpring(newRight, spring)
+        bgLeft.value = withDelay(60, withSpring(newLeft, spring))
+      } else {
+        bgLeft.value = withSpring(newLeft, spring)
+        bgRight.value = withDelay(60, withSpring(newRight, spring))
+      }
+    }
+
+    if (prevFocusedRef.current !== focused) {
+      const prevFocused = prevFocusedRef.current
+      prevFocusedRef.current = focused
+      setFromColors(pillColors(prevFocused))
+      setToColors(pillColors(focused))
+      colorFade.value = 0
+      colorFade.value = withTiming(1, { duration: 350 })
+    }
+  }, [focused, bgLeft, bgRight, colorFade])
+
   return (
     <View className="mb-3 items-center">
       <Text
@@ -25,8 +95,54 @@ export function ModeSelector({
       >
         GAME MODES
       </Text>
-      <View className="flex-row justify-center">
-        {([...MODE_ORDER, 'arcade'] as (Mode | 'arcade')[]).map((m) => {
+      <View className="flex-row">
+        {/* Sliding pill — behind buttons in z-order */}
+        <Animated.View
+          pointerEvents="none"
+          style={[
+            bgStyle,
+            {
+              position: 'absolute',
+              top: 0,
+              bottom: 0,
+              borderRadius: 12,
+              overflow: 'hidden',
+            },
+          ]}
+        >
+          {/* From layer: previous colors, fades out */}
+          <Animated.View
+            style={[
+              { position: 'absolute', top: 0, bottom: 0, left: -16, right: -16 },
+              innerGradStyle,
+              fromGradStyle,
+            ]}
+          >
+            <LinearGradient
+              colors={fromColors}
+              start={{ x: 0, y: 0.5 }}
+              end={{ x: 1, y: 0.5 }}
+              style={{ flex: 1 }}
+            />
+          </Animated.View>
+          {/* To layer: current colors, fades in */}
+          <Animated.View
+            style={[
+              { position: 'absolute', top: 0, bottom: 0, left: -16, right: -16 },
+              innerGradStyle,
+              toGradStyle,
+            ]}
+          >
+            <LinearGradient
+              colors={toColors}
+              start={{ x: 0, y: 0.5 }}
+              end={{ x: 1, y: 0.5 }}
+              style={{ flex: 1 }}
+            />
+          </Animated.View>
+        </Animated.View>
+
+        {MODE_ITEMS.map((m, i) => {
           const isActive = m === focused
           if (m === 'arcade') {
             return (
@@ -35,12 +151,18 @@ export function ModeSelector({
                 onPress={() => {
                   onSelect('arcade')
                 }}
-                className="rounded-xl px-3.5 py-2"
-                style={
-                  isActive
-                    ? { backgroundColor: ARCADE_TEASER.color }
-                    : { backgroundColor: 'transparent', opacity: 0.6 }
-                }
+                onLayout={(e) => {
+                  tabLayouts.current[i] = {
+                    x: e.nativeEvent.layout.x,
+                    width: e.nativeEvent.layout.width,
+                  }
+                  if (isActive) {
+                    bgLeft.value = e.nativeEvent.layout.x
+                    bgRight.value = e.nativeEvent.layout.x + e.nativeEvent.layout.width
+                  }
+                }}
+                className="px-3.5 py-2"
+                style={!isActive ? { opacity: 0.6 } : undefined}
               >
                 <Text
                   selectable={false}
@@ -82,33 +204,25 @@ export function ModeSelector({
               onPress={() => {
                 onSelect(m)
               }}
-              className="overflow-hidden rounded-xl"
+              onLayout={(e) => {
+                tabLayouts.current[i] = {
+                  x: e.nativeEvent.layout.x,
+                  width: e.nativeEvent.layout.width,
+                }
+                if (isActive) {
+                  bgLeft.value = e.nativeEvent.layout.x
+                  bgRight.value = e.nativeEvent.layout.x + e.nativeEvent.layout.width
+                }
+              }}
+              className="px-3.5 py-2"
             >
-              {isActive ? (
-                <LinearGradient
-                  colors={[...MODE_GRADIENT[m]]}
-                  start={{ x: 0, y: 0.5 }}
-                  end={{ x: 1, y: 0.5 }}
-                  className="px-3.5 py-2"
-                >
-                  <Text
-                    selectable={false}
-                    className="font-mono text-[11px] font-black tracking-[1.5px] text-white"
-                  >
-                    {MODES[m].label}
-                  </Text>
-                </LinearGradient>
-              ) : (
-                <View className="px-3.5 py-2">
-                  <Text
-                    selectable={false}
-                    className="font-mono text-[11px] font-black tracking-[1.5px]"
-                    style={{ color: MODE_GRADIENT[m][0] }}
-                  >
-                    {MODES[m].label}
-                  </Text>
-                </View>
-              )}
+              <Text
+                selectable={false}
+                className="font-mono text-[11px] font-black tracking-[1.5px]"
+                style={{ color: isActive ? '#FFFFFF' : MODE_GRADIENT[m][0] }}
+              >
+                {MODES[m].label}
+              </Text>
             </Pressable>
           )
         })}
