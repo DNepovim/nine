@@ -30,7 +30,8 @@ import {
   DIFFICULTIES,
   effectiveTimeout,
   gameMachine,
-  MODE_COLORS,
+  getDifficultyColor,
+  MODE_GRADIENT,
   MODES,
   streakMultiplier,
 } from '@/machines/game'
@@ -113,21 +114,24 @@ export default function GameScreen() {
               <Text
                 selectable={false}
                 className="font-mono text-[13px] font-black tracking-[2px]"
-                style={{ color: MODE_COLORS[mode] }}
+                style={{ color: MODE_GRADIENT[mode][0] }}
               >
                 {MODES[mode].label}
               </Text>
-              <Text
-                selectable={false}
-                className="font-mono text-[10px] font-bold tracking-[1px] text-dim"
-              >
-                {DIFFICULTIES[difficulty].label.toLowerCase()}
-              </Text>
+              {mode !== 'trainee' && (
+                <Text
+                  selectable={false}
+                  className="font-mono text-[10px] font-bold tracking-[1px] text-dim"
+                >
+                  {DIFFICULTIES[difficulty].label.toLowerCase()}
+                </Text>
+              )}
             </View>
-            {/* center: NINE */}
+            {/* center: NINE — tinted by difficulty shade of mode color */}
             <Text
               selectable={false}
-              className="font-mono text-[24px] font-black tracking-[8px] text-muted"
+              className="font-mono text-[24px] font-black tracking-[8px]"
+              style={{ color: getDifficultyColor(mode, difficulty) }}
             >
               NINE
             </Text>
@@ -137,21 +141,22 @@ export default function GameScreen() {
 
           {/* Row 2 — hearts + score cluster */}
           <View className="mt-1.5 flex-row items-center justify-between gap-2.5">
-            {/* Hearts — hidden for trainee (infinite lives) */}
-            {MODES[mode].lives !== Number.POSITIVE_INFINITY ? (
-              <View className="flex-row gap-1">
-                {[0, 1, 2].map((i) => (
-                  <AntDesign
-                    key={i}
-                    name="heart"
-                    size={22}
-                    color={i < lives ? '#E5534B' : isDark ? '#1C1D30' : '#FDFCFA'}
-                  />
-                ))}
-              </View>
-            ) : (
-              <View />
-            )}
+            <View className="flex-row gap-1">
+              {[0, 1, 2].map((i) => (
+                <AntDesign
+                  key={i}
+                  name="heart"
+                  size={22}
+                  color={
+                    MODES[mode].lives === Number.POSITIVE_INFINITY || i < lives
+                      ? '#E5534B'
+                      : isDark
+                        ? '#1C1D30'
+                        : '#FDFCFA'
+                  }
+                />
+              ))}
+            </View>
 
             {/* Score cluster: digital readout + streak multiplier badge */}
             <View className="relative items-end">
@@ -275,7 +280,6 @@ export default function GameScreen() {
             gameMode={mode}
             stats={stats}
             difficulty={difficulty}
-            dsegLoaded={dsegLoaded}
             currentScore={state.context.score}
             currentHits={state.context.hits}
             avgAccuracy={avgAccuracy}

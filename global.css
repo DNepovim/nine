@@ -38,6 +38,30 @@
   --color-on-strong: #d8d2f4;
 }
 
+/* NINE title: each letter has its own float period for an organic async feel.
+   CSS handles this on web; native ignores animation/keyframes gracefully. */
+@keyframes letter-float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-3px);
+  }
+}
+.letter-float-0 {
+  animation: letter-float 1.6s ease-in-out infinite;
+}
+.letter-float-1 {
+  animation: letter-float 1.9s ease-in-out infinite;
+}
+.letter-float-2 {
+  animation: letter-float 1.5s ease-in-out infinite;
+}
+.letter-float-3 {
+  animation: letter-float 1.8s ease-in-out infinite;
+}
+
 /* Match the monospace family to the app's previous per-platform values. */
 :root {
   @media ios {

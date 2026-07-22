@@ -80,7 +80,12 @@ export function FloatingPoints({
       {bonus && (
         <Text
           selectable={false}
-          style={{ fontFamily: mono, fontWeight: '900', fontSize: 11, color: '#E7B44C' }}
+          style={{
+            fontFamily: mono,
+            fontWeight: '900',
+            fontSize: 11,
+            color: '#E7B44C',
+          }}
         >
           ×2
         </Text>
