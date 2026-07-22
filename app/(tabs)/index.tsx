@@ -11,8 +11,10 @@ import { MenuButton } from '@/components/game/menu-button'
 import { ScoreDigit } from '@/components/game/score-digit'
 import { TargetCard } from '@/components/game/target-card'
 import { AdvancedOptionsOverlay } from '@/components/overlays/advanced-options-overlay'
-import { MenuOverlay, type MenuMode } from '@/components/overlays/menu-overlay'
+import { GameOverOverlay } from '@/components/overlays/game-over-overlay'
+import { MenuOverlay } from '@/components/overlays/menu-overlay'
 import { NicknameModal } from '@/components/overlays/nickname-modal'
+import { PausedOverlay } from '@/components/overlays/paused-overlay'
 import { Screen } from '@/components/screen'
 import { mono } from '@/constants/theme'
 import { useDisplayOptions } from '@/hooks/use-display-options'
@@ -71,6 +73,12 @@ export default function GameScreen() {
   const { showSum, showFactor, toggleSum, toggleFactor } = useDisplayOptions()
   const [advancedOpen, setAdvancedOpen] = useState(false)
 
+  // Close advanced options whenever the game starts or resumes so that pausing
+  // again always shows the pause screen, not the advanced options overlay.
+  useEffect(() => {
+    if (isPlaying) setAdvancedOpen(false)
+  }, [isPlaying])
+
   const { userId, nickname, isReady, updateNickname } = useSupabaseAuth()
   const { submit: submitScore } = useScoreSubmission(userId, nickname, isReady)
   const [showNicknameModal, setShowNicknameModal] = useState(false)
@@ -120,8 +128,6 @@ export default function GameScreen() {
   // Dial pad is a square sized to fit its container (min of width/height), so it
   // never overflows over the score above it.
   const [dialSize, setDialSize] = useState(0)
-
-  const menuMode: MenuMode = isGameOver ? 'gameOver' : isPaused ? 'paused' : 'menu'
 
   const currentMultiplier = streakMultiplier(streak)
   const duration = effectiveTimeout(mode, difficulty)
@@ -287,8 +293,45 @@ export default function GameScreen() {
         </View>
       </Screen>
 
-      {/* ── Menu / Pause / Game-over overlay (shared layout) ── */}
-      {(isMenu || isPaused || isGameOver) &&
+      {/* ── Game-over overlay ── */}
+      {isGameOver && (
+        <GameOverOverlay
+          gameMode={mode}
+          difficulty={difficulty}
+          userId={userId}
+          nickname={nickname}
+          score={state.context.score}
+          hits={state.context.hits}
+          avgAccuracy={avgAccuracy}
+          avgSpeed={avgSpeed}
+          onNewGame={() => {
+            send({ type: 'MENU' })
+          }}
+        />
+      )}
+
+      {/* ── Pause overlay ── */}
+      {isPaused && (
+        <PausedOverlay
+          gameMode={mode}
+          difficulty={difficulty}
+          userId={userId}
+          nickname={nickname}
+          score={state.context.score}
+          hits={state.context.hits}
+          avgAccuracy={avgAccuracy}
+          avgSpeed={avgSpeed}
+          onContinue={() => {
+            send({ type: 'RESUME' })
+          }}
+          onNewGame={() => {
+            send({ type: 'MENU' })
+          }}
+        />
+      )}
+
+      {/* ── Menu overlay ── */}
+      {isMenu &&
         (advancedOpen ? (
           <AdvancedOptionsOverlay
             isDark={isDark}
@@ -303,23 +346,12 @@ export default function GameScreen() {
           />
         ) : (
           <MenuOverlay
-            mode={menuMode}
             gameMode={mode}
             difficulty={difficulty}
             userId={userId}
             nickname={nickname}
-            currentScore={state.context.score}
-            currentHits={state.context.hits}
-            avgAccuracy={avgAccuracy}
-            avgSpeed={avgSpeed}
             onPlay={() => {
-              send({ type: isGameOver ? 'RESTART' : 'START' })
-            }}
-            onContinue={() => {
-              send({ type: 'RESUME' })
-            }}
-            onNewGame={() => {
-              send({ type: 'MENU' })
+              send({ type: 'START' })
             }}
             onSetMode={(next) => {
               send({ type: 'SET_MODE', mode: next })

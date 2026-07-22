@@ -63,14 +63,6 @@ export function AdvancedOptionsOverlay({
 }) {
   return (
     <Screen overlay>
-      <Pressable
-        onPress={onClose}
-        hitSlop={12}
-        style={{ position: 'absolute', top: 16, right: 16 }}
-      >
-        <AntDesign name="close" size={26} color={isDark ? '#2A2B44' : '#D4D0C8'} />
-      </Pressable>
-
       <Text
         selectable={false}
         className="mb-8 font-mono text-[20px] font-black tracking-[3px] text-primary"

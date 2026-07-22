@@ -1,5 +1,5 @@
 import { useEffect } from 'react'
-import { Pressable, View } from 'react-native'
+import { Pressable, Text, View } from 'react-native'
 import Animated, {
   Easing,
   useAnimatedStyle,
@@ -99,7 +99,17 @@ export function MenuButton({
 
   if (!visible) return null
   return (
-    <Pressable onPress={trigger} hitSlop={14} style={style}>
+    <Pressable
+      onPress={trigger}
+      hitSlop={14}
+      style={[style, { flexDirection: 'row', alignItems: 'center', gap: 8 }]}
+    >
+      <Text
+        selectable={false}
+        className="font-mono text-[14px] font-black tracking-[3px] text-muted"
+      >
+        {paused ? 'CLOSE' : 'MENU'}
+      </Text>
       <View style={{ width: size, height: size }}>
         {coords.map((y, r) =>
           coords.map((x, c) => {
