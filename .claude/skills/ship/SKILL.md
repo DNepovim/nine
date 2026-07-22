@@ -5,10 +5,10 @@ description: Ship the current work — first run the `check` suite, then (defaul
 
 # Ship
 
-Two modes, decided by the argument:
+Two modes:
 
-- **`ship`** (no argument) → new branch + GitHub PR.
-- **`ship prod`** → commit and push directly to `main`.
+- **`ship`** (no argument) → ask the user whether to open a branch + PR or commit directly to `main`.
+- **`ship prod`** → skip the question and commit directly to `main`.
 
 Both start by gating on the checks and proposing Conventional Commit messages
 for confirmation. **Never commit, push, or open a PR without the user's explicit
@@ -21,6 +21,33 @@ if anything can't be made green, **stop** and report — do not ship failing che
 
 Then look at what will ship: `git status --short` and `git diff` (staged +
 unstaged). If the tree is clean, say there's nothing to ship and stop.
+
+## Step 0b — Migration check (both modes)
+
+Check whether any migration files are new or modified in the current working tree:
+
+```bash
+git status --short supabase/migrations/
+```
+
+If any migration files appear in the output (new `??` or modified `M`), ask the
+user before proceeding using **`AskUserQuestion`**:
+
+- **"Yes, push now"** — run `pnpm db:push` and wait for it to succeed before
+  continuing. If it fails, report the error and stop — do not ship code with a
+  failed migration. (Recommended for `ship prod`)
+- **"No, skip"** — continue without pushing migrations.
+
+If no migration files changed, skip this step silently.
+
+## Step 0c — Choose ship mode (only when invoked as plain `ship`)
+
+Ask the user using **`AskUserQuestion`**:
+
+- **"Branch + PR"** — create a new branch, commit, push, open a GitHub PR. (Recommended)
+- **"Commit to main"** — commit and push directly to `main` (same as `ship prod`).
+
+Use the answer to determine which Step 2 path to follow.
 
 ## Step 1 — Propose Conventional Commit message(s) (both modes)
 
