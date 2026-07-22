@@ -38,9 +38,9 @@ export const MODES: Record<Mode, ModeConfig> = {
   },
 }
 
-export type Difficulty = 'easy' | 'medium' | 'hard' | 'extreme'
+export type Difficulty = 'easy' | 'hard' | 'extreme'
 
-export const DIFFICULTY_ORDER: Difficulty[] = ['easy', 'medium', 'hard', 'extreme']
+export const DIFFICULTY_ORDER: Difficulty[] = ['easy', 'hard', 'extreme']
 
 export type DifficultyConfig = {
   label: string
@@ -51,16 +51,41 @@ export type DifficultyConfig = {
 
 export const DIFFICULTIES: Record<Difficulty, DifficultyConfig> = {
   easy: { label: 'EASY', timeoutScale: 1.3, maxTargets: 1, spawnInterval: 6000 },
-  medium: { label: 'MEDIUM', timeoutScale: 1.0, maxTargets: 2, spawnInterval: 5000 },
   hard: { label: 'HARD', timeoutScale: 0.75, maxTargets: 3, spawnInterval: 3500 },
   extreme: { label: 'EXTREME', timeoutScale: 0.55, maxTargets: 4, spawnInterval: 2500 },
 }
 
-export const MODE_COLORS: Record<Mode, string> = {
-  trainee: SPECTRUM[0],
-  accuracy: SPECTRUM[1],
-  speed: SPECTRUM[4],
+// Linear interpolation between two 6-digit hex colors.
+export function lerpColor(from: string, to: string, t: number): string {
+  if (t <= 0) return from
+  if (t >= 1) return to
+  const r1 = parseInt(from.slice(1, 3), 16)
+  const g1 = parseInt(from.slice(3, 5), 16)
+  const b1 = parseInt(from.slice(5, 7), 16)
+  const r2 = parseInt(to.slice(1, 3), 16)
+  const g2 = parseInt(to.slice(3, 5), 16)
+  const b2 = parseInt(to.slice(5, 7), 16)
+  const r = Math.round(r1 + (r2 - r1) * t)
+  const g = Math.round(g1 + (g2 - g1) * t)
+  const b = Math.round(b1 + (b2 - b1) * t)
+  return `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`
 }
+
+// Two-stop gradient per mode. The end of each mode equals the start of the next,
+// so the three modes form a continuous blue → purple → pink → red spectrum.
+export const MODE_GRADIENT = {
+  trainee: ['#4C7EFF', '#7273D2'] as const,
+  accuracy: ['#7273D2', '#c36282'] as const,
+  speed: ['#c36282', '#E5534B'] as const,
+} as const satisfies Record<Mode, readonly [string, string]>
+
+// Same hues as MODE_GRADIENT but darkened for use as a high-contrast
+// button background behind white text.
+export const DARK_MODE_GRADIENT = {
+  trainee: ['#102972', '#27255a'] as const,
+  accuracy: ['#27255a', '#501b2e'] as const,
+  speed: ['#501b2e', '#620b0c'] as const,
+} as const satisfies Record<Mode, readonly [string, string]>
 
 export const MODE_DESCRIPTIONS: Record<Mode, string> = {
   trainee: 'Learn the ropes — no lives, no rush.',
@@ -68,11 +93,16 @@ export const MODE_DESCRIPTIONS: Record<Mode, string> = {
   speed: 'Race the clock. Fast hits build big combos.',
 }
 
-export const DIFFICULTY_COLORS: Record<Difficulty, string> = {
-  easy: SPECTRUM[0],
-  medium: SPECTRUM[1],
-  hard: SPECTRUM[3],
-  extreme: SPECTRUM[4],
+// Difficulty is a position on the mode gradient: easy = start, extreme = end.
+const DIFFICULTY_T: Record<Difficulty, number> = {
+  easy: 0,
+  hard: 0.5,
+  extreme: 1,
+}
+
+export function getDifficultyColor(mode: Mode, difficulty: Difficulty): string {
+  const [start, end] = MODE_GRADIENT[mode]
+  return lerpColor(start, end, DIFFICULTY_T[difficulty])
 }
 
 // Locked, UI-only teaser — NOT a playable Mode yet.

@@ -13,11 +13,13 @@ import { accuracyFactor, computeHitPoints, computePar, speedFactor } from './sco
 export type { Difficulty, Mode } from './modes'
 export {
   ARCADE_TEASER,
+  DARK_MODE_GRADIENT,
   DIFFICULTIES,
-  DIFFICULTY_COLORS,
   DIFFICULTY_ORDER,
-  MODE_COLORS,
+  getDifficultyColor,
+  lerpColor,
   MODE_DESCRIPTIONS,
+  MODE_GRADIENT,
   MODE_ORDER,
   MODES,
   effectiveTimeout,
@@ -40,12 +42,11 @@ export type Target = {
   userSteps: number // button changes since the reference moment
 }
 
-type DifficultyStats = { score: number; hits: number }
+type DifficultyStats = { score: number; hits: number; accSum?: number; spdSum?: number }
 export type Stats = Record<Mode, Record<Difficulty, DifficultyStats>>
 
 const emptyDifficultyStats = (): Record<Difficulty, DifficultyStats> => ({
   easy: { score: 0, hits: 0 },
-  medium: { score: 0, hits: 0 },
   hard: { score: 0, hits: 0 },
   extreme: { score: 0, hits: 0 },
 })
@@ -129,7 +130,9 @@ const bestByScore = (
   prev: DifficultyStats,
   score: number,
   hits: number,
-): DifficultyStats => (score > prev.score ? { score, hits } : prev)
+  accSum: number,
+  spdSum: number,
+): DifficultyStats => (score > prev.score ? { score, hits, accSum, spdSum } : prev)
 
 // Applies a new grid: scores any targets whose value equals the new sum, resets
 // the reference for surviving targets when a hit happened, applies streak multiplier,
@@ -210,6 +213,9 @@ function applyGrid(context: Context, newGrid: Grid, now: number) {
       : { ...t, userSteps: t.userSteps + 1 },
   )
 
+  const newAccSum = context.accSum + accAdded
+  const newSpdSum = context.spdSum + spdAdded
+
   const stats = anyHit
     ? {
         ...context.stats,
@@ -219,6 +225,8 @@ function applyGrid(context: Context, newGrid: Grid, now: number) {
             context.stats[context.mode][context.difficulty],
             score,
             hits,
+            newAccSum,
+            newSpdSum,
           ),
         },
       }
@@ -234,8 +242,8 @@ function applyGrid(context: Context, newGrid: Grid, now: number) {
     hits,
     score,
     streak,
-    accSum: context.accSum + accAdded,
-    spdSum: context.spdSum + spdAdded,
+    accSum: newAccSum,
+    spdSum: newSpdSum,
     stats,
     hitBatch,
   }
@@ -252,7 +260,7 @@ export const gameMachine = createMachine({
     score: 0,
     stats: emptyStats(),
     mode: 'accuracy' as Mode,
-    difficulty: 'medium' as Difficulty,
+    difficulty: 'hard' as Difficulty,
     lives: 3,
     streak: 0,
     accSum: 0,

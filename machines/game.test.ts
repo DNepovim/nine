@@ -33,7 +33,7 @@ describe('per mode × difficulty stats shape', () => {
     const actor = createActor(gameMachine)
     actor.start()
     const { stats } = actor.getSnapshot().context
-    expect(stats.accuracy.medium).toEqual({ score: 0, hits: 0 })
+    expect(stats.accuracy.hard).toEqual({ score: 0, hits: 0 })
     expect(stats.speed.extreme).toEqual({ score: 0, hits: 0 })
   })
 })
