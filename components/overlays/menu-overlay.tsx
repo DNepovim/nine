@@ -3,7 +3,6 @@ import { useState } from 'react'
 import { Pressable, Text, View } from 'react-native'
 
 import { Screen } from '@/components/screen'
-import { BUILD_LABEL } from '@/constants/game'
 import {
   DARK_MODE_GRADIENT,
   lerpColor,
@@ -14,8 +13,8 @@ import {
 } from '@/machines/game'
 
 import { AnimatedLetter } from './animated-letter'
-import { BestScore } from './best-score'
 import { DifficultySelector } from './difficulty-selector'
+import { HighScores } from './high-scores'
 import { ModeSelector } from './mode-selector'
 
 export type MenuMode = 'menu' | 'paused' | 'gameOver'
@@ -114,7 +113,7 @@ export function MenuOverlay({
       )}
 
       {mode === 'menu' ? (
-        <View className="mb-4 flex-row">
+        <View className="mb-4 flex-row gap-3">
           {(['N', 'I', 'N', 'E'] as const).map((char, i) => (
             <AnimatedLetter
               key={i}
@@ -157,9 +156,7 @@ export function MenuOverlay({
         />
       )}
 
-      {showConfig && (
-        <BestScore stats={stats} gameMode={gameMode} difficulty={difficulty} />
-      )}
+      {showConfig && <HighScores gameMode={gameMode} stats={stats} />}
 
       {/* Buttons */}
       <View className="w-56 gap-3">
@@ -228,15 +225,6 @@ export function MenuOverlay({
           ADVANCED OPTIONS
         </Text>
       </Pressable>
-
-      {showConfig && (
-        <Text
-          selectable={false}
-          className="absolute bottom-[24px] font-mono text-[9px] font-bold tracking-[1px] text-dim"
-        >
-          {BUILD_LABEL}
-        </Text>
-      )}
     </Screen>
   )
 }
