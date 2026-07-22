@@ -112,7 +112,7 @@ export function HighScores({ gameMode, stats }: { gameMode: Mode; stats: Stats }
   }
 
   return (
-    <View className="mb-8 w-full max-w-xs self-center">
+    <View className="mb-8 w-full max-w-3xs self-center">
       {/* Time-period tabs */}
       <View className="mb-3 flex-row justify-center gap-1">
         {TABS.map(({ key, label }) => (

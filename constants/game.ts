@@ -4,4 +4,3 @@ export const SWIPE_THRESHOLD = 20
 // Target card / countdown pie geometry (the card footprint is the pie itself).
 export const PIE_SIZE = 80
 export const CARD_GAP = 10
-
