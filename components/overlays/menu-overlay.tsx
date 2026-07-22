@@ -63,7 +63,7 @@ export function MenuOverlay({
   onSetDifficulty: (difficulty: Difficulty) => void
   onOpenAdvanced: () => void
 }) {
-  const [focused, setFocused] = useState<Mode | 'arcade'>(gameMode)
+  const [selectedGameMode, setSelectedGameMode] = useState<Mode | 'arcade'>(gameMode)
 
   const isPaused = mode === 'paused'
   const isGameOver = mode === 'gameOver'
@@ -140,15 +140,15 @@ export function MenuOverlay({
 
       {showConfig && (
         <ModeSelector
-          focused={focused}
+          focused={selectedGameMode}
           onSelect={(m) => {
-            setFocused(m)
+            setSelectedGameMode(m)
             if (m !== 'arcade') onSetMode(m)
           }}
         />
       )}
 
-      {showConfig && focused !== 'arcade' && focused !== 'trainee' && (
+      {showConfig && selectedGameMode !== 'arcade' && selectedGameMode !== 'trainee' && (
         <DifficultySelector
           gameMode={gameMode}
           difficulty={difficulty}
@@ -156,7 +156,9 @@ export function MenuOverlay({
         />
       )}
 
-      {showConfig && <HighScores gameMode={gameMode} stats={stats} />}
+      {showConfig && selectedGameMode !== 'trainee' && (
+        <HighScores gameMode={gameMode} stats={stats} />
+      )}
 
       {/* Buttons */}
       <View className="w-56 gap-3">
@@ -196,9 +198,9 @@ export function MenuOverlay({
         ) : (
           <Pressable
             onPress={onPlay}
-            disabled={focused === 'arcade'}
+            disabled={selectedGameMode === 'arcade'}
             className="overflow-hidden rounded-2xl"
-            style={{ ...shadow, opacity: focused === 'arcade' ? 0.4 : 1 }}
+            style={{ ...shadow, opacity: selectedGameMode === 'arcade' ? 0.4 : 1 }}
           >
             <LinearGradient
               colors={[...DARK_MODE_GRADIENT[gameMode]]}
