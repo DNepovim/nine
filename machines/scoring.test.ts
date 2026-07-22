@@ -18,8 +18,8 @@ describe('computeHitPoints weights', () => {
       duration: 10000,
       weights: { acc: 0.85, spd: 0.15 },
     })
-    // acc factor = 1, spd factor = 0 → 1000 * 0.85 = 850
-    expect(accHeavy).toBe(850)
+    // acc factor = 1, spd factor = 0 → 100 * 0.85 = 85
+    expect(accHeavy).toBe(85)
 
     const spdHeavy = computeHitPoints({
       par: 2,
@@ -28,8 +28,8 @@ describe('computeHitPoints weights', () => {
       duration: 10000,
       weights: { acc: 0.15, spd: 0.85 },
     })
-    // acc factor = 1, spd factor = 1 → 1000 * (0.15 + 0.85) = 1000
-    expect(spdHeavy).toBe(1000)
+    // acc factor = 1, spd factor = 1 → 100 * (0.15 + 0.85) = 100
+    expect(spdHeavy).toBe(100)
   })
 })
 

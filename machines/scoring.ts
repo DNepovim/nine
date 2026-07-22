@@ -1,7 +1,7 @@
 import type { Grid } from './game'
 
 // Points a perfect hit is worth before the accuracy/speed blend. Tunable.
-const SCORE_BASE = 1000
+const SCORE_BASE = 100
 
 // Cell weights, row-major: (row+1) * (col+1). Matches computeSum in game.ts.
 const WEIGHTS: number[] = [1, 2, 3, 2, 4, 6, 3, 6, 9]

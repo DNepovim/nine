@@ -27,25 +27,25 @@ const TABS: { key: Tab; label: string }[] = [
 // Placeholder leaderboard data — replace with live API responses per tab
 const MOCK_TOP5: Record<Tab, ScoreEntry[]> = {
   today: [
-    { rank: 1, nickname: 'DOMINO', score: 1840 },
-    { rank: 2, nickname: 'SPEEDY', score: 1620 },
-    { rank: 3, nickname: 'ACE_9', score: 1430 },
-    { rank: 4, nickname: 'BLAZE', score: 1280 },
-    { rank: 5, nickname: 'NOVA', score: 1050 },
+    { rank: 1, nickname: 'DOMINO', score: 184 },
+    { rank: 2, nickname: 'SPEEDY', score: 162 },
+    { rank: 3, nickname: 'ACE_9', score: 143 },
+    { rank: 4, nickname: 'BLAZE', score: 128 },
+    { rank: 5, nickname: 'NOVA', score: 105 },
   ],
   week: [
-    { rank: 1, nickname: 'ACE_9', score: 9820 },
-    { rank: 2, nickname: 'DOMINO', score: 8740 },
-    { rank: 3, nickname: 'SPEEDY', score: 7610 },
-    { rank: 4, nickname: 'BLAZE', score: 6390 },
-    { rank: 5, nickname: 'KIRO', score: 5080 },
+    { rank: 1, nickname: 'ACE_9', score: 982 },
+    { rank: 2, nickname: 'DOMINO', score: 874 },
+    { rank: 3, nickname: 'SPEEDY', score: 761 },
+    { rank: 4, nickname: 'BLAZE', score: 639 },
+    { rank: 5, nickname: 'KIRO', score: 508 },
   ],
   forever: [
-    { rank: 1, nickname: 'ACE_9', score: 48200 },
-    { rank: 2, nickname: 'DOMINO', score: 41800 },
-    { rank: 3, nickname: 'SPEEDY', score: 35600 },
-    { rank: 4, nickname: 'BLAZE', score: 28900 },
-    { rank: 5, nickname: 'KIRO', score: 22100 },
+    { rank: 1, nickname: 'ACE_9', score: 4820 },
+    { rank: 2, nickname: 'DOMINO', score: 4180 },
+    { rank: 3, nickname: 'SPEEDY', score: 3560 },
+    { rank: 4, nickname: 'BLAZE', score: 2890 },
+    { rank: 5, nickname: 'KIRO', score: 2210 },
   ],
 }
 
