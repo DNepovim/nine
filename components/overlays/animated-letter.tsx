@@ -10,18 +10,24 @@ import Animated, {
 import { type Mode } from '@/machines/game'
 
 // Vibrant off-spectrum intermediates — chosen to be as far from the
-// app's blue-purple-red palette as possible so each mode switch sweeps
-// visibly through foreign hue territory.
+// app's blue-purple-red-amber palette as possible so each mode switch
+// sweeps visibly through foreign hue territory.
 const MID_COLORS: Record<string, string> = {
   'trainee->accuracy': '#00D4FF', // cyan
   'trainee->speed': '#AAFF00', // lime
+  'trainee->arcade': '#FFE000', // vivid yellow — warm, far from blue
   'accuracy->trainee': '#FF00CC', // hot-pink
   'accuracy->speed': '#FF7700', // orange
+  'accuracy->arcade': '#00BFFF', // sky blue — cool contrast to red-amber
   'speed->trainee': '#00FFCC', // mint
   'speed->accuracy': '#DD00FF', // violet
+  'speed->arcade': '#8800FF', // electric violet — max contrast to warm
+  'arcade->trainee': '#00FF7F', // spring green — cool from warm end
+  'arcade->accuracy': '#FF3399', // hot pink — saturated bridge to purple
+  'arcade->speed': '#00FFCC', // turquoise — cool contrast to red-orange
 }
 
-function getMidColor(from: Mode, to: Mode): string {
+function getMidColor(from: Mode | 'arcade', to: Mode | 'arcade'): string {
   return MID_COLORS[`${from}->${to}`] ?? '#FFFFFF'
 }
 
@@ -53,7 +59,7 @@ export function AnimatedLetter({
   char: string
   color: string
   tBase: number
-  mode: Mode
+  mode: Mode | 'arcade'
   delay: number
   letterIndex: number
   gradStart: SharedValue<string>
@@ -61,7 +67,7 @@ export function AnimatedLetter({
   gradPhase: SharedValue<number>
 }) {
   const prevColorRef = useRef(color)
-  const prevModeRef = useRef(mode)
+  const prevModeRef = useRef<Mode | 'arcade'>(mode)
   const canAnimateRef = useRef(false)
   const progress = useSharedValue(1)
   const from = useSharedValue(color)

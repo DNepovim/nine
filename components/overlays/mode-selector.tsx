@@ -22,9 +22,7 @@ import {
 const MODE_ITEMS = [...MODE_ORDER, 'arcade'] as (Mode | 'arcade')[]
 
 function pillColors(f: Mode | 'arcade'): [string, string] {
-  return f === 'arcade'
-    ? [ARCADE_TEASER.color, ARCADE_TEASER.color]
-    : (MODE_GRADIENT[f] as [string, string])
+  return MODE_GRADIENT[f] as [string, string]
 }
 
 export function ModeSelector({
@@ -167,7 +165,7 @@ export function ModeSelector({
                 <Text
                   selectable={false}
                   className="font-mono text-[11px] font-black tracking-[1.5px]"
-                  style={{ color: isActive ? '#FFFFFF' : ARCADE_TEASER.color }}
+                  style={{ color: isActive ? '#FFFFFF' : MODE_GRADIENT.arcade[0] }}
                 >
                   {ARCADE_TEASER.label}
                 </Text>
@@ -231,7 +229,7 @@ export function ModeSelector({
         selectable={false}
         className="mt-3 px-8 text-center font-mono text-[10px] font-bold tracking-[0.5px] text-dim"
       >
-        {focused === 'arcade' ? ARCADE_TEASER.description : MODE_DESCRIPTIONS[focused]}
+        {MODE_DESCRIPTIONS[focused]}
       </Text>
     </View>
   )

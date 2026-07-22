@@ -1,5 +1,3 @@
-import { SPECTRUM } from '@/constants/colors'
-
 export type Mode = 'trainee' | 'accuracy' | 'speed'
 
 export const MODE_ORDER: Mode[] = ['trainee', 'accuracy', 'speed']
@@ -71,26 +69,28 @@ export function lerpColor(from: string, to: string, t: number): string {
   return `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`
 }
 
-// Two-stop gradient per mode. The end of each mode equals the start of the next,
-// so the three modes form a continuous blue → purple → pink → red spectrum.
+// Two-stop gradients. Each playable mode's end equals the next mode's start,
+// forming a continuous blue → purple → pink → red → amber spectrum.
 export const MODE_GRADIENT = {
   trainee: ['#4C7EFF', '#7273D2'] as const,
   accuracy: ['#7273D2', '#c36282'] as const,
   speed: ['#c36282', '#E5534B'] as const,
-} as const satisfies Record<Mode, readonly [string, string]>
+  arcade: ['#E5534B', '#FF8C00'] as const,
+} as const satisfies Record<Mode | 'arcade', readonly [string, string]>
 
-// Same hues as MODE_GRADIENT but darkened for use as a high-contrast
-// button background behind white text.
+// Same hues darkened for use as a high-contrast button background behind white text.
 export const DARK_MODE_GRADIENT = {
   trainee: ['#102972', '#27255a'] as const,
   accuracy: ['#27255a', '#501b2e'] as const,
   speed: ['#501b2e', '#620b0c'] as const,
-} as const satisfies Record<Mode, readonly [string, string]>
+  arcade: ['#620b0c', '#7A3800'] as const,
+} as const satisfies Record<Mode | 'arcade', readonly [string, string]>
 
-export const MODE_DESCRIPTIONS: Record<Mode, string> = {
+export const MODE_DESCRIPTIONS: Record<Mode | 'arcade', string> = {
   trainee: 'Learn the ropes — no lives, no rush.',
   accuracy: 'Fewest moves win. Precision over speed.',
   speed: 'Race the clock. Fast hits build big combos.',
+  arcade: 'Levels, bonuses, sidequests.',
 }
 
 // Difficulty is a position on the mode gradient: easy = start, extreme = end.
@@ -108,8 +108,6 @@ export function getDifficultyColor(mode: Mode, difficulty: Difficulty): string {
 // Locked, UI-only teaser — NOT a playable Mode yet.
 export const ARCADE_TEASER = {
   label: 'ARCADE',
-  color: SPECTRUM[2],
-  description: 'Levels, bonuses, sidequests.',
   tag: 'SOON',
 } as const
 
