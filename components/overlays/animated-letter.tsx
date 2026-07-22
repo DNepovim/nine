@@ -102,7 +102,7 @@ export function AnimatedLetter({
   return (
     <Animated.Text
       selectable={false}
-      className={`font-mono text-[56px] font-black tracking-[10px] letter-float-${letterIndex}`}
+      className={`font-mono text-[56px] font-black letter-float-${letterIndex}`}
       style={style}
     >
       {char}

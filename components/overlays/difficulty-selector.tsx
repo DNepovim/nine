@@ -19,17 +19,8 @@ export function DifficultySelector({
 }) {
   return (
     <View className="mb-6 items-center">
-      <Text
-        selectable={false}
-        className="mb-2 font-mono text-[9px] font-bold tracking-[2.5px] text-dim"
-      >
-        DIFFICULTY
-      </Text>
-      <View
-        className="flex-row flex-wrap justify-center gap-2 px-6"
-        style={{ maxWidth: 320 }}
-      >
-        {DIFFICULTY_ORDER.map((d) => {
+      <View className="flex-row flex-wrap justify-center px-6">
+        {DIFFICULTY_ORDER.map((d, i) => {
           const selected = d === difficulty
           return (
             <Pressable
@@ -37,12 +28,8 @@ export function DifficultySelector({
               onPress={() => {
                 onSetDifficulty(d)
               }}
-              className="rounded-xl px-3.5 py-2"
-              style={
-                selected
-                  ? { backgroundColor: getDifficultyColor(gameMode, d) }
-                  : { backgroundColor: 'transparent' }
-              }
+              className={`px-2 py-1 bg-card  ${i === 0 ? 'rounded-l-md' : i === DIFFICULTY_ORDER.length - 1 ? 'rounded-r-md' : ''}`}
+              style={selected ? { backgroundColor: getDifficultyColor(gameMode, d) } : {}}
             >
               <Text
                 selectable={false}
