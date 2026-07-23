@@ -70,7 +70,7 @@ export default function GameScreen() {
   usePersistedStats(stats, send)
   usePersistedDifficulty(difficulty, send)
   usePersistedMode(mode, send)
-  const { showSum, showFactor, toggleSum, toggleFactor } = useDisplayOptions()
+  const { showSum, toggleSum } = useDisplayOptions()
   const [advancedOpen, setAdvancedOpen] = useState(false)
 
   // Close advanced options whenever the game starts or resumes so that pausing
@@ -90,7 +90,7 @@ export default function GameScreen() {
     prevIsGameOverRef.current = isGameOver
     if (isGameOver && mode !== 'trainee') {
       submitScore(mode, difficulty, state.context.score, state.context.hits)
-      if (isReady && !nickname) setShowNicknameModal(true)
+      if (isReady && !nickname && state.context.score > 0) setShowNicknameModal(true)
     }
   }, [
     isGameOver,
@@ -172,9 +172,9 @@ export default function GameScreen() {
             <View className="flex-1" />
           </View>
 
-          {/* Row 2 — hearts + score cluster */}
-          <View className="mt-1.5 flex-row items-center justify-between gap-2.5">
-            <View className="flex-row gap-1">
+          {/* Row 2 — hearts · center stat · score cluster */}
+          <View className="mt-1.5 flex-row items-center">
+            <View className="flex-1 flex-row gap-1">
               {[0, 1, 2].map((i) => (
                 <AntDesign
                   key={i}
@@ -191,8 +191,26 @@ export default function GameScreen() {
               ))}
             </View>
 
+            {/* Center: avg accuracy or avg speed depending on mode */}
+            {mode === 'accuracy' && (
+              <Text
+                selectable={false}
+                className="font-mono text-[10px] font-bold tracking-[1.5px] text-dim"
+              >
+                {avgAccuracy}%
+              </Text>
+            )}
+            {mode === 'speed' && (
+              <Text
+                selectable={false}
+                className="font-mono text-[10px] font-bold tracking-[1.5px] text-dim"
+              >
+                {avgSpeed}%
+              </Text>
+            )}
+
             {/* Score cluster: digital readout + streak multiplier badge */}
-            <View className="relative items-end">
+            <View className="flex-1 relative items-end">
               <View className="flex-row items-baseline gap-1.5">
                 <Text
                   selectable={false}
@@ -280,7 +298,6 @@ export default function GameScreen() {
                 size={Math.floor(dialSize / 3)}
                 weight={(Math.floor(index / 3) + 1) * ((index % 3) + 1)}
                 showSum={showSum}
-                showFactor={showFactor}
                 onDelta={(delta) => {
                   send({ type: 'PRESS', index, delta, now: Date.now() })
                 }}
@@ -311,7 +328,7 @@ export default function GameScreen() {
       )}
 
       {/* ── Pause overlay ── */}
-      {isPaused && (
+      {isPaused && !advancedOpen && (
         <PausedOverlay
           gameMode={mode}
           difficulty={difficulty}
@@ -327,43 +344,46 @@ export default function GameScreen() {
           onNewGame={() => {
             send({ type: 'MENU' })
           }}
+          onOpenAdvanced={() => {
+            setAdvancedOpen(true)
+          }}
+        />
+      )}
+
+      {/* ── Advanced options — shared between menu and pause ── */}
+      {advancedOpen && (
+        <AdvancedOptionsOverlay
+          isDark={isDark}
+          showSum={showSum}
+          onToggleSum={toggleSum}
+          onToggleTheme={toggleTheme}
+          onClose={() => {
+            setAdvancedOpen(false)
+          }}
         />
       )}
 
       {/* ── Menu overlay ── */}
-      {isMenu &&
-        (advancedOpen ? (
-          <AdvancedOptionsOverlay
-            isDark={isDark}
-            showSum={showSum}
-            showFactor={showFactor}
-            onToggleSum={toggleSum}
-            onToggleFactor={toggleFactor}
-            onToggleTheme={toggleTheme}
-            onClose={() => {
-              setAdvancedOpen(false)
-            }}
-          />
-        ) : (
-          <MenuOverlay
-            gameMode={mode}
-            difficulty={difficulty}
-            userId={userId}
-            nickname={nickname}
-            onPlay={() => {
-              send({ type: 'START' })
-            }}
-            onSetMode={(next) => {
-              send({ type: 'SET_MODE', mode: next })
-            }}
-            onSetDifficulty={(next) => {
-              send({ type: 'SET_DIFFICULTY', difficulty: next })
-            }}
-            onOpenAdvanced={() => {
-              setAdvancedOpen(true)
-            }}
-          />
-        ))}
+      {isMenu && !advancedOpen && (
+        <MenuOverlay
+          gameMode={mode}
+          difficulty={difficulty}
+          userId={userId}
+          nickname={nickname}
+          onPlay={() => {
+            send({ type: 'START' })
+          }}
+          onSetMode={(next) => {
+            send({ type: 'SET_MODE', mode: next })
+          }}
+          onSetDifficulty={(next) => {
+            send({ type: 'SET_DIFFICULTY', difficulty: next })
+          }}
+          onOpenAdvanced={() => {
+            setAdvancedOpen(true)
+          }}
+        />
+      )}
 
       <NicknameModal
         visible={showNicknameModal}
