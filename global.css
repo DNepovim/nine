@@ -62,6 +62,33 @@
   animation: letter-float 1.8s ease-in-out infinite;
 }
 
+/* Landscape guard — shown on touch devices (phones/tablets) only.
+   Desktop windows in landscape are left alone.
+   body::before is the backdrop; body::after is the label on top. */
+@media (orientation: landscape) and (pointer: coarse) {
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    z-index: 9998;
+    background-color: var(--color-surface, #f3efe9);
+  }
+  body::after {
+    content: 'ROTATE DEVICE';
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: ui-monospace, monospace;
+    font-size: 10px;
+    font-weight: 900;
+    letter-spacing: 3px;
+    color: var(--color-dim, #aaa69e);
+  }
+}
+
 /* Match the monospace family to the app's previous per-platform values. */
 :root {
   @media ios {

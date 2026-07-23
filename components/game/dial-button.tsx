@@ -1,5 +1,5 @@
 import { useEffect } from 'react'
-import { Text, View } from 'react-native'
+import { View } from 'react-native'
 import { Gesture, GestureDetector } from 'react-native-gesture-handler'
 import Animated, {
   Easing,
@@ -22,7 +22,6 @@ export function DialButton({
   size,
   weight,
   showSum,
-  showFactor,
   onDelta,
   onSet,
 }: {
@@ -31,7 +30,6 @@ export function DialButton({
   size: number
   weight: number
   showSum: boolean
-  showFactor: boolean
   onDelta: (delta: 1 | -1) => void
   onSet: (value: number) => void
 }) {
@@ -159,30 +157,6 @@ export function DialButton({
             btnStyle,
           ]}
         >
-          {/* Factor (row×col multiplier) — small, pinned near the top */}
-          {showFactor && (
-            <View
-              style={{
-                position: 'absolute',
-                top: Math.round(size * 0.1),
-                left: 0,
-                right: 0,
-                alignItems: 'center',
-              }}
-              pointerEvents="none"
-            >
-              <Text
-                selectable={false}
-                className="font-mono font-bold text-factor"
-                style={{
-                  fontSize: Math.max(10, Math.round(size * 0.14)),
-                  includeFontPadding: false,
-                }}
-              >
-                {weight}
-              </Text>
-            </View>
-          )}
           <Animated.Text
             selectable={false}
             style={[

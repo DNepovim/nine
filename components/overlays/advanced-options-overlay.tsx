@@ -47,17 +47,13 @@ function AdvancedOption({
 export function AdvancedOptionsOverlay({
   isDark,
   showSum,
-  showFactor,
   onToggleSum,
-  onToggleFactor,
   onToggleTheme,
   onClose,
 }: {
   isDark: boolean
   showSum: boolean
-  showFactor: boolean
   onToggleSum: () => void
-  onToggleFactor: () => void
   onToggleTheme: () => void
   onClose: () => void
 }) {
@@ -75,12 +71,6 @@ export function AdvancedOptionsOverlay({
         label="SHOW SUM IN BUTTONS"
         description="Display value × row × column"
         onToggle={onToggleSum}
-      />
-      <AdvancedOption
-        checked={showFactor}
-        label="SHOW FACTOR"
-        description="Small multiplier at the top of each button"
-        onToggle={onToggleFactor}
       />
 
       {/* Theme */}

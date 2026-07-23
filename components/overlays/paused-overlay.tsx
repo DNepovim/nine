@@ -30,6 +30,7 @@ export function PausedOverlay({
   avgSpeed,
   onContinue,
   onNewGame,
+  onOpenAdvanced,
 }: {
   gameMode: Mode
   difficulty: Difficulty
@@ -41,6 +42,7 @@ export function PausedOverlay({
   avgSpeed: number
   onContinue: () => void
   onNewGame: () => void
+  onOpenAdvanced: () => void
 }) {
   return (
     <Screen overlay>
@@ -119,35 +121,45 @@ export function PausedOverlay({
           )}
         </View>
 
-        <View className="w-56 gap-3">
-          <Pressable
-            onPress={onContinue}
-            className="overflow-hidden rounded-2xl"
-            style={shadow}
-          >
-            <LinearGradient
-              colors={[...DARK_MODE_GRADIENT[gameMode]]}
-              start={{ x: 0, y: 0.5 }}
-              end={{ x: 1, y: 0.5 }}
-              className="items-center py-4"
+        <View className="items-center gap-8">
+          <View className="w-56 gap-3">
+            <Pressable
+              onPress={onContinue}
+              className="overflow-hidden rounded-2xl"
+              style={shadow}
+            >
+              <LinearGradient
+                colors={[...DARK_MODE_GRADIENT[gameMode]]}
+                start={{ x: 0, y: 0.5 }}
+                end={{ x: 1, y: 0.5 }}
+                className="items-center py-4"
+              >
+                <Text
+                  selectable={false}
+                  className="font-mono text-[13px] font-black tracking-[2px] text-on-strong"
+                >
+                  CONTINUE
+                </Text>
+              </LinearGradient>
+            </Pressable>
+            <Pressable
+              onPress={onNewGame}
+              className="items-center rounded-2xl bg-card py-4"
             >
               <Text
                 selectable={false}
-                className="font-mono text-[13px] font-black tracking-[2px] text-on-strong"
+                className="font-mono text-[13px] font-black tracking-[2px] text-primary"
               >
-                CONTINUE
+                NEW GAME
               </Text>
-            </LinearGradient>
-          </Pressable>
-          <Pressable
-            onPress={onNewGame}
-            className="items-center rounded-2xl bg-card py-4"
-          >
+            </Pressable>
+          </View>
+          <Pressable onPress={onOpenAdvanced} hitSlop={10}>
             <Text
               selectable={false}
-              className="font-mono text-[13px] font-black tracking-[2px] text-primary"
+              className="font-mono text-[10px] font-bold tracking-[1.8px] text-dim underline"
             >
-              NEW GAME
+              ADVANCED OPTIONS
             </Text>
           </Pressable>
         </View>
