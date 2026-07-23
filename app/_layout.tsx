@@ -3,11 +3,13 @@ import 'react-native-url-polyfill/auto'
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native'
 import { Stack } from 'expo-router'
 import { StatusBar } from 'expo-status-bar'
+import { useState } from 'react'
 import { GestureHandlerRootView } from 'react-native-gesture-handler'
 import Animated, { useAnimatedStyle } from 'react-native-reanimated'
 
 import '@/global.css'
 
+import { SplashScreen } from '@/components/splash-screen'
 import { AppThemeProvider, useTheme } from '@/hooks/use-theme'
 
 export const unstable_settings = {
@@ -16,6 +18,7 @@ export const unstable_settings = {
 
 function ThemedApp() {
   const { colorScheme, transitionOpacity, transitionColor } = useTheme()
+  const [splashDone, setSplashDone] = useState(false)
 
   const overlayStyle = useAnimatedStyle(() => ({
     opacity: transitionOpacity.value,
@@ -41,6 +44,13 @@ function ThemedApp() {
           overlayStyle,
         ]}
       />
+      {!splashDone && (
+        <SplashScreen
+          onDone={() => {
+            setSplashDone(true)
+          }}
+        />
+      )}
     </ThemeProvider>
   )
 }
