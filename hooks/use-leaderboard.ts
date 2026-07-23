@@ -9,15 +9,14 @@ import {
 } from '@/lib/leaderboard'
 import type { Difficulty, Mode } from '@/machines/game'
 
-type LeaderboardState = {
+export type LeaderboardState = {
   rows: LeaderboardRow[]
   myRank: MyRankRow | null
   loading: boolean
   error: string | null
 }
 
-// Per-session in-memory cache — avoids redundant RPCs while the modal is open.
-const cache = new Map<string, { rows: LeaderboardRow[]; myRank: MyRankRow | null }>()
+const POLL_MS = 30_000
 
 function useSingleTab(
   mode: Mode,
@@ -31,6 +30,7 @@ function useSingleTab(
     loading: true,
     error: null,
   })
+  const hasDataRef = useRef(false)
   const abortedRef = useRef(false)
 
   useEffect(() => {
@@ -39,17 +39,11 @@ function useSingleTab(
       return
     }
 
-    const key = `${tab}:${mode}:${difficulty}:${userId ?? 'anon'}`
-    const hit = cache.get(key)
-    if (hit) {
-      setState({ rows: hit.rows, myRank: hit.myRank, loading: false, error: null })
-      return
-    }
-
     abortedRef.current = false
-    setState((s) => ({ ...s, loading: true, error: null }))
+    hasDataRef.current = false
+    setState({ rows: [], myRank: null, loading: true, error: null })
 
-    void (async () => {
+    const fetchData = async () => {
       const [top5, myRankRes] = await Promise.all([
         fetchTop5(mode, difficulty, tab),
         userId
@@ -60,19 +54,30 @@ function useSingleTab(
       if (abortedRef.current) return
 
       const error = top5.error ?? myRankRes.error
-      cache.set(key, { rows: top5.rows, myRank: myRankRes.row })
-      setState({ rows: top5.rows, myRank: myRankRes.row, loading: false, error })
-    })()
+
+      if (!error) {
+        hasDataRef.current = true
+        setState({ rows: top5.rows, myRank: myRankRes.row, loading: false, error: null })
+      } else if (!hasDataRef.current) {
+        // First load failed — show the error/offline state
+        setState({ rows: [], myRank: null, loading: false, error })
+      }
+      // Polling failures when we already have data are silent — keep showing last good rows
+    }
+
+    void fetchData()
+    const id = setInterval(() => {
+      void fetchData()
+    }, POLL_MS)
 
     return () => {
       abortedRef.current = true
+      clearInterval(id)
     }
   }, [mode, difficulty, tab, userId])
 
   return state
 }
-
-export type { LeaderboardState }
 
 export function useLeaderboard(
   mode: Mode,

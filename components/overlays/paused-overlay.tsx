@@ -2,7 +2,13 @@ import { LinearGradient } from 'expo-linear-gradient'
 import { Pressable, Text, View } from 'react-native'
 
 import { Screen } from '@/components/screen'
-import { DARK_MODE_GRADIENT, type Difficulty, type Mode } from '@/machines/game'
+import {
+  DARK_MODE_GRADIENT,
+  DIFFICULTIES,
+  MODES,
+  type Difficulty,
+  type Mode,
+} from '@/machines/game'
 
 import { HighScores } from './high-scores'
 
@@ -42,9 +48,15 @@ export function PausedOverlay({
         <View className="w-full items-center">
           <Text
             selectable={false}
+            className="mb-1 font-mono text-[9px] font-bold tracking-[2px] text-dim"
+          >
+            {MODES[gameMode].label} · {DIFFICULTIES[difficulty].label}
+          </Text>
+          <Text
+            selectable={false}
             className="font-mono text-[9px] font-bold tracking-[2.5px] text-dim"
           >
-            SCORE
+            YOUR SCORE
           </Text>
           <Text
             selectable={false}

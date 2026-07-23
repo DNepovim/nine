@@ -6,8 +6,10 @@ import { Easing, useSharedValue, withRepeat, withTiming } from 'react-native-rea
 import { Screen } from '@/components/screen'
 import {
   DARK_MODE_GRADIENT,
+  DIFFICULTIES,
   lerpColor,
   MODE_GRADIENT,
+  MODES,
   type Difficulty,
   type Mode,
 } from '@/machines/game'
@@ -67,7 +69,7 @@ export function GameOverOverlay({
         {/* Top: title + score + stats + leaderboard */}
         <View className="w-full items-center">
           {/* GAME OVER — two rows of four animated letters */}
-          <View className="mb-6 items-center gap-1">
+          <View className="mb-3 items-center gap-1">
             {ROWS.map((word, rowIndex) => (
               <View key={rowIndex} className="flex-row gap-3">
                 {word.map((char, colIndex) => {
@@ -96,12 +98,20 @@ export function GameOverOverlay({
             ))}
           </View>
 
+          {/* Mode · Difficulty subtitle */}
+          <Text
+            selectable={false}
+            className="mb-4 font-mono text-[9px] font-bold tracking-[2px] text-dim"
+          >
+            {MODES[gameMode].label} · {DIFFICULTIES[difficulty].label}
+          </Text>
+
           {/* Score */}
           <Text
             selectable={false}
             className="font-mono text-[9px] font-bold tracking-[2.5px] text-dim"
           >
-            SCORE
+            YOUR SCORE
           </Text>
           <Text
             selectable={false}
@@ -161,6 +171,8 @@ export function GameOverOverlay({
               difficulty={difficulty}
               userId={userId}
               nickname={nickname}
+              optimisticScore={score}
+              optimisticHits={hits}
             />
           )}
         </View>

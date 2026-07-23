@@ -1,13 +1,6 @@
 import { LinearGradient } from 'expo-linear-gradient'
 import { useEffect, useRef, useState } from 'react'
-import {
-  ActivityIndicator,
-  Pressable,
-  ScrollView,
-  Text,
-  useWindowDimensions,
-  View,
-} from 'react-native'
+import { Pressable, ScrollView, Text, useWindowDimensions, View } from 'react-native'
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
@@ -17,7 +10,11 @@ import Animated, {
 
 import { useLeaderboard } from '@/hooks/use-leaderboard'
 import type { LeaderboardState } from '@/hooks/use-leaderboard'
-import { type LeaderboardTab } from '@/lib/leaderboard'
+import {
+  type LeaderboardRow,
+  type LeaderboardTab,
+  type MyRankRow,
+} from '@/lib/leaderboard'
 import { MODE_GRADIENT, type Difficulty, type Mode } from '@/machines/game'
 
 const TABS: { key: LeaderboardTab; label: string }[] = [
@@ -76,21 +73,76 @@ function SkeletonRow() {
   )
 }
 
+function applyOptimistic(
+  state: LeaderboardState,
+  userId: string | null,
+  nickname: string | null,
+  optimisticScore: number | undefined,
+  optimisticHits: number | undefined,
+): LeaderboardState {
+  if (!optimisticScore || !userId || !nickname || state.loading || state.error !== null) {
+    return state
+  }
+  // Real data already includes this user — no injection needed.
+  if (state.rows.some((r) => r.user_id === userId)) return state
+
+  // Use the better of the current-game score and any stored best so we never
+  // show a rank worse than what the server would report.
+  const effectiveScore = Math.max(optimisticScore, state.myRank?.best_score ?? 0)
+  const effectiveHits =
+    effectiveScore === optimisticScore ? (optimisticHits ?? 0) : (state.myRank?.hits ?? 0)
+
+  const rows = state.rows
+  const beatCount = rows.filter(
+    (r) => r.user_id !== userId && r.best_score >= effectiveScore,
+  ).length
+  const newRank = beatCount + 1
+
+  const newMyRank: MyRankRow = {
+    rank: newRank,
+    total: Math.max(state.myRank?.total ?? 0, newRank),
+    best_score: effectiveScore,
+    hits: effectiveHits,
+  }
+
+  let newRows = rows
+  if (newRank <= 5) {
+    const others = rows.filter((r) => r.user_id !== userId)
+    const above = others.filter((r) => r.best_score >= effectiveScore)
+    const below = others.filter((r) => r.best_score < effectiveScore)
+    const entry: LeaderboardRow = {
+      rank: above.length + 1,
+      user_id: userId,
+      nickname,
+      best_score: effectiveScore,
+      hits: effectiveHits,
+    }
+    newRows = [
+      ...above.map((r, i) => ({ ...r, rank: i + 1 })),
+      entry,
+      ...below.map((r, i) => ({ ...r, rank: above.length + 2 + i })),
+    ].slice(0, 5)
+  }
+
+  return { rows: newRows, myRank: newMyRank, loading: false, error: null }
+}
+
 function TabPanel({
   data,
   accentColor,
+  userId,
   nickname,
   width,
 }: {
   data: LeaderboardState
   accentColor: string
+  userId: string | null
   nickname: string | null
   width: number
 }) {
   if (data.loading) {
     return (
-      <View style={{ width }} className="items-center py-4">
-        <ActivityIndicator size="small" color={accentColor} />
+      <View style={{ width }}>
         {[1, 2, 3, 4, 5].map((i) => (
           <SkeletonRow key={i} />
         ))}
@@ -100,9 +152,9 @@ function TabPanel({
 
   if (data.error) {
     return (
-      <View style={{ width }} className="items-center py-6">
+      <View style={{ width }} className="items-center py-4">
         <Text selectable={false} className="font-mono text-[9px] font-bold text-dim">
-          COULD NOT LOAD
+          — UNAVAILABLE —
         </Text>
       </View>
     )
@@ -112,12 +164,27 @@ function TabPanel({
   const myRank = data.myRank
   const userIsInTop5 = myRank !== null && myRank.rank <= top5.length
 
+  if (top5.length === 0) {
+    return (
+      <View style={{ width }} className="items-center py-4">
+        <Text selectable={false} className="font-mono text-[9px] font-bold text-dim">
+          — NO SCORES YET —
+        </Text>
+      </View>
+    )
+  }
+
   return (
     <View style={{ width }}>
       {top5.map((row) => (
         <ScoreRow
           key={row.user_id}
-          entry={{ rank: row.rank, nickname: row.nickname, score: row.best_score }}
+          entry={{
+            rank: row.rank,
+            nickname: row.nickname,
+            score: row.best_score,
+            isUser: row.user_id === userId,
+          }}
           accentColor={accentColor}
         />
       ))}
@@ -151,11 +218,15 @@ export function HighScores({
   difficulty,
   userId,
   nickname,
+  optimisticScore,
+  optimisticHits,
 }: {
   gameMode: Mode
   difficulty: Difficulty
   userId: string | null
   nickname: string | null
+  optimisticScore?: number
+  optimisticHits?: number
 }) {
   const { width: windowWidth } = useWindowDimensions()
   const [panelWidth, setPanelWidth] = useState(0)
@@ -172,7 +243,11 @@ export function HighScores({
   const effectiveWidth = panelWidth > 0 ? panelWidth : windowWidth - 32
 
   const { today, week, forever } = useLeaderboard(gameMode, difficulty, userId)
-  const dataByTab: Record<LeaderboardTab, LeaderboardState> = { today, week, forever }
+  const dataByTab: Record<LeaderboardTab, LeaderboardState> = {
+    today: applyOptimistic(today, userId, nickname, optimisticScore, optimisticHits),
+    week: applyOptimistic(week, userId, nickname, optimisticScore, optimisticHits),
+    forever: applyOptimistic(forever, userId, nickname, optimisticScore, optimisticHits),
+  }
 
   const underlineStyle = useAnimatedStyle(() => ({
     transform: [{ translateX: underlineLeft.value }],
@@ -332,6 +407,7 @@ export function HighScores({
               key={key}
               data={dataByTab[key]}
               accentColor={accentColor}
+              userId={userId}
               nickname={nickname}
               width={effectiveWidth}
             />
