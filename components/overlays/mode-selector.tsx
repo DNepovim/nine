@@ -29,10 +29,12 @@ export function ModeSelector({
   focused,
   onSelect,
   gradPhase,
+  items = MODE_ITEMS,
 }: {
   focused: Mode | 'arcade'
   onSelect: (m: Mode | 'arcade') => void
   gradPhase: SharedValue<number>
+  items?: (Mode | 'arcade')[]
 }) {
   const tabLayouts = useRef<{ x: number; width: number }[]>([])
   const bgLeft = useSharedValue(-999)
@@ -57,7 +59,7 @@ export function ModeSelector({
   const toGradStyle = useAnimatedStyle(() => ({ opacity: colorFade.value }))
 
   useEffect(() => {
-    const index = MODE_ITEMS.findIndex((m) => m === focused)
+    const index = items.findIndex((m) => m === focused)
     const layout = tabLayouts.current[index]
     if (layout) {
       const newLeft = layout.x
@@ -83,16 +85,10 @@ export function ModeSelector({
       colorFade.value = 0
       colorFade.value = withTiming(1, { duration: 350 })
     }
-  }, [focused, bgLeft, bgRight, colorFade])
+  }, [focused, items, bgLeft, bgRight, colorFade])
 
   return (
-    <View className="mb-3 items-center">
-      <Text
-        selectable={false}
-        className="mb-2 font-mono text-[9px] font-bold tracking-[2.5px] text-dim"
-      >
-        GAME MODES
-      </Text>
+    <View className="mb-3 items-center" style={{ paddingTop: 8 }}>
       <View className="flex-row">
         {/* Sliding pill — behind buttons in z-order */}
         <Animated.View
@@ -140,7 +136,7 @@ export function ModeSelector({
           </Animated.View>
         </Animated.View>
 
-        {MODE_ITEMS.map((m, i) => {
+        {items.map((m, i) => {
           const isActive = m === focused
           if (m === 'arcade') {
             return (
