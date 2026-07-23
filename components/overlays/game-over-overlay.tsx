@@ -65,7 +65,7 @@ export function GameOverOverlay({
 
   return (
     <Screen overlay>
-      <View className="w-full items-center justify-between" style={{ minHeight: 640 }}>
+      <View className="w-full items-center justify-between" style={{ minHeight: 560 }}>
         {/* Top: title + score + stats + leaderboard */}
         <View className="w-full items-center">
           {/* GAME OVER — two rows of four animated letters */}

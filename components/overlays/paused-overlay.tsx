@@ -46,7 +46,7 @@ export function PausedOverlay({
 }) {
   return (
     <Screen overlay>
-      <View className="w-full items-center justify-between" style={{ minHeight: 640 }}>
+      <View className="w-full items-center justify-between" style={{ minHeight: 560 }}>
         <View className="w-full items-center">
           <Text
             selectable={false}

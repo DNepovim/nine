@@ -338,7 +338,7 @@ export function MenuOverlay({
 
   return (
     <Screen overlay>
-      <View className="w-full items-center justify-between" style={{ minHeight: 640 }}>
+      <View className="w-full items-center justify-between" style={{ minHeight: 560 }}>
         {/* Top section */}
         <View className="w-full items-center">
           {/* Greeting — only shown when nickname is set */}
