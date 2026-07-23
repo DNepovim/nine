@@ -347,7 +347,7 @@ export function MenuOverlay({
               selectable={false}
               className="mb-2 font-mono text-[11px] font-bold tracking-[0.5px] text-dim"
             >
-              {`Hi ${nickname}, let's count`}
+              {`Hi ${nickname}, let's multiply`}
             </Text>
           )}
 
