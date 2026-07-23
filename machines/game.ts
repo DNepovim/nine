@@ -22,6 +22,7 @@ export {
   MODE_GRADIENT,
   MODE_ORDER,
   MODES,
+  effectiveSpawnInterval,
   effectiveTimeout,
   streakMultiplier,
 } from './modes'

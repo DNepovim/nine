@@ -117,7 +117,7 @@ export default function GameScreen() {
         ? 'paused'
         : 'gameOver'
 
-  useTargetSpawner({ isPlaying, targetCount: targets.length, difficulty, send })
+  useTargetSpawner({ isPlaying, targetCount: targets.length, mode, difficulty, send })
   const { floats, removeFloat } = useFloatingPoints(hitBatch)
   const { displayedTargets, removeDisplayed, onContainerLayout } = useDisplayedTargets({
     machineTargets: targets,

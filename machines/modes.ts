@@ -44,13 +44,12 @@ export type DifficultyConfig = {
   label: string
   timeoutScale: number
   maxTargets: number
-  spawnInterval: number
 }
 
 export const DIFFICULTIES: Record<Difficulty, DifficultyConfig> = {
-  easy: { label: 'EASY', timeoutScale: 1.3, maxTargets: 1, spawnInterval: 6000 },
-  hard: { label: 'HARD', timeoutScale: 0.75, maxTargets: 3, spawnInterval: 3500 },
-  extreme: { label: 'EXTREME', timeoutScale: 0.55, maxTargets: 4, spawnInterval: 2500 },
+  easy: { label: 'EASY', timeoutScale: 1.3, maxTargets: 1 },
+  hard: { label: 'HARD', timeoutScale: 0.75, maxTargets: 3 },
+  extreme: { label: 'EXTREME', timeoutScale: 0.55, maxTargets: 4 },
 }
 
 // Linear interpolation between two 6-digit hex colors.
@@ -114,6 +113,10 @@ export const ARCADE_TEASER = {
 // round(baseTimeout × timeoutScale)
 export const effectiveTimeout = (mode: Mode, difficulty: Difficulty): number =>
   Math.round(MODES[mode].baseTimeout * DIFFICULTIES[difficulty].timeoutScale)
+
+// Targets spawn every 1/3 of the target liveness timeout.
+export const effectiveSpawnInterval = (mode: Mode, difficulty: Difficulty): number =>
+  Math.round(effectiveTimeout(mode, difficulty) / 3)
 
 // ×2 → ×4 → ×8 (capped). streakCount = consecutive triggers; 0 ⇒ ×1.
 export const streakMultiplier = (streakCount: number): number =>
