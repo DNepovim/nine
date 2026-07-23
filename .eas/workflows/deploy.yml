@@ -21,6 +21,8 @@ jobs:
         run: pnpm audit --audit-level high
       - name: Dead code (knip)
         run: pnpm knip
+      - name: Env vars
+        run: pnpm check-env
 
   deploy:
     name: Deploy to production
