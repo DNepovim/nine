@@ -99,19 +99,18 @@ export function SplashScreen({ onDone }: { onDone: () => void }) {
     )
 
     // Appearance sequence
-    nineOpacity.value = withDelay(1000, withTiming(1, { duration: 1500 }))
-    subtitleOpacity.value = withDelay(4000, withTiming(1, { duration: 1500 }))
+    nineOpacity.value = withDelay(300, withTiming(1, { duration: 1500 }))
+    subtitleOpacity.value = withDelay(2000, withTiming(1, { duration: 1500 }))
 
-    // Exit: 5 seconds after subtitle appears (4000ms) = 9000ms total
     contentScale.value = withDelay(
-      9000,
+      5000,
       withTiming(1.35, { duration: 2250, easing: Easing.in(Easing.ease) }),
     )
-    contentOpacity.value = withDelay(9000, withTiming(0, { duration: 2000 }))
+    contentOpacity.value = withDelay(5000, withTiming(0, { duration: 2000 }))
 
     // Background fades after content is mostly gone, then calls onDone
     bgOpacity.value = withDelay(
-      10500,
+      6500,
       withTiming(0, { duration: 2000 }, (finished) => {
         'worklet'
         if (finished) scheduleOnRN(onDone)
