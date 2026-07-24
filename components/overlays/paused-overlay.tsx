@@ -86,13 +86,13 @@ export function PausedOverlay({
                 selectable={false}
                 className="font-mono text-[10px] font-bold tracking-[1.5px] text-dim"
               >
-                ACCURACY
+                AVG ACC
               </Text>
               <Text
                 selectable={false}
                 className="font-mono text-[10px] font-bold tracking-[1.5px] text-dim"
               >
-                SPEED
+                AVG SPD
               </Text>
             </View>
             <View className="flex-1 items-start gap-2 pl-4">
