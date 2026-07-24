@@ -1,8 +1,9 @@
 import { LinearGradient } from 'expo-linear-gradient'
-import { useEffect } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { StyleSheet } from 'react-native'
 import Animated, {
   Easing,
+  useAnimatedReaction,
   useAnimatedStyle,
   useSharedValue,
   withDelay,
@@ -56,7 +57,28 @@ function FloatingLetter({ char, period }: { char: string; period: number }) {
 }
 
 export function SplashScreen({ onDone }: { onDone: () => void }) {
-  const gradPhase = useSharedValue(0)
+  // Bridge animated values → React state so LinearGradient sees the updates.
+  // expo-linear-gradient doesn't expose locations as an animatable native prop,
+  // so useAnimatedProps is a no-op for it; runOnJS is the correct path.
+  const [locations, setLocations] = useState<[number, number, number, number]>([
+    0, 0.28, 0.62, 1,
+  ])
+  const loc1 = useSharedValue(0.28)
+  const loc2 = useSharedValue(0.62)
+
+  const applyLocations = useCallback((l1: number, l2: number) => {
+    setLocations([0, l1, l2, 1])
+  }, [])
+
+  useAnimatedReaction(
+    () => ({ l1: loc1.value, l2: loc2.value }),
+    ({ l1, l2 }) => {
+      scheduleOnRN(() => {
+        applyLocations(l1, l2)
+      })
+    },
+  )
+
   const nineOpacity = useSharedValue(0)
   const subtitleOpacity = useSharedValue(0)
   const contentScale = useSharedValue(1)
@@ -64,11 +86,16 @@ export function SplashScreen({ onDone }: { onDone: () => void }) {
   const bgOpacity = useSharedValue(1)
 
   useEffect(() => {
-    // Moving gradient — 5× slower than menu overlay
-    gradPhase.value = withRepeat(
-      withTiming(1, { duration: 10000, easing: Easing.linear }),
+    // Threshold animation — asynchronous periods so they never sync up
+    loc1.value = withRepeat(
+      withTiming(0.44, { duration: 4200, easing: Easing.inOut(Easing.ease) }),
       -1,
-      false,
+      true,
+    )
+    loc2.value = withRepeat(
+      withTiming(0.76, { duration: 5800, easing: Easing.inOut(Easing.ease) }),
+      -1,
+      true,
     )
 
     // Appearance sequence
@@ -92,12 +119,6 @@ export function SplashScreen({ onDone }: { onDone: () => void }) {
     )
   }, [])
 
-  const gradStyle = useAnimatedStyle(() => ({
-    transform: [
-      { translateX: Math.sin(gradPhase.value * Math.PI * 2) * 50 },
-      { translateY: Math.sin(gradPhase.value * Math.PI * 2 + Math.PI / 4) * 30 },
-    ],
-  }))
   const bgStyle = useAnimatedStyle(() => ({ opacity: bgOpacity.value }))
   const nineStyle = useAnimatedStyle(() => ({ opacity: nineOpacity.value }))
   const subtitleStyle = useAnimatedStyle(() => ({ opacity: subtitleOpacity.value }))
@@ -108,17 +129,13 @@ export function SplashScreen({ onDone }: { onDone: () => void }) {
 
   return (
     <Animated.View style={[styles.absolute, { zIndex: 100 }, bgStyle]}>
-      {/* Animated gradient — larger than screen so panning doesn't reveal edges */}
-      <Animated.View style={[styles.absolute, { overflow: 'hidden' }]}>
-        <Animated.View style={[styles.gradPad, gradStyle]}>
-          <LinearGradient
-            colors={['#4C7EFF', '#7273D2', '#c36282', '#E5534B']}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            style={{ flex: 1 }}
-          />
-        </Animated.View>
-      </Animated.View>
+      <LinearGradient
+        colors={['#4C7EFF', '#7273D2', '#c36282', '#E5534B']}
+        locations={locations}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={styles.absolute}
+      />
 
       {/* Centered text content */}
       <Animated.View style={[styles.absolute, styles.center, contentStyle]}>
@@ -163,12 +180,5 @@ const styles = StyleSheet.create({
   row: {
     flexDirection: 'row',
     gap: 12,
-  },
-  gradPad: {
-    position: 'absolute',
-    top: -80,
-    left: -80,
-    right: -80,
-    bottom: -80,
   },
 })
