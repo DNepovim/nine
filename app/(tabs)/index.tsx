@@ -1,6 +1,7 @@
 import { AntDesign } from '@expo/vector-icons'
 import { useMachine } from '@xstate/react'
 import { useFonts } from 'expo-font'
+import { isNotNull, isOneOf } from 'narrowland'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { AppState, Text, View } from 'react-native'
 
@@ -95,7 +96,7 @@ export default function GameScreen() {
   useEffect(() => {
     if (isGameOver === prevIsGameOverRef.current) return
     prevIsGameOverRef.current = isGameOver
-    if (isGameOver && mode !== 'trainee') {
+    if (isGameOver && isOneOf(mode, ['accuracy', 'speed'])) {
       submitScore(mode, difficulty, state.context.score, state.context.hits)
       if (isReady && !nickname && state.context.score > 0) setShowNicknameModal(true)
     }
@@ -216,9 +217,9 @@ export default function GameScreen() {
   }, [multiRoom.isAdmin, multiRoomId])
 
   // Which multiplayer screen to show.
-  const showMultiWaiting = multiRoom.room !== null && multiGame.phase === 'waiting'
-  const showMultiGame = multiRoom.room !== null && multiGame.phase === 'playing'
-  const showMultiResults = multiRoom.room !== null && multiGame.phase === 'results'
+  const showMultiWaiting = isNotNull(multiRoom.room) && multiGame.phase === 'waiting'
+  const showMultiGame = isNotNull(multiRoom.room) && multiGame.phase === 'playing'
+  const showMultiResults = isNotNull(multiRoom.room) && multiGame.phase === 'results'
   const isMultiActive = showMultiWaiting || showMultiGame || showMultiResults
 
   return (
@@ -237,7 +238,7 @@ export default function GameScreen() {
               >
                 {MODES[mode].label}
               </Text>
-              {mode !== 'trainee' && (
+              {isOneOf(mode, ['accuracy', 'speed']) && (
                 <Text
                   selectable={false}
                   className="font-mono text-[10px] font-bold tracking-[1px] text-dim"

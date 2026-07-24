@@ -1,4 +1,5 @@
 import { LinearGradient } from 'expo-linear-gradient'
+import { isOneOf } from 'narrowland'
 import { Pressable, Text, View } from 'react-native'
 
 import { Screen } from '@/components/screen'
@@ -111,7 +112,7 @@ export function PausedOverlay({
             </View>
           </View>
 
-          {gameMode !== 'trainee' && (
+          {isOneOf(gameMode, ['accuracy', 'speed']) && (
             <HighScores
               gameMode={gameMode}
               difficulty={difficulty}

@@ -1,4 +1,5 @@
 import { LinearGradient } from 'expo-linear-gradient'
+import { isOneOf } from 'narrowland'
 import { useEffect } from 'react'
 import { Pressable, Text, View } from 'react-native'
 import { Easing, useSharedValue, withRepeat, withTiming } from 'react-native-reanimated'
@@ -85,7 +86,7 @@ export function MultiplayerWaiting({
             gradPhase={gradPhase}
             items={['accuracy', 'speed']}
             onSelect={(m) => {
-              if (m === 'accuracy' || m === 'speed') onSetMode(m)
+              if (isOneOf(m, ['accuracy', 'speed'])) onSetMode(m)
             }}
           />
         ) : (

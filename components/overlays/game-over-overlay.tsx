@@ -1,4 +1,5 @@
 import { LinearGradient } from 'expo-linear-gradient'
+import { isOneOf } from 'narrowland'
 import { useEffect } from 'react'
 import { Pressable, Text, View } from 'react-native'
 import { Easing, useSharedValue, withRepeat, withTiming } from 'react-native-reanimated'
@@ -165,7 +166,7 @@ export function GameOverOverlay({
             </View>
           </View>
 
-          {gameMode !== 'trainee' && (
+          {isOneOf(gameMode, ['accuracy', 'speed']) && (
             <HighScores
               gameMode={gameMode}
               difficulty={difficulty}

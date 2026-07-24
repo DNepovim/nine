@@ -1,4 +1,5 @@
 import { LinearGradient } from 'expo-linear-gradient'
+import { isNonEmptyString, isOneOf } from 'narrowland'
 import { useEffect, useRef, useState } from 'react'
 import { Pressable, ScrollView, Text, useWindowDimensions, View } from 'react-native'
 import { Easing, useSharedValue, withRepeat, withTiming } from 'react-native-reanimated'
@@ -100,7 +101,7 @@ export function MenuOverlay({
         {/* Top section */}
         <View className="w-full items-center">
           {/* Greeting — only shown when nickname is set */}
-          {nickname !== null && nickname.length > 0 && (
+          {isNonEmptyString(nickname) && (
             <Text
               selectable={false}
               className="mb-2 font-mono text-[11px] font-bold tracking-[0.5px] text-dim"
@@ -164,10 +165,10 @@ export function MenuOverlay({
                   gradPhase={gradPhase}
                   onSelect={(m) => {
                     setFocused(m)
-                    if (m !== 'arcade') onSetMode(m)
+                    if (isOneOf(m, ['trainee', 'accuracy', 'speed'])) onSetMode(m)
                   }}
                 />
-                {focused !== 'arcade' && focused !== 'trainee' && (
+                {isOneOf(focused, ['accuracy', 'speed']) && (
                   <DifficultySelector
                     gameMode={gameMode}
                     difficulty={difficulty}
@@ -175,7 +176,7 @@ export function MenuOverlay({
                     onSetDifficulty={onSetDifficulty}
                   />
                 )}
-                {focused !== 'trainee' && focused !== 'arcade' && (
+                {isOneOf(focused, ['accuracy', 'speed']) && (
                   <HighScores
                     gameMode={gameMode}
                     difficulty={difficulty}

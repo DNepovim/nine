@@ -1,3 +1,4 @@
+import { isNonEmptyArray } from 'narrowland'
 import { assign, createMachine } from 'xstate'
 
 import {
@@ -142,14 +143,14 @@ function applyGrid(context: Context, newGrid: Grid, now: number) {
   const newSum = computeSum(newGrid)
   const matched = context.targets.filter((t) => t.value === newSum)
   const remaining = context.targets.filter((t) => t.value !== newSum)
-  const anyHit = matched.length > 0
+  const anyHit = isNonEmptyArray(matched)
   const clearedBoard = anyHit && remaining.length === 0
 
   const mode = MODES[context.mode]
   const duration = effectiveTimeout(context.mode, context.difficulty)
 
   let rawScore = 0
-  let allOptimal = matched.length > 0
+  let allOptimal = isNonEmptyArray(matched)
   let accAdded = 0
   let spdAdded = 0
   const perTarget: { points: number; progress: number }[] = []

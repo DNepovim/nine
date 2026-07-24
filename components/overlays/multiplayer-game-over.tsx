@@ -1,4 +1,5 @@
 import { LinearGradient } from 'expo-linear-gradient'
+import { isNonEmptyArray, isOneOf } from 'narrowland'
 import { useEffect } from 'react'
 import { Pressable, Text, View } from 'react-native'
 import { Easing, useSharedValue, withRepeat, withTiming } from 'react-native-reanimated'
@@ -63,7 +64,8 @@ export function MultiplayerGameOver({
   const myPlayer = players.find((p) => p.userId === userId)
   const iAmReady = myPlayer?.ready ?? false
   const nonAdminPlayers = isAdmin ? players.filter((p) => p.userId !== userId) : players
-  const allReady = nonAdminPlayers.length > 0 && nonAdminPlayers.every((p) => p.ready)
+  const allReady =
+    isNonEmptyArray(nonAdminPlayers) && nonAdminPlayers.every((p) => p.ready)
 
   return (
     <Screen overlay topAligned>
@@ -119,7 +121,7 @@ export function MultiplayerGameOver({
               gradPhase={gradPhase}
               items={['accuracy', 'speed']}
               onSelect={(m) => {
-                if (m !== 'arcade') onModeChange(m as MultiMode)
+                if (isOneOf(m, ['accuracy', 'speed'])) onModeChange(m)
               }}
             />
           </View>

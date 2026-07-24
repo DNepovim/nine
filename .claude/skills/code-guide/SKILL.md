@@ -132,6 +132,39 @@ const scale = TIMEOUT_SCALES[difficulty]
 
 ---
 
+## Type narrowing
+
+Use type guards from `narrowland` instead of manual comparisons. Import individual guards:
+
+```ts
+import { isNonEmptyArray, isNonEmptyString, isNotNull, isOneOf } from 'narrowland'
+```
+
+| Pattern to replace               | narrowland equivalent     |
+| -------------------------------- | ------------------------- |
+| `a === 'x' \|\| a === 'y'`       | `isOneOf(a, ['x', 'y'])`  |
+| `a !== 'x' && a !== 'y'`         | `!isOneOf(a, ['x', 'y'])` |
+| `arr.length > 0`                 | `isNonEmptyArray(arr)`    |
+| `arr.length === 0`               | `isEmptyArray(arr)`       |
+| `value !== null`                 | `isNotNull(value)`        |
+| `str !== null && str.length > 0` | `isNonEmptyString(str)`   |
+
+```ts
+// ❌ Manual narrowing
+if (mode !== 'trainee' && mode !== 'arcade') { ... }
+const hasItems = items.length > 0
+if (nickname !== null && nickname.length > 0) { ... }
+
+// ✅ narrowland
+if (isOneOf(mode, ['accuracy', 'speed'])) { ... }
+const hasItems = isNonEmptyArray(items)
+if (isNonEmptyString(nickname)) { ... }
+```
+
+Single comparisons that aren't about membership (`if (mode === 'trainee')`, a lone `!== null`) are fine as-is — reach for narrowland when it replaces a multi-part check or adds semantic clarity.
+
+---
+
 ## State machines (XState v5)
 
 - All non-trivial state logic lives in `machines/` as XState v5 machines, not in component state
