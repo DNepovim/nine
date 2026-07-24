@@ -1,18 +1,22 @@
 import { AntDesign } from '@expo/vector-icons'
 import { useMachine } from '@xstate/react'
 import { useFonts } from 'expo-font'
-import { useEffect, useRef, useState } from 'react'
-import { Text, View } from 'react-native'
+import { useCallback, useEffect, useRef, useState } from 'react'
+import { AppState, Text, View } from 'react-native'
 
 import DSEG7Font from '@/assets/fonts/DSEG7Classic-Bold.ttf'
 import { DialButton } from '@/components/game/dial-button'
 import { FloatingPoints } from '@/components/game/floating-points'
 import { MenuButton } from '@/components/game/menu-button'
+import { MultiplayerGame } from '@/components/game/multiplayer-game'
 import { ScoreDigit } from '@/components/game/score-digit'
 import { TargetCard } from '@/components/game/target-card'
 import { AdvancedOptionsOverlay } from '@/components/overlays/advanced-options-overlay'
 import { GameOverOverlay } from '@/components/overlays/game-over-overlay'
 import { MenuOverlay } from '@/components/overlays/menu-overlay'
+import { MultiplayerGameOver } from '@/components/overlays/multiplayer-game-over'
+import { MultiplayerMenu } from '@/components/overlays/multiplayer-menu'
+import { MultiplayerWaiting } from '@/components/overlays/multiplayer-waiting'
 import { NicknameModal } from '@/components/overlays/nickname-modal'
 import { PausedOverlay } from '@/components/overlays/paused-overlay'
 import { Screen } from '@/components/screen'
@@ -21,6 +25,8 @@ import { useDisplayOptions } from '@/hooks/use-display-options'
 import { useDisplayScore } from '@/hooks/use-display-score'
 import { useDisplayedTargets } from '@/hooks/use-displayed-targets'
 import { useFloatingPoints } from '@/hooks/use-floating-points'
+import { useMultiplayerGame } from '@/hooks/use-multiplayer-game'
+import { useMultiplayerRoom } from '@/hooks/use-multiplayer-room'
 import { usePersistedDifficulty } from '@/hooks/use-persisted-difficulty'
 import { usePersistedMode } from '@/hooks/use-persisted-mode'
 import { usePersistedStats } from '@/hooks/use-persisted-stats'
@@ -40,6 +46,7 @@ import {
   MODES,
   streakMultiplier,
 } from '@/machines/game'
+import type { MultiMode } from '@/types/multiplayer'
 
 export default function GameScreen() {
   const { colorScheme, toggleTheme } = useTheme()
@@ -134,6 +141,85 @@ export default function GameScreen() {
 
   const avgAccuracy = hits > 0 ? Math.round((100 * accSum) / hits) : 0
   const avgSpeed = hits > 0 ? Math.round((100 * spdSum) / hits) : 0
+
+  // ── Multiplayer ────────────────────────────────────────────────────────────
+
+  const multiRoom = useMultiplayerRoom(userId)
+  const multiGame = useMultiplayerGame({
+    gameChannel: multiRoom.gameChannel,
+    userId,
+    isAdmin: multiRoom.isAdmin,
+    initialPlayers: multiRoom.players,
+  })
+
+  // Pending action when user tries to create/join without a nickname.
+  const [pendingMultiAction, setPendingMultiAction] = useState<
+    { type: 'create'; mode: MultiMode } | { type: 'join'; code: string } | null
+  >(null)
+
+  const executeMultiAction = useCallback(
+    (action: { type: 'create'; mode: MultiMode } | { type: 'join'; code: string }) => {
+      if (action.type === 'create') {
+        void multiRoom.create('accuracy')
+      } else {
+        void multiRoom.join(action.code)
+      }
+    },
+    [multiRoom],
+  )
+
+  const [showMultiMenu, setShowMultiMenu] = useState(false)
+  const [menuInitialTab, setMenuInitialTab] = useState<'alone' | 'friends'>('alone')
+
+  const handleCreateRoom = useCallback(() => {
+    if (!nickname) {
+      setPendingMultiAction({ type: 'create', mode: 'accuracy' })
+      setShowNicknameModal(true)
+      return
+    }
+    void multiRoom.create('accuracy')
+  }, [nickname, multiRoom])
+
+  const handleJoinRoom = useCallback(
+    (code: string) => {
+      if (!nickname) {
+        setPendingMultiAction({ type: 'join', code })
+        setShowNicknameModal(true)
+        return
+      }
+      void multiRoom.join(code)
+    },
+    [nickname, multiRoom],
+  )
+
+  const handleAdminStartGame = useCallback(() => {
+    const playerOrder = multiRoom.players.map((p) => p.user_id)
+    const roomMode = multiRoom.room?.mode ?? 'accuracy'
+    multiRoom.startGame(playerOrder)
+    multiGame.applyGameStart(roomMode, playerOrder)
+  }, [multiRoom, multiGame])
+
+  // Destroy room when admin backgrounds the app.
+  const multiLeaveRef = useRef(multiRoom.leave)
+  useEffect(() => {
+    multiLeaveRef.current = multiRoom.leave
+  }, [multiRoom.leave])
+  const multiRoomId = multiRoom.room?.id ?? null
+  useEffect(() => {
+    if (!multiRoom.isAdmin || !multiRoomId) return
+    const sub = AppState.addEventListener('change', (next) => {
+      if (next === 'background') void multiLeaveRef.current()
+    })
+    return () => {
+      sub.remove()
+    }
+  }, [multiRoom.isAdmin, multiRoomId])
+
+  // Which multiplayer screen to show.
+  const showMultiWaiting = multiRoom.room !== null && multiGame.phase === 'waiting'
+  const showMultiGame = multiRoom.room !== null && multiGame.phase === 'playing'
+  const showMultiResults = multiRoom.room !== null && multiGame.phase === 'results'
+  const isMultiActive = showMultiWaiting || showMultiGame || showMultiResults
 
   return (
     <>
@@ -364,13 +450,16 @@ export default function GameScreen() {
       )}
 
       {/* ── Menu overlay ── */}
-      {isMenu && !advancedOpen && (
+      {isMenu && !advancedOpen && !isMultiActive && (
         <MenuOverlay
           gameMode={mode}
           difficulty={difficulty}
           userId={userId}
           nickname={nickname}
+          joinError={multiRoom.error}
+          initialPlayMode={menuInitialTab}
           onPlay={() => {
+            setMenuInitialTab('alone')
             send({ type: 'START' })
           }}
           onSetMode={(next) => {
@@ -382,6 +471,8 @@ export default function GameScreen() {
           onOpenAdvanced={() => {
             setAdvancedOpen(true)
           }}
+          onCreateRoom={handleCreateRoom}
+          onJoinRoom={handleJoinRoom}
         />
       )}
 
@@ -389,11 +480,18 @@ export default function GameScreen() {
         visible={showNicknameModal}
         onSave={async (name) => {
           const res = await updateNickname(name)
-          if (!res.error) setShowNicknameModal(false)
+          if (!res.error) {
+            setShowNicknameModal(false)
+            if (pendingMultiAction) {
+              executeMultiAction(pendingMultiAction)
+              setPendingMultiAction(null)
+            }
+          }
           return res
         }}
         onSkip={() => {
           setShowNicknameModal(false)
+          setPendingMultiAction(null)
         }}
       />
 
@@ -407,6 +505,73 @@ export default function GameScreen() {
         color={isDark ? '#2A2B44' : '#D4D0C8'}
         style={{ position: 'absolute', top: 12, right: 18, zIndex: 20 }}
       />
+
+      {/* ── Multiplayer screens (above everything) ── */}
+
+      {showMultiWaiting && multiRoom.room && (
+        <MultiplayerWaiting
+          code={multiRoom.room.code}
+          mode={multiRoom.room.mode}
+          players={multiRoom.players}
+          userId={userId}
+          isAdmin={multiRoom.isAdmin}
+          onLeave={() => {
+            setMenuInitialTab('friends')
+            void multiRoom.leave()
+          }}
+          onStart={handleAdminStartGame}
+          onSetMode={(m) => {
+            void multiRoom.setRoomMode(m)
+          }}
+        />
+      )}
+
+      {showMultiGame && (
+        <MultiplayerGame
+          mode={multiGame.mode}
+          userId={userId}
+          players={multiGame.players}
+          currentTarget={multiGame.currentTarget}
+          isDark={isDark}
+          onHit={multiGame.sendHit}
+          onTargetExpire={() => {
+            // Only admin resolves; non-admin's timer is purely visual.
+          }}
+          onMenu={() => {
+            setShowMultiMenu(true)
+          }}
+        />
+      )}
+
+      {showMultiGame && showMultiMenu && (
+        <MultiplayerMenu
+          mode={multiGame.mode}
+          onContinue={() => {
+            setShowMultiMenu(false)
+          }}
+          onLeave={() => {
+            setMenuInitialTab('friends')
+            setShowMultiMenu(false)
+            void multiRoom.leave()
+          }}
+        />
+      )}
+
+      {showMultiResults && (
+        <MultiplayerGameOver
+          players={multiGame.players}
+          mode={multiGame.mode}
+          userId={userId}
+          isAdmin={multiRoom.isAdmin}
+          onReady={multiGame.sendReady}
+          onModeChange={multiGame.sendModeChange}
+          onStartNext={multiGame.startNextGame}
+          onLeave={() => {
+            setMenuInitialTab('friends')
+            void multiRoom.leave()
+          }}
+        />
+      )}
     </>
   )
 }
