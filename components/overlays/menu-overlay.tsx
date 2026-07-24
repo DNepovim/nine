@@ -1,8 +1,14 @@
 import { LinearGradient } from 'expo-linear-gradient'
 import { isNonEmptyString, isOneOf } from 'narrowland'
-import { useEffect, useRef, useState } from 'react'
-import { Pressable, ScrollView, Text, useWindowDimensions, View } from 'react-native'
-import { Easing, useSharedValue, withRepeat, withTiming } from 'react-native-reanimated'
+import { useEffect, useState } from 'react'
+import { Pressable, Share, Text, useWindowDimensions, View } from 'react-native'
+import Animated, {
+  Easing,
+  useAnimatedStyle,
+  useSharedValue,
+  withRepeat,
+  withTiming,
+} from 'react-native-reanimated'
 
 import { Screen } from '@/components/screen'
 import { cn } from '@/lib/cn'
@@ -59,7 +65,7 @@ export function MenuOverlay({
   const [playMode, setPlayMode] = useState<PlayMode>(initialPlayMode)
   const [gameCode, setGameCode] = useState('')
   const [panelWidth, setPanelWidth] = useState(0)
-  const scrollRef = useRef<ScrollView>(null)
+  const panelOffset = useSharedValue(0)
   const { width: windowWidth } = useWindowDimensions()
   // Screen has px-4 on each side (32px total); use as fallback before onLayout fires.
   const effectivePanelWidth = panelWidth > 0 ? panelWidth : windowWidth - 32
@@ -89,10 +95,17 @@ export function MenuOverlay({
     }
   }, [gameCode, onJoinRoom])
 
+  const panelStyle = useAnimatedStyle(() => ({
+    transform: [{ translateX: panelOffset.value }],
+  }))
+
   const handlePlayModeSelect = (pm: PlayMode) => {
     setPlayMode(pm)
     const index = pm === 'alone' ? 0 : 1
-    scrollRef.current?.scrollTo({ x: index * effectivePanelWidth, animated: true })
+    panelOffset.value = withTiming(-index * effectivePanelWidth, {
+      duration: 280,
+      easing: Easing.inOut(Easing.ease),
+    })
   }
 
   return (
@@ -140,23 +153,23 @@ export function MenuOverlay({
             onSelect={handlePlayModeSelect}
           />
 
-          {/* Horizontally paging content panels */}
+          {/* Horizontally paging content panels — translateX avoids the Safari
+              scrollTo-on-overflow:hidden bug that breaks the tab switch on web */}
           <View
-            className="w-full"
+            className="w-full overflow-hidden"
             onLayout={(e) => {
               const w = e.nativeEvent.layout.width
               setPanelWidth(w)
-              // Re-snap to current panel after layout resolution (no animation)
+              // Snap to current panel instantly on layout (no animation)
               const index = playMode === 'alone' ? 0 : 1
-              scrollRef.current?.scrollTo({ x: index * w, animated: false })
+              panelOffset.value = -index * w
             }}
           >
-            <ScrollView
-              ref={scrollRef}
-              horizontal
-              pagingEnabled
-              scrollEnabled={false}
-              showsHorizontalScrollIndicator={false}
+            <Animated.View
+              style={[
+                { flexDirection: 'row', width: effectivePanelWidth * 2 },
+                panelStyle,
+              ]}
             >
               {/* Panel 0: ALONE */}
               <View style={{ width: effectivePanelWidth }}>
@@ -195,7 +208,7 @@ export function MenuOverlay({
                   joinError={joinError}
                 />
               </View>
-            </ScrollView>
+            </Animated.View>
           </View>
         </View>
 
@@ -247,14 +260,32 @@ export function MenuOverlay({
             </Pressable>
           )}
 
-          <Pressable onPress={onOpenAdvanced} hitSlop={10}>
-            <Text
-              selectable={false}
-              className="font-mono text-[10px] font-bold tracking-[1.8px] text-dim underline"
+          <View className="flex-row items-center gap-5">
+            <Pressable onPress={onOpenAdvanced} hitSlop={10}>
+              <Text
+                selectable={false}
+                className="font-mono text-[10px] font-bold tracking-[1.8px] text-dim underline"
+              >
+                OPTIONS
+              </Text>
+            </Pressable>
+            <Pressable
+              onPress={() => {
+                void Share.share({
+                  message: 'https://nine.expo.app',
+                  url: 'https://nine.expo.app',
+                })
+              }}
+              hitSlop={10}
             >
-              ADVANCED OPTIONS
-            </Text>
-          </Pressable>
+              <Text
+                selectable={false}
+                className="font-mono text-[10px] font-bold tracking-[1.8px] text-dim underline"
+              >
+                SHARE
+              </Text>
+            </Pressable>
+          </View>
         </View>
       </View>
     </Screen>

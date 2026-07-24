@@ -1,6 +1,6 @@
 import { LinearGradient } from 'expo-linear-gradient'
 import { isOneOf } from 'narrowland'
-import { Pressable, Text, View } from 'react-native'
+import { Pressable, Share, Text, View } from 'react-native'
 
 import { Screen } from '@/components/screen'
 import {
@@ -155,14 +155,32 @@ export function PausedOverlay({
               </Text>
             </Pressable>
           </View>
-          <Pressable onPress={onOpenAdvanced} hitSlop={10}>
-            <Text
-              selectable={false}
-              className="font-mono text-[10px] font-bold tracking-[1.8px] text-dim underline"
+          <View className="flex-row items-center gap-5">
+            <Pressable onPress={onOpenAdvanced} hitSlop={10}>
+              <Text
+                selectable={false}
+                className="font-mono text-[10px] font-bold tracking-[1.8px] text-dim underline"
+              >
+                OPTIONS
+              </Text>
+            </Pressable>
+            <Pressable
+              onPress={() => {
+                void Share.share({
+                  message: 'https://nine.expo.app',
+                  url: 'https://nine.expo.app',
+                })
+              }}
+              hitSlop={10}
             >
-              ADVANCED OPTIONS
-            </Text>
-          </Pressable>
+              <Text
+                selectable={false}
+                className="font-mono text-[10px] font-bold tracking-[1.8px] text-dim underline"
+              >
+                SHARE
+              </Text>
+            </Pressable>
+          </View>
         </View>
       </View>
     </Screen>
