@@ -21,8 +21,8 @@ import { TabPanel } from './tab-panel'
 
 const TABS: { key: LeaderboardTab; label: string }[] = [
   { key: 'today', label: 'TODAY' },
-  { key: 'week', label: 'THIS WEEK' },
-  { key: 'forever', label: 'FOREVER' },
+  { key: 'week', label: 'LAST 7 DAYS' },
+  { key: 'forever', label: 'EVER' },
 ]
 
 function applyOptimistic(
@@ -101,6 +101,8 @@ export function HighScores({
   const autoplayRef = useRef(true)
   const activeIndexRef = useRef(0)
   const tabLayouts = useRef<{ x: number; width: number }[]>([])
+  const isAutoScrolling = useRef(false)
+  const scrollEndTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
   const underlineLeft = useSharedValue(-999)
   const underlineRight = useSharedValue(-999)
 
@@ -151,9 +153,13 @@ export function HighScores({
       const nextIndex = (activeIndexRef.current + 1) % TABS.length
       const next = TABS[nextIndex]
       if (!next) return
+      isAutoScrolling.current = true
       activeIndexRef.current = nextIndex
       setActiveTab(next.key)
       scrollRef.current?.scrollTo({ x: nextIndex * effectiveWidth, animated: true })
+      setTimeout(() => {
+        isAutoScrolling.current = false
+      }, 600)
     }, 2000)
     return () => {
       clearInterval(id)
@@ -250,14 +256,20 @@ export function HighScores({
           horizontal
           pagingEnabled
           showsHorizontalScrollIndicator={false}
-          scrollEventThrottle={32}
-          onScrollBeginDrag={() => {
+          scrollEventThrottle={16}
+          onScroll={(e) => {
+            if (isAutoScrolling.current) return
             autoplayRef.current = false
-          }}
-          onMomentumScrollEnd={(e) => {
-            const index = Math.round(e.nativeEvent.contentOffset.x / effectiveWidth)
-            const tab = TABS[index]
-            if (tab) setActiveTab(tab.key)
+            const x = e.nativeEvent.contentOffset.x
+            clearTimeout(scrollEndTimer.current)
+            scrollEndTimer.current = setTimeout(() => {
+              const index = Math.round(x / effectiveWidth)
+              const tab = TABS[index]
+              if (tab) {
+                activeIndexRef.current = index
+                setActiveTab(tab.key)
+              }
+            }, 80)
           }}
         >
           {TABS.map(({ key }) => (
