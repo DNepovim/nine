@@ -1,8 +1,10 @@
+import { Ionicons } from '@expo/vector-icons'
 import { LinearGradient } from 'expo-linear-gradient'
 import { isOneOf } from 'narrowland'
 import { Pressable, Share, Text, View } from 'react-native'
 
 import { Screen } from '@/components/screen'
+import { useTheme } from '@/hooks/use-theme'
 import {
   DARK_MODE_GRADIENT,
   DIFFICULTIES,
@@ -45,6 +47,9 @@ export function PausedOverlay({
   onNewGame: () => void
   onOpenAdvanced: () => void
 }) {
+  const { colorScheme } = useTheme()
+  const dimColor = colorScheme === 'dark' ? '#504e6e' : '#aaa69e'
+
   return (
     <Screen overlay>
       <View className="w-full items-center justify-between" style={{ minHeight: 560 }}>
@@ -157,12 +162,15 @@ export function PausedOverlay({
           </View>
           <View className="flex-row items-center gap-5">
             <Pressable onPress={onOpenAdvanced} hitSlop={10}>
-              <Text
-                selectable={false}
-                className="font-mono text-[10px] font-bold tracking-[1.8px] text-dim underline"
-              >
-                OPTIONS
-              </Text>
+              <View className="flex-row items-center gap-1">
+                <Ionicons name="settings-outline" size={10} color={dimColor} />
+                <Text
+                  selectable={false}
+                  className="font-mono text-[10px] font-bold tracking-[1.8px] text-dim"
+                >
+                  OPTIONS
+                </Text>
+              </View>
             </Pressable>
             <Pressable
               onPress={() => {
@@ -173,12 +181,15 @@ export function PausedOverlay({
               }}
               hitSlop={10}
             >
-              <Text
-                selectable={false}
-                className="font-mono text-[10px] font-bold tracking-[1.8px] text-dim underline"
-              >
-                SHARE
-              </Text>
+              <View className="flex-row items-center gap-1">
+                <Ionicons name="share-outline" size={10} color={dimColor} />
+                <Text
+                  selectable={false}
+                  className="font-mono text-[10px] font-bold tracking-[1.8px] text-dim"
+                >
+                  SHARE
+                </Text>
+              </View>
             </Pressable>
           </View>
         </View>

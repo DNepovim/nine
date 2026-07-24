@@ -1,3 +1,4 @@
+import { Ionicons } from '@expo/vector-icons'
 import { LinearGradient } from 'expo-linear-gradient'
 import { isNonEmptyString, isOneOf } from 'narrowland'
 import { useEffect, useState } from 'react'
@@ -11,6 +12,7 @@ import Animated, {
 } from 'react-native-reanimated'
 
 import { Screen } from '@/components/screen'
+import { useTheme } from '@/hooks/use-theme'
 import { cn } from '@/lib/cn'
 import {
   DARK_MODE_GRADIENT,
@@ -61,6 +63,8 @@ export function MenuOverlay({
   onCreateRoom: () => void
   onJoinRoom: (code: string) => void
 }) {
+  const { colorScheme } = useTheme()
+  const dimColor = colorScheme === 'dark' ? '#504e6e' : '#aaa69e'
   const [focused, setFocused] = useState<Mode | 'arcade'>(gameMode)
   const [playMode, setPlayMode] = useState<PlayMode>(initialPlayMode)
   const [gameCode, setGameCode] = useState('')
@@ -114,14 +118,14 @@ export function MenuOverlay({
         {/* Top section */}
         <View className="w-full items-center">
           {/* Greeting — only shown when nickname is set */}
-          {isNonEmptyString(nickname) && (
-            <Text
-              selectable={false}
-              className="mb-2 font-mono text-[11px] font-bold tracking-[0.5px] text-dim"
-            >
-              {`Hi ${nickname}, let's multiply`}
-            </Text>
-          )}
+          <Text
+            selectable={false}
+            className="mb-2 font-mono text-[11px] font-bold tracking-[0.5px] text-dim"
+          >
+            {isNonEmptyString(nickname)
+              ? `Hi ${nickname}, let's multiply`
+              : `Let's multiply`}
+          </Text>
 
           {/* NINE title */}
           <View className="mb-4 flex-row gap-3">
@@ -262,12 +266,15 @@ export function MenuOverlay({
 
           <View className="flex-row items-center gap-5">
             <Pressable onPress={onOpenAdvanced} hitSlop={10}>
-              <Text
-                selectable={false}
-                className="font-mono text-[10px] font-bold tracking-[1.8px] text-dim underline"
-              >
-                OPTIONS
-              </Text>
+              <View className="flex-row items-center gap-1">
+                <Ionicons name="settings-outline" size={10} color={dimColor} />
+                <Text
+                  selectable={false}
+                  className="font-mono text-[10px] font-bold tracking-[1.8px] text-dim"
+                >
+                  OPTIONS
+                </Text>
+              </View>
             </Pressable>
             <Pressable
               onPress={() => {
@@ -278,12 +285,15 @@ export function MenuOverlay({
               }}
               hitSlop={10}
             >
-              <Text
-                selectable={false}
-                className="font-mono text-[10px] font-bold tracking-[1.8px] text-dim underline"
-              >
-                SHARE
-              </Text>
+              <View className="flex-row items-center gap-1">
+                <Ionicons name="share-outline" size={10} color={dimColor} />
+                <Text
+                  selectable={false}
+                  className="font-mono text-[10px] font-bold tracking-[1.8px] text-dim"
+                >
+                  SHARE
+                </Text>
+              </View>
             </Pressable>
           </View>
         </View>
