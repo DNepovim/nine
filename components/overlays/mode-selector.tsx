@@ -223,7 +223,7 @@ export function ModeSelector({
       </View>
       <Text
         selectable={false}
-        className="mt-3 px-8 text-center font-mono text-[10px] font-bold tracking-[0.5px] text-dim"
+        className="mt-3 px-8 text-center font-mono text-[10px] font-bold text-dim leading-5"
       >
         {MODE_DESCRIPTIONS[focused]}
       </Text>

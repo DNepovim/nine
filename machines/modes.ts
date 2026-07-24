@@ -86,10 +86,14 @@ export const DARK_MODE_GRADIENT = {
 } as const satisfies Record<Mode | 'arcade', readonly [string, string]>
 
 export const MODE_DESCRIPTIONS: Record<Mode | 'arcade', string> = {
-  trainee: 'Learn the ropes — no lives, no rush.',
-  accuracy: 'Fewest moves win. Precision over speed.',
-  speed: 'Race the clock. Fast hits build big combos.',
-  arcade: 'Levels, bonuses, sidequests.',
+  trainee: `Learn the ropes.
+No lives, no rush.`,
+  accuracy: `Fewest moves win. 
+Precision over speed.`,
+  speed: `Race the clock. 
+Fast hits build big combos.`,
+  arcade: `New adventure.
+Levels, bonuses, sidequests.`,
 }
 
 // Difficulty is a position on the mode gradient: easy = start, extreme = end.
