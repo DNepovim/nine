@@ -31,18 +31,18 @@ export function FloatingPoints({
   useEffect(() => {
     op.value = withSequence(
       withTiming(1, { duration: 90 }),
-      withTiming(1, { duration: 330 }),
-      withTiming(0, { duration: 200 }),
+      withTiming(1, { duration: 550 }),
+      withTiming(0, { duration: 300 }),
     )
     ty.value = withSequence(
-      withTiming(0, { duration: 160 }), // hold below the block — readable
-      withTiming(-20, { duration: 480, easing: Easing.out(Easing.quad) }), // rise into the block
+      withTiming(0, { duration: 240 }), // hold below the block — readable
+      withTiming(-20, { duration: 720, easing: Easing.out(Easing.quad) }), // rise into the block
     )
     sc.value = withSequence(
       withSpring(bonus ? 1.3 : 1, { damping: 9, stiffness: 220 }),
       withTiming(bonus ? 1.18 : 1, { duration: 220 }),
     )
-    const t = setTimeout(onDone, 660)
+    const t = setTimeout(onDone, 980)
     return () => {
       clearTimeout(t)
     }
@@ -61,11 +61,9 @@ export function FloatingPoints({
         {
           position: 'absolute',
           top: 24,
-          left: 0,
           right: 0,
-          alignItems: 'center',
           flexDirection: 'row',
-          justifyContent: 'center',
+          alignItems: 'center',
           gap: 4,
         },
         style,

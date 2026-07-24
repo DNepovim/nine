@@ -17,11 +17,13 @@ export function ScoreDigit({
   direction,
   isDark,
   progress,
+  size = 42,
 }: {
   digit: string
   direction: 1 | -1
   isDark: boolean
   progress: number
+  size?: number
 }) {
   const prevDigit = useRef(digit)
   const translateY = useSharedValue(0)
@@ -65,7 +67,7 @@ export function ScoreDigit({
       selectable={false}
       style={[
         {
-          fontSize: 42,
+          fontSize: size,
           fontWeight: '700',
           fontFamily: mono,
           letterSpacing: 2,

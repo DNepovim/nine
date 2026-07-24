@@ -65,6 +65,8 @@ export type HitInfo = {
   progress: number
   bonus: boolean
   multiplier: number
+  accFactor: number
+  spdFactor: number
 }
 export type HitBatch = { seq: number; hits: HitInfo[] }
 
@@ -153,7 +155,12 @@ function applyGrid(context: Context, newGrid: Grid, now: number) {
   let allOptimal = isNonEmptyArray(matched)
   let accAdded = 0
   let spdAdded = 0
-  const perTarget: { points: number; progress: number }[] = []
+  const perTarget: {
+    points: number
+    progress: number
+    accFactor: number
+    spdFactor: number
+  }[] = []
 
   for (const t of matched) {
     const userSteps = t.userSteps + 1
@@ -166,11 +173,13 @@ function applyGrid(context: Context, newGrid: Grid, now: number) {
       duration,
       weights: mode.weights,
     })
+    const acc = accuracyFactor(t.par, userSteps)
+    const spd = speedFactor(timeLeft, duration)
     if (userSteps !== t.par) allOptimal = false
-    accAdded += accuracyFactor(t.par, userSteps)
-    spdAdded += speedFactor(timeLeft, duration)
+    accAdded += acc
+    spdAdded += spd
     rawScore += pts
-    perTarget.push({ points: pts, progress })
+    perTarget.push({ points: pts, progress, accFactor: acc, spdFactor: spd })
   }
 
   const triggered =
@@ -196,6 +205,8 @@ function applyGrid(context: Context, newGrid: Grid, now: number) {
     progress: p.progress,
     bonus: multiplier > 1,
     multiplier,
+    accFactor: p.accFactor,
+    spdFactor: p.spdFactor,
   }))
 
   const hits = context.hits + matched.length

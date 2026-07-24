@@ -8,6 +8,7 @@ import { AppState, Text, View } from 'react-native'
 import DSEG7Font from '@/assets/fonts/DSEG7Classic-Bold.ttf'
 import { DialButton } from '@/components/game/dial-button'
 import { FloatingPoints } from '@/components/game/floating-points'
+import { FloatingStat } from '@/components/game/floating-stat'
 import { MenuButton } from '@/components/game/menu-button'
 import { MultiplayerGame } from '@/components/game/multiplayer-game'
 import { ScoreDigit } from '@/components/game/score-digit'
@@ -26,6 +27,7 @@ import { useDisplayOptions } from '@/hooks/use-display-options'
 import { useDisplayScore } from '@/hooks/use-display-score'
 import { useDisplayedTargets } from '@/hooks/use-displayed-targets'
 import { useFloatingPoints } from '@/hooks/use-floating-points'
+import { useFloatingStat } from '@/hooks/use-floating-stat'
 import { useMultiplayerGame } from '@/hooks/use-multiplayer-game'
 import { useMultiplayerRoom } from '@/hooks/use-multiplayer-room'
 import { usePersistedDifficulty } from '@/hooks/use-persisted-difficulty'
@@ -143,6 +145,16 @@ export default function GameScreen() {
 
   const avgAccuracy = hits > 0 ? Math.round((100 * accSum) / hits) : 0
   const avgSpeed = hits > 0 ? Math.round((100 * spdSum) / hits) : 0
+
+  const { floatStats, removeFloatStat } = useFloatingStat(hitBatch, mode)
+
+  const avgStat = mode === 'accuracy' ? avgAccuracy : avgSpeed
+  const prevAvgRef = useRef(avgStat)
+  const avgDirection = useRef<1 | -1>(1)
+  if (avgStat !== prevAvgRef.current) {
+    avgDirection.current = avgStat > prevAvgRef.current ? 1 : -1
+    prevAvgRef.current = avgStat
+  }
 
   // ── Multiplayer ────────────────────────────────────────────────────────────
 
@@ -280,21 +292,31 @@ export default function GameScreen() {
             </View>
 
             {/* Center: avg accuracy or avg speed depending on mode */}
-            {mode === 'accuracy' && (
-              <Text
-                selectable={false}
-                className="font-mono text-[10px] font-bold tracking-[1.5px] text-dim"
-              >
-                {avgAccuracy}%
-              </Text>
-            )}
-            {mode === 'speed' && (
-              <Text
-                selectable={false}
-                className="font-mono text-[10px] font-bold tracking-[1.5px] text-dim"
-              >
-                {avgSpeed}%
-              </Text>
+            {isOneOf(mode, ['accuracy', 'speed']) && (
+              <View style={{ alignItems: 'center' }}>
+                <View style={{ flexDirection: 'row' }}>
+                  {`${avgStat}%`.split('').map((digit, i, arr) => (
+                    <ScoreDigit
+                      key={arr.length - 1 - i}
+                      digit={digit}
+                      direction={avgDirection.current}
+                      isDark={isDark}
+                      progress={0}
+                      size={16}
+                    />
+                  ))}
+                </View>
+                {floatStats.map((f) => (
+                  <FloatingStat
+                    key={f.id}
+                    value={f.value}
+                    progress={f.progress}
+                    onDone={() => {
+                      removeFloatStat(f.id)
+                    }}
+                  />
+                ))}
+              </View>
             )}
 
             {/* Score cluster: digital readout + streak multiplier badge */}
@@ -310,7 +332,15 @@ export default function GameScreen() {
                 {streak > 0 && (
                   <Text
                     selectable={false}
-                    className="font-mono text-[11px] font-black tracking-[1px] text-score"
+                    className="font-mono text-[11px] font-black tracking-[1px]"
+                    style={{
+                      color:
+                        currentMultiplier >= 8
+                          ? '#E5534B'
+                          : currentMultiplier >= 4
+                            ? '#7273D2'
+                            : '#4C7EFF',
+                    }}
                   >
                     {`×${currentMultiplier}`}
                   </Text>
