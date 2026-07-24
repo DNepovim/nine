@@ -17,61 +17,13 @@ import {
 } from '@/lib/leaderboard'
 import { MODE_GRADIENT, type Difficulty, type Mode } from '@/machines/game'
 
+import { TabPanel } from './tab-panel'
+
 const TABS: { key: LeaderboardTab; label: string }[] = [
   { key: 'today', label: 'TODAY' },
   { key: 'week', label: 'THIS WEEK' },
   { key: 'forever', label: 'FOREVER' },
 ]
-
-type ScoreEntry = {
-  rank: number
-  nickname: string
-  score: number
-  isUser?: boolean
-}
-
-function ScoreRow({ entry, accentColor }: { entry: ScoreEntry; accentColor: string }) {
-  const highlight = entry.isUser === true
-  const accentStyle = highlight ? { color: accentColor } : undefined
-  return (
-    <View
-      className="flex-row items-center rounded-lg px-2 py-1.5"
-      style={highlight ? { backgroundColor: accentColor + '20' } : undefined}
-    >
-      <Text
-        selectable={false}
-        className="w-7 font-mono text-[10px] font-bold text-dim"
-        style={accentStyle}
-      >
-        {entry.rank}
-      </Text>
-      <Text
-        selectable={false}
-        className="flex-1 font-mono text-[10px] font-bold tracking-[0.5px] text-primary"
-        style={accentStyle}
-      >
-        {entry.nickname}
-      </Text>
-      <Text
-        selectable={false}
-        className="font-mono text-[10px] font-bold text-primary"
-        style={accentStyle}
-      >
-        {entry.score}
-      </Text>
-    </View>
-  )
-}
-
-function SkeletonRow() {
-  return (
-    <View className="flex-row items-center px-2 py-1.5">
-      <View className="mr-1 h-2.5 w-5 rounded-sm bg-dim/20" />
-      <View className="mr-1 h-2.5 flex-1 rounded-sm bg-dim/20" />
-      <View className="h-2.5 w-10 rounded-sm bg-dim/20" />
-    </View>
-  )
-}
 
 function applyOptimistic(
   state: LeaderboardState,
@@ -125,92 +77,6 @@ function applyOptimistic(
   }
 
   return { rows: newRows, myRank: newMyRank, loading: false, error: null }
-}
-
-function TabPanel({
-  data,
-  accentColor,
-  userId,
-  nickname,
-  width,
-}: {
-  data: LeaderboardState
-  accentColor: string
-  userId: string | null
-  nickname: string | null
-  width: number
-}) {
-  if (data.loading) {
-    return (
-      <View style={{ width }}>
-        {[1, 2, 3, 4, 5].map((i) => (
-          <SkeletonRow key={i} />
-        ))}
-      </View>
-    )
-  }
-
-  if (data.error) {
-    return (
-      <View style={{ width }} className="items-center py-4">
-        <Text selectable={false} className="font-mono text-[9px] font-bold text-dim">
-          — UNAVAILABLE —
-        </Text>
-      </View>
-    )
-  }
-
-  const top5 = data.rows
-  const myRank = data.myRank
-  const userIsInTop5 = myRank !== null && myRank.rank <= top5.length
-
-  if (top5.length === 0) {
-    return (
-      <View style={{ width }} className="items-center py-4">
-        <Text selectable={false} className="font-mono text-[9px] font-bold text-dim">
-          — NO SCORES YET —
-        </Text>
-      </View>
-    )
-  }
-
-  return (
-    <View style={{ width }}>
-      {top5.map((row) => (
-        <ScoreRow
-          key={row.user_id}
-          entry={{
-            rank: row.rank,
-            nickname: row.nickname,
-            score: row.best_score,
-            isUser: row.user_id === userId,
-          }}
-          accentColor={accentColor}
-        />
-      ))}
-      {myRank !== null && !userIsInTop5 && nickname !== null && (
-        <>
-          <View className="items-center py-1">
-            <Text
-              selectable={false}
-              className="font-mono text-[11px] tracking-[6px] text-dim"
-            >
-              ⋯
-            </Text>
-          </View>
-          <ScoreRow
-            entry={{
-              rank: myRank.rank,
-              nickname,
-              score: myRank.best_score,
-              isUser: true,
-            }}
-            accentColor={accentColor}
-          />
-        </>
-      )}
-    </View>
-  )
 }
 
 export function HighScores({
@@ -338,22 +204,14 @@ export function HighScores({
 
         {/* Animated gradient underline */}
         <Animated.View
-          style={[
-            underlineStyle,
-            {
-              position: 'absolute',
-              bottom: 0,
-              height: 4,
-              borderRadius: 2,
-              overflow: 'hidden',
-            },
-          ]}
+          className="absolute bottom-0 h-1 rounded-sm overflow-hidden"
+          style={underlineStyle}
         >
           <LinearGradient
             colors={gradientColors}
             start={{ x: 0, y: 0.5 }}
             end={{ x: 1, y: 0.5 }}
-            style={{ flex: 1 }}
+            className="flex-1"
           />
         </Animated.View>
       </View>

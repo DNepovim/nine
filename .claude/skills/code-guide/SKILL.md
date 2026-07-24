@@ -29,6 +29,7 @@ Style and pattern reference for the Nine codebase. Consult before writing or rev
 - Destructure props in the function signature
 - Pass primitives over objects where possible (`name={item.name}` not `item={item}`)
 - Keep components small; extract sub-components when a section has its own state or animation logic
+- **Every named component must live in its own file** — no inline sub-components inside another component's file. Even if a component is only used in one place, it gets its own file.
 - Define animated sub-components at **module level**, not inside the parent function — nesting them causes remount on every parent render, resetting all shared values
 
 ```tsx
@@ -50,10 +51,26 @@ export function Screen() {
 
 ## Styling (NativeWind)
 
+**Strongly prefer `className`** — reach for it first. `style` is the last resort, reserved only for values that cannot be expressed statically: runtime-computed colors (hex with dynamic alpha), sizes derived from layout measurements, and Reanimated animated style objects.
+
 - Use `className` for all static styles (spacing, typography, flex, colors from the palette)
 - Use the `style` prop only for values that are computed at runtime: dynamic hex colors, pixel sizes from layout measurements, or Reanimated animated styles
 - Never mix NativeWind `className` with React Native `StyleSheet.create` on the same component
 - Tailwind color tokens (`text-primary`, `bg-dim`, etc.) are defined in `global.css` — prefer tokens over raw hex in `className`
+
+For **conditional** class names, use the `cn` utility (`lib/cn.ts`) — it wraps `clsx` + `tailwind-merge` so conditional Tailwind classes are safe to compose:
+
+```tsx
+import { cn } from '@/lib/cn'
+
+// ❌ Conditional inline style
+<View style={{ opacity: disabled ? 0.35 : 1 }} />
+<Text style={{ color: isMe ? '#4C7EFF' : '#aaa69e' }} />
+
+// ✅ cn() keeps everything in className
+<View className={cn('rounded-2xl', disabled && 'opacity-[0.35]')} />
+<Text className={cn('font-mono', isMe ? 'text-[#4C7EFF]' : 'text-dim')} />
+```
 
 ```tsx
 // ❌ Inline style for something Tailwind can express
@@ -62,7 +79,7 @@ export function Screen() {
 // ✅ NativeWind className
 <View className="flex-row gap-2 p-4" />
 
-// ✅ style prop only for runtime values
+// ✅ style prop only for runtime values (dynamic hex, layout-measured sizes, Reanimated)
 <Text className="font-mono text-[13px] font-black" style={{ color: MODE_COLORS[mode] }}>
   {label}
 </Text>
