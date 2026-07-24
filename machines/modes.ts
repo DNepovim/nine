@@ -47,7 +47,7 @@ export type DifficultyConfig = {
 }
 
 export const DIFFICULTIES: Record<Difficulty, DifficultyConfig> = {
-  easy: { label: 'EASY', timeoutScale: 1.3, maxTargets: 1 },
+  easy: { label: 'EASY', timeoutScale: 1.3, maxTargets: 3 },
   hard: { label: 'HARD', timeoutScale: 0.75, maxTargets: 3 },
   extreme: { label: 'EXTREME', timeoutScale: 0.55, maxTargets: 4 },
 }
