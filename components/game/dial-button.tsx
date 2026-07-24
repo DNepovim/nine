@@ -22,6 +22,7 @@ export function DialButton({
   size,
   weight,
   showSum,
+  trainee,
   onDelta,
   onSet,
 }: {
@@ -30,6 +31,7 @@ export function DialButton({
   size: number
   weight: number
   showSum: boolean
+  trainee: boolean
   onDelta: (delta: 1 | -1) => void
   onSet: (value: number) => void
 }) {
@@ -157,21 +159,50 @@ export function DialButton({
             btnStyle,
           ]}
         >
-          <Animated.Text
-            selectable={false}
-            style={[
-              {
-                fontSize: 30,
+          <Animated.View style={[{ alignItems: 'center' as const }, numStyle]}>
+            {trainee && (
+              <Animated.Text
+                selectable={false}
+                style={{
+                  fontSize: 10,
+                  fontFamily: mono,
+                  fontWeight: '700' as const,
+                  includeFontPadding: false,
+                  color: isDark ? 'rgba(200,194,232,0.5)' : 'rgba(28,25,40,0.4)',
+                  letterSpacing: 0.5,
+                }}
+              >
+                ×{weight}
+              </Animated.Text>
+            )}
+            <Animated.Text
+              selectable={false}
+              style={{
+                fontSize: trainee ? 24 : 30,
                 fontFamily: mono,
                 fontWeight: '500' as const,
                 includeFontPadding: false,
                 color: isDark ? '#C8C2E8' : '#1C1928',
-              },
-              numStyle,
-            ]}
-          >
-            {showSum ? value * weight : value}
-          </Animated.Text>
+              }}
+            >
+              {showSum ? value * weight : value}
+            </Animated.Text>
+            {trainee && (
+              <Animated.Text
+                selectable={false}
+                style={{
+                  fontSize: 10,
+                  fontFamily: mono,
+                  fontWeight: '700' as const,
+                  includeFontPadding: false,
+                  color: isDark ? 'rgba(200,194,232,0.5)' : 'rgba(28,25,40,0.4)',
+                  letterSpacing: 0.5,
+                }}
+              >
+                {9 * weight}
+              </Animated.Text>
+            )}
+          </Animated.View>
         </Animated.View>
       </View>
     </GestureDetector>

@@ -261,6 +261,7 @@ export function MultiplayerGame({
               size={Math.floor(dialSize / 3)}
               weight={(Math.floor(index / 3) + 1) * ((index % 3) + 1)}
               showSum={false}
+              trainee={false}
               onDelta={(delta) => {
                 handlePress(index, delta)
               }}

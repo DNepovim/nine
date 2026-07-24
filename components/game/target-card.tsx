@@ -1,4 +1,5 @@
 import { useEffect } from 'react'
+import { Text, View } from 'react-native'
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
@@ -8,18 +9,21 @@ import Animated, {
 import { scheduleOnRN } from 'react-native-worklets'
 
 import { PieCountdown } from '@/components/game/pie-countdown'
+import { mono } from '@/constants/theme'
 import type { DisplayTarget } from '@/types/game'
 
 export function TargetCard({
   target,
   isDark,
   duration,
+  par,
   onExpire,
   onExitComplete,
 }: {
   target: DisplayTarget
   isDark: boolean
   duration: number
+  par?: number
   onExpire: () => void
   onExitComplete: () => void
 }) {
@@ -62,6 +66,31 @@ export function TargetCard({
         duration={duration}
         onComplete={onExpire}
       />
+      {par !== undefined && (
+        <View
+          style={{
+            position: 'absolute',
+            bottom: 4,
+            right: 4,
+            backgroundColor: '#6B7280',
+            borderRadius: 999,
+            paddingHorizontal: 6,
+            paddingVertical: 3,
+          }}
+        >
+          <Text
+            selectable={false}
+            style={{
+              fontFamily: mono,
+              fontSize: 13,
+              fontWeight: '700',
+              color: '#FFFFFF',
+            }}
+          >
+            {par}
+          </Text>
+        </View>
+      )}
     </Animated.View>
   )
 }

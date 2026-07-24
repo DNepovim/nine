@@ -47,6 +47,7 @@ import {
   MODES,
   streakMultiplier,
 } from '@/machines/game'
+import { computePar } from '@/machines/scoring'
 import type { MultiMode } from '@/types/multiplayer'
 
 export default function GameScreen() {
@@ -338,6 +339,7 @@ export default function GameScreen() {
               target={target}
               isDark={isDark}
               duration={duration}
+              par={mode === 'trainee' ? computePar(grid, target.value) : undefined}
               onExpire={() => {
                 send({ type: 'TARGET_EXPIRED', id: target.id })
               }}
@@ -385,6 +387,7 @@ export default function GameScreen() {
                 size={Math.floor(dialSize / 3)}
                 weight={(Math.floor(index / 3) + 1) * ((index % 3) + 1)}
                 showSum={showSum}
+                trainee={mode === 'trainee'}
                 onDelta={(delta) => {
                   send({ type: 'PRESS', index, delta, now: Date.now() })
                 }}
