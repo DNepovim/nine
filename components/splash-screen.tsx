@@ -61,10 +61,10 @@ export function SplashScreen({ onDone }: { onDone: () => void }) {
   // expo-linear-gradient doesn't expose locations as an animatable native prop,
   // so useAnimatedProps is a no-op for it; runOnJS is the correct path.
   const [locations, setLocations] = useState<[number, number, number, number]>([
-    0, 0.28, 0.62, 1,
+    0, 0.1, 0.9, 1,
   ])
-  const loc1 = useSharedValue(0.28)
-  const loc2 = useSharedValue(0.62)
+  const loc1 = useSharedValue(0.1)
+  const loc2 = useSharedValue(0.9)
 
   const applyLocations = useCallback((l1: number, l2: number) => {
     setLocations([0, l1, l2, 1])
@@ -88,19 +88,19 @@ export function SplashScreen({ onDone }: { onDone: () => void }) {
   useEffect(() => {
     // Threshold animation — asynchronous periods so they never sync up
     loc1.value = withRepeat(
-      withTiming(0.44, { duration: 4200, easing: Easing.inOut(Easing.ease) }),
+      withTiming(0.45, { duration: 4200, easing: Easing.inOut(Easing.ease) }),
       -1,
       true,
     )
     loc2.value = withRepeat(
-      withTiming(0.76, { duration: 5800, easing: Easing.inOut(Easing.ease) }),
+      withTiming(0.55, { duration: 5800, easing: Easing.inOut(Easing.ease) }),
       -1,
       true,
     )
 
     // Appearance sequence
     nineOpacity.value = withDelay(300, withTiming(1, { duration: 1500 }))
-    subtitleOpacity.value = withDelay(2000, withTiming(1, { duration: 1500 }))
+    subtitleOpacity.value = withDelay(1300, withTiming(1, { duration: 1500 }))
 
     contentScale.value = withDelay(
       5000,
@@ -157,7 +157,27 @@ export function SplashScreen({ onDone }: { onDone: () => void }) {
             subtitleStyle,
           ]}
         >
-          {"Let's multiply."}
+          {"Let's multiply"}
+        </Animated.Text>
+
+        {/* Bottom attribution — inside contentStyle so it fades out with the rest */}
+        <Animated.Text
+          selectable={false}
+          style={[
+            {
+              position: 'absolute',
+              bottom: 48,
+              alignSelf: 'center',
+              fontFamily: mono,
+              fontSize: 11,
+              fontWeight: '700' as const,
+              color: 'rgba(255,255,255,0.5)',
+              letterSpacing: 2,
+            },
+            subtitleStyle,
+          ]}
+        >
+          by Donda
         </Animated.Text>
       </Animated.View>
     </Animated.View>
