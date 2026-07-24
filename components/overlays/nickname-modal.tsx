@@ -9,7 +9,7 @@ import {
   View,
 } from 'react-native'
 
-const NICK_RE = /^\w{3,16}$/
+const NICK_RE = /^[\p{L}\p{N}_]{3,16}$/u
 
 export function NicknameModal({
   visible,
@@ -78,7 +78,7 @@ export function NicknameModal({
               setError(null)
             }}
             placeholder="e.g. ACE_9"
-            autoCapitalize="characters"
+            autoCapitalize="none"
             autoCorrect={false}
             maxLength={16}
             returnKeyType="done"
