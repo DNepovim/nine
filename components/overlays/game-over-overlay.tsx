@@ -96,22 +96,25 @@ export function GameOverOverlay({
           </Text>
 
           {/* Stats — labels right-aligned, values left-aligned, boundary at screen centre */}
-          <View className="mb-6 flex-row">
+          <View className="mb-6 w-72 flex-row">
             <View className="flex-1 items-end gap-2 pr-4">
               <Text
                 selectable={false}
+                numberOfLines={1}
                 className="font-mono text-[10px] font-bold tracking-[1.5px] text-dim"
               >
                 HITS
               </Text>
               <Text
                 selectable={false}
+                numberOfLines={1}
                 className="font-mono text-[10px] font-bold tracking-[1.5px] text-dim"
               >
                 AVG ACC
               </Text>
               <Text
                 selectable={false}
+                numberOfLines={1}
                 className="font-mono text-[10px] font-bold tracking-[1.5px] text-dim"
               >
                 AVG SPD
@@ -120,18 +123,21 @@ export function GameOverOverlay({
             <View className="flex-1 items-start gap-2 pl-4">
               <Text
                 selectable={false}
+                numberOfLines={1}
                 className="font-mono text-[10px] font-bold tracking-[1.5px] text-primary"
               >
                 {hits}
               </Text>
               <Text
                 selectable={false}
+                numberOfLines={1}
                 className="font-mono text-[10px] font-bold tracking-[1.5px] text-primary"
               >
                 {avgAccuracy}%
               </Text>
               <Text
                 selectable={false}
+                numberOfLines={1}
                 className="font-mono text-[10px] font-bold tracking-[1.5px] text-primary"
               >
                 {avgSpeed}%
