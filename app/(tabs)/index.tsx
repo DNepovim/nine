@@ -4,6 +4,15 @@ import { useFonts } from 'expo-font'
 import { isNotNull, isOneOf } from 'narrowland'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { AppState, Text, View } from 'react-native'
+import Animated, {
+  Easing,
+  useAnimatedStyle,
+  useSharedValue,
+  withDelay,
+  withSequence,
+  withSpring,
+  withTiming,
+} from 'react-native-reanimated'
 
 import DSEG7Font from '@/assets/fonts/DSEG7Classic-Bold.ttf'
 import { DialButton } from '@/components/game/dial-button'
@@ -14,7 +23,7 @@ import { MultiplayerGame } from '@/components/game/multiplayer-game'
 import { ScoreDigit } from '@/components/game/score-digit'
 import { TargetCard } from '@/components/game/target-card'
 import { AdvancedOptionsOverlay } from '@/components/overlays/advanced-options-overlay'
-import { GameOverOverlay } from '@/components/overlays/game-over-overlay'
+import { GameOverSequence } from '@/components/overlays/game-over-sequence'
 import { MenuOverlay } from '@/components/overlays/menu-overlay'
 import { MultiplayerGameOver } from '@/components/overlays/multiplayer-game-over'
 import { MultiplayerMenu } from '@/components/overlays/multiplayer-menu'
@@ -26,6 +35,7 @@ import { mono } from '@/constants/theme'
 import { useDisplayOptions } from '@/hooks/use-display-options'
 import { useDisplayScore } from '@/hooks/use-display-score'
 import { useDisplayedTargets } from '@/hooks/use-displayed-targets'
+import { useDyingSequence } from '@/hooks/use-dying-sequence'
 import { useFloatingPoints } from '@/hooks/use-floating-points'
 import { useFloatingStat } from '@/hooks/use-floating-stat'
 import { useMultiplayerGame } from '@/hooks/use-multiplayer-game'
@@ -51,6 +61,43 @@ import {
 } from '@/machines/game'
 import { computePar } from '@/machines/scoring'
 import type { MultiMode } from '@/types/multiplayer'
+
+function HeartIcon({ filled, emptyColor }: { filled: boolean; emptyColor: string }) {
+  const scale = useSharedValue(1)
+  const fillOp = useSharedValue(filled ? 1 : 0)
+  const prevFilled = useRef(filled)
+
+  useEffect(() => {
+    if (prevFilled.current && !filled) {
+      scale.value = withSequence(
+        withTiming(1.5, { duration: 120, easing: Easing.out(Easing.quad) }),
+        withSpring(1, { damping: 10, stiffness: 250 }),
+      )
+      fillOp.value = withDelay(80, withTiming(0, { duration: 200 }))
+    } else if (!prevFilled.current && filled) {
+      fillOp.value = 1
+      scale.value = 1
+    }
+    prevFilled.current = filled
+  }, [filled, fillOp, scale])
+
+  const scaleStyle = useAnimatedStyle(() => ({ transform: [{ scale: scale.value }] }))
+  const fillStyle = useAnimatedStyle(() => ({ opacity: fillOp.value }))
+
+  return (
+    <Animated.View style={scaleStyle}>
+      <AntDesign name="heart" size={22} color={emptyColor} />
+      <Animated.View
+        style={[
+          { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 },
+          fillStyle,
+        ]}
+      >
+        <AntDesign name="heart" size={22} color="#E5534B" />
+      </Animated.View>
+    </Animated.View>
+  )
+}
 
 export default function GameScreen() {
   const { colorScheme, toggleTheme } = useTheme()
@@ -155,6 +202,17 @@ export default function GameScreen() {
     avgDirection.current = avgStat > prevAvgRef.current ? 1 : -1
     prevAvgRef.current = avgStat
   }
+
+  // ── Life-loss & dying sequence ──────────────────────────────────────────────
+
+  const {
+    phase: dyingPhase,
+    flashStyle,
+    titleStyle,
+    overlayStyle,
+    targetsAreaRef,
+    setOverlayTitleY,
+  } = useDyingSequence({ isGameOver, lives })
 
   // ── Multiplayer ────────────────────────────────────────────────────────────
 
@@ -276,17 +334,10 @@ export default function GameScreen() {
           <View className="mt-1.5 flex-row items-center">
             <View className="flex-1 flex-row gap-1">
               {[0, 1, 2].map((i) => (
-                <AntDesign
+                <HeartIcon
                   key={i}
-                  name="heart"
-                  size={22}
-                  color={
-                    MODES[mode].lives === Number.POSITIVE_INFINITY || i < lives
-                      ? '#E5534B'
-                      : isDark
-                        ? '#1C1D30'
-                        : '#FDFCFA'
-                  }
+                  filled={MODES[mode].lives === Number.POSITIVE_INFINITY || i < lives}
+                  emptyColor={isDark ? '#1C1D30' : '#FDFCFA'}
                 />
               ))}
             </View>
@@ -362,7 +413,7 @@ export default function GameScreen() {
         </View>
 
         {/* Target numbers */}
-        <View className="flex-1" onLayout={onContainerLayout}>
+        <View ref={targetsAreaRef} className="flex-1" onLayout={onContainerLayout}>
           {displayedTargets.map((target) => (
             <TargetCard
               key={target.id}
@@ -370,6 +421,7 @@ export default function GameScreen() {
               isDark={isDark}
               duration={duration}
               par={mode === 'trainee' ? computePar(grid, target.value) : undefined}
+              dying={isGameOver}
               onExpire={() => {
                 send({ type: 'TARGET_EXPIRED', id: target.id })
               }}
@@ -430,22 +482,40 @@ export default function GameScreen() {
         </View>
       </Screen>
 
-      {/* ── Game-over overlay ── */}
-      {isGameOver && (
-        <GameOverOverlay
-          gameMode={mode}
-          difficulty={difficulty}
-          userId={userId}
-          nickname={nickname}
-          score={state.context.score}
-          hits={state.context.hits}
-          avgAccuracy={avgAccuracy}
-          avgSpeed={avgSpeed}
-          onNewGame={() => {
-            send({ type: 'MENU' })
-          }}
-        />
-      )}
+      {/* ── Life-loss flash — red tint over the game screen ── */}
+      <Animated.View
+        pointerEvents="none"
+        style={[
+          {
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: '#E5534B',
+          },
+          flashStyle,
+        ]}
+      />
+
+      {/* ── Game-over cinematic (overlay crossfade + flying title) ── */}
+      <GameOverSequence
+        phase={dyingPhase}
+        overlayStyle={overlayStyle}
+        titleStyle={titleStyle}
+        onTitleLayout={setOverlayTitleY}
+        gameMode={mode}
+        difficulty={difficulty}
+        userId={userId}
+        nickname={nickname}
+        score={state.context.score}
+        hits={state.context.hits}
+        avgAccuracy={avgAccuracy}
+        avgSpeed={avgSpeed}
+        onNewGame={() => {
+          send({ type: 'MENU' })
+        }}
+      />
 
       {/* ── Pause overlay ── */}
       {isPaused && !advancedOpen && (

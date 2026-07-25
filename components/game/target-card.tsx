@@ -1,6 +1,7 @@
 import { useEffect } from 'react'
 import { Text, View } from 'react-native'
 import Animated, {
+  Easing,
   useAnimatedStyle,
   useSharedValue,
   withSpring,
@@ -17,6 +18,7 @@ export function TargetCard({
   isDark,
   duration,
   par,
+  dying = false,
   onExpire,
   onExitComplete,
 }: {
@@ -24,6 +26,7 @@ export function TargetCard({
   isDark: boolean
   duration: number
   par?: number
+  dying?: boolean
   onExpire: () => void
   onExitComplete: () => void
 }) {
@@ -36,12 +39,19 @@ export function TargetCard({
   }, [])
 
   useEffect(() => {
+    // On game over the target isn't removed from the machine, so `exiting` never
+    // flips — drive the freeze-and-shrink straight off the `dying` prop instead.
+    if (dying) {
+      scale.value = withTiming(0.4, { duration: 500, easing: Easing.in(Easing.quad) })
+      opacity.value = withTiming(0, { duration: 500, easing: Easing.in(Easing.quad) })
+      return
+    }
     if (!target.exiting) return
     scale.value = withSpring(1.15, { damping: 10, stiffness: 300 })
     opacity.value = withTiming(0, { duration: 250 }, (finished) => {
       if (finished) scheduleOnRN(onExitComplete)
     })
-  }, [target.exiting])
+  }, [target.exiting, dying])
 
   const animStyle = useAnimatedStyle(() => ({
     transform: [{ scale: scale.value }],
@@ -62,7 +72,7 @@ export function TargetCard({
       <PieCountdown
         value={target.value}
         isDark={isDark}
-        active={!target.exiting}
+        active={!target.exiting && !dying}
         duration={duration}
         onComplete={onExpire}
       />

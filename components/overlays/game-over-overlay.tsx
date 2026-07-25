@@ -1,28 +1,19 @@
 import { LinearGradient } from 'expo-linear-gradient'
 import { isOneOf } from 'narrowland'
-import { useEffect } from 'react'
+import { useRef } from 'react'
 import { Pressable, Text, View } from 'react-native'
-import { Easing, useSharedValue, withRepeat, withTiming } from 'react-native-reanimated'
 
 import { Screen } from '@/components/screen'
 import {
   DARK_MODE_GRADIENT,
   DIFFICULTIES,
-  lerpColor,
-  MODE_GRADIENT,
   MODES,
   type Difficulty,
   type Mode,
 } from '@/machines/game'
 
-import { AnimatedLetter } from './animated-letter'
+import { GameOverTitle } from './game-over-title'
 import { HighScores } from './high-scores'
-
-const ROWS = [
-  ['G', 'A', 'M', 'E'],
-  ['O', 'V', 'E', 'R'],
-]
-const TOTAL_LETTERS = 8
 
 const shadow = {
   shadowColor: '#000',
@@ -41,6 +32,8 @@ export function GameOverOverlay({
   avgAccuracy,
   avgSpeed,
   onNewGame,
+  titleHidden = false,
+  onTitleLayout,
 }: {
   gameMode: Mode
   difficulty: Difficulty
@@ -51,18 +44,13 @@ export function GameOverOverlay({
   avgAccuracy: number
   avgSpeed: number
   onNewGame: () => void
+  // When the in-game dying sequence flies its own copy of the title up into
+  // place, the overlay hides its title until the hand-off completes, and reports
+  // where the title sits (window centre-Y) so the flying copy can land on it.
+  titleHidden?: boolean
+  onTitleLayout?: (centerY: number) => void
 }) {
-  const gradPhase = useSharedValue(0)
-  const gradStartSv = useSharedValue<string>(MODE_GRADIENT[gameMode][0])
-  const gradEndSv = useSharedValue<string>(MODE_GRADIENT[gameMode][1])
-
-  useEffect(() => {
-    gradPhase.value = withRepeat(
-      withTiming(1, { duration: 2000, easing: Easing.linear }),
-      -1,
-      false,
-    )
-  }, [gradPhase])
+  const titleRef = useRef<View>(null)
 
   return (
     <Screen overlay>
@@ -70,33 +58,18 @@ export function GameOverOverlay({
         {/* Top: title + score + stats + leaderboard */}
         <View className="w-full items-center">
           {/* GAME OVER — two rows of four animated letters */}
-          <View className="mb-3 items-center gap-1">
-            {ROWS.map((word, rowIndex) => (
-              <View key={rowIndex} className="flex-row gap-3">
-                {word.map((char, colIndex) => {
-                  const globalIndex = rowIndex * 4 + colIndex
-                  const tBase = globalIndex / (TOTAL_LETTERS - 1)
-                  return (
-                    <AnimatedLetter
-                      key={globalIndex}
-                      char={char}
-                      color={lerpColor(
-                        MODE_GRADIENT[gameMode][0],
-                        MODE_GRADIENT[gameMode][1],
-                        tBase,
-                      )}
-                      tBase={tBase}
-                      gradStart={gradStartSv}
-                      gradEnd={gradEndSv}
-                      gradPhase={gradPhase}
-                      mode={gameMode}
-                      delay={globalIndex * 80}
-                      letterIndex={globalIndex % 4}
-                    />
-                  )
-                })}
-              </View>
-            ))}
+          <View
+            ref={titleRef}
+            className="mb-3"
+            style={{ opacity: titleHidden ? 0 : 1 }}
+            onLayout={() => {
+              if (!onTitleLayout) return
+              titleRef.current?.measureInWindow((_x, y, _w, h) => {
+                onTitleLayout(y + h / 2)
+              })
+            }}
+          >
+            <GameOverTitle gameMode={gameMode} />
           </View>
 
           {/* Mode · Difficulty subtitle */}
