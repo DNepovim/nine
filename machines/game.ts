@@ -138,6 +138,25 @@ const bestByScore = (
   spdSum: number,
 ): DifficultyStats => (score > prev.score ? { score, hits, accSum, spdSum } : prev)
 
+function buildPressGrid(grid: Grid, index: number, delta: 1 | -1): Grid {
+  const row = Math.floor(index / 3)
+  const col = index % 3
+  return grid.map((r, ri) =>
+    r.map((v, ci) => {
+      if (ri !== row || ci !== col) return v
+      return (((v + delta) % 10) + 10) % 10
+    }),
+  ) as Grid
+}
+
+function buildSetGrid(grid: Grid, index: number, value: number): Grid {
+  const row = Math.floor(index / 3)
+  const col = index % 3
+  return grid.map((r, ri) =>
+    r.map((v, ci) => (ri === row && ci === col ? value : v)),
+  ) as Grid
+}
+
 // Applies a new grid: scores any targets whose value equals the new sum, resets
 // the reference for surviving targets when a hit happened, applies streak multiplier,
 // and emits a hit batch for the UI.
@@ -249,6 +268,12 @@ function applyGrid(context: Context, newGrid: Grid, now: number) {
     ? { seq: context.hitBatch.seq + 1, hits: hitInfos }
     : context.hitBatch
 
+  // Accuracy mode: lose a life when hitting a target with < 20 % accuracy factor.
+  let newLives = context.lives
+  if (context.mode === 'accuracy' && anyHit && perTarget.some((p) => p.accFactor < 0.2)) {
+    newLives = Math.max(0, context.lives - 1)
+  }
+
   return {
     grid: newGrid,
     targets,
@@ -259,6 +284,7 @@ function applyGrid(context: Context, newGrid: Grid, now: number) {
     spdSum: newSpdSum,
     stats,
     hitBatch,
+    lives: newLives,
   }
 }
 
@@ -328,46 +354,101 @@ export const gameMachine = createMachine({
     playing: {
       on: {
         PAUSE: { target: 'paused' },
-        PRESS: {
-          actions: assign(
-            ({
+        PRESS: [
+          {
+            guard: ({
               context,
               event,
             }: {
               context: Context
               event: Extract<Event, { type: 'PRESS' }>
-            }) => {
-              const row = Math.floor(event.index / 3)
-              const col = event.index % 3
-              const newGrid = context.grid.map((r, ri) =>
-                r.map((v, ci) => {
-                  if (ri !== row || ci !== col) return v
-                  return (((v + event.delta) % 10) + 10) % 10
-                }),
-              ) as Grid
-              return applyGrid(context, newGrid, event.now)
-            },
-          ),
-        },
+            }) =>
+              applyGrid(
+                context,
+                buildPressGrid(context.grid, event.index, event.delta),
+                event.now,
+              ).lives <= 0,
+            target: 'gameOver',
+            actions: assign(
+              ({
+                context,
+                event,
+              }: {
+                context: Context
+                event: Extract<Event, { type: 'PRESS' }>
+              }) =>
+                applyGrid(
+                  context,
+                  buildPressGrid(context.grid, event.index, event.delta),
+                  event.now,
+                ),
+            ),
+          },
+          {
+            actions: assign(
+              ({
+                context,
+                event,
+              }: {
+                context: Context
+                event: Extract<Event, { type: 'PRESS' }>
+              }) =>
+                applyGrid(
+                  context,
+                  buildPressGrid(context.grid, event.index, event.delta),
+                  event.now,
+                ),
+            ),
+          },
+        ],
         // Absolute set (swipe left → 0, swipe right → 9).
-        SET_CELL: {
-          actions: assign(
-            ({
+        SET_CELL: [
+          {
+            guard: ({
               context,
               event,
             }: {
               context: Context
               event: Extract<Event, { type: 'SET_CELL' }>
-            }) => {
-              const row = Math.floor(event.index / 3)
-              const col = event.index % 3
-              const newGrid = context.grid.map((r, ri) =>
-                r.map((v, ci) => (ri === row && ci === col ? event.value : v)),
-              ) as Grid
-              return applyGrid(context, newGrid, event.now)
-            },
-          ),
-        },
+            }) =>
+              applyGrid(
+                context,
+                buildSetGrid(context.grid, event.index, event.value),
+                event.now,
+              ).lives <= 0,
+            target: 'gameOver',
+            actions: assign(
+              ({
+                context,
+                event,
+              }: {
+                context: Context
+                event: Extract<Event, { type: 'SET_CELL' }>
+              }) =>
+                applyGrid(
+                  context,
+                  buildSetGrid(context.grid, event.index, event.value),
+                  event.now,
+                ),
+            ),
+          },
+          {
+            actions: assign(
+              ({
+                context,
+                event,
+              }: {
+                context: Context
+                event: Extract<Event, { type: 'SET_CELL' }>
+              }) =>
+                applyGrid(
+                  context,
+                  buildSetGrid(context.grid, event.index, event.value),
+                  event.now,
+                ),
+            ),
+          },
+        ],
         TARGET_EXPIRED: [
           {
             // No-life-loss modes (trainee): just clear the target, keep playing.
