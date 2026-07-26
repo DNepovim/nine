@@ -44,35 +44,41 @@ export function GameOverSequence({
 }) {
   if (phase === 'idle') return null
   const revealed = phase === 'done'
+
+  const overlay = (
+    <GameOverOverlay
+      gameMode={gameMode}
+      difficulty={difficulty}
+      userId={userId}
+      nickname={nickname}
+      score={score}
+      hits={hits}
+      avgAccuracy={avgAccuracy}
+      avgSpeed={avgSpeed}
+      titleHidden={!revealed}
+      onTitleLayout={onTitleLayout}
+      onNewGame={onNewGame}
+    />
+  )
+
+  // Once fully revealed the overlay is static, so render it plainly (no
+  // Reanimated opacity layer). Leaving to the menu then tears down an ordinary
+  // view — iOS Safari fails to repaint the menu underneath a composited opacity
+  // layer that unmounts, leaving a blank screen. The overlay already fills the
+  // screen (Screen overlay = absolute inset-0), so it needs no extra wrapper.
+  if (revealed) return overlay
+
   return (
     <>
-      {/* Overlay — mounted invisible from the dying phase so its title can report
-          its resting position; fades in during the blend; interactive at done. */}
-      <Animated.View
-        pointerEvents={revealed ? 'auto' : 'none'}
-        style={[FILL, overlayStyle]}
-      >
-        <GameOverOverlay
-          gameMode={gameMode}
-          difficulty={difficulty}
-          userId={userId}
-          nickname={nickname}
-          score={score}
-          hits={hits}
-          avgAccuracy={avgAccuracy}
-          avgSpeed={avgSpeed}
-          titleHidden={!revealed}
-          onTitleLayout={onTitleLayout}
-          onNewGame={onNewGame}
-        />
+      {/* Crossfade: overlay fades in (invisible during dying so its title can
+          report its resting position); flying title pops in over the frozen
+          targets and flies up to land on the overlay's title during the blend. */}
+      <Animated.View pointerEvents="none" style={[FILL, overlayStyle]}>
+        {overlay}
       </Animated.View>
-
-      {/* Flying title — pops in over the frozen targets, flies up during blend. */}
-      {!revealed && (
-        <Animated.View pointerEvents="none" style={[FILL_CENTER, titleStyle]}>
-          <GameOverTitle gameMode={gameMode} />
-        </Animated.View>
-      )}
+      <Animated.View pointerEvents="none" style={[FILL_CENTER, titleStyle]}>
+        <GameOverTitle gameMode={gameMode} />
+      </Animated.View>
     </>
   )
 }
