@@ -104,9 +104,16 @@ export function useLeaderboard(
     // Row-level filter keeps traffic minimal: only events for this exact board
     // trigger a re-fetch (requires REPLICA IDENTITY FULL on both tables — see
     // migration 20260723000000_enable_realtime.sql).
+    // Unique topic per subscription. The same board (mode×difficulty) is often
+    // live in two places at once — e.g. the menu and the game-over overlay — and
+    // a channel that is torn down then re-created may still overlap the old one.
+    // Reusing a topic makes supabase-js throw "cannot add postgres_changes
+    // callbacks … after subscribe()" when the second channel binds while the
+    // first is still subscribed, which crashes the whole screen. A fresh topic
+    // each time avoids any collision; the row filter is what scopes the events.
     const filter = `mode=eq.${mode}&difficulty=eq.${difficulty}`
     const channel = supabase
-      .channel(`lb:${mode}:${difficulty}`)
+      .channel(`lb:${mode}:${difficulty}:${Math.random().toString(36).slice(2)}`)
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'scores', filter },
