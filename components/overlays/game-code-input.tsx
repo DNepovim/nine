@@ -15,7 +15,7 @@ export function GameCodeInput({
 }) {
   const accentColor = accentColors[0]
   return (
-    <View className="mt-4 items-center">
+    <View className="mb-8 mt-4 items-center">
       <Text
         selectable={false}
         className="mb-4 font-mono text-[9px] font-bold tracking-[2.5px] text-dim"

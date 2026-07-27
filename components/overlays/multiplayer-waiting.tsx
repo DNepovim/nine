@@ -5,15 +5,10 @@ import { Pressable, Text, View } from 'react-native'
 import { Easing, useSharedValue, withRepeat, withTiming } from 'react-native-reanimated'
 
 import { ModeSelector } from '@/components/overlays/mode-selector'
-import { PlayerSlot } from '@/components/overlays/player-slot'
+import { PLAYER_GRADIENTS, PlayerTile } from '@/components/overlays/player-tile'
 import { Screen } from '@/components/screen'
 import { cn } from '@/lib/cn'
-import {
-  DARK_MODE_GRADIENT,
-  lerpColor,
-  MODE_DESCRIPTIONS,
-  MODE_GRADIENT,
-} from '@/machines/game'
+import { DARK_MODE_GRADIENT, MODE_DESCRIPTIONS, MODE_GRADIENT } from '@/machines/game'
 import type { MultiMode, RoomPlayer } from '@/types/multiplayer'
 
 const shadow = {
@@ -51,14 +46,6 @@ export function MultiplayerWaiting({
       false,
     )
   }, [gradPhase])
-
-  const [c0, c1] = MODE_GRADIENT[mode]
-  const slotColors = [
-    lerpColor(c0, c1, 0),
-    lerpColor(c0, c1, 0.25),
-    lerpColor(c0, c1, 0.5),
-    lerpColor(c0, c1, 0.75),
-  ] as const
 
   return (
     <Screen overlay topAligned>
@@ -107,34 +94,33 @@ export function MultiplayerWaiting({
           </View>
         )}
 
-        {/* Player list */}
-        <View className="w-full rounded-xl bg-card px-4 py-2">
-          <View className="mb-1 flex-row px-2">
+        {/* Player grid — two tiles per row */}
+        <View className="w-full gap-2.5">
+          <View className="flex-row items-center justify-between px-1">
             <Text
               selectable={false}
-              className="w-7 font-mono text-[8px] font-bold tracking-[1px] text-dim"
+              className="font-mono text-[9px] font-bold tracking-[2px] text-dim"
             >
-              #
+              PLAYERS
             </Text>
             <Text
               selectable={false}
-              className="flex-1 font-mono text-[8px] font-bold tracking-[1px] text-dim"
+              className="font-mono text-[9px] font-bold tracking-[2px] text-dim"
             >
-              PLAYER
+              {players.length}/4
             </Text>
           </View>
-          {[0, 1, 2, 3].map((i) => {
-            const player = players[i]
-            return (
-              <PlayerSlot
+          <View className="w-full flex-row flex-wrap justify-between gap-y-3">
+            {PLAYER_GRADIENTS.map((gradient, i) => (
+              <PlayerTile
                 key={i}
-                player={player}
-                index={i}
-                color={slotColors[i] ?? slotColors[0]}
-                isMe={userId !== null && player?.user_id === userId}
+                nickname={players[i]?.nickname}
+                gradient={gradient}
+                isMe={userId !== null && players[i]?.user_id === userId}
+                isHost={i === 0 && players[i] !== undefined}
               />
-            )
-          })}
+            ))}
+          </View>
         </View>
 
         {/* Actions */}

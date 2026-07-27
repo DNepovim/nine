@@ -6,10 +6,15 @@ import { Easing, useSharedValue, withRepeat, withTiming } from 'react-native-rea
 
 import { AnimatedLetter } from '@/components/overlays/animated-letter'
 import { ModeSelector } from '@/components/overlays/mode-selector'
-import { RankRow } from '@/components/overlays/rank-row'
+import { PLAYER_GRADIENTS, PlayerTile } from '@/components/overlays/player-tile'
 import { Screen } from '@/components/screen'
 import { cn } from '@/lib/cn'
-import { DARK_MODE_GRADIENT, lerpColor, MODE_GRADIENT } from '@/machines/game'
+import {
+  DARK_MODE_GRADIENT,
+  lerpColor,
+  MODE_DESCRIPTIONS,
+  MODE_GRADIENT,
+} from '@/machines/game'
 import type { MultiMode, PlayerState } from '@/types/multiplayer'
 
 const ROWS = [
@@ -100,21 +105,9 @@ export function MultiplayerGameOver({
           ))}
         </View>
 
-        {/* Rankings */}
-        <View className="w-full rounded-xl bg-card px-4 py-2">
-          <Text
-            selectable={false}
-            className="mb-1 font-mono text-[9px] font-bold tracking-[2.5px] text-dim"
-          >
-            RESULTS
-          </Text>
-          {sorted.map((p, i) => (
-            <RankRow key={p.userId} player={p} rank={i + 1} userId={userId} />
-          ))}
-        </View>
-
-        {/* Mode selector (admin only) */}
-        {isAdmin && (
+        {/* Mode switcher — admin picks the next mode; guest sees a label. Sits
+            above the list, mirroring the waiting room. */}
+        {isAdmin ? (
           <View className="w-full">
             <ModeSelector
               focused={mode}
@@ -125,7 +118,48 @@ export function MultiplayerGameOver({
               }}
             />
           </View>
+        ) : (
+          <View className="items-center gap-1">
+            <Text
+              selectable={false}
+              className="font-mono text-[10px] font-bold tracking-[2px]"
+              style={{ color: MODE_GRADIENT[mode][0] }}
+            >
+              {mode.toUpperCase()} MODE
+            </Text>
+            <Text
+              selectable={false}
+              className="px-6 text-center font-mono text-[10px] font-bold tracking-[0.5px] text-dim"
+            >
+              {MODE_DESCRIPTIONS[mode]}
+            </Text>
+          </View>
         )}
+
+        {/* Ranked player grid — same tiles as the waiting room, ordered by score */}
+        <View className="w-full gap-2.5">
+          <View className="flex-row items-center justify-between px-1">
+            <Text
+              selectable={false}
+              className="font-mono text-[9px] font-bold tracking-[2px] text-dim"
+            >
+              RESULTS
+            </Text>
+          </View>
+          <View className="w-full flex-row flex-wrap justify-between gap-y-3">
+            {sorted.map((p, i) => (
+              <PlayerTile
+                key={p.userId}
+                nickname={p.nickname}
+                gradient={PLAYER_GRADIENTS[i] ?? PLAYER_GRADIENTS[0]}
+                isMe={p.userId === userId}
+                rank={i + 1}
+                score={p.score}
+                ready={p.ready}
+              />
+            ))}
+          </View>
+        </View>
 
         {/* Actions */}
         <View className="w-full items-center gap-4">

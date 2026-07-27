@@ -114,9 +114,12 @@ export const ARCADE_TEASER = {
   tag: 'SOON',
 } as const
 
-// round(baseTimeout × timeoutScale)
-export const effectiveTimeout = (mode: Mode, difficulty: Difficulty): number =>
-  Math.round(MODES[mode].baseTimeout * DIFFICULTIES[difficulty].timeoutScale)
+// round(baseTimeout × timeoutScale). Trainee has no difficulty selector, so it
+// always runs at the Easy pace — its targets last as long as Accuracy on Easy.
+export const effectiveTimeout = (mode: Mode, difficulty: Difficulty): number => {
+  const scale = DIFFICULTIES[mode === 'trainee' ? 'easy' : difficulty].timeoutScale
+  return Math.round(MODES[mode].baseTimeout * scale)
+}
 
 // Targets spawn every 1/3 of the target liveness timeout.
 export const effectiveSpawnInterval = (mode: Mode, difficulty: Difficulty): number =>

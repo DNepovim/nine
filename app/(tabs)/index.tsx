@@ -181,7 +181,15 @@ export default function GameScreen() {
         ? 'paused'
         : 'gameOver'
 
-  useTargetSpawner({ isPlaying, targetCount: targets.length, mode, difficulty, send })
+  useTargetSpawner({
+    isPlaying,
+    targetCount: targets.length,
+    mode,
+    difficulty,
+    currentSum: sum,
+    takenValues: targets.map((t) => t.value),
+    send,
+  })
   const { floats, removeFloat } = useFloatingPoints(hitBatch)
   const { displayedTargets, removeDisplayed, onContainerLayout } = useDisplayedTargets({
     machineTargets: targets,
@@ -338,14 +346,16 @@ export default function GameScreen() {
 
           {/* Row 2 — hearts · center stat · score cluster */}
           <View className="mt-1.5 flex-row items-center">
+            {/* Hearts — Trainee has no lives, so show none. */}
             <View className="flex-1 flex-row gap-1">
-              {[0, 1, 2].map((i) => (
-                <HeartIcon
-                  key={i}
-                  filled={MODES[mode].lives === Number.POSITIVE_INFINITY || i < lives}
-                  emptyColor={isDark ? '#1C1D30' : '#FDFCFA'}
-                />
-              ))}
+              {mode !== 'trainee' &&
+                [0, 1, 2].map((i) => (
+                  <HeartIcon
+                    key={i}
+                    filled={MODES[mode].lives === Number.POSITIVE_INFINITY || i < lives}
+                    emptyColor={isDark ? '#1C1D30' : '#FDFCFA'}
+                  />
+                ))}
             </View>
 
             {/* Center: avg accuracy or avg speed depending on mode */}
@@ -376,44 +386,49 @@ export default function GameScreen() {
               </View>
             )}
 
-            {/* Score cluster: digital readout + streak multiplier badge */}
+            {/* Score cluster: digital readout + streak multiplier badge.
+                Hidden in Trainee — it's a practice mode, not a scored run. */}
             <View className="flex-1 relative items-end">
-              <View className="flex-row items-baseline gap-1.5">
-                <Text
-                  selectable={false}
-                  className="text-[17px] tracking-[1px] text-score"
-                  style={{ fontFamily: dsegLoaded ? 'DSEG7' : mono }}
-                >
-                  {displayScore}
-                </Text>
-                {streak > 0 && (
-                  <Text
-                    selectable={false}
-                    className="font-mono text-[11px] font-black tracking-[1px]"
-                    style={{
-                      color:
-                        currentMultiplier >= 8
-                          ? '#E5534B'
-                          : currentMultiplier >= 4
-                            ? '#7273D2'
-                            : '#4C7EFF',
-                    }}
-                  >
-                    {`×${currentMultiplier}`}
-                  </Text>
-                )}
-              </View>
-              {floats.map((f) => (
-                <FloatingPoints
-                  key={f.id}
-                  points={f.points}
-                  progress={f.progress}
-                  bonus={f.bonus}
-                  onDone={() => {
-                    removeFloat(f.id)
-                  }}
-                />
-              ))}
+              {mode !== 'trainee' && (
+                <>
+                  <View className="flex-row items-baseline gap-1.5">
+                    <Text
+                      selectable={false}
+                      className="text-[17px] tracking-[1px] text-score"
+                      style={{ fontFamily: dsegLoaded ? 'DSEG7' : mono }}
+                    >
+                      {displayScore}
+                    </Text>
+                    {streak > 0 && (
+                      <Text
+                        selectable={false}
+                        className="font-mono text-[11px] font-black tracking-[1px]"
+                        style={{
+                          color:
+                            currentMultiplier >= 8
+                              ? '#E5534B'
+                              : currentMultiplier >= 4
+                                ? '#7273D2'
+                                : '#4C7EFF',
+                        }}
+                      >
+                        {`×${currentMultiplier}`}
+                      </Text>
+                    )}
+                  </View>
+                  {floats.map((f) => (
+                    <FloatingPoints
+                      key={f.id}
+                      points={f.points}
+                      progress={f.progress}
+                      bonus={f.bonus}
+                      onDone={() => {
+                        removeFloat(f.id)
+                      }}
+                    />
+                  ))}
+                </>
+              )}
             </View>
           </View>
         </View>

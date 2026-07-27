@@ -15,22 +15,47 @@ export function useTargetSpawner({
   targetCount,
   mode,
   difficulty,
+  currentSum,
+  takenValues,
   send,
 }: {
   isPlaying: boolean
   targetCount: number
   mode: Mode
   difficulty: Difficulty
+  currentSum: number
+  takenValues: number[]
   send: GameSend
 }) {
   const spawnTimer = useRef<ReturnType<typeof setInterval> | null>(null)
 
+  // Latest exclusions, read at spawn time without re-creating the interval.
+  const excludeRef = useRef<{ sum: number; values: number[] }>({
+    sum: currentSum,
+    values: takenValues,
+  })
+  excludeRef.current = { sum: currentSum, values: takenValues }
+
   const spawnTarget = useCallback(() => {
-    send({
-      type: 'ADD_TARGET',
-      value: Math.floor(Math.random() * (MAX_TARGET + 1)),
-      at: Date.now(),
-    })
+    const { sum, values } = excludeRef.current
+    // Never spawn a target that's already the dialled sum, or a duplicate of a
+    // target already on the board.
+    const taken = new Set<number>([sum, ...values])
+    let value = Math.floor(Math.random() * (MAX_TARGET + 1))
+    if (taken.has(value)) {
+      const base = value
+      for (let d = 1; d <= MAX_TARGET; d++) {
+        if (base + d <= MAX_TARGET && !taken.has(base + d)) {
+          value = base + d
+          break
+        }
+        if (base - d >= 0 && !taken.has(base - d)) {
+          value = base - d
+          break
+        }
+      }
+    }
+    send({ type: 'ADD_TARGET', value, at: Date.now() })
   }, [send])
 
   const restartCadence = useCallback(() => {

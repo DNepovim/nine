@@ -93,6 +93,12 @@ export function MenuOverlay({
     gradEndSv.value = MODE_GRADIENT[focused][1]
   }, [focused, gradStartSv, gradEndSv])
 
+  // Highlight the remembered mode: `focused` is seeded before the persisted mode
+  // finishes hydrating into the machine, so re-sync when gameMode lands.
+  useEffect(() => {
+    setFocused(gameMode)
+  }, [gameMode])
+
   // Auto-join when 4 digits are entered.
   useEffect(() => {
     if (gameCode.length === 4) {

@@ -38,6 +38,7 @@ export function MultiplayerGame({
   userId,
   players,
   currentTarget,
+  targetCount,
   isDark,
   onHit,
   onTargetExpire,
@@ -47,6 +48,7 @@ export function MultiplayerGame({
   userId: string | null
   players: PlayerState[]
   currentTarget: MultiTarget | null
+  targetCount: number
   isDark: boolean
   onHit: (accuracy: number) => void
   onTargetExpire: () => void
@@ -148,13 +150,21 @@ export function MultiplayerGame({
             MULTIPLAYER
           </Text>
         </View>
-        <Text
-          selectable={false}
-          className="font-mono text-[24px] font-black tracking-[8px]"
-          style={{ color: myGradient[1] }}
-        >
-          NINE
-        </Text>
+        <View className="items-center">
+          <Text
+            selectable={false}
+            className="font-mono text-[24px] font-black tracking-[8px]"
+            style={{ color: myGradient[1] }}
+          >
+            NINE
+          </Text>
+          <Text
+            selectable={false}
+            className="font-mono text-[10px] font-bold tracking-[2px] text-dim"
+          >
+            {Math.min(targetCount + 1, 10)} / 10
+          </Text>
+        </View>
         <View className="flex-1 items-end">
           <Pressable onPress={onMenu} hitSlop={12}>
             <View className="gap-1">

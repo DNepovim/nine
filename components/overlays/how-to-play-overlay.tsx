@@ -2,6 +2,8 @@ import { AntDesign, Ionicons } from '@expo/vector-icons'
 import { LinearGradient } from 'expo-linear-gradient'
 import { Pressable, ScrollView, Text, View } from 'react-native'
 
+import { MenuButton } from '@/components/game/menu-button'
+import { useTheme } from '@/hooks/use-theme'
 import { MODE_DESCRIPTIONS, MODE_GRADIENT, MODES, type Mode } from '@/machines/game'
 
 // The cell weights, row-major: value × (row+1) × (col+1). Mirrors computeSum.
@@ -85,39 +87,58 @@ function Bullet({ color, children }: { color: string; children: string }) {
 
 // ── Graphics ────────────────────────────────────────────────────────────────
 
-// The 3×3 grid of cell weights — the bottom-right ×9 is the coarsest knob.
+// The 3×3 grid of cell weights with row / column order headers, so it reads as
+// weight = row order × column order (bottom-right ×9 is the coarsest knob).
 function WeightGrid() {
+  const ORDER = ['1', '2', '3']
+  const header = (label: string) => (
+    <Text
+      selectable={false}
+      className="font-mono text-[11px] font-black tracking-[0.5px] text-dim"
+    >
+      {label}
+    </Text>
+  )
   return (
     <View className="items-center">
-      <View className="gap-2">
-        {WEIGHTS.map((row, r) => (
-          <View key={r} className="flex-row gap-2">
-            {row.map((w, c) => {
-              const t = w / 9
-              return (
-                <View
-                  key={c}
-                  className="h-14 w-14 items-center justify-center rounded-full"
-                  style={{ backgroundColor: `rgba(114,115,210,${0.14 + t * 0.6})` }}
-                >
-                  <Text
-                    selectable={false}
-                    className="font-mono text-[15px] font-black"
-                    style={{ color: t > 0.55 ? '#FFFFFF' : '#3A3760' }}
-                  >
-                    ×{w}
-                  </Text>
-                </View>
-              )
-            })}
+      {/* Column-order headers (left-padded to clear the row-header column). */}
+      <View className="mb-2 flex-row items-center gap-2">
+        <View className="w-12 items-center">{header('R×C')}</View>
+        {ORDER.map((n) => (
+          <View key={n} className="w-14 items-center">
+            {header(`COL ${n}`)}
           </View>
         ))}
       </View>
+
+      {WEIGHTS.map((row, r) => (
+        <View key={r} className="mb-2 flex-row items-center gap-2">
+          <View className="w-12 items-center">{header(`ROW ${ORDER[r] ?? ''}`)}</View>
+          {row.map((w, c) => {
+            const t = w / 9
+            return (
+              <View
+                key={c}
+                className="h-14 w-14 items-center justify-center rounded-full"
+                style={{ backgroundColor: `rgba(114,115,210,${0.14 + t * 0.6})` }}
+              >
+                <Text
+                  selectable={false}
+                  className="font-mono text-[16px] font-black"
+                  style={{ color: t > 0.55 ? '#FFFFFF' : '#3A3760' }}
+                >
+                  {w}
+                </Text>
+              </View>
+            )
+          })}
+        </View>
+      ))}
       <Text
         selectable={false}
-        className="mt-3 font-mono text-[10px] font-bold tracking-[1px] text-dim"
+        className="mt-1 font-mono text-[10px] font-bold tracking-[1px] text-dim"
       >
-        EACH BUTTON COUNTS AS DIGIT × ITS WEIGHT
+        WEIGHT = ROW ORDER × COLUMN ORDER
       </Text>
     </View>
   )
@@ -211,6 +232,8 @@ function ModeCard({ mode, facts }: { mode: Mode; facts: string[] }) {
 // ── Overlay ─────────────────────────────────────────────────────────────────
 
 export function HowToPlayOverlay({ onClose }: { onClose: () => void }) {
+  const { colorScheme } = useTheme()
+  const dotColor = colorScheme === 'dark' ? '#2A2B44' : '#D4D0C8'
   return (
     <View className="absolute inset-0 bg-surface">
       <ScrollView
@@ -239,7 +262,7 @@ export function HowToPlayOverlay({ onClose }: { onClose: () => void }) {
         <SectionHeader icon="flag" title="THE GOAL" color={ACCENT.goal} />
         <Body>
           {
-            'A glowing target number floats onto the board. Turn the nine dial buttons so the whole grid adds up to exactly that number, and the target pops — a hit.\n\nEvery button holds a digit 0–9, but each one is worth more depending on where it sits: its digit is multiplied by its weight below.'
+            'A glowing target number floats onto the board. Turn the nine dial buttons so the whole grid adds up to exactly that number, and the target pops — a hit.\n\nEvery button holds a digit 0–9, but where it sits decides how much it counts. Each button’s weight is its row order × its column order — rows numbered 1–3 top to bottom, columns 1–3 left to right — so it adds row × column × value to the total.'
           }
         </Body>
         <Card>
@@ -247,7 +270,7 @@ export function HowToPlayOverlay({ onClose }: { onClose: () => void }) {
         </Card>
         <Body>
           {
-            '\nSo the bottom-right button moves the total in big ×9 leaps, while the top-left nudges it by ×1 — perfect for fine-tuning the last few points.'
+            '\nSo the bottom-right button (row 3 × column 3 = 9) moves the total in big leaps, while the top-left (1 × 1 = 1) nudges it by exactly its digit — perfect for fine-tuning the last few points.'
           }
         </Body>
 
@@ -280,7 +303,7 @@ export function HowToPlayOverlay({ onClose }: { onClose: () => void }) {
         <ModeCard
           mode="trainee"
           facts={[
-            'No lives and a relaxed clock — nothing punishes a mistake.',
+            'Pure practice — no lives, no score, and a relaxed clock.',
             'Buttons show their weight and max, so you can learn the math.',
           ]}
         />
@@ -321,7 +344,7 @@ export function HowToPlayOverlay({ onClose }: { onClose: () => void }) {
         </Card>
         <Body>
           {
-            '\nAccuracy mode leans almost entirely on precision; Speed mode on the clock. Trainee just tracks your best.'
+            '\nAccuracy mode leans almost entirely on precision; Speed mode on the clock. Trainee is unscored practice.'
           }
         </Body>
 
@@ -370,14 +393,14 @@ export function HowToPlayOverlay({ onClose }: { onClose: () => void }) {
         </Pressable>
       </ScrollView>
 
-      {/* Close (X) */}
-      <Pressable
-        onPress={onClose}
-        hitSlop={12}
-        className="absolute right-5 top-14 h-9 w-9 items-center justify-center rounded-full bg-card"
-      >
-        <Ionicons name="close" size={20} color="#aaa69e" />
-      </Pressable>
+      {/* Close — same 5-dot cross + CLOSE label and position as the pause menu. */}
+      <MenuButton
+        visible
+        paused
+        onToggle={onClose}
+        color={dotColor}
+        style={{ position: 'absolute', top: 12, right: 18, zIndex: 20 }}
+      />
     </View>
   )
 }
