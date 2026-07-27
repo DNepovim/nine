@@ -24,6 +24,7 @@ import { ScoreDigit } from '@/components/game/score-digit'
 import { TargetCard } from '@/components/game/target-card'
 import { AdvancedOptionsOverlay } from '@/components/overlays/advanced-options-overlay'
 import { GameOverSequence } from '@/components/overlays/game-over-sequence'
+import { HowToPlayOverlay } from '@/components/overlays/how-to-play-overlay'
 import { MenuOverlay } from '@/components/overlays/menu-overlay'
 import { MultiplayerGameOver } from '@/components/overlays/multiplayer-game-over'
 import { MultiplayerMenu } from '@/components/overlays/multiplayer-menu'
@@ -129,12 +130,17 @@ export default function GameScreen() {
   usePersistedDifficulty(difficulty, send)
   usePersistedMode(mode, send)
   const { showSum, toggleSum } = useDisplayOptions()
-  const [advancedOpen, setAdvancedOpen] = useState(false)
+  // Which menu-level overlay is open. Only one shows at a time, and the menu
+  // itself is hidden while any of them is open — a single source of truth avoids
+  // z-order/gating clashes between separate booleans.
+  const [menuOverlay, setMenuOverlay] = useState<'none' | 'advanced' | 'howToPlay'>(
+    'none',
+  )
 
   // Close advanced options whenever the game starts or resumes so that pausing
   // again always shows the pause screen, not the advanced options overlay.
   useEffect(() => {
-    if (isPlaying) setAdvancedOpen(false)
+    if (isPlaying) setMenuOverlay('none')
   }, [isPlaying])
 
   const { userId, nickname, isReady, updateNickname } = useSupabaseAuth()
@@ -518,7 +524,7 @@ export default function GameScreen() {
       />
 
       {/* ── Pause overlay ── */}
-      {isPaused && !advancedOpen && (
+      {isPaused && menuOverlay === 'none' && (
         <PausedOverlay
           gameMode={mode}
           difficulty={difficulty}
@@ -535,26 +541,35 @@ export default function GameScreen() {
             send({ type: 'MENU' })
           }}
           onOpenAdvanced={() => {
-            setAdvancedOpen(true)
+            setMenuOverlay('advanced')
           }}
         />
       )}
 
       {/* ── Advanced options — shared between menu and pause ── */}
-      {advancedOpen && (
+      {menuOverlay === 'advanced' && (
         <AdvancedOptionsOverlay
           isDark={isDark}
           showSum={showSum}
           onToggleSum={toggleSum}
           onToggleTheme={toggleTheme}
           onClose={() => {
-            setAdvancedOpen(false)
+            setMenuOverlay('none')
+          }}
+        />
+      )}
+
+      {/* ── How to play guide ── */}
+      {menuOverlay === 'howToPlay' && (
+        <HowToPlayOverlay
+          onClose={() => {
+            setMenuOverlay('none')
           }}
         />
       )}
 
       {/* ── Menu overlay ── */}
-      {isMenu && !advancedOpen && !isMultiActive && (
+      {isMenu && menuOverlay === 'none' && !isMultiActive && (
         <MenuOverlay
           gameMode={mode}
           difficulty={difficulty}
@@ -573,7 +588,10 @@ export default function GameScreen() {
             send({ type: 'SET_DIFFICULTY', difficulty: next })
           }}
           onOpenAdvanced={() => {
-            setAdvancedOpen(true)
+            setMenuOverlay('advanced')
+          }}
+          onHowToPlay={() => {
+            setMenuOverlay('howToPlay')
           }}
           onCreateRoom={handleCreateRoom}
           onJoinRoom={handleJoinRoom}

@@ -47,6 +47,7 @@ export function MenuOverlay({
   onSetMode,
   onSetDifficulty,
   onOpenAdvanced,
+  onHowToPlay,
   onCreateRoom,
   onJoinRoom,
 }: {
@@ -60,6 +61,7 @@ export function MenuOverlay({
   onSetMode: (mode: Mode) => void
   onSetDifficulty: (difficulty: Difficulty) => void
   onOpenAdvanced: () => void
+  onHowToPlay: () => void
   onCreateRoom: () => void
   onJoinRoom: (code: string) => void
 }) {
@@ -264,7 +266,7 @@ export function MenuOverlay({
             </Pressable>
           )}
 
-          <View className="flex-row items-center gap-5">
+          <View className="flex-row flex-wrap items-center justify-center gap-x-5 gap-y-2">
             <Pressable onPress={onOpenAdvanced} hitSlop={10}>
               <View className="flex-row items-center gap-1">
                 <Ionicons name="settings-outline" size={10} color={dimColor} />
@@ -292,6 +294,17 @@ export function MenuOverlay({
                   className="font-mono text-[10px] font-bold tracking-[1.8px] text-dim"
                 >
                   SHARE
+                </Text>
+              </View>
+            </Pressable>
+            <Pressable onPress={onHowToPlay} hitSlop={10}>
+              <View className="flex-row items-center gap-1">
+                <Ionicons name="help-circle-outline" size={11} color={dimColor} />
+                <Text
+                  selectable={false}
+                  className="font-mono text-[10px] font-bold tracking-[1.8px] text-dim"
+                >
+                  HOW TO PLAY
                 </Text>
               </View>
             </Pressable>
