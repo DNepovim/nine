@@ -85,8 +85,17 @@ export function PlayerTile({
   }
 
   const initial = nickname.trim().charAt(0).toUpperCase() || '?'
+  const medal = rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : null
   const cornerLabel =
-    rank !== undefined ? ordinal(rank) : isHost ? 'HOST' : isMe ? 'YOU' : null
+    medal !== null
+      ? null
+      : rank !== undefined
+        ? ordinal(rank)
+        : isHost
+          ? 'HOST'
+          : isMe
+            ? 'YOU'
+            : null
 
   return (
     <View style={{ width: '48%' }}>
@@ -113,7 +122,13 @@ export function PlayerTile({
               {initial}
             </Text>
           </View>
-          {cornerLabel !== null && <Chip label={cornerLabel} />}
+          {medal !== null ? (
+            <Text selectable={false} style={{ fontSize: 22 }}>
+              {medal}
+            </Text>
+          ) : (
+            cornerLabel !== null && <Chip label={cornerLabel} />
+          )}
         </View>
 
         <View className="flex-row items-end justify-between gap-1">

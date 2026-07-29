@@ -669,6 +669,7 @@ export default function GameScreen() {
           userId={userId}
           players={multiGame.players}
           currentTarget={multiGame.currentTarget}
+          targetCount={multiGame.targetCount}
           isDark={isDark}
           onHit={multiGame.sendHit}
           onTargetExpire={() => {
