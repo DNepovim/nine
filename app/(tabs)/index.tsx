@@ -42,6 +42,7 @@ import { NewsArchiveOverlay } from '@/components/overlays/news-archive-overlay'
 import { NicknameModal } from '@/components/overlays/nickname-modal'
 import { PausedOverlay } from '@/components/overlays/paused-overlay'
 import { StepUpOverlay } from '@/components/overlays/step-up-overlay'
+import { TutorialOverlay } from '@/components/overlays/tutorial/tutorial-overlay'
 import { WhatsNewOverlay } from '@/components/overlays/whats-new-overlay'
 import { Screen } from '@/components/screen'
 import { mono } from '@/constants/theme'
@@ -71,6 +72,7 @@ import { useSupabaseAuth } from '@/hooks/use-supabase-auth'
 import { useTargetSpawner } from '@/hooks/use-target-spawner'
 import { useTheme } from '@/hooks/use-theme'
 import { useTraineeCoach } from '@/hooks/use-trainee-coach'
+import { useTutorial } from '@/hooks/use-tutorial'
 import { useWhatsNew } from '@/hooks/use-whats-new'
 import { identify, track } from '@/lib/analytics'
 import type { AnalyticsEvents } from '@/lib/analytics-events'
@@ -287,6 +289,21 @@ export default function GameScreen() {
   useEffect(() => {
     if (isPlaying) setMenuOverlay('none')
   }, [isPlaying])
+
+  // Onboarding: opens itself under the splash on a first launch, and is
+  // replayable from How to Play.
+  const tutorial = useTutorial()
+
+  const handleTutorialNext = useCallback(() => {
+    if (!tutorial.isLast) {
+      tutorial.goTo(tutorial.step + 1)
+      return
+    }
+    // The last screen's CTA drops the player straight into a Trainee run.
+    tutorial.dismiss()
+    send({ type: 'SET_MODE', mode: 'trainee' })
+    send({ type: 'START', now: Date.now() })
+  }, [tutorial, send])
 
   const { userId, nickname, isReady, updateNickname } = useSupabaseAuth()
 
@@ -678,13 +695,25 @@ export default function GameScreen() {
   // was being typed, and in a multiplayer room it would drop the player out of it.
   useEffect(() => {
     const settled =
-      isMenu && menuOverlay === 'none' && !isMultiActive && !showNicknameModal
+      isMenu &&
+      menuOverlay === 'none' &&
+      !isMultiActive &&
+      !showNicknameModal &&
+      !tutorial.visible
     if (!updateReady || !settled) return
     const timer = setTimeout(applyUpdate, UPDATE_SETTLE_MS)
     return () => {
       clearTimeout(timer)
     }
-  }, [updateReady, applyUpdate, isMenu, menuOverlay, isMultiActive, showNicknameModal])
+  }, [
+    updateReady,
+    applyUpdate,
+    isMenu,
+    menuOverlay,
+    isMultiActive,
+    showNicknameModal,
+    tutorial.visible,
+  ])
 
   return (
     // Every board on screen reads this one store, so the intro, the pause screen and
@@ -1127,19 +1156,56 @@ export default function GameScreen() {
             onClose={() => {
               setMenuOverlay('none')
             }}
+            onStartTutorial={() => {
+              setMenuOverlay('none')
+              tutorial.openReview()
+            }}
+          />
+        )}
+
+        {/* ── Tutorial ── */}
+        {tutorial.visible && (
+          <TutorialOverlay
+            isDark={isDark}
+            mode={tutorial.mode}
+            step={tutorial.step}
+            stepId={tutorial.stepId}
+            canAdvance={tutorial.canAdvance}
+            canResume={tutorial.canResume}
+            resumeStep={tutorial.resumeStep}
+            isLast={tutorial.isLast}
+            onPrev={() => {
+              tutorial.goTo(tutorial.step - 1)
+            }}
+            onNext={handleTutorialNext}
+            onResume={() => {
+              tutorial.goTo(tutorial.resumeStep)
+            }}
+            onStepDone={() => {
+              tutorial.markStepDone(tutorial.step)
+            }}
+            onDismiss={tutorial.dismiss}
           />
         )}
 
         {/* ── What's new — announcements the player hasn't seen yet ── */}
-        {isMenu && menuOverlay === 'none' && !isMultiActive && whatsNew.visible && (
-          <WhatsNewOverlay items={whatsNew.unseen} onDismiss={whatsNew.dismiss} />
-        )}
+        {/* Never over the tutorial. A first-ever launch has nothing unseen to show
+          (use-whats-new.ts marks everything seen when there is no record at all), but
+          the tutorial replays from How to Play, and a returning player can have both. */}
+        {isMenu &&
+          menuOverlay === 'none' &&
+          !isMultiActive &&
+          !tutorial.visible &&
+          whatsNew.visible && (
+            <WhatsNewOverlay items={whatsNew.unseen} onDismiss={whatsNew.dismiss} />
+          )}
 
         {/* ── Install prompt — web only, and only once the news has had its turn.
           Every launch until the player installs: closing it lasts the session. ── */}
         {isMenu &&
           menuOverlay === 'none' &&
           !isMultiActive &&
+          !tutorial.visible &&
           whatsNew.ready &&
           !whatsNew.visible &&
           installPrompt.target !== 'none' && (
@@ -1151,7 +1217,7 @@ export default function GameScreen() {
           )}
 
         {/* ── Menu overlay ── */}
-        {isMenu && menuOverlay === 'none' && !isMultiActive && (
+        {isMenu && menuOverlay === 'none' && !isMultiActive && !tutorial.visible && (
           <MenuOverlay
             gameMode={mode}
             difficulty={difficulty}

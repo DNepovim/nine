@@ -177,7 +177,9 @@ const SECTIONS: Section[] = [
       {
         key: 'how-to-play',
         label: 'HOW TO PLAY',
-        render: (close) => <HowToPlayOverlay onClose={close} />,
+        // The gallery shows one component at a time, so the tutorial entry point has
+        // nowhere to lead — it closes the guide, same as the done button.
+        render: (close) => <HowToPlayOverlay onClose={close} onStartTutorial={close} />,
       },
     ],
   },

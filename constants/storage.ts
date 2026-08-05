@@ -11,6 +11,7 @@ export const OPTIONS_KEY = 'nine.options.v1'
 // the separate pending queue and daily-bests stores, which held the same runs twice.
 export const LOCAL_SCORES_KEY = 'nine.scores.v1'
 export const SEEN_NEWS_KEY = 'nine.seen-news.v1'
+export const TUTORIAL_KEY = 'nine.tutorial.v1'
 
 // Keys no build reads any more, cleared once on boot so the retired data does not sit on
 // the device forever. Anything listed here is gone for good: the pending queue is on the
