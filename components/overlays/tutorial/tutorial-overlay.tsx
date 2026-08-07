@@ -8,9 +8,10 @@ import { StrategyLesson } from '@/components/overlays/tutorial/lessons/strategy-
 import { TipsLesson } from '@/components/overlays/tutorial/lessons/tips-lesson'
 import { WeightsLesson } from '@/components/overlays/tutorial/lessons/weights-lesson'
 import { TutorialFooter } from '@/components/overlays/tutorial/tutorial-footer'
+import { TutorialNextButton } from '@/components/overlays/tutorial/tutorial-next-button'
 import { TutorialResumeButton } from '@/components/overlays/tutorial/tutorial-resume-button'
 import { TutorialStepper } from '@/components/overlays/tutorial/tutorial-stepper'
-import type { TutorialStepId } from '@/constants/tutorial'
+import { STEP_CTA, type TutorialStepId } from '@/constants/tutorial'
 import type { TutorialMode } from '@/hooks/use-tutorial'
 import type { LessonProps } from '@/types/tutorial'
 
@@ -33,13 +34,14 @@ export function TutorialOverlay({
   mode,
   step,
   stepId,
-  canAdvance,
+  showNext,
   canResume,
   resumeStep,
   isLast,
   onPrev,
   onNext,
   onResume,
+  onSelectStep,
   onStepDone,
   onDismiss,
 }: {
@@ -47,13 +49,14 @@ export function TutorialOverlay({
   mode: TutorialMode
   step: number
   stepId: TutorialStepId
-  canAdvance: boolean
+  showNext: boolean
   canResume: boolean
   resumeStep: number
   isLast: boolean
   onPrev: () => void
   onNext: () => void
   onResume: () => void
+  onSelectStep: (index: number) => void
   onStepDone: () => void
   onDismiss: () => void
 }) {
@@ -62,22 +65,32 @@ export function TutorialOverlay({
   // px-4 mirrors Screen, so a lesson's dial lands where the game's does.
   return (
     <View className="absolute inset-0 bg-surface px-4 pb-2 pt-14" style={{ zIndex: 30 }}>
-      <TutorialStepper step={step} />
+      <TutorialStepper step={step} onSelect={onSelectStep} />
 
       {canResume && <TutorialResumeButton step={resumeStep} onPress={onResume} />}
 
       <TutorialFooter
-        canAdvance={canAdvance}
         isFirst={step === 0}
-        isLast={isLast}
         dismissLabel={DISMISS_LABEL[mode]}
         onPrev={onPrev}
-        onNext={onNext}
         onDismiss={onDismiss}
       />
 
       {/* Keyed so each screen starts from a clean dial. */}
-      <Lesson key={stepId} isDark={isDark} onComplete={onStepDone} />
+      <Lesson
+        key={stepId}
+        isDark={isDark}
+        onComplete={onStepDone}
+        nextButton={
+          showNext ? (
+            <TutorialNextButton
+              label={STEP_CTA[stepId]}
+              isLast={isLast}
+              onPress={onNext}
+            />
+          ) : null
+        }
+      />
     </View>
   )
 }

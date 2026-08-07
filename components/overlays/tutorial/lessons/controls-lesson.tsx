@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { View } from 'react-native'
 
 import { DialButton } from '@/components/game/dial-button'
+import { DialStage } from '@/components/overlays/tutorial/dial-stage'
 import { LessonHeading } from '@/components/overlays/tutorial/lesson-heading'
 import { SubStepDots } from '@/components/overlays/tutorial/sub-step-dots'
 import { TaskPrompt } from '@/components/overlays/tutorial/task-prompt'
@@ -14,59 +15,44 @@ import type { LessonProps } from '@/types/tutorial'
 const COLOR = STEP_COLORS[1] ?? '#7273D2'
 
 // Swipe up is deliberately absent — tap already covers +1, so it's one gesture
-// fewer to learn for the same result. `arrivesAt` is the value a horizontal swipe
-// lands on; the vertical ones are relative and have none.
+// fewer to learn for the same result.
 const GESTURE_TASKS = [
-  { gesture: 'tap', prompt: 'Tap the button — every tap adds 1.', arrivesAt: null },
-  {
-    gesture: 'down',
-    prompt: 'Now swipe down — that takes 1 back off.',
-    arrivesAt: null,
-  },
-  {
-    gesture: 'right',
-    prompt: 'Swipe right — straight to 9 in one move.',
-    arrivesAt: 9,
-  },
-  { gesture: 'left', prompt: 'And swipe left — straight back to 0.', arrivesAt: 0 },
-] as const satisfies readonly {
-  gesture: ThumbGesture
-  prompt: string
-  arrivesAt: number | null
-}[]
+  { gesture: 'tap', prompt: 'Tap the button — every tap adds 1.' },
+  { gesture: 'down', prompt: 'Now swipe down — that takes 1 back off.' },
+  { gesture: 'right', prompt: 'Swipe right — straight to 9 in one move.' },
+  { gesture: 'left', prompt: 'And swipe left — straight back to 0.' },
+] as const satisfies readonly { gesture: ThumbGesture; prompt: string }[]
 
-export function ControlsLesson({ isDark, onComplete }: LessonProps) {
-  const [value, setValue] = useState(CONTROLS_START_VALUE)
-  const [taskIndex, setTaskIndex] = useState(0)
-  // Sized like the game's dial pad so the button is exactly the size — and in the
-  // position — of the real dial's centre cell.
-  const [measured, setMeasured] = useState(0)
-  const size = useGameDialSize(measured)
+export function ControlsLesson({ isDark, onComplete, nextButton }: LessonProps) {
+  // Value and sub-step move as one: checking the gesture inside the updater keeps
+  // two gestures landing in the same frame from advancing twice off a stale read.
+  const [{ value, taskIndex }, setState] = useState(() => ({
+    value: CONTROLS_START_VALUE,
+    taskIndex: 0,
+  }))
+  const dialSize = useGameDialSize()
+  const cellSize = Math.floor(dialSize / GRID_SIZE)
   const task = GESTURE_TASKS[taskIndex]
-  const cellSize = Math.floor(size / GRID_SIZE)
 
   useEffect(() => {
     if (task === undefined) onComplete()
   }, [task, onComplete])
 
-  // DialButton skips its callback when a horizontal swipe wouldn't change
-  // anything, so a button already sitting on the destination could never report
-  // the gesture. Count it as done instead of dead-ending the step. Only reachable
-  // by dialling through the 9 → 0 wrap first; the normal path never hits it.
-  useEffect(() => {
-    if (task?.arrivesAt === value) setTaskIndex((index) => index + 1)
-  }, [task, value])
-
-  // Only the gesture the current sub-step asks for advances it; the dial still
-  // responds to everything else, it just doesn't count.
-  const satisfy = (gesture: ThumbGesture) => {
-    if (task?.gesture === gesture) setTaskIndex((index) => index + 1)
+  // Only the gesture the current sub-step asks for does anything at all — and
+  // because performing it moves the sub-step on, each one works exactly once.
+  // Everything else leaves the button untouched, so the taught order holds and
+  // the value walks a fixed path: 5 → 6 → 5 → 9 → 0.
+  const attempt = (gesture: ThumbGesture, next: (current: number) => number) => {
+    setState((current) => {
+      if (GESTURE_TASKS[current.taskIndex]?.gesture !== gesture) return current
+      return { value: next(current.value), taskIndex: current.taskIndex + 1 }
+    })
   }
 
   return (
     <View className="flex-1">
       <LessonHeading title="CONTROLS" color={COLOR}>
-        {'Four moves, one button. It keeps whatever value you leave it on.'}
+        {'Four moves, one button. Try them in order.'}
       </LessonHeading>
 
       <TaskPrompt
@@ -76,16 +62,10 @@ export function ControlsLesson({ isDark, onComplete }: LessonProps) {
       />
       <SubStepDots total={GESTURE_TASKS.length} current={taskIndex} color={COLOR} />
 
-      <View
-        className="flex-1 items-center justify-end"
-        onLayout={(e) => {
-          const { width, height } = e.nativeEvent.layout
-          setMeasured(Math.min(width, height))
-        }}
-      >
-        {/* The full dial's footprint, with only its centre cell filled. */}
+      <DialStage above={nextButton} readout={null} dialSize={dialSize}>
+        {/* The dial's footprint, with only its centre cell filled. */}
         <View
-          style={{ width: size, height: size }}
+          style={{ width: dialSize, height: dialSize }}
           className="items-center justify-center"
         >
           {cellSize > 0 && (
@@ -97,12 +77,12 @@ export function ControlsLesson({ isDark, onComplete }: LessonProps) {
               showSum={false}
               trainee={false}
               onDelta={(delta) => {
-                setValue((current) => dialValue(current, delta))
-                satisfy(delta === 1 ? 'tap' : 'down')
+                attempt(delta === 1 ? 'tap' : 'down', (current) =>
+                  dialValue(current, delta),
+                )
               }}
               onSet={(next) => {
-                setValue(next)
-                satisfy(next === 9 ? 'right' : 'left')
+                attempt(next === 9 ? 'right' : 'left', () => next)
               }}
             />
           )}
@@ -115,12 +95,12 @@ export function ControlsLesson({ isDark, onComplete }: LessonProps) {
               <ThumbHint
                 gesture={task.gesture}
                 color={COLOR}
-                size={Math.round(cellSize * 0.8)}
+                size={Math.round(cellSize * 0.7)}
               />
             </View>
           )}
         </View>
-      </View>
+      </DialStage>
     </View>
   )
 }

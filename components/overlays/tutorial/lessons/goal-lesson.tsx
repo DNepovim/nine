@@ -1,59 +1,114 @@
+import { useEffect, useState } from 'react'
 import { Text, View } from 'react-native'
+import Animated, {
+  useAnimatedStyle,
+  useSharedValue,
+  withTiming,
+} from 'react-native-reanimated'
 
-import { LessonHeading } from '@/components/overlays/tutorial/lesson-heading'
-import { MiniGrid } from '@/components/overlays/tutorial/mini-grid'
-import { TargetBadge } from '@/components/overlays/tutorial/target-badge'
+import { PieCountdown } from '@/components/game/pie-countdown'
+import { DialStage } from '@/components/overlays/tutorial/dial-stage'
+import { LiveDialGrid } from '@/components/overlays/tutorial/live-dial-grid'
+import { SumReadout } from '@/components/overlays/tutorial/sum-readout'
 import {
-  COARSE_CELL,
-  FINE_CELL,
-  GOAL_EXAMPLE_COARSE,
-  GOAL_EXAMPLE_FINE,
-  GOAL_EXAMPLE_TARGET,
+  GOAL_HOW_DELAY_MS,
+  GOAL_RING_MS,
+  GOAL_TARGET,
   STEP_COLORS,
 } from '@/constants/tutorial'
-import { emptyCells, setCell } from '@/lib/tutorial-grid'
+import { useGameDialSize } from '@/hooks/use-game-dial-size'
+import { useSplash } from '@/hooks/use-splash'
+import { dialCell, emptyCells, setCell, sumCells } from '@/lib/tutorial-grid'
+import type { LessonProps } from '@/types/tutorial'
 
 const COLOR = STEP_COLORS[0] ?? '#4C7EFF'
 
-const EXAMPLE_CELLS = setCell(
-  setCell(emptyCells(), FINE_CELL, GOAL_EXAMPLE_FINE),
-  COARSE_CELL,
-  GOAL_EXAMPLE_COARSE,
-)
+// The real game screen, minus the HUD: one target ticking down, the board total,
+// the dial. The player is invited to try — and five seconds isn't nearly enough
+// for a three-digit target, which is exactly the question the tutorial answers.
+// When the ring empties the screen reports itself done and moves on.
+// No forward button here: the screen is a timed demonstration, and it ends itself
+// the moment the target resolves — either way.
+export function GoalLesson({ isDark, onComplete }: LessonProps) {
+  const [cells, setCells] = useState<readonly number[]>(emptyCells)
+  const dialSize = useGameDialSize()
+  const howOpacity = useSharedValue(0)
+  const hit = sumCells(cells) === GOAL_TARGET
+  // The tutorial is mounted beneath the intro splash, so nothing here may start
+  // ticking until that clears — otherwise the countdown expires unseen and the
+  // screen advances before the player has laid eyes on it.
+  const { done: splashDone } = useSplash()
 
-export function GoalLesson() {
+  useEffect(() => {
+    if (!splashDone) return
+    const timer = setTimeout(() => {
+      howOpacity.value = withTiming(1, { duration: 600 })
+    }, GOAL_HOW_DELAY_MS)
+    return () => {
+      clearTimeout(timer)
+    }
+  }, [splashDone])
+
+  // Practically nobody dials 137 inside five seconds — but if they do, that
+  // answers the question just as well as the ring running out.
+  useEffect(() => {
+    if (hit) onComplete()
+  }, [hit, onComplete])
+
+  const howStyle = useAnimatedStyle(() => ({ opacity: howOpacity.value }))
+
   return (
     <View className="flex-1">
-      <LessonHeading title="THE GOAL" color={COLOR}>
-        {
-          'A number lands on the board. Dial the nine buttons until your total matches it.'
+      <Text
+        selectable={false}
+        className="mt-5 text-center font-mono text-[15px] font-bold leading-[22px] text-primary"
+      >
+        {'The board must equal the target.\nThat’s the whole game.'}
+      </Text>
+
+      <DialStage
+        above={
+          <View className="items-center">
+            {/* Keyed on the splash so the ring remounts — and only then starts
+                counting — the moment the screen becomes visible. */}
+            <PieCountdown
+              key={String(splashDone)}
+              value={GOAL_TARGET}
+              isDark={isDark}
+              active={splashDone && !hit}
+              duration={GOAL_RING_MS}
+              onComplete={onComplete}
+            />
+            <Animated.View style={howStyle}>
+              <Text
+                selectable={false}
+                className="mt-4 text-center font-mono text-[19px] font-black tracking-[1px]"
+                style={{ color: COLOR }}
+              >
+                {'But how?'}
+              </Text>
+            </Animated.View>
+          </View>
         }
-      </LessonHeading>
-
-      <View className="flex-1 items-center justify-center">
-        <TargetBadge value={GOAL_EXAMPLE_TARGET} size={72} />
-
-        <View className="mt-6">
-          <MiniGrid
-            cells={EXAMPLE_CELLS}
-            highlight={[FINE_CELL, COARSE_CELL]}
-            color={COLOR}
-          />
-        </View>
-
-        <Text
-          selectable={false}
-          className="mt-4 font-mono text-[13px] font-black tracking-[1px] text-primary"
-        >
-          {`${GOAL_EXAMPLE_FINE} × 1  +  ${GOAL_EXAMPLE_COARSE} × 9  =  ${GOAL_EXAMPLE_TARGET}`}
-        </Text>
-        <Text
-          selectable={false}
-          className="mt-2 text-center font-mono text-[11px] font-medium leading-[17px] text-dim"
-        >
-          {'Every button is worth more or less depending on where it sits.'}
-        </Text>
-      </View>
+        readout={<SumReadout sum={sumCells(cells)} isDark={isDark} />}
+        dialSize={dialSize}
+      >
+        <LiveDialGrid
+          cells={cells}
+          isDark={isDark}
+          size={dialSize}
+          showWeights={false}
+          hintCell={null}
+          hintGesture="tap"
+          hintColor={COLOR}
+          onDelta={(index, delta) => {
+            setCells((current) => dialCell(current, index, delta))
+          }}
+          onSet={(index, value) => {
+            setCells((current) => setCell(current, index, value))
+          }}
+        />
+      </DialStage>
     </View>
   )
 }

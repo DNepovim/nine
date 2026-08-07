@@ -3,7 +3,8 @@ import { useCallback, useEffect, useState } from 'react'
 
 import { TUTORIAL_KEY } from '@/constants/storage'
 import {
-  STEP_HAS_TASK,
+  AUTO_ADVANCE_MS,
+  STEP_SELF_ADVANCES,
   TUTORIAL_STEP_COUNT,
   TUTORIAL_STEPS,
   type TutorialStepId,
@@ -64,6 +65,10 @@ export function useTutorial() {
       const clamped = clampStep(next)
       setStep(clamped)
       setFurthest((prev) => Math.max(prev, clamped))
+      // Completion is per visit. Without this a screen cleared earlier would
+      // still count as done the moment you arrive back on it, and the
+      // auto-advance below would bounce you straight off again.
+      setDoneSteps((prev) => prev.filter((index) => index !== clamped))
       // Only the gated run is resumable; a replay shouldn't rewrite progress.
       if (mode === 'gated') persist({ finished: false, step: clamped })
     },
@@ -92,11 +97,28 @@ export function useTutorial() {
 
   const stepId: TutorialStepId = TUTORIAL_STEPS[step] ?? 'goal'
   const isLast = step === TUTORIAL_STEP_COUNT - 1
-  const canAdvance =
-    mode === 'review' ||
-    step < furthest ||
-    !STEP_HAS_TASK[stepId] ||
-    doneSteps.includes(step)
+  // A screen already cleared in an earlier visit — its task isn't a gate any more.
+  const isRevisit = step < furthest
+
+  // A screen that reports itself done carries the player forward. This runs in
+  // review too: the opening screen has no forward button of its own, so without
+  // it a replay would sit there once its target resolved. Holds on a revisit as
+  // well, since goTo cleared the step — only the last screen stays put, ending
+  // on its CTA instead.
+  useEffect(() => {
+    if (isLast) return
+    if (!doneSteps.includes(step)) return
+    const timer = setTimeout(() => {
+      goTo(step + 1)
+    }, AUTO_ADVANCE_MS)
+    return () => {
+      clearTimeout(timer)
+    }
+  }, [isLast, doneSteps, step, goTo])
+
+  // Shown only where there's nothing to fulfil: free-browse replay, a screen
+  // without a task, or one the player has already cleared.
+  const showNext = mode === 'review' || !STEP_SELF_ADVANCES[stepId] || isRevisit
   // Only worth offering while the player is still sitting on the first screen.
   const canResume = resumeStep > 0 && step === 0
 
@@ -106,7 +128,7 @@ export function useTutorial() {
     step,
     stepId,
     isLast,
-    canAdvance,
+    showNext,
     canResume,
     resumeStep,
     openReview,

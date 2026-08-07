@@ -611,7 +611,7 @@ export default function GameScreen() {
           mode={tutorial.mode}
           step={tutorial.step}
           stepId={tutorial.stepId}
-          canAdvance={tutorial.canAdvance}
+          showNext={tutorial.showNext}
           canResume={tutorial.canResume}
           resumeStep={tutorial.resumeStep}
           isLast={tutorial.isLast}
@@ -621,6 +621,9 @@ export default function GameScreen() {
           onNext={handleTutorialNext}
           onResume={() => {
             tutorial.goTo(tutorial.resumeStep)
+          }}
+          onSelectStep={(index) => {
+            tutorial.goTo(index)
           }}
           onStepDone={() => {
             tutorial.markStepDone(tutorial.step)
