@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons'
 import { Pressable, Text } from 'react-native'
 
-import { STEP_COLORS, TUTORIAL_STEP_COUNT } from '@/constants/tutorial'
+import { STEP_COLORS } from '@/constants/tutorial'
 
 // Shown on the first screen when a previous session left off further along:
 // start over by simply reading on, or jump straight back to where you stopped.
@@ -25,7 +25,7 @@ export function TutorialResumeButton({
         className="flex-1 font-mono text-[11px] font-black tracking-[1px]"
         style={{ color }}
       >
-        {`GO TO WHERE YOU LEFT OFF — STEP ${step + 1} OF ${TUTORIAL_STEP_COUNT}`}
+        {`CONTINUE FROM STEP ${step + 1}`}
       </Text>
     </Pressable>
   )

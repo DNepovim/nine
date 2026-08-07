@@ -1,71 +1,65 @@
-import { AntDesign } from '@expo/vector-icons'
-import { ScrollView, Text, View } from 'react-native'
+import { ScrollView, useWindowDimensions, View } from 'react-native'
 
-import { GuideBullet } from '@/components/guide/guide-bullet'
-import { GuideCard } from '@/components/guide/guide-card'
 import { ModeCard } from '@/components/guide/mode-card'
 import { LessonHeading } from '@/components/overlays/tutorial/lesson-heading'
 import { STEP_COLORS } from '@/constants/tutorial'
+import { MODE_ORDER, type Mode } from '@/machines/game'
+import type { LessonProps } from '@/types/tutorial'
 
 const COLOR = STEP_COLORS[4] ?? '#E5534B'
 
-export function ModesLesson() {
+const GAP = 12
+// Leaves the next card peeking, so the row reads as swipeable.
+const PEEK = 44
+
+// Lives and streaks belong to the mode that owns them, so each card carries its
+// own — no separate hearts section to cross-reference.
+const MODE_FACTS = {
+  trainee: [
+    'No lives, no score, a relaxed clock — practice.',
+    'Buttons show their weight, like the last two screens.',
+    'Each target wears a grey badge: the fewest moves needed to hit it from here.',
+  ],
+  accuracy: [
+    'Solve each target in the fewest possible moves.',
+    'Three hearts. A badly wasteful hit costs one, and so does letting a ring empty.',
+    'Hit every target in its optimal move count to build a ×2 → ×4 → ×8 streak.',
+  ],
+  speed: [
+    'Short clock — the sooner you hit, the more it scores.',
+    'Three hearts. Let a target’s ring empty and you lose one; lose all three and the run ends.',
+    'Clear the whole board to fire the same ×2 → ×4 → ×8 streak.',
+  ],
+} as const satisfies Record<Mode, readonly string[]>
+
+export function ModesLesson({ nextButton }: LessonProps) {
+  const { width } = useWindowDimensions()
+  const cardWidth = width - 32 - PEEK
+
   return (
     <View className="flex-1">
       <LessonHeading title="MODES & LIVES" color={COLOR}>
-        {
-          'Same grid, different pressure. Difficulty — Easy, Hard, Extreme — tightens the clock and puts more targets on the board at once.'
-        }
+        {'Same grid, different pressure. Swipe through the three.'}
       </LessonHeading>
 
+      {/* Not inside a flex-1 parent: a horizontal ScrollView would stretch to fill
+          it and strand the cards at the top. */}
       <ScrollView
-        className="mt-1 flex-1"
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ paddingBottom: 8 }}
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        snapToInterval={cardWidth + GAP}
+        decelerationRate="fast"
+        contentContainerStyle={{ gap: GAP, paddingRight: PEEK }}
       >
-        <ModeCard
-          mode="trainee"
-          facts={[
-            'No lives, no score, a relaxed clock — practice.',
-            'Buttons show their weight and max, like the last two screens.',
-            'Each target wears a grey badge — the fewest moves needed to hit it from where the board is now. It updates as you dial.',
-          ]}
-        />
-        <ModeCard
-          mode="accuracy"
-          facts={[
-            'Solve each target in the fewest possible moves.',
-            'Every wasted move costs you points; a really wasteful hit costs a heart.',
-          ]}
-        />
-        <ModeCard
-          mode="speed"
-          facts={[
-            'Short clock — the sooner you hit, the more it scores.',
-            'Clear the whole board to fire your combo streak.',
-          ]}
-        />
-
-        <GuideCard>
-          <View className="flex-row items-center gap-2">
-            {[0, 1, 2].map((i) => (
-              <AntDesign key={i} name="heart" size={14} color="#E5534B" />
-            ))}
-            <Text
-              selectable={false}
-              className="font-mono text-[11px] font-black tracking-[1.5px] text-primary"
-            >
-              THREE HEARTS
-            </Text>
+        {MODE_ORDER.map((mode) => (
+          <View key={mode} style={{ width: cardWidth }}>
+            <ModeCard mode={mode} facts={[...MODE_FACTS[mode]]} />
           </View>
-          <GuideBullet color="#E5534B">
-            Let a target’s ring empty and you lose one. Lose all three and the run ends.
-          </GuideBullet>
-          <GuideBullet color="#FF8C00">
-            Perfect plays back to back build a streak that multiplies points ×2 → ×4 → ×8.
-          </GuideBullet>
-        </GuideCard>
+        ))}
       </ScrollView>
+
+      <View className="flex-1" />
+      {nextButton}
     </View>
   )
 }

@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Text, View } from 'react-native'
 
 import { PieCountdown } from '@/components/game/pie-countdown'
+import { DialStage } from '@/components/overlays/tutorial/dial-stage'
 import { LessonHeading } from '@/components/overlays/tutorial/lesson-heading'
 import { LiveDialGrid } from '@/components/overlays/tutorial/live-dial-grid'
 import { SumReadout } from '@/components/overlays/tutorial/sum-readout'
@@ -15,6 +16,7 @@ import {
   STRATEGY_RING_MS,
   STRATEGY_TARGET,
 } from '@/constants/tutorial'
+import { useGameDialSize } from '@/hooks/use-game-dial-size'
 import { cellWeight, dialCell, emptyCells, setCell, sumCells } from '@/lib/tutorial-grid'
 import type { LessonProps } from '@/types/tutorial'
 
@@ -43,11 +45,12 @@ const ROUTE = [
   },
 ] as const
 
-export function StrategyLesson({ isDark, onComplete }: LessonProps) {
+export function StrategyLesson({ isDark, onComplete, nextButton }: LessonProps) {
   const [cells, setCells] = useState<readonly number[]>(emptyCells)
   // Bumping the key remounts the ring, which is how a fresh target is dealt.
   const [ringKey, setRingKey] = useState(0)
   const [ranOut, setRanOut] = useState(false)
+  const dialSize = useGameDialSize()
 
   const sum = sumCells(cells)
   const hit = sum === STRATEGY_TARGET
@@ -79,61 +82,52 @@ export function StrategyLesson({ isDark, onComplete }: LessonProps) {
 
       <TaskPrompt text={prompt()} done={hit} color={COLOR} />
 
-      {/* Labelled, because the target and the board total can read the same. */}
-      <View className="mt-3 flex-row items-end justify-center gap-7">
-        <View className="items-center">
-          <PieCountdown
-            key={ringKey}
-            value={STRATEGY_TARGET}
-            isDark={isDark}
-            active={!hit}
-            duration={STRATEGY_RING_MS}
-            onComplete={() => {
-              setRanOut(true)
-              setRingKey((current) => current + 1)
-            }}
-          />
-          <Text
-            selectable={false}
-            className="mt-1 font-mono text-[10px] font-black tracking-[1.5px] text-dim"
-          >
-            TARGET
-          </Text>
-        </View>
-        <View className="items-center">
-          <SumReadout sum={sum} isDark={isDark} />
-          <Text
-            selectable={false}
-            className="mt-1 font-mono text-[10px] font-black tracking-[1.5px] text-dim"
-          >
-            YOUR TOTAL
-          </Text>
-        </View>
-      </View>
-
-      <Text
-        selectable={false}
-        className="mt-2 text-center font-mono text-[10px] font-bold tracking-[0.5px] text-dim"
+      <DialStage
+        // The target sits in the targets area and the total above the dial —
+        // both exactly where the game puts them.
+        above={
+          <View className="items-center">
+            <PieCountdown
+              key={ringKey}
+              value={STRATEGY_TARGET}
+              isDark={isDark}
+              active={!hit}
+              duration={STRATEGY_RING_MS}
+              onComplete={() => {
+                setRanOut(true)
+                setRingKey((current) => current + 1)
+              }}
+            />
+            <Text
+              selectable={false}
+              className="mt-2 text-center font-mono text-[10px] font-bold tracking-[0.5px] text-dim"
+            >
+              {ranOut && !hit
+                ? 'THE RING EMPTIED — FRESH TARGET, NO HARM DONE'
+                : 'THE RING IS THE TARGET’S COUNTDOWN'}
+            </Text>
+            {nextButton}
+          </View>
+        }
+        readout={<SumReadout sum={sum} isDark={isDark} />}
+        dialSize={dialSize}
       >
-        {ranOut && !hit
-          ? 'THE RING EMPTIED — FRESH TARGET, NO HARM DONE'
-          : 'THE RING IS THE TARGET’S COUNTDOWN'}
-      </Text>
-
-      <LiveDialGrid
-        cells={cells}
-        isDark={isDark}
-        showWeights
-        hintCell={hintCell()}
-        hintGesture="tap"
-        hintColor={COLOR}
-        onDelta={(index, delta) => {
-          setCells((current) => dialCell(current, index, delta))
-        }}
-        onSet={(index, value) => {
-          setCells((current) => setCell(current, index, value))
-        }}
-      />
+        <LiveDialGrid
+          cells={cells}
+          isDark={isDark}
+          size={dialSize}
+          showWeights
+          hintCell={hintCell()}
+          hintGesture="tap"
+          hintColor={COLOR}
+          onDelta={(index, delta) => {
+            setCells((current) => dialCell(current, index, delta))
+          }}
+          onSet={(index, value) => {
+            setCells((current) => setCell(current, index, value))
+          }}
+        />
+      </DialStage>
     </View>
   )
 }

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Text, View } from 'react-native'
 
+import { DialStage } from '@/components/overlays/tutorial/dial-stage'
 import { LessonHeading } from '@/components/overlays/tutorial/lesson-heading'
 import { LiveDialGrid } from '@/components/overlays/tutorial/live-dial-grid'
 import { SubStepDots } from '@/components/overlays/tutorial/sub-step-dots'
@@ -9,86 +10,105 @@ import { TaskPrompt } from '@/components/overlays/tutorial/task-prompt'
 import {
   COARSE_CELL,
   FINE_CELL,
+  MID_CELL,
   STEP_COLORS,
-  WEIGHTS_COARSE_SUM,
-  WEIGHTS_FINE_SUM,
+  WEIGHTS_TAPS,
 } from '@/constants/tutorial'
-import { dialCell, emptyCells, setCell, sumCells } from '@/lib/tutorial-grid'
+import { useGameDialSize } from '@/hooks/use-game-dial-size'
+import { cellWeight, dialCell, emptyCells, sumCells } from '@/lib/tutorial-grid'
 import type { LessonProps } from '@/types/tutorial'
 
 const COLOR = STEP_COLORS[2] ?? '#c36282'
 
-// Two swipes, side by side: the weakest button maxed out, then the strongest.
-const WEIGHT_TASKS = [
-  {
-    cell: FINE_CELL,
-    prompt: 'Swipe the ×1 button — top-left — to the right.',
-    reveal: `Maxed out, that whole button is worth ${WEIGHTS_FINE_SUM}.`,
-  },
-  {
-    cell: COARSE_CELL,
-    prompt: 'Now swipe the ×9 button — bottom-right — to the right.',
-    reveal: `Same digit, nine times the punch: the total jumps to ${WEIGHTS_COARSE_SUM}.`,
-  },
+// The same three taps on three different buttons. Nothing changes but where they
+// land, so the board total is doing all the talking.
+const WEIGHT_ROUNDS = [
+  { cell: FINE_CELL, lead: 'Start small.' },
+  { cell: MID_CELL, lead: 'Board cleared. Same three taps, one column over.' },
+  { cell: COARSE_CELL, lead: 'Cleared again. Now the far corner.' },
 ] as const
 
-export function WeightsLesson({ isDark, onComplete }: LessonProps) {
-  const [cells, setCells] = useState<readonly number[]>(emptyCells)
-  const [taskIndex, setTaskIndex] = useState(0)
-  const task = WEIGHT_TASKS[taskIndex]
-  const previous = WEIGHT_TASKS[taskIndex - 1]
+const roundTotal = (cell: number) => WEIGHTS_TAPS * cellWeight(cell)
+
+export function WeightsLesson({ isDark, onComplete, nextButton }: LessonProps) {
+  // Board, round and tap count move together: checking the target cell inside the
+  // updater keeps two taps landing in the same frame from over-counting.
+  const [{ cells, round, taps }, setState] = useState<{
+    cells: readonly number[]
+    round: number
+    taps: number
+  }>(() => ({ cells: emptyCells(), round: 0, taps: 0 }))
+  const dialSize = useGameDialSize()
+  const current = WEIGHT_ROUNDS[round]
+  const finished = WEIGHT_ROUNDS[round - 1]
 
   useEffect(() => {
-    if (task === undefined) onComplete()
-  }, [task, onComplete])
-
-  // The gate is "this button reads 9", however the player got it there. Watching
-  // the resulting value rather than the swipe itself keeps the step from
-  // dead-ending when the button already sits on 9 (DialButton then has no change
-  // to report), and a nine-tap route is just as instructive.
-  useEffect(() => {
-    if (task !== undefined && cells[task.cell] === 9) {
-      setTaskIndex((step) => step + 1)
-    }
-  }, [task, cells])
+    if (current === undefined) onComplete()
+  }, [current, onComplete])
 
   return (
     <View className="flex-1">
       <LessonHeading title="POSITION IS POWER" color={COLOR}>
-        {'A button’s weight is its row × its column — the small print above each digit.'}
+        {'A button’s weight is its row × its column — the small print above it.'}
       </LessonHeading>
 
       <TaskPrompt
-        text={task?.prompt ?? 'That’s the trick — now put it to work.'}
-        done={task === undefined}
+        text={
+          current === undefined
+            ? `Three taps, three totals: ${roundTotal(FINE_CELL)}, ${roundTotal(MID_CELL)}, ${roundTotal(COARSE_CELL)}.`
+            : `${current.lead} Tap the ×${cellWeight(current.cell)} button ${WEIGHTS_TAPS} times.`
+        }
+        done={current === undefined}
         color={COLOR}
       />
-      <SubStepDots total={WEIGHT_TASKS.length} current={taskIndex} color={COLOR} />
+      <SubStepDots total={WEIGHT_ROUNDS.length} current={round} color={COLOR} />
 
-      <View className="mt-3 items-center">
-        <SumReadout sum={sumCells(cells)} isDark={isDark} />
-        <Text
-          selectable={false}
-          className="mt-1 min-h-[30px] px-6 text-center font-mono text-[11px] font-bold leading-[15px] tracking-[0.5px] text-dim"
-        >
-          {previous?.reveal ?? 'BOARD TOTAL'}
-        </Text>
-      </View>
-
-      <LiveDialGrid
-        cells={cells}
-        isDark={isDark}
-        showWeights
-        hintCell={task?.cell ?? null}
-        hintGesture="right"
-        hintColor={COLOR}
-        onDelta={(index, delta) => {
-          setCells((current) => dialCell(current, index, delta))
-        }}
-        onSet={(index, value) => {
-          setCells((current) => setCell(current, index, value))
-        }}
-      />
+      <DialStage
+        above={
+          <View className="items-center">
+            <Text
+              selectable={false}
+              className="px-6 text-center font-mono text-[11px] font-bold leading-[16px] tracking-[0.5px] text-dim"
+            >
+              {taps === 0 && finished !== undefined
+                ? `${WEIGHTS_TAPS} × ${cellWeight(finished.cell)} = ${roundTotal(finished.cell)}`
+                : ''}
+            </Text>
+            {nextButton}
+          </View>
+        }
+        readout={<SumReadout sum={sumCells(cells)} isDark={isDark} />}
+        dialSize={dialSize}
+      >
+        <LiveDialGrid
+          cells={cells}
+          isDark={isDark}
+          size={dialSize}
+          showWeights
+          showMax={false}
+          hintCell={current?.cell ?? null}
+          hintGesture="tap"
+          hintColor={COLOR}
+          // Only taps on the button being demonstrated count. The first tap of a
+          // round wipes the previous one, so the finished total stays on screen
+          // until the player moves on.
+          onDelta={(index, delta) => {
+            if (delta !== 1) return
+            setState((state) => {
+              if (index !== WEIGHT_ROUNDS[state.round]?.cell) return state
+              const base = state.taps === 0 ? emptyCells() : state.cells
+              const taps = state.taps + 1
+              const done = taps === WEIGHTS_TAPS
+              return {
+                cells: dialCell(base, index, 1),
+                round: done ? state.round + 1 : state.round,
+                taps: done ? 0 : taps,
+              }
+            })
+          }}
+          onSet={() => {}}
+        />
+      </DialStage>
     </View>
   )
 }

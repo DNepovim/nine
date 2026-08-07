@@ -1,19 +1,22 @@
 import { useWindowDimensions } from 'react-native'
 
 // The game screen's dial pad is a square of min(width, height) inside a flex-1
-// area that splits the leftover height with the targets area. A tutorial lesson
-// has more copy above its dial but less below, so measuring alone would hand it a
-// *larger* square than the real thing on shorter screens — and DialButton's
-// numeral is a fixed 30px, so an oversized button looks wrong. Capping at the
-// game's own budget keeps tutorial buttons the size the player will meet.
+// area that splits the leftover height with the targets area. Deriving the same
+// number here — rather than measuring whatever space a lesson happens to leave —
+// puts the tutorial's dial at exactly the size and position the player will meet
+// in a real game, however much copy sits above it.
 //
 // These mirror app/(tabs)/index.tsx's layout; they only need to be roughly right.
-const SCREEN_PADDING = 16 // Screen py-2, top + bottom
+const SCREEN_PADDING_X = 32 // Screen px-4, both sides
+const SCREEN_PADDING_Y = 16 // Screen py-2, top + bottom
 const HUD_HEIGHT = 70 // mode / NINE / hearts / score block, incl. mb-3
-const SUM_ROW_HEIGHT = 50 // the sum readout above the dial
 
-export function useGameDialSize(measured: number): number {
-  const { height } = useWindowDimensions()
-  const gameDialArea = (height - SCREEN_PADDING - HUD_HEIGHT - SUM_ROW_HEIGHT) / 2
-  return Math.min(measured, Math.floor(gameDialArea))
+// The sum readout's slot above the dial. Lessons reserve it even when they have
+// no total to show, so the dial never drifts up.
+export const SUM_ROW_HEIGHT = 50
+
+export function useGameDialSize(): number {
+  const { width, height } = useWindowDimensions()
+  const dialArea = (height - SCREEN_PADDING_Y - HUD_HEIGHT - SUM_ROW_HEIGHT) / 2
+  return Math.max(0, Math.floor(Math.min(width - SCREEN_PADDING_X, dialArea)))
 }

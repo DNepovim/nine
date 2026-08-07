@@ -8,7 +8,7 @@ import {
 } from '@react-navigation/native'
 import { Stack, type ErrorBoundaryProps } from 'expo-router'
 import { StatusBar } from 'expo-status-bar'
-import { lazy, Suspense, useEffect, useState } from 'react'
+import { lazy, Suspense, useEffect } from 'react'
 import { useWindowDimensions, View } from 'react-native'
 import { GestureHandlerRootView } from 'react-native-gesture-handler'
 import Animated, { useAnimatedStyle } from 'react-native-reanimated'
@@ -18,6 +18,7 @@ import '@/global.css'
 import { CrashScreen } from '@/components/crash-screen'
 import { PhoneFrame } from '@/components/phone-frame'
 import { SplashScreen } from '@/components/splash-screen'
+import { SplashProvider, useSplash } from '@/hooks/use-splash'
 import { AppThemeProvider, useTheme } from '@/hooks/use-theme'
 import { captureError, initAnalytics } from '@/lib/analytics'
 import { isDesktopViewport } from '@/lib/desktop'
@@ -68,7 +69,7 @@ const AppDarkTheme: Theme = {
 
 function ThemedApp() {
   const { colorScheme, transitionOpacity, transitionColor } = useTheme()
-  const [splashDone, setSplashDone] = useState(false)
+  const { done: splashDone, finish: finishSplash } = useSplash()
 
   const overlayStyle = useAnimatedStyle(() => ({
     opacity: transitionOpacity.value,
@@ -94,13 +95,7 @@ function ThemedApp() {
           overlayStyle,
         ]}
       />
-      {!splashDone && (
-        <SplashScreen
-          onDone={() => {
-            setSplashDone(true)
-          }}
-        />
-      )}
+      {!splashDone && <SplashScreen onDone={finishSplash} />}
     </ThemeProvider>
   )
 }
@@ -136,10 +131,14 @@ export default function RootLayout() {
             </Suspense>
           )}
           {/* Inside the theme provider, so the frame is drawn in the app's own colours
-              and the splash screen is framed along with everything after it. */}
+              and the splash screen is framed along with everything after it. Inside the
+              frame for the same reason the splash is: what the provider gates is drawn
+              in there with the rest of the app, not over the top of it. */}
           <View style={{ flex: 1 }}>
             <PhoneFrame>
-              <ThemedApp />
+              <SplashProvider>
+                <ThemedApp />
+              </SplashProvider>
             </PhoneFrame>
           </View>
         </View>

@@ -30,6 +30,7 @@ export function DialButton({
   trainee,
   peakFrom,
   peakTo,
+  showMax = true,
   onDelta,
   onSet,
 }: {
@@ -42,6 +43,9 @@ export function DialButton({
   // The mode's dark CTA gradient, worn by the button at its maximum value.
   peakFrom: string
   peakTo: string
+  // The trainee layout also prints the button's ceiling under the digit. The
+  // tutorial turns it off while it's teaching the factor on its own.
+  showMax?: boolean
   onDelta: (delta: 1 | -1) => void
   onSet: (value: number) => void
 }) {
@@ -243,7 +247,7 @@ export function DialButton({
             >
               {showSum ? value * weight : value}
             </Animated.Text>
-            {trainee && (
+            {trainee && showMax && (
               <Animated.Text
                 selectable={false}
                 style={[

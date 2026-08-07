@@ -44,7 +44,9 @@ export function TutorialStepSegment({
 
   return (
     <Animated.View
-      className={cn('h-1.5 flex-1 rounded-full', state === 'todo' && 'bg-muted')}
+      // Width comes from the pressable wrapper's flex-1; growing here would
+      // stretch the bar down its column instead of across the row.
+      className={cn('h-1.5 w-full rounded-full', state === 'todo' && 'bg-muted')}
       style={[state === 'todo' ? null : { backgroundColor: color }, pulseStyle]}
     />
   )
