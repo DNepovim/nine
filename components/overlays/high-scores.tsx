@@ -22,7 +22,7 @@ import { TabPanel } from './tab-panel'
 
 const TABS: { key: LeaderboardTab; label: string }[] = [
   { key: 'today', label: 'TODAY' },
-  { key: 'week', label: 'LAST 7 DAYS' },
+  { key: 'week', label: 'THIS WEEK' },
   { key: 'forever', label: 'EVER' },
 ]
 

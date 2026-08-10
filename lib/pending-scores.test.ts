@@ -2,7 +2,8 @@ import { describe, expect, it } from 'vitest'
 
 import { bestPendingScore, type PendingScore } from './pending-scores'
 
-const TODAY = '2026-08-10'
+// A Wednesday, so its Monday-to-Sunday week has days either side of it.
+const TODAY = '2026-08-12'
 
 const entry = (over: Partial<PendingScore> = {}): PendingScore => ({
   mode: 'speed',
@@ -38,13 +39,15 @@ describe('bestPendingScore', () => {
     expect(bestPendingScore(queue, 'speed', 'hard', 'today', TODAY)).toBe(800)
   })
 
-  it('includes days still inside the week', () => {
-    const queue = [entry({ day: '2026-08-04', score: 5000 })]
+  it('includes earlier days from the same calendar week', () => {
+    // TODAY is Wednesday; Monday opened its week.
+    const queue = [entry({ day: '2026-08-10', score: 5000 })]
     expect(bestPendingScore(queue, 'speed', 'hard', 'week', TODAY)).toBe(5000)
   })
 
-  it('excludes days that fell out of the week', () => {
-    const queue = [entry({ day: '2026-08-03', score: 5000 })]
+  it('excludes the previous week, even a day that is only three days old', () => {
+    // Sunday 2026-08-09 closed the previous week.
+    const queue = [entry({ day: '2026-08-09', score: 5000 })]
     expect(bestPendingScore(queue, 'speed', 'hard', 'week', TODAY)).toBeNull()
   })
 
