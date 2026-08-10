@@ -1,0 +1,48 @@
+name: Preview deploy
+
+# Every pull request gets its own preview URL at nine--pr-<number>.expo.app.
+# The alias is re-assigned on each run, so the link stays the same for the life
+# of the PR and always shows the latest push. Never passes --prod, so production
+# is only ever touched by deploy.yml on main.
+on:
+  pull_request:
+    branches:
+      - main
+    types:
+      - opened
+      - reopened
+      - synchronize
+
+jobs:
+  check:
+    name: Static checks
+    steps:
+      - uses: eas/checkout
+      - uses: eas/install_node_modules
+      - name: Lint (eslint)
+        run: pnpm lint
+      - name: Format (prettier)
+        run: pnpm exec prettier --check .
+      - name: Types (tsc)
+        run: pnpm typecheck
+      - name: Audit (high & critical only)
+        run: pnpm audit --audit-level high
+      - name: Dead code (knip)
+        run: pnpm knip
+      - name: Tests (vitest)
+        run: pnpm test
+      # Fails loudly if the EXPO_PUBLIC_* vars are missing, rather than shipping
+      # a preview that builds fine but points at nothing.
+      - name: Env vars
+        run: pnpm check-env
+
+  deploy:
+    name: Deploy preview
+    needs: [check]
+    steps:
+      - uses: eas/checkout
+      - uses: eas/install_node_modules
+      - name: Build web (export + service worker)
+        run: pnpm run build:web
+      - name: Deploy to EAS Hosting (preview)
+        run: pnpm dlx eas-cli@latest deploy --alias pr-${{ github.event.pull_request.number }} --non-interactive
