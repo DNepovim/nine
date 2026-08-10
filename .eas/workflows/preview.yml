@@ -4,6 +4,11 @@ name: Preview deploy
 # The alias is re-assigned on each run, so the link stays the same for the life
 # of the PR and always shows the latest push. Never passes --prod, so production
 # is only ever touched by deploy.yml on main.
+#
+# Deliberately no `pnpm audit` here, unlike deploy.yml: it gates on an advisory
+# database that moves on its own, so a new CVE in a transitive dependency would
+# block every preview overnight with nothing in the PR to fix. Some advisories
+# have no patched version at all. Keep supply-chain gating on the release path.
 on:
   pull_request:
     branches:
@@ -25,8 +30,6 @@ jobs:
         run: pnpm exec prettier --check .
       - name: Types (tsc)
         run: pnpm typecheck
-      - name: Audit (high & critical only)
-        run: pnpm audit --audit-level high
       - name: Dead code (knip)
         run: pnpm knip
       - name: Tests (vitest)
