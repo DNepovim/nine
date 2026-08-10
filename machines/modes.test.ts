@@ -15,9 +15,17 @@ import {
 
 describe('effectiveTimeout', () => {
   it('scales the mode base timeout by the difficulty scale', () => {
-    expect(effectiveTimeout('speed', 'extreme')).toBe(4400) // 8000 * 0.55
+    expect(effectiveTimeout('speed', 'extreme')).toBe(8067) // 14667 * 0.55
     expect(effectiveTimeout('accuracy', 'easy')).toBe(28600) // 22000 * 1.30
     expect(effectiveTimeout('accuracy', 'hard')).toBe(16500)
+  })
+
+  it('keeps Speed one and a half times faster than Accuracy at every difficulty', () => {
+    for (const difficulty of ['easy', 'hard', 'extreme'] as const) {
+      const ratio =
+        effectiveTimeout('accuracy', difficulty) / effectiveTimeout('speed', difficulty)
+      expect(ratio).toBeCloseTo(1.5, 2)
+    }
   })
 })
 

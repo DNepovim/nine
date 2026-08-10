@@ -29,7 +29,9 @@ export const MODES: Record<Mode, ModeConfig> = {
   },
   speed: {
     label: 'SPEED',
-    baseTimeout: 8000,
+    // Accuracy's 22 000 / 1.5 — Speed runs half again as fast, not nearly three
+    // times, which was more punishing than distinguishing.
+    baseTimeout: 14667,
     weights: { acc: 0.15, spd: 0.85 },
     lives: 3,
     streak: 'clear',

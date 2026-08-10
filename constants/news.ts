@@ -62,6 +62,16 @@ export const RELEASES: Release[] = [
           'It stays out of the way for the first few seconds of a run.',
         ].join('\n'),
       },
+      {
+        id: 'speed-retune',
+        icon: 'timer',
+        accent: '#E5534B',
+        title: 'Speed eases off',
+        body: [
+          'Speed mode was brutal. Now it is merely fast — about half again as',
+          'long on every target.',
+        ].join('\n'),
+      },
     ],
   },
 ]
