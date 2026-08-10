@@ -1,237 +1,24 @@
-import { AntDesign, Ionicons } from '@expo/vector-icons'
-import { LinearGradient } from 'expo-linear-gradient'
+import { Ionicons } from '@expo/vector-icons'
 import { Pressable, ScrollView, Text, View } from 'react-native'
 
 import { MenuButton } from '@/components/game/menu-button'
+import { ControlsDiagram } from '@/components/guide/controls-diagram'
+import { GuideBody } from '@/components/guide/guide-body'
+import { GuideBullet } from '@/components/guide/guide-bullet'
+import { GuideCard } from '@/components/guide/guide-card'
+import { ModeCard } from '@/components/guide/mode-card'
+import { SectionHeader } from '@/components/guide/section-header'
+import { WeightGrid } from '@/components/guide/weight-grid'
+import { GUIDE_ACCENT } from '@/constants/guide'
 import { useTheme } from '@/hooks/use-theme'
-import { MODE_DESCRIPTIONS, MODE_GRADIENT, MODES, type Mode } from '@/machines/game'
 
-// The cell weights, row-major: value × (row+1) × (col+1). Mirrors computeSum.
-const WEIGHTS = [
-  [1, 2, 3],
-  [2, 4, 6],
-  [3, 6, 9],
-]
-
-const ACCENT = {
-  goal: '#4C7EFF',
-  controls: '#7273D2',
-  modes: '#c36282',
-  scoring: '#E5534B',
-  lives: '#E5534B',
-  tips: '#FF8C00',
-} as const
-
-type IoniconName = keyof typeof Ionicons.glyphMap
-
-// ── Reusable building blocks ────────────────────────────────────────────────
-
-function SectionHeader({
-  icon,
-  title,
-  color,
+export function HowToPlayOverlay({
+  onClose,
+  onStartTutorial,
 }: {
-  icon: IoniconName
-  title: string
-  color: string
+  onClose: () => void
+  onStartTutorial: () => void
 }) {
-  return (
-    <View className="mb-3 mt-8 flex-row items-center gap-2.5">
-      <View
-        className="h-7 w-7 items-center justify-center rounded-lg"
-        style={{ backgroundColor: `${color}26` }}
-      >
-        <Ionicons name={icon} size={15} color={color} />
-      </View>
-      <Text
-        selectable={false}
-        className="font-mono text-[15px] font-black tracking-[2px] text-primary"
-      >
-        {title}
-      </Text>
-    </View>
-  )
-}
-
-function Body({ children }: { children: string }) {
-  return (
-    <Text
-      selectable={false}
-      className="font-mono text-[12px] font-medium leading-[19px] text-dim"
-    >
-      {children}
-    </Text>
-  )
-}
-
-function Card({ children }: { children: React.ReactNode }) {
-  return <View className="mt-3 rounded-2xl bg-card p-4">{children}</View>
-}
-
-function Bullet({ color, children }: { color: string; children: string }) {
-  return (
-    <View className="mt-2.5 flex-row gap-2.5">
-      <View
-        className="mt-[6px] h-1.5 w-1.5 rounded-full"
-        style={{ backgroundColor: color }}
-      />
-      <Text
-        selectable={false}
-        className="flex-1 font-mono text-[12px] font-medium leading-[19px] text-primary"
-      >
-        {children}
-      </Text>
-    </View>
-  )
-}
-
-// ── Graphics ────────────────────────────────────────────────────────────────
-
-// The 3×3 grid of cell weights with row / column order headers, so it reads as
-// weight = row order × column order (bottom-right ×9 is the coarsest knob).
-function WeightGrid() {
-  const ORDER = ['1', '2', '3']
-  const header = (label: string) => (
-    <Text
-      selectable={false}
-      className="font-mono text-[11px] font-black tracking-[0.5px] text-dim"
-    >
-      {label}
-    </Text>
-  )
-  return (
-    <View className="items-center">
-      {/* Column-order headers (left-padded to clear the row-header column). */}
-      <View className="mb-2 flex-row items-center gap-2">
-        <View className="w-12 items-center">{header('R×C')}</View>
-        {ORDER.map((n) => (
-          <View key={n} className="w-14 items-center">
-            {header(`COL ${n}`)}
-          </View>
-        ))}
-      </View>
-
-      {WEIGHTS.map((row, r) => (
-        <View key={r} className="mb-2 flex-row items-center gap-2">
-          <View className="w-12 items-center">{header(`ROW ${ORDER[r] ?? ''}`)}</View>
-          {row.map((w, c) => {
-            const t = w / 9
-            return (
-              <View
-                key={c}
-                className="h-14 w-14 items-center justify-center rounded-full"
-                style={{ backgroundColor: `rgba(114,115,210,${0.14 + t * 0.6})` }}
-              >
-                <Text
-                  selectable={false}
-                  className="font-mono text-[16px] font-black"
-                  style={{ color: t > 0.55 ? '#FFFFFF' : '#3A3760' }}
-                >
-                  {w}
-                </Text>
-              </View>
-            )
-          })}
-        </View>
-      ))}
-      <Text
-        selectable={false}
-        className="mt-1 font-mono text-[10px] font-bold tracking-[1px] text-dim"
-      >
-        WEIGHT = ROW ORDER × COLUMN ORDER
-      </Text>
-    </View>
-  )
-}
-
-// A single dial button surrounded by its gesture hints.
-function ControlsDiagram() {
-  const hint = (label: string) => (
-    <Text
-      selectable={false}
-      className="font-mono text-[10px] font-bold tracking-[0.5px] text-dim"
-    >
-      {label}
-    </Text>
-  )
-  return (
-    <View className="items-center py-1">
-      {hint('SWIPE UP  +1')}
-      <View className="my-1.5 flex-row items-center gap-3">
-        {hint('◀ SET 0')}
-        <View className="h-16 w-16 items-center justify-center rounded-full bg-strong">
-          <Text
-            selectable={false}
-            className="font-mono text-[26px] font-medium text-on-strong"
-          >
-            5
-          </Text>
-        </View>
-        {hint('SET 9 ▶')}
-      </View>
-      {hint('SWIPE DOWN  −1')}
-      <Text
-        selectable={false}
-        className="mt-3 font-mono text-[10px] font-bold tracking-[1px] text-dim"
-      >
-        TAP = +1 (WRAPS 9 → 0)
-      </Text>
-    </View>
-  )
-}
-
-function ModeCard({ mode, facts }: { mode: Mode; facts: string[] }) {
-  const [from, to] = MODE_GRADIENT[mode]
-  const [line1, line2] = MODE_DESCRIPTIONS[mode].split('\n')
-  return (
-    <View className="mt-3 overflow-hidden rounded-2xl bg-card">
-      <LinearGradient
-        colors={[from, to]}
-        start={{ x: 0, y: 0.5 }}
-        end={{ x: 1, y: 0.5 }}
-        className="flex-row items-center justify-between px-4 py-2.5"
-      >
-        <Text
-          selectable={false}
-          className="font-mono text-[13px] font-black tracking-[2px] text-on-strong"
-        >
-          {MODES[mode].label}
-        </Text>
-        <View className="flex-row items-center gap-1">
-          {MODES[mode].lives === Number.POSITIVE_INFINITY ? (
-            <Text
-              selectable={false}
-              className="font-mono text-[10px] font-bold tracking-[1px] text-on-strong"
-            >
-              ∞ LIVES
-            </Text>
-          ) : (
-            Array.from({ length: MODES[mode].lives }).map((_, i) => (
-              <AntDesign key={i} name="heart" size={11} color="#FFFFFF" />
-            ))
-          )}
-        </View>
-      </LinearGradient>
-      <View className="px-4 pb-3 pt-2.5">
-        <Text
-          selectable={false}
-          className="mb-1 font-mono text-[11px] font-bold italic tracking-[0.5px] text-dim"
-        >
-          {line1?.trim()} {line2?.trim()}
-        </Text>
-        {facts.map((f) => (
-          <Bullet key={f} color={from}>
-            {f}
-          </Bullet>
-        ))}
-      </View>
-    </View>
-  )
-}
-
-// ── Overlay ─────────────────────────────────────────────────────────────────
-
-export function HowToPlayOverlay({ onClose }: { onClose: () => void }) {
   const { colorScheme } = useTheme()
   const dotColor = colorScheme === 'dark' ? '#2A2B44' : '#D4D0C8'
   return (
@@ -258,53 +45,87 @@ export function HowToPlayOverlay({ onClose }: { onClose: () => void }) {
           DIAL THE GRID · MATCH THE NUMBER
         </Text>
 
+        {/* Hands-on tutorial — the guide below is the reference version. */}
+        <Pressable
+          onPress={onStartTutorial}
+          className="mt-5 flex-row items-center gap-3 rounded-2xl bg-card p-4"
+        >
+          <View
+            className="h-9 w-9 items-center justify-center rounded-xl"
+            style={{ backgroundColor: `${GUIDE_ACCENT.goal}26` }}
+          >
+            <Ionicons name="play" size={17} color={GUIDE_ACCENT.goal} />
+          </View>
+          <View className="flex-1">
+            <Text
+              selectable={false}
+              className="font-mono text-[13px] font-black tracking-[1.5px] text-primary"
+            >
+              PLAY THE TUTORIAL
+            </Text>
+            <Text
+              selectable={false}
+              className="mt-0.5 font-mono text-[11px] font-medium text-dim"
+            >
+              Learn by doing — six quick, hands-on steps.
+            </Text>
+          </View>
+          <Ionicons name="chevron-forward" size={16} color={dotColor} />
+        </Pressable>
+
         {/* Goal */}
-        <SectionHeader icon="flag" title="THE GOAL" color={ACCENT.goal} />
-        <Body>
+        <SectionHeader icon="flag" title="THE GOAL" color={GUIDE_ACCENT.goal} />
+        <GuideBody>
           {
             'A glowing target number floats onto the board. Turn the nine dial buttons so the whole grid adds up to exactly that number, and the target pops — a hit.\n\nEvery button holds a digit 0–9, but where it sits decides how much it counts. Each button’s weight is its row order × its column order — rows numbered 1–3 top to bottom, columns 1–3 left to right — so it adds row × column × value to the total.'
           }
-        </Body>
-        <Card>
+        </GuideBody>
+        <GuideCard>
           <WeightGrid />
-        </Card>
-        <Body>
+        </GuideCard>
+        <GuideBody>
           {
             '\nSo the bottom-right button (row 3 × column 3 = 9) moves the total in big leaps, while the top-left (1 × 1 = 1) nudges it by exactly its digit — perfect for fine-tuning the last few points.'
           }
-        </Body>
+        </GuideBody>
 
         {/* Controls */}
-        <SectionHeader icon="hand-left" title="CONTROLS" color={ACCENT.controls} />
-        <Card>
+        <SectionHeader icon="hand-left" title="CONTROLS" color={GUIDE_ACCENT.controls} />
+        <GuideCard>
           <ControlsDiagram />
-        </Card>
-        <Body>
+        </GuideCard>
+        <GuideBody>
           {
             '\nTap to count up, swipe up/down to step ±1, and swipe left or right to jump straight to 0 or 9. Tip: turn on “Show sum in buttons” under Options to see each button’s live contribution.'
           }
-        </Body>
+        </GuideBody>
 
         {/* Targets & clock */}
-        <SectionHeader icon="timer" title="TARGETS & THE CLOCK" color={ACCENT.controls} />
-        <Body>
+        <SectionHeader
+          icon="timer"
+          title="TARGETS & THE CLOCK"
+          color={GUIDE_ACCENT.controls}
+        />
+        <GuideBody>
           {
             'Each target carries a shrinking ring — its countdown. Land the sum before the ring empties. Several targets can share the board at once (up to 3, or 4 on Extreme), and new ones keep arriving, so pick your order wisely.'
           }
-        </Body>
+        </GuideBody>
 
         {/* Modes */}
-        <SectionHeader icon="grid" title="MODES" color={ACCENT.modes} />
-        <Body>
+        <SectionHeader icon="grid" title="MODES" color={GUIDE_ACCENT.modes} />
+        <GuideBody>
           {
             'Same grid, different pressure. Difficulty (Easy / Hard / Extreme) tightens the clock and adds targets.'
           }
-        </Body>
+        </GuideBody>
         <ModeCard
           mode="trainee"
           facts={[
             'Pure practice — no lives, no score, and a relaxed clock.',
             'Buttons show their weight and max, so you can learn the math.',
+            'Each target wears a grey badge: the fewest moves needed to hit it from the board as it stands.',
+            'That count updates as you dial — and a swipe to 0 or 9 counts as one move, so it drops faster than you might expect.',
           ]}
         />
         <ModeCard
@@ -325,58 +146,58 @@ export function HowToPlayOverlay({ onClose }: { onClose: () => void }) {
         />
 
         {/* Scoring */}
-        <SectionHeader icon="trophy" title="SCORING" color={ACCENT.scoring} />
-        <Body>
+        <SectionHeader icon="trophy" title="SCORING" color={GUIDE_ACCENT.scoring} />
+        <GuideBody>
           {
             'A hit is worth up to 100 points, blended from two factors and weighted by the mode:'
           }
-        </Body>
-        <Card>
-          <Bullet color={ACCENT.goal}>
+        </GuideBody>
+        <GuideCard>
+          <GuideBullet color={GUIDE_ACCENT.goal}>
             Accuracy — how close to the fewest possible moves you were.
-          </Bullet>
-          <Bullet color={ACCENT.scoring}>
+          </GuideBullet>
+          <GuideBullet color={GUIDE_ACCENT.scoring}>
             Speed — how much time was left on the ring.
-          </Bullet>
-          <Bullet color="#FF8C00">
+          </GuideBullet>
+          <GuideBullet color={GUIDE_ACCENT.tips}>
             Streak — consecutive perfect plays multiply your points ×2 → ×4 → ×8.
-          </Bullet>
-        </Card>
-        <Body>
+          </GuideBullet>
+        </GuideCard>
+        <GuideBody>
           {
             '\nAccuracy mode leans almost entirely on precision; Speed mode on the clock. Trainee is unscored practice.'
           }
-        </Body>
+        </GuideBody>
 
         {/* Lives */}
-        <SectionHeader icon="heart" title="LIVES" color={ACCENT.lives} />
-        <Body>
+        <SectionHeader icon="heart" title="LIVES" color={GUIDE_ACCENT.lives} />
+        <GuideBody>
           {
             'Accuracy and Speed give you three hearts. You lose one when a target’s ring runs out — and in Accuracy, also for a badly wasteful hit. Lose all three and it’s game over. Trainee has unlimited lives, so take your time.'
           }
-        </Body>
+        </GuideBody>
 
         {/* Tips */}
-        <SectionHeader icon="bulb" title="TIPS & TRICKS" color={ACCENT.tips} />
-        <Bullet color={ACCENT.tips}>
+        <SectionHeader icon="bulb" title="TIPS & TRICKS" color={GUIDE_ACCENT.tips} />
+        <GuideBullet color={GUIDE_ACCENT.tips}>
           Set the coarse ×9 / ×6 buttons first to get near the target, then fine-tune with
           the ×1 / ×2 buttons.
-        </Bullet>
-        <Bullet color={ACCENT.tips}>
+        </GuideBullet>
+        <GuideBullet color={GUIDE_ACCENT.tips}>
           Swipe to 0 or 9 to reset a button in a single gesture instead of tapping
           through.
-        </Bullet>
-        <Bullet color={ACCENT.tips}>
+        </GuideBullet>
+        <GuideBullet color={GUIDE_ACCENT.tips}>
           In Accuracy, plan your route before you touch anything — every extra move costs
           you.
-        </Bullet>
-        <Bullet color={ACCENT.tips}>
+        </GuideBullet>
+        <GuideBullet color={GUIDE_ACCENT.tips}>
           In Speed, hunt targets that are closest to the current sum to clear the board
           fast and keep the combo alive.
-        </Bullet>
-        <Bullet color={ACCENT.tips}>
+        </GuideBullet>
+        <GuideBullet color={GUIDE_ACCENT.tips}>
           Start in Trainee to build intuition for the weights, then chase high scores.
-        </Bullet>
+        </GuideBullet>
 
         {/* Done */}
         <Pressable

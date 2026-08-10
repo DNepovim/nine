@@ -8,13 +8,13 @@ import {
 } from '@react-navigation/native'
 import { Stack } from 'expo-router'
 import { StatusBar } from 'expo-status-bar'
-import { useState } from 'react'
 import { GestureHandlerRootView } from 'react-native-gesture-handler'
 import Animated, { useAnimatedStyle } from 'react-native-reanimated'
 
 import '@/global.css'
 
 import { SplashScreen } from '@/components/splash-screen'
+import { SplashProvider, useSplash } from '@/hooks/use-splash'
 import { AppThemeProvider, useTheme } from '@/hooks/use-theme'
 
 export const unstable_settings = {
@@ -36,7 +36,7 @@ const AppDarkTheme: Theme = {
 
 function ThemedApp() {
   const { colorScheme, transitionOpacity, transitionColor } = useTheme()
-  const [splashDone, setSplashDone] = useState(false)
+  const { done: splashDone, finish: finishSplash } = useSplash()
 
   const overlayStyle = useAnimatedStyle(() => ({
     opacity: transitionOpacity.value,
@@ -62,13 +62,7 @@ function ThemedApp() {
           overlayStyle,
         ]}
       />
-      {!splashDone && (
-        <SplashScreen
-          onDone={() => {
-            setSplashDone(true)
-          }}
-        />
-      )}
+      {!splashDone && <SplashScreen onDone={finishSplash} />}
     </ThemeProvider>
   )
 }
@@ -77,7 +71,9 @@ export default function RootLayout() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <AppThemeProvider>
-        <ThemedApp />
+        <SplashProvider>
+          <ThemedApp />
+        </SplashProvider>
       </AppThemeProvider>
     </GestureHandlerRootView>
   )

@@ -31,6 +31,7 @@ import { MultiplayerMenu } from '@/components/overlays/multiplayer-menu'
 import { MultiplayerWaiting } from '@/components/overlays/multiplayer-waiting'
 import { NicknameModal } from '@/components/overlays/nickname-modal'
 import { PausedOverlay } from '@/components/overlays/paused-overlay'
+import { TutorialOverlay } from '@/components/overlays/tutorial/tutorial-overlay'
 import { Screen } from '@/components/screen'
 import { mono } from '@/constants/theme'
 import { useDisplayOptions } from '@/hooks/use-display-options'
@@ -49,6 +50,7 @@ import { useScoreSubmission } from '@/hooks/use-score-submission'
 import { useSupabaseAuth } from '@/hooks/use-supabase-auth'
 import { useTargetSpawner } from '@/hooks/use-target-spawner'
 import { useTheme } from '@/hooks/use-theme'
+import { useTutorial } from '@/hooks/use-tutorial'
 import { valueProgress } from '@/lib/value-progress'
 import {
   computeSum,
@@ -142,6 +144,21 @@ export default function GameScreen() {
   useEffect(() => {
     if (isPlaying) setMenuOverlay('none')
   }, [isPlaying])
+
+  // Onboarding: opens itself under the splash on a first launch, and is
+  // replayable from How to Play.
+  const tutorial = useTutorial()
+
+  const handleTutorialNext = useCallback(() => {
+    if (!tutorial.isLast) {
+      tutorial.goTo(tutorial.step + 1)
+      return
+    }
+    // The last screen's CTA drops the player straight into a Trainee run.
+    tutorial.dismiss()
+    send({ type: 'SET_MODE', mode: 'trainee' })
+    send({ type: 'START' })
+  }, [tutorial, send])
 
   const { userId, nickname, isReady, updateNickname } = useSupabaseAuth()
   const { submit: submitScore } = useScoreSubmission(userId, nickname, isReady)
@@ -580,11 +597,43 @@ export default function GameScreen() {
           onClose={() => {
             setMenuOverlay('none')
           }}
+          onStartTutorial={() => {
+            setMenuOverlay('none')
+            tutorial.openReview()
+          }}
+        />
+      )}
+
+      {/* ── Tutorial ── */}
+      {tutorial.visible && (
+        <TutorialOverlay
+          isDark={isDark}
+          mode={tutorial.mode}
+          step={tutorial.step}
+          stepId={tutorial.stepId}
+          showNext={tutorial.showNext}
+          canResume={tutorial.canResume}
+          resumeStep={tutorial.resumeStep}
+          isLast={tutorial.isLast}
+          onPrev={() => {
+            tutorial.goTo(tutorial.step - 1)
+          }}
+          onNext={handleTutorialNext}
+          onResume={() => {
+            tutorial.goTo(tutorial.resumeStep)
+          }}
+          onSelectStep={(index) => {
+            tutorial.goTo(index)
+          }}
+          onStepDone={() => {
+            tutorial.markStepDone(tutorial.step)
+          }}
+          onDismiss={tutorial.dismiss}
         />
       )}
 
       {/* ── Menu overlay ── */}
-      {isMenu && menuOverlay === 'none' && !isMultiActive && (
+      {isMenu && menuOverlay === 'none' && !isMultiActive && !tutorial.visible && (
         <MenuOverlay
           gameMode={mode}
           difficulty={difficulty}
