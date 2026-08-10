@@ -1,20 +1,13 @@
-import AsyncStorage from '@react-native-async-storage/async-storage'
+import { isEmptyArray } from 'narrowland'
 
-import { PENDING_SCORES_KEY } from '@/constants/storage'
+import { todayISO } from '@/lib/leaderboard-period'
+import {
+  readPendingScores,
+  writePendingScores,
+  type PendingScore,
+} from '@/lib/pending-scores'
 import { supabase } from '@/lib/supabase'
 import type { Difficulty, Mode } from '@/machines/game'
-
-type PendingScore = {
-  mode: Mode
-  difficulty: Difficulty
-  score: number
-  hits: number
-  day: string // 'YYYY-MM-DD'
-}
-
-function todayUTC(): string {
-  return new Date().toISOString().slice(0, 10)
-}
 
 async function upsertScore(userId: string, entry: PendingScore): Promise<boolean> {
   const now = new Date().toISOString()
@@ -47,14 +40,8 @@ async function upsertScore(userId: string, entry: PendingScore): Promise<boolean
 }
 
 async function enqueue(entry: PendingScore): Promise<void> {
-  try {
-    const raw = await AsyncStorage.getItem(PENDING_SCORES_KEY)
-    const queue: PendingScore[] = raw ? (JSON.parse(raw) as PendingScore[]) : []
-    queue.push(entry)
-    await AsyncStorage.setItem(PENDING_SCORES_KEY, JSON.stringify(queue))
-  } catch {
-    // ignore
-  }
+  const queue = await readPendingScores()
+  await writePendingScores([...queue, entry])
 }
 
 export async function submitScore(
@@ -66,7 +53,7 @@ export async function submitScore(
   hits: number,
 ): Promise<void> {
   if (mode === 'trainee' || score <= 0) return
-  const entry: PendingScore = { mode, difficulty, score, hits, day: todayUTC() }
+  const entry: PendingScore = { mode, difficulty, score, hits, day: todayISO() }
   if (!userId || !nickname) {
     await enqueue(entry)
     return
@@ -81,27 +68,21 @@ export async function flushPendingScores(
   nickname: string,
 ): Promise<void> {
   if (!nickname) return
-  try {
-    const raw = await AsyncStorage.getItem(PENDING_SCORES_KEY)
-    if (!raw) return
-    const queue: PendingScore[] = JSON.parse(raw) as PendingScore[]
-    if (queue.length === 0) return
+  const queue = await readPendingScores()
+  if (isEmptyArray(queue)) return
 
-    // Keep max score per (mode, difficulty, day)
-    const best = new Map<string, PendingScore>()
-    for (const e of queue) {
-      const key = `${e.mode}-${e.difficulty}-${e.day}`
-      const prev = best.get(key)
-      if (!prev || e.score > prev.score) best.set(key, e)
-    }
-
-    const remaining: PendingScore[] = []
-    for (const entry of best.values()) {
-      const ok = await upsertScore(userId, entry)
-      if (!ok) remaining.push(entry)
-    }
-    await AsyncStorage.setItem(PENDING_SCORES_KEY, JSON.stringify(remaining))
-  } catch {
-    // ignore
+  // Keep max score per (mode, difficulty, day)
+  const best = new Map<string, PendingScore>()
+  for (const e of queue) {
+    const key = `${e.mode}-${e.difficulty}-${e.day}`
+    const prev = best.get(key)
+    if (!prev || e.score > prev.score) best.set(key, e)
   }
+
+  const remaining: PendingScore[] = []
+  for (const entry of best.values()) {
+    const ok = await upsertScore(userId, entry)
+    if (!ok) remaining.push(entry)
+  }
+  await writePendingScores(remaining)
 }

@@ -29,6 +29,7 @@ export function GameOverSequence({
   avgAccuracy,
   avgSpeed,
   onNewGame,
+  onAddNickname,
 }: {
   phase: DyingPhase
   overlayStyle: StyleProp<AnimatedStyle<ViewStyle>>
@@ -43,6 +44,7 @@ export function GameOverSequence({
   avgAccuracy: number
   avgSpeed: number
   onNewGame: () => void
+  onAddNickname: () => void
 }) {
   if (phase === 'idle') return null
   const revealed = phase === 'done'
@@ -67,6 +69,7 @@ export function GameOverSequence({
           titleHidden={!revealed}
           onTitleLayout={onTitleLayout}
           onNewGame={onNewGame}
+          onAddNickname={onAddNickname}
         />
       </Animated.View>
 

@@ -32,6 +32,7 @@ export function GameOverOverlay({
   avgAccuracy,
   avgSpeed,
   onNewGame,
+  onAddNickname,
   titleHidden = false,
   onTitleLayout,
 }: {
@@ -44,6 +45,7 @@ export function GameOverOverlay({
   avgAccuracy: number
   avgSpeed: number
   onNewGame: () => void
+  onAddNickname: () => void
   // When the in-game dying sequence flies its own copy of the title up into
   // place, the overlay hides its title until the hand-off completes, and reports
   // where the title sits (window centre-Y) so the flying copy can land on it.
@@ -153,6 +155,7 @@ export function GameOverOverlay({
               nickname={nickname}
               optimisticScore={score}
               optimisticHits={hits}
+              onAddNickname={onAddNickname}
             />
           )}
         </View>

@@ -41,12 +41,15 @@ export function MenuOverlay({
   difficulty,
   userId,
   nickname,
+  bestScore,
+  bestHits,
   joinError,
   initialPlayMode = 'alone',
   onPlay,
   onSetMode,
   onSetDifficulty,
   onOpenAdvanced,
+  onAddNickname,
   onHowToPlay,
   onCreateRoom,
   onJoinRoom,
@@ -55,12 +58,17 @@ export function MenuOverlay({
   difficulty: Difficulty
   userId: string | null
   nickname: string | null
+  // The locally stored best for this board, so a run that just finished shows on the
+  // menu's board straight away instead of waiting for the submit to land.
+  bestScore: number
+  bestHits: number
   joinError: string | null
   initialPlayMode?: PlayMode
   onPlay: () => void
   onSetMode: (mode: Mode) => void
   onSetDifficulty: (difficulty: Difficulty) => void
   onOpenAdvanced: () => void
+  onAddNickname: () => void
   onHowToPlay: () => void
   onCreateRoom: () => void
   onJoinRoom: (code: string) => void
@@ -207,6 +215,9 @@ export function MenuOverlay({
                     difficulty={difficulty}
                     userId={userId}
                     nickname={nickname}
+                    optimisticScore={bestScore}
+                    optimisticHits={bestHits}
+                    onAddNickname={onAddNickname}
                   />
                 )}
               </View>

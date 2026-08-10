@@ -10,13 +10,14 @@ import Animated, {
 
 import { useLeaderboard } from '@/hooks/use-leaderboard'
 import type { LeaderboardState } from '@/hooks/use-leaderboard'
-import {
-  type LeaderboardRow,
-  type LeaderboardTab,
-  type MyRankRow,
-} from '@/lib/leaderboard'
+import { usePendingScores } from '@/hooks/use-pending-scores'
+import { type LeaderboardTab } from '@/lib/leaderboard'
+import { withMyBest } from '@/lib/leaderboard-optimistic'
+import { todayISO } from '@/lib/leaderboard-period'
+import { bestPendingScore } from '@/lib/pending-scores'
 import { MODE_GRADIENT, type Difficulty, type Mode } from '@/machines/game'
 
+import { PublishScoresButton } from './publish-scores-button'
 import { TabPanel } from './tab-panel'
 
 const TABS: { key: LeaderboardTab; label: string }[] = [
@@ -35,48 +36,15 @@ function applyOptimistic(
   if (!optimisticScore || !userId || !nickname || state.loading || state.error !== null) {
     return state
   }
-  // Real data already includes this user — no injection needed.
-  if (state.rows.some((r) => r.user_id === userId)) return state
-
-  // Use the better of the current-game score and any stored best so we never
-  // show a rank worse than what the server would report.
-  const effectiveScore = Math.max(optimisticScore, state.myRank?.best_score ?? 0)
-  const effectiveHits =
-    effectiveScore === optimisticScore ? (optimisticHits ?? 0) : (state.myRank?.hits ?? 0)
-
-  const rows = state.rows
-  const beatCount = rows.filter(
-    (r) => r.user_id !== userId && r.best_score >= effectiveScore,
-  ).length
-  const newRank = beatCount + 1
-
-  const newMyRank: MyRankRow = {
-    rank: newRank,
-    total: Math.max(state.myRank?.total ?? 0, newRank),
-    best_score: effectiveScore,
-    hits: effectiveHits,
-  }
-
-  let newRows = rows
-  if (newRank <= 5) {
-    const others = rows.filter((r) => r.user_id !== userId)
-    const above = others.filter((r) => r.best_score >= effectiveScore)
-    const below = others.filter((r) => r.best_score < effectiveScore)
-    const entry: LeaderboardRow = {
-      rank: above.length + 1,
-      user_id: userId,
-      nickname,
-      best_score: effectiveScore,
-      hits: effectiveHits,
-    }
-    newRows = [
-      ...above.map((r, i) => ({ ...r, rank: i + 1 })),
-      entry,
-      ...below.map((r, i) => ({ ...r, rank: above.length + 2 + i })),
-    ].slice(0, 5)
-  }
-
-  return { rows: newRows, myRank: newMyRank, loading: false, error: null }
+  const merged = withMyBest(
+    state.rows,
+    state.myRank,
+    userId,
+    nickname,
+    optimisticScore,
+    optimisticHits ?? 0,
+  )
+  return { ...merged, loading: false, error: null }
 }
 
 export function HighScores({
@@ -86,6 +54,7 @@ export function HighScores({
   nickname,
   optimisticScore,
   optimisticHits,
+  onAddNickname,
 }: {
   gameMode: Mode
   difficulty: Difficulty
@@ -93,6 +62,8 @@ export function HighScores({
   nickname: string | null
   optimisticScore?: number
   optimisticHits?: number
+  // Opens the nickname prompt so the player's local bests can be published.
+  onAddNickname: () => void
 }) {
   const { width: windowWidth } = useWindowDimensions()
   const [panelWidth, setPanelWidth] = useState(0)
@@ -116,6 +87,17 @@ export function HighScores({
     week: applyOptimistic(week, userId, nickname, optimisticScore, optimisticHits),
     forever: applyOptimistic(forever, userId, nickname, optimisticScore, optimisticHits),
   }
+
+  // Local runs that never reached the server, shown with a mark until a nickname
+  // exists — at which point the flush publishes them and the real rows take over.
+  const pending = usePendingScores(nickname === null)
+  const day = todayISO()
+  const unpublishedByTab: Record<LeaderboardTab, number | null> = {
+    today: bestPendingScore(pending, gameMode, difficulty, 'today', day),
+    week: bestPendingScore(pending, gameMode, difficulty, 'week', day),
+    forever: bestPendingScore(pending, gameMode, difficulty, 'forever', day),
+  }
+  const hasUnpublished = unpublishedByTab.forever !== null
 
   const underlineStyle = useAnimatedStyle(() => ({
     transform: [{ translateX: underlineLeft.value }],
@@ -280,10 +262,19 @@ export function HighScores({
               userId={userId}
               nickname={nickname}
               width={effectiveWidth}
+              unpublishedScore={unpublishedByTab[key]}
             />
           ))}
         </ScrollView>
       </View>
+
+      {hasUnpublished && (
+        <PublishScoresButton
+          from={gradientColors[0]}
+          to={gradientColors[1]}
+          onPress={onAddNickname}
+        />
+      )}
     </View>
   )
 }

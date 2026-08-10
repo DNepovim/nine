@@ -34,6 +34,7 @@ export function PausedOverlay({
   onContinue,
   onNewGame,
   onOpenAdvanced,
+  onAddNickname,
 }: {
   gameMode: Mode
   difficulty: Difficulty
@@ -46,6 +47,7 @@ export function PausedOverlay({
   onContinue: () => void
   onNewGame: () => void
   onOpenAdvanced: () => void
+  onAddNickname: () => void
 }) {
   const { colorScheme } = useTheme()
   const dimColor = colorScheme === 'dark' ? '#504e6e' : '#aaa69e'
@@ -123,6 +125,7 @@ export function PausedOverlay({
               difficulty={difficulty}
               userId={userId}
               nickname={nickname}
+              onAddNickname={onAddNickname}
             />
           )}
         </View>
@@ -156,7 +159,7 @@ export function PausedOverlay({
                 selectable={false}
                 className="font-mono text-[13px] font-black tracking-[2px] text-primary"
               >
-                NEW GAME
+                CANCEL GAME
               </Text>
             </Pressable>
           </View>

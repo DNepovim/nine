@@ -1,5 +1,8 @@
+import { tabSince, todayISO, type LeaderboardTab } from '@/lib/leaderboard-period'
 import { supabase } from '@/lib/supabase'
 import type { Difficulty, Mode } from '@/machines/game'
+
+export type { LeaderboardTab }
 
 export type LeaderboardRow = {
   rank: number
@@ -16,14 +19,7 @@ export type MyRankRow = {
   hits: number
 }
 
-export type LeaderboardTab = 'today' | 'week' | 'forever'
-
-function tabToSince(tab: LeaderboardTab): string | null {
-  if (tab === 'forever') return null
-  const d = new Date()
-  if (tab === 'week') d.setDate(d.getDate() - 6)
-  return d.toISOString().slice(0, 10)
-}
+const tabToSince = (tab: LeaderboardTab): string | null => tabSince(tab, todayISO())
 
 export async function fetchTop5(
   mode: Mode,

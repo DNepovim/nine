@@ -1,9 +1,14 @@
+import { isEmptyArray } from 'narrowland'
 import { Text, View } from 'react-native'
 
 import type { LeaderboardState } from '@/hooks/use-leaderboard'
+import { displayRows } from '@/lib/leaderboard-rows'
 
 import { ScoreRow } from './score-row'
 import { SkeletonRow } from './skeleton-row'
+
+// Label the unpublished row carries in the nickname column.
+const UNPUBLISHED_LABEL = 'YOU'
 
 export function TabPanel({
   data,
@@ -11,12 +16,15 @@ export function TabPanel({
   userId,
   nickname,
   width,
+  unpublishedScore,
 }: {
   data: LeaderboardState
   accentColor: string
   userId: string | null
   nickname: string | null
   width: number
+  // The player's best local score for this period, when it has yet to be published.
+  unpublishedScore: number | null
 }) {
   if (data.loading) {
     return (
@@ -38,11 +46,15 @@ export function TabPanel({
     )
   }
 
-  const top5 = data.rows
+  const unpublished =
+    unpublishedScore === null
+      ? null
+      : { score: unpublishedScore, label: UNPUBLISHED_LABEL }
+  const rows = displayRows(data.rows, userId, unpublished)
   const myRank = data.myRank
-  const userIsInTop5 = myRank !== null && myRank.rank <= top5.length
+  const userIsInTop5 = myRank !== null && myRank.rank <= rows.length
 
-  if (top5.length === 0) {
+  if (isEmptyArray(rows)) {
     return (
       <View style={{ width }} className="items-center py-4">
         <Text selectable={false} className="font-mono text-[9px] font-bold text-dim">
@@ -54,14 +66,15 @@ export function TabPanel({
 
   return (
     <View style={{ width }}>
-      {top5.map((row) => (
+      {rows.map((row) => (
         <ScoreRow
-          key={row.user_id}
+          key={row.key}
           entry={{
             rank: row.rank,
             nickname: row.nickname,
-            score: row.best_score,
-            isUser: row.user_id === userId,
+            score: row.score,
+            isUser: row.isUser,
+            unpublished: row.unpublished,
           }}
           accentColor={accentColor}
         />

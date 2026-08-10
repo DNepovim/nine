@@ -16,6 +16,7 @@ import Animated, {
 
 import DSEG7Font from '@/assets/fonts/DSEG7Classic-Bold.ttf'
 import { BestScoresLine } from '@/components/game/best-scores-line'
+import { Confetti } from '@/components/game/confetti'
 import { DialButton } from '@/components/game/dial-button'
 import { FloatingPoints } from '@/components/game/floating-points'
 import { FloatingStat } from '@/components/game/floating-stat'
@@ -36,6 +37,7 @@ import { PausedOverlay } from '@/components/overlays/paused-overlay'
 import { WhatsNewOverlay } from '@/components/overlays/whats-new-overlay'
 import { Screen } from '@/components/screen'
 import { mono } from '@/constants/theme'
+import { useAnnouncements } from '@/hooks/use-announcements'
 import { useBestScores } from '@/hooks/use-best-scores'
 import { useDisplayOptions } from '@/hooks/use-display-options'
 import { useDisplayScore } from '@/hooks/use-display-score'
@@ -162,6 +164,13 @@ export default function GameScreen() {
     refresh: refreshBests,
   } = useBestScores(mode, difficulty, mode !== 'trainee')
 
+  const inRun = isPlaying || isPaused
+  const announcement = useAnnouncements({
+    inRun,
+    score: state.context.score,
+    storedBest: stats[mode][difficulty].score,
+  })
+
   // Trigger score submission on each game-over transition.
   const prevIsGameOverRef = useRef(false)
   useEffect(() => {
@@ -186,6 +195,18 @@ export default function GameScreen() {
     submitScore,
     refreshBests,
   ])
+
+  // Ending a run yourself from the pause menu still counts: submit the score and ask
+  // for a nickname exactly as running out of lives does. The game-over effect below
+  // only fires on the gameOver transition, so without this the run would be lost.
+  const endRunEarly = () => {
+    if (!isOneOf(mode, ['accuracy', 'speed'])) return
+    const { score, hits } = state.context
+    if (score <= 0) return
+    submitScore(mode, difficulty, score, hits)
+    refreshBests()
+    if (isReady && !nickname) setShowNicknameModal(true)
+  }
 
   // The dial sum drives the score above the dial; the machine's composite score
   // drives the digital HUD readout.
@@ -329,13 +350,20 @@ export default function GameScreen() {
 
   return (
     <>
+      {/* Confetti sits before the Screen so it paints behind the game's own UI —
+          pieces fall through the gaps between dial keys and targets. Keyed on the
+          announcement so each one plays a fresh fall. */}
+      {announcement !== null && <Confetti key={announcement.id} />}
+
       {/* ── Game screen (single padded wrapper) ── */}
       <Screen>
         {/* Row 0 — board bests, a hairline above the top bar. Trainee is a
             practice mode with no board, so it gets no strip. */}
         {mode !== 'trainee' && (
           <BestScoresLine
-            inRun={isPlaying || isPaused}
+            inRun={inRun}
+            mode={mode}
+            announcement={announcement}
             yourBest={stats[mode][difficulty].score}
             today={bestToday}
             week={bestWeek}
@@ -569,6 +597,9 @@ export default function GameScreen() {
         onNewGame={() => {
           send({ type: 'MENU' })
         }}
+        onAddNickname={() => {
+          setShowNicknameModal(true)
+        }}
       />
 
       {/* ── Pause overlay ── */}
@@ -586,10 +617,14 @@ export default function GameScreen() {
             send({ type: 'RESUME' })
           }}
           onNewGame={() => {
+            endRunEarly()
             send({ type: 'MENU' })
           }}
           onOpenAdvanced={() => {
             setMenuOverlay('advanced')
+          }}
+          onAddNickname={() => {
+            setShowNicknameModal(true)
           }}
         />
       )}
@@ -640,6 +675,8 @@ export default function GameScreen() {
           difficulty={difficulty}
           userId={userId}
           nickname={nickname}
+          bestScore={stats[mode][difficulty].score}
+          bestHits={stats[mode][difficulty].hits}
           joinError={multiRoom.error}
           initialPlayMode={menuInitialTab}
           onPlay={() => {
@@ -654,6 +691,9 @@ export default function GameScreen() {
           }}
           onOpenAdvanced={() => {
             setMenuOverlay('advanced')
+          }}
+          onAddNickname={() => {
+            setShowNicknameModal(true)
           }}
           onHowToPlay={() => {
             setMenuOverlay('howToPlay')
