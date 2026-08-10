@@ -15,6 +15,7 @@ import Animated, {
 } from 'react-native-reanimated'
 
 import DSEG7Font from '@/assets/fonts/DSEG7Classic-Bold.ttf'
+import { BestScoresLine } from '@/components/game/best-scores-line'
 import { DialButton } from '@/components/game/dial-button'
 import { FloatingPoints } from '@/components/game/floating-points'
 import { FloatingStat } from '@/components/game/floating-stat'
@@ -35,6 +36,7 @@ import { PausedOverlay } from '@/components/overlays/paused-overlay'
 import { WhatsNewOverlay } from '@/components/overlays/whats-new-overlay'
 import { Screen } from '@/components/screen'
 import { mono } from '@/constants/theme'
+import { useBestScores } from '@/hooks/use-best-scores'
 import { useDisplayOptions } from '@/hooks/use-display-options'
 import { useDisplayScore } from '@/hooks/use-display-score'
 import { useDisplayedTargets } from '@/hooks/use-displayed-targets'
@@ -152,11 +154,23 @@ export default function GameScreen() {
   const { submit: submitScore } = useScoreSubmission(userId, nickname, isReady)
   const [showNicknameModal, setShowNicknameModal] = useState(false)
 
+  // Board bests for the strip above the top bar. Trainee has no leaderboard.
+  const {
+    today: bestToday,
+    week: bestWeek,
+    ever: bestEver,
+    refresh: refreshBests,
+  } = useBestScores(mode, difficulty, mode !== 'trainee')
+
   // Trigger score submission on each game-over transition.
   const prevIsGameOverRef = useRef(false)
   useEffect(() => {
     if (isGameOver === prevIsGameOverRef.current) return
     prevIsGameOverRef.current = isGameOver
+    // Refresh on both edges of game over: entering picks up other players' runs,
+    // and leaving catches our own score, which submitScore fires and forgets and
+    // so may not have landed by the time the overlay appeared.
+    refreshBests()
     if (isGameOver && isOneOf(mode, ['accuracy', 'speed'])) {
       submitScore(mode, difficulty, state.context.score, state.context.hits)
       if (isReady && !nickname && state.context.score > 0) setShowNicknameModal(true)
@@ -170,6 +184,7 @@ export default function GameScreen() {
     state.context.score,
     state.context.hits,
     submitScore,
+    refreshBests,
   ])
 
   // The dial sum drives the score above the dial; the machine's composite score
@@ -316,6 +331,17 @@ export default function GameScreen() {
     <>
       {/* ── Game screen (single padded wrapper) ── */}
       <Screen>
+        {/* Row 0 — board bests, a hairline above the top bar. Trainee is a
+            practice mode with no board, so it gets no strip. */}
+        {mode !== 'trainee' && (
+          <BestScoresLine
+            inRun={isPlaying || isPaused}
+            yourBest={stats[mode][difficulty].score}
+            today={bestToday}
+            week={bestWeek}
+            ever={bestEver}
+          />
+        )}
         <View className="mb-3">
           {/* Row 1 — mode/difficulty left, NINE centered, spacer right */}
           <View className="mb-1 flex-row items-center">
@@ -656,7 +682,9 @@ export default function GameScreen() {
         }}
       />
 
-      {/* Persistent menu button — same spot in game & pause; morphs grid↔cross */}
+      {/* Persistent menu button — same spot in game & pause; morphs grid↔cross.
+          Sits level with the NINE row, so it clears the best-scores strip above
+          it: bump `top` if that strip's height changes. */}
       <MenuButton
         visible={isPlaying || isPaused}
         paused={isPaused}
@@ -664,7 +692,7 @@ export default function GameScreen() {
           send({ type: isPaused ? 'RESUME' : 'PAUSE' })
         }}
         color={isDark ? '#2A2B44' : '#D4D0C8'}
-        style={{ position: 'absolute', top: 12, right: 18, zIndex: 20 }}
+        style={{ position: 'absolute', top: 36, right: 18, zIndex: 20 }}
       />
 
       {/* ── Multiplayer screens (above everything) ── */}

@@ -50,6 +50,18 @@ export const RELEASES: Release[] = [
           'No more squinting at the top of the range mid-run.',
         ].join('\n'),
       },
+      {
+        id: 'best-scores-bar',
+        icon: 'trophy',
+        accent: '#c36282',
+        title: 'Best scores, up top',
+        body: [
+          'A thin line above the game now shows your best on this board next to',
+          "today's, this week's and the all-time high.",
+          '',
+          'It stays out of the way for the first few seconds of a run.',
+        ].join('\n'),
+      },
     ],
   },
 ]
