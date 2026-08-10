@@ -64,16 +64,46 @@
 
 /* Landscape guard — shown on touch devices (phones/tablets) only.
    Desktop windows in landscape are left alone.
-   body::before is the backdrop; body::after is the label on top. */
+
+   Four stacked layers, because a pseudo-element can hold one thing each:
+   html::before is the backdrop, html::after the rotate icon, body::before the
+   title and body::after the subtitle. All four are centred on the viewport and
+   offset from it, so the stack stays put whatever the screen size.
+
+   Deliberately CSS-only: this has to work before the JS bundle loads, which also
+   means no icon font and no network request — hence the inlined SVG. It is applied
+   as a mask rather than a background-image so the shape takes its colour from the
+   theme token, exactly like the text does. */
 @media (orientation: landscape) and (pointer: coarse) {
-  body::before {
+  html::before {
     content: '';
     position: fixed;
     inset: 0;
     z-index: 9998;
     background-color: var(--color-surface, #f3efe9);
   }
-  body::after {
+  html::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    background-color: var(--color-dim, #aaa69e);
+    /* Portrait phone ringed by two arcing arrows — one over the top ending on the
+       right, one under the bottom ending on the left. The pair is rotationally
+       symmetric, which is what makes it read as turning rather than as a bracket.
+       Geometry: arcs lie on r=19 about (24,24); the phone stays inside r=12.5 so
+       nothing overlaps. */
+    --rotate-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48' fill='none' stroke='black' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='18' y='13' width='12' height='22' rx='2.5'/%3E%3Cpath d='M21.5 32h5'/%3E%3Cpath d='M6.1 17.5A19 19 0 0 1 41.9 17.5'/%3E%3Cpath d='M36.2 14.3 41.9 17.5 44.1 11.4'/%3E%3Cpath d='M41.9 30.5A19 19 0 0 1 6.1 30.5'/%3E%3Cpath d='M11.8 33.8 6.1 30.5 3.9 36.6'/%3E%3C/svg%3E");
+    -webkit-mask-image: var(--rotate-icon);
+    mask-image: var(--rotate-icon);
+    -webkit-mask-repeat: no-repeat;
+    mask-repeat: no-repeat;
+    -webkit-mask-position: center calc(50% - 46px);
+    mask-position: center calc(50% - 46px);
+    -webkit-mask-size: 56px 56px;
+    mask-size: 56px 56px;
+  }
+  body::before {
     content: 'ROTATE DEVICE';
     position: fixed;
     inset: 0;
@@ -81,11 +111,28 @@
     display: flex;
     align-items: center;
     justify-content: center;
+    transform: translateY(6px);
+    font-family: ui-monospace, monospace;
+    font-size: 20px;
+    font-weight: 900;
+    letter-spacing: 6px;
+    color: var(--color-dim, #aaa69e);
+  }
+  body::after {
+    content: 'THIS GAME WORKS ONLY IN PORTRAIT';
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transform: translateY(36px);
     font-family: ui-monospace, monospace;
     font-size: 10px;
-    font-weight: 900;
-    letter-spacing: 3px;
+    font-weight: 700;
+    letter-spacing: 2px;
     color: var(--color-dim, #aaa69e);
+    opacity: 0.75;
   }
 }
 
