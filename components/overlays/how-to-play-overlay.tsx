@@ -318,9 +318,9 @@ export function HowToPlayOverlay({ onClose }: { onClose: () => void }) {
         <ModeCard
           mode="speed"
           facts={[
-            'A fast, short clock — the sooner you hit, the more it scores.',
-            'Clear the entire board to fire your combo streak.',
-            'Let a target run out and you lose a life.',
+            'A shorter clock — the sooner you hit, the more it scores.',
+            'Hit while most of the ring is left to build your combo streak.',
+            'A slow hit breaks the streak; let a target run out and you lose a life.',
           ]}
         />
 
@@ -336,15 +336,17 @@ export function HowToPlayOverlay({ onClose }: { onClose: () => void }) {
             Accuracy — how close to the fewest possible moves you were.
           </Bullet>
           <Bullet color={ACCENT.scoring}>
-            Speed — how much time was left on the ring.
+            Speed — how much time was left on the ring. Land it with most of the ring
+            intact and it pays a bonus on top.
           </Bullet>
           <Bullet color="#FF8C00">
-            Streak — consecutive perfect plays multiply your points ×2 → ×4 → ×8.
+            Streak — consecutive perfect plays multiply your points ×2 → ×4 → ×8. One
+            imperfect hit and you start again.
           </Bullet>
         </Card>
         <Body>
           {
-            '\nAccuracy mode leans almost entirely on precision; Speed mode on the clock. Trainee is unscored practice.'
+            '\nAccuracy mode leans almost entirely on precision; Speed mode on the clock. Each keeps its own streak: Accuracy wants the fewest moves, Speed wants you early on the ring. Trainee is unscored practice.'
           }
         </Body>
 
@@ -371,8 +373,8 @@ export function HowToPlayOverlay({ onClose }: { onClose: () => void }) {
           you.
         </Bullet>
         <Bullet color={ACCENT.tips}>
-          In Speed, hunt targets that are closest to the current sum to clear the board
-          fast and keep the combo alive.
+          In Speed, go for whichever target sits closest to the current sum — fewer moves
+          means more of the ring left, and the ring is what feeds your combo.
         </Bullet>
         <Bullet color={ACCENT.tips}>
           Start in Trainee to build intuition for the weights, then chase high scores.

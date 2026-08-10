@@ -45,7 +45,7 @@ describe('config tables', () => {
     expect(MODE_ORDER).toEqual(['trainee', 'accuracy', 'speed'])
     expect(DIFFICULTY_ORDER).toEqual(['easy', 'hard', 'extreme'])
     expect(MODES.trainee.lives).toBe(Number.POSITIVE_INFINITY)
-    expect(MODES.speed.streak).toBe('clear')
+    expect(MODES.speed.streak).toBe('fast')
     expect(MODES.accuracy.streak).toBe('optimal')
     expect(DIFFICULTIES.extreme.maxTargets).toBe(4)
   })

@@ -52,10 +52,23 @@ export function accuracyFactor(par: number, userSteps: number): number {
   return Math.max(0, 1 - excess / (effectivePar + 2))
 }
 
-// 1 = hit instantly, 0 = hit at the buzzer.
+// 1 = hit instantly, 0 = hit at the buzzer. Stays linear because it doubles as the
+// run's average-speed stat, which should report plain time left.
 export function speedFactor(timeLeft: number, duration: number): number {
   if (duration <= 0) return 0
   return Math.min(1, Math.max(0, timeLeft / duration))
+}
+
+// Where the extra reward starts, and how much a perfect instant hit adds on top.
+export const FAST_BAND = 0.85
+const FAST_BONUS = 0.25
+
+// What a hit's speed is worth in points. Linear time-left up to the fast band, then
+// rising past 1 — so landing a hit near-instantly pays visibly more than merely
+// being quick, instead of the few percent a straight line would give.
+export function speedReward(spd: number): number {
+  if (spd <= FAST_BAND) return spd
+  return spd + (FAST_BONUS * (spd - FAST_BAND)) / (1 - FAST_BAND)
 }
 
 // Points for a single hit, blending accuracy and speed per the mode's weights.
@@ -69,6 +82,6 @@ export function computeHitPoints(opts: {
 }): number {
   const { par, userSteps, timeLeft, duration, weights, base = SCORE_BASE } = opts
   const acc = accuracyFactor(par, userSteps)
-  const spd = speedFactor(timeLeft, duration)
+  const spd = speedReward(speedFactor(timeLeft, duration))
   return Math.round(base * (weights.acc * acc + weights.spd * spd))
 }

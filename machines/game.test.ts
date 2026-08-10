@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { createActor } from 'xstate'
 
-import { gameMachine } from '@/machines/game'
+import { effectiveTimeout, gameMachine } from '@/machines/game'
 
 const start = (mode: 'trainee' | 'accuracy' | 'speed') => {
   const actor = createActor(gameMachine)
@@ -73,20 +73,60 @@ describe('accuracy streak (second optimal)', () => {
   })
 })
 
-describe('speed streak (clear trigger)', () => {
-  it('increments only when the board is cleared and resets on expiry', () => {
-    const actor = start('speed')
+describe('speed streak (fast trigger)', () => {
+  const duration = effectiveTimeout('speed', 'hard')
+  // A hit counts as fast while at least FAST_HIT_THRESHOLD of the ring remains, so
+  // these are comfortably inside and outside that window.
+  const fast = Math.round(duration * 0.1)
+  const slow = Math.round(duration * 0.9)
 
-    // Target value=9: from empty grid, index 8 → press once → sum=9, board clears. streak=1.
+  it('increments on a fast hit', () => {
+    const actor = start('speed')
     actor.send({ type: 'ADD_TARGET', value: 9, at: 0 })
-    actor.send({ type: 'PRESS', index: 8, delta: 1, now: 0 }) // clears board
+    actor.send({ type: 'PRESS', index: 8, delta: 1, now: fast })
+    expect(actor.getSnapshot().context.streak).toBe(1)
+  })
+
+  it('builds across consecutive fast hits', () => {
+    const actor = start('speed')
+    actor.send({ type: 'ADD_TARGET', value: 9, at: 0 })
+    actor.send({ type: 'PRESS', index: 8, delta: 1, now: fast })
+    actor.send({ type: 'ADD_TARGET', value: 18, at: fast })
+    actor.send({ type: 'PRESS', index: 8, delta: 1, now: fast * 2 })
+    expect(actor.getSnapshot().context.streak).toBe(2)
+  })
+
+  it('resets on a slow hit — the streak is a chain, not a tally', () => {
+    const actor = start('speed')
+    actor.send({ type: 'ADD_TARGET', value: 9, at: 0 })
+    actor.send({ type: 'PRESS', index: 8, delta: 1, now: fast })
     expect(actor.getSnapshot().context.streak).toBe(1)
 
-    // Add another target and let it expire → streak resets
+    actor.send({ type: 'ADD_TARGET', value: 18, at: 0 })
+    actor.send({ type: 'PRESS', index: 8, delta: 1, now: slow })
+    expect(actor.getSnapshot().context.streak).toBe(0)
+  })
+
+  it('resets on expiry', () => {
+    const actor = start('speed')
+    actor.send({ type: 'ADD_TARGET', value: 9, at: 0 })
+    actor.send({ type: 'PRESS', index: 8, delta: 1, now: fast })
+    expect(actor.getSnapshot().context.streak).toBe(1)
+
     actor.send({ type: 'ADD_TARGET', value: 18, at: 0 })
     const id = actor.getSnapshot().context.targets[0]?.id ?? 0
     actor.send({ type: 'TARGET_EXPIRED', id })
     expect(actor.getSnapshot().context.streak).toBe(0)
+  })
+
+  it('no longer depends on clearing the board', () => {
+    const actor = start('speed')
+    // Two targets, one hit: the board is not cleared, but the hit was fast.
+    actor.send({ type: 'ADD_TARGET', value: 9, at: 0 })
+    actor.send({ type: 'ADD_TARGET', value: 200, at: 0 })
+    actor.send({ type: 'PRESS', index: 8, delta: 1, now: fast })
+    expect(actor.getSnapshot().context.targets).toHaveLength(1)
+    expect(actor.getSnapshot().context.streak).toBe(1)
   })
 })
 

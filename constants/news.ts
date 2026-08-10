@@ -72,6 +72,18 @@ export const RELEASES: Release[] = [
           'long on every target.',
         ].join('\n'),
       },
+      {
+        id: 'speed-streak',
+        icon: 'flash',
+        accent: '#c36282',
+        title: 'Speed combos, rebuilt',
+        body: [
+          'Your Speed combo now grows on every quick hit instead of waiting',
+          'for a clear board — but a slow one breaks it.',
+          '',
+          'Land a target with most of its ring still full and it pays extra.',
+        ].join('\n'),
+      },
     ],
   },
 ]

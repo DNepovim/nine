@@ -2,7 +2,13 @@ export type Mode = 'trainee' | 'accuracy' | 'speed'
 
 export const MODE_ORDER: Mode[] = ['trainee', 'accuracy', 'speed']
 
-type StreakTrigger = 'optimal' | 'clear' | 'none'
+// What extends a mode's streak. `optimal` and `fast` are chains of decisions — every
+// matching hit either builds them or breaks them — where `clear` depends on the spawn
+// timing cooperating, so most hits leave it untouched.
+export type StreakTrigger = 'optimal' | 'fast' | 'clear' | 'none'
+
+// A hit counts as fast when this much of the target's ring is still full.
+export const FAST_HIT_THRESHOLD = 0.6
 
 export type ModeConfig = {
   label: string
@@ -34,7 +40,7 @@ export const MODES: Record<Mode, ModeConfig> = {
     baseTimeout: 14667,
     weights: { acc: 0.15, spd: 0.85 },
     lives: 3,
-    streak: 'clear',
+    streak: 'fast',
   },
 }
 

@@ -4,10 +4,12 @@ import { assign, createMachine } from 'xstate'
 import {
   DIFFICULTIES,
   effectiveTimeout,
+  FAST_HIT_THRESHOLD,
   MODES,
   streakMultiplier,
   type Difficulty,
   type Mode,
+  type StreakTrigger,
 } from './modes'
 import { accuracyFactor, computeHitPoints, computePar, speedFactor } from './scoring'
 
@@ -157,6 +159,33 @@ function buildSetGrid(grid: Grid, index: number, value: number): Grid {
   ) as Grid
 }
 
+// What a hit batch did, as far as the streak rules care.
+type StreakFacts = {
+  anyHit: boolean
+  allOptimal: boolean
+  allFast: boolean
+  clearedBoard: boolean
+}
+
+// Whether a hit batch extends the streak. One predicate per trigger, so adding a
+// mode's rule means adding a row here rather than another branch in a conditional.
+const STREAK_TRIGGERED = {
+  optimal: ({ anyHit, allOptimal }) => anyHit && allOptimal,
+  fast: ({ anyHit, allFast }) => anyHit && allFast,
+  clear: ({ clearedBoard }) => clearedBoard,
+  none: () => false,
+} as const satisfies Record<StreakTrigger, (facts: StreakFacts) => boolean>
+
+// Whether a hit batch breaks it. A streak only feels like a chain when both halves
+// are in play: `optimal` and `fast` are broken by a matching hit that missed the
+// mark, where `clear` is never broken by a hit — only by a target running out.
+const STREAK_BROKEN = {
+  optimal: ({ anyHit }) => anyHit,
+  fast: ({ anyHit }) => anyHit,
+  clear: () => false,
+  none: () => false,
+} as const satisfies Record<StreakTrigger, (facts: StreakFacts) => boolean>
+
 // Applies a new grid: scores any targets whose value equals the new sum, resets
 // the reference for surviving targets when a hit happened, applies streak multiplier,
 // and emits a hit batch for the UI.
@@ -172,6 +201,7 @@ function applyGrid(context: Context, newGrid: Grid, now: number) {
 
   let rawScore = 0
   let allOptimal = isNonEmptyArray(matched)
+  let allFast = isNonEmptyArray(matched)
   let accAdded = 0
   let spdAdded = 0
   const perTarget: {
@@ -195,18 +225,15 @@ function applyGrid(context: Context, newGrid: Grid, now: number) {
     const acc = accuracyFactor(t.par, userSteps)
     const spd = speedFactor(timeLeft, duration)
     if (userSteps !== t.par) allOptimal = false
+    if (spd < FAST_HIT_THRESHOLD) allFast = false
     accAdded += acc
     spdAdded += spd
     rawScore += pts
     perTarget.push({ points: pts, progress, accFactor: acc, spdFactor: spd })
   }
 
-  const triggered =
-    mode.streak === 'optimal'
-      ? anyHit && allOptimal
-      : mode.streak === 'clear'
-        ? clearedBoard
-        : false
+  const streakFacts = { anyHit, allOptimal, allFast, clearedBoard }
+  const triggered = STREAK_TRIGGERED[mode.streak](streakFacts)
   let streak = context.streak
   let multiplier = 1
   if (mode.streak === 'none') {
@@ -214,9 +241,9 @@ function applyGrid(context: Context, newGrid: Grid, now: number) {
   } else if (triggered) {
     streak = context.streak + 1
     multiplier = streakMultiplier(streak)
-  } else if (mode.streak === 'optimal' && anyHit) {
-    streak = 0 // a matching but non-optimal hit resets accuracy streak
-  } // speed non-clearing hit, or any miss: streak unchanged, multiplier stays 1
+  } else if (STREAK_BROKEN[mode.streak](streakFacts)) {
+    streak = 0
+  } // a miss leaves the streak alone; only expiry clears it outright
 
   const addedScore = Math.round(rawScore * multiplier)
   const hitInfos: HitInfo[] = perTarget.map((p) => ({
