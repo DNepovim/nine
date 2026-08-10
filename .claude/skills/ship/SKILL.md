@@ -10,9 +10,10 @@ Two modes:
 - **`ship`** (no argument) → ask the user whether to open a branch + PR or commit directly to `main`.
 - **`ship prod`** → skip the question and commit directly to `main`.
 
-Both start by gating on the checks and proposing Conventional Commit messages
-for confirmation. **Never commit, push, or open a PR without the user's explicit
-confirmation of the message(s) — and, for the branch flow, the branch name.**
+The commit itself belongs to the **`commit`** skill — this skill gates, decides
+where the work lands, and pushes. **Never push or open a PR without the user's
+explicit confirmation**, which the `commit` skill collects for the message and
+Step 0c collects for the branch name.
 
 ## Step 0 — Gate on checks (both modes)
 
@@ -21,6 +22,9 @@ if anything can't be made green, **stop** and report — do not ship failing che
 
 Then look at what will ship: `git status --short` and `git diff` (staged +
 unstaged). If the tree is clean, say there's nothing to ship and stop.
+
+Having run `check` here, tell the `commit` skill it's already green so it doesn't
+run the suite a second time.
 
 ## Step 0b — Migration check (both modes)
 
@@ -71,81 +75,51 @@ If yes, draft the entry and show it for confirmation **before writing the file**
 Present the drafted entry with **`AskUserQuestion`**: "Use it", "Edit" (they
 supply replacement copy), or "Skip the announcement".
 
+If they pick "Edit" but send no replacement text, **do not commit yet** — ask
+again for the copy, offering drafts they can pick from.
+
 Once confirmed, add it to `constants/news.ts` under today's date — appending to
 that release's `items` if today already has an entry, otherwise adding a new
-release at the **top** of the array. Then continue to the commit message, which
-should cover the announcement as part of the change.
+release at the **top** of the array. Re-run `pnpm check` after editing the file,
+and make sure the commit message covers the announcement as part of the change.
 
 ## Step 0c — Choose ship mode (only when invoked as plain `ship`)
 
-Ask the user using **`AskUserQuestion`**:
+Ask the user using **`AskUserQuestion`**. In branch mode the branch name is this
+skill's to confirm, so include it in the same question:
 
-- **"Branch + PR"** — create a new branch, commit, push, open a GitHub PR. (Recommended)
+- **"Branch + PR"** — create branch `<type>/<kebab-summary>` (e.g.
+  `feat/leaderboard`, `fix/dial-overflow`) derived from the change, commit, push,
+  open a GitHub PR. (Recommended)
 - **"Commit to main"** — commit and push directly to `main` (same as `ship prod`).
 
-Use the answer to determine which Step 2 path to follow.
+## Step 1 — Commit
 
-## Step 1 — Propose Conventional Commit message(s) (both modes)
+Invoke the **`commit`** skill. It owns the Conventional Commit format, the
+one-commit-per-logically-separate-change rule, the confirmation gate and the
+co-author footer. Pass it the context it needs:
 
-Read the diff and propose commit message(s) following **Conventional Commits
-v1.0.0** (https://www.conventionalcommits.org/en/v1.0.0/):
+- checks are already green (Step 0), so it should not re-run them
+- any `constants/news.ts` entry added in Step 0bb belongs in the commit
 
-```
-<type>[optional scope][!]: <description>
+In branch mode, create and switch to the confirmed branch **before** invoking it
+(`git checkout -b <branch>` carries the uncommitted changes across).
 
-[optional body]
+If the user cancels at the commit skill's gate, stop here — nothing to push.
 
-[optional footer(s)]
-```
-
-- **types:** `feat`, `fix`, `docs`, `style`, `refactor`, `perf`, `test`, `build`,
-  `ci`, `chore`, `revert`.
-- `feat` → MINOR, `fix` → PATCH. Breaking change → append `!` after type/scope
-  **and/or** a `BREAKING CHANGE:` footer.
-- Description: imperative mood, lowercase, no trailing period, concise.
-- Scope is optional and in parentheses, e.g. `feat(scoring): …`.
-
-If the working tree contains **logically separate** changes, propose **multiple
-commits** (each a coherent Conventional Commit with the files it covers) rather
-than one catch-all. Otherwise propose a single commit.
-
-Present the proposed message(s) (and, in branch mode, the branch name) using
-**`AskUserQuestion`** with these choices:
-
-- **"Ship it"** — proceed as-is (Recommended)
-- **"Edit message"** — user will type a replacement; apply it and ship
-- **"Cancel"** — stop, do not commit
-
-Only continue once the user picks "Ship it" or provides an edited message.
-Do **not** ask in plain text — always use `AskUserQuestion` so the session
-stays unblocked.
-
-Every commit message must end with the footer:
-
-```
-Co-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>
-```
-
-## Step 2 — Ship
+## Step 2 — Push
 
 ### Default (`ship`, no arg): branch + PR
 
-1. Suggest a branch name `<type>/<kebab-summary>` (e.g. `feat/leaderboard`,
-   `fix/dial-overflow`) derived from the change. Include it in the Step 1
-   confirmation prompt.
-2. If on the default branch (`main`), create and switch to the new branch
-   (`git checkout -b <branch>`) — this carries the uncommitted changes with it.
-3. Commit the confirmed message(s) (stage per-commit if splitting).
-4. Push: `git push -u origin <branch>`.
-5. Open the PR with `gh pr create --base main --head <branch> --title "<conventional title>" --body "<short summary of what & why>"`.
-6. Report the PR URL.
+1. `git push -u origin <branch>`
+2. Open the PR:
+   `gh pr create --base main --head <branch> --title "<conventional title>" --body "<short summary of what & why>"`
+3. Report the PR URL.
 
-### `ship prod`: commit + push to main
+### `ship prod`: push to main
 
-1. Ensure you're on `main` (or check it out).
-2. Commit the confirmed message(s).
-3. `git push origin main`.
-4. **Note to the user:** pushing `main` triggers the EAS Workflow
+1. `git push origin main`
+2. **Note to the user:** pushing `main` triggers the EAS Workflow
    (`.eas/workflows/deploy.yml`) → checks + **production deploy**. So `ship prod`
    effectively ships to production via CI.
 
@@ -154,3 +128,5 @@ Co-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>
 - Use `gh` for the PR; if `gh` isn't authenticated, tell the user to run
   `gh auth login` (as a `! gh auth login` prompt) rather than failing silently.
 - Don't touch unrelated files or amend history the user didn't ask about.
+- A push that fails on infrastructure (rather than on git) is worth one retry
+  before reporting it.
