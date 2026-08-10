@@ -40,6 +40,42 @@ user before proceeding using **`AskUserQuestion`**:
 
 If no migration files changed, skip this step silently.
 
+## Step 0bb — Offer a release announcement (both modes)
+
+Players see announcements in the app's what's-new popup, sourced from
+`constants/news.ts`. Adding one here means it lands in the **same commit** as the
+feature it describes.
+
+Read the diff and judge whether anything in it is worth telling a player about —
+a new feature, a visible change, something that alters how the game feels. Pure
+refactors, CI changes, dependency bumps and internal fixes are not.
+
+Ask with **`AskUserQuestion`**:
+
+- **"Yes, announce it"** — draft and add an entry (Recommended when the diff
+  contains anything player-visible)
+- **"No"** — skip; ship without touching `constants/news.ts`
+
+If yes, draft the entry and show it for confirmation **before writing the file**:
+
+- `id` — short, kebab-case, permanent. Never reuse one; "seen" state is keyed on
+  it, so a reused id means players silently miss the new announcement.
+- `icon` — an Ionicons name that suits the change.
+- `accent` — a colour from the app's mode spectrum (`#4C7EFF`, `#7273D2`,
+  `#c36282`, `#E5534B`, `#FF8C00`).
+- `title` — a few words, sentence case; it is upper-cased in the UI.
+- `body` — markdown. Write for a player, not a changelog: say what they can now
+  do and why it is good. Bullets for a list of specifics, a sentence or two
+  otherwise. Never mention file names, commit types or internals.
+
+Present the drafted entry with **`AskUserQuestion`**: "Use it", "Edit" (they
+supply replacement copy), or "Skip the announcement".
+
+Once confirmed, add it to `constants/news.ts` under today's date — appending to
+that release's `items` if today already has an entry, otherwise adding a new
+release at the **top** of the array. Then continue to the commit message, which
+should cover the announcement as part of the change.
+
 ## Step 0c — Choose ship mode (only when invoked as plain `ship`)
 
 Ask the user using **`AskUserQuestion`**:
