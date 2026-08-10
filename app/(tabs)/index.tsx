@@ -55,6 +55,7 @@ import { useWhatsNew } from '@/hooks/use-whats-new'
 import { valueProgress } from '@/lib/value-progress'
 import {
   computeSum,
+  DARK_MODE_GRADIENT,
   DIFFICULTIES,
   effectiveTimeout,
   gameMachine,
@@ -495,6 +496,8 @@ export default function GameScreen() {
                 weight={(Math.floor(index / 3) + 1) * ((index % 3) + 1)}
                 showSum={showSum}
                 trainee={mode === 'trainee'}
+                peakFrom={DARK_MODE_GRADIENT[mode][0]}
+                peakTo={DARK_MODE_GRADIENT[mode][1]}
                 onDelta={(delta) => {
                   send({ type: 'PRESS', index, delta, now: Date.now() })
                 }}

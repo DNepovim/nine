@@ -1,3 +1,4 @@
+import { LinearGradient } from 'expo-linear-gradient'
 import { useEffect } from 'react'
 import { View } from 'react-native'
 import { Gesture, GestureDetector } from 'react-native-gesture-handler'
@@ -16,6 +17,10 @@ import { DIAL_COLORS } from '@/constants/colors'
 import { SWIPE_THRESHOLD } from '@/constants/game'
 import { mono } from '@/constants/theme'
 
+// Values 0..8 ride the low → high tint ramp; 9 is the mode's CTA gradient.
+const RAMP_MAX = 8
+const TINT_TIMING = { duration: 260, easing: Easing.out(Easing.quad) }
+
 export function DialButton({
   value,
   isDark,
@@ -23,6 +28,8 @@ export function DialButton({
   weight,
   showSum,
   trainee,
+  peakFrom,
+  peakTo,
   onDelta,
   onSet,
 }: {
@@ -32,6 +39,9 @@ export function DialButton({
   weight: number
   showSum: boolean
   trainee: boolean
+  // The mode's dark CTA gradient, worn by the button at its maximum value.
+  peakFrom: string
+  peakTo: string
   onDelta: (delta: 1 | -1) => void
   onSet: (value: number) => void
 }) {
@@ -40,14 +50,17 @@ export function DialButton({
   const numTranslateY = useSharedValue(0)
   const numOpacity = useSharedValue(1)
   const numScale = useSharedValue(1)
-  const colorProgress = useSharedValue(value / 9)
+  const rampProgress = useSharedValue(Math.min(value, RAMP_MAX) / RAMP_MAX)
+  const peakProgress = useSharedValue(value === 9 ? 1 : 0)
 
   // Animate the button tint whenever its value changes.
   useEffect(() => {
-    colorProgress.value = withTiming(value / 9, {
-      duration: 260,
-      easing: Easing.out(Easing.quad),
-    })
+    // At 9 the gradient covers the pill, so the ramp underneath holds its
+    // previous color: animating it up to `high` would flash a lighter blue
+    // through the fading-in gradient — visible when swiping right from a low
+    // value straight to 9.
+    if (value !== 9) rampProgress.value = withTiming(value / RAMP_MAX, TINT_TIMING)
+    peakProgress.value = withTiming(value === 9 ? 1 : 0, TINT_TIMING)
   }, [value])
 
   const animateSwipe = (delta: 1 | -1) => {
@@ -128,15 +141,32 @@ export function DialButton({
   const btnStyle = useAnimatedStyle(() => ({
     transform: [{ scale: scale.value }, { translateY: translateY.value }],
     backgroundColor: interpolateColor(
-      colorProgress.value,
+      rampProgress.value,
       [0, 1],
       [palette.low, palette.high],
     ),
   }))
 
+  // The CTA gradient crossfades in over the ramp — every tint change, including
+  // the jump to and from 9, is a timed transition.
+  const peakStyle = useAnimatedStyle(() => ({ opacity: peakProgress.value }))
+
   const numStyle = useAnimatedStyle(() => ({
     transform: [{ translateY: numTranslateY.value }, { scale: numScale.value }],
     opacity: numOpacity.value,
+  }))
+
+  // The digit and its trainee hints warm to pale red over the dark 9 gradient.
+  const digitStyle = useAnimatedStyle(() => ({
+    color: interpolateColor(peakProgress.value, [0, 1], [palette.text, palette.peakText]),
+  }))
+
+  const hintStyle = useAnimatedStyle(() => ({
+    color: interpolateColor(
+      peakProgress.value,
+      [0, 1],
+      [palette.label, palette.peakLabel],
+    ),
   }))
 
   return (
@@ -159,45 +189,67 @@ export function DialButton({
             btnStyle,
           ]}
         >
+          {/* Rounded on its own rather than clipped by the pill — `overflow:
+              hidden` on the parent would clip away the button's shadow too. */}
+          <Animated.View
+            pointerEvents="none"
+            style={[
+              { position: 'absolute', top: 0, right: 0, bottom: 0, left: 0 },
+              peakStyle,
+            ]}
+          >
+            <LinearGradient
+              colors={[peakFrom, peakTo]}
+              start={{ x: 0, y: 0.5 }}
+              end={{ x: 1, y: 0.5 }}
+              style={{ flex: 1, borderRadius: 999 }}
+            />
+          </Animated.View>
           <Animated.View style={[{ alignItems: 'center' as const }, numStyle]}>
             {trainee && (
               <Animated.Text
                 selectable={false}
-                style={{
-                  fontSize: 10,
-                  fontFamily: mono,
-                  fontWeight: '700' as const,
-                  includeFontPadding: false,
-                  color: isDark ? 'rgba(200,194,232,0.5)' : 'rgba(28,25,40,0.4)',
-                  letterSpacing: 0.5,
-                }}
+                style={[
+                  {
+                    fontSize: 10,
+                    fontFamily: mono,
+                    fontWeight: '700' as const,
+                    includeFontPadding: false,
+                    letterSpacing: 0.5,
+                  },
+                  hintStyle,
+                ]}
               >
                 ×{weight}
               </Animated.Text>
             )}
             <Animated.Text
               selectable={false}
-              style={{
-                fontSize: trainee ? 24 : 30,
-                fontFamily: mono,
-                fontWeight: '500' as const,
-                includeFontPadding: false,
-                color: isDark ? '#C8C2E8' : '#1C1928',
-              }}
+              style={[
+                {
+                  fontSize: trainee ? 24 : 30,
+                  fontFamily: mono,
+                  fontWeight: '500' as const,
+                  includeFontPadding: false,
+                },
+                digitStyle,
+              ]}
             >
               {showSum ? value * weight : value}
             </Animated.Text>
             {trainee && (
               <Animated.Text
                 selectable={false}
-                style={{
-                  fontSize: 10,
-                  fontFamily: mono,
-                  fontWeight: '700' as const,
-                  includeFontPadding: false,
-                  color: isDark ? 'rgba(200,194,232,0.5)' : 'rgba(28,25,40,0.4)',
-                  letterSpacing: 0.5,
-                }}
+                style={[
+                  {
+                    fontSize: 10,
+                    fontFamily: mono,
+                    fontWeight: '700' as const,
+                    includeFontPadding: false,
+                    letterSpacing: 0.5,
+                  },
+                  hintStyle,
+                ]}
               >
                 {9 * weight}
               </Animated.Text>

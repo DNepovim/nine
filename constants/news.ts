@@ -36,6 +36,20 @@ export const RELEASES: Release[] = [
           '- Past updates live in Options → What’s new',
         ].join('\n'),
       },
+      {
+        id: 'nine-peak-tint',
+        icon: 'color-fill',
+        accent: '#E5534B',
+        title: 'Spot your nines',
+        body: [
+          'The dial tells you more at a glance.',
+          '',
+          '- Buttons still brighten as you dial higher',
+          '- **Nine now stands apart** — a dark pill with a warm red digit',
+          '',
+          'No more squinting at the top of the range mid-run.',
+        ].join('\n'),
+      },
     ],
   },
 ]

@@ -10,7 +10,13 @@ import { PIE_SIZE } from '@/constants/game'
 import { useMultiplayerDial } from '@/hooks/use-multiplayer-dial'
 import { useScoreDirection } from '@/hooks/use-score-direction'
 import { valueProgress } from '@/lib/value-progress'
-import { computeSum, lerpColor, MODE_GRADIENT, MODES } from '@/machines/game'
+import {
+  computeSum,
+  DARK_MODE_GRADIENT,
+  lerpColor,
+  MODE_GRADIENT,
+  MODES,
+} from '@/machines/game'
 import type { MultiMode, MultiTarget, PlayerState } from '@/types/multiplayer'
 
 const SPEED_TIMEOUT = 7000
@@ -272,6 +278,8 @@ export function MultiplayerGame({
               weight={(Math.floor(index / 3) + 1) * ((index % 3) + 1)}
               showSum={false}
               trainee={false}
+              peakFrom={DARK_MODE_GRADIENT[mode][0]}
+              peakTo={DARK_MODE_GRADIENT[mode][1]}
               onDelta={(delta) => {
                 handlePress(index, delta)
               }}
