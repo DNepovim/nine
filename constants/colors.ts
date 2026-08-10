@@ -3,6 +3,10 @@
 export const APP_BLUE = '#4C7EFF'
 export const APP_RED = '#E5534B'
 
+// The game's full spectrum, as seen on the splash and the app icon. Also the
+// span of the mode gradients: trainee blue through to speed red.
+export const SPECTRUM = ['#4C7EFF', '#7273D2', '#c36282', '#E5534B'] as const
+
 type Palette = { low: string; high: string }
 
 // Dial buttons tint by value (0 → 9) across an on-brand cool gradient.

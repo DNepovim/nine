@@ -65,6 +65,7 @@ export function MenuButton({
   onToggle,
   color,
   size = 22,
+  showLabel = true,
   style,
 }: {
   visible: boolean
@@ -72,6 +73,9 @@ export function MenuButton({
   onToggle: () => void
   color: string
   size?: number
+  // Off where the surrounding UI already says what the button does — a dialog
+  // header doesn't need the word CLOSE next to a close control.
+  showLabel?: boolean
   style?: object
 }) {
   const D = 4
@@ -104,12 +108,14 @@ export function MenuButton({
       hitSlop={14}
       style={[style, { flexDirection: 'row', alignItems: 'center', gap: 8 }]}
     >
-      <Text
-        selectable={false}
-        className="font-mono text-[14px] font-black tracking-[3px] text-muted"
-      >
-        {paused ? 'CLOSE' : 'MENU'}
-      </Text>
+      {showLabel && (
+        <Text
+          selectable={false}
+          className="font-mono text-[14px] font-black tracking-[3px] text-muted"
+        >
+          {paused ? 'CLOSE' : 'MENU'}
+        </Text>
+      )}
       <View style={{ width: size, height: size }}>
         {coords.map((y, r) =>
           coords.map((x, c) => {

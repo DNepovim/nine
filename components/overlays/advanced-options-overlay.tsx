@@ -3,6 +3,7 @@ import { Pressable, Text, View } from 'react-native'
 
 import { Screen } from '@/components/screen'
 import { ThemeToggle } from '@/components/theme-toggle'
+import { buildInfo } from '@/lib/build-info'
 
 function AdvancedOption({
   checked,
@@ -49,14 +50,17 @@ export function AdvancedOptionsOverlay({
   showSum,
   onToggleSum,
   onToggleTheme,
+  onOpenNews,
   onClose,
 }: {
   isDark: boolean
   showSum: boolean
   onToggleSum: () => void
   onToggleTheme: () => void
+  onOpenNews: () => void
   onClose: () => void
 }) {
+  const build = buildInfo()
   return (
     <Screen overlay>
       <Text
@@ -82,6 +86,31 @@ export function AdvancedOptionsOverlay({
           THEME
         </Text>
         <ThemeToggle isDark={isDark} onToggle={onToggleTheme} />
+      </View>
+
+      {/* What's new */}
+      <Pressable
+        onPress={onOpenNews}
+        className="flex-row items-center justify-between py-3"
+        style={{ width: 300 }}
+      >
+        <Text
+          selectable={false}
+          className="font-mono text-[13px] font-black tracking-[1px] text-primary"
+        >
+          WHAT’S NEW
+        </Text>
+        <AntDesign name="right" size={14} color="#aaa69e" />
+      </Pressable>
+
+      {/* Build stamp — the line to quote in a bug report. */}
+      <View className="flex-row items-center justify-between pt-3" style={{ width: 300 }}>
+        <Text
+          selectable={false}
+          className="text-center w-full font-mono text-[10px] font-bold tracking-[0.5px] text-dim"
+        >
+          {build.label}
+        </Text>
       </View>
 
       <Pressable

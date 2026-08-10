@@ -29,8 +29,10 @@ import { MenuOverlay } from '@/components/overlays/menu-overlay'
 import { MultiplayerGameOver } from '@/components/overlays/multiplayer-game-over'
 import { MultiplayerMenu } from '@/components/overlays/multiplayer-menu'
 import { MultiplayerWaiting } from '@/components/overlays/multiplayer-waiting'
+import { NewsArchiveOverlay } from '@/components/overlays/news-archive-overlay'
 import { NicknameModal } from '@/components/overlays/nickname-modal'
 import { PausedOverlay } from '@/components/overlays/paused-overlay'
+import { WhatsNewOverlay } from '@/components/overlays/whats-new-overlay'
 import { Screen } from '@/components/screen'
 import { mono } from '@/constants/theme'
 import { useDisplayOptions } from '@/hooks/use-display-options'
@@ -49,6 +51,7 @@ import { useScoreSubmission } from '@/hooks/use-score-submission'
 import { useSupabaseAuth } from '@/hooks/use-supabase-auth'
 import { useTargetSpawner } from '@/hooks/use-target-spawner'
 import { useTheme } from '@/hooks/use-theme'
+import { useWhatsNew } from '@/hooks/use-whats-new'
 import { valueProgress } from '@/lib/value-progress'
 import {
   computeSum,
@@ -133,9 +136,10 @@ export default function GameScreen() {
   // Which menu-level overlay is open. Only one shows at a time, and the menu
   // itself is hidden while any of them is open — a single source of truth avoids
   // z-order/gating clashes between separate booleans.
-  const [menuOverlay, setMenuOverlay] = useState<'none' | 'advanced' | 'howToPlay'>(
-    'none',
-  )
+  const [menuOverlay, setMenuOverlay] = useState<
+    'none' | 'advanced' | 'howToPlay' | 'news'
+  >('none')
+  const whatsNew = useWhatsNew()
 
   // Close advanced options whenever the game starts or resumes so that pausing
   // again always shows the pause screen, not the advanced options overlay.
@@ -568,8 +572,20 @@ export default function GameScreen() {
           showSum={showSum}
           onToggleSum={toggleSum}
           onToggleTheme={toggleTheme}
+          onOpenNews={() => {
+            setMenuOverlay('news')
+          }}
           onClose={() => {
             setMenuOverlay('none')
+          }}
+        />
+      )}
+
+      {/* ── News archive — opened from advanced options ── */}
+      {menuOverlay === 'news' && (
+        <NewsArchiveOverlay
+          onClose={() => {
+            setMenuOverlay('advanced')
           }}
         />
       )}
@@ -581,6 +597,11 @@ export default function GameScreen() {
             setMenuOverlay('none')
           }}
         />
+      )}
+
+      {/* ── What's new — announcements the player hasn't seen yet ── */}
+      {isMenu && menuOverlay === 'none' && !isMultiActive && whatsNew.visible && (
+        <WhatsNewOverlay items={whatsNew.unseen} onDismiss={whatsNew.dismiss} />
       )}
 
       {/* ── Menu overlay ── */}
