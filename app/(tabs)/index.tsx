@@ -74,7 +74,7 @@ import {
   streakMultiplier,
   type Mode,
 } from '@/machines/game'
-import { computePar } from '@/machines/scoring'
+import { cellWeight, computePar } from '@/machines/scoring'
 import type { MultiMode } from '@/types/multiplayer'
 
 // Where the menu button sits, level with the NINE row. Trainee draws no
@@ -605,7 +605,7 @@ export default function GameScreen() {
                 value={value}
                 isDark={isDark}
                 size={Math.floor(dialSize / 3)}
-                weight={(Math.floor(index / 3) + 1) * ((index % 3) + 1)}
+                weight={cellWeight(index)}
                 showSum={showSum}
                 trainee={mode === 'trainee'}
                 peakFrom={DARK_MODE_GRADIENT[mode][0]}

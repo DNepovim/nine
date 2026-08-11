@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
 import {
+  cellWeight,
   cleanHitReason,
   computeHitPoints,
   computePar,
@@ -136,5 +137,17 @@ describe('cleanHitReason', () => {
 describe('computePar (unchanged)', () => {
   it('returns 0 steps for a target of 0 on an empty grid', () => {
     expect(computePar(empty as unknown as Parameters<typeof computePar>[0], 0)).toBe(0)
+  })
+})
+
+describe('cellWeight', () => {
+  it('multiplies one-based row by one-based column', () => {
+    expect(cellWeight(0)).toBe(1)
+    expect(cellWeight(4)).toBe(4)
+    expect(cellWeight(8)).toBe(9)
+  })
+
+  it('returns 0 outside the grid', () => {
+    expect(cellWeight(9)).toBe(0)
   })
 })

@@ -73,6 +73,11 @@ export type HitInfo = {
   multiplier: number
   accFactor: number
   spdFactor: number
+  // What the hit cost and what it could have cost. The accuracy factor blends the
+  // two into a fraction; Trainee's coach needs the figures themselves to be able to
+  // say "4 would have done".
+  steps: number
+  par: number
 }
 export type HitBatch = { seq: number; hits: HitInfo[] }
 
@@ -144,7 +149,10 @@ const bestByScore = (
   spdSum: number,
 ): DifficultyStats => (score > prev.score ? { score, hits, accSum, spdSum } : prev)
 
-function buildPressGrid(grid: Grid, index: number, delta: 1 | -1): Grid {
+// Exported because Trainee's coach applies a press itself, to compare the route
+// before against the route after while the machine's snapshot still holds the grid
+// from before. A third copy of the wrap arithmetic was the alternative.
+export function buildPressGrid(grid: Grid, index: number, delta: 1 | -1): Grid {
   const row = Math.floor(index / 3)
   const col = index % 3
   return grid.map((r, ri) =>
@@ -155,7 +163,7 @@ function buildPressGrid(grid: Grid, index: number, delta: 1 | -1): Grid {
   ) as Grid
 }
 
-function buildSetGrid(grid: Grid, index: number, value: number): Grid {
+export function buildSetGrid(grid: Grid, index: number, value: number): Grid {
   const row = Math.floor(index / 3)
   const col = index % 3
   return grid.map((r, ri) =>
@@ -212,6 +220,8 @@ function applyGrid(context: Context, newGrid: Grid, now: number) {
     progress: number
     accFactor: number
     spdFactor: number
+    steps: number
+    par: number
   }[] = []
 
   for (const t of matched) {
@@ -233,7 +243,14 @@ function applyGrid(context: Context, newGrid: Grid, now: number) {
     accAdded += acc
     spdAdded += spd
     rawScore += pts
-    perTarget.push({ points: pts, progress, accFactor: acc, spdFactor: spd })
+    perTarget.push({
+      points: pts,
+      progress,
+      accFactor: acc,
+      spdFactor: spd,
+      steps: userSteps,
+      par: t.par,
+    })
   }
 
   const streakFacts = { anyHit, allOptimal, allFast, clearedBoard }
@@ -257,6 +274,8 @@ function applyGrid(context: Context, newGrid: Grid, now: number) {
     multiplier,
     accFactor: p.accFactor,
     spdFactor: p.spdFactor,
+    steps: p.steps,
+    par: p.par,
   }))
 
   const hits = context.hits + matched.length

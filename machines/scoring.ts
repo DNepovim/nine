@@ -6,6 +6,11 @@ const SCORE_BASE = 100
 // Cell weights, row-major: (row+1) * (col+1). Matches computeSum in game.ts.
 const WEIGHTS: number[] = [1, 2, 3, 2, 4, 6, 3, 6, 9]
 
+// What one dial key multiplies its digit by. The dial needs it to label a button
+// and the coach needs it to tell a fine key from a coarse one, so the formula lives
+// here beside the weights it comes from rather than in three places.
+export const cellWeight = (index: number): number => WEIGHTS[index] ?? 0
+
 const MAX_SUM = 324 // 9 * sum(WEIGHTS)
 
 // Minimum steps to change ONE button from value `a` to `f` using the available

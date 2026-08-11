@@ -1,7 +1,13 @@
 import { describe, expect, it } from 'vitest'
 import { createActor } from 'xstate'
 
-import { effectiveTimeout, gameMachine } from '@/machines/game'
+import {
+  buildPressGrid,
+  buildSetGrid,
+  effectiveTimeout,
+  gameMachine,
+  type Grid,
+} from '@/machines/game'
 
 const start = (mode: 'trainee' | 'accuracy' | 'speed') => {
   const actor = createActor(gameMachine)
@@ -182,5 +188,60 @@ describe('run stat accumulators', () => {
     expect(accSum).toBeCloseTo(1) // perfect accuracy
     expect(spdSum).toBeGreaterThanOrEqual(0)
     expect(spdSum).toBeLessThanOrEqual(1)
+  })
+})
+
+describe('hit batch reports the route', () => {
+  it('carries the steps taken and the par for an optimal hit', () => {
+    const actor = start('trainee')
+    actor.send({ type: 'ADD_TARGET', value: 9, at: 0 })
+    // Index 8 carries weight 9, so one press from the empty grid lands 9 exactly.
+    actor.send({ type: 'PRESS', index: 8, delta: 1, now: 0 })
+    const [hit] = actor.getSnapshot().context.hitBatch.hits
+    expect(hit?.steps).toBe(1)
+    expect(hit?.par).toBe(1)
+  })
+
+  it('counts wasted presses in steps while par stays as it was', () => {
+    const actor = start('trainee')
+    actor.send({ type: 'ADD_TARGET', value: 9, at: 0 })
+    // Up and back down on the ×1 key, then the ×9 key: three steps for a one-step
+    // target, which is exactly what the debrief exists to name.
+    actor.send({ type: 'PRESS', index: 0, delta: 1, now: 0 })
+    actor.send({ type: 'PRESS', index: 0, delta: -1, now: 0 })
+    actor.send({ type: 'PRESS', index: 8, delta: 1, now: 0 })
+    const [hit] = actor.getSnapshot().context.hitBatch.hits
+    expect(hit?.steps).toBe(3)
+    expect(hit?.par).toBe(1)
+  })
+})
+
+describe('grid builders', () => {
+  const zeros: Grid = [
+    [0, 0, 0],
+    [0, 0, 0],
+    [0, 0, 0],
+  ]
+
+  it('wraps a press up from 9 and down from 0', () => {
+    const nines: Grid = [
+      [9, 0, 0],
+      [0, 0, 0],
+      [0, 0, 0],
+    ]
+    expect(buildPressGrid(nines, 0, 1)[0][0]).toBe(0)
+    expect(buildPressGrid(zeros, 0, -1)[0][0]).toBe(9)
+  })
+
+  it('leaves every other cell alone', () => {
+    expect(buildPressGrid(zeros, 4, 1)).toEqual([
+      [0, 0, 0],
+      [0, 1, 0],
+      [0, 0, 0],
+    ])
+  })
+
+  it('sets a cell outright', () => {
+    expect(buildSetGrid(zeros, 8, 9)[2][2]).toBe(9)
   })
 })
