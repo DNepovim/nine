@@ -26,6 +26,12 @@ export default function Root({ children }: PropsWithChildren) {
         <meta name="apple-mobile-web-app-title" content="nine" />
         <link rel="apple-touch-icon" href="/pwa-192.png" />
 
+        {/* Catch the install event before React mounts. Chromium can fire it
+            during the initial load, it is the only handle on the install dialog
+            we ever get, and it does not fire twice. Not gated on NODE_ENV:
+            there is nothing here to break in dev. */}
+        <script dangerouslySetInnerHTML={{ __html: installCapture }} />
+
         {/* Register the Workbox service worker — only in production builds,
             where `expo export` actually generates /sw.js (it doesn't exist
             under `expo start`, which would otherwise 404 on registration). */}
@@ -43,6 +49,17 @@ export default function Root({ children }: PropsWithChildren) {
     </html>
   )
 }
+
+// Stashed on window and announced, because hooks/use-install-prompt.web.ts may
+// mount either before or after this fires.
+const installCapture = `
+window.addEventListener('beforeinstallprompt', (event) => {
+  // Suppress Chrome's own install banner — the in-app popup replaces it.
+  event.preventDefault();
+  window.__nineInstallPrompt = event;
+  window.dispatchEvent(new Event('nine:installable'));
+});
+`
 
 const sw = `
 if ('serviceWorker' in navigator) {

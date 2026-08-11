@@ -27,6 +27,7 @@ import { TargetCard } from '@/components/game/target-card'
 import { AdvancedOptionsOverlay } from '@/components/overlays/advanced-options-overlay'
 import { GameOverSequence } from '@/components/overlays/game-over-sequence'
 import { HowToPlayOverlay } from '@/components/overlays/how-to-play-overlay'
+import { InstallOverlay } from '@/components/overlays/install-overlay'
 import { MenuOverlay } from '@/components/overlays/menu-overlay'
 import { MultiplayerGameOver } from '@/components/overlays/multiplayer-game-over'
 import { MultiplayerMenu } from '@/components/overlays/multiplayer-menu'
@@ -45,6 +46,7 @@ import { useDisplayedTargets } from '@/hooks/use-displayed-targets'
 import { useDyingSequence } from '@/hooks/use-dying-sequence'
 import { useFloatingPoints } from '@/hooks/use-floating-points'
 import { useFloatingStat } from '@/hooks/use-floating-stat'
+import { useInstallPrompt } from '@/hooks/use-install-prompt'
 import { useMultiplayerGame } from '@/hooks/use-multiplayer-game'
 import { useMultiplayerRoom } from '@/hooks/use-multiplayer-room'
 import { usePersistedDifficulty } from '@/hooks/use-persisted-difficulty'
@@ -145,6 +147,7 @@ export default function GameScreen() {
     'none' | 'advanced' | 'howToPlay' | 'news'
   >('none')
   const whatsNew = useWhatsNew()
+  const installPrompt = useInstallPrompt()
 
   // Close advanced options whenever the game starts or resumes so that pausing
   // again always shows the pause screen, not the advanced options overlay.
@@ -685,6 +688,21 @@ export default function GameScreen() {
       {isMenu && menuOverlay === 'none' && !isMultiActive && whatsNew.visible && (
         <WhatsNewOverlay items={whatsNew.unseen} onDismiss={whatsNew.dismiss} />
       )}
+
+      {/* ── Install prompt — web only, and only once the news has had its turn.
+          Every launch until the player installs: closing it lasts the session. ── */}
+      {isMenu &&
+        menuOverlay === 'none' &&
+        !isMultiActive &&
+        whatsNew.ready &&
+        !whatsNew.visible &&
+        installPrompt.target !== 'none' && (
+          <InstallOverlay
+            target={installPrompt.target}
+            onInstall={installPrompt.install}
+            onDismiss={installPrompt.dismiss}
+          />
+        )}
 
       {/* ── Menu overlay ── */}
       {isMenu && menuOverlay === 'none' && !isMultiActive && (

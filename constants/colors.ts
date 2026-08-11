@@ -7,6 +7,11 @@ export const SURFACE = { light: '#F3EFE9', dark: '#0B0C14' } as const
 export const APP_BLUE = '#4C7EFF'
 export const APP_RED = '#E5534B'
 
+// The violet mid-point of the spectrum. It is the manifest `theme_color` and the
+// Android adaptive-icon background, so it is the app's own hue for the rare
+// element that speaks for the app rather than for a mode.
+export const APP_VIOLET = '#7273D2'
+
 // The game's full spectrum, as seen on the splash and the app icon. Also the
 // span of the mode gradients: trainee blue through to speed red.
 export const SPECTRUM = ['#4C7EFF', '#7273D2', '#c36282', '#E5534B'] as const

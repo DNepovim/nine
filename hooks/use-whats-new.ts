@@ -9,6 +9,10 @@ import type { NewsItem } from '@/types/news'
 export function useWhatsNew() {
   const [unseen, setUnseen] = useState<readonly NewsItem[]>([])
   const [visible, setVisible] = useState(false)
+  // The storage read is async, so `visible: false` means "not yet known" until
+  // this flips. Anything queueing behind the news — the install popup — waits
+  // for it, otherwise it paints first and gets covered a moment later.
+  const [ready, setReady] = useState(false)
 
   useEffect(() => {
     void (async () => {
@@ -33,6 +37,8 @@ export function useWhatsNew() {
       } catch {
         // Storage unavailable — showing news we can't record as seen would
         // repeat it on every launch, so stay quiet.
+      } finally {
+        setReady(true)
       }
     })()
   }, [])
@@ -43,5 +49,5 @@ export function useWhatsNew() {
     AsyncStorage.setItem(SEEN_NEWS_KEY, serializeSeenIds(ids)).catch(() => {})
   }, [])
 
-  return { visible, unseen, dismiss }
+  return { visible, unseen, dismiss, ready }
 }

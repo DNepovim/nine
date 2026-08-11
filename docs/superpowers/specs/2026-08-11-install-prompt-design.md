@@ -24,11 +24,11 @@ A pure `resolveInstallTarget` maps the browser to one of three targets. The hook
 probes `window`/`navigator` and hands it a plain object, so the decision itself
 is testable without mocking globals.
 
-| Target           | When                                                     | Body shown        |
-| ---------------- | -------------------------------------------------------- | ----------------- |
-| `'prompt'`       | `beforeinstallprompt` fired **and** `uaMobile === true`   | An INSTALL button |
-| `'instructions'` | iOS Safari, not already installed                        | Two numbered steps |
-| `'none'`         | anything else                                            | Nothing renders   |
+| Target           | When                                                    | Body shown         |
+| ---------------- | ------------------------------------------------------- | ------------------ |
+| `'prompt'`       | `beforeinstallprompt` fired **and** `uaMobile === true` | An INSTALL button  |
+| `'instructions'` | iOS Safari, not already installed                       | Two numbered steps |
+| `'none'`         | anything else                                           | Nothing renders    |
 
 `'none'` covers more than it looks: already installed, desktop, and every
 browser we cannot advise accurately.
@@ -58,7 +58,7 @@ experience free of it.
 `beforeinstallprompt` can fire before React mounts. `app/+html.tsx` gains a
 second inline script beside the service-worker one: `preventDefault()`, stash
 the event on `window`, dispatch a custom `nine:installable`. The hook reads the
-stash on mount *and* listens for the custom event, so either order works.
+stash on mount _and_ listens for the custom event, so either order works.
 
 The script is not gated on `NODE_ENV`, unlike service-worker registration —
 there is nothing to break in dev and gating it would make dev diverge further
@@ -120,19 +120,31 @@ the game scale and the CTA token rather than any `MODE_GRADIENT`.
 ## Files
 
 ```
+types/install.ts                        the three targets and the env shape
 lib/install-target.ts          + test   env object → target
 hooks/use-install-prompt.web.ts         deferred event, visibility, install()
 hooks/use-install-prompt.ts             native no-op
 components/overlays/install-overlay.tsx the dialog
 components/overlays/install-steps.tsx   the two iOS rows
+components/overlays/install-step.tsx    one numbered row
+constants/colors.ts                   + APP_VIOLET
 hooks/use-whats-new.ts                + ready flag
 app/+html.tsx                         + the capture script
 app/(tabs)/index.tsx                  + wiring
-install.d.ts                            ambient types for non-standard DOM bits
 ```
 
 The `.web.ts` / `.ts` hook pair follows `lib/supabase.web.ts`: the native file
 is a no-op returning `'none'`, so the native bundle never references a DOM API.
+
+No ambient `.d.ts` for the non-standard DOM surfaces (`navigator.standalone`,
+`navigator.userAgentData`, the `window` stash). Augmenting `Navigator` and
+`Window` needs `interface` merging, which the lint config bans in favour of
+`type`. The web hook instead reads them through local structural types with
+optional properties — no assertion, and a browser missing them yields
+`undefined` rather than a lie.
+
+`APP_VIOLET` joins `APP_BLUE` and `APP_RED` in `constants/colors.ts` rather than
+being written as a hex in two components.
 
 Pure logic in `lib/` with Vitest coverage matches `lib/news.ts` and
 `machines/scoring.ts`. One component per file per the code guide.
