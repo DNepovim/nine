@@ -14,6 +14,7 @@ import {
 } from '@/machines/game'
 
 import { HighScores } from './high-scores'
+import { ModeTips } from './mode-tips'
 
 const shadow = {
   shadowColor: '#000',
@@ -62,19 +63,29 @@ export function PausedOverlay({
           >
             {MODES[gameMode].label} · {DIFFICULTIES[difficulty].label}
           </Text>
-          <Text
-            selectable={false}
-            className="font-mono text-[9px] font-bold tracking-[2.5px] text-dim"
-          >
-            YOUR SCORE
-          </Text>
-          <Text
-            selectable={false}
-            className="mb-5 text-[56px] tracking-[2px]"
-            style={{ fontFamily: 'DSEG7', color: '#4ADE80' }}
-          >
-            {score}
-          </Text>
+          {/* Trainee has no board, so a score here measures nothing. A tip is
+              worth more to someone practising than a number they cannot place. */}
+          {gameMode === 'trainee' ? (
+            <View className="mb-5 w-full">
+              <ModeTips />
+            </View>
+          ) : (
+            <>
+              <Text
+                selectable={false}
+                className="font-mono text-[9px] font-bold tracking-[2.5px] text-dim"
+              >
+                YOUR SCORE
+              </Text>
+              <Text
+                selectable={false}
+                className="mb-5 text-[56px] tracking-[2px]"
+                style={{ fontFamily: 'DSEG7', color: '#4ADE80' }}
+              >
+                {score}
+              </Text>
+            </>
+          )}
 
           <View className="mb-6 flex-row">
             <View className="flex-1 items-end gap-2 pr-4">
