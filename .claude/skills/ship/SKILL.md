@@ -68,9 +68,19 @@ If yes, draft the entry and show it for confirmation **before writing the file**
 - `accent` — a colour from the app's mode spectrum (`#4C7EFF`, `#7273D2`,
   `#c36282`, `#E5534B`, `#FF8C00`).
 - `title` — a few words, sentence case; it is upper-cased in the UI.
-- `body` — markdown. Write for a player, not a changelog: say what they can now
-  do and why it is good. Bullets for a list of specifics, a sentence or two
-  otherwise. Never mention file names, commit types or internals.
+- `body` — markdown, and **brief**: two or three sentences whose job is to make a
+  player want to try it. Say what they can now do and why that is good, then
+  stop.
+  - Leave out the specifics — colours, timings, thresholds, counts, file names,
+    commit types, anything about how it was built. A player is not reading a
+    changelog.
+  - Bullets only for a genuine list of separate things. Prose reads warmer.
+  - **One array entry is one paragraph, not one line.** Never split a sentence
+    across entries to keep the source narrow. The entries are joined verbatim,
+    and a newline inside a paragraph renders as a hard line break in the app —
+    so the text wraps at whatever column the source happened to use instead of
+    at the screen edge. Join paragraphs with `'\n\n'`, or use a plain string
+    when there is only one.
 
 Present the drafted entry with **`AskUserQuestion`**: "Use it", "Edit" (they
 supply replacement copy), or "Skip the announcement".

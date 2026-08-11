@@ -68,8 +68,7 @@ export const RELEASES: Release[] = [
         accent: '#c36282',
         title: 'Best scores, up top',
         body: [
-          'A thin line above the game now shows your best on this board next to',
-          "today's, this week's and the all-time high.",
+          "A thin line above the game now shows your best on this board next to today's, this week's and the all-time high.",
           '',
           'It stays out of the way for the first few seconds of a run.',
         ].join('\n'),
@@ -80,8 +79,7 @@ export const RELEASES: Release[] = [
         accent: '#E5534B',
         title: 'Speed eases off',
         body: [
-          'Speed mode was brutal. Now it is merely fast — about half again as',
-          'long on every target.',
+          'Speed mode was brutal. Now it is merely fast — about half again as long on every target.',
         ].join('\n'),
       },
       {
@@ -90,8 +88,7 @@ export const RELEASES: Release[] = [
         accent: '#c36282',
         title: 'Speed combos, rebuilt',
         body: [
-          'Your Speed combo now grows on every quick hit instead of waiting',
-          'for a clear board — but a slow one breaks it.',
+          'Your Speed combo now grows on every quick hit instead of waiting for a clear board — but a slow one breaks it.',
           '',
           'Land a target with most of its ring still full and it pays extra.',
         ].join('\n'),
