@@ -22,12 +22,20 @@ practising.
 ## The signal
 
 `computePar(grid, target)` (`machines/scoring.ts:23`) is an exact DP returning the
-minimum number of steps from any grid to any target. Today it is called twice: when
-a target spawns, and when a hit resets the reference for the survivors.
+minimum number of steps from any grid to any target. The machine calls it when a
+target spawns and when a hit resets the reference for the survivors — and Trainee
+already calls it a third way, every render, for every target on the board, because
+`TargetCard` prints that number on the card (`app/(tabs)/index.tsx:561`).
 
-Calling it once more — after every press — turns it into a live distance, and the
-delta across a press is the whole analysis. A press that fails to shorten the route
-is exactly the press that costs accuracy.
+So the live distance is not new, and neither is its cost. The player is already
+looking at it. What is missing is the **delta** across a press, and that is the
+whole analysis: a press that fails to shorten the route is exactly the press that
+costs accuracy.
+
+That the figure is already on the card is the argument for this feature rather than
+against it. A learner watching "7" sit still through three presses has been told
+something is wrong and not what. The coach's job is the same as the praise line's —
+saying what a number on screen means.
 
 A press **helped** when it got the player closer to _any_ live target:
 
@@ -45,7 +53,8 @@ accusation.
 
 Measured cost: 0.029 ms per `computePar` call, so 0.115 ms for a four-target board.
 Ten times that under Hermes on a slow phone is still a millisecond, and it happens
-on a press rather than on a frame.
+on a press rather than on a frame — which is a lighter load than the per-render
+calls Trainee already makes to fill in the target cards.
 
 ## The four verdicts
 
@@ -194,16 +203,17 @@ and only for a line of copy — `HitPraiseLine` and `TraineeStats` are left alon
 
 ## Thresholds
 
-Named constants in `machines/coach.ts`:
+Named constants in `machines/coach.ts`, except the dwell, which belongs to the hook
+— the reducer has no notion of time:
 
-| Constant                 | Value | What it decides                            |
-| ------------------------ | ----- | ------------------------------------------ |
-| `LOST_PRESSES`           | 3     | unhelpful presses before `lost` fires      |
-| `TAP_RUN`                | 4     | same-key presses before `tapping`          |
-| `COARSE_GAP`             | 12    | gap that makes a fine key the wrong opener |
-| `FINE_WEIGHT`            | 2     | which keys count as fine                   |
-| `HABIT_COOLDOWN_TARGETS` | 8     | resolved targets before a habit repeats    |
-| `COACH_MS`               | 3000  | how long a coach line holds                |
+| Constant                 | Value | Where      | What it decides                            |
+| ------------------------ | ----- | ---------- | ------------------------------------------ |
+| `LOST_PRESSES`           | 3     | `coach.ts` | unhelpful presses before `lost` fires      |
+| `TAP_RUN`                | 4     | `coach.ts` | same-key presses before `tapping`          |
+| `COARSE_GAP`             | 12    | `coach.ts` | gap that makes a fine key the wrong opener |
+| `FINE_WEIGHT`            | 2     | `coach.ts` | which keys count as fine                   |
+| `HABIT_COOLDOWN_TARGETS` | 8     | `coach.ts` | resolved targets before a habit repeats    |
+| `COACH_MS`               | 3000  | the hook   | how long a coach line holds                |
 
 `COARSE_GAP` is the one genuine heuristic here and the most likely to want tuning
 by feel. 12 is the point past which a ×9 or ×6 press is unambiguously the better
