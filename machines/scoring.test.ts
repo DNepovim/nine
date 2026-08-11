@@ -1,6 +1,13 @@
 import { describe, expect, it } from 'vitest'
 
-import { computeHitPoints, computePar, FAST_BAND, speedReward } from '@/machines/scoring'
+import {
+  cleanHitReason,
+  computeHitPoints,
+  computePar,
+  FAST_BAND,
+  isCleanHit,
+  speedReward,
+} from '@/machines/scoring'
 
 const empty = [
   [0, 0, 0],
@@ -64,6 +71,65 @@ describe('speedReward', () => {
   it('widens the gap between quick and instant', () => {
     // Linearly, 1.0 beats 0.7 by 1.43x. With the curve it is nearly 1.8x.
     expect(speedReward(1) / speedReward(0.7)).toBeGreaterThan(1.7)
+  })
+})
+
+// What Trainee celebrates: the hit rather than the run.
+describe('isCleanHit', () => {
+  it('celebrates a hit taken in optimal steps however slow', () => {
+    expect(isCleanHit({ accFactor: 1, spdFactor: 0 })).toBe(true)
+  })
+
+  it('celebrates a fast hit however wasteful', () => {
+    expect(isCleanHit({ accFactor: 0, spdFactor: 0.9 })).toBe(true)
+  })
+
+  it('celebrates a hit that is both, without caring which', () => {
+    expect(isCleanHit({ accFactor: 1, spdFactor: 0.9 })).toBe(true)
+  })
+
+  it('stays quiet for a hit that is neither', () => {
+    expect(isCleanHit({ accFactor: 0.8, spdFactor: 0.59 })).toBe(false)
+  })
+
+  it('treats the speed threshold as inclusive', () => {
+    expect(isCleanHit({ accFactor: 0, spdFactor: 0.6 })).toBe(true)
+  })
+
+  it('wants exactly optimal steps, not nearly', () => {
+    expect(isCleanHit({ accFactor: 0.99, spdFactor: 0 })).toBe(false)
+  })
+})
+
+// Which of the two things a batch is being congratulated for.
+describe('cleanHitReason', () => {
+  it('is null when nothing in the batch was clean', () => {
+    expect(cleanHitReason([{ accFactor: 0.8, spdFactor: 0.2 }])).toBeNull()
+  })
+
+  it('is null for an empty batch', () => {
+    expect(cleanHitReason([])).toBeNull()
+  })
+
+  it('names accuracy for an optimal but unhurried hit', () => {
+    expect(cleanHitReason([{ accFactor: 1, spdFactor: 0.2 }])).toBe('accuracy')
+  })
+
+  it('names speed for a fast but wasteful hit', () => {
+    expect(cleanHitReason([{ accFactor: 0.5, spdFactor: 0.8 }])).toBe('speed')
+  })
+
+  it('names both when one hit managed both', () => {
+    expect(cleanHitReason([{ accFactor: 1, spdFactor: 0.8 }])).toBe('both')
+  })
+
+  it('names both when the batch earned one each', () => {
+    expect(
+      cleanHitReason([
+        { accFactor: 1, spdFactor: 0.1 },
+        { accFactor: 0.4, spdFactor: 0.9 },
+      ]),
+    ).toBe('both')
   })
 })
 

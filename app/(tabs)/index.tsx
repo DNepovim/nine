@@ -16,7 +16,8 @@ import Animated, {
 
 import DSEG7Font from '@/assets/fonts/DSEG7Classic-Bold.ttf'
 import { AnnouncementEffect } from '@/components/game/announcement-effect'
-import { BestScoresLine } from '@/components/game/best-scores-line'
+import { BEST_SCORES_HEIGHT, BestScoresLine } from '@/components/game/best-scores-line'
+import { Confetti } from '@/components/game/confetti'
 import { DialButton } from '@/components/game/dial-button'
 import { FloatingPoints } from '@/components/game/floating-points'
 import { FloatingStat } from '@/components/game/floating-stat'
@@ -24,6 +25,7 @@ import { MenuButton } from '@/components/game/menu-button'
 import { MultiplayerGame } from '@/components/game/multiplayer-game'
 import { ScoreDigit } from '@/components/game/score-digit'
 import { TargetCard } from '@/components/game/target-card'
+import { TraineeStats } from '@/components/game/trainee-stats'
 import { AdvancedOptionsOverlay } from '@/components/overlays/advanced-options-overlay'
 import { GameOverSequence } from '@/components/overlays/game-over-sequence'
 import { HowToPlayOverlay } from '@/components/overlays/how-to-play-overlay'
@@ -46,6 +48,7 @@ import { useDisplayedTargets } from '@/hooks/use-displayed-targets'
 import { useDyingSequence } from '@/hooks/use-dying-sequence'
 import { useFloatingPoints } from '@/hooks/use-floating-points'
 import { useFloatingStat } from '@/hooks/use-floating-stat'
+import { useHitCelebration } from '@/hooks/use-hit-celebration'
 import { useInstallPrompt } from '@/hooks/use-install-prompt'
 import { useMultiplayerGame } from '@/hooks/use-multiplayer-game'
 import { useMultiplayerRoom } from '@/hooks/use-multiplayer-room'
@@ -69,9 +72,19 @@ import {
   MODE_GRADIENT,
   MODES,
   streakMultiplier,
+  type Mode,
 } from '@/machines/game'
 import { computePar } from '@/machines/scoring'
 import type { MultiMode } from '@/types/multiplayer'
+
+// Where the menu button sits, level with the NINE row. Trainee draws no
+// best-scores strip, so everything below it — the button included — comes up by
+// exactly that strip's height.
+const MENU_TOP = {
+  trainee: 36 - BEST_SCORES_HEIGHT,
+  accuracy: 36,
+  speed: 36,
+} as const satisfies Record<Mode, number>
 
 function HeartIcon({ filled, emptyColor }: { filled: boolean; emptyColor: string }) {
   const scale = useSharedValue(1)
@@ -178,9 +191,13 @@ export default function GameScreen() {
     leaders,
     refresh: refreshBests,
   })
+  const celebration = useHitCelebration(inRun, mode, hitBatch)
+
   const announcement = useAnnouncements({
     inRun,
     score: state.context.score,
+    // Trainee's entry stays at zero — the machine neither records nor hydrates a
+    // best for it — so this needs no special case to stay quiet there.
     storedBest: stats[mode][difficulty].score,
     todayBest: bestToday,
     weekBest: bestWeek,
@@ -382,6 +399,11 @@ export default function GameScreen() {
         <AnnouncementEffect key={announcement.id} id={announcement.id} mode={mode} />
       )}
 
+      {/* Trainee celebrates the hit rather than the run — half a record's pieces,
+          because this fires many times a run and should not shout as loudly.
+          Keyed on the batch so consecutive clean hits each get their own. */}
+      {celebration.seq !== null && <Confetti key={celebration.seq} density="half" />}
+
       {/* ── Game screen (single padded wrapper) ── */}
       <Screen>
         {/* Row 0 — board bests, a hairline above the top bar. Trainee is a
@@ -429,6 +451,13 @@ export default function GameScreen() {
             {/* right: spacer balancing the absolute dots menu button */}
             <View className="flex-1" />
           </View>
+
+          {/* Row 1b — Trainee's readout. The other modes spend this space on the
+              board bests; Trainee has no board, and a learner wants to know how
+              the press they just made actually went. */}
+          {mode === 'trainee' && (
+            <TraineeStats hits={hits} batch={hitBatch} praise={celebration.message} />
+          )}
 
           {/* Row 2 — hearts · center stat · score cluster */}
           <View className="mt-1.5 flex-row items-center">
@@ -768,7 +797,8 @@ export default function GameScreen() {
 
       {/* Persistent menu button — same spot in game & pause; morphs grid↔cross.
           Sits level with the NINE row, so it clears the best-scores strip above
-          it: bump `top` if that strip's height changes. */}
+          it. Trainee renders no strip, so it comes up by exactly that strip's
+          height rather than by a second number that could drift from it. */}
       <MenuButton
         visible={isPlaying || isPaused}
         paused={isPaused}
@@ -776,7 +806,12 @@ export default function GameScreen() {
           send({ type: isPaused ? 'RESUME' : 'PAUSE' })
         }}
         color={isDark ? '#2A2B44' : '#D4D0C8'}
-        style={{ position: 'absolute', top: 36, right: 18, zIndex: 20 }}
+        style={{
+          position: 'absolute',
+          top: MENU_TOP[mode],
+          right: 18,
+          zIndex: 20,
+        }}
       />
 
       {/* ── Multiplayer screens (above everything) ── */}

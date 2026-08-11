@@ -28,10 +28,14 @@ Speed hide the same mechanism because real runs set a high bar.
 `stats.trainee.*` stays at zero.
 
 That alone is not enough. Players already have a Trainee best on disk, and it
-would keep firing. So `app/(tabs)/index.tsx` also passes `storedBest: 0` for
-Trainee into `useAnnouncements`. The two together end it for existing players as
-well as new ones, without bumping the storage key — which would take Accuracy and
-Speed stats down with it.
+would keep firing.
+
+So `HYDRATE_STATS` drops the persisted Trainee entry rather than merging it,
+keeping the machine's zero. Handling it at the load boundary rather than at the
+read site means every consumer sees the same thing — no caller has to remember a
+special case — and it avoids bumping the storage key, which would take Accuracy
+and Speed history down with it. The stale value stays on disk, harmless, and is
+overwritten the next time stats are persisted.
 
 Nothing else reads Trainee's best: it has no board, and the menu's high-scores
 panel is Accuracy and Speed only.
@@ -54,6 +58,38 @@ call site says what it means and the numbers stay in one place.
 The shower is keyed on `hitBatch.seq`, so each qualifying hit replays it from the
 start rather than reusing a shower already in flight.
 
+### Saying what it was for
+
+Confetti alone leaves a learner guessing which half of the hit earned it, which
+is the one thing the mode exists to teach. A line under the stat row says what
+they did: "No wasted moves", "Most of the clock left", "Shortest route, fast
+too".
+
+It names no figure. The stat row directly above already shows that hit's accuracy
+and speed, so repeating them would spend the width saying twice what is on screen
+already. What a number cannot say is what it means, and that is the line's whole
+job.
+
+Short on purpose, capped at 24 characters by a test — it is read at a glance
+mid-run, with a target on the clock.
+
+`cleanHitReason` returns which of the two the batch earned, or both — a batch can
+manage both across two hits without either hit managing both, and that still
+deserves the both-line. `lib/hit-praise.ts` holds a pool per reason and picks
+from it with a roll passed in, the same shape as `messageFor` for announcements,
+so the choice stays pure and the randomness lives at the call site. The roll
+happens once when the celebration starts, so a re-render cannot reword the praise
+mid-read.
+
+The line reserves its height whether or not there is anything to say, so praise
+arriving and leaving never nudges the board. It rises into place and fades away
+flat, and holds its last words through the fade rather than vanishing at the
+moment the celebration ends.
+
+The hook returns `{ seq, message }` rather than a nullable object. The caller
+reads both fields, and an optional shape would have pushed two more branches into
+a screen already at its cognitive-complexity ceiling.
+
 ## Stat row under NINE
 
 Hits, then the last hit's accuracy and speed as percentages. Trainee only.
@@ -63,7 +99,14 @@ Read from `hitBatch.hits`, whose entries already carry `accFactor` and
 every target cleared by one press, and a learner wants to know about the press
 they just made.
 
-Dashes before the first hit, since there is no hit to describe.
+Dashes before the first hit, since there is no hit to describe — a dash rather
+than 0%, which would read as a bad hit instead of no hit.
+
+`TraineeStats` takes the batch rather than two pre-picked numbers. That is a
+deliberate exception to the code guide's prefer-primitives rule: choosing the hit
+and handling its absence is the component's own business, and doing it at the
+call site pushed three more branches into a screen already at its complexity
+ceiling.
 
 ## Menu button
 
@@ -72,9 +115,23 @@ but the menu button is absolutely positioned and stayed put, leaving it low
 relative to the NINE row it is meant to sit level with.
 
 `BestScoresLine` exports its total height (14px row + 4px gap + 1px rule + 6px
-margin) and Trainee subtracts it from the button's `top`. Deriving it beats
-hard-coding a second number: the comment already at the button says to bump it if
-the strip's height changes, and this makes that automatic.
+margin), and the button's `top` becomes a value map over the mode with Trainee's
+entry that much smaller. Deriving it beats hard-coding a second number: the
+comment already at the button says to bump it if the strip's height changes, and
+this makes that automatic. A map rather than a ternary because that is the
+codebase's idiom for picking a value per mode — and because `GameScreen` is
+already at its cognitive-complexity ceiling.
+
+## Only the digit animates
+
+Trainee's dial keys stack three things: the weight hint (`×2`), the value, and
+the key's maximum (`9 × weight`). All three sat inside the one `Animated.View`
+carrying the change animation, so every press swung the whole stack — including
+two hints that are fixed facts about the key and have no business moving.
+
+The animation moves onto the digit's own `Animated.Text`. No mode check is
+needed: outside Trainee that wrapper holds nothing but the digit, so the result
+there is pixel-identical.
 
 ## Paused screen
 
@@ -86,7 +143,8 @@ Trainee tab, so a pause becomes a chance to learn something.
 
 ```
 machines/scoring.ts          + test   the qualifying-hit predicate
-machines/game.ts                      skip the stats fold in Trainee
+machines/game.ts                      skip the fold, drop the hydrated Trainee best
+components/game/trainee-stat.tsx      one labelled figure
 components/game/confetti.tsx          density prop
 components/game/best-scores-line.tsx  export the strip height
 components/game/trainee-stats.tsx     the stat row
