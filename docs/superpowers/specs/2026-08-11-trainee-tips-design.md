@@ -36,10 +36,92 @@ being asked for. The cost is that a tip can rotate away mid-read, which the dots
 mitigate: they take `onSelect`, so tapping one jumps to that tip and restarts the
 timer.
 
+Swiping the card changes the tip: left goes forward, right goes back, both
+wrapping, so a swipe never meets an end that refuses to move. It reuses the
+`SWIPE_THRESHOLD` the dial already swipes by, so the gesture feels the same
+everywhere in the app, and it follows the dial's idiom — `Gesture.Pan().onEnd`
+with `scheduleOnRN` to cross back to JS. The menu's ALONE / WITH FRIENDS panels
+are driven by their tabs rather than by a pan, so nothing competes for the
+horizontal drag.
+
+The transition carries a 16px directional slide alongside the fade: a swipe that
+produced a pure cross-fade would read as a tap. The timer and the dots animate
+the same way, with "forward" matching the direction a swipe-left sends things,
+so the panel only ever moves one way for one meaning.
+
+Every route to another tip — timer, dot, swipe — goes through one function, which
+is what guarantees they all cancel the pending rotation and all re-arm a full
+dwell on arrival. Two details fall out of that. A swipe landing in the last
+moments of a dwell cannot be followed by the rotation firing on top of it,
+because the timer is cleared before the fade starts. And a second swipe part-way
+through a transition retargets it rather than being dropped, so the tip that
+appears is the one last asked for rather than one already swiped past.
+
+The text sits in a fixed-height box, vertically centred, and the box clips: the
+departing tip slides within the card rather than drifting out over the border. Tips differ in length
+and this panel sits directly above the PLAY button, so without a floor the button
+would hop every six seconds. The cost is whitespace under the shorter tips, which
+is the better of the two problems.
+
 The cross-fade is built the way the what's-new dialog already closes —
 `withTiming` to 0, `scheduleOnRN` to swap the index at the trough, `withTiming`
 back to 1 — 200ms each way, `Easing.in` leaving and `Easing.out` entering per the
 design guide.
+
+## The border, and the dots hanging off it
+
+The panel wears the what's-new dialog's edge at half weight — 1px rather than 2px
+and radius 20 rather than 26, because this is a 256px panel and not a full-width
+sheet.
+
+Where that dialog needs a padded-gradient sandwich (React Native has no
+`borderImage`), this is a plain `borderWidth`: the edge is one flat colour, so
+there is no gradient to fake. React Native draws borders inside the box, so the
+line still ends exactly at the card's bounds and the dots' offset below is
+unaffected.
+
+Border and dots share one hue, `MODE_GRADIENT.trainee[0]`. That is the trick
+rather than a coincidence: the dots hang on the border's centreline, so a shared
+colour is what makes the row read as the border going dotted instead of as a
+meter parked on top of it.
+
+The line alone is held back to a third alpha, so it frames the tip without
+competing with the mode selector above it, while the dots stay solid because they
+are the control and want to be seen. The alpha rides on the colour rather than on
+an `opacity` style, which would take the card and its text down with the border,
+and it is one constant to tune.
+
+The dots do not sit under the card. They hang off its bottom edge, their row
+centred on the border's centreline, so half the row is inside the card and half
+outside and the dots read as the border itself going dotted. A narrow
+surface-coloured strip behind the row is what breaks the line, and it is
+invisible from either side because the card's interior and the screen behind it
+are both `bg-surface`.
+
+The dot shapes are exactly as they were — 6px circles, a 20px pill for the
+current one, `px-1 py-2` hit targets — but two things about them change.
+
+**Colour.** Every dot takes the same tone rather than filling up to the current
+one. Progress means nothing on a sequence that loops back to the start, and a row
+of grey-and-coloured dots reads as a meter sitting on the border rather than as
+part of it. The stretched dot still says which tip you are on. The tone is the
+border's, `MODE_GRADIENT.trainee[0]` — see above.
+
+**Movement.** The width animates between the two sizes instead of snapping, so a
+rotation reads as movement along the row rather than as two dots blinking
+independently. That needs each dot to hold its own shared value, which means its
+own module-level component — declared inside the row's `map` it would remount
+every render and the stretch would never play. Hence `components/page-dot.tsx`.
+
+Two supporting details. The row's height is a constant rather than measured,
+because it decides where the row hangs and `onLayout` would land a frame late —
+the dots would visibly drop onto the border after the panel appeared. And the
+full-width positioning wrapper is `pointerEvents="box-none"`, so it cannot
+swallow a press meant for what sits below it.
+
+`PageDots` gives up its own `mt-3` for this: spacing belongs to the caller once
+one caller hangs the row off a border. The what's-new dialog wraps it in a
+`mt-3` View, which leaves that dialog pixel-identical.
 
 ## Content
 

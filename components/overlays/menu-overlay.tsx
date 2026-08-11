@@ -27,6 +27,7 @@ import { DifficultySelector } from './difficulty-selector'
 import { GameCodeInput } from './game-code-input'
 import { HighScores } from './high-scores'
 import { ModeSelector } from './mode-selector'
+import { ModeTips } from './mode-tips'
 import { PlayModeTab, type PlayMode } from './play-mode-tab'
 
 const shadow = {
@@ -209,6 +210,9 @@ export function MenuOverlay({
                     onSetDifficulty={onSetDifficulty}
                   />
                 )}
+                {/* Trainee's half of this slot: no board to show, so it teaches
+                    instead. Arcade stays empty — it isn't playable yet. */}
+                {focused === 'trainee' && <ModeTips />}
                 {isOneOf(focused, ['accuracy', 'speed']) && (
                   <HighScores
                     gameMode={gameMode}

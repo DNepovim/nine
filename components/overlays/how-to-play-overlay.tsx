@@ -3,6 +3,7 @@ import { LinearGradient } from 'expo-linear-gradient'
 import { Pressable, ScrollView, Text, View } from 'react-native'
 
 import { MenuButton } from '@/components/game/menu-button'
+import { TIPS } from '@/constants/tips'
 import { useTheme } from '@/hooks/use-theme'
 import { MODE_DESCRIPTIONS, MODE_GRADIENT, MODES, type Mode } from '@/machines/game'
 
@@ -361,25 +362,13 @@ export function HowToPlayOverlay({ onClose }: { onClose: () => void }) {
 
         {/* Tips */}
         <SectionHeader icon="bulb" title="TIPS & TRICKS" color={ACCENT.tips} />
-        <Bullet color={ACCENT.tips}>
-          Set the coarse ×9 / ×6 buttons first to get near the target, then fine-tune with
-          the ×1 / ×2 buttons.
-        </Bullet>
-        <Bullet color={ACCENT.tips}>
-          Swipe to 0 or 9 to reset a button in a single gesture instead of tapping
-          through.
-        </Bullet>
-        <Bullet color={ACCENT.tips}>
-          In Accuracy, plan your route before you touch anything — every extra move costs
-          you.
-        </Bullet>
-        <Bullet color={ACCENT.tips}>
-          In Speed, go for whichever target sits closest to the current sum — fewer moves
-          means more of the ring left, and the ring is what feeds your combo.
-        </Bullet>
-        <Bullet color={ACCENT.tips}>
-          Start in Trainee to build intuition for the weights, then chase high scores.
-        </Bullet>
+        {/* Shared with the rotating panel in Trainee's menu slot — see
+            constants/tips.ts. Editing there updates both. */}
+        {TIPS.map((tip) => (
+          <Bullet key={tip} color={ACCENT.tips}>
+            {tip}
+          </Bullet>
+        ))}
 
         {/* Done */}
         <Pressable
