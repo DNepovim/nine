@@ -5,6 +5,7 @@ import {
   ANNOUNCEMENT_IDS,
   announcementFor,
   crossedRecords,
+  hasBoardRecord,
   type Announcement,
   type AnnouncementId,
 } from '@/lib/announcements'
@@ -27,6 +28,7 @@ export function useAnnouncements({
   weekBest,
   everBest,
   rival,
+  onBoardRecord,
 }: {
   inRun: boolean
   score: number
@@ -36,6 +38,9 @@ export function useAnnouncements({
   everBest: number | null
   // What another player just did, if anything. Always yields to your own records.
   rival: RivalAnnouncement | null
+  // Called the instant a board record falls, so the score reaches the board while
+  // the run is still going and rivals hear about it now rather than at game over.
+  onBoardRecord: () => void
 }): Announcement | null {
   const [current, setCurrent] = useState<Announcement | null>(null)
   const targetsRef = useRef({
@@ -49,6 +54,10 @@ export function useAnnouncements({
   const lastRivalSeqRef = useRef(0)
   // Set while one of your own records is on the bar, so a rival cannot displace it.
   const ownUntilRef = useRef(0)
+  // Kept current without becoming an effect dependency: the crossing effect keys on
+  // the score and must not re-run because the parent handed us a new closure.
+  const onBoardRecordRef = useRef(onBoardRecord)
+  onBoardRecordRef.current = onBoardRecord
 
   useEffect(() => {
     if (!inRun) {
@@ -71,11 +80,17 @@ export function useAnnouncements({
   useEffect(() => {
     if (!inRun) return
     const crossed = crossedRecords(score, targetsRef.current)
-    const next = crossed.find((id) => !firedRef.current.has(id))
+    const fresh = crossed.filter((id) => !firedRef.current.has(id))
+    const next = fresh[0]
     if (next === undefined) return
     // Mark every record this score cleared, not just the one being announced, so a
     // single big hit past two records celebrates once instead of twice in a row.
     for (const id of crossed) firedRef.current.add(id)
+
+    // Publish before announcing. One write covers every board this score just took,
+    // and the run carries on either way — submission is fire-and-forget.
+    if (hasBoardRecord(fresh)) onBoardRecordRef.current()
+
     ownUntilRef.current = Date.now() + ANNOUNCEMENT_MS
     setCurrent(announcementFor(next, Math.random()))
   }, [inRun, score])

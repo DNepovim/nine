@@ -4,6 +4,7 @@ import {
   ANNOUNCEMENT_IDS,
   announcementFor,
   crossedRecords,
+  hasBoardRecord,
   MAX_MESSAGE_LENGTH,
   messageFor,
   messagePool,
@@ -58,6 +59,38 @@ describe('crossedRecords', () => {
       'week',
       'record',
     ])
+  })
+})
+
+// What decides whether a crossing is worth publishing to the board mid-run. A
+// personal best concerns nobody else, so it must not.
+describe('hasBoardRecord', () => {
+  it('is false for a personal best alone', () => {
+    expect(hasBoardRecord(['record'])).toBe(false)
+  })
+
+  it('is false when nothing was crossed', () => {
+    expect(hasBoardRecord([])).toBe(false)
+  })
+
+  it("is true for today's board", () => {
+    expect(hasBoardRecord(['today'])).toBe(true)
+  })
+
+  it('is true for the week board', () => {
+    expect(hasBoardRecord(['week'])).toBe(true)
+  })
+
+  it('is true for the all-time board', () => {
+    expect(hasBoardRecord(['ever'])).toBe(true)
+  })
+
+  it('is true when a board record came alongside a personal best', () => {
+    expect(hasBoardRecord(['ever', 'week', 'today', 'record'])).toBe(true)
+  })
+
+  it("is false for a rival's announcement, which is nothing of ours to publish", () => {
+    expect(hasBoardRecord(['everRaised', 'todayLost'])).toBe(false)
   })
 })
 

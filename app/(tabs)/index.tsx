@@ -186,6 +186,14 @@ export default function GameScreen() {
     weekBest: bestWeek,
     everBest: bestEver,
     rival,
+    // Send the score the moment a board record falls rather than waiting for game
+    // over: the write is what wakes every other player's bar, so delaying it is
+    // what made rivals hear about a record minutes after it happened. The score
+    // only climbs within a run, and the database refuses downgrades, so an early
+    // write can never spoil the final one.
+    onBoardRecord: () => {
+      submitScore(mode, difficulty, state.context.score, state.context.hits)
+    },
   })
 
   // Trigger score submission on each game-over transition.

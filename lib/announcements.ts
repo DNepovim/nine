@@ -1,3 +1,5 @@
+import { isOneOf } from 'narrowland'
+
 // Announcements take over the best-scores bar for a moment when something worth
 // saying happens mid-run — a record you broke, or one a rival took.
 //
@@ -161,6 +163,12 @@ const beaten = (score: number, target: number | null): boolean =>
 export function crossedRecords(score: number, targets: RecordTargets): AnnouncementId[] {
   return OWN_TIERS.filter((tier) => beaten(score, targets[tier]))
 }
+
+// Whether a crossing is worth publishing to the board before the run is over. A
+// personal best is nobody else's business, so only the three board periods count
+// — this is what stops a mid-run write for a milestone no rival can see.
+export const hasBoardRecord = (crossed: readonly AnnouncementId[]): boolean =>
+  crossed.some((id) => isOneOf(id, PERIODS))
 
 // ─── Other players' records ────────────────────────────────────────────────────
 
