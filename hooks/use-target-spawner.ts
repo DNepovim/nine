@@ -15,6 +15,7 @@ export function useTargetSpawner({
   targetCount,
   mode,
   difficulty,
+  hits,
   currentSum,
   takenValues,
   send,
@@ -23,11 +24,13 @@ export function useTargetSpawner({
   targetCount: number
   mode: Mode
   difficulty: Difficulty
+  // Drives the cadence in ramping modes: more hits, shorter gap between arrivals.
+  hits: number
   currentSum: number
   takenValues: number[]
   send: GameSend
 }) {
-  const spawnTimer = useRef<ReturnType<typeof setInterval> | null>(null)
+  const spawnTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   // Latest exclusions, read at spawn time without re-creating the interval.
   const excludeRef = useRef<{ sum: number; values: number[] }>({
@@ -35,6 +38,11 @@ export function useTargetSpawner({
     values: takenValues,
   })
   excludeRef.current = { sum: currentSum, values: takenValues }
+
+  // Latest cadence, likewise read when a spawn fires rather than when the wait is
+  // armed. See startCadence for why that matters.
+  const intervalRef = useRef(effectiveSpawnInterval(mode, difficulty, hits))
+  intervalRef.current = effectiveSpawnInterval(mode, difficulty, hits)
 
   const spawnTarget = useCallback(() => {
     const { sum, values } = excludeRef.current
@@ -58,25 +66,33 @@ export function useTargetSpawner({
     send({ type: 'ADD_TARGET', value, at: Date.now() })
   }, [send])
 
-  const restartCadence = useCallback(() => {
-    if (spawnTimer.current) clearInterval(spawnTimer.current)
-    spawnTimer.current = setInterval(
-      spawnTarget,
-      effectiveSpawnInterval(mode, difficulty),
-    )
-  }, [spawnTarget, mode, difficulty])
+  // A self-rescheduling chain rather than setInterval, because an interval's period
+  // is fixed when it is armed. Following the ramp with setInterval would mean
+  // clearing and re-arming on every hit, which keeps pushing the next spawn further
+  // away — a fast player would starve the board. Each wait instead reads the current
+  // cadence as it is scheduled, so the gap tightens on its own.
+  const startCadence = useCallback(() => {
+    function wait() {
+      spawnTimer.current = setTimeout(() => {
+        spawnTarget()
+        wait()
+      }, intervalRef.current)
+    }
+    if (spawnTimer.current) clearTimeout(spawnTimer.current)
+    wait()
+  }, [spawnTarget])
 
   useEffect(() => {
     if (!isPlaying) {
-      if (spawnTimer.current) clearInterval(spawnTimer.current)
+      if (spawnTimer.current) clearTimeout(spawnTimer.current)
       return
     }
     spawnTarget()
-    restartCadence()
+    startCadence()
     return () => {
-      if (spawnTimer.current) clearInterval(spawnTimer.current)
+      if (spawnTimer.current) clearTimeout(spawnTimer.current)
     }
-  }, [isPlaying, spawnTarget, restartCadence])
+  }, [isPlaying, spawnTarget, startCadence])
 
   // Immediate respawn when a hit clears the board mid-game. Reset the tracker
   // whenever we're not playing so a fresh game's targets→0 reset isn't mistaken
@@ -89,8 +105,8 @@ export function useTargetSpawner({
     }
     if (prevTargetCount.current > 0 && targetCount === 0) {
       spawnTarget()
-      restartCadence()
+      startCadence()
     }
     prevTargetCount.current = targetCount
-  }, [targetCount, isPlaying, spawnTarget, restartCadence])
+  }, [targetCount, isPlaying, spawnTarget, startCadence])
 }

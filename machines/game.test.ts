@@ -130,6 +130,48 @@ describe('speed streak (fast trigger)', () => {
   })
 })
 
+describe('speed ramp', () => {
+  it('stamps each target with the clock it spawned under', () => {
+    const actor = start('speed')
+    actor.send({ type: 'ADD_TARGET', value: 9, at: 0 })
+    const first = actor.getSnapshot().context.targets[0]?.duration
+    expect(first).toBe(effectiveTimeout('speed', 'hard'))
+  })
+
+  it('gives a later target a tighter clock than an earlier one', () => {
+    const actor = start('speed')
+    // Land a hit so the run has progress, then spawn again.
+    actor.send({ type: 'ADD_TARGET', value: 9, at: 0 })
+    const early = actor.getSnapshot().context.targets[0]?.duration ?? 0
+    actor.send({ type: 'PRESS', index: 8, delta: 1, now: 0 })
+    actor.send({ type: 'ADD_TARGET', value: 18, at: 0 })
+    const later = actor.getSnapshot().context.targets[0]?.duration ?? 0
+    expect(later).toBeLessThan(early)
+  })
+
+  it('leaves a target already in flight on its original clock', () => {
+    const actor = start('speed')
+    actor.send({ type: 'ADD_TARGET', value: 200, at: 0 })
+    const before = actor.getSnapshot().context.targets[0]?.duration
+    // A hit on a different target advances the run, tightening the clock for
+    // whatever spawns next — but this one keeps the ring it started with.
+    actor.send({ type: 'ADD_TARGET', value: 9, at: 0 })
+    actor.send({ type: 'PRESS', index: 8, delta: 1, now: 0 })
+    const survivor = actor.getSnapshot().context.targets.find((t) => t.value === 200)
+    expect(survivor?.duration).toBe(before)
+  })
+
+  it('does not ramp accuracy', () => {
+    const actor = start('accuracy')
+    actor.send({ type: 'ADD_TARGET', value: 9, at: 0 })
+    actor.send({ type: 'PRESS', index: 8, delta: 1, now: 0 })
+    actor.send({ type: 'ADD_TARGET', value: 18, at: 0 })
+    expect(actor.getSnapshot().context.targets[0]?.duration).toBe(
+      effectiveTimeout('accuracy', 'hard'),
+    )
+  })
+})
+
 describe('run stat accumulators', () => {
   it('accumulates accSum and spdSum after a hit', () => {
     const actor = start('accuracy')

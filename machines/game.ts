@@ -3,9 +3,9 @@ import { assign, createMachine } from 'xstate'
 
 import {
   DIFFICULTIES,
-  effectiveTimeout,
   FAST_HIT_THRESHOLD,
   MODES,
+  rampedTimeout,
   streakMultiplier,
   type Difficulty,
   type Mode,
@@ -40,6 +40,10 @@ export type Target = {
   id: number
   value: number
   spawnedAt: number // ms timestamp — drives the countdown / speed factor
+  // The clock this target was given, fixed when it spawned. Stored per target rather
+  // than read from the mode, because Speed's timeout shrinks as the run goes on and a
+  // target already in flight must keep the ring it started with.
+  duration: number
   refAt: number // reference moment (spawn, or the last time any target was hit)
   refGrid: Grid // dial snapshot at the reference moment
   par: number // optimal steps from refGrid to value (fixed at reference time)
@@ -197,7 +201,6 @@ function applyGrid(context: Context, newGrid: Grid, now: number) {
   const clearedBoard = anyHit && remaining.length === 0
 
   const mode = MODES[context.mode]
-  const duration = effectiveTimeout(context.mode, context.difficulty)
 
   let rawScore = 0
   let allOptimal = isNonEmptyArray(matched)
@@ -213,17 +216,18 @@ function applyGrid(context: Context, newGrid: Grid, now: number) {
 
   for (const t of matched) {
     const userSteps = t.userSteps + 1
-    const timeLeft = Math.max(0, duration - (now - t.spawnedAt))
-    const progress = duration > 0 ? Math.min(1, Math.max(0, timeLeft / duration)) : 0
+    // Each target is scored against the clock it was given, not the run's current one.
+    const timeLeft = Math.max(0, t.duration - (now - t.spawnedAt))
+    const progress = t.duration > 0 ? Math.min(1, Math.max(0, timeLeft / t.duration)) : 0
     const pts = computeHitPoints({
       par: t.par,
       userSteps,
       timeLeft,
-      duration,
+      duration: t.duration,
       weights: mode.weights,
     })
     const acc = accuracyFactor(t.par, userSteps)
-    const spd = speedFactor(timeLeft, duration)
+    const spd = speedFactor(timeLeft, t.duration)
     if (userSteps !== t.par) allOptimal = false
     if (spd < FAST_HIT_THRESHOLD) allFast = false
     accAdded += acc
@@ -544,6 +548,7 @@ export const gameMachine = createMachine({
                   id: context.nextTargetId,
                   value: event.value,
                   spawnedAt: event.at,
+                  duration: rampedTimeout(context.mode, context.difficulty, context.hits),
                   refAt: event.at,
                   refGrid: context.grid,
                   par: computePar(context.grid, event.value),

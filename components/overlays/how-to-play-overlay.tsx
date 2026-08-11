@@ -289,7 +289,7 @@ export function HowToPlayOverlay({ onClose }: { onClose: () => void }) {
         <SectionHeader icon="timer" title="TARGETS & THE CLOCK" color={ACCENT.controls} />
         <Body>
           {
-            'Each target carries a shrinking ring — its countdown. Land the sum before the ring empties. Several targets can share the board at once (up to 3, or 4 on Extreme), and new ones keep arriving, so pick your order wisely.'
+            'Each target carries a shrinking ring — its countdown. Land the sum before the ring empties. Several targets can share the board at once (up to 3, or 4 on Extreme), and new ones keep arriving, so pick your order wisely. In Speed, each new target arrives with a slightly shorter ring than the last — the squeeze eases off as it goes, so a long run gets tighter without ever running away from you.'
           }
         </Body>
 
@@ -319,6 +319,7 @@ export function HowToPlayOverlay({ onClose }: { onClose: () => void }) {
           mode="speed"
           facts={[
             'A shorter clock — the sooner you hit, the more it scores.',
+            'The clock keeps tightening as your run goes on, less and less each time.',
             'Hit while most of the ring is left to build your combo streak.',
             'A slow hit breaks the streak; let a target run out and you lose a life.',
           ]}

@@ -61,7 +61,6 @@ import {
   computeSum,
   DARK_MODE_GRADIENT,
   DIFFICULTIES,
-  effectiveTimeout,
   gameMachine,
   getDifficultyColor,
   MODE_GRADIENT,
@@ -227,6 +226,7 @@ export default function GameScreen() {
     targetCount: targets.length,
     mode,
     difficulty,
+    hits,
     currentSum: sum,
     takenValues: targets.map((t) => t.value),
     send,
@@ -243,7 +243,6 @@ export default function GameScreen() {
   const [dialSize, setDialSize] = useState(0)
 
   const currentMultiplier = streakMultiplier(streak)
-  const duration = effectiveTimeout(mode, difficulty)
 
   const avgAccuracy = hits > 0 ? Math.round((100 * accSum) / hits) : 0
   const avgSpeed = hits > 0 ? Math.round((100 * spdSum) / hits) : 0
@@ -499,7 +498,9 @@ export default function GameScreen() {
               key={target.id}
               target={target}
               isDark={isDark}
-              duration={duration}
+              // The clock this target spawned with, so a ring never retargets
+              // mid-flight when Speed's timeout tightens.
+              duration={target.duration}
               par={mode === 'trainee' ? computePar(grid, target.value) : undefined}
               dying={isGameOver}
               onExpire={() => {
