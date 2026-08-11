@@ -23,7 +23,13 @@ import { cleanHitReason } from '@/machines/scoring'
 // to be gone before the next press makes it stale.
 const COACH_MS = 3000
 
-type Showing = { kind: CoachKind; text: string }
+// How long an arriving line contends with the one already showing. The ladder
+// exists for two messages about the same press — a habit, and the debrief for the
+// hit that press landed. Past this window the line on screen has been read, and a
+// fresh observation about the press just made should not lose to a stale one.
+const CONTENTION_MS = 600
+
+type Showing = { kind: CoachKind; text: string; at: number }
 
 // Trainee's coach. Watches what the player does and says something about it in the
 // line under the stat row — never which key to press, only what the last press or
@@ -51,12 +57,34 @@ export function useTraineeCoach({
   const lastSeqRef = useRef(batch.seq)
   const liveIdsRef = useRef<readonly number[]>([])
 
-  // Lower-ranked lines are dropped rather than queued: a correction held back three
-  // seconds would arrive attached to the wrong press.
+  // The dial delivers a swipe's callback about 110 ms after the gesture ends —
+  // `animateSwipe` and `animateSet` both call `scheduleOnRN` from inside a
+  // `withTiming` completion (`components/game/dial-button.tsx:78`, `:97`) — so a
+  // handler that closed over its render's board can fire after a later press has
+  // already moved it. These hold the last committed board instead, which is what
+  // the machine will apply the delayed event against. This does not close the
+  // window completely — two presses inside one React tick still leave the ref one
+  // behind — but it is the board the pending press will actually land on.
+  const gridRef = useRef(grid)
+  const targetsRef = useRef(targets)
+  useEffect(() => {
+    gridRef.current = grid
+    targetsRef.current = targets
+  }, [grid, targets])
+
+  // Lower-ranked lines are dropped rather than queued, unless the one on screen is
+  // old enough to have been read: a correction held back three seconds would arrive
+  // attached to the wrong press, but a habit line untouched for the whole window
+  // must not silently swallow the debrief for a hit just landed.
   const say = (kind: CoachKind, text: string) => {
-    setShowing((current) =>
-      current === null || outranks(kind, current.kind) ? { kind, text } : current,
-    )
+    const at = Date.now()
+    setShowing((current) => {
+      if (current === null) return { kind, text, at }
+      if (at - current.at < CONTENTION_MS && !outranks(kind, current.kind)) {
+        return current
+      }
+      return { kind, text, at }
+    })
   }
 
   const judge = (facts: PressFacts) => {
@@ -69,31 +97,33 @@ export function useTraineeCoach({
   }
 
   // Called at the dial beside the machine's PRESS and SET_CELL, and before them,
-  // while the snapshot still holds the grid from before the press. These close over
-  // this render's grid and targets rather than reading refs, because the dial builds
-  // fresh handlers every render anyway.
+  // while the snapshot still holds the grid from before the press. These read the
+  // refs above rather than closing over `grid`/`targets` directly, because a swipe's
+  // callback fires well after the render that queued it.
   const notePress = (index: number, delta: 1 | -1) => {
     if (!active) return
+    const gridBefore = gridRef.current
     judge(
       pressFacts({
         index,
         delta,
-        gridBefore: grid,
-        gridAfter: buildPressGrid(grid, index, delta),
-        targets,
+        gridBefore,
+        gridAfter: buildPressGrid(gridBefore, index, delta),
+        targets: targetsRef.current,
       }),
     )
   }
 
   const noteSet = (index: number, value: number) => {
     if (!active) return
+    const gridBefore = gridRef.current
     judge(
       pressFacts({
         index,
         delta: null,
-        gridBefore: grid,
-        gridAfter: buildSetGrid(grid, index, value),
-        targets,
+        gridBefore,
+        gridAfter: buildSetGrid(gridBefore, index, value),
+        targets: targetsRef.current,
       }),
     )
   }
@@ -101,9 +131,13 @@ export function useTraineeCoach({
   // What the hit cost. The figures are the machine's to report, so this comes off the
   // batch rather than from a press.
   useEffect(() => {
-    if (!active) return
+    // Tracked even while inactive: `seq` is monotonic across games and modes
+    // (`freshGame` omits `hitBatch`), so a baseline that only advances while
+    // Trainee is running would let another mode's last hit look fresh the moment
+    // a Trainee run starts.
     if (batch.seq === lastSeqRef.current) return
     lastSeqRef.current = batch.seq
+    if (!active) return
     // A clean hit gets confetti and praise, and a celebration is not the moment to
     // correct someone — the debrief is dropped rather than held.
     if (cleanHitReason(batch.hits) !== null) return
@@ -125,7 +159,9 @@ export function useTraineeCoach({
     if (resolved > 0) coachRef.current = noteResolved(coachRef.current, resolved)
   }, [targets])
 
-  // Leaving Trainee, or leaving a run, starts the next one with a clean slate.
+  // Leaving Trainee, or leaving a run, starts the next one with a clean slate — now
+  // that the debrief effect above tracks `lastSeqRef` even while inactive, a hit
+  // landed in another mode cannot surface the moment Trainee starts.
   useEffect(() => {
     if (active) return
     coachRef.current = initialCoachState()
