@@ -279,21 +279,25 @@ function applyGrid(context: Context, newGrid: Grid, now: number) {
   const newAccSum = context.accSum + accAdded
   const newSpdSum = context.spdSum + spdAdded
 
-  const stats = anyHit
-    ? {
-        ...context.stats,
-        [context.mode]: {
-          ...context.stats[context.mode],
-          [context.difficulty]: bestByScore(
-            context.stats[context.mode][context.difficulty],
-            score,
-            hits,
-            newAccSum,
-            newSpdSum,
-          ),
-        },
-      }
-    : context.stats
+  // Trainee keeps no best. It is a practice mode with no board, and tracking one
+  // meant the personal-best celebration fired on the first hit of a later run —
+  // practice runs are short, so the stored best was low enough to clear at once.
+  const stats =
+    anyHit && context.mode !== 'trainee'
+      ? {
+          ...context.stats,
+          [context.mode]: {
+            ...context.stats[context.mode],
+            [context.difficulty]: bestByScore(
+              context.stats[context.mode][context.difficulty],
+              score,
+              hits,
+              newAccSum,
+              newSpdSum,
+            ),
+          },
+        }
+      : context.stats
 
   const hitBatch = anyHit
     ? { seq: context.hitBatch.seq + 1, hits: hitInfos }
@@ -351,7 +355,11 @@ export const gameMachine = createMachine({
           event: Extract<Event, { type: 'HYDRATE_STATS' }>
         }) => ({
           stats: {
-            trainee: { ...context.stats.trainee, ...event.stats.trainee },
+            // Trainee's persisted best is deliberately dropped rather than merged.
+            // It no longer records one, but players from before that change still
+            // have a value on disk, and loading it would keep firing the
+            // personal-best celebration on the first hit of a practice run.
+            trainee: context.stats.trainee,
             accuracy: { ...context.stats.accuracy, ...event.stats.accuracy },
             speed: { ...context.stats.speed, ...event.stats.speed },
           },
