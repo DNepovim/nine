@@ -205,7 +205,12 @@ export function DialButton({
               style={{ flex: 1, borderRadius: 999 }}
             />
           </Animated.View>
-          <Animated.View style={[{ alignItems: 'center' as const }, numStyle]}>
+          {/* The change animation belongs to the digit alone, not to this stack.
+              Trainee hangs the weight hint above and the key's maximum below, and
+              animating the group swung all three every time a value changed —
+              the two hints are fixed facts about the key and should sit still.
+              Outside Trainee this holds only the digit, so nothing differs. */}
+          <View style={{ alignItems: 'center' }}>
             {trainee && (
               <Animated.Text
                 selectable={false}
@@ -233,6 +238,7 @@ export function DialButton({
                   includeFontPadding: false,
                 },
                 digitStyle,
+                numStyle,
               ]}
             >
               {showSum ? value * weight : value}
@@ -254,7 +260,7 @@ export function DialButton({
                 {9 * weight}
               </Animated.Text>
             )}
-          </Animated.View>
+          </View>
         </Animated.View>
       </View>
     </GestureDetector>
