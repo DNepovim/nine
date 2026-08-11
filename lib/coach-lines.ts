@@ -18,7 +18,7 @@ export type CoachKind = PressVerdict | 'debrief'
 const LINES = {
   lost: ['Going the wrong way', 'That’s not closer', 'Try a different key'],
   tapping: ['Swipe instead of tapping', 'A swipe gets there', 'Swipe to 0 or 9'],
-  coarse: ['Start with the big keys', 'Big keys first', 'Try ×9 or ×6 first'],
+  coarse: ['Start with the big keys', 'Big keys first', 'Go big, then fine-tune'],
 } as const satisfies Record<PressVerdict, readonly [string, ...string[]]>
 
 export const pressPool = (verdict: PressVerdict): readonly string[] => LINES[verdict]

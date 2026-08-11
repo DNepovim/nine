@@ -46,12 +46,13 @@ describe('coach pools', () => {
     }
   })
 
-  it('never tells the player which key to press', () => {
-    // It coaches; it does not solve. "The big keys" is a class of key, which is
-    // advice — a bare index would be the answer.
+  it('never names a key by its weight label', () => {
+    // The dial labels its keys ×1 … ×9 (`components/game/dial-button.tsx`), so a
+    // line carrying that label is naming specific buttons rather than giving
+    // advice — which is solving the target, the one thing the coach must not do.
     for (const verdict of VERDICTS) {
       for (const line of pressPool(verdict)) {
-        expect(line).not.toMatch(/\bkey [1-9]\b/i)
+        expect(line).not.toMatch(/×/)
       }
     }
   })
