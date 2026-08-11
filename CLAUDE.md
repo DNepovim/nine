@@ -34,9 +34,11 @@ pnpm check          # All of the above in sequence (CI gate)
 
 **Expo Router (file-based routing)** — the `app/` directory defines all routes. `app/_layout.tsx` is the root layout wrapping everything in a `ThemeProvider`. `app/(tabs)/` defines the tab group; its `_layout.tsx` configures the bottom tab navigator.
 
-**Theme system** — `constants/theme.ts` defines `Colors` with `light`/`dark` variants. `hooks/use-color-scheme.ts` detects OS preference (with a web-specific hydration-safe variant at `hooks/use-color-scheme.web.ts`). `hooks/use-theme-color.ts` resolves a color key against the active scheme.
+**Theme system** — `AppThemeProvider` in `hooks/use-theme.tsx` owns the active scheme and the cross-fade when it changes; `useTheme()` reads it. Semantic tokens live in `global.css` (a `@theme` block for light, `.dark:root` overriding it for dark), toggled via the `.dark` class on web and `Appearance.setColorScheme` on native.
 
 **Styling** — NativeWind v5 (Tailwind for React Native). Use `className` for static styles; the `style` prop only for values computed at runtime (dynamic colors, pixel sizes).
+
+**Colors, typography, motion** — the three color scales (game / mode / CTA), theme tokens and contrast rules live in the **`design-guide`** skill. Consult it before picking any color the player sees.
 
 **State machines** — XState v5 + `@xstate/react`. Game logic lives in `machines/game.ts`; mode/difficulty config in `machines/modes.ts`; scoring helpers in `machines/scoring.ts`. Components consume the machine via `useMachine` in `app/(tabs)/index.tsx`.
 
@@ -44,9 +46,9 @@ pnpm check          # All of the above in sequence (CI gate)
 
 **Animations** — `react-native-reanimated` v4 with worklets. Use `useSharedValue`, `useAnimatedStyle`, and the `withTiming`/`withSpring`/`withRepeat` drivers. Define animated sub-components at **module level** (not inside render functions) to avoid remounts.
 
-**Platform-specific files** — Expo resolves `.ios.tsx` / `.web.ts` variants automatically. Used for `icon-symbol` (SF Symbols on iOS, Material Icons elsewhere) and `use-color-scheme` (hydration safety on web).
+**Platform-specific files** — Expo resolves `.ios.tsx` / `.web.ts` variants automatically. Currently used for `lib/supabase.web.ts`.
 
-**Path alias** — `@/*` maps to the repo root (e.g. `import { Colors } from '@/constants/theme'`). Never use relative `../` imports.
+**Path alias** — `@/*` maps to the repo root (e.g. `import { mono } from '@/constants/theme'`). Never use relative `../` imports.
 
 **New Architecture & React Compiler** — both are enabled in `app.json`.
 
