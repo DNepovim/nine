@@ -110,12 +110,14 @@ export function WhatsNewOverlay({
             </ScrollView>
 
             {items.length > 1 && (
-              <PageDots
-                total={items.length}
-                current={index}
-                color={item.accent}
-                onSelect={setIndex}
-              />
+              <View className="mt-3">
+                <PageDots
+                  total={items.length}
+                  current={index}
+                  color={item.accent}
+                  onSelect={setIndex}
+                />
+              </View>
             )}
 
             <View className="mt-3 flex-row items-center justify-center gap-3">
