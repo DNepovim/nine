@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 
+import { boardFilter, isBoardEvent } from '@/lib/board-events'
 import { fetchMyRank, fetchTop5, type LeaderboardTab } from '@/lib/leaderboard'
 import { supabase } from '@/lib/supabase'
 import type { Difficulty, Mode } from '@/machines/game'
@@ -100,10 +101,10 @@ export function useLeaderboard(
 
     void fetchAll(true)
 
-    // One Realtime channel per mode×difficulty board.
-    // Row-level filter keeps traffic minimal: only events for this exact board
-    // trigger a re-fetch (requires REPLICA IDENTITY FULL on both tables — see
-    // migration 20260723000000_enable_realtime.sql).
+    // One Realtime channel per mode×difficulty board. postgres_changes takes only a
+    // single filter expression, so the mode is filtered server-side and the difficulty
+    // is checked against the event's own row — see lib/board-events.ts. Both need
+    // REPLICA IDENTITY FULL, set in migration 20260723000000_enable_realtime.sql.
     // Unique topic per subscription. The same board (mode×difficulty) is often
     // live in two places at once — e.g. the menu and the game-over overlay — and
     // a channel that is torn down then re-created may still overlap the old one.
@@ -111,21 +112,21 @@ export function useLeaderboard(
     // callbacks … after subscribe()" when the second channel binds while the
     // first is still subscribed, which crashes the whole screen. A fresh topic
     // each time avoids any collision; the row filter is what scopes the events.
-    const filter = `mode=eq.${mode}&difficulty=eq.${difficulty}`
+    const filter = boardFilter(mode)
     const channel = supabase
       .channel(`lb:${mode}:${difficulty}:${Math.random().toString(36).slice(2)}`)
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'scores', filter },
-        () => {
-          void fetchAllRef.current(false)
+        (payload) => {
+          if (isBoardEvent(payload, difficulty)) void fetchAllRef.current(false)
         },
       )
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'daily_scores', filter },
-        () => {
-          void fetchAllRef.current(false)
+        (payload) => {
+          if (isBoardEvent(payload, difficulty)) void fetchAllRef.current(false)
         },
       )
       .subscribe()

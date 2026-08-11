@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 
 import { rivalChange, type AnnouncementId, type Leaders } from '@/lib/announcements'
+import { boardFilter, isBoardEvent } from '@/lib/board-events'
 import { supabase } from '@/lib/supabase'
 import type { Difficulty, Mode } from '@/machines/game'
 
@@ -49,21 +50,21 @@ export function useRivalRecords({
     // A fresh topic each time: the same board is often live in more than one place, and
     // reusing a topic makes supabase-js throw when the second channel binds while the
     // first is still subscribed.
-    const filter = `mode=eq.${mode}&difficulty=eq.${difficulty}`
+    const filter = boardFilter(mode)
     const channel = supabase
       .channel(`rival:${mode}:${difficulty}:${Math.random().toString(36).slice(2)}`)
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'scores', filter },
-        () => {
-          refreshRef.current()
+        (payload) => {
+          if (isBoardEvent(payload, difficulty)) refreshRef.current()
         },
       )
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'daily_scores', filter },
-        () => {
-          refreshRef.current()
+        (payload) => {
+          if (isBoardEvent(payload, difficulty)) refreshRef.current()
         },
       )
       .subscribe()
