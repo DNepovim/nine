@@ -776,7 +776,7 @@ export function noteResolved(state: CoachState, resolved: number): CoachState {
 - [ ] **Step 4: Run the test to verify it passes**
 
 Run: `pnpm exec vitest run machines/coach.test.ts`
-Expected: PASS, 24 tests.
+Expected: PASS, 25 tests.
 
 - [ ] **Step 5: Typecheck**
 
