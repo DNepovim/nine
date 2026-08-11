@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
 
+import type { RivalAnnouncement } from '@/hooks/use-rival-records'
 import {
+  ANNOUNCEMENT_IDS,
   announcementFor,
   crossedRecords,
   type Announcement,
@@ -15,8 +17,8 @@ const ANNOUNCEMENT_MS = 5000
 // The personal-best check needs the best the run *started* with, because the machine
 // folds each hit straight into `stats` (machines/game.ts) — so the stored best climbs
 // during the run and comparing against it live would never be true. The board records
-// are snapshotted for the same reason: they only refresh between runs today, but
-// pinning them keeps a mid-run refresh from moving the goalposts.
+// are snapshotted for the same reason: they move under us now that the boards are live,
+// and a rival raising one mid-run must not silently raise the bar you are chasing.
 export function useAnnouncements({
   inRun,
   score,
@@ -24,6 +26,7 @@ export function useAnnouncements({
   todayBest,
   weekBest,
   everBest,
+  rival,
 }: {
   inRun: boolean
   score: number
@@ -31,6 +34,8 @@ export function useAnnouncements({
   todayBest: number | null
   weekBest: number | null
   everBest: number | null
+  // What another player just did, if anything. Always yields to your own records.
+  rival: RivalAnnouncement | null
 }): Announcement | null {
   const [current, setCurrent] = useState<Announcement | null>(null)
   const targetsRef = useRef({
@@ -41,6 +46,9 @@ export function useAnnouncements({
   })
   const startedRef = useRef(false)
   const firedRef = useRef(new Set<AnnouncementId>())
+  const lastRivalSeqRef = useRef(0)
+  // Set while one of your own records is on the bar, so a rival cannot displace it.
+  const ownUntilRef = useRef(0)
 
   useEffect(() => {
     if (!inRun) {
@@ -68,8 +76,19 @@ export function useAnnouncements({
     // Mark every record this score cleared, not just the one being announced, so a
     // single big hit past two records celebrates once instead of twice in a row.
     for (const id of crossed) firedRef.current.add(id)
+    ownUntilRef.current = Date.now() + ANNOUNCEMENT_MS
     setCurrent(announcementFor(next, Math.random()))
   }, [inRun, score])
+
+  useEffect(() => {
+    if (!inRun || rival === null) return
+    if (rival.seq === lastRivalSeqRef.current) return
+    lastRivalSeqRef.current = rival.seq
+    // Your own moment always wins the bar; the rival's is dropped rather than queued,
+    // because by the time yours clears theirs is old news.
+    if (Date.now() < ownUntilRef.current) return
+    setCurrent(announcementFor(rival.id, Math.random(), rival.name))
+  }, [inRun, rival])
 
   // The dismissal timer lives with the announcement, not with the score that
   // triggered it — tying it to `score` would cancel the timer on the next hit.
@@ -84,15 +103,18 @@ export function useAnnouncements({
   }, [current])
 
   // Dev-only escape hatch: fire any announcement from the console without having to
-  // actually beat a record, so the celebrations can be watched on demand. Object.assign
-  // rather than a global declaration keeps this free of type assertions, and the
-  // __DEV__ guard keeps it out of production bundles.
+  // beat a record or wait for a rival. Object.assign rather than a global declaration
+  // keeps this free of type assertions, and __DEV__ keeps it out of production.
+  //
+  // `nineAnnounceIds` is exposed alongside so the console can list what is available
+  // instead of the ids living only in a script file.
   useEffect(() => {
     if (!__DEV__) return
     Object.assign(globalThis, {
-      nineAnnounce: (id: AnnouncementId) => {
-        setCurrent(announcementFor(id, Math.random()))
+      nineAnnounce: (id: AnnouncementId, name = 'RIVAL') => {
+        setCurrent(announcementFor(id, Math.random(), name))
       },
+      nineAnnounceIds: [...ANNOUNCEMENT_IDS],
     })
   }, [])
 

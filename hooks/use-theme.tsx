@@ -4,10 +4,12 @@ import { useSharedValue, withTiming } from 'react-native-reanimated'
 import type { SharedValue } from 'react-native-reanimated'
 import { scheduleOnRN } from 'react-native-worklets'
 
+import { SURFACE } from '@/constants/colors'
+
 type ColorScheme = 'light' | 'dark'
 
-const BG_DARK = '#0B0C14'
-const BG_LIGHT = '#F3EFE9'
+const BG_DARK = SURFACE.dark
+const BG_LIGHT = SURFACE.light
 
 const ThemeContext = createContext<{
   colorScheme: ColorScheme
@@ -21,7 +23,8 @@ export function AppThemeProvider({ children }: { children: ReactNode }) {
   // hydration), then let the user toggle manually. Reading the OS preference
   // here caused an inconsistent first paint where some components rendered dark.
   const [colorScheme, setColorScheme] = useState<ColorScheme>('light')
-  const [transitionColor, setTransitionColor] = useState(BG_DARK)
+  // Annotated: SURFACE is `as const`, so an inferred state would lock to one hex.
+  const [transitionColor, setTransitionColor] = useState<string>(BG_DARK)
 
   const transitionOpacity = useSharedValue(0)
 

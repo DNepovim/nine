@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
 import {
+  ANNOUNCEMENT_IDS,
   announcementFor,
   crossedRecords,
   MAX_MESSAGE_LENGTH,
@@ -60,19 +61,28 @@ describe('crossedRecords', () => {
   })
 })
 
-const IDS = ['record', 'today', 'week', 'ever'] as const
+// Straight from the source, so a new announcement is covered by these tests the
+// moment it is added rather than when someone remembers to update a list here.
+const IDS = ANNOUNCEMENT_IDS
+
+// The longest name displayName will ever produce.
+const LONGEST_NAME = 'ABCDEFGHIJ'
+
+// messageFor substitutes the name token, so expectations must be rendered too.
+const rendered = (template: string, name = 'SOMEONE') =>
+  template.replaceAll('{name}', name)
 
 describe('messageFor', () => {
   it('picks the first line at the bottom of the range', () => {
     for (const id of IDS) {
-      expect(messageFor(id, 0)).toBe(messagePool(id)[0])
+      expect(messageFor(id, 0)).toBe(rendered(messagePool(id)[0] ?? ''))
     }
   })
 
   it('picks the last line at the top of the range', () => {
     for (const id of IDS) {
       const pool = messagePool(id)
-      expect(messageFor(id, 0.999)).toBe(pool[pool.length - 1])
+      expect(messageFor(id, 0.999)).toBe(rendered(pool[pool.length - 1] ?? ''))
     }
   })
 
@@ -82,17 +92,19 @@ describe('messageFor', () => {
     expect(pool.map((_, i) => messageFor('record', (i + 0.5) / pool.length))).toEqual([
       ...pool,
     ])
+    // 'record' carries no name token, so its pool renders unchanged.
   })
 
   it('clamps a roll of exactly 1 rather than falling off the end', () => {
     for (const id of IDS) {
       const pool = messagePool(id)
-      expect(messageFor(id, 1)).toBe(pool[pool.length - 1])
+      expect(messageFor(id, 1)).toBe(rendered(pool[pool.length - 1] ?? ''))
     }
   })
 
   it('clamps a negative roll', () => {
     expect(messageFor('record', -0.5)).toBe(messagePool('record')[0])
+    expect(messageFor('everLost', -0.5)).toBe(rendered(messagePool('everLost')[0] ?? ''))
   })
 })
 
@@ -110,10 +122,39 @@ describe('message pools', () => {
     }
   })
 
-  it('keeps every line short enough for the bar', () => {
+  it('keeps every line short enough for the bar, once a name is substituted', () => {
     for (const id of IDS) {
       for (const message of messagePool(id)) {
-        expect(message.length).toBeLessThanOrEqual(MAX_MESSAGE_LENGTH)
+        const rendered = message.replaceAll('{name}', LONGEST_NAME)
+        expect(rendered.length).toBeLessThanOrEqual(MAX_MESSAGE_LENGTH)
+      }
+    }
+  })
+
+  it('gives every rival announcement a name to say', () => {
+    const rivalIds = IDS.filter((id) => id.endsWith('Raised') || id.endsWith('Lost'))
+    expect(rivalIds).toHaveLength(6)
+    for (const id of rivalIds) {
+      for (const message of messagePool(id)) {
+        expect(message).toContain('{name}')
+      }
+    }
+  })
+
+  it('leaves your own announcements free of a name token', () => {
+    for (const id of ['record', 'today', 'week', 'ever'] as const) {
+      for (const message of messagePool(id)) {
+        expect(message).not.toContain('{name}')
+      }
+    }
+  })
+
+  it('shouts only the rival name — the prose stays in sentence case', () => {
+    for (const id of IDS) {
+      for (const message of messagePool(id)) {
+        const prose = message.replaceAll('{name}', '')
+        // Something in the prose must be lower case, i.e. it is not all shouting.
+        expect(prose).not.toBe(prose.toUpperCase())
       }
     }
   })
@@ -129,10 +170,18 @@ describe('message pools', () => {
 
 describe('announcementFor', () => {
   it('pairs an id with a line from its pool', () => {
-    for (const id of IDS) {
+    for (const id of ['record', 'today', 'week', 'ever'] as const) {
       const announcement = announcementFor(id, 0.5)
       expect(announcement.id).toBe(id)
       expect(messagePool(id)).toContain(announcement.message)
     }
+  })
+
+  it('substitutes the rival name', () => {
+    expect(announcementFor('everLost', 0.5, 'BOLT').message).toContain('BOLT')
+  })
+
+  it('falls back to SOMEONE when no name is supplied', () => {
+    expect(messageFor('todayRaised', 0)).toContain('SOMEONE')
   })
 })

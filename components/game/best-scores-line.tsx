@@ -1,5 +1,5 @@
 import { useFonts } from 'expo-font'
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { View } from 'react-native'
 import Animated, {
   Easing,
@@ -11,10 +11,11 @@ import Animated, {
 import DSEG7Font from '@/assets/fonts/DSEG7Classic-Bold.ttf'
 import { AnnouncementBar } from '@/components/game/announcement-bar'
 import { BestScoreCell } from '@/components/game/best-score-cell'
-import { ANNOUNCEMENT_GRADIENT, ANNOUNCEMENT_INK, SPECTRUM } from '@/constants/colors'
+import { SPECTRUM } from '@/constants/colors'
 import { mono } from '@/constants/theme'
+import { announcementStyle } from '@/lib/announcement-style'
 import type { Announcement } from '@/lib/announcements'
-import { hasBestScore } from '@/lib/best-score'
+import type { Mode } from '@/machines/modes'
 
 type BestKey = 'you' | 'today' | 'week' | 'ever'
 
@@ -59,6 +60,7 @@ const ROW_HEIGHT = 14
 // leaderboards.
 export function BestScoresLine({
   inRun,
+  mode,
   announcement,
   yourBest,
   today,
@@ -68,6 +70,8 @@ export function BestScoresLine({
   // True for the whole of a run, pauses included, so resuming does not restart the
   // countdown — the same notion of "in a run" the menu button uses.
   inRun: boolean
+  // Drives the announcement bar's gradient — the mode and CTA scales are per-mode.
+  mode: Mode
   // While set, the bar carries this message instead of the scores.
   announcement: Announcement | null
   yourBest: number
@@ -103,6 +107,27 @@ export function BestScoresLine({
     translateY.value = withTiming(0, timing)
   }, [revealed, opacity, translateY])
 
+  // The bar has to outlive the announcement: when it clears, the last one stays on
+  // screen in `shown` while its sweep wipes it away, and is dropped on onExited.
+  const [pinned, setPinned] = useState<Announcement | null>(null)
+  const [leaving, setLeaving] = useState(false)
+
+  useEffect(() => {
+    if (announcement !== null) {
+      setPinned(announcement)
+      setLeaving(false)
+      return
+    }
+    setLeaving(true)
+  }, [announcement])
+
+  // Stable identity: the bar restarts its wipe whenever this changes, and an inline
+  // arrow would hand it a new one on every render — which is every score change.
+  const handleExited = useCallback(() => {
+    setPinned(null)
+    setLeaving(false)
+  }, [])
+
   const revealStyle = useAnimatedStyle(() => ({
     opacity: opacity.value,
     transform: [{ translateY: translateY.value }],
@@ -120,15 +145,10 @@ export function BestScoresLine({
   } as const satisfies Record<BestKey, number | null>
 
   const digitFont = dsegLoaded ? 'DSEG7' : mono
-  // flatMap rather than filter so each surviving value is narrowed to a number.
-  // The annotation is load-bearing: without it the two branches infer as a union
-  // that collapses to `any` at the call site.
+  // Every category always shows a number: an untouched board, or one we could not
+  // reach, reads as 0 rather than vanishing and leaving a ragged row.
   const shown: ShownBest[] = revealed
-    ? BEST_ORDER.flatMap((key): ShownBest[] => {
-        if (key === 'you') return [{ key, value: yourBest }]
-        const value = values[key]
-        return hasBestScore(value) ? [{ key, value }] : []
-      })
+    ? BEST_ORDER.map((key) => ({ key, value: values[key] ?? 0 }))
     : []
 
   return (
@@ -153,12 +173,12 @@ export function BestScoresLine({
         </Animated.View>
         {/* Covers the scores, and deliberately ignores the reveal gate — a record
             broken inside the first five seconds still deserves to be announced. */}
-        {announcement !== null && (
+        {pinned !== null && (
           <AnnouncementBar
-            message={announcement.message}
-            from={ANNOUNCEMENT_GRADIENT[announcement.id][0]}
-            to={ANNOUNCEMENT_GRADIENT[announcement.id][1]}
-            ink={ANNOUNCEMENT_INK[announcement.id]}
+            message={pinned.message}
+            {...announcementStyle(pinned.id, mode)}
+            leaving={leaving}
+            onExited={handleExited}
           />
         )}
       </View>

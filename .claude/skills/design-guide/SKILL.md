@@ -12,15 +12,16 @@ decide which scale the element belongs to — that decision is the design.
 
 ### 1. Game scale — the app's identity
 
-`SPECTRUM` in `constants/colors.ts`. Blue → purple → pink → red, the arc seen on
-the splash and the app icon.
+Two exports in `constants/colors.ts`, same arc:
 
 ```
-#4C7EFF  #7273D2  #c36282  #E5534B
+SPECTRUM     #4C7EFF  #7273D2  #c36282  #E5534B
+GAME_SCALE   #4C7EFF  #7273D2  #c36282  #E5534B  #FF8C00
 ```
 
-`FULL_SPECTRUM` (module-private) extends it with the arcade amber `#FF8C00` for
-the rare case that wants the whole arc at once.
+`SPECTRUM` is the four playable-mode stops — the arc on the splash and the app icon.
+`GAME_SCALE` carries the arcade amber too, for anything that wants the whole range at
+once, such as the personal-best celebration.
 
 **Use it** when something represents the game as a whole rather than one mode: the
 splash, the icon, the four best-score numbers in the top bar, the personal-best
@@ -68,11 +69,26 @@ that should read as pressable and sit _under_ text. Pair with `text-on-strong`.
 
 These are not scales — they are single-purpose and live in `constants/colors.ts`.
 
-| Palette                                      | For                                                                                                                                          |
-| -------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
-| `ANNOUNCEMENT_COLORS` / `_GRADIENT` / `_INK` | Record celebrations. Game scale for a personal best, gold for the three board records. One map so particles, bar and ink cannot drift apart. |
-| `DIAL_COLORS`                                | Dial key tint by value: `low` → `high` for 0–8, plus the ink for the 9 key.                                                                  |
-| `SCORE_COLORS`                               | The score above the dial, tinting from `APP_BLUE` to the text colour.                                                                        |
+| Palette        | For                                                                                           |
+| -------------- | --------------------------------------------------------------------------------------------- |
+| `GOLD_SCALE`   | The three board records you hold. Needs dark ink — white on it is about 1.5:1.                |
+| `GRAYSCALE`    | A record taken off you: the colour drained out. Mid-tones only, so it reads on both surfaces. |
+| `DIAL_COLORS`  | Dial key tint by value: `low` → `high` for 0–8, plus the ink for the 9 key.                   |
+| `SCORE_COLORS` | The score above the dial, tinting from `APP_BLUE` to the text colour.                         |
+
+An announcement never picks these itself. `announcementStyle(id, mode)` in
+`lib/announcement-style.ts` maps each announcement to a scale and resolves its bar
+gradient, ink and particle colours together, so they cannot drift apart:
+
+| Announcement                      | Bar        | Particles   |
+| --------------------------------- | ---------- | ----------- |
+| Your personal best                | game scale | game scale  |
+| Your day / week / all-time record | gold       | gold        |
+| A rival raised a record           | CTA scale  | — no effect |
+| A rival took yours                | greyscale  | greyscale   |
+
+The bar takes only the two darkest greys, not the whole ramp — the pale end would drop
+white text to about 1.9:1 — while the implosion falls in all four.
 
 ## Theme tokens
 
@@ -128,6 +144,10 @@ resolves per platform; in `className` it is `font-mono`.
 
 Wide letter-spacing on upper-case labels is the app's voice — an unspaced
 upper-case label looks wrong here even when the size is right.
+
+The announcement bar is the deliberate exception: its messages are sentence case so
+that the rival's upper-cased nickname is the only thing shouting, and its tracking
+drops to `0.3px` to suit. Wide tracking is a caps device; it reads as airy on prose.
 
 ## Motion
 

@@ -3,25 +3,36 @@ import type { ReactElement } from 'react'
 import { Confetti } from '@/components/game/confetti'
 import { Fireworks } from '@/components/game/fireworks'
 import { Hyperspace } from '@/components/game/hyperspace'
-import { ANNOUNCEMENT_COLORS } from '@/constants/colors'
+import { Implosion } from '@/components/game/implosion'
+import { announcementStyle } from '@/lib/announcement-style'
 import type { AnnouncementId } from '@/lib/announcements'
+import type { Mode } from '@/machines/modes'
 
-// One celebration per announcement, escalating with the record: confetti for your own
-// best, gold confetti for the day, fireworks for the week, and the jump to lightspeed
-// for all time. A value map rather than a switch, so the exhaustiveness check makes a
-// new announcement id impossible to add without deciding how it celebrates.
+// One effect per announcement. Your own records escalate — confetti, gold confetti,
+// fireworks, the jump to lightspeed. A rival merely raising a board record gets no
+// effect at all: it is news, not a moment, and the bar alone should carry it. Losing a
+// record you held gets the jump run backwards.
 //
-// Colours come from ANNOUNCEMENT_COLORS, shared with the bar behind the message.
+// A value map rather than a switch, so the exhaustiveness check makes a new
+// announcement id impossible to add without deciding what it plays.
 const EFFECTS = {
   record: (colors) => <Confetti colors={colors} />,
   today: (colors) => <Confetti colors={colors} />,
   week: (colors) => <Fireworks colors={colors} />,
   ever: (colors) => <Hyperspace colors={colors} />,
+
+  todayRaised: () => null,
+  weekRaised: () => null,
+  everRaised: () => null,
+
+  todayLost: (colors) => <Implosion colors={colors} />,
+  weekLost: (colors) => <Implosion colors={colors} />,
+  everLost: (colors) => <Implosion colors={colors} />,
 } as const satisfies Record<
   AnnouncementId,
-  (colors: readonly [string, ...string[]]) => ReactElement
+  (colors: readonly [string, ...string[]]) => ReactElement | null
 >
 
-export function AnnouncementEffect({ id }: { id: AnnouncementId }) {
-  return EFFECTS[id](ANNOUNCEMENT_COLORS[id])
+export function AnnouncementEffect({ id, mode }: { id: AnnouncementId; mode: Mode }) {
+  return EFFECTS[id](announcementStyle(id, mode).colors)
 }

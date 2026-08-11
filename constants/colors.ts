@@ -1,6 +1,8 @@
 // Brand + value-tint palettes shared across the game UI.
 
-import type { AnnouncementId } from '@/lib/announcements'
+// The screen background per theme. Anything that needs to hide what is behind it —
+// the announcement sweep, the theme cross-fade — paints in these.
+export const SURFACE = { light: '#F3EFE9', dark: '#0B0C14' } as const
 
 export const APP_BLUE = '#4C7EFF'
 export const APP_RED = '#E5534B'
@@ -9,40 +11,17 @@ export const APP_RED = '#E5534B'
 // span of the mode gradients: trainee blue through to speed red.
 export const SPECTRUM = ['#4C7EFF', '#7273D2', '#c36282', '#E5534B'] as const
 
-// Celebration palettes. The spectrum is the app's own, used for a personal best;
-// gold marks the daily record, and the starfield is for the all-time jump.
-const GOLD = ['#FFD166', '#FF8C00', '#FFE8A3', '#F4A261'] as const
+// Gold marks the three board records. Needs dark ink — white on it is about 1.5:1.
+export const GOLD_SCALE = ['#FFD166', '#FF8C00', '#FFE8A3', '#F4A261'] as const
+
+// Losing a record you held: the colour drained out. Kept to mid-tones with the app's
+// faint violet cast — a true black-to-white ramp would put half its steps on the wrong
+// side of one surface or the other, where these read on both.
+export const GRAYSCALE = ['#5F5C6E', '#7A7688', '#95919F', '#B0ACB8'] as const
 
 // The game's whole scale, blue through to the arcade amber — every mode's colour at
 // once. All five are mid-tone, so unlike white they read on both themes.
-const FULL_SPECTRUM = ['#4C7EFF', '#7273D2', '#c36282', '#E5534B', '#FF8C00'] as const
-
-// Each announcement's look, in one place so the celebration, the bar behind the
-// message and the message's own ink can never drift apart. Beating your own best wears
-// the game's colours; the three board records wear gold.
-//
-// Gold needs dark ink — white on #FFD166 is about 1.5:1, which is unreadable — where
-// the game scale needs white. That is why the ink is mapped rather than assumed.
-export const ANNOUNCEMENT_COLORS = {
-  record: FULL_SPECTRUM,
-  today: GOLD,
-  week: GOLD,
-  ever: GOLD,
-} as const satisfies Record<AnnouncementId, readonly [string, ...string[]]>
-
-export const ANNOUNCEMENT_GRADIENT = {
-  record: ['#4C7EFF', '#E5534B'],
-  today: ['#FF8C00', '#FFD166'],
-  week: ['#FF8C00', '#FFD166'],
-  ever: ['#FF8C00', '#FFD166'],
-} as const satisfies Record<AnnouncementId, readonly [string, string]>
-
-export const ANNOUNCEMENT_INK = {
-  record: '#FFFFFF',
-  today: '#1C1928',
-  week: '#1C1928',
-  ever: '#1C1928',
-} as const satisfies Record<AnnouncementId, string>
+export const GAME_SCALE = ['#4C7EFF', '#7273D2', '#c36282', '#E5534B', '#FF8C00'] as const
 
 type Palette = { low: string; high: string }
 

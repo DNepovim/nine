@@ -50,6 +50,7 @@ import { useMultiplayerRoom } from '@/hooks/use-multiplayer-room'
 import { usePersistedDifficulty } from '@/hooks/use-persisted-difficulty'
 import { usePersistedMode } from '@/hooks/use-persisted-mode'
 import { usePersistedStats } from '@/hooks/use-persisted-stats'
+import { useRivalRecords } from '@/hooks/use-rival-records'
 import { useScoreDirection } from '@/hooks/use-score-direction'
 import { useScoreSubmission } from '@/hooks/use-score-submission'
 import { useSupabaseAuth } from '@/hooks/use-supabase-auth'
@@ -155,15 +156,25 @@ export default function GameScreen() {
   const { submit: submitScore } = useScoreSubmission(userId, nickname, isReady)
   const [showNicknameModal, setShowNicknameModal] = useState(false)
 
-  // Board bests for the strip above the top bar. Trainee has no leaderboard.
-  const {
-    today: bestToday,
-    week: bestWeek,
-    ever: bestEver,
-    refresh: refreshBests,
-  } = useBestScores(mode, difficulty, mode !== 'trainee')
+  // Board leaders for the strip above the top bar. Trainee has no leaderboard.
+  const { leaders, refresh: refreshBests } = useBestScores(
+    mode,
+    difficulty,
+    mode !== 'trainee',
+  )
+  const bestToday = leaders.today?.score ?? null
+  const bestWeek = leaders.week?.score ?? null
+  const bestEver = leaders.ever?.score ?? null
 
   const inRun = isPlaying || isPaused
+  const rival = useRivalRecords({
+    inRun,
+    mode,
+    difficulty,
+    userId,
+    leaders,
+    refresh: refreshBests,
+  })
   const announcement = useAnnouncements({
     inRun,
     score: state.context.score,
@@ -171,6 +182,7 @@ export default function GameScreen() {
     todayBest: bestToday,
     weekBest: bestWeek,
     everBest: bestEver,
+    rival,
   })
 
   // Trigger score submission on each game-over transition.
@@ -356,7 +368,7 @@ export default function GameScreen() {
           Keyed on the announcement so each one plays from the start, and so escalating
           through two records in a run swaps the effect rather than reusing it. */}
       {announcement !== null && (
-        <AnnouncementEffect key={announcement.id} id={announcement.id} />
+        <AnnouncementEffect key={announcement.id} id={announcement.id} mode={mode} />
       )}
 
       {/* ── Game screen (single padded wrapper) ── */}
@@ -366,6 +378,7 @@ export default function GameScreen() {
         {mode !== 'trainee' && (
           <BestScoresLine
             inRun={inRun}
+            mode={mode}
             announcement={announcement}
             yourBest={stats[mode][difficulty].score}
             today={bestToday}
