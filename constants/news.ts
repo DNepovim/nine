@@ -7,6 +7,18 @@ import type { Release } from '@/types/news'
 // different announcement or players who already saw the old one will miss it.
 export const RELEASES: Release[] = [
   {
+    date: '2026-08-11',
+    items: [
+      {
+        id: 'record-celebrations',
+        icon: 'sparkles',
+        accent: '#FF8C00',
+        title: 'Records, celebrated',
+        body: 'Beat a record and the game makes a fuss about it.',
+      },
+    ],
+  },
+  {
     date: '2026-08-10',
     items: [
       {

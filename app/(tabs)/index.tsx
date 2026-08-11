@@ -15,8 +15,8 @@ import Animated, {
 } from 'react-native-reanimated'
 
 import DSEG7Font from '@/assets/fonts/DSEG7Classic-Bold.ttf'
+import { AnnouncementEffect } from '@/components/game/announcement-effect'
 import { BestScoresLine } from '@/components/game/best-scores-line'
-import { Confetti } from '@/components/game/confetti'
 import { DialButton } from '@/components/game/dial-button'
 import { FloatingPoints } from '@/components/game/floating-points'
 import { FloatingStat } from '@/components/game/floating-stat'
@@ -168,6 +168,9 @@ export default function GameScreen() {
     inRun,
     score: state.context.score,
     storedBest: stats[mode][difficulty].score,
+    todayBest: bestToday,
+    weekBest: bestWeek,
+    everBest: bestEver,
   })
 
   // Trigger score submission on each game-over transition.
@@ -349,10 +352,12 @@ export default function GameScreen() {
 
   return (
     <>
-      {/* Confetti sits before the Screen so it paints behind the game's own UI —
-          pieces fall through the gaps between dial keys and targets. Keyed on the
-          announcement so each one plays a fresh fall. */}
-      {announcement !== null && <Confetti key={announcement.id} />}
+      {/* The celebration sits before the Screen so it paints behind the game's own UI.
+          Keyed on the announcement so each one plays from the start, and so escalating
+          through two records in a run swaps the effect rather than reusing it. */}
+      {announcement !== null && (
+        <AnnouncementEffect key={announcement.id} id={announcement.id} />
+      )}
 
       {/* ── Game screen (single padded wrapper) ── */}
       <Screen>
@@ -361,7 +366,6 @@ export default function GameScreen() {
         {mode !== 'trainee' && (
           <BestScoresLine
             inRun={inRun}
-            mode={mode}
             announcement={announcement}
             yourBest={stats[mode][difficulty].score}
             today={bestToday}

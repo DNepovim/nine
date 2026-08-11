@@ -11,11 +11,10 @@ import Animated, {
 import DSEG7Font from '@/assets/fonts/DSEG7Classic-Bold.ttf'
 import { AnnouncementBar } from '@/components/game/announcement-bar'
 import { BestScoreCell } from '@/components/game/best-score-cell'
-import { SPECTRUM } from '@/constants/colors'
+import { ANNOUNCEMENT_GRADIENT, ANNOUNCEMENT_INK, SPECTRUM } from '@/constants/colors'
 import { mono } from '@/constants/theme'
 import type { Announcement } from '@/lib/announcements'
 import { hasBestScore } from '@/lib/best-score'
-import { MODE_GRADIENT, type Mode } from '@/machines/game'
 
 type BestKey = 'you' | 'today' | 'week' | 'ever'
 
@@ -60,7 +59,6 @@ const ROW_HEIGHT = 14
 // leaderboards.
 export function BestScoresLine({
   inRun,
-  mode,
   announcement,
   yourBest,
   today,
@@ -70,7 +68,6 @@ export function BestScoresLine({
   // True for the whole of a run, pauses included, so resuming does not restart the
   // countdown — the same notion of "in a run" the menu button uses.
   inRun: boolean
-  mode: Mode
   // While set, the bar carries this message instead of the scores.
   announcement: Announcement | null
   yourBest: number
@@ -134,8 +131,6 @@ export function BestScoresLine({
       })
     : []
 
-  const [from, to] = MODE_GRADIENT[mode]
-
   return (
     <View className="mb-1.5">
       <View style={{ height: ROW_HEIGHT }}>
@@ -159,7 +154,12 @@ export function BestScoresLine({
         {/* Covers the scores, and deliberately ignores the reveal gate — a record
             broken inside the first five seconds still deserves to be announced. */}
         {announcement !== null && (
-          <AnnouncementBar message={announcement.message} from={from} to={to} />
+          <AnnouncementBar
+            message={announcement.message}
+            from={ANNOUNCEMENT_GRADIENT[announcement.id][0]}
+            to={ANNOUNCEMENT_GRADIENT[announcement.id][1]}
+            ink={ANNOUNCEMENT_INK[announcement.id]}
+          />
         )}
       </View>
       <Animated.View className="mt-1 h-px bg-muted" style={ruleStyle} />

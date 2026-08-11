@@ -1,11 +1,48 @@
 // Brand + value-tint palettes shared across the game UI.
 
+import type { AnnouncementId } from '@/lib/announcements'
+
 export const APP_BLUE = '#4C7EFF'
 export const APP_RED = '#E5534B'
 
 // The game's full spectrum, as seen on the splash and the app icon. Also the
 // span of the mode gradients: trainee blue through to speed red.
 export const SPECTRUM = ['#4C7EFF', '#7273D2', '#c36282', '#E5534B'] as const
+
+// Celebration palettes. The spectrum is the app's own, used for a personal best;
+// gold marks the daily record, and the starfield is for the all-time jump.
+const GOLD = ['#FFD166', '#FF8C00', '#FFE8A3', '#F4A261'] as const
+
+// The game's whole scale, blue through to the arcade amber — every mode's colour at
+// once. All five are mid-tone, so unlike white they read on both themes.
+const FULL_SPECTRUM = ['#4C7EFF', '#7273D2', '#c36282', '#E5534B', '#FF8C00'] as const
+
+// Each announcement's look, in one place so the celebration, the bar behind the
+// message and the message's own ink can never drift apart. Beating your own best wears
+// the game's colours; the three board records wear gold.
+//
+// Gold needs dark ink — white on #FFD166 is about 1.5:1, which is unreadable — where
+// the game scale needs white. That is why the ink is mapped rather than assumed.
+export const ANNOUNCEMENT_COLORS = {
+  record: FULL_SPECTRUM,
+  today: GOLD,
+  week: GOLD,
+  ever: GOLD,
+} as const satisfies Record<AnnouncementId, readonly [string, ...string[]]>
+
+export const ANNOUNCEMENT_GRADIENT = {
+  record: ['#4C7EFF', '#E5534B'],
+  today: ['#FF8C00', '#FFD166'],
+  week: ['#FF8C00', '#FFD166'],
+  ever: ['#FF8C00', '#FFD166'],
+} as const satisfies Record<AnnouncementId, readonly [string, string]>
+
+export const ANNOUNCEMENT_INK = {
+  record: '#FFFFFF',
+  today: '#1C1928',
+  week: '#1C1928',
+  ever: '#1C1928',
+} as const satisfies Record<AnnouncementId, string>
 
 type Palette = { low: string; high: string }
 

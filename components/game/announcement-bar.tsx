@@ -10,16 +10,19 @@ import Animated, {
 
 const FADE_MS = 180
 
-// The best-scores bar wearing the mode gradient, with a message in white. Fills its
-// parent, so it covers the scores row for as long as it is mounted.
+// The best-scores bar wearing the announcement's own gradient. Fills its parent, so it
+// covers the scores row for as long as it is mounted. The ink is passed in rather than
+// fixed: the gold gradients need dark text where the game scale needs white.
 export function AnnouncementBar({
   message,
   from,
   to,
+  ink,
 }: {
   message: string
   from: string
   to: string
+  ink: string
 }) {
   const opacity = useSharedValue(0)
 
@@ -42,7 +45,8 @@ export function AnnouncementBar({
         <Text
           selectable={false}
           numberOfLines={1}
-          className="font-mono text-[9px] font-black tracking-[1.5px] text-white"
+          className="font-mono text-[9px] font-black tracking-[1.5px]"
+          style={{ color: ink }}
         >
           {message}
         </Text>

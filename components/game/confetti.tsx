@@ -9,24 +9,31 @@ import { SPECTRUM } from '@/constants/colors'
 // thread; if it ever costs frames on a low-end device, this constant is the dial.
 const PIECE_COUNT = 80
 
-// Timings are kept inside the announcement's own three seconds — the parent unmounts
-// this when the message clears, so anything still falling would be cut mid-air.
-const MAX_DELAY_MS = 500
-const MIN_FALL_MS = 1400
-const EXTRA_FALL_MS = 800
+// Starts are spread across most of the announcement rather than bunched at the top, so
+// confetti keeps arriving while earlier pieces are still falling — one shower instead of
+// one batch. The last piece to start still lands before the parent unmounts this at the
+// five-second mark, so nothing gets cut mid-air.
+const MAX_DELAY_MS = 2000
+const MIN_FALL_MS = 1900
+const EXTRA_FALL_MS = 600
 
 // A one-shot confetti fall in the game's spectrum colours. Mounting plays it; the
 // parent unmounts it when the moment is over. Rendered behind the game UI and
 // non-interactive, so pieces fall through the gaps between dial keys and targets
 // without ever swallowing a tap.
-export function Confetti() {
+export function Confetti({
+  colors = SPECTRUM,
+}: {
+  // Non-empty, so colors[0] is a guaranteed fallback for the computed index.
+  colors?: readonly [string, ...string[]]
+}) {
   const { width, height } = useWindowDimensions()
 
   const pieces = useMemo(
     () =>
       Array.from({ length: PIECE_COUNT }, (_, i) => ({
         id: i,
-        color: SPECTRUM[i % SPECTRUM.length] ?? SPECTRUM[0],
+        color: colors[i % colors.length] ?? SPECTRUM[0],
         startX: Math.random() * width,
         size: 4 + Math.random() * 7,
         delay: Math.random() * MAX_DELAY_MS,
@@ -34,7 +41,7 @@ export function Confetti() {
         drift: (Math.random() - 0.5) * 120,
         spin: (Math.random() - 0.5) * 900,
       })),
-    [width],
+    [width, colors],
   )
 
   return (
