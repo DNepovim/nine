@@ -26,13 +26,46 @@ const EXIT_MS = 160
 
 const CTA_LABEL = {
   prompt: 'INSTALL',
-  instructions: 'GOT IT',
+  'ios-safari': 'GOT IT',
+  'ios-chrome': 'GOT IT',
+  'ios-other': 'GOT IT',
+  'open-in-safari': 'GOT IT',
+  'open-in-chrome': 'GOT IT',
 } as const satisfies Record<InstallableTarget, string>
 
 const CTA_ICON = {
   prompt: 'download-outline',
-  instructions: 'checkmark',
+  'ios-safari': 'checkmark',
+  'ios-chrome': 'checkmark',
+  'ios-other': 'checkmark',
+  'open-in-safari': 'checkmark',
+  'open-in-chrome': 'checkmark',
 } as const satisfies Record<InstallableTarget, IoniconName>
+
+// The install paths sell the result; the redirects have to explain the obstacle
+// first, because the player can't act on anything until they move.
+const PITCH = 'Full screen, no browser bar, and it keeps working offline.'
+
+const BODY = {
+  prompt: PITCH,
+  'ios-safari': PITCH,
+  'ios-chrome': PITCH,
+  'ios-other': PITCH,
+  'open-in-safari': `This app can't add to your home screen. Open nine in Safari and you can. ${PITCH}`,
+  'open-in-chrome': `This app can't add to your home screen. Open nine in Chrome and you can. ${PITCH}`,
+} as const satisfies Record<InstallableTarget, string>
+
+// Where each browser keeps its Share button. `null` means this target shows no
+// steps at all — the map doubles as the "are there steps?" decision, so adding a
+// target forces an answer rather than silently falling through to none.
+const STEP_ONE = {
+  prompt: null,
+  'ios-safari': 'Tap Share in the toolbar',
+  'ios-chrome': 'Tap Share next to the address bar',
+  'ios-other': "Open your browser's Share menu",
+  'open-in-safari': null,
+  'open-in-chrome': null,
+} as const satisfies Record<InstallableTarget, string | null>
 
 // Offers the home screen to a player who arrived in a mobile browser. Two
 // bodies: a real install button where the browser gives us one, Safari's manual
@@ -53,6 +86,7 @@ export function InstallOverlay({
   const scale = useSharedValue(1)
   const fadeStyle = useAnimatedStyle(() => ({ opacity: fade.value }))
   const cardStyle = useAnimatedStyle(() => ({ transform: [{ scale: scale.value }] }))
+  const stepOne = STEP_ONE[target]
 
   // Shrink away rather than blinking out. onDismiss unmounts us, so it waits
   // for the animation to finish.
@@ -120,11 +154,11 @@ export function InstallOverlay({
                 selectable={false}
                 className="mt-2 text-center font-mono text-[12px] leading-[18px] text-dim"
               >
-                Full screen, no browser bar, and it keeps working offline.
+                {BODY[target]}
               </Text>
             </View>
 
-            {target === 'instructions' && <InstallSteps />}
+            {stepOne !== null && <InstallSteps stepOne={stepOne} />}
 
             <View className="mt-4 flex-row items-center justify-center">
               <Pressable

@@ -11,27 +11,50 @@ already work; nothing advertises them.
 
 A popup at launch, modelled on the what's-new dialog, does the advertising. On
 Android it installs with one tap. On iOS, where no install API exists, it shows
-the two share-sheet steps.
+the two share-sheet steps. In an in-app webview, where neither is possible, it
+names a browser that can do it.
 
 Out of scope: QR-code deep links into a multiplayer room, and Universal Links
 into a native build. Both were discussed alongside this and are separate work.
 
 ## Behaviour
 
-### Three states
+### Seven states
 
-A pure `resolveInstallTarget` maps the browser to one of three targets. The hook
-probes `window`/`navigator` and hands it a plain object, so the decision itself
-is testable without mocking globals.
+A pure `resolveInstallTarget` maps the browser to one target. The hook probes
+`window`/`navigator` and hands it a plain object, so the decision itself is
+testable without mocking globals.
 
-| Target           | When                                                    | Body shown         |
-| ---------------- | ------------------------------------------------------- | ------------------ |
-| `'prompt'`       | `beforeinstallprompt` fired **and** `uaMobile === true` | An INSTALL button  |
-| `'instructions'` | iOS Safari, not already installed                       | Two numbered steps |
-| `'none'`         | anything else                                           | Nothing renders    |
+The rule behind the states: give a button where a button is possible, give
+instructions where the player can still do it by hand, and where neither is
+possible, name a browser that works rather than saying nothing.
 
-`'none'` covers more than it looks: already installed, desktop, and every
-browser we cannot advise accurately.
+| Target             | When                                                    | Body shown                      |
+| ------------------ | ------------------------------------------------------- | ------------------------------- |
+| `'prompt'`         | `beforeinstallprompt` fired **and** `uaMobile === true` | An INSTALL button               |
+| `'ios-safari'`     | Safari on iOS or iPadOS                                 | Steps, Share in the toolbar     |
+| `'ios-chrome'`     | Chrome on iOS (`CriOS`)                                 | Steps, Share by the address bar |
+| `'ios-other'`      | Firefox, Edge, Opera on iOS                             | Steps, no location named        |
+| `'open-in-safari'` | an in-app webview on iOS                                | "open it in Safari"             |
+| `'open-in-chrome'` | an in-app webview on Android                            | "open it in Chrome"             |
+| `'none'`           | anything else                                           | Nothing renders                 |
+
+`'none'` still covers already installed, desktop, and any browser we cannot
+advise accurately.
+
+The webview cases are checked **before** the plain iOS case, because an in-app
+browser on an iPhone matches both and the share-sheet steps would send the
+player hunting for a menu that does not exist there. They are entered only on
+positive identification of a webview UA, never on the absence of an install
+event — otherwise a real Chrome tab whose event has not fired yet would be told
+to go and use Chrome.
+
+Combinations that genuinely cannot add to the home screen, and so justify this
+tier: in-app webviews (Instagram, Facebook, Messenger, LinkedIn and friends) on
+both platforms, Firefox on desktop, Safari before macOS Sonoma, and any
+non-Safari iOS browser below iOS 16.4. Only the webview case is both mobile and
+common enough to be worth detecting; the desktop ones fall to `'none'` under the
+mobile-only rule anyway.
 
 ### Mobile only, without a UA regex for Android
 
@@ -43,9 +66,19 @@ iOS needs the regex, because WebKit does not implement UA-CH: iPhone and iPod
 match directly, and iPadOS Safari claims to be `Macintosh`, betrayed only by
 `maxTouchPoints > 1`.
 
-Chrome, Firefox and Edge on iOS (`CriOS`, `FxiOS`, `EdgiOS`) resolve to
-`'none'`. Their steps are nearly identical to Safari's but the toolbar sits
-elsewhere, and accuracy was chosen over reach. This is a deliberate, known gap.
+Every iOS browser gets the steps, not only Safari. An earlier revision excluded
+Chrome, Firefox and Edge on the grounds that their toolbars differ, which meant
+a player browsing in Chrome was told nothing at all.
+
+The toolbars really do differ, so the browser is identified rather than papered
+over. All of them end at the same iOS share sheet holding Add to Home Screen;
+only the route in changes. Safari keeps Share in the toolbar. Chrome keeps it
+beside the address bar, per Google's own documentation. Firefox, Edge and Opera
+get wording that names no location at all, which is honest rather than wrong —
+and worth revisiting per browser if any of them becomes common.
+
+This is why the iOS states are three targets and not one: an instruction that
+points at the wrong corner of the screen is worse than a vague one.
 
 ### Already installed
 
@@ -94,7 +127,7 @@ The what's-new shell verbatim: `SPECTRUM` gradient border (2px pad, radius 26),
 fade-and-scale-to-0.92 exit over 160ms. Header label `INSTALL`, `text-dim` mono
 caps at `tracking-[2px]`. No page dots — one screen.
 
-**Hero**, shared by both targets and following `NewsCard`'s grammar without
+**Hero**, shared by every target and following `NewsCard`'s grammar without
 fabricating a `NewsItem`: a 64px rounded tile tinted `#7273D2` at low alpha
 around a `phone-portrait-outline` glyph, the title `ADD TO HOME SCREEN`, then
 12px `text-dim` body — "Full screen, no browser bar, and it keeps working
@@ -108,11 +141,18 @@ mid-tone, so it reads on both `surface` values.
 and a `download-outline` glyph, at the same geometry as LET'S GO (`rounded-2xl
 px-6 py-3.5`). Press calls the deferred event's `prompt()`.
 
-**iOS body** — two numbered rows on `bg-card` pills: "1 · Tap ⎋ in the toolbar"
-with Ionicons `share-outline`, which is the real iOS share glyph; "2 · Choose ⊞
-Add to Home Screen", where the square-plus is a `border-muted` `View` around an
-`add` glyph, Ionicons having no square-plus of its own. Then a `bg-strong` GOT
-IT that only closes.
+**iOS body** — two numbered rows on `bg-card` pills. Step one varies by browser
+("Tap Share in the toolbar" / "Tap Share next to the address bar" / "Open your
+browser's Share menu") and carries Ionicons `share-outline`, the real iOS share
+glyph. Step two is the same everywhere: "Choose ⊞ Add to Home Screen", where the
+square-plus is a `border-muted` `View` around an `add` glyph, Ionicons having no
+square-plus of its own. Then a `bg-strong` GOT IT that only closes.
+
+`InstallSteps` takes step one as a plain string prop rather than the target, so
+it owns the shared half and the caller owns the varying line. The `STEP_ONE` map
+in the overlay is keyed by every `InstallableTarget` with `null` for the targets
+that show no steps — it doubles as the "are there steps?" decision, so a new
+target has to answer the question instead of silently falling through.
 
 Per the design guide this is a whole-app concern, not a mode one, so it takes
 the game scale and the CTA token rather than any `MODE_GRADIENT`.
@@ -120,7 +160,7 @@ the game scale and the CTA token rather than any `MODE_GRADIENT`.
 ## Files
 
 ```
-types/install.ts                        the three targets and the env shape
+types/install.ts                        the targets and the env shape
 lib/install-target.ts          + test   env object → target
 hooks/use-install-prompt.web.ts         deferred event, visibility, install()
 hooks/use-install-prompt.ts             native no-op
@@ -154,13 +194,18 @@ Pure logic in `lib/` with Vitest coverage matches `lib/news.ts` and
 `lib/install-target.test.ts`, all plain objects:
 
 - standalone, and iOS standalone via `navigator.standalone` → `'none'`
-- iPhone Safari → `'instructions'`
-- iPadOS reporting `Macintosh` with `maxTouchPoints > 1` → `'instructions'`
-- `CriOS` on an iPhone → `'none'`
+- iPhone Safari → `'ios-safari'`
+- iPadOS reporting `Macintosh` with `maxTouchPoints > 1` → `'ios-safari'`
+- `CriOS` on an iPhone → `'ios-chrome'`
+- `FxiOS` and `EdgiOS` on an iPhone → `'ios-other'`
 - Android Chromium with the event and `uaMobile` → `'prompt'`
 - Android Chromium before the event fires → `'none'`
 - desktop Chromium with the event, `uaMobile: false` → `'none'`
 - `uaMobile: undefined` with no iOS match → `'none'`
+- an Instagram webview on iOS → `'open-in-safari'`
+- a Facebook webview on Android → `'open-in-chrome'`
+- Android Chrome with a pending event → `'none'`, never `'open-in-chrome'`
+- a webview that somehow has the install event → `'prompt'` wins
 
 ## Verifying by hand
 

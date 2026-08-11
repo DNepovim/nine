@@ -14,6 +14,9 @@ const IPAD_SAFARI =
 const IPHONE_CHROME =
   'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) CriOS/120.0.0.0 Mobile/15E148 Safari/604.1'
 
+const IPHONE_FIREFOX =
+  'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) FxiOS/120.0 Mobile/15E148 Safari/605.1.15'
+
 const ANDROID_CHROME =
   'Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36'
 
@@ -25,6 +28,15 @@ const DESKTOP_CHROME =
 
 const MAC_SAFARI =
   'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Safari/605.1.15'
+
+const IPHONE_EDGE =
+  'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) EdgiOS/120.0 Mobile/15E148 Safari/605.1.15'
+
+const IPHONE_INSTAGRAM =
+  'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148 Instagram 300.0.0.0.0'
+
+const ANDROID_FACEBOOK =
+  'Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36 [FBAN/FB4A;FBAV/440.0.0.0;]'
 
 const env = (overrides: Partial<InstallEnv>): InstallEnv => ({
   standalone: false,
@@ -64,26 +76,64 @@ describe('resolveInstallTarget', () => {
     ).toBe('none')
   })
 
-  it('shows the steps on iPhone Safari', () => {
+  it('names the toolbar on iPhone Safari', () => {
     expect(
       resolveInstallTarget(env({ userAgent: IPHONE_SAFARI, maxTouchPoints: 5 })),
-    ).toBe('instructions')
+    ).toBe('ios-safari')
   })
 
-  it('shows the steps on iPadOS, which claims to be a Mac', () => {
+  it('names the toolbar on iPadOS, which claims to be a Mac', () => {
     expect(resolveInstallTarget(env({ userAgent: IPAD_SAFARI, maxTouchPoints: 5 }))).toBe(
-      'instructions',
+      'ios-safari',
     )
   })
 
-  it('stays quiet in Chrome on iOS, whose toolbar is somewhere else', () => {
+  it('names the address bar in Chrome on iOS, where Share actually sits', () => {
     expect(
       resolveInstallTarget(env({ userAgent: IPHONE_CHROME, maxTouchPoints: 5 })),
-    ).toBe('none')
+    ).toBe('ios-chrome')
+  })
+
+  it('names no location in Firefox on iOS', () => {
+    expect(
+      resolveInstallTarget(env({ userAgent: IPHONE_FIREFOX, maxTouchPoints: 5 })),
+    ).toBe('ios-other')
+  })
+
+  it('names no location in Edge on iOS', () => {
+    expect(resolveInstallTarget(env({ userAgent: IPHONE_EDGE, maxTouchPoints: 5 }))).toBe(
+      'ios-other',
+    )
   })
 
   it('stays quiet on a touchless Mac, which is not an iPad', () => {
     expect(resolveInstallTarget(env({ userAgent: MAC_SAFARI }))).toBe('none')
+  })
+
+  it("points an iOS in-app webview at Safari, since it can't add anything", () => {
+    expect(
+      resolveInstallTarget(env({ userAgent: IPHONE_INSTAGRAM, maxTouchPoints: 5 })),
+    ).toBe('open-in-safari')
+  })
+
+  it('points an Android in-app webview at Chrome', () => {
+    expect(
+      resolveInstallTarget(env({ userAgent: ANDROID_FACEBOOK, uaMobile: true })),
+    ).toBe('open-in-chrome')
+  })
+
+  it('never tells a real Chrome tab to open Chrome while its event is pending', () => {
+    expect(resolveInstallTarget(env({ uaMobile: true, userAgent: ANDROID_CHROME }))).toBe(
+      'none',
+    )
+  })
+
+  it('prefers the install button over a redirect when both could match', () => {
+    expect(
+      resolveInstallTarget(
+        env({ hasPrompt: true, uaMobile: true, userAgent: ANDROID_FACEBOOK }),
+      ),
+    ).toBe('prompt')
   })
 
   it('stays quiet in a browser that offers neither route', () => {
