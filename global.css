@@ -38,6 +38,32 @@
   --color-on-strong: #d8d2f4;
 }
 
+/* No text selection anywhere. Every surface the player taps and swipes has text
+   sitting on it, so a long press that highlights a word — and on iOS raises the
+   copy callout over the dial — is never what they meant.
+
+   Set once on `html` and inherited, rather than repeated per component: the
+   `selectable={false}` props scattered through the tree are this same intent
+   applied one Text at a time, and they no longer have to be remembered.
+
+   Web only, like the landscape guard below. React Native's Text is already
+   unselectable on iOS and Android, so there is nothing to switch off there.
+
+   `-webkit-touch-callout` is the half that matters on iOS Safari: `user-select`
+   alone stops the highlight but still lets the callout menu appear on a long
+   press. */
+html {
+  -webkit-touch-callout: none;
+  user-select: none;
+}
+
+/* The one exception. The nickname field renders as an <input> on web, and a field
+   you cannot place a caret in or select-all inside is broken rather than tidy. */
+input,
+textarea {
+  user-select: auto;
+}
+
 /* NINE title: each letter has its own float period for an organic async feel.
    CSS handles this on web; native ignores animation/keyframes gracefully. */
 @keyframes letter-float {
