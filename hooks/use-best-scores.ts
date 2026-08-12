@@ -11,8 +11,12 @@ export function useBestScores(
   mode: Mode,
   difficulty: Difficulty,
   enabled: boolean,
-): { leaders: Leaders; refresh: () => void } {
+): { leaders: Leaders; loaded: boolean; refresh: () => void } {
   const [leaders, setLeaders] = useState<Leaders>(NO_LEADERS)
+  // True once the first fetch for this board has settled, however it went — an empty
+  // board and three failed requests both count, because callers wait on this to know
+  // the numbers are as good as they are going to get, not that they are non-null.
+  const [loaded, setLoaded] = useState(false)
   // Bumped on every load, board change and unmount, so a slow response that has been
   // superseded can tell and drop itself.
   const requestIdRef = useRef(0)
@@ -25,6 +29,7 @@ export function useBestScores(
       ),
     )
     if (requestIdRef.current !== id) return
+    setLoaded(true)
     // All three null means either an untouched board or three failed requests, and we
     // cannot tell which — so keep whatever is on screen instead of blanking a line that
     // was already showing real scores.
@@ -36,10 +41,12 @@ export function useBestScores(
     if (!enabled) {
       requestIdRef.current++
       setLeaders(NO_LEADERS)
+      setLoaded(false)
       return
     }
     // The board changed, so the leaders on screen belong to a different board.
     setLeaders(NO_LEADERS)
+    setLoaded(false)
     void load()
     return () => {
       requestIdRef.current++
@@ -51,5 +58,5 @@ export function useBestScores(
     void load()
   }, [enabled, load])
 
-  return { leaders, refresh }
+  return { leaders, loaded, refresh }
 }

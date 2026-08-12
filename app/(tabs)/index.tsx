@@ -174,11 +174,11 @@ export default function GameScreen() {
   const [showNicknameModal, setShowNicknameModal] = useState(false)
 
   // Board leaders for the strip above the top bar. Trainee has no leaderboard.
-  const { leaders, refresh: refreshBests } = useBestScores(
-    mode,
-    difficulty,
-    mode !== 'trainee',
-  )
+  const {
+    leaders,
+    loaded: bestsLoaded,
+    refresh: refreshBests,
+  } = useBestScores(mode, difficulty, mode !== 'trainee')
   const bestToday = leaders.today?.score ?? null
   const bestWeek = leaders.week?.score ?? null
   const bestEver = leaders.ever?.score ?? null
@@ -423,6 +423,7 @@ export default function GameScreen() {
             mode={mode}
             announcement={announcement}
             yourBest={stats[mode][difficulty].score}
+            loaded={bestsLoaded}
             today={bestToday}
             week={bestWeek}
             ever={bestEver}
