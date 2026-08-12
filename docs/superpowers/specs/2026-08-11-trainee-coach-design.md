@@ -146,11 +146,30 @@ cognitive-complexity ceiling and every branch there is expensive.
 
 A habit or debrief arriving on a clean hit is discarded rather than queued. A
 celebration is not the moment to correct someone, and holding a correction to
-deliver it three seconds late would attach it to the wrong press.
+deliver it three seconds late would attach it to the wrong press. This is enforced
+by a `muted` flag the hook takes from the call site (`celebration.message !== null`)
+rather than by the reducer's own `cleanHitReason` check alone: the batch that
+triggered a shower is not the only thing a shower outlasts. Praise holds a full
+second longer than a coach line does, so a verdict produced against a _later_
+press, one that landed while an earlier hit's shower was still running, must be
+dropped too, and the reducer has no way to know the shower is still up. `say`
+checks `muted` first and drops unconditionally when it is set, which is the same
+rule the debrief path already applied to its own batch, now applied to every path
+that can produce a line.
 
 Coach messages hold for 3 s against praise's 4 s. Praise is tied to the shower's
 length; a mid-route hint wants to clear before the player's next press makes it
 stale.
+
+The rank order above is not the whole rule once time is in play. Two lines compete
+by rank only while they concern the same moment; once the one on screen has had
+600 ms to be read, an arriving line wins outright regardless of rank, because at
+that point it is no longer contention for a shared observation — it is a fresh
+one about the press just made, and a stale habit line should not be able to sit
+there mutely blocking the debrief for a hit that followed it. This is what sent a
+three-second-old habit line silently swallowing the debrief for a hit just landed
+back when rank alone decided every arrival, and `CONTENTION_MS` is the fix: past
+it, recency wins; inside it, rank still does.
 
 `HitPraiseLine` itself does not change. It already takes `string | null`, already
 holds its last words through the fade, and already reserves its height whether or
@@ -206,14 +225,15 @@ and only for a line of copy — `HitPraiseLine` and `TraineeStats` are left alon
 Named constants in `machines/coach.ts`, except the dwell, which belongs to the hook
 — the reducer has no notion of time:
 
-| Constant                 | Value | Where      | What it decides                            |
-| ------------------------ | ----- | ---------- | ------------------------------------------ |
-| `LOST_PRESSES`           | 3     | `coach.ts` | unhelpful presses before `lost` fires      |
-| `TAP_RUN`                | 4     | `coach.ts` | same-key presses before `tapping`          |
-| `COARSE_GAP`             | 12    | `coach.ts` | gap that makes a fine key the wrong opener |
-| `FINE_WEIGHT`            | 2     | `coach.ts` | which keys count as fine                   |
-| `HABIT_COOLDOWN_TARGETS` | 8     | `coach.ts` | resolved targets before a habit repeats    |
-| `COACH_MS`               | 3000  | the hook   | how long a coach line holds                |
+| Constant                 | Value | Where      | What it decides                                                |
+| ------------------------ | ----- | ---------- | -------------------------------------------------------------- |
+| `LOST_PRESSES`           | 3     | `coach.ts` | unhelpful presses before `lost` fires                          |
+| `TAP_RUN`                | 4     | `coach.ts` | same-key presses before `tapping`                              |
+| `COARSE_GAP`             | 12    | `coach.ts` | gap that makes a fine key the wrong opener                     |
+| `FINE_WEIGHT`            | 2     | `coach.ts` | which keys count as fine                                       |
+| `HABIT_COOLDOWN_TARGETS` | 8     | `coach.ts` | resolved targets before a habit repeats                        |
+| `COACH_MS`               | 3000  | the hook   | how long a coach line holds                                    |
+| `CONTENTION_MS`          | 600   | the hook   | how long an arriving line contends on rank rather than recency |
 
 `COARSE_GAP` is the one genuine heuristic here and the most likely to want tuning
 by feel. 12 is the point past which a ×9 or ×6 press is unambiguously the better

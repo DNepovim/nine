@@ -40,12 +40,19 @@ export function useTraineeCoach({
   grid,
   targets,
   batch,
+  muted,
 }: {
   inRun: boolean
   mode: Mode
   grid: Grid
   targets: readonly Target[]
   batch: HitBatch
+  // True while a celebration owns the line. The coach drops what it would have said
+  // rather than storing it: praise holds a second longer than a coach line does, so
+  // a queued correction would surface after the shower ended, describing a press the
+  // player made three seconds earlier. The debrief path already drops for the same
+  // reason — this is that rule applied to the press path too.
+  muted: boolean
 }) {
   // Trainee only, and only while playing — the same gate the celebration keeps. The
   // other modes celebrate the run, and coaching mid-run there would talk over the
@@ -77,6 +84,7 @@ export function useTraineeCoach({
   // attached to the wrong press, but a habit line untouched for the whole window
   // must not silently swallow the debrief for a hit just landed.
   const say = (kind: CoachKind, text: string) => {
+    if (muted) return
     const at = Date.now()
     setShowing((current) => {
       if (current === null) return { kind, text, at }
@@ -139,7 +147,12 @@ export function useTraineeCoach({
     lastSeqRef.current = batch.seq
     if (!active) return
     // A clean hit gets confetti and praise, and a celebration is not the moment to
-    // correct someone — the debrief is dropped rather than held.
+    // correct someone — the debrief is dropped rather than held. This and `muted`
+    // (checked inside `say`) are the same rule reached by two routes, not one
+    // guarding the other redundantly: this inspects the batch that just resolved,
+    // while `muted` reflects what is actually on screen, and the celebration it
+    // started outlasts that batch — so a later debrief can still land mid-shower
+    // with `cleanHitReason` on its own *new* batch reading false.
     if (cleanHitReason(batch.hits) !== null) return
     // The last hit of the batch, the same one the stat row reports: a batch is every
     // target one press cleared, and it is that press the player is asking about.

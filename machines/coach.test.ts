@@ -7,6 +7,7 @@ import {
   pressFacts,
   type CoachState,
   type PressFacts,
+  type PressVerdict,
 } from './coach'
 import { buildPressGrid, type Grid, type Target } from './game'
 import { computePar } from './scoring'
@@ -45,7 +46,7 @@ const target = (over: Partial<Target> & { value: number }): Target => ({
 // Feeds a sequence of presses through the reducer and reports every verdict it
 // produced, so a test can say what a run of presses earned.
 const run = (state: CoachState, sequence: readonly PressFacts[]) =>
-  sequence.reduce<{ state: CoachState; verdicts: (string | null)[] }>(
+  sequence.reduce<{ state: CoachState; verdicts: (PressVerdict | null)[] }>(
     (acc, next) => {
       const result = coachReducer(acc.state, next)
       return { state: result.state, verdicts: [...acc.verdicts, result.verdict] }
@@ -268,8 +269,10 @@ describe('habit cool-down', () => {
 
 describe('one verdict per press', () => {
   it('prefers the tapping habit when a tap run reaches an opening press', () => {
-    // A run of taps can survive a hit and land on the next target's opening press,
-    // so both habits qualify at once. Several presses of evidence beat one.
+    // No hit is needed for a tap run to reach an opening press: a newly spawned
+    // target can become the nearest one with zero steps taken, so the next press of
+    // an ongoing run is also that target's opener. Both habits qualify at once, and
+    // several presses of evidence beat one.
     const tapping = run(initialCoachState(), [
       facts({ index: 0, delta: 1, improved: true }),
       facts({ index: 0, delta: 1, improved: true }),

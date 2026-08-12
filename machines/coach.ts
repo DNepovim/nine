@@ -133,6 +133,10 @@ function nextTapRun(current: TapRun | null, facts: PressFacts): TapRun | null {
 export function coachReducer(state: CoachState, facts: PressFacts): CoachResult {
   // Presses with an empty board are idle fiddling. Nothing is judged, and the tap
   // run is dropped so it cannot span the gap and surface against the next target.
+  // `unhelpful` is deliberately left standing, unlike the tap run — a gap with no
+  // target on the board is not itself evidence of anything, so it neither adds to
+  // the count nor clears it. The hook zeroes it via `noteResolved` when the board
+  // empties, not here.
   if (!facts.routing) return { state: { ...state, tapRun: null }, verdict: null }
 
   const tapRun = nextTapRun(state.tapRun, facts)
@@ -140,9 +144,11 @@ export function coachReducer(state: CoachState, facts: PressFacts): CoachResult 
   const lostSaid = facts.improved ? false : state.lostSaid
   const advanced: CoachState = { ...state, tapRun, unhelpful, lostSaid }
 
-  // A tap run can carry into an opening press — tap a key up five times, land a hit,
-  // and the survivors re-reference — so both habits can qualify at once. Tapping
-  // wins: several presses of evidence beat one.
+  // A tap run can carry into an opening press without any hit at all: a newly spawned
+  // target can become the nearest one with `userSteps === 0`, so the very next press
+  // on the key already being tapped is both a continuation of the run and an opener.
+  // Both habits can qualify at once. Tapping wins: several presses of evidence beat
+  // one.
   if (
     tapRun !== null &&
     tapRun.count >= TAP_RUN &&

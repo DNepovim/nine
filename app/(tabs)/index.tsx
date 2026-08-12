@@ -193,7 +193,14 @@ export default function GameScreen() {
     refresh: refreshBests,
   })
   const celebration = useHitCelebration(inRun, mode, hitBatch)
-  const coach = useTraineeCoach({ inRun, mode, grid, targets, batch: hitBatch })
+  const coach = useTraineeCoach({
+    inRun,
+    mode,
+    grid,
+    targets,
+    batch: hitBatch,
+    muted: celebration.message !== null,
+  })
 
   const announcement = useAnnouncements({
     inRun,
