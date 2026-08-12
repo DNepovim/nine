@@ -7,6 +7,18 @@ import type { Release } from '@/types/news'
 // different announcement or players who already saw the old one will miss it.
 export const RELEASES: Release[] = [
   {
+    date: '2026-08-12',
+    items: [
+      {
+        id: 'trainee-coach',
+        icon: 'school',
+        accent: '#4C7EFF',
+        title: 'Trainee coaches you',
+        body: 'Trainee now says when a move went to waste, and what a hit cost.',
+      },
+    ],
+  },
+  {
     date: '2026-08-11',
     items: [
       {
