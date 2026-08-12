@@ -7,8 +7,13 @@ import { displayRows } from '@/lib/leaderboard-rows'
 import { ScoreRow } from './score-row'
 import { SkeletonRow } from './skeleton-row'
 
-// Label the unpublished row carries in the nickname column.
-const UNPUBLISHED_LABEL = 'YOU'
+// What the local row is called before it has a name on the server.
+const ANONYMOUS_LABEL = 'YOU'
+
+// Why the local row is not on the board — a missing nickname is the player's to fix,
+// a missing connection is not.
+const UNPUBLISHED_NOTE = 'NOT PUBLISHED'
+const UNSYNCED_NOTE = 'NOT SYNCED'
 
 export function TabPanel({
   data,
@@ -23,7 +28,7 @@ export function TabPanel({
   userId: string | null
   nickname: string | null
   width: number
-  // The player's best local score for this period, when it has yet to be published.
+  // The player's best local score for this period, when it has yet to reach the board.
   unpublishedScore: number | null
 }) {
   if (data.loading) {
@@ -36,7 +41,17 @@ export function TabPanel({
     )
   }
 
-  if (data.error) {
+  const unpublished =
+    unpublishedScore === null
+      ? null
+      : { score: unpublishedScore, label: nickname ?? ANONYMOUS_LABEL }
+  const note = nickname === null ? UNPUBLISHED_NOTE : UNSYNCED_NOTE
+
+  // The board could not be read — offline, most likely. A record held on the device is
+  // still the player's, so it stands on its own rather than vanishing with the board;
+  // the notice underneath says why it is alone up there.
+  const rows = displayRows(data.error === null ? data.rows : [], userId, unpublished)
+  if (data.error !== null && isEmptyArray(rows)) {
     return (
       <View style={{ width }} className="items-center py-4">
         <Text selectable={false} className="font-mono text-[9px] font-bold text-dim">
@@ -46,11 +61,6 @@ export function TabPanel({
     )
   }
 
-  const unpublished =
-    unpublishedScore === null
-      ? null
-      : { score: unpublishedScore, label: UNPUBLISHED_LABEL }
-  const rows = displayRows(data.rows, userId, unpublished)
   const myRank = data.myRank
   const userIsInTop5 = myRank !== null && myRank.rank <= rows.length
 
@@ -74,7 +84,7 @@ export function TabPanel({
             nickname: row.nickname,
             score: row.score,
             isUser: row.isUser,
-            unpublished: row.unpublished,
+            note: row.unpublished ? note : undefined,
           }}
           accentColor={accentColor}
         />

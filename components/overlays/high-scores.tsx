@@ -10,6 +10,7 @@ import Animated, {
 
 import { useLeaderboard } from '@/hooks/use-leaderboard'
 import type { LeaderboardState } from '@/hooks/use-leaderboard'
+import { useOnline } from '@/hooks/use-online'
 import { usePendingScores } from '@/hooks/use-pending-scores'
 import { type LeaderboardTab } from '@/lib/leaderboard'
 import { withMyBest } from '@/lib/leaderboard-optimistic'
@@ -17,6 +18,7 @@ import { todayISO } from '@/lib/leaderboard-period'
 import { bestPendingScore } from '@/lib/pending-scores'
 import { MODE_GRADIENT, type Difficulty, type Mode } from '@/machines/game'
 
+import { OfflineNotice } from './offline-notice'
 import { PublishScoresButton } from './publish-scores-button'
 import { TabPanel } from './tab-panel'
 
@@ -30,10 +32,20 @@ function applyOptimistic(
   state: LeaderboardState,
   userId: string | null,
   nickname: string | null,
+  online: boolean,
   optimisticScore: number | undefined,
   optimisticHits: number | undefined,
 ): LeaderboardState {
-  if (!optimisticScore || !userId || !nickname || state.loading || state.error !== null) {
+  // Offline, the run that just ended is in the pending queue and shows as a local row.
+  // Folding it in here as well would put the same score on the board twice.
+  if (
+    !optimisticScore ||
+    !userId ||
+    !nickname ||
+    !online ||
+    state.loading ||
+    state.error !== null
+  ) {
     return state
   }
   const merged = withMyBest(
@@ -81,16 +93,40 @@ export function HighScores({
   const gradientColors = MODE_GRADIENT[gameMode] as [string, string]
   const effectiveWidth = panelWidth > 0 ? panelWidth : windowWidth - 32
 
+  const online = useOnline()
+
   const { today, week, forever } = useLeaderboard(gameMode, difficulty, userId)
   const dataByTab: Record<LeaderboardTab, LeaderboardState> = {
-    today: applyOptimistic(today, userId, nickname, optimisticScore, optimisticHits),
-    week: applyOptimistic(week, userId, nickname, optimisticScore, optimisticHits),
-    forever: applyOptimistic(forever, userId, nickname, optimisticScore, optimisticHits),
+    today: applyOptimistic(
+      today,
+      userId,
+      nickname,
+      online,
+      optimisticScore,
+      optimisticHits,
+    ),
+    week: applyOptimistic(
+      week,
+      userId,
+      nickname,
+      online,
+      optimisticScore,
+      optimisticHits,
+    ),
+    forever: applyOptimistic(
+      forever,
+      userId,
+      nickname,
+      online,
+      optimisticScore,
+      optimisticHits,
+    ),
   }
 
-  // Local runs that never reached the server, shown with a mark until a nickname
-  // exists — at which point the flush publishes them and the real rows take over.
-  const pending = usePendingScores(nickname === null)
+  // Local records, shown with a mark in the two cases where the server cannot show
+  // them: there is no nickname to publish under, or there is no connection to publish
+  // over. Any other time the flush has already landed them and the real rows take over.
+  const pending = usePendingScores(nickname === null || !online)
   const day = todayISO()
   const unpublishedByTab: Record<LeaderboardTab, number | null> = {
     today: bestPendingScore(pending, gameMode, difficulty, 'today', day),
@@ -268,7 +304,9 @@ export function HighScores({
         </ScrollView>
       </View>
 
-      {hasUnpublished && (
+      {!online && <OfflineNotice unsynced={hasUnpublished} />}
+
+      {hasUnpublished && nickname === null && (
         <PublishScoresButton
           from={gradientColors[0]}
           to={gradientColors[1]}

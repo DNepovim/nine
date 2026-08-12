@@ -5,8 +5,8 @@ export type ScoreEntry = {
   nickname: string
   score: number
   isUser?: boolean
-  // A local best that has not reached the board yet — says so in the row itself.
-  unpublished?: boolean
+  // Set on a local record that has not reached the board yet — the row says why.
+  note?: string
 }
 
 export function ScoreRow({
@@ -38,13 +38,13 @@ export function ScoreRow({
         >
           {entry.nickname}
         </Text>
-        {entry.unpublished === true && (
+        {entry.note !== undefined && (
           <Text
             selectable={false}
             numberOfLines={1}
             className="font-mono text-[7px] font-bold tracking-[0.5px] text-dim"
           >
-            NOT PUBLISHED
+            {entry.note}
           </Text>
         )}
       </View>

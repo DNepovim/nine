@@ -1,4 +1,5 @@
 import type { Leader } from '@/lib/announcements'
+import { noteRequest } from '@/lib/connectivity'
 import { tabSince, todayISO, type LeaderboardTab } from '@/lib/leaderboard-period'
 import { supabase } from '@/lib/supabase'
 import type { Difficulty, Mode } from '@/machines/game'
@@ -33,6 +34,9 @@ export async function fetchTop5(
     p_limit: 5,
     p_since: tabToSince(tab),
   })
+  // Every board read doubles as a reachability probe — this is the request the app
+  // makes most often, so it is what notices a connection coming back.
+  noteRequest(res.error)
   if (res.error) return { rows: [], error: res.error.message }
   return { rows: (res.data as LeaderboardRow[] | null) ?? [], error: null }
 }
@@ -54,6 +58,7 @@ export async function fetchPeriodLeader(
     p_limit: 1,
     p_since: tabToSince(tab),
   })
+  noteRequest(res.error)
   if (res.error) return null
   const rows = (res.data as LeaderboardRow[] | null) ?? []
   const top = rows[0]
@@ -73,6 +78,7 @@ export async function fetchMyRank(
     p_difficulty: difficulty,
     p_since: tabToSince(tab),
   })
+  noteRequest(res.error)
   if (res.error) return { row: null, error: res.error.message }
   const rows = (res.data as MyRankRow[] | null) ?? []
   return { row: rows[0] ?? null, error: null }
