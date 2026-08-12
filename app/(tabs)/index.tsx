@@ -61,6 +61,7 @@ import { useScoreSubmission } from '@/hooks/use-score-submission'
 import { useSupabaseAuth } from '@/hooks/use-supabase-auth'
 import { useTargetSpawner } from '@/hooks/use-target-spawner'
 import { useTheme } from '@/hooks/use-theme'
+import { useTraineeCoach } from '@/hooks/use-trainee-coach'
 import { useWhatsNew } from '@/hooks/use-whats-new'
 import { valueProgress } from '@/lib/value-progress'
 import {
@@ -192,6 +193,7 @@ export default function GameScreen() {
     refresh: refreshBests,
   })
   const celebration = useHitCelebration(inRun, mode, hitBatch)
+  const coach = useTraineeCoach({ inRun, mode, grid, targets, batch: hitBatch })
 
   const announcement = useAnnouncements({
     inRun,
@@ -456,7 +458,11 @@ export default function GameScreen() {
               board bests; Trainee has no board, and a learner wants to know how
               the press they just made actually went. */}
           {mode === 'trainee' && (
-            <TraineeStats hits={hits} batch={hitBatch} praise={celebration.message} />
+            <TraineeStats
+              hits={hits}
+              batch={hitBatch}
+              praise={celebration.message ?? coach.line}
+            />
           )}
 
           {/* Row 2 — hearts · center stat · score cluster */}
@@ -611,9 +617,11 @@ export default function GameScreen() {
                 peakFrom={DARK_MODE_GRADIENT[mode][0]}
                 peakTo={DARK_MODE_GRADIENT[mode][1]}
                 onDelta={(delta) => {
+                  coach.notePress(index, delta)
                   send({ type: 'PRESS', index, delta, now: Date.now() })
                 }}
                 onSet={(cellValue) => {
+                  coach.noteSet(index, cellValue)
                   send({ type: 'SET_CELL', index, value: cellValue, now: Date.now() })
                 }}
               />

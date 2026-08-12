@@ -306,6 +306,7 @@ export function HowToPlayOverlay({ onClose }: { onClose: () => void }) {
           facts={[
             'Pure practice — no lives, no score, and a relaxed clock.',
             'Buttons show their weight and max, so you can learn the math.',
+            'A coach line under the stat row says when a move was wasted, and what a hit cost.',
           ]}
         />
         <ModeCard
