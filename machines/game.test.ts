@@ -8,6 +8,7 @@ import {
   gameMachine,
   type Grid,
 } from '@/machines/game'
+import { cleanHitReason } from '@/machines/scoring'
 
 const start = (mode: 'trainee' | 'accuracy' | 'speed') => {
   const actor = createActor(gameMachine)
@@ -243,5 +244,60 @@ describe('grid builders', () => {
 
   it('sets a cell outright', () => {
     expect(buildSetGrid(zeros, 8, 9)[2][2]).toBe(9)
+  })
+})
+
+describe('a new run does not inherit the last one', () => {
+  it('empties the hit batch on START while keeping its seq climbing', () => {
+    const actor = start('trainee')
+    actor.send({ type: 'ADD_TARGET', value: 9, at: 0 })
+    actor.send({ type: 'PRESS', index: 8, delta: 1, now: 0 })
+    const landed = actor.getSnapshot().context.hitBatch
+    expect(landed.hits).toHaveLength(1)
+
+    actor.send({ type: 'PAUSE' })
+    actor.send({ type: 'MENU' })
+    actor.send({ type: 'START' })
+    const fresh = actor.getSnapshot().context.hitBatch
+    // Emptied, so nothing describes a press from the previous run — but the seq
+    // keeps climbing, because the UI keys its animations on it.
+    expect(fresh.hits).toEqual([])
+    expect(fresh.seq).toBe(landed.seq)
+  })
+
+  it('empties it on RESTART too', () => {
+    const actor = start('accuracy')
+    actor.send({ type: 'ADD_TARGET', value: 9, at: 0 })
+    actor.send({ type: 'PRESS', index: 8, delta: 1, now: 0 })
+    expect(actor.getSnapshot().context.hitBatch.hits).toHaveLength(1)
+
+    // Accuracy has three lives, so three expiries are what reaches game over —
+    // the only state RESTART is handled in.
+    for (const value of [100, 101, 102]) {
+      actor.send({ type: 'ADD_TARGET', value, at: 0 })
+      const id = actor.getSnapshot().context.targets[0]?.id ?? 0
+      actor.send({ type: 'TARGET_EXPIRED', id })
+    }
+    expect(actor.getSnapshot().value).toBe('gameOver')
+
+    actor.send({ type: 'RESTART' })
+    expect(actor.getSnapshot().context.hitBatch.hits).toEqual([])
+  })
+
+  it('carries no clean hit from another mode into a trainee run', () => {
+    // The bug this pins: seq is monotonic across modes, so a Trainee run opened
+    // with Accuracy's last hit still in the batch — earning a confetti shower and
+    // filling the stat row before the player had touched the dial.
+    const actor = start('accuracy')
+    actor.send({ type: 'ADD_TARGET', value: 9, at: 0 })
+    actor.send({ type: 'PRESS', index: 8, delta: 1, now: 0 })
+    expect(cleanHitReason(actor.getSnapshot().context.hitBatch.hits)).not.toBeNull()
+
+    // Leaving a run goes through pause: MENU is not handled while playing.
+    actor.send({ type: 'PAUSE' })
+    actor.send({ type: 'MENU' })
+    actor.send({ type: 'SET_MODE', mode: 'trainee' })
+    actor.send({ type: 'START' })
+    expect(cleanHitReason(actor.getSnapshot().context.hitBatch.hits)).toBeNull()
   })
 })

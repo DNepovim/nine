@@ -31,18 +31,25 @@ export function useHitCelebration(
   batch: HitBatch,
 ): HitCelebration {
   const [current, setCurrent] = useState<HitCelebration>(NOTHING)
-  const lastSeqRef = useRef(0)
+  // Seeded from the batch on screen rather than from zero, so a remount mid-run
+  // replays nothing that has already been celebrated.
+  const lastSeqRef = useRef(batch.seq)
   // Trainee only. The other modes celebrate the run, and a shower per clean hit
   // would drown the record celebration that actually means something there.
   const active = inRun && mode === 'trainee'
 
   useEffect(() => {
+    // The baseline advances even while inactive. `seq` climbs across games and
+    // across modes, so a baseline that only moved during a Trainee run would let
+    // another mode's last hit still look fresh when one started.
+    const fresh = batch.seq !== lastSeqRef.current
+    lastSeqRef.current = batch.seq
+
     if (!active) {
       setCurrent(NOTHING)
       return
     }
-    if (batch.seq === lastSeqRef.current) return
-    lastSeqRef.current = batch.seq
+    if (!fresh) return
 
     // A batch holds every target one press cleared. Any clean hit among them
     // earns the shower; there is only ever one shower to give.

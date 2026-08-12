@@ -127,9 +127,16 @@ type Event =
 // The machine's `send` function, for hooks that dispatch events.
 export type GameSend = (event: Event) => void
 
-// Per-game reset; mode, difficulty, stats and hitBatch are intentionally omitted so
-// assign leaves them untouched (hitBatch.seq stays monotonic across games).
-const freshGame = (mode: Mode) => ({
+// Per-game reset; mode, difficulty and stats are intentionally omitted so assign
+// leaves them untouched.
+//
+// The hit batch is emptied but keeps its seq. The seq keys the UI's celebration and
+// floating-point animations, so it has to keep climbing across games — but the hits
+// themselves describe a press made in the *previous* run, and possibly in another
+// mode, since nothing else clears them. Carrying them into a new run opened it with
+// a stale hit already on Trainee's stat row and still able to earn a confetti
+// shower, before the player had touched the dial.
+const freshGame = (mode: Mode, seq: number) => ({
   grid: initialGrid,
   hits: 0,
   score: 0,
@@ -139,6 +146,7 @@ const freshGame = (mode: Mode) => ({
   spdSum: 0,
   targets: [] as Target[],
   nextTargetId: 0,
+  hitBatch: { seq, hits: [] as HitInfo[] },
 })
 
 const bestByScore = (
@@ -391,7 +399,9 @@ export const gameMachine = createMachine({
       on: {
         START: {
           target: 'playing',
-          actions: assign(({ context }: { context: Context }) => freshGame(context.mode)),
+          actions: assign(({ context }: { context: Context }) =>
+            freshGame(context.mode, context.hitBatch.seq),
+          ),
         },
         SET_MODE: {
           actions: assign(
@@ -628,7 +638,9 @@ export const gameMachine = createMachine({
         },
         RESTART: {
           target: 'playing',
-          actions: assign(({ context }: { context: Context }) => freshGame(context.mode)),
+          actions: assign(({ context }: { context: Context }) =>
+            freshGame(context.mode, context.hitBatch.seq),
+          ),
         },
       },
     },
