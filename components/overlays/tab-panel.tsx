@@ -21,6 +21,7 @@ export function TabPanel({
   userId,
   nickname,
   width,
+  digitFont,
   unpublishedScore,
 }: {
   data: LeaderboardState
@@ -28,6 +29,8 @@ export function TabPanel({
   userId: string | null
   nickname: string | null
   width: number
+  // Resolved once by the parent — 'DSEG7', or `mono` while the face is still loading.
+  digitFont: string
   // The player's best local score for this period, when it has yet to reach the board.
   unpublishedScore: number | null
 }) {
@@ -88,6 +91,7 @@ export function TabPanel({
             achievedAt: row.achievedAt ?? undefined,
           }}
           accentColor={accentColor}
+          digitFont={digitFont}
         />
       ))}
       {myRank !== null && !userIsInTop5 && nickname !== null && (
@@ -108,6 +112,7 @@ export function TabPanel({
               isUser: true,
             }}
             accentColor={accentColor}
+            digitFont={digitFont}
           />
         </>
       )}

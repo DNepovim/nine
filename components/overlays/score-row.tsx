@@ -18,9 +18,13 @@ export type ScoreEntry = {
 export function ScoreRow({
   entry,
   accentColor,
+  digitFont,
 }: {
   entry: ScoreEntry
   accentColor: string
+  // The seven-segment face, or `mono` until it loads. Passed in rather than loaded
+  // here: a board is six of these rows, and they should not each ask for the font.
+  digitFont: string
 }) {
   const highlight = entry.isUser === true
   const accentStyle = highlight ? { color: accentColor } : undefined
@@ -73,10 +77,18 @@ export function ScoreRow({
           </Text>
         )}
       </View>
+      {/* The seven-segment face and the score green every other score in the app
+          wears — the top bar's bests, the score above the dial, the game-over
+          readout. A board of scores set in the label ink was the one place a number
+          did not look like one.
+
+          Deliberately not accented on the player's own row: the tinted background,
+          rank and nickname already say which row is theirs, and a score column that
+          changes colour on one line stops reading as a column. */}
       <Text
         selectable={false}
-        className="font-mono text-[10px] font-bold text-primary"
-        style={accentStyle}
+        className="text-[10px] tracking-[1px] text-score"
+        style={{ fontFamily: digitFont }}
       >
         {entry.score}
       </Text>

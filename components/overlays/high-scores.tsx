@@ -1,3 +1,4 @@
+import { useFonts } from 'expo-font'
 import { LinearGradient } from 'expo-linear-gradient'
 import { useEffect, useRef, useState } from 'react'
 import { Pressable, ScrollView, Text, View } from 'react-native'
@@ -8,6 +9,8 @@ import Animated, {
   withSpring,
 } from 'react-native-reanimated'
 
+import DSEG7Font from '@/assets/fonts/DSEG7Classic-Bold.ttf'
+import { mono } from '@/constants/theme'
 import { useLeaderboard } from '@/hooks/use-leaderboard'
 import type { LeaderboardState } from '@/hooks/use-leaderboard'
 import { useOnline } from '@/hooks/use-online'
@@ -84,6 +87,10 @@ export function HighScores({
   // twice.
   onAddNickname?: () => void
 }) {
+  // Loaded once here rather than per row: the board draws six of them, and every
+  // score in the app wears the seven-segment face. `mono` stands in until it lands.
+  const [dsegLoaded] = useFonts({ DSEG7: DSEG7Font })
+  const digitFont = dsegLoaded ? 'DSEG7' : mono
   const { width: windowWidth } = useViewport()
   const [panelWidth, setPanelWidth] = useState(0)
   const [activeTab, setActiveTab] = useState<LeaderboardTab>('today')
@@ -305,6 +312,7 @@ export function HighScores({
               userId={userId}
               nickname={nickname}
               width={effectiveWidth}
+              digitFont={digitFont}
               unpublishedScore={unpublishedByTab[key]}
             />
           ))}
