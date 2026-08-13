@@ -6,12 +6,14 @@ import { Pressable, Text, View } from 'react-native'
 
 import { Screen } from '@/components/screen'
 import { useTheme } from '@/hooks/use-theme'
+import type { Period } from '@/lib/announcements'
 import { earnedChallenge, nextChallenge } from '@/lib/next-challenge'
 import { DARK_MODE_GRADIENT, type Difficulty, type Mode } from '@/machines/game'
 
 import { BoardBadges } from './board-badges'
 import { GameOverTitle } from './game-over-title'
 import { HighScores } from './high-scores'
+import { RecordMedals } from './record-medals'
 import { RunStats } from './run-stats'
 import { ScoreReadout } from './score-readout'
 
@@ -30,6 +32,7 @@ export function GameOverOverlay({
   score,
   hits,
   strikes,
+  medals,
   avgAccuracy,
   avgSpeed,
   onPlayAgain,
@@ -46,6 +49,8 @@ export function GameOverOverlay({
   hits: number
   // How many of those hits landed on a streak — the challenge is offered on it.
   strikes: number
+  // The boards this run ended on top of, biggest first.
+  medals: readonly Period[]
   avgAccuracy: number
   avgSpeed: number
   // Straight back into a run on this same board.
@@ -92,6 +97,8 @@ export function GameOverOverlay({
               GAME OVER title can only be one number — and the label was a third line
               of small caps on a screen that already had too many. */}
           <ScoreReadout score={score} />
+
+          <RecordMedals periods={medals} gameMode={gameMode} />
 
           <RunStats hits={hits} avgAccuracy={avgAccuracy} avgSpeed={avgSpeed} />
 

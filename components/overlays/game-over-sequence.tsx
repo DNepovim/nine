@@ -2,6 +2,7 @@ import { type StyleProp, type ViewStyle } from 'react-native'
 import Animated, { type AnimatedStyle } from 'react-native-reanimated'
 
 import { type DyingPhase } from '@/hooks/use-dying-sequence'
+import type { Period } from '@/lib/announcements'
 import { type Difficulty, type Mode } from '@/machines/game'
 
 import { GameOverOverlay } from './game-over-overlay'
@@ -27,6 +28,7 @@ export function GameOverSequence({
   score,
   hits,
   strikes,
+  medals,
   avgAccuracy,
   avgSpeed,
   onPlayAgain,
@@ -44,6 +46,7 @@ export function GameOverSequence({
   score: number
   hits: number
   strikes: number
+  medals: readonly Period[]
   avgAccuracy: number
   avgSpeed: number
   onPlayAgain: () => void
@@ -69,6 +72,7 @@ export function GameOverSequence({
           score={score}
           hits={hits}
           strikes={strikes}
+          medals={medals}
           avgAccuracy={avgAccuracy}
           avgSpeed={avgSpeed}
           titleHidden={!revealed}

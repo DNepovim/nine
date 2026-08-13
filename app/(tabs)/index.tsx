@@ -63,6 +63,7 @@ import { useTargetSpawner } from '@/hooks/use-target-spawner'
 import { useTheme } from '@/hooks/use-theme'
 import { useTraineeCoach } from '@/hooks/use-trainee-coach'
 import { useWhatsNew } from '@/hooks/use-whats-new'
+import { medalPeriods } from '@/lib/record-medals'
 import { valueProgress } from '@/lib/value-progress'
 import {
   computeSum,
@@ -203,7 +204,7 @@ export default function GameScreen() {
     muted: celebration.message !== null,
   })
 
-  const announcement = useAnnouncements({
+  const { announcement, crossed } = useAnnouncements({
     inRun,
     score: state.context.score,
     // Trainee's entry stays at zero — the machine neither records nor hydrates a
@@ -224,6 +225,11 @@ export default function GameScreen() {
       submitScore(mode, difficulty, state.context.score, state.context.hits)
     },
   })
+
+  // The boards the run ended on top of, for the game-over screen. Read from what the
+  // bar announced rather than from the boards themselves: by game over the player's own
+  // score is the record, so asking the leaderboard would say yes to every run.
+  const runMedals = medalPeriods(crossed)
 
   // Trigger score submission on each game-over transition.
   const prevIsGameOverRef = useRef(false)
@@ -670,6 +676,7 @@ export default function GameScreen() {
         score={state.context.score}
         hits={state.context.hits}
         strikes={state.context.strikes}
+        medals={runMedals}
         avgAccuracy={avgAccuracy}
         avgSpeed={avgSpeed}
         onPlayAgain={() => {

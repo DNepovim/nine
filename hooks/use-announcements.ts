@@ -48,8 +48,12 @@ export function useAnnouncements({
   // Called the instant a board record falls, so the score reaches the board while
   // the run is still going and rivals hear about it now rather than at game over.
   onBoardRecord: () => void
-}): Announcement | null {
+}): { announcement: Announcement | null; crossed: AnnouncementId[] } {
   const [current, setCurrent] = useState<Announcement | null>(null)
+  // Everything this run has crossed, kept as state as well as in the ref below: the bar
+  // only needs the latest crossing, but the game-over screen needs the whole run's
+  // tally, and it reads it after the bar has long since cleared.
+  const [taken, setTaken] = useState<AnnouncementId[]>([])
   const targetsRef = useRef<RecordTargets>({
     record: 0,
     today: null,
@@ -86,6 +90,9 @@ export function useAnnouncements({
       weekEmpty,
     }
     firedRef.current = new Set()
+    // Cleared as the run starts rather than as it ends: the game-over screen is still
+    // reading last run's medals while it is on screen.
+    setTaken([])
   }, [inRun, storedBest, todayBest, weekBest, everBest, todayEmpty, weekEmpty])
 
   useEffect(() => {
@@ -97,6 +104,7 @@ export function useAnnouncements({
     // Mark every record this score cleared, not just the one being announced, so a
     // single big hit past two records celebrates once instead of twice in a row.
     for (const id of crossed) firedRef.current.add(id)
+    setTaken([...firedRef.current])
 
     // Publish before announcing. One write covers every board this score just took,
     // and the run carries on either way — submission is fire-and-forget.
@@ -144,5 +152,5 @@ export function useAnnouncements({
     })
   }, [])
 
-  return current
+  return { announcement: current, crossed: taken }
 }
