@@ -10,13 +10,18 @@ import Animated, {
   type SharedValue,
 } from 'react-native-reanimated'
 
+import { CornerBadge } from '@/components/overlays/corner-badge'
 import { MODE_GRADIENT, type Mode } from '@/machines/game'
 
 export type PlayMode = 'alone' | 'friends'
 
-const PLAY_MODES: { key: PlayMode; label: string }[] = [
-  { key: 'alone', label: 'ALONE' },
-  { key: 'friends', label: 'WITH FRIENDS' },
+// Playing together is the newer half of the app and still finding its feet, so the tab
+// says so before the player commits to a room rather than after something goes wrong in
+// one. `null` is spelled out for the other tab so a new one cannot quietly skip the
+// question of whether it needs a flag.
+const PLAY_MODES: { key: PlayMode; label: string; badge: string | null }[] = [
+  { key: 'alone', label: 'ALONE', badge: null },
+  { key: 'friends', label: 'WITH FRIENDS', badge: 'BETA' },
 ]
 
 function lerpHex(a: string, b: string, t: number): string {
@@ -112,7 +117,7 @@ export function PlayModeTab({
           </Animated.View>
         </Animated.View>
 
-        {PLAY_MODES.map(({ key, label }, i) => (
+        {PLAY_MODES.map(({ key, label, badge }, i) => (
           <Pressable
             key={key}
             onPress={() => {
@@ -135,6 +140,7 @@ export function PlayModeTab({
             >
               {label}
             </Animated.Text>
+            {badge !== null && <CornerBadge label={badge} />}
           </Pressable>
         ))}
       </View>

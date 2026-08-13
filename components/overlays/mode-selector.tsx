@@ -10,6 +10,7 @@ import Animated, {
   type SharedValue,
 } from 'react-native-reanimated'
 
+import { CornerBadge } from '@/components/overlays/corner-badge'
 import {
   ARCADE_TEASER,
   MODE_DESCRIPTIONS,
@@ -165,30 +166,7 @@ export function ModeSelector({
                 >
                   {ARCADE_TEASER.label}
                 </Text>
-                {/* SOON badge — top-right corner */}
-                <View
-                  style={{
-                    position: 'absolute',
-                    top: -6,
-                    right: -6,
-                    backgroundColor: '#E5534B',
-                    borderRadius: 5,
-                    paddingHorizontal: 4,
-                    paddingVertical: 1,
-                  }}
-                >
-                  <Text
-                    selectable={false}
-                    style={{
-                      color: '#FFFFFF',
-                      fontSize: 7,
-                      fontWeight: '800',
-                      letterSpacing: 0.5,
-                    }}
-                  >
-                    {ARCADE_TEASER.tag}
-                  </Text>
-                </View>
+                <CornerBadge label={ARCADE_TEASER.tag} />
               </Pressable>
             )
           }
