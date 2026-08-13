@@ -3,6 +3,7 @@ import Animated, { type AnimatedStyle } from 'react-native-reanimated'
 
 import { type DyingPhase } from '@/hooks/use-dying-sequence'
 import type { Period } from '@/lib/announcements'
+import { gameOverTitle } from '@/lib/game-over-title'
 import { type Difficulty, type Mode } from '@/machines/game'
 
 import { GameOverOverlay } from './game-over-overlay'
@@ -29,6 +30,8 @@ export function GameOverSequence({
   hits,
   strikes,
   medals,
+  personalBest,
+  titleRoll,
   avgAccuracy,
   avgSpeed,
   onPlayAgain,
@@ -47,6 +50,10 @@ export function GameOverSequence({
   hits: number
   strikes: number
   medals: readonly Period[]
+  // Whether the run beat the player's own stored best — the title's second tier.
+  personalBest: boolean
+  // Which of the tier's three lines to use, drawn once per game over upstream.
+  titleRoll: number
   avgAccuracy: number
   avgSpeed: number
   onPlayAgain: () => void
@@ -55,6 +62,12 @@ export function GameOverSequence({
 }) {
   if (phase === 'idle') return null
   const revealed = phase === 'done'
+  // One title for both copies: the flying one and the one it hands off to must read
+  // the same, or the words would change under the player mid-flight.
+  const words = gameOverTitle(
+    { medals, personalBest, difficulty, score, hits, strikes },
+    titleRoll,
+  )
 
   return (
     <>
@@ -73,6 +86,7 @@ export function GameOverSequence({
           hits={hits}
           strikes={strikes}
           medals={medals}
+          titleWords={words}
           avgAccuracy={avgAccuracy}
           avgSpeed={avgSpeed}
           titleHidden={!revealed}
@@ -86,7 +100,7 @@ export function GameOverSequence({
       {/* Flying title — pops in over the frozen targets, flies up during blend. */}
       {!revealed && (
         <Animated.View pointerEvents="none" style={[FILL_CENTER, titleStyle]}>
-          <GameOverTitle gameMode={gameMode} />
+          <GameOverTitle gameMode={gameMode} words={words} />
         </Animated.View>
       )}
     </>

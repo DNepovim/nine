@@ -7,6 +7,7 @@ import { Pressable, Text, View } from 'react-native'
 import { Screen } from '@/components/screen'
 import { useTheme } from '@/hooks/use-theme'
 import type { Period } from '@/lib/announcements'
+import type { TitleWords } from '@/lib/game-over-title'
 import { earnedChallenge, nextChallenge } from '@/lib/next-challenge'
 import { DARK_MODE_GRADIENT, type Difficulty, type Mode } from '@/machines/game'
 
@@ -33,6 +34,7 @@ export function GameOverOverlay({
   hits,
   strikes,
   medals,
+  titleWords,
   avgAccuracy,
   avgSpeed,
   onPlayAgain,
@@ -51,6 +53,8 @@ export function GameOverOverlay({
   strikes: number
   // The boards this run ended on top of, biggest first.
   medals: readonly Period[]
+  // Decided by the sequence so the flying copy and this one always agree.
+  titleWords: TitleWords
   avgAccuracy: number
   avgSpeed: number
   // Straight back into a run on this same board.
@@ -88,7 +92,7 @@ export function GameOverOverlay({
               })
             }}
           >
-            <GameOverTitle gameMode={gameMode} />
+            <GameOverTitle gameMode={gameMode} words={titleWords} />
           </View>
 
           <BoardBadges gameMode={gameMode} difficulty={difficulty} />

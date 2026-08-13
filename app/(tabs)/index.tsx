@@ -231,11 +231,17 @@ export default function GameScreen() {
   // score is the record, so asking the leaderboard would say yes to every run.
   const runMedals = medalPeriods(crossed)
 
+  // Which of a title tier's three lines this run gets. Drawn once per game over, not
+  // per render: the title flies up from the board and hands off to the overlay, so a
+  // roll taken during render would change the letters mid-flight.
+  const [titleRoll, setTitleRoll] = useState(Math.random())
+
   // Trigger score submission on each game-over transition.
   const prevIsGameOverRef = useRef(false)
   useEffect(() => {
     if (isGameOver === prevIsGameOverRef.current) return
     prevIsGameOverRef.current = isGameOver
+    if (isGameOver) setTitleRoll(Math.random())
     // Refresh on both edges of game over: entering picks up other players' runs,
     // and leaving catches our own score, which submitScore fires and forgets and
     // so may not have landed by the time the overlay appeared.
@@ -677,6 +683,8 @@ export default function GameScreen() {
         hits={state.context.hits}
         strikes={state.context.strikes}
         medals={runMedals}
+        personalBest={crossed.includes('record')}
+        titleRoll={titleRoll}
         avgAccuracy={avgAccuracy}
         avgSpeed={avgSpeed}
         onPlayAgain={() => {
