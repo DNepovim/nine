@@ -10,6 +10,7 @@ import Animated, {
 } from 'react-native-reanimated'
 import { scheduleOnRN } from 'react-native-worklets'
 
+import { TipSizer } from '@/components/overlays/tip-sizer'
 import { PageDots } from '@/components/page-dots'
 import { SWIPE_THRESHOLD } from '@/constants/game'
 import { TIPS } from '@/constants/tips'
@@ -52,10 +53,14 @@ const BACK = -1
 const BORDER = 1
 const RADIUS = 20
 
-// Tips vary in length, and this sits directly above PLAY. Without a floor the
-// button would hop every six seconds, so the text is centred in a fixed box
-// tall enough for the longest tip.
-const BODY_HEIGHT = 96
+// Tips vary in length, and this sits directly above PLAY. A box that fitted each tip
+// on its own would hop the button every six seconds, so all five share one height —
+// the tallest, measured by TipSizer. Sizing to the content rather than to a constant
+// is what keeps a newly-written long tip from being cropped.
+//
+// This is only the floor, holding the box open for the frame before the measurements
+// land. Tips shorter than it stay centred in it.
+const BODY_MIN_HEIGHT = 96
 
 // A 6px dot inside px-1 py-2 pressables. Hard-coded rather than measured because
 // it decides where the row hangs, and onLayout would land a frame late — the
@@ -71,6 +76,9 @@ const DOTS_OFFSET = -(DOTS_HEIGHT / 2 - BORDER / 2)
 // needs teaching the one that said the least.
 export function ModeTips() {
   const [index, setIndex] = useState(0)
+  // Grows to the tallest tip and stays there — the box must not resize as the
+  // rotation moves through tips shorter than the one that set the height.
+  const [bodyHeight, setBodyHeight] = useState(BODY_MIN_HEIGHT)
   const fade = useSharedValue(1)
   const slide = useSharedValue(0)
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -80,6 +88,10 @@ export function ModeTips() {
   const targetRef = useRef(0)
 
   const tip = TIPS[index] ?? TIPS[0]
+
+  const measure = useCallback((height: number) => {
+    setBodyHeight((current) => (height > current ? height : current))
+  }, [])
 
   const bodyStyle = useAnimatedStyle(() => ({
     opacity: fade.value,
@@ -165,9 +177,9 @@ export function ModeTips() {
 
           {/* overflow-hidden keeps the departing tip inside the card rather than
               letting it drift out over the border. */}
-          <View className="overflow-hidden" style={{ height: BODY_HEIGHT }}>
+          <View className="overflow-hidden" style={{ height: bodyHeight }}>
             <Animated.View
-              style={[{ height: BODY_HEIGHT, justifyContent: 'center' }, bodyStyle]}
+              style={[{ height: bodyHeight, justifyContent: 'center' }, bodyStyle]}
             >
               <Text
                 selectable={false}
@@ -177,6 +189,8 @@ export function ModeTips() {
               </Text>
             </Animated.View>
           </View>
+
+          <TipSizer onMeasure={measure} />
         </View>
       </GestureDetector>
 
