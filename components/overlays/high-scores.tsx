@@ -1,6 +1,6 @@
 import { LinearGradient } from 'expo-linear-gradient'
 import { useEffect, useRef, useState } from 'react'
-import { Pressable, ScrollView, Text, useWindowDimensions, View } from 'react-native'
+import { Pressable, ScrollView, Text, View } from 'react-native'
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
@@ -12,6 +12,7 @@ import { useLeaderboard } from '@/hooks/use-leaderboard'
 import type { LeaderboardState } from '@/hooks/use-leaderboard'
 import { useOnline } from '@/hooks/use-online'
 import { usePendingScores } from '@/hooks/use-pending-scores'
+import { useViewport } from '@/hooks/use-viewport'
 import { type LeaderboardTab } from '@/lib/leaderboard'
 import { withMyBest } from '@/lib/leaderboard-optimistic'
 import { todayISO } from '@/lib/leaderboard-period'
@@ -80,7 +81,7 @@ export function HighScores({
   // twice.
   onAddNickname?: () => void
 }) {
-  const { width: windowWidth } = useWindowDimensions()
+  const { width: windowWidth } = useViewport()
   const [panelWidth, setPanelWidth] = useState(0)
   const [activeTab, setActiveTab] = useState<LeaderboardTab>('today')
   const scrollRef = useRef<ScrollView>(null)

@@ -1,7 +1,8 @@
 import { useMemo } from 'react'
-import { useWindowDimensions, View } from 'react-native'
+import { View } from 'react-native'
 
 import { HyperspaceStreak } from '@/components/game/hyperspace-streak'
+import { useViewport } from '@/hooks/use-viewport'
 
 const STAR_COUNT = 120
 const STREAK_LENGTH = 60
@@ -23,7 +24,7 @@ const MAX_OPACITY = 0.85
 // colour it is given is mid-tone, so this needs no theme variant: they read on both
 // the light and dark surfaces where white would vanish on one.
 export function Hyperspace({ colors }: { colors: readonly [string, ...string[]] }) {
-  const { width, height } = useWindowDimensions()
+  const { width, height } = useViewport()
 
   const centerX = width / 2
   const centerY = height / 2

@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons'
 import { LinearGradient } from 'expo-linear-gradient'
 import { useState } from 'react'
-import { Pressable, ScrollView, Text, useWindowDimensions, View } from 'react-native'
+import { Pressable, ScrollView, Text, View } from 'react-native'
 import Animated, {
   Easing,
   useAnimatedStyle,
@@ -15,6 +15,7 @@ import { NewsCard } from '@/components/overlays/news-card'
 import { PageDots } from '@/components/page-dots'
 import { SPECTRUM } from '@/constants/colors'
 import { useTheme } from '@/hooks/use-theme'
+import { useViewport } from '@/hooks/use-viewport'
 import { cn } from '@/lib/cn'
 import type { NewsItem } from '@/types/news'
 
@@ -35,7 +36,7 @@ export function WhatsNewOverlay({
   onDismiss: () => void
 }) {
   const [index, setIndex] = useState(0)
-  const { height } = useWindowDimensions()
+  const { height } = useViewport()
   const { colorScheme } = useTheme()
   const dotColor = colorScheme === 'dark' ? '#2A2B44' : '#D4D0C8'
   const fade = useSharedValue(1)

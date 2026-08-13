@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { useWindowDimensions, View } from 'react-native'
+import { View } from 'react-native'
 import {
   Easing,
   useAnimatedStyle,
@@ -9,6 +9,8 @@ import {
   withSpring,
   withTiming,
 } from 'react-native-reanimated'
+
+import { useViewport } from '@/hooks/use-viewport'
 
 export type DyingPhase = 'idle' | 'dying' | 'blend' | 'done'
 
@@ -25,7 +27,7 @@ export function useDyingSequence({
   isGameOver: boolean
   lives: number
 }) {
-  const { height: windowHeight } = useWindowDimensions()
+  const { height: windowHeight } = useViewport()
 
   const flashOp = useSharedValue(0)
   const flashStyle = useAnimatedStyle(() => ({ opacity: flashOp.value }))

@@ -2,7 +2,7 @@ import { Ionicons } from '@expo/vector-icons'
 import { LinearGradient } from 'expo-linear-gradient'
 import { isNonEmptyString, isOneOf } from 'narrowland'
 import { useEffect, useState } from 'react'
-import { Platform, Pressable, Share, Text, useWindowDimensions, View } from 'react-native'
+import { Platform, Pressable, Share, Text, View } from 'react-native'
 import Animated, {
   Easing,
   useAnimatedStyle,
@@ -12,7 +12,9 @@ import Animated, {
 } from 'react-native-reanimated'
 
 import { Screen } from '@/components/screen'
+import { useMyMedals } from '@/hooks/use-my-medals'
 import { useTheme } from '@/hooks/use-theme'
+import { useViewport } from '@/hooks/use-viewport'
 import { cn } from '@/lib/cn'
 import { inviteMessage, SHARE_URL } from '@/lib/invite-message'
 import {
@@ -27,6 +29,7 @@ import { AnimatedLetter } from './animated-letter'
 import { DifficultySelector } from './difficulty-selector'
 import { GameCodeInput } from './game-code-input'
 import { HighScores } from './high-scores'
+import { MedalLine } from './medal-line'
 import { ModeSelector } from './mode-selector'
 import { ModeTips } from './mode-tips'
 import { PlayModeTab, type PlayMode } from './play-mode-tab'
@@ -77,12 +80,13 @@ export function MenuOverlay({
 }) {
   const { colorScheme } = useTheme()
   const dimColor = colorScheme === 'dark' ? '#504e6e' : '#aaa69e'
+  const medals = useMyMedals(userId)
   const [focused, setFocused] = useState<Mode | 'arcade'>(gameMode)
   const [playMode, setPlayMode] = useState<PlayMode>(initialPlayMode)
   const [gameCode, setGameCode] = useState('')
   const [panelWidth, setPanelWidth] = useState(0)
   const panelOffset = useSharedValue(0)
-  const { width: windowWidth } = useWindowDimensions()
+  const { width: windowWidth } = useViewport()
   // Screen has px-4 on each side (32px total); use as fallback before onLayout fires.
   const effectivePanelWidth = panelWidth > 0 ? panelWidth : windowWidth - 32
 
@@ -166,6 +170,10 @@ export function MenuOverlay({
               />
             ))}
           </View>
+
+          {/* What the player holds across all six boards, all-time. Silent until they
+              have a podium finish, so the title keeps its space on a fresh install. */}
+          <MedalLine medals={medals} />
 
           {/* ALONE / WITH FRIENDS tabs */}
           <PlayModeTab

@@ -1,8 +1,9 @@
 import { useMemo } from 'react'
-import { useWindowDimensions, View } from 'react-native'
+import { View } from 'react-native'
 
 import { ConfettiPiece } from '@/components/game/confetti-piece'
 import { SPECTRUM } from '@/constants/colors'
+import { useViewport } from '@/hooks/use-viewport'
 
 // Beating your own best is the loudest moment the game has, so that is a proper
 // shower rather than a sprinkle. Trainee celebrates a single clean hit, which
@@ -34,7 +35,7 @@ export function Confetti({
   colors?: readonly [string, ...string[]]
   density?: Density
 }) {
-  const { width, height } = useWindowDimensions()
+  const { width, height } = useViewport()
 
   const pieces = useMemo(
     () =>

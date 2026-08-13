@@ -1,7 +1,8 @@
 import { useMemo } from 'react'
-import { useWindowDimensions, View } from 'react-native'
+import { View } from 'react-native'
 
 import { FireworkParticle } from '@/components/game/firework-particle'
+import { useViewport } from '@/hooks/use-viewport'
 
 const BURSTS = 9
 const SPARKS_PER_BURST = 18
@@ -17,7 +18,7 @@ const FLIGHT_MS = 1200
 // than a cog — and they arc down as they fade. Mounting plays it once; the parent
 // unmounts it when the announcement clears.
 export function Fireworks({ colors }: { colors: readonly [string, ...string[]] }) {
-  const { width, height } = useWindowDimensions()
+  const { width, height } = useViewport()
 
   const sparks = useMemo(() => {
     const all: {

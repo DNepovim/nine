@@ -14,6 +14,7 @@ import Animated, { useAnimatedStyle } from 'react-native-reanimated'
 
 import '@/global.css'
 
+import { PhoneFrame } from '@/components/phone-frame'
 import { SplashScreen } from '@/components/splash-screen'
 import { AppThemeProvider, useTheme } from '@/hooks/use-theme'
 
@@ -77,7 +78,11 @@ export default function RootLayout() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <AppThemeProvider>
-        <ThemedApp />
+        {/* Inside the theme provider, so the frame is drawn in the app's own colours
+            and the splash screen is framed along with everything after it. */}
+        <PhoneFrame>
+          <ThemedApp />
+        </PhoneFrame>
       </AppThemeProvider>
     </GestureHandlerRootView>
   )

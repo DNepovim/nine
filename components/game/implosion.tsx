@@ -1,7 +1,8 @@
 import { useMemo } from 'react'
-import { useWindowDimensions, View } from 'react-native'
+import { View } from 'react-native'
 
 import { ImplosionStreak } from '@/components/game/implosion-streak'
+import { useViewport } from '@/hooks/use-viewport'
 
 const STREAK_COUNT = 90
 const STREAK_LENGTH = 50
@@ -15,7 +16,7 @@ const MAX_OPACITY = 0.7
 // near the edges, are pulled inwards along their own ray, and collapse into the centre.
 // The direction is the whole message — everything converges instead of escaping.
 export function Implosion({ colors }: { colors: readonly [string, ...string[]] }) {
-  const { width, height } = useWindowDimensions()
+  const { width, height } = useViewport()
 
   const centerX = width / 2
   const centerY = height / 2
