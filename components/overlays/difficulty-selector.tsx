@@ -145,7 +145,7 @@ export function DifficultySelector({
   }, [gameMode, colorFade])
 
   return (
-    <View className="mb-6 items-center">
+    <View className="mb-3 items-center">
       <View className="flex-row overflow-hidden rounded-md bg-card">
         {/* Sliding pill */}
         <Animated.View

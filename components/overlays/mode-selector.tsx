@@ -88,7 +88,7 @@ export function ModeSelector({
   }, [focused, items, bgLeft, bgRight, colorFade])
 
   return (
-    <View className="mb-3 items-center" style={{ paddingTop: 8 }}>
+    <View className="mb-1 items-center" style={{ paddingTop: 8 }}>
       <View className="flex-row">
         {/* Sliding pill — behind buttons in z-order */}
         <Animated.View

@@ -26,7 +26,7 @@ export function ScoreRow({
   const emoji = rankEmoji(entry.rank)
   return (
     <View
-      className="flex-row items-center rounded-lg px-2 py-1.5"
+      className="flex-row items-center rounded-lg px-2 py-1"
       style={highlight ? { backgroundColor: accentColor + '20' } : undefined}
     >
       {/* An emoji needs more room than the 10px numeral it replaces, and a fixed line

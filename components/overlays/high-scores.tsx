@@ -197,7 +197,7 @@ export function HighScores({
   }
 
   return (
-    <View className="mb-8 w-full max-w-3xs self-center">
+    <View className="mb-5 w-full max-w-3xs self-center">
       {/* Time-period tabs */}
       <View className="mb-3">
         <View className="flex-row justify-center">
