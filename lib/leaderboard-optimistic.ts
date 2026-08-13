@@ -19,18 +19,33 @@ export function withMyBest(
   nickname: string,
   score: number,
   hits: number,
+  // When the score being folded in was set — the run that just ended, so the caller's
+  // clock. Taken as an argument rather than read here so this stays pure.
+  achievedAt: string,
 ): Result {
   const existing = rows.find((row) => row.user_id === userId)
 
+  // Each candidate carries its own timestamp, so the row shows when the score that
+  // actually won was set rather than always claiming it was just now. MyRankRow has no
+  // timestamp of its own, so it borrows the caller's — it only wins when the server
+  // knows a better score than both the run just played and the row on the board.
   const candidates = [
-    ...(myRank === null ? [] : [{ score: myRank.best_score, hits: myRank.hits }]),
+    ...(myRank === null
+      ? []
+      : [{ score: myRank.best_score, hits: myRank.hits, at: achievedAt }]),
     ...(existing === undefined
       ? []
-      : [{ score: existing.best_score, hits: existing.hits }]),
+      : [
+          {
+            score: existing.best_score,
+            hits: existing.hits,
+            at: existing.achieved_at,
+          },
+        ]),
   ]
   const winner = candidates.reduce(
     (best, next) => (next.score > best.score ? next : best),
-    { score, hits },
+    { score, hits, at: achievedAt },
   )
 
   const others = rows.filter((row) => row.user_id !== userId)
@@ -45,6 +60,7 @@ export function withMyBest(
     nickname,
     best_score: winner.score,
     hits: winner.hits,
+    achieved_at: winner.at,
   }
 
   const merged = [...above, mine, ...below]

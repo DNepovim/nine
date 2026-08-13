@@ -3,12 +3,15 @@ import { describe, expect, it } from 'vitest'
 import type { LeaderboardRow } from './leaderboard'
 import { displayRows } from './leaderboard-rows'
 
+const ACHIEVED_AT = '2026-08-13T10:00:00.000Z'
+
 const row = (nickname: string, best_score: number): LeaderboardRow => ({
   rank: 0,
   user_id: nickname,
   nickname,
   best_score,
   hits: 1,
+  achieved_at: ACHIEVED_AT,
 })
 
 const board = [row('ACE', 2140), row('BOLT', 1980), row('CIRA', 1720)]
@@ -61,6 +64,8 @@ describe('displayRows', () => {
         score: 500,
         isUser: true,
         unpublished: true,
+        // No board timestamp: the score has never reached the board.
+        achievedAt: null,
       },
     ])
   })

@@ -85,6 +85,7 @@ export function TabPanel({
             score: row.score,
             isUser: row.isUser,
             note: row.unpublished ? note : undefined,
+            achievedAt: row.achievedAt ?? undefined,
           }}
           accentColor={accentColor}
         />

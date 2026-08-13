@@ -56,6 +56,9 @@ function applyOptimistic(
     nickname,
     optimisticScore,
     optimisticHits ?? 0,
+    // The run this folds in has only just ended, so the board has no timestamp for it
+    // yet and the clock here is the closest thing to one.
+    new Date().toISOString(),
   )
   return { ...merged, loading: false, error: null }
 }

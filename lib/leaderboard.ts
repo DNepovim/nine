@@ -17,6 +17,9 @@ export type LeaderboardRow = {
   nickname: string
   best_score: number
   hits: number
+  // When the record was set — the row's `updated_at`, as an ISO string. Drives the
+  // "how long it has stood" mark beside the nickname.
+  achieved_at: string
 }
 
 export type MyRankRow = {

@@ -7,6 +7,9 @@ export type DisplayRow = {
   score: number
   isUser: boolean
   unpublished: boolean
+  // When the record was set, or null for the local row — a score that has not reached
+  // the board has no board timestamp, and the row says it is unpublished instead.
+  achievedAt: string | null
 }
 
 const LIMIT = 5
@@ -26,6 +29,7 @@ export function displayRows(
     score: row.best_score,
     isUser: row.user_id === userId,
     unpublished: false,
+    achievedAt: row.achieved_at,
   }))
 
   if (unpublished === null) {
@@ -41,6 +45,7 @@ export function displayRows(
     score: unpublished.score,
     isUser: true,
     unpublished: true,
+    achievedAt: null,
   }
 
   return [...above, local, ...below]
