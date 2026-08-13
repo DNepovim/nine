@@ -1,5 +1,8 @@
 import { Text, View } from 'react-native'
 
+import { cn } from '@/lib/cn'
+import { rankEmoji } from '@/lib/rank-emoji'
+
 export type ScoreEntry = {
   rank: number
   nickname: string
@@ -18,17 +21,27 @@ export function ScoreRow({
 }) {
   const highlight = entry.isUser === true
   const accentStyle = highlight ? { color: accentColor } : undefined
+  // Null past fifth — the player's own row can sit below the board's cut, and there
+  // the number is the point.
+  const emoji = rankEmoji(entry.rank)
   return (
     <View
       className="flex-row items-center rounded-lg px-2 py-1.5"
       style={highlight ? { backgroundColor: accentColor + '20' } : undefined}
     >
+      {/* An emoji needs more room than the 10px numeral it replaces, and a fixed line
+          height on both keeps a row the same height whichever it shows — the board's
+          five rows would otherwise stand taller than the player's own row below the
+          cut. */}
       <Text
         selectable={false}
-        className="w-7 font-mono text-[10px] font-bold text-dim"
+        className={cn(
+          'w-7 font-mono font-bold leading-[16px] text-dim',
+          emoji === null ? 'text-[10px]' : 'text-[13px]',
+        )}
         style={accentStyle}
       >
-        {entry.rank}
+        {emoji ?? entry.rank}
       </Text>
       <View className="flex-1 flex-row items-baseline gap-1.5">
         <Text

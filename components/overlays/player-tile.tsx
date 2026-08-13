@@ -2,6 +2,8 @@ import { AntDesign } from '@expo/vector-icons'
 import { LinearGradient } from 'expo-linear-gradient'
 import { Text, View } from 'react-native'
 
+import { rankMedal } from '@/lib/rank-emoji'
+
 // A distinct, lively gradient per attendee slot (drawn from the app palette).
 // Shared by the waiting room and the game-over screen so both grids match.
 export const PLAYER_GRADIENTS = [
@@ -85,7 +87,9 @@ export function PlayerTile({
   }
 
   const initial = nickname.trim().charAt(0).toUpperCase() || '?'
-  const medal = rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : null
+  // Medals only: a room can end with four or five players, and the board's mark for
+  // last place is a joke about missing the cut, which does not apply here.
+  const medal = rank === undefined ? null : rankMedal(rank)
   const cornerLabel =
     medal !== null
       ? null
