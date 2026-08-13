@@ -82,12 +82,20 @@ export function useTargetSpawner({
     wait()
   }, [spawnTarget])
 
+  // Read when play resumes rather than depended on, so the effect below runs on the
+  // transition and not on every arrival and hit.
+  const targetCountRef = useRef(targetCount)
+  targetCountRef.current = targetCount
+
   useEffect(() => {
     if (!isPlaying) {
       if (spawnTimer.current) clearTimeout(spawnTimer.current)
       return
     }
-    spawnTarget()
+    // Only an empty board needs filling this instant — which a fresh run always is.
+    // Coming back from a pause the board still holds everything it had, and spawning
+    // here would hand the player an extra target for having paused.
+    if (targetCountRef.current === 0) spawnTarget()
     startCadence()
     return () => {
       if (spawnTimer.current) clearTimeout(spawnTimer.current)

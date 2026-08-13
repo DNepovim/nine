@@ -589,6 +589,7 @@ export default function GameScreen() {
               duration={target.duration}
               par={mode === 'trainee' ? computePar(grid, target.value) : undefined}
               dying={isGameOver}
+              frozen={isPaused}
               onExpire={() => {
                 send({ type: 'TARGET_EXPIRED', id: target.id })
               }}

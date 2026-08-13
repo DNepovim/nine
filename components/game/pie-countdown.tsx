@@ -54,15 +54,30 @@ export function PieCountdown({
   const trackColor =
     backgroundColor ?? TARGET_BAND_TRACK[isDark ? 'dark' : 'light'][targetBand(value)]
 
+  // One effect for starting, stopping and starting again, because they are the same
+  // thing: the clock always runs from wherever the arc currently stands.
+  //
+  // Going inactive cancels, which leaves `progress` frozen at the fraction of the
+  // clock that was left — and cancelling reports `finished: false`, so a target frozen
+  // at nothing does not expire. Coming back runs that remainder: the easing is linear,
+  // so the time left is exactly the arc left, and a target that was a hair from
+  // running out has a hair of clock when the run resumes. That is what makes pausing
+  // cost nothing and give nothing.
   useEffect(() => {
-    progress.value = withTiming(0, { duration, easing: Easing.linear }, (finished) => {
-      if (finished) scheduleOnRN(onComplete)
-    })
-  }, [])
-
-  useEffect(() => {
-    if (active) return
-    cancelAnimation(progress)
+    if (!active) {
+      cancelAnimation(progress)
+      return
+    }
+    // Read off the render thread rather than inside it — this is an effect, and it is
+    // the only place that can know how much clock is left.
+    const remaining = duration * progress.value
+    progress.value = withTiming(
+      0,
+      { duration: remaining, easing: Easing.linear },
+      (finished) => {
+        if (finished) scheduleOnRN(onComplete)
+      },
+    )
   }, [active])
 
   const animatedProps = useAnimatedProps(() => ({

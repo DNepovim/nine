@@ -613,20 +613,12 @@ export const gameMachine = createMachine({
         RESUME: { target: 'playing' },
         // "New game" from the pause/settings menu returns to the intro menu.
         MENU: { target: 'menu' },
-        // Timers that fire while paused just remove the target — no life lost.
-        TARGET_EXPIRED: {
-          actions: assign(
-            ({
-              context,
-              event,
-            }: {
-              context: Context
-              event: Extract<Event, { type: 'TARGET_EXPIRED' }>
-            }) => ({
-              targets: context.targets.filter((t) => t.id !== event.id),
-            }),
-          ),
-        },
+        // TARGET_EXPIRED is deliberately not handled here. A paused run has no clock
+        // running — every countdown is frozen where it stood — so nothing can time out
+        // while paused, and an expiry that arrives anyway is one that was already in
+        // flight when the pause landed. Quietly dropping the target, as this state used
+        // to, is what let a player pause a target away: it vanished and cost nothing.
+        // Ignored, it keeps its sliver of clock and runs out on resume, where it counts.
       },
     },
     gameOver: {

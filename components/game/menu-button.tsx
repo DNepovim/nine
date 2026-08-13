@@ -98,7 +98,11 @@ export function MenuButton({
       withTiming(1, { duration: 160, easing: Easing.in(Easing.quad) }),
       withTiming(0, { duration: 340, easing: Easing.out(Easing.back(2)) }),
     )
-    setTimeout(onToggle, 160) // toggle at the peak; edges morph via the paused effect
+    // Immediately, not at the peak of the squash. Waiting 160ms for the animation left
+    // the run going for those 160ms, which is long enough for a target that was nearly
+    // out of time to run out — the player pressed pause and lost a life to it. The
+    // edges still morph on their own, off the `paused` prop.
+    onToggle()
   }
 
   if (!visible) return null

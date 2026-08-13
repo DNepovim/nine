@@ -19,6 +19,7 @@ export function TargetCard({
   duration,
   par,
   dying = false,
+  frozen = false,
   onExpire,
   onExitComplete,
 }: {
@@ -27,6 +28,8 @@ export function TargetCard({
   duration: number
   par?: number
   dying?: boolean
+  // The run is paused: hold the clock where it is until play resumes.
+  frozen?: boolean
   onExpire: () => void
   onExitComplete: () => void
 }) {
@@ -72,7 +75,7 @@ export function TargetCard({
       <PieCountdown
         value={target.value}
         isDark={isDark}
-        active={!target.exiting && !dying}
+        active={!target.exiting && !dying && !frozen}
         duration={duration}
         onComplete={onExpire}
       />

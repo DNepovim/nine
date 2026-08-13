@@ -64,6 +64,33 @@ describe('accuracy streak (optimal trigger)', () => {
   })
 })
 
+describe('pausing', () => {
+  it('holds on to a target whose clock ran out as the pause landed', () => {
+    const actor = start('accuracy')
+    actor.send({ type: 'ADD_TARGET', value: 5, at: 0 })
+    const id = actor.getSnapshot().context.targets[0]?.id ?? 0
+
+    actor.send({ type: 'PAUSE' })
+    // In flight when the pause hit: dropping it here is what let a player pause a
+    // target away, and taking a life for it would punish them for pausing.
+    actor.send({ type: 'TARGET_EXPIRED', id })
+    expect(actor.getSnapshot().context.targets).toHaveLength(1)
+    expect(actor.getSnapshot().context.lives).toBe(3)
+  })
+
+  it('makes it cost a life once the run is going again', () => {
+    const actor = start('accuracy')
+    actor.send({ type: 'ADD_TARGET', value: 5, at: 0 })
+    const id = actor.getSnapshot().context.targets[0]?.id ?? 0
+
+    actor.send({ type: 'PAUSE' })
+    actor.send({ type: 'RESUME' })
+    actor.send({ type: 'TARGET_EXPIRED', id })
+    expect(actor.getSnapshot().context.targets).toHaveLength(0)
+    expect(actor.getSnapshot().context.lives).toBe(2)
+  })
+})
+
 describe('strikes', () => {
   it('tallies the hits that landed on a streak, and only those', () => {
     const actor = start('accuracy')
