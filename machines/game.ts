@@ -79,6 +79,11 @@ export type HitInfo = {
   // say "4 would have done".
   steps: number
   par: number
+  // The board the par was measured from, and what was being reached for. Carried
+  // rather than solved here so the route is only worked out for the rare hit whose
+  // debrief actually shows it — the coach calls computeRoute on these.
+  refGrid: Grid
+  value: number
 }
 export type HitBatch = { seq: number; hits: HitInfo[] }
 
@@ -235,6 +240,8 @@ function applyGrid(context: Context, newGrid: Grid, now: number) {
     spdFactor: number
     steps: number
     par: number
+    refGrid: Grid
+    value: number
   }[] = []
 
   for (const t of matched) {
@@ -263,6 +270,8 @@ function applyGrid(context: Context, newGrid: Grid, now: number) {
       spdFactor: spd,
       steps: userSteps,
       par: t.par,
+      refGrid: t.refGrid,
+      value: t.value,
     })
   }
 
@@ -289,6 +298,8 @@ function applyGrid(context: Context, newGrid: Grid, now: number) {
     spdFactor: p.spdFactor,
     steps: p.steps,
     par: p.par,
+    refGrid: p.refGrid,
+    value: p.value,
   }))
 
   const hits = context.hits + matched.length

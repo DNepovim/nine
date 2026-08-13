@@ -50,6 +50,89 @@ export function computePar(grid: Grid, target: number): number {
   return Number.isFinite(dp[target]) ? (dp[target] ?? 0) : 0
 }
 
+// One weight's share of an optimal route: how many steps to spend on keys of that
+// weight. Steps rather than taps — a swipe to 0 or 9 is one step.
+export type RouteStep = { weight: number; steps: number }
+
+// One layer of the DP: the cheapest way to reach each running sum once this button
+// has been decided, and the value it was set to in order to get there. -1 marks a sum
+// this button could not produce.
+type Layer = { costs: number[]; choice: number[] }
+
+const INF = Number.POSITIVE_INFINITY
+
+function extendLayer(costs: number[], weight: number, from: number): Layer {
+  const next = new Array<number>(MAX_SUM + 1).fill(INF)
+  const choice = new Array<number>(MAX_SUM + 1).fill(-1)
+  for (let s = 0; s <= MAX_SUM; s++) {
+    const cur = costs[s] ?? INF
+    if (cur === INF) continue
+    for (let f = 0; f <= 9; f++) {
+      const sum = s + weight * f
+      if (sum > MAX_SUM) break
+      const cost = cur + stepCost(from, f)
+      if (cost < (next[sum] ?? INF)) {
+        next[sum] = cost
+        choice[sum] = f
+      }
+    }
+  }
+  return { costs: next, choice }
+}
+
+// Walks the layers back from the target, totalling the steps each weight is owed.
+//
+// Keyed by weight rather than by button, because the two keys sharing a weight are
+// interchangeable to the sum — a step on either moves the total by the same amount, so
+// splitting them into "1× ②  ›  1× ②" reported the same instruction twice.
+//
+// Buttons already at the right value contribute nothing, and drop out.
+function readRoute(
+  values: number[],
+  layers: Layer[],
+  target: number,
+): Map<number, number> {
+  const byWeight = new Map<number, number>()
+  let sum = target
+  for (let i = 8; i >= 0; i--) {
+    const value = layers[i]?.choice[sum] ?? -1
+    if (value < 0) return new Map()
+    const weight = WEIGHTS[i] ?? 0
+    const steps = stepCost(values[i] ?? 0, value)
+    if (steps > 0) byWeight.set(weight, (byWeight.get(weight) ?? 0) + steps)
+    sum -= weight * value
+  }
+  return byWeight
+}
+
+// The route behind computePar — not just what the best solution costs but what it is.
+//
+// Same DP, keeping the value chosen for each button at each running sum so the answer
+// can be walked back.
+//
+// Coarsest weight first, matching how the game is taught — get near the target with ×9
+// and ×6, then trim with the fine keys.
+export function computeRoute(grid: Grid, target: number): RouteStep[] {
+  if (target < 0 || target > MAX_SUM) return []
+  const values = grid.flat()
+
+  const start = new Array<number>(MAX_SUM + 1).fill(INF)
+  start[0] = 0
+  const layers: Layer[] = []
+  let costs = start
+  for (let i = 0; i < 9; i++) {
+    const layer = extendLayer(costs, WEIGHTS[i] ?? 0, values[i] ?? 0)
+    layers.push(layer)
+    costs = layer.costs
+  }
+
+  if (!Number.isFinite(costs[target] ?? INF)) return []
+
+  return [...readRoute(values, layers, target)]
+    .map(([weight, steps]) => ({ weight, steps }))
+    .sort((a, b) => b.weight - a.weight)
+}
+
 // Gentler difference-based accuracy: 1 at optimal, decaying with wasted steps.
 export function accuracyFactor(par: number, userSteps: number): number {
   const effectivePar = Math.max(par, 1)

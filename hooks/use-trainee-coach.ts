@@ -16,12 +16,20 @@ import {
   type Mode,
   type Target,
 } from '@/machines/game'
-import { cleanHitReason } from '@/machines/scoring'
+import { cleanHitReason, computeRoute, type RouteStep } from '@/machines/scoring'
 
-// How long a coach line holds. Shorter than the four seconds a praise line keeps:
-// praise is tied to the length of its confetti shower, where a mid-route hint wants
-// to be gone before the next press makes it stale.
-const COACH_MS = 3000
+// How long a coach line holds, by what it is.
+//
+// A habit line is short on purpose: it is about the press just made, and wants to be
+// gone before the next press makes it stale. The debrief is the exception — it is two
+// things to read, a verdict and the route that would have beaten it, and three seconds
+// is not long enough to take in a row of keys and still look at the board.
+const HOLD_MS = {
+  tapping: 3000,
+  coarse: 3000,
+  debrief: 5000,
+  lost: 3000,
+} as const satisfies Record<CoachKind, number>
 
 // How long an arriving line contends with the one already showing. The ladder
 // exists for two messages about the same press — a habit, and the debrief for the
@@ -29,7 +37,9 @@ const COACH_MS = 3000
 // fresh observation about the press just made should not lose to a stale one.
 const CONTENTION_MS = 600
 
-type Showing = { kind: CoachKind; text: string; at: number }
+// `route` is the optimal way to the target the debrief is about, and empty for every
+// other kind — a habit line is about the press just made, which has no route to show.
+type Showing = { kind: CoachKind; text: string; route: RouteStep[]; at: number }
 
 // Trainee's coach. Watches what the player does and says something about it in the
 // line under the stat row — never which key to press, only what the last press or
@@ -83,15 +93,15 @@ export function useTraineeCoach({
   // old enough to have been read: a correction held back three seconds would arrive
   // attached to the wrong press, but a habit line untouched for the whole window
   // must not silently swallow the debrief for a hit just landed.
-  const say = (kind: CoachKind, text: string) => {
+  const say = (kind: CoachKind, text: string, route: RouteStep[] = []) => {
     if (muted) return
     const at = Date.now()
     setShowing((current) => {
-      if (current === null) return { kind, text, at }
+      if (current === null) return { kind, text, route, at }
       if (at - current.at < CONTENTION_MS && !outranks(kind, current.kind)) {
         return current
       }
-      return { kind, text, at }
+      return { kind, text, route, at }
     })
   }
 
@@ -158,7 +168,13 @@ export function useTraineeCoach({
     // target one press cleared, and it is that press the player is asking about.
     const last = batch.hits[batch.hits.length - 1]
     if (last === undefined) return
-    say('debrief', debriefLine(last.steps, last.par))
+    // Solved here rather than in the machine: this is the only hit in the run whose
+    // route is ever shown, and the DP is not worth running on every hit for it.
+    say(
+      'debrief',
+      debriefLine(last.steps, last.par),
+      computeRoute(last.refGrid, last.value),
+    )
   }, [active, batch])
 
   // Targets leaving the board — hit or expired — clear the route counters and advance
@@ -186,11 +202,16 @@ export function useTraineeCoach({
     if (showing === null) return
     const timer = setTimeout(() => {
       setShowing(null)
-    }, COACH_MS)
+    }, HOLD_MS[showing.kind])
     return () => {
       clearTimeout(timer)
     }
   }, [showing])
 
-  return { line: showing?.text ?? null, notePress, noteSet }
+  return {
+    line: showing?.text ?? null,
+    route: showing?.route ?? [],
+    notePress,
+    noteSet,
+  }
 }

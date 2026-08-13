@@ -7,6 +7,18 @@ import type { Release } from '@/types/news'
 // different announcement or players who already saw the old one will miss it.
 export const RELEASES: Release[] = [
   {
+    date: '2026-08-13',
+    items: [
+      {
+        id: 'trainee-route-hint',
+        icon: 'footsteps',
+        accent: '#4C7EFF',
+        title: 'See the better way',
+        body: 'Take the long road to a target and Trainee now shows you the short one — the keys that would have done it, in the order to press them.',
+      },
+    ],
+  },
+  {
     date: '2026-08-12',
     items: [
       {

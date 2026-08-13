@@ -1,10 +1,12 @@
 import { describe, expect, it } from 'vitest'
 
+import type { Grid } from '@/machines/game'
 import {
   cellWeight,
   cleanHitReason,
   computeHitPoints,
   computePar,
+  computeRoute,
   FAST_BAND,
   isCleanHit,
   speedReward,
@@ -149,5 +151,68 @@ describe('cellWeight', () => {
 
   it('returns 0 outside the grid', () => {
     expect(cellWeight(9)).toBe(0)
+  })
+})
+
+describe('computeRoute', () => {
+  const empty: Grid = [
+    [0, 0, 0],
+    [0, 0, 0],
+    [0, 0, 0],
+  ]
+
+  it('is empty when the grid already sums to the target', () => {
+    expect(computeRoute(empty, 0)).toEqual([])
+  })
+
+  it('costs exactly what computePar says, for every route it finds', () => {
+    // The two must agree or the hint would contradict the debrief above it.
+    for (const target of [7, 31, 100, 123, 223, 324]) {
+      const route = computeRoute(empty, target)
+      const spent = route.reduce((sum, step) => sum + step.steps, 0)
+      expect(spent).toBe(computePar(empty, target))
+    }
+  })
+
+  it('names each weight once, and only weights the dial actually has', () => {
+    const route = computeRoute(empty, 223)
+    expect(route.length).toBeGreaterThan(0)
+    const weights = route.map((step) => step.weight)
+    expect(new Set(weights).size).toBe(weights.length)
+    const dialWeights = new Set([0, 1, 2, 3, 4, 5, 6, 7, 8].map(cellWeight))
+    for (const step of route) {
+      expect(dialWeights.has(step.weight)).toBe(true)
+      expect(step.steps).toBeGreaterThan(0)
+    }
+  })
+
+  it('adds up the two keys that share a weight instead of listing both', () => {
+    // Reaching 4 costs one step on each ×2 key, or two on one of them — the same to
+    // the sum either way, so it is reported once as 2× rather than twice as 1×.
+    const route = computeRoute(empty, 4)
+    const twos = route.filter((step) => step.weight === 2)
+    expect(twos.length).toBeLessThanOrEqual(1)
+    expect(route.reduce((sum, step) => sum + step.steps, 0)).toBe(computePar(empty, 4))
+  })
+
+  it('names the coarsest key first', () => {
+    const route = computeRoute(empty, 223)
+    const weights = route.map((step) => step.weight)
+    expect([...weights].sort((a, b) => b - a)).toEqual(weights)
+  })
+
+  it('omits buttons that are already right', () => {
+    const grid: Grid = [
+      [0, 0, 0],
+      [0, 0, 0],
+      [0, 0, 1],
+    ]
+    // 9 is already on the ×9 key, so reaching 9 asks for nothing.
+    expect(computeRoute(grid, 9)).toEqual([])
+  })
+
+  it('is empty for a target off the board', () => {
+    expect(computeRoute(empty, -1)).toEqual([])
+    expect(computeRoute(empty, 325)).toEqual([])
   })
 })

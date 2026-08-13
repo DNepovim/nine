@@ -79,6 +79,11 @@ import {
 import { cellWeight, computePar } from '@/machines/scoring'
 import type { MultiMode } from '@/types/multiplayer'
 
+// Trainee's shower wears the mode's own blue rather than the default spectrum. This
+// fires on every clean hit, and the full arc is the personal-best celebration's — a
+// hit-by-hit sprinkle borrowing it made the two read as the same event.
+const TRAINEE_CONFETTI = [MODE_GRADIENT.trainee[0]] as const
+
 // Where the menu button sits, level with the NINE row. Trainee draws no
 // best-scores strip, so everything below it — the button included — comes up by
 // exactly that strip's height.
@@ -426,7 +431,9 @@ export default function GameScreen() {
       {/* Trainee celebrates the hit rather than the run — half a record's pieces,
           because this fires many times a run and should not shout as loudly.
           Keyed on the batch so consecutive clean hits each get their own. */}
-      {celebration.seq !== null && <Confetti key={celebration.seq} density="half" />}
+      {celebration.seq !== null && (
+        <Confetti key={celebration.seq} density="half" colors={TRAINEE_CONFETTI} />
+      )}
 
       {/* ── Game screen (single padded wrapper) ── */}
       <Screen>
@@ -485,6 +492,7 @@ export default function GameScreen() {
               hits={hits}
               batch={hitBatch}
               praise={celebration.message ?? coach.line}
+              route={coach.route}
             />
           )}
 
