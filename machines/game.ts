@@ -103,6 +103,9 @@ type Context = {
   difficulty: Difficulty
   lives: number
   streak: number
+  // Hits that landed on a streak, over the whole run — `streak` only knows the one
+  // running now. It is what says whether a run was played well or merely played.
+  strikes: number
   accSum: number
   spdSum: number
   targets: Target[]
@@ -142,6 +145,7 @@ const freshGame = (mode: Mode, seq: number) => ({
   score: 0,
   lives: MODES[mode].lives,
   streak: 0,
+  strikes: 0,
   accSum: 0,
   spdSum: 0,
   targets: [] as Target[],
@@ -287,6 +291,9 @@ function applyGrid(context: Context, newGrid: Grid, now: number) {
   }))
 
   const hits = context.hits + matched.length
+  // Every target in a triggering press counts: the multiplier applied to all of them,
+  // and each one wears the ×N badge as it floats up.
+  const strikes = context.strikes + (multiplier > 1 ? matched.length : 0)
   const score = context.score + addedScore
 
   // Surviving targets: a hit resets their reference (and par) to now; otherwise
@@ -342,6 +349,7 @@ function applyGrid(context: Context, newGrid: Grid, now: number) {
     hits,
     score,
     streak,
+    strikes,
     accSum: newAccSum,
     spdSum: newSpdSum,
     stats,
@@ -364,6 +372,7 @@ export const gameMachine = createMachine({
     difficulty: 'hard' as Difficulty,
     lives: 3,
     streak: 0,
+    strikes: 0,
     accSum: 0,
     spdSum: 0,
     targets: [] as Target[],

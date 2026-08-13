@@ -64,6 +64,36 @@ describe('accuracy streak (optimal trigger)', () => {
   })
 })
 
+describe('strikes', () => {
+  it('tallies the hits that landed on a streak, and only those', () => {
+    const actor = start('accuracy')
+
+    // Optimal, so it triggers the streak and carries a multiplier — a strike.
+    actor.send({ type: 'ADD_TARGET', value: 9, at: 0 })
+    actor.send({ type: 'PRESS', index: 8, delta: 1, now: 0 })
+    expect(actor.getSnapshot().context.strikes).toBe(1)
+
+    // Two steps where par was one: a hit, but not a strike.
+    actor.send({ type: 'ADD_TARGET', value: 11, at: 0 })
+    actor.send({ type: 'PRESS', index: 0, delta: 1, now: 0 })
+    actor.send({ type: 'PRESS', index: 0, delta: 1, now: 0 })
+    expect(actor.getSnapshot().context.hits).toBe(2)
+    expect(actor.getSnapshot().context.strikes).toBe(1)
+  })
+
+  it('starts a new run at zero — the tally describes one run', () => {
+    const actor = start('accuracy')
+    actor.send({ type: 'ADD_TARGET', value: 9, at: 0 })
+    actor.send({ type: 'PRESS', index: 8, delta: 1, now: 0 })
+    expect(actor.getSnapshot().context.strikes).toBe(1)
+
+    actor.send({ type: 'PAUSE' })
+    actor.send({ type: 'MENU' })
+    actor.send({ type: 'START' })
+    expect(actor.getSnapshot().context.strikes).toBe(0)
+  })
+})
+
 describe('accuracy streak (second optimal)', () => {
   it('doubles on consecutive par hits and caps at 3 consecutive (×8)', () => {
     const actor = start('accuracy')

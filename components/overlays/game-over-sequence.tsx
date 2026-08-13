@@ -26,9 +26,12 @@ export function GameOverSequence({
   nickname,
   score,
   hits,
+  strikes,
   avgAccuracy,
   avgSpeed,
-  onNewGame,
+  onPlayAgain,
+  onChallenge,
+  onMenu,
   onAddNickname,
 }: {
   phase: DyingPhase
@@ -41,9 +44,12 @@ export function GameOverSequence({
   nickname: string | null
   score: number
   hits: number
+  strikes: number
   avgAccuracy: number
   avgSpeed: number
-  onNewGame: () => void
+  onPlayAgain: () => void
+  onChallenge: (mode: Mode, difficulty: Difficulty) => void
+  onMenu: () => void
   onAddNickname: () => void
 }) {
   if (phase === 'idle') return null
@@ -64,11 +70,14 @@ export function GameOverSequence({
           nickname={nickname}
           score={score}
           hits={hits}
+          strikes={strikes}
           avgAccuracy={avgAccuracy}
           avgSpeed={avgSpeed}
           titleHidden={!revealed}
           onTitleLayout={onTitleLayout}
-          onNewGame={onNewGame}
+          onPlayAgain={onPlayAgain}
+          onChallenge={onChallenge}
+          onMenu={onMenu}
           onAddNickname={onAddNickname}
         />
       </Animated.View>

@@ -550,7 +550,7 @@ export default function GameScreen() {
                       key={f.id}
                       points={f.points}
                       progress={f.progress}
-                      bonus={f.bonus}
+                      multiplier={f.multiplier}
                       onDone={() => {
                         removeFloat(f.id)
                       }}
@@ -666,9 +666,20 @@ export default function GameScreen() {
         nickname={nickname}
         score={state.context.score}
         hits={state.context.hits}
+        strikes={state.context.strikes}
         avgAccuracy={avgAccuracy}
         avgSpeed={avgSpeed}
-        onNewGame={() => {
+        onPlayAgain={() => {
+          send({ type: 'RESTART' })
+        }}
+        onChallenge={(nextMode, nextDifficulty) => {
+          // Both land before RESTART builds the fresh game, so it reads the board
+          // the player just accepted — and the persistence hooks remember it.
+          send({ type: 'SET_MODE', mode: nextMode })
+          send({ type: 'SET_DIFFICULTY', difficulty: nextDifficulty })
+          send({ type: 'RESTART' })
+        }}
+        onMenu={() => {
           send({ type: 'MENU' })
         }}
         onAddNickname={() => {

@@ -5,6 +5,7 @@ import { Pressable, Share, Text, View } from 'react-native'
 
 import { Screen } from '@/components/screen'
 import { useTheme } from '@/hooks/use-theme'
+import { cn } from '@/lib/cn'
 import {
   DARK_MODE_GRADIENT,
   DIFFICULTIES,
@@ -15,6 +16,7 @@ import {
 
 import { HighScores } from './high-scores'
 import { ModeTips } from './mode-tips'
+import { RunStats } from './run-stats'
 
 const shadow = {
   shadowColor: '#000',
@@ -59,17 +61,20 @@ export function PausedOverlay({
         <View className="w-full items-center">
           <Text
             selectable={false}
-            className="mb-1 font-mono text-[9px] font-bold tracking-[2px] text-dim"
+            className={cn(
+              'font-mono text-[9px] font-bold tracking-[2px] text-dim',
+              // Trainee has no score block under this line, so the stats would
+              // otherwise sit right on top of it.
+              gameMode === 'trainee' ? 'mb-5' : 'mb-1',
+            )}
           >
             {MODES[gameMode].label} · {DIFFICULTIES[difficulty].label}
           </Text>
           {/* Trainee has no board, so a score here measures nothing. A tip is
-              worth more to someone practising than a number they cannot place. */}
-          {gameMode === 'trainee' ? (
-            <View className="mb-5 w-full">
-              <ModeTips />
-            </View>
-          ) : (
+              worth more to someone practising than a number they cannot place —
+              but the run's own numbers still do, so they come first and the tip
+              reads as advice on what they show. */}
+          {gameMode !== 'trainee' && (
             <>
               <Text
                 selectable={false}
@@ -87,48 +92,13 @@ export function PausedOverlay({
             </>
           )}
 
-          <View className="mb-6 flex-row">
-            <View className="flex-1 items-end gap-2 pr-4">
-              <Text
-                selectable={false}
-                className="font-mono text-[10px] font-bold tracking-[1.5px] text-dim"
-              >
-                HITS
-              </Text>
-              <Text
-                selectable={false}
-                className="font-mono text-[10px] font-bold tracking-[1.5px] text-dim"
-              >
-                AVG ACC
-              </Text>
-              <Text
-                selectable={false}
-                className="font-mono text-[10px] font-bold tracking-[1.5px] text-dim"
-              >
-                AVG SPD
-              </Text>
+          <RunStats hits={hits} avgAccuracy={avgAccuracy} avgSpeed={avgSpeed} />
+
+          {gameMode === 'trainee' && (
+            <View className="mb-5 w-full">
+              <ModeTips />
             </View>
-            <View className="flex-1 items-start gap-2 pl-4">
-              <Text
-                selectable={false}
-                className="font-mono text-[10px] font-bold tracking-[1.5px] text-primary"
-              >
-                {hits}
-              </Text>
-              <Text
-                selectable={false}
-                className="font-mono text-[10px] font-bold tracking-[1.5px] text-primary"
-              >
-                {avgAccuracy}%
-              </Text>
-              <Text
-                selectable={false}
-                className="font-mono text-[10px] font-bold tracking-[1.5px] text-primary"
-              >
-                {avgSpeed}%
-              </Text>
-            </View>
-          </View>
+          )}
 
           {isOneOf(gameMode, ['accuracy', 'speed']) && (
             <HighScores
@@ -170,7 +140,7 @@ export function PausedOverlay({
                 selectable={false}
                 className="font-mono text-[13px] font-black tracking-[2px] text-primary"
               >
-                CANCEL GAME
+                END RUN
               </Text>
             </Pressable>
           </View>

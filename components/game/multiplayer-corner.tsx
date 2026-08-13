@@ -87,7 +87,7 @@ export function MultiplayerCorner({
           key={f.id}
           points={f.points}
           progress={1}
-          bonus={false}
+          multiplier={1}
           onDone={() => {
             removeFloat(f.id)
           }}

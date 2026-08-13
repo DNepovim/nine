@@ -1,9 +1,12 @@
+import { Ionicons } from '@expo/vector-icons'
 import { LinearGradient } from 'expo-linear-gradient'
 import { isOneOf } from 'narrowland'
 import { useRef } from 'react'
 import { Pressable, Text, View } from 'react-native'
 
 import { Screen } from '@/components/screen'
+import { useTheme } from '@/hooks/use-theme'
+import { earnedChallenge, nextChallenge } from '@/lib/next-challenge'
 import {
   DARK_MODE_GRADIENT,
   DIFFICULTIES,
@@ -14,6 +17,7 @@ import {
 
 import { GameOverTitle } from './game-over-title'
 import { HighScores } from './high-scores'
+import { RunStats } from './run-stats'
 
 const shadow = {
   shadowColor: '#000',
@@ -29,9 +33,12 @@ export function GameOverOverlay({
   nickname,
   score,
   hits,
+  strikes,
   avgAccuracy,
   avgSpeed,
-  onNewGame,
+  onPlayAgain,
+  onChallenge,
+  onMenu,
   onAddNickname,
   titleHidden = false,
   onTitleLayout,
@@ -42,9 +49,15 @@ export function GameOverOverlay({
   nickname: string | null
   score: number
   hits: number
+  // How many of those hits landed on a streak — the challenge is offered on it.
+  strikes: number
   avgAccuracy: number
   avgSpeed: number
-  onNewGame: () => void
+  // Straight back into a run on this same board.
+  onPlayAgain: () => void
+  // Into a run on the board one rung up — see `nextChallenge`.
+  onChallenge: (mode: Mode, difficulty: Difficulty) => void
+  onMenu: () => void
   onAddNickname: () => void
   // When the in-game dying sequence flies its own copy of the title up into
   // place, the overlay hides its title until the hand-off completes, and reports
@@ -53,6 +66,11 @@ export function GameOverOverlay({
   onTitleLayout?: (centerY: number) => void
 }) {
   const titleRef = useRef<View>(null)
+  const { colorScheme } = useTheme()
+  const dimColor = colorScheme === 'dark' ? '#504e6e' : '#aaa69e'
+  const challenge = earnedChallenge(hits, strikes)
+    ? nextChallenge(gameMode, difficulty)
+    : null
 
   return (
     <Screen overlay>
@@ -97,55 +115,7 @@ export function GameOverOverlay({
             {score}
           </Text>
 
-          {/* Stats — labels right-aligned, values left-aligned, boundary at screen centre */}
-          <View className="mb-6 w-72 flex-row">
-            <View className="flex-1 items-end gap-2 pr-4">
-              <Text
-                selectable={false}
-                numberOfLines={1}
-                className="font-mono text-[10px] font-bold tracking-[1.5px] text-dim"
-              >
-                HITS
-              </Text>
-              <Text
-                selectable={false}
-                numberOfLines={1}
-                className="font-mono text-[10px] font-bold tracking-[1.5px] text-dim"
-              >
-                AVG ACC
-              </Text>
-              <Text
-                selectable={false}
-                numberOfLines={1}
-                className="font-mono text-[10px] font-bold tracking-[1.5px] text-dim"
-              >
-                AVG SPD
-              </Text>
-            </View>
-            <View className="flex-1 items-start gap-2 pl-4">
-              <Text
-                selectable={false}
-                numberOfLines={1}
-                className="font-mono text-[10px] font-bold tracking-[1.5px] text-primary"
-              >
-                {hits}
-              </Text>
-              <Text
-                selectable={false}
-                numberOfLines={1}
-                className="font-mono text-[10px] font-bold tracking-[1.5px] text-primary"
-              >
-                {avgAccuracy}%
-              </Text>
-              <Text
-                selectable={false}
-                numberOfLines={1}
-                className="font-mono text-[10px] font-bold tracking-[1.5px] text-primary"
-              >
-                {avgSpeed}%
-              </Text>
-            </View>
-          </View>
+          <RunStats hits={hits} avgAccuracy={avgAccuracy} avgSpeed={avgSpeed} />
 
           {isOneOf(gameMode, ['accuracy', 'speed']) && (
             <HighScores
@@ -160,26 +130,57 @@ export function GameOverOverlay({
           )}
         </View>
 
-        {/* Bottom: NEW GAME returns to intro */}
-        <View className="items-center">
-          <Pressable
-            onPress={onNewGame}
-            className="overflow-hidden rounded-2xl"
-            style={shadow}
-          >
-            <LinearGradient
-              colors={[...DARK_MODE_GRADIENT[gameMode]]}
-              start={{ x: 0, y: 0.5 }}
-              end={{ x: 1, y: 0.5 }}
-              className="w-56 items-center py-4"
+        {/* Bottom: the two ways back into a run, then the way out. Three equal
+            buttons would make leaving as loud as playing; the ladder — CTA, card
+            pill, text link — says which one the screen is for. */}
+        <View className="items-center gap-6">
+          <View className="w-56 gap-3">
+            <Pressable
+              onPress={onPlayAgain}
+              className="overflow-hidden rounded-2xl"
+              style={shadow}
             >
+              <LinearGradient
+                colors={[...DARK_MODE_GRADIENT[gameMode]]}
+                start={{ x: 0, y: 0.5 }}
+                end={{ x: 1, y: 0.5 }}
+                className="items-center py-4"
+              >
+                <Text
+                  selectable={false}
+                  className="font-mono text-[13px] font-black tracking-[2px] text-on-strong"
+                >
+                  PLAY AGAIN
+                </Text>
+              </LinearGradient>
+            </Pressable>
+            {challenge !== null && (
+              <Pressable
+                onPress={() => {
+                  onChallenge(challenge.mode, challenge.difficulty)
+                }}
+                className="items-center rounded-2xl bg-card py-4"
+              >
+                <Text
+                  selectable={false}
+                  numberOfLines={1}
+                  className="font-mono text-[13px] font-black tracking-[2px] text-primary"
+                >
+                  {challenge.label}
+                </Text>
+              </Pressable>
+            )}
+          </View>
+          <Pressable onPress={onMenu} hitSlop={10}>
+            <View className="flex-row items-center gap-1">
+              <Ionicons name="home-outline" size={10} color={dimColor} />
               <Text
                 selectable={false}
-                className="font-mono text-[13px] font-black tracking-[2px] text-on-strong"
+                className="font-mono text-[10px] font-bold tracking-[1.8px] text-dim"
               >
-                NEW GAME
+                MENU
               </Text>
-            </LinearGradient>
+            </View>
           </Pressable>
         </View>
       </View>

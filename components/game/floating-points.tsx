@@ -16,14 +16,17 @@ import { mono } from '@/constants/theme'
 export function FloatingPoints({
   points,
   progress,
-  bonus,
+  multiplier,
   onDone,
 }: {
   points: number
   progress: number
-  bonus: boolean
+  // What the streak was worth when these points were scored — ×2, then ×4, then ×8.
+  // The points are already multiplied; this is the badge that says why they are big.
+  multiplier: number
   onDone: () => void
 }) {
+  const bonus = multiplier > 1
   const ty = useSharedValue(0)
   const op = useSharedValue(0)
   const sc = useSharedValue(bonus ? 0.5 : 0.9)
@@ -85,7 +88,7 @@ export function FloatingPoints({
             color: '#E7B44C',
           }}
         >
-          ×2
+          ×{multiplier}
         </Text>
       )}
     </Animated.View>
