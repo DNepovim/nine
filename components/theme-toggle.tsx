@@ -2,14 +2,26 @@ import { Ionicons } from '@expo/vector-icons'
 import { useEffect } from 'react'
 import { Pressable, View } from 'react-native'
 import Animated, {
+  Easing,
   useAnimatedStyle,
   useSharedValue,
-  withSpring,
+  withTiming,
 } from 'react-native-reanimated'
 
-const TOGGLE_W = 96
-const TOGGLE_H = 40
-const KNOB = TOGGLE_H - 8
+const TOGGLE_W = 72
+const TOGGLE_H = 30
+const PAD = 4
+const KNOB = TOGGLE_H - PAD * 2
+const TRAVEL = TOGGLE_W - KNOB - PAD * 2
+const ICON = 12
+const ICON_INSET = 8
+
+// Straight across and back, easing out of one end and into the other. A timing curve
+// rather than a spring on purpose: every spring soft enough to read as a swing also
+// overshoots, and an overshoot here carries the knob past the end of the track and out
+// of the pill. This eases at both ends and stops exactly where the track does.
+const SWING_MS = 280
+const SWING_EASING = Easing.inOut(Easing.sin)
 
 export function ThemeToggle({
   isDark,
@@ -18,14 +30,14 @@ export function ThemeToggle({
   isDark: boolean
   onToggle: () => void
 }) {
-  const knobX = useSharedValue(isDark ? TOGGLE_W - KNOB - 4 : 4)
+  const knobX = useSharedValue(isDark ? PAD + TRAVEL : PAD)
 
   useEffect(() => {
-    knobX.value = withSpring(isDark ? TOGGLE_W - KNOB - 4 : 4, {
-      damping: 18,
-      stiffness: 200,
+    knobX.value = withTiming(isDark ? PAD + TRAVEL : PAD, {
+      duration: SWING_MS,
+      easing: SWING_EASING,
     })
-  }, [isDark])
+  }, [isDark, knobX])
 
   const knobStyle = useAnimatedStyle(() => ({
     transform: [{ translateX: knobX.value }],
@@ -48,23 +60,23 @@ export function ThemeToggle({
         <View
           style={{
             position: 'absolute',
-            left: 10,
+            left: ICON_INSET,
             justifyContent: 'center',
             alignItems: 'center',
           }}
         >
-          <Ionicons name="moon" size={15} color={isDark ? iconDim : iconActive} />
+          <Ionicons name="moon" size={ICON} color={isDark ? iconDim : iconActive} />
         </View>
         {/* Sun — right */}
         <View
           style={{
             position: 'absolute',
-            right: 10,
+            right: ICON_INSET,
             justifyContent: 'center',
             alignItems: 'center',
           }}
         >
-          <Ionicons name="sunny" size={15} color={isDark ? iconActive : iconDim} />
+          <Ionicons name="sunny" size={ICON} color={isDark ? iconActive : iconDim} />
         </View>
         {/* Knob */}
         <Animated.View
