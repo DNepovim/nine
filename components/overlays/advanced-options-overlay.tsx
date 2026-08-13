@@ -1,6 +1,7 @@
 import { AntDesign } from '@expo/vector-icons'
 import { Pressable, Text, View } from 'react-native'
 
+import { OptionCheckbox } from '@/components/overlays/option-checkbox'
 import { Screen } from '@/components/screen'
 import { ThemeToggle } from '@/components/theme-toggle'
 import { buildInfo } from '@/lib/build-info'
@@ -22,11 +23,7 @@ function AdvancedOption({
       className="flex-row items-center gap-3 py-3"
       style={{ width: 300 }}
     >
-      <View
-        className={`h-7 w-7 items-center justify-center rounded-lg ${checked ? 'bg-strong' : 'bg-card'}`}
-      >
-        {checked && <AntDesign name="check" size={17} color="#D8D2F4" />}
-      </View>
+      <OptionCheckbox checked={checked} />
       <View className="flex-1">
         <Text
           selectable={false}
