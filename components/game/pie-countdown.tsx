@@ -10,10 +10,16 @@ import Animated, {
 import Svg, { Circle } from 'react-native-svg'
 import { scheduleOnRN } from 'react-native-worklets'
 
-import { APP_BLUE, APP_RED } from '@/constants/colors'
+import { APP_BLUE, APP_RED, TARGET_BAND_TRACK } from '@/constants/colors'
 import { PIE_SIZE } from '@/constants/game'
+import { targetBand } from '@/lib/target-band'
 
 const AnimatedCircle = Animated.createAnimatedComponent(Circle)
+
+// The arc never covers the whole circle, so a sliver of the band-tinted track shows
+// even on a freshly spawned target. Without this the band cue would grow from nothing
+// as the clock drains — absent exactly when the target is most worth reading.
+const ARC_MAX = 0.9
 
 const fontSizeForDigits = (value: number, scale: number): number => {
   const digits = String(value).length
@@ -44,7 +50,9 @@ export function PieCountdown({
   const circumference = 2 * Math.PI * radius
 
   const progress = useSharedValue(1) // 1 = full, 0 = empty
-  const trackColor = backgroundColor ?? (isDark ? '#2A2B44' : '#D4D0C8')
+  // The multiplayer hit-flash owns the track while it lasts, so the band yields to it.
+  const trackColor =
+    backgroundColor ?? TARGET_BAND_TRACK[isDark ? 'dark' : 'light'][targetBand(value)]
 
   useEffect(() => {
     progress.value = withTiming(0, { duration, easing: Easing.linear }, (finished) => {
@@ -58,11 +66,11 @@ export function PieCountdown({
   }, [active])
 
   const animatedProps = useAnimatedProps(() => ({
-    strokeDashoffset: circumference * (1 - progress.value),
+    strokeDashoffset: circumference * (1 - progress.value * ARC_MAX),
   }))
 
   const redProps = useAnimatedProps(() => ({
-    strokeDashoffset: circumference * (1 - progress.value),
+    strokeDashoffset: circumference * (1 - progress.value * ARC_MAX),
     opacity: 1 - progress.value,
   }))
 

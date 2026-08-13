@@ -1,3 +1,5 @@
+import type { TargetBand } from '@/types/game'
+
 // Brand + value-tint palettes shared across the game UI.
 
 // The screen background per theme. Anything that needs to hide what is behind it —
@@ -27,6 +29,16 @@ export const GRAYSCALE = ['#5F5C6E', '#7A7688', '#95919F', '#B0ACB8'] as const
 // The game's whole scale, blue through to the arcade amber — every mode's colour at
 // once. All five are mid-tone, so unlike white they read on both themes.
 export const GAME_SCALE = ['#4C7EFF', '#7273D2', '#c36282', '#E5534B', '#FF8C00'] as const
+
+// The countdown pie's track — the part revealed as the arc drains — tints by the
+// target's hundreds band, so the band reads as area rather than as a digit you have
+// to parse. The numeral sits directly on this, so these stay near the plain track's
+// lightness: light theme carries the near-black `pie` ink, dark theme white. Band 0
+// keeps the untinted track, which makes "no colour" the sub-100 signal.
+export const TARGET_BAND_TRACK = {
+  light: { 0: '#D4D0C8', 1: '#CFCBEE', 2: '#EBC7D2', 3: '#F2DCB4' },
+  dark: { 0: '#2A2B44', 1: '#2E2A55', 2: '#4A2434', 3: '#4A3213' },
+} as const satisfies Record<'light' | 'dark', Record<TargetBand, string>>
 
 type Palette = { low: string; high: string }
 
