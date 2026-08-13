@@ -682,9 +682,6 @@ export default function GameScreen() {
         onMenu={() => {
           send({ type: 'MENU' })
         }}
-        onAddNickname={() => {
-          setShowNicknameModal(true)
-        }}
       />
 
       {/* ── Pause overlay ── */}

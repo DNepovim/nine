@@ -32,7 +32,6 @@ export function GameOverSequence({
   onPlayAgain,
   onChallenge,
   onMenu,
-  onAddNickname,
 }: {
   phase: DyingPhase
   overlayStyle: StyleProp<AnimatedStyle<ViewStyle>>
@@ -50,7 +49,6 @@ export function GameOverSequence({
   onPlayAgain: () => void
   onChallenge: (mode: Mode, difficulty: Difficulty) => void
   onMenu: () => void
-  onAddNickname: () => void
 }) {
   if (phase === 'idle') return null
   const revealed = phase === 'done'
@@ -78,7 +76,6 @@ export function GameOverSequence({
           onPlayAgain={onPlayAgain}
           onChallenge={onChallenge}
           onMenu={onMenu}
-          onAddNickname={onAddNickname}
         />
       </Animated.View>
 

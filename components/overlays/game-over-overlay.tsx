@@ -7,17 +7,13 @@ import { Pressable, Text, View } from 'react-native'
 import { Screen } from '@/components/screen'
 import { useTheme } from '@/hooks/use-theme'
 import { earnedChallenge, nextChallenge } from '@/lib/next-challenge'
-import {
-  DARK_MODE_GRADIENT,
-  DIFFICULTIES,
-  MODES,
-  type Difficulty,
-  type Mode,
-} from '@/machines/game'
+import { DARK_MODE_GRADIENT, type Difficulty, type Mode } from '@/machines/game'
 
+import { BoardBadges } from './board-badges'
 import { GameOverTitle } from './game-over-title'
 import { HighScores } from './high-scores'
 import { RunStats } from './run-stats'
+import { ScoreReadout } from './score-readout'
 
 const shadow = {
   shadowColor: '#000',
@@ -39,7 +35,6 @@ export function GameOverOverlay({
   onPlayAgain,
   onChallenge,
   onMenu,
-  onAddNickname,
   titleHidden = false,
   onTitleLayout,
 }: {
@@ -58,7 +53,6 @@ export function GameOverOverlay({
   // Into a run on the board one rung up — see `nextChallenge`.
   onChallenge: (mode: Mode, difficulty: Difficulty) => void
   onMenu: () => void
-  onAddNickname: () => void
   // When the in-game dying sequence flies its own copy of the title up into
   // place, the overlay hides its title until the hand-off completes, and reports
   // where the title sits (window centre-Y) so the flying copy can land on it.
@@ -92,28 +86,12 @@ export function GameOverOverlay({
             <GameOverTitle gameMode={gameMode} />
           </View>
 
-          {/* Mode · Difficulty subtitle */}
-          <Text
-            selectable={false}
-            className="mb-4 font-mono text-[9px] font-bold tracking-[2px] text-dim"
-          >
-            {MODES[gameMode].label} · {DIFFICULTIES[difficulty].label}
-          </Text>
+          <BoardBadges gameMode={gameMode} difficulty={difficulty} />
 
-          {/* Score */}
-          <Text
-            selectable={false}
-            className="font-mono text-[9px] font-bold tracking-[2.5px] text-dim"
-          >
-            YOUR SCORE
-          </Text>
-          <Text
-            selectable={false}
-            className="mb-5 text-[56px] tracking-[2px]"
-            style={{ fontFamily: 'DSEG7', color: '#4ADE80' }}
-          >
-            {score}
-          </Text>
+          {/* Unlabelled: seven-segment digits in the score colour, framed, under a
+              GAME OVER title can only be one number — and the label was a third line
+              of small caps on a screen that already had too many. */}
+          <ScoreReadout score={score} />
 
           <RunStats hits={hits} avgAccuracy={avgAccuracy} avgSpeed={avgSpeed} />
 
@@ -125,7 +103,6 @@ export function GameOverOverlay({
               nickname={nickname}
               optimisticScore={score}
               optimisticHits={hits}
-              onAddNickname={onAddNickname}
             />
           )}
         </View>

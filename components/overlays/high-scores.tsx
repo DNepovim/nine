@@ -74,8 +74,11 @@ export function HighScores({
   nickname: string | null
   optimisticScore?: number
   optimisticHits?: number
-  // Opens the nickname prompt so the player's local bests can be published.
-  onAddNickname: () => void
+  // Opens the nickname prompt so the player's local bests can be published. Omitted
+  // by the game over screen, which asks for a nickname of its own accord the moment
+  // the run ends — a button offering the prompt behind it would be the same question
+  // twice.
+  onAddNickname?: () => void
 }) {
   const { width: windowWidth } = useWindowDimensions()
   const [panelWidth, setPanelWidth] = useState(0)
@@ -306,7 +309,7 @@ export function HighScores({
 
       {!online && <OfflineNotice unsynced={hasUnpublished} />}
 
-      {hasUnpublished && nickname === null && (
+      {hasUnpublished && nickname === null && onAddNickname !== undefined && (
         <PublishScoresButton
           from={gradientColors[0]}
           to={gradientColors[1]}

@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons'
 import { LinearGradient } from 'expo-linear-gradient'
 import { isOneOf } from 'narrowland'
-import { Pressable, Share, Text, View } from 'react-native'
+import { Pressable, Text, View } from 'react-native'
 
 import { Screen } from '@/components/screen'
 import { useTheme } from '@/hooks/use-theme'
@@ -17,6 +17,7 @@ import {
 import { HighScores } from './high-scores'
 import { ModeTips } from './mode-tips'
 import { RunStats } from './run-stats'
+import { ScoreReadout } from './score-readout'
 
 const shadow = {
   shadowColor: '#000',
@@ -74,23 +75,7 @@ export function PausedOverlay({
               worth more to someone practising than a number they cannot place —
               but the run's own numbers still do, so they come first and the tip
               reads as advice on what they show. */}
-          {gameMode !== 'trainee' && (
-            <>
-              <Text
-                selectable={false}
-                className="font-mono text-[9px] font-bold tracking-[2.5px] text-dim"
-              >
-                YOUR SCORE
-              </Text>
-              <Text
-                selectable={false}
-                className="mb-5 text-[56px] tracking-[2px]"
-                style={{ fontFamily: 'DSEG7', color: '#4ADE80' }}
-              >
-                {score}
-              </Text>
-            </>
-          )}
+          {gameMode !== 'trainee' && <ScoreReadout score={score} />}
 
           <RunStats hits={hits} avgAccuracy={avgAccuracy} avgSpeed={avgSpeed} />
 
@@ -144,38 +129,17 @@ export function PausedOverlay({
               </Text>
             </Pressable>
           </View>
-          <View className="flex-row items-center gap-5">
-            <Pressable onPress={onOpenAdvanced} hitSlop={10}>
-              <View className="flex-row items-center gap-1">
-                <Ionicons name="settings-outline" size={10} color={dimColor} />
-                <Text
-                  selectable={false}
-                  className="font-mono text-[10px] font-bold tracking-[1.8px] text-dim"
-                >
-                  OPTIONS
-                </Text>
-              </View>
-            </Pressable>
-            <Pressable
-              onPress={() => {
-                void Share.share({
-                  message: 'https://nine.expo.app',
-                  url: 'https://nine.expo.app',
-                })
-              }}
-              hitSlop={10}
-            >
-              <View className="flex-row items-center gap-1">
-                <Ionicons name="share-outline" size={10} color={dimColor} />
-                <Text
-                  selectable={false}
-                  className="font-mono text-[10px] font-bold tracking-[1.8px] text-dim"
-                >
-                  SHARE
-                </Text>
-              </View>
-            </Pressable>
-          </View>
+          <Pressable onPress={onOpenAdvanced} hitSlop={10}>
+            <View className="flex-row items-center gap-1">
+              <Ionicons name="settings-outline" size={10} color={dimColor} />
+              <Text
+                selectable={false}
+                className="font-mono text-[10px] font-bold tracking-[1.8px] text-dim"
+              >
+                OPTIONS
+              </Text>
+            </View>
+          </Pressable>
         </View>
       </View>
     </Screen>
