@@ -178,7 +178,7 @@ export function GameOverOverlay({
                 selectable={false}
                 className="font-mono text-[10px] font-bold tracking-[1.8px] text-dim"
               >
-                MENU
+                HOME
               </Text>
             </View>
           </Pressable>
