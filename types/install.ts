@@ -28,6 +28,8 @@ export type InstallableTarget = Exclude<InstallTarget, 'none'>
 export type InstallEnv = {
   standalone: boolean
   hasPrompt: boolean
+  // Whether the window is desktop-sized — see `lib/desktop.ts`.
+  wideViewport: boolean
   // `undefined` on browsers without User-Agent Client Hints — every WebKit one.
   uaMobile: boolean | undefined
   userAgent: string

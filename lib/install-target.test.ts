@@ -41,6 +41,7 @@ const ANDROID_FACEBOOK =
 const env = (overrides: Partial<InstallEnv>): InstallEnv => ({
   standalone: false,
   hasPrompt: false,
+  wideViewport: false,
   uaMobile: undefined,
   userAgent: ANDROID_CHROME,
   maxTouchPoints: 0,
@@ -72,6 +73,22 @@ describe('resolveInstallTarget', () => {
     expect(
       resolveInstallTarget(
         env({ hasPrompt: true, uaMobile: false, userAgent: DESKTOP_CHROME }),
+      ),
+    ).toBe('none')
+  })
+
+  it('stays quiet in a desktop-sized window, whatever the browser claims to be', () => {
+    expect(
+      resolveInstallTarget(
+        env({ wideViewport: true, userAgent: IPAD_SAFARI, maxTouchPoints: 5 }),
+      ),
+    ).toBe('none')
+  })
+
+  it('stays quiet on a Mac that reports a touchscreen — the iPad rule used to bite', () => {
+    expect(
+      resolveInstallTarget(
+        env({ wideViewport: true, userAgent: MAC_SAFARI, maxTouchPoints: 5 }),
       ),
     ).toBe('none')
   })

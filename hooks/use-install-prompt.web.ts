@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 
+import { isDesktopViewport } from '@/lib/desktop'
 import { resolveInstallTarget } from '@/lib/install-target'
 import type { InstallTarget } from '@/types/install'
 
@@ -30,6 +31,7 @@ const readTarget = (): InstallTarget => {
     standalone:
       win.matchMedia('(display-mode: standalone)').matches || nav.standalone === true,
     hasPrompt: win.__nineInstallPrompt !== undefined,
+    wideViewport: isDesktopViewport(win.innerWidth, win.innerHeight),
     uaMobile: nav.userAgentData?.mobile,
     userAgent: nav.userAgent,
     maxTouchPoints: nav.maxTouchPoints,
@@ -60,9 +62,14 @@ export function useInstallPrompt(): {
 
     window.addEventListener(INSTALLABLE_EVENT, onInstallable)
     window.addEventListener('appinstalled', onInstalled)
+    // The window's size is part of the answer now, so a window dragged across the
+    // desktop threshold has to change it — otherwise the popup's idea of where it is
+    // running would be whatever was true at launch.
+    window.addEventListener('resize', onInstallable)
     return () => {
       window.removeEventListener(INSTALLABLE_EVENT, onInstallable)
       window.removeEventListener('appinstalled', onInstalled)
+      window.removeEventListener('resize', onInstallable)
     }
   }, [])
 

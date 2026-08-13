@@ -33,6 +33,15 @@ export function resolveInstallTarget(env: InstallEnv): InstallTarget {
   // installed app itself.
   if (env.standalone) return 'none'
 
+  // A desktop has no home screen to add the game to. The window is the signal
+  // rather than the user agent, because the user agent cannot be trusted to say:
+  // iPadOS reports itself as a Mac on purpose, and the touch-point heuristic that
+  // sees through that also catches a Mac with a touchscreen plugged into it, which
+  // is how a desktop ends up being offered iPad instructions. A window this size is
+  // one the app has already decided to draw a phone frame inside; offering to
+  // install that as a phone app on top of it is noise.
+  if (env.wideViewport) return 'none'
+
   // A real install event beats everything else wherever we get one. `uaMobile`
   // keeps it to phones: User-Agent Client Hints exist on exactly the Chromium
   // browsers that fire the event, so desktop answers `false` and we never have
