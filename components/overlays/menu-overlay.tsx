@@ -2,7 +2,7 @@ import { Ionicons } from '@expo/vector-icons'
 import { LinearGradient } from 'expo-linear-gradient'
 import { isNonEmptyString, isOneOf } from 'narrowland'
 import { useEffect, useState } from 'react'
-import { Pressable, Share, Text, useWindowDimensions, View } from 'react-native'
+import { Platform, Pressable, Share, Text, useWindowDimensions, View } from 'react-native'
 import Animated, {
   Easing,
   useAnimatedStyle,
@@ -14,6 +14,7 @@ import Animated, {
 import { Screen } from '@/components/screen'
 import { useTheme } from '@/hooks/use-theme'
 import { cn } from '@/lib/cn'
+import { inviteMessage, SHARE_URL } from '@/lib/invite-message'
 import {
   DARK_MODE_GRADIENT,
   lerpColor,
@@ -301,10 +302,14 @@ export function MenuOverlay({
             </Pressable>
             <Pressable
               onPress={() => {
-                void Share.share({
-                  message: 'https://nine.expo.app',
-                  url: 'https://nine.expo.app',
-                })
+                const invite = inviteMessage(gameMode, difficulty, bestScore)
+                // iOS takes the link as its own item, so the sheet can offer it to
+                // AirDrop and Copy Link; Android ignores `url` and needs it inline.
+                void Share.share(
+                  Platform.OS === 'ios'
+                    ? { message: invite, url: SHARE_URL }
+                    : { message: `${invite}\n\n${SHARE_URL}` },
+                )
               }}
               hitSlop={10}
             >
