@@ -12,6 +12,10 @@ const ANNOUNCEMENT_SCALE = {
   today: 'gold',
   week: 'gold',
   ever: 'gold',
+  // Opening a board is a board milestone like any other, so it wears the same gold as
+  // the record for its period — same bar, same particles.
+  todayFirst: 'gold',
+  weekFirst: 'gold',
   // Someone else moved a board record. The dark CTA scale carries the weight of a
   // real event without the shine of a prize.
   todayRaised: 'cta',

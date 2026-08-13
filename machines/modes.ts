@@ -55,15 +55,23 @@ export const DIFFICULTY_ORDER: Difficulty[] = ['easy', 'hard', 'extreme']
 
 export type DifficultyConfig = {
   label: string
+  // The label at a glance, for rows too tight to spell it out — the medal line under
+  // the title. Lives beside the label so the two cannot drift.
+  code: string
   timeoutScale: number
   maxTargets: number
 }
 
 export const DIFFICULTIES: Record<Difficulty, DifficultyConfig> = {
-  easy: { label: 'EASY', timeoutScale: 1.3, maxTargets: 3 },
-  hard: { label: 'HARD', timeoutScale: 0.75, maxTargets: 3 },
-  extreme: { label: 'EXTREME', timeoutScale: 0.55, maxTargets: 4 },
+  easy: { label: 'EASY', code: 'ESY', timeoutScale: 1.3, maxTargets: 3 },
+  hard: { label: 'HARD', code: 'HRD', timeoutScale: 0.75, maxTargets: 3 },
+  extreme: { label: 'EXTREME', code: 'EXT', timeoutScale: 0.55, maxTargets: 4 },
 }
+
+// The modes that keep a board. Trainee is unscored, so it has no leaderboard, no rank
+// and no medal — every board-shaped question in the app is really about these two.
+export const SCORED_MODES = ['accuracy', 'speed'] as const satisfies readonly Mode[]
+export type ScoredMode = (typeof SCORED_MODES)[number]
 
 // Linear interpolation between two 6-digit hex colors.
 export function lerpColor(from: string, to: string, t: number): string {

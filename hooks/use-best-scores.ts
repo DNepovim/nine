@@ -1,8 +1,14 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 
-import { NO_LEADERS, PERIODS, type Leaders } from '@/lib/announcements'
+import { NO_LEADERS, PERIODS, type Leaders, type Period } from '@/lib/announcements'
 import { fetchPeriodLeader } from '@/lib/leaderboard'
 import type { Difficulty, Mode } from '@/machines/game'
+
+// Which periods are known to hold no score at all. False is the safe answer: it means
+// "not established", so a board we could not read is never mistaken for an empty one.
+export type EmptyPeriods = Record<Period, boolean>
+
+const NONE_EMPTY: EmptyPeriods = { today: false, week: false, ever: false }
 
 // Who leads each period on one board (mode × difficulty). Fetched on mount and on
 // demand via `refresh` — the game screen refreshes between runs, and while a run is in
@@ -11,8 +17,14 @@ export function useBestScores(
   mode: Mode,
   difficulty: Difficulty,
   enabled: boolean,
-): { leaders: Leaders; loaded: boolean; refresh: () => void } {
+): {
+  leaders: Leaders
+  empty: EmptyPeriods
+  loaded: boolean
+  refresh: () => void
+} {
   const [leaders, setLeaders] = useState<Leaders>(NO_LEADERS)
+  const [empty, setEmpty] = useState<EmptyPeriods>(NONE_EMPTY)
   // True once the first fetch for this board has settled, however it went — an empty
   // board and three failed requests both count, because callers wait on this to know
   // the numbers are as good as they are going to get, not that they are non-null.
@@ -30,22 +42,36 @@ export function useBestScores(
     )
     if (requestIdRef.current !== id) return
     setLoaded(true)
-    // All three null means either an untouched board or three failed requests, and we
-    // cannot tell which — so keep whatever is on screen instead of blanking a line that
-    // was already showing real scores.
-    if (ever === null && week === null && today === null) return
-    setLeaders({ ever: ever ?? null, week: week ?? null, today: today ?? null })
+    // A period counts as empty only when its request came back and brought nothing.
+    setEmpty({
+      ever: ever?.ok === true && ever.leader === null,
+      week: week?.ok === true && week.leader === null,
+      today: today?.ok === true && today.leader === null,
+    })
+    const next: Leaders = {
+      ever: ever?.leader ?? null,
+      week: week?.leader ?? null,
+      today: today?.leader ?? null,
+    }
+    // All three null means either an untouched board or three failed requests, and the
+    // line cannot tell the player which — so keep whatever is on screen instead of
+    // blanking one that was already showing real scores. (`empty` above can tell, and
+    // is what the opened-a-board announcement reads.)
+    if (next.ever === null && next.week === null && next.today === null) return
+    setLeaders(next)
   }, [mode, difficulty])
 
   useEffect(() => {
     if (!enabled) {
       requestIdRef.current++
       setLeaders(NO_LEADERS)
+      setEmpty(NONE_EMPTY)
       setLoaded(false)
       return
     }
     // The board changed, so the leaders on screen belong to a different board.
     setLeaders(NO_LEADERS)
+    setEmpty(NONE_EMPTY)
     setLoaded(false)
     void load()
     return () => {
@@ -58,5 +84,5 @@ export function useBestScores(
     void load()
   }, [enabled, load])
 
-  return { leaders, loaded, refresh }
+  return { leaders, empty, loaded, refresh }
 }

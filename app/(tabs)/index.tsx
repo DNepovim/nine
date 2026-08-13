@@ -176,6 +176,7 @@ export default function GameScreen() {
   // Board leaders for the strip above the top bar. Trainee has no leaderboard.
   const {
     leaders,
+    empty: emptyBoards,
     loaded: bestsLoaded,
     refresh: refreshBests,
   } = useBestScores(mode, difficulty, mode !== 'trainee')
@@ -211,6 +212,8 @@ export default function GameScreen() {
     todayBest: bestToday,
     weekBest: bestWeek,
     everBest: bestEver,
+    todayEmpty: emptyBoards.today,
+    weekEmpty: emptyBoards.week,
     rival,
     // Send the score the moment a board record falls rather than waiting for game
     // over: the write is what wakes every other player's bar, so delaying it is

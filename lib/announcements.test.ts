@@ -16,6 +16,8 @@ const targets = (over: Partial<RecordTargets> = {}): RecordTargets => ({
   today: 2000,
   week: 3000,
   ever: 4000,
+  todayEmpty: false,
+  weekEmpty: false,
   ...over,
 })
 
@@ -62,6 +64,43 @@ describe('crossedRecords', () => {
   })
 })
 
+// Opening a board the player found empty. Distinct from beating a record, which
+// crossedRecords deliberately never reports for an empty board.
+describe('crossedRecords — opening a board', () => {
+  const open = (over: Partial<RecordTargets> = {}) =>
+    targets({ today: null, week: null, todayEmpty: true, weekEmpty: true, ...over })
+
+  it('announces the week when both boards were empty, the day being implied', () => {
+    expect(crossedRecords(500, open())).toEqual(['weekFirst', 'todayFirst'])
+  })
+
+  it('announces only the day when the week already had a score', () => {
+    const t = open({ week: 3000, weekEmpty: false })
+    expect(crossedRecords(500, t)).toEqual(['todayFirst'])
+  })
+
+  it('stays quiet on a board we merely failed to read', () => {
+    // Null record with no emptiness established: offline, not untouched.
+    expect(crossedRecords(500, targets({ today: null, week: null }))).toEqual([])
+  })
+
+  it('needs a score of its own — a run that scored nothing opened nothing', () => {
+    expect(crossedRecords(0, open())).toEqual([])
+  })
+
+  it('ranks an opening above a personal best', () => {
+    const crossed = crossedRecords(5000, open())
+    expect(crossed.indexOf('weekFirst')).toBeLessThan(crossed.indexOf('record'))
+  })
+
+  it('never reports beating and opening the same board at once', () => {
+    // An empty board has no record to beat, so these cannot both apply.
+    const crossed = crossedRecords(5000, open())
+    expect(crossed).not.toContain('week')
+    expect(crossed).not.toContain('today')
+  })
+})
+
 // What decides whether a crossing is worth publishing to the board mid-run. A
 // personal best concerns nobody else, so it must not.
 describe('hasBoardRecord', () => {
@@ -87,6 +126,11 @@ describe('hasBoardRecord', () => {
 
   it('is true when a board record came alongside a personal best', () => {
     expect(hasBoardRecord(['ever', 'week', 'today', 'record'])).toBe(true)
+  })
+
+  it('is true for opening a board — nobody sees it until the score is published', () => {
+    expect(hasBoardRecord(['todayFirst'])).toBe(true)
+    expect(hasBoardRecord(['weekFirst', 'todayFirst', 'record'])).toBe(true)
   })
 
   it("is false for a rival's announcement, which is nothing of ours to publish", () => {

@@ -8,6 +8,7 @@ import {
   hasBoardRecord,
   type Announcement,
   type AnnouncementId,
+  type RecordTargets,
 } from '@/lib/announcements'
 
 // How long an announcement holds the bar before the scores come back.
@@ -27,6 +28,8 @@ export function useAnnouncements({
   todayBest,
   weekBest,
   everBest,
+  todayEmpty,
+  weekEmpty,
   rival,
   onBoardRecord,
 }: {
@@ -36,6 +39,10 @@ export function useAnnouncements({
   todayBest: number | null
   weekBest: number | null
   everBest: number | null
+  // Whether the period's board is known to hold no score, so a run that puts one there
+  // opened it. False whenever we could not find out — see EmptyPeriods.
+  todayEmpty: boolean
+  weekEmpty: boolean
   // What another player just did, if anything. Always yields to your own records.
   rival: RivalAnnouncement | null
   // Called the instant a board record falls, so the score reaches the board while
@@ -43,11 +50,13 @@ export function useAnnouncements({
   onBoardRecord: () => void
 }): Announcement | null {
   const [current, setCurrent] = useState<Announcement | null>(null)
-  const targetsRef = useRef({
+  const targetsRef = useRef<RecordTargets>({
     record: 0,
-    today: null as number | null,
-    week: null as number | null,
-    ever: null as number | null,
+    today: null,
+    week: null,
+    ever: null,
+    todayEmpty: false,
+    weekEmpty: false,
   })
   const startedRef = useRef(false)
   const firedRef = useRef(new Set<AnnouncementId>())
@@ -73,9 +82,11 @@ export function useAnnouncements({
       today: todayBest,
       week: weekBest,
       ever: everBest,
+      todayEmpty,
+      weekEmpty,
     }
     firedRef.current = new Set()
-  }, [inRun, storedBest, todayBest, weekBest, everBest])
+  }, [inRun, storedBest, todayBest, weekBest, everBest, todayEmpty, weekEmpty])
 
   useEffect(() => {
     if (!inRun) return

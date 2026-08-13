@@ -13,7 +13,7 @@ import {
 } from './modes'
 import { accuracyFactor, computeHitPoints, computePar, speedFactor } from './scoring'
 
-export type { Difficulty, Mode } from './modes'
+export type { Difficulty, Mode, ScoredMode } from './modes'
 export {
   ARCADE_TEASER,
   DARK_MODE_GRADIENT,
@@ -25,6 +25,7 @@ export {
   MODE_GRADIENT,
   MODE_ORDER,
   MODES,
+  SCORED_MODES,
   effectiveSpawnInterval,
   effectiveTimeout,
   streakMultiplier,

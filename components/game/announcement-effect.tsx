@@ -21,6 +21,11 @@ const EFFECTS = {
   week: (colors) => <Fireworks colors={colors} />,
   ever: (colors) => <Hyperspace colors={colors} />,
 
+  // Opening a board plays whatever that board's record plays, so the day and the week
+  // keep their own flavour whether you took the record or set the first one.
+  todayFirst: (colors) => <Confetti colors={colors} />,
+  weekFirst: (colors) => <Fireworks colors={colors} />,
+
   todayRaised: () => null,
   weekRaised: () => null,
   everRaised: () => null,

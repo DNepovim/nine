@@ -14,6 +14,8 @@ export const ANNOUNCEMENT_IDS = [
   'today',
   'week',
   'ever',
+  'todayFirst',
+  'weekFirst',
   'todayRaised',
   'weekRaised',
   'everRaised',
@@ -28,7 +30,7 @@ export type Announcement = { id: AnnouncementId; message: string }
 
 // The three board periods, biggest first.
 export const PERIODS = ['ever', 'week', 'today'] as const
-type Period = (typeof PERIODS)[number]
+export type Period = (typeof PERIODS)[number]
 
 const RAISED_ID = {
   ever: 'everRaised',
@@ -82,6 +84,22 @@ const ANNOUNCEMENT_MESSAGES = {
     'Crowned of all time',
     'First of all time',
     'Untouchable',
+  ],
+
+  // Opening an empty board, which is not the same as topping a busy one. The lines say
+  // the board was bare rather than that you are ahead — there is nobody to be ahead of
+  // — so they cannot be mistaken for the `today` / `week` lines above.
+  todayFirst: [
+    "You opened today's board",
+    'First on the board today',
+    'Nobody had scored today',
+    'Today starts with you',
+  ],
+  weekFirst: [
+    "You opened this week's board",
+    'First on the board this week',
+    'Nobody had scored this week',
+    'The week starts with you',
   ],
 
   // Someone else pushed a board record up. Neutral news — it was not yours to lose.
@@ -142,7 +160,15 @@ export const messagePool = (id: AnnouncementId): readonly string[] =>
 
 // Biggest first, so a single hit that clears several records at once announces only
 // the one worth shouting about.
-const OWN_TIERS = ['ever', 'week', 'today', 'record'] as const
+//
+// Opening a board sits with the record for the same period rather than below it: the
+// two are mutually exclusive — a board either has a score to beat or it does not — so
+// the pair never compete, and an opening outranks a personal best the same way a
+// record does. Being first for the week implies being first today, which is why the
+// week's opening is listed above the day's.
+const OWN_TIERS = ['ever', 'week', 'weekFirst', 'today', 'todayFirst', 'record'] as const
+
+type OwnTier = (typeof OWN_TIERS)[number]
 
 export type RecordTargets = {
   // The player's own stored best as the run began.
@@ -152,6 +178,11 @@ export type RecordTargets = {
   today: number | null
   week: number | null
   ever: number | null
+  // Whether the period's board is *known* to hold no score at all. Distinct from a null
+  // record above, which also covers "we could not find out": claiming to have opened a
+  // board we simply failed to read would be a lie the player cannot check.
+  todayEmpty: boolean
+  weekEmpty: boolean
 }
 
 // A record is only broken when there was one to beat: a first score sets the bar
@@ -159,16 +190,33 @@ export type RecordTargets = {
 const beaten = (score: number, target: number | null): boolean =>
   target !== null && target > 0 && score > target
 
-// Every record this score has passed, biggest first.
+// Opening a board takes a score of your own — a run that ends on nothing has not put
+// anything there to be first with.
+const opened = (score: number, empty: boolean): boolean => empty && score > 0
+
+const ACHIEVED = {
+  ever: (score, t) => beaten(score, t.ever),
+  week: (score, t) => beaten(score, t.week),
+  today: (score, t) => beaten(score, t.today),
+  record: (score, t) => beaten(score, t.record),
+  weekFirst: (score, t) => opened(score, t.weekEmpty),
+  todayFirst: (score, t) => opened(score, t.todayEmpty),
+} as const satisfies Record<OwnTier, (score: number, targets: RecordTargets) => boolean>
+
+// Every record this score has passed and every board it has opened, biggest first.
 export function crossedRecords(score: number, targets: RecordTargets): AnnouncementId[] {
-  return OWN_TIERS.filter((tier) => beaten(score, targets[tier]))
+  return OWN_TIERS.filter((tier) => ACHIEVED[tier](score, targets))
 }
 
+// The milestones that belong to a board rather than to the player alone. Opening one
+// counts: the score has to reach the board for anyone else to see that it happened.
+const BOARD_IDS = [...PERIODS, 'weekFirst', 'todayFirst'] as const
+
 // Whether a crossing is worth publishing to the board before the run is over. A
-// personal best is nobody else's business, so only the three board periods count
+// personal best is nobody else's business, so only the board milestones count
 // — this is what stops a mid-run write for a milestone no rival can see.
 export const hasBoardRecord = (crossed: readonly AnnouncementId[]): boolean =>
-  crossed.some((id) => isOneOf(id, PERIODS))
+  crossed.some((id) => isOneOf(id, BOARD_IDS))
 
 // ─── Other players' records ────────────────────────────────────────────────────
 
