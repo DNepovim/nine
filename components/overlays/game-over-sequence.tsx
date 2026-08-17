@@ -85,7 +85,6 @@ export function GameOverSequence({
           score={score}
           hits={hits}
           strikes={strikes}
-          medals={medals}
           titleWords={words}
           avgAccuracy={avgAccuracy}
           avgSpeed={avgSpeed}

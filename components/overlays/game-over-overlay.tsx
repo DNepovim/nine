@@ -5,18 +5,34 @@ import { useRef } from 'react'
 import { Pressable, Text, View } from 'react-native'
 
 import { Screen } from '@/components/screen'
+import { useBoardContext, type PeriodBoard } from '@/hooks/use-board'
 import { useTheme } from '@/hooks/use-theme'
-import type { Period } from '@/lib/announcements'
+import { boardMedals, runMedal } from '@/lib/board-medals'
 import type { TitleWords } from '@/lib/game-over-title'
 import { earnedChallenge, nextChallenge } from '@/lib/next-challenge'
 import { DARK_MODE_GRADIENT, type Difficulty, type Mode } from '@/machines/game'
 
 import { BoardBadges } from './board-badges'
+import { BoardMedals } from './board-medals'
 import { GameOverTitle } from './game-over-title'
 import { HighScores } from './high-scores'
-import { RecordMedals } from './record-medals'
 import { RunStats } from './run-stats'
 import { ScoreReadout } from './score-readout'
+
+// The medal this run puts on one period, against the five rows that board is holding.
+// The player's own rows are marked so a score they already beat cannot be beaten twice.
+const earned = (
+  period: PeriodBoard,
+  score: number,
+  userId: string | null,
+): 1 | 2 | 3 | null =>
+  runMedal(
+    score,
+    period.rows.map((row) => ({
+      score: row.best_score,
+      isMine: userId !== null && row.user_id === userId,
+    })),
+  )
 
 const shadow = {
   shadowColor: '#000',
@@ -33,7 +49,6 @@ export function GameOverOverlay({
   score,
   hits,
   strikes,
-  medals,
   titleWords,
   avgAccuracy,
   avgSpeed,
@@ -51,8 +66,6 @@ export function GameOverOverlay({
   hits: number
   // How many of those hits landed on a streak — the challenge is offered on it.
   strikes: number
-  // The boards this run ended on top of, biggest first.
-  medals: readonly Period[]
   // Decided by the sequence so the flying copy and this one always agree.
   titleWords: TitleWords
   avgAccuracy: number
@@ -74,6 +87,16 @@ export function GameOverOverlay({
   const challenge = earnedChallenge(hits, strikes)
     ? nextChallenge(gameMode, difficulty)
     : null
+
+  // What this run put on each period of this board: the medal the player can go and see
+  // on the board afterwards, and only when this run is what earned it. Not their
+  // standing — a place held since last week is not something this game did.
+  const board = useBoardContext()
+  const medals = boardMedals({
+    ever: earned(board.forever, score, userId),
+    week: earned(board.week, score, userId),
+    today: earned(board.today, score, userId),
+  })
 
   return (
     <Screen overlay>
@@ -102,7 +125,7 @@ export function GameOverOverlay({
               of small caps on a screen that already had too many. */}
           <ScoreReadout score={score} />
 
-          <RecordMedals periods={medals} gameMode={gameMode} />
+          <BoardMedals medals={medals} gameMode={gameMode} />
 
           <RunStats hits={hits} avgAccuracy={avgAccuracy} avgSpeed={avgSpeed} />
 

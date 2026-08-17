@@ -2,6 +2,7 @@ import { isEmptyArray } from 'narrowland'
 import { Text, View } from 'react-native'
 
 import type { Period } from '@/lib/announcements'
+import type { BoardMedal } from '@/lib/board-medals'
 import { rankMedal } from '@/lib/rank-emoji'
 import { MODE_GRADIENT, type Mode } from '@/machines/game'
 
@@ -13,26 +14,29 @@ const PERIOD_LABEL = {
   today: 'TODAY',
 } as const satisfies Record<Period, string>
 
-// What the run just took, under the score: a gold for every board it ended on top of.
+// Where the run leaves the player standing, under the score.
 //
-// Gold on all of them, not a descending podium — these are three separate boards and
-// the player leads each one, so a silver would be saying something untrue about the
-// week. The mode's accent colours the labels, the same hue the leaderboard gives it.
-export function RecordMedals({
-  periods,
+// The metal is the place, not the achievement: a bronze here means third, and it sits
+// beside a gold from a shorter board without contradicting it — being first today and
+// third all time is one player's honest position on two different boards. `boardMedals`
+// has already dropped the periods a longer one implies, so every entry says something
+// the one above it did not. The mode's accent colours the labels, the same hue the
+// leaderboard gives it.
+export function BoardMedals({
+  medals,
   gameMode,
 }: {
-  periods: readonly Period[]
+  medals: readonly BoardMedal[]
   gameMode: Mode
 }) {
-  if (isEmptyArray(periods)) return null
+  if (isEmptyArray(medals)) return null
 
   return (
     <View className="mb-5 flex-row items-center justify-center gap-3">
-      {periods.map((period) => (
+      {medals.map(({ period, rank }) => (
         <View key={period} className="flex-row items-center gap-1">
           <Text selectable={false} className="text-[13px] leading-[15px]">
-            {rankMedal(1)}
+            {rankMedal(rank)}
           </Text>
           <Text
             selectable={false}
