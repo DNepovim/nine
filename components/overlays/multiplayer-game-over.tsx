@@ -151,6 +151,7 @@ export function MultiplayerGameOver({
               <PlayerTile
                 key={p.userId}
                 nickname={p.nickname}
+                userId={p.userId}
                 gradient={PLAYER_GRADIENTS[i] ?? PLAYER_GRADIENTS[0]}
                 isMe={p.userId === userId}
                 rank={i + 1}

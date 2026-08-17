@@ -50,15 +50,13 @@ export function HyperspaceStreak({
   const opacity = useSharedValue(0)
 
   useEffect(() => {
-    opacity.value = withDelay(
-      delay,
-      withSequence(
-        withTiming(peakOpacity, { duration: APPEAR_MS }),
-        // Hold through the growth and the first half of the flight, then fade as it
-        // leaves, so the streak doesn't blink out while still on screen.
-        withDelay(GROW_MS + TRAVEL_MS / 2, withTiming(0, { duration: TRAVEL_MS / 2 })),
-      ),
-    )
+    // Lights up and stays lit. It used to fade over the second half of the flight,
+    // which sounds like "fading as it leaves" but is not: the travel eases *in*, so
+    // half the time is a quarter of the distance — the streak was already half
+    // transparent while still well inside the screen, and dimmed out mid-flight
+    // instead of leaving. `toRadius` puts the inner end clear of the furthest corner,
+    // so a streak at full opacity is off screen by the time it stops.
+    opacity.value = withDelay(delay, withTiming(peakOpacity, { duration: APPEAR_MS }))
     scale.value = withDelay(
       delay + APPEAR_MS,
       withSequence(

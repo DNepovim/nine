@@ -1,5 +1,7 @@
 import { Text, View } from 'react-native'
 
+import { ON_GOLD_LABEL_SHADOW } from '@/constants/theme'
+
 // The three numbers a run leaves behind, shown on both the pause and game-over
 // screens. One component so the two can never drift apart.
 //
@@ -11,11 +13,15 @@ export function RunStats({
   hits,
   avgAccuracy,
   avgSpeed,
+  halo = false,
 }: {
   hits: number
   avgAccuracy: number
   avgSpeed: number
+  // Set on the gold game-over screen, where these sit straight on the celebration.
+  halo?: boolean
 }) {
+  const shadow = halo ? ON_GOLD_LABEL_SHADOW : null
   const cells = [
     { label: 'HITS', value: `${hits}` },
     { label: 'AVG ACC', value: `${avgAccuracy}%` },
@@ -30,6 +36,7 @@ export function RunStats({
             selectable={false}
             numberOfLines={1}
             className="font-mono text-[12px] font-bold tracking-[0.5px] text-primary"
+            style={shadow}
           >
             {value}
           </Text>
@@ -37,6 +44,7 @@ export function RunStats({
             selectable={false}
             numberOfLines={1}
             className="font-mono text-[8px] font-bold tracking-[1px] text-dim"
+            style={shadow}
           >
             {label}
           </Text>

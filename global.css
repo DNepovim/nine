@@ -51,9 +51,17 @@
 
    `-webkit-touch-callout` is the half that matters on iOS Safari: `user-select`
    alone stops the highlight but still lets the callout menu appear on a long
-   press. */
+   press.
+
+   Both properties are written prefixed *and* plain, and the prefix is not
+   decoration. Safari only understood unprefixed `user-select` from version 17, so
+   on any older iPhone the plain declaration is dropped and the long press selects
+   a word again — which is exactly what it did. Nothing in the build adds the
+   prefix for us: there is no autoprefixer here, and Tailwind's Lightning CSS pass
+   has no browser targets configured to make it prefix on its own. */
 html {
   -webkit-touch-callout: none;
+  -webkit-user-select: none;
   user-select: none;
 }
 
@@ -61,6 +69,8 @@ html {
    you cannot place a caret in or select-all inside is broken rather than tidy. */
 input,
 textarea {
+  -webkit-touch-callout: default;
+  -webkit-user-select: auto;
   user-select: auto;
 }
 

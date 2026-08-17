@@ -7,6 +7,7 @@ import Animated, {
   type SharedValue,
 } from 'react-native-reanimated'
 
+import { ON_GOLD_TEXT_SHADOW } from '@/constants/theme'
 import { type Mode } from '@/machines/game'
 
 // Vibrant off-spectrum intermediates — chosen to be as far from the
@@ -55,6 +56,7 @@ export function AnimatedLetter({
   gradStart,
   gradEnd,
   gradPhase,
+  shadow = false,
 }: {
   char: string
   color: string
@@ -65,6 +67,8 @@ export function AnimatedLetter({
   gradStart: SharedValue<string>
   gradEnd: SharedValue<string>
   gradPhase: SharedValue<number>
+  // Set on the gold game-over screen, where a celebration plays behind the letters.
+  shadow?: boolean
 }) {
   const prevColorRef = useRef(color)
   const prevModeRef = useRef<Mode | 'arcade'>(mode)
@@ -123,7 +127,7 @@ export function AnimatedLetter({
     <Animated.Text
       selectable={false}
       className={`font-mono text-[56px] font-black letter-float-${letterIndex}`}
-      style={style}
+      style={[style, shadow ? ON_GOLD_TEXT_SHADOW : null]}
     >
       {char}
     </Animated.Text>

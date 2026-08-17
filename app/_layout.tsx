@@ -8,7 +8,8 @@ import {
 } from '@react-navigation/native'
 import { Stack } from 'expo-router'
 import { StatusBar } from 'expo-status-bar'
-import { useEffect, useState } from 'react'
+import { lazy, Suspense, useEffect, useState } from 'react'
+import { useWindowDimensions, View } from 'react-native'
 import { GestureHandlerRootView } from 'react-native-gesture-handler'
 import Animated, { useAnimatedStyle } from 'react-native-reanimated'
 
@@ -17,7 +18,17 @@ import '@/global.css'
 import { PhoneFrame } from '@/components/phone-frame'
 import { SplashScreen } from '@/components/splash-screen'
 import { AppThemeProvider, useTheme } from '@/hooks/use-theme'
+import { isDesktopViewport } from '@/lib/desktop'
 import { purgeRetiredStorage } from '@/lib/retired-storage'
+
+// The screen gallery's picker, in development only. Folded away in a production export
+// exactly as the stage is — see the note in app/(tabs)/index.tsx.
+const GallerySwitcher = __DEV__
+  ? lazy(async () => {
+      const mod = await import('@/dev/gallery')
+      return { default: mod.GallerySwitcher }
+    })
+  : null
 
 export const unstable_settings = {
   anchor: '(tabs)',
@@ -76,6 +87,11 @@ function ThemedApp() {
 }
 
 export default function RootLayout() {
+  // The picker only has somewhere to live once the app is drawn inside a frame — the
+  // same threshold the frame itself uses, so the two can never disagree about it.
+  const { width, height } = useWindowDimensions()
+  const desktop = isDesktopViewport(width, height)
+
   // Once per launch, before anything reads storage for real. Nothing waits on it: the
   // keys it clears are ones no build reads, so the app is correct whether it has
   // finished or not.
@@ -86,11 +102,25 @@ export default function RootLayout() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <AppThemeProvider>
-        {/* Inside the theme provider, so the frame is drawn in the app's own colours
-            and the splash screen is framed along with everything after it. */}
-        <PhoneFrame>
-          <ThemedApp />
-        </PhoneFrame>
+        {/* A row, so the gallery's picker takes its own column beside the frame rather
+            than floating over it — the frame then centres in what is left. With no
+            picker the row has one child at flex-1, which is the layout as it was.
+            Desktop only: below that width the window *is* the phone and there is no
+            beside. */}
+        <View style={{ flex: 1, flexDirection: 'row' }}>
+          {GallerySwitcher !== null && desktop && (
+            <Suspense fallback={null}>
+              <GallerySwitcher />
+            </Suspense>
+          )}
+          {/* Inside the theme provider, so the frame is drawn in the app's own colours
+              and the splash screen is framed along with everything after it. */}
+          <View style={{ flex: 1 }}>
+            <PhoneFrame>
+              <ThemedApp />
+            </PhoneFrame>
+          </View>
+        </View>
       </AppThemeProvider>
     </GestureHandlerRootView>
   )

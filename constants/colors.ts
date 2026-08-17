@@ -93,3 +93,59 @@ export const SCORE_COLORS = {
   light: { low: APP_BLUE, high: '#1C1928' },
   dark: { low: APP_BLUE, high: '#D8D2F4' },
 } as const satisfies Record<'light' | 'dark', Palette>
+
+// The all-time record turns the whole game-over screen gold, which means every semantic
+// token has to be re-bound for that subtree: GOLD_SCALE is a background palette, and in
+// dark mode the app's inks are light-on-dark — laid straight onto gold they would be
+// unreadable. Applied with `vars()` so the screen's existing classes re-ink themselves
+// rather than every component growing a prop for one case.
+//
+// The scale supplies the surfaces; the inks are chosen against #FFD166: near-black for
+// primary (about 10:1), a dark goldenrod for secondary (about 3.3:1, softer than primary
+// without dropping out), and the light theme's darker green for the score, because the
+// dark theme's brighter one falls to about 2:1 on gold.
+// The gold screen's secondary ink, for the few places a colour is computed in JS
+// instead of coming from a class — those cannot see the re-bound tokens.
+export const GOLD_DIM_INK = '#8A6D1F'
+
+export const GOLD_SCREEN_TOKENS = {
+  '--color-surface': GOLD_SCALE[0],
+  '--color-card': GOLD_SCALE[2],
+  '--color-elevated': '#FFF6DC',
+  '--color-muted': '#E0A94A',
+  '--color-dim': GOLD_DIM_INK,
+  '--color-primary': '#1C1928',
+  '--color-strong': '#1C1928',
+  '--color-on-strong': '#FFE8A3',
+  '--color-score': '#147A32',
+  '--color-dial': '#1C1928',
+  '--color-factor': '#8A6D1F',
+  '--color-pie': '#1C1928',
+} as const
+
+// A mode's Extreme all-time screen is painted in that mode's own colours, darkened —
+// DARK_MODE_GRADIENT rather than MODE_GRADIENT. The bright pair is the same mid-tone
+// the title letters and the score are drawn in, so at full strength it would swallow
+// them; the darkened pair is the app's existing answer to "this colour, carrying text".
+//
+// Its inks are light, and fixed rather than themed: the background is the same darkness
+// whichever way the player has the app set.
+export const MODE_SCREEN_TOKENS = {
+  '--color-surface': 'transparent',
+  '--color-card': 'rgba(255, 255, 255, 0.12)',
+  '--color-elevated': 'rgba(255, 255, 255, 0.18)',
+  '--color-muted': 'rgba(255, 255, 255, 0.25)',
+  '--color-dim': 'rgba(255, 255, 255, 0.7)',
+  '--color-primary': '#FFFFFF',
+  '--color-strong': 'rgba(0, 0, 0, 0.35)',
+  '--color-on-strong': '#FFFFFF',
+  '--color-score': '#FFFFFF',
+  '--color-dial': '#FFFFFF',
+  '--color-factor': 'rgba(255, 255, 255, 0.6)',
+  '--color-pie': '#FFFFFF',
+} as const
+
+// Particles for the all-time celebration once it is playing over gold. The gold scale
+// itself would disappear into its own background, so this is the pale end of it plus
+// white — decoration is allowed to sit lighter than text.
+export const PALE_GOLD = ['#FFF6DC', '#FFFFFF', '#FFE8A3', '#FFEFC2'] as const

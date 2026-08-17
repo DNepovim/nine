@@ -7,6 +7,18 @@ import type { Release } from '@/types/news'
 // different announcement or players who already saw the old one will miss it.
 export const RELEASES: Release[] = [
   {
+    date: '2026-08-17',
+    items: [
+      {
+        id: 'champion-marks',
+        icon: 'ribbon',
+        accent: '#FF8C00',
+        title: 'Marks for the hardest boards',
+        body: 'Take the all-time record on a mode’s Extreme board and you carry its mark beside your name everywhere — an owl for Accuracy, an eagle for Speed, a crown for both. Take one and the game over screen celebrates it properly.',
+      },
+    ],
+  },
+  {
     date: '2026-08-13',
     items: [
       {

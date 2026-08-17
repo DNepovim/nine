@@ -1,6 +1,7 @@
 import { isEmptyArray } from 'narrowland'
 import { Text, View } from 'react-native'
 
+import { ON_GOLD_LABEL_SHADOW } from '@/constants/theme'
 import type { Period } from '@/lib/announcements'
 import type { BoardMedal } from '@/lib/board-medals'
 import { rankMedal } from '@/lib/rank-emoji'
@@ -25,9 +26,13 @@ const PERIOD_LABEL = {
 export function BoardMedals({
   medals,
   gameMode,
+  shadow = false,
 }: {
   medals: readonly BoardMedal[]
   gameMode: Mode
+  // Set on the gold screen: these labels wear the mode's colour, which is a mid-tone
+  // against gold before a pale streak even crosses it.
+  shadow?: boolean
 }) {
   if (isEmptyArray(medals)) return null
 
@@ -41,7 +46,10 @@ export function BoardMedals({
           <Text
             selectable={false}
             className="font-mono text-[9px] font-black leading-[15px] tracking-[1px]"
-            style={{ color: MODE_GRADIENT[gameMode][0] }}
+            style={[
+              { color: MODE_GRADIENT[gameMode][0] },
+              shadow ? ON_GOLD_LABEL_SHADOW : null,
+            ]}
           >
             {PERIOD_LABEL[period]}
           </Text>

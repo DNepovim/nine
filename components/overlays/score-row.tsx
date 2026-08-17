@@ -1,11 +1,14 @@
 import { Text, View } from 'react-native'
 
+import { ON_GOLD_LABEL_SHADOW } from '@/constants/theme'
 import { cn } from '@/lib/cn'
 import { rankEmoji } from '@/lib/rank-emoji'
 import { timeAgo } from '@/lib/time-ago'
 
 export type ScoreEntry = {
   rank: number
+  // The crown or bird this player wears everywhere their name appears, or null.
+  mark: string | null
   nickname: string
   score: number
   isUser?: boolean
@@ -19,14 +22,18 @@ export function ScoreRow({
   entry,
   accentColor,
   digitFont,
+  halo = false,
 }: {
   entry: ScoreEntry
   accentColor: string
   // The seven-segment face, or `mono` until it loads. Passed in rather than loaded
   // here: a board is six of these rows, and they should not each ask for the font.
   digitFont: string
+  // Set on the gold game-over screen: these rows sit straight on the celebration.
+  halo?: boolean
 }) {
   const highlight = entry.isUser === true
+  const glow = halo ? ON_GOLD_LABEL_SHADOW : null
   const accentStyle = highlight ? { color: accentColor } : undefined
   // Null past fifth — the player's own row can sit below the board's cut, and there
   // the number is the point.
@@ -51,15 +58,23 @@ export function ScoreRow({
           'w-7 font-mono font-bold leading-[16px] text-dim',
           emoji === null ? 'text-[10px]' : 'text-[13px]',
         )}
-        style={accentStyle}
+        style={[accentStyle, glow]}
       >
         {emoji ?? entry.rank}
       </Text>
       <View className="flex-1 flex-row items-baseline gap-1.5">
+        {/* Champions carry their mark wherever their name is drawn, so the board says
+            who holds the hardest boards without a legend explaining it. Rendered only
+            when there is one — an empty Text would still take the row's gap. */}
+        {entry.mark !== null && (
+          <Text selectable={false} className="text-[9px] leading-[13px]">
+            {entry.mark}
+          </Text>
+        )}
         <Text
           selectable={false}
           className="font-mono text-[10px] font-bold tracking-[0.5px] text-primary"
-          style={accentStyle}
+          style={[accentStyle, glow]}
         >
           {entry.nickname}
         </Text>
@@ -72,6 +87,7 @@ export function ScoreRow({
             selectable={false}
             numberOfLines={1}
             className="font-mono text-[7px] font-bold tracking-[0.5px] text-dim"
+            style={glow}
           >
             {note}
           </Text>
@@ -88,7 +104,7 @@ export function ScoreRow({
       <Text
         selectable={false}
         className="text-[10px] tracking-[1px] text-score"
-        style={{ fontFamily: digitFont }}
+        style={[{ fontFamily: digitFont }, glow]}
       >
         {entry.score}
       </Text>

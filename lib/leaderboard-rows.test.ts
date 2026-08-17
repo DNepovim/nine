@@ -59,6 +59,7 @@ describe('displayRows', () => {
     expect(out).toEqual([
       {
         key: 'unpublished',
+        userId: null,
         rank: 1,
         nickname: 'YOU',
         score: 500,

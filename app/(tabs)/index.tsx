@@ -2,7 +2,7 @@ import { AntDesign } from '@expo/vector-icons'
 import { useMachine } from '@xstate/react'
 import { useFonts } from 'expo-font'
 import { isNotNull, isOneOf } from 'narrowland'
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { AppState, Text, View } from 'react-native'
 import Animated, {
   Easing,
@@ -24,6 +24,7 @@ import { FloatingStat } from '@/components/game/floating-stat'
 import { MenuButton } from '@/components/game/menu-button'
 import { MultiplayerGame } from '@/components/game/multiplayer-game'
 import { ScoreDigit } from '@/components/game/score-digit'
+import { StepUpToast } from '@/components/game/step-up-toast'
 import { TargetCard } from '@/components/game/target-card'
 import { TraineeStats } from '@/components/game/trainee-stats'
 import { AdvancedOptionsOverlay } from '@/components/overlays/advanced-options-overlay'
@@ -37,11 +38,14 @@ import { MultiplayerWaiting } from '@/components/overlays/multiplayer-waiting'
 import { NewsArchiveOverlay } from '@/components/overlays/news-archive-overlay'
 import { NicknameModal } from '@/components/overlays/nickname-modal'
 import { PausedOverlay } from '@/components/overlays/paused-overlay'
+import { StepUpOverlay } from '@/components/overlays/step-up-overlay'
 import { WhatsNewOverlay } from '@/components/overlays/whats-new-overlay'
 import { Screen } from '@/components/screen'
 import { mono } from '@/constants/theme'
 import { useAnnouncements } from '@/hooks/use-announcements'
+import { useAppUpdate } from '@/hooks/use-app-update'
 import { BoardProvider, useBoard } from '@/hooks/use-board'
+import { ChampionsProvider, useChampions } from '@/hooks/use-champions'
 import { useDisplayOptions } from '@/hooks/use-display-options'
 import { useDisplayScore } from '@/hooks/use-display-score'
 import { useDisplayedTargets } from '@/hooks/use-displayed-targets'
@@ -58,33 +62,64 @@ import { usePersistedStats } from '@/hooks/use-persisted-stats'
 import { useRivalRecords } from '@/hooks/use-rival-records'
 import { useScoreDirection } from '@/hooks/use-score-direction'
 import { useScoreSubmission } from '@/hooks/use-score-submission'
+import { useStepUp } from '@/hooks/use-step-up'
 import { useSupabaseAuth } from '@/hooks/use-supabase-auth'
 import { useTargetSpawner } from '@/hooks/use-target-spawner'
 import { useTheme } from '@/hooks/use-theme'
 import { useTraineeCoach } from '@/hooks/use-trainee-coach'
 import { useWhatsNew } from '@/hooks/use-whats-new'
 import { barFor, isOpenable, type Leaders, type Period } from '@/lib/announcements'
+import { recordScreen, type RecordScreen } from '@/lib/champions'
 import { leaderOf } from '@/lib/leaderboard'
 import { heldPeriods, medalPeriods } from '@/lib/record-medals'
+import { STEP_UP_BOARD } from '@/lib/step-up'
 import { valueProgress } from '@/lib/value-progress'
 import {
   computeSum,
   DARK_MODE_GRADIENT,
   DIFFICULTIES,
+  DIFFICULTY_ORDER,
   gameMachine,
   getDifficultyColor,
   MODE_GRADIENT,
   MODES,
+  SCORED_MODES,
   streakMultiplier,
   type Mode,
 } from '@/machines/game'
 import { cellWeight, computePar } from '@/machines/scoring'
 import type { MultiMode } from '@/types/multiplayer'
 
+// The screen gallery's stage, in development only — the screen being looked at, drawn
+// inside the app so it sees the real board store, champions, fonts and theme. Its picker
+// lives outside the phone frame; see app/_layout.tsx.
+//
+// Loaded through a dynamic import inside a `__DEV__` ternary rather than imported at the
+// top: babel-preset-expo folds `__DEV__` to false before Metro builds its dependency
+// graph, so a production export drops the branch, the arrow that names the module, and
+// therefore the module itself. A static import would be hoisted and shipped whatever the
+// branch said.
+//
+// `import()` rather than `require()` because it carries its own types — `require`
+// returns `any`, and typing that back would take either an assertion or a lint
+// exemption, both of which this codebase does without.
+const GalleryStage = __DEV__
+  ? lazy(async () => {
+      const mod = await import('@/dev/gallery')
+      return { default: mod.GalleryStage }
+    })
+  : null
+
 // Trainee's shower wears the mode's own blue rather than the default spectrum. This
 // fires on every clean hit, and the full arc is the personal-best celebration's — a
 // hit-by-hit sprinkle borrowing it made the two read as the same event.
 const TRAINEE_CONFETTI = [MODE_GRADIENT.trainee[0]] as const
+
+// How long the intro has to stand undisturbed before a waiting new version is allowed
+// to swap itself in. Not zero: a player who has just come back from a run would be
+// reloaded on the spot, and an app that restarts the instant you reach the menu reads as
+// a crash. Anything they start inside the window cancels it.
+const UPDATE_SETTLE_MS = 2500
 
 // Where the menu button sits, level with the NINE row. Trainee draws no
 // best-scores strip, so everything below it — the button included — comes up by
@@ -170,6 +205,7 @@ export default function GameScreen() {
   >('none')
   const whatsNew = useWhatsNew()
   const installPrompt = useInstallPrompt()
+  const { ready: updateReady, apply: applyUpdate } = useAppUpdate()
 
   // Close advanced options whenever the game starts or resumes so that pausing
   // again always shows the pause screen, not the advanced options overlay.
@@ -185,6 +221,9 @@ export default function GameScreen() {
   // the top bar, the intro, the pause screen and the game over screen — so they cannot
   // answer the same question differently. Trainee has no board and it stays quiet.
   const board = useBoard(mode, difficulty, userId)
+  // Who holds each mode's Extreme all-time board. Two ids, read wherever a name is
+  // drawn and by the game-over screen to tell a reign from a single record.
+  const champions = useChampions()
   const refreshBoard = board.refresh
   const bestToday = board.today.record
   const bestWeek = board.week.record
@@ -203,6 +242,22 @@ export default function GameScreen() {
   const inRun = isPlaying || isPaused
   const rival = useRivalRecords({ inRun, mode, difficulty, userId, leaders })
   const celebration = useHitCelebration(inRun, mode, hitBatch)
+
+  // Trainee's invitation to a scored board. Offered only to a player who has never
+  // posted one: the point is introducing the boards to someone who has not found them.
+  const playedScored = SCORED_MODES.some((scored) =>
+    DIFFICULTY_ORDER.some((level) => stats[scored][level].score > 0),
+  )
+  const stepUp = useStepUp({
+    inRun: isPlaying,
+    mode,
+    batch: hitBatch,
+    hits,
+    playedScored,
+  })
+  // Open while the transitional screen is up. The run is paused behind it rather than
+  // abandoned, so backing out through the intro leaves nothing half-finished.
+  const [stepUpOpen, setStepUpOpen] = useState(false)
   const coach = useTraineeCoach({
     inRun,
     mode,
@@ -246,6 +301,10 @@ export default function GameScreen() {
   // tier reads it while flying up from the board, and a medal that moved under it would
   // change the letters mid-flight.
   const [runMedals, setRunMedals] = useState<readonly Period[]>([])
+  // Latched beside the medals and for the same reason: the title reads it while flying
+  // up from the board, and a rival taking the other mode's Extreme board mid-screen
+  // must not turn a crown into a bird under the player.
+  const [runScreen, setRunScreen] = useState<RecordScreen>('plain')
 
   // Which of a title tier's three lines this run gets. Drawn once per game over, not
   // per render: the title flies up from the board and hands off to the overlay, so a
@@ -261,12 +320,22 @@ export default function GameScreen() {
       setTitleRoll(Math.random())
       // The boards have been kept live all run by Realtime, so what they hold now is
       // what a rival left behind if they passed us while we were playing.
-      setRunMedals(
-        heldPeriods(medalPeriods(crossed), state.context.score, {
-          today: bestToday,
-          week: bestWeek,
-          ever: bestEver,
-        }),
+      const taken = heldPeriods(medalPeriods(crossed), state.context.score, {
+        today: bestToday,
+        week: bestWeek,
+        ever: bestEver,
+      })
+      setRunMedals(taken)
+      setRunScreen(
+        isOneOf(mode, ['accuracy', 'speed'])
+          ? recordScreen({
+              record: taken[0] ?? null,
+              mode,
+              difficulty,
+              userId,
+              champions,
+            })
+          : 'plain',
       )
     }
     // Refresh on both edges of game over so other players' runs appear. Our own score
@@ -445,523 +514,603 @@ export default function GameScreen() {
   const showMultiResults = isNotNull(multiRoom.room) && multiGame.phase === 'results'
   const isMultiActive = showMultiWaiting || showMultiGame || showMultiResults
 
+  // A new build waits on the device until the app lets it through, because the swap ends
+  // in a reload. The intro with nothing open over it is the only place that costs
+  // nothing: mid-run it would throw the run away, over an overlay it would lose whatever
+  // was being typed, and in a multiplayer room it would drop the player out of it.
+  useEffect(() => {
+    const settled =
+      isMenu && menuOverlay === 'none' && !isMultiActive && !showNicknameModal
+    if (!updateReady || !settled) return
+    const timer = setTimeout(applyUpdate, UPDATE_SETTLE_MS)
+    return () => {
+      clearTimeout(timer)
+    }
+  }, [updateReady, applyUpdate, isMenu, menuOverlay, isMultiActive, showNicknameModal])
+
   return (
     // Every board on screen reads this one store, so the intro, the pause screen and
     // the game over screen cannot show three different answers to the same question.
-    <BoardProvider value={board}>
-      {/* The celebration sits before the Screen so it paints behind the game's own UI.
+    <ChampionsProvider value={champions}>
+      <BoardProvider value={board}>
+        {/* The celebration sits before the Screen so it paints behind the game's own UI.
           Keyed on the announcement so each one plays from the start, and so escalating
           through two records in a run swaps the effect rather than reusing it. */}
-      {announcement !== null && (
-        <AnnouncementEffect key={announcement.id} id={announcement.id} mode={mode} />
-      )}
+        {announcement !== null && (
+          <AnnouncementEffect key={announcement.id} id={announcement.id} mode={mode} />
+        )}
 
-      {/* Trainee celebrates the hit rather than the run — half a record's pieces,
+        {/* Trainee celebrates the hit rather than the run — half a record's pieces,
           because this fires many times a run and should not shout as loudly.
           Keyed on the batch so consecutive clean hits each get their own. */}
-      {celebration.seq !== null && (
-        <Confetti key={celebration.seq} density="half" colors={TRAINEE_CONFETTI} />
-      )}
+        {celebration.seq !== null && (
+          <Confetti key={celebration.seq} density="half" colors={TRAINEE_CONFETTI} />
+        )}
 
-      {/* ── Game screen (single padded wrapper) ── */}
-      <Screen>
-        {/* Row 0 — board bests, a hairline above the top bar. Trainee is a
-            practice mode with no board, so it gets no strip. */}
-        {mode !== 'trainee' && (
-          <BestScoresLine
-            inRun={inRun}
-            mode={mode}
-            announcement={announcement}
-            yourBest={stats[mode][difficulty].score}
-            loaded={board.loaded}
-            todayIsMine={board.today.recordIsMine}
-            weekIsMine={board.week.recordIsMine}
-            everIsMine={board.forever.recordIsMine}
-            today={bestToday}
-            week={bestWeek}
-            ever={bestEver}
+        {/* Trainee only, once a run, and never for a player who already knows the
+          boards exist. Floats over the top bars rather than sitting in the layout —
+          Trainee reclaims the band a strip would occupy. */}
+        {stepUp.message !== null && !stepUpOpen && (
+          <StepUpToast
+            opener={stepUp.message.opener}
+            invite={stepUp.message.invite}
+            mode={STEP_UP_BOARD.mode}
+            onPress={() => {
+              // Frozen rather than ended: backing out of the screen this opens leaves
+              // the practice run exactly where it stood.
+              send({ type: 'PAUSE' })
+              stepUp.dismiss()
+              setStepUpOpen(true)
+            }}
           />
         )}
-        <View className="mb-3">
-          {/* Row 1 — mode/difficulty left, NINE centered, spacer right */}
-          <View className="mb-1 flex-row items-center">
-            {/* left: mode (colored, caps) + difficulty (dim, lowercase) */}
-            <View className="flex-1">
-              <Text
-                selectable={false}
-                className="font-mono text-[13px] font-black tracking-[2px]"
-                style={{ color: MODE_GRADIENT[mode][0] }}
-              >
-                {MODES[mode].label}
-              </Text>
-              {isOneOf(mode, ['accuracy', 'speed']) && (
-                <Text
-                  selectable={false}
-                  className="font-mono text-[10px] font-bold tracking-[1px] text-dim"
-                >
-                  {DIFFICULTIES[difficulty].label.toLowerCase()}
-                </Text>
-              )}
-            </View>
-            {/* center: NINE — tinted by difficulty shade of mode color */}
-            <Text
-              selectable={false}
-              className="font-mono text-[24px] font-black tracking-[8px]"
-              style={{ color: getDifficultyColor(mode, difficulty) }}
-            >
-              NINE
-            </Text>
-            {/* right: spacer balancing the absolute dots menu button */}
-            <View className="flex-1" />
-          </View>
 
-          {/* Row 1b — Trainee's readout. The other modes spend this space on the
-              board bests; Trainee has no board, and a learner wants to know how
-              the press they just made actually went. */}
-          {mode === 'trainee' && (
-            <TraineeStats
-              hits={hits}
-              batch={hitBatch}
-              praise={celebration.message ?? coach.line}
-              route={coach.route}
+        {/* ── Game screen (single padded wrapper) ── */}
+        <Screen>
+          {/* Row 0 — board bests, a hairline above the top bar. Trainee is a
+            practice mode with no board, so it gets no strip. */}
+          {mode !== 'trainee' && (
+            <BestScoresLine
+              inRun={inRun}
+              mode={mode}
+              announcement={announcement}
+              yourBest={stats[mode][difficulty].score}
+              loaded={board.loaded}
+              todayIsMine={board.today.recordIsMine}
+              weekIsMine={board.week.recordIsMine}
+              everIsMine={board.forever.recordIsMine}
+              today={bestToday}
+              week={bestWeek}
+              ever={bestEver}
             />
           )}
-
-          {/* Row 2 — hearts · center stat · score cluster */}
-          <View className="mt-1.5 flex-row items-center">
-            {/* Hearts — Trainee has no lives, so show none. */}
-            <View className="flex-1 flex-row gap-1">
-              {mode !== 'trainee' &&
-                [0, 1, 2].map((i) => (
-                  <HeartIcon
-                    key={i}
-                    filled={MODES[mode].lives === Number.POSITIVE_INFINITY || i < lives}
-                    emptyColor={isDark ? '#1C1D30' : '#FDFCFA'}
-                  />
-                ))}
+          <View className="mb-3">
+            {/* Row 1 — mode/difficulty left, NINE centered, spacer right */}
+            <View className="mb-1 flex-row items-center">
+              {/* left: mode (colored, caps) + difficulty (dim, lowercase) */}
+              <View className="flex-1">
+                <Text
+                  selectable={false}
+                  className="font-mono text-[13px] font-black tracking-[2px]"
+                  style={{ color: MODE_GRADIENT[mode][0] }}
+                >
+                  {MODES[mode].label}
+                </Text>
+                {isOneOf(mode, ['accuracy', 'speed']) && (
+                  <Text
+                    selectable={false}
+                    className="font-mono text-[10px] font-bold tracking-[1px] text-dim"
+                  >
+                    {DIFFICULTIES[difficulty].label.toLowerCase()}
+                  </Text>
+                )}
+              </View>
+              {/* center: NINE — tinted by difficulty shade of mode color */}
+              <Text
+                selectable={false}
+                className="font-mono text-[24px] font-black tracking-[8px]"
+                style={{ color: getDifficultyColor(mode, difficulty) }}
+              >
+                NINE
+              </Text>
+              {/* right: spacer balancing the absolute dots menu button */}
+              <View className="flex-1" />
             </View>
 
-            {/* Center: avg accuracy or avg speed depending on mode */}
-            {isOneOf(mode, ['accuracy', 'speed']) && (
-              <View style={{ alignItems: 'center' }}>
-                <View style={{ flexDirection: 'row' }}>
-                  {`${avgStat}%`.split('').map((digit, i, arr) => (
-                    <ScoreDigit
-                      key={arr.length - 1 - i}
-                      digit={digit}
-                      direction={avgDirection.current}
-                      isDark={isDark}
-                      progress={0}
-                      size={16}
-                    />
-                  ))}
-                </View>
-                {floatStats.map((f) => (
-                  <FloatingStat
-                    key={f.id}
-                    value={f.value}
-                    progress={f.progress}
-                    onDone={() => {
-                      removeFloatStat(f.id)
-                    }}
-                  />
-                ))}
-              </View>
+            {/* Row 1b — Trainee's readout. The other modes spend this space on the
+              board bests; Trainee has no board, and a learner wants to know how
+              the press they just made actually went. */}
+            {mode === 'trainee' && (
+              <TraineeStats
+                hits={hits}
+                batch={hitBatch}
+                praise={celebration.message ?? coach.line}
+                route={coach.route}
+              />
             )}
 
-            {/* Score cluster: digital readout + streak multiplier badge.
-                Hidden in Trainee — it's a practice mode, not a scored run. */}
-            <View className="flex-1 relative items-end">
-              {mode !== 'trainee' && (
-                <>
-                  <View className="flex-row items-baseline gap-1.5">
-                    <Text
-                      selectable={false}
-                      className="text-[17px] tracking-[1px] text-score"
-                      style={{ fontFamily: dsegLoaded ? 'DSEG7' : mono }}
-                    >
-                      {displayScore}
-                    </Text>
-                    {streak > 0 && (
-                      <Text
-                        selectable={false}
-                        className="font-mono text-[11px] font-black tracking-[1px]"
-                        style={{
-                          color:
-                            currentMultiplier >= 8
-                              ? '#E5534B'
-                              : currentMultiplier >= 4
-                                ? '#7273D2'
-                                : '#4C7EFF',
-                        }}
-                      >
-                        {`×${currentMultiplier}`}
-                      </Text>
-                    )}
+            {/* Row 2 — hearts · center stat · score cluster */}
+            <View className="mt-1.5 flex-row items-center">
+              {/* Hearts — Trainee has no lives, so show none. */}
+              <View className="flex-1 flex-row gap-1">
+                {mode !== 'trainee' &&
+                  [0, 1, 2].map((i) => (
+                    <HeartIcon
+                      key={i}
+                      filled={MODES[mode].lives === Number.POSITIVE_INFINITY || i < lives}
+                      emptyColor={isDark ? '#1C1D30' : '#FDFCFA'}
+                    />
+                  ))}
+              </View>
+
+              {/* Center: avg accuracy or avg speed depending on mode */}
+              {isOneOf(mode, ['accuracy', 'speed']) && (
+                <View style={{ alignItems: 'center' }}>
+                  <View style={{ flexDirection: 'row' }}>
+                    {`${avgStat}%`.split('').map((digit, i, arr) => (
+                      <ScoreDigit
+                        key={arr.length - 1 - i}
+                        digit={digit}
+                        direction={avgDirection.current}
+                        isDark={isDark}
+                        progress={0}
+                        size={16}
+                      />
+                    ))}
                   </View>
-                  {floats.map((f) => (
-                    <FloatingPoints
+                  {floatStats.map((f) => (
+                    <FloatingStat
                       key={f.id}
-                      points={f.points}
+                      value={f.value}
                       progress={f.progress}
-                      multiplier={f.multiplier}
                       onDone={() => {
-                        removeFloat(f.id)
+                        removeFloatStat(f.id)
                       }}
                     />
                   ))}
-                </>
+                </View>
               )}
+
+              {/* Score cluster: digital readout + streak multiplier badge.
+                Hidden in Trainee — it's a practice mode, not a scored run. */}
+              <View className="flex-1 relative items-end">
+                {mode !== 'trainee' && (
+                  <>
+                    <View className="flex-row items-baseline gap-1.5">
+                      <Text
+                        selectable={false}
+                        className="text-[17px] tracking-[1px] text-score"
+                        style={{ fontFamily: dsegLoaded ? 'DSEG7' : mono }}
+                      >
+                        {displayScore}
+                      </Text>
+                      {streak > 0 && (
+                        <Text
+                          selectable={false}
+                          className="font-mono text-[11px] font-black tracking-[1px]"
+                          style={{
+                            color:
+                              currentMultiplier >= 8
+                                ? '#E5534B'
+                                : currentMultiplier >= 4
+                                  ? '#7273D2'
+                                  : '#4C7EFF',
+                          }}
+                        >
+                          {`×${currentMultiplier}`}
+                        </Text>
+                      )}
+                    </View>
+                    {floats.map((f) => (
+                      <FloatingPoints
+                        key={f.id}
+                        points={f.points}
+                        progress={f.progress}
+                        multiplier={f.multiplier}
+                        onDone={() => {
+                          removeFloat(f.id)
+                        }}
+                      />
+                    ))}
+                  </>
+                )}
+              </View>
             </View>
           </View>
-        </View>
 
-        {/* Target numbers */}
-        <View ref={targetsAreaRef} className="flex-1" onLayout={onContainerLayout}>
-          {displayedTargets.map((target) => (
-            <TargetCard
-              key={target.id}
-              target={target}
-              isDark={isDark}
-              // The clock this target spawned with, so a ring never retargets
-              // mid-flight when Speed's timeout tightens.
-              duration={target.duration}
-              par={mode === 'trainee' ? computePar(grid, target.value) : undefined}
-              dying={isGameOver}
-              frozen={isPaused}
-              onExpire={() => {
-                send({ type: 'TARGET_EXPIRED', id: target.id })
-              }}
-              onExitComplete={() => {
-                removeDisplayed(target.id)
-              }}
-            />
-          ))}
-        </View>
-
-        {/* ── Score above dial ── */}
-        <View className="items-center py-1.5">
-          <View className="flex-row">
-            {String(sum)
-              .split('')
-              .map((digit, i, arr) => (
-                <ScoreDigit
-                  key={arr.length - 1 - i}
-                  digit={digit}
-                  direction={direction}
-                  isDark={isDark}
-                  progress={valueProgress(sum)}
-                />
-              ))}
-          </View>
-        </View>
-
-        {/* ── Dial pad — bottom two thirds ── */}
-        <View
-          className="flex-1 items-center justify-center"
-          onLayout={(e) => {
-            const { width, height } = e.nativeEvent.layout
-            setDialSize(Math.min(width, height))
-          }}
-        >
-          <View
-            style={{ width: dialSize, height: dialSize }}
-            className="flex-row flex-wrap"
-          >
-            {grid.flat().map((value, index) => (
-              <DialButton
-                key={index}
-                value={value}
+          {/* Target numbers */}
+          <View ref={targetsAreaRef} className="flex-1" onLayout={onContainerLayout}>
+            {displayedTargets.map((target) => (
+              <TargetCard
+                key={target.id}
+                target={target}
                 isDark={isDark}
-                size={Math.floor(dialSize / 3)}
-                weight={cellWeight(index)}
-                showSum={showSum}
-                trainee={mode === 'trainee'}
-                peakFrom={DARK_MODE_GRADIENT[mode][0]}
-                peakTo={DARK_MODE_GRADIENT[mode][1]}
-                onDelta={(delta) => {
-                  coach.notePress(index, delta)
-                  send({ type: 'PRESS', index, delta, now: Date.now() })
+                // The clock this target spawned with, so a ring never retargets
+                // mid-flight when Speed's timeout tightens.
+                duration={target.duration}
+                par={mode === 'trainee' ? computePar(grid, target.value) : undefined}
+                dying={isGameOver}
+                frozen={isPaused}
+                onExpire={() => {
+                  send({ type: 'TARGET_EXPIRED', id: target.id })
                 }}
-                onSet={(cellValue) => {
-                  coach.noteSet(index, cellValue)
-                  send({ type: 'SET_CELL', index, value: cellValue, now: Date.now() })
+                onExitComplete={() => {
+                  removeDisplayed(target.id)
                 }}
               />
             ))}
           </View>
-        </View>
-      </Screen>
 
-      {/* ── Life-loss flash — red tint over the game screen ── */}
-      <Animated.View
-        pointerEvents="none"
-        style={[
-          {
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            backgroundColor: '#E5534B',
-          },
-          flashStyle,
-        ]}
-      />
+          {/* ── Score above dial ── */}
+          <View className="items-center py-1.5">
+            <View className="flex-row">
+              {String(sum)
+                .split('')
+                .map((digit, i, arr) => (
+                  <ScoreDigit
+                    key={arr.length - 1 - i}
+                    digit={digit}
+                    direction={direction}
+                    isDark={isDark}
+                    progress={valueProgress(sum)}
+                  />
+                ))}
+            </View>
+          </View>
 
-      {/* ── Game-over cinematic (overlay crossfade + flying title) ── */}
-      <GameOverSequence
-        phase={dyingPhase}
-        overlayStyle={overlayStyle}
-        titleStyle={titleStyle}
-        onTitleLayout={setOverlayTitleY}
-        gameMode={mode}
-        difficulty={difficulty}
-        userId={userId}
-        nickname={nickname}
-        score={state.context.score}
-        hits={state.context.hits}
-        strikes={state.context.strikes}
-        medals={runMedals}
-        personalBest={crossed.includes('record')}
-        titleRoll={titleRoll}
-        avgAccuracy={avgAccuracy}
-        avgSpeed={avgSpeed}
-        onPlayAgain={() => {
-          send({ type: 'RESTART' })
-        }}
-        onChallenge={(nextMode, nextDifficulty) => {
-          // Both land before RESTART builds the fresh game, so it reads the board
-          // the player just accepted — and the persistence hooks remember it.
-          send({ type: 'SET_MODE', mode: nextMode })
-          send({ type: 'SET_DIFFICULTY', difficulty: nextDifficulty })
-          send({ type: 'RESTART' })
-        }}
-        onMenu={() => {
-          send({ type: 'MENU' })
-        }}
-      />
+          {/* ── Dial pad — bottom two thirds ── */}
+          <View
+            className="flex-1 items-center justify-center"
+            onLayout={(e) => {
+              const { width, height } = e.nativeEvent.layout
+              setDialSize(Math.min(width, height))
+            }}
+          >
+            <View
+              style={{ width: dialSize, height: dialSize }}
+              className="flex-row flex-wrap"
+            >
+              {grid.flat().map((value, index) => (
+                <DialButton
+                  key={index}
+                  value={value}
+                  isDark={isDark}
+                  size={Math.floor(dialSize / 3)}
+                  weight={cellWeight(index)}
+                  showSum={showSum}
+                  trainee={mode === 'trainee'}
+                  peakFrom={DARK_MODE_GRADIENT[mode][0]}
+                  peakTo={DARK_MODE_GRADIENT[mode][1]}
+                  onDelta={(delta) => {
+                    coach.notePress(index, delta)
+                    send({ type: 'PRESS', index, delta, now: Date.now() })
+                  }}
+                  onSet={(cellValue) => {
+                    coach.noteSet(index, cellValue)
+                    send({ type: 'SET_CELL', index, value: cellValue, now: Date.now() })
+                  }}
+                />
+              ))}
+            </View>
+          </View>
+        </Screen>
 
-      {/* ── Pause overlay ── */}
-      {isPaused && menuOverlay === 'none' && (
-        <PausedOverlay
+        {/* ── Life-loss flash — red tint over the game screen ── */}
+        <Animated.View
+          pointerEvents="none"
+          style={[
+            {
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              backgroundColor: '#E5534B',
+            },
+            flashStyle,
+          ]}
+        />
+
+        {/* ── Game-over cinematic (overlay crossfade + flying title) ── */}
+        <GameOverSequence
+          phase={dyingPhase}
+          overlayStyle={overlayStyle}
+          titleStyle={titleStyle}
+          onTitleLayout={setOverlayTitleY}
           gameMode={mode}
           difficulty={difficulty}
           userId={userId}
           nickname={nickname}
           score={state.context.score}
           hits={state.context.hits}
+          strikes={state.context.strikes}
+          medals={runMedals}
+          screen={runScreen}
+          personalBest={crossed.includes('record')}
+          titleRoll={titleRoll}
           avgAccuracy={avgAccuracy}
           avgSpeed={avgSpeed}
-          onContinue={() => {
-            send({ type: 'RESUME' })
+          onPlayAgain={() => {
+            send({ type: 'RESTART' })
           }}
-          onNewGame={() => {
-            endRunEarly()
+          onChallenge={(nextMode, nextDifficulty) => {
+            // Both land before RESTART builds the fresh game, so it reads the board
+            // the player just accepted — and the persistence hooks remember it.
+            send({ type: 'SET_MODE', mode: nextMode })
+            send({ type: 'SET_DIFFICULTY', difficulty: nextDifficulty })
+            send({ type: 'RESTART' })
+          }}
+          onMenu={() => {
             send({ type: 'MENU' })
           }}
-          onOpenAdvanced={() => {
-            setMenuOverlay('advanced')
-          }}
-          onAddNickname={() => {
-            setShowNicknameModal(true)
-          }}
         />
-      )}
 
-      {/* ── Advanced options — shared between menu and pause ── */}
-      {menuOverlay === 'advanced' && (
-        <AdvancedOptionsOverlay
-          isDark={isDark}
-          showSum={showSum}
-          onToggleSum={toggleSum}
-          onToggleTheme={toggleTheme}
-          onOpenNews={() => {
-            setMenuOverlay('news')
-          }}
-          onClose={() => {
-            setMenuOverlay('none')
-          }}
-        />
-      )}
-
-      {/* ── News archive — opened from advanced options ── */}
-      {menuOverlay === 'news' && (
-        <NewsArchiveOverlay
-          onClose={() => {
-            setMenuOverlay('advanced')
-          }}
-        />
-      )}
-
-      {/* ── How to play guide ── */}
-      {menuOverlay === 'howToPlay' && (
-        <HowToPlayOverlay
-          onClose={() => {
-            setMenuOverlay('none')
-          }}
-        />
-      )}
-
-      {/* ── What's new — announcements the player hasn't seen yet ── */}
-      {isMenu && menuOverlay === 'none' && !isMultiActive && whatsNew.visible && (
-        <WhatsNewOverlay items={whatsNew.unseen} onDismiss={whatsNew.dismiss} />
-      )}
-
-      {/* ── Install prompt — web only, and only once the news has had its turn.
-          Every launch until the player installs: closing it lasts the session. ── */}
-      {isMenu &&
-        menuOverlay === 'none' &&
-        !isMultiActive &&
-        whatsNew.ready &&
-        !whatsNew.visible &&
-        installPrompt.target !== 'none' && (
-          <InstallOverlay
-            target={installPrompt.target}
-            onInstall={installPrompt.install}
-            onDismiss={installPrompt.dismiss}
+        {/* ── Pause overlay ── */}
+        {/* Where the toast leads. Sits over the paused run, and takes the pause
+          screen's place while it is up — both belong to the same frozen run, and two
+          of them would be two answers to the same press. */}
+        {isPaused && stepUpOpen && (
+          <StepUpOverlay
+            gameMode={STEP_UP_BOARD.mode}
+            difficulty={STEP_UP_BOARD.difficulty}
+            onStart={() => {
+              // Out of the paused run first: START builds its fresh game from the
+              // machine's own mode, so the board has to be set before it lands, and
+              // only the menu accepts either.
+              send({ type: 'MENU' })
+              send({ type: 'SET_MODE', mode: STEP_UP_BOARD.mode })
+              send({ type: 'SET_DIFFICULTY', difficulty: STEP_UP_BOARD.difficulty })
+              send({ type: 'START' })
+              setStepUpOpen(false)
+            }}
+            onOtherMode={() => {
+              // The intro with every board on offer, rather than the one we picked.
+              send({ type: 'MENU' })
+              setStepUpOpen(false)
+            }}
           />
         )}
 
-      {/* ── Menu overlay ── */}
-      {isMenu && menuOverlay === 'none' && !isMultiActive && (
-        <MenuOverlay
-          gameMode={mode}
-          difficulty={difficulty}
-          userId={userId}
-          nickname={nickname}
-          bestScore={stats[mode][difficulty].score}
-          joinError={multiRoom.error}
-          initialPlayMode={menuInitialTab}
-          onPlay={() => {
-            setMenuInitialTab('alone')
-            send({ type: 'START' })
-          }}
-          onSetMode={(next) => {
-            send({ type: 'SET_MODE', mode: next })
-          }}
-          onSetDifficulty={(next) => {
-            send({ type: 'SET_DIFFICULTY', difficulty: next })
-          }}
-          onOpenAdvanced={() => {
-            setMenuOverlay('advanced')
-          }}
-          onAddNickname={() => {
-            setShowNicknameModal(true)
-          }}
-          onHowToPlay={() => {
-            setMenuOverlay('howToPlay')
-          }}
-          onCreateRoom={handleCreateRoom}
-          onJoinRoom={handleJoinRoom}
-        />
-      )}
+        {isPaused && menuOverlay === 'none' && !stepUpOpen && (
+          <PausedOverlay
+            gameMode={mode}
+            difficulty={difficulty}
+            userId={userId}
+            nickname={nickname}
+            score={state.context.score}
+            hits={state.context.hits}
+            avgAccuracy={avgAccuracy}
+            avgSpeed={avgSpeed}
+            onContinue={() => {
+              send({ type: 'RESUME' })
+            }}
+            onNewGame={() => {
+              endRunEarly()
+              send({ type: 'MENU' })
+            }}
+            onOpenAdvanced={() => {
+              setMenuOverlay('advanced')
+            }}
+            onAddNickname={() => {
+              setShowNicknameModal(true)
+            }}
+          />
+        )}
 
-      <NicknameModal
-        visible={showNicknameModal}
-        onSave={async (name) => {
-          const res = await updateNickname(name)
-          if (!res.error) {
-            setShowNicknameModal(false)
-            if (pendingMultiAction) {
-              executeMultiAction(pendingMultiAction)
-              setPendingMultiAction(null)
+        {/* ── Advanced options — shared between menu and pause ── */}
+        {menuOverlay === 'advanced' && (
+          <AdvancedOptionsOverlay
+            isDark={isDark}
+            showSum={showSum}
+            onToggleSum={toggleSum}
+            onToggleTheme={toggleTheme}
+            onOpenNews={() => {
+              setMenuOverlay('news')
+            }}
+            onClose={() => {
+              setMenuOverlay('none')
+            }}
+          />
+        )}
+
+        {/* ── News archive — opened from advanced options ── */}
+        {menuOverlay === 'news' && (
+          <NewsArchiveOverlay
+            onClose={() => {
+              setMenuOverlay('advanced')
+            }}
+          />
+        )}
+
+        {/* ── How to play guide ── */}
+        {menuOverlay === 'howToPlay' && (
+          <HowToPlayOverlay
+            onClose={() => {
+              setMenuOverlay('none')
+            }}
+          />
+        )}
+
+        {/* ── What's new — announcements the player hasn't seen yet ── */}
+        {isMenu && menuOverlay === 'none' && !isMultiActive && whatsNew.visible && (
+          <WhatsNewOverlay items={whatsNew.unseen} onDismiss={whatsNew.dismiss} />
+        )}
+
+        {/* ── Install prompt — web only, and only once the news has had its turn.
+          Every launch until the player installs: closing it lasts the session. ── */}
+        {isMenu &&
+          menuOverlay === 'none' &&
+          !isMultiActive &&
+          whatsNew.ready &&
+          !whatsNew.visible &&
+          installPrompt.target !== 'none' && (
+            <InstallOverlay
+              target={installPrompt.target}
+              onInstall={installPrompt.install}
+              onDismiss={installPrompt.dismiss}
+            />
+          )}
+
+        {/* ── Menu overlay ── */}
+        {isMenu && menuOverlay === 'none' && !isMultiActive && (
+          <MenuOverlay
+            gameMode={mode}
+            difficulty={difficulty}
+            userId={userId}
+            nickname={nickname}
+            bestScore={stats[mode][difficulty].score}
+            joinError={multiRoom.error}
+            initialPlayMode={menuInitialTab}
+            onPlay={() => {
+              setMenuInitialTab('alone')
+              send({ type: 'START' })
+            }}
+            onSetMode={(next) => {
+              send({ type: 'SET_MODE', mode: next })
+            }}
+            onSetDifficulty={(next) => {
+              send({ type: 'SET_DIFFICULTY', difficulty: next })
+            }}
+            onOpenAdvanced={() => {
+              setMenuOverlay('advanced')
+            }}
+            onAddNickname={() => {
+              setShowNicknameModal(true)
+            }}
+            onHowToPlay={() => {
+              setMenuOverlay('howToPlay')
+            }}
+            onCreateRoom={handleCreateRoom}
+            onJoinRoom={handleJoinRoom}
+          />
+        )}
+
+        <NicknameModal
+          visible={showNicknameModal}
+          onSave={async (name) => {
+            const res = await updateNickname(name)
+            if (!res.error) {
+              setShowNicknameModal(false)
+              if (pendingMultiAction) {
+                executeMultiAction(pendingMultiAction)
+                setPendingMultiAction(null)
+              }
             }
-          }
-          return res
-        }}
-        onSkip={() => {
-          setShowNicknameModal(false)
-          setPendingMultiAction(null)
-        }}
-      />
+            return res
+          }}
+          onSkip={() => {
+            setShowNicknameModal(false)
+            setPendingMultiAction(null)
+          }}
+        />
 
-      {/* Persistent menu button — same spot in game & pause; morphs grid↔cross.
+        {/* Persistent menu button — same spot in game & pause; morphs grid↔cross.
           Sits level with the NINE row, so it clears the best-scores strip above
           it. Trainee renders no strip, so it comes up by exactly that strip's
           height rather than by a second number that could drift from it. */}
-      <MenuButton
-        visible={isPlaying || isPaused}
-        paused={isPaused}
-        onToggle={() => {
-          send({ type: isPaused ? 'RESUME' : 'PAUSE' })
-        }}
-        color={isDark ? '#2A2B44' : '#D4D0C8'}
-        style={{
-          position: 'absolute',
-          top: MENU_TOP[mode],
-          right: 18,
-          zIndex: 20,
-        }}
-      />
-
-      {/* ── Multiplayer screens (above everything) ── */}
-
-      {showMultiWaiting && multiRoom.room && (
-        <MultiplayerWaiting
-          code={multiRoom.room.code}
-          mode={multiRoom.room.mode}
-          players={multiRoom.players}
-          userId={userId}
-          isAdmin={multiRoom.isAdmin}
-          onLeave={() => {
-            setMenuInitialTab('friends')
-            void multiRoom.leave()
+        <MenuButton
+          visible={isPlaying || isPaused}
+          paused={isPaused}
+          onToggle={() => {
+            send({ type: isPaused ? 'RESUME' : 'PAUSE' })
           }}
-          onStart={handleAdminStartGame}
-          onSetMode={(m) => {
-            void multiRoom.setRoomMode(m)
+          color={isDark ? '#2A2B44' : '#D4D0C8'}
+          style={{
+            position: 'absolute',
+            top: MENU_TOP[mode],
+            right: 18,
+            zIndex: 20,
           }}
         />
-      )}
 
-      {showMultiGame && (
-        <MultiplayerGame
-          mode={multiGame.mode}
-          userId={userId}
-          players={multiGame.players}
-          currentTarget={multiGame.currentTarget}
-          targetCount={multiGame.targetCount}
-          isDark={isDark}
-          onHit={multiGame.sendHit}
-          onTargetExpire={() => {
-            // Only admin resolves; non-admin's timer is purely visual.
-          }}
-          onMenu={() => {
-            setShowMultiMenu(true)
-          }}
-        />
-      )}
+        {/* ── Multiplayer screens (above everything) ── */}
 
-      {showMultiGame && showMultiMenu && (
-        <MultiplayerMenu
-          mode={multiGame.mode}
-          onContinue={() => {
-            setShowMultiMenu(false)
-          }}
-          onLeave={() => {
-            setMenuInitialTab('friends')
-            setShowMultiMenu(false)
-            void multiRoom.leave()
-          }}
-        />
-      )}
+        {showMultiWaiting && multiRoom.room && (
+          <MultiplayerWaiting
+            code={multiRoom.room.code}
+            mode={multiRoom.room.mode}
+            players={multiRoom.players}
+            userId={userId}
+            isAdmin={multiRoom.isAdmin}
+            onLeave={() => {
+              setMenuInitialTab('friends')
+              void multiRoom.leave()
+            }}
+            onStart={handleAdminStartGame}
+            onSetMode={(m) => {
+              void multiRoom.setRoomMode(m)
+            }}
+          />
+        )}
 
-      {showMultiResults && (
-        <MultiplayerGameOver
-          players={multiGame.players}
-          mode={multiGame.mode}
-          userId={userId}
-          isAdmin={multiRoom.isAdmin}
-          onReady={multiGame.sendReady}
-          onModeChange={multiGame.sendModeChange}
-          onStartNext={multiGame.startNextGame}
-          onLeave={() => {
-            setMenuInitialTab('friends')
-            void multiRoom.leave()
-          }}
-        />
-      )}
-    </BoardProvider>
+        {showMultiGame && (
+          <MultiplayerGame
+            mode={multiGame.mode}
+            userId={userId}
+            players={multiGame.players}
+            currentTarget={multiGame.currentTarget}
+            targetCount={multiGame.targetCount}
+            isDark={isDark}
+            onHit={multiGame.sendHit}
+            onTargetExpire={() => {
+              // Only admin resolves; non-admin's timer is purely visual.
+            }}
+            onMenu={() => {
+              setShowMultiMenu(true)
+            }}
+          />
+        )}
+
+        {showMultiGame && showMultiMenu && (
+          <MultiplayerMenu
+            mode={multiGame.mode}
+            onContinue={() => {
+              setShowMultiMenu(false)
+            }}
+            onLeave={() => {
+              setMenuInitialTab('friends')
+              setShowMultiMenu(false)
+              void multiRoom.leave()
+            }}
+          />
+        )}
+
+        {showMultiResults && (
+          <MultiplayerGameOver
+            players={multiGame.players}
+            mode={multiGame.mode}
+            userId={userId}
+            isAdmin={multiRoom.isAdmin}
+            onReady={multiGame.sendReady}
+            onModeChange={multiGame.sendModeChange}
+            onStartNext={multiGame.startNextGame}
+            onLeave={() => {
+              setMenuInitialTab('friends')
+              void multiRoom.leave()
+            }}
+          />
+        )}
+        {/* Last child and explicitly stacked: every overlay above is absolutely
+            positioned and opaque, so a stage mounted earlier draws underneath the
+            screen it is meant to be showing. Renders nothing until the picker on the
+            desk outside the frame chooses something. */}
+        {GalleryStage !== null && (
+          <Suspense fallback={null}>
+            <View
+              style={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                right: 0,
+                bottom: 0,
+                zIndex: 100,
+              }}
+            >
+              <GalleryStage />
+            </View>
+          </Suspense>
+        )}
+      </BoardProvider>
+    </ChampionsProvider>
   )
 }

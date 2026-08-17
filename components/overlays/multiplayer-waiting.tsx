@@ -115,6 +115,7 @@ export function MultiplayerWaiting({
               <PlayerTile
                 key={i}
                 nickname={players[i]?.nickname}
+                userId={players[i]?.user_id}
                 gradient={gradient}
                 isMe={userId !== null && players[i]?.user_id === userId}
                 isHost={i === 0 && players[i] !== undefined}

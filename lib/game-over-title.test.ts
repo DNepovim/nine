@@ -6,6 +6,8 @@ import { gameOverTitle } from './game-over-title'
 const run = (over: Partial<Parameters<typeof gameOverTitle>[0]> = {}, roll = 0) =>
   gameOverTitle(
     {
+      screen: 'plain',
+      mode: 'accuracy',
       medals: [],
       personalBest: false,
       difficulty: 'easy',
@@ -20,12 +22,31 @@ const run = (over: Partial<Parameters<typeof gameOverTitle>[0]> = {}, roll = 0) 
 describe('gameOverTitle', () => {
   it('calls a board record gold', () => {
     expect(run({ medals: ['today'] })).toEqual(['PURE', 'GOLD'])
+    expect(run({ medals: ['week'] })).toEqual(['PURE', 'GOLD'])
+  })
+
+  it('gives the all-time record words of its own', () => {
+    // The one record that cannot be taken again tomorrow does not share the day's.
+    expect(run({ medals: ['ever'], screen: 'wash' })).toEqual(['BEST', 'EVER'])
+    expect(run({ medals: ['ever', 'week', 'today'] })).toEqual(['BEST', 'EVER'])
+  })
+
+  it('crowns a reign and gives each mode’s Extreme record its own bird', () => {
+    expect(run({ medals: ['ever'], screen: 'crown' })).toEqual(['BEST', 'EVER'])
+    expect(run({ medals: ['ever'], screen: 'bird', mode: 'accuracy' })).toEqual([
+      'TRUE',
+      'SHOT',
+    ])
+    expect(run({ medals: ['ever'], screen: 'bird', mode: 'speed' })).toEqual([
+      'FAST',
+      'WING',
+    ])
   })
 
   it('takes the board record over the personal best behind it', () => {
     // Taking a board almost always beats your own best on the way, and the board is
     // the bigger claim.
-    expect(run({ medals: ['ever'], personalBest: true })).toEqual(['PURE', 'GOLD'])
+    expect(run({ medals: ['today'], personalBest: true })).toEqual(['PURE', 'GOLD'])
   })
 
   it('names a personal best when no board fell', () => {

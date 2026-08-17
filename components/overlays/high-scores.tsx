@@ -10,7 +10,7 @@ import Animated, {
 } from 'react-native-reanimated'
 
 import DSEG7Font from '@/assets/fonts/DSEG7Classic-Bold.ttf'
-import { mono } from '@/constants/theme'
+import { mono, ON_GOLD_LABEL_SHADOW } from '@/constants/theme'
 import { useBoardContext, type PeriodBoard } from '@/hooks/use-board'
 import { useOnline } from '@/hooks/use-online'
 import { useViewport } from '@/hooks/use-viewport'
@@ -33,6 +33,8 @@ export function HighScores({
   userId,
   nickname,
   onAddNickname,
+  halo = false,
+  compact = false,
 }: {
   gameMode: Mode
   userId: string | null
@@ -42,11 +44,17 @@ export function HighScores({
   // the run ends — a button offering the prompt behind it would be the same question
   // twice.
   onAddNickname?: () => void
+  // Set on the gold game-over screen, where the board sits on the celebration.
+  halo?: boolean
+  // Short board: three rows and no row below the cut. See TabPanel.
+  compact?: boolean
 }) {
   // Loaded once here rather than per row: the board draws six of them, and every
   // score in the app wears the seven-segment face. `mono` stands in until it lands.
   const [dsegLoaded] = useFonts({ DSEG7: DSEG7Font })
   const digitFont = dsegLoaded ? 'DSEG7' : mono
+  // The tab labels and column headers sit straight on the gold, like the rows below.
+  const glow = halo ? ON_GOLD_LABEL_SHADOW : null
   const { width: windowWidth } = useViewport()
   const [panelWidth, setPanelWidth] = useState(0)
   const [activeTab, setActiveTab] = useState<LeaderboardTab>('today')
@@ -160,6 +168,7 @@ export function HighScores({
               <Text
                 selectable={false}
                 className="font-mono text-[9px] font-bold tracking-[1px] text-primary"
+                style={glow}
               >
                 {label}
               </Text>
@@ -190,18 +199,21 @@ export function HighScores({
         <Text
           selectable={false}
           className="w-7 font-mono text-[8px] font-bold tracking-[1px] text-dim"
+          style={glow}
         >
           #
         </Text>
         <Text
           selectable={false}
           className="flex-1 font-mono text-[8px] font-bold tracking-[1px] text-dim"
+          style={glow}
         >
           NICK
         </Text>
         <Text
           selectable={false}
           className="font-mono text-[8px] font-bold tracking-[1px] text-dim"
+          style={glow}
         >
           SCORE
         </Text>
@@ -244,6 +256,8 @@ export function HighScores({
               nickname={nickname}
               width={effectiveWidth}
               digitFont={digitFont}
+              halo={halo}
+              compact={compact}
             />
           ))}
         </ScrollView>

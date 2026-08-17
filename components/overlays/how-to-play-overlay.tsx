@@ -28,6 +28,7 @@ const SECTIONS = {
   controls: { icon: 'hand-left', title: 'CONTROLS', color: GAME_SCALE[1] },
   targets: { icon: 'timer', title: 'TARGETS & THE CLOCK', color: GAME_SCALE[1] },
   modes: { icon: 'grid', title: 'MODES', color: GAME_SCALE[2] },
+  champions: { icon: 'ribbon', title: 'CHAMPIONS', color: GAME_SCALE[2] },
   multiplayer: { icon: 'people', title: 'MULTIPLAYER', color: GAME_SCALE[3] },
   tips: { icon: 'bulb', title: 'TIPS & TRICKS', color: GAME_SCALE[4] },
 } as const satisfies Record<string, { icon: IoniconName; title: string; color: string }>
@@ -49,6 +50,7 @@ const SECTION_ORDER = [
   'controls',
   'targets',
   'modes',
+  'champions',
   'multiplayer',
   'tips',
 ] as const satisfies readonly SectionKey[]
@@ -454,6 +456,33 @@ export function HowToPlayOverlay({ onClose }: { onClose: () => void }) {
           <Body>
             {
               '\nAccuracy leans almost entirely on precision; Speed on the clock. Each keeps its own streak: Accuracy wants the fewest moves, Speed wants you early on the ring.'
+            }
+          </Body>
+
+          {/* Champions — the marks the boards hand out, explained where a player who
+              has just seen one on a row will look for them. */}
+          <SectionHeader section="champions" onMeasure={measure} />
+          <Body>
+            {
+              'Hold the all-time record on a mode’s Extreme board and you carry its mark. It travels with your name everywhere it is drawn — the boards, your own row, a multiplayer room — so the hardest boards say who holds them without anyone having to look them up.'
+            }
+          </Body>
+          <Card>
+            <Bullet color={MODE_GRADIENT.accuracy[0]}>
+              🦉 The owl is Accuracy at its hardest. That board rewards the exact route,
+              and the owl is the eye that finds it.
+            </Bullet>
+            <Bullet color={MODE_GRADIENT.speed[0]}>
+              🦅 The eagle is Speed at its hardest, for the dive rather than the search.
+            </Bullet>
+            <Bullet color={GAME_SCALE[4]}>
+              👑 The crown is both at once — the rarest thing in the game, and the only
+              way to wear one mark instead of two.
+            </Bullet>
+          </Card>
+          <Body>
+            {
+              '\nA mark is only ever lent. Take somebody’s record and it moves to you; lose yours and it leaves with the board.'
             }
           </Body>
 

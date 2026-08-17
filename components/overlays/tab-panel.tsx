@@ -2,6 +2,8 @@ import { isEmptyArray } from 'narrowland'
 import { Text, View } from 'react-native'
 
 import type { PeriodBoard } from '@/hooks/use-board'
+import { useChampionsContext } from '@/hooks/use-champions'
+import { championMark } from '@/lib/champions'
 import { displayRows } from '@/lib/leaderboard-rows'
 
 import { ScoreRow } from './score-row'
@@ -15,6 +17,9 @@ const ANONYMOUS_LABEL = 'YOU'
 const UNPUBLISHED_NOTE = 'NOT PUBLISHED'
 const UNSYNCED_NOTE = 'NOT SYNCED'
 
+// What the game-over screen has room for.
+const COMPACT_ROWS = 3
+
 export function TabPanel({
   data,
   accentColor,
@@ -22,6 +27,8 @@ export function TabPanel({
   nickname,
   width,
   digitFont,
+  halo = false,
+  compact = false,
 }: {
   data: PeriodBoard
   accentColor: string
@@ -30,7 +37,15 @@ export function TabPanel({
   width: number
   // Resolved once by the parent — 'DSEG7', or `mono` while the face is still loading.
   digitFont: string
+  // Set on the gold game-over screen, where the board sits on the celebration.
+  halo?: boolean
+  // The game-over screen's short board: three rows, and no row for the player below the
+  // cut. Their score is the headline directly above it, so repeating it under a row of
+  // dots says nothing and costs the screen two lines it does not have.
+  compact?: boolean
 }) {
+  const champions = useChampionsContext()
+
   if (data.loading) {
     return (
       <View style={{ width }}>
@@ -52,7 +67,12 @@ export function TabPanel({
   // The board could not be read — offline, most likely. A record held on the device is
   // still the player's, so it stands on its own rather than vanishing with the board;
   // the notice underneath says why it is alone up there.
-  const rows = displayRows(data.error === null ? data.rows : [], userId, unpublished)
+  const rows = displayRows(
+    data.error === null ? data.rows : [],
+    userId,
+    unpublished,
+    compact ? COMPACT_ROWS : undefined,
+  )
   if (data.error !== null && isEmptyArray(rows)) {
     return (
       <View style={{ width }} className="items-center py-4">
@@ -88,6 +108,7 @@ export function TabPanel({
           key={row.key}
           entry={{
             rank: row.rank,
+            mark: championMark(row.userId, champions),
             nickname: row.nickname,
             score: row.score,
             isUser: row.isUser,
@@ -96,9 +117,10 @@ export function TabPanel({
           }}
           accentColor={accentColor}
           digitFont={digitFont}
+          halo={halo}
         />
       ))}
-      {myRank !== null && !userIsInTop5 && nickname !== null && (
+      {!compact && myRank !== null && !userIsInTop5 && nickname !== null && (
         <>
           <View className="items-center py-1">
             <Text
@@ -111,6 +133,7 @@ export function TabPanel({
           <ScoreRow
             entry={{
               rank: myRank.rank,
+              mark: championMark(userId, champions),
               nickname,
               score: data.myBest,
               isUser: true,
@@ -118,6 +141,7 @@ export function TabPanel({
             }}
             accentColor={accentColor}
             digitFont={digitFont}
+            halo={halo}
           />
         </>
       )}

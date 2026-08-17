@@ -134,7 +134,13 @@ export function MenuOverlay({
 
   return (
     <Screen overlay>
-      <View className="w-full items-center justify-between" style={{ minHeight: 560 }}>
+      {/* Sized by its content. This used to stand in a 560px box with the top section
+          and the CTA pushed to its ends, which held PLAY at the same height whichever
+          mode was focused — but the box was a hand-tuned constant, and every trim to
+          the rows above it turned more of the box into empty space between the board
+          and the button. `Screen overlay` centres this block anyway, so the height was
+          buying stability in one axis at the cost of a gap that grew on its own. */}
+      <View className="w-full items-center">
         {/* Top section */}
         <View className="w-full items-center">
           {/* Greeting — only shown when nickname is set */}
@@ -243,8 +249,10 @@ export function MenuOverlay({
           </View>
         </View>
 
-        {/* Bottom CTA */}
-        <View className="items-center gap-8">
+        {/* Bottom CTA. Its own margin now, rather than whatever a fixed-height box had
+            left over: the panel above already carries a bottom margin, so this is the
+            breathing room on top of it. */}
+        <View className="mt-4 items-center gap-8">
           {playMode === 'alone' ? (
             <Pressable
               onPress={onPlay}

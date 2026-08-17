@@ -2,6 +2,8 @@ import { AntDesign } from '@expo/vector-icons'
 import { LinearGradient } from 'expo-linear-gradient'
 import { Text, View } from 'react-native'
 
+import { useChampionsContext } from '@/hooks/use-champions'
+import { championMark } from '@/lib/champions'
 import { rankMedal } from '@/lib/rank-emoji'
 
 // A distinct, lively gradient per attendee slot (drawn from the app palette).
@@ -52,6 +54,7 @@ function Chip({ label }: { label: string }) {
 // the game-over screen so the two lists look identical.
 export function PlayerTile({
   nickname,
+  userId,
   gradient,
   isMe,
   isHost = false,
@@ -60,6 +63,9 @@ export function PlayerTile({
   ready,
 }: {
   nickname: string | undefined
+  // Whose tile it is, so a champion carries the same mark here as on the board. Omitted
+  // for an empty slot, which has nobody to mark.
+  userId?: string | null
   gradient: readonly [string, string]
   isMe: boolean
   isHost?: boolean
@@ -67,6 +73,9 @@ export function PlayerTile({
   score?: number
   ready?: boolean
 }) {
+  // Before the empty-slot return: hooks cannot sit behind a condition.
+  const champions = useChampionsContext()
+
   if (nickname === undefined) {
     return (
       <View style={{ width: '48%' }}>
@@ -87,6 +96,9 @@ export function PlayerTile({
   }
 
   const initial = nickname.trim().charAt(0).toUpperCase() || '?'
+  // The board's crown and birds follow a player into a room: the same two ids answer it
+  // here, so a champion is recognisable wherever their name is drawn.
+  const mark = championMark(userId ?? null, champions)
   // Medals only: a room can end with four or five players, and the board's mark for
   // last place is a joke about missing the cut, which does not apply here.
   const medal = rank === undefined ? null : rankMedal(rank)
@@ -142,7 +154,7 @@ export function PlayerTile({
             className="flex-1 font-mono text-[13px] font-black tracking-[0.5px]"
             style={{ color: WHITE }}
           >
-            {nickname}
+            {mark === null ? nickname : `${mark} ${nickname}`}
           </Text>
           {score !== undefined && (
             <View className="flex-row items-center gap-1">

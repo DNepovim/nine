@@ -5,17 +5,17 @@ import { Pressable, Text, View } from 'react-native'
 
 import { Screen } from '@/components/screen'
 import { useTheme } from '@/hooks/use-theme'
-import { cn } from '@/lib/cn'
 import {
   DARK_MODE_GRADIENT,
-  DIFFICULTIES,
-  MODES,
+  MODE_GRADIENT,
   type Difficulty,
   type Mode,
 } from '@/machines/game'
 
+import { BoardBadges } from './board-badges'
 import { HighScores } from './high-scores'
 import { ModeTips } from './mode-tips'
+import { PauseMark } from './pause-mark'
 import { RunStats } from './run-stats'
 import { ScoreReadout } from './score-readout'
 
@@ -60,22 +60,25 @@ export function PausedOverlay({
     <Screen overlay>
       <View className="w-full items-center justify-between" style={{ minHeight: 560 }}>
         <View className="w-full items-center">
-          <Text
-            selectable={false}
-            className={cn(
-              'font-mono text-[9px] font-bold tracking-[2px] text-dim',
-              // Trainee has no score block under this line, so the stats would
-              // otherwise sit right on top of it.
-              gameMode === 'trainee' ? 'mb-5' : 'mb-1',
-            )}
-          >
-            {MODES[gameMode].label} · {DIFFICULTIES[difficulty].label}
-          </Text>
+          {/* The same three pieces the game-over screen opens with, in the same order
+              and the same dress: a mark saying what happened, the board it happened on,
+              then the number. Only the mark differs — a run that stopped rather than
+              one that ended. */}
+          <PauseMark gameMode={gameMode} />
+
+          <BoardBadges gameMode={gameMode} difficulty={difficulty} />
+
           {/* Trainee has no board, so a score here measures nothing. A tip is
               worth more to someone practising than a number they cannot place —
               but the run's own numbers still do, so they come first and the tip
               reads as advice on what they show. */}
-          {gameMode !== 'trainee' && <ScoreReadout score={score} />}
+          {gameMode !== 'trainee' && (
+            <ScoreReadout
+              score={score}
+              color={MODE_GRADIENT[gameMode][0]}
+              glow={`${MODE_GRADIENT[gameMode][0]}99`}
+            />
+          )}
 
           <RunStats hits={hits} avgAccuracy={avgAccuracy} avgSpeed={avgSpeed} />
 
@@ -91,6 +94,7 @@ export function PausedOverlay({
               userId={userId}
               nickname={nickname}
               onAddNickname={onAddNickname}
+              compact
             />
           )}
         </View>

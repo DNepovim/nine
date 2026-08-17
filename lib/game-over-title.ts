@@ -1,6 +1,7 @@
 import type { Period } from '@/lib/announcements'
+import type { RecordScreen } from '@/lib/champions'
 import { earnedChallenge } from '@/lib/next-challenge'
-import type { Difficulty } from '@/machines/modes'
+import type { Difficulty, ScoredMode } from '@/machines/modes'
 
 // The wordmark over the game-over screen, as two four-letter words. Four and four is
 // not a style choice: the title animates as two rows of four letters, and both the
@@ -16,12 +17,45 @@ export type TitleWords = readonly [string, string]
 // What kind of run it was. The tier is decided first, then a line is drawn from that
 // tier's pool, the same shape the announcement bar uses — one meaning, several ways of
 // saying it, so a player who dies twice in a row is not read the same words twice.
-type Tier = 'board' | 'personal' | 'cold' | 'strong' | 'played'
+type Tier =
+  | 'crown'
+  | 'owl'
+  | 'eagle'
+  | 'allTime'
+  | 'board'
+  | 'personal'
+  | 'cold'
+  | 'strong'
+  | 'played'
 
 // Three per tier. The cold pool is deliberately the gentlest of the five: it is the
 // only one that comments on a run going badly, and it says the run was cold rather
 // than the player.
 const TITLES = {
+  // Holding both Extreme all-time boards at once — the rarest thing in the game.
+  crown: [
+    ['BEST', 'EVER'],
+    ['KING', 'NINE'],
+    ['PEAK', 'FORM'],
+  ],
+  // One mode's Extreme all-time board. Each reads as what its mode asks for: Accuracy
+  // is an eye, Speed is a dive.
+  owl: [
+    ['TRUE', 'SHOT'],
+    ['WISE', 'EYES'],
+    ['DEAD', 'EYES'],
+  ],
+  eagle: [
+    ['FAST', 'WING'],
+    ['HIGH', 'GEAR'],
+    ['FREE', 'FALL'],
+  ],
+  // Any other all-time record: a real one, but not a reign.
+  allTime: [
+    ['BEST', 'EVER'],
+    ['KING', 'NINE'],
+    ['PEAK', 'FORM'],
+  ],
   board: [
     ['PURE', 'GOLD'],
     ['TOOK', 'GOLD'],
@@ -68,6 +102,8 @@ const COLD_BELOW = {
 // almost always beat the player's own best too, and the bigger claim is the one worth
 // putting on screen.
 const tierFor = ({
+  screen,
+  mode,
   medals,
   personalBest,
   difficulty,
@@ -75,6 +111,10 @@ const tierFor = ({
   hits,
   strikes,
 }: {
+  // How loudly the screen is celebrating — the crown and the birds are its two loudest
+  // settings, and each has words of its own.
+  screen: RecordScreen
+  mode: ScoredMode
   // Board records this run took, any period. Already computed for the medal row.
   medals: readonly Period[]
   // Whether the run beat the player's own stored best on this board.
@@ -84,9 +124,13 @@ const tierFor = ({
   hits: number
   strikes: number
 }): Tier => {
+  // A reign outranks everything, and each mode's is its own claim.
+  if (screen === 'crown') return 'crown'
+  if (screen === 'bird') return mode === 'accuracy' ? 'owl' : 'eagle'
   // Both record tiers outrank the cold one on purpose. A first score on an empty
   // board can take it while barely scoring at all, and being told the run was cold in
   // the same breath as taking a record would read as the game arguing with itself.
+  if (medals.includes('ever')) return 'allTime'
   if (medals.length > 0) return 'board'
   if (personalBest) return 'personal'
   if (score < COLD_BELOW[difficulty]) return 'cold'

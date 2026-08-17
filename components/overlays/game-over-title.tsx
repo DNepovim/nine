@@ -20,9 +20,12 @@ const TOTAL_LETTERS = 8
 export function GameOverTitle({
   gameMode,
   words,
+  shadow = false,
 }: {
   gameMode: Mode
   words: TitleWords
+  // The all-time screen puts these letters on gold with a celebration behind them.
+  shadow?: boolean
 }) {
   const rows = words.map((word) => Array.from(word))
   const gradPhase = useSharedValue(0)
@@ -60,6 +63,7 @@ export function GameOverTitle({
                 mode={gameMode}
                 delay={globalIndex * 80}
                 letterIndex={globalIndex % 4}
+                shadow={shadow}
               />
             )
           })}
