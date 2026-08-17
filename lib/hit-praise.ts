@@ -14,7 +14,6 @@ import type { CleanReason } from '@/machines/scoring'
 // announcement bar: this is the game talking to you, not a label.
 const PRAISE = {
   accuracy: ['No wasted moves', 'Shortest route', 'Fewest moves possible'],
-  speed: ['Most of the clock left', 'Time to spare', 'Well ahead of the clock'],
   both: ['Shortest route, fast too', 'No waste, time to spare', 'Optimal and fast'],
 } as const satisfies Record<CleanReason, readonly [string, ...string[]]>
 

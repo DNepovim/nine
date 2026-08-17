@@ -159,32 +159,32 @@ export function speedReward(spd: number): number {
   return spd + (FAST_BONUS * (spd - FAST_BAND)) / (1 - FAST_BAND)
 }
 
-// Trainee celebrates the hit rather than the run, and this is what earns it:
-// either the hit was taken in optimal steps, or it was taken with most of the
-// clock still to run. Either alone is worth marking — a learner who nails the
-// route deserves the same nod as one who nails the timing.
+// Trainee celebrates the hit rather than the run, and only the route earns it: the
+// hit has to have been taken in optimal steps. Being quick is not celebrated on its
+// own — Trainee has no timer worth racing, and cheering a fast hit that wasted moves
+// taught the opposite of what the mode is for. A quick, wasteful hit now gets the
+// coach's debrief instead, which is the thing a learner can act on.
 //
-// The accuracy side wants exactly optimal, not nearly: `accuracyFactor` returns 1
-// only when no step was wasted, and softening that would celebrate a near miss.
+// Optimal means exactly optimal, not nearly: `accuracyFactor` returns 1 only when no
+// step was wasted, and softening that would celebrate a near miss.
 const CLEAN_SPEED = 0.6
 
 type Factors = { accFactor: number; spdFactor: number }
 
-export const isCleanHit = (hit: Factors): boolean =>
-  hit.accFactor === 1 || hit.spdFactor >= CLEAN_SPEED
+export const isCleanHit = (hit: Factors): boolean => hit.accFactor === 1
 
-// What a batch earned its celebration for, so the praise can name it. A batch is
-// every target one press cleared, so it can manage both across two hits without
-// either hit managing both — which still deserves the both-line.
-export type CleanReason = 'accuracy' | 'speed' | 'both'
+// What a batch earned its celebration for, so the praise can name it. Speed is not a
+// reason of its own, but it still colours one: a hit that was optimal *and* quick is a
+// bigger thing than one that was merely optimal, and says so.
+//
+// A batch is every target one press cleared, so it can manage both across two hits
+// without either hit managing both — which still deserves the both-line.
+export type CleanReason = 'accuracy' | 'both'
 
 export function cleanHitReason(hits: readonly Factors[]): CleanReason | null {
-  const accurate = hits.some((hit) => hit.accFactor === 1)
-  const fast = hits.some((hit) => hit.spdFactor >= CLEAN_SPEED)
-  if (accurate && fast) return 'both'
-  if (accurate) return 'accuracy'
-  if (fast) return 'speed'
-  return null
+  const accurate = hits.some(isCleanHit)
+  if (!accurate) return null
+  return hits.some((hit) => hit.spdFactor >= CLEAN_SPEED) ? 'both' : 'accuracy'
 }
 
 // Points for a single hit, blending accuracy and speed per the mode's weights.

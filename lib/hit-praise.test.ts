@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 
 import { praiseFor, praisePool } from './hit-praise'
 
-const REASONS = ['accuracy', 'speed', 'both'] as const
+const REASONS = ['accuracy', 'both'] as const
 
 describe('praiseFor', () => {
   it('picks the first line at the bottom of the roll', () => {
@@ -10,8 +10,8 @@ describe('praiseFor', () => {
   })
 
   it('picks the last line at the top of the roll', () => {
-    const pool = praisePool('speed')
-    expect(praiseFor('speed', 0.999)).toBe(pool[pool.length - 1])
+    const pool = praisePool('both')
+    expect(praiseFor('both', 0.999)).toBe(pool[pool.length - 1])
   })
 
   it('stays inside the pool for a roll of exactly 1', () => {

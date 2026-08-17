@@ -77,26 +77,22 @@ describe('speedReward', () => {
   })
 })
 
-// What Trainee celebrates: the hit rather than the run.
+// What Trainee celebrates: the hit rather than the run, and the route rather than
+// the clock.
 describe('isCleanHit', () => {
   it('celebrates a hit taken in optimal steps however slow', () => {
     expect(isCleanHit({ accFactor: 1, spdFactor: 0 })).toBe(true)
   })
 
-  it('celebrates a fast hit however wasteful', () => {
-    expect(isCleanHit({ accFactor: 0, spdFactor: 0.9 })).toBe(true)
-  })
-
-  it('celebrates a hit that is both, without caring which', () => {
-    expect(isCleanHit({ accFactor: 1, spdFactor: 0.9 })).toBe(true)
+  it('stays quiet for a fast hit that wasted moves', () => {
+    // Speed alone earns nothing here. Trainee is about the route, and cheering a
+    // quick sloppy hit taught the opposite of what the mode is for.
+    expect(isCleanHit({ accFactor: 0, spdFactor: 0.9 })).toBe(false)
+    expect(isCleanHit({ accFactor: 0.8, spdFactor: 1 })).toBe(false)
   })
 
   it('stays quiet for a hit that is neither', () => {
     expect(isCleanHit({ accFactor: 0.8, spdFactor: 0.59 })).toBe(false)
-  })
-
-  it('treats the speed threshold as inclusive', () => {
-    expect(isCleanHit({ accFactor: 0, spdFactor: 0.6 })).toBe(true)
   })
 
   it('wants exactly optimal steps, not nearly', () => {
@@ -104,7 +100,8 @@ describe('isCleanHit', () => {
   })
 })
 
-// Which of the two things a batch is being congratulated for.
+// Which of the two things a batch is being congratulated for. Speed is never a
+// reason on its own; it only sharpens the accuracy one.
 describe('cleanHitReason', () => {
   it('is null when nothing in the batch was clean', () => {
     expect(cleanHitReason([{ accFactor: 0.8, spdFactor: 0.2 }])).toBeNull()
@@ -114,12 +111,12 @@ describe('cleanHitReason', () => {
     expect(cleanHitReason([])).toBeNull()
   })
 
-  it('names accuracy for an optimal but unhurried hit', () => {
-    expect(cleanHitReason([{ accFactor: 1, spdFactor: 0.2 }])).toBe('accuracy')
+  it('is null for a fast but wasteful hit, which the coach debriefs instead', () => {
+    expect(cleanHitReason([{ accFactor: 0.5, spdFactor: 0.8 }])).toBeNull()
   })
 
-  it('names speed for a fast but wasteful hit', () => {
-    expect(cleanHitReason([{ accFactor: 0.5, spdFactor: 0.8 }])).toBe('speed')
+  it('names accuracy for an optimal but unhurried hit', () => {
+    expect(cleanHitReason([{ accFactor: 1, spdFactor: 0.2 }])).toBe('accuracy')
   })
 
   it('names both when one hit managed both', () => {
@@ -133,6 +130,10 @@ describe('cleanHitReason', () => {
         { accFactor: 0.4, spdFactor: 0.9 },
       ]),
     ).toBe('both')
+  })
+
+  it('treats the speed threshold as inclusive when accuracy already qualified', () => {
+    expect(cleanHitReason([{ accFactor: 1, spdFactor: 0.6 }])).toBe('both')
   })
 })
 
