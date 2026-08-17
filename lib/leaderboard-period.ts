@@ -42,6 +42,18 @@ export function dayInPrague(at: Date = new Date()): string {
 // bounding the boards, so the two can never disagree about where a score belongs.
 export const todayISO = (): string => dayInPrague()
 
+const DAY_MS = 86_400_000
+
+// How long until the day boards roll over. A board left open across the boundary would
+// otherwise keep yesterday's rows until something else happened to refresh it, so this
+// is what schedules the refetch. The offset is read once, so an hour is lost or gained
+// across a DST change — the timer only triggers a fetch, and the fetch is what decides
+// what the day is.
+export function msUntilNextDay(at: Date = new Date()): number {
+  const shifted = at.getTime() + pragueOffsetHours(at) * HOUR_MS
+  return DAY_MS - (((shifted % DAY_MS) + DAY_MS) % DAY_MS)
+}
+
 // The Monday of the calendar week containing `day`. Weeks run Monday to Sunday on the
 // Prague clock, so the `week` board is "this week so far" and empties at Prague
 // midnight every Monday, rather than a rolling window that quietly drops a day.

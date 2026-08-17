@@ -107,14 +107,7 @@ export function GameOverOverlay({
           <RunStats hits={hits} avgAccuracy={avgAccuracy} avgSpeed={avgSpeed} />
 
           {isOneOf(gameMode, ['accuracy', 'speed']) && (
-            <HighScores
-              gameMode={gameMode}
-              difficulty={difficulty}
-              userId={userId}
-              nickname={nickname}
-              optimisticScore={score}
-              optimisticHits={hits}
-            />
+            <HighScores gameMode={gameMode} userId={userId} nickname={nickname} />
           )}
         </View>
 

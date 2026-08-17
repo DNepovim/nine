@@ -1,6 +1,12 @@
 import { describe, expect, it } from 'vitest'
 
-import { dayInPrague, qualifiesForTab, tabSince, weekStart } from './leaderboard-period'
+import {
+  dayInPrague,
+  msUntilNextDay,
+  qualifiesForTab,
+  tabSince,
+  weekStart,
+} from './leaderboard-period'
 
 describe('dayInPrague', () => {
   // Fixed instants, so these assert the same thing whatever the runner's timezone.
@@ -106,5 +112,31 @@ describe('qualifiesForTab', () => {
 
   it('accepts anything under all time', () => {
     expect(qualifiesForTab('2019-01-01', 'forever', WEDNESDAY)).toBe(true)
+  })
+})
+
+describe('msUntilNextDay', () => {
+  const MINUTE = 60_000
+
+  it('counts the half hour left before Prague midnight in summer', () => {
+    // 21:30 UTC = 23:30 CEST.
+    expect(msUntilNextDay(new Date('2026-08-12T21:30:00Z'))).toBe(30 * MINUTE)
+  })
+
+  it('counts the half hour left before Prague midnight in winter', () => {
+    // 22:30 UTC = 23:30 CET.
+    expect(msUntilNextDay(new Date('2026-01-12T22:30:00Z'))).toBe(30 * MINUTE)
+  })
+
+  it('is a whole day the instant a day begins', () => {
+    // 22:00 UTC = 00:00 CEST.
+    expect(msUntilNextDay(new Date('2026-08-12T22:00:00Z'))).toBe(24 * 60 * MINUTE)
+  })
+
+  it('lands on the moment the day actually turns', () => {
+    const at = new Date('2026-08-12T09:17:23.456Z')
+    const next = new Date(at.getTime() + msUntilNextDay(at))
+    expect(dayInPrague(next)).not.toBe(dayInPrague(at))
+    expect(dayInPrague(new Date(next.getTime() - 1))).toBe(dayInPrague(at))
   })
 })

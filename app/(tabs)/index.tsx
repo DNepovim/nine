@@ -2,7 +2,7 @@ import { AntDesign } from '@expo/vector-icons'
 import { useMachine } from '@xstate/react'
 import { useFonts } from 'expo-font'
 import { isNotNull, isOneOf } from 'narrowland'
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { AppState, Text, View } from 'react-native'
 import Animated, {
   Easing,
@@ -41,7 +41,7 @@ import { WhatsNewOverlay } from '@/components/overlays/whats-new-overlay'
 import { Screen } from '@/components/screen'
 import { mono } from '@/constants/theme'
 import { useAnnouncements } from '@/hooks/use-announcements'
-import { useBestScores } from '@/hooks/use-best-scores'
+import { BoardProvider, useBoard } from '@/hooks/use-board'
 import { useDisplayOptions } from '@/hooks/use-display-options'
 import { useDisplayScore } from '@/hooks/use-display-score'
 import { useDisplayedTargets } from '@/hooks/use-displayed-targets'
@@ -63,7 +63,9 @@ import { useTargetSpawner } from '@/hooks/use-target-spawner'
 import { useTheme } from '@/hooks/use-theme'
 import { useTraineeCoach } from '@/hooks/use-trainee-coach'
 import { useWhatsNew } from '@/hooks/use-whats-new'
-import { medalPeriods } from '@/lib/record-medals'
+import { barFor, isOpenable, type Leaders, type Period } from '@/lib/announcements'
+import { leaderOf } from '@/lib/leaderboard'
+import { heldPeriods, medalPeriods } from '@/lib/record-medals'
 import { valueProgress } from '@/lib/value-progress'
 import {
   computeSum,
@@ -179,26 +181,27 @@ export default function GameScreen() {
   const { submit: submitScore } = useScoreSubmission(userId, nickname, isReady)
   const [showNicknameModal, setShowNicknameModal] = useState(false)
 
-  // Board leaders for the strip above the top bar. Trainee has no leaderboard.
-  const {
-    leaders,
-    empty: emptyBoards,
-    loaded: bestsLoaded,
-    refresh: refreshBests,
-  } = useBestScores(mode, difficulty, mode !== 'trainee')
-  const bestToday = leaders.today?.score ?? null
-  const bestWeek = leaders.week?.score ?? null
-  const bestEver = leaders.ever?.score ?? null
+  // The one board store. Every surface that shows a score reads it — the strip above
+  // the top bar, the intro, the pause screen and the game over screen — so they cannot
+  // answer the same question differently. Trainee has no board and it stays quiet.
+  const board = useBoard(mode, difficulty, userId)
+  const refreshBoard = board.refresh
+  const bestToday = board.today.record
+  const bestWeek = board.week.record
+  const bestEver = board.forever.record
+  // Memoised on the fetched rows so the rival watcher only wakes when a fetch actually
+  // lands, not on every render of the game screen.
+  const leaders: Leaders = useMemo(
+    () => ({
+      today: leaderOf(board.today.rows),
+      week: leaderOf(board.week.rows),
+      ever: leaderOf(board.forever.rows),
+    }),
+    [board.today.rows, board.week.rows, board.forever.rows],
+  )
 
   const inRun = isPlaying || isPaused
-  const rival = useRivalRecords({
-    inRun,
-    mode,
-    difficulty,
-    userId,
-    leaders,
-    refresh: refreshBests,
-  })
+  const rival = useRivalRecords({ inRun, mode, difficulty, userId, leaders })
   const celebration = useHitCelebration(inRun, mode, hitBatch)
   const coach = useTraineeCoach({
     inRun,
@@ -211,15 +214,19 @@ export default function GameScreen() {
 
   const { announcement, crossed } = useAnnouncements({
     inRun,
+    // Nothing is frozen until the board has answered. A run that started first gets its
+    // targets the moment they land, and the score already reached is measured against
+    // them — which is what a run begun on a cold start used to lose entirely.
+    ready: board.loaded,
     score: state.context.score,
     // Trainee's entry stays at zero — the machine neither records nor hydrates a
     // best for it — so this needs no special case to stay quiet there.
     storedBest: stats[mode][difficulty].score,
-    todayBest: bestToday,
-    weekBest: bestWeek,
-    everBest: bestEver,
-    todayEmpty: emptyBoards.today,
-    weekEmpty: emptyBoards.week,
+    todayBest: barFor(bestToday, board.today.myBest),
+    weekBest: barFor(bestWeek, board.week.myBest),
+    everBest: barFor(bestEver, board.forever.myBest),
+    todayEmpty: isOpenable(board.today.empty, board.today.myBest),
+    weekEmpty: isOpenable(board.week.empty, board.week.myBest),
     rival,
     // Send the score the moment a board record falls rather than waiting for game
     // over: the write is what wakes every other player's bar, so delaying it is
@@ -231,10 +238,14 @@ export default function GameScreen() {
     },
   })
 
-  // The boards the run ended on top of, for the game-over screen. Read from what the
-  // bar announced rather than from the boards themselves: by game over the player's own
-  // score is the record, so asking the leaderboard would say yes to every run.
-  const runMedals = medalPeriods(crossed)
+  // The boards the run ended on top of, latched on the game-over edge below. What the
+  // bar announced is the starting point — by game over the player's own score is the
+  // record, so asking the board what this run took would say yes to every run — and
+  // each claim is then checked against the board as it stands, so a rival who went past
+  // mid-run takes the medal with them. Latched rather than derived because the title
+  // tier reads it while flying up from the board, and a medal that moved under it would
+  // change the letters mid-flight.
+  const [runMedals, setRunMedals] = useState<readonly Period[]>([])
 
   // Which of a title tier's three lines this run gets. Drawn once per game over, not
   // per render: the title flies up from the board and hands off to the overlay, so a
@@ -246,11 +257,22 @@ export default function GameScreen() {
   useEffect(() => {
     if (isGameOver === prevIsGameOverRef.current) return
     prevIsGameOverRef.current = isGameOver
-    if (isGameOver) setTitleRoll(Math.random())
-    // Refresh on both edges of game over: entering picks up other players' runs,
-    // and leaving catches our own score, which submitScore fires and forgets and
-    // so may not have landed by the time the overlay appeared.
-    refreshBests()
+    if (isGameOver) {
+      setTitleRoll(Math.random())
+      // The boards have been kept live all run by Realtime, so what they hold now is
+      // what a rival left behind if they passed us while we were playing.
+      setRunMedals(
+        heldPeriods(medalPeriods(crossed), state.context.score, {
+          today: bestToday,
+          week: bestWeek,
+          ever: bestEver,
+        }),
+      )
+    }
+    // Refresh on both edges of game over so other players' runs appear. Our own score
+    // no longer depends on this landing: it is recorded on the device as it is
+    // submitted, and the board store folds that in without asking the server.
+    void refreshBoard()
     if (isGameOver && isOneOf(mode, ['accuracy', 'speed'])) {
       submitScore(mode, difficulty, state.context.score, state.context.hits)
       if (isReady && !nickname && state.context.score > 0) setShowNicknameModal(true)
@@ -263,8 +285,12 @@ export default function GameScreen() {
     difficulty,
     state.context.score,
     state.context.hits,
+    crossed,
+    bestToday,
+    bestWeek,
+    bestEver,
     submitScore,
-    refreshBests,
+    refreshBoard,
   ])
 
   // Ending a run yourself from the pause menu still counts: submit the score and ask
@@ -275,7 +301,7 @@ export default function GameScreen() {
     const { score, hits } = state.context
     if (score <= 0) return
     submitScore(mode, difficulty, score, hits)
-    refreshBests()
+    void refreshBoard()
     if (isReady && !nickname) setShowNicknameModal(true)
   }
 
@@ -420,7 +446,9 @@ export default function GameScreen() {
   const isMultiActive = showMultiWaiting || showMultiGame || showMultiResults
 
   return (
-    <>
+    // Every board on screen reads this one store, so the intro, the pause screen and
+    // the game over screen cannot show three different answers to the same question.
+    <BoardProvider value={board}>
       {/* The celebration sits before the Screen so it paints behind the game's own UI.
           Keyed on the announcement so each one plays from the start, and so escalating
           through two records in a run swaps the effect rather than reusing it. */}
@@ -445,7 +473,7 @@ export default function GameScreen() {
             mode={mode}
             announcement={announcement}
             yourBest={stats[mode][difficulty].score}
-            loaded={bestsLoaded}
+            loaded={board.loaded}
             today={bestToday}
             week={bestWeek}
             ever={bestEver}
@@ -800,7 +828,6 @@ export default function GameScreen() {
           userId={userId}
           nickname={nickname}
           bestScore={stats[mode][difficulty].score}
-          bestHits={stats[mode][difficulty].hits}
           joinError={multiRoom.error}
           initialPlayMode={menuInitialTab}
           onPlay={() => {
@@ -932,6 +959,6 @@ export default function GameScreen() {
           }}
         />
       )}
-    </>
+    </BoardProvider>
   )
 }

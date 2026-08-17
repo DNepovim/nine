@@ -6,11 +6,6 @@ import type { Medal, MedalPeriod } from '@/lib/medals'
 import { rankMedal } from '@/lib/rank-emoji'
 import { DIFFICULTIES, MODE_GRADIENT } from '@/machines/game'
 
-// All six boards can be medalled at once, and six items overrun the title's width. The
-// sort has already put the best first, so the cut takes the least worth showing. Three
-// rather than four now that each item carries a period as well.
-const MAX_ITEMS = 3
-
 // How long the board has stood, in the same clipped register as the difficulty code
 // beside it. A medal without this reads as all-time, which is the rarest of the three
 // and the one nobody should be handed by default.
@@ -20,16 +15,19 @@ const PERIOD_CODES = {
   ever: 'ALL',
 } as const satisfies Record<MedalPeriod, string>
 
-// The player's all-time podium finishes, under the title. The difficulty is spelled;
-// the mode is the colour it is spelled in — the same accent the leaderboard gives that
-// mode, so the two agree on which hue means what.
+// The player's best claim in each mode, under the title. The difficulty is spelled; the
+// mode is the colour it is spelled in — the same accent the leaderboard gives that mode,
+// so the two agree on which hue means what.
+//
+// No cap here any more: `toMedals` keeps one medal per mode, so the line is as long as
+// there are modes to win in and cannot outgrow the title above it.
 export function MedalLine({ medals }: { medals: readonly Medal[] }) {
   if (isEmptyArray(medals)) return null
 
   return (
     <View className="mb-4 flex-row items-center justify-center gap-1.5">
-      {medals.slice(0, MAX_ITEMS).map((medal, i) => (
-        <Fragment key={`${medal.mode}-${medal.difficulty}`}>
+      {medals.map((medal, i) => (
+        <Fragment key={medal.mode}>
           {i > 0 && (
             <Text selectable={false} className="font-mono text-[9px] text-dim">
               ·

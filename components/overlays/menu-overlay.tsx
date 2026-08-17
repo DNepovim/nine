@@ -47,7 +47,6 @@ export function MenuOverlay({
   userId,
   nickname,
   bestScore,
-  bestHits,
   joinError,
   initialPlayMode = 'alone',
   onPlay,
@@ -63,10 +62,9 @@ export function MenuOverlay({
   difficulty: Difficulty
   userId: string | null
   nickname: string | null
-  // The locally stored best for this board, so a run that just finished shows on the
-  // menu's board straight away instead of waiting for the submit to land.
+  // The locally stored all-time best for this board, for the challenge the invite
+  // carries. The board below reads the shared store and needs nothing from here.
   bestScore: number
-  bestHits: number
   joinError: string | null
   initialPlayMode?: PlayMode
   onPlay: () => void
@@ -225,11 +223,8 @@ export function MenuOverlay({
                 {isOneOf(focused, ['accuracy', 'speed']) && (
                   <HighScores
                     gameMode={gameMode}
-                    difficulty={difficulty}
                     userId={userId}
                     nickname={nickname}
-                    optimisticScore={bestScore}
-                    optimisticHits={bestHits}
                     onAddNickname={onAddNickname}
                   />
                 )}

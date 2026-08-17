@@ -2,8 +2,9 @@ import { isNonEmptyArray } from 'narrowland'
 import { useCallback, useEffect } from 'react'
 import { AppState } from 'react-native'
 
+import { useLocalScores } from '@/hooks/use-local-scores'
 import { useOnline } from '@/hooks/use-online'
-import { usePendingScores } from '@/hooks/use-pending-scores'
+import { pendingOf } from '@/lib/local-scores'
 import { flushPendingScores, submitScore } from '@/lib/score-submission'
 import type { Difficulty, Mode } from '@/machines/game'
 
@@ -18,7 +19,7 @@ export function useScoreSubmission(
   isReady: boolean,
 ) {
   const online = useOnline()
-  const hasPending = isNonEmptyArray(usePendingScores(true))
+  const hasPending = isNonEmptyArray(pendingOf(useLocalScores()))
 
   // Publishing is possible the moment there is a nickname, and the queue is drained
   // then and there — that first flush is what moves a player's local records onto the

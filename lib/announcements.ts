@@ -208,6 +208,25 @@ export function crossedRecords(score: number, targets: RecordTargets): Announcem
   return OWN_TIERS.filter((tier) => ACHIEVED[tier](score, targets))
 }
 
+// The bar a run has to clear for one period: whichever is higher, the record the board
+// shows or the player's own best there.
+//
+// Their own best has to count. The board lists nobody without a nickname and lags every
+// write by a round trip, so a player can hold a score the board has never heard of — and
+// asking only the board is what let a second run be told it had just taken a day its own
+// first run already held. Zero on both sides means nothing is known, which is not a bar
+// that can be cleared.
+export const barFor = (record: number | null, myBest: number): number | null => {
+  const bar = Math.max(record ?? 0, myBest)
+  return bar > 0 ? bar : null
+}
+
+// Whether a period is there to be opened. An empty board is not enough: a score of the
+// player's own, published or not, is already on it as far as they are concerned, and
+// being told twice that you opened the same board is the tell that nobody checked.
+export const isOpenable = (empty: boolean, myBest: number): boolean =>
+  empty && myBest <= 0
+
 // The milestones that belong to a board rather than to the player alone. Opening one
 // counts: the score has to reach the board for anyone else to see that it happened.
 const BOARD_IDS = [...PERIODS, 'weekFirst', 'todayFirst'] as const
@@ -222,8 +241,6 @@ export const hasBoardRecord = (crossed: readonly AnnouncementId[]): boolean =>
 
 export type Leader = { score: number; userId: string; nickname: string | null }
 export type Leaders = Record<Period, Leader | null>
-
-export const NO_LEADERS: Leaders = { today: null, week: null, ever: null }
 
 // What another player just did to the boards, or null if nothing worth announcing.
 //

@@ -3,8 +3,10 @@ import { describe, expect, it } from 'vitest'
 import {
   ANNOUNCEMENT_IDS,
   announcementFor,
+  barFor,
   crossedRecords,
   hasBoardRecord,
+  isOpenable,
   MAX_MESSAGE_LENGTH,
   messageFor,
   messagePool,
@@ -260,5 +262,44 @@ describe('announcementFor', () => {
 
   it('falls back to SOMEONE when no name is supplied', () => {
     expect(messageFor('todayRaised', 0)).toContain('SOMEONE')
+  })
+})
+
+describe('barFor', () => {
+  it('is the board record when nobody has anything of their own there', () => {
+    expect(barFor(700, 0)).toBe(700)
+  })
+
+  it('is the player’s own best when the board has not heard of it', () => {
+    // No nickname, so the board lists nobody — but the run still happened.
+    expect(barFor(null, 91)).toBe(91)
+  })
+
+  it('takes the player’s own best over a lower board record', () => {
+    expect(barFor(500, 727)).toBe(727)
+  })
+
+  it('takes the board record over a lower best of the player’s own', () => {
+    expect(barFor(727, 500)).toBe(727)
+  })
+
+  it('is unknown when neither side knows anything', () => {
+    expect(barFor(null, 0)).toBeNull()
+  })
+})
+
+describe('isOpenable', () => {
+  it('is open when the board is empty and the player has nothing there', () => {
+    expect(isOpenable(true, 0)).toBe(true)
+  })
+
+  it('is not open once the player has scored there themselves', () => {
+    // The board lists nobody without a nickname, which is what let a second run be
+    // told it had opened a board its own first run already had.
+    expect(isOpenable(true, 91)).toBe(false)
+  })
+
+  it('is not open on a board we could not read', () => {
+    expect(isOpenable(false, 0)).toBe(false)
   })
 })

@@ -8,7 +8,7 @@ import {
 } from '@react-navigation/native'
 import { Stack } from 'expo-router'
 import { StatusBar } from 'expo-status-bar'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { GestureHandlerRootView } from 'react-native-gesture-handler'
 import Animated, { useAnimatedStyle } from 'react-native-reanimated'
 
@@ -17,6 +17,7 @@ import '@/global.css'
 import { PhoneFrame } from '@/components/phone-frame'
 import { SplashScreen } from '@/components/splash-screen'
 import { AppThemeProvider, useTheme } from '@/hooks/use-theme'
+import { purgeRetiredStorage } from '@/lib/retired-storage'
 
 export const unstable_settings = {
   anchor: '(tabs)',
@@ -75,6 +76,13 @@ function ThemedApp() {
 }
 
 export default function RootLayout() {
+  // Once per launch, before anything reads storage for real. Nothing waits on it: the
+  // keys it clears are ones no build reads, so the app is correct whether it has
+  // finished or not.
+  useEffect(() => {
+    void purgeRetiredStorage()
+  }, [])
+
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <AppThemeProvider>

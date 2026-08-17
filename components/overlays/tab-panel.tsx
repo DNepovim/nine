@@ -1,7 +1,7 @@
 import { isEmptyArray } from 'narrowland'
 import { Text, View } from 'react-native'
 
-import type { LeaderboardState } from '@/hooks/use-leaderboard'
+import type { PeriodBoard } from '@/hooks/use-board'
 import { displayRows } from '@/lib/leaderboard-rows'
 
 import { ScoreRow } from './score-row'
@@ -22,17 +22,14 @@ export function TabPanel({
   nickname,
   width,
   digitFont,
-  unpublishedScore,
 }: {
-  data: LeaderboardState
+  data: PeriodBoard
   accentColor: string
   userId: string | null
   nickname: string | null
   width: number
   // Resolved once by the parent — 'DSEG7', or `mono` while the face is still loading.
   digitFont: string
-  // The player's best local score for this period, when it has yet to reach the board.
-  unpublishedScore: number | null
 }) {
   if (data.loading) {
     return (
@@ -44,10 +41,12 @@ export function TabPanel({
     )
   }
 
+  // A local row appears only when the device holds more than the server does for this
+  // period. Once the flush lands, the two agree and the real row takes over on its own.
   const unpublished =
-    unpublishedScore === null
+    data.unpublished === null
       ? null
-      : { score: unpublishedScore, label: nickname ?? ANONYMOUS_LABEL }
+      : { score: data.unpublished, label: nickname ?? ANONYMOUS_LABEL }
   const note = nickname === null ? UNPUBLISHED_NOTE : UNSYNCED_NOTE
 
   // The board could not be read — offline, most likely. A record held on the device is
@@ -64,8 +63,13 @@ export function TabPanel({
     )
   }
 
-  const myRank = data.myRank
-  const userIsInTop5 = myRank !== null && myRank.rank <= rows.length
+  // A rank with no score behind it is `my_rank` counting a player who has never posted
+  // as one past the field, so the row below the cut needs a real score to stand on.
+  const myRank = data.myRank !== null && data.myRank.best_score > 0 ? data.myRank : null
+  // Whether the player is already up there — asked of the rows on screen rather than of
+  // the server rank, because a local record can put them on the board while the server
+  // still ranks them far down, and they must not appear twice.
+  const userIsInTop5 = rows.some((row) => row.isUser)
 
   if (isEmptyArray(rows)) {
     return (
@@ -108,8 +112,9 @@ export function TabPanel({
             entry={{
               rank: myRank.rank,
               nickname,
-              score: myRank.best_score,
+              score: data.myBest,
               isUser: true,
+              note: data.unpublished === null ? undefined : note,
             }}
             accentColor={accentColor}
             digitFont={digitFont}

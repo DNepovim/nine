@@ -11,19 +11,15 @@ import Animated, {
 
 import DSEG7Font from '@/assets/fonts/DSEG7Classic-Bold.ttf'
 import { mono } from '@/constants/theme'
-import { useLeaderboard } from '@/hooks/use-leaderboard'
-import type { LeaderboardState } from '@/hooks/use-leaderboard'
+import { useBoardContext, type PeriodBoard } from '@/hooks/use-board'
 import { useOnline } from '@/hooks/use-online'
-import { usePendingScores } from '@/hooks/use-pending-scores'
 import { useViewport } from '@/hooks/use-viewport'
 import { type LeaderboardTab } from '@/lib/leaderboard'
-import { withMyBest } from '@/lib/leaderboard-optimistic'
-import { todayISO } from '@/lib/leaderboard-period'
-import { bestPendingScore } from '@/lib/pending-scores'
-import { MODE_GRADIENT, type Difficulty, type Mode } from '@/machines/game'
+import { MODE_GRADIENT, type Mode } from '@/machines/game'
 
 import { OfflineNotice } from './offline-notice'
 import { PublishScoresButton } from './publish-scores-button'
+import { TabMedal } from './tab-medal'
 import { TabPanel } from './tab-panel'
 
 const TABS: { key: LeaderboardTab; label: string }[] = [
@@ -32,55 +28,15 @@ const TABS: { key: LeaderboardTab; label: string }[] = [
   { key: 'forever', label: 'EVER' },
 ]
 
-function applyOptimistic(
-  state: LeaderboardState,
-  userId: string | null,
-  nickname: string | null,
-  online: boolean,
-  optimisticScore: number | undefined,
-  optimisticHits: number | undefined,
-): LeaderboardState {
-  // Offline, the run that just ended is in the pending queue and shows as a local row.
-  // Folding it in here as well would put the same score on the board twice.
-  if (
-    !optimisticScore ||
-    !userId ||
-    !nickname ||
-    !online ||
-    state.loading ||
-    state.error !== null
-  ) {
-    return state
-  }
-  const merged = withMyBest(
-    state.rows,
-    state.myRank,
-    userId,
-    nickname,
-    optimisticScore,
-    optimisticHits ?? 0,
-    // The run this folds in has only just ended, so the board has no timestamp for it
-    // yet and the clock here is the closest thing to one.
-    new Date().toISOString(),
-  )
-  return { ...merged, loading: false, error: null }
-}
-
 export function HighScores({
   gameMode,
-  difficulty,
   userId,
   nickname,
-  optimisticScore,
-  optimisticHits,
   onAddNickname,
 }: {
   gameMode: Mode
-  difficulty: Difficulty
   userId: string | null
   nickname: string | null
-  optimisticScore?: number
-  optimisticHits?: number
   // Opens the nickname prompt so the player's local bests can be published. Omitted
   // by the game over screen, which asks for a nickname of its own accord the moment
   // the run ends — a button offering the prompt behind it would be the same question
@@ -109,45 +65,16 @@ export function HighScores({
 
   const online = useOnline()
 
-  const { today, week, forever } = useLeaderboard(gameMode, difficulty, userId)
-  const dataByTab: Record<LeaderboardTab, LeaderboardState> = {
-    today: applyOptimistic(
-      today,
-      userId,
-      nickname,
-      online,
-      optimisticScore,
-      optimisticHits,
-    ),
-    week: applyOptimistic(
-      week,
-      userId,
-      nickname,
-      online,
-      optimisticScore,
-      optimisticHits,
-    ),
-    forever: applyOptimistic(
-      forever,
-      userId,
-      nickname,
-      online,
-      optimisticScore,
-      optimisticHits,
-    ),
+  // The one board store, shared with the intro, the pause screen and the strip above
+  // the dial. Each period already carries what the device holds beyond what the server
+  // does, so there is nothing to fold in here and no way for two screens to disagree.
+  const board = useBoardContext()
+  const dataByTab: Record<LeaderboardTab, PeriodBoard> = {
+    today: board.today,
+    week: board.week,
+    forever: board.forever,
   }
-
-  // Local records, shown with a mark in the two cases where the server cannot show
-  // them: there is no nickname to publish under, or there is no connection to publish
-  // over. Any other time the flush has already landed them and the real rows take over.
-  const pending = usePendingScores(nickname === null || !online)
-  const day = todayISO()
-  const unpublishedByTab: Record<LeaderboardTab, number | null> = {
-    today: bestPendingScore(pending, gameMode, difficulty, 'today', day),
-    week: bestPendingScore(pending, gameMode, difficulty, 'week', day),
-    forever: bestPendingScore(pending, gameMode, difficulty, 'forever', day),
-  }
-  const hasUnpublished = unpublishedByTab.forever !== null
+  const hasUnpublished = board.forever.unpublished !== null
 
   const underlineStyle = useAnimatedStyle(() => ({
     transform: [{ translateX: underlineLeft.value }],
@@ -236,6 +163,10 @@ export function HighScores({
               >
                 {label}
               </Text>
+              {/* Says the player holds a place on this period without their having to
+                  open it — the tabs rotate, so a medal on a tab they are not looking at
+                  would otherwise go unseen. */}
+              <TabMedal myRank={dataByTab[key].myRank} />
             </Pressable>
           ))}
         </View>
@@ -313,7 +244,6 @@ export function HighScores({
               nickname={nickname}
               width={effectiveWidth}
               digitFont={digitFont}
-              unpublishedScore={unpublishedByTab[key]}
             />
           ))}
         </ScrollView>
