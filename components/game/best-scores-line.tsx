@@ -11,8 +11,9 @@ import Animated, {
 import DSEG7Font from '@/assets/fonts/DSEG7Classic-Bold.ttf'
 import { AnnouncementBar } from '@/components/game/announcement-bar'
 import { BestScoreCell } from '@/components/game/best-score-cell'
-import { SPECTRUM } from '@/constants/colors'
+import { GOLD_INK, SPECTRUM } from '@/constants/colors'
 import { mono } from '@/constants/theme'
+import { useTheme } from '@/hooks/use-theme'
 import { announcementStyle } from '@/lib/announcement-style'
 import type { Announcement } from '@/lib/announcements'
 import type { Mode } from '@/machines/modes'
@@ -20,7 +21,7 @@ import type { Mode } from '@/machines/modes'
 type BestKey = 'you' | 'today' | 'week' | 'ever'
 
 // A score that survived the "is there anything to show?" filter.
-type ShownBest = { key: BestKey; value: number }
+type ShownBest = { key: BestKey; value: number; mine: boolean }
 
 const BEST_LABELS = {
   you: 'YOU',
@@ -78,6 +79,9 @@ export function BestScoresLine({
   today,
   week,
   ever,
+  todayIsMine,
+  weekIsMine,
+  everIsMine,
 }: {
   // True for the whole of a run, pauses included, so resuming does not restart the
   // countdown — the same notion of "in a run" the menu button uses.
@@ -93,7 +97,13 @@ export function BestScoresLine({
   today: number | null
   week: number | null
   ever: number | null
+  // Whether each board's record is the player's own. The YOU cell needs no such flag —
+  // it is labelled with whose it is.
+  todayIsMine: boolean
+  weekIsMine: boolean
+  everIsMine: boolean
 }) {
+  const { colorScheme } = useTheme()
   const [dsegLoaded] = useFonts({ DSEG7: DSEG7Font })
   const [delayDone, setDelayDone] = useState(false)
   const [waitedOut, setWaitedOut] = useState(false)
@@ -168,11 +178,19 @@ export function BestScoresLine({
     ever,
   } as const satisfies Record<BestKey, number | null>
 
+  const heldByMe = {
+    you: false,
+    today: todayIsMine,
+    week: weekIsMine,
+    ever: everIsMine,
+  } as const satisfies Record<BestKey, boolean>
+
   const digitFont = dsegLoaded ? 'DSEG7' : mono
+  const mineColor = GOLD_INK[colorScheme === 'dark' ? 'dark' : 'light']
   // Every category always shows a number: an untouched board, or one we could not
   // reach, reads as 0 rather than vanishing and leaving a ragged row.
   const shown: ShownBest[] = revealed
-    ? BEST_ORDER.map((key) => ({ key, value: values[key] ?? 0 }))
+    ? BEST_ORDER.map((key) => ({ key, value: values[key] ?? 0, mine: heldByMe[key] }))
     : []
 
   return (
@@ -185,13 +203,15 @@ export function BestScoresLine({
           ]}
           className="flex-row items-baseline justify-between"
         >
-          {shown.map(({ key, value }) => (
+          {shown.map(({ key, value, mine }) => (
             <BestScoreCell
               key={key}
               label={BEST_LABELS[key]}
               value={value}
               color={BEST_COLORS[key]}
               digitFont={digitFont}
+              mine={mine}
+              mineColor={mineColor}
             />
           ))}
         </Animated.View>

@@ -40,6 +40,9 @@ export type PeriodBoard = {
   // The score at the top, or null when the board is empty or could not be read. An
   // unknown record cannot be beaten, which is why the two share a value.
   record: number | null
+  // Whether that record is the player's own. False on a board with no record at all,
+  // so nothing has to check for both.
+  recordIsMine: boolean
   // Known to hold no score at all — the request came back and brought nothing. False
   // whenever we could not find out, so a board we failed to read is never mistaken for
   // an empty one.
@@ -80,6 +83,7 @@ const ALL_LOADING: FetchedByTab = { today: LOADING, week: LOADING, forever: LOAD
 const NO_PERIOD: PeriodBoard = {
   ...EMPTY,
   record: null,
+  recordIsMine: false,
   empty: false,
   myBest: 0,
   unpublished: null,
@@ -139,9 +143,11 @@ function toPeriod(
   const myRow = rowFor(fetched.rows, userId)
   const serverBest = Math.max(fetched.myRank?.best_score ?? 0, myRow?.best_score ?? 0)
   const unpublished = waiting !== null && waiting > serverBest ? waiting : null
+  const top = fetched.rows[0]
   return {
     ...fetched,
-    record: fetched.rows[0]?.best_score ?? null,
+    record: top?.best_score ?? null,
+    recordIsMine: top !== undefined && userId !== null && top.user_id === userId,
     empty: fetched.error === null && !fetched.loading && fetched.rows.length === 0,
     myBest: Math.max(serverBest, local ?? 0),
     unpublished,

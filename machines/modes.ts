@@ -16,9 +16,18 @@ export type ModeConfig = {
   weights: { acc: number; spd: number }
   lives: number // Number.POSITIVE_INFINITY = no life loss (trainee)
   streak: StreakTrigger
-  // Whether the target clock tightens as the run goes on. See rampedTimeout.
-  ramps: boolean
+  // What tightens as the run goes on. See rampedTimeout and effectiveSpawnInterval.
+  ramps: RampTarget
 }
+
+// Where a mode's difficulty ramp lands. `clock` shortens the ring each target gets,
+// `spawn` shortens the gap between arrivals, `none` holds the run at one pace.
+//
+// One or the other, never both. Speed squeezes the clock, and its spawn gap follows the
+// clock so the board stays about as full. Accuracy's clock has to stay where it is —
+// deliberation is the thing it asks for, and hurrying it would undo that — so its run
+// tightens by targets arriving closer together instead.
+type RampTarget = 'clock' | 'spawn' | 'none'
 
 export const MODES: Record<Mode, ModeConfig> = {
   trainee: {
@@ -27,7 +36,7 @@ export const MODES: Record<Mode, ModeConfig> = {
     weights: { acc: 2 / 3, spd: 1 / 3 },
     lives: Number.POSITIVE_INFINITY,
     streak: 'none',
-    ramps: false,
+    ramps: 'none',
   },
   accuracy: {
     label: 'ACCURACY',
@@ -35,7 +44,7 @@ export const MODES: Record<Mode, ModeConfig> = {
     weights: { acc: 0.85, spd: 0.15 },
     lives: 3,
     streak: 'optimal',
-    ramps: false,
+    ramps: 'spawn',
   },
   speed: {
     label: 'SPEED',
@@ -45,7 +54,7 @@ export const MODES: Record<Mode, ModeConfig> = {
     weights: { acc: 0.15, spd: 0.85 },
     lives: 3,
     streak: 'fast',
-    ramps: true,
+    ramps: 'clock',
   },
 }
 
@@ -147,31 +156,42 @@ export const effectiveTimeout = (mode: Mode, difficulty: Difficulty): number => 
 const RAMP_HALF_LIFE_HITS = 20
 const RAMP_FLOOR_RATIO = 0.65
 
-// The clock a target gets, given how many hits the run has landed so far.
+// The ramp itself, shared by both things that tighten.
 //
 // Exponential decay towards a floor: each RAMP_HALF_LIFE_HITS hits removes half of
 // whatever slack is left. That makes the contraction decelerate — the first twenty
-// hits cost far more time than the next twenty, and the curve never reaches the floor
-// at all, so the run tightens without ever becoming impossible.
-//
-// Only Speed ramps. Accuracy is about deliberation, and squeezing its clock as the run
-// went on would undermine the thing it asks of the player.
-export function rampedTimeout(mode: Mode, difficulty: Difficulty, hits: number): number {
-  const base = effectiveTimeout(mode, difficulty)
-  if (!MODES[mode].ramps) return base
+// hits cost far more than the next twenty, and the curve never reaches the floor at
+// all, so a run tightens without ever becoming impossible.
+const decayed = (base: number, hits: number): number => {
   const floor = base * RAMP_FLOOR_RATIO
   const remaining = 0.5 ** (Math.max(0, hits) / RAMP_HALF_LIFE_HITS)
-  return Math.round(floor + (base - floor) * remaining)
+  return floor + (base - floor) * remaining
 }
 
-// Targets spawn every 1/3 of the timeout a target would get right now, so the gap
-// between arrivals tightens with the clock and the board keeps roughly the same
-// number of targets on it all run long.
+// The clock a target gets, given how many hits the run has landed so far. Only a mode
+// ramping its `clock` moves; the rest hand back the flat timeout.
+export function rampedTimeout(mode: Mode, difficulty: Difficulty, hits: number): number {
+  const base = effectiveTimeout(mode, difficulty)
+  return MODES[mode].ramps === 'clock' ? Math.round(decayed(base, hits)) : base
+}
+
+// Targets spawn every 1/3 of the clock a target would get right now.
+//
+// Under a `clock` ramp that is all it takes: the gap follows the ring down, so the
+// board keeps roughly the same number of targets on it all run long.
+//
+// Under a `spawn` ramp the clock never moves, so the same decay is applied here
+// instead — every target still gets the full ring it always got, but they arrive closer
+// and closer together and the board fills up. Same curve and same floor as Speed's;
+// only what it squeezes is different.
 export const effectiveSpawnInterval = (
   mode: Mode,
   difficulty: Difficulty,
   hits: number,
-): number => Math.round(rampedTimeout(mode, difficulty, hits) / 3)
+): number => {
+  const base = rampedTimeout(mode, difficulty, hits) / 3
+  return Math.round(MODES[mode].ramps === 'spawn' ? decayed(base, hits) : base)
+}
 
 // ×2 → ×4 → ×8 (capped). streakCount = consecutive triggers; 0 ⇒ ×1.
 export const streakMultiplier = (streakCount: number): number =>

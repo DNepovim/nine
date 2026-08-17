@@ -474,6 +474,9 @@ export default function GameScreen() {
             announcement={announcement}
             yourBest={stats[mode][difficulty].score}
             loaded={board.loaded}
+            todayIsMine={board.today.recordIsMine}
+            weekIsMine={board.week.recordIsMine}
+            everIsMine={board.forever.recordIsMine}
             today={bestToday}
             week={bestWeek}
             ever={bestEver}

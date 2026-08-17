@@ -393,7 +393,7 @@ export function HowToPlayOverlay({ onClose }: { onClose: () => void }) {
           <SectionHeader section="targets" onMeasure={measure} />
           <Body>
             {
-              'Each target carries a shrinking ring — its countdown. Land the sum before the ring empties. The colour behind the ring tells you the target’s hundreds at a glance: plain grey under 100, violet in the 100s, rose in the 200s, amber in the 300s — so 223 never passes for 123. Several targets can share the board at once (up to 3, or 4 on Extreme), and new ones keep arriving, so pick your order wisely. In Speed, each new target arrives with a slightly shorter ring than the last — the squeeze eases off as it goes, so a long run gets tighter without ever running away from you.'
+              'Each target carries a shrinking ring — its countdown. Land the sum before the ring empties. The colour behind the ring tells you the target’s hundreds at a glance: plain grey under 100, violet in the 100s, rose in the 200s, amber in the 300s — so 223 never passes for 123. Several targets can share the board at once (up to 3, or 4 on Extreme), and new ones keep arriving, so pick your order wisely. Both scored modes tighten as you go, in opposite ways. In Speed each new target arrives with a slightly shorter ring than the last. In Accuracy the ring never shrinks — you always get the full time to think — but targets start arriving closer together, so the board fills up around you. Either squeeze eases off as it goes, so a long run gets harder without ever running away from you.'
             }
           </Body>
 
@@ -438,6 +438,7 @@ export function HowToPlayOverlay({ onClose }: { onClose: () => void }) {
               'Waste too many moves on a hit (under 20% accuracy) and you lose a life.',
               'Let a target’s ring run out and you lose one too — precision still has a clock.',
               'Matching every target in its optimal move count builds your streak.',
+              'Targets arrive faster the longer you last, but each still gets its full ring.',
             ]}
           />
           <ModeCard

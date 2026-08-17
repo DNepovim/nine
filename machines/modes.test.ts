@@ -78,7 +78,9 @@ describe('rampedTimeout', () => {
     }
   })
 
-  it('leaves the non-ramping modes flat', () => {
+  it('leaves the clock alone in every mode that does not ramp it', () => {
+    // Accuracy ramps too, but its spawn gap rather than its clock — deliberation is
+    // what it asks for, so the ring a target gets must not shrink.
     for (const mode of ['trainee', 'accuracy'] as const) {
       const flat = effectiveTimeout(mode, 'hard')
       expect(rampedTimeout(mode, 'hard', 0)).toBe(flat)
@@ -109,10 +111,44 @@ describe('effectiveSpawnInterval', () => {
     expect(rampedTimeout('speed', 'hard', 60) / later).toBeCloseTo(3, 1)
   })
 
-  it('stays flat in the non-ramping modes', () => {
-    expect(effectiveSpawnInterval('accuracy', 'hard', 0)).toBe(
-      effectiveSpawnInterval('accuracy', 'hard', 200),
+  it('stays flat in Trainee, which ramps nothing', () => {
+    expect(effectiveSpawnInterval('trainee', 'hard', 0)).toBe(
+      effectiveSpawnInterval('trainee', 'hard', 200),
     )
+  })
+
+  it('tightens in Accuracy while its clock holds still', () => {
+    const clock = effectiveTimeout('accuracy', 'hard')
+    expect(rampedTimeout('accuracy', 'hard', 60)).toBe(clock)
+    expect(effectiveSpawnInterval('accuracy', 'hard', 60)).toBeLessThan(
+      effectiveSpawnInterval('accuracy', 'hard', 0),
+    )
+  })
+
+  it('rides the same curve in Accuracy as the clock does in Speed', () => {
+    const start = effectiveSpawnInterval('accuracy', 'hard', 0)
+    const floor = start * 0.65
+    expect(effectiveSpawnInterval('accuracy', 'hard', 20)).toBe(
+      Math.round(floor + (start - floor) / 2),
+    )
+    expect(effectiveSpawnInterval('accuracy', 'hard', 40)).toBe(
+      Math.round(floor + (start - floor) / 4),
+    )
+  })
+
+  it('never lets Accuracy spawn faster than the floor', () => {
+    const floor = Math.round(effectiveSpawnInterval('accuracy', 'hard', 0) * 0.65)
+    expect(effectiveSpawnInterval('accuracy', 'hard', 5000)).toBe(floor)
+    expect(effectiveSpawnInterval('accuracy', 'hard', 200)).toBeGreaterThanOrEqual(floor)
+  })
+
+  it('lets the Accuracy board fill up, unlike Speed which holds its density', () => {
+    // Same ring, shorter gap, so more targets share the board as the run goes on —
+    // which is where Accuracy's pressure comes from.
+    const density = (hits: number) =>
+      rampedTimeout('accuracy', 'hard', hits) /
+      effectiveSpawnInterval('accuracy', 'hard', hits)
+    expect(density(60)).toBeGreaterThan(density(0))
   })
 })
 

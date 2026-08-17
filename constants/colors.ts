@@ -21,6 +21,16 @@ export const SPECTRUM = ['#4C7EFF', '#7273D2', '#c36282', '#E5534B'] as const
 // Gold marks the three board records. Needs dark ink — white on it is about 1.5:1.
 export const GOLD_SCALE = ['#FFD166', '#FF8C00', '#FFE8A3', '#F4A261'] as const
 
+// Gold as *text*, which GOLD_SCALE cannot be: the scale is a background palette, and
+// #FFD166 on the light surface is about 1.26:1 — invisible. So the mark that says a
+// record is yours carries its own pair.
+//
+// The light stop is as yellow as the parchment surface allows. Yellow is a light hue by
+// nature, so on #F3EFE9 it runs out of contrast long before it runs out of brightness:
+// this goldenrod is about 2.9:1, and anything more vivid stops being a mark and starts
+// being a smudge. Dark has no such problem and takes the vivid one.
+export const GOLD_INK = { light: '#B8860B', dark: '#FFD24A' } as const
+
 // Losing a record you held: the colour drained out. Kept to mid-tones with the app's
 // faint violet cast — a true black-to-white ramp would put half its steps on the wrong
 // side of one surface or the other, where these read on both.
