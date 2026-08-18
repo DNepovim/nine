@@ -1,6 +1,6 @@
 import { useFonts } from 'expo-font'
 import { useCallback, useEffect, useState } from 'react'
-import { View } from 'react-native'
+import { Text, View } from 'react-native'
 import Animated, {
   Easing,
   useAnimatedStyle,
@@ -13,6 +13,7 @@ import { AnnouncementBar } from '@/components/game/announcement-bar'
 import { BestScoreCell } from '@/components/game/best-score-cell'
 import { GOLD_INK, SPECTRUM } from '@/constants/colors'
 import { mono } from '@/constants/theme'
+import { useOnline } from '@/hooks/use-online'
 import { useTheme } from '@/hooks/use-theme'
 import { announcementStyle } from '@/lib/announcement-style'
 import type { Announcement } from '@/lib/announcements'
@@ -66,10 +67,10 @@ const ROW_HEIGHT = 14
 export const BEST_SCORES_HEIGHT = ROW_HEIGHT + 4 + 1 + 6
 
 // A hairline strip above the top bar: the player's best on this board next to the
-// day, week and all-time bests. Your own best always shows, as 0 until you set one.
-// The three server-backed periods show nothing when they have no value, so offline
-// or an untouched board simply leaves those slots bare rather than reading as zero
-// leaderboards.
+// day, week and all-time bests. Your own best always shows, as 0 until you set one —
+// it lives on the device and needs no connection. An untouched board leaves its slot
+// bare rather than reading as a zero leaderboard; offline replaces all three with one
+// small note instead, since none of their numbers can be trusted right now.
 export function BestScoresLine({
   inRun,
   mode,
@@ -104,6 +105,7 @@ export function BestScoresLine({
   everIsMine: boolean
 }) {
   const { colorScheme } = useTheme()
+  const online = useOnline()
   const [dsegLoaded] = useFonts({ DSEG7: DSEG7Font })
   const [delayDone, setDelayDone] = useState(false)
   const [waitedOut, setWaitedOut] = useState(false)
@@ -187,10 +189,13 @@ export function BestScoresLine({
 
   const digitFont = dsegLoaded ? 'DSEG7' : mono
   const mineColor = GOLD_INK[colorScheme === 'dark' ? 'dark' : 'light']
-  // Every category always shows a number: an untouched board, or one we could not
-  // reach, reads as 0 rather than vanishing and leaving a ragged row.
+  // An untouched board reads as 0 rather than vanishing and leaving a ragged row.
+  // Offline, the three server-backed keys are dropped instead — see the note that
+  // fills their place below — since a 0 there would misreport an empty board rather
+  // than one that simply cannot be reached.
+  const shownKeys = online ? BEST_ORDER : (['you'] as const satisfies readonly BestKey[])
   const shown: ShownBest[] = revealed
-    ? BEST_ORDER.map((key) => ({ key, value: values[key] ?? 0, mine: heldByMe[key] }))
+    ? shownKeys.map((key) => ({ key, value: values[key] ?? 0, mine: heldByMe[key] }))
     : []
 
   return (
@@ -214,6 +219,14 @@ export function BestScoresLine({
               mineColor={mineColor}
             />
           ))}
+          {revealed && !online && (
+            <Text
+              selectable={false}
+              className="font-mono text-[8px] font-bold tracking-[1px] text-dim"
+            >
+              — OFFLINE —
+            </Text>
+          )}
         </Animated.View>
         {/* Covers the scores, and deliberately ignores the reveal gate — a record
             broken before the scores appear still deserves to be announced. */}

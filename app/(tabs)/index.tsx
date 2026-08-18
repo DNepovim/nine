@@ -20,6 +20,7 @@ import { AnnouncementEffect } from '@/components/game/announcement-effect'
 import { BEST_SCORES_HEIGHT, BestScoresLine } from '@/components/game/best-scores-line'
 import { Confetti } from '@/components/game/confetti'
 import { DialButton } from '@/components/game/dial-button'
+import { FloatingLifeLoss } from '@/components/game/floating-life-loss'
 import { FloatingPoints } from '@/components/game/floating-points'
 import { FloatingStat } from '@/components/game/floating-stat'
 import { MenuButton } from '@/components/game/menu-button'
@@ -58,6 +59,7 @@ import { useHitCelebration } from '@/hooks/use-hit-celebration'
 import { useInstallPrompt } from '@/hooks/use-install-prompt'
 import { useMultiplayerGame } from '@/hooks/use-multiplayer-game'
 import { useMultiplayerRoom } from '@/hooks/use-multiplayer-room'
+import { useOnline } from '@/hooks/use-online'
 import { usePersistedDifficulty } from '@/hooks/use-persisted-difficulty'
 import { usePersistedMode } from '@/hooks/use-persisted-mode'
 import { usePersistedStats } from '@/hooks/use-persisted-stats'
@@ -75,7 +77,7 @@ import type { AnalyticsEvents } from '@/lib/analytics-events'
 import { barFor, isOpenable, type Leaders, type Period } from '@/lib/announcements'
 import { recordScreen, type RecordScreen } from '@/lib/champions'
 import { leaderOf } from '@/lib/leaderboard'
-import { earnedChallenge, nextChallenge } from '@/lib/next-challenge'
+import { runChallenge } from '@/lib/next-challenge'
 import { heldPeriods, medalPeriods } from '@/lib/record-medals'
 import { STEP_UP_BOARD } from '@/lib/step-up'
 import { valueProgress } from '@/lib/value-progress'
@@ -126,6 +128,11 @@ const TRAINEE_CONFETTI = [MODE_GRADIENT.trainee[0]] as const
 // a crash. Anything they start inside the window cancels it.
 const UPDATE_SETTLE_MS = 2500
 
+// How long the feedback bookmark waits after the game-over cinematic lands before
+// sliding its label into view. The player's eyes are still on the title the instant
+// the sequence hits `done` — a beat lets that settle before something else moves.
+const BOOKMARK_REVEAL_DELAY_MS = 500
+
 // The menu-level overlays, one open at a time. 'none' means the screen under them —
 // the intro or the pause screen — is what shows. Feedback is not here: it is a
 // dialog over whatever is showing, not a screen of its own.
@@ -150,6 +157,32 @@ const MENU_TOP = {
   accuracy: 36,
   speed: 36,
 } as const satisfies Record<Mode, number>
+
+// A record measured against a board that cannot be trusted — offline, reading
+// whatever it last managed to load — is not a record worth telling the player
+// about, so nothing freezes until both the board and the connection are good.
+function announcementsReady(boardLoaded: boolean, online: boolean): boolean {
+  return boardLoaded && online
+}
+
+// Every screen but a live run gets the bookmark — except game over, which holds it
+// back until the death cinematic has actually landed (see gameOverBookmarkReady).
+function showFeedbackBookmark({
+  isPlaying,
+  showMultiGame,
+  feedbackOpen,
+  isGameOver,
+  gameOverBookmarkReady,
+}: {
+  isPlaying: boolean
+  showMultiGame: boolean
+  feedbackOpen: boolean
+  isGameOver: boolean
+  gameOverBookmarkReady: boolean
+}): boolean {
+  if (isPlaying || showMultiGame || feedbackOpen) return false
+  return !isGameOver || gameOverBookmarkReady
+}
 
 function HeartIcon({ filled, emptyColor }: { filled: boolean; emptyColor: string }) {
   const scale = useSharedValue(1)
@@ -208,6 +241,7 @@ export default function GameScreen() {
     accSum,
     spdSum,
     hits,
+    elapsedMs,
   } = state.context
   const isPlaying = state.matches('playing')
   const isMenu = state.matches('menu')
@@ -225,6 +259,20 @@ export default function GameScreen() {
   // The feedback dialog floats over whatever is showing rather than replacing it, so
   // it is its own boolean instead of a member of the overlay union above.
   const [feedbackOpen, setFeedbackOpen] = useState(false)
+  // Whether the feedback bookmark is showing its label. Lives up here, not inside
+  // the bookmark, because the bookmark unmounts while the dialog it opens is on
+  // screen — an internal flag would forget a swipe-to-collapse the moment the
+  // player closed that dialog. Paused brings it back on its own; game over does
+  // the same once its cinematic lands, further down. Menu is the reset: whichever
+  // screen sent the player back there, the bookmark should wait behind the edge
+  // again next time it matters.
+  const [bookmarkRevealed, setBookmarkRevealed] = useState(false)
+  useEffect(() => {
+    if (isPaused) setBookmarkRevealed(true)
+  }, [isPaused])
+  useEffect(() => {
+    if (isMenu) setBookmarkRevealed(false)
+  }, [isMenu])
   // One event per overlay actually opened. 'none' is a closing, not an opening.
   useEffect(() => {
     if (menuOverlay === 'none') return
@@ -317,12 +365,15 @@ export default function GameScreen() {
     muted: celebration.message !== null,
   })
 
+  const online = useOnline()
+
   const { announcement, crossed } = useAnnouncements({
     inRun,
-    // Nothing is frozen until the board has answered. A run that started first gets its
-    // targets the moment they land, and the score already reached is measured against
-    // them — which is what a run begun on a cold start used to lose entirely.
-    ready: board.loaded,
+    // Nothing is frozen until the board has answered and the connection is good —
+    // see announcementsReady. A run that started first gets its targets the moment
+    // they land, and the score already reached is measured against them — which is
+    // what a run begun on a cold start used to lose entirely.
+    ready: announcementsReady(board.loaded, online),
     score: state.context.score,
     // Trainee's entry stays at zero — the machine neither records nor hydrates a
     // best for it — so this needs no special case to stay quiet there.
@@ -397,14 +448,20 @@ export default function GameScreen() {
         personal_best: crossed.includes('record'),
       })
       // Mirrors the game-over screen's own decision — see game-over-overlay.tsx, which
-      // computes the same dare from the same run. Offered here, accepted in onChallenge.
-      if (earnedChallenge(state.context.hits, state.context.strikes)) {
-        const dare = nextChallenge(mode, difficulty)
+      // computes the same offer from the same run, up or down. Offered here, accepted
+      // in onChallenge.
+      const offer = runChallenge(
+        mode,
+        difficulty,
+        state.context.hits,
+        state.context.strikes,
+      )
+      if (offer !== null) {
         track('challenge_offered', {
           mode,
           difficulty,
-          to_mode: dare.mode,
-          to: dare.difficulty,
+          to_mode: offer.mode,
+          to: offer.difficulty,
         })
       }
     }
@@ -505,6 +562,25 @@ export default function GameScreen() {
     targetsAreaRef,
     setOverlayTitleY,
   } = useDyingSequence({ isGameOver, lives })
+
+  // The bookmark stays off the game-over screen entirely until the cinematic has
+  // actually landed — not just hidden-then-revealed, mounted the instant it's
+  // allowed to and already showing its label, so there is no icon sitting there
+  // mid-flight and no separate step where the label slides out after it.
+  const [gameOverBookmarkReady, setGameOverBookmarkReady] = useState(false)
+  useEffect(() => {
+    if (dyingPhase !== 'done') {
+      setGameOverBookmarkReady(false)
+      return
+    }
+    const timer = setTimeout(() => {
+      setGameOverBookmarkReady(true)
+      setBookmarkRevealed(true)
+    }, BOOKMARK_REVEAL_DELAY_MS)
+    return () => {
+      clearTimeout(timer)
+    }
+  }, [dyingPhase])
 
   // ── Multiplayer ────────────────────────────────────────────────────────────
 
@@ -640,7 +716,7 @@ export default function GameScreen() {
             onPress={() => {
               // Frozen rather than ended: backing out of the screen this opens leaves
               // the practice run exactly where it stood.
-              send({ type: 'PAUSE' })
+              send({ type: 'PAUSE', now: Date.now() })
               stepUp.dismiss()
               setStepUpOpen(true)
             }}
@@ -708,6 +784,7 @@ export default function GameScreen() {
                 batch={hitBatch}
                 praise={celebration.message ?? coach.line}
                 route={coach.route}
+                routeStart={coach.routeStart}
                 routeTarget={coach.routeTarget}
               />
             )}
@@ -715,13 +792,27 @@ export default function GameScreen() {
             {/* Row 2 — hearts · center stat · score cluster */}
             <View className="mt-1.5 flex-row items-center">
               {/* Hearts — Trainee has no lives, so show none. */}
-              <View className="flex-1 flex-row gap-1">
+              <View className="relative flex-1 flex-row gap-1">
                 {mode !== 'trainee' &&
                   [0, 1, 2].map((i) => (
                     <HeartIcon
                       key={i}
                       filled={MODES[mode].lives === Number.POSITIVE_INFINITY || i < lives}
                       emptyColor={isDark ? '#1C1D30' : '#FDFCFA'}
+                    />
+                  ))}
+                {/* Says why, the moment a hit rather than an expiry is what took the
+                    heart — Accuracy's under-20%-accuracy rule is invisible otherwise.
+                    Shares the points floats' lifecycle: same `floats` list, same
+                    removal, just a second element for the rare entry that costLife. */}
+                {floats
+                  .filter((f) => f.costLife)
+                  .map((f) => (
+                    <FloatingLifeLoss
+                      key={f.id}
+                      onDone={() => {
+                        removeFloat(f.id)
+                      }}
                     />
                   ))}
               </View>
@@ -815,7 +906,7 @@ export default function GameScreen() {
                 dying={isGameOver}
                 frozen={isPaused}
                 onExpire={() => {
-                  send({ type: 'TARGET_EXPIRED', id: target.id })
+                  send({ type: 'TARGET_EXPIRED', id: target.id, now: Date.now() })
                 }}
                 onExitComplete={() => {
                   removeDisplayed(target.id)
@@ -906,6 +997,7 @@ export default function GameScreen() {
           nickname={nickname}
           score={state.context.score}
           hits={state.context.hits}
+          gameTimeMs={state.context.elapsedMs}
           strikes={state.context.strikes}
           medals={runMedals}
           screen={runScreen}
@@ -914,7 +1006,7 @@ export default function GameScreen() {
           avgAccuracy={avgAccuracy}
           avgSpeed={avgSpeed}
           onPlayAgain={() => {
-            send({ type: 'RESTART' })
+            send({ type: 'RESTART', now: Date.now() })
             track('run_started', { mode, difficulty, from: 'play_again' })
           }}
           onChallenge={(nextMode, nextDifficulty) => {
@@ -922,7 +1014,7 @@ export default function GameScreen() {
             // the player just accepted — and the persistence hooks remember it.
             send({ type: 'SET_MODE', mode: nextMode })
             send({ type: 'SET_DIFFICULTY', difficulty: nextDifficulty })
-            send({ type: 'RESTART' })
+            send({ type: 'RESTART', now: Date.now() })
             track('challenge_accepted', {
               mode,
               difficulty,
@@ -955,7 +1047,7 @@ export default function GameScreen() {
               send({ type: 'MENU' })
               send({ type: 'SET_MODE', mode: STEP_UP_BOARD.mode })
               send({ type: 'SET_DIFFICULTY', difficulty: STEP_UP_BOARD.difficulty })
-              send({ type: 'START' })
+              send({ type: 'START', now: Date.now() })
               setStepUpOpen(false)
               track('challenge_accepted', {
                 mode,
@@ -985,10 +1077,11 @@ export default function GameScreen() {
             nickname={nickname}
             score={state.context.score}
             hits={state.context.hits}
+            gameTimeMs={elapsedMs}
             avgAccuracy={avgAccuracy}
             avgSpeed={avgSpeed}
             onContinue={() => {
-              send({ type: 'RESUME' })
+              send({ type: 'RESUME', now: Date.now() })
             }}
             onNewGame={() => {
               endRunEarly()
@@ -1067,9 +1160,10 @@ export default function GameScreen() {
             bestScore={stats[mode][difficulty].score}
             joinError={multiRoom.error}
             initialPlayMode={menuInitialTab}
+            onPlayModeChange={setMenuInitialTab}
             onPlay={() => {
               setMenuInitialTab('alone')
-              send({ type: 'START' })
+              send({ type: 'START', now: Date.now() })
               track('run_started', { mode, difficulty, from: 'menu' })
             }}
             onSetMode={(next) => {
@@ -1094,9 +1188,22 @@ export default function GameScreen() {
 
         {/* ── Feedback bookmark and its dialog — every screen except a live run ── */}
         {/* Mounted after the overlays so they draw over whichever one is up; a live
-            dial is the one place a tab a thumb could graze has no business being. */}
-        {!isPlaying && !showMultiGame && !feedbackOpen && (
+            dial is the one place a tab a thumb could graze has no business being.
+            On game over it waits for gameOverBookmarkReady — see the dying-sequence
+            effect above — rather than showing the instant isGameOver flips. */}
+        {showFeedbackBookmark({
+          isPlaying,
+          showMultiGame,
+          feedbackOpen,
+          isGameOver,
+          gameOverBookmarkReady,
+        }) && (
           <FeedbackBookmark
+            mode={mode}
+            revealed={bookmarkRevealed}
+            onCollapse={() => {
+              setBookmarkRevealed(false)
+            }}
             onPress={() => {
               setFeedbackOpen(true)
               track('screen_opened', { screen: 'feedback' })
@@ -1141,7 +1248,7 @@ export default function GameScreen() {
           visible={isPlaying || isPaused}
           paused={isPaused}
           onToggle={() => {
-            send({ type: isPaused ? 'RESUME' : 'PAUSE' })
+            send({ type: isPaused ? 'RESUME' : 'PAUSE', now: Date.now() })
           }}
           color={isDark ? '#2A2B44' : '#D4D0C8'}
           style={{

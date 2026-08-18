@@ -1,6 +1,12 @@
 import { describe, expect, it } from 'vitest'
 
-import { earnedChallenge, nextChallenge } from './next-challenge'
+import {
+  earnedChallenge,
+  easierChallenge,
+  nextChallenge,
+  runChallenge,
+  struggledRun,
+} from './next-challenge'
 
 describe('earnedChallenge', () => {
   it('offers the next rung when a tenth of the hits landed on a streak', () => {
@@ -67,5 +73,78 @@ describe('nextChallenge', () => {
       difficulty: 'extreme',
       label: 'TRY ACCURACY',
     })
+  })
+})
+
+describe('struggledRun', () => {
+  it('offers it after a hitless run', () => {
+    expect(struggledRun(0)).toBe(true)
+  })
+
+  it('offers it under the struggle bar', () => {
+    expect(struggledRun(2)).toBe(true)
+  })
+
+  it('holds it back once hits clear the bar', () => {
+    expect(struggledRun(3)).toBe(false)
+    expect(struggledRun(20)).toBe(false)
+  })
+})
+
+describe('easierChallenge', () => {
+  it('drops to the previous difficulty in the same mode', () => {
+    expect(easierChallenge('speed', 'extreme')).toEqual({
+      mode: 'speed',
+      difficulty: 'hard',
+      label: 'STEP DOWN TO HARD',
+    })
+  })
+
+  it('drops from hard to easy', () => {
+    expect(easierChallenge('accuracy', 'hard')).toEqual({
+      mode: 'accuracy',
+      difficulty: 'easy',
+      label: 'STEP DOWN TO EASY',
+    })
+  })
+
+  it('offers Trainee once already on Easy, where there is no easier difficulty', () => {
+    expect(easierChallenge('accuracy', 'easy')).toEqual({
+      mode: 'trainee',
+      difficulty: 'easy',
+      label: 'TRY TRAINEE',
+    })
+    expect(easierChallenge('speed', 'easy')).toEqual({
+      mode: 'trainee',
+      difficulty: 'easy',
+      label: 'TRY TRAINEE',
+    })
+  })
+})
+
+describe('runChallenge', () => {
+  it('is null for an ordinary run — neither earned nor struggled', () => {
+    expect(runChallenge('accuracy', 'hard', 10, 0)).toBeNull()
+  })
+
+  it('offers the dare for a run that earned it', () => {
+    expect(runChallenge('accuracy', 'easy', 20, 2)).toEqual(
+      nextChallenge('accuracy', 'easy'),
+    )
+  })
+
+  it('offers to ease off for a run that struggled', () => {
+    expect(runChallenge('speed', 'extreme', 1, 0)).toEqual(
+      easierChallenge('speed', 'extreme'),
+    )
+  })
+
+  it('prefers the dare when a short run is both earned and struggled at once', () => {
+    // Two hits, both optimal: earnedChallenge and struggledRun both pass here.
+    expect(earnedChallenge(2, 1)).toBe(true)
+    expect(struggledRun(2)).toBe(true)
+    expect(runChallenge('accuracy', 'easy', 2, 1)).toEqual(
+      nextChallenge('accuracy', 'easy'),
+    )
   })
 })

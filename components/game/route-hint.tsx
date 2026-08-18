@@ -109,18 +109,26 @@ function Step({ step, isDark }: { step: RouteStep; isDark: boolean }) {
   )
 }
 
-// The optimal way to the target the debrief just described: the target itself, then the
-// gestures that would have reached it — a dot for a tap, an arrow for a swipe, and the
-// key each is made on.
+// The optimal way to the target the debrief just described: where the grid stood, then
+// the gestures that would have carried it to the target, then the target itself — read
+// left to right the same way the move happens, from what it was to what it needed to
+// be.
 //
 // Coarsest key first, which is both what computeRoute returns and how the game is
 // taught. Counts are steps rather than taps, so a jump to an end is the one step it
 // costs.
 export function RouteHint({
   route,
+  start,
   target,
 }: {
   route: readonly RouteStep[]
+  // The sum before the hit, shown to the left of the keys — the number the route
+  // starts from.
+  start: number | null
+  // The sum the route reaches, shown to the right — the target itself has already
+  // popped off the board by the time this shows, so without it the keys are a set of
+  // instructions with nothing to attach them to.
   target: number | null
 }) {
   const { colorScheme } = useTheme()
@@ -146,17 +154,20 @@ export function RouteHint({
         className="flex-row items-center gap-1.5 rounded-full px-2.5 py-1"
         style={{ borderWidth: BORDER, borderColor: BORDER_TINT }}
       >
-        {/* The number the route reaches. The target it belongs to has already popped
-            off the board by the time this shows, so without it the keys are a set of
-            instructions with nothing to attach them to. */}
-        {target !== null && (
-          <Text
-            selectable={false}
-            className="font-mono text-[12px] font-black tracking-[0.5px]"
-            style={{ color: TINT }}
-          >
-            {target}
-          </Text>
+        {/* The sum before the hit, read first because the move starts from it. */}
+        {start !== null && (
+          <>
+            <Text
+              selectable={false}
+              className="font-mono text-[12px] font-black tracking-[0.5px]"
+              style={{ color: TINT }}
+            >
+              {start}
+            </Text>
+            <Text selectable={false} className="font-mono text-[11px] text-dim">
+              ›
+            </Text>
+          </>
         )}
         {route.slice(0, MAX_KEYS).map((step, i) => (
           <Fragment key={`${step.weight}-${step.jump ?? 'walk'}-${step.direction}`}>
@@ -168,6 +179,24 @@ export function RouteHint({
             <Step step={step} isDark={isDark} />
           </Fragment>
         ))}
+        {/* The sum the route reaches, read last because the move ends on it. The
+            target it belongs to has already popped off the board by the time this
+            shows, so without it the keys are a set of instructions with nothing to
+            attach them to. */}
+        {target !== null && (
+          <>
+            <Text selectable={false} className="font-mono text-[11px] text-dim">
+              ›
+            </Text>
+            <Text
+              selectable={false}
+              className="font-mono text-[12px] font-black tracking-[0.5px]"
+              style={{ color: TINT }}
+            >
+              {target}
+            </Text>
+          </>
+        )}
       </View>
     </View>
   )

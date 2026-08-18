@@ -9,7 +9,7 @@ import {
   type PressFacts,
   type PressVerdict,
 } from './coach'
-import { buildPressGrid, type Grid, type Target } from './game'
+import { buildPressGrid, buildSetGrid, type Grid, type Target } from './game'
 import { computePar } from './scoring'
 
 const ZEROS: Grid = [
@@ -29,6 +29,7 @@ const facts = (over: Partial<PressFacts> = {}): PressFacts => ({
   opening: false,
   gap: 0,
   routing: true,
+  wrapSwipe: false,
   ...over,
 })
 
@@ -133,6 +134,65 @@ describe('pressFacts', () => {
     })
     expect(result.routing).toBe(false)
     expect(result.improved).toBe(false)
+  })
+
+  it('flags a swipe left from 9 to 0 as a wrap swipe — a tap wraps there too', () => {
+    const nineAtZero: Grid = [
+      [9, 0, 0],
+      [0, 0, 0],
+      [0, 0, 0],
+    ]
+    const result = pressFacts({
+      index: 0,
+      delta: null,
+      gridBefore: nineAtZero,
+      gridAfter: buildSetGrid(nineAtZero, 0, 0),
+      targets: [target({ value: 5 })],
+    })
+    expect(result.wrapSwipe).toBe(true)
+  })
+
+  it('does not flag a swipe right from 0 to 9 — a tap never decrements, so a tap cannot reach it', () => {
+    const result = pressFacts({
+      index: 0,
+      delta: null,
+      gridBefore: ZEROS,
+      gridAfter: buildSetGrid(ZEROS, 0, 9),
+      targets: [target({ value: 5 })],
+    })
+    expect(result.wrapSwipe).toBe(false)
+  })
+
+  it('does not flag a swipe that is not one tap away', () => {
+    const fiveAtZero: Grid = [
+      [5, 0, 0],
+      [0, 0, 0],
+      [0, 0, 0],
+    ]
+    const result = pressFacts({
+      index: 0,
+      delta: null,
+      gridBefore: fiveAtZero,
+      gridAfter: buildSetGrid(fiveAtZero, 0, 0),
+      targets: [target({ value: 5 })],
+    })
+    expect(result.wrapSwipe).toBe(false)
+  })
+
+  it('does not flag an ordinary tap that lands on 0 from 9', () => {
+    const nineAtZero: Grid = [
+      [9, 0, 0],
+      [0, 0, 0],
+      [0, 0, 0],
+    ]
+    const result = pressFacts({
+      index: 0,
+      delta: 1,
+      gridBefore: nineAtZero,
+      gridAfter: buildPressGrid(nineAtZero, 0, 1),
+      targets: [target({ value: 5 })],
+    })
+    expect(result.wrapSwipe).toBe(false)
   })
 })
 
@@ -249,6 +309,24 @@ describe('coarse', () => {
     expect(
       coachReducer(initialCoachState(), opener({ opening: false })).verdict,
     ).toBeNull()
+  })
+})
+
+describe('wrap', () => {
+  const wrapSwipe = () => facts({ delta: null, wrapSwipe: true })
+
+  it('speaks on a swipe that crosses the wrap boundary', () => {
+    expect(coachReducer(initialCoachState(), wrapSwipe()).verdict).toBe('wrap')
+  })
+
+  it('stays quiet for an ordinary swipe', () => {
+    expect(coachReducer(initialCoachState(), facts({ delta: null })).verdict).toBeNull()
+  })
+
+  it('cools down for eight resolved targets like the other habits', () => {
+    const first = coachReducer(initialCoachState(), wrapSwipe())
+    expect(coachReducer(noteResolved(first.state, 7), wrapSwipe()).verdict).toBeNull()
+    expect(coachReducer(noteResolved(first.state, 8), wrapSwipe()).verdict).toBe('wrap')
   })
 })
 

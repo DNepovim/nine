@@ -1,6 +1,13 @@
 import { describe, expect, it } from 'vitest'
 
-import { medalRank, toMedals, type BoardStanding } from './medals'
+import type { LeaderboardTab } from './leaderboard'
+import {
+  longestMedalTab,
+  medalRank,
+  toMedals,
+  type BoardStanding,
+  type TabRank,
+} from './medals'
 
 const standing = (over: Partial<BoardStanding> = {}): BoardStanding => ({
   mode: 'accuracy',
@@ -103,5 +110,56 @@ describe('toMedals', () => {
       standing({ mode: 'accuracy', rank: 3 }),
     ])
     expect(medals.map((m) => m.mode)).toEqual(['accuracy', 'speed'])
+  })
+})
+
+describe('longestMedalTab', () => {
+  const NONE: Record<LeaderboardTab, TabRank> = {
+    today: null,
+    week: null,
+    forever: null,
+  }
+
+  it('is null when nothing is a medal', () => {
+    expect(longestMedalTab(NONE)).toBeNull()
+    expect(longestMedalTab({ ...NONE, today: { rank: 5, score: 100 } })).toBeNull()
+  })
+
+  it('is null for a rank no score stands behind', () => {
+    // What my_rank returns on an empty board for someone who has never played.
+    expect(longestMedalTab({ ...NONE, forever: { rank: 1, score: 0 } })).toBeNull()
+  })
+
+  it('picks the only medal on offer', () => {
+    expect(longestMedalTab({ ...NONE, week: { rank: 3, score: 40 } })).toBe('week')
+  })
+
+  it('prefers forever over week, and week over today', () => {
+    expect(
+      longestMedalTab({
+        today: { rank: 1, score: 10 },
+        week: { rank: 1, score: 10 },
+        forever: { rank: 1, score: 10 },
+      }),
+    ).toBe('forever')
+
+    expect(
+      longestMedalTab({
+        today: { rank: 1, score: 10 },
+        week: { rank: 1, score: 10 },
+        forever: null,
+      }),
+    ).toBe('week')
+  })
+
+  it('lets a bronze on the longer board beat a gold on the shorter one', () => {
+    // Gold today, bronze this week: the week wins on range, not on metal.
+    expect(
+      longestMedalTab({
+        today: { rank: 1, score: 500 },
+        week: { rank: 3, score: 300 },
+        forever: null,
+      }),
+    ).toBe('week')
   })
 })

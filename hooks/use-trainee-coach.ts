@@ -11,6 +11,7 @@ import {
 import {
   buildPressGrid,
   buildSetGrid,
+  computeSum,
   type Grid,
   type HitBatch,
   type Mode,
@@ -30,6 +31,7 @@ import { cleanHitReason, computeRoute, type RouteStep } from '@/machines/scoring
 const HOLD_MS = {
   tapping: 3000,
   coarse: 3000,
+  wrap: 3000,
   debrief: null,
   lost: 3000,
 } as const satisfies Record<CoachKind, number | null>
@@ -42,12 +44,14 @@ const CONTENTION_MS = 600
 
 // `route` is the optimal way to the target the debrief is about, and empty for every
 // other kind — a habit line is about the press just made, which has no route to show.
-// `target` is the number that route reaches, shown beside it so the keys are attached
-// to the sum they were for once the target itself has left the board.
+// `start` and `target` are the sum the route began from and the one it reaches, shown
+// either side of the keys so the gestures are read as a move from one number to the
+// other rather than a set of instructions with nothing to anchor them.
 type Showing = {
   kind: CoachKind
   text: string
   route: RouteStep[]
+  start: number | null
   target: number | null
   at: number
 }
@@ -108,16 +112,17 @@ export function useTraineeCoach({
     kind: CoachKind,
     text: string,
     route: RouteStep[] = [],
+    start: number | null = null,
     target: number | null = null,
   ) => {
     if (muted) return
     const at = Date.now()
     setShowing((current) => {
-      if (current === null) return { kind, text, route, target, at }
+      if (current === null) return { kind, text, route, start, target, at }
       if (at - current.at < CONTENTION_MS && !outranks(kind, current.kind)) {
         return current
       }
-      return { kind, text, route, target, at }
+      return { kind, text, route, start, target, at }
     })
   }
 
@@ -195,6 +200,7 @@ export function useTraineeCoach({
       'debrief',
       debriefLine(last.steps, last.par),
       computeRoute(last.refGrid, last.value),
+      computeSum(last.refGrid),
       last.value,
     )
   }, [active, batch])
@@ -235,6 +241,7 @@ export function useTraineeCoach({
   return {
     line: showing?.text ?? null,
     route: showing?.route ?? [],
+    routeStart: showing?.start ?? null,
     routeTarget: showing?.target ?? null,
     notePress,
     noteSet,

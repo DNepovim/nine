@@ -41,6 +41,7 @@ type Section = { title: string; items: Variant[] }
 const RUN = {
   score: 4820,
   hits: 37,
+  gameTimeMs: 4 * 60_000 + 12_000,
   strikes: 6,
   avgAccuracy: 84,
   avgSpeed: 71,
@@ -81,8 +82,11 @@ const gameOver = (
   mode: ScoredMode,
   difficulty: Difficulty,
   record: Period | null,
+  // Overrides the shared RUN mock — the one variant below with a struggled run needs
+  // its own low hit count to show the step-down offer instead of the usual dare.
+  run: Pick<typeof RUN, 'score' | 'hits' | 'strikes'> = RUN,
 ): Variant => ({
-  key: `go-${screen}-${mode}-${difficulty}-${record ?? 'none'}`,
+  key: `go-${screen}-${mode}-${difficulty}-${record ?? 'none'}-${run.hits}`,
   label: `${MODE_CODE[mode]} · ${DIFFICULTIES[difficulty].code} · ${
     record === null ? '—' : RANGE_LABEL[record]
   } · ${emblemFor(screen, mode)}`,
@@ -92,9 +96,10 @@ const gameOver = (
       difficulty={difficulty}
       userId="dev"
       nickname="DONDA"
-      score={RUN.score}
-      hits={RUN.hits}
-      strikes={RUN.strikes}
+      score={run.score}
+      hits={run.hits}
+      gameTimeMs={RUN.gameTimeMs}
+      strikes={run.strikes}
       record={record}
       screen={screen}
       titleWords={gameOverTitle(
@@ -104,9 +109,9 @@ const gameOver = (
           medals: record === null ? [] : [record],
           personalBest: true,
           difficulty,
-          score: RUN.score,
-          hits: RUN.hits,
-          strikes: RUN.strikes,
+          score: run.score,
+          hits: run.hits,
+          strikes: run.strikes,
         },
         0,
       )}
@@ -130,6 +135,7 @@ const paused = (mode: Mode): Variant => ({
       nickname="DONDA"
       score={RUN.score}
       hits={RUN.hits}
+      gameTimeMs={RUN.gameTimeMs}
       avgAccuracy={RUN.avgAccuracy}
       avgSpeed={RUN.avgSpeed}
       onContinue={close}
@@ -156,6 +162,9 @@ const SECTIONS: Section[] = [
       gameOver('bird', 'speed', 'extreme', 'ever'),
       gameOver('crown', 'accuracy', 'extreme', 'ever'),
       gameOver('crown', 'speed', 'extreme', 'ever'),
+      // The step-down offer: a handful of hits and no streak, well under the
+      // struggle bar — see struggledRun in lib/next-challenge.ts.
+      gameOver('plain', 'accuracy', 'extreme', null, { score: 210, hits: 1, strikes: 0 }),
     ],
   },
   {

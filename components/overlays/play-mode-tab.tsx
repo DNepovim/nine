@@ -11,7 +11,7 @@ import Animated, {
 } from 'react-native-reanimated'
 
 import { CornerBadge } from '@/components/overlays/corner-badge'
-import { MODE_GRADIENT, type Mode } from '@/machines/game'
+import { MODE_GRADIENT, MULTIPLAYER_GRADIENT, type Mode } from '@/machines/game'
 
 export type PlayMode = 'alone' | 'friends'
 
@@ -109,7 +109,14 @@ export function PlayModeTab({
             style={innerGradStyle}
           >
             <LinearGradient
-              colors={[...MODE_GRADIENT[gameMode]]}
+              // Multiplayer's own pair once WITH FRIENDS is selected, rather than
+              // whichever singleplayer mode happens to be focused — pinned to
+              // accuracy since a room is always created as accuracy.
+              colors={[
+                ...(playMode === 'friends'
+                  ? MULTIPLAYER_GRADIENT.accuracy
+                  : MODE_GRADIENT[gameMode]),
+              ]}
               start={{ x: 0, y: 0.5 }}
               end={{ x: 1, y: 0.5 }}
               className="flex-1"

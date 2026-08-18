@@ -12,10 +12,10 @@ import { useScoreDirection } from '@/hooks/use-score-direction'
 import { valueProgress } from '@/lib/value-progress'
 import {
   computeSum,
-  DARK_MODE_GRADIENT,
+  DARK_MULTIPLAYER_GRADIENT,
   lerpColor,
-  MODE_GRADIENT,
   MODES,
+  MULTIPLAYER_GRADIENT,
 } from '@/machines/game'
 import type { MultiMode, MultiTarget, PlayerState } from '@/types/multiplayer'
 
@@ -30,7 +30,7 @@ const NEXT_TARGET_DELAY_MS = 600
 function playerGradients(
   mode: MultiMode,
 ): [[string, string], [string, string], [string, string], [string, string]] {
-  const [c0, c1] = MODE_GRADIENT[mode]
+  const [c0, c1] = MULTIPLAYER_GRADIENT[mode]
   return [
     [lerpColor(c0, c1, 0), lerpColor(c0, c1, 0.25)],
     [lerpColor(c0, c1, 0.25), lerpColor(c0, c1, 0.5)],
@@ -278,8 +278,8 @@ export function MultiplayerGame({
               weight={(Math.floor(index / 3) + 1) * ((index % 3) + 1)}
               showSum={false}
               trainee={false}
-              peakFrom={DARK_MODE_GRADIENT[mode][0]}
-              peakTo={DARK_MODE_GRADIENT[mode][1]}
+              peakFrom={DARK_MULTIPLAYER_GRADIENT[mode][0]}
+              peakTo={DARK_MULTIPLAYER_GRADIENT[mode][1]}
               onDelta={(delta) => {
                 handlePress(index, delta)
               }}

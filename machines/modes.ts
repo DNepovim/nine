@@ -115,6 +115,25 @@ export const DARK_MODE_GRADIENT = {
   arcade: ['#620b0c', '#7A3800'] as const,
 } as const satisfies Record<Mode | 'arcade', readonly [string, string]>
 
+// Multiplayer's own two-stop gradients: a teal shared by both scored modes, standing
+// for "you're in multiplayer" the way MODE_GRADIENT's own stops stand for a single
+// mode, paired with that mode's own end stop from MODE_GRADIENT — its dominant colour
+// carried over from singleplayer. Teal rather than a mode hue on purpose: the app's
+// existing mode-switch flash colours (`animated-letter.tsx`) already reach into this
+// same cyan/green family specifically because it is unused everywhere else, so a
+// multiplayer room reads as its own thing rather than a re-skin of accuracy or speed.
+export const MULTIPLAYER_GRADIENT = {
+  accuracy: ['#0D9488', MODE_GRADIENT.accuracy[1]],
+  speed: ['#0D9488', MODE_GRADIENT.speed[1]],
+} as const satisfies Record<ScoredMode, readonly [string, string]>
+
+// Same shape, darkened for CTA buttons — the teal darkened to match, the dominant
+// stop reused from DARK_MODE_GRADIENT rather than re-derived.
+export const DARK_MULTIPLAYER_GRADIENT = {
+  accuracy: ['#0A3D37', DARK_MODE_GRADIENT.accuracy[1]],
+  speed: ['#0A3D37', DARK_MODE_GRADIENT.speed[1]],
+} as const satisfies Record<ScoredMode, readonly [string, string]>
+
 export const MODE_DESCRIPTIONS: Record<Mode | 'arcade', string> = {
   trainee: `Learn the ropes.
 No lives, no rush.`,

@@ -1,3 +1,4 @@
+import type { LeaderboardTab } from '@/lib/leaderboard'
 import {
   DIFFICULTY_ORDER,
   SCORED_MODES,
@@ -98,4 +99,29 @@ export function toMedals(standings: readonly BoardStanding[]): Medal[] {
         ]
   })
   return bestPerMode(medals).sort((a, b) => modeWeight(a.mode) - modeWeight(b.mode))
+}
+
+// Longest board first: forever says more than a week, which says more than a day —
+// the same ordering `bestPerMode` uses when one board holds several medals at once.
+const TAB_ORDER: readonly LeaderboardTab[] = ['forever', 'week', 'today']
+
+// A run's own board, single mode × difficulty, at whatever rank each period reports
+// right now. Unlike `toMedals`, this is not about the medal line — it is what a
+// game-over screen asks to decide which leaderboard tab to feature, so it takes
+// exactly the shape that screen already has on hand rather than a `BoardStanding`.
+export type TabRank = { rank: number; score: number } | null
+
+// Which tab to show without the player having to look for it — the longest-standing
+// board the run just played on that is *currently* a medal, or null when none is.
+// "Currently" matters: a rank moves as other players post, so this is meant to be
+// recomputed as the board's own numbers settle rather than decided once and frozen.
+export function longestMedalTab(
+  ranks: Record<LeaderboardTab, TabRank>,
+): LeaderboardTab | null {
+  return (
+    TAB_ORDER.find((tab) => {
+      const r = ranks[tab]
+      return r !== null && medalRank(r.rank, r.score) !== null
+    }) ?? null
+  )
 }

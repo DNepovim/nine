@@ -20,7 +20,7 @@ import type { Period } from '@/lib/announcements'
 import { boardMedals, runMedal } from '@/lib/board-medals'
 import type { RecordScreen } from '@/lib/champions'
 import type { TitleWords } from '@/lib/game-over-title'
-import { earnedChallenge, nextChallenge } from '@/lib/next-challenge'
+import { runChallenge } from '@/lib/next-challenge'
 import {
   DARK_MODE_GRADIENT,
   MODE_GRADIENT,
@@ -78,6 +78,7 @@ export function GameOverOverlay({
   nickname,
   score,
   hits,
+  gameTimeMs,
   strikes,
   record,
   screen,
@@ -96,6 +97,7 @@ export function GameOverOverlay({
   nickname: string | null
   score: number
   hits: number
+  gameTimeMs: number
   // How many of those hits landed on a streak — the challenge is offered on it.
   strikes: number
   // The biggest board record this run took, or null for a run that took none. Drives
@@ -110,7 +112,7 @@ export function GameOverOverlay({
   avgSpeed: number
   // Straight back into a run on this same board.
   onPlayAgain: () => void
-  // Into a run on the board one rung up — see `nextChallenge`.
+  // Into a run on the board one rung up, or one down — see `runChallenge`.
   onChallenge: (mode: Mode, difficulty: Difficulty) => void
   onMenu: () => void
   // When the in-game dying sequence flies its own copy of the title up into
@@ -122,9 +124,7 @@ export function GameOverOverlay({
   const titleRef = useRef<View>(null)
   const { colorScheme } = useTheme()
   const dimColor = colorScheme === 'dark' ? '#504e6e' : '#aaa69e'
-  const challenge = earnedChallenge(hits, strikes)
-    ? nextChallenge(gameMode, difficulty)
-    : null
+  const challenge = runChallenge(gameMode, difficulty, hits, strikes)
 
   // What this run put on each period of this board: the medal the player can go and see
   // on the board afterwards, and only when this run is what earned it. Not their
@@ -231,6 +231,7 @@ export function GameOverOverlay({
 
             <RunStats
               hits={hits}
+              gameTimeMs={gameTimeMs}
               avgAccuracy={avgAccuracy}
               avgSpeed={avgSpeed}
               halo={painted}
@@ -243,6 +244,8 @@ export function GameOverOverlay({
                 nickname={nickname}
                 halo={painted}
                 compact
+                pinMedalTab
+                runScore={score}
               />
             )}
           </View>

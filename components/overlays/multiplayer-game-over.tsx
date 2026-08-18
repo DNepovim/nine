@@ -10,10 +10,10 @@ import { PLAYER_GRADIENTS, PlayerTile } from '@/components/overlays/player-tile'
 import { Screen } from '@/components/screen'
 import { cn } from '@/lib/cn'
 import {
-  DARK_MODE_GRADIENT,
+  DARK_MULTIPLAYER_GRADIENT,
   lerpColor,
   MODE_DESCRIPTIONS,
-  MODE_GRADIENT,
+  MULTIPLAYER_GRADIENT,
 } from '@/machines/game'
 import type { MultiMode, PlayerState } from '@/types/multiplayer'
 
@@ -49,8 +49,8 @@ export function MultiplayerGameOver({
   onLeave: () => void
 }) {
   const gradPhase = useSharedValue(0)
-  const gradStartSv = useSharedValue<string>(MODE_GRADIENT[mode][0])
-  const gradEndSv = useSharedValue<string>(MODE_GRADIENT[mode][1])
+  const gradStartSv = useSharedValue<string>(MULTIPLAYER_GRADIENT[mode][0])
+  const gradEndSv = useSharedValue<string>(MULTIPLAYER_GRADIENT[mode][1])
 
   useEffect(() => {
     gradPhase.value = withRepeat(
@@ -61,8 +61,8 @@ export function MultiplayerGameOver({
   }, [gradPhase])
 
   useEffect(() => {
-    gradStartSv.value = MODE_GRADIENT[mode][0]
-    gradEndSv.value = MODE_GRADIENT[mode][1]
+    gradStartSv.value = MULTIPLAYER_GRADIENT[mode][0]
+    gradEndSv.value = MULTIPLAYER_GRADIENT[mode][1]
   }, [mode, gradStartSv, gradEndSv])
 
   const sorted = [...players].sort((a, b) => b.score - a.score)
@@ -87,8 +87,8 @@ export function MultiplayerGameOver({
                     key={globalIndex}
                     char={char}
                     color={lerpColor(
-                      MODE_GRADIENT[mode][0],
-                      MODE_GRADIENT[mode][1],
+                      MULTIPLAYER_GRADIENT[mode][0],
+                      MULTIPLAYER_GRADIENT[mode][1],
                       tBase,
                     )}
                     tBase={tBase}
@@ -113,6 +113,8 @@ export function MultiplayerGameOver({
               focused={mode}
               gradPhase={gradPhase}
               items={['accuracy', 'speed']}
+              gradient={MULTIPLAYER_GRADIENT}
+              accentIndex={1}
               onSelect={(m) => {
                 if (isOneOf(m, ['accuracy', 'speed'])) onModeChange(m)
               }}
@@ -123,7 +125,7 @@ export function MultiplayerGameOver({
             <Text
               selectable={false}
               className="font-mono text-[10px] font-bold tracking-[2px]"
-              style={{ color: MODE_GRADIENT[mode][0] }}
+              style={{ color: MULTIPLAYER_GRADIENT[mode][1] }}
             >
               {mode.toUpperCase()} MODE
             </Text>
@@ -175,7 +177,7 @@ export function MultiplayerGameOver({
               style={shadow}
             >
               <LinearGradient
-                colors={[...DARK_MODE_GRADIENT[mode]]}
+                colors={[...DARK_MULTIPLAYER_GRADIENT[mode]]}
                 start={{ x: 0, y: 0.5 }}
                 end={{ x: 1, y: 0.5 }}
                 className="items-center py-4"

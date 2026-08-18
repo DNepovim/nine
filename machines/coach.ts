@@ -24,13 +24,22 @@ const FINE_WEIGHT = 2
 
 const isFineKey = (index: number): boolean => cellWeight(index) <= FINE_WEIGHT
 
+const cellValue = (grid: Grid, index: number): number =>
+  grid[Math.floor(index / 3)]?.[index % 3] ?? 0
+
+// Whether a swipe carried a button from 9 to 0 — the one swipe a single tap reaches
+// just as fast, since a tap always increments and wraps 9 back to 0. There is no
+// mirror case: a tap never decrements, so 0 to 9 cannot be reached by one.
+const isWrapSwipe = (delta: 1 | -1 | null, before: number, after: number): boolean =>
+  delta === null && before === 9 && after === 0
+
 // Targets that must leave the board before the same habit may be named again.
 // Trainee has infinite lives, so a run ends only when the player does — once per run
 // would leave a long run uncoached, and once per occurrence would nag.
 const HABIT_COOLDOWN_TARGETS = 8
 
 // The verdicts a single press can earn. `lib/coach-lines.ts` holds their words.
-export type PressVerdict = 'lost' | 'tapping' | 'coarse'
+export type PressVerdict = 'lost' | 'tapping' | 'coarse' | 'wrap'
 
 // A run of presses on one key in one direction. Broken by any other key, by a
 // reversal, and by a swipe — which is what makes the tapping habit detectable at
@@ -46,6 +55,7 @@ export type CoachState = {
   // Targets resolved since each habit was last named.
   sinceTapping: number
   sinceCoarse: number
+  sinceWrap: number
 }
 
 // The cool-downs start already satisfied, so the first occurrence of a habit is
@@ -56,6 +66,7 @@ export const initialCoachState = (): CoachState => ({
   tapRun: null,
   sinceTapping: HABIT_COOLDOWN_TARGETS,
   sinceCoarse: HABIT_COOLDOWN_TARGETS,
+  sinceWrap: HABIT_COOLDOWN_TARGETS,
 })
 
 // What one press did, in the terms the rules are written in.
@@ -73,6 +84,9 @@ export type PressFacts = {
   gap: number
   // False when the board is empty: nothing to route toward, so nothing to judge.
   routing: boolean
+  // A swipe that set a button to 0 from 9 — the one swipe a single tap would have
+  // reached in the same one step, since a tap wraps 9 back to 0.
+  wrapSwipe: boolean
 }
 
 // Turns the machine's own grid and targets into facts. This is where the analysis
@@ -86,8 +100,21 @@ export function pressFacts(opts: {
   targets: readonly Target[]
 }): PressFacts {
   const { index, delta, gridBefore, gridAfter, targets } = opts
+  const wrapSwipe = isWrapSwipe(
+    delta,
+    cellValue(gridBefore, index),
+    cellValue(gridAfter, index),
+  )
   if (!isNonEmptyArray(targets)) {
-    return { index, delta, improved: false, opening: false, gap: 0, routing: false }
+    return {
+      index,
+      delta,
+      improved: false,
+      opening: false,
+      gap: 0,
+      routing: false,
+      wrapSwipe,
+    }
   }
 
   const sum = computeSum(gridBefore)
@@ -112,6 +139,7 @@ export function pressFacts(opts: {
     // left to cover; par answers a different question.
     gap: Math.abs(nearest.value - sum),
     routing: true,
+    wrapSwipe,
   }
 }
 
@@ -157,6 +185,12 @@ export function coachReducer(state: CoachState, facts: PressFacts): CoachResult 
     return { state: { ...advanced, sinceTapping: 0 }, verdict: 'tapping' }
   }
 
+  // A wrap swipe never grows a tap run — `nextTapRun` breaks on any swipe — so this
+  // never contends with `tapping` on the same press.
+  if (facts.wrapSwipe && state.sinceWrap >= HABIT_COOLDOWN_TARGETS) {
+    return { state: { ...advanced, sinceWrap: 0 }, verdict: 'wrap' }
+  }
+
   if (
     facts.opening &&
     isFineKey(facts.index) &&
@@ -185,5 +219,6 @@ export function noteResolved(state: CoachState, resolved: number): CoachState {
     tapRun: null,
     sinceTapping: state.sinceTapping + resolved,
     sinceCoarse: state.sinceCoarse + resolved,
+    sinceWrap: state.sinceWrap + resolved,
   }
 }

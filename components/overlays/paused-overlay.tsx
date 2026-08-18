@@ -33,6 +33,7 @@ export function PausedOverlay({
   nickname,
   score,
   hits,
+  gameTimeMs,
   avgAccuracy,
   avgSpeed,
   onContinue,
@@ -46,6 +47,7 @@ export function PausedOverlay({
   nickname: string | null
   score: number
   hits: number
+  gameTimeMs: number
   avgAccuracy: number
   avgSpeed: number
   onContinue: () => void
@@ -80,7 +82,12 @@ export function PausedOverlay({
             />
           )}
 
-          <RunStats hits={hits} avgAccuracy={avgAccuracy} avgSpeed={avgSpeed} />
+          <RunStats
+            hits={hits}
+            gameTimeMs={gameTimeMs}
+            avgAccuracy={avgAccuracy}
+            avgSpeed={avgSpeed}
+          />
 
           {gameMode === 'trainee' && (
             <View className="mb-5 w-full">

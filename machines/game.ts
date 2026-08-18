@@ -17,6 +17,7 @@ export type { Difficulty, Mode, ScoredMode } from './modes'
 export {
   ARCADE_TEASER,
   DARK_MODE_GRADIENT,
+  DARK_MULTIPLAYER_GRADIENT,
   DIFFICULTIES,
   DIFFICULTY_ORDER,
   getDifficultyColor,
@@ -25,6 +26,7 @@ export {
   MODE_GRADIENT,
   MODE_ORDER,
   MODES,
+  MULTIPLAYER_GRADIENT,
   SCORED_MODES,
   effectiveSpawnInterval,
   effectiveTimeout,
@@ -84,6 +86,11 @@ export type HitInfo = {
   // debrief actually shows it — the coach calls computeRoute on these.
   refGrid: Grid
   value: number
+  // Whether this is the hit that just cost a life — Accuracy's under-20%-accuracy
+  // rule. One life is lost per batch no matter how many hits in it crossed the bar,
+  // so at most one hit in a batch ever carries this; the UI needs it to know which
+  // floating stat to attach the reason to.
+  costLife: boolean
 }
 export type HitBatch = { seq: number; hits: HitInfo[] }
 
@@ -117,13 +124,22 @@ type Context = {
   targets: Target[]
   nextTargetId: number
   hitBatch: HitBatch
+  // How much of this run has been spent actually playing, not counting time in the
+  // pause menu — finalized into here the instant `playing` is left, so a screen that
+  // reads it while paused or over sees a number that has already stopped moving.
+  elapsedMs: number
+  // When the run's current active stretch began — set on START/RESTART/RESUME, folded
+  // into `elapsedMs` and cleared back to null on PAUSE and on reaching gameOver. Null
+  // whenever the run is not actively being played, which is also how a screen showing
+  // `elapsedMs` can tell it is reading a finished number rather than a moving target.
+  playingSince: number | null
 }
 
 type Event =
-  | { type: 'START' }
-  | { type: 'PAUSE' }
-  | { type: 'RESUME' }
-  | { type: 'RESTART' }
+  | { type: 'START'; now: number }
+  | { type: 'PAUSE'; now: number }
+  | { type: 'RESUME'; now: number }
+  | { type: 'RESTART'; now: number }
   | { type: 'MENU' }
   | { type: 'SET_MODE'; mode: Mode }
   | { type: 'SET_DIFFICULTY'; difficulty: Difficulty }
@@ -131,7 +147,7 @@ type Event =
   | { type: 'PRESS'; index: number; delta: 1 | -1; now: number }
   | { type: 'SET_CELL'; index: number; value: number; now: number }
   | { type: 'ADD_TARGET'; value: number; at: number }
-  | { type: 'TARGET_EXPIRED'; id: number }
+  | { type: 'TARGET_EXPIRED'; id: number; now: number }
 
 // The machine's `send` function, for hooks that dispatch events.
 export type GameSend = (event: Event) => void
@@ -145,7 +161,7 @@ export type GameSend = (event: Event) => void
 // mode, since nothing else clears them. Carrying them into a new run opened it with
 // a stale hit already on Trainee's stat row and still able to earn a confetti
 // shower, before the player had touched the dial.
-const freshGame = (mode: Mode, seq: number) => ({
+const freshGame = (mode: Mode, seq: number, now: number) => ({
   grid: initialGrid,
   hits: 0,
   score: 0,
@@ -157,6 +173,17 @@ const freshGame = (mode: Mode, seq: number) => ({
   targets: [] as Target[],
   nextTargetId: 0,
   hitBatch: { seq, hits: [] as HitInfo[] },
+  elapsedMs: 0,
+  playingSince: now,
+})
+
+// Folds the run's current active stretch into `elapsedMs` and clears `playingSince`,
+// which is what every exit from `playing` needs to do to the clock. `playingSince` is
+// only ever null while the state machine itself is not in `playing`, so a context this
+// runs against always has one — the fallback exists for the type, not for a real case.
+const stopClock = (context: Context, now: number) => ({
+  elapsedMs: context.elapsedMs + (now - (context.playingSince ?? now)),
+  playingSince: null,
 })
 
 const bestByScore = (
@@ -289,7 +316,16 @@ function applyGrid(context: Context, newGrid: Grid, now: number) {
   } // a miss leaves the streak alone; only expiry clears it outright
 
   const addedScore = Math.round(rawScore * multiplier)
-  const hitInfos: HitInfo[] = perTarget.map((p) => ({
+
+  // Accuracy mode: a hit under 20% accuracy costs a life. Computed once here rather
+  // than re-checked below, so the hit blamed for it and the decrement it causes can
+  // never name a different one. `findIndex` rather than `some` because the UI needs
+  // to know *which* hit to attach the reason to, not just that one did.
+  const wastefulIndex =
+    context.mode === 'accuracy' ? perTarget.findIndex((p) => p.accFactor < 0.2) : -1
+  const costsLife = anyHit && wastefulIndex !== -1
+
+  const hitInfos: HitInfo[] = perTarget.map((p, i) => ({
     points: Math.round(p.points * multiplier),
     progress: p.progress,
     bonus: multiplier > 1,
@@ -300,6 +336,7 @@ function applyGrid(context: Context, newGrid: Grid, now: number) {
     par: p.par,
     refGrid: p.refGrid,
     value: p.value,
+    costLife: costsLife && i === wastefulIndex,
   }))
 
   const hits = context.hits + matched.length
@@ -349,11 +386,7 @@ function applyGrid(context: Context, newGrid: Grid, now: number) {
     ? { seq: context.hitBatch.seq + 1, hits: hitInfos }
     : context.hitBatch
 
-  // Accuracy mode: lose a life when hitting a target with < 20 % accuracy factor.
-  let newLives = context.lives
-  if (context.mode === 'accuracy' && anyHit && perTarget.some((p) => p.accFactor < 0.2)) {
-    newLives = Math.max(0, context.lives - 1)
-  }
+  const newLives = costsLife ? Math.max(0, context.lives - 1) : context.lives
 
   return {
     grid: newGrid,
@@ -390,6 +423,8 @@ export const gameMachine = createMachine({
     targets: [] as Target[],
     nextTargetId: 0,
     hitBatch: { seq: 0, hits: [] as HitInfo[] },
+    elapsedMs: 0,
+    playingSince: null,
   } satisfies Context,
   on: {
     // Load persisted per-mode×difficulty stats on app start.
@@ -420,8 +455,14 @@ export const gameMachine = createMachine({
       on: {
         START: {
           target: 'playing',
-          actions: assign(({ context }: { context: Context }) =>
-            freshGame(context.mode, context.hitBatch.seq),
+          actions: assign(
+            ({
+              context,
+              event,
+            }: {
+              context: Context
+              event: Extract<Event, { type: 'START' }>
+            }) => freshGame(context.mode, context.hitBatch.seq, event.now),
           ),
         },
         SET_MODE: {
@@ -442,7 +483,18 @@ export const gameMachine = createMachine({
     },
     playing: {
       on: {
-        PAUSE: { target: 'paused' },
+        PAUSE: {
+          target: 'paused',
+          actions: assign(
+            ({
+              context,
+              event,
+            }: {
+              context: Context
+              event: Extract<Event, { type: 'PAUSE' }>
+            }) => stopClock(context, event.now),
+          ),
+        },
         PRESS: [
           {
             guard: ({
@@ -465,12 +517,14 @@ export const gameMachine = createMachine({
               }: {
                 context: Context
                 event: Extract<Event, { type: 'PRESS' }>
-              }) =>
-                applyGrid(
+              }) => ({
+                ...applyGrid(
                   context,
                   buildPressGrid(context.grid, event.index, event.delta),
                   event.now,
                 ),
+                ...stopClock(context, event.now),
+              }),
             ),
           },
           {
@@ -513,12 +567,14 @@ export const gameMachine = createMachine({
               }: {
                 context: Context
                 event: Extract<Event, { type: 'SET_CELL' }>
-              }) =>
-                applyGrid(
+              }) => ({
+                ...applyGrid(
                   context,
                   buildSetGrid(context.grid, event.index, event.value),
                   event.now,
                 ),
+                ...stopClock(context, event.now),
+              }),
             ),
           },
           {
@@ -570,6 +626,7 @@ export const gameMachine = createMachine({
                 targets: context.targets.filter((t) => t.id !== event.id),
                 lives: 0,
                 streak: 0,
+                ...stopClock(context, event.now),
               }),
             ),
           },
@@ -621,7 +678,12 @@ export const gameMachine = createMachine({
     },
     paused: {
       on: {
-        RESUME: { target: 'playing' },
+        RESUME: {
+          target: 'playing',
+          actions: assign(({ event }: { event: Extract<Event, { type: 'RESUME' }> }) => ({
+            playingSince: event.now,
+          })),
+        },
         // "New game" from the pause/settings menu returns to the intro menu.
         MENU: { target: 'menu' },
         // TARGET_EXPIRED is deliberately not handled here. A paused run has no clock
@@ -651,8 +713,14 @@ export const gameMachine = createMachine({
         },
         RESTART: {
           target: 'playing',
-          actions: assign(({ context }: { context: Context }) =>
-            freshGame(context.mode, context.hitBatch.seq),
+          actions: assign(
+            ({
+              context,
+              event,
+            }: {
+              context: Context
+              event: Extract<Event, { type: 'RESTART' }>
+            }) => freshGame(context.mode, context.hitBatch.seq, event.now),
           ),
         },
       },

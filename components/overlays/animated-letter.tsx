@@ -10,6 +10,11 @@ import Animated, {
 import { ON_GOLD_TEXT_SHADOW } from '@/constants/theme'
 import { type Mode } from '@/machines/game'
 
+// A letter's colour source: a singleplayer mode, the arcade teaser, or the
+// multiplayer identity — the intro title switches between the last two depending on
+// which of ALONE / WITH FRIENDS is open.
+type TitleMode = Mode | 'arcade' | 'multiplayer'
+
 // Vibrant off-spectrum intermediates — chosen to be as far from the
 // app's blue-purple-red-amber palette as possible so each mode switch
 // sweeps visibly through foreign hue territory.
@@ -28,7 +33,7 @@ const MID_COLORS: Record<string, string> = {
   'arcade->speed': '#00FFCC', // turquoise — cool contrast to red-orange
 }
 
-function getMidColor(from: Mode | 'arcade', to: Mode | 'arcade'): string {
+function getMidColor(from: TitleMode, to: TitleMode): string {
   return MID_COLORS[`${from}->${to}`] ?? '#FFFFFF'
 }
 
@@ -61,7 +66,7 @@ export function AnimatedLetter({
   char: string
   color: string
   tBase: number
-  mode: Mode | 'arcade'
+  mode: TitleMode
   delay: number
   letterIndex: number
   gradStart: SharedValue<string>
@@ -71,7 +76,7 @@ export function AnimatedLetter({
   shadow?: boolean
 }) {
   const prevColorRef = useRef(color)
-  const prevModeRef = useRef<Mode | 'arcade'>(mode)
+  const prevModeRef = useRef<TitleMode>(mode)
   const canAnimateRef = useRef(false)
   const progress = useSharedValue(1)
   const from = useSharedValue(color)

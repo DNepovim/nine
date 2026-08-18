@@ -14,7 +14,7 @@ const start = (mode: 'trainee' | 'accuracy' | 'speed') => {
   const actor = createActor(gameMachine)
   actor.start()
   actor.send({ type: 'SET_MODE', mode })
-  actor.send({ type: 'START' })
+  actor.send({ type: 'START', now: 0 })
   return actor
 }
 
@@ -29,7 +29,7 @@ describe('mode selection + lives', () => {
     const actor = start('trainee')
     actor.send({ type: 'ADD_TARGET', value: 5, at: 0 })
     const id = actor.getSnapshot().context.targets[0]?.id ?? 0
-    actor.send({ type: 'TARGET_EXPIRED', id })
+    actor.send({ type: 'TARGET_EXPIRED', id, now: 0 })
     expect(actor.getSnapshot().context.lives).toBe(Number.POSITIVE_INFINITY)
     expect(actor.getSnapshot().value).toBe('playing')
   })
@@ -70,10 +70,10 @@ describe('pausing', () => {
     actor.send({ type: 'ADD_TARGET', value: 5, at: 0 })
     const id = actor.getSnapshot().context.targets[0]?.id ?? 0
 
-    actor.send({ type: 'PAUSE' })
+    actor.send({ type: 'PAUSE', now: 0 })
     // In flight when the pause hit: dropping it here is what let a player pause a
     // target away, and taking a life for it would punish them for pausing.
-    actor.send({ type: 'TARGET_EXPIRED', id })
+    actor.send({ type: 'TARGET_EXPIRED', id, now: 0 })
     expect(actor.getSnapshot().context.targets).toHaveLength(1)
     expect(actor.getSnapshot().context.lives).toBe(3)
   })
@@ -83,9 +83,9 @@ describe('pausing', () => {
     actor.send({ type: 'ADD_TARGET', value: 5, at: 0 })
     const id = actor.getSnapshot().context.targets[0]?.id ?? 0
 
-    actor.send({ type: 'PAUSE' })
-    actor.send({ type: 'RESUME' })
-    actor.send({ type: 'TARGET_EXPIRED', id })
+    actor.send({ type: 'PAUSE', now: 0 })
+    actor.send({ type: 'RESUME', now: 0 })
+    actor.send({ type: 'TARGET_EXPIRED', id, now: 0 })
     expect(actor.getSnapshot().context.targets).toHaveLength(0)
     expect(actor.getSnapshot().context.lives).toBe(2)
   })
@@ -114,9 +114,9 @@ describe('strikes', () => {
     actor.send({ type: 'PRESS', index: 8, delta: 1, now: 0 })
     expect(actor.getSnapshot().context.strikes).toBe(1)
 
-    actor.send({ type: 'PAUSE' })
+    actor.send({ type: 'PAUSE', now: 0 })
     actor.send({ type: 'MENU' })
-    actor.send({ type: 'START' })
+    actor.send({ type: 'START', now: 0 })
     expect(actor.getSnapshot().context.strikes).toBe(0)
   })
 })
@@ -134,6 +134,65 @@ describe('accuracy streak (second optimal)', () => {
     actor.send({ type: 'ADD_TARGET', value: 18, at: 0 })
     actor.send({ type: 'PRESS', index: 8, delta: 1, now: 0 })
     expect(actor.getSnapshot().context.streak).toBe(2)
+  })
+})
+
+describe('accuracy life loss', () => {
+  // Four presses that cancel out (up, down, up, down on the ×1 key) waste four
+  // steps against whatever target is live without ever touching its sum, then the
+  // fifth reaches value=9 in one step on the ×9 key — five steps against a par of
+  // one is accuracyFactor(1, 5) = 0, well under the 20% floor.
+  const wasteThenHit = (actor: ReturnType<typeof start>) => {
+    actor.send({ type: 'PRESS', index: 0, delta: 1, now: 0 })
+    actor.send({ type: 'PRESS', index: 0, delta: -1, now: 0 })
+    actor.send({ type: 'PRESS', index: 0, delta: 1, now: 0 })
+    actor.send({ type: 'PRESS', index: 0, delta: -1, now: 0 })
+    actor.send({ type: 'PRESS', index: 8, delta: 1, now: 0 })
+  }
+
+  it('costs a life on a hit under 20% accuracy, and marks that hit', () => {
+    const actor = start('accuracy')
+    actor.send({ type: 'ADD_TARGET', value: 9, at: 0 })
+    wasteThenHit(actor)
+    const snap = actor.getSnapshot()
+    expect(snap.context.lives).toBe(2)
+    expect(snap.context.hitBatch.hits[0]?.costLife).toBe(true)
+  })
+
+  it('leaves lives and the mark alone on an ordinary hit', () => {
+    const actor = start('accuracy')
+    actor.send({ type: 'ADD_TARGET', value: 9, at: 0 })
+    actor.send({ type: 'PRESS', index: 8, delta: 1, now: 0 }) // par 1, userSteps 1 — optimal
+    const snap = actor.getSnapshot()
+    expect(snap.context.lives).toBe(3)
+    expect(snap.context.hitBatch.hits[0]?.costLife).toBe(false)
+  })
+
+  it('does not apply the rule outside Accuracy', () => {
+    // Same wasteful shape, but Speed has no accuracy-driven life loss — only an
+    // expired target costs a life there.
+    const actor = start('speed')
+    actor.send({ type: 'ADD_TARGET', value: 9, at: 0 })
+    wasteThenHit(actor)
+    const snap = actor.getSnapshot()
+    expect(snap.context.lives).toBe(3)
+    expect(snap.context.hitBatch.hits[0]?.costLife).toBe(false)
+  })
+
+  it('takes only one life when one press wastes two targets at once, and blames only the first', () => {
+    const actor = start('accuracy')
+    // Two targets sharing the same value, both wasted identically — one press clears
+    // both, and only one heart should go for it.
+    actor.send({ type: 'ADD_TARGET', value: 9, at: 0 })
+    actor.send({ type: 'ADD_TARGET', value: 9, at: 0 })
+    wasteThenHit(actor)
+    const snap = actor.getSnapshot()
+    expect(snap.context.lives).toBe(2)
+    const hits = snap.context.hitBatch.hits
+    expect(hits).toHaveLength(2)
+    expect(hits.filter((h) => h.costLife)).toHaveLength(1)
+    expect(hits[0]?.costLife).toBe(true)
+    expect(hits[1]?.costLife).toBe(false)
   })
 })
 
@@ -179,7 +238,7 @@ describe('speed streak (fast trigger)', () => {
 
     actor.send({ type: 'ADD_TARGET', value: 18, at: 0 })
     const id = actor.getSnapshot().context.targets[0]?.id ?? 0
-    actor.send({ type: 'TARGET_EXPIRED', id })
+    actor.send({ type: 'TARGET_EXPIRED', id, now: 0 })
     expect(actor.getSnapshot().context.streak).toBe(0)
   })
 
@@ -312,9 +371,9 @@ describe('a new run does not inherit the last one', () => {
     const landed = actor.getSnapshot().context.hitBatch
     expect(landed.hits).toHaveLength(1)
 
-    actor.send({ type: 'PAUSE' })
+    actor.send({ type: 'PAUSE', now: 0 })
     actor.send({ type: 'MENU' })
-    actor.send({ type: 'START' })
+    actor.send({ type: 'START', now: 0 })
     const fresh = actor.getSnapshot().context.hitBatch
     // Emptied, so nothing describes a press from the previous run — but the seq
     // keeps climbing, because the UI keys its animations on it.
@@ -333,11 +392,11 @@ describe('a new run does not inherit the last one', () => {
     for (const value of [100, 101, 102]) {
       actor.send({ type: 'ADD_TARGET', value, at: 0 })
       const id = actor.getSnapshot().context.targets[0]?.id ?? 0
-      actor.send({ type: 'TARGET_EXPIRED', id })
+      actor.send({ type: 'TARGET_EXPIRED', id, now: 0 })
     }
     expect(actor.getSnapshot().value).toBe('gameOver')
 
-    actor.send({ type: 'RESTART' })
+    actor.send({ type: 'RESTART', now: 0 })
     expect(actor.getSnapshot().context.hitBatch.hits).toEqual([])
   })
 
@@ -351,10 +410,101 @@ describe('a new run does not inherit the last one', () => {
     expect(cleanHitReason(actor.getSnapshot().context.hitBatch.hits)).not.toBeNull()
 
     // Leaving a run goes through pause: MENU is not handled while playing.
-    actor.send({ type: 'PAUSE' })
+    actor.send({ type: 'PAUSE', now: 0 })
     actor.send({ type: 'MENU' })
     actor.send({ type: 'SET_MODE', mode: 'trainee' })
-    actor.send({ type: 'START' })
+    actor.send({ type: 'START', now: 0 })
     expect(cleanHitReason(actor.getSnapshot().context.hitBatch.hits)).toBeNull()
+  })
+})
+
+describe('run clock', () => {
+  const started = () => {
+    const actor = createActor(gameMachine)
+    actor.start()
+    actor.send({ type: 'SET_MODE', mode: 'accuracy' })
+    actor.send({ type: 'START', now: 1000 })
+    return actor
+  }
+
+  it('starts at zero', () => {
+    const actor = started()
+    expect(actor.getSnapshot().context.elapsedMs).toBe(0)
+  })
+
+  it('freezes at whatever it reached the instant PAUSE lands', () => {
+    const actor = started()
+    actor.send({ type: 'PAUSE', now: 6000 })
+    expect(actor.getSnapshot().context.elapsedMs).toBe(5000)
+  })
+
+  it('does not count time spent in the pause menu', () => {
+    const actor = started()
+    actor.send({ type: 'PAUSE', now: 6000 }) // 5s played
+    actor.send({ type: 'RESUME', now: 30_000 }) // 24s in the pause menu, uncounted
+    actor.send({ type: 'PAUSE', now: 33_000 }) // 3s more played
+    expect(actor.getSnapshot().context.elapsedMs).toBe(8000)
+  })
+
+  it('finalizes on a PRESS that ends the run', () => {
+    // Accuracy takes a life for a hit under 20% accuracy. Two expiries bring lives
+    // to one, then a hit wasted enough to cost the last one ends the run on PRESS
+    // rather than on an expiry — the branch TARGET_EXPIRED does not cover.
+    const actor = started()
+    for (const at of [1500, 2500]) {
+      actor.send({ type: 'ADD_TARGET', value: 100, at })
+      const id = actor.getSnapshot().context.targets[0]?.id ?? 0
+      actor.send({ type: 'TARGET_EXPIRED', id, now: at })
+    }
+    expect(actor.getSnapshot().context.lives).toBe(1)
+
+    // par 1 (index 8, weight 9, from an empty grid). Four wasted steps that net back
+    // to zero, then the hit: userSteps 5 against par 1 is well under 20% accuracy.
+    actor.send({ type: 'ADD_TARGET', value: 9, at: 2500 })
+    actor.send({ type: 'PRESS', index: 0, delta: 1, now: 3000 })
+    actor.send({ type: 'PRESS', index: 0, delta: -1, now: 3100 })
+    actor.send({ type: 'PRESS', index: 0, delta: 1, now: 3200 })
+    actor.send({ type: 'PRESS', index: 0, delta: -1, now: 3300 })
+    actor.send({ type: 'PRESS', index: 8, delta: 1, now: 4000 })
+
+    expect(actor.getSnapshot().value).toBe('gameOver')
+    expect(actor.getSnapshot().context.elapsedMs).toBe(3000)
+  })
+
+  it('finalizes on a SET_CELL that ends the run', () => {
+    const actor = started()
+    for (const at of [1500, 2500]) {
+      actor.send({ type: 'ADD_TARGET', value: 100, at })
+      const id = actor.getSnapshot().context.targets[0]?.id ?? 0
+      actor.send({ type: 'TARGET_EXPIRED', id, now: at })
+    }
+    expect(actor.getSnapshot().context.lives).toBe(1)
+
+    // SET_CELL to the value already there still counts as a step against the target
+    // — the grid does not move, but the press did — so four calls waste four steps
+    // as plainly as four PRESSes would.
+    actor.send({ type: 'ADD_TARGET', value: 9, at: 2500 })
+    for (const now of [3000, 3100, 3200, 3300]) {
+      actor.send({ type: 'SET_CELL', index: 0, value: 0, now })
+    }
+    actor.send({ type: 'SET_CELL', index: 8, value: 1, now: 4000 })
+
+    expect(actor.getSnapshot().value).toBe('gameOver')
+    expect(actor.getSnapshot().context.elapsedMs).toBe(3000)
+  })
+
+  it('resets to zero on RESTART, timed from the restart rather than the first START', () => {
+    const actor = started()
+    for (const at of [1500, 2500, 3500]) {
+      actor.send({ type: 'ADD_TARGET', value: 100, at })
+      const id = actor.getSnapshot().context.targets[0]?.id ?? 0
+      actor.send({ type: 'TARGET_EXPIRED', id, now: at })
+    }
+    expect(actor.getSnapshot().value).toBe('gameOver')
+
+    actor.send({ type: 'RESTART', now: 10_000 })
+    expect(actor.getSnapshot().context.elapsedMs).toBe(0)
+    actor.send({ type: 'PAUSE', now: 10_500 })
+    expect(actor.getSnapshot().context.elapsedMs).toBe(500)
   })
 })

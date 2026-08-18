@@ -44,3 +44,57 @@ export function nextChallenge(mode: Mode, difficulty: Difficulty): Challenge {
   // "STEP UP" would be a lie sideways: Speed is not above Accuracy, just different.
   return { mode: other, difficulty, label: `TRY ${MODES[other].label}` }
 }
+
+const PREV_DIFFICULTY = {
+  // Nothing below Easy at the difficulty level — the ladder continues into Trainee.
+  easy: null,
+  hard: 'easy',
+  extreme: 'hard',
+} as const satisfies Record<Difficulty, Difficulty | null>
+
+// Every game over on a scored mode is the same event — three lives spent — so it
+// cannot say *how* the run went wrong the way `earnedChallenge`'s streak share does.
+// Hit count is the one number that still can: a handful of hits before the board wins
+// says the pace outran the player before they found any rhythm, whichever mode it was.
+const STRUGGLE_HITS = 3
+
+// Whether the run is worth easing off from. `earnedChallenge` requires hits > 0
+// because daring someone who did nothing is absurd; here zero hits is the clearest
+// case there is — a run that landed nothing is exactly the one an easier board or
+// Trainee is for.
+export const struggledRun = (hits: number): boolean => hits < STRUGGLE_HITS
+
+export function easierChallenge(mode: Mode, difficulty: Difficulty): Challenge {
+  const easier = PREV_DIFFICULTY[difficulty]
+  if (easier !== null) {
+    return {
+      mode,
+      difficulty: easier,
+      label: `STEP DOWN TO ${DIFFICULTIES[easier].label}`,
+    }
+  }
+  // Already on Easy — Trainee is the full step down: no clock, no lives, nothing left
+  // to ease. Difficulty stays as it was and is ignored on the Trainee board.
+  return { mode: 'trainee', difficulty, label: 'TRY TRAINEE' }
+}
+
+// What the game-over screen offers, if anything — up on a run that showed it was
+// ready, down on one that did not get going, and nothing for the ordinary run between
+// the two.
+//
+// The two thresholds can both pass on a short, streaky run — a couple of hits, both
+// optimal, before the board won anyway. Landing clean hits at all outranks landing few
+// of them, so the dare wins that tie: a player who is connecting deserves encouragement
+// over a suggestion to ease off. One function rather than each caller checking both in
+// this order is what keeps the offer and the analytics event that announces it from
+// ever quietly disagreeing.
+export function runChallenge(
+  mode: Mode,
+  difficulty: Difficulty,
+  hits: number,
+  strikes: number,
+): Challenge | null {
+  if (earnedChallenge(hits, strikes)) return nextChallenge(mode, difficulty)
+  if (struggledRun(hits)) return easierChallenge(mode, difficulty)
+  return null
+}

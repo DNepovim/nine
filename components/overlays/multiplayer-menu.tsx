@@ -2,7 +2,7 @@ import { LinearGradient } from 'expo-linear-gradient'
 import { Pressable, Text, View } from 'react-native'
 
 import { Screen } from '@/components/screen'
-import { DARK_MODE_GRADIENT } from '@/machines/game'
+import { DARK_MULTIPLAYER_GRADIENT } from '@/machines/game'
 import type { MultiMode } from '@/types/multiplayer'
 
 const shadow = {
@@ -30,7 +30,7 @@ export function MultiplayerMenu({
           style={shadow}
         >
           <LinearGradient
-            colors={[...DARK_MODE_GRADIENT[mode]]}
+            colors={[...DARK_MULTIPLAYER_GRADIENT[mode]]}
             start={{ x: 0, y: 0.5 }}
             end={{ x: 1, y: 0.5 }}
             className="items-center py-4"

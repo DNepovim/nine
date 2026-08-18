@@ -24,6 +24,7 @@ export function TraineeStats({
   batch,
   praise,
   route,
+  routeStart,
   routeTarget,
 }: {
   hits: number
@@ -33,7 +34,9 @@ export function TraineeStats({
   // The optimal way to the target the line above is about. Empty for every line that
   // is not a debrief, and for a debrief the coach could not solve.
   route: readonly RouteStep[]
-  // The number that route reaches, shown beside it — the target itself is gone from the
+  // The sum the route starts from, shown to its left.
+  routeStart: number | null
+  // The sum the route reaches, shown to its right — the target itself is gone from the
   // board by then.
   routeTarget: number | null
 }) {
@@ -52,7 +55,7 @@ export function TraineeStats({
       </View>
       <HitPraiseLine message={praise} />
       {/* Under the words, as the way to reach what they just described. */}
-      <RouteHint route={route} target={routeTarget} />
+      <RouteHint route={route} start={routeStart} target={routeTarget} />
     </View>
   )
 }

@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 
 import { debriefLine, outranks, pressLine, pressPool } from './coach-lines'
 
-const VERDICTS = ['lost', 'tapping', 'coarse'] as const
+const VERDICTS = ['lost', 'tapping', 'coarse', 'wrap'] as const
 
 // The cap the praise lines already keep: one row of 10px mono under the stat row,
 // read at a glance mid-run.
@@ -76,6 +76,7 @@ describe('outranks', () => {
   it('lets a habit take the line from a debrief', () => {
     expect(outranks('tapping', 'debrief')).toBe(true)
     expect(outranks('coarse', 'debrief')).toBe(true)
+    expect(outranks('wrap', 'debrief')).toBe(true)
   })
 
   it('does not let a debrief take the line from a habit', () => {

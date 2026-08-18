@@ -19,6 +19,7 @@ const LINES = {
   lost: ['Going the wrong way', 'That’s not closer', 'Try a different key'],
   tapping: ['Swipe instead of tapping', 'A swipe gets there', 'Swipe to 0 or 9'],
   coarse: ['Start with the big keys', 'Big keys first', 'Go big, then fine-tune'],
+  wrap: ['A tap is quicker', 'Tap is quicker here', 'One tap beats a swipe'],
 } as const satisfies Record<PressVerdict, readonly [string, ...string[]]>
 
 export const pressPool = (verdict: PressVerdict): readonly string[] => LINES[verdict]
@@ -49,6 +50,7 @@ export function debriefLine(steps: number, par: number): string {
 const RANK = {
   tapping: 0,
   coarse: 0,
+  wrap: 0,
   debrief: 1,
   lost: 2,
 } as const satisfies Record<CoachKind, number>

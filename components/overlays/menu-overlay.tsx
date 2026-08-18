@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons'
 import { LinearGradient } from 'expo-linear-gradient'
 import { isNonEmptyString, isOneOf } from 'narrowland'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Platform, Pressable, Share, Text, View } from 'react-native'
 import Animated, {
   Easing,
@@ -13,14 +13,17 @@ import Animated, {
 
 import { Screen } from '@/components/screen'
 import { useMyMedals } from '@/hooks/use-my-medals'
+import { useOnline } from '@/hooks/use-online'
 import { useTheme } from '@/hooks/use-theme'
 import { useViewport } from '@/hooks/use-viewport'
 import { cn } from '@/lib/cn'
 import { inviteMessage, SHARE_URL } from '@/lib/invite-message'
 import {
   DARK_MODE_GRADIENT,
+  DARK_MULTIPLAYER_GRADIENT,
   lerpColor,
   MODE_GRADIENT,
+  MULTIPLAYER_GRADIENT,
   type Difficulty,
   type Mode,
 } from '@/machines/game'
@@ -50,6 +53,7 @@ export function MenuOverlay({
   joinError,
   initialPlayMode = 'alone',
   onPlay,
+  onPlayModeChange,
   onSetMode,
   onSetDifficulty,
   onOpenAdvanced,
@@ -68,6 +72,12 @@ export function MenuOverlay({
   joinError: string | null
   initialPlayMode?: PlayMode
   onPlay: () => void
+  // Fired on every ALONE / WITH FRIENDS toggle, not just at mount — this screen
+  // unmounts under Options and How to Play (they render above it), which drops its
+  // local `playMode` state. The caller mirrors this into whatever it feeds back as
+  // `initialPlayMode`, so remounting after either lands back on the tab the player
+  // left, rather than always defaulting to ALONE.
+  onPlayModeChange?: (playMode: PlayMode) => void
   onSetMode: (mode: Mode) => void
   onSetDifficulty: (difficulty: Difficulty) => void
   onOpenAdvanced: () => void
@@ -79,6 +89,9 @@ export function MenuOverlay({
   const { colorScheme } = useTheme()
   const dimColor = colorScheme === 'dark' ? '#504e6e' : '#aaa69e'
   const medals = useMyMedals(userId)
+  // Creating or joining a room is a Supabase round trip either way, so both are
+  // dead ends with no connection — disabled rather than left to fail after a tap.
+  const online = useOnline()
   const [focused, setFocused] = useState<Mode | 'arcade'>(gameMode)
   const [playMode, setPlayMode] = useState<PlayMode>(initialPlayMode)
   const [gameCode, setGameCode] = useState('')
@@ -88,9 +101,17 @@ export function MenuOverlay({
   // Screen has px-4 on each side (32px total); use as fallback before onLayout fires.
   const effectivePanelWidth = panelWidth > 0 ? panelWidth : windowWidth - 32
 
+  // The title and the WITH FRIENDS pill read multiplayer's own pair while that tab is
+  // open, rather than whichever singleplayer mode `focused` last was — pinned to
+  // accuracy since a room is always created as accuracy.
+  const activeMode: Mode | 'arcade' | 'multiplayer' =
+    playMode === 'friends' ? 'multiplayer' : focused
+  const activeGradient =
+    playMode === 'friends' ? MULTIPLAYER_GRADIENT.accuracy : MODE_GRADIENT[focused]
+
   const gradPhase = useSharedValue(0)
-  const gradStartSv = useSharedValue<string>(MODE_GRADIENT[gameMode][0])
-  const gradEndSv = useSharedValue<string>(MODE_GRADIENT[gameMode][1])
+  const gradStartSv = useSharedValue<string>(activeGradient[0])
+  const gradEndSv = useSharedValue<string>(activeGradient[1])
 
   useEffect(() => {
     gradPhase.value = withRepeat(
@@ -101,9 +122,9 @@ export function MenuOverlay({
   }, [gradPhase])
 
   useEffect(() => {
-    gradStartSv.value = MODE_GRADIENT[focused][0]
-    gradEndSv.value = MODE_GRADIENT[focused][1]
-  }, [focused, gradStartSv, gradEndSv])
+    gradStartSv.value = activeGradient[0]
+    gradEndSv.value = activeGradient[1]
+  }, [activeGradient, gradStartSv, gradEndSv])
 
   // Highlight the remembered mode: `focused` is seeded before the persisted mode
   // finishes hydrating into the machine, so re-sync when gameMode lands.
@@ -111,12 +132,27 @@ export function MenuOverlay({
     setFocused(gameMode)
   }, [gameMode])
 
-  // Auto-join when 4 digits are entered.
+  // Auto-join when 4 digits are entered. Left on screen rather than cleared here —
+  // a wrong code stays put so `GameCodeInput` can show it was rejected before
+  // clearing it itself; a right one is moot, since joining swaps this whole screen
+  // out from under it.
+  //
+  // Guarded by the code itself, not just its length: `onJoinRoom` closes over
+  // `multiRoom`, which the room hook rebuilds as a fresh object every render, so
+  // this effect re-runs on renders the code never touched. Without the guard,
+  // `gameCode` sitting at 4 digits (as it now does until the flash clears it) would
+  // re-submit the same code on every one of those renders — each one flipping
+  // `joinError` null → message → null as its own attempt started and resolved,
+  // which is what was reading as a strobe.
+  const submittedCodeRef = useRef<string | null>(null)
   useEffect(() => {
-    if (gameCode.length === 4) {
-      onJoinRoom(gameCode)
-      setGameCode('')
+    if (gameCode.length !== 4) {
+      submittedCodeRef.current = null
+      return
     }
+    if (submittedCodeRef.current === gameCode) return
+    submittedCodeRef.current = gameCode
+    onJoinRoom(gameCode)
   }, [gameCode, onJoinRoom])
 
   const panelStyle = useAnimatedStyle(() => ({
@@ -125,6 +161,7 @@ export function MenuOverlay({
 
   const handlePlayModeSelect = (pm: PlayMode) => {
     setPlayMode(pm)
+    onPlayModeChange?.(pm)
     const index = pm === 'alone' ? 0 : 1
     panelOffset.value = withTiming(-index * effectivePanelWidth, {
       duration: 280,
@@ -159,16 +196,12 @@ export function MenuOverlay({
               <AnimatedLetter
                 key={i}
                 char={char}
-                color={lerpColor(
-                  MODE_GRADIENT[focused][0],
-                  MODE_GRADIENT[focused][1],
-                  i / 3,
-                )}
+                color={lerpColor(activeGradient[0], activeGradient[1], i / 3)}
                 tBase={i / 3}
                 gradStart={gradStartSv}
                 gradEnd={gradEndSv}
                 gradPhase={gradPhase}
-                mode={focused}
+                mode={activeMode}
                 delay={i * 80}
                 letterIndex={i}
               />
@@ -237,13 +270,39 @@ export function MenuOverlay({
               </View>
 
               {/* Panel 1: WITH FRIENDS */}
-              <View style={{ width: effectivePanelWidth }} className="items-center">
+              <View
+                style={{ width: effectivePanelWidth }}
+                className="relative items-center"
+              >
+                {/* Fixed to accuracy's pair rather than `focused`: onCreateRoom always
+                    creates an accuracy room (`app/(tabs)/index.tsx`), regardless of
+                    which singleplayer mode this tab happened to inherit. */}
                 <GameCodeInput
                   value={gameCode}
                   onChange={setGameCode}
-                  accentColors={MODE_GRADIENT[focused] as [string, string]}
+                  accentColors={MULTIPLAYER_GRADIENT.accuracy as [string, string]}
                   joinError={joinError}
                 />
+                {/* Covers the code entry rather than disabling it piece by piece —
+                    creating or joining a room is a Supabase round trip either way, so
+                    nothing under here can do anything useful without a connection. */}
+                {!online && (
+                  <View className="absolute inset-0 items-center justify-center gap-3 bg-surface px-6">
+                    <Ionicons name="cloud-offline-outline" size={32} color={dimColor} />
+                    <Text
+                      selectable={false}
+                      className="font-mono text-[11px] font-black tracking-[2px] text-dim"
+                    >
+                      YOU'RE OFFLINE
+                    </Text>
+                    <Text
+                      selectable={false}
+                      className="text-center font-mono text-[10px] font-bold leading-[16px] tracking-[0.5px] text-dim"
+                    >
+                      CONNECT TO THE INTERNET TO PLAY WITH FRIENDS
+                    </Text>
+                  </View>
+                )}
               </View>
             </Animated.View>
           </View>
@@ -280,11 +339,12 @@ export function MenuOverlay({
           ) : (
             <Pressable
               onPress={onCreateRoom}
-              className="w-56 overflow-hidden rounded-2xl"
+              disabled={!online}
+              className={cn('w-56 overflow-hidden rounded-2xl', !online && 'opacity-40')}
               style={shadow}
             >
               <LinearGradient
-                colors={[...DARK_MODE_GRADIENT[gameMode]]}
+                colors={[...DARK_MULTIPLAYER_GRADIENT.accuracy]}
                 start={{ x: 0, y: 0.5 }}
                 end={{ x: 1, y: 0.5 }}
                 className="items-center py-4"

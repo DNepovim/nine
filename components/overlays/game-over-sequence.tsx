@@ -30,6 +30,7 @@ export function GameOverSequence({
   nickname,
   score,
   hits,
+  gameTimeMs,
   strikes,
   medals,
   screen,
@@ -51,6 +52,7 @@ export function GameOverSequence({
   nickname: string | null
   score: number
   hits: number
+  gameTimeMs: number
   strikes: number
   medals: readonly Period[]
   // How loudly this game over celebrates — latched with the run upstream.
@@ -93,6 +95,7 @@ export function GameOverSequence({
           nickname={nickname}
           score={score}
           hits={hits}
+          gameTimeMs={gameTimeMs}
           strikes={strikes}
           record={medals[0] ?? null}
           screen={screen}

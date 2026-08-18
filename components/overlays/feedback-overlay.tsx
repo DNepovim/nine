@@ -1,3 +1,4 @@
+import { Ionicons } from '@expo/vector-icons'
 import { LinearGradient } from 'expo-linear-gradient'
 import { isNonEmptyString } from 'narrowland'
 import { useState } from 'react'
@@ -15,7 +16,7 @@ import { SPECTRUM } from '@/constants/colors'
 import { useTheme } from '@/hooks/use-theme'
 import { track } from '@/lib/analytics'
 import { BUILD_ID } from '@/lib/analytics-events'
-import type { Difficulty, Mode } from '@/machines/game'
+import { MODE_GRADIENT, type Difficulty, type Mode } from '@/machines/game'
 
 // The same dialog dress as the what's-new popup — gradient edge, surface card,
 // dot-menu close — so the two read as one family of interruptions.
@@ -47,6 +48,7 @@ export function FeedbackOverlay({
 }) {
   const { colorScheme } = useTheme()
   const dotColor = colorScheme === 'dark' ? '#2A2B44' : '#D4D0C8'
+  const modeColor = MODE_GRADIENT[gameMode][0]
   const [message, setMessage] = useState('')
   const [sent, setSent] = useState(false)
 
@@ -98,12 +100,16 @@ export function FeedbackOverlay({
             style={{ borderRadius: RADIUS - BORDER }}
           >
             <View className="mb-3 flex-row items-center justify-between">
-              <Text
-                selectable={false}
-                className="font-mono text-[11px] font-bold tracking-[2px] text-dim"
-              >
-                FEEDBACK
-              </Text>
+              <View className="flex-row items-center gap-1.5">
+                <Ionicons name="chatbox-outline" size={14} color={modeColor} />
+                <Text
+                  selectable={false}
+                  className="font-mono text-[11px] font-bold tracking-[2px]"
+                  style={{ color: modeColor }}
+                >
+                  FEEDBACK
+                </Text>
+              </View>
               <MenuButton
                 visible
                 paused

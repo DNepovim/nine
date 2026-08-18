@@ -22,21 +22,33 @@ import {
 
 const MODE_ITEMS = [...MODE_ORDER, 'arcade'] as (Mode | 'arcade')[]
 
-function pillColors(f: Mode | 'arcade'): [string, string] {
-  return MODE_GRADIENT[f] as [string, string]
-}
-
 export function ModeSelector({
   focused,
   onSelect,
   gradPhase,
   items = MODE_ITEMS,
+  // Overrides MODE_GRADIENT per key — multiplayer's waiting room and results pass
+  // their own accuracy/speed pair here rather than the singleplayer one, leaving
+  // trainee/arcade (never in a multiplayer item list) on the default.
+  gradient,
+  // Which stop of the (possibly overridden) pair labels an inactive tab. 0 for
+  // singleplayer, where each mode's own start stop already tells the tabs apart.
+  // Multiplayer's pair shares its start stop across both modes, so it passes 1 —
+  // the dominant stop borrowed from singleplayer — to keep the tabs distinguishable
+  // before either is tapped.
+  accentIndex = 0,
 }: {
   focused: Mode | 'arcade'
   onSelect: (m: Mode | 'arcade') => void
   gradPhase: SharedValue<number>
   items?: (Mode | 'arcade')[]
+  gradient?: Partial<Record<Mode | 'arcade', readonly [string, string]>>
+  accentIndex?: 0 | 1
 }) {
+  const source = { ...MODE_GRADIENT, ...gradient }
+  const pillColors = (f: Mode | 'arcade'): [string, string] =>
+    source[f] as [string, string]
+
   const tabLayouts = useRef<{ x: number; width: number }[]>([])
   const bgLeft = useSharedValue(-999)
   const bgRight = useSharedValue(-999)
@@ -162,7 +174,7 @@ export function ModeSelector({
                 <Text
                   selectable={false}
                   className="font-mono text-[11px] font-black tracking-[1.5px]"
-                  style={{ color: isActive ? '#FFFFFF' : MODE_GRADIENT.arcade[0] }}
+                  style={{ color: isActive ? '#FFFFFF' : source.arcade[0] }}
                 >
                   {ARCADE_TEASER.label}
                 </Text>
@@ -191,7 +203,7 @@ export function ModeSelector({
               <Text
                 selectable={false}
                 className="font-mono text-[11px] font-black tracking-[1.5px]"
-                style={{ color: isActive ? '#FFFFFF' : MODE_GRADIENT[m][0] }}
+                style={{ color: isActive ? '#FFFFFF' : source[m][accentIndex] }}
               >
                 {MODES[m].label}
               </Text>
