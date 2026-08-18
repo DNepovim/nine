@@ -7,6 +7,18 @@ import type { Release } from '@/types/news'
 // different announcement or players who already saw the old one will miss it.
 export const RELEASES: Release[] = [
   {
+    date: '2026-08-18',
+    items: [
+      {
+        id: 'feedback-bookmark',
+        icon: 'chatbox-outline',
+        accent: '#4C7EFF',
+        title: 'Tell me what you think',
+        body: 'There is a little FEEDBACK tab tucked into the bottom-right corner, on every screen except a live run. Anything goes — what broke, what annoyed you, what you wish the game did. It lands straight with the person who makes Nine, and it is read.',
+      },
+    ],
+  },
+  {
     date: '2026-08-17',
     items: [
       {

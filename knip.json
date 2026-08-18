@@ -7,6 +7,6 @@
     "**/*.test.ts"
   ],
   "project": ["**/*.{ts,tsx}"],
-  "ignoreDependencies": ["babel-preset-expo"],
+  "ignoreDependencies": ["babel-preset-expo", "posthog-js"],
   "ignore": ["**/*.web.ts", "**/*.web.tsx"]
 }

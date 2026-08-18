@@ -15,6 +15,7 @@ import Animated, {
 } from 'react-native-reanimated'
 
 import DSEG7Font from '@/assets/fonts/DSEG7Classic-Bold.ttf'
+import { FeedbackBookmark } from '@/components/feedback-bookmark'
 import { AnnouncementEffect } from '@/components/game/announcement-effect'
 import { BEST_SCORES_HEIGHT, BestScoresLine } from '@/components/game/best-scores-line'
 import { Confetti } from '@/components/game/confetti'
@@ -28,6 +29,7 @@ import { StepUpToast } from '@/components/game/step-up-toast'
 import { TargetCard } from '@/components/game/target-card'
 import { TraineeStats } from '@/components/game/trainee-stats'
 import { AdvancedOptionsOverlay } from '@/components/overlays/advanced-options-overlay'
+import { FeedbackOverlay } from '@/components/overlays/feedback-overlay'
 import { GameOverSequence } from '@/components/overlays/game-over-sequence'
 import { HowToPlayOverlay } from '@/components/overlays/how-to-play-overlay'
 import { InstallOverlay } from '@/components/overlays/install-overlay'
@@ -68,9 +70,12 @@ import { useTargetSpawner } from '@/hooks/use-target-spawner'
 import { useTheme } from '@/hooks/use-theme'
 import { useTraineeCoach } from '@/hooks/use-trainee-coach'
 import { useWhatsNew } from '@/hooks/use-whats-new'
+import { identify, track } from '@/lib/analytics'
+import type { AnalyticsEvents } from '@/lib/analytics-events'
 import { barFor, isOpenable, type Leaders, type Period } from '@/lib/announcements'
 import { recordScreen, type RecordScreen } from '@/lib/champions'
 import { leaderOf } from '@/lib/leaderboard'
+import { earnedChallenge, nextChallenge } from '@/lib/next-challenge'
 import { heldPeriods, medalPeriods } from '@/lib/record-medals'
 import { STEP_UP_BOARD } from '@/lib/step-up'
 import { valueProgress } from '@/lib/value-progress'
@@ -120,6 +125,22 @@ const TRAINEE_CONFETTI = [MODE_GRADIENT.trainee[0]] as const
 // reloaded on the spot, and an app that restarts the instant you reach the menu reads as
 // a crash. Anything they start inside the window cancels it.
 const UPDATE_SETTLE_MS = 2500
+
+// The menu-level overlays, one open at a time. 'none' means the screen under them —
+// the intro or the pause screen — is what shows. Feedback is not here: it is a
+// dialog over whatever is showing, not a screen of its own.
+type MenuOverlayName = 'none' | 'advanced' | 'howToPlay' | 'news'
+
+// Overlay names → the screen names the warehouse knows, so the event table stays the
+// only place that spells them. 'none' has no row: it is a closing, not an opening.
+const OVERLAY_SCREENS = {
+  advanced: 'options',
+  howToPlay: 'how_to_play',
+  news: 'news',
+} as const satisfies Record<
+  Exclude<MenuOverlayName, 'none'>,
+  AnalyticsEvents['screen_opened']['screen']
+>
 
 // Where the menu button sits, level with the NINE row. Trainee draws no
 // best-scores strip, so everything below it — the button included — comes up by
@@ -200,9 +221,15 @@ export default function GameScreen() {
   // Which menu-level overlay is open. Only one shows at a time, and the menu
   // itself is hidden while any of them is open — a single source of truth avoids
   // z-order/gating clashes between separate booleans.
-  const [menuOverlay, setMenuOverlay] = useState<
-    'none' | 'advanced' | 'howToPlay' | 'news'
-  >('none')
+  const [menuOverlay, setMenuOverlay] = useState<MenuOverlayName>('none')
+  // The feedback dialog floats over whatever is showing rather than replacing it, so
+  // it is its own boolean instead of a member of the overlay union above.
+  const [feedbackOpen, setFeedbackOpen] = useState(false)
+  // One event per overlay actually opened. 'none' is a closing, not an opening.
+  useEffect(() => {
+    if (menuOverlay === 'none') return
+    track('screen_opened', { screen: OVERLAY_SCREENS[menuOverlay] })
+  }, [menuOverlay])
   const whatsNew = useWhatsNew()
   const installPrompt = useInstallPrompt()
   const { ready: updateReady, apply: applyUpdate } = useAppUpdate()
@@ -214,6 +241,14 @@ export default function GameScreen() {
   }, [isPlaying])
 
   const { userId, nickname, isReady, updateNickname } = useSupabaseAuth()
+
+  // Analytics reuses the identity the boards already rank — the anonymous Supabase user
+  // id — so an event can be read next to the score it produced. Re-runs when the
+  // nickname lands or changes, which just refreshes the person's properties.
+  useEffect(() => {
+    if (userId !== null) identify(userId, nickname)
+  }, [userId, nickname])
+
   const { submit: submitScore } = useScoreSubmission(userId, nickname, isReady)
   const [showNicknameModal, setShowNicknameModal] = useState(false)
 
@@ -258,6 +293,21 @@ export default function GameScreen() {
   // Open while the transitional screen is up. The run is paused behind it rather than
   // abandoned, so backing out through the intro leaves nothing half-finished.
   const [stepUpOpen, setStepUpOpen] = useState(false)
+  // The toast appearing is the offer being made; latched on its rising edge so the
+  // withdraw-and-reoffer dance inside one run cannot double-count.
+  const stepUpOfferedRef = useRef(false)
+  useEffect(() => {
+    const offered = stepUp.message !== null
+    if (offered && !stepUpOfferedRef.current) {
+      track('challenge_offered', {
+        mode,
+        difficulty,
+        to_mode: STEP_UP_BOARD.mode,
+        to: STEP_UP_BOARD.difficulty,
+      })
+    }
+    stepUpOfferedRef.current = offered
+  }, [stepUp.message, mode, difficulty])
   const coach = useTraineeCoach({
     inRun,
     mode,
@@ -325,18 +375,38 @@ export default function GameScreen() {
         week: bestWeek,
         ever: bestEver,
       })
+      const screen = isOneOf(mode, ['accuracy', 'speed'])
+        ? recordScreen({
+            record: taken[0] ?? null,
+            mode,
+            difficulty,
+            userId,
+            champions,
+          })
+        : 'plain'
       setRunMedals(taken)
-      setRunScreen(
-        isOneOf(mode, ['accuracy', 'speed'])
-          ? recordScreen({
-              record: taken[0] ?? null,
-              mode,
-              difficulty,
-              userId,
-              champions,
-            })
-          : 'plain',
-      )
+      setRunScreen(screen)
+      track('run_finished', {
+        mode,
+        difficulty,
+        score: state.context.score,
+        hits: state.context.hits,
+        strikes: state.context.strikes,
+        records: taken,
+        screen,
+        personal_best: crossed.includes('record'),
+      })
+      // Mirrors the game-over screen's own decision — see game-over-overlay.tsx, which
+      // computes the same dare from the same run. Offered here, accepted in onChallenge.
+      if (earnedChallenge(state.context.hits, state.context.strikes)) {
+        const dare = nextChallenge(mode, difficulty)
+        track('challenge_offered', {
+          mode,
+          difficulty,
+          to_mode: dare.mode,
+          to: dare.difficulty,
+        })
+      }
     }
     // Refresh on both edges of game over so other players' runs appear. Our own score
     // no longer depends on this landing: it is recorded on the device as it is
@@ -354,6 +424,7 @@ export default function GameScreen() {
     difficulty,
     state.context.score,
     state.context.hits,
+    state.context.strikes,
     crossed,
     bestToday,
     bestWeek,
@@ -514,6 +585,17 @@ export default function GameScreen() {
   const showMultiResults = isNotNull(multiRoom.room) && multiGame.phase === 'results'
   const isMultiActive = showMultiWaiting || showMultiGame || showMultiResults
 
+  // A shared run reaching its results screen is the run finishing, and the roster at
+  // that moment is who was in it. Edge-latched: the screen stays up while everyone
+  // reads it, and one run is one event.
+  const multiFinishedRef = useRef(false)
+  useEffect(() => {
+    if (showMultiResults && !multiFinishedRef.current) {
+      track('multiplayer_room', { action: 'finished', players: multiRoom.players.length })
+    }
+    multiFinishedRef.current = showMultiResults
+  }, [showMultiResults, multiRoom.players.length])
+
   // A new build waits on the device until the app lets it through, because the swap ends
   // in a reload. The intro with nothing open over it is the only place that costs
   // nothing: mid-run it would throw the run away, over an overlay it would lose whatever
@@ -626,6 +708,7 @@ export default function GameScreen() {
                 batch={hitBatch}
                 praise={celebration.message ?? coach.line}
                 route={coach.route}
+                routeTarget={coach.routeTarget}
               />
             )}
 
@@ -832,6 +915,7 @@ export default function GameScreen() {
           avgSpeed={avgSpeed}
           onPlayAgain={() => {
             send({ type: 'RESTART' })
+            track('run_started', { mode, difficulty, from: 'play_again' })
           }}
           onChallenge={(nextMode, nextDifficulty) => {
             // Both land before RESTART builds the fresh game, so it reads the board
@@ -839,6 +923,17 @@ export default function GameScreen() {
             send({ type: 'SET_MODE', mode: nextMode })
             send({ type: 'SET_DIFFICULTY', difficulty: nextDifficulty })
             send({ type: 'RESTART' })
+            track('challenge_accepted', {
+              mode,
+              difficulty,
+              to_mode: nextMode,
+              to: nextDifficulty,
+            })
+            track('run_started', {
+              mode: nextMode,
+              difficulty: nextDifficulty,
+              from: 'challenge',
+            })
           }}
           onMenu={() => {
             send({ type: 'MENU' })
@@ -862,6 +957,17 @@ export default function GameScreen() {
               send({ type: 'SET_DIFFICULTY', difficulty: STEP_UP_BOARD.difficulty })
               send({ type: 'START' })
               setStepUpOpen(false)
+              track('challenge_accepted', {
+                mode,
+                difficulty,
+                to_mode: STEP_UP_BOARD.mode,
+                to: STEP_UP_BOARD.difficulty,
+              })
+              track('run_started', {
+                mode: STEP_UP_BOARD.mode,
+                difficulty: STEP_UP_BOARD.difficulty,
+                from: 'challenge',
+              })
             }}
             onOtherMode={() => {
               // The intro with every board on offer, rather than the one we picked.
@@ -964,6 +1070,7 @@ export default function GameScreen() {
             onPlay={() => {
               setMenuInitialTab('alone')
               send({ type: 'START' })
+              track('run_started', { mode, difficulty, from: 'menu' })
             }}
             onSetMode={(next) => {
               send({ type: 'SET_MODE', mode: next })
@@ -982,6 +1089,28 @@ export default function GameScreen() {
             }}
             onCreateRoom={handleCreateRoom}
             onJoinRoom={handleJoinRoom}
+          />
+        )}
+
+        {/* ── Feedback bookmark and its dialog — every screen except a live run ── */}
+        {/* Mounted after the overlays so they draw over whichever one is up; a live
+            dial is the one place a tab a thumb could graze has no business being. */}
+        {!isPlaying && !showMultiGame && !feedbackOpen && (
+          <FeedbackBookmark
+            onPress={() => {
+              setFeedbackOpen(true)
+              track('screen_opened', { screen: 'feedback' })
+            }}
+          />
+        )}
+        {feedbackOpen && (
+          <FeedbackOverlay
+            gameMode={mode}
+            difficulty={difficulty}
+            score={state.context.score}
+            onClose={() => {
+              setFeedbackOpen(false)
+            }}
           />
         )}
 
@@ -1093,21 +1222,14 @@ export default function GameScreen() {
         {/* Last child and explicitly stacked: every overlay above is absolutely
             positioned and opaque, so a stage mounted earlier draws underneath the
             screen it is meant to be showing. Renders nothing until the picker on the
-            desk outside the frame chooses something. */}
+            desk outside the frame chooses something.
+            The stacking lives on the stage's own view rather than on a wrapper here.
+            A wrapper is mounted whether or not a screen is chosen, and a full-bleed
+            absolute view at zIndex 100 over the whole app takes every press — which
+            in a dev build left nothing on the screen clickable at all. */}
         {GalleryStage !== null && (
           <Suspense fallback={null}>
-            <View
-              style={{
-                position: 'absolute',
-                top: 0,
-                left: 0,
-                right: 0,
-                bottom: 0,
-                zIndex: 100,
-              }}
-            >
-              <GalleryStage />
-            </View>
+            <GalleryStage />
           </Suspense>
         )}
       </BoardProvider>

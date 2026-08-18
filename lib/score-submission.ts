@@ -1,5 +1,6 @@
 import { isEmptyArray } from 'narrowland'
 
+import { captureError } from '@/lib/analytics'
 import { isNetworkFailure, noteRequest } from '@/lib/connectivity'
 import { todayISO } from '@/lib/leaderboard-period'
 import {
@@ -44,7 +45,17 @@ async function upsertScore(userId: string, entry: LocalScore): Promise<Sent> {
   if (error === null) return 'published'
   // A retry re-sends the same row, which the server's no-downgrade trigger makes
   // harmless.
-  return isNetworkFailure(error.message) ? 'offline' : 'refused'
+  if (isNetworkFailure(error.message)) return 'offline'
+  // A refusal is the server rejecting a score the device believes is a new best —
+  // never expected, and invisible to the player, so it is exactly what error logging
+  // is for.
+  captureError(new Error(`score refused: ${error.message}`), {
+    mode: entry.mode,
+    difficulty: entry.difficulty,
+    day: entry.day,
+    score: entry.score,
+  })
+  return 'refused'
 }
 
 // Applies one send to the store. Publishing clears the entry from the queue; a refusal

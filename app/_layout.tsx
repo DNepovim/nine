@@ -6,7 +6,7 @@ import {
   ThemeProvider,
   type Theme,
 } from '@react-navigation/native'
-import { Stack } from 'expo-router'
+import { Stack, type ErrorBoundaryProps } from 'expo-router'
 import { StatusBar } from 'expo-status-bar'
 import { lazy, Suspense, useEffect, useState } from 'react'
 import { useWindowDimensions, View } from 'react-native'
@@ -15,9 +15,11 @@ import Animated, { useAnimatedStyle } from 'react-native-reanimated'
 
 import '@/global.css'
 
+import { CrashScreen } from '@/components/crash-screen'
 import { PhoneFrame } from '@/components/phone-frame'
 import { SplashScreen } from '@/components/splash-screen'
 import { AppThemeProvider, useTheme } from '@/hooks/use-theme'
+import { captureError, initAnalytics } from '@/lib/analytics'
 import { isDesktopViewport } from '@/lib/desktop'
 import { purgeRetiredStorage } from '@/lib/retired-storage'
 
@@ -32,6 +34,23 @@ const GallerySwitcher = __DEV__
 
 export const unstable_settings = {
   anchor: '(tabs)',
+}
+
+// The last line of error logging. PostHog's own `capture_exceptions` hears everything
+// that escapes to the window, but a render crash caught by a boundary never gets there —
+// so the boundary reports it itself, and the player gets a retry instead of a blank page.
+export function ErrorBoundary({ error, retry }: ErrorBoundaryProps) {
+  useEffect(() => {
+    captureError(error, { boundary: 'root' })
+  }, [error])
+
+  return (
+    <CrashScreen
+      onRetry={() => {
+        void retry()
+      }}
+    />
+  )
 }
 
 // Match navigation background to the app's surface tokens so the iOS status
@@ -97,6 +116,9 @@ export default function RootLayout() {
   // finished or not.
   useEffect(() => {
     void purgeRetiredStorage()
+    // Same once-per-launch moment. A no-op without a key, and on native entirely —
+    // see lib/analytics.ts.
+    initAnalytics()
   }, [])
 
   return (

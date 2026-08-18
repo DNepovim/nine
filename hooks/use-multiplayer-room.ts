@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 
+import { track } from '@/lib/analytics'
 import {
   createRoom as createRoomDb,
   fetchRoomPlayers,
@@ -113,6 +114,8 @@ export function useMultiplayerRoom(userId: string | null): UseMultiplayerRoomRes
       setIsAdmin(true)
       isAdminRef.current = true
       subscribe(result.roomId)
+      // A fresh room holds exactly its creator.
+      track('multiplayer_room', { action: 'created', players: 1 })
     },
     [userId, subscribe],
   )
@@ -138,6 +141,11 @@ export function useMultiplayerRoom(userId: string | null): UseMultiplayerRoomRes
       setIsAdmin(admin)
       isAdminRef.current = admin
       subscribe(result.roomId)
+      // Its own fetch rather than a peek at `players`, which the subscribe above is
+      // still filling in — the event wants the roster as it stood on arrival.
+      void fetchRoomPlayers(result.roomId).then((roster) => {
+        track('multiplayer_room', { action: 'joined', players: roster.length })
+      })
     },
     [userId, subscribe],
   )
