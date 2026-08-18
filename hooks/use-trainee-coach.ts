@@ -18,18 +18,21 @@ import {
 } from '@/machines/game'
 import { cleanHitReason, computeRoute, type RouteStep } from '@/machines/scoring'
 
-// How long a coach line holds, by what it is.
+// How long a coach line holds, by what it is. `null` means it holds until something
+// retires it rather than until a clock runs out.
 //
 // A habit line is short on purpose: it is about the press just made, and wants to be
-// gone before the next press makes it stale. The debrief is the exception — it is two
-// things to read, a verdict and the route that would have beaten it, and three seconds
-// is not long enough to take in a row of keys and still look at the board.
+// gone before the next press makes it stale. The debrief is the exception, and now not
+// on a timer at all — it carries a route of gestures to read off and copy onto the
+// dial, and any timeout long enough to do that with is long enough to be wrong for the
+// player who read it in a second. The next hit is what ends it, because the next hit is
+// what makes it stale.
 const HOLD_MS = {
   tapping: 3000,
   coarse: 3000,
-  debrief: 5000,
+  debrief: null,
   lost: 3000,
-} as const satisfies Record<CoachKind, number>
+} as const satisfies Record<CoachKind, number | null>
 
 // How long an arriving line contends with the one already showing. The ladder
 // exists for two messages about the same press — a habit, and the debrief for the
@@ -39,7 +42,15 @@ const CONTENTION_MS = 600
 
 // `route` is the optimal way to the target the debrief is about, and empty for every
 // other kind — a habit line is about the press just made, which has no route to show.
-type Showing = { kind: CoachKind; text: string; route: RouteStep[]; at: number }
+// `target` is the number that route reaches, shown beside it so the keys are attached
+// to the sum they were for once the target itself has left the board.
+type Showing = {
+  kind: CoachKind
+  text: string
+  route: RouteStep[]
+  target: number | null
+  at: number
+}
 
 // Trainee's coach. Watches what the player does and says something about it in the
 // line under the stat row — never which key to press, only what the last press or
@@ -93,15 +104,20 @@ export function useTraineeCoach({
   // old enough to have been read: a correction held back three seconds would arrive
   // attached to the wrong press, but a habit line untouched for the whole window
   // must not silently swallow the debrief for a hit just landed.
-  const say = (kind: CoachKind, text: string, route: RouteStep[] = []) => {
+  const say = (
+    kind: CoachKind,
+    text: string,
+    route: RouteStep[] = [],
+    target: number | null = null,
+  ) => {
     if (muted) return
     const at = Date.now()
     setShowing((current) => {
-      if (current === null) return { kind, text, route, at }
+      if (current === null) return { kind, text, route, target, at }
       if (at - current.at < CONTENTION_MS && !outranks(kind, current.kind)) {
         return current
       }
-      return { kind, text, route, at }
+      return { kind, text, route, target, at }
     })
   }
 
@@ -156,6 +172,11 @@ export function useTraineeCoach({
     if (batch.seq === lastSeqRef.current) return
     lastSeqRef.current = batch.seq
     if (!active) return
+    // Every hit retires what the last one left on screen. The debrief holds without a
+    // timer, so this is the only thing that clears it — and it has to run before the
+    // clean-hit check below, or a good hit would leave the previous hit's route sitting
+    // under its confetti.
+    setShowing(null)
     // A clean hit gets confetti and praise, and a celebration is not the moment to
     // correct someone — the debrief is dropped rather than held. This and `muted`
     // (checked inside `say`) are the same rule reached by two routes, not one
@@ -174,6 +195,7 @@ export function useTraineeCoach({
       'debrief',
       debriefLine(last.steps, last.par),
       computeRoute(last.refGrid, last.value),
+      last.value,
     )
   }, [active, batch])
 
@@ -200,9 +222,11 @@ export function useTraineeCoach({
 
   useEffect(() => {
     if (showing === null) return
+    const hold = HOLD_MS[showing.kind]
+    if (hold === null) return
     const timer = setTimeout(() => {
       setShowing(null)
-    }, HOLD_MS[showing.kind])
+    }, hold)
     return () => {
       clearTimeout(timer)
     }
@@ -211,6 +235,7 @@ export function useTraineeCoach({
   return {
     line: showing?.text ?? null,
     route: showing?.route ?? [],
+    routeTarget: showing?.target ?? null,
     notePress,
     noteSet,
   }

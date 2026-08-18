@@ -15,7 +15,12 @@ const MAX_SUM = 324 // 9 * sum(WEIGHTS)
 
 // Minimum steps to change ONE button from value `a` to `f` using the available
 // operations: +1 / -1 (wrapping 0↔9), jump →0, jump →9.
-function stepCost(a: number, f: number): number {
+//
+// Kept as plain arithmetic rather than deferring to `movePlan`, which prices the same
+// four routes but allocates to do it: this runs roughly thirty thousand times per
+// `computePar`, and that runs on every spawn and every hit. A test holds the two to the
+// same answer for all hundred pairs.
+export function stepCost(a: number, f: number): number {
   if (a === f) return 0
   const d = Math.abs(f - a)
   const wrap = Math.min(d, 10 - d) // ±1 either way, with wrap
@@ -50,9 +55,56 @@ export function computePar(grid: Grid, target: number): number {
   return Number.isFinite(dp[target]) ? (dp[target] ?? 0) : 0
 }
 
-// One weight's share of an optimal route: how many steps to spend on keys of that
-// weight. Steps rather than taps — a swipe to 0 or 9 is one step.
-export type RouteStep = { weight: number; steps: number }
+// Which way a key is moved. Up is a tap — the dial wraps 9 → 0 — and down is a swipe
+// down; the two are the same cost per step, so the route names whichever is shorter.
+export type MoveDirection = 'up' | 'down'
+
+// A jump straight to an end of the key's range: swipe left for 0, right for 9. Taken
+// first when present, and worth one step however far it travels — which is why a key
+// far from where it needs to be is often cheaper to reset than to walk.
+export type MoveJump = 'zero' | 'nine'
+
+// One instruction in an optimal route: the gesture, how many of it, and on which key.
+//
+// `steps` is the cost the score is measured against, so it counts the jump as the one
+// step it is: a `nine` jump plus two downs is three steps, not two.
+export type RouteStep = {
+  weight: number
+  jump: MoveJump | null
+  moves: number
+  direction: MoveDirection
+  steps: number
+}
+
+// The cheapest way to move one key from `from` to `to`, as gestures rather than a
+// count. Same four routes `stepCost` prices — walk up, walk down, reset to 0 and walk
+// up, jump to 9 and walk down — and a test pins the two to the same total, so the hint
+// can never describe a route that costs more than the par it is shown beside.
+//
+// Ties go to the earliest candidate, which orders them simplest-first: walking beats
+// jumping when both cost the same, because one gesture is easier to follow than two.
+export function movePlan(from: number, to: number): Omit<RouteStep, 'weight'> {
+  const up = (to - from + 10) % 10
+  const down = (from - to + 10) % 10
+  // Walking up is the seed rather than one of the candidates, so the reduce has an
+  // initial value and the tie order still runs simplest-first: a walk only loses to a
+  // jump that is strictly cheaper.
+  const walkUp: Omit<RouteStep, 'weight'> = {
+    jump: null,
+    moves: up,
+    direction: 'up',
+    steps: up,
+  }
+  const candidates: Omit<RouteStep, 'weight'>[] = [
+    { jump: null, moves: down, direction: 'down', steps: down },
+    { jump: 'zero', moves: to, direction: 'up', steps: 1 + to },
+    { jump: 'nine', moves: 9 - to, direction: 'down', steps: 1 + (9 - to) },
+  ]
+  return candidates.reduce(
+    (best, next) => (next.steps < best.steps ? next : best),
+    walkUp,
+  )
+}
 
 // One layer of the DP: the cheapest way to reach each running sum once this button
 // has been decided, and the value it was set to in order to get there. -1 marks a sum
@@ -87,22 +139,47 @@ function extendLayer(costs: number[], weight: number, from: number): Layer {
 // splitting them into "1× ②  ›  1× ②" reported the same instruction twice.
 //
 // Buttons already at the right value contribute nothing, and drop out.
-function readRoute(
-  values: number[],
-  layers: Layer[],
-  target: number,
-): Map<number, number> {
-  const byWeight = new Map<number, number>()
+function readRoute(values: number[], layers: Layer[], target: number): RouteStep[] {
+  const route: RouteStep[] = []
   let sum = target
   for (let i = 8; i >= 0; i--) {
     const value = layers[i]?.choice[sum] ?? -1
-    if (value < 0) return new Map()
+    if (value < 0) return []
     const weight = WEIGHTS[i] ?? 0
-    const steps = stepCost(values[i] ?? 0, value)
-    if (steps > 0) byWeight.set(weight, (byWeight.get(weight) ?? 0) + steps)
+    const plan = movePlan(values[i] ?? 0, value)
+    if (plan.steps > 0) route.push({ weight, ...plan })
     sum -= weight * value
   }
-  return byWeight
+  return route
+}
+
+// Two keys of the same weight move the sum by the same amount, so asking for one step
+// on each and two on either are the same instruction — and printed apart they read as
+// two, which is what "1× ② › 1× ②" was.
+//
+// Only plain walks combine. A jump is a gesture aimed at one key's own position, so two
+// of them are genuinely two things to do and stay apart, as do a walk up and a walk
+// down: merging those would name a direction that undoes half of itself.
+const merged = (route: readonly RouteStep[]): RouteStep[] => {
+  const byKey = new Map<string, RouteStep>()
+  const out: RouteStep[] = []
+  for (const step of route) {
+    if (step.jump !== null) {
+      out.push(step)
+      continue
+    }
+    const key = `${step.weight}:${step.direction}`
+    const held = byKey.get(key)
+    if (held === undefined) {
+      const copy = { ...step }
+      byKey.set(key, copy)
+      out.push(copy)
+      continue
+    }
+    held.moves += step.moves
+    held.steps += step.steps
+  }
+  return out
 }
 
 // The route behind computePar — not just what the best solution costs but what it is.
@@ -128,9 +205,7 @@ export function computeRoute(grid: Grid, target: number): RouteStep[] {
 
   if (!Number.isFinite(costs[target] ?? INF)) return []
 
-  return [...readRoute(values, layers, target)]
-    .map(([weight, steps]) => ({ weight, steps }))
-    .sort((a, b) => b.weight - a.weight)
+  return merged(readRoute(values, layers, target)).sort((a, b) => b.weight - a.weight)
 }
 
 // Gentler difference-based accuracy: 1 at optimal, decaying with wasted steps.

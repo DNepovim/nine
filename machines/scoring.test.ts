@@ -9,7 +9,9 @@ import {
   computeRoute,
   FAST_BAND,
   isCleanHit,
+  movePlan,
   speedReward,
+  stepCost,
 } from '@/machines/scoring'
 
 const empty = [
@@ -175,16 +177,66 @@ describe('computeRoute', () => {
     }
   })
 
-  it('names each weight once, and only weights the dial actually has', () => {
+  it('names only weights the dial actually has, and never an empty instruction', () => {
     const route = computeRoute(empty, 223)
     expect(route.length).toBeGreaterThan(0)
-    const weights = route.map((step) => step.weight)
-    expect(new Set(weights).size).toBe(weights.length)
     const dialWeights = new Set([0, 1, 2, 3, 4, 5, 6, 7, 8].map(cellWeight))
     for (const step of route) {
       expect(dialWeights.has(step.weight)).toBe(true)
       expect(step.steps).toBeGreaterThan(0)
     }
+  })
+
+  it('never lists one weight twice for the same walk', () => {
+    // Walks of the same weight and direction combine; a weight can still appear twice
+    // when the gestures differ, because those are two things to do rather than one
+    // said twice.
+    for (const target of [7, 31, 100, 123, 223, 324]) {
+      const walks = computeRoute(empty, target)
+        .filter((step) => step.jump === null)
+        .map((step) => `${step.weight}:${step.direction}`)
+      expect(new Set(walks).size).toBe(walks.length)
+    }
+  })
+
+  it('prices every move plan exactly as stepCost does', () => {
+    // Two independent implementations of the same four routes. The hint and the par it
+    // sits under must never disagree about what a key costs.
+    for (let from = 0; from <= 9; from++) {
+      for (let to = 0; to <= 9; to++) {
+        expect(movePlan(from, to).steps).toBe(stepCost(from, to))
+      }
+    }
+  })
+
+  it('describes a plan that actually lands on the value', () => {
+    for (let from = 0; from <= 9; from++) {
+      for (let to = 0; to <= 9; to++) {
+        const plan = movePlan(from, to)
+        const start = plan.jump === null ? from : plan.jump === 'zero' ? 0 : 9
+        const delta = plan.direction === 'up' ? plan.moves : -plan.moves
+        expect((((start + delta) % 10) + 10) % 10).toBe(to)
+      }
+    }
+  })
+
+  it('walks rather than jumps when the two cost the same', () => {
+    // 0 → 1 is one tap, and resetting to 0 first would also be one step plus a tap.
+    expect(movePlan(0, 1)).toMatchObject({ jump: null, direction: 'up', moves: 1 })
+  })
+
+  it('walks down when down is shorter', () => {
+    expect(movePlan(5, 4)).toMatchObject({ jump: null, direction: 'down', moves: 1 })
+  })
+
+  it('wraps upward rather than walking the long way', () => {
+    expect(movePlan(9, 0)).toMatchObject({ jump: null, direction: 'up', moves: 1 })
+  })
+
+  it('jumps to an end when walking there would take longer', () => {
+    // 4 → 9 is five taps up or five downs; a swipe right lands in one.
+    expect(movePlan(4, 9)).toMatchObject({ jump: 'nine', moves: 0 })
+    expect(movePlan(5, 0)).toMatchObject({ jump: 'zero', moves: 0 })
   })
 
   it('adds up the two keys that share a weight instead of listing both', () => {

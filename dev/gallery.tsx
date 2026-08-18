@@ -242,8 +242,11 @@ export function GalleryStage() {
   const variant = ALL_VARIANTS.find((v) => v.key === shown) ?? null
   if (variant === null) return null
 
+  // Stacked above the app's own overlays, which are absolute and opaque. Set here
+  // rather than on a wrapper at the call site: this view exists only while a screen is
+  // chosen, where a wrapper would sit over the app for the whole of a dev run.
   return (
-    <View className="absolute inset-0">
+    <View className="absolute inset-0" style={{ zIndex: 100 }}>
       {variant.render(() => {
         show(null)
       })}

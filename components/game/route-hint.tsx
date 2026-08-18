@@ -1,3 +1,4 @@
+import { Ionicons } from '@expo/vector-icons'
 import { isEmptyArray } from 'narrowland'
 import { Fragment } from 'react'
 import { Text, View } from 'react-native'
@@ -5,33 +6,50 @@ import { Text, View } from 'react-native'
 import { DIAL_COLORS } from '@/constants/colors'
 import { useTheme } from '@/hooks/use-theme'
 import { lerpColor, MODE_GRADIENT } from '@/machines/game'
-import type { RouteStep } from '@/machines/scoring'
+import type { MoveDirection, MoveJump, RouteStep } from '@/machines/scoring'
 
-// Trainee's colour, worn by the pill's edge and the step counts — the frame stays the
-// mode's, so the miniatures inside are the only thing wearing the dial's colours.
+// Trainee's colour, worn by the pill's edge, the target and the step counts — the frame
+// stays the mode's, so the miniatures inside are the only thing wearing the dial's.
 const TINT = MODE_GRADIENT.trainee[0]
 
 // A key is drawn as a filled disc so the hint reads as buttons rather than as more
 // arithmetic — the row says "press these", and the shape is what says it.
-const KEY_SIZE = 14
+const KEY_SIZE = 22
 
-// The line around the row, held right back at a third the way the tips panel holds
-// its own edge — enough to gather the keys into one thing, not enough to compete with
-// them. Alpha on the colour rather than an `opacity` style, which would take the keys
-// and their numerals down with the border.
+// Room for a key plus the border and padding around it.
+const ROUTE_HINT_HEIGHT = 30
+
+// The line around the row, held right back at a third the way the tips panel holds its
+// own edge. Alpha on the colour rather than an `opacity` style, which would take the
+// keys and their numerals down with the border.
 const BORDER = 1
 const BORDER_TINT = `${TINT}55`
 
-// Room for a key plus the border and padding around it: 14 + 2 + 2, rounded up.
-const ROUTE_HINT_HEIGHT = 20
-
-// More keys than this and the row stops being glanceable at 8px. A route needing five
-// is a board nobody was going to read off a single line anyway.
+// More keys than this and the row stops being glanceable. A route needing five is a
+// board nobody was going to read off a single line anyway.
 const MAX_KEYS = 4
 
 // The heaviest key is ×9 and the lightest ×1, so a weight sits at (w - 1) / 8 along
 // the ramp.
 const WEIGHT_SPAN = 8
+
+const ICON_SIZE = 13
+
+type IoniconName = keyof typeof Ionicons.glyphMap
+
+// The gesture that walks a key one step, by direction. Up is a tap — the dial counts up
+// and wraps — and down is a swipe down, which is the only way to go back.
+const WALK_ICON = {
+  up: 'ellipse',
+  down: 'arrow-down',
+} as const satisfies Record<MoveDirection, IoniconName>
+
+// The gesture that jumps a key straight to an end of its range. Left for 0, right for 9
+// — the same two arrows the how-to-play diagram uses for them.
+const JUMP_ICON = {
+  zero: 'arrow-back',
+  nine: 'arrow-forward',
+} as const satisfies Record<MoveJump, IoniconName>
 
 // The miniatures wear the dial's own ramp, so a key in the hint is coloured the way the
 // dial colours keys — pale lavender to periwinkle in light, deep navy to app blue in
@@ -49,13 +67,62 @@ const keyColors = (isDark: boolean, weight: number) => {
   }
 }
 
-// The optimal way to the target the debrief just described — "2×(9) › 1×(3)", meaning
-// spend two steps on ×9 keys, then one on a ×3.
+// One instruction: the gesture to make, how many times, and on which key. A jump is
+// drawn on its own — it happens once whatever follows it — and the walk after it takes
+// the count.
+function Step({ step, isDark }: { step: RouteStep; isDark: boolean }) {
+  const { background, ink } = keyColors(isDark, step.weight)
+  return (
+    <View className="flex-row items-center gap-1">
+      {step.jump !== null && (
+        <Ionicons name={JUMP_ICON[step.jump]} size={ICON_SIZE} color={TINT} />
+      )}
+      {step.moves > 0 && (
+        <View className="flex-row items-center gap-0.5">
+          <Ionicons
+            name={WALK_ICON[step.direction]}
+            size={step.direction === 'up' ? ICON_SIZE - 5 : ICON_SIZE}
+            color={TINT}
+          />
+          <Text
+            selectable={false}
+            className="font-mono text-[11px] font-bold"
+            style={{ color: TINT }}
+          >
+            ×{step.moves}
+          </Text>
+        </View>
+      )}
+      <View
+        className="items-center justify-center rounded-full"
+        style={{ width: KEY_SIZE, height: KEY_SIZE, backgroundColor: background }}
+      >
+        <Text
+          selectable={false}
+          className="font-mono text-[11px] font-black"
+          style={{ color: ink }}
+        >
+          {step.weight}
+        </Text>
+      </View>
+    </View>
+  )
+}
+
+// The optimal way to the target the debrief just described: the target itself, then the
+// gestures that would have reached it — a dot for a tap, an arrow for a swipe, and the
+// key each is made on.
 //
 // Coarsest key first, which is both what computeRoute returns and how the game is
-// taught. The count is steps rather than taps, so a swipe to 9 counts as the one step
-// it costs.
-export function RouteHint({ route }: { route: readonly RouteStep[] }) {
+// taught. Counts are steps rather than taps, so a jump to an end is the one step it
+// costs.
+export function RouteHint({
+  route,
+  target,
+}: {
+  route: readonly RouteStep[]
+  target: number | null
+}) {
   const { colorScheme } = useTheme()
   const isDark = colorScheme === 'dark'
 
@@ -76,49 +143,31 @@ export function RouteHint({ route }: { route: readonly RouteStep[] }) {
       style={{ height: ROUTE_HINT_HEIGHT }}
     >
       <View
-        className="flex-row items-center gap-1 rounded-full px-2 py-0.5"
+        className="flex-row items-center gap-1.5 rounded-full px-2.5 py-1"
         style={{ borderWidth: BORDER, borderColor: BORDER_TINT }}
       >
-        {route.slice(0, MAX_KEYS).map((step, i) => {
-          const { background, ink } = keyColors(isDark, step.weight)
-          return (
-            <Fragment key={step.weight}>
-              {i > 0 && (
-                <Text selectable={false} className="font-mono text-[9px] text-dim">
-                  ›
-                </Text>
-              )}
-              <View className="flex-row items-center gap-0.5">
-                {/* The count keeps the mode's tint rather than the key's: at 9px on the
-                    surface, the pale end of the dial ramp would all but vanish, and the
-                    disc beside it already carries the key's identity. */}
-                <Text
-                  selectable={false}
-                  className="font-mono text-[9px] font-bold"
-                  style={{ color: TINT }}
-                >
-                  {step.steps}×
-                </Text>
-                <View
-                  className="items-center justify-center rounded-full"
-                  style={{
-                    width: KEY_SIZE,
-                    height: KEY_SIZE,
-                    backgroundColor: background,
-                  }}
-                >
-                  <Text
-                    selectable={false}
-                    className="font-mono text-[8px] font-black"
-                    style={{ color: ink }}
-                  >
-                    {step.weight}
-                  </Text>
-                </View>
-              </View>
-            </Fragment>
-          )
-        })}
+        {/* The number the route reaches. The target it belongs to has already popped
+            off the board by the time this shows, so without it the keys are a set of
+            instructions with nothing to attach them to. */}
+        {target !== null && (
+          <Text
+            selectable={false}
+            className="font-mono text-[12px] font-black tracking-[0.5px]"
+            style={{ color: TINT }}
+          >
+            {target}
+          </Text>
+        )}
+        {route.slice(0, MAX_KEYS).map((step, i) => (
+          <Fragment key={`${step.weight}-${step.jump ?? 'walk'}-${step.direction}`}>
+            {i > 0 && (
+              <Text selectable={false} className="font-mono text-[11px] text-dim">
+                ›
+              </Text>
+            )}
+            <Step step={step} isDark={isDark} />
+          </Fragment>
+        ))}
       </View>
     </View>
   )

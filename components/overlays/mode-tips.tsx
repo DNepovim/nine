@@ -14,6 +14,7 @@ import { TipSizer } from '@/components/overlays/tip-sizer'
 import { PageDots } from '@/components/page-dots'
 import { SWIPE_THRESHOLD } from '@/constants/game'
 import { TIPS } from '@/constants/tips'
+import { pickTips } from '@/lib/pick-tips'
 import { MODE_GRADIENT } from '@/machines/game'
 
 // Trainee's own colour, worn by the border and the dots alike. This panel shows
@@ -33,6 +34,12 @@ const TINT = MODE_GRADIENT.trainee[0]
 // subtree, so it would take the card and its text down with the border. Tune here
 // — 55 is a third, 99 is 60%, CC is 80%.
 const BORDER_TINT = `${TINT}55`
+
+// How many of the tips a visit gets. Not all of them: at ROTATE_MS each, the full list
+// is half a minute of reading parked above the PLAY button, and a panel that always
+// shows the same tips in the same order stops being read. Three is a set the dots can
+// still be counted at a glance, and a fresh three every visit is worth another look.
+const TIP_COUNT = 3
 
 const ROTATE_MS = 6000
 const FADE_MS = 200
@@ -76,6 +83,15 @@ const DOTS_OFFSET = -(DOTS_HEIGHT / 2 - BORDER / 2)
 // needs teaching the one that said the least.
 export function ModeTips() {
   const [index, setIndex] = useState(0)
+  // Drawn once per mount, so the rotation cannot reshuffle under a tip being read — and
+  // so leaving Trainee and coming back deals a new hand.
+  const [tips] = useState(() =>
+    pickTips(
+      TIPS,
+      TIP_COUNT,
+      Array.from({ length: TIP_COUNT }, () => Math.random()),
+    ),
+  )
   // Grows to the tallest tip and stays there — the box must not resize as the
   // rotation moves through tips shorter than the one that set the height.
   const [bodyHeight, setBodyHeight] = useState(BODY_MIN_HEIGHT)
@@ -87,7 +103,9 @@ export function ModeTips() {
   // asked for rather than on one they have already swiped past.
   const targetRef = useRef(0)
 
-  const tip = TIPS[index] ?? TIPS[0]
+  // TIPS is a non-empty tuple and TIP_COUNT is at least one, so the fallback is
+  // unreachable — it is here because the index type cannot say so.
+  const tip = tips[index] ?? TIPS[0]
 
   const measure = useCallback((height: number) => {
     setBodyHeight((current) => (height > current ? height : current))
@@ -137,9 +155,9 @@ export function ModeTips() {
 
   const step = useCallback(
     (direction: number) => {
-      goTo((index + direction + TIPS.length) % TIPS.length, direction)
+      goTo((index + direction + tips.length) % tips.length, direction)
     },
-    [goTo, index],
+    [goTo, index, tips.length],
   )
 
   // Re-armed whenever the tip changes, so a swipe or a tapped dot buys a full
@@ -190,7 +208,7 @@ export function ModeTips() {
             </Animated.View>
           </View>
 
-          <TipSizer onMeasure={measure} />
+          <TipSizer tips={tips} onMeasure={measure} />
         </View>
       </GestureDetector>
 
@@ -208,7 +226,7 @@ export function ModeTips() {
       >
         <View className="bg-surface px-1.5">
           <PageDots
-            total={TIPS.length}
+            total={tips.length}
             current={index}
             color={TINT}
             uniform
