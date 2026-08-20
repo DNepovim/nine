@@ -25,6 +25,7 @@ export function useStepUp({
   batch,
   hits,
   playedScored,
+  fromTutorial,
 }: {
   // Playing, not paused. A frozen run should not be interrupted by an offer.
   inRun: boolean
@@ -32,6 +33,9 @@ export function useStepUp({
   batch: HitBatch
   hits: number
   playedScored: boolean
+  // Whether this run began on the tutorial's closing CTA, which lowers the bar to a
+  // hit count — see TUTORIAL_HITS in lib/step-up.ts.
+  fromTutorial: boolean
 }): { message: StepUpMessage | null; dismiss: () => void } {
   const [message, setMessage] = useState<StepUpMessage | null>(null)
   const stateRef = useRef(initialStepUp())
@@ -66,13 +70,15 @@ export function useStepUp({
       hits,
       elapsedMs: Date.now() - startedAtRef.current,
       playedScored,
+      fromTutorial,
     })
     stateRef.current = result.state
-    if (!result.offer) return
+    if (result.offer === null) return
     // Rolled once here rather than at render, so a re-render cannot reword the offer
-    // while the player is reading it.
-    setMessage(stepUpMessage(Math.random(), Math.random()))
-  }, [active, batch, hits, playedScored])
+    // while the player is reading it. The reason picks the pool: only one of them has
+    // watched the player do something worth mentioning.
+    setMessage(stepUpMessage(result.offer, Math.random(), Math.random()))
+  }, [active, batch, hits, playedScored, fromTutorial])
 
   useEffect(() => {
     if (message === null) return

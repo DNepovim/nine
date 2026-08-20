@@ -21,6 +21,13 @@ export const CLEAN_RUN = 5
 export const MIN_HITS = 10
 export const MIN_RUN_MS = 60_000
 
+// A run that began on the tutorial's closing CTA gets asked on hit count alone — no
+// clean streak, no clock. That player was taught the game ninety seconds ago and has
+// never seen a scored board; the offer is the last step of the tutorial rather than a
+// reward for playing well, so waiting for evidence of playing well would strand exactly
+// the player it was written for. Twelve targets is long enough to have found the rhythm.
+export const TUTORIAL_HITS = 12
+
 // Where the offer points. Easy on purpose: Trainee hands out infinite lives, so even a
 // player clearing Extreme practice has never once been under the pressure of losing, and
 // dropping them on a matching Extreme board would be a worse welcome than a fair one.
@@ -47,34 +54,63 @@ export type StepUpFacts = {
   // Whether the player has ever posted a score on a scored board. They know the real
   // modes exist, so there is nothing to introduce and the offer would only be noise.
   playedScored: boolean
+  // Whether this run began on the tutorial's closing CTA rather than from the intro.
+  fromTutorial: boolean
 }
+
+// Which bar was cleared. The offer says different things depending: one has watched the
+// player do something well and can say so, the other has only counted to twelve.
+//
+// A list rather than a bare union so the screen gallery can enumerate them and show
+// every wording — a reason added here turns up there without being remembered.
+export const STEP_UP_REASONS = ['clean', 'tutorial'] as const
+export type StepUpReason = (typeof STEP_UP_REASONS)[number]
 
 // One resolved batch in, at most one offer out.
 export function stepUpReducer(
   state: StepUpState,
   facts: StepUpFacts,
-): { state: StepUpState; offer: boolean } {
+): { state: StepUpState; offer: StepUpReason | null } {
   const cleanRun = facts.clean ? state.cleanRun + 1 : 0
-  const earned =
-    !state.offered &&
-    !facts.playedScored &&
-    cleanRun >= CLEAN_RUN &&
-    facts.hits >= MIN_HITS &&
-    facts.elapsedMs >= MIN_RUN_MS
 
-  return { state: { cleanRun, offered: state.offered || earned }, offer: earned }
+  const reason = (): StepUpReason | null => {
+    if (state.offered || facts.playedScored) return null
+    // Checked first, but it is the slower bar in practice: five clean hits arrive well
+    // before twelve of anything, so a tutorial graduate playing well still gets the
+    // opener that says so.
+    if (
+      cleanRun >= CLEAN_RUN &&
+      facts.hits >= MIN_HITS &&
+      facts.elapsedMs >= MIN_RUN_MS
+    ) {
+      return 'clean'
+    }
+    if (facts.fromTutorial && facts.hits >= TUTORIAL_HITS) return 'tutorial'
+    return null
+  }
+
+  const offer = reason()
+  return { state: { cleanRun, offered: state.offered || offer !== null }, offer }
 }
 
 // The line the toast carries: something about what they just did, then the invitation.
 //
 // Two halves rather than one sentence so the recognition can be specific without the
-// invitation changing — and the count comes off CLEAN_RUN rather than being written out,
-// so raising the bar can never leave the words claiming a different number.
-const OPENERS = [
-  "You're playing well.",
-  `${CLEAN_RUN} clean in a row.`,
-  'Nice streak.',
-] as const
+// invitation changing — and the counts come off the thresholds rather than being written
+// out, so raising a bar can never leave the words claiming a different number.
+//
+// One opener pool per reason. The clean-run openers are about how the player is doing,
+// which the tutorial offer has no standing to claim: it fires on twelve targets however
+// they went, so it marks the milestone and leaves the praise out of it. The invitations
+// are shared — that half is the same question either way.
+const OPENERS = {
+  clean: ["You're playing well.", `${CLEAN_RUN} clean in a row.`, 'Nice streak.'],
+  tutorial: [
+    `That's ${TUTORIAL_HITS} targets.`,
+    "You've got the idea.",
+    "That's the practice done.",
+  ],
+} as const satisfies Record<StepUpReason, readonly [string, ...string[]]>
 
 const INVITES = ["Let's try a real game.", 'Ready to play for real?'] as const
 
@@ -88,10 +124,14 @@ export type StepUpMessage = { opener: string; invite: string }
 // Rolls are parameters rather than Math.random() calls inside, exactly as the
 // announcement bar does it: the choice stays pure and testable, and the randomness lives
 // at the call site where it can be taken once instead of on every render.
-export const stepUpMessage = (openerRoll: number, inviteRoll: number): StepUpMessage => ({
-  opener: pick(OPENERS, openerRoll),
+export const stepUpMessage = (
+  reason: StepUpReason,
+  openerRoll: number,
+  inviteRoll: number,
+): StepUpMessage => ({
+  opener: pick(OPENERS[reason], openerRoll),
   invite: pick(INVITES, inviteRoll),
 })
 
-export const openerPool = (): readonly string[] => OPENERS
+export const openerPool = (reason: StepUpReason): readonly string[] => OPENERS[reason]
 export const invitePool = (): readonly string[] => INVITES

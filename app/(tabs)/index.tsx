@@ -289,6 +289,17 @@ export default function GameScreen() {
   // replayable from How to Play.
   const tutorial = useTutorial()
 
+  // True only for the run the tutorial's closing CTA started, which is offered a scored
+  // board on hit count alone — see TUTORIAL_HITS in lib/step-up.ts. Cleared on the way
+  // back to the intro, and every other way of starting a run passes through there (or
+  // through game over, which Trainee's infinite lives never reach), so no later run can
+  // inherit the lower bar.
+  const [fromTutorial, setFromTutorial] = useState(false)
+
+  useEffect(() => {
+    if (isMenu) setFromTutorial(false)
+  }, [isMenu])
+
   const handleTutorialNext = useCallback(() => {
     if (!tutorial.isLast) {
       tutorial.goTo(tutorial.step + 1)
@@ -296,6 +307,7 @@ export default function GameScreen() {
     }
     // The last screen's CTA drops the player straight into a Trainee run.
     tutorial.dismiss()
+    setFromTutorial(true)
     send({ type: 'SET_MODE', mode: 'trainee' })
     send({ type: 'START', now: Date.now() })
   }, [tutorial, send])
@@ -349,6 +361,7 @@ export default function GameScreen() {
     batch: hitBatch,
     hits,
     playedScored,
+    fromTutorial,
   })
   // Open while the transitional screen is up. The run is paused behind it rather than
   // abandoned, so backing out through the intro leaves nothing half-finished.

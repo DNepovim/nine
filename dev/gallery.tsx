@@ -9,7 +9,7 @@ import { StepUpOverlay } from '@/components/overlays/step-up-overlay'
 import type { Period } from '@/lib/announcements'
 import type { RecordScreen } from '@/lib/champions'
 import { gameOverTitle } from '@/lib/game-over-title'
-import { invitePool, openerPool, STEP_UP_BOARD } from '@/lib/step-up'
+import { invitePool, openerPool, STEP_UP_BOARD, STEP_UP_REASONS } from '@/lib/step-up'
 import {
   DIFFICULTIES,
   type Difficulty,
@@ -199,20 +199,24 @@ const SECTIONS: Section[] = [
         ),
       },
       // Every opener against every invitation, so the pairing that reads worst is the
-      // one being looked at rather than the one nobody rolled.
-      ...openerPool().flatMap((opener, o) =>
-        invitePool().map((invite, i) => ({
-          key: `step-up-toast-${o}-${i}`,
-          label: `TOAST ${o + 1}${String.fromCharCode(97 + i)}`,
-          render: (close: () => void) => (
-            <StepUpToast
-              opener={opener}
-              invite={invite}
-              mode={STEP_UP_BOARD.mode}
-              onPress={close}
-            />
-          ),
-        })),
+      // one being looked at rather than the one nobody rolled. Both pools: the clean-run
+      // offer praises the player, the tutorial one only counts targets, and they have to
+      // sit next to the same invitations without either reading oddly.
+      ...STEP_UP_REASONS.flatMap((reason) =>
+        openerPool(reason).flatMap((opener, o) =>
+          invitePool().map((invite, i) => ({
+            key: `step-up-toast-${reason}-${o}-${i}`,
+            label: `TOAST ${reason === 'clean' ? 'C' : 'T'}${o + 1}${String.fromCharCode(97 + i)}`,
+            render: (close: () => void) => (
+              <StepUpToast
+                opener={opener}
+                invite={invite}
+                mode={STEP_UP_BOARD.mode}
+                onPress={close}
+              />
+            ),
+          })),
+        ),
       ),
     ],
   },
