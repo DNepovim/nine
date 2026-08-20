@@ -4,11 +4,10 @@ import { ScrollView, Text, View } from 'react-native'
 import { GuideBullet } from '@/components/guide/guide-bullet'
 import { LessonHeading } from '@/components/overlays/tutorial/lesson-heading'
 import { STEP_COLORS } from '@/constants/tutorial'
-import type { LessonProps } from '@/types/tutorial'
 
 const COLOR = STEP_COLORS[5] ?? '#FF8C00'
 
-export function TipsLesson({ nextButton }: LessonProps) {
+export function TipsLesson() {
   return (
     <View className="flex-1">
       <LessonHeading title="TIPS & TRICKS" color={COLOR}>
@@ -58,8 +57,6 @@ export function TipsLesson({ nextButton }: LessonProps) {
             'The full rulebook — scoring, difficulties, streaks — is always in How to Play, along with this tutorial if you want another run through it.'
           }
         </Text>
-
-        {nextButton}
       </ScrollView>
     </View>
   )

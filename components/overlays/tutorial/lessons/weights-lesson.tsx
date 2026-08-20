@@ -12,6 +12,7 @@ import {
   FINE_CELL,
   MID_CELL,
   STEP_COLORS,
+  WEIGHTS_CLEAR_DELAY_MS,
   WEIGHTS_TAPS,
 } from '@/constants/tutorial'
 import { useGameDialSize } from '@/hooks/use-game-dial-size'
@@ -30,7 +31,26 @@ const WEIGHT_ROUNDS = [
 
 const roundTotal = (cell: number) => WEIGHTS_TAPS * cellWeight(cell)
 
-export function WeightsLesson({ isDark, onComplete, nextButton }: LessonProps) {
+// The multiplication the board is doing, on screen the whole time rather than only
+// once a round lands — watching `1 × 9` become `2 × 9` is the point of the screen, and
+// a line that appears and disappears also shifts everything under it.
+//
+// Between rounds the finished total stays up while the next prompt is being read: taps
+// are back to 0 but the board still holds what the last round built. Only the very
+// first round opens on `0 × 1 = 0`, which is the shape of the sum about to be filled in.
+function equation(
+  taps: number,
+  current: { cell: number } | undefined,
+  finished: { cell: number } | undefined,
+): string {
+  if (taps === 0 && finished !== undefined) {
+    return `${WEIGHTS_TAPS} × ${cellWeight(finished.cell)} = ${roundTotal(finished.cell)}`
+  }
+  if (current === undefined) return ''
+  return `${taps} × ${cellWeight(current.cell)} = ${taps * cellWeight(current.cell)}`
+}
+
+export function WeightsLesson({ isDark, onComplete }: LessonProps) {
   // Board, round and tap count move together: checking the target cell inside the
   // updater keeps two taps landing in the same frame from over-counting.
   const [{ cells, round, taps }, setState] = useState<{
@@ -45,6 +65,27 @@ export function WeightsLesson({ isDark, onComplete, nextButton }: LessonProps) {
   useEffect(() => {
     if (current === undefined) onComplete()
   }, [current, onComplete])
+
+  // A finished round holds its total for a beat, then the board clears and the next
+  // round's prompt arrives together — that prompt opens by saying the board is cleared,
+  // and it used to say so while the previous total was still sitting there, because the
+  // wipe waited for the next round's first tap.
+  //
+  // The last round keeps its total: nothing follows it to clear for, and its closing
+  // line is about the three numbers the screen just produced.
+  useEffect(() => {
+    if (taps !== WEIGHTS_TAPS) return
+    const timer = setTimeout(() => {
+      setState((state) => ({
+        cells: WEIGHT_ROUNDS[state.round + 1] === undefined ? state.cells : emptyCells(),
+        round: state.round + 1,
+        taps: 0,
+      }))
+    }, WEIGHTS_CLEAR_DELAY_MS)
+    return () => {
+      clearTimeout(timer)
+    }
+  }, [taps])
 
   return (
     <View className="flex-1">
@@ -70,11 +111,8 @@ export function WeightsLesson({ isDark, onComplete, nextButton }: LessonProps) {
               selectable={false}
               className="px-6 text-center font-mono text-[11px] font-bold leading-[16px] tracking-[0.5px] text-dim"
             >
-              {taps === 0 && finished !== undefined
-                ? `${WEIGHTS_TAPS} × ${cellWeight(finished.cell)} = ${roundTotal(finished.cell)}`
-                : ''}
+              {equation(taps, current, finished)}
             </Text>
-            {nextButton}
           </View>
         }
         readout={<SumReadout sum={sumCells(cells)} isDark={isDark} />}
@@ -86,23 +124,24 @@ export function WeightsLesson({ isDark, onComplete, nextButton }: LessonProps) {
           size={dialSize}
           showWeights
           showMax={false}
-          hintCell={current?.cell ?? null}
+          // The hint stops once the round is satisfied — it has nothing left to ask for
+          // while the total is being held.
+          hintCell={taps === WEIGHTS_TAPS ? null : (current?.cell ?? null)}
           hintGesture="tap"
           hintColor={COLOR}
-          // Only taps on the button being demonstrated count. The first tap of a
-          // round wipes the previous one, so the finished total stays on screen
-          // until the player moves on.
+          // Only taps on the button being demonstrated count. Reaching the third tap
+          // does not advance the round — it parks there, and the effect above is what
+          // clears the board and moves on a beat later.
           onDelta={(index, delta) => {
             if (delta !== 1) return
             setState((state) => {
+              // A fourth tap would land on a board that is about to be wiped.
+              if (state.taps === WEIGHTS_TAPS) return state
               if (index !== WEIGHT_ROUNDS[state.round]?.cell) return state
-              const base = state.taps === 0 ? emptyCells() : state.cells
-              const taps = state.taps + 1
-              const done = taps === WEIGHTS_TAPS
               return {
-                cells: dialCell(base, index, 1),
-                round: done ? state.round + 1 : state.round,
-                taps: done ? 0 : taps,
+                cells: dialCell(state.cells, index, 1),
+                round: state.round,
+                taps: state.taps + 1,
               }
             })
           }}

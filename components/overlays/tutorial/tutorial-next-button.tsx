@@ -1,13 +1,14 @@
 import { Ionicons } from '@expo/vector-icons'
 import { Pressable, Text } from 'react-native'
 
-// Rendered by each lesson wherever it reads naturally — at the end of the copy,
-// in the targets area. Only appears when there's nothing to fulfil: a screen with
-// no task, an already-cleared screen being revisited, or a free-browse replay.
-// Completing a task carries the player forward on its own.
+// Forward, in the top bar beside BACK — see the note in tutorial-footer.tsx for why it
+// lives there and not in the lesson. Only appears when there's nothing to fulfil: a
+// screen with no task, an already-cleared screen being revisited, or a free-browse
+// replay. Completing a task carries the player forward on its own.
 //
-// The label names what's coming rather than saying "next", so the button reads
-// as an invitation into the next screen.
+// Small, to sit in a row with two other controls. The label names where it goes rather
+// than saying "next", but as the destination alone: with the arrow beside it, "MODES →"
+// is the whole sentence.
 export function TutorialNextButton({
   label,
   isLast,
@@ -20,15 +21,15 @@ export function TutorialNextButton({
   return (
     <Pressable
       onPress={onPress}
-      className="mt-5 flex-row items-center justify-center gap-2 self-center rounded-2xl bg-strong px-6 py-3.5"
+      className="mt-3 flex-row items-center justify-center gap-1.5 self-center rounded-xl bg-strong px-4 py-2.5"
     >
       <Text
         selectable={false}
-        className="font-mono text-[12px] font-black tracking-[1.5px] text-on-strong"
+        className="font-mono text-[11px] font-black tracking-[1px] text-on-strong"
       >
         {label}
       </Text>
-      <Ionicons name={isLast ? 'play' : 'arrow-forward'} size={14} color="#d8d2f4" />
+      <Ionicons name={isLast ? 'play' : 'arrow-forward'} size={12} color="#d8d2f4" />
     </Pressable>
   )
 }

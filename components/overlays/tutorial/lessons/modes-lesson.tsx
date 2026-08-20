@@ -4,13 +4,14 @@ import { ModeCard } from '@/components/guide/mode-card'
 import { LessonHeading } from '@/components/overlays/tutorial/lesson-heading'
 import { STEP_COLORS } from '@/constants/tutorial'
 import { MODE_ORDER, type Mode } from '@/machines/game'
-import type { LessonProps } from '@/types/tutorial'
 
 const COLOR = STEP_COLORS[4] ?? '#E5534B'
 
 const GAP = 12
 // Leaves the next card peeking, so the row reads as swipeable.
 const PEEK = 44
+// The overlay's own px-4, re-applied inside the scroll content — see the note below.
+const EDGE = 16
 
 // Lives and streaks belong to the mode that owns them, so each card carries its
 // own — no separate hearts section to cross-reference.
@@ -32,9 +33,12 @@ const MODE_FACTS = {
   ],
 } as const satisfies Record<Mode, readonly string[]>
 
-export function ModesLesson({ nextButton }: LessonProps) {
+export function ModesLesson() {
   const { width } = useWindowDimensions()
-  const cardWidth = width - 32 - PEEK
+  // A card starts EDGE from the left, so leaving PEEK of the next one showing at the
+  // right screen edge costs it the gap as well. Now that the track is full-bleed, PEEK
+  // is exactly how much of the next card the player sees.
+  const cardWidth = width - EDGE - GAP - PEEK
 
   return (
     <View className="flex-1">
@@ -43,13 +47,20 @@ export function ModesLesson({ nextButton }: LessonProps) {
       </LessonHeading>
 
       {/* Not inside a flex-1 parent: a horizontal ScrollView would stretch to fill
-          it and strand the cards at the top. */}
+          it and strand the cards at the top.
+
+          Full-bleed: -mx-4 cancels the overlay's px-4 so the track runs to the screen
+          edges and the peeking card is cut off by the screen rather than stopping short
+          of it. The padding moves inside the content instead, which keeps the first
+          card's left edge lined up with the heading above and still lets the last one
+          scroll clear. */}
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
         snapToInterval={cardWidth + GAP}
         decelerationRate="fast"
-        contentContainerStyle={{ gap: GAP, paddingRight: PEEK }}
+        className="-mx-4"
+        contentContainerStyle={{ gap: GAP, paddingHorizontal: EDGE }}
       >
         {MODE_ORDER.map((mode) => (
           <View key={mode} style={{ width: cardWidth }}>
@@ -57,9 +68,6 @@ export function ModesLesson({ nextButton }: LessonProps) {
           </View>
         ))}
       </ScrollView>
-
-      <View className="flex-1" />
-      {nextButton}
     </View>
   )
 }

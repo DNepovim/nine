@@ -18,16 +18,23 @@ const COLOR = STEP_COLORS[1] ?? '#7273D2'
 // The hit flash a key wears at 9 — Trainee's, the run this tutorial ends in.
 const [PEAK_FROM, PEAK_TO] = DARK_MODE_GRADIENT.trainee
 
-// Swipe up is deliberately absent — tap already covers +1, so it's one gesture
-// fewer to learn for the same result.
+// Swipe up is deliberately absent — tap already covers +1, so it's one gesture fewer to
+// learn for the same result.
+//
+// The gesture is named on its own so the callout can set it apart from the reason: the
+// arrow, the words and the thumb over the button then all say the same direction.
 const GESTURE_TASKS = [
-  { gesture: 'tap', prompt: 'Tap the button — every tap adds 1.' },
-  { gesture: 'down', prompt: 'Now swipe down — that takes 1 back off.' },
-  { gesture: 'right', prompt: 'Swipe right — straight to 9 in one move.' },
-  { gesture: 'left', prompt: 'And swipe left — straight back to 0.' },
-] as const satisfies readonly { gesture: ThumbGesture; prompt: string }[]
+  { gesture: 'tap', action: 'TAP', detail: 'every tap adds 1.' },
+  { gesture: 'down', action: 'SWIPE DOWN', detail: 'that takes 1 back off.' },
+  { gesture: 'right', action: 'SWIPE RIGHT', detail: 'straight to 9 in one move.' },
+  { gesture: 'left', action: 'SWIPE LEFT', detail: 'straight back to 0.' },
+] as const satisfies readonly {
+  gesture: ThumbGesture
+  action: string
+  detail: string
+}[]
 
-export function ControlsLesson({ isDark, onComplete, nextButton }: LessonProps) {
+export function ControlsLesson({ isDark, onComplete }: LessonProps) {
   // Value and sub-step move as one: checking the gesture inside the updater keeps
   // two gestures landing in the same frame from advancing twice off a stale read.
   const [{ value, taskIndex }, setState] = useState(() => ({
@@ -60,13 +67,15 @@ export function ControlsLesson({ isDark, onComplete, nextButton }: LessonProps) 
       </LessonHeading>
 
       <TaskPrompt
-        text={task === undefined ? 'That’s every move the dial has.' : task.prompt}
+        text={task === undefined ? 'That’s every move the dial has.' : task.detail}
+        action={task?.action}
+        gesture={task?.gesture}
         done={task === undefined}
         color={COLOR}
       />
       <SubStepDots total={GESTURE_TASKS.length} current={taskIndex} color={COLOR} />
 
-      <DialStage above={nextButton} readout={null} dialSize={dialSize}>
+      <DialStage above={null} readout={null} dialSize={dialSize}>
         {/* The dial's footprint, with only its centre cell filled. */}
         <View
           style={{ width: dialSize, height: dialSize }}

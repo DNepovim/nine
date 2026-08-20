@@ -8,7 +8,6 @@ import { StrategyLesson } from '@/components/overlays/tutorial/lessons/strategy-
 import { TipsLesson } from '@/components/overlays/tutorial/lessons/tips-lesson'
 import { WeightsLesson } from '@/components/overlays/tutorial/lessons/weights-lesson'
 import { TutorialFooter } from '@/components/overlays/tutorial/tutorial-footer'
-import { TutorialNextButton } from '@/components/overlays/tutorial/tutorial-next-button'
 import { TutorialResumeButton } from '@/components/overlays/tutorial/tutorial-resume-button'
 import { TutorialStepper } from '@/components/overlays/tutorial/tutorial-stepper'
 import { STEP_CTA, type TutorialStepId } from '@/constants/tutorial'
@@ -71,26 +70,17 @@ export function TutorialOverlay({
 
       <TutorialFooter
         isFirst={step === 0}
+        isLast={isLast}
+        showNext={showNext}
+        nextLabel={STEP_CTA[stepId]}
         dismissLabel={DISMISS_LABEL[mode]}
         onPrev={onPrev}
+        onNext={onNext}
         onDismiss={onDismiss}
       />
 
       {/* Keyed so each screen starts from a clean dial. */}
-      <Lesson
-        key={stepId}
-        isDark={isDark}
-        onComplete={onStepDone}
-        nextButton={
-          showNext ? (
-            <TutorialNextButton
-              label={STEP_CTA[stepId]}
-              isLast={isLast}
-              onPress={onNext}
-            />
-          ) : null
-        }
-      />
+      <Lesson key={stepId} isDark={isDark} onComplete={onStepDone} />
     </View>
   )
 }

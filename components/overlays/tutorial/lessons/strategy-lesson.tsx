@@ -45,7 +45,7 @@ const ROUTE = [
   },
 ] as const
 
-export function StrategyLesson({ isDark, onComplete, nextButton }: LessonProps) {
+export function StrategyLesson({ isDark, onComplete }: LessonProps) {
   const [cells, setCells] = useState<readonly number[]>(emptyCells)
   // Bumping the key remounts the ring, which is how a fresh target is dealt.
   const [ringKey, setRingKey] = useState(0)
@@ -54,8 +54,16 @@ export function StrategyLesson({ isDark, onComplete, nextButton }: LessonProps) 
 
   const sum = sumCells(cells)
   const hit = sum === STRATEGY_TARGET
-  const stage = ROUTE.findIndex(({ cell, upTo }) => (cells[cell] ?? 0) < upTo)
+  // A step is done when its button sits on exactly the value the route wants — not
+  // merely at or past it. Overshooting therefore keeps the step, which is what keeps
+  // the offending button unlocked: `isLive` below is the only way to touch anything,
+  // so a step that moved on from an overshot button would leave nothing able to fix it.
+  const stage = ROUTE.findIndex(({ cell, upTo }) => (cells[cell] ?? 0) !== upTo)
   const step = stage === -1 ? undefined : ROUTE[stage]
+
+  // Only the button the route is on responds. Dialling the other eight would leave the
+  // prompt describing a board the player had already wandered away from.
+  const isLive = (index: number) => index === step?.cell
 
   useEffect(() => {
     if (hit) onComplete()
@@ -63,14 +71,16 @@ export function StrategyLesson({ isDark, onComplete, nextButton }: LessonProps) 
 
   const prompt = () => {
     if (hit) return `${STRATEGY_TARGET} exactly — that’s a hit.`
-    if (sum > STRATEGY_TARGET)
-      return `${sum} is over ${STRATEGY_TARGET}. Swipe a button left to clear it and come back down.`
+    // Names the button rather than saying "a button": it is the only one that answers.
+    if (sum > STRATEGY_TARGET && step !== undefined)
+      return `${sum} is over ${STRATEGY_TARGET}. Swipe the ×${cellWeight(step.cell)} button left to clear it and come back down.`
     return step?.prompt ?? `Keep dialling — you want ${STRATEGY_TARGET} on the nose.`
   }
 
-  // Point at the button the route needs next, and stop once the target is hit.
+  // Point at the button the route needs next, and stop once the target is hit. Over the
+  // target it keeps pointing at the same button, because that is the one to clear.
   const hintCell = () => {
-    if (hit || sum > STRATEGY_TARGET) return null
+    if (hit) return null
     return step?.cell ?? null
   }
 
@@ -106,7 +116,6 @@ export function StrategyLesson({ isDark, onComplete, nextButton }: LessonProps) 
                 ? 'THE RING EMPTIED — FRESH TARGET, NO HARM DONE'
                 : 'THE RING IS THE TARGET’S COUNTDOWN'}
             </Text>
-            {nextButton}
           </View>
         }
         readout={<SumReadout sum={sum} isDark={isDark} />}
@@ -118,12 +127,14 @@ export function StrategyLesson({ isDark, onComplete, nextButton }: LessonProps) 
           size={dialSize}
           showWeights
           hintCell={hintCell()}
-          hintGesture="tap"
+          hintGesture={sum > STRATEGY_TARGET ? 'left' : 'tap'}
           hintColor={COLOR}
           onDelta={(index, delta) => {
+            if (!isLive(index)) return
             setCells((current) => dialCell(current, index, delta))
           }}
           onSet={(index, value) => {
+            if (!isLive(index)) return
             setCells((current) => setCell(current, index, value))
           }}
         />

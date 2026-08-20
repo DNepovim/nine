@@ -26,14 +26,17 @@ export const STEP_SELF_ADVANCES = {
   tips: false,
 } as const satisfies Record<TutorialStepId, boolean>
 
-// What the forward button promises, per screen. A label that names what comes
-// next reads as an invitation; a bare "NEXT" doesn't.
+// Where the forward button goes, per screen — the destination, not a sentence about
+// it. A bare "NEXT" says nothing, but the full invitation ("SEE WHY POSITION MATTERS")
+// made for a button the size of a primary CTA, sharing the dial screens' one flexible
+// band with the target it was crowding. The arrow supplies the verb.
 export const STEP_CTA = {
-  goal: 'LET’S TRY THE CONTROLS',
-  controls: 'SEE WHY POSITION MATTERS',
-  weights: 'NOW PUT IT TO WORK',
-  strategy: 'MEET THE MODES',
-  modes: 'A FEW LAST TIPS',
+  goal: 'CONTROLS',
+  controls: 'POSITION',
+  weights: 'PRACTICE',
+  strategy: 'MODES',
+  modes: 'TIPS',
+  // The last one keeps its full promise: it starts a run rather than turning a page.
   tips: 'PLAY TRAINEE',
 } as const satisfies Record<TutorialStepId, string>
 
@@ -63,6 +66,12 @@ export const CONTROLS_START_VALUE = 5
 // Weights lesson: the same handful of taps on three different buttons, so the
 // only thing that changes is where they land.
 export const WEIGHTS_TAPS = 3
+
+// How long a finished round's total holds before the board clears for the next one.
+// Long enough to read the total and the equation beside it, short enough that the
+// next prompt — which opens by saying the board is cleared — is telling the truth by
+// the time it appears.
+export const WEIGHTS_CLEAR_DELAY_MS = 650
 
 // Strategy lesson: ×9 twice covers 18, then ×2 and ×1 walk the last 3 in. Note
 // this is deliberately not the par route — computePar counts a swipe-to-9 as one
