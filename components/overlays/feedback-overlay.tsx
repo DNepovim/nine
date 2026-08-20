@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons'
 import { LinearGradient } from 'expo-linear-gradient'
-import { isNonEmptyString } from 'narrowland'
+import { isNonEmptyString, isOneOf } from 'narrowland'
 import { useState } from 'react'
 import { Pressable, Text, TextInput, View } from 'react-native'
 import Animated, {
@@ -14,8 +14,9 @@ import { scheduleOnRN } from 'react-native-worklets'
 import { MenuButton } from '@/components/game/menu-button'
 import { SPECTRUM } from '@/constants/colors'
 import { useTheme } from '@/hooks/use-theme'
-import { track } from '@/lib/analytics'
-import { BUILD_ID } from '@/lib/analytics-events'
+import { cn } from '@/lib/cn'
+import { MAX_FEEDBACK_LENGTH } from '@/lib/feedback-outcome'
+import { submitFeedback } from '@/lib/feedback-submission'
 import { MODE_GRADIENT, type Difficulty, type Mode } from '@/machines/game'
 
 // The same dialog dress as the what's-new popup — gradient edge, surface card,
@@ -24,7 +25,27 @@ const BORDER = 2
 const RADIUS = 26
 const EXIT_MS = 160
 
-const MAX_LENGTH = 800
+// Where the send got to. The two failures are separate states rather than one `error`
+// because they ask different things of the player: a lost connection is worth the same
+// message again in a minute, a refusal is not.
+type Status = 'idle' | 'sending' | 'sent' | 'offline' | 'refused'
+
+const BUTTON_LABEL = {
+  idle: 'SEND',
+  sending: 'SENDING',
+  sent: 'DONE',
+  offline: 'TRY AGAIN',
+  refused: 'TRY AGAIN',
+} as const satisfies Record<Status, string>
+
+// Both of these say the same thing first — nothing was sent — because that is the part
+// the old dialog got wrong, and the part a player needs in order to know their message is
+// still theirs to send.
+const FAILURE_LINE = {
+  offline:
+    'No connection, so nothing was sent. The message is still here — try again once you are back.',
+  refused: 'Something went wrong at our end and the message was not saved. Try again?',
+} as const satisfies Record<'offline' | 'refused', string>
 
 // A message from the player, sent with what they were looking at when they wrote it.
 //
@@ -33,8 +54,14 @@ const MAX_LENGTH = 800
 // can be looked into. All of it is already on screen — nothing is collected here that the
 // player is not currently seeing.
 //
+// It writes a row and waits for the answer (`lib/feedback-submission.ts`). It used to
+// fire a PostHog event, which cannot be awaited and cannot fail out loud, and so THANK
+// YOU was printed whether or not anything left the device — including on native, where
+// analytics is a no-op, and in any browser with an ad blocker, which is a good share of
+// exactly the players who have something to report.
+//
 // No screenshot yet: capturing one means `react-native-view-shot` and somewhere to put
-// the file, which is a Storage bucket and an upload path rather than an event property.
+// the file, which is a Storage bucket and an upload path rather than a column.
 export function FeedbackOverlay({
   gameMode,
   difficulty,
@@ -50,7 +77,7 @@ export function FeedbackOverlay({
   const dotColor = colorScheme === 'dark' ? '#2A2B44' : '#D4D0C8'
   const modeColor = MODE_GRADIENT[gameMode][0]
   const [message, setMessage] = useState('')
-  const [sent, setSent] = useState(false)
+  const [status, setStatus] = useState<Status>('idle')
 
   const fade = useSharedValue(1)
   const scale = useSharedValue(1)
@@ -71,16 +98,18 @@ export function FeedbackOverlay({
     )
   }
 
-  const send = () => {
-    if (!isNonEmptyString(message.trim())) return
-    track('feedback_submitted', {
-      message: message.trim().slice(0, MAX_LENGTH),
-      mode: gameMode,
-      difficulty,
-      score,
-      build: BUILD_ID,
-    })
-    setSent(true)
+  const canSend = isNonEmptyString(message.trim()) && status !== 'sending'
+  const failureLine = isOneOf(status, ['offline', 'refused'])
+    ? FAILURE_LINE[status]
+    : null
+
+  // `submitFeedback` answers with exactly the three states this can land in, so the
+  // outcome of the write *is* what the dialog shows. There is no path from here to THANK
+  // YOU that does not go through a row the server confirmed.
+  const send = async () => {
+    if (!canSend) return
+    setStatus('sending')
+    setStatus(await submitFeedback(message, gameMode, difficulty, score))
   }
 
   return (
@@ -119,7 +148,7 @@ export function FeedbackOverlay({
               />
             </View>
 
-            {sent ? (
+            {status === 'sent' ? (
               <>
                 <Text
                   selectable={false}
@@ -142,7 +171,7 @@ export function FeedbackOverlay({
                     selectable={false}
                     className="font-mono text-[12px] font-black tracking-[1.5px] text-on-strong"
                   >
-                    DONE
+                    {BUTTON_LABEL.sent}
                   </Text>
                 </Pressable>
               </>
@@ -160,24 +189,38 @@ export function FeedbackOverlay({
                   value={message}
                   onChangeText={setMessage}
                   multiline
-                  maxLength={MAX_LENGTH}
+                  editable={status !== 'sending'}
+                  maxLength={MAX_FEEDBACK_LENGTH}
                   placeholder="Type here"
                   placeholderTextColor={colorScheme === 'dark' ? '#504e6e' : '#aaa69e'}
                   className="mb-4 h-32 w-full rounded-2xl border border-muted bg-card p-3 font-mono text-[12px] leading-[18px] text-primary"
                   style={{ textAlignVertical: 'top' }}
                 />
 
+                {failureLine !== null && (
+                  <Text
+                    selectable={false}
+                    className="mb-3 font-mono text-[10px] font-bold leading-[16px] text-red-500"
+                  >
+                    {failureLine}
+                  </Text>
+                )}
+
                 <Pressable
-                  onPress={send}
-                  disabled={!isNonEmptyString(message.trim())}
-                  className="items-center rounded-2xl bg-strong py-3.5"
-                  style={{ opacity: isNonEmptyString(message.trim()) ? 1 : 0.35 }}
+                  onPress={() => {
+                    void send()
+                  }}
+                  disabled={!canSend}
+                  className={cn(
+                    'items-center rounded-2xl bg-strong py-3.5',
+                    !canSend && 'opacity-[0.35]',
+                  )}
                 >
                   <Text
                     selectable={false}
                     className="font-mono text-[12px] font-black tracking-[1.5px] text-on-strong"
                   >
-                    SEND
+                    {BUTTON_LABEL[status]}
                   </Text>
                 </Pressable>
               </>

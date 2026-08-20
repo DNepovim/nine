@@ -36,15 +36,6 @@ export type AnalyticsEvents = {
   }
   screen_opened: { screen: 'how_to_play' | 'options' | 'news' | 'feedback' }
   multiplayer_room: { action: 'created' | 'joined' | 'finished'; players: number }
-  feedback_submitted: {
-    message: string
-    // What the player was looking at when they wrote it. A message without this is a
-    // sentence with no subject.
-    mode: Mode
-    difficulty: Difficulty
-    score: number
-    build: string
-  }
 }
 
 export type AnalyticsEvent = keyof AnalyticsEvents
