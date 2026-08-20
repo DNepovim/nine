@@ -8,6 +8,7 @@ import Animated, {
 
 import { PieCountdown } from '@/components/game/pie-countdown'
 import { DialStage } from '@/components/overlays/tutorial/dial-stage'
+import { GoalHitPopup } from '@/components/overlays/tutorial/goal-hit-popup'
 import { LiveDialGrid } from '@/components/overlays/tutorial/live-dial-grid'
 import { SumReadout } from '@/components/overlays/tutorial/sum-readout'
 import {
@@ -27,10 +28,12 @@ const COLOR = STEP_COLORS[0] ?? '#4C7EFF'
 // the dial. The player is invited to try — and five seconds isn't nearly enough
 // for a three-digit target, which is exactly the question the tutorial answers.
 // When the ring empties the screen reports itself done and moves on.
-// No forward button here: the screen is a timed demonstration, and it ends itself
-// the moment the target resolves — either way.
-export function GoalLesson({ isDark, onComplete }: LessonProps) {
+// No forward button here: the screen is a timed demonstration. If the ring runs out
+// it ends itself and moves on; if the player actually lands the hit, that proves the
+// point early, so a popup asks whether to keep learning or skip straight to the game.
+export function GoalLesson({ isDark, onComplete, onDismiss }: LessonProps) {
   const [cells, setCells] = useState<readonly number[]>(emptyCells)
+  const [showHitChoice, setShowHitChoice] = useState(false)
   const dialSize = useGameDialSize()
   const howOpacity = useSharedValue(0)
   const hit = sumCells(cells) === GOAL_TARGET
@@ -49,11 +52,12 @@ export function GoalLesson({ isDark, onComplete }: LessonProps) {
     }
   }, [splashDone])
 
-  // Practically nobody dials 137 inside five seconds — but if they do, that
-  // answers the question just as well as the ring running out.
+  // Practically nobody dials 137 inside five seconds — but if they do, that answers
+  // the question just as well as the ring running out. Rather than carrying on by
+  // itself, it offers the choice: keep learning, or take the win to a real run.
   useEffect(() => {
-    if (hit) onComplete()
-  }, [hit, onComplete])
+    if (hit) setShowHitChoice(true)
+  }, [hit])
 
   const howStyle = useAnimatedStyle(() => ({ opacity: howOpacity.value }))
 
@@ -109,6 +113,19 @@ export function GoalLesson({ isDark, onComplete }: LessonProps) {
           }}
         />
       </DialStage>
+
+      {showHitChoice && (
+        <GoalHitPopup
+          onContinue={() => {
+            setShowHitChoice(false)
+            onComplete()
+          }}
+          onSkip={() => {
+            setShowHitChoice(false)
+            onDismiss?.()
+          }}
+        />
+      )}
     </View>
   )
 }

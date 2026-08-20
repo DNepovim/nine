@@ -80,7 +80,12 @@ export function TutorialOverlay({
       />
 
       {/* Keyed so each screen starts from a clean dial. */}
-      <Lesson key={stepId} isDark={isDark} onComplete={onStepDone} />
+      <Lesson
+        key={stepId}
+        isDark={isDark}
+        onComplete={onStepDone}
+        onDismiss={onDismiss}
+      />
     </View>
   )
 }
