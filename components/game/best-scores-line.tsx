@@ -198,6 +198,13 @@ export function BestScoresLine({
     ? shownKeys.map((key) => ({ key, value: values[key] ?? 0, mine: heldByMe[key] }))
     : []
 
+  // Trainee is practice against no board, so it has no scores to put here — but it
+  // still occupies the strip's height. Everything above the dial is drawn from the same
+  // leftover the dial is sized from, so a mode that gave this space back would get a
+  // bigger dial than the others, and the dial has to be the same in every mode. After
+  // the hooks, not before: the reveal timers run identically whatever the mode.
+  if (mode === 'trainee') return <View style={{ height: BEST_SCORES_HEIGHT }} />
+
   return (
     <View className="mb-1.5">
       <View style={{ height: ROW_HEIGHT }}>

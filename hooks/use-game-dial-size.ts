@@ -1,5 +1,7 @@
 import { useWindowDimensions } from 'react-native'
 
+import { BEST_SCORES_HEIGHT } from '@/components/game/best-scores-line'
+
 // The game screen's dial pad is a square of min(width, height) inside a flex-1
 // area that splits the leftover height with the targets area. Deriving the same
 // number here — rather than measuring whatever space a lesson happens to leave —
@@ -17,6 +19,11 @@ export const SUM_ROW_HEIGHT = 50
 
 export function useGameDialSize(): number {
   const { width, height } = useWindowDimensions()
-  const dialArea = (height - SCREEN_PADDING_Y - HUD_HEIGHT - SUM_ROW_HEIGHT) / 2
+  // The best-scores strip is in every mode's budget, Trainee included — it reserves the
+  // height even though it shows nothing there, precisely so the dial does not change
+  // size between modes. Imported rather than written out again: it is one of the numbers
+  // this calculation exists to track.
+  const chrome = SCREEN_PADDING_Y + BEST_SCORES_HEIGHT + HUD_HEIGHT + SUM_ROW_HEIGHT
+  const dialArea = (height - chrome) / 2
   return Math.max(0, Math.floor(Math.min(width - SCREEN_PADDING_X, dialArea)))
 }

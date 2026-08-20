@@ -17,7 +17,7 @@ import Animated, {
 import DSEG7Font from '@/assets/fonts/DSEG7Classic-Bold.ttf'
 import { FeedbackBookmark } from '@/components/feedback-bookmark'
 import { AnnouncementEffect } from '@/components/game/announcement-effect'
-import { BEST_SCORES_HEIGHT, BestScoresLine } from '@/components/game/best-scores-line'
+import { BestScoresLine } from '@/components/game/best-scores-line'
 import { Confetti } from '@/components/game/confetti'
 import { DialButton } from '@/components/game/dial-button'
 import { FloatingLifeLoss } from '@/components/game/floating-life-loss'
@@ -94,7 +94,6 @@ import {
   MODES,
   SCORED_MODES,
   streakMultiplier,
-  type Mode,
 } from '@/machines/game'
 import { cellWeight, computePar } from '@/machines/scoring'
 import type { MultiMode } from '@/types/multiplayer'
@@ -151,14 +150,10 @@ const OVERLAY_SCREENS = {
   AnalyticsEvents['screen_opened']['screen']
 >
 
-// Where the menu button sits, level with the NINE row. Trainee draws no
-// best-scores strip, so everything below it — the button included — comes up by
-// exactly that strip's height.
-const MENU_TOP = {
-  trainee: 36 - BEST_SCORES_HEIGHT,
-  accuracy: 36,
-  speed: 36,
-} as const satisfies Record<Mode, number>
+// Where the menu button sits, level with the NINE row. One number for every mode:
+// the best-scores strip occupies its height in all of them, Trainee included, so
+// there is no longer a mode whose top bar starts higher than the rest.
+const MENU_TOP = 36
 
 // A record measured against a board that cannot be trusted — offline, reading
 // whatever it last managed to load — is not a record worth telling the player
@@ -754,23 +749,22 @@ export default function GameScreen() {
 
         {/* ── Game screen (single padded wrapper) ── */}
         <Screen>
-          {/* Row 0 — board bests, a hairline above the top bar. Trainee is a
-            practice mode with no board, so it gets no strip. */}
-          {mode !== 'trainee' && (
-            <BestScoresLine
-              inRun={inRun}
-              mode={mode}
-              announcement={announcement}
-              yourBest={stats[mode][difficulty].score}
-              loaded={board.loaded}
-              todayIsMine={board.today.recordIsMine}
-              weekIsMine={board.week.recordIsMine}
-              everIsMine={board.forever.recordIsMine}
-              today={bestToday}
-              week={bestWeek}
-              ever={bestEver}
-            />
-          )}
+          {/* Row 0 — board bests, a hairline above the top bar. In every mode,
+            Trainee included: it has no board to report, and reserves the height
+            instead, so that the dial below is the same size in all of them. */}
+          <BestScoresLine
+            inRun={inRun}
+            mode={mode}
+            announcement={announcement}
+            yourBest={stats[mode][difficulty].score}
+            loaded={board.loaded}
+            todayIsMine={board.today.recordIsMine}
+            weekIsMine={board.week.recordIsMine}
+            everIsMine={board.forever.recordIsMine}
+            today={bestToday}
+            week={bestWeek}
+            ever={bestEver}
+          />
           <View className="mb-3">
             {/* Row 1 — mode/difficulty left, NINE centered, spacer right */}
             <View className="mb-1 flex-row items-center">
@@ -803,20 +797,6 @@ export default function GameScreen() {
               {/* right: spacer balancing the absolute dots menu button */}
               <View className="flex-1" />
             </View>
-
-            {/* Row 1b — Trainee's readout. The other modes spend this space on the
-              board bests; Trainee has no board, and a learner wants to know how
-              the press they just made actually went. */}
-            {mode === 'trainee' && (
-              <TraineeStats
-                hits={hits}
-                batch={hitBatch}
-                praise={celebration.message ?? coach.line}
-                route={coach.route}
-                routeStart={coach.routeStart}
-                routeTarget={coach.routeTarget}
-              />
-            )}
 
             {/* Row 2 — hearts · center stat · score cluster */}
             <View className="mt-1.5 flex-row items-center">
@@ -922,26 +902,50 @@ export default function GameScreen() {
           </View>
 
           {/* Target numbers */}
-          <View ref={targetsAreaRef} className="flex-1" onLayout={onContainerLayout}>
-            {displayedTargets.map((target) => (
-              <TargetCard
-                key={target.id}
-                target={target}
-                isDark={isDark}
-                // The clock this target spawned with, so a ring never retargets
-                // mid-flight when Speed's timeout tightens.
-                duration={target.duration}
-                par={mode === 'trainee' ? computePar(grid, target.value) : undefined}
-                dying={isGameOver}
-                frozen={isPaused}
-                onExpire={() => {
-                  send({ type: 'TARGET_EXPIRED', id: target.id, now: Date.now() })
-                }}
-                onExitComplete={() => {
-                  removeDisplayed(target.id)
-                }}
+          <View className="flex-1">
+            {/* Trainee's readout — how many targets they have cleared and how the press
+              they just made actually went, which is what a learner wants and a score
+              cannot tell them.
+
+              It sits inside the targets area rather than up in the top bar, and that is
+              a layout constraint rather than a design preference: the bar's height comes
+              out of the same leftover the dial is sized from, and this block is ~85px
+              against the bests strip's 25, which took about 10px off every dial button
+              in Trainee alone. Down here it costs the spawn canvas instead — which has
+              room to give, and which is measured below, so targets never land under it. */}
+            {mode === 'trainee' && (
+              <TraineeStats
+                hits={hits}
+                batch={hitBatch}
+                praise={celebration.message ?? coach.line}
+                route={coach.route}
+                routeStart={coach.routeStart}
+                routeTarget={coach.routeTarget}
               />
-            ))}
+            )}
+            {/* The canvas the targets actually spawn into. It carries the measurement,
+              so its bounds are whatever is left after the readout above. */}
+            <View ref={targetsAreaRef} className="flex-1" onLayout={onContainerLayout}>
+              {displayedTargets.map((target) => (
+                <TargetCard
+                  key={target.id}
+                  target={target}
+                  isDark={isDark}
+                  // The clock this target spawned with, so a ring never retargets
+                  // mid-flight when Speed's timeout tightens.
+                  duration={target.duration}
+                  par={mode === 'trainee' ? computePar(grid, target.value) : undefined}
+                  dying={isGameOver}
+                  frozen={isPaused}
+                  onExpire={() => {
+                    send({ type: 'TARGET_EXPIRED', id: target.id, now: Date.now() })
+                  }}
+                  onExitComplete={() => {
+                    removeDisplayed(target.id)
+                  }}
+                />
+              ))}
+            </View>
           </View>
 
           {/* ── Score above dial ── */}
@@ -1322,7 +1326,7 @@ export default function GameScreen() {
           color={isDark ? '#2A2B44' : '#D4D0C8'}
           style={{
             position: 'absolute',
-            top: MENU_TOP[mode],
+            top: MENU_TOP,
             right: 18,
             zIndex: 20,
           }}
