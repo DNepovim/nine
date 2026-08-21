@@ -13,6 +13,7 @@ import Animated, {
 } from 'react-native-reanimated'
 import { scheduleOnRN } from 'react-native-worklets'
 
+import { DialBadge } from '@/components/game/dial-badge'
 import { DIAL_COLORS } from '@/constants/colors'
 import { SWIPE_THRESHOLD } from '@/constants/game'
 import { mono } from '@/constants/theme'
@@ -20,6 +21,24 @@ import { mono } from '@/constants/theme'
 // Values 0..8 ride the low → high tint ramp; 9 is the mode's CTA gradient.
 const RAMP_MAX = 8
 const TINT_TIMING = { duration: 260, easing: Easing.out(Easing.quad) }
+
+// Space reserved around the pill for its shadow and for the two badges below to
+// sit half in, half out of. Also what BADGE_OFFSET below is measured from.
+const PADDING = 10
+
+// Trainee's weight and max badges — small discs riding the pill's own rim rather
+// than text stacked inside it, so they read off a chip built for contrast instead
+// of fighting the pill's own animated fill colour.
+//
+// MIN still has to hold up on the smallest phones the dial ships on (an ~80px
+// cell there, going by useGameDialSize): even at that floor there's over 20px of
+// clearance between a MIN-sized badge and the digit, so raising the floor along
+// with the ratio makes every device's badge bigger rather than only the roomy ones.
+const BADGE_MIN = 22
+const BADGE_MAX = 34
+const BADGE_RATIO = 0.28
+const BADGE_FONT_SIZE = 12
+const BADGE_BORDER = 1
 
 export function DialButton({
   value,
@@ -160,24 +179,32 @@ export function DialButton({
     opacity: numOpacity.value,
   }))
 
-  // The digit and its trainee hints warm to pale red over the dark 9 gradient.
+  // The digit warms to pale red over the dark 9 gradient.
   const digitStyle = useAnimatedStyle(() => ({
     color: interpolateColor(peakProgress.value, [0, 1], [palette.text, palette.peakText]),
   }))
 
-  const hintStyle = useAnimatedStyle(() => ({
-    color: interpolateColor(
-      peakProgress.value,
-      [0, 1],
-      [palette.label, palette.peakLabel],
-    ),
-  }))
+  // The pill's own radius, inset by PADDING on every side.
+  const radius = (size - PADDING * 2) / 2
+  const badgeSize = Math.min(
+    BADGE_MAX,
+    Math.max(BADGE_MIN, Math.round(size * BADGE_RATIO)),
+  )
+  // Where a badge centred on the pill's rim, on the diagonal toward a corner,
+  // lands: PADDING plus the distance from that corner in to the circle — a
+  // circle's closest approach to its bounding square's corner is radius short of
+  // it on both axes, by Math.SQRT1_2 (cos/sin 45°). Expressed as a top/left (or,
+  // mirrored, bottom/right) offset from the outer box so the badge's own centre,
+  // not its corner, sits exactly on the rim.
+  const badgeOffset = PADDING + radius * (1 - Math.SQRT1_2) - badgeSize / 2
 
   return (
     <GestureDetector gesture={gesture}>
       {/* Explicit pixel size (not w-1/3 + aspect-square): iOS WebKit fails to
-          derive height from aspect-ratio on wrapping flex children. */}
-      <View style={{ width: size, height: size, padding: 10 }}>
+          derive height from aspect-ratio on wrapping flex children. The two
+          badges below are positioned against this box, not the pill inside it,
+          so they can straddle the pill's rim rather than being clipped by it. */}
+      <View style={{ width: size, height: size, padding: PADDING }}>
         <Animated.View
           style={[
             {
@@ -209,63 +236,67 @@ export function DialButton({
               style={{ flex: 1, borderRadius: 999 }}
             />
           </Animated.View>
-          {/* The change animation belongs to the digit alone, not to this stack.
-              Trainee hangs the weight hint above and the key's maximum below, and
-              animating the group swung all three every time a value changed —
-              the two hints are fixed facts about the key and should sit still.
-              Outside Trainee this holds only the digit, so nothing differs. */}
-          <View style={{ alignItems: 'center' }}>
-            {trainee && (
-              <Animated.Text
-                selectable={false}
-                style={[
-                  {
-                    fontSize: 10,
-                    fontFamily: mono,
-                    fontWeight: '700' as const,
-                    includeFontPadding: false,
-                    letterSpacing: 0.5,
-                  },
-                  hintStyle,
-                ]}
-              >
-                ×{weight}
-              </Animated.Text>
-            )}
-            <Animated.Text
-              selectable={false}
-              style={[
-                {
-                  fontSize: trainee ? 24 : 30,
-                  fontFamily: mono,
-                  fontWeight: '500' as const,
-                  includeFontPadding: false,
-                },
-                digitStyle,
-                numStyle,
-              ]}
-            >
-              {showSum ? value * weight : value}
-            </Animated.Text>
-            {trainee && showMax && (
-              <Animated.Text
-                selectable={false}
-                style={[
-                  {
-                    fontSize: 10,
-                    fontFamily: mono,
-                    fontWeight: '700' as const,
-                    includeFontPadding: false,
-                    letterSpacing: 0.5,
-                  },
-                  hintStyle,
-                ]}
-              >
-                {9 * weight}
-              </Animated.Text>
-            )}
-          </View>
+          <Animated.Text
+            selectable={false}
+            style={[
+              {
+                fontSize: 30,
+                fontFamily: mono,
+                fontWeight: '500' as const,
+                includeFontPadding: false,
+              },
+              digitStyle,
+              numStyle,
+            ]}
+          >
+            {showSum ? value * weight : value}
+          </Animated.Text>
         </Animated.View>
+
+        {/* The weight and the key's ceiling, as fixed facts pinned to the pill's
+            rim rather than stacked with the digit. Top-left reads as "what this
+            key is worth"; bottom-right, on the corner the value climbs toward,
+            as "the most it can give." */}
+        {trainee && (
+          <DialBadge
+            label={`×${weight}`}
+            size={badgeSize}
+            fontSize={BADGE_FONT_SIZE}
+            offset={badgeOffset}
+            corner="topLeft"
+            low={palette.low}
+            high={palette.high}
+            text={palette.text}
+            peakText={palette.peakText}
+            peakFrom={peakFrom}
+            peakTo={peakTo}
+            borderColor={peakFrom}
+            borderWidth={BADGE_BORDER}
+            rampProgress={rampProgress}
+            peakProgress={peakProgress}
+            scale={scale}
+          />
+        )}
+        {trainee && showMax && (
+          <DialBadge
+            label={`${9 * weight}`}
+            size={badgeSize}
+            fontSize={BADGE_FONT_SIZE}
+            offset={badgeOffset}
+            corner="bottomRight"
+            low={palette.low}
+            high={palette.high}
+            text={palette.text}
+            peakText={palette.peakText}
+            peakFrom={peakFrom}
+            peakTo={peakTo}
+            borderColor={peakFrom}
+            borderWidth={BADGE_BORDER}
+            rampProgress={rampProgress}
+            peakProgress={peakProgress}
+            scale={scale}
+          />
+        )}
       </View>
     </GestureDetector>
   )
