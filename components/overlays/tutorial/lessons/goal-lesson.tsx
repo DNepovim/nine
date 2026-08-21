@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Text, View } from 'react-native'
 import Animated, {
+  FadeInDown,
   useAnimatedStyle,
   useSharedValue,
   withTiming,
@@ -63,12 +64,13 @@ export function GoalLesson({ isDark, onComplete, onDismiss }: LessonProps) {
 
   return (
     <View className="flex-1">
-      <Text
+      <Animated.Text
+        entering={FadeInDown.duration(380)}
         selectable={false}
         className="mt-5 text-center font-mono text-[15px] font-bold leading-[22px] text-primary"
       >
         {'The board must equal the target.\nThat’s the whole game.'}
-      </Text>
+      </Animated.Text>
 
       <DialStage
         above={

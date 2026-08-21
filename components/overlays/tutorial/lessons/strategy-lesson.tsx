@@ -11,6 +11,7 @@ import {
   COARSE_CELL,
   FINE_CELL,
   MID_CELL,
+  STEP_ACCENT_COLORS,
   STEP_COLORS,
   STRATEGY_COARSE_VALUE,
   STRATEGY_RING_MS,
@@ -20,7 +21,10 @@ import { useGameDialSize } from '@/hooks/use-game-dial-size'
 import { cellWeight, dialCell, emptyCells, setCell, sumCells } from '@/lib/tutorial-grid'
 import type { LessonProps } from '@/types/tutorial'
 
+// The heading and callout speak in one colour; the dial hint pointing at the button
+// to touch next speaks in the other.
 const COLOR = STEP_COLORS[3] ?? '#E5534B'
+const ACCENT = STEP_ACCENT_COLORS[3] ?? '#f06f3a'
 
 const COARSE_REACH = STRATEGY_COARSE_VALUE * cellWeight(COARSE_CELL)
 const MID_REACH = COARSE_REACH + cellWeight(MID_CELL)
@@ -128,7 +132,7 @@ export function StrategyLesson({ isDark, onComplete }: LessonProps) {
           showWeights
           hintCell={hintCell()}
           hintGesture={sum > STRATEGY_TARGET ? 'left' : 'tap'}
-          hintColor={COLOR}
+          hintColor={ACCENT}
           onDelta={(index, delta) => {
             if (!isLive(index)) return
             setCells((current) => dialCell(current, index, delta))

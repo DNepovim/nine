@@ -5,7 +5,7 @@ import { ControlsLesson } from '@/components/overlays/tutorial/lessons/controls-
 import { GoalLesson } from '@/components/overlays/tutorial/lessons/goal-lesson'
 import { ModesLesson } from '@/components/overlays/tutorial/lessons/modes-lesson'
 import { StrategyLesson } from '@/components/overlays/tutorial/lessons/strategy-lesson'
-import { TipsLesson } from '@/components/overlays/tutorial/lessons/tips-lesson'
+import { SwipeLesson } from '@/components/overlays/tutorial/lessons/swipe-lesson'
 import { WeightsLesson } from '@/components/overlays/tutorial/lessons/weights-lesson'
 import { TutorialFooter } from '@/components/overlays/tutorial/tutorial-footer'
 import { TutorialResumeButton } from '@/components/overlays/tutorial/tutorial-resume-button'
@@ -19,8 +19,8 @@ const LESSONS = {
   controls: ControlsLesson,
   weights: WeightsLesson,
   strategy: StrategyLesson,
+  swipe: SwipeLesson,
   modes: ModesLesson,
-  tips: TipsLesson,
 } as const satisfies Record<TutorialStepId, ComponentType<LessonProps>>
 
 const DISMISS_LABEL = {

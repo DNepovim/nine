@@ -1,17 +1,25 @@
-import { ScrollView, useWindowDimensions, View } from 'react-native'
+import { useRef, useState } from 'react'
+import {
+  ScrollView,
+  useWindowDimensions,
+  View,
+  type NativeScrollEvent,
+  type NativeSyntheticEvent,
+} from 'react-native'
+import Animated, { FadeInDown } from 'react-native-reanimated'
 
 import { ModeCard } from '@/components/guide/mode-card'
 import { LessonHeading } from '@/components/overlays/tutorial/lesson-heading'
+import { PageDots } from '@/components/page-dots'
 import { STEP_COLORS } from '@/constants/tutorial'
 import { MODE_ORDER, type Mode } from '@/machines/game'
 
-const COLOR = STEP_COLORS[4] ?? '#E5534B'
+const COLOR = STEP_COLORS[5] ?? '#FF8C00'
 
 const GAP = 12
-// Leaves the next card peeking, so the row reads as swipeable.
-const PEEK = 44
-// The overlay's own px-4, re-applied inside the scroll content — see the note below.
-const EDGE = 16
+// How much of a neighbouring card shows past the current one's edge on either
+// side — enough to read as "there's more here", not so much it looks cropped.
+const PEEK = 32
 
 // Lives and streaks belong to the mode that owns them, so each card carries its
 // own — no separate hearts section to cross-reference.
@@ -33,41 +41,80 @@ const MODE_FACTS = {
   ],
 } as const satisfies Record<Mode, readonly string[]>
 
+// A classic peeking carousel: the current mode sits centred, with a slice of its
+// neighbour showing on either side rather than the row starting flush with one
+// card in full view. That slice is the "swipe for more" cue — no arrows needed.
 export function ModesLesson() {
   const { width } = useWindowDimensions()
-  // A card starts EDGE from the left, so leaving PEEK of the next one showing at the
-  // right screen edge costs it the gap as well. Now that the track is full-bleed, PEEK
-  // is exactly how much of the next card the player sees.
-  const cardWidth = width - EDGE - GAP - PEEK
+  const [index, setIndex] = useState(0)
+  const scrollRef = useRef<ScrollView>(null)
+
+  // Solving `sidePadding = (width - cardWidth) / 2` for a target PEEK: the card
+  // sits sidePadding from the screen edge, and the neighbour's edge is a further
+  // GAP beyond that — so the visible sliver of it is sidePadding - GAP, which is
+  // PEEK exactly when cardWidth is built this way.
+  const cardWidth = width - 2 * (PEEK + GAP)
+  const step = cardWidth + GAP
+  const sidePadding = (width - cardWidth) / 2
+
+  const goTo = (next: number) => {
+    const clamped = Math.min(Math.max(next, 0), MODE_ORDER.length - 1)
+    setIndex(clamped)
+    scrollRef.current?.scrollTo({ x: clamped * step, animated: true })
+  }
+
+  // Fires once the snap settles, so the dots follow where the carousel actually
+  // stopped rather than wherever a drag let go mid-flight.
+  const onMomentumScrollEnd = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
+    const next = Math.round(e.nativeEvent.contentOffset.x / step)
+    setIndex(Math.min(Math.max(next, 0), MODE_ORDER.length - 1))
+  }
 
   return (
     <View className="flex-1">
-      <LessonHeading title="MODES & LIVES" color={COLOR}>
+      <LessonHeading title="MODES" color={COLOR}>
         {'Same grid, different pressure. Swipe through the three.'}
       </LessonHeading>
 
       {/* Not inside a flex-1 parent: a horizontal ScrollView would stretch to fill
           it and strand the cards at the top.
 
-          Full-bleed: -mx-4 cancels the overlay's px-4 so the track runs to the screen
-          edges and the peeking card is cut off by the screen rather than stopping short
-          of it. The padding moves inside the content instead, which keeps the first
-          card's left edge lined up with the heading above and still lets the last one
-          scroll clear. */}
+          Full-bleed: -mx-4 cancels the overlay's px-4 so the peeking neighbours run
+          all the way to the screen edge instead of stopping short of it. The
+          padding that centres the first and last card lives inside the scroll
+          content instead. */}
       <ScrollView
+        ref={scrollRef}
         horizontal
         showsHorizontalScrollIndicator={false}
-        snapToInterval={cardWidth + GAP}
+        snapToInterval={step}
         decelerationRate="fast"
+        onMomentumScrollEnd={onMomentumScrollEnd}
         className="-mx-4"
-        contentContainerStyle={{ gap: GAP, paddingHorizontal: EDGE }}
+        contentContainerStyle={{ gap: GAP, paddingHorizontal: sidePadding }}
       >
-        {MODE_ORDER.map((mode) => (
-          <View key={mode} style={{ width: cardWidth }}>
+        {MODE_ORDER.map((mode, i) => (
+          <Animated.View
+            key={mode}
+            entering={FadeInDown.delay(120 + i * 90).duration(400)}
+            style={{ width: cardWidth }}
+          >
             <ModeCard mode={mode} facts={[...MODE_FACTS[mode]]} />
-          </View>
+          </Animated.View>
         ))}
       </ScrollView>
+
+      {/* The same stepper Trainee's tip panel uses — uniform dots, since browsing
+          three peer modes isn't progress toward anything, just a position to jump to. */}
+      <View className="mt-4 items-center">
+        <PageDots
+          total={MODE_ORDER.length}
+          current={index}
+          color={COLOR}
+          uniform
+          onSelect={goTo}
+        />
+      </View>
     </View>
   )
 }

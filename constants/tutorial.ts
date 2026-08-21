@@ -1,4 +1,9 @@
-import { spreadSpectrum } from '@/lib/spectrum'
+import { sampleSpectrum, spreadSpectrum } from '@/lib/spectrum'
+
+// The arc every step's colour (or pair of colours) is drawn from — Trainee blue
+// through to Arcade amber. Kept as one stop list so the primary and accent tones
+// below are guaranteed to come from the same journey rather than drift apart.
+const SPECTRUM_STOPS = ['#4C7EFF', '#7273D2', '#c36282', '#E5534B', '#FF8C00']
 
 // The tutorial's screens, in order. The stepper draws one segment per entry.
 export const TUTORIAL_STEPS = [
@@ -6,8 +11,8 @@ export const TUTORIAL_STEPS = [
   'controls',
   'weights',
   'strategy',
+  'swipe',
   'modes',
-  'tips',
 ] as const
 
 export type TutorialStepId = (typeof TUTORIAL_STEPS)[number]
@@ -22,8 +27,8 @@ export const STEP_SELF_ADVANCES = {
   controls: true,
   weights: true,
   strategy: true,
+  swipe: true,
   modes: false,
-  tips: false,
 } as const satisfies Record<TutorialStepId, boolean>
 
 // Where the forward button goes, per screen — the destination, not a sentence about
@@ -34,17 +39,38 @@ export const STEP_CTA = {
   goal: 'CONTROLS',
   controls: 'POSITION',
   weights: 'PRACTICE',
-  strategy: 'MODES',
-  modes: 'TIPS',
+  strategy: 'SWIPE',
+  swipe: 'MODES',
   // The last one keeps its full promise: it starts a run rather than turning a page.
-  tips: 'PLAY TRAINEE',
+  modes: 'PLAY TRAINEE',
 } as const satisfies Record<TutorialStepId, string>
 
 // One color per screen, spread across the mode spectrum so progress reads as a
-// journey from Trainee blue to Arcade amber.
+// journey from Trainee blue to Arcade amber. Carries the heading and the screen's
+// main instruction — the voice doing the teaching.
 export const STEP_COLORS: readonly string[] = spreadSpectrum(
-  ['#4C7EFF', '#7273D2', '#c36282', '#E5534B', '#FF8C00'],
+  SPECTRUM_STOPS,
   TUTORIAL_STEP_COUNT,
+)
+
+// A second tone per screen, sampled half a step further along the same arc — close
+// enough to read as a companion to STEP_COLORS rather than a clash, distinct enough
+// to tell apart. Reserved for whatever on a slide is live or interactive rather than
+// instructional: a dial hint, a running readout, the closing callout — so every
+// lesson carries two colours instead of one flat tint repeated across everything.
+//
+// The last step looks back rather than forward — sampling ahead of it would clamp
+// to the arc's own end stop, landing on the exact colour STEP_COLORS already used.
+export const STEP_ACCENT_COLORS: readonly string[] = Array.from(
+  { length: TUTORIAL_STEP_COUNT },
+  (_, i) => {
+    const half = 0.5 / (TUTORIAL_STEP_COUNT - 1)
+    const t =
+      i === TUTORIAL_STEP_COUNT - 1
+        ? i / (TUTORIAL_STEP_COUNT - 1) - half
+        : i / (TUTORIAL_STEP_COUNT - 1) + half
+    return sampleSpectrum(SPECTRUM_STOPS, t)
+  },
 )
 
 // ── Lesson tuning ───────────────────────────────────────────────────────────
@@ -59,8 +85,8 @@ export const FINE_CELL = 0
 export const MID_CELL = 1
 export const COARSE_CELL = 8
 
-// The controls lesson's single button starts at 5 so neither horizontal swipe is
-// a no-op (DialButton skips the callback when the value is already 0 or 9).
+// The controls lesson's single button starts at 5 so the swipe-right task isn't a
+// no-op (DialButton skips the callback when the value is already 9).
 export const CONTROLS_START_VALUE = 5
 
 // Weights lesson: the same handful of taps on three different buttons, so the
@@ -81,6 +107,13 @@ export const STRATEGY_TARGET = 21
 export const STRATEGY_COARSE_VALUE = 2
 // A generous ring — long enough to think, short enough to feel the pressure.
 export const STRATEGY_RING_MS = 30_000
+
+// Swipe lesson: two deliberate overshoots — ×1 and ×2 both swiped straight to 9 —
+// then one swipe left clears the ×1 button back off, landing on 18. The sequence is
+// fixed rather than steered, so there's nothing to plan, only to execute — the ring
+// gets a shorter fuse than Strategy's for that reason.
+export const SWIPE_TARGET = 18
+export const SWIPE_RING_MS = 20_000
 
 // The opening screen is a live mock of the game screen. A three-digit target
 // nobody could dial in five seconds is the point: the ring empties, and the

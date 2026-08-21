@@ -11,6 +11,7 @@ import {
   COARSE_CELL,
   FINE_CELL,
   MID_CELL,
+  STEP_ACCENT_COLORS,
   STEP_COLORS,
   WEIGHTS_CLEAR_DELAY_MS,
   WEIGHTS_TAPS,
@@ -19,7 +20,10 @@ import { useGameDialSize } from '@/hooks/use-game-dial-size'
 import { cellWeight, dialCell, emptyCells, sumCells } from '@/lib/tutorial-grid'
 import type { LessonProps } from '@/types/tutorial'
 
+// The heading and callout speak in one colour; the running equation and the dial
+// hint — the two things actually changing as the board fills — speak in the other.
 const COLOR = STEP_COLORS[2] ?? '#c36282'
+const ACCENT = STEP_ACCENT_COLORS[2] ?? '#ac5570'
 
 // The same three taps on three different buttons. Nothing changes but where they
 // land, so the board total is doing all the talking.
@@ -109,7 +113,8 @@ export function WeightsLesson({ isDark, onComplete }: LessonProps) {
           <View className="items-center">
             <Text
               selectable={false}
-              className="px-6 text-center font-mono text-[11px] font-bold leading-[16px] tracking-[0.5px] text-dim"
+              className="px-6 text-center font-mono text-[11px] font-bold leading-[16px] tracking-[0.5px]"
+              style={{ color: ACCENT }}
             >
               {equation(taps, current, finished)}
             </Text>
@@ -128,7 +133,7 @@ export function WeightsLesson({ isDark, onComplete }: LessonProps) {
           // while the total is being held.
           hintCell={taps === WEIGHTS_TAPS ? null : (current?.cell ?? null)}
           hintGesture="tap"
-          hintColor={COLOR}
+          hintColor={ACCENT}
           // Only taps on the button being demonstrated count. Reaching the third tap
           // does not advance the round — it parks there, and the effect above is what
           // clears the board and moves on a beat later.

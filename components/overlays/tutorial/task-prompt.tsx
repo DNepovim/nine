@@ -1,7 +1,9 @@
 import { Ionicons } from '@expo/vector-icons'
 import { Text, View } from 'react-native'
+import Animated, { FadeInDown } from 'react-native-reanimated'
 
 import type { ThumbGesture } from '@/components/overlays/tutorial/thumb-hint'
+import { cn } from '@/lib/cn'
 
 type IoniconName = keyof typeof Ionicons.glyphMap
 
@@ -21,9 +23,14 @@ const NEUTRAL_ICON = 'hand-left'
 // The one thing the player has to do right now. Flips to a tick once done, so the
 // screen always says whether Next is waiting on them.
 //
-// `action` is the gesture named on its own — "SWIPE RIGHT" — set in the app's caps
-// so the instruction is legible at a glance and the sentence after it is the reason
-// rather than the instruction. Screens with nothing to name pass text alone.
+// `action` is the gesture named on its own — "SWIPE RIGHT" — set apart on its own
+// line, in the app's caps, so the instruction reads before the reason does. Screens
+// with nothing to name pass text alone, which then carries the colour itself.
+//
+// The colour shows up three times over rather than once: the edge stripe marks the
+// callout out from the page at a glance, the badge behind the icon gives it a seat
+// to sit in, and the action line — the thing to actually do — is the only text
+// wearing it. Detail stays dim, a reason rather than an instruction.
 export function TaskPrompt({
   text,
   action,
@@ -43,24 +50,44 @@ export function TaskPrompt({
     return GESTURE_ICON[gesture]
   }
 
+  const hasAction = action !== undefined && !done
+
   return (
-    <View
-      className="mt-4 flex-row items-center gap-2.5 rounded-2xl px-4 py-3"
-      style={{ backgroundColor: `${color}1F` }}
+    <Animated.View
+      entering={FadeInDown.delay(170).duration(380)}
+      className="mt-4 flex-row items-stretch overflow-hidden rounded-2xl"
+      style={{ backgroundColor: `${color}17` }}
     >
-      <Ionicons name={icon()} size={17} color={color} />
-      <Text
-        selectable={false}
-        className="flex-1 font-mono text-[12px] font-bold leading-[18px]"
-        style={{ color }}
-      >
-        {action !== undefined && !done && (
-          <Text className="font-mono text-[12px] font-black tracking-[1px]">
-            {`${action} `}
+      <View className="w-1" style={{ backgroundColor: color }} />
+      <View className="flex-1 flex-row items-center gap-3 px-3.5 py-3">
+        <View
+          className="h-9 w-9 items-center justify-center rounded-full"
+          style={{ backgroundColor: `${color}2E` }}
+        >
+          <Ionicons name={icon()} size={18} color={color} />
+        </View>
+        <View className="flex-1">
+          {hasAction && (
+            <Text
+              selectable={false}
+              className="font-mono text-[12.5px] font-black tracking-[1.5px]"
+              style={{ color }}
+            >
+              {action}
+            </Text>
+          )}
+          <Text
+            selectable={false}
+            className={cn(
+              'font-mono text-[12px] leading-[18px]',
+              hasAction ? 'mt-0.5 font-medium text-dim' : 'font-bold',
+            )}
+            style={hasAction ? undefined : { color }}
+          >
+            {text}
           </Text>
-        )}
-        {text}
-      </Text>
-    </View>
+        </View>
+      </View>
+    </Animated.View>
   )
 }
