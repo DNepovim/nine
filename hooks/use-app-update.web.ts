@@ -1,6 +1,11 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { AppState } from 'react-native'
 
+// The web module by name rather than through platform resolution: leaving the note is
+// something only this file ever does, and only on web, so the native stub has no reason
+// to carry a no-op for it.
+import { markUpdateReload } from '@/lib/update-reload.web'
+
 // What workbox's generated worker listens for when `skipWaiting` is false — see
 // workbox-config.js. Sending it is what lets the waiting version through.
 const SKIP_WAITING = { type: 'SKIP_WAITING' }
@@ -77,7 +82,11 @@ export function useAppUpdate(): { ready: boolean; apply: () => void } {
     if (waiting === null || swappingRef.current) return
     swappingRef.current = true
 
+    // Both paths below end here, so this is the one place that knows a reload is ours.
+    // The note it leaves is what stops the splash playing over a player who was looking
+    // at the app a second ago.
     const reload = () => {
+      markUpdateReload()
       window.location.reload()
     }
     // Reloading before the swap would only boot the old bundle again, so this waits for

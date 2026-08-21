@@ -1,5 +1,7 @@
 import { createContext, use, useCallback, useMemo, useState, type ReactNode } from 'react'
 
+import { consumeUpdateReload } from '@/lib/update-reload'
+
 type SplashState = { done: boolean; finish: () => void }
 
 const SplashContext = createContext<SplashState>({ done: false, finish: () => {} })
@@ -7,8 +9,14 @@ const SplashContext = createContext<SplashState>({ done: false, finish: () => {}
 // The intro splash covers the whole app while the screens beneath it are already
 // mounted. Anything time-based down there — the tutorial's opening countdown —
 // has to wait for this, or it burns through while nobody can see it.
+//
+// It starts already finished when this launch is the reload a service-worker update ends
+// in. The player was looking at the app a second ago and did not ask to go anywhere, so
+// replaying the logo would read as the app having restarted itself. Passed as the lazy
+// initialiser rather than called: the note is read once, on the first launch that finds
+// it, and never on a cold start.
 export function SplashProvider({ children }: { children: ReactNode }) {
-  const [done, setDone] = useState(false)
+  const [done, setDone] = useState(consumeUpdateReload)
   const finish = useCallback(() => {
     setDone(true)
   }, [])
