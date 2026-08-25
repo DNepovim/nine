@@ -48,7 +48,11 @@ export function useDyingSequence({
 
   const prevLivesRef = useRef(lives)
   useEffect(() => {
-    if (lives < prevLivesRef.current) {
+    // Trainee's lives are Infinity, and stepping up from a Trainee run into a
+    // scored one resets `lives` to that mode's finite count in the same instant —
+    // a genuine decrease by the numbers, but not a life lost. Comparing only while
+    // both sides are finite keeps that transition silent.
+    if (Number.isFinite(prevLivesRef.current) && lives < prevLivesRef.current) {
       // Final life holds the red for the dying sequence; others flash and fade.
       flashOp.value =
         lives <= 0
