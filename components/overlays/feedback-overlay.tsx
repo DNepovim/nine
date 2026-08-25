@@ -2,7 +2,7 @@ import { Ionicons } from '@expo/vector-icons'
 import { LinearGradient } from 'expo-linear-gradient'
 import { isNonEmptyString, isOneOf } from 'narrowland'
 import { useState } from 'react'
-import { Pressable, Text, TextInput, View } from 'react-native'
+import { Platform, Pressable, Text, TextInput, View } from 'react-native'
 import Animated, {
   Easing,
   useAnimatedStyle,
@@ -193,8 +193,15 @@ export function FeedbackOverlay({
                   maxLength={MAX_FEEDBACK_LENGTH}
                   placeholder="Type here"
                   placeholderTextColor={colorScheme === 'dark' ? '#504e6e' : '#aaa69e'}
-                  className="mb-4 h-32 w-full rounded-2xl border border-muted bg-card p-3 font-mono text-[12px] leading-[18px] text-primary"
-                  style={{ textAlignVertical: 'top' }}
+                  className="mb-4 h-32 w-full rounded-2xl border border-muted bg-card p-3 font-mono leading-[18px] text-primary"
+                  // Mobile Safari zooms the whole page in on focus for any input under
+                  // 16px — the one web quirk with no CSS opt-out, only a bigger font.
+                  // Native has no such behaviour, so it keeps the smaller size the rest
+                  // of the sheet uses.
+                  style={{
+                    textAlignVertical: 'top',
+                    fontSize: Platform.OS === 'web' ? 16 : 12,
+                  }}
                 />
 
                 {failureLine !== null && (
