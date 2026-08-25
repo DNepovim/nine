@@ -51,3 +51,33 @@ export function boardMedals(ranks: Record<Period, 1 | 2 | 3 | null>): BoardMedal
   }
   return kept
 }
+
+// One period of a board, as much of it as a medal count needs — the same shape
+// `PeriodBoard` (hooks/use-board.ts) already has on hand, spelled out here instead of
+// imported so this file keeps its no-React-dependency rule.
+type MedalBoardPeriod = { rows: readonly { best_score: number; user_id: string }[] }
+
+// What a run is worth right now across all three periods of one board — the same
+// question `runMedal` answers for one period, asked of the live board a game-over
+// screen already has in context. Shared so the badges on screen and anything that
+// reacts to "did this run medal at all" can never read two different answers to the
+// same question.
+export function currentBoardMedals(
+  board: { today: MedalBoardPeriod; week: MedalBoardPeriod; forever: MedalBoardPeriod },
+  score: number,
+  userId: string | null,
+): BoardMedal[] {
+  const earned = (period: MedalBoardPeriod) =>
+    runMedal(
+      score,
+      period.rows.map((row) => ({
+        score: row.best_score,
+        isMine: userId !== null && row.user_id === userId,
+      })),
+    )
+  return boardMedals({
+    ever: earned(board.forever),
+    week: earned(board.week),
+    today: earned(board.today),
+  })
+}

@@ -23,6 +23,7 @@ type Tier =
   | 'eagle'
   | 'allTime'
   | 'board'
+  | 'medal'
   | 'personal'
   | 'cold'
   | 'strong'
@@ -60,6 +61,14 @@ const TITLES = {
     ['PURE', 'GOLD'],
     ['TOOK', 'GOLD'],
     ['GOLD', 'RUSH'],
+  ],
+  // A podium finish — second or third — rather than the top spot itself, which is
+  // `board`'s claim. Still a real place on the board, so it outranks a score's own
+  // number the same way `board` does; it just doesn't reach for gold.
+  medal: [
+    ['MADE', 'RANK'],
+    ['TOOK', 'SPOT'],
+    ['NEAR', 'GOLD'],
   ],
   personal: [
     ['YOUR', 'BEST'],
@@ -105,6 +114,7 @@ const tierFor = ({
   screen,
   mode,
   medals,
+  podium,
   personalBest,
   difficulty,
   score,
@@ -115,8 +125,13 @@ const tierFor = ({
   // settings, and each has words of its own.
   screen: RecordScreen
   mode: ScoredMode
-  // Board records this run took, any period. Already computed for the medal row.
+  // Board records this run took outright, any period. Already computed for the medal
+  // row — a subset of `podium` below, since taking a board is itself a podium finish.
   medals: readonly Period[]
+  // Whether this run earned any podium place at all — gold, silver or bronze, on any
+  // period. A superset of `medals`: every board this run took is on the podium too, but
+  // a second or third place shows up only here.
+  podium: boolean
   // Whether the run beat the player's own stored best on this board.
   personalBest: boolean
   difficulty: Difficulty
@@ -127,11 +142,12 @@ const tierFor = ({
   // A reign outranks everything, and each mode's is its own claim.
   if (screen === 'crown') return 'crown'
   if (screen === 'bird') return mode === 'accuracy' ? 'owl' : 'eagle'
-  // Both record tiers outrank the cold one on purpose. A first score on an empty
+  // Every medal tier outranks the cold one on purpose. A first score on an empty
   // board can take it while barely scoring at all, and being told the run was cold in
-  // the same breath as taking a record would read as the game arguing with itself.
+  // the same breath as earning a medal would read as the game arguing with itself.
   if (medals.includes('ever')) return 'allTime'
   if (medals.length > 0) return 'board'
+  if (podium) return 'medal'
   if (personalBest) return 'personal'
   if (score < COLD_BELOW[difficulty]) return 'cold'
   // The same bar the challenge button uses: a run with real streaks in it went well

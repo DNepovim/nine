@@ -9,6 +9,7 @@ const run = (over: Partial<Parameters<typeof gameOverTitle>[0]> = {}, roll = 0) 
       screen: 'plain',
       mode: 'accuracy',
       medals: [],
+      podium: false,
       personalBest: false,
       difficulty: 'easy',
       score: 800,
@@ -51,6 +52,19 @@ describe('gameOverTitle', () => {
 
   it('names a personal best when no board fell', () => {
     expect(run({ personalBest: true })).toEqual(['YOUR', 'BEST'])
+  })
+
+  it('calls a podium finish a medal even without the top spot', () => {
+    expect(run({ podium: true })).toEqual(['MADE', 'RANK'])
+  })
+
+  it('takes the outright board record over a lesser podium finish', () => {
+    expect(run({ podium: true, medals: ['today'] })).toEqual(['PURE', 'GOLD'])
+  })
+
+  it('takes a podium finish over a cold score or a personal best', () => {
+    expect(run({ podium: true, score: 20 })).toEqual(['MADE', 'RANK'])
+    expect(run({ podium: true, personalBest: true })).toEqual(['MADE', 'RANK'])
   })
 
   it('credits a run with streaks in it', () => {
@@ -99,6 +113,7 @@ describe('gameOverTitle', () => {
     // letters into a 4×2 grid, so a five-letter word would fall off the ramp.
     const tiers = [
       { medals: ['ever'] as const },
+      { podium: true },
       { personalBest: true },
       { score: 10 },
       { hits: 20, strikes: 2 },

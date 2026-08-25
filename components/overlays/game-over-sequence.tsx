@@ -33,6 +33,7 @@ export function GameOverSequence({
   gameTimeMs,
   strikes,
   medals,
+  podium,
   screen,
   personalBest,
   titleRoll,
@@ -55,6 +56,9 @@ export function GameOverSequence({
   gameTimeMs: number
   strikes: number
   medals: readonly Period[]
+  // Whether the run earned any podium place at all, gold, silver or bronze — latched
+  // with the run upstream. A superset of `medals`, which only counts the top spot.
+  podium: boolean
   // How loudly this game over celebrates — latched with the run upstream.
   screen: RecordScreen
   // Whether the run beat the player's own stored best — the title's second tier.
@@ -76,7 +80,17 @@ export function GameOverSequence({
   // happen.
   const scoredMode = isOneOf(gameMode, ['accuracy', 'speed']) ? gameMode : 'accuracy'
   const words = gameOverTitle(
-    { screen, mode: scoredMode, medals, personalBest, difficulty, score, hits, strikes },
+    {
+      screen,
+      mode: scoredMode,
+      medals,
+      podium,
+      personalBest,
+      difficulty,
+      score,
+      hits,
+      strikes,
+    },
     titleRoll,
   )
 

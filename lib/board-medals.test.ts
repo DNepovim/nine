@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import { boardMedals, runMedal } from './board-medals'
+import { boardMedals, currentBoardMedals, runMedal } from './board-medals'
 
 const theirs = (score: number) => ({ score, isMine: false })
 const mine = (score: number) => ({ score, isMine: true })
@@ -81,5 +81,41 @@ describe('boardMedals', () => {
 
   it('has nothing to show for a player off every podium', () => {
     expect(boardMedals({ ever: null, week: null, today: null })).toEqual([])
+  })
+})
+
+describe('currentBoardMedals', () => {
+  const row = (best_score: number, user_id = 'rival') => ({ best_score, user_id })
+
+  it('reads the same rank runMedal would, across all three periods at once', () => {
+    const board = {
+      forever: { rows: [row(900), row(800)] },
+      week: { rows: [row(400)] },
+      today: { rows: [] },
+    }
+    // Bronze all time, but gold this week and today — the day says nothing the week
+    // did not already say, so it is dropped the same way `boardMedals` drops it.
+    expect(currentBoardMedals(board, 500, 'me')).toEqual([
+      { period: 'ever', rank: 3 },
+      { period: 'week', rank: 1 },
+    ])
+  })
+
+  it('marks the player’s own row so a run cannot beat itself', () => {
+    const board = {
+      forever: { rows: [row(500, 'me')] },
+      week: { rows: [row(500, 'me')] },
+      today: { rows: [row(500, 'me')] },
+    }
+    expect(currentBoardMedals(board, 500, 'me')).toEqual([{ period: 'ever', rank: 1 }])
+  })
+
+  it('has nothing to show for a player off every podium', () => {
+    const board = {
+      forever: { rows: [row(900), row(800), row(700)] },
+      week: { rows: [row(900), row(800), row(700)] },
+      today: { rows: [row(900), row(800), row(700)] },
+    }
+    expect(currentBoardMedals(board, 500, 'me')).toEqual([])
   })
 })

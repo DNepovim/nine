@@ -107,6 +107,7 @@ const gameOver = (
           screen,
           mode,
           medals: record === null ? [] : [record],
+          podium: record !== null,
           personalBest: true,
           difficulty,
           score: run.score,

@@ -14,10 +14,10 @@ import Animated, {
 import { Screen } from '@/components/screen'
 import { GOLD_DIM_INK, GOLD_SCREEN_TOKENS, MODE_SCREEN_TOKENS } from '@/constants/colors'
 import { CROWN_CORONA, ON_GOLD_LABEL_SHADOW } from '@/constants/theme'
-import { useBoardContext, type PeriodBoard } from '@/hooks/use-board'
+import { useBoardContext } from '@/hooks/use-board'
 import { useTheme } from '@/hooks/use-theme'
 import type { Period } from '@/lib/announcements'
-import { boardMedals, runMedal } from '@/lib/board-medals'
+import { currentBoardMedals } from '@/lib/board-medals'
 import type { RecordScreen } from '@/lib/champions'
 import type { TitleWords } from '@/lib/game-over-title'
 import { runChallenge } from '@/lib/next-challenge'
@@ -35,21 +35,6 @@ import { HighScores } from './high-scores'
 import { RecordBackdrop } from './record-backdrop'
 import { RunStats } from './run-stats'
 import { ScoreReadout } from './score-readout'
-
-// The medal this run puts on one period, against the five rows that board is holding.
-// The player's own rows are marked so a score they already beat cannot be beaten twice.
-const earned = (
-  period: PeriodBoard,
-  score: number,
-  userId: string | null,
-): 1 | 2 | 3 | null =>
-  runMedal(
-    score,
-    period.rows.map((row) => ({
-      score: row.best_score,
-      isMine: userId !== null && row.user_id === userId,
-    })),
-  )
 
 // What the screen wears over its title. The crown is a reign — both Extreme all-time
 // boards at once; a bird is one of them, and each mode gets the one that describes what
@@ -158,11 +143,7 @@ export function GameOverOverlay({
     opacity: Math.min(1, crownIn.value),
     transform: [{ scale: 0.6 + crownIn.value * 0.4 }],
   }))
-  const medals = boardMedals({
-    ever: earned(board.forever, score, userId),
-    week: earned(board.week, score, userId),
-    today: earned(board.today, score, userId),
-  })
+  const medals = currentBoardMedals(board, score, userId)
 
   return (
     <Screen overlay>
