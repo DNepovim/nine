@@ -30,8 +30,8 @@ const PADDING = 10
 // than text stacked inside it, so they read off a chip built for contrast instead
 // of fighting the pill's own animated fill colour.
 //
-// MIN still has to hold up on the smallest phones the dial ships on (an ~80px
-// cell there, going by useGameDialSize): even at that floor there's over 20px of
+// MIN still has to hold up on the smallest phones the dial ships on (an ~72px
+// cell there, going by useGameDialSize): even at that floor there's over 15px of
 // clearance between a MIN-sized badge and the digit, so raising the floor along
 // with the ratio makes every device's badge bigger rather than only the roomy ones.
 const BADGE_MIN = 22
@@ -259,7 +259,7 @@ export function DialButton({
             as "the most it can give." */}
         {trainee && (
           <DialBadge
-            label={`×${weight}`}
+            label={`${weight}×`}
             size={badgeSize}
             fontSize={BADGE_FONT_SIZE}
             offset={badgeOffset}

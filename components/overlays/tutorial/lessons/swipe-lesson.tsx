@@ -36,19 +36,19 @@ const ROUTE_TASKS = [
     cell: FINE_CELL,
     gesture: 'right',
     action: 'SWIPE RIGHT',
-    detail: 'the ×1 button jumps straight to 9 — no tapping nine times.',
+    detail: 'the 1× button jumps straight to 9 — no tapping nine times.',
   },
   {
     cell: MID_CELL,
     gesture: 'right',
     action: 'SWIPE RIGHT',
-    detail: `${FIRST_REACH}. Same move on the ×2 button — straight to 9 again, that’s ${OVERSHOOT}.`,
+    detail: `${FIRST_REACH}. Same move on the 2× button — straight to 9 again, that’s ${OVERSHOOT}.`,
   },
   {
     cell: FINE_CELL,
     gesture: 'left',
     action: 'SWIPE LEFT',
-    detail: `${OVERSHOOT} is over ${SWIPE_TARGET}. Clear the ×1 button and land it exactly.`,
+    detail: `${OVERSHOOT} is over ${SWIPE_TARGET}. Clear the 1× button and land it exactly.`,
   },
 ] as const satisfies readonly {
   cell: number

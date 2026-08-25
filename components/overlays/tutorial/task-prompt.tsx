@@ -20,6 +20,12 @@ const GESTURE_ICON = {
 // target to reach. The open hand is the generic "your turn".
 const NEUTRAL_ICON = 'hand-left'
 
+// The app's own dark ink (global.css's --color-primary, DIAL_COLORS' light text) —
+// used here rather than a light ink because it's the one tone that reads on every
+// accent colour the tutorial's screens wear, badge to badge: white drops as low as
+// ~3.4:1 on the warmer stops, this stays above 4:1 clear across all of them.
+const INK = '#1C1928'
+
 // The one thing the player has to do right now. Flips to a tick once done, so the
 // screen always says whether Next is waiting on them.
 //
@@ -27,10 +33,12 @@ const NEUTRAL_ICON = 'hand-left'
 // line, in the app's caps, so the instruction reads before the reason does. Screens
 // with nothing to name pass text alone, which then carries the colour itself.
 //
-// The colour shows up three times over rather than once: the edge stripe marks the
-// callout out from the page at a glance, the badge behind the icon gives it a seat
-// to sit in, and the action line — the thing to actually do — is the only text
-// wearing it. Detail stays dim, a reason rather than an instruction.
+// The colour shows up several times over rather than once: the edge stripe marks
+// the callout out from the page at a glance, the icon sits in the same wash as the
+// callout itself rather than a badge of its own, and the action chip — the thing
+// to actually do — is the one place the colour goes solid, with dark ink on top.
+// Detail stays dim, a reason rather than an instruction, but still bold: this is a
+// callout, not a caption, and both its lines should read as said with confidence.
 export function TaskPrompt({
   text,
   action,
@@ -62,25 +70,30 @@ export function TaskPrompt({
       <View className="flex-1 flex-row items-center gap-3 px-3.5 py-3">
         <View
           className="h-9 w-9 items-center justify-center rounded-full"
-          style={{ backgroundColor: `${color}2E` }}
+          style={{ backgroundColor: `${color}17` }}
         >
           <Ionicons name={icon()} size={18} color={color} />
         </View>
         <View className="flex-1">
           {hasAction && (
-            <Text
-              selectable={false}
-              className="font-mono text-[12.5px] font-black tracking-[1.5px]"
-              style={{ color }}
+            <View
+              className="mb-0.5 self-start rounded-md px-1.5 py-0.5"
+              style={{ backgroundColor: color }}
             >
-              {action}
-            </Text>
+              <Text
+                selectable={false}
+                className="font-mono text-[12.5px] font-black tracking-[1.5px]"
+                style={{ color: INK }}
+              >
+                {action}
+              </Text>
+            </View>
           )}
           <Text
             selectable={false}
             className={cn(
-              'font-mono text-[12px] leading-[18px]',
-              hasAction ? 'mt-0.5 font-medium text-dim' : 'font-bold',
+              'font-mono text-[12px] font-bold leading-[18px]',
+              hasAction && 'text-dim',
             )}
             style={hasAction ? undefined : { color }}
           >

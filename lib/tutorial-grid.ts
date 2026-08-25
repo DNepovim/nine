@@ -9,6 +9,11 @@ const CELL_COUNT = GRID_SIZE * GRID_SIZE
 export const cellWeight = (index: number): number =>
   (Math.floor(index / GRID_SIZE) + 1) * ((index % GRID_SIZE) + 1)
 
+// The two factors `cellWeight` multiplies together, exposed separately for lessons
+// that walk through the multiplication rather than just quoting its answer.
+export const cellRow = (index: number): number => Math.floor(index / GRID_SIZE) + 1
+export const cellCol = (index: number): number => (index % GRID_SIZE) + 1
+
 export const emptyCells = (): number[] => Array.from({ length: CELL_COUNT }, () => 0)
 
 export const sumCells = (cells: readonly number[]): number =>

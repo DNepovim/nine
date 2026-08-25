@@ -1,7 +1,8 @@
 import { useRef, useState } from 'react'
 import {
+  Pressable,
   ScrollView,
-  useWindowDimensions,
+  Text,
   View,
   type NativeScrollEvent,
   type NativeSyntheticEvent,
@@ -10,9 +11,10 @@ import Animated, { FadeInDown } from 'react-native-reanimated'
 
 import { ModeCard } from '@/components/guide/mode-card'
 import { LessonHeading } from '@/components/overlays/tutorial/lesson-heading'
-import { PageDots } from '@/components/page-dots'
 import { STEP_COLORS } from '@/constants/tutorial'
-import { MODE_ORDER, type Mode } from '@/machines/game'
+import { useViewport } from '@/hooks/use-viewport'
+import { cn } from '@/lib/cn'
+import { MODE_ORDER, MODES, type Mode } from '@/machines/game'
 
 const COLOR = STEP_COLORS[5] ?? '#FF8C00'
 
@@ -20,6 +22,15 @@ const GAP = 12
 // How much of a neighbouring card shows past the current one's edge on either
 // side — enough to read as "there's more here", not so much it looks cropped.
 const PEEK = 32
+// Caps the card on wide screens (tablets, web) — past this it reads as a banner
+// rather than a card, and the neighbours' peek would all but disappear.
+const MAX_CARD_WIDTH = 340
+// The overlay's own px-4, cancelled below so the peeking neighbours can reach the
+// true screen edge. Set as a style rather than the `-mx-4` class: this number has
+// to match what the centring math below assumes width means, and a literal here
+// keeps that assumption visible in one place instead of split across a class name
+// and a constant.
+const SCREEN_EDGE = 16
 
 // Lives and streaks belong to the mode that owns them, so each card carries its
 // own — no separate hearts section to cross-reference.
@@ -45,15 +56,18 @@ const MODE_FACTS = {
 // neighbour showing on either side rather than the row starting flush with one
 // card in full view. That slice is the "swipe for more" cue — no arrows needed.
 export function ModesLesson() {
-  const { width } = useWindowDimensions()
+  const { width } = useViewport()
   const [index, setIndex] = useState(0)
   const scrollRef = useRef<ScrollView>(null)
 
   // Solving `sidePadding = (width - cardWidth) / 2` for a target PEEK: the card
   // sits sidePadding from the screen edge, and the neighbour's edge is a further
   // GAP beyond that — so the visible sliver of it is sidePadding - GAP, which is
-  // PEEK exactly when cardWidth is built this way.
-  const cardWidth = width - 2 * (PEEK + GAP)
+  // PEEK exactly when cardWidth is built this way. Capped at MAX_CARD_WIDTH on
+  // wide screens; sidePadding is solved from whichever width actually won, so the
+  // card stays centred either way — it just picks up a wider peek past the cap
+  // instead of growing past it.
+  const cardWidth = Math.min(MAX_CARD_WIDTH, width - 2 * (PEEK + GAP))
   const step = cardWidth + GAP
   const sidePadding = (width - cardWidth) / 2
 
@@ -79,10 +93,12 @@ export function ModesLesson() {
       {/* Not inside a flex-1 parent: a horizontal ScrollView would stretch to fill
           it and strand the cards at the top.
 
-          Full-bleed: -mx-4 cancels the overlay's px-4 so the peeking neighbours run
-          all the way to the screen edge instead of stopping short of it. The
-          padding that centres the first and last card lives inside the scroll
-          content instead. */}
+          Full-bleed: a negative margin cancels the overlay's own px-4 so the
+          peeking neighbours run all the way to the screen edge instead of
+          stopping short of it — set inline rather than as a `-mx-4` class, since
+          the width the centring math above assumes has to match this exactly.
+          The padding that centres the first and last card lives inside the
+          scroll content instead. */}
       <ScrollView
         ref={scrollRef}
         horizontal
@@ -90,7 +106,7 @@ export function ModesLesson() {
         snapToInterval={step}
         decelerationRate="fast"
         onMomentumScrollEnd={onMomentumScrollEnd}
-        className="-mx-4"
+        style={{ marginHorizontal: -SCREEN_EDGE }}
         contentContainerStyle={{ gap: GAP, paddingHorizontal: sidePadding }}
       >
         {MODE_ORDER.map((mode, i) => (
@@ -99,21 +115,44 @@ export function ModesLesson() {
             entering={FadeInDown.delay(120 + i * 90).duration(400)}
             style={{ width: cardWidth }}
           >
-            <ModeCard mode={mode} facts={[...MODE_FACTS[mode]]} />
+            {/* A tap anywhere on a peeking neighbour jumps straight to it — the
+                same destination a swipe reaches, just without the swipe. Tapping
+                the card already showing is a same-index no-op. */}
+            <Pressable
+              onPress={() => {
+                goTo(i)
+              }}
+            >
+              <ModeCard mode={mode} facts={[...MODE_FACTS[mode]]} />
+            </Pressable>
           </Animated.View>
         ))}
       </ScrollView>
 
-      {/* The same stepper Trainee's tip panel uses — uniform dots, since browsing
-          three peer modes isn't progress toward anything, just a position to jump to. */}
-      <View className="mt-4 items-center">
-        <PageDots
-          total={MODE_ORDER.length}
-          current={index}
-          color={COLOR}
-          uniform
-          onSelect={goTo}
-        />
+      {/* Mode names rather than dots: three peer destinations, not an abstract
+          position in a sequence, so the stepper can just say what they are. Right
+          under the carousel it labels, not the dots' usual gap below. */}
+      <View className="mt-2 flex-row items-center justify-center gap-6">
+        {MODE_ORDER.map((mode, i) => (
+          <Pressable
+            key={mode}
+            hitSlop={8}
+            onPress={() => {
+              goTo(i)
+            }}
+          >
+            <Text
+              selectable={false}
+              className={cn(
+                'font-mono text-[11px] font-black tracking-[1.5px]',
+                i !== index && 'text-dim',
+              )}
+              style={i === index ? { color: COLOR } : undefined}
+            >
+              {MODES[mode].label}
+            </Text>
+          </Pressable>
+        ))}
       </View>
     </View>
   )

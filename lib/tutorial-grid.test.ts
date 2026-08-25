@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest'
 
 import {
+  cellCol,
+  cellRow,
   cellWeight,
   dialCell,
   dialValue,
@@ -31,6 +33,22 @@ describe('cellWeight', () => {
     expect([0, 1, 2, 3, 4, 5, 6, 7, 8].map(cellWeight)).toEqual([
       1, 2, 3, 2, 4, 6, 3, 6, 9,
     ])
+  })
+})
+
+describe('cellRow', () => {
+  it('runs 1-3 down each column', () => {
+    expect([0, 3, 6].map(cellRow)).toEqual([1, 2, 3])
+  })
+
+  it('multiplied by cellCol reproduces cellWeight', () => {
+    for (let i = 0; i < 9; i++) expect(cellRow(i) * cellCol(i)).toBe(cellWeight(i))
+  })
+})
+
+describe('cellCol', () => {
+  it('runs 1-3 across each row', () => {
+    expect([0, 1, 2].map(cellCol)).toEqual([1, 2, 3])
   })
 })
 

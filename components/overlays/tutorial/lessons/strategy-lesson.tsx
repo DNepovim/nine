@@ -35,17 +35,17 @@ const ROUTE = [
   {
     cell: COARSE_CELL,
     upTo: STRATEGY_COARSE_VALUE,
-    prompt: `Tap the ×9 button twice — that alone covers ${COARSE_REACH} of the ${STRATEGY_TARGET}.`,
+    prompt: `Tap the 9× button twice — that alone covers ${COARSE_REACH} of the ${STRATEGY_TARGET}.`,
   },
   {
     cell: MID_CELL,
     upTo: 1,
-    prompt: `${COARSE_REACH}. One tap on a ×2 button takes it to ${MID_REACH}.`,
+    prompt: `${COARSE_REACH}. One tap on a 2× button takes it to ${MID_REACH}.`,
   },
   {
     cell: FINE_CELL,
     upTo: 1,
-    prompt: `${MID_REACH} — one short. The ×1 button lands it exactly.`,
+    prompt: `${MID_REACH} — one short. The 1× button lands it exactly.`,
   },
 ] as const
 
@@ -77,7 +77,7 @@ export function StrategyLesson({ isDark, onComplete }: LessonProps) {
     if (hit) return `${STRATEGY_TARGET} exactly — that’s a hit.`
     // Names the button rather than saying "a button": it is the only one that answers.
     if (sum > STRATEGY_TARGET && step !== undefined)
-      return `${sum} is over ${STRATEGY_TARGET}. Swipe the ×${cellWeight(step.cell)} button left to clear it and come back down.`
+      return `${sum} is over ${STRATEGY_TARGET}. Swipe the ${cellWeight(step.cell)}× button left to clear it and come back down.`
     return step?.prompt ?? `Keep dialling — you want ${STRATEGY_TARGET} on the nose.`
   }
 
