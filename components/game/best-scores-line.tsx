@@ -17,6 +17,7 @@ import { useOnline } from '@/hooks/use-online'
 import { useTheme } from '@/hooks/use-theme'
 import { announcementStyle } from '@/lib/announcement-style'
 import type { Announcement } from '@/lib/announcements'
+import { nearestRecord } from '@/lib/near-record'
 import type { Mode } from '@/machines/modes'
 
 type BestKey = 'you' | 'today' | 'week' | 'ever'
@@ -75,6 +76,7 @@ export function BestScoresLine({
   inRun,
   mode,
   announcement,
+  score,
   yourBest,
   loaded,
   today,
@@ -91,6 +93,9 @@ export function BestScoresLine({
   mode: Mode
   // While set, the bar carries this message instead of the scores.
   announcement: Announcement | null
+  // The live score — read only to find which of the four cells below is worth a
+  // nudge, never displayed itself. See lib/near-record.ts.
+  score: number
   yourBest: number
   // Whether the board's leaders have arrived — the reveal holds for them past the
   // delay. False for a board still loading, true once its fetch has settled either way.
@@ -197,6 +202,12 @@ export function BestScoresLine({
   const shown: ShownBest[] = revealed
     ? shownKeys.map((key) => ({ key, value: values[key] ?? 0, mine: heldByMe[key] }))
     : []
+  // Only once the run is actually chasing these numbers — mid-reveal or mid-announcement
+  // is not the moment to also draw the eye toward one cell over the others.
+  const nearKey =
+    inRun && revealed && pinned === null
+      ? nearestRecord(score, { you: yourBest, today, week, ever })
+      : null
 
   // Trainee is practice against no board, so it has no scores to put here — but it
   // still occupies the strip's height. Everything above the dial is drawn from the same
@@ -224,6 +235,7 @@ export function BestScoresLine({
               digitFont={digitFont}
               mine={mine}
               mineColor={mineColor}
+              pulsing={key === nearKey}
             />
           ))}
           {revealed && !online && (

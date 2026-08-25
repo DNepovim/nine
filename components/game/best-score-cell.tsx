@@ -1,4 +1,12 @@
+import { useEffect } from 'react'
 import { Text, View } from 'react-native'
+import Animated, {
+  Easing,
+  useAnimatedStyle,
+  useSharedValue,
+  withRepeat,
+  withTiming,
+} from 'react-native-reanimated'
 
 // The mark hangs off the cell's own top-right, which is the number's top-right — the
 // label sits to the left, so nothing else is over there. Being absolute is the point:
@@ -10,6 +18,11 @@ const MARK_RIGHT = -8
 // Deliberately not the seven-segment face the number wears: DSEG7 draws digits from
 // segments and has no asterisk to draw.
 const MARK = '*'
+
+// A slow breathe rather than a flash — this sits beside three other still numbers, and
+// anything faster would read as an error state instead of a nudge.
+const PULSE_MS = 700
+const PULSE_SCALE = 1.14
 
 // One label + number pair in the best-scores line. The label stays in the shared
 // dim ink; the number carries its own colour from the game spectrum so the four
@@ -25,6 +38,7 @@ export function BestScoreCell({
   digitFont,
   mine = false,
   mineColor,
+  pulsing = false,
 }: {
   label: string
   value: number
@@ -34,7 +48,29 @@ export function BestScoreCell({
   mine?: boolean
   // Gold that reads as text on the active theme — see GOLD_INK.
   mineColor?: string
+  // Whether the live score is close enough to this bar to nudge the player toward it —
+  // see lib/near-record.ts. Never true on more than one cell at once, since only the
+  // tightest gap counts as close.
+  pulsing?: boolean
 }) {
+  const scale = useSharedValue(1)
+
+  useEffect(() => {
+    if (!pulsing) {
+      scale.value = withTiming(1, { duration: PULSE_MS / 2 })
+      return
+    }
+    scale.value = withRepeat(
+      withTiming(PULSE_SCALE, { duration: PULSE_MS, easing: Easing.inOut(Easing.sin) }),
+      -1,
+      true,
+    )
+  }, [pulsing, scale])
+
+  const pulseStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: scale.value }],
+  }))
+
   return (
     <View className="flex-row items-baseline gap-1">
       <Text
@@ -43,14 +79,14 @@ export function BestScoreCell({
       >
         {label}
       </Text>
-      <Text
+      <Animated.Text
         selectable={false}
         numberOfLines={1}
         className="text-[10px] tracking-[1px]"
-        style={{ fontFamily: digitFont, color }}
+        style={[{ fontFamily: digitFont, color }, pulseStyle]}
       >
         {value}
-      </Text>
+      </Animated.Text>
       {mine && (
         <Text
           selectable={false}
