@@ -129,12 +129,8 @@ export function FeedbackBookmark({
   return (
     <GestureDetector gesture={gesture}>
       <Animated.View
-        className="absolute bottom-16 right-0 flex-row items-center rounded-l-2xl border border-r-0"
-        style={[
-          { borderColor: color, backgroundColor: '#FFFFFF', height: ICON_ZONE },
-          SHADOW,
-          rectStyle,
-        ]}
+        className="absolute bottom-16 right-0 flex-row items-center rounded-l-2xl border border-r-0 bg-surface"
+        style={[{ borderColor: color, height: ICON_ZONE }, SHADOW, rectStyle]}
       >
         <Animated.View
           className="items-center justify-center"
