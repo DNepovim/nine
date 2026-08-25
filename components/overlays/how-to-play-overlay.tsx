@@ -473,7 +473,7 @@ export function HowToPlayOverlay({
             mode="accuracy"
             facts={[
               'Score rewards precision: solve each target in the fewest moves.',
-              'Waste too many moves on a hit (under 20% accuracy) and you lose a life.',
+              'Waste too many moves on a hit and you lose a life — the bar is 25% accuracy on Easy, 20% on Hard, 15% on Extreme.',
               'Let a target’s ring run out and you lose one too — precision still has a clock.',
               'Matching every target in its optimal move count builds your streak.',
               'Targets arrive faster the longer you last, but each still gets its full ring.',

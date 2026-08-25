@@ -141,7 +141,8 @@ describe('accuracy life loss', () => {
   // Four presses that cancel out (up, down, up, down on the ×1 key) waste four
   // steps against whatever target is live without ever touching its sum, then the
   // fifth reaches value=9 in one step on the ×9 key — five steps against a par of
-  // one is accuracyFactor(1, 5) = 0, well under the 20% floor.
+  // one is accuracyFactor(1, 5) = 0, well under every difficulty's wastefulThreshold
+  // (the actor here defaults to 'hard', whose bar is 0.2 — see DIFFICULTIES).
   const wasteThenHit = (actor: ReturnType<typeof start>) => {
     actor.send({ type: 'PRESS', index: 0, delta: 1, now: 0 })
     actor.send({ type: 'PRESS', index: 0, delta: -1, now: 0 })
@@ -150,7 +151,7 @@ describe('accuracy life loss', () => {
     actor.send({ type: 'PRESS', index: 8, delta: 1, now: 0 })
   }
 
-  it('costs a life on a hit under 20% accuracy, and marks that hit', () => {
+  it('costs a life on a wasteful hit, and marks that hit', () => {
     const actor = start('accuracy')
     actor.send({ type: 'ADD_TARGET', value: 9, at: 0 })
     wasteThenHit(actor)
@@ -447,7 +448,7 @@ describe('run clock', () => {
   })
 
   it('finalizes on a PRESS that ends the run', () => {
-    // Accuracy takes a life for a hit under 20% accuracy. Two expiries bring lives
+    // Accuracy takes a life for a wasteful hit. Two expiries bring lives
     // to one, then a hit wasted enough to cost the last one ends the run on PRESS
     // rather than on an expiry — the branch TARGET_EXPIRED does not cover.
     const actor = started()
@@ -459,7 +460,7 @@ describe('run clock', () => {
     expect(actor.getSnapshot().context.lives).toBe(1)
 
     // par 1 (index 8, weight 9, from an empty grid). Four wasted steps that net back
-    // to zero, then the hit: userSteps 5 against par 1 is well under 20% accuracy.
+    // to zero, then the hit: userSteps 5 against par 1 is well under the wasteful bar.
     actor.send({ type: 'ADD_TARGET', value: 9, at: 2500 })
     actor.send({ type: 'PRESS', index: 0, delta: 1, now: 3000 })
     actor.send({ type: 'PRESS', index: 0, delta: -1, now: 3100 })

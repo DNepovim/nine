@@ -86,10 +86,10 @@ export type HitInfo = {
   // debrief actually shows it — the coach calls computeRoute on these.
   refGrid: Grid
   value: number
-  // Whether this is the hit that just cost a life — Accuracy's under-20%-accuracy
-  // rule. One life is lost per batch no matter how many hits in it crossed the bar,
-  // so at most one hit in a batch ever carries this; the UI needs it to know which
-  // floating stat to attach the reason to.
+  // Whether this is the hit that just cost a life — Accuracy's wasteful-hit rule
+  // (DIFFICULTIES[difficulty].wastefulThreshold). One life is lost per batch no
+  // matter how many hits in it crossed the bar, so at most one hit in a batch ever
+  // carries this; the UI needs it to know which floating stat to attach the reason to.
   costLife: boolean
 }
 export type HitBatch = { seq: number; hits: HitInfo[] }
@@ -317,12 +317,16 @@ function applyGrid(context: Context, newGrid: Grid, now: number) {
 
   const addedScore = Math.round(rawScore * multiplier)
 
-  // Accuracy mode: a hit under 20% accuracy costs a life. Computed once here rather
+  // Accuracy mode: a hit scoring under the difficulty's bar (tightest on Easy,
+  // loosest on Extreme — see DIFFICULTIES) costs a life. Computed once here rather
   // than re-checked below, so the hit blamed for it and the decrement it causes can
   // never name a different one. `findIndex` rather than `some` because the UI needs
   // to know *which* hit to attach the reason to, not just that one did.
+  const wastefulThreshold = DIFFICULTIES[context.difficulty].wastefulThreshold
   const wastefulIndex =
-    context.mode === 'accuracy' ? perTarget.findIndex((p) => p.accFactor < 0.2) : -1
+    context.mode === 'accuracy'
+      ? perTarget.findIndex((p) => p.accFactor < wastefulThreshold)
+      : -1
   const costsLife = anyHit && wastefulIndex !== -1
 
   const hitInfos: HitInfo[] = perTarget.map((p, i) => ({

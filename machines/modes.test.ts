@@ -38,22 +38,22 @@ describe('rampedTimeout', () => {
     expect(rampedTimeout('speed', 'hard', 0)).toBe(base)
   })
 
-  it('closes half the slack every twenty hits', () => {
+  it('closes half the slack every sixteen hits', () => {
     // floor is 65% of base, so 35% of base is up for grabs.
     const floor = base * 0.65
-    expect(rampedTimeout('speed', 'hard', 20)).toBe(
+    expect(rampedTimeout('speed', 'hard', 16)).toBe(
       Math.round(floor + (base - floor) / 2),
     )
-    expect(rampedTimeout('speed', 'hard', 40)).toBe(
+    expect(rampedTimeout('speed', 'hard', 32)).toBe(
       Math.round(floor + (base - floor) / 4),
     )
   })
 
   it('contracts by less and less — the rate itself decays', () => {
     const at = (hits: number) => rampedTimeout('speed', 'hard', hits)
-    const first = at(0) - at(20)
-    const second = at(20) - at(40)
-    const third = at(40) - at(60)
+    const first = at(0) - at(16)
+    const second = at(16) - at(32)
+    const third = at(32) - at(48)
     expect(second).toBeLessThan(first)
     expect(third).toBeLessThan(second)
     // Each window gives up roughly half of what the one before it did.
@@ -128,10 +128,10 @@ describe('effectiveSpawnInterval', () => {
   it('rides the same curve in Accuracy as the clock does in Speed', () => {
     const start = effectiveSpawnInterval('accuracy', 'hard', 0)
     const floor = start * 0.65
-    expect(effectiveSpawnInterval('accuracy', 'hard', 20)).toBe(
+    expect(effectiveSpawnInterval('accuracy', 'hard', 16)).toBe(
       Math.round(floor + (start - floor) / 2),
     )
-    expect(effectiveSpawnInterval('accuracy', 'hard', 40)).toBe(
+    expect(effectiveSpawnInterval('accuracy', 'hard', 32)).toBe(
       Math.round(floor + (start - floor) / 4),
     )
   })
@@ -171,6 +171,12 @@ describe('config tables', () => {
     expect(MODES.speed.streak).toBe('fast')
     expect(MODES.accuracy.streak).toBe('optimal')
     expect(DIFFICULTIES.extreme.maxTargets).toBe(4)
+  })
+
+  it('tightens the wasteful-hit bar as difficulty eases rather than as it hardens', () => {
+    expect(DIFFICULTIES.easy.wastefulThreshold).toBeCloseTo(0.25)
+    expect(DIFFICULTIES.hard.wastefulThreshold).toBeCloseTo(0.2)
+    expect(DIFFICULTIES.extreme.wastefulThreshold).toBeCloseTo(0.15)
   })
 })
 

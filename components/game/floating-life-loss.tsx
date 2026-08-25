@@ -11,7 +11,7 @@ import { APP_RED } from '@/constants/colors'
 import { mono } from '@/constants/theme'
 
 // Says why a heart just went in Accuracy — the only mode where a hit itself can cost
-// a life, via the same under-20%-accuracy rule the debrief line names in Trainee. A
+// a life, via the same wasteful-hit rule the debrief line names in Trainee. A
 // heart disappearing says *that* one was lost; nothing near it said why until now, so
 // a run could bleed lives to wasted moves and read as bad luck instead.
 //

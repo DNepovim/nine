@@ -69,12 +69,37 @@ export type DifficultyConfig = {
   code: string
   timeoutScale: number
   maxTargets: number
+  // Accuracy mode: a hit scoring below this costs a life (see costsLife in game.ts).
+  // Counter-intuitively tightest on Easy rather than Extreme — Easy's slack lives in
+  // the clock (timeoutScale 1.3 gives far more room to find the optimal route), so a
+  // hit that's still wasteful despite all that time is the one difficulty can afford
+  // to call out. Extreme's clock is already the run's whole fight; asking for a tight
+  // route on top of it would be punishing the same thing twice.
+  wastefulThreshold: number
 }
 
 export const DIFFICULTIES: Record<Difficulty, DifficultyConfig> = {
-  easy: { label: 'EASY', code: 'ESY', timeoutScale: 1.3, maxTargets: 3 },
-  hard: { label: 'HARD', code: 'HRD', timeoutScale: 0.75, maxTargets: 3 },
-  extreme: { label: 'EXTREME', code: 'EXT', timeoutScale: 0.55, maxTargets: 4 },
+  easy: {
+    label: 'EASY',
+    code: 'ESY',
+    timeoutScale: 1.3,
+    maxTargets: 3,
+    wastefulThreshold: 0.25,
+  },
+  hard: {
+    label: 'HARD',
+    code: 'HRD',
+    timeoutScale: 0.75,
+    maxTargets: 3,
+    wastefulThreshold: 0.2,
+  },
+  extreme: {
+    label: 'EXTREME',
+    code: 'EXT',
+    timeoutScale: 0.55,
+    maxTargets: 4,
+    wastefulThreshold: 0.15,
+  },
 }
 
 // The modes that keep a board. Trainee is unscored, so it has no leaderboard, no rank
@@ -172,15 +197,18 @@ export const effectiveTimeout = (mode: Mode, difficulty: Difficulty): number => 
 
 // How many hits close half the remaining gap to the floor, and how far down that
 // floor sits relative to the run's starting timeout.
-const RAMP_HALF_LIFE_HITS = 20
+//
+// Shared by both things that ramp — Speed's clock and Accuracy's spawn gap — so
+// tuning one tunes the other, and the two stay tightening at the same felt rate.
+const RAMP_HALF_LIFE_HITS = 16
 const RAMP_FLOOR_RATIO = 0.65
 
 // The ramp itself, shared by both things that tighten.
 //
 // Exponential decay towards a floor: each RAMP_HALF_LIFE_HITS hits removes half of
-// whatever slack is left. That makes the contraction decelerate — the first twenty
-// hits cost far more than the next twenty, and the curve never reaches the floor at
-// all, so a run tightens without ever becoming impossible.
+// whatever slack is left. That makes the contraction decelerate — the first stretch
+// of hits costs far more than the next equal stretch, and the curve never reaches
+// the floor at all, so a run tightens without ever becoming impossible.
 const decayed = (base: number, hits: number): number => {
   const floor = base * RAMP_FLOOR_RATIO
   const remaining = 0.5 ** (Math.max(0, hits) / RAMP_HALF_LIFE_HITS)
