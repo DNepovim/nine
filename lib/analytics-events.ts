@@ -34,7 +34,7 @@ export type AnalyticsEvents = {
     to_mode: Mode
     to: Difficulty
   }
-  screen_opened: { screen: 'how_to_play' | 'options' | 'news' | 'feedback' }
+  screen_opened: { screen: 'how_to_play' | 'options' | 'news' | 'feedback' | 'join_room' }
   multiplayer_room: { action: 'created' | 'joined' | 'finished'; players: number }
 }
 
