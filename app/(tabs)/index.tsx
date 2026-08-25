@@ -34,6 +34,7 @@ import { FeedbackOverlay } from '@/components/overlays/feedback-overlay'
 import { GameOverSequence } from '@/components/overlays/game-over-sequence'
 import { HowToPlayOverlay } from '@/components/overlays/how-to-play-overlay'
 import { InstallOverlay } from '@/components/overlays/install-overlay'
+import { JoinRoomOverlay } from '@/components/overlays/join-room-overlay'
 import { MenuOverlay } from '@/components/overlays/menu-overlay'
 import { MultiplayerGameOver } from '@/components/overlays/multiplayer-game-over'
 import { MultiplayerMenu } from '@/components/overlays/multiplayer-menu'
@@ -77,6 +78,7 @@ import { useWhatsNew } from '@/hooks/use-whats-new'
 import { identify, track } from '@/lib/analytics'
 import type { AnalyticsEvents } from '@/lib/analytics-events'
 import { barFor, isOpenable, type Leaders, type Period } from '@/lib/announcements'
+import { currentBoardMedals } from '@/lib/board-medals'
 import { recordScreen, type RecordScreen } from '@/lib/champions'
 import { leaderOf } from '@/lib/leaderboard'
 import { runChallenge } from '@/lib/next-challenge'
@@ -137,7 +139,7 @@ const BOOKMARK_REVEAL_DELAY_MS = 500
 // The menu-level overlays, one open at a time. 'none' means the screen under them —
 // the intro or the pause screen — is what shows. Feedback is not here: it is a
 // dialog over whatever is showing, not a screen of its own.
-type MenuOverlayName = 'none' | 'advanced' | 'howToPlay' | 'news'
+type MenuOverlayName = 'none' | 'advanced' | 'howToPlay' | 'news' | 'joinRoom'
 
 // Overlay names → the screen names the warehouse knows, so the event table stays the
 // only place that spells them. 'none' has no row: it is a closing, not an opening.
@@ -145,6 +147,7 @@ const OVERLAY_SCREENS = {
   advanced: 'options',
   howToPlay: 'how_to_play',
   news: 'news',
+  joinRoom: 'join_room',
 } as const satisfies Record<
   Exclude<MenuOverlayName, 'none'>,
   AnalyticsEvents['screen_opened']['screen']
@@ -330,7 +333,7 @@ export default function GameScreen() {
   const board = useBoard(mode, difficulty, userId)
   // Who holds each mode's Extreme all-time board. Two ids, read wherever a name is
   // drawn and by the game-over screen to tell a reign from a single record.
-  const champions = useChampions()
+  const { champions, refresh: refreshChampions } = useChampions()
   const refreshBoard = board.refresh
   const bestToday = board.today.record
   const bestWeek = board.week.record
@@ -431,6 +434,11 @@ export default function GameScreen() {
   // up from the board, and a rival taking the other mode's Extreme board mid-screen
   // must not turn a crown into a bird under the player.
   const [runScreen, setRunScreen] = useState<RecordScreen>('plain')
+  // Whether this run landed on the podium at all — gold, silver or bronze, on any
+  // period — latched for the same reason as the two above. A superset of `runMedals`,
+  // which only tracks the top spot: this is what keeps a low-scoring run that still
+  // took second or third off the title's cold/plain fallbacks.
+  const [runPodium, setRunPodium] = useState(false)
 
   // Which of a title tier's three lines this run gets. Drawn once per game over, not
   // per render: the title flies up from the board and hands off to the overlay, so a
@@ -462,6 +470,16 @@ export default function GameScreen() {
         : 'plain'
       setRunMedals(taken)
       setRunScreen(screen)
+      setRunPodium(
+        isOneOf(mode, ['accuracy', 'speed']) &&
+          currentBoardMedals(board, state.context.score, userId).length > 0,
+      )
+      // An Extreme all-time record just changed who a champion is — `champions` was
+      // read above for this run's own screen, which only ever asks about the *other*
+      // mode, so refreshing now cannot change that decision. It's every other mark in
+      // the app — the leaderboard, the pause screen, a room — that would otherwise go
+      // on showing whoever led before this run.
+      if (taken.includes('ever')) refreshChampions()
       track('run_finished', {
         mode,
         difficulty,
@@ -513,6 +531,7 @@ export default function GameScreen() {
     bestEver,
     submitScore,
     refreshBoard,
+    refreshChampions,
   ])
 
   // Ending a run yourself from the pause menu still counts: submit the score and ask
@@ -769,6 +788,7 @@ export default function GameScreen() {
             inRun={inRun}
             mode={mode}
             announcement={announcement}
+            score={state.context.score}
             yourBest={stats[mode][difficulty].score}
             loaded={board.loaded}
             todayIsMine={board.today.recordIsMine}
@@ -824,7 +844,7 @@ export default function GameScreen() {
                     />
                   ))}
                 {/* Says why, the moment a hit rather than an expiry is what took the
-                    heart — Accuracy's under-20%-accuracy rule is invisible otherwise.
+                    heart — Accuracy's wasteful-hit rule is invisible otherwise.
                     Shares the points floats' lifecycle: same `floats` list, same
                     removal, just a second element for the rare entry that costLife. */}
                 {floats
@@ -1046,6 +1066,7 @@ export default function GameScreen() {
           gameTimeMs={state.context.elapsedMs}
           strikes={state.context.strikes}
           medals={runMedals}
+          podium={runPodium}
           screen={runScreen}
           personalBest={crossed.includes('record')}
           titleRoll={titleRoll}
@@ -1180,6 +1201,20 @@ export default function GameScreen() {
           />
         )}
 
+        {/* ── Join a room by code — its own screen past WITH FRIENDS' JOIN ROOM ──
+            !isMultiActive so a successful join steps aside for the waiting room
+            rather than sitting on top of it — nothing else resets `menuOverlay`
+            back to 'none' on that edge. */}
+        {menuOverlay === 'joinRoom' && !isMultiActive && (
+          <JoinRoomOverlay
+            joinError={multiRoom.error}
+            onJoinRoom={handleJoinRoom}
+            onClose={() => {
+              setMenuOverlay('none')
+            }}
+          />
+        )}
+
         {/* ── Tutorial ── */}
         {tutorial.visible && (
           <TutorialOverlay
@@ -1244,7 +1279,6 @@ export default function GameScreen() {
             userId={userId}
             nickname={nickname}
             bestScore={stats[mode][difficulty].score}
-            joinError={multiRoom.error}
             initialPlayMode={menuInitialTab}
             onPlayModeChange={setMenuInitialTab}
             onPlay={() => {
@@ -1268,7 +1302,9 @@ export default function GameScreen() {
               setMenuOverlay('howToPlay')
             }}
             onCreateRoom={handleCreateRoom}
-            onJoinRoom={handleJoinRoom}
+            onOpenJoinRoom={() => {
+              setMenuOverlay('joinRoom')
+            }}
           />
         )}
 

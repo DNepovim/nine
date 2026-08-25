@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons'
 import { LinearGradient } from 'expo-linear-gradient'
 import { isNonEmptyString, isOneOf } from 'narrowland'
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Platform, Pressable, Share, Text, View } from 'react-native'
 import Animated, {
   Easing,
@@ -12,10 +12,12 @@ import Animated, {
 } from 'react-native-reanimated'
 
 import { Screen } from '@/components/screen'
+import { useChampionsContext } from '@/hooks/use-champions'
 import { useMyMedals } from '@/hooks/use-my-medals'
 import { useOnline } from '@/hooks/use-online'
 import { useTheme } from '@/hooks/use-theme'
 import { useViewport } from '@/hooks/use-viewport'
+import { championMark } from '@/lib/champions'
 import { cn } from '@/lib/cn'
 import { inviteMessage, SHARE_URL } from '@/lib/invite-message'
 import {
@@ -30,7 +32,6 @@ import {
 
 import { AnimatedLetter } from './animated-letter'
 import { DifficultySelector } from './difficulty-selector'
-import { GameCodeInput } from './game-code-input'
 import { HighScores } from './high-scores'
 import { MedalLine } from './medal-line'
 import { ModeSelector } from './mode-selector'
@@ -50,7 +51,6 @@ export function MenuOverlay({
   userId,
   nickname,
   bestScore,
-  joinError,
   initialPlayMode = 'alone',
   onPlay,
   onPlayModeChange,
@@ -60,7 +60,7 @@ export function MenuOverlay({
   onAddNickname,
   onHowToPlay,
   onCreateRoom,
-  onJoinRoom,
+  onOpenJoinRoom,
 }: {
   gameMode: Mode
   difficulty: Difficulty
@@ -69,7 +69,6 @@ export function MenuOverlay({
   // The locally stored all-time best for this board, for the challenge the invite
   // carries. The board below reads the shared store and needs nothing from here.
   bestScore: number
-  joinError: string | null
   initialPlayMode?: PlayMode
   onPlay: () => void
   // Fired on every ALONE / WITH FRIENDS toggle, not just at mount — this screen
@@ -84,17 +83,22 @@ export function MenuOverlay({
   onAddNickname: () => void
   onHowToPlay: () => void
   onCreateRoom: () => void
-  onJoinRoom: (code: string) => void
+  // The code entry itself lives on its own screen now — this just opens it.
+  onOpenJoinRoom: () => void
 }) {
   const { colorScheme } = useTheme()
   const dimColor = colorScheme === 'dark' ? '#504e6e' : '#aaa69e'
   const medals = useMyMedals(userId)
+  // Same mark the leaderboard, the pause screen and a room wear beside this
+  // player's name — worn here over the title itself, since the title is this
+  // player's too.
+  const champions = useChampionsContext()
+  const mark = championMark(userId, champions)
   // Creating or joining a room is a Supabase round trip either way, so both are
   // dead ends with no connection — disabled rather than left to fail after a tap.
   const online = useOnline()
   const [focused, setFocused] = useState<Mode | 'arcade'>(gameMode)
   const [playMode, setPlayMode] = useState<PlayMode>(initialPlayMode)
-  const [gameCode, setGameCode] = useState('')
   const [panelWidth, setPanelWidth] = useState(0)
   const panelOffset = useSharedValue(0)
   const { width: windowWidth } = useViewport()
@@ -132,29 +136,6 @@ export function MenuOverlay({
     setFocused(gameMode)
   }, [gameMode])
 
-  // Auto-join when 4 digits are entered. Left on screen rather than cleared here —
-  // a wrong code stays put so `GameCodeInput` can show it was rejected before
-  // clearing it itself; a right one is moot, since joining swaps this whole screen
-  // out from under it.
-  //
-  // Guarded by the code itself, not just its length: `onJoinRoom` closes over
-  // `multiRoom`, which the room hook rebuilds as a fresh object every render, so
-  // this effect re-runs on renders the code never touched. Without the guard,
-  // `gameCode` sitting at 4 digits (as it now does until the flash clears it) would
-  // re-submit the same code on every one of those renders — each one flipping
-  // `joinError` null → message → null as its own attempt started and resolved,
-  // which is what was reading as a strobe.
-  const submittedCodeRef = useRef<string | null>(null)
-  useEffect(() => {
-    if (gameCode.length !== 4) {
-      submittedCodeRef.current = null
-      return
-    }
-    if (submittedCodeRef.current === gameCode) return
-    submittedCodeRef.current = gameCode
-    onJoinRoom(gameCode)
-  }, [gameCode, onJoinRoom])
-
   const panelStyle = useAnimatedStyle(() => ({
     transform: [{ translateX: panelOffset.value }],
   }))
@@ -189,6 +170,18 @@ export function MenuOverlay({
               ? `Hi ${nickname}, let's multiply`
               : `Let's multiply`}
           </Text>
+
+          {/* The mark this player wears everywhere their name does, over the one
+              title that's always theirs — silent for everyone who hasn't taken an
+              Extreme all-time board. */}
+          {mark !== null && (
+            <Text
+              selectable={false}
+              className="letter-float-1 mb-1 text-[26px] leading-[30px]"
+            >
+              {mark}
+            </Text>
+          )}
 
           {/* NINE title */}
           <View className="mb-4 flex-row gap-3">
@@ -274,16 +267,56 @@ export function MenuOverlay({
                 style={{ width: effectivePanelWidth }}
                 className="relative items-center"
               >
-                {/* Fixed to accuracy's pair rather than `focused`: onCreateRoom always
-                    creates an accuracy room (`app/(tabs)/index.tsx`), regardless of
-                    which singleplayer mode this tab happened to inherit. */}
-                <GameCodeInput
-                  value={gameCode}
-                  onChange={setGameCode}
-                  accentColors={MULTIPLAYER_GRADIENT.accuracy as [string, string]}
-                  joinError={joinError}
-                />
-                {/* Covers the code entry rather than disabling it piece by piece —
+                {/* Just the two doors in: start a room, or walk into one that
+                    already exists. The code and its keyboard used to live right
+                    here — they get their own screen now, past JOIN ROOM, so this
+                    tab is a choice rather than a form. */}
+                <View className="items-center gap-4 py-10">
+                  {/* Fixed to accuracy's pair rather than `focused`: onCreateRoom
+                      always creates an accuracy room (`app/(tabs)/index.tsx`),
+                      regardless of which singleplayer mode this tab inherited. */}
+                  <Pressable
+                    onPress={onCreateRoom}
+                    disabled={!online}
+                    className={cn(
+                      'w-56 overflow-hidden rounded-2xl',
+                      !online && 'opacity-40',
+                    )}
+                    style={shadow}
+                  >
+                    <LinearGradient
+                      colors={[...DARK_MULTIPLAYER_GRADIENT.accuracy]}
+                      start={{ x: 0, y: 0.5 }}
+                      end={{ x: 1, y: 0.5 }}
+                      className="items-center py-4"
+                    >
+                      <Text
+                        selectable={false}
+                        className="font-mono text-[13px] font-black tracking-[2px] text-on-strong"
+                      >
+                        CREATE ROOM
+                      </Text>
+                    </LinearGradient>
+                  </Pressable>
+                  <Pressable
+                    onPress={onOpenJoinRoom}
+                    disabled={!online}
+                    className={cn(
+                      'w-56 items-center rounded-2xl border-2 py-[14px]',
+                      !online && 'opacity-40',
+                    )}
+                    style={{ borderColor: MULTIPLAYER_GRADIENT.accuracy[0] }}
+                  >
+                    <Text
+                      selectable={false}
+                      className="font-mono text-[13px] font-black tracking-[2px]"
+                      style={{ color: MULTIPLAYER_GRADIENT.accuracy[0] }}
+                    >
+                      JOIN ROOM
+                    </Text>
+                  </Pressable>
+                </View>
+                {/* Covers both buttons rather than disabling them piece by piece —
                     creating or joining a room is a Supabase round trip either way, so
                     nothing under here can do anything useful without a connection. */}
                 {!online && (
@@ -310,9 +343,12 @@ export function MenuOverlay({
 
         {/* Bottom CTA. Its own margin now, rather than whatever a fixed-height box had
             left over: the panel above already carries a bottom margin, so this is the
-            breathing room on top of it. */}
+            breathing room on top of it.
+
+            ALONE only — WITH FRIENDS carries its own two buttons in the panel above,
+            since there are two doors in rather than one PLAY. */}
         <View className="mt-4 items-center gap-8">
-          {playMode === 'alone' ? (
+          {playMode === 'alone' && (
             <Pressable
               onPress={onPlay}
               disabled={focused === 'arcade'}
@@ -333,27 +369,6 @@ export function MenuOverlay({
                   className="font-mono text-[13px] font-black tracking-[2px] text-on-strong"
                 >
                   PLAY GAME
-                </Text>
-              </LinearGradient>
-            </Pressable>
-          ) : (
-            <Pressable
-              onPress={onCreateRoom}
-              disabled={!online}
-              className={cn('w-56 overflow-hidden rounded-2xl', !online && 'opacity-40')}
-              style={shadow}
-            >
-              <LinearGradient
-                colors={[...DARK_MULTIPLAYER_GRADIENT.accuracy]}
-                start={{ x: 0, y: 0.5 }}
-                end={{ x: 1, y: 0.5 }}
-                className="items-center py-4"
-              >
-                <Text
-                  selectable={false}
-                  className="font-mono text-[13px] font-black tracking-[2px] text-on-strong"
-                >
-                  CREATE GAME
                 </Text>
               </LinearGradient>
             </Pressable>
