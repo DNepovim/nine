@@ -1,4 +1,3 @@
-import { Ionicons } from '@expo/vector-icons'
 import { LinearGradient } from 'expo-linear-gradient'
 import { useState } from 'react'
 import { Pressable, Text } from 'react-native'
@@ -40,20 +39,6 @@ export function JoinRoomOverlay({
 
   return (
     <Screen overlay>
-      <Pressable
-        onPress={onClose}
-        hitSlop={10}
-        className="absolute left-4 top-14 flex-row items-center gap-1"
-      >
-        <Ionicons name="chevron-back" size={13} color="#aaa69e" />
-        <Text
-          selectable={false}
-          className="font-mono text-[11px] font-black tracking-[1px] text-dim"
-        >
-          BACK
-        </Text>
-      </Pressable>
-
       <Text
         selectable={false}
         className="mb-1 font-mono text-[20px] font-black tracking-[3px] text-primary"
@@ -95,6 +80,15 @@ export function JoinRoomOverlay({
             JOIN ROOM
           </Text>
         </LinearGradient>
+      </Pressable>
+
+      <Pressable onPress={onClose} hitSlop={10} className="mt-4">
+        <Text
+          selectable={false}
+          className="font-mono text-[10px] font-bold tracking-[1.8px] text-dim underline"
+        >
+          CANCEL
+        </Text>
       </Pressable>
     </Screen>
   )
