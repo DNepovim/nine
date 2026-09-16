@@ -232,7 +232,11 @@ export function MenuOverlay({
               ]}
             >
               {/* Panel 0: ALONE */}
-              <View style={{ width: effectivePanelWidth }}>
+              {/* overflow: 'hidden' of its own — the shared row's clip only bounds the
+                  two panels together, so ARCADE's SOON badge, which deliberately hangs
+                  past its own tab (see CornerBadge), was free to cross from this panel's
+                  space into WITH FRIENDS' once this one slid off to make room for it. */}
+              <View style={{ width: effectivePanelWidth, overflow: 'hidden' }}>
                 <ModeSelector
                   focused={focused}
                   gradPhase={gradPhase}
@@ -264,7 +268,7 @@ export function MenuOverlay({
 
               {/* Panel 1: WITH FRIENDS */}
               <View
-                style={{ width: effectivePanelWidth }}
+                style={{ width: effectivePanelWidth, overflow: 'hidden' }}
                 className="relative items-center"
               >
                 {/* Just the two doors in: start a room, or walk into one that
