@@ -1,6 +1,12 @@
 import { describe, expect, it } from 'vitest'
 
-import { championMark, NO_CHAMPIONS, recordScreen, type Champions } from './champions'
+import {
+  championMark,
+  mergeChampions,
+  NO_CHAMPIONS,
+  recordScreen,
+  type Champions,
+} from './champions'
 
 const ME = 'me'
 const THEM = 'them'
@@ -64,5 +70,40 @@ describe('recordScreen', () => {
     expect(run({ record: 'week' })).toBe('plain')
     expect(run({ record: 'today' })).toBe('plain')
     expect(run({ record: null })).toBe('plain')
+  })
+})
+
+describe('mergeChampions', () => {
+  it('takes what a read answered', () => {
+    expect(mergeChampions(NO_CHAMPIONS, { accuracy: ME, speed: THEM })).toStrictEqual(
+      holding({ accuracy: ME, speed: THEM }),
+    )
+  })
+
+  it('records a board nobody holds', () => {
+    expect(
+      mergeChampions(holding({ accuracy: ME }), { accuracy: null, speed: null }),
+    ).toStrictEqual(NO_CHAMPIONS)
+  })
+
+  it('keeps a champion a read could not reach', () => {
+    // The bug this exists for: one board answering and the other failing used to write
+    // null for the failure, which took the crown off a player holding both and left
+    // them wearing a bird until the app was relaunched.
+    expect(
+      mergeChampions(holding({ accuracy: ME, speed: ME }), {
+        accuracy: ME,
+        speed: undefined,
+      }),
+    ).toStrictEqual(holding({ accuracy: ME, speed: ME }))
+  })
+
+  it('keeps both when neither board could be read', () => {
+    expect(
+      mergeChampions(holding({ accuracy: ME, speed: THEM }), {
+        accuracy: undefined,
+        speed: undefined,
+      }),
+    ).toStrictEqual(holding({ accuracy: ME, speed: THEM }))
   })
 })

@@ -7,6 +7,27 @@ export type Champions = Record<ScoredMode, string | null>
 
 export const NO_CHAMPIONS: Champions = { accuracy: null, speed: null }
 
+// What one board read can say about who leads it: an id, nobody, or — `undefined` —
+// nothing at all, because the request did not come back.
+//
+// The distinction is the whole point. `null` is an answer: that board has no champion.
+// A failed request is not an answer, and folding the two together used to take the mark
+// off a player who still held the board, because one flaky read out of the two wrote
+// `null` over a good id and nothing ever asked again.
+export type ChampionRead = string | null | undefined
+
+// A fresh pair of reads over what is already known. Boards that answered replace what
+// they answered for; boards that did not are left exactly as they were.
+export function mergeChampions(
+  prev: Champions,
+  reads: Record<ScoredMode, ChampionRead>,
+): Champions {
+  return {
+    accuracy: reads.accuracy === undefined ? prev.accuracy : reads.accuracy,
+    speed: reads.speed === undefined ? prev.speed : reads.speed,
+  }
+}
+
 // The mark a player wears in front of their name, anywhere their name appears.
 //
 // Both boards is a crown; one is that mode's bird. Accuracy is an owl for what it asks

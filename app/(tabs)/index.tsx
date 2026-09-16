@@ -333,7 +333,7 @@ export default function GameScreen() {
   const board = useBoard(mode, difficulty, userId)
   // Who holds each mode's Extreme all-time board. Two ids, read wherever a name is
   // drawn and by the game-over screen to tell a reign from a single record.
-  const { champions, refresh: refreshChampions } = useChampions()
+  const champions = useChampions()
   const refreshBoard = board.refresh
   const bestToday = board.today.record
   const bestWeek = board.week.record
@@ -474,12 +474,6 @@ export default function GameScreen() {
         isOneOf(mode, ['accuracy', 'speed']) &&
           currentBoardMedals(board, state.context.score, userId).length > 0,
       )
-      // An Extreme all-time record just changed who a champion is — `champions` was
-      // read above for this run's own screen, which only ever asks about the *other*
-      // mode, so refreshing now cannot change that decision. It's every other mark in
-      // the app — the leaderboard, the pause screen, a room — that would otherwise go
-      // on showing whoever led before this run.
-      if (taken.includes('ever')) refreshChampions()
       track('run_finished', {
         mode,
         difficulty,
@@ -531,7 +525,6 @@ export default function GameScreen() {
     bestEver,
     submitScore,
     refreshBoard,
-    refreshChampions,
   ])
 
   // Ending a run yourself from the pause menu still counts: submit the score and ask
