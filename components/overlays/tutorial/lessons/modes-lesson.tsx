@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import {
   Pressable,
   ScrollView,
@@ -32,6 +32,14 @@ const MAX_CARD_WIDTH = 340
 // and a constant.
 const SCREEN_EDGE = 16
 
+// How long the scroll position has to sit still before it counts as settled and
+// gets pulled to the nearest card. `snapToInterval` is a no-op on the web build —
+// react-native-web never turns it into CSS scroll-snap — so nothing actually
+// anchored the carousel there, and `onMomentumScrollEnd` alongside it is unreliable
+// on the same platform. A quiet-period timer works identically everywhere instead:
+// no platform has to be asked whether it snapped on its own.
+const SETTLE_MS = 120
+
 // Lives and streaks belong to the mode that owns them, so each card carries its
 // own — no separate hearts section to cross-reference.
 const MODE_FACTS = {
@@ -59,6 +67,13 @@ export function ModesLesson() {
   const { width } = useViewport()
   const [index, setIndex] = useState(0)
   const scrollRef = useRef<ScrollView>(null)
+  // Whether a finger (or pointer) is currently down on the carousel. The settle
+  // timer only ever runs while this is false — otherwise a slow drag that pauses
+  // mid-gesture would get yanked to the nearest card out from under the player's
+  // finger before they had let go.
+  const draggingRef = useRef(false)
+  const lastXRef = useRef(0)
+  const settleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   // Solving `sidePadding = (width - cardWidth) / 2` for a target PEEK: the card
   // sits sidePadding from the screen edge, and the neighbour's edge is a further
@@ -77,12 +92,46 @@ export function ModesLesson() {
     scrollRef.current?.scrollTo({ x: clamped * step, animated: true })
   }
 
-  // Fires once the snap settles, so the dots follow where the carousel actually
-  // stopped rather than wherever a drag let go mid-flight.
-  const onMomentumScrollEnd = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
-    const next = Math.round(e.nativeEvent.contentOffset.x / step)
-    setIndex(Math.min(Math.max(next, 0), MODE_ORDER.length - 1))
+  const clearSettleTimer = () => {
+    if (settleTimerRef.current === null) return
+    clearTimeout(settleTimerRef.current)
+    settleTimerRef.current = null
   }
+
+  // Pulls the carousel to whichever card is nearest wherever it currently sits,
+  // and moves the dots to match — the one place both the scroll position and the
+  // index it implies are decided together, so they can never name two different
+  // cards.
+  const settle = () => {
+    goTo(Math.round(lastXRef.current / step))
+  }
+
+  // Restarts the quiet-period timer on every scroll event during the momentum
+  // phase; a drag still in progress skips it entirely. `settle` firing is what
+  // "the scroll position stopped changing" looks like without a platform telling
+  // us so directly.
+  const onScroll = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
+    lastXRef.current = e.nativeEvent.contentOffset.x
+    if (draggingRef.current) return
+    clearSettleTimer()
+    settleTimerRef.current = setTimeout(settle, SETTLE_MS)
+  }
+
+  const onScrollBeginDrag = () => {
+    draggingRef.current = true
+    clearSettleTimer()
+  }
+
+  // Covers the release itself: a slow drag let go with no momentum behind it
+  // produces no further onScroll events, so nothing would otherwise start the
+  // clock that snaps it home.
+  const onScrollEndDrag = () => {
+    draggingRef.current = false
+    clearSettleTimer()
+    settleTimerRef.current = setTimeout(settle, SETTLE_MS)
+  }
+
+  useEffect(() => clearSettleTimer, [])
 
   return (
     <View className="flex-1">
@@ -103,9 +152,11 @@ export function ModesLesson() {
         ref={scrollRef}
         horizontal
         showsHorizontalScrollIndicator={false}
-        snapToInterval={step}
         decelerationRate="fast"
-        onMomentumScrollEnd={onMomentumScrollEnd}
+        onScroll={onScroll}
+        onScrollBeginDrag={onScrollBeginDrag}
+        onScrollEndDrag={onScrollEndDrag}
+        scrollEventThrottle={16}
         style={{ marginHorizontal: -SCREEN_EDGE }}
         contentContainerStyle={{ gap: GAP, paddingHorizontal: sidePadding }}
       >
