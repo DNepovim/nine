@@ -10,6 +10,7 @@ import {
   MAX_MESSAGE_LENGTH,
   messageFor,
   messagePool,
+  personalBar,
   type RecordTargets,
 } from './announcements'
 
@@ -285,6 +286,55 @@ describe('barFor', () => {
 
   it('is unknown when neither side knows anything', () => {
     expect(barFor(null, 0)).toBeNull()
+  })
+})
+
+describe('personalBar', () => {
+  it('is the stored best when the boards know nothing better', () => {
+    expect(personalBar(727, 0)).toBe(727)
+  })
+
+  it('takes the board’s best over a stored best that has fallen behind', () => {
+    // Local stats lose to a reinstall, a second device, or a hydrate that threw.
+    // The boards still remember, and they are on the same screen.
+    expect(personalBar(900, 7308)).toBe(7308)
+  })
+
+  it('keeps a stored best the boards have not heard of', () => {
+    // A run played with no nickname never reaches a board, but it happened.
+    expect(personalBar(7308, 0)).toBe(7308)
+  })
+
+  it('is nothing to beat when neither side knows anything', () => {
+    // Trainee, which keeps no stored best and has no board either.
+    expect(personalBar(0, 0)).toBe(0)
+  })
+})
+
+describe('the run that announced a personal best it had not set', () => {
+  // Accuracy / Extreme. The player holds the all-time board at 7308; this week's
+  // record stands at 1300 and their own best this week is 900. Local stats were
+  // stranded at 900 by a failed hydrate.
+  const stranded = (storedBest: number): RecordTargets => ({
+    record: storedBest,
+    today: barFor(1200, 900),
+    week: barFor(1300, 900),
+    ever: barFor(7308, 7308),
+    todayEmpty: false,
+    weekEmpty: false,
+  })
+
+  it('announced one from the stored best alone', () => {
+    // What shipped: 1449 clears the stranded 900 and is called a personal best,
+    // with the player's own 7308 on screen at the same time.
+    expect(crossedRecords(1449, stranded(900))).toContain('record')
+  })
+
+  it('stays quiet once the stored best is measured against the boards', () => {
+    expect(crossedRecords(1449, stranded(personalBar(900, 7308)))).toEqual([
+      'week',
+      'today',
+    ])
   })
 })
 

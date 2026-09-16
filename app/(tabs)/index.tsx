@@ -77,7 +77,13 @@ import { useTutorial } from '@/hooks/use-tutorial'
 import { useWhatsNew } from '@/hooks/use-whats-new'
 import { identify, track } from '@/lib/analytics'
 import type { AnalyticsEvents } from '@/lib/analytics-events'
-import { barFor, isOpenable, type Leaders, type Period } from '@/lib/announcements'
+import {
+  barFor,
+  isOpenable,
+  personalBar,
+  type Leaders,
+  type Period,
+} from '@/lib/announcements'
 import { currentBoardMedals } from '@/lib/board-medals'
 import { recordScreen, type RecordScreen } from '@/lib/champions'
 import { leaderOf } from '@/lib/leaderboard'
@@ -403,9 +409,11 @@ export default function GameScreen() {
     // what a run begun on a cold start used to lose entirely.
     ready: announcementsReady(board.loaded, online),
     score: state.context.score,
-    // Trainee's entry stays at zero — the machine neither records nor hydrates a
-    // best for it — so this needs no special case to stay quiet there.
-    storedBest: stats[mode][difficulty].score,
+    // Measured against everything the app knows the player has scored here, not the
+    // device's memory alone — the boards outlive a reinstall, a second device and a
+    // hydrate that threw, and they are on this same screen. Trainee's entry stays at
+    // zero on both sides, so this needs no special case to stay quiet there.
+    storedBest: personalBar(stats[mode][difficulty].score, board.forever.myBest),
     todayBest: barFor(bestToday, board.today.myBest),
     weekBest: barFor(bestWeek, board.week.myBest),
     everBest: barFor(bestEver, board.forever.myBest),

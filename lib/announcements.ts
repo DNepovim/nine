@@ -221,6 +221,21 @@ export const barFor = (record: number | null, myBest: number): number | null => 
   return bar > 0 ? bar : null
 }
 
+// The bar a personal best has to clear — the same reconciliation `barFor` does for a
+// board, and for the same reason.
+//
+// The device's stored stats are not on their own a record of what the player has
+// scored. They are lost to a reinstall, to cleared app data, to a second device, and to
+// a read that threw on the way in; the boards remember through all four. Trusting the
+// stored number alone is what let a run well under the player's own all-time record be
+// announced as a personal best — with both numbers on screen at once, the boards
+// showing the record and the bar claiming it had just been beaten.
+//
+// Zero on both sides is Trainee, which keeps no best and has no board. `beaten` refuses
+// a target of zero, so that stays quiet without a special case here.
+export const personalBar = (storedBest: number, myBest: number): number =>
+  Math.max(storedBest, myBest)
+
 // Whether a period is there to be opened. An empty board is not enough: a score of the
 // player's own, published or not, is already on it as far as they are concerned, and
 // being told twice that you opened the same board is the tell that nobody checked.
