@@ -14,9 +14,15 @@ import Animated, {
 import { scheduleOnRN } from 'react-native-worklets'
 
 import { DialBadge } from '@/components/game/dial-badge'
-import { DIAL_COLORS } from '@/constants/colors'
+import { DIAL_COLORS, GRAYSCALE } from '@/constants/colors'
 import { SWIPE_THRESHOLD } from '@/constants/game'
 import { mono } from '@/constants/theme'
+
+// The badges' ring, constant regardless of mode or theme — a mode-coloured border
+// tied it to whichever pair a button happened to be animating through, which read
+// as noise next to the badge's own fill. Lightest of the greyscale: legible on both
+// surfaces without competing with the digit it is labelling.
+const BADGE_BORDER_COLOR = GRAYSCALE[3]
 
 // Values 0..8 ride the low → high tint ramp; 9 is the mode's CTA gradient.
 const RAMP_MAX = 8
@@ -270,7 +276,7 @@ export function DialButton({
             peakText={palette.peakText}
             peakFrom={peakFrom}
             peakTo={peakTo}
-            borderColor={peakFrom}
+            borderColor={BADGE_BORDER_COLOR}
             borderWidth={BADGE_BORDER}
             rampProgress={rampProgress}
             peakProgress={peakProgress}
@@ -290,7 +296,7 @@ export function DialButton({
             peakText={palette.peakText}
             peakFrom={peakFrom}
             peakTo={peakTo}
-            borderColor={peakFrom}
+            borderColor={BADGE_BORDER_COLOR}
             borderWidth={BADGE_BORDER}
             rampProgress={rampProgress}
             peakProgress={peakProgress}
