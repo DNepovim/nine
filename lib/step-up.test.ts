@@ -128,9 +128,19 @@ describe('stepUpReducer, straight out of the tutorial', () => {
     expect(play(messy).offers).toBe(0)
   })
 
-  it('takes whichever bar comes first when a tutorial run is also playing well', () => {
-    // Five clean hits arrive well before twelve of anything.
-    expect(play(cleanRun(CLEAN_RUN, { fromTutorial: true })).last).toBe('clean')
+  it('credits the streak over the hit count when both bars clear on the same hit', () => {
+    // Five messy hits, then five clean — the tenth hit is the moment both bars are
+    // met at once (MIN_HITS and TUTORIAL_HITS are the same number), and 'clean' is
+    // the one that actually says something, so it is the one checked first.
+    const inputs = [
+      ...Array.from({ length: 5 }, (_unused, index) =>
+        facts({ fromTutorial: true, clean: false, hits: index + 1 }),
+      ),
+      ...Array.from({ length: 5 }, (_unused, index) =>
+        facts({ fromTutorial: true, clean: true, hits: index + 6 }),
+      ),
+    ]
+    expect(play(inputs).last).toBe('clean')
   })
 })
 

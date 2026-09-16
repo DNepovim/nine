@@ -25,8 +25,8 @@ export const MIN_RUN_MS = 60_000
 // clean streak, no clock. That player was taught the game ninety seconds ago and has
 // never seen a scored board; the offer is the last step of the tutorial rather than a
 // reward for playing well, so waiting for evidence of playing well would strand exactly
-// the player it was written for. Twelve targets is long enough to have found the rhythm.
-export const TUTORIAL_HITS = 12
+// the player it was written for. Ten targets is long enough to have found the rhythm.
+export const TUTORIAL_HITS = 10
 
 // Where the offer points. Easy on purpose: Trainee hands out infinite lives, so even a
 // player clearing Extreme practice has never once been under the pressure of losing, and
@@ -59,7 +59,7 @@ export type StepUpFacts = {
 }
 
 // Which bar was cleared. The offer says different things depending: one has watched the
-// player do something well and can say so, the other has only counted to twelve.
+// player do something well and can say so, the other has only counted to ten.
 //
 // A list rather than a bare union so the screen gallery can enumerate them and show
 // every wording — a reason added here turns up there without being remembered.
@@ -76,7 +76,7 @@ export function stepUpReducer(
   const reason = (): StepUpReason | null => {
     if (state.offered || facts.playedScored) return null
     // Checked first, but it is the slower bar in practice: five clean hits arrive well
-    // before twelve of anything, so a tutorial graduate playing well still gets the
+    // before ten of anything, so a tutorial graduate playing well still gets the
     // opener that says so.
     if (
       cleanRun >= CLEAN_RUN &&
@@ -100,7 +100,7 @@ export function stepUpReducer(
 // out, so raising a bar can never leave the words claiming a different number.
 //
 // One opener pool per reason. The clean-run openers are about how the player is doing,
-// which the tutorial offer has no standing to claim: it fires on twelve targets however
+// which the tutorial offer has no standing to claim: it fires on ten targets however
 // they went, so it marks the milestone and leaves the praise out of it. The invitations
 // are shared — that half is the same question either way.
 const OPENERS = {
