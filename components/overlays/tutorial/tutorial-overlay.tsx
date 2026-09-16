@@ -25,7 +25,7 @@ const LESSONS = {
 
 const DISMISS_LABEL = {
   gated: 'SKIP TUTORIAL',
-  review: 'CLOSE',
+  review: 'SKIP',
 } as const satisfies Record<TutorialMode, string>
 
 export function TutorialOverlay({
@@ -61,9 +61,12 @@ export function TutorialOverlay({
 }) {
   const Lesson = LESSONS[stepId]
 
-  // px-4 mirrors Screen, so a lesson's dial lands where the game's does.
+  // px-4 mirrors Screen, so a lesson's dial lands where the game's does. Top padding
+  // is lighter than it looks it should be: the stepper is the first thing on the
+  // screen and, unlike a row of controls, a slim tap target sitting close to the
+  // notch/status bar reads fine — the old pt-14 was leaving that whole strip empty.
   return (
-    <View className="absolute inset-0 bg-surface px-4 pb-2 pt-14" style={{ zIndex: 30 }}>
+    <View className="absolute inset-0 bg-surface px-4 pb-2 pt-6" style={{ zIndex: 30 }}>
       <TutorialStepper step={step} onSelect={onSelectStep} />
 
       {canResume && <TutorialResumeButton step={resumeStep} onPress={onResume} />}

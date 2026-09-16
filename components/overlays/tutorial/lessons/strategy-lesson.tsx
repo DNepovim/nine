@@ -10,6 +10,7 @@ import { TaskPrompt } from '@/components/overlays/tutorial/task-prompt'
 import {
   COARSE_CELL,
   FINE_CELL,
+  LESSON_HEADER_SHRINK,
   MID_CELL,
   STEP_ACCENT_COLORS,
   STEP_COLORS,
@@ -54,7 +55,7 @@ export function StrategyLesson({ isDark, onComplete }: LessonProps) {
   // Bumping the key remounts the ring, which is how a fresh target is dealt.
   const [ringKey, setRingKey] = useState(0)
   const [ranOut, setRanOut] = useState(false)
-  const dialSize = useGameDialSize()
+  const dialSize = useGameDialSize(LESSON_HEADER_SHRINK)
 
   const sum = sumCells(cells)
   const hit = sum === STRATEGY_TARGET

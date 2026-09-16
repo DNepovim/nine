@@ -21,7 +21,7 @@ export function TutorialNextButton({
   return (
     <Pressable
       onPress={onPress}
-      className="mt-3 flex-row items-center justify-center gap-1.5 self-center rounded-xl bg-strong px-4 py-2.5"
+      className="flex-row items-center justify-center gap-1.5 self-center rounded-xl bg-strong px-4 py-2.5"
     >
       <Text
         selectable={false}

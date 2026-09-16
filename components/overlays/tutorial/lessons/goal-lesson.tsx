@@ -13,6 +13,7 @@ import { GoalHitPopup } from '@/components/overlays/tutorial/goal-hit-popup'
 import { LiveDialGrid } from '@/components/overlays/tutorial/live-dial-grid'
 import { SumReadout } from '@/components/overlays/tutorial/sum-readout'
 import {
+  GOAL_HEADER_SHRINK,
   GOAL_HOW_DELAY_MS,
   GOAL_RING_MS,
   GOAL_TARGET,
@@ -35,7 +36,7 @@ const COLOR = STEP_COLORS[0] ?? '#4C7EFF'
 export function GoalLesson({ isDark, onComplete, onDismiss }: LessonProps) {
   const [cells, setCells] = useState<readonly number[]>(emptyCells)
   const [showHitChoice, setShowHitChoice] = useState(false)
-  const dialSize = useGameDialSize()
+  const dialSize = useGameDialSize(GOAL_HEADER_SHRINK)
   const howOpacity = useSharedValue(0)
   const hit = sumCells(cells) === GOAL_TARGET
   // The tutorial is mounted beneath the intro splash, so nothing here may start

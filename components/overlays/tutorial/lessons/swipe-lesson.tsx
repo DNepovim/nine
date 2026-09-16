@@ -10,6 +10,7 @@ import { TaskPrompt } from '@/components/overlays/tutorial/task-prompt'
 import type { ThumbGesture } from '@/components/overlays/tutorial/thumb-hint'
 import {
   FINE_CELL,
+  LESSON_HEADER_SHRINK,
   MID_CELL,
   STEP_ACCENT_COLORS,
   STEP_COLORS,
@@ -66,7 +67,7 @@ export function SwipeLesson({ isDark, onComplete }: LessonProps) {
   }>(() => ({ cells: emptyCells(), taskIndex: 0 }))
   const [ringKey, setRingKey] = useState(0)
   const [ranOut, setRanOut] = useState(false)
-  const dialSize = useGameDialSize()
+  const dialSize = useGameDialSize(LESSON_HEADER_SHRINK)
   const task = ROUTE_TASKS[taskIndex]
 
   useEffect(() => {

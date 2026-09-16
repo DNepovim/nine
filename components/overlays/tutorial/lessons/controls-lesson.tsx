@@ -9,6 +9,7 @@ import { TaskPrompt } from '@/components/overlays/tutorial/task-prompt'
 import { ThumbHint, type ThumbGesture } from '@/components/overlays/tutorial/thumb-hint'
 import {
   CONTROLS_START_VALUE,
+  LESSON_HEADER_SHRINK,
   STEP_ACCENT_COLORS,
   STEP_COLORS,
 } from '@/constants/tutorial'
@@ -50,7 +51,7 @@ export function ControlsLesson({ isDark, onComplete }: LessonProps) {
     value: CONTROLS_START_VALUE,
     taskIndex: 0,
   }))
-  const dialSize = useGameDialSize()
+  const dialSize = useGameDialSize(LESSON_HEADER_SHRINK)
   const cellSize = Math.floor(dialSize / GRID_SIZE)
   const task = GESTURE_TASKS[taskIndex]
 

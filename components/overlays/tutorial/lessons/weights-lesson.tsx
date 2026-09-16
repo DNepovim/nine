@@ -11,6 +11,7 @@ import { TaskPrompt } from '@/components/overlays/tutorial/task-prompt'
 import {
   COARSE_CELL,
   FINE_CELL,
+  LESSON_HEADER_SHRINK,
   MID_CELL,
   STEP_ACCENT_COLORS,
   STEP_COLORS,
@@ -92,7 +93,7 @@ export function WeightsLesson({ isDark, onComplete }: LessonProps) {
     round: number
     taps: number
   }>(() => ({ cells: emptyCells(), round: 0, taps: 0 }))
-  const dialSize = useGameDialSize()
+  const dialSize = useGameDialSize(LESSON_HEADER_SHRINK)
   const cellSize = Math.floor(dialSize / GRID_SIZE)
   const current = WEIGHT_ROUNDS[round]
   const finished = WEIGHT_ROUNDS[round - 1]
