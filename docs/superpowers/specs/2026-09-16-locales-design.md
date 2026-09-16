@@ -13,93 +13,121 @@ has to hold.
 - **Everything is translated**, including the how-to-play guide and the historical
   what's-new archive.
 - **Claude drafts the Czech, Dominik reviews and corrects it** before it ships.
-- **A typed dictionary module**, not Paraglide, not `i18n-js`. Reasoning in
-  "Why not Paraglide" below.
+- **Lingui** (`@lingui/core` + `@lingui/react`), chosen over a hand-rolled typed
+  dictionary and over Paraglide.
 - **Per-locale date and number display**, and **localized server-error copy**, both
   pulled into scope.
 
-## Why not Paraglide
+## Why Lingui
 
-Paraglide works under Hermes — the compiler emits plain tree-shakable functions with no
-DOM dependency, and `paraglide-js compile --outdir` is a supported bundler-free path, so
-Metro would only ever see generated source. It was still the wrong pick here, for three
-reasons found in this codebase rather than in the docs:
+It is the only i18n library with genuinely first-party React Native support: an official
+Expo Metro transformer, a dedicated React Native guide, and an `I18nProvider` that
+re-renders the tree on `i18n.activate()`.
 
-1. **No plural strings exist.** `timeAgo` uses single-letter suffixes (`5M AGO`);
-   durations are `M:SS`. The only placeholder in the app is `{name}` in the rival
-   announcements. ICU MessageFormat — the main draw beyond bundle size — buys nothing.
-2. **Half the content is not a string table.** `ANNOUNCEMENT_MESSAGES` is pools of 3–4
-   variants per id; `constants/news.ts` is structured data with markdown bodies;
-   how-to-play is 593 lines of JSX prose. Flattening pools into `record_1`…`record_4`
-   would destroy the thing the duplicate-detection and length tests iterate over.
-3. **Every built-in locale strategy is web-only** — cookie, url, localStorage,
-   sessionStorage, `preferredLanguage`, `documentElement.lang`. React Native would need
-   an `overwriteGetLocale`/`overwriteSetLocale` bridge we maintain, plus a forced
-   re-render, because `setLocale()` works by reloading the document and `{ reload: false }`
-   is documented as a browser-only escape hatch.
+That last point is what rules out **Paraglide**, which is otherwise the better compiler:
+its `setLocale()` works by reloading the document, `{ reload: false }` is documented as a
+browser-only escape hatch, and every built-in locale strategy — cookie, url,
+localStorage, sessionStorage, `preferredLanguage`, `documentElement.lang` — is web-only.
+Adopting it here would mean maintaining an `overwriteGetLocale`/`overwriteSetLocale`
+bridge and a forced re-render.
 
-A dictionary in TypeScript gives type-checked completeness, keeps pools as pools, needs
-no build step, and re-renders for free because the locale is React state.
+Lingui also brings what a dictionary cannot: `.po` catalogs a non-developer can
+translate, ICU plurals if Czech ever needs 1 / 2–4 / 5+ forms, and message ids generated
+from source text, so there are no keys to invent or keep in sync.
+
+**The honest trade** is that a typed dictionary (`type Messages = typeof en`) would have
+made `tsc` the completeness check for free and added no build step at all, and this app
+has no plurals and exactly one placeholder. Lingui is the better technology; the
+dictionary was the smaller fit. The deciding argument is longevity — a third locale or an
+outside translator makes the dictionary a liability, and migrating later costs more than
+starting here.
 
 ## Architecture
 
-### Message modules
+### Messages are descriptors, not strings
 
-`lib/i18n/en.ts` is the source of truth and the only file that defines shape:
+The load-bearing decision. `lib/` holds `msg` descriptors at module level and returns
+them; only components resolve them to text.
 
 ```ts
-export const en = {
-  common: { play: 'PLAY GAME', cancel: 'CANCEL' /* … */ },
-  announcements: {
-    record: ['You beat your best', 'A better you' /* … */],
-    todayRaised: ['{name} now leads today' /* … */],
-  },
-  // …
-} as const
+import { msg } from '@lingui/core/macro'
+
+const ANNOUNCEMENT_MESSAGES = {
+  record: [msg`You beat your best`, msg`A better you` /* … */],
+  todayRaised: [msg`{name} now leads today` /* … */],
+}
 ```
 
-`type Messages = typeof en`, and `lib/i18n/cs.ts` is declared `satisfies Messages`.
-TypeScript then rejects a missing key, a renamed key, and a pool with the wrong number
-of variants. `tsc` is the completeness check — there is no registry to keep in sync and
-nothing to generate.
+Lingui's own rule forbids module-level `t` — it resolves once and never reacts to a
+locale change — and prescribes `msg`/`defineMessage` for exactly this case. It happens to
+solve the pools problem outright: a pool stays an array that tests can iterate, and
+`messagePool(id)` keeps returning one.
 
-### Reading messages
+It also preserves CLAUDE.md's "`lib/` = pure helpers, no side effects" rule. A `lib/`
+function returning descriptors touches no singleton and needs no active locale; the
+component calls `i18n._(descriptor)` at the edge. Without this, every `lib/` function
+would reach for the `i18n` global — and `i18n._()` **throws** when no locale is active,
+not just in development.
 
-`LocaleProvider` mirrors `AppThemeProvider` in `hooks/use-theme.tsx` and exposes
-`useMessages(): Messages` and `useLocale(): { locale, setLocale }`. Components call
-`useMessages()`.
+### Catalogs and the build step
 
-**Pure `lib/` functions take `Messages` as a parameter** rather than importing it:
-`messagePool(id, messages)`, `gameOverTitle({ …, messages })`. This is the load-bearing
-decision. It keeps CLAUDE.md's "`lib/` = pure helpers, no side effects" rule true, keeps
-all 41 test files running under `environment: 'node'` with no provider in sight, and
-lets one test loop both locales through the same assertions.
+`lingui.config.ts` declares locales `en` and `cs`, with `en` as the source. The workflow
+is `lingui extract` (updates `.po`) then `lingui compile` (emits runtime catalogs).
+
+**The Metro transformer is deliberately not used.** `@lingui/metro-transformer` sets
+`babelTransformerPath`, and `metro.config.js` already hands that to `withNativewind`.
+Rather than have the two fight over it, compiled JS catalogs are imported like any other
+module.
+
+Compiled catalogs are generated output: gitignored, and produced by a `lingui compile`
+step that runs ahead of `start`, `build:web`, `check` and every CI job. A fresh clone
+must compile before it can typecheck or test.
+
+### Babel
+
+No `babel.config.js` exists today; Expo SDK 55 applies `babel-preset-expo` implicitly.
+One is added that keeps the preset and adds `@lingui/babel-plugin-lingui-macro`. The
+preset must be preserved — `app.json` sets `experiments.reactCompiler`, and
+`babel-preset-expo` is what wires the React Compiler in.
+
+### Vitest
+
+This repo's tests are `environment: 'node'` with `include: ['**/*.test.ts']`, and
+`vitest.config.ts` has no React or Babel plugin — so macros would reach the tests
+unexpanded. It gains `@lingui/vite-plugin` and the macro Babel plugin.
+
+Tests then follow Lingui's documented pattern: `i18n.load({ en, cs })`, then
+`i18n.activate(locale)` per case. Because `lib/` returns descriptors, this stays pure
+function testing — no renderer, no provider, no jsdom.
 
 ### Locale resolution and persistence
 
-`expo-localization` (new dependency, added with `npx expo install`) supplies the system
-default: the first tag whose `languageCode` is `cs` selects Czech, anything else English.
-A user choice overrides it and persists under `LOCALE_KEY = 'nine.locale.v1'`.
+`expo-localization` supplies the system default: the first tag whose `languageCode` is
+`cs` selects Czech, anything else English. A user choice overrides it and persists under
+`LOCALE_KEY = 'nine.locale.v1'`. Resolution is a pure function — tag list in, locale out
+— tested directly.
+
+`I18nProvider` wraps the tree in `app/_layout.tsx`, alongside `AppThemeProvider`.
+Components use `useLingui()` so a switch re-renders them.
 
 `hooks/use-display-options.ts` carries the same `finally { hydrated.current = true }`
-defect that was fixed in `use-persisted-stats.ts` on 2026-09-16 — a read that throws
-opens the write gate, and the next change overwrites the stored value with defaults. The
-locale hook uses the `hydrateFrom` gate from `lib/stats-hydration.ts` instead, and
-`use-display-options.ts` is repaired the same way as part of phase 1.
+defect fixed in `use-persisted-stats.ts` on 2026-09-16 — a read that throws opens the
+write gate, and the next change overwrites the stored value with defaults. The locale
+hook uses the `hydrateFrom` gate from `lib/stats-hydration.ts`, and
+`use-display-options.ts` is repaired the same way in phase 1.
 
 ### The options control
 
 A segmented `EN | CS` control in `advanced-options-overlay.tsx`, beside the existing
-`THEME` row and shaped like `ThemeToggle`. Switching re-renders through React state; no
-reload, no restart.
+`THEME` row and shaped like `ThemeToggle`.
 
 ### Guide and news archive
 
-Per-locale content modules, not key extraction. `how-to-play-overlay.tsx` keeps its
-layout and takes prose from `lib/i18n/guide.{en,cs}.ts` as structured sections. Extracting
-two hundred keys out of that JSX would leave worse code than exists today.
+Here Lingui is clearly better than the dictionary alternative: `how-to-play-overlay.tsx`
+wraps its prose in `<Trans>` in place, keeping 593 lines of JSX as JSX instead of
+extracting two hundred keys into a content module.
 
-`constants/news.ts` items carry `title` and `body` as `{ en, cs }`. **Item ids stay
+`constants/news.ts` bodies become `msg` descriptors resolved at render. **Item ids stay
 exactly as they are** — seen-state is keyed on them, so a changed id silently re-shows an
 old announcement to every player.
 
@@ -107,18 +135,17 @@ old announcement to every player.
 
 Display only:
 
-- `lib/format-date.ts` holds a hardcoded English `MONTHS` array; month names move into
-  the message modules. Czech month names decline — the genitive is what a date takes
-  (`16. září 2026`), so the Czech module stores the genitive forms and the formatter
-  takes a locale-specific pattern rather than assuming `{day} {month} {year}`.
-- `lib/time-ago.ts` suffixes (`Y MO W D H M`, `NOW`, `AGO`) move into the modules.
+- `lib/format-date.ts` holds a hardcoded English `MONTHS` array. Czech dates take the
+  genitive (`16. září 2026`), so the month list and the assembly pattern both become
+  translatable rather than assuming `{day} {month} {year}`.
+- `lib/time-ago.ts` suffixes (`Y MO W D H M`, `NOW`, `AGO`) become descriptors.
 - Server-error copy surfaced in the UI — `already_taken` in `nickname-modal.tsx`,
   `NOT PUBLISHED` / `NOT SYNCED` / `UNAVAILABLE` in `tab-panel.tsx`,
-  `lib/feedback-outcome.ts` — maps through the modules by code.
+  `lib/feedback-outcome.ts` — maps by code to descriptors.
 
 **The Prague clock does not move.** `lib/leaderboard-period.ts` draws every board
-boundary on one shared Prague clock so that all players roll over at the same instant.
-Localizing that would let two players disagree about which week a score belongs to. Only
+boundary on one shared Prague clock so all players roll over at the same instant.
+Localizing it would let two players disagree about which week a score belongs to. Only
 the rendering of a date changes; never which day or week it falls in.
 
 ## The four-letter problem
@@ -134,9 +161,8 @@ crown: [
 ```
 
 Every word is exactly four letters, and `lib/game-over-title.test.ts` asserts it
-(`expect([first.length, second.length]).toEqual([4, 4])`),
-because the dying sequence flies the letters into a 4×2 grid — a five-letter word falls
-off the ramp.
+(`expect([first.length, second.length]).toEqual([4, 4])`), because the dying sequence
+flies the letters into a 4×2 grid — a five-letter word falls off the ramp.
 
 Czech equivalents mean 36 words of exactly four letters that read as triumphant or
 gently consoling. Some land (`KRÁL NINE`); a full set of eighteen pairs may not. Three
@@ -145,22 +171,27 @@ ways out, in the order they should be tried:
 1. **Find Czech four-letter pairs.** Best outcome, uncertain. Attempted first, tier by
    tier, with Dominik reviewing — this is precisely the copy where a flat translation
    would be obvious.
-2. **Make the grid locale-aware.** Let the ramp take five or six letters when the locale
-   is Czech. Changes an animation that is currently exact, and the spacing was tuned for
-   four.
-3. **Keep the titles in English.** They already read as arcade-cabinet display text
-   rather than prose, so untranslated titles are defensible as styling. Contradicts
-   "everything is translated", so it needs Dominik's explicit sign-off.
+2. **Make the grid locale-aware.** Let the ramp take five or six letters in Czech.
+   Changes an animation that is currently exact and tuned for four.
+3. **Keep the titles in English**, as arcade-cabinet display styling rather than prose.
+   Contradicts "everything is translated", so it needs Dominik's explicit sign-off.
+
+Note that `BEST EVER` appears in both the `crown` and `allTime` tiers. Lingui generates
+ids from source text, so both resolve through one catalog entry and cannot drift apart —
+a small improvement on the duplicated literals there today.
 
 **This is an open decision.** The phase-2 plan attempts (1) and escalates rather than
 picking (2) or (3) unilaterally.
 
 ## The forty-character problem
 
-`lib/announcements.test.ts` ("keeps every line short enough for the bar, once a
-name is substituted") asserts that every line in every pool, with the longest
-nickname substituted, fits `MAX_MESSAGE_LENGTH = 40`. English lines already sit at 28+
-characters, and Czech typically runs 10–20% longer.
+`lib/announcements.test.ts` ("keeps every line short enough for the bar, once a name is
+substituted") asserts that every line in every pool, with the longest nickname
+substituted, fits `MAX_MESSAGE_LENGTH = 40`. English lines already sit at 28+ characters,
+and Czech typically runs 10–20% longer.
+
+Under Lingui this test gets stronger: it activates each locale and measures the **actual
+resolved output** from the compiled catalog, rather than a literal in a source file.
 
 If Czech does not fit, **the Czech gets shorter — the cap does not get raised.** Forty
 characters is the width of the announcement bar, not a preference.
@@ -168,31 +199,47 @@ characters is the width of the announcement bar, not a preference.
 ## Testing
 
 - `lib/announcements.test.ts` loops both locales through the existing assertions: no
-  duplicate lines in a pool, every rival line has a `{name}`, every line inside the cap.
+  duplicate lines in a pool, every rival line has a `{name}` placeholder, every resolved
+  line inside the cap.
 - `lib/game-over-title.test.ts` loops both locales through the four-letter assertion,
   unless decision (2) or (3) above is taken, in which case it is revised to match.
-- A parity test: every guide section and every news item has both locales.
-- Locale resolution is pure and tested directly: a system tag list in, a locale out.
-- `pnpm check` is the gate, as always.
+- A catalog-completeness test: no `cs` entry left untranslated. `lingui extract` reports
+  this, but a test is what fails CI.
+- Locale resolution tested directly as a pure function.
+- `pnpm check` remains the gate, with `lingui compile` ahead of it.
+
+## What this costs
+
+Stated plainly, because it is the price of the choice and the plan should not discover it
+later:
+
+- Three new build-time dependencies plus `expo-localization`, a new `babel.config.js`, a
+  `lingui.config.ts`, and a compile step in front of four existing scripts.
+- `.eas/workflows/deploy.yml` and `preview.yml` each gain a compile step; without it,
+  typecheck and knip fail on missing catalogs.
+- `knip` must be taught to ignore generated catalogs.
+- A fresh clone cannot typecheck or test until `lingui compile` has run once.
+- Contributors edit `.po` files for copy, not TypeScript.
 
 ## Phasing
 
 Three phases, each shippable on its own.
 
-| Phase | Contents                                                                                                                       | Leaves the app                                      |
-| ----- | ------------------------------------------------------------------------------------------------------------------------------ | --------------------------------------------------- |
-| 1     | `lib/i18n` modules, `expo-localization`, persistence + the `use-display-options` repair, options control, `components/` chrome | Switcher works; chrome Czech, game text English     |
-| 2     | `lib/` game text — announcements, coach lines, hit praise, game-over titles, dates, server errors                              | Gameplay fully Czech; four-letter decision resolved |
-| 3     | How-to-play guide, news archive                                                                                                | Everything Czech                                    |
+| Phase | Contents                                                                                                                                                                         | Leaves the app                                      |
+| ----- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------- |
+| 1     | Lingui + Babel + Vitest wiring, `lingui.config.ts`, CI compile steps, `expo-localization`, persistence + the `use-display-options` repair, options control, `components/` chrome | Switcher works; chrome Czech, game text English     |
+| 2     | `lib/` game text — announcements, coach lines, hit praise, game-over titles, dates, server errors                                                                                | Gameplay fully Czech; four-letter decision resolved |
+| 3     | How-to-play guide via `<Trans>`, news archive                                                                                                                                    | Everything Czech                                    |
 
-All of the architectural risk is in phase 1. Phases 2 and 3 are mostly copy against a
-proven pattern, which is why the four-letter decision sits in phase 2 rather than
-blocking the start.
+All the toolchain risk is in phase 1, and it is larger than it was under the dictionary
+design — the NativeWind/Metro overlap and the Vitest macro wiring are the two places
+phase 1 can go wrong. Phases 2 and 3 are mostly copy against a proven pattern, which is
+why the four-letter decision sits in phase 2 rather than blocking the start.
 
 ## Out of scope
 
 - Nicknames and leaderboard rows — user-generated and server-held; not translatable.
-- Board semantics — the boards are shared across locales, as are their Prague-clock
+- Board semantics — boards are shared across locales, as are their Prague-clock
   boundaries.
 - DSEG7 digits — the font renders numbers only, so diacritics never reach it.
-- A third locale. The shape supports one, but nothing here is built speculatively for it.
+- A third locale. Lingui makes one cheap, but nothing here is built speculatively for it.
