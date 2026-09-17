@@ -74,7 +74,7 @@ export type DifficultyConfig = {
   maxTargets: number
   // Accuracy mode: a hit scoring below this costs a life (see costsLife in game.ts).
   // Counter-intuitively tightest on Easy rather than Extreme — Easy's slack lives in
-  // the clock (timeoutScale 1.3 gives far more room to find the optimal route), so a
+  // the clock (timeoutScale 1.45 gives far more room to find the optimal route), so a
   // hit that's still wasteful despite all that time is the one difficulty can afford
   // to call out. Extreme's clock is already the run's whole fight; asking for a tight
   // route on top of it would be punishing the same thing twice.
@@ -85,7 +85,7 @@ export const DIFFICULTIES: Record<Difficulty, DifficultyConfig> = {
   easy: {
     label: msg`EASY`,
     code: msg`ESY`,
-    timeoutScale: 1.3,
+    timeoutScale: 1.45,
     maxTargets: 3,
     wastefulThreshold: 0.25,
   },
@@ -99,7 +99,7 @@ export const DIFFICULTIES: Record<Difficulty, DifficultyConfig> = {
   extreme: {
     label: msg`EXTREME`,
     code: msg`EXT`,
-    timeoutScale: 0.55,
+    timeoutScale: 0.5,
     maxTargets: 4,
     wastefulThreshold: 0.15,
   },

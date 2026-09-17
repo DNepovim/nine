@@ -13,11 +13,11 @@ import Animated, {
 } from 'react-native-reanimated'
 
 import { Screen } from '@/components/screen'
-import type { AchievementId } from '@/constants/achievements'
 import { GOLD_DIM_INK, GOLD_SCREEN_TOKENS, MODE_SCREEN_TOKENS } from '@/constants/colors'
 import { CROWN_CORONA, ON_GOLD_LABEL_SHADOW } from '@/constants/theme'
 import { useBoardContext } from '@/hooks/use-board'
 import { useTheme } from '@/hooks/use-theme'
+import type { Award } from '@/lib/achievements'
 import type { Period } from '@/lib/announcements'
 import { currentBoardMedals } from '@/lib/board-medals'
 import type { RecordScreen } from '@/lib/champions'
@@ -101,7 +101,7 @@ export function GameOverOverlay({
   avgAccuracy: number
   avgSpeed: number
   // What this run earned for good — empty on most runs, and silent when it is.
-  achievements: readonly AchievementId[]
+  achievements: readonly Award[]
   // Straight back into a run on this same board.
   onPlayAgain: () => void
   // Into a run on the board one rung up, or one down — see `runChallenge`.
@@ -233,7 +233,7 @@ export function GameOverOverlay({
             {/* Under the run's own numbers and above the board: what this run *did* is a
                 description of the run, and what it earned is something the player keeps
                 — which belongs nearer the boards than the stopwatch. */}
-            <EarnedAchievements ids={achievements} halo={painted} />
+            <EarnedAchievements awards={achievements} halo={painted} />
 
             {isOneOf(gameMode, ['accuracy', 'speed']) && (
               <HighScores

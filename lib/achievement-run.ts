@@ -1,5 +1,4 @@
-import type { AchievementId } from '@/constants/achievements'
-import { earned, type AchievementFacts } from '@/lib/achievements'
+import { awardKey, earned, type AchievementFacts, type Award } from '@/lib/achievements'
 import { emptyCareer, type Career } from '@/lib/career'
 import type { HitInfo } from '@/machines/game'
 
@@ -17,9 +16,9 @@ import type { HitInfo } from '@/machines/game'
 export type AchievementPhase = {
   started: boolean
   career: Career
-  // Everything unlocked this run, so one achievement announces once however many hits
+  // Every award unlocked this run, as `awardKey` names it, so one stage announces once
   // land past its bar.
-  fired: readonly AchievementId[]
+  fired: readonly string[]
 }
 
 // The per-run figures no single snapshot can answer, accumulated batch by batch.
@@ -68,16 +67,16 @@ export type RunInput = {
   career: Career
   // Everything else the rules ask about. The career is the phase's, not this.
   facts: Omit<AchievementFacts, 'career'>
-  // What the player already holds, from the store. Filtered at evaluation rather than
-  // seeded into `fired`, so a store that finishes loading mid-run still silences the
-  // achievements it covers instead of announcing them a second time.
-  held: readonly AchievementId[]
+  // What the player already holds, from the store, as `awardKey` names it. Filtered at
+  // evaluation rather than seeded into `fired`, so a store that finishes loading mid-run
+  // still silences the awards it covers instead of announcing them a second time.
+  held: readonly string[]
 }
 
 export type RunStep = {
   phase: AchievementPhase
-  // Everything newly earned, in catalogue order. Empty for nothing new.
-  unlocked: AchievementId[]
+  // Every award newly earned, in catalogue order. Empty for nothing new.
+  unlocked: Award[]
 }
 
 export const IDLE: AchievementPhase = {
@@ -86,17 +85,20 @@ export const IDLE: AchievementPhase = {
   fired: [],
 }
 
-const QUIET: AchievementId[] = []
+const QUIET: Award[] = []
 
 function evaluate(phase: AchievementPhase, input: RunInput): RunStep {
   const all = earned({ ...input.facts, career: phase.career })
-  const fresh = all.filter((id) => !phase.fired.includes(id) && !input.held.includes(id))
+  const fresh = all.filter((award) => {
+    const key = awardKey(award)
+    return !phase.fired.includes(key) && !input.held.includes(key)
+  })
   // Everything earned is marked, not just what is announced. An achievement the store
   // already covers is silent but still settled — otherwise it would be re-tested on every
   // hit for the rest of the run, and would speak up the moment the store said anything
   // different. Nothing in `fresh` can be missing from this, so a run with nothing new has
   // nothing to mark either, and the phase is handed back by identity.
-  const fired = [...new Set([...phase.fired, ...all])]
+  const fired = [...new Set([...phase.fired, ...all.map(awardKey)])]
   if (fired.length === phase.fired.length) return { phase, unlocked: QUIET }
   return { phase: { ...phase, fired }, unlocked: fresh }
 }

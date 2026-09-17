@@ -13,6 +13,7 @@ import Animated, {
 } from 'react-native-reanimated'
 
 import { Screen } from '@/components/screen'
+import type { AchievementId } from '@/constants/achievements'
 import { useChampionsContext } from '@/hooks/use-champions'
 import { useOnline } from '@/hooks/use-online'
 import { useTheme } from '@/hooks/use-theme'
@@ -56,6 +57,7 @@ export function MenuOverlay({
   bestScore,
   medals,
   achievementsEarned,
+  achievementsLatest,
   achievementsLoaded,
   onOpenAchievements,
   initialPlayMode = 'alone',
@@ -82,6 +84,8 @@ export function MenuOverlay({
   medals: readonly Medal[]
   // How many of the catalogue the player holds.
   achievementsEarned: number
+  // The most recently achieved one, or null before there is one.
+  achievementsLatest: AchievementId | null
   // Whether the device's copy has been read. The strip waits rather than flashing 0 of 48
   // at a player who holds thirty.
   achievementsLoaded: boolean
@@ -229,6 +233,7 @@ export function MenuOverlay({
           {achievementsLoaded && (
             <AchievementProgress
               earned={achievementsEarned}
+              latest={achievementsLatest}
               onPress={onOpenAchievements}
             />
           )}

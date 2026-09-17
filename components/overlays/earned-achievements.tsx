@@ -2,10 +2,12 @@ import { Trans, useLingui } from '@lingui/react/macro'
 import { isNonEmptyArray } from 'narrowland'
 import { Text, View } from 'react-native'
 
-import { ACHIEVEMENTS, type AchievementId } from '@/constants/achievements'
+import { ACHIEVEMENTS } from '@/constants/achievements'
 import { ACHIEVEMENT_INK } from '@/constants/colors'
 import { ON_GOLD_LABEL_SHADOW } from '@/constants/theme'
 import { useTheme } from '@/hooks/use-theme'
+import { awardKey, type Award } from '@/lib/achievements'
+import { DIFFICULTIES } from '@/machines/modes'
 
 // What this run earned for good, under the numbers that only describe it.
 //
@@ -17,16 +19,16 @@ import { useTheme } from '@/hooks/use-theme'
 // cannot see them, so there the chips take the screen's own ink and the halo that lifts
 // it off the celebration — the same trade `GOLD_DIM_INK` makes for the HOME icon.
 export function EarnedAchievements({
-  ids,
+  awards,
   halo = false,
 }: {
-  ids: readonly AchievementId[]
+  awards: readonly Award[]
   // Set on the gold and mode-painted game-over screens.
   halo?: boolean
 }) {
   const { t } = useLingui()
   const { colorScheme } = useTheme()
-  if (!isNonEmptyArray(ids)) return null
+  if (!isNonEmptyArray(awards)) return null
 
   const shadow = halo ? ON_GOLD_LABEL_SHADOW : null
 
@@ -37,15 +39,15 @@ export function EarnedAchievements({
         className="font-mono text-[8px] font-bold tracking-[1.5px] text-dim"
         style={shadow}
       >
-        <Trans>EARNED</Trans>
+        <Trans>ACHIEVED</Trans>
       </Text>
-      {ids.map((id) => (
+      {awards.map((award) => (
         <View
-          key={id}
+          key={awardKey(award)}
           className="flex-row items-center gap-1 rounded-full bg-card px-2 py-1"
         >
           <Text selectable={false} className="text-[10px] leading-[13px]">
-            {ACHIEVEMENTS[id].emblem}
+            {ACHIEVEMENTS[award.id].emblem}
           </Text>
           <Text
             selectable={false}
@@ -55,7 +57,8 @@ export function EarnedAchievements({
             // outside it — inside, the ink just has to suit the card.
             style={halo ? null : { color: ACHIEVEMENT_INK[colorScheme] }}
           >
-            {t(ACHIEVEMENTS[id].title)}
+            {t(ACHIEVEMENTS[award.id].title)}
+            {award.stage === null ? '' : ` · ${t(DIFFICULTIES[award.stage].code)}`}
           </Text>
         </View>
       ))}

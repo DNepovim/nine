@@ -1,3 +1,5 @@
+import { msg } from '@lingui/core/macro'
+import { useLingui } from '@lingui/react/macro'
 import { Text, View } from 'react-native'
 
 import { ON_GOLD_LABEL_SHADOW } from '@/constants/theme'
@@ -6,10 +8,10 @@ import { formatGameTime } from '@/lib/duration'
 // The four numbers a run leaves behind, shown on both the pause and game-over
 // screens. One component so the two can never drift apart.
 //
-// One line rather than a stacked table: four numbers are a footnote to the score,
-// not a report, and read across in a row they cost a fraction of the height they used
-// to. The row takes the full width and centres its content, so nothing can collapse
-// it — that collapse is what once squeezed `AVG ACC` onto two lines.
+// A row of four columns, each number over its own label. The label underneath rather
+// than beside it is what lets a cell be as wide as its widest line instead of as wide
+// as both put together — which is what used to squeeze `AVG ACC` onto two lines when
+// the row ran out of room. It costs one line of height across the whole row, not four.
 export function RunStats({
   hits,
   gameTimeMs,
@@ -26,18 +28,19 @@ export function RunStats({
   // Set on the gold game-over screen, where these sit straight on the celebration.
   halo?: boolean
 }) {
+  const { t } = useLingui()
   const shadow = halo ? ON_GOLD_LABEL_SHADOW : null
   const cells = [
-    { label: 'HITS', value: `${hits}` },
-    { label: 'TIME', value: formatGameTime(gameTimeMs) },
-    { label: 'AVG ACC', value: `${avgAccuracy}%` },
-    { label: 'AVG SPD', value: `${avgSpeed}%` },
+    { key: 'hits', label: msg`HITS`, value: `${hits}` },
+    { key: 'time', label: msg`TIME`, value: formatGameTime(gameTimeMs) },
+    { key: 'acc', label: msg`AVG ACC`, value: `${avgAccuracy}%` },
+    { key: 'spd', label: msg`AVG SPD`, value: `${avgSpeed}%` },
   ]
 
   return (
-    <View className="mb-6 w-full flex-row items-baseline justify-center gap-3">
-      {cells.map(({ label, value }) => (
-        <View key={label} className="flex-row items-baseline gap-1">
+    <View className="mb-6 w-full flex-row items-start justify-center gap-5">
+      {cells.map(({ key, label, value }) => (
+        <View key={key} className="items-center">
           <Text
             selectable={false}
             numberOfLines={1}
@@ -49,10 +52,10 @@ export function RunStats({
           <Text
             selectable={false}
             numberOfLines={1}
-            className="font-mono text-[8px] font-bold tracking-[1px] text-dim"
+            className="mt-0.5 font-mono text-[8px] font-bold tracking-[1px] text-dim"
             style={shadow}
           >
-            {label}
+            {t(label)}
           </Text>
         </View>
       ))}

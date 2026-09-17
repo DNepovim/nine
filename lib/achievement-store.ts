@@ -3,6 +3,8 @@ import { isNonEmptyArray, isOneOf } from 'narrowland'
 
 import { ACHIEVEMENT_IDS, type AchievementId } from '@/constants/achievements'
 import { ACHIEVEMENTS_KEY } from '@/constants/storage'
+import { awardKey, awardsOf, type Award } from '@/lib/achievements'
+import { DIFFICULTY_ORDER, type Difficulty } from '@/machines/modes'
 
 // One achievement the player holds.
 //
@@ -11,6 +13,10 @@ import { ACHIEVEMENTS_KEY } from '@/constants/storage'
 // would quietly rewrite the player's history.
 export type EarnedAchievement = {
   id: AchievementId
+  // The board it was cleared on, for a staged achievement; null for the rest. A staged
+  // achievement holds up to three of these, each with its own moment — a harder board
+  // never stands in for an easier one.
+  stage: Difficulty | null
   earnedAt: string // ISO 8601
   // Whether the server has it. The device is what the app reads; this is the queue.
   synced: boolean
@@ -40,24 +46,28 @@ export function mergeEarned(
   local: AchievementStore,
   remote: AchievementStore,
 ): AchievementStore {
-  const merged = new Map<AchievementId, EarnedAchievement>()
+  const merged = new Map<string, EarnedAchievement>()
   for (const entry of [...local, ...remote]) {
-    const held = merged.get(entry.id)
+    const key = awardKey(entry)
+    const held = merged.get(key)
     if (held === undefined) {
-      merged.set(entry.id, entry)
+      merged.set(key, entry)
       continue
     }
-    merged.set(entry.id, {
+    merged.set(key, {
       id: entry.id,
+      stage: entry.stage,
       earnedAt: held.earnedAt < entry.earnedAt ? held.earnedAt : entry.earnedAt,
       // Synced if either side says so: the server having it is the only thing `synced`
       // claims, and one of the two sides just came from there.
       synced: held.synced || entry.synced,
     })
   }
-  // Catalogue order, so everything downstream — the chips, the screen, the count — reads
-  // in one order without sorting it again.
-  return ACHIEVEMENT_IDS.flatMap((id) => merged.get(id) ?? [])
+  // Catalogue order, then easiest board first, so everything downstream — the chips, the
+  // screen, the count — reads in one order without sorting it again.
+  return ACHIEVEMENT_IDS.flatMap((id) =>
+    awardsOf(id).flatMap((award) => merged.get(awardKey(award)) ?? []),
+  )
 }
 
 // Adds newly earned achievements, keeping anything already held exactly as it was.
@@ -66,19 +76,29 @@ export function mergeEarned(
 // nothing to write by identity.
 export function addEarned(
   store: AchievementStore,
-  ids: readonly AchievementId[],
+  awards: readonly Award[],
   at: string,
 ): AchievementStore {
-  const fresh = ids.filter((id) => !store.some((entry) => entry.id === id))
+  const have = new Set(store.map(awardKey))
+  const fresh = awards.filter((award) => !have.has(awardKey(award)))
   if (!isNonEmptyArray(fresh)) return store
   return mergeEarned(
     store,
-    fresh.map((id) => ({ id, earnedAt: at, synced: false })),
+    fresh.map(({ id, stage }) => ({ id, stage, earnedAt: at, synced: false })),
   )
 }
 
-export const idsOf = (store: AchievementStore): AchievementId[] =>
-  store.map((entry) => entry.id)
+// Every award the store holds, as `awardKey` names it — what the run filters against.
+export const keysOf = (store: AchievementStore): string[] => store.map(awardKey)
+
+// The achievements the store holds at least one stage of, for counting and for the list.
+export const idsOf = (store: AchievementStore): AchievementId[] => [
+  ...new Set(store.map((entry) => entry.id)),
+]
+
+// Which boards a staged achievement has been cleared on.
+export const stagesOf = (store: AchievementStore, id: AchievementId): Difficulty[] =>
+  store.flatMap((entry) => (entry.id === id && entry.stage !== null ? entry.stage : []))
 
 export const unsyncedOf = (store: AchievementStore): EarnedAchievement[] =>
   store.filter((entry) => !entry.synced)
@@ -108,6 +128,7 @@ const isEntry = (value: unknown): value is EarnedAchievement => {
   return (
     typeof entry.id === 'string' &&
     isKnownAchievement(entry.id) &&
+    (entry.stage === null || isOneOf(entry.stage, DIFFICULTY_ORDER)) &&
     typeof entry.earnedAt === 'string' &&
     typeof entry.synced === 'boolean'
   )
@@ -119,4 +140,35 @@ export async function writeAchievements(store: AchievementStore): Promise<void> 
   } catch {
     // The player keeps what is on screen either way; the next write tries again.
   }
+}
+
+// The most recently achieved one, for the line on the intro screen.
+//
+// Ties are real and common: a run that crosses several at once stamps them all with the
+// same instant, and "the latest" has to be one of them rather than whichever the array
+// happened to hold last. Catalogue order breaks it, so the answer is stable across
+// launches and the same on every device.
+export function latestAchievement(store: AchievementStore): AchievementId | null {
+  let best: EarnedAchievement | null = null
+  for (const entry of store) {
+    if (best === null || entry.earnedAt > best.earnedAt) {
+      best = entry
+      continue
+    }
+    if (entry.earnedAt !== best.earnedAt) continue
+    const order = ACHIEVEMENT_IDS.indexOf(entry.id) - ACHIEVEMENT_IDS.indexOf(best.id)
+    if (order > 0) best = entry
+  }
+  return best?.id ?? null
+}
+
+// When an achievement first landed — the earliest of its stages, for the one date the
+// row shows. Null for one the store does not hold.
+export function firstEarnedAt(store: AchievementStore, id: AchievementId): string | null {
+  let first: string | null = null
+  for (const entry of store) {
+    if (entry.id !== id) continue
+    if (first === null || entry.earnedAt < first) first = entry.earnedAt
+  }
+  return first
 }

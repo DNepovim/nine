@@ -46,7 +46,10 @@ const RUN = {
   avgAccuracy: 84,
   avgSpeed: 71,
   // Two, so the row can be seen wrapping beside the EARNED label.
-  achievements: ['flawlessTen', 'thousandHits'] as const,
+  achievements: [
+    { id: 'flawlessTen', stage: null },
+    { id: 'steadyHand', stage: 'extreme' },
+  ] as const,
 }
 
 const noop = () => {

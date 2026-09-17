@@ -1,10 +1,11 @@
-import { isNonEmptyArray } from 'narrowland'
+import { isNonEmptyArray, isOneOf } from 'narrowland'
 
 import { isKnownAchievement } from '@/lib/achievement-store'
 import type { AchievementStore, EarnedAchievement } from '@/lib/achievement-store'
 import { captureError } from '@/lib/analytics'
 import { isNetworkFailure, noteRequest } from '@/lib/connectivity'
 import { supabase } from '@/lib/supabase'
+import { DIFFICULTY_ORDER, type Difficulty } from '@/machines/modes'
 
 // The server's copy of what the player has earned.
 //
@@ -15,7 +16,19 @@ import { supabase } from '@/lib/supabase'
 // Split from the store itself the way `score-submission.ts` is split from
 // `local-scores.ts`: the merge rules are pure and testable, and this half is the network.
 
-type AchievementRow = { achievement_id: string; earned_at: string }
+type AchievementRow = {
+  achievement_id: string
+  // The board, or '' for an unstaged achievement. Empty rather than null because the
+  // column is half the primary key — see the migration. A row naming a stage this build
+  // does not know is dropped for the same reason an unknown id is.
+  stage: string
+  earned_at: string
+}
+
+// The server's empty string is the client's null: one identity, two spellings, mapped
+// here so nothing above this file has to know the column exists.
+const toStage = (value: string): Difficulty | null | undefined =>
+  value === '' ? null : isOneOf(value, DIFFICULTY_ORDER) ? value : undefined
 
 // Everything the server holds for this player. Null — not an empty store — when the ask
 // itself failed, so a flaky read is never mistaken for a player who has earned nothing.
@@ -24,15 +37,16 @@ export async function fetchAchievements(
 ): Promise<AchievementStore | null> {
   const { data, error } = await supabase
     .from('achievements')
-    .select('achievement_id, earned_at')
+    .select('achievement_id, stage, earned_at')
     .eq('user_id', userId)
   noteRequest(error)
   if (error !== null) return null
-  return ((data as AchievementRow[] | null) ?? []).flatMap((row) =>
-    isKnownAchievement(row.achievement_id)
-      ? [{ id: row.achievement_id, earnedAt: row.earned_at, synced: true }]
-      : [],
-  )
+  return ((data as AchievementRow[] | null) ?? []).flatMap((row) => {
+    const stage = toStage(row.stage)
+    return isKnownAchievement(row.achievement_id) && stage !== undefined
+      ? [{ id: row.achievement_id, stage, earnedAt: row.earned_at, synced: true }]
+      : []
+  })
 }
 
 // Pushes everything the server has not been told about, in one write.
@@ -50,9 +64,10 @@ export async function pushAchievements(
     entries.map((entry) => ({
       user_id: userId,
       achievement_id: entry.id,
+      stage: entry.stage ?? '',
       earned_at: entry.earnedAt,
     })),
-    { onConflict: 'user_id,achievement_id', ignoreDuplicates: true },
+    { onConflict: 'user_id,achievement_id,stage', ignoreDuplicates: true },
   )
   noteRequest(error)
   if (error === null) return true

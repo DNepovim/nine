@@ -98,7 +98,7 @@ const TITLES = {
 // before it began, not a modest one.
 //
 // The bar falls as the difficulty rises: the same play yields fewer hits when the
-// clock is tighter (Extreme runs at 0.55 of the base timeout and carries a fourth
+// clock is tighter (Extreme runs at 0.5 of the base timeout and carries a fourth
 // target), so holding one number across all three would call an ordinary Extreme run
 // cold while letting a genuinely dead Easy run pass.
 const COLD_BELOW = {

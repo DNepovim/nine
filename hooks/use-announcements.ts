@@ -1,8 +1,9 @@
 import { i18n } from '@lingui/core'
 import { useEffect, useRef, useState } from 'react'
 
-import { ACHIEVEMENTS, type AchievementId } from '@/constants/achievements'
+import { ACHIEVEMENTS } from '@/constants/achievements'
 import type { RivalAnnouncement } from '@/hooks/use-rival-records'
+import type { Award } from '@/lib/achievements'
 import { IDLE, stepRun, type RunPhase } from '@/lib/announcement-run'
 import {
   ANNOUNCEMENT_IDS,
@@ -61,9 +62,9 @@ export function useAnnouncements({
   // Achievements earned but not yet announced, oldest first. Unlike a rival's news these
   // are never dropped: an achievement happens once in a player's life, so one that cannot
   // have the bar right now waits for it.
-  achievements: readonly AchievementId[]
+  achievements: readonly Award[]
   // Called once one has had its turn, so the queue moves on.
-  onAchievementAnnounced: (id: AchievementId) => void
+  onAchievementAnnounced: (award: Award) => void
   // Called the instant a board record falls, so the score reaches the board while
   // the run is still going and rivals hear about it now rather than at game over.
   onBoardRecord: () => void
@@ -149,7 +150,7 @@ export function useAnnouncements({
       announcementFor(
         'achievement',
         Math.random(),
-        i18n._(ACHIEVEMENTS[next].title).toUpperCase(),
+        i18n._(ACHIEVEMENTS[next.id].title).toUpperCase(),
       ),
     )
     onAchievementAnnouncedRef.current(next)

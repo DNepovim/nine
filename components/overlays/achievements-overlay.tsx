@@ -11,8 +11,9 @@ import {
 } from '@/constants/achievements'
 import { ACHIEVEMENT_INK } from '@/constants/colors'
 import { useTheme } from '@/hooks/use-theme'
+import { firstEarnedAt, idsOf, stagesOf } from '@/lib/achievement-store'
 import type { AchievementStore } from '@/lib/achievement-store'
-import { progressOf, type AchievementFacts } from '@/lib/achievements'
+import { stageProgress, type AchievementFacts } from '@/lib/achievements'
 
 import { AchievementRow } from './achievement-row'
 
@@ -40,7 +41,9 @@ export function AchievementsOverlay({
   onClose: () => void
 }) {
   const { colorScheme } = useTheme()
-  const earnedAt = new Map(store.map((entry) => [entry.id, entry.earnedAt]))
+  // One date per achievement, the earliest — a staged one shows when it first landed
+  // and its pips say the rest.
+  const earnedAt = new Map(idsOf(store).map((id) => [id, firstEarnedAt(store, id)]))
 
   return (
     <View className="absolute inset-0 bg-surface px-6 pb-6 pt-16" style={{ zIndex: 40 }}>
@@ -75,7 +78,8 @@ export function AchievementsOverlay({
           <AchievementRow
             id={item}
             earnedAt={earnedAt.get(item) ?? null}
-            progress={progressOf(item, facts)}
+            stages={stagesOf(store, item)}
+            progress={stageProgress(item, facts)}
           />
         )}
       />

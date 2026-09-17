@@ -18,7 +18,7 @@ export const RELEASES: Release[] = [
         // is one you keep — see the design guide.
         accent: '#1E9448',
         title: msg`Things you keep`,
-        body: msg`A record is only ever lent — someone takes it back eventually. Achievements are the other kind: earned once and yours for good, measured against nobody but yourself. Some are waiting where you would not think to look.`,
+        body: msg`A record is only ever lent — someone takes it back eventually. Achievements are the other kind: achieved once and yours for good, measured against nobody but yourself. Some are waiting where you would not think to look.`,
       },
     ],
   },

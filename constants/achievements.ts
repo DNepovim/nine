@@ -53,14 +53,12 @@ export const ACHIEVEMENT_IDS = [
   'surgeon',
   'immaculate',
   'perfectionist',
-  'mountaineer',
 
   'fastStart',
   'slipstream',
   'afterburner',
   'lightning',
   'terminalVelocity',
-  'daredevil',
 
   'flawlessTen',
   'maxMultiplier',
@@ -84,12 +82,8 @@ export const ACHIEVEMENT_IDS = [
   'tenBests',
   'earlyBird',
 
-  'heldAccEasy',
-  'heldAccHard',
-  'heldAccExtreme',
-  'heldSpeedEasy',
-  'heldSpeedHard',
-  'heldSpeedExtreme',
+  'heldAccuracy',
+  'heldSpeed',
 
   'roomForTwo',
   'winner',
@@ -117,6 +111,11 @@ export type AchievementDef = {
   target?: number
   // Listed as ??? until earned.
   secret?: true
+  // Cleared once per board rather than once. A staged achievement is achieved three
+  // times — Easy, Hard and Extreme — each on its own board, each with its own date, and
+  // a harder board never implies an easier one. The hint says what the target is; the
+  // board it was met on is the stage.
+  staged?: true
 }
 
 // The announcement bar holds 40 characters (MAX_MESSAGE_LENGTH in lib/announcements.ts)
@@ -168,7 +167,7 @@ export const ACHIEVEMENTS = {
     group: 'firstSteps',
     emblem: '🌋',
     title: msg`INTO THE DEEP`,
-    hint: msg`Play an Extreme board.`,
+    hint: msg`Land a hit on an Extreme board.`,
   },
 
   // ── Accuracy ───────────────────────────────────────────────────────────────────
@@ -178,6 +177,7 @@ export const ACHIEVEMENTS = {
     title: msg`STEADY HAND`,
     hint: msg`Score 250 in Accuracy.`,
     target: 250,
+    staged: true,
   },
   fineWork: {
     group: 'accuracy',
@@ -185,6 +185,7 @@ export const ACHIEVEMENTS = {
     title: msg`FINE WORK`,
     hint: msg`Score 1 000 in Accuracy.`,
     target: 1000,
+    staged: true,
   },
   surgeon: {
     group: 'accuracy',
@@ -192,6 +193,7 @@ export const ACHIEVEMENTS = {
     title: msg`SURGEON`,
     hint: msg`Score 2 500 in Accuracy.`,
     target: 2500,
+    staged: true,
   },
   immaculate: {
     group: 'accuracy',
@@ -199,6 +201,7 @@ export const ACHIEVEMENTS = {
     title: msg`IMMACULATE`,
     hint: msg`Score 5 000 in Accuracy.`,
     target: 5000,
+    staged: true,
   },
   perfectionist: {
     group: 'accuracy',
@@ -206,13 +209,7 @@ export const ACHIEVEMENTS = {
     title: msg`PERFECTIONIST`,
     hint: msg`Score 10 000 in Accuracy.`,
     target: 10000,
-  },
-  mountaineer: {
-    group: 'accuracy',
-    emblem: '⛰️',
-    title: msg`MOUNTAINEER`,
-    hint: msg`Score 1 000 on Accuracy Extreme.`,
-    target: 1000,
+    staged: true,
   },
 
   // ── Speed ──────────────────────────────────────────────────────────────────────
@@ -222,6 +219,7 @@ export const ACHIEVEMENTS = {
     title: msg`FAST START`,
     hint: msg`Score 250 in Speed.`,
     target: 250,
+    staged: true,
   },
   slipstream: {
     group: 'speed',
@@ -229,6 +227,7 @@ export const ACHIEVEMENTS = {
     title: msg`SLIPSTREAM`,
     hint: msg`Score 1 000 in Speed.`,
     target: 1000,
+    staged: true,
   },
   afterburner: {
     group: 'speed',
@@ -236,6 +235,7 @@ export const ACHIEVEMENTS = {
     title: msg`AFTERBURNER`,
     hint: msg`Score 2 500 in Speed.`,
     target: 2500,
+    staged: true,
   },
   lightning: {
     group: 'speed',
@@ -243,6 +243,7 @@ export const ACHIEVEMENTS = {
     title: msg`LIGHTNING`,
     hint: msg`Score 5 000 in Speed.`,
     target: 5000,
+    staged: true,
   },
   terminalVelocity: {
     group: 'speed',
@@ -250,13 +251,7 @@ export const ACHIEVEMENTS = {
     title: msg`TERMINAL VELOCITY`,
     hint: msg`Score 10 000 in Speed.`,
     target: 10000,
-  },
-  daredevil: {
-    group: 'speed',
-    emblem: '🎢',
-    title: msg`DAREDEVIL`,
-    hint: msg`Score 1 000 on Speed Extreme.`,
-    target: 1000,
+    staged: true,
   },
 
   // ── Mastery ────────────────────────────────────────────────────────────────────
@@ -398,47 +393,19 @@ export const ACHIEVEMENTS = {
   // ── Held boards ────────────────────────────────────────────────────────────────
   // One per board. The titles borrow MedalLine's clipped register (`🥇 EXT ALL`), where a
   // player already reads `ACC ESY` as a board.
-  heldAccEasy: {
+  heldAccuracy: {
     group: 'held',
     emblem: '🛡️',
-    title: msg`HELD ACC ESY`,
-    hint: msg`Hold the Accuracy Easy all-time record for seven days.`,
-    target: 7,
+    title: msg`HELD ACCURACY`,
+    hint: msg`Hold an Accuracy all-time record for seven days.`,
+    staged: true,
   },
-  heldAccHard: {
+  heldSpeed: {
     group: 'held',
-    emblem: '🛡️',
-    title: msg`HELD ACC HRD`,
-    hint: msg`Hold the Accuracy Hard all-time record for seven days.`,
-    target: 7,
-  },
-  heldAccExtreme: {
-    group: 'held',
-    emblem: '🛡️',
-    title: msg`HELD ACC EXT`,
-    hint: msg`Hold the Accuracy Extreme all-time record for seven days.`,
-    target: 7,
-  },
-  heldSpeedEasy: {
-    group: 'held',
-    emblem: '🛡️',
-    title: msg`HELD SPD ESY`,
-    hint: msg`Hold the Speed Easy all-time record for seven days.`,
-    target: 7,
-  },
-  heldSpeedHard: {
-    group: 'held',
-    emblem: '🛡️',
-    title: msg`HELD SPD HRD`,
-    hint: msg`Hold the Speed Hard all-time record for seven days.`,
-    target: 7,
-  },
-  heldSpeedExtreme: {
-    group: 'held',
-    emblem: '🛡️',
-    title: msg`HELD SPD EXT`,
-    hint: msg`Hold the Speed Extreme all-time record for seven days.`,
-    target: 7,
+    emblem: '🏰',
+    title: msg`HELD SPEED`,
+    hint: msg`Hold a Speed all-time record for seven days.`,
+    staged: true,
   },
 
   // ── With friends ───────────────────────────────────────────────────────────────

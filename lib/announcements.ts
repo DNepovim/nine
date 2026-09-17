@@ -93,7 +93,7 @@ const ANNOUNCEMENT_MESSAGES = {
   // so it is the only thing shouting in the bar — the same arrangement the rival lines
   // use for a nickname. Keep the longest prefix here at 10 characters: it is what
   // TITLE_MAX in constants/achievements.ts is measured against.
-  achievement: ['Unlocked: {name}', '{name} unlocked', 'Earned: {name}'],
+  achievement: ['Unlocked: {name}', '{name} unlocked', 'Achieved: {name}'],
 
   // Opening an empty board, which is not the same as topping a busy one. The lines say
   // the board was bare rather than that you are ahead — there is nobody to be ahead of

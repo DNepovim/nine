@@ -3,9 +3,12 @@ import { describe, expect, it } from 'vitest'
 import {
   addEarned,
   EMPTY_STORE,
+  firstEarnedAt,
   idsOf,
+  latestAchievement,
   markSynced,
   mergeEarned,
+  stagesOf,
   unsyncedOf,
   type AchievementStore,
 } from './achievement-store'
@@ -14,7 +17,15 @@ const entry = (
   id: 'firstHit' | 'graduate' | 'tenRuns',
   earnedAt: string,
   synced = false,
-) => ({ id, earnedAt, synced }) as const
+) => ({ id, stage: null, earnedAt, synced }) as const
+
+// A staged award: the same achievement on one board.
+const staged = (
+  id: 'steadyHand',
+  stage: 'easy' | 'hard' | 'extreme',
+  earnedAt: string,
+  synced = false,
+) => ({ id, stage, earnedAt, synced }) as const
 
 describe('mergeEarned', () => {
   it('takes the union of both sides', () => {
@@ -49,19 +60,37 @@ describe('mergeEarned', () => {
 
 describe('addEarned', () => {
   it('adds something new, unsynced', () => {
-    const next = addEarned(EMPTY_STORE, ['firstHit'], '2026-09-17T00:00:00.000Z')
+    const next = addEarned(
+      EMPTY_STORE,
+      [{ id: 'firstHit', stage: null }],
+      '2026-09-17T00:00:00.000Z',
+    )
     expect(next).toEqual([entry('firstHit', '2026-09-17T00:00:00.000Z', false)])
   })
 
   it('leaves the moment an achievement was first earned alone', () => {
-    const held = addEarned(EMPTY_STORE, ['firstHit'], '2026-09-01T00:00:00.000Z')
-    const again = addEarned(held, ['firstHit'], '2026-09-17T00:00:00.000Z')
+    const held = addEarned(
+      EMPTY_STORE,
+      [{ id: 'firstHit', stage: null }],
+      '2026-09-01T00:00:00.000Z',
+    )
+    const again = addEarned(
+      held,
+      [{ id: 'firstHit', stage: null }],
+      '2026-09-17T00:00:00.000Z',
+    )
     expect(again[0]?.earnedAt).toBe('2026-09-01T00:00:00.000Z')
   })
 
   it('hands back the same store when nothing is new', () => {
-    const held = addEarned(EMPTY_STORE, ['firstHit'], '2026-09-01T00:00:00.000Z')
-    expect(addEarned(held, ['firstHit'], '2026-09-17T00:00:00.000Z')).toBe(held)
+    const held = addEarned(
+      EMPTY_STORE,
+      [{ id: 'firstHit', stage: null }],
+      '2026-09-01T00:00:00.000Z',
+    )
+    expect(
+      addEarned(held, [{ id: 'firstHit', stage: null }], '2026-09-17T00:00:00.000Z'),
+    ).toBe(held)
   })
 })
 
@@ -77,5 +106,64 @@ describe('the sync queue', () => {
   it('empties once the push lands', () => {
     const store: AchievementStore = [entry('tenRuns', '2026-09-02T00:00:00.000Z', false)]
     expect(unsyncedOf(markSynced(store))).toEqual([])
+  })
+})
+
+describe('latestAchievement', () => {
+  it('is nothing on an empty store', () => {
+    expect(latestAchievement(EMPTY_STORE)).toBeNull()
+  })
+
+  it('takes the most recent, whatever order the store is in', () => {
+    const store: AchievementStore = [
+      entry('graduate', '2026-09-02T10:00:00.000Z'),
+      entry('firstHit', '2026-09-17T10:00:00.000Z'),
+      entry('tenRuns', '2026-09-09T10:00:00.000Z'),
+    ]
+    expect(latestAchievement(store)).toBe('firstHit')
+  })
+
+  it('breaks a tie by catalogue order rather than by array position', () => {
+    // A run crossing several at once stamps them all with the same instant, so the tie
+    // is the common case and has to answer the same way on every device.
+    const at = '2026-09-17T10:00:00.000Z'
+    const oneWay: AchievementStore = [entry('firstHit', at), entry('graduate', at)]
+    const other: AchievementStore = [entry('graduate', at), entry('firstHit', at)]
+    expect(latestAchievement(oneWay)).toBe(latestAchievement(other))
+    // `graduate` sits after `firstHit` in the catalogue, so it wins.
+    expect(latestAchievement(oneWay)).toBe('graduate')
+  })
+})
+
+describe('a staged achievement in the store', () => {
+  const store: AchievementStore = [
+    staged('steadyHand', 'easy', '2026-09-01T00:00:00.000Z'),
+    staged('steadyHand', 'extreme', '2026-09-17T00:00:00.000Z'),
+  ]
+
+  it('counts once however many boards are cleared', () => {
+    expect(idsOf(store)).toEqual(['steadyHand'])
+  })
+
+  it('names the boards it has been cleared on', () => {
+    expect(stagesOf(store, 'steadyHand')).toEqual(['easy', 'extreme'])
+    expect(stagesOf(store, 'firstHit')).toEqual([])
+  })
+
+  it('dates the row from the first stage, not the latest', () => {
+    // The row shows when the achievement first landed; the pips say the rest.
+    expect(firstEarnedAt(store, 'steadyHand')).toBe('2026-09-01T00:00:00.000Z')
+    expect(firstEarnedAt(store, 'firstHit')).toBeNull()
+  })
+
+  it('keeps stages of one achievement apart when adding', () => {
+    const added = addEarned(
+      store,
+      [{ id: 'steadyHand', stage: 'hard' }],
+      '2026-09-18T00:00:00.000Z',
+    )
+    expect(stagesOf(added, 'steadyHand')).toEqual(['easy', 'hard', 'extreme'])
+    // Re-adding a board already cleared changes nothing, by identity.
+    expect(addEarned(added, [{ id: 'steadyHand', stage: 'hard' }], 'x')).toBe(added)
   })
 })

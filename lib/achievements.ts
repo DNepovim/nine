@@ -75,12 +75,6 @@ export type AchievementFacts = {
 
 // The best this player has ever scored in a mode, on any difficulty — the run included,
 // since the run's own score is not in `stats` until the machine folds it in.
-const bestIn = (f: AchievementFacts, mode: ScoredMode): number =>
-  Math.max(
-    f.run.mode === mode ? f.run.score : 0,
-    ...DIFFICULTY_ORDER.map((difficulty) => f.stats[mode][difficulty].score),
-  )
-
 // The same, on one board rather than across a mode.
 const bestOn = (f: AchievementFacts, mode: ScoredMode, difficulty: Difficulty): number =>
   Math.max(
@@ -131,21 +125,26 @@ const RULES = {
     (f.run.finished && isOneOf(f.run.mode, SCORED_MODES)),
   allThree: (f) => new Set([...f.career.modesPlayed, f.run.mode]).size >= MODE_COUNT,
   upARung: (f) => playedDifficulty(f, 'hard'),
-  intoTheDeep: (f) => playedDifficulty(f, 'extreme'),
+  // A hit rather than a board opened: Extreme is the one rung where turning up is
+  // not the achievement. Asked of the run alone — the career remembers which
+  // difficulties were played, not where a hit landed, so a player who opened Extreme
+  // before this earns it on their next landed target there.
+  intoTheDeep: (f) =>
+    isOneOf(f.run.mode, SCORED_MODES) &&
+    f.run.difficulty === 'extreme' &&
+    f.run.hits >= 1,
 
-  steadyHand: (f) => bestIn(f, 'accuracy') >= 250,
-  fineWork: (f) => bestIn(f, 'accuracy') >= 1000,
-  surgeon: (f) => bestIn(f, 'accuracy') >= 2500,
-  immaculate: (f) => bestIn(f, 'accuracy') >= 5000,
-  perfectionist: (f) => bestIn(f, 'accuracy') >= 10000,
-  mountaineer: (f) => bestOn(f, 'accuracy', 'extreme') >= 1000,
+  steadyHand: (f, stage) => bestOn(f, 'accuracy', stage) >= 250,
+  fineWork: (f, stage) => bestOn(f, 'accuracy', stage) >= 1000,
+  surgeon: (f, stage) => bestOn(f, 'accuracy', stage) >= 2500,
+  immaculate: (f, stage) => bestOn(f, 'accuracy', stage) >= 5000,
+  perfectionist: (f, stage) => bestOn(f, 'accuracy', stage) >= 10000,
 
-  fastStart: (f) => bestIn(f, 'speed') >= 250,
-  slipstream: (f) => bestIn(f, 'speed') >= 1000,
-  afterburner: (f) => bestIn(f, 'speed') >= 2500,
-  lightning: (f) => bestIn(f, 'speed') >= 5000,
-  terminalVelocity: (f) => bestIn(f, 'speed') >= 10000,
-  daredevil: (f) => bestOn(f, 'speed', 'extreme') >= 1000,
+  fastStart: (f, stage) => bestOn(f, 'speed', stage) >= 250,
+  slipstream: (f, stage) => bestOn(f, 'speed', stage) >= 1000,
+  afterburner: (f, stage) => bestOn(f, 'speed', stage) >= 2500,
+  lightning: (f, stage) => bestOn(f, 'speed', stage) >= 5000,
+  terminalVelocity: (f, stage) => bestOn(f, 'speed', stage) >= 10000,
 
   flawlessTen: (f) => Math.max(f.career.bestStreak, f.run.maxStreak) >= 10,
   maxMultiplier: (f) =>
@@ -173,12 +172,8 @@ const RULES = {
   // Opening the week's board opens the day's too, so either counts.
   earlyBird: (f) => f.crossed.includes('todayFirst') || f.crossed.includes('weekFirst'),
 
-  heldAccEasy: (f) => heldFor(f, 'accuracy', 'easy') >= HELD_DAYS,
-  heldAccHard: (f) => heldFor(f, 'accuracy', 'hard') >= HELD_DAYS,
-  heldAccExtreme: (f) => heldFor(f, 'accuracy', 'extreme') >= HELD_DAYS,
-  heldSpeedEasy: (f) => heldFor(f, 'speed', 'easy') >= HELD_DAYS,
-  heldSpeedHard: (f) => heldFor(f, 'speed', 'hard') >= HELD_DAYS,
-  heldSpeedExtreme: (f) => heldFor(f, 'speed', 'extreme') >= HELD_DAYS,
+  heldAccuracy: (f, stage) => heldFor(f, 'accuracy', stage) >= HELD_DAYS,
+  heldSpeed: (f, stage) => heldFor(f, 'speed', stage) >= HELD_DAYS,
 
   roomForTwo: (f) => f.career.multiplayerRuns >= 1,
   winner: (f) => f.career.multiplayerWins >= 1,
@@ -190,7 +185,13 @@ const RULES = {
     const hour = f.run.endedAt.getHours()
     return hour >= NIGHT_FROM && hour < NIGHT_UNTIL
   },
-} as const satisfies Record<AchievementId, (facts: AchievementFacts) => boolean>
+} as const satisfies Record<
+  AchievementId,
+  // `stage` is the board being asked about. Unstaged rules ignore it and are asked once
+  // with `'easy'`, which they never read — the alternative was two tables that could
+  // drift, or a union every call site had to narrow.
+  (facts: AchievementFacts, stage: Difficulty) => boolean
+>
 
 const MODE_COUNT = 3
 const ALL_BOARD_COUNT = SCORED_MODES.length * DIFFICULTY_ORDER.length
@@ -226,19 +227,17 @@ const PROGRESS = {
   upARung: () => 0,
   intoTheDeep: () => 0,
 
-  steadyHand: (f) => bestIn(f, 'accuracy'),
-  fineWork: (f) => bestIn(f, 'accuracy'),
-  surgeon: (f) => bestIn(f, 'accuracy'),
-  immaculate: (f) => bestIn(f, 'accuracy'),
-  perfectionist: (f) => bestIn(f, 'accuracy'),
-  mountaineer: (f) => bestOn(f, 'accuracy', 'extreme'),
+  steadyHand: (f, stage) => bestOn(f, 'accuracy', stage),
+  fineWork: (f, stage) => bestOn(f, 'accuracy', stage),
+  surgeon: (f, stage) => bestOn(f, 'accuracy', stage),
+  immaculate: (f, stage) => bestOn(f, 'accuracy', stage),
+  perfectionist: (f, stage) => bestOn(f, 'accuracy', stage),
 
-  fastStart: (f) => bestIn(f, 'speed'),
-  slipstream: (f) => bestIn(f, 'speed'),
-  afterburner: (f) => bestIn(f, 'speed'),
-  lightning: (f) => bestIn(f, 'speed'),
-  terminalVelocity: (f) => bestIn(f, 'speed'),
-  daredevil: (f) => bestOn(f, 'speed', 'extreme'),
+  fastStart: (f, stage) => bestOn(f, 'speed', stage),
+  slipstream: (f, stage) => bestOn(f, 'speed', stage),
+  afterburner: (f, stage) => bestOn(f, 'speed', stage),
+  lightning: (f, stage) => bestOn(f, 'speed', stage),
+  terminalVelocity: (f, stage) => bestOn(f, 'speed', stage),
 
   flawlessTen: (f) => Math.max(f.career.bestStreak, f.run.maxStreak),
   maxMultiplier: () => 0,
@@ -262,12 +261,8 @@ const PROGRESS = {
   tenBests: (f) => f.career.personalBests + (f.run.personalBest ? 1 : 0),
   earlyBird: () => 0,
 
-  heldAccEasy: (f) => heldFor(f, 'accuracy', 'easy'),
-  heldAccHard: (f) => heldFor(f, 'accuracy', 'hard'),
-  heldAccExtreme: (f) => heldFor(f, 'accuracy', 'extreme'),
-  heldSpeedEasy: (f) => heldFor(f, 'speed', 'easy'),
-  heldSpeedHard: (f) => heldFor(f, 'speed', 'hard'),
-  heldSpeedExtreme: (f) => heldFor(f, 'speed', 'extreme'),
+  heldAccuracy: (f, stage) => heldFor(f, 'accuracy', stage),
+  heldSpeed: (f, stage) => heldFor(f, 'speed', stage),
 
   roomForTwo: () => 0,
   winner: () => 0,
@@ -275,22 +270,48 @@ const PROGRESS = {
 
   theLongWay: () => 0,
   nightShift: () => 0,
-} as const satisfies Record<AchievementId, (facts: AchievementFacts) => number>
+} as const satisfies Record<
+  AchievementId,
+  (facts: AchievementFacts, stage: Difficulty) => number
+>
 
-// Every achievement these facts satisfy, in catalogue order.
-export const earned = (facts: AchievementFacts): AchievementId[] =>
-  ACHIEVEMENT_IDS.filter((id) => RULES[id](facts))
+// One thing a player can achieve: an achievement, and for a staged one the board it was
+// cleared on. `stage` is null for the rest, which are achieved once and have no board.
+export type Award = { id: AchievementId; stage: Difficulty | null }
 
-// How far along one achievement is, clamped to its target. Zero for anything that has no
-// target, since there is nothing to be part-way through.
-export function progressOf(id: AchievementId, facts: AchievementFacts): number {
+// The stable name for an award, so a set can hold it and the store can key on it.
+export const awardKey = ({ id, stage }: Award): string =>
+  stage === null ? id : `${id}:${stage}`
+
+// Every stage a staged achievement can be cleared on, or the single unstaged award.
+export const awardsOf = (id: AchievementId): Award[] =>
+  achievement(id).staged === true
+    ? DIFFICULTY_ORDER.map((stage) => ({ id, stage }))
+    : [{ id, stage: null }]
+
+// Every award these facts satisfy, in catalogue order and then easiest board first.
+export const earned = (facts: AchievementFacts): Award[] =>
+  ACHIEVEMENT_IDS.flatMap((id) =>
+    awardsOf(id).filter((award) => RULES[id](facts, award.stage ?? 'easy')),
+  )
+
+// How far along one achievement is on one board, clamped to its target. Zero for
+// anything that has no target, since there is nothing to be part-way through.
+export function progressOf(
+  id: AchievementId,
+  facts: AchievementFacts,
+  stage: Difficulty = 'easy',
+): number {
   const target = achievement(id).target
   if (target === undefined) return 0
-  return Math.min(target, Math.max(0, PROGRESS[id](facts)))
+  return Math.min(target, Math.max(0, PROGRESS[id](facts, stage)))
 }
 
-export const isEarnedBy = (id: AchievementId, facts: AchievementFacts): boolean =>
-  RULES[id](facts)
+export const isEarnedBy = (
+  id: AchievementId,
+  facts: AchievementFacts,
+  stage: Difficulty = 'easy',
+): boolean => RULES[id](facts, stage)
 
 // A rank of 1 on a board's all-time list, or null for a board the player is not on. The
 // achievements themselves do not read this — the career's `heldSince` is what watches
@@ -301,3 +322,17 @@ export const holdsBoard = (
   mode: ScoredMode,
   difficulty: Difficulty,
 ): boolean => standingOn(f, mode, difficulty) === 1
+
+// How far along an achievement is on each board — what the row's three bars read.
+//
+// An unstaged achievement answers the same number three times: its rule never looks at
+// the board it is handed. Total rather than optional, so a caller cannot forget a board
+// and quietly draw an empty bar.
+export const stageProgress = (
+  id: AchievementId,
+  facts: AchievementFacts,
+): Record<Difficulty, number> => ({
+  easy: progressOf(id, facts, 'easy'),
+  hard: progressOf(id, facts, 'hard'),
+  extreme: progressOf(id, facts, 'extreme'),
+})

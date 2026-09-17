@@ -7,7 +7,6 @@ import {
   ACHIEVEMENTS,
   groupIds,
   TITLE_MAX,
-  type AchievementId,
 } from '@/constants/achievements'
 import { MAX_MESSAGE_LENGTH } from '@/lib/announcements'
 import { emptyCareer, observeHeld, type Career } from '@/lib/career'
@@ -17,7 +16,13 @@ import { messages as cs } from '@/locales/cs/messages'
 import { messages as en } from '@/locales/en/messages'
 import type { Stats } from '@/machines/game'
 
-import { earned, isEarnedBy, progressOf, type AchievementFacts } from './achievements'
+import {
+  earned,
+  isEarnedBy,
+  progressOf,
+  stageProgress,
+  type AchievementFacts,
+} from './achievements'
 
 const emptyStats = (): Stats => {
   const board = { score: 0, hits: 0 }
@@ -143,6 +148,32 @@ describe('first steps', () => {
       run: { ...facts().run, mode: 'trainee', difficulty: 'extreme' },
     })
     expect(isEarnedBy('intoTheDeep', practice)).toBe(false)
+    expect(
+      isEarnedBy('upARung', facts({ run: { ...facts().run, mode: 'trainee' } })),
+    ).toBe(false)
+  })
+
+  it('wants a hit on Extreme, not merely the board opened', () => {
+    // Opening the hardest board and bailing is not going into the deep. UP A RUNG
+    // still asks only that Hard was played — this is the one that asks for a landing.
+    const opened = facts({ run: { ...facts().run, difficulty: 'extreme', hits: 0 } })
+    expect(isEarnedBy('intoTheDeep', opened)).toBe(false)
+
+    const landed = facts({ run: { ...facts().run, difficulty: 'extreme', hits: 1 } })
+    expect(isEarnedBy('intoTheDeep', landed)).toBe(true)
+  })
+
+  it('does not hand it over for a hit on an easier board', () => {
+    const hard = facts({ run: { ...facts().run, difficulty: 'hard', hits: 12 } })
+    expect(isEarnedBy('intoTheDeep', hard)).toBe(false)
+  })
+
+  it('does not count a trainee hit on Extreme', () => {
+    // Trainee is unscored practice; it does not put you on a board at all.
+    const practice = facts({
+      run: { ...facts().run, mode: 'trainee', difficulty: 'extreme', hits: 9 },
+    })
+    expect(isEarnedBy('intoTheDeep', practice)).toBe(false)
   })
 })
 
@@ -155,7 +186,7 @@ describe('the score ladders', () => {
 
   it('earns an accuracy rung retroactively from a stored best', () => {
     expect(
-      isEarnedBy('surgeon', facts({ stats: withBest('accuracy', 'hard', 3000) })),
+      isEarnedBy('surgeon', facts({ stats: withBest('accuracy', 'hard', 3000) }), 'hard'),
     ).toBe(true)
   })
 
@@ -165,13 +196,18 @@ describe('the score ladders', () => {
     expect(isEarnedBy('fineWork', f)).toBe(false)
   })
 
-  it('earns MOUNTAINEER only on the Accuracy Extreme board', () => {
-    expect(
-      isEarnedBy('mountaineer', facts({ stats: withBest('accuracy', 'hard', 5000) })),
-    ).toBe(false)
-    expect(
-      isEarnedBy('mountaineer', facts({ stats: withBest('accuracy', 'extreme', 1000) })),
-    ).toBe(true)
+  it('asks a staged ladder for the board it is being asked about', () => {
+    // FINE WORK is 1 000 whichever board; the stage is which board it was met on. A
+    // huge score on Hard says nothing about the Extreme stage — that is the whole
+    // point of staging, and what MOUNTAINEER used to say on its own.
+    const hard = facts({ stats: withBest('accuracy', 'hard', 5000) })
+    expect(isEarnedBy('fineWork', hard, 'hard')).toBe(true)
+    expect(isEarnedBy('fineWork', hard, 'extreme')).toBe(false)
+
+    const extreme = facts({ stats: withBest('accuracy', 'extreme', 1000) })
+    expect(isEarnedBy('fineWork', extreme, 'extreme')).toBe(true)
+    // And a harder board never stands in for an easier one.
+    expect(isEarnedBy('fineWork', extreme, 'easy')).toBe(false)
   })
 })
 
@@ -263,16 +299,17 @@ describe('held boards', () => {
   it('earns a HELD board after seven whole days', () => {
     const held = observeHeld(emptyCareer(), ['speed:extreme'], '2026-09-10T10:00:00.000Z')
     const six = facts({ career: held, now: new Date('2026-09-16T22:00:00.000Z') })
-    expect(isEarnedBy('heldSpeedExtreme', six)).toBe(false)
+    expect(isEarnedBy('heldSpeed', six, 'extreme')).toBe(false)
     const seven = facts({ career: held, now: new Date('2026-09-17T11:00:00.000Z') })
-    expect(isEarnedBy('heldSpeedExtreme', seven)).toBe(true)
+    expect(isEarnedBy('heldSpeed', seven, 'extreme')).toBe(true)
   })
 
   it('keeps a HELD achievement to its own board', () => {
     const held = observeHeld(emptyCareer(), ['speed:extreme'], '2026-09-01T10:00:00.000Z')
     const f = facts({ career: held })
-    expect(isEarnedBy('heldSpeedExtreme', f)).toBe(true)
-    expect(isEarnedBy('heldAccExtreme', f)).toBe(false)
+    expect(isEarnedBy('heldSpeed', f, 'extreme')).toBe(true)
+    expect(isEarnedBy('heldSpeed', f, 'easy')).toBe(false)
+    expect(isEarnedBy('heldAccuracy', f, 'extreme')).toBe(false)
   })
 })
 
@@ -309,7 +346,7 @@ describe('earned', () => {
 
   it('returns ids in catalogue order', () => {
     const f = facts({ career: career({ hits: 1, runs: 10 }), tutorialDone: true })
-    const ids: AchievementId[] = earned(f)
+    const ids = earned(f).map((award) => award.id)
     expect(ids.indexOf('firstHit')).toBeLessThan(ids.indexOf('tenRuns'))
   })
 })
@@ -327,5 +364,32 @@ describe('progressOf', () => {
 
   it('answers zero for an achievement with nothing to count', () => {
     expect(progressOf('graduate', facts({ tutorialDone: true }))).toBe(0)
+  })
+})
+
+describe('stageProgress', () => {
+  it('differs per board for a staged achievement', () => {
+    // The three bars under a staged row read this. A big score on Hard must not fill
+    // the Extreme bar — that is the same rule the stages themselves keep.
+    const f = facts({ stats: withBest('accuracy', 'hard', 600) })
+    expect(stageProgress('fineWork', f)).toStrictEqual({
+      easy: 0,
+      hard: 600,
+      extreme: 0,
+    })
+  })
+
+  it('answers the same on every board for an unstaged one', () => {
+    // FIRST HIT counts career hits and never looks at the board, so one bar is drawn
+    // and all three answers agree.
+    const f = facts({ career: career({ hits: 1 }) })
+    const p = stageProgress('firstHit', f)
+    expect(p.easy).toBe(p.hard)
+    expect(p.hard).toBe(p.extreme)
+  })
+
+  it('clamps to the target, so a bar can never overrun', () => {
+    const f = facts({ stats: withBest('accuracy', 'easy', 99999) })
+    expect(stageProgress('fineWork', f).easy).toBe(1000)
   })
 })

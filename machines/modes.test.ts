@@ -17,8 +17,8 @@ import {
 
 describe('effectiveTimeout', () => {
   it('scales the mode base timeout by the difficulty scale', () => {
-    expect(effectiveTimeout('speed', 'extreme')).toBe(8067) // 14667 * 0.55
-    expect(effectiveTimeout('accuracy', 'easy')).toBe(28600) // 22000 * 1.30
+    expect(effectiveTimeout('speed', 'extreme')).toBe(7334) // 14667 * 0.5
+    expect(effectiveTimeout('accuracy', 'easy')).toBe(31900) // 22000 * 1.45
     expect(effectiveTimeout('accuracy', 'hard')).toBe(16500)
   })
 

@@ -105,32 +105,32 @@ describe('stepAchievements', () => {
     // first hit must still count.
     const step = stepAchievements(IDLE, withHits(5))
     expect(step.phase.started).toBe(true)
-    expect(step.unlocked).toContain('firstHit')
+    expect(step.unlocked.map((a) => a.id)).toContain('firstHit')
   })
 
   it('announces an achievement once, however many hits land past it', () => {
     const first = stepAchievements(IDLE, withHits(1))
-    expect(first.unlocked).toContain('firstHit')
+    expect(first.unlocked.map((a) => a.id)).toContain('firstHit')
     const second = stepAchievements(first.phase, withHits(2))
-    expect(second.unlocked).not.toContain('firstHit')
+    expect(second.unlocked.map((a) => a.id)).not.toContain('firstHit')
   })
 
   it('stays silent about an achievement the store already holds', () => {
     const step = stepAchievements(IDLE, { ...withHits(1), held: ['firstHit'] })
-    expect(step.unlocked).not.toContain('firstHit')
+    expect(step.unlocked.map((a) => a.id)).not.toContain('firstHit')
   })
 
   it('stays silent about it on the next hit too', () => {
     const first = stepAchievements(IDLE, { ...withHits(1), held: ['firstHit'] })
     const second = stepAchievements(first.phase, withHits(2))
-    expect(second.unlocked).not.toContain('firstHit')
+    expect(second.unlocked.map((a) => a.id)).not.toContain('firstHit')
   })
 
   it('ignores a career that moves once the run is under way', () => {
     // 995 lifetime hits would put THOUSAND HITS in reach; frozen at zero, it is not.
     const started = stepAchievements(IDLE, withHits(1)).phase
     const moved = stepAchievements(started, withHits(5, { ...emptyCareer(), hits: 995 }))
-    expect(moved.unlocked).not.toContain('thousandHits')
+    expect(moved.unlocked.map((a) => a.id)).not.toContain('thousandHits')
     expect(moved.phase.career.hits).toBe(0)
   })
 
@@ -150,7 +150,7 @@ describe('stepAchievements', () => {
         facts: worldFacts({ run: { ...worldFacts().run, hits: 3 } }),
       }),
     )
-    expect(mid.unlocked).not.toContain('tenRuns')
+    expect(mid.unlocked.map((a) => a.id)).not.toContain('tenRuns')
 
     const over = stepAchievements(
       mid.phase,
@@ -159,7 +159,7 @@ describe('stepAchievements', () => {
         facts: worldFacts({ run: { ...worldFacts().run, hits: 3, finished: true } }),
       }),
     )
-    expect(over.unlocked).toContain('tenRuns')
+    expect(over.unlocked.map((a) => a.id)).toContain('tenRuns')
   })
 })
 

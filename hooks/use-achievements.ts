@@ -14,7 +14,7 @@ import {
 import {
   addEarned,
   EMPTY_STORE,
-  idsOf,
+  keysOf,
   markSynced,
   mergeEarned,
   readAchievements,
@@ -23,7 +23,13 @@ import {
   type AchievementStore,
 } from '@/lib/achievement-store'
 import { fetchAchievements, pushAchievements } from '@/lib/achievement-sync'
-import { earned, holdsBoard, type AchievementFacts } from '@/lib/achievements'
+import {
+  awardKey,
+  earned,
+  holdsBoard,
+  type AchievementFacts,
+  type Award,
+} from '@/lib/achievements'
 import type { AnnouncementId } from '@/lib/announcements'
 import { boardKey, foldMultiplayer, foldRun, observeHeld } from '@/lib/career'
 import { todayISO } from '@/lib/leaderboard-period'
@@ -67,7 +73,7 @@ export type AchievementsInput = {
   // outside this hook — see `useAchievementQueue` — because the announcement bar has to
   // read it and this hook has to read the bar's own `crossed`, and one of the two had to
   // stop owning the other.
-  onUnlocked: (ids: readonly AchievementId[]) => void
+  onUnlocked: (awards: readonly Award[]) => void
 }
 
 export type Achievements = {
@@ -77,7 +83,7 @@ export type Achievements = {
   // showing 0 of 48 for a moment to a player who holds thirty.
   loaded: boolean
   // Everything this run earned, for the game-over screen.
-  runEarned: readonly AchievementId[]
+  runEarned: readonly Award[]
   // What the rules are being measured against right now, so the achievements screen can
   // show how far along a locked row is. The same object the run is evaluated with —
   // asking a second way is how a row saying 340/1000 and a bar that just fired would come
@@ -105,7 +111,7 @@ export function useAchievements(input: AchievementsInput): Achievements {
   const { career, loaded: careerLoaded, update: updateCareer } = useCareer()
   const [store, setStore] = useState<AchievementStore>(EMPTY_STORE)
   const [storeLoaded, setStoreLoaded] = useState(false)
-  const [runEarned, setRunEarned] = useState<readonly AchievementId[]>([])
+  const [runEarned, setRunEarned] = useState<readonly Award[]>([])
 
   const phaseRef = useRef<AchievementPhase>(IDLE)
   const tallyRef = useRef<RunTally>(EMPTY_TALLY)
@@ -185,7 +191,7 @@ export function useAchievements(input: AchievementsInput): Achievements {
         ready: careerLoaded && storeLoaded,
         career: careerRef.current,
         facts: worldFacts(live, tallyRef.current, finished),
-        held: idsOf(storeRef.current),
+        held: keysOf(storeRef.current),
       })
       phaseRef.current = step.phase
       if (!isNonEmptyArray(step.unlocked)) return
@@ -311,9 +317,10 @@ export function useAchievements(input: AchievementsInput): Achievements {
   useEffect(() => {
     if (!__DEV__) return
     Object.assign(globalThis, {
-      nineEarn: (id: AchievementId) => {
-        persist(addEarned(storeRef.current, [id], new Date().toISOString()))
-        onUnlockedRef.current([id])
+      nineEarn: (id: AchievementId, stage: Difficulty | null = null) => {
+        const award = { id, stage }
+        persist(addEarned(storeRef.current, [award], new Date().toISOString()))
+        onUnlockedRef.current([award])
       },
       nineClearAchievements: () => {
         persist(EMPTY_STORE)
@@ -341,22 +348,23 @@ export function useAchievements(input: AchievementsInput): Achievements {
 // Cleared as a run starts rather than as one ends — the game-over screen is still up, and
 // anything left over belongs to the run the player is looking at.
 export function useAchievementQueue(inRun: boolean): {
-  queue: readonly AchievementId[]
-  push: (ids: readonly AchievementId[]) => void
-  announced: (id: AchievementId) => void
+  queue: readonly Award[]
+  push: (awards: readonly Award[]) => void
+  announced: (award: Award) => void
 } {
-  const [queue, setQueue] = useState<readonly AchievementId[]>([])
+  const [queue, setQueue] = useState<readonly Award[]>([])
 
   useEffect(() => {
     if (inRun) setQueue([])
   }, [inRun])
 
-  const push = useCallback((ids: readonly AchievementId[]) => {
-    setQueue((held) => [...held, ...ids])
+  const push = useCallback((awards: readonly Award[]) => {
+    setQueue((held) => [...held, ...awards])
   }, [])
 
-  const announced = useCallback((id: AchievementId) => {
-    setQueue((held) => held.filter((queued) => queued !== id))
+  const announced = useCallback((award: Award) => {
+    const key = awardKey(award)
+    setQueue((held) => held.filter((queued) => awardKey(queued) !== key))
   }, [])
 
   return { queue, push, announced }

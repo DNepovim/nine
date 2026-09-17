@@ -533,7 +533,7 @@ export function HowToPlayOverlay({
               on "only ever lent" and this is the opposite kind of reward. */}
           <SectionHeader section="achievements" onMeasure={measure} />
           <Body>
-            {t`Achievements are the other kind. Nothing can take one back: they are earned once and yours for good, and they are measured against you rather than against anybody else — so they are there to be collected whether or not your score is ever good enough for a board.\n\nThere are dozens, and they ask for all sorts of things.`}
+            {t`Achievements are the other kind. Nothing can take one back: they are achieved once and yours for good, and they are measured against you rather than against anybody else — so they are there to be collected whether or not your score is ever good enough for a board.\n\nThere are dozens, and they ask for all sorts of things.`}
           </Body>
           <Card>
             <Bullet color={ACHIEVEMENT_SCALE[3]}>
@@ -559,7 +559,7 @@ export function HowToPlayOverlay({
             </Bullet>
           </Card>
           <Body>
-            {t`\nEarn one mid-run and the score bar says so in green. The whole list is behind the bar under NINE on the start screen, along with how far along you are on the ones you have not got yet.`}
+            {t`\nAchieve one mid-run and the score bar says so in green. The whole list is behind the bar under NINE on the start screen, along with how far along you are on the ones you have not got yet.`}
           </Body>
 
           {/* Multiplayer */}
