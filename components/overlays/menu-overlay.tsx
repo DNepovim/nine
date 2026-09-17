@@ -1,4 +1,5 @@
 import { Ionicons } from '@expo/vector-icons'
+import { Trans } from '@lingui/react/macro'
 import { LinearGradient } from 'expo-linear-gradient'
 import { isNonEmptyString, isOneOf } from 'narrowland'
 import { useEffect, useState } from 'react'
@@ -88,7 +89,7 @@ export function MenuOverlay({
 }) {
   const { colorScheme } = useTheme()
   const dimColor = colorScheme === 'dark' ? '#504e6e' : '#aaa69e'
-  const medals = useMyMedals(userId)
+  const { medals } = useMyMedals(userId)
   // Same mark the leaderboard, the pause screen and a room wear beside this
   // player's name — worn here over the title itself, since the title is this
   // player's too.
@@ -298,7 +299,7 @@ export function MenuOverlay({
                         selectable={false}
                         className="font-mono text-[13px] font-black tracking-[2px] text-on-strong"
                       >
-                        CREATE ROOM
+                        <Trans>CREATE ROOM</Trans>
                       </Text>
                     </LinearGradient>
                   </Pressable>
@@ -316,7 +317,7 @@ export function MenuOverlay({
                       className="font-mono text-[13px] font-black tracking-[2px]"
                       style={{ color: MULTIPLAYER_GRADIENT.accuracy[0] }}
                     >
-                      JOIN ROOM
+                      <Trans>JOIN ROOM</Trans>
                     </Text>
                   </Pressable>
                 </View>
@@ -330,13 +331,13 @@ export function MenuOverlay({
                       selectable={false}
                       className="font-mono text-[11px] font-black tracking-[2px] text-dim"
                     >
-                      YOU'RE OFFLINE
+                      <Trans>YOU'RE OFFLINE</Trans>
                     </Text>
                     <Text
                       selectable={false}
                       className="text-center font-mono text-[10px] font-bold leading-[16px] tracking-[0.5px] text-dim"
                     >
-                      CONNECT TO THE INTERNET TO PLAY WITH FRIENDS
+                      <Trans>CONNECT TO THE INTERNET TO PLAY WITH FRIENDS</Trans>
                     </Text>
                   </View>
                 )}
@@ -372,7 +373,7 @@ export function MenuOverlay({
                   selectable={false}
                   className="font-mono text-[13px] font-black tracking-[2px] text-on-strong"
                 >
-                  PLAY GAME
+                  <Trans>PLAY GAME</Trans>
                 </Text>
               </LinearGradient>
             </Pressable>
@@ -386,7 +387,7 @@ export function MenuOverlay({
                   selectable={false}
                   className="font-mono text-[10px] font-bold tracking-[1.8px] text-dim"
                 >
-                  OPTIONS
+                  <Trans>OPTIONS</Trans>
                 </Text>
               </View>
             </Pressable>
@@ -409,7 +410,7 @@ export function MenuOverlay({
                   selectable={false}
                   className="font-mono text-[10px] font-bold tracking-[1.8px] text-dim"
                 >
-                  SHARE
+                  <Trans>SHARE</Trans>
                 </Text>
               </View>
             </Pressable>
@@ -420,7 +421,7 @@ export function MenuOverlay({
                   selectable={false}
                   className="font-mono text-[10px] font-bold tracking-[1.8px] text-dim"
                 >
-                  HOW TO PLAY
+                  <Trans>HOW TO PLAY</Trans>
                 </Text>
               </View>
             </Pressable>

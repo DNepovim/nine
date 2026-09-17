@@ -42,8 +42,11 @@ const toStanding = (row: MyMedalRow): BoardStanding | null => {
 // this whole request fired for every score anyone posted anywhere, to keep three emoji
 // current. The boards that matter are the ones the last response named, plus any the
 // device holds a score on, which covers a first-ever score on a new board.
-export function useMyMedals(userId: string | null): Medal[] {
-  const [medals, setMedals] = useState<Medal[]>([])
+export function useMyMedals(userId: string | null): {
+  medals: Medal[]
+  standings: BoardStanding[]
+} {
+  const [standings, setStandings] = useState<BoardStanding[]>([])
   // Bumped on every load and unmount, so a slow response for a user who has since
   // changed can tell and drop itself.
   const requestIdRef = useRef(0)
@@ -60,14 +63,14 @@ export function useMyMedals(userId: string | null): Medal[] {
     const { rows } = await fetchMyMedals(id)
     if (requestIdRef.current !== requestId) return
     heldRef.current = new Set(rows.map(keyOf))
-    setMedals(toMedals(rows.flatMap((row) => toStanding(row) ?? [])))
+    setStandings(rows.flatMap((row) => toStanding(row) ?? []))
   }, [])
 
   useEffect(() => {
     if (userId === null) {
       requestIdRef.current++
       heldRef.current = new Set()
-      setMedals([])
+      setStandings([])
       return
     }
     void load(userId)
@@ -92,5 +95,8 @@ export function useMyMedals(userId: string | null): Medal[] {
     }
   }, [userId, load])
 
-  return medals
+  // The medal line wants one claim per mode; the achievements want every board the player
+  // stands on, because `toMedals` keeps the *best* claim and a gold today would vanish
+  // behind a bronze all-time. Both come out of the same one request.
+  return { medals: toMedals(standings), standings }
 }
