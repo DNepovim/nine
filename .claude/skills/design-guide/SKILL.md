@@ -69,23 +69,30 @@ that should read as pressable and sit _under_ text. Pair with `text-on-strong`.
 
 These are not scales — they are single-purpose and live in `constants/colors.ts`.
 
-| Palette        | For                                                                                           |
-| -------------- | --------------------------------------------------------------------------------------------- |
-| `GOLD_SCALE`   | The three board records you hold. Needs dark ink — white on it is about 1.5:1.                |
-| `GRAYSCALE`    | A record taken off you: the colour drained out. Mid-tones only, so it reads on both surfaces. |
-| `DIAL_COLORS`  | Dial key tint by value: `low` → `high` for 0–8, plus the ink for the 9 key.                   |
-| `SCORE_COLORS` | The score above the dial, tinting from `APP_BLUE` to the text colour.                         |
+| Palette             | For                                                                                                                |
+| ------------------- | ------------------------------------------------------------------------------------------------------------------ |
+| `GOLD_SCALE`        | The three board records you hold. Needs dark ink — white on it is about 1.5:1.                                     |
+| `ACHIEVEMENT_SCALE` | An achievement earned. Green, and green only: gold is a record you _hold_, this is one you _keep_. Needs dark ink. |
+| `GRAYSCALE`         | A record taken off you: the colour drained out. Mid-tones only, so it reads on both surfaces.                      |
+| `DIAL_COLORS`       | Dial key tint by value: `low` → `high` for 0–8, plus the ink for the 9 key.                                        |
+| `SCORE_COLORS`      | The score above the dial, tinting from `APP_BLUE` to the text colour.                                              |
+
+Two of these are background palettes and cannot carry text on the app's own surfaces, so
+each has a separate themed ink pair for the case where the colour _is_ the text:
+`GOLD_INK` beside `GOLD_SCALE`, `ACHIEVEMENT_INK` beside `ACHIEVEMENT_SCALE`. Reaching into
+the scale for a text colour is the mistake both pairs exist to stop.
 
 An announcement never picks these itself. `announcementStyle(id, mode)` in
 `lib/announcement-style.ts` maps each announcement to a scale and resolves its bar
 gradient, ink and particle colours together, so they cannot drift apart:
 
-| Announcement                      | Bar        | Particles   |
-| --------------------------------- | ---------- | ----------- |
-| Your personal best                | game scale | game scale  |
-| Your day / week / all-time record | gold       | gold        |
-| A rival raised a record           | CTA scale  | — no effect |
-| A rival took yours                | greyscale  | greyscale   |
+| Announcement                      | Bar         | Particles   |
+| --------------------------------- | ----------- | ----------- |
+| Your personal best                | game scale  | game scale  |
+| Your day / week / all-time record | gold        | gold        |
+| An achievement earned             | achievement | achievement |
+| A rival raised a record           | CTA scale   | — no effect |
+| A rival took yours                | greyscale   | greyscale   |
 
 The bar takes only the two darkest greys, not the whole ramp — the pale end would drop
 white text to about 1.9:1 — while the implosion falls in all four.
@@ -123,6 +130,8 @@ white works:
 
 - White on the CTA scale: fine, that is what it is for.
 - White on gold (`#FFD166`) is about **1.5:1** — unreadable. Gold takes dark ink.
+- Same for the achievement green: white on `#8DE86B` is about **1.4:1**. Both bright
+  palettes carry near-black, and both hand their text case to a separate `*_INK` pair.
 - Decorative marks (icons, particles, hairlines) can go lighter than text, but a
   streak or icon that carries meaning still needs to be visible on **both**
   surfaces — `#f3efe9` and `#0b0c14`. Mid-tone colours read on both; white and

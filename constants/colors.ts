@@ -31,6 +31,24 @@ export const GOLD_SCALE = ['#FFD166', '#FF8C00', '#FFE8A3', '#F4A261'] as const
 // being a smudge. Dark has no such problem and takes the vivid one.
 export const GOLD_INK = { light: '#B8860B', dark: '#FFD24A' } as const
 
+// Earning an achievement: the one hue the app had left. Modes own blue through amber,
+// gold marks a board record you *currently hold*, teal means multiplayer and grey means a
+// record just left you. An achievement is permanent and belongs to nobody else, so it
+// takes the green nothing else does — gold is held, green is kept.
+//
+// A background palette like GOLD_SCALE, with the same limitation: needs dark ink, since
+// white on #8DE86B is about 1.4:1.
+export const ACHIEVEMENT_SCALE = ['#8DE86B', '#3FBF5F', '#C6F5A6', '#1E9448'] as const
+
+// Dark ink for text sitting *on* ACHIEVEMENT_SCALE — about 7.8:1 on its darkest stop.
+export const ACHIEVEMENT_BAR_INK = '#12210F'
+
+// The achievement green as *text*, which ACHIEVEMENT_SCALE cannot be — same reason and
+// same shape as GOLD_INK. The scale is tuned to carry ink, not to be it: #3FBF5F on the
+// parchment surface is about 2.3:1. So the mark that says an achievement is earned
+// carries its own pair: about 5.4:1 on #F3EFE9, about 10:1 on #0B0C14.
+export const ACHIEVEMENT_INK = { light: '#217A3D', dark: '#7FE08A' } as const
+
 // Losing a record you held: the colour drained out. Kept to mid-tones with the app's
 // faint violet cast — a true black-to-white ramp would put half its steps on the wrong
 // side of one surface or the other, where these read on both.
