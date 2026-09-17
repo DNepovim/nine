@@ -33,6 +33,13 @@ export type Career = {
   // The boards a score has been posted on, as `boardKey` strings. Trainee keeps no
   // board, so it is never in here.
   boardsPlayed: string[]
+  // Every mode ever played, scoring or not — "played all three" is about having tried
+  // them, not about having been good at them, so this counts a run that scored nothing.
+  modesPlayed: string[]
+  // Every difficulty ever played, on a scored mode only. Trainee has no difficulty
+  // selector and always runs at the Easy pace, so whatever `context.difficulty` happens
+  // to be set to while practising says nothing about what the player has attempted.
+  difficultiesPlayed: string[]
   // The last day a run was played, ISO 'YYYY-MM-DD' on the shared Prague clock — the
   // same day a score is stamped with, so the two can never disagree.
   lastDay: string | null
@@ -40,6 +47,8 @@ export type Career = {
   bestDayStreak: number
   multiplayerRuns: number
   multiplayerWins: number
+  // The most players ever in a room with them, themselves included.
+  biggestRoom: number
   // When the player was first seen holding a board's all-time record, keyed by
   // `boardKey`. The app keeps no history of the boards, so "held it for a week" is not
   // answerable from anything else that exists; this is the smallest thing that makes it
@@ -91,11 +100,14 @@ export const emptyCareer = (): Career => ({
   personalBests: 0,
   longestRunMs: 0,
   boardsPlayed: [],
+  modesPlayed: [],
+  difficultiesPlayed: [],
   lastDay: null,
   dayStreak: 0,
   bestDayStreak: 0,
   multiplayerRuns: 0,
   multiplayerWins: 0,
+  biggestRoom: 0,
   heldSince: {},
 })
 
@@ -106,26 +118,35 @@ const DAY_MS = 86_400_000
 const nextDay = (day: string): string =>
   new Date(new Date(`${day}T00:00:00Z`).getTime() + DAY_MS).toISOString().slice(0, 10)
 
-// How many consecutive days of play this run makes it, given the last one seen.
+// How many consecutive days of play a run on `day` makes it.
 //
 // Same day: the streak is already counted and must not climb twice. The very next day:
 // one longer. Anything else — a gap, or a run stamped with a day already behind us —
-// starts again at one. A run cannot *reduce* a streak, so an out-of-order day is treated
-// as a fresh start rather than allowed to rewind `lastDay`.
-const streakAfter = (lastDay: string | null, day: string): number => {
-  if (lastDay === null) return 1
-  if (day === lastDay) return 0 // unchanged — the caller keeps what it had
-  if (day === nextDay(lastDay)) return -1 // one more — the caller adds
+// starts again at one. A run cannot *reduce* a streak, so an out-of-order day starts
+// afresh rather than being allowed to rewind anything.
+//
+// Exported because the achievements ask the question before the run has been folded in:
+// they measure against the career as it stood when the run began, so `career.dayStreak`
+// does not yet know about today.
+export function dayStreakWith(career: Career, day: string): number {
+  if (career.lastDay === null) return 1
+  if (day === career.lastDay) return career.dayStreak
+  if (day === nextDay(career.lastDay)) return career.dayStreak + 1
   return 1
 }
+
+// Appends a value to a set-like list, or hands the list straight back — both when the
+// value is already there and when there is nothing to add. Returning the same array
+// matters: `useCareer` only writes when the fold produced something new.
+const withValue = (list: string[], value: string | null): string[] =>
+  value === null || list.includes(value) ? list : [...list, value]
 
 // Folds a finished run into the career.
 //
 // Everything here is monotonic except the day streak, which is the one thing that can
 // fall — and it falls by starting over, never by going backwards.
 export function foldRun(career: Career, run: RunSummary): Career {
-  const step = streakAfter(career.lastDay, run.day)
-  const dayStreak = step === 0 ? career.dayStreak : step === -1 ? career.dayStreak + 1 : 1
+  const dayStreak = dayStreakWith(career, run.day)
 
   // Trainee has no board to be played on, and a run that scored nothing has not put
   // anything on the one it was played on.
@@ -142,10 +163,12 @@ export function foldRun(career: Career, run: RunSummary): Career {
     bestCleanHits: Math.max(career.bestCleanHits, run.cleanHits),
     personalBests: career.personalBests + (run.personalBest ? 1 : 0),
     longestRunMs: Math.max(career.longestRunMs, run.elapsedMs),
-    boardsPlayed:
-      board !== null && !career.boardsPlayed.includes(board)
-        ? [...career.boardsPlayed, board]
-        : career.boardsPlayed,
+    boardsPlayed: withValue(career.boardsPlayed, board),
+    modesPlayed: withValue(career.modesPlayed, run.mode),
+    difficultiesPlayed: withValue(
+      career.difficultiesPlayed,
+      run.mode === 'trainee' ? null : run.difficulty,
+    ),
     // Only ever forward. A run stamped with an older day — a clock that moved, a queued
     // run flushed late — must not drag the last day back with it.
     lastDay:
@@ -158,10 +181,14 @@ export function foldRun(career: Career, run: RunSummary): Career {
 // Folds a finished multiplayer run in. Its own entry point rather than a flag on
 // `RunSummary`: a shared run has no board of its own, sets no personal best and keeps no
 // stats, so all it contributes is that it happened and how it went.
-export const foldMultiplayer = (career: Career, won: boolean): Career => ({
+export const foldMultiplayer = (
+  career: Career,
+  { won, players }: { won: boolean; players: number },
+): Career => ({
   ...career,
   multiplayerRuns: career.multiplayerRuns + 1,
   multiplayerWins: career.multiplayerWins + (won ? 1 : 0),
+  biggestRoom: Math.max(career.biggestRoom, players),
 })
 
 // Records which boards the player is holding right now.

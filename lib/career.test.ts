@@ -79,6 +79,22 @@ describe('foldRun', () => {
     expect(foldRun(emptyCareer(), run({ score: 0 })).boardsPlayed).toEqual([])
   })
 
+  it('records the mode even for a run that scored nothing', () => {
+    const next = foldRun(emptyCareer(), run({ mode: 'trainee', score: 0 }))
+    expect(next.modesPlayed).toEqual(['trainee'])
+  })
+
+  it('records a difficulty only for a scored mode', () => {
+    const practice = foldRun(
+      emptyCareer(),
+      run({ mode: 'trainee', difficulty: 'extreme' }),
+    )
+    expect(practice.difficultiesPlayed).toEqual([])
+    expect(foldRun(practice, run({ difficulty: 'hard' })).difficultiesPlayed).toEqual([
+      'hard',
+    ])
+  })
+
   it('starts the day streak at one on the first ever run', () => {
     const next = foldRun(emptyCareer(), run({ day: '2026-09-17' }))
     expect(next.dayStreak).toBe(1)
@@ -126,10 +142,15 @@ describe('foldRun', () => {
 
 describe('foldMultiplayer', () => {
   it('counts a shared run, and a win only when it was one', () => {
-    const played = foldMultiplayer(emptyCareer(), false)
+    const played = foldMultiplayer(emptyCareer(), { won: false, players: 2 })
     expect(played.multiplayerRuns).toBe(1)
     expect(played.multiplayerWins).toBe(0)
-    expect(foldMultiplayer(played, true).multiplayerWins).toBe(1)
+    expect(foldMultiplayer(played, { won: true, players: 2 }).multiplayerWins).toBe(1)
+  })
+
+  it('keeps the biggest room ever played, not the latest', () => {
+    const big = foldMultiplayer(emptyCareer(), { won: false, players: 4 })
+    expect(foldMultiplayer(big, { won: false, players: 2 }).biggestRoom).toBe(4)
   })
 })
 
