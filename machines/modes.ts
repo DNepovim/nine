@@ -200,8 +200,8 @@ export const effectiveTimeout = (mode: Mode, difficulty: Difficulty): number => 
 //
 // Shared by both things that ramp — Speed's clock and Accuracy's spawn gap — so
 // tuning one tunes the other, and the two stay tightening at the same felt rate.
-const RAMP_HALF_LIFE_HITS = 16
-const RAMP_FLOOR_RATIO = 0.65
+const RAMP_HALF_LIFE_HITS = 12
+const RAMP_FLOOR_RATIO = 0.55
 
 // The ramp itself, shared by both things that tighten.
 //

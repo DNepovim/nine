@@ -38,22 +38,22 @@ describe('rampedTimeout', () => {
     expect(rampedTimeout('speed', 'hard', 0)).toBe(base)
   })
 
-  it('closes half the slack every sixteen hits', () => {
-    // floor is 65% of base, so 35% of base is up for grabs.
-    const floor = base * 0.65
-    expect(rampedTimeout('speed', 'hard', 16)).toBe(
+  it('closes half the slack every twelve hits', () => {
+    // floor is 55% of base, so 45% of base is up for grabs.
+    const floor = base * 0.55
+    expect(rampedTimeout('speed', 'hard', 12)).toBe(
       Math.round(floor + (base - floor) / 2),
     )
-    expect(rampedTimeout('speed', 'hard', 32)).toBe(
+    expect(rampedTimeout('speed', 'hard', 24)).toBe(
       Math.round(floor + (base - floor) / 4),
     )
   })
 
   it('contracts by less and less — the rate itself decays', () => {
     const at = (hits: number) => rampedTimeout('speed', 'hard', hits)
-    const first = at(0) - at(16)
-    const second = at(16) - at(32)
-    const third = at(32) - at(48)
+    const first = at(0) - at(12)
+    const second = at(12) - at(24)
+    const third = at(24) - at(36)
     expect(second).toBeLessThan(first)
     expect(third).toBeLessThan(second)
     // Each window gives up roughly half of what the one before it did.
@@ -63,7 +63,7 @@ describe('rampedTimeout', () => {
   it('never falls below the floor, however long the run', () => {
     // The curve approaches the floor from above and never crosses it, though
     // rounding lands it exactly on the floor once the gap is sub-millisecond.
-    const floor = Math.round(base * 0.65)
+    const floor = Math.round(base * 0.55)
     expect(rampedTimeout('speed', 'hard', 500)).toBe(floor)
     expect(rampedTimeout('speed', 'hard', 5000)).toBe(floor)
     expect(rampedTimeout('speed', 'hard', 200)).toBeGreaterThanOrEqual(floor)
@@ -127,17 +127,17 @@ describe('effectiveSpawnInterval', () => {
 
   it('rides the same curve in Accuracy as the clock does in Speed', () => {
     const start = effectiveSpawnInterval('accuracy', 'hard', 0)
-    const floor = start * 0.65
-    expect(effectiveSpawnInterval('accuracy', 'hard', 16)).toBe(
+    const floor = start * 0.55
+    expect(effectiveSpawnInterval('accuracy', 'hard', 12)).toBe(
       Math.round(floor + (start - floor) / 2),
     )
-    expect(effectiveSpawnInterval('accuracy', 'hard', 32)).toBe(
+    expect(effectiveSpawnInterval('accuracy', 'hard', 24)).toBe(
       Math.round(floor + (start - floor) / 4),
     )
   })
 
   it('never lets Accuracy spawn faster than the floor', () => {
-    const floor = Math.round(effectiveSpawnInterval('accuracy', 'hard', 0) * 0.65)
+    const floor = Math.round(effectiveSpawnInterval('accuracy', 'hard', 0) * 0.55)
     expect(effectiveSpawnInterval('accuracy', 'hard', 5000)).toBe(floor)
     expect(effectiveSpawnInterval('accuracy', 'hard', 200)).toBeGreaterThanOrEqual(floor)
   })
