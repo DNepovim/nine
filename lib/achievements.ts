@@ -17,6 +17,7 @@ import {
   type ScoredMode,
   type Stats,
 } from '@/machines/game'
+import { MAX_ROOM_PLAYERS } from '@/types/multiplayer'
 
 // What one run has done so far, or did in the end.
 //
@@ -181,7 +182,7 @@ const RULES = {
 
   roomForTwo: (f) => f.career.multiplayerRuns >= 1,
   winner: (f) => f.career.multiplayerWins >= 1,
-  fullHouse: (f) => f.career.biggestRoom >= 4,
+  fullHouse: (f) => f.career.biggestRoom >= MAX_ROOM_PLAYERS,
 
   theLongWay: (f) => f.run.longestRoute >= 30,
   nightShift: (f) => {

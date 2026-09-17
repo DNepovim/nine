@@ -25,6 +25,11 @@ export type MultiEvent =
   | { type: 'MODE_CHANGE'; mode: MultiMode }
   | { type: 'GAME_RESTART'; mode: MultiMode; playerOrder: string[] }
 
+// How many players one room holds. The server enforces it — `join_room` answers
+// ROOM_FULL past this — and the waiting screen counts up to it; FULL HOUSE is earned by
+// reaching it.
+export const MAX_ROOM_PLAYERS = 4
+
 export type PlayerState = {
   userId: string
   nickname: string
