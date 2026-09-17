@@ -6,7 +6,7 @@ import { Gesture, GestureDetector } from 'react-native-gesture-handler'
 import { scheduleOnRN } from 'react-native-worklets'
 
 import { MenuButton } from '@/components/game/menu-button'
-import { GAME_SCALE } from '@/constants/colors'
+import { ACHIEVEMENT_SCALE, GAME_SCALE } from '@/constants/colors'
 import { TIPS } from '@/constants/tips'
 import { useTheme } from '@/hooks/use-theme'
 import { MODE_DESCRIPTIONS, MODE_GRADIENT, MODES, type Mode } from '@/machines/game'
@@ -29,6 +29,9 @@ const SECTIONS = {
   targets: { icon: 'timer', title: 'TARGETS & THE CLOCK', color: GAME_SCALE[1] },
   modes: { icon: 'grid', title: 'MODES', color: GAME_SCALE[2] },
   champions: { icon: 'ribbon', title: 'CHAMPIONS', color: GAME_SCALE[2] },
+  // The one section that steps off the game scale, because achievements are the one
+  // reward that is not a place on a board — the green says so before the words do.
+  achievements: { icon: 'trophy', title: 'ACHIEVEMENTS', color: ACHIEVEMENT_SCALE[3] },
   multiplayer: { icon: 'people', title: 'MULTIPLAYER', color: GAME_SCALE[3] },
   tips: { icon: 'bulb', title: 'TIPS & TRICKS', color: GAME_SCALE[4] },
 } as const satisfies Record<string, { icon: IoniconName; title: string; color: string }>
@@ -51,6 +54,7 @@ const SECTION_ORDER = [
   'targets',
   'modes',
   'champions',
+  'achievements',
   'multiplayer',
   'tips',
 ] as const satisfies readonly SectionKey[]
@@ -519,6 +523,37 @@ export function HowToPlayOverlay({
           <Body>
             {
               '\nA mark is only ever lent. Take somebody’s record and it moves to you; lose yours and it leaves with the board.'
+            }
+          </Body>
+
+          {/* Achievements — straight after the marks, because the sentence above ends
+              on "only ever lent" and this is the opposite kind of reward. */}
+          <SectionHeader section="achievements" onMeasure={measure} />
+          <Body>
+            {
+              'Achievements are the other kind. Nothing can take one back: they are earned once and yours for good, and they are measured against you rather than against anybody else — so they are there to be collected whether or not your score is ever good enough for a board.\n\nThere are dozens, and they ask for all sorts of things.'
+            }
+          </Body>
+          <Card>
+            <Bullet color={ACHIEVEMENT_SCALE[3]}>
+              Scores, one ladder per mode — Accuracy and Speed ask for opposite things, so
+              each has its own rungs to climb.
+            </Bullet>
+            <Bullet color={ACHIEVEMENT_SCALE[3]}>
+              Skill inside a single run: a long streak, the top multiplier, a stretch
+              without losing a life.
+            </Bullet>
+            <Bullet color={ACHIEVEMENT_SCALE[3]}>
+              Sticking with it — targets landed across every run you have ever played, and
+              days played in a row.
+            </Bullet>
+            <Bullet color={ACHIEVEMENT_SCALE[3]}>
+              A few nobody is told about until they happen.
+            </Bullet>
+          </Card>
+          <Body>
+            {
+              '\nEarn one mid-run and the score bar says so in green. The whole list is behind the bar under NINE on the start screen, along with how far along you are on the ones you have not got yet.'
             }
           </Body>
 

@@ -46,6 +46,16 @@ Two naming traps here: `multiplayer-menu.tsx` is **not** the multiplayer intro �
 | **run**        | One game from start to game over. "END RUN", "run stats", "this run" — never "round" or "session".                                                                   |
 | **board**      | One mode × difficulty pairing, i.e. one leaderboard. Careful: the How to Play copy uses "board" for the 3×3 playfield — call that the **grid** in code and comments. |
 
+Three words for three different rewards, and they are not interchangeable:
+
+| Term            | What it is                                                                                                                                         | Code                                               |
+| --------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------- |
+| **record**      | A score crossing a bar, announced mid-run and then gone. A moment, not a thing you keep.                                                           | `crossedRecords` in `lib/announcements.ts`         |
+| **medal**       | A podium standing on a board. **Losable** — a rival can take it back tomorrow.                                                                     | `lib/medals.ts`, `hooks/use-my-medals.ts`          |
+| **achievement** | Permanent, earned once, never lost, measured against the player's own history rather than against anyone else. _Earned_ / _unlocked_, never _won_. | `constants/achievements.ts`, `lib/achievements.ts` |
+
+An achievement's colour is the green nothing else uses (`ACHIEVEMENT_SCALE`), and that is the distinction it draws: gold is a record you currently **hold**, green is one you **keep**.
+
 ## Rules
 
 - **Never deploy to production.** Do not run `eas deploy --prod` (or otherwise promote to prod) unless the user explicitly issues that exact command in the current turn. "Continue", "ship it", or prior approvals do NOT authorize a prod deploy — wait for the explicit instruction every time.

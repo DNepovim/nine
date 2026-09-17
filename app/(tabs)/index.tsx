@@ -484,6 +484,7 @@ export default function GameScreen() {
     userId,
     onUnlocked: achievementQueue.push,
   })
+  const recordMultiplayer = achievements.recordMultiplayer
 
   // The boards the run ended on top of, latched on the game-over edge below. What the
   // bar announced is the starting point — by game over the player's own score is the
@@ -764,10 +765,28 @@ export default function GameScreen() {
   const multiFinishedRef = useRef(false)
   useEffect(() => {
     if (showMultiResults && !multiFinishedRef.current) {
-      track('multiplayer_room', { action: 'finished', players: multiRoom.players.length })
+      const players = multiRoom.players.length
+      track('multiplayer_room', { action: 'finished', players })
+      // A room has no board of its own, sets no personal best and keeps no stats, so all
+      // a shared run contributes is that it happened, how it went and how full the room
+      // was. Won outright: a tie is shared, and there is nothing to be proud of in
+      // beating nobody, so a room of one never counts.
+      const best = Math.max(...multiGame.players.map((player) => player.score), 0)
+      const mine = multiGame.players.find((player) => player.userId === userId)
+      const won =
+        players > 1 &&
+        mine?.score === best &&
+        multiGame.players.filter((player) => player.score === best).length === 1
+      recordMultiplayer(won, players)
     }
     multiFinishedRef.current = showMultiResults
-  }, [showMultiResults, multiRoom.players.length])
+  }, [
+    showMultiResults,
+    multiRoom.players.length,
+    multiGame.players,
+    userId,
+    recordMultiplayer,
+  ])
 
   // A new build waits on the device until the app lets it through, because the swap ends
   // in a reload. The intro with nothing open over it is the only place that costs
