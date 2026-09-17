@@ -24,7 +24,7 @@ import {
 // it, and the two are kept apart on purpose: `career` is always the career as it stood
 // when the run began, so a rule that wants a lifetime total writes `career.hits +
 // run.hits` and means the same thing whether the run is halfway through or over.
-export type RunFacts = {
+type RunFacts = {
   mode: Mode
   difficulty: Difficulty
   score: number

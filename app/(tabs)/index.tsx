@@ -29,6 +29,7 @@ import { ScoreDigit } from '@/components/game/score-digit'
 import { StepUpToast } from '@/components/game/step-up-toast'
 import { TargetCard } from '@/components/game/target-card'
 import { TraineeStats } from '@/components/game/trainee-stats'
+import { AchievementsOverlay } from '@/components/overlays/achievements-overlay'
 import { AdvancedOptionsOverlay } from '@/components/overlays/advanced-options-overlay'
 import { FeedbackOverlay } from '@/components/overlays/feedback-overlay'
 import { GameOverSequence } from '@/components/overlays/game-over-sequence'
@@ -47,6 +48,7 @@ import { TutorialOverlay } from '@/components/overlays/tutorial/tutorial-overlay
 import { WhatsNewOverlay } from '@/components/overlays/whats-new-overlay'
 import { Screen } from '@/components/screen'
 import { mono } from '@/constants/theme'
+import { useAchievementQueue, useAchievements } from '@/hooks/use-achievements'
 import { useAnnouncements } from '@/hooks/use-announcements'
 import { useAppUpdate } from '@/hooks/use-app-update'
 import { BoardProvider, useBoard } from '@/hooks/use-board'
@@ -61,6 +63,7 @@ import { useHitCelebration } from '@/hooks/use-hit-celebration'
 import { useInstallPrompt } from '@/hooks/use-install-prompt'
 import { useMultiplayerGame } from '@/hooks/use-multiplayer-game'
 import { useMultiplayerRoom } from '@/hooks/use-multiplayer-room'
+import { useMyMedals } from '@/hooks/use-my-medals'
 import { useOnline } from '@/hooks/use-online'
 import { usePersistedDifficulty } from '@/hooks/use-persisted-difficulty'
 import { usePersistedMode } from '@/hooks/use-persisted-mode'
@@ -85,7 +88,7 @@ import {
   type Period,
 } from '@/lib/announcements'
 import { currentBoardMedals } from '@/lib/board-medals'
-import { recordScreen, type RecordScreen } from '@/lib/champions'
+import { holdsCrown, recordScreen, type RecordScreen } from '@/lib/champions'
 import { leaderOf } from '@/lib/leaderboard'
 import { runChallenge } from '@/lib/next-challenge'
 import { heldPeriods, medalPeriods } from '@/lib/record-medals'
@@ -145,7 +148,8 @@ const BOOKMARK_REVEAL_DELAY_MS = 500
 // The menu-level overlays, one open at a time. 'none' means the screen under them —
 // the intro or the pause screen — is what shows. Feedback is not here: it is a
 // dialog over whatever is showing, not a screen of its own.
-type MenuOverlayName = 'none' | 'advanced' | 'howToPlay' | 'news' | 'joinRoom'
+type MenuOverlayName =
+  'none' | 'advanced' | 'howToPlay' | 'news' | 'joinRoom' | 'achievements'
 
 // Overlay names → the screen names the warehouse knows, so the event table stays the
 // only place that spells them. 'none' has no row: it is a closing, not an opening.
@@ -154,6 +158,7 @@ const OVERLAY_SCREENS = {
   howToPlay: 'how_to_play',
   news: 'news',
   joinRoom: 'join_room',
+  achievements: 'achievements',
 } as const satisfies Record<
   Exclude<MenuOverlayName, 'none'>,
   AnalyticsEvents['screen_opened']['screen']
@@ -244,6 +249,8 @@ export default function GameScreen() {
     stats,
     hitBatch,
     streak,
+    maxStreak,
+    strikes,
     accSum,
     spdSum,
     hits,
@@ -401,6 +408,21 @@ export default function GameScreen() {
 
   const online = useOnline()
 
+  // Read up here rather than beside the dial they are drawn next to: the achievements ask
+  // for both, and a run's average is one of the few things a rule cannot re-derive.
+  const avgAccuracy = hits > 0 ? Math.round((100 * accSum) / hits) : 0
+  const avgSpeed = hits > 0 ? Math.round((100 * spdSum) / hits) : 0
+
+  // Every board the player stands on. Read here rather than inside the intro screen,
+  // which unmounts for the whole run — the achievements need it while one is going, and
+  // one request answers for both.
+  const { medals, standings } = useMyMedals(userId)
+
+  // Shared by the two hooks below, and declared above both because each needs something
+  // from the other: the bar reads the queue, and the achievements read the bar's own
+  // `crossed` to answer the board-shaped ones.
+  const achievementQueue = useAchievementQueue(inRun)
+
   const { announcement, crossed } = useAnnouncements({
     inRun,
     // Nothing is frozen until the board has answered and the connection is good —
@@ -420,6 +442,8 @@ export default function GameScreen() {
     todayEmpty: isOpenable(board.today.empty, board.today.myBest),
     weekEmpty: isOpenable(board.week.empty, board.week.myBest),
     rival,
+    achievements: achievementQueue.queue,
+    onAchievementAnnounced: achievementQueue.announced,
     // Send the score the moment a board record falls rather than waiting for game
     // over: the write is what wakes every other player's bar, so delaying it is
     // what made rivals hear about a record minutes after it happened. The score
@@ -428,6 +452,37 @@ export default function GameScreen() {
     onBoardRecord: () => {
       submitScore(mode, difficulty, state.context.score, state.context.hits)
     },
+  })
+
+  // What the player has earned, and what this run just added to it.
+  //
+  // Declared after the bar because it reads what the run has crossed: opening a day's
+  // board and beating your own best are both things the bar has already worked out, and
+  // working them out a second time here is how the two would come to disagree.
+  const achievements = useAchievements({
+    inRun,
+    finished: isGameOver,
+    mode,
+    difficulty,
+    score: state.context.score,
+    hits,
+    lives,
+    maxStreak,
+    strikes,
+    elapsedMs,
+    avgAccuracy,
+    avgSpeed,
+    personalBest: crossed.includes('record'),
+    batch: hitBatch,
+    stats,
+    standings,
+    // The crown is both Extreme all-time boards at once — the same reign the game-over
+    // screen pays out for, read from the same two ids.
+    crown: holdsCrown(userId, champions),
+    crossed,
+    tutorialDone: tutorial.finished,
+    userId,
+    onUnlocked: achievementQueue.push,
   })
 
   // The boards the run ended on top of, latched on the game-over edge below. What the
@@ -583,9 +638,6 @@ export default function GameScreen() {
   const [dialSize, setDialSize] = useState(0)
 
   const currentMultiplier = streakMultiplier(streak)
-
-  const avgAccuracy = hits > 0 ? Math.round((100 * accSum) / hits) : 0
-  const avgSpeed = hits > 0 ? Math.round((100 * spdSum) / hits) : 0
 
   const { floatStats, removeFloatStat } = useFloatingStat(hitBatch, mode)
 
@@ -1073,6 +1125,7 @@ export default function GameScreen() {
           titleRoll={titleRoll}
           avgAccuracy={avgAccuracy}
           avgSpeed={avgSpeed}
+          achievements={achievements.runEarned}
           onPlayAgain={() => {
             send({ type: 'RESTART', now: Date.now() })
             track('run_started', { mode, difficulty, from: 'play_again' })
@@ -1189,6 +1242,17 @@ export default function GameScreen() {
           />
         )}
 
+        {/* ── Everything there is to earn, and what's been earned ── */}
+        {menuOverlay === 'achievements' && (
+          <AchievementsOverlay
+            store={achievements.store}
+            facts={achievements.facts}
+            onClose={() => {
+              setMenuOverlay('none')
+            }}
+          />
+        )}
+
         {/* ── How to play guide ── */}
         {menuOverlay === 'howToPlay' && (
           <HowToPlayOverlay
@@ -1280,6 +1344,12 @@ export default function GameScreen() {
             userId={userId}
             nickname={nickname}
             bestScore={stats[mode][difficulty].score}
+            medals={medals}
+            achievementsEarned={achievements.store.length}
+            achievementsLoaded={achievements.loaded}
+            onOpenAchievements={() => {
+              setMenuOverlay('achievements')
+            }}
             initialPlayMode={menuInitialTab}
             onPlayModeChange={setMenuInitialTab}
             onPlay={() => {

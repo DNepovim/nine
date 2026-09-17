@@ -1,9 +1,15 @@
-import { GAME_SCALE, GOLD_SCALE, GRAYSCALE } from '@/constants/colors'
+import {
+  ACHIEVEMENT_BAR_INK,
+  ACHIEVEMENT_SCALE,
+  GAME_SCALE,
+  GOLD_SCALE,
+  GRAYSCALE,
+} from '@/constants/colors'
 import type { AnnouncementId } from '@/lib/announcements'
 import { DARK_MODE_GRADIENT, type Mode } from '@/machines/modes'
 
 // Which of the app's scales an announcement wears. See the design-guide skill.
-type Scale = 'game' | 'gold' | 'cta' | 'gray'
+type Scale = 'game' | 'gold' | 'achievement' | 'cta' | 'gray'
 
 const ANNOUNCEMENT_SCALE = {
   // Your own achievements: the game's own colours for a personal best, gold for the
@@ -16,6 +22,10 @@ const ANNOUNCEMENT_SCALE = {
   // the record for its period — same bar, same particles.
   todayFirst: 'gold',
   weekFirst: 'gold',
+  // An achievement wears the one scale nothing else does. Gold would have been the easy
+  // choice and is the wrong one: gold means a board record you *currently hold*, and an
+  // achievement is the opposite — yours for good, and nobody else's business.
+  achievement: 'achievement',
   // Someone else moved a board record. The dark CTA scale carries the weight of a
   // real event without the shine of a prize.
   todayRaised: 'cta',
@@ -55,6 +65,13 @@ export function announcementStyle(id: AnnouncementId, mode: Mode): AnnouncementS
       return { from: GAME_SCALE[0], to: GAME_SCALE[3], ink: WHITE, colors: GAME_SCALE }
     case 'gold':
       return { from: GOLD_SCALE[1], to: GOLD_SCALE[0], ink: DARK_INK, colors: GOLD_SCALE }
+    case 'achievement':
+      return {
+        from: ACHIEVEMENT_SCALE[1],
+        to: ACHIEVEMENT_SCALE[0],
+        ink: ACHIEVEMENT_BAR_INK,
+        colors: ACHIEVEMENT_SCALE,
+      }
     case 'cta':
       return { from: ctaFrom, to: ctaTo, ink: ON_STRONG, colors: GRAYSCALE }
     case 'gray':

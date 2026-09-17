@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 
+import { ACHIEVEMENTS, type AchievementId } from '@/constants/achievements'
 import type { RivalAnnouncement } from '@/hooks/use-rival-records'
 import { IDLE, stepRun, type RunPhase } from '@/lib/announcement-run'
 import {
@@ -35,6 +36,8 @@ export function useAnnouncements({
   todayEmpty,
   weekEmpty,
   rival,
+  achievements,
+  onAchievementAnnounced,
   onBoardRecord,
 }: {
   inRun: boolean
@@ -54,6 +57,12 @@ export function useAnnouncements({
   weekEmpty: boolean
   // What another player just did, if anything. Always yields to your own records.
   rival: RivalAnnouncement | null
+  // Achievements earned but not yet announced, oldest first. Unlike a rival's news these
+  // are never dropped: an achievement happens once in a player's life, so one that cannot
+  // have the bar right now waits for it.
+  achievements: readonly AchievementId[]
+  // Called once one has had its turn, so the queue moves on.
+  onAchievementAnnounced: (id: AchievementId) => void
   // Called the instant a board record falls, so the score reaches the board while
   // the run is still going and rivals hear about it now rather than at game over.
   onBoardRecord: () => void
@@ -65,8 +74,14 @@ export function useAnnouncements({
   const [taken, setTaken] = useState<AnnouncementId[]>([])
   const phaseRef = useRef<RunPhase>(IDLE)
   const lastRivalSeqRef = useRef(0)
-  // Set while one of your own records is on the bar, so a rival cannot displace it.
+  // Set while one of your own records is on the bar, so nothing else can displace it.
   const ownUntilRef = useRef(0)
+  // Set while anything at all is on the bar. A record may take the bar from an
+  // achievement; an achievement may not take it from a rival mid-line, because two
+  // announcements in the same five seconds is a flicker rather than two moments.
+  const busyUntilRef = useRef(0)
+  const onAchievementAnnouncedRef = useRef(onAchievementAnnounced)
+  onAchievementAnnouncedRef.current = onAchievementAnnounced
   // Kept current without becoming an effect dependency: the step effect keys on the
   // score and must not re-run because the parent handed us a new closure.
   const onBoardRecordRef = useRef(onBoardRecord)
@@ -104,6 +119,7 @@ export function useAnnouncements({
     if (step.publish) onBoardRecordRef.current()
 
     ownUntilRef.current = Date.now() + ANNOUNCEMENT_MS
+    busyUntilRef.current = ownUntilRef.current
     setCurrent(announcementFor(step.announce, Math.random()))
   }, [
     inRun,
@@ -117,6 +133,27 @@ export function useAnnouncements({
     weekEmpty,
   ])
 
+  // The ladder, in one place: your own record beats an achievement, which beats a rival.
+  //
+  // What separates them is not only the order but what happens to the loser. A rival's
+  // news is *dropped* — by the time the bar frees up, someone else leading is no longer
+  // news. An achievement is queued, because it happens once and being swallowed by a
+  // record that landed in the same second would be losing it for good.
+  useEffect(() => {
+    const next = achievements[0]
+    if (!inRun || next === undefined) return
+    if (Date.now() < busyUntilRef.current) return
+    busyUntilRef.current = Date.now() + ANNOUNCEMENT_MS
+    setCurrent(
+      announcementFor(
+        'achievement',
+        Math.random(),
+        ACHIEVEMENTS[next].title.toUpperCase(),
+      ),
+    )
+    onAchievementAnnouncedRef.current(next)
+  }, [inRun, achievements, current])
+
   useEffect(() => {
     if (!inRun || rival === null) return
     if (rival.seq === lastRivalSeqRef.current) return
@@ -124,6 +161,7 @@ export function useAnnouncements({
     // Your own moment always wins the bar; the rival's is dropped rather than queued,
     // because by the time yours clears theirs is old news.
     if (Date.now() < ownUntilRef.current) return
+    busyUntilRef.current = Date.now() + ANNOUNCEMENT_MS
     setCurrent(announcementFor(rival.id, Math.random(), rival.name))
   }, [inRun, rival])
 

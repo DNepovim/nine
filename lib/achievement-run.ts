@@ -1,5 +1,5 @@
 import type { AchievementId } from '@/constants/achievements'
-import { earned, type AchievementFacts, type RunFacts } from '@/lib/achievements'
+import { earned, type AchievementFacts } from '@/lib/achievements'
 import { emptyCareer, type Career } from '@/lib/career'
 import type { HitInfo } from '@/machines/game'
 
@@ -113,15 +113,4 @@ export function stepAchievements(phase: AchievementPhase, input: RunInput): RunS
   if (phase.started) return evaluate(phase, input)
   if (!input.ready) return { phase, unlocked: QUIET }
   return evaluate({ started: true, career: input.career, fired: [] }, input)
-}
-
-// The run half of the facts, assembled from the machine's context and the tally.
-//
-// Here rather than in the hook so the shape has one definition and the tests can build a
-// run without a React tree.
-export function runFacts(
-  run: Omit<RunFacts, 'cleanHits' | 'parHits' | 'longestRoute'>,
-  tally: RunTally,
-): RunFacts {
-  return { ...run, ...tally }
 }

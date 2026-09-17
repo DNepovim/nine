@@ -53,6 +53,12 @@ export function championMark(
   return null
 }
 
+// Whether this player holds both Extreme all-time boards at once — a reign rather than a
+// record. Named rather than left as a comparison against the crown emoji: the mark is a
+// rendering of the fact, and code that wants the fact should not have to go through it.
+export const holdsCrown = (userId: string | null, champions: Champions): boolean =>
+  championMark(userId, champions) === CHAMPION_MARKS.both
+
 // How loudly the game-over screen celebrates what the run just took.
 //
 // `crown` is the rarest thing in the game — the all-time Extreme record in one mode

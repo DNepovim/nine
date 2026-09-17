@@ -45,6 +45,8 @@ const RUN = {
   strikes: 6,
   avgAccuracy: 84,
   avgSpeed: 71,
+  // Two, so the row can be seen wrapping beside the EARNED label.
+  achievements: ['flawlessTen', 'thousandHits'] as const,
 }
 
 const noop = () => {
@@ -118,6 +120,7 @@ const gameOver = (
       )}
       avgAccuracy={RUN.avgAccuracy}
       avgSpeed={RUN.avgSpeed}
+      achievements={RUN.achievements}
       onPlayAgain={close}
       onChallenge={close}
       onMenu={close}

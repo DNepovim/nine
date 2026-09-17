@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import { formatReleaseDate } from './format-date'
+import { formatReleaseDate, formatShortDate } from './format-date'
 
 describe('formatReleaseDate', () => {
   it('spells out the month', () => {
@@ -25,5 +25,19 @@ describe('formatReleaseDate', () => {
   it('returns anything unrecognised untouched', () => {
     expect(formatReleaseDate('not-a-date')).toBe('not-a-date')
     expect(formatReleaseDate('2026-13-01')).toBe('2026-13-01')
+  })
+})
+
+describe('formatShortDate', () => {
+  it('renders an instant as a day and a short month', () => {
+    expect(formatShortDate('2026-09-17T12:00:00.000Z')).toBe('17 SEP')
+  })
+
+  it('does not pad the day', () => {
+    expect(formatShortDate('2026-01-05T12:00:00.000Z')).toBe('5 JAN')
+  })
+
+  it('returns nothing at all for something that is not a date', () => {
+    expect(formatShortDate('not a date')).toBe('')
   })
 })

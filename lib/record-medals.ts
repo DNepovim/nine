@@ -17,6 +17,9 @@ const MEDAL_PERIOD = {
   todayFirst: 'today',
 
   record: null,
+  // An achievement is not a board standing either. It is permanent and nobody else's
+  // business, which is the opposite of what a medal claims.
+  achievement: null,
 
   todayRaised: null,
   weekRaised: null,

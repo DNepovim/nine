@@ -24,6 +24,10 @@ export type TutorialMode = 'gated' | 'review'
 
 export function useTutorial() {
   const [visible, setVisible] = useState(false)
+  // Whether the player is done with the tutorial — reached the end, or decided they had
+  // seen enough. The stored flag does not tell the two apart, and nothing in the app has
+  // ever needed it to: `dismiss` is the one way out, whichever screen it was called from.
+  const [finished, setFinished] = useState(false)
   const [mode, setMode] = useState<TutorialMode>('gated')
   const [step, setStep] = useState(0)
   // The furthest screen reached, including progress carried over from a previous
@@ -42,6 +46,7 @@ export function useTutorial() {
     void (async () => {
       try {
         const progress = parseTutorialProgress(await AsyncStorage.getItem(TUTORIAL_KEY))
+        setFinished(progress.finished)
         if (tutorialLaunch(progress) === 'hidden') return
         // Always open on the first screen; a stored step becomes a jump offer.
         const reached = progress.step ?? 0
@@ -88,6 +93,7 @@ export function useTutorial() {
   // the stored step goes away and the flag stays.
   const dismiss = useCallback(() => {
     persist(FINISHED_PROGRESS)
+    setFinished(true)
     setVisible(false)
   }, [persist])
 
@@ -124,6 +130,7 @@ export function useTutorial() {
 
   return {
     visible,
+    finished,
     mode,
     step,
     stepId,

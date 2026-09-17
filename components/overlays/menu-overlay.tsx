@@ -14,13 +14,13 @@ import Animated, {
 
 import { Screen } from '@/components/screen'
 import { useChampionsContext } from '@/hooks/use-champions'
-import { useMyMedals } from '@/hooks/use-my-medals'
 import { useOnline } from '@/hooks/use-online'
 import { useTheme } from '@/hooks/use-theme'
 import { useViewport } from '@/hooks/use-viewport'
 import { championMark } from '@/lib/champions'
 import { cn } from '@/lib/cn'
 import { inviteMessage, SHARE_URL } from '@/lib/invite-message'
+import type { Medal } from '@/lib/medals'
 import {
   DARK_MODE_GRADIENT,
   DARK_MULTIPLAYER_GRADIENT,
@@ -31,6 +31,7 @@ import {
   type Mode,
 } from '@/machines/game'
 
+import { AchievementProgress } from './achievement-progress'
 import { AnimatedLetter } from './animated-letter'
 import { DifficultySelector } from './difficulty-selector'
 import { HighScores } from './high-scores'
@@ -52,6 +53,10 @@ export function MenuOverlay({
   userId,
   nickname,
   bestScore,
+  medals,
+  achievementsEarned,
+  achievementsLoaded,
+  onOpenAchievements,
   initialPlayMode = 'alone',
   onPlay,
   onPlayModeChange,
@@ -70,6 +75,16 @@ export function MenuOverlay({
   // The locally stored all-time best for this board, for the challenge the invite
   // carries. The board below reads the shared store and needs nothing from here.
   bestScore: number
+  // What the player holds across all six boards. Read by the game screen rather than
+  // here: this screen unmounts for the whole run, and the achievements need the same one
+  // request while a run is going.
+  medals: readonly Medal[]
+  // How many of the catalogue the player holds.
+  achievementsEarned: number
+  // Whether the device's copy has been read. The strip waits rather than flashing 0 of 48
+  // at a player who holds thirty.
+  achievementsLoaded: boolean
+  onOpenAchievements: () => void
   initialPlayMode?: PlayMode
   onPlay: () => void
   // Fired on every ALONE / WITH FRIENDS toggle, not just at mount — this screen
@@ -89,7 +104,6 @@ export function MenuOverlay({
 }) {
   const { colorScheme } = useTheme()
   const dimColor = colorScheme === 'dark' ? '#504e6e' : '#aaa69e'
-  const { medals } = useMyMedals(userId)
   // Same mark the leaderboard, the pause screen and a room wear beside this
   // player's name — worn here over the title itself, since the title is this
   // player's too.
@@ -205,6 +219,17 @@ export function MenuOverlay({
           {/* What the player holds across all six boards, all-time. Silent until they
               have a podium finish, so the title keeps its space on a fresh install. */}
           <MedalLine medals={medals} />
+
+          {/* Unlike the medal line above, this is never silent. A medal line with nothing
+              in it is a player who has not won anything; a strip with nothing in it is a
+              player who has not found the feature, and hiding the front door from exactly
+              them is backwards. */}
+          {achievementsLoaded && (
+            <AchievementProgress
+              earned={achievementsEarned}
+              onPress={onOpenAchievements}
+            />
+          )}
 
           {/* ALONE / WITH FRIENDS tabs */}
           <PlayModeTab

@@ -3,8 +3,10 @@ import { isOneOf } from 'narrowland'
 // Announcements take over the best-scores bar for a moment when something worth
 // saying happens mid-run — a record you broke, or one a rival took.
 //
-// Four are your own achievements. Six are about other players: `*Raised` when someone
-// pushes a board record up, `*Lost` when the record they took was yours.
+// Four are your own records. Six are about other players: `*Raised` when someone pushes a
+// board record up, `*Lost` when the record they took was yours. One is an achievement —
+// one id for all of them, because what changes between two achievements is the name, and
+// the `{name}` substitution below already exists for exactly that.
 //
 // The array is the source of truth and the type derives from it, so the id list can
 // never drift out of sync with the union — and ANNOUNCEMENT_MESSAGES below `satisfies`
@@ -22,6 +24,7 @@ export const ANNOUNCEMENT_IDS = [
   'todayLost',
   'weekLost',
   'everLost',
+  'achievement',
 ] as const
 
 export type AnnouncementId = (typeof ANNOUNCEMENT_IDS)[number]
@@ -85,6 +88,12 @@ const ANNOUNCEMENT_MESSAGES = {
     'First of all time',
     'Untouchable',
   ],
+
+  // An achievement. The name is the achievement's own title, upper-cased by the caller,
+  // so it is the only thing shouting in the bar — the same arrangement the rival lines
+  // use for a nickname. Keep the longest prefix here at 10 characters: it is what
+  // TITLE_MAX in constants/achievements.ts is measured against.
+  achievement: ['Unlocked: {name}', '{name} unlocked', 'Earned: {name}'],
 
   // Opening an empty board, which is not the same as topping a busy one. The lines say
   // the board was bare rather than that you are ahead — there is nobody to be ahead of

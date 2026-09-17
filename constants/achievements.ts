@@ -139,7 +139,9 @@ export const ACHIEVEMENTS = {
     group: 'firstSteps',
     emblem: '🎓',
     title: 'GRADUATE',
-    hint: 'Finish the tutorial.',
+    // The app stores one flag for "done with the tutorial" and does not tell reaching the
+    // end from deciding you have seen enough. The wording follows what is actually known.
+    hint: 'Get through the tutorial.',
   },
   firstRun: {
     group: 'firstSteps',

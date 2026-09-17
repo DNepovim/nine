@@ -26,6 +26,10 @@ const EFFECTS = {
   todayFirst: (colors) => <Confetti colors={colors} />,
   weekFirst: (colors) => <Fireworks colors={colors} />,
 
+  // Confetti again, in the achievement green. The colour is what says this is a different
+  // kind of moment; a fourth effect would be saying it twice.
+  achievement: (colors) => <Confetti colors={colors} />,
+
   todayRaised: () => null,
   weekRaised: () => null,
   everRaised: () => null,

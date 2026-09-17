@@ -63,6 +63,11 @@ export type AchievementsInput = {
   crossed: readonly AnnouncementId[]
   tutorialDone: boolean
   userId: string | null
+  // Called with everything a step just unlocked, oldest first. The queue itself lives
+  // outside this hook — see `useAchievementQueue` — because the announcement bar has to
+  // read it and this hook has to read the bar's own `crossed`, and one of the two had to
+  // stop owning the other.
+  onUnlocked: (ids: readonly AchievementId[]) => void
 }
 
 export type Achievements = {
@@ -71,12 +76,13 @@ export type Achievements = {
   // Whether the device's copy has been read yet. The strip waits for this rather than
   // showing 0 of 48 for a moment to a player who holds thirty.
   loaded: boolean
-  // Earned but not yet announced, oldest first. The announcement bar drains this.
-  pending: readonly AchievementId[]
-  // Called once an unlock has had its turn on the bar.
-  announced: (id: AchievementId) => void
   // Everything this run earned, for the game-over screen.
   runEarned: readonly AchievementId[]
+  // What the rules are being measured against right now, so the achievements screen can
+  // show how far along a locked row is. The same object the run is evaluated with —
+  // asking a second way is how a row saying 340/1000 and a bar that just fired would come
+  // to disagree.
+  facts: AchievementFacts
   // A finished shared run. Its own entry point: a room has no board of its own, sets no
   // personal best and keeps no stats, so all it contributes is that it happened.
   recordMultiplayer: (won: boolean, players: number) => void
@@ -99,7 +105,6 @@ export function useAchievements(input: AchievementsInput): Achievements {
   const { career, loaded: careerLoaded, update: updateCareer } = useCareer()
   const [store, setStore] = useState<AchievementStore>(EMPTY_STORE)
   const [storeLoaded, setStoreLoaded] = useState(false)
-  const [pending, setPending] = useState<readonly AchievementId[]>([])
   const [runEarned, setRunEarned] = useState<readonly AchievementId[]>([])
 
   const phaseRef = useRef<AchievementPhase>(IDLE)
@@ -114,6 +119,8 @@ export function useAchievements(input: AchievementsInput): Achievements {
   storeRef.current = store
   const careerRef = useRef(career)
   careerRef.current = career
+  const onUnlockedRef = useRef(input.onUnlocked)
+  onUnlockedRef.current = input.onUnlocked
 
   // ── The device's copy, then the server's ────────────────────────────────────
 
@@ -187,7 +194,7 @@ export function useAchievements(input: AchievementsInput): Achievements {
       const room = Math.max(0, MAX_ANNOUNCED_PER_RUN - announcedRef.current)
       const announce = step.unlocked.slice(0, room)
       announcedRef.current += announce.length
-      if (isNonEmptyArray(announce)) setPending((queue) => [...queue, ...announce])
+      if (isNonEmptyArray(announce)) onUnlockedRef.current(announce)
     },
     [careerLoaded, storeLoaded, persist],
   )
@@ -199,7 +206,6 @@ export function useAchievements(input: AchievementsInput): Achievements {
     tallyRef.current = EMPTY_TALLY
     announcedRef.current = 0
     setRunEarned([])
-    setPending([])
   }, [input.inRun])
 
   useEffect(() => {
@@ -294,10 +300,6 @@ export function useAchievements(input: AchievementsInput): Achievements {
     persist,
   ])
 
-  const announced = useCallback((id: AchievementId) => {
-    setPending((queue) => queue.filter((queued) => queued !== id))
-  }, [])
-
   const recordMultiplayer = useCallback(
     (won: boolean, players: number) => {
       updateCareer((current) => foldMultiplayer(current, { won, players }))
@@ -311,7 +313,7 @@ export function useAchievements(input: AchievementsInput): Achievements {
     Object.assign(globalThis, {
       nineEarn: (id: AchievementId) => {
         persist(addEarned(storeRef.current, [id], new Date().toISOString()))
-        setPending((queue) => [...queue, id])
+        onUnlockedRef.current([id])
       },
       nineClearAchievements: () => {
         persist(EMPTY_STORE)
@@ -323,11 +325,41 @@ export function useAchievements(input: AchievementsInput): Achievements {
   return {
     store,
     loaded: storeLoaded,
-    pending,
-    announced,
     runEarned,
+    facts: { ...worldFacts(input, tallyRef.current, false), career },
     recordMultiplayer,
   }
+}
+
+// The unlocks still waiting for their turn on the announcement bar.
+//
+// Its own hook, and owned above both of the two that need it: `useAnnouncements` has to
+// read the queue, and `useAchievements` has to read the bar's own `crossed` to answer the
+// board-shaped achievements. Neither can be declared after the other, so the one thing
+// they share is declared before both.
+//
+// Cleared as a run starts rather than as one ends — the game-over screen is still up, and
+// anything left over belongs to the run the player is looking at.
+export function useAchievementQueue(inRun: boolean): {
+  queue: readonly AchievementId[]
+  push: (ids: readonly AchievementId[]) => void
+  announced: (id: AchievementId) => void
+} {
+  const [queue, setQueue] = useState<readonly AchievementId[]>([])
+
+  useEffect(() => {
+    if (inRun) setQueue([])
+  }, [inRun])
+
+  const push = useCallback((ids: readonly AchievementId[]) => {
+    setQueue((held) => [...held, ...ids])
+  }, [])
+
+  const announced = useCallback((id: AchievementId) => {
+    setQueue((held) => held.filter((queued) => queued !== id))
+  }, [])
+
+  return { queue, push, announced }
 }
 
 // Everything the rules ask about except the career, which the phase owns.

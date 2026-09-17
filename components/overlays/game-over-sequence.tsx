@@ -2,6 +2,7 @@ import { isOneOf } from 'narrowland'
 import { type StyleProp, type ViewStyle } from 'react-native'
 import Animated, { type AnimatedStyle } from 'react-native-reanimated'
 
+import type { AchievementId } from '@/constants/achievements'
 import { type DyingPhase } from '@/hooks/use-dying-sequence'
 import type { Period } from '@/lib/announcements'
 import type { RecordScreen } from '@/lib/champions'
@@ -39,6 +40,7 @@ export function GameOverSequence({
   titleRoll,
   avgAccuracy,
   avgSpeed,
+  achievements,
   onPlayAgain,
   onChallenge,
   onMenu,
@@ -67,6 +69,7 @@ export function GameOverSequence({
   titleRoll: number
   avgAccuracy: number
   avgSpeed: number
+  achievements: readonly AchievementId[]
   onPlayAgain: () => void
   onChallenge: (mode: Mode, difficulty: Difficulty) => void
   onMenu: () => void
@@ -116,6 +119,7 @@ export function GameOverSequence({
           titleWords={words}
           avgAccuracy={avgAccuracy}
           avgSpeed={avgSpeed}
+          achievements={achievements}
           titleHidden={!revealed}
           onTitleLayout={onTitleLayout}
           onPlayAgain={onPlayAgain}
