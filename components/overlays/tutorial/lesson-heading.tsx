@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react'
 import { View } from 'react-native'
 import Animated, { FadeInDown } from 'react-native-reanimated'
 
@@ -14,9 +15,11 @@ export function LessonHeading({
   color,
   children,
 }: {
-  title: string
+  // Nodes rather than strings so a caller can hand these a <Trans>; both render
+  // inside the <Animated.Text> below exactly as a literal did.
+  title: ReactNode
   color: string
-  children: string
+  children: ReactNode
 }) {
   return (
     <View className="mt-4">

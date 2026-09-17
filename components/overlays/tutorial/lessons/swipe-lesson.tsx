@@ -1,3 +1,4 @@
+import { Trans } from '@lingui/react/macro'
 import { useEffect, useState } from 'react'
 import { Text, View } from 'react-native'
 
@@ -90,7 +91,7 @@ export function SwipeLesson({ isDark, onComplete }: LessonProps) {
 
   return (
     <View className="flex-1">
-      <LessonHeading title="SWIPE SHORTCUTS" color={COLOR}>
+      <LessonHeading title={<Trans>SWIPE SHORTCUTS</Trans>} color={COLOR}>
         {
           'A horizontal swipe jumps a button straight to 9 or 0 — coarse ground covered, or an overshoot cleared, in one move.'
         }

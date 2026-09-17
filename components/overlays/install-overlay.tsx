@@ -1,4 +1,5 @@
 import { Ionicons } from '@expo/vector-icons'
+import { Trans } from '@lingui/react/macro'
 import { LinearGradient } from 'expo-linear-gradient'
 import { Pressable, Text, View } from 'react-native'
 import Animated, {
@@ -123,7 +124,7 @@ export function InstallOverlay({
                 selectable={false}
                 className="font-mono text-[11px] font-bold tracking-[2px] text-dim"
               >
-                INSTALL
+                <Trans>INSTALL</Trans>
               </Text>
               <MenuButton
                 visible
@@ -147,7 +148,7 @@ export function InstallOverlay({
                 className="mt-4 text-center font-mono text-[17px] font-black tracking-[2px]"
                 style={{ color: APP_VIOLET }}
               >
-                ADD TO HOME SCREEN
+                <Trans>ADD TO HOME SCREEN</Trans>
               </Text>
 
               <Text

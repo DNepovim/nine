@@ -4,9 +4,14 @@
     "app/**/*.{ts,tsx}",
     "workbox-config.js",
     "scripts/**/*.{js,ts}",
-    "**/*.test.ts"
+    "**/*.test.ts",
+    "lingui.config.ts"
   ],
   "project": ["**/*.{ts,tsx}"],
-  "ignoreDependencies": ["babel-preset-expo", "posthog-js"],
+  "ignoreDependencies": [
+    "babel-preset-expo",
+    "posthog-js",
+    "@lingui/babel-plugin-lingui-macro"
+  ],
   "ignore": ["**/*.web.ts", "**/*.web.tsx"]
 }

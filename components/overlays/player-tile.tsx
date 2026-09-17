@@ -1,4 +1,5 @@
 import { AntDesign } from '@expo/vector-icons'
+import { Trans } from '@lingui/react/macro'
 import { LinearGradient } from 'expo-linear-gradient'
 import { Text, View } from 'react-native'
 
@@ -88,7 +89,7 @@ export function PlayerTile({
             selectable={false}
             className="mt-2 font-mono text-[9px] font-bold tracking-[2px] text-dim"
           >
-            WAITING
+            <Trans>WAITING</Trans>
           </Text>
         </View>
       </View>

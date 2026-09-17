@@ -1,4 +1,5 @@
 import { Ionicons } from '@expo/vector-icons'
+import { Trans } from '@lingui/react/macro'
 import { Pressable, Text, View } from 'react-native'
 
 import { TutorialNextButton } from '@/components/overlays/tutorial/tutorial-next-button'
@@ -49,7 +50,7 @@ export function TutorialFooter({
           selectable={false}
           className="font-mono text-[11px] font-black tracking-[1px] text-dim"
         >
-          BACK
+          <Trans>BACK</Trans>
         </Text>
       </Pressable>
 

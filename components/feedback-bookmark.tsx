@@ -1,4 +1,5 @@
 import { Ionicons } from '@expo/vector-icons'
+import { Trans } from '@lingui/react/macro'
 import { useEffect, useRef } from 'react'
 import { Text, View } from 'react-native'
 import { Gesture, GestureDetector } from 'react-native-gesture-handler'
@@ -145,7 +146,7 @@ export function FeedbackBookmark({
             className="font-mono text-[10px] font-bold tracking-[1.5px]"
             style={{ color }}
           >
-            TELL US
+            <Trans>TELL US</Trans>
           </Text>
         </View>
       </Animated.View>

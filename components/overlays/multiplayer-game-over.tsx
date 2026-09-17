@@ -1,3 +1,4 @@
+import { Trans } from '@lingui/react/macro'
 import { LinearGradient } from 'expo-linear-gradient'
 import { isNonEmptyArray, isOneOf } from 'narrowland'
 import { useEffect } from 'react'
@@ -145,7 +146,7 @@ export function MultiplayerGameOver({
               selectable={false}
               className="font-mono text-[9px] font-bold tracking-[2px] text-dim"
             >
-              RESULTS
+              <Trans>RESULTS</Trans>
             </Text>
           </View>
           <View className="w-full flex-row flex-wrap justify-between gap-y-3">
@@ -186,7 +187,7 @@ export function MultiplayerGameOver({
                   selectable={false}
                   className="font-mono text-[13px] font-black tracking-[2px] text-on-strong"
                 >
-                  PLAY AGAIN
+                  <Trans>PLAY AGAIN</Trans>
                 </Text>
               </LinearGradient>
             </Pressable>
@@ -208,7 +209,7 @@ export function MultiplayerGameOver({
                   selectable={false}
                   className="font-mono text-[13px] font-black tracking-[2px] text-on-strong"
                 >
-                  READY
+                  <Trans>READY</Trans>
                 </Text>
               </LinearGradient>
             </Pressable>
@@ -219,7 +220,7 @@ export function MultiplayerGameOver({
               selectable={false}
               className="font-mono text-[10px] font-bold tracking-[2px] text-dim"
             >
-              WAITING FOR OTHERS…
+              <Trans>WAITING FOR OTHERS…</Trans>
             </Text>
           )}
 

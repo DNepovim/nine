@@ -1,3 +1,4 @@
+import { Trans } from '@lingui/react/macro'
 import { View } from 'react-native'
 
 import { HitPraiseLine } from '@/components/game/hit-praise-line'
@@ -49,9 +50,15 @@ export function TraineeStats({
       {/* The same gap the route hint keeps below the line, so the three rows sit at
           an even rhythm rather than the words crowding the stats they follow. */}
       <View className="mb-1.5 flex-row justify-center gap-6">
-        <TraineeStat label="HITS" value={String(hits)} />
-        <TraineeStat label="ACCURACY" value={percent(last?.accFactor ?? null)} />
-        <TraineeStat label="SPEED" value={percent(last?.spdFactor ?? null)} />
+        <TraineeStat label={<Trans>HITS</Trans>} value={String(hits)} />
+        <TraineeStat
+          label={<Trans>ACCURACY</Trans>}
+          value={percent(last?.accFactor ?? null)}
+        />
+        <TraineeStat
+          label={<Trans>SPEED</Trans>}
+          value={percent(last?.spdFactor ?? null)}
+        />
       </View>
       <HitPraiseLine message={praise} />
       {/* Under the words, as the way to reach what they just described. */}

@@ -1,3 +1,4 @@
+import { Trans } from '@lingui/react/macro'
 import { useEffect, useState } from 'react'
 import { Text, View } from 'react-native'
 
@@ -126,8 +127,10 @@ export function WeightsLesson({ isDark, onComplete }: LessonProps) {
 
   return (
     <View className="flex-1">
-      <LessonHeading title="POSITION IS POWER" color={COLOR}>
-        {'A button’s weight is its row × its column — the small print above it.'}
+      <LessonHeading title={<Trans>POSITION IS POWER</Trans>} color={COLOR}>
+        <Trans>
+          A button’s weight is its row × its column — the small print above it.
+        </Trans>
       </LessonHeading>
 
       <TaskPrompt
@@ -152,7 +155,7 @@ export function WeightsLesson({ isDark, onComplete }: LessonProps) {
                     selectable={false}
                     className="mt-1 font-mono text-[9px] font-bold tracking-[1px] text-dim"
                   >
-                    ROW
+                    <Trans>ROW</Trans>
                   </Text>
                 </View>
                 <Text
@@ -168,7 +171,7 @@ export function WeightsLesson({ isDark, onComplete }: LessonProps) {
                     selectable={false}
                     className="mt-1 font-mono text-[9px] font-bold tracking-[1px] text-dim"
                   >
-                    COLUMN
+                    <Trans>COLUMN</Trans>
                   </Text>
                 </View>
                 <Text
@@ -184,7 +187,7 @@ export function WeightsLesson({ isDark, onComplete }: LessonProps) {
                     selectable={false}
                     className="mt-1 font-mono text-[9px] font-bold tracking-[1px] text-dim"
                   >
-                    VALUE
+                    <Trans>VALUE</Trans>
                   </Text>
                 </View>
               </View>

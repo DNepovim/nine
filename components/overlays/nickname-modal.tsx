@@ -1,3 +1,4 @@
+import { Trans, useLingui } from '@lingui/react/macro'
 import { useState } from 'react'
 import {
   KeyboardAvoidingView,
@@ -20,6 +21,8 @@ export function NicknameModal({
   onSave: (name: string) => Promise<{ error: string | null }>
   onSkip: () => void
 }) {
+  // `t` rather than <Trans>: a TextInput placeholder takes a string, not a node.
+  const { t } = useLingui()
   const [value, setValue] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
@@ -62,13 +65,13 @@ export function NicknameModal({
             selectable={false}
             className="mb-1 font-mono text-[11px] font-black tracking-[2px] text-primary"
           >
-            CHOOSE A NICKNAME
+            <Trans>CHOOSE A NICKNAME</Trans>
           </Text>
           <Text
             selectable={false}
             className="mb-4 font-mono text-[9px] font-bold tracking-[0.5px] text-dim"
           >
-            Your name appears on the leaderboard.
+            <Trans>Your name appears on the leaderboard.</Trans>
           </Text>
 
           <TextInput
@@ -77,7 +80,7 @@ export function NicknameModal({
               setValue(t)
               setError(null)
             }}
-            placeholder="e.g. ACE_9"
+            placeholder={t`e.g. ACE_9`}
             autoCapitalize="none"
             autoCorrect={false}
             maxLength={16}
@@ -106,7 +109,7 @@ export function NicknameModal({
                 selectable={false}
                 className="font-mono text-[11px] font-black tracking-[1.5px] text-dim"
               >
-                SKIP
+                <Trans>SKIP</Trans>
               </Text>
             </Pressable>
 

@@ -1,3 +1,4 @@
+import { Trans } from '@lingui/react/macro'
 import { Text, View } from 'react-native'
 
 // What the board cannot say for itself while the connection is down: everyone
@@ -13,7 +14,7 @@ export function OfflineNotice({ unsynced }: { unsynced: boolean }) {
         selectable={false}
         className="font-mono text-[9px] font-black tracking-[2px] text-dim"
       >
-        YOU'RE OFFLINE
+        <Trans>YOU'RE OFFLINE</Trans>
       </Text>
       <Text
         selectable={false}

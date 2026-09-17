@@ -10,7 +10,8 @@ export function InstallStep({
   children,
 }: {
   step: number
-  label: string
+  // A node so the caller can hand it a <Trans>.
+  label: ReactNode
   children: ReactNode
 }) {
   return (

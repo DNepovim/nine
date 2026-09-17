@@ -1,4 +1,5 @@
 import { Ionicons } from '@expo/vector-icons'
+import { Trans } from '@lingui/react/macro'
 import { Modal, Pressable, Text, View } from 'react-native'
 
 // Shown the moment the opening screen's mock target actually resolves — a real hit,
@@ -20,7 +21,7 @@ export function GoalHitPopup({
             selectable={false}
             className="mb-1 text-center font-mono text-[13px] font-black tracking-[1.5px] text-primary"
           >
-            NICE HIT
+            <Trans>NICE HIT</Trans>
           </Text>
           <Text
             selectable={false}
@@ -37,7 +38,7 @@ export function GoalHitPopup({
               selectable={false}
               className="font-mono text-[11px] font-black tracking-[1px] text-on-strong"
             >
-              CONTINUE TUTORIAL
+              <Trans>CONTINUE TUTORIAL</Trans>
             </Text>
             <Ionicons name="arrow-forward" size={12} color="#d8d2f4" />
           </Pressable>
@@ -47,7 +48,7 @@ export function GoalHitPopup({
               selectable={false}
               className="font-mono text-[10px] font-bold tracking-[1px] text-dim underline"
             >
-              SKIP TUTORIAL
+              <Trans>SKIP TUTORIAL</Trans>
             </Text>
           </Pressable>
         </View>

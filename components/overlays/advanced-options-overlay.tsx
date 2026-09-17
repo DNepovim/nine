@@ -1,9 +1,13 @@
 import { AntDesign } from '@expo/vector-icons'
+import { Trans } from '@lingui/react/macro'
+import type { ReactNode } from 'react'
 import { Pressable, Text, View } from 'react-native'
 
+import { LocaleToggle } from '@/components/locale-toggle'
 import { OptionCheckbox } from '@/components/overlays/option-checkbox'
 import { Screen } from '@/components/screen'
 import { ThemeToggle } from '@/components/theme-toggle'
+import { useLocale } from '@/hooks/use-locale'
 import { buildInfo } from '@/lib/build-info'
 
 function AdvancedOption({
@@ -13,8 +17,10 @@ function AdvancedOption({
   onToggle,
 }: {
   checked: boolean
-  label: string
-  description: string
+  // Nodes rather than strings: the caller hands these a <Trans>, which renders inside
+  // the <Text> below exactly as the literal did.
+  label: ReactNode
+  description: ReactNode
   onToggle: () => void
 }) {
   return (
@@ -57,6 +63,7 @@ export function AdvancedOptionsOverlay({
   onOpenNews: () => void
   onClose: () => void
 }) {
+  const { locale, setLocale } = useLocale()
   const build = buildInfo()
   return (
     <Screen overlay>
@@ -64,13 +71,13 @@ export function AdvancedOptionsOverlay({
         selectable={false}
         className="mb-8 font-mono text-[20px] font-black tracking-[3px] text-primary"
       >
-        ADVANCED
+        <Trans>ADVANCED</Trans>
       </Text>
 
       <AdvancedOption
         checked={showSum}
-        label="SHOW SUM IN BUTTONS"
-        description="Display value × row × column"
+        label={<Trans>SHOW SUM IN BUTTONS</Trans>}
+        description={<Trans>Display value × row × column</Trans>}
         onToggle={onToggleSum}
       />
 
@@ -80,9 +87,20 @@ export function AdvancedOptionsOverlay({
           selectable={false}
           className="font-mono text-[13px] font-black tracking-[1px] text-primary"
         >
-          THEME
+          <Trans>THEME</Trans>
         </Text>
         <ThemeToggle isDark={isDark} onToggle={onToggleTheme} />
+      </View>
+
+      {/* Language */}
+      <View className="flex-row items-center justify-between py-3" style={{ width: 300 }}>
+        <Text
+          selectable={false}
+          className="font-mono text-[13px] font-black tracking-[1px] text-primary"
+        >
+          <Trans>LANGUAGE</Trans>
+        </Text>
+        <LocaleToggle locale={locale} onSelect={setLocale} />
       </View>
 
       {/* What's new */}
@@ -95,7 +113,7 @@ export function AdvancedOptionsOverlay({
           selectable={false}
           className="font-mono text-[13px] font-black tracking-[1px] text-primary"
         >
-          WHAT’S NEW
+          <Trans>WHAT’S NEW</Trans>
         </Text>
         <AntDesign name="right" size={14} color="#aaa69e" />
       </Pressable>
@@ -119,7 +137,7 @@ export function AdvancedOptionsOverlay({
           selectable={false}
           className="font-mono text-[13px] font-black tracking-[2px] text-on-strong"
         >
-          DONE
+          <Trans>DONE</Trans>
         </Text>
       </Pressable>
     </Screen>

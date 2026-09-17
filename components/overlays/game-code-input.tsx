@@ -1,3 +1,4 @@
+import { Trans } from '@lingui/react/macro'
 import { useEffect, useRef, useState } from 'react'
 import { Text, View } from 'react-native'
 import Animated, {
@@ -98,7 +99,7 @@ export function GameCodeInput({
         selectable={false}
         className="mb-4 font-mono text-[9px] font-bold tracking-[2.5px] text-dim"
       >
-        JOIN WITH CODE
+        <Trans>JOIN WITH CODE</Trans>
       </Text>
       <View className="flex-row gap-3">
         {[0, 1, 2, 3].map((i) => {

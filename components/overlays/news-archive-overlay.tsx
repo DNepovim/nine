@@ -1,3 +1,4 @@
+import { Trans } from '@lingui/react/macro'
 import { FlatList, Pressable, Text, View } from 'react-native'
 
 import { NewsRelease } from '@/components/overlays/news-release'
@@ -15,13 +16,13 @@ export function NewsArchiveOverlay({ onClose }: { onClose: () => void }) {
         selectable={false}
         className="mb-1 font-mono text-[20px] font-black tracking-[3px] text-primary"
       >
-        WHAT’S NEW
+        <Trans>WHAT’S NEW</Trans>
       </Text>
       <Text
         selectable={false}
         className="mb-6 font-mono text-[10px] font-bold tracking-[1px] text-dim"
       >
-        EVERYTHING THAT’S CHANGED
+        <Trans>EVERYTHING THAT’S CHANGED</Trans>
       </Text>
 
       <FlatList
@@ -31,7 +32,7 @@ export function NewsArchiveOverlay({ onClose }: { onClose: () => void }) {
         showsVerticalScrollIndicator={false}
         ListEmptyComponent={
           <Text selectable={false} className="font-mono text-[12px] font-medium text-dim">
-            Nothing announced yet.
+            <Trans>Nothing announced yet.</Trans>
           </Text>
         }
       />
@@ -45,7 +46,7 @@ export function NewsArchiveOverlay({ onClose }: { onClose: () => void }) {
           selectable={false}
           className="font-mono text-[13px] font-black tracking-[2px] text-on-strong"
         >
-          DONE
+          <Trans>DONE</Trans>
         </Text>
       </Pressable>
     </View>

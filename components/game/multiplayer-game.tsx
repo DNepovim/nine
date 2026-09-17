@@ -1,3 +1,4 @@
+import { Trans } from '@lingui/react/macro'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Pressable, Text, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
@@ -153,7 +154,7 @@ export function MultiplayerGame({
             selectable={false}
             className="font-mono text-[10px] font-bold tracking-[1px] text-dim"
           >
-            MULTIPLAYER
+            <Trans>MULTIPLAYER</Trans>
           </Text>
         </View>
         <View className="items-center">
@@ -162,7 +163,7 @@ export function MultiplayerGame({
             className="font-mono text-[24px] font-black tracking-[8px]"
             style={{ color: myGradient[1] }}
           >
-            NINE
+            <Trans>NINE</Trans>
           </Text>
           <Text
             selectable={false}

@@ -1,3 +1,4 @@
+import { Trans } from '@lingui/react/macro'
 import { LinearGradient } from 'expo-linear-gradient'
 import { Pressable, Text, View } from 'react-native'
 
@@ -27,7 +28,7 @@ export function PublishScoresButton({
             selectable={false}
             className="font-mono text-[11px] font-black tracking-[2px] text-white"
           >
-            ADD YOUR NICKNAME
+            <Trans>ADD YOUR NICKNAME</Trans>
           </Text>
         </LinearGradient>
       </Pressable>
@@ -35,7 +36,7 @@ export function PublishScoresButton({
         selectable={false}
         className="mt-1.5 font-mono text-[8px] font-bold tracking-[1px] text-dim"
       >
-        TO PUBLISH YOUR BESTS
+        <Trans>TO PUBLISH YOUR BESTS</Trans>
       </Text>
     </View>
   )

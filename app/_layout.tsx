@@ -18,6 +18,7 @@ import '@/global.css'
 import { CrashScreen } from '@/components/crash-screen'
 import { PhoneFrame } from '@/components/phone-frame'
 import { SplashScreen } from '@/components/splash-screen'
+import { LocaleProvider } from '@/hooks/use-locale'
 import { SplashProvider, useSplash } from '@/hooks/use-splash'
 import { AppThemeProvider, useTheme } from '@/hooks/use-theme'
 import { captureError, initAnalytics } from '@/lib/analytics'
@@ -118,31 +119,36 @@ export default function RootLayout() {
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
-      <AppThemeProvider>
-        {/* A row, so the gallery's picker takes its own column beside the frame rather
+      {/* Outside the theme provider: the language decides what every string in the tree
+          below says, including the splash and the dev gallery's own chrome, and nothing
+          about it depends on the colour scheme. */}
+      <LocaleProvider>
+        <AppThemeProvider>
+          {/* A row, so the gallery's picker takes its own column beside the frame rather
             than floating over it — the frame then centres in what is left. With no
             picker the row has one child at flex-1, which is the layout as it was.
             Desktop only: below that width the window *is* the phone and there is no
             beside. */}
-        <View style={{ flex: 1, flexDirection: 'row' }}>
-          {GallerySwitcher !== null && desktop && (
-            <Suspense fallback={null}>
-              <GallerySwitcher />
-            </Suspense>
-          )}
-          {/* Inside the theme provider, so the frame is drawn in the app's own colours
+          <View style={{ flex: 1, flexDirection: 'row' }}>
+            {GallerySwitcher !== null && desktop && (
+              <Suspense fallback={null}>
+                <GallerySwitcher />
+              </Suspense>
+            )}
+            {/* Inside the theme provider, so the frame is drawn in the app's own colours
               and the splash screen is framed along with everything after it. Inside the
               frame for the same reason the splash is: what the provider gates is drawn
               in there with the rest of the app, not over the top of it. */}
-          <View style={{ flex: 1 }}>
-            <PhoneFrame>
-              <SplashProvider>
-                <ThemedApp />
-              </SplashProvider>
-            </PhoneFrame>
+            <View style={{ flex: 1 }}>
+              <PhoneFrame>
+                <SplashProvider>
+                  <ThemedApp />
+                </SplashProvider>
+              </PhoneFrame>
+            </View>
           </View>
-        </View>
-      </AppThemeProvider>
+        </AppThemeProvider>
+      </LocaleProvider>
     </GestureHandlerRootView>
   )
 }

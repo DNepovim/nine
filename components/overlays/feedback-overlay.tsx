@@ -1,4 +1,5 @@
 import { Ionicons } from '@expo/vector-icons'
+import { Trans, useLingui } from '@lingui/react/macro'
 import { LinearGradient } from 'expo-linear-gradient'
 import { isNonEmptyString, isOneOf } from 'narrowland'
 import { useState } from 'react'
@@ -73,6 +74,8 @@ export function FeedbackOverlay({
   score: number
   onClose: () => void
 }) {
+  // `t` rather than <Trans>: a TextInput placeholder takes a string, not a node.
+  const { t } = useLingui()
   const { colorScheme } = useTheme()
   const dotColor = colorScheme === 'dark' ? '#2A2B44' : '#D4D0C8'
   const modeColor = MODE_GRADIENT[gameMode][0]
@@ -136,7 +139,7 @@ export function FeedbackOverlay({
                   className="font-mono text-[11px] font-bold tracking-[2px]"
                   style={{ color: modeColor }}
                 >
-                  FEEDBACK
+                  <Trans>FEEDBACK</Trans>
                 </Text>
               </View>
               <MenuButton
@@ -154,14 +157,16 @@ export function FeedbackOverlay({
                   selectable={false}
                   className="mb-2 font-mono text-[16px] font-black tracking-[2px] text-primary"
                 >
-                  THANK YOU
+                  <Trans>THANK YOU</Trans>
                 </Text>
                 <Text
                   selectable={false}
                   className="mb-6 font-mono text-[12px] leading-[19px] text-dim"
                 >
-                  It went straight to the person who makes this. No reply to expect — but
-                  it is read.
+                  <Trans>
+                    It went straight to the person who makes this. No reply to expect —
+                    but it is read.
+                  </Trans>
                 </Text>
                 <Pressable
                   onPress={close}
@@ -181,8 +186,10 @@ export function FeedbackOverlay({
                   selectable={false}
                   className="mb-4 font-mono text-[11px] leading-[18px] text-dim"
                 >
-                  Anything at all — what broke, what annoyed you, what you wish it did.
-                  The mode, difficulty and score you are on go with it.
+                  <Trans>
+                    Anything at all — what broke, what annoyed you, what you wish it did.
+                    The mode, difficulty and score you are on go with it.
+                  </Trans>
                 </Text>
 
                 <TextInput
@@ -191,7 +198,7 @@ export function FeedbackOverlay({
                   multiline
                   editable={status !== 'sending'}
                   maxLength={MAX_FEEDBACK_LENGTH}
-                  placeholder="Type here"
+                  placeholder={t`Type here`}
                   placeholderTextColor={colorScheme === 'dark' ? '#504e6e' : '#aaa69e'}
                   className="mb-4 h-32 w-full rounded-2xl border border-muted bg-card p-3 font-mono leading-[18px] text-primary"
                   // Mobile Safari zooms the whole page in on focus for any input under

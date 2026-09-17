@@ -1,3 +1,4 @@
+import { Trans } from '@lingui/react/macro'
 import { LinearGradient } from 'expo-linear-gradient'
 import { useState } from 'react'
 import { Pressable, Text } from 'react-native'
@@ -43,13 +44,13 @@ export function JoinRoomOverlay({
         selectable={false}
         className="mb-1 font-mono text-[20px] font-black tracking-[3px] text-primary"
       >
-        ENTER ROOM CODE
+        <Trans>ENTER ROOM CODE</Trans>
       </Text>
       <Text
         selectable={false}
         className="mb-6 text-center font-mono text-[11px] font-bold tracking-[0.5px] text-dim"
       >
-        Ask whoever created the room for their 4-digit code.
+        <Trans>Ask whoever created the room for their 4-digit code.</Trans>
       </Text>
 
       <GameCodeInput
@@ -77,7 +78,7 @@ export function JoinRoomOverlay({
             selectable={false}
             className="font-mono text-[13px] font-black tracking-[2px] text-on-strong"
           >
-            JOIN ROOM
+            <Trans>JOIN ROOM</Trans>
           </Text>
         </LinearGradient>
       </Pressable>
@@ -87,7 +88,7 @@ export function JoinRoomOverlay({
           selectable={false}
           className="font-mono text-[10px] font-bold tracking-[1.8px] text-dim underline"
         >
-          CANCEL
+          <Trans>CANCEL</Trans>
         </Text>
       </Pressable>
     </Screen>

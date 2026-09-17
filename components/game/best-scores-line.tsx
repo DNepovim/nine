@@ -1,3 +1,4 @@
+import { Trans } from '@lingui/react/macro'
 import { useFonts } from 'expo-font'
 import { useCallback, useEffect, useState } from 'react'
 import { Text, View } from 'react-native'
@@ -243,7 +244,7 @@ export function BestScoresLine({
               selectable={false}
               className="font-mono text-[8px] font-bold tracking-[1px] text-dim"
             >
-              — OFFLINE —
+              <Trans>— OFFLINE —</Trans>
             </Text>
           )}
         </Animated.View>

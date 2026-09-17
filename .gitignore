@@ -45,3 +45,6 @@ app-example
 
 # Supabase CLI
 supabase/.temp/
+
+# Compiled Lingui catalogs (the .po files beside them are the source)
+locales/*/messages.ts

@@ -1,3 +1,4 @@
+import { Trans } from '@lingui/react/macro'
 import { Pressable, Text, View } from 'react-native'
 
 // What a render crash leaves on screen instead of a blank page. Deliberately built from
@@ -10,14 +11,16 @@ export function CrashScreen({ onRetry }: { onRetry: () => void }) {
         selectable={false}
         className="mb-3 font-mono text-[20px] font-black tracking-[3px] text-primary"
       >
-        SOMETHING BROKE
+        <Trans>SOMETHING BROKE</Trans>
       </Text>
       <Text
         selectable={false}
         className="mb-8 text-center font-mono text-[11px] leading-[18px] text-dim"
       >
-        Not your fault. The error has been reported — try again, and if it keeps
-        happening, reload the page.
+        <Trans>
+          Not your fault. The error has been reported — try again, and if it keeps
+          happening, reload the page.
+        </Trans>
       </Text>
       <Pressable
         onPress={onRetry}
@@ -27,7 +30,7 @@ export function CrashScreen({ onRetry }: { onRetry: () => void }) {
           selectable={false}
           className="font-mono text-[13px] font-black tracking-[2px] text-on-strong"
         >
-          TRY AGAIN
+          <Trans>TRY AGAIN</Trans>
         </Text>
       </Pressable>
     </View>

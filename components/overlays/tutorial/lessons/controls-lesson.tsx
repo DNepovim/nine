@@ -1,3 +1,4 @@
+import { Trans } from '@lingui/react/macro'
 import { useEffect, useState } from 'react'
 import { View } from 'react-native'
 
@@ -72,8 +73,8 @@ export function ControlsLesson({ isDark, onComplete }: LessonProps) {
 
   return (
     <View className="flex-1">
-      <LessonHeading title="CONTROLS" color={COLOR}>
-        {'Three moves, one button. Try them in order.'}
+      <LessonHeading title={<Trans>CONTROLS</Trans>} color={COLOR}>
+        <Trans>Three moves, one button. Try them in order.</Trans>
       </LessonHeading>
 
       <TaskPrompt

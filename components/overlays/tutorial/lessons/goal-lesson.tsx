@@ -1,3 +1,4 @@
+import { Trans } from '@lingui/react/macro'
 import { useEffect, useState } from 'react'
 import { Text, View } from 'react-native'
 import Animated, {
@@ -92,7 +93,7 @@ export function GoalLesson({ isDark, onComplete, onDismiss }: LessonProps) {
                 className="mt-4 text-center font-mono text-[19px] font-black tracking-[1px]"
                 style={{ color: COLOR }}
               >
-                {'But how?'}
+                <Trans>But how?</Trans>
               </Text>
             </Animated.View>
           </View>

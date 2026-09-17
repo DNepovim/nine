@@ -1,3 +1,4 @@
+import { Trans } from '@lingui/react/macro'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Text, View } from 'react-native'
 import { Gesture, GestureDetector } from 'react-native-gesture-handler'
@@ -190,7 +191,7 @@ export function ModeTips() {
             selectable={false}
             className="mb-1 text-center font-mono text-[9px] font-bold tracking-[2px] text-dim"
           >
-            TIP
+            <Trans>TIP</Trans>
           </Text>
 
           {/* overflow-hidden keeps the departing tip inside the card rather than

@@ -1,3 +1,4 @@
+import { Trans } from '@lingui/react/macro'
 import { useFonts } from 'expo-font'
 import { LinearGradient } from 'expo-linear-gradient'
 import { useCallback, useEffect, useRef, useState } from 'react'
@@ -265,14 +266,14 @@ export function HighScores({
           className="flex-1 font-mono text-[8px] font-bold tracking-[1px] text-dim"
           style={glow}
         >
-          NICK
+          <Trans>NICK</Trans>
         </Text>
         <Text
           selectable={false}
           className="font-mono text-[8px] font-bold tracking-[1px] text-dim"
           style={glow}
         >
-          SCORE
+          <Trans>SCORE</Trans>
         </Text>
       </View>
 

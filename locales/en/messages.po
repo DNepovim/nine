@@ -1,0 +1,358 @@
+msgid ""
+msgstr ""
+"POT-Creation-Date: 2026-09-16 16:58+0200\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: @lingui/cli\n"
+"Language: en\n"
+"Project-Id-Version: \n"
+"Report-Msgid-Bugs-To: \n"
+"PO-Revision-Date: \n"
+"Last-Translator: \n"
+"Language-Team: \n"
+"Plural-Forms: \n"
+
+#: components/overlays/tab-panel.tsx:99
+msgid "— NO SCORES YET —"
+msgstr "— NO SCORES YET —"
+
+#: components/game/best-scores-line.tsx:247
+msgid "— OFFLINE —"
+msgstr "— OFFLINE —"
+
+#: components/overlays/tab-panel.tsx:81
+msgid "— UNAVAILABLE —"
+msgstr "— UNAVAILABLE —"
+
+#: components/guide/mode-card.tsx:32
+msgid "∞ LIVES"
+msgstr "∞ LIVES"
+
+#: components/overlays/tutorial/lessons/weights-lesson.tsx:131
+msgid "A button’s weight is its row × its column — the small print above it."
+msgstr "A button’s weight is its row × its column — the small print above it."
+
+#: components/game/trainee-stats.tsx:55
+msgid "ACCURACY"
+msgstr "ACCURACY"
+
+#: components/overlays/install-overlay.tsx:151
+msgid "ADD TO HOME SCREEN"
+msgstr "ADD TO HOME SCREEN"
+
+#: components/overlays/publish-scores-button.tsx:31
+msgid "ADD YOUR NICKNAME"
+msgstr "ADD YOUR NICKNAME"
+
+#: components/overlays/advanced-options-overlay.tsx:74
+msgid "ADVANCED"
+msgstr "ADVANCED"
+
+#: components/overlays/feedback-overlay.tsx:189
+msgid "Anything at all — what broke, what annoyed you, what you wish it did. The mode, difficulty and score you are on go with it."
+msgstr "Anything at all — what broke, what annoyed you, what you wish it did. The mode, difficulty and score you are on go with it."
+
+#: components/overlays/join-room-overlay.tsx:53
+msgid "Ask whoever created the room for their 4-digit code."
+msgstr "Ask whoever created the room for their 4-digit code."
+
+#: components/overlays/tutorial/tutorial-footer.tsx:53
+#: components/overlays/whats-new-overlay.tsx:142
+msgid "BACK"
+msgstr "BACK"
+
+#: components/overlays/tutorial/lessons/goal-lesson.tsx:96
+msgid "But how?"
+msgstr "But how?"
+
+#: components/overlays/join-room-overlay.tsx:91
+#: components/overlays/multiplayer-waiting.tsx:237
+msgid "CANCEL"
+msgstr "CANCEL"
+
+#: components/overlays/nickname-modal.tsx:68
+msgid "CHOOSE A NICKNAME"
+msgstr "CHOOSE A NICKNAME"
+
+#: components/overlays/install-steps.tsx:25
+msgid "Choose Add to Home Screen"
+msgstr "Choose Add to Home Screen"
+
+#: components/overlays/tutorial/lessons/strategy-lesson.tsx:95
+msgid "COARSE, THEN FINE"
+msgstr "COARSE, THEN FINE"
+
+#: components/overlays/tutorial/lessons/weights-lesson.tsx:174
+msgid "COLUMN"
+msgstr "COLUMN"
+
+#: components/overlays/menu-overlay.tsx:340
+msgid "CONNECT TO THE INTERNET TO PLAY WITH FRIENDS"
+msgstr "CONNECT TO THE INTERNET TO PLAY WITH FRIENDS"
+
+#: components/overlays/multiplayer-menu.tsx:43
+#: components/overlays/paused-overlay.tsx:127
+msgid "CONTINUE"
+msgstr "CONTINUE"
+
+#: components/overlays/tutorial/goal-hit-popup.tsx:41
+msgid "CONTINUE TUTORIAL"
+msgstr "CONTINUE TUTORIAL"
+
+#: components/overlays/tutorial/lessons/controls-lesson.tsx:76
+msgid "CONTROLS"
+msgstr "CONTROLS"
+
+#: components/overlays/menu-overlay.tsx:302
+msgid "CREATE ROOM"
+msgstr "CREATE ROOM"
+
+#: components/overlays/advanced-options-overlay.tsx:80
+msgid "Display value × row × column"
+msgstr "Display value × row × column"
+
+#: components/overlays/advanced-options-overlay.tsx:140
+#: components/overlays/news-archive-overlay.tsx:49
+msgid "DONE"
+msgstr "DONE"
+
+#: components/overlays/nickname-modal.tsx:83
+msgid "e.g. ACE_9"
+msgstr "e.g. ACE_9"
+
+#: components/overlays/paused-overlay.tsx:139
+msgid "END RUN"
+msgstr "END RUN"
+
+#: components/overlays/join-room-overlay.tsx:47
+msgid "ENTER ROOM CODE"
+msgstr "ENTER ROOM CODE"
+
+#: components/overlays/news-archive-overlay.tsx:25
+msgid "EVERYTHING THAT’S CHANGED"
+msgstr "EVERYTHING THAT’S CHANGED"
+
+#: components/overlays/feedback-overlay.tsx:142
+msgid "FEEDBACK"
+msgstr "FEEDBACK"
+
+#: components/overlays/multiplayer-waiting.tsx:94
+msgid "GAME CODE"
+msgstr "GAME CODE"
+
+#: components/overlays/tutorial/lessons/strategy-lesson.tsx:96
+msgid "Heavy buttons cover the distance. Light buttons land the exact number."
+msgstr "Heavy buttons cover the distance. Light buttons land the exact number."
+
+#: components/game/trainee-stats.tsx:53
+msgid "HITS"
+msgstr "HITS"
+
+#: components/overlays/game-over-overlay.tsx:291
+msgid "HOME"
+msgstr "HOME"
+
+#: components/overlays/menu-overlay.tsx:424
+msgid "HOW TO PLAY"
+msgstr "HOW TO PLAY"
+
+#: components/overlays/install-overlay.tsx:127
+msgid "INSTALL"
+msgstr "INSTALL"
+
+#: components/overlays/feedback-overlay.tsx:166
+msgid "It went straight to the person who makes this. No reply to expect — but it is read."
+msgstr "It went straight to the person who makes this. No reply to expect — but it is read."
+
+#: components/overlays/join-room-overlay.tsx:81
+#: components/overlays/menu-overlay.tsx:320
+msgid "JOIN ROOM"
+msgstr "JOIN ROOM"
+
+#: components/overlays/game-code-input.tsx:102
+msgid "JOIN WITH CODE"
+msgstr "JOIN WITH CODE"
+
+#: components/overlays/advanced-options-overlay.tsx:101
+msgid "LANGUAGE"
+msgstr "LANGUAGE"
+
+#: components/overlays/multiplayer-menu.tsx:53
+msgid "LEAVE GAME"
+msgstr "LEAVE GAME"
+
+#: components/overlays/tutorial/lessons/modes-lesson.tsx:139
+msgid "MODES"
+msgstr "MODES"
+
+#: components/game/multiplayer-game.tsx:157
+msgid "MULTIPLAYER"
+msgstr "MULTIPLAYER"
+
+#: components/overlays/tutorial/goal-hit-popup.tsx:24
+msgid "NICE HIT"
+msgstr "NICE HIT"
+
+#: components/overlays/high-scores.tsx:269
+msgid "NICK"
+msgstr "NICK"
+
+#: components/game/multiplayer-game.tsx:166
+msgid "NINE"
+msgstr "NINE"
+
+#: components/crash-screen.tsx:20
+msgid "Not your fault. The error has been reported — try again, and if it keeps happening, reload the page."
+msgstr "Not your fault. The error has been reported — try again, and if it keeps happening, reload the page."
+
+#: components/overlays/news-archive-overlay.tsx:35
+msgid "Nothing announced yet."
+msgstr "Nothing announced yet."
+
+#: components/overlays/menu-overlay.tsx:390
+#: components/overlays/paused-overlay.tsx:150
+msgid "OPTIONS"
+msgstr "OPTIONS"
+
+#: components/overlays/game-over-overlay.tsx:255
+#: components/overlays/multiplayer-game-over.tsx:190
+msgid "PLAY AGAIN"
+msgstr "PLAY AGAIN"
+
+#: components/overlays/menu-overlay.tsx:376
+msgid "PLAY GAME"
+msgstr "PLAY GAME"
+
+#: components/overlays/multiplayer-waiting.tsx:169
+msgid "PLAYERS"
+msgstr "PLAYERS"
+
+#: components/overlays/tutorial/lessons/weights-lesson.tsx:130
+msgid "POSITION IS POWER"
+msgstr "POSITION IS POWER"
+
+#: components/overlays/multiplayer-game-over.tsx:212
+msgid "READY"
+msgstr "READY"
+
+#: components/overlays/multiplayer-game-over.tsx:149
+msgid "RESULTS"
+msgstr "RESULTS"
+
+#: components/overlays/tutorial/lessons/weights-lesson.tsx:158
+msgid "ROW"
+msgstr "ROW"
+
+#: components/overlays/tutorial/lessons/modes-lesson.tsx:140
+msgid "Same grid, different pressure. Swipe through the three."
+msgstr "Same grid, different pressure. Swipe through the three."
+
+#: components/overlays/high-scores.tsx:276
+msgid "SCORE"
+msgstr "SCORE"
+
+#: components/overlays/menu-overlay.tsx:413
+#: components/overlays/multiplayer-waiting.tsx:125
+msgid "SHARE"
+msgstr "SHARE"
+
+#: components/overlays/advanced-options-overlay.tsx:79
+msgid "SHOW SUM IN BUTTONS"
+msgstr "SHOW SUM IN BUTTONS"
+
+#: components/overlays/nickname-modal.tsx:112
+msgid "SKIP"
+msgstr "SKIP"
+
+#: components/overlays/tutorial/goal-hit-popup.tsx:51
+msgid "SKIP TUTORIAL"
+msgstr "SKIP TUTORIAL"
+
+#: components/crash-screen.tsx:14
+msgid "SOMETHING BROKE"
+msgstr "SOMETHING BROKE"
+
+#: components/game/trainee-stats.tsx:59
+msgid "SPEED"
+msgstr "SPEED"
+
+#: components/overlays/multiplayer-waiting.tsx:214
+#: components/overlays/step-up-overlay.tsx:85
+msgid "START GAME"
+msgstr "START GAME"
+
+#: components/overlays/tutorial/lessons/swipe-lesson.tsx:94
+msgid "SWIPE SHORTCUTS"
+msgstr "SWIPE SHORTCUTS"
+
+#: components/feedback-bookmark.tsx:149
+msgid "TELL US"
+msgstr "TELL US"
+
+#: components/overlays/feedback-overlay.tsx:160
+msgid "THANK YOU"
+msgstr "THANK YOU"
+
+#: components/overlays/advanced-options-overlay.tsx:90
+msgid "THEME"
+msgstr "THEME"
+
+#: components/overlays/step-up-overlay.tsx:64
+msgid "Three lives, and every score reaches the board."
+msgstr "Three lives, and every score reaches the board."
+
+#: components/overlays/tutorial/lessons/controls-lesson.tsx:77
+msgid "Three moves, one button. Try them in order."
+msgstr "Three moves, one button. Try them in order."
+
+#: components/overlays/mode-tips.tsx:194
+msgid "TIP"
+msgstr "TIP"
+
+#: components/overlays/publish-scores-button.tsx:39
+msgid "TO PUBLISH YOUR BESTS"
+msgstr "TO PUBLISH YOUR BESTS"
+
+#: components/crash-screen.tsx:33
+msgid "TRY AGAIN"
+msgstr "TRY AGAIN"
+
+#: components/overlays/step-up-overlay.tsx:100
+msgid "TRY ANOTHER MODE"
+msgstr "TRY ANOTHER MODE"
+
+#: components/overlays/feedback-overlay.tsx:201
+msgid "Type here"
+msgstr "Type here"
+
+#: components/overlays/tutorial/lessons/weights-lesson.tsx:190
+msgid "VALUE"
+msgstr "VALUE"
+
+#: components/overlays/player-tile.tsx:92
+msgid "WAITING"
+msgstr "WAITING"
+
+#: components/overlays/multiplayer-waiting.tsx:227
+msgid "WAITING FOR HOST"
+msgstr "WAITING FOR HOST"
+
+#: components/overlays/multiplayer-game-over.tsx:223
+msgid "WAITING FOR OTHERS…"
+msgstr "WAITING FOR OTHERS…"
+
+#: components/overlays/advanced-options-overlay.tsx:116
+#: components/overlays/news-archive-overlay.tsx:19
+#: components/overlays/whats-new-overlay.tsx:91
+msgid "WHAT’S NEW"
+msgstr "WHAT’S NEW"
+
+#: components/overlays/menu-overlay.tsx:334
+#: components/overlays/offline-notice.tsx:17
+msgid "YOU'RE OFFLINE"
+msgstr "YOU'RE OFFLINE"
+
+#: components/overlays/nickname-modal.tsx:74
+msgid "Your name appears on the leaderboard."
+msgstr "Your name appears on the leaderboard."

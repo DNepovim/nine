@@ -24,6 +24,10 @@ jobs:
     steps:
       - uses: eas/checkout
       - uses: eas/install_node_modules
+      - name: Compile message catalogs
+        # Generated output, not committed — knip and tsc both read them, so this
+        # has to run before any gate that resolves imports.
+        run: pnpm i18n:compile
       - name: Lint (eslint)
         run: pnpm lint
       - name: Format (prettier)

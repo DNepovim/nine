@@ -1,3 +1,4 @@
+import { Trans } from '@lingui/react/macro'
 import { useEffect, useState } from 'react'
 import { Text, View } from 'react-native'
 
@@ -91,8 +92,10 @@ export function StrategyLesson({ isDark, onComplete }: LessonProps) {
 
   return (
     <View className="flex-1">
-      <LessonHeading title="COARSE, THEN FINE" color={COLOR}>
-        {'Heavy buttons cover the distance. Light buttons land the exact number.'}
+      <LessonHeading title={<Trans>COARSE, THEN FINE</Trans>} color={COLOR}>
+        <Trans>
+          Heavy buttons cover the distance. Light buttons land the exact number.
+        </Trans>
       </LessonHeading>
 
       <TaskPrompt text={prompt()} done={hit} color={COLOR} />

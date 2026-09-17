@@ -1,3 +1,4 @@
+import { Trans } from '@lingui/react/macro'
 import { useEffect, useRef, useState } from 'react'
 import {
   Pressable,
@@ -135,8 +136,8 @@ export function ModesLesson() {
 
   return (
     <View className="flex-1">
-      <LessonHeading title="MODES" color={COLOR}>
-        {'Same grid, different pressure. Swipe through the three.'}
+      <LessonHeading title={<Trans>MODES</Trans>} color={COLOR}>
+        <Trans>Same grid, different pressure. Swipe through the three.</Trans>
       </LessonHeading>
 
       {/* Not inside a flex-1 parent: a horizontal ScrollView would stretch to fill

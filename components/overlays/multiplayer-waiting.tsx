@@ -1,4 +1,5 @@
 import { Ionicons } from '@expo/vector-icons'
+import { Trans } from '@lingui/react/macro'
 import * as Clipboard from 'expo-clipboard'
 import { LinearGradient } from 'expo-linear-gradient'
 import { isOneOf } from 'narrowland'
@@ -90,7 +91,7 @@ export function MultiplayerWaiting({
             selectable={false}
             className="font-mono text-[9px] font-bold tracking-[3px] text-dim"
           >
-            GAME CODE
+            <Trans>GAME CODE</Trans>
           </Text>
           <Text
             selectable={false}
@@ -121,7 +122,7 @@ export function MultiplayerWaiting({
                   selectable={false}
                   className="font-mono text-[10px] font-bold tracking-[1.8px] text-dim"
                 >
-                  SHARE
+                  <Trans>SHARE</Trans>
                 </Text>
               </View>
             </Pressable>
@@ -165,7 +166,7 @@ export function MultiplayerWaiting({
               selectable={false}
               className="font-mono text-[9px] font-bold tracking-[2px] text-dim"
             >
-              PLAYERS
+              <Trans>PLAYERS</Trans>
             </Text>
             <Text
               selectable={false}
@@ -210,7 +211,7 @@ export function MultiplayerWaiting({
                   selectable={false}
                   className="font-mono text-[13px] font-black tracking-[2px] text-on-strong"
                 >
-                  START GAME
+                  <Trans>START GAME</Trans>
                 </Text>
               </LinearGradient>
             </Pressable>
@@ -223,7 +224,7 @@ export function MultiplayerWaiting({
                 selectable={false}
                 className="font-mono text-[9px] font-bold tracking-[2px] text-dim"
               >
-                WAITING FOR HOST
+                <Trans>WAITING FOR HOST</Trans>
               </Text>
             </View>
           )}
@@ -233,7 +234,7 @@ export function MultiplayerWaiting({
               selectable={false}
               className="font-mono text-[10px] font-bold tracking-[1.8px] text-dim underline"
             >
-              CANCEL
+              <Trans>CANCEL</Trans>
             </Text>
           </Pressable>
         </View>

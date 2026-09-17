@@ -1,4 +1,5 @@
 import { Ionicons } from '@expo/vector-icons'
+import { Trans } from '@lingui/react/macro'
 import { LinearGradient } from 'expo-linear-gradient'
 import { isOneOf } from 'narrowland'
 import { Pressable, Text, View } from 'react-native'
@@ -123,7 +124,7 @@ export function PausedOverlay({
                   selectable={false}
                   className="font-mono text-[13px] font-black tracking-[2px] text-on-strong"
                 >
-                  CONTINUE
+                  <Trans>CONTINUE</Trans>
                 </Text>
               </LinearGradient>
             </Pressable>
@@ -135,7 +136,7 @@ export function PausedOverlay({
                 selectable={false}
                 className="font-mono text-[13px] font-black tracking-[2px] text-primary"
               >
-                END RUN
+                <Trans>END RUN</Trans>
               </Text>
             </Pressable>
           </View>
@@ -146,7 +147,7 @@ export function PausedOverlay({
                 selectable={false}
                 className="font-mono text-[10px] font-bold tracking-[1.8px] text-dim"
               >
-                OPTIONS
+                <Trans>OPTIONS</Trans>
               </Text>
             </View>
           </Pressable>

@@ -1,4 +1,5 @@
 import { Ionicons } from '@expo/vector-icons'
+import { Trans } from '@lingui/react/macro'
 import { LinearGradient } from 'expo-linear-gradient'
 import { useState } from 'react'
 import { Pressable, ScrollView, Text, View } from 'react-native'
@@ -87,7 +88,7 @@ export function WhatsNewOverlay({
                 selectable={false}
                 className="font-mono text-[11px] font-bold tracking-[2px] text-dim"
               >
-                WHAT’S NEW
+                <Trans>WHAT’S NEW</Trans>
               </Text>
               {/* The same 5-dot cross the pause screen closes with, unlabelled
                   — a dialog header already reads as one. */}
@@ -138,7 +139,7 @@ export function WhatsNewOverlay({
                     selectable={false}
                     className="font-mono text-[12px] font-black tracking-[1.5px] text-dim"
                   >
-                    BACK
+                    <Trans>BACK</Trans>
                   </Text>
                 </Pressable>
               )}

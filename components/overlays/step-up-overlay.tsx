@@ -1,4 +1,5 @@
 import { Ionicons } from '@expo/vector-icons'
+import { Trans } from '@lingui/react/macro'
 import { LinearGradient } from 'expo-linear-gradient'
 import { Pressable, Text, View } from 'react-native'
 
@@ -60,7 +61,7 @@ export function StepUpOverlay({
           selectable={false}
           className="mb-6 max-w-3xs text-center font-mono text-[12px] leading-[18px] text-dim"
         >
-          Three lives, and every score reaches the board.
+          <Trans>Three lives, and every score reaches the board.</Trans>
         </Text>
 
         <BoardBadges gameMode={gameMode} difficulty={difficulty} />
@@ -81,7 +82,7 @@ export function StepUpOverlay({
                 selectable={false}
                 className="font-mono text-[13px] font-black tracking-[2px] text-on-strong"
               >
-                START GAME
+                <Trans>START GAME</Trans>
               </Text>
             </LinearGradient>
           </Pressable>
@@ -96,7 +97,7 @@ export function StepUpOverlay({
                 selectable={false}
                 className="font-mono text-[10px] font-bold tracking-[1.8px] text-dim"
               >
-                TRY ANOTHER MODE
+                <Trans>TRY ANOTHER MODE</Trans>
               </Text>
             </View>
           </Pressable>

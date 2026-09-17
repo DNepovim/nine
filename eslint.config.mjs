@@ -15,6 +15,8 @@ export default defineConfig(
     '*.config.js',
     '*.config.mjs',
     'workbox-config.js',
+    // Compiled message catalogs: build output of `lingui compile`, never edited.
+    'locales/*/messages.ts',
   ]),
   eslint.configs.recommended,
   tseslint.configs.strictTypeChecked,

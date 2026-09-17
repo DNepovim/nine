@@ -1,3 +1,4 @@
+import { Trans } from '@lingui/react/macro'
 import { LinearGradient } from 'expo-linear-gradient'
 import { Pressable, Text, View } from 'react-native'
 
@@ -39,7 +40,7 @@ export function MultiplayerMenu({
               selectable={false}
               className="font-mono text-[13px] font-black tracking-[2px] text-on-strong"
             >
-              CONTINUE
+              <Trans>CONTINUE</Trans>
             </Text>
           </LinearGradient>
         </Pressable>
@@ -49,7 +50,7 @@ export function MultiplayerMenu({
             selectable={false}
             className="font-mono text-[10px] font-bold tracking-[1.8px] text-dim underline"
           >
-            LEAVE GAME
+            <Trans>LEAVE GAME</Trans>
           </Text>
         </Pressable>
       </View>

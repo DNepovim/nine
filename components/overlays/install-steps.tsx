@@ -1,4 +1,5 @@
 import { Ionicons } from '@expo/vector-icons'
+import { Trans } from '@lingui/react/macro'
 import { View } from 'react-native'
 
 import { InstallStep } from '@/components/overlays/install-step'
@@ -21,7 +22,7 @@ export function InstallSteps({ stepOne }: { stepOne: string }) {
         <Ionicons name="share-outline" size={GLYPH} color={APP_VIOLET} />
       </InstallStep>
 
-      <InstallStep step={2} label="Choose Add to Home Screen">
+      <InstallStep step={2} label={<Trans>Choose Add to Home Screen</Trans>}>
         {/* Safari's square-plus, which Ionicons has no equivalent of — so the
             square is a border and the plus sits inside it. */}
         <View

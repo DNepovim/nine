@@ -1,4 +1,5 @@
 import { AntDesign } from '@expo/vector-icons'
+import { Trans } from '@lingui/react/macro'
 import { LinearGradient } from 'expo-linear-gradient'
 import { Text, View } from 'react-native'
 
@@ -28,7 +29,7 @@ export function ModeCard({ mode, facts }: { mode: Mode; facts: string[] }) {
               selectable={false}
               className="font-mono text-[10px] font-bold tracking-[1px] text-on-strong"
             >
-              ∞ LIVES
+              <Trans>∞ LIVES</Trans>
             </Text>
           ) : (
             Array.from({ length: MODES[mode].lives }).map((_, i) => (

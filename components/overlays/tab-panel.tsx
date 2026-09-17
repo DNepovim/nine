@@ -1,3 +1,4 @@
+import { Trans } from '@lingui/react/macro'
 import { isEmptyArray } from 'narrowland'
 import { Text, View } from 'react-native'
 
@@ -77,7 +78,7 @@ export function TabPanel({
     return (
       <View style={{ width }} className="items-center py-4">
         <Text selectable={false} className="font-mono text-[9px] font-bold text-dim">
-          — UNAVAILABLE —
+          <Trans>— UNAVAILABLE —</Trans>
         </Text>
       </View>
     )
@@ -95,7 +96,7 @@ export function TabPanel({
     return (
       <View style={{ width }} className="items-center py-4">
         <Text selectable={false} className="font-mono text-[9px] font-bold text-dim">
-          — NO SCORES YET —
+          <Trans>— NO SCORES YET —</Trans>
         </Text>
       </View>
     )
