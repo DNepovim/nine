@@ -1,4 +1,4 @@
-import { Trans } from '@lingui/react/macro'
+import { Trans, useLingui } from '@lingui/react/macro'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Pressable, Text, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
@@ -61,6 +61,7 @@ export function MultiplayerGame({
   onTargetExpire: () => void
   onMenu: () => void
 }) {
+  const { t } = useLingui()
   const insets = useSafeAreaInsets()
   const [dialSize, setDialSize] = useState(0)
 
@@ -148,7 +149,7 @@ export function MultiplayerGame({
             className="font-mono text-[13px] font-black tracking-[2px]"
             style={{ color: myGradient[0] }}
           >
-            {MODES[mode].label}
+            {t(MODES[mode].label)}
           </Text>
           <Text
             selectable={false}
@@ -163,7 +164,8 @@ export function MultiplayerGame({
             className="font-mono text-[24px] font-black tracking-[8px]"
             style={{ color: myGradient[1] }}
           >
-            <Trans>NINE</Trans>
+            {/* The game's name, the one string that is the same in every language. */}
+            NINE
           </Text>
           <Text
             selectable={false}

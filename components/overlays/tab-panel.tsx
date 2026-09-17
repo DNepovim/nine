@@ -1,4 +1,5 @@
-import { Trans } from '@lingui/react/macro'
+import { msg } from '@lingui/core/macro'
+import { Trans, useLingui } from '@lingui/react/macro'
 import { isEmptyArray } from 'narrowland'
 import { Text, View } from 'react-native'
 
@@ -11,12 +12,12 @@ import { ScoreRow } from './score-row'
 import { SkeletonRow } from './skeleton-row'
 
 // What the local row is called before it has a name on the server.
-const ANONYMOUS_LABEL = 'YOU'
+const ANONYMOUS_LABEL = msg`YOU`
 
 // Why the local row is not on the board — a missing nickname is the player's to fix,
 // a missing connection is not.
-const UNPUBLISHED_NOTE = 'NOT PUBLISHED'
-const UNSYNCED_NOTE = 'NOT SYNCED'
+const UNPUBLISHED_NOTE = msg`NOT PUBLISHED`
+const UNSYNCED_NOTE = msg`NOT SYNCED`
 
 // What the game-over screen has room for.
 const COMPACT_ROWS = 3
@@ -45,6 +46,7 @@ export function TabPanel({
   // dots says nothing and costs the screen two lines it does not have.
   compact?: boolean
 }) {
+  const { t } = useLingui()
   const champions = useChampionsContext()
 
   if (data.loading) {
@@ -62,8 +64,8 @@ export function TabPanel({
   const unpublished =
     data.unpublished === null
       ? null
-      : { score: data.unpublished, label: nickname ?? ANONYMOUS_LABEL }
-  const note = nickname === null ? UNPUBLISHED_NOTE : UNSYNCED_NOTE
+      : { score: data.unpublished, label: nickname ?? t(ANONYMOUS_LABEL) }
+  const note = nickname === null ? t(UNPUBLISHED_NOTE) : t(UNSYNCED_NOTE)
 
   // The board could not be read — offline, most likely. A record held on the device is
   // still the player's, so it stands on its own rather than vanishing with the board;

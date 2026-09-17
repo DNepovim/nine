@@ -1,4 +1,6 @@
-import { Trans } from '@lingui/react/macro'
+import type { MessageDescriptor } from '@lingui/core'
+import { msg } from '@lingui/core/macro'
+import { Trans, useLingui } from '@lingui/react/macro'
 import { useFonts } from 'expo-font'
 import { useCallback, useEffect, useState } from 'react'
 import { Text, View } from 'react-native'
@@ -27,11 +29,11 @@ type BestKey = 'you' | 'today' | 'week' | 'ever'
 type ShownBest = { key: BestKey; value: number; mine: boolean }
 
 const BEST_LABELS = {
-  you: 'YOU',
-  today: 'TODAY',
-  week: 'WEEK',
-  ever: 'EVER',
-} as const satisfies Record<BestKey, string>
+  you: msg`YOU`,
+  today: msg`TODAY`,
+  week: msg`WEEK`,
+  ever: msg`EVER`,
+} as const satisfies Record<BestKey, MessageDescriptor>
 
 // One step along the game spectrum per score, coolest to hottest: your own best,
 // then the day, the week, and all time.
@@ -110,6 +112,7 @@ export function BestScoresLine({
   weekIsMine: boolean
   everIsMine: boolean
 }) {
+  const { t } = useLingui()
   const { colorScheme } = useTheme()
   const online = useOnline()
   const [dsegLoaded] = useFonts({ DSEG7: DSEG7Font })
@@ -230,7 +233,7 @@ export function BestScoresLine({
           {shown.map(({ key, value, mine }) => (
             <BestScoreCell
               key={key}
-              label={BEST_LABELS[key]}
+              label={t(BEST_LABELS[key])}
               value={value}
               color={BEST_COLORS[key]}
               digitFont={digitFont}

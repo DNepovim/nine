@@ -1,4 +1,4 @@
-import { Trans } from '@lingui/react/macro'
+import { Trans, useLingui } from '@lingui/react/macro'
 import { useEffect, useRef, useState } from 'react'
 import {
   Pressable,
@@ -65,6 +65,7 @@ const MODE_FACTS = {
 // neighbour showing on either side rather than the row starting flush with one
 // card in full view. That slice is the "swipe for more" cue — no arrows needed.
 export function ModesLesson() {
+  const { t } = useLingui()
   const { width } = useViewport()
   const [index, setIndex] = useState(0)
   const scrollRef = useRef<ScrollView>(null)
@@ -201,7 +202,7 @@ export function ModesLesson() {
               )}
               style={i === index ? { color: COLOR } : undefined}
             >
-              {MODES[mode].label}
+              {t(MODES[mode].label)}
             </Text>
           </Pressable>
         ))}

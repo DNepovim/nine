@@ -1,5 +1,9 @@
 import { Ionicons } from '@expo/vector-icons'
+import type { MessageDescriptor } from '@lingui/core'
+import { msg } from '@lingui/core/macro'
+import { Trans, useLingui } from '@lingui/react/macro'
 import { LinearGradient } from 'expo-linear-gradient'
+import type { ReactNode } from 'react'
 import { useRef } from 'react'
 import { Pressable, ScrollView, Text, View } from 'react-native'
 import { Gesture, GestureDetector } from 'react-native-gesture-handler'
@@ -24,17 +28,20 @@ type IoniconName = keyof typeof Ionicons.glyphMap
 // list at the top and the headers down the page, so a section can never be listed and
 // missing — or present and unlisted. Colours step along the game scale.
 const SECTIONS = {
-  goal: { icon: 'flag', title: 'THE GOAL', color: GAME_SCALE[0] },
-  controls: { icon: 'hand-left', title: 'CONTROLS', color: GAME_SCALE[1] },
-  targets: { icon: 'timer', title: 'TARGETS & THE CLOCK', color: GAME_SCALE[1] },
-  modes: { icon: 'grid', title: 'MODES', color: GAME_SCALE[2] },
-  champions: { icon: 'ribbon', title: 'CHAMPIONS', color: GAME_SCALE[2] },
+  goal: { icon: 'flag', title: msg`THE GOAL`, color: GAME_SCALE[0] },
+  controls: { icon: 'hand-left', title: msg`CONTROLS`, color: GAME_SCALE[1] },
+  targets: { icon: 'timer', title: msg`TARGETS & THE CLOCK`, color: GAME_SCALE[1] },
+  modes: { icon: 'grid', title: msg`MODES`, color: GAME_SCALE[2] },
+  champions: { icon: 'ribbon', title: msg`CHAMPIONS`, color: GAME_SCALE[2] },
   // The one section that steps off the game scale, because achievements are the one
   // reward that is not a place on a board — the green says so before the words do.
-  achievements: { icon: 'trophy', title: 'ACHIEVEMENTS', color: ACHIEVEMENT_SCALE[3] },
-  multiplayer: { icon: 'people', title: 'MULTIPLAYER', color: GAME_SCALE[3] },
-  tips: { icon: 'bulb', title: 'TIPS & TRICKS', color: GAME_SCALE[4] },
-} as const satisfies Record<string, { icon: IoniconName; title: string; color: string }>
+  achievements: { icon: 'trophy', title: msg`ACHIEVEMENTS`, color: ACHIEVEMENT_SCALE[3] },
+  multiplayer: { icon: 'people', title: msg`MULTIPLAYER`, color: GAME_SCALE[3] },
+  tips: { icon: 'bulb', title: msg`TIPS & TRICKS`, color: GAME_SCALE[4] },
+} as const satisfies Record<
+  string,
+  { icon: IoniconName; title: MessageDescriptor; color: string }
+>
 
 type SectionKey = keyof typeof SECTIONS
 
@@ -71,6 +78,7 @@ function SectionHeader({
   // heights move with every copy edit.
   onMeasure: (section: SectionKey, y: number) => void
 }) {
+  const { t } = useLingui()
   const { icon, title, color } = SECTIONS[section]
   return (
     <View
@@ -89,7 +97,7 @@ function SectionHeader({
         selectable={false}
         className="font-mono text-[15px] font-black tracking-[2px] text-primary"
       >
-        {title}
+        {t(title)}
       </Text>
     </View>
   )
@@ -105,6 +113,7 @@ function SectionHeader({
 // again on arrival. The icons also do the separating that dots used to, one mark at
 // the start of every entry, so nothing sits between them but space.
 function Contents({ onJump }: { onJump: (section: SectionKey) => void }) {
+  const { t } = useLingui()
   return (
     <View className="mt-4 flex-row flex-wrap items-center gap-x-3.5 gap-y-2">
       {SECTION_ORDER.map((key) => (
@@ -122,7 +131,7 @@ function Contents({ onJump }: { onJump: (section: SectionKey) => void }) {
             className="font-mono text-[10px] font-bold tracking-[1.5px]"
             style={{ color: SECTIONS[key].color }}
           >
-            {SECTIONS[key].title}
+            {t(SECTIONS[key].title)}
           </Text>
         </Pressable>
       ))}
@@ -133,7 +142,7 @@ function Contents({ onJump }: { onJump: (section: SectionKey) => void }) {
 // Primary, not dim: this is the one screen a player reads rather than glances at, and
 // paragraphs of dim text at 12px asked too much of them. Dim stays for the labels and
 // captions around the graphics, where it separates aside from prose.
-function Body({ children }: { children: string }) {
+function Body({ children }: { children: ReactNode }) {
   return (
     <Text
       selectable={false}
@@ -148,7 +157,7 @@ function Card({ children }: { children: React.ReactNode }) {
   return <View className="mt-3 rounded-2xl bg-card p-4">{children}</View>
 }
 
-function Bullet({ color, children }: { color: string; children: string }) {
+function Bullet({ color, children }: { color: string; children: ReactNode }) {
   return (
     <View className="mt-2.5 flex-row gap-2.5">
       <View
@@ -218,7 +227,7 @@ function WeightGrid() {
         selectable={false}
         className="mt-1 font-mono text-[10px] font-bold tracking-[1px] text-dim"
       >
-        WEIGHT = ROW ORDER × COLUMN ORDER
+        <Trans>WEIGHT = ROW ORDER × COLUMN ORDER</Trans>
       </Text>
     </View>
   )
@@ -257,8 +266,9 @@ function ControlsDiagram() {
 }
 
 function ModeCard({ mode, facts }: { mode: Mode; facts: string[] }) {
+  const { t } = useLingui()
   const [from, to] = MODE_GRADIENT[mode]
-  const [line1, line2] = MODE_DESCRIPTIONS[mode].split('\n')
+  const [line1, line2] = t(MODE_DESCRIPTIONS[mode]).split('\n')
   return (
     <View className="mt-3 overflow-hidden rounded-2xl bg-card">
       <LinearGradient
@@ -271,7 +281,7 @@ function ModeCard({ mode, facts }: { mode: Mode; facts: string[] }) {
           selectable={false}
           className="font-mono text-[13px] font-black tracking-[2px] text-on-strong"
         >
-          {MODES[mode].label}
+          {t(MODES[mode].label)}
         </Text>
         <Ionicons name={MODE_ICONS[mode]} size={15} color="#FFFFFF" />
       </LinearGradient>
@@ -314,6 +324,7 @@ export function HowToPlayOverlay({
   onClose: () => void
   onStartTutorial: () => void
 }) {
+  const { t } = useLingui()
   const { colorScheme } = useTheme()
   const dotColor = colorScheme === 'dark' ? '#2A2B44' : '#D4D0C8'
 
@@ -363,13 +374,13 @@ export function HowToPlayOverlay({
             selectable={false}
             className="font-mono text-[22px] font-black tracking-[3px] text-primary"
           >
-            HOW TO PLAY
+            <Trans>HOW TO PLAY</Trans>
           </Text>
           <Text
             selectable={false}
             className="mt-1 font-mono text-[11px] font-bold tracking-[1px] text-dim"
           >
-            DIAL THE GRID · MATCH THE NUMBER
+            <Trans>DIAL THE GRID · MATCH THE NUMBER</Trans>
           </Text>
 
           {/* Hands-on tutorial — above the contents list because doing it beats reading
@@ -390,13 +401,13 @@ export function HowToPlayOverlay({
                 selectable={false}
                 className="font-mono text-[13px] font-black tracking-[1.5px] text-primary"
               >
-                PLAY THE TUTORIAL
+                <Trans>PLAY THE TUTORIAL</Trans>
               </Text>
               <Text
                 selectable={false}
                 className="mt-0.5 font-mono text-[11px] font-medium text-dim"
               >
-                Learn by doing — six quick, hands-on steps.
+                <Trans>Learn by doing — six quick, hands-on steps.</Trans>
               </Text>
             </View>
             <Ionicons name="chevron-forward" size={16} color={dotColor} />
@@ -407,17 +418,13 @@ export function HowToPlayOverlay({
           {/* Goal */}
           <SectionHeader section="goal" onMeasure={measure} />
           <Body>
-            {
-              'A glowing target number floats onto the board. Turn the nine dial buttons so the whole grid adds up to exactly that number, and the target pops — a hit.\n\nEvery button holds a digit 0–9, but where it sits decides how much it counts. Each button’s weight is its row order × its column order — rows numbered 1–3 top to bottom, columns 1–3 left to right — so it adds row × column × value to the total.'
-            }
+            {t`A glowing target number floats onto the board. Turn the nine dial buttons so the whole grid adds up to exactly that number, and the target pops — a hit.\n\nEvery button holds a digit 0–9, but where it sits decides how much it counts. Each button’s weight is its row order × its column order — rows numbered 1–3 top to bottom, columns 1–3 left to right — so it adds row × column × value to the total.`}
           </Body>
           <Card>
             <WeightGrid />
           </Card>
           <Body>
-            {
-              '\nSo the bottom-right button (row 3 × column 3 = 9) moves the total in big leaps, while the top-left (1 × 1 = 1) nudges it by exactly its digit — perfect for fine-tuning the last few points.'
-            }
+            {t`\nSo the bottom-right button (row 3 × column 3 = 9) moves the total in big leaps, while the top-left (1 × 1 = 1) nudges it by exactly its digit — perfect for fine-tuning the last few points.`}
           </Body>
 
           {/* Controls */}
@@ -426,143 +433,139 @@ export function HowToPlayOverlay({
             <ControlsDiagram />
           </Card>
           <Body>
-            {
-              '\nTap to count up — 9 wraps back to 0 — swipe down to step back one, and swipe left or right to jump straight to 0 or 9. Tip: turn on “Show sum in buttons” under Options to see each button’s live contribution.'
-            }
+            {t`\nTap to count up — 9 wraps back to 0 — swipe down to step back one, and swipe left or right to jump straight to 0 or 9. Tip: turn on “Show sum in buttons” under Options to see each button’s live contribution.`}
           </Body>
 
           {/* Targets & clock */}
           <SectionHeader section="targets" onMeasure={measure} />
           <Body>
-            {
-              'Each target carries a shrinking ring — its countdown. Land the sum before the ring empties. The colour behind the ring tells you the target’s hundreds at a glance: plain grey under 100, violet in the 100s, rose in the 200s, amber in the 300s — so 223 never passes for 123. Several targets can share the board at once (up to 3, or 4 on Extreme), and new ones keep arriving, so pick your order wisely. Both scored modes tighten as you go, in opposite ways. In Speed each new target arrives with a slightly shorter ring than the last. In Accuracy the ring never shrinks — you always get the full time to think — but targets start arriving closer together, so the board fills up around you. Either squeeze eases off as it goes, so a long run gets harder without ever running away from you.'
-            }
+            {t`Each target carries a shrinking ring — its countdown. Land the sum before the ring empties. The colour behind the ring tells you the target’s hundreds at a glance: plain grey under 100, violet in the 100s, rose in the 200s, amber in the 300s — so 223 never passes for 123. Several targets can share the board at once (up to 3, or 4 on Extreme), and new ones keep arriving, so pick your order wisely. Both scored modes tighten as you go, in opposite ways. In Speed each new target arrives with a slightly shorter ring than the last. In Accuracy the ring never shrinks — you always get the full time to think — but targets start arriving closer together, so the board fills up around you. Either squeeze eases off as it goes, so a long run gets harder without ever running away from you.`}
           </Body>
 
           {/* Modes — scoring and lives live here too: both only mean anything per
               mode, and as their own sections they repeated what the cards say. */}
           <SectionHeader section="modes" onMeasure={measure} />
           <Body>
-            {
-              'Same grid, different pressure. Difficulty (Easy / Hard / Extreme) tightens the clock and adds targets.\n\nA hit is worth up to 100 points, blended from two factors and weighted by the mode:'
-            }
+            {t`Same grid, different pressure. Difficulty (Easy / Hard / Extreme) tightens the clock and adds targets.\n\nA hit is worth up to 100 points, blended from two factors and weighted by the mode:`}
           </Body>
           <Card>
             <Bullet color={GAME_SCALE[0]}>
-              Accuracy — how close to the fewest possible moves you were.
+              <Trans>Accuracy — how close to the fewest possible moves you were.</Trans>
             </Bullet>
             <Bullet color={GAME_SCALE[3]}>
-              Speed — how much time was left on the ring. Land it with most of the ring
-              intact and it pays a bonus on top.
+              <Trans>
+                Speed — how much time was left on the ring. Land it with most of the ring
+                intact and it pays a bonus on top.
+              </Trans>
             </Bullet>
             <Bullet color={GAME_SCALE[4]}>
-              Streak — consecutive perfect plays multiply your points ×2 → ×4 → ×8. One
-              imperfect hit and you start again.
+              <Trans>
+                Streak — consecutive perfect plays multiply your points ×2 → ×4 → ×8. One
+                imperfect hit and you start again.
+              </Trans>
             </Bullet>
           </Card>
           <Body>
-            {
-              '\nAccuracy and Speed give you three hearts each, and lose one when a target’s ring runs out. All three gone ends the run. Trainee is unscored practice with unlimited lives, so take your time.'
-            }
+            {t`\nAccuracy and Speed give you three hearts each, and lose one when a target’s ring runs out. All three gone ends the run. Trainee is unscored practice with unlimited lives, so take your time.`}
           </Body>
           <ModeCard
             mode="trainee"
             facts={[
-              'Pure practice — no lives, no score, and a relaxed clock.',
-              'Buttons show their weight and max, so you can learn the math.',
-              'A coach line under the stat row says when a move was wasted, and what a hit cost.',
+              t`Pure practice — no lives, no score, and a relaxed clock.`,
+              t`Buttons show their weight and max, so you can learn the math.`,
+              t`A coach line under the stat row says when a move was wasted, and what a hit cost.`,
             ]}
           />
           <ModeCard
             mode="accuracy"
             facts={[
-              'Score rewards precision: solve each target in the fewest moves.',
-              'Waste too many moves on a hit and you lose a life — the bar is 25% accuracy on Easy, 20% on Hard, 15% on Extreme.',
-              'Let a target’s ring run out and you lose one too — precision still has a clock.',
-              'Matching every target in its optimal move count builds your streak.',
-              'Targets arrive faster the longer you last, but each still gets its full ring.',
+              t`Score rewards precision: solve each target in the fewest moves.`,
+              t`Waste too many moves on a hit and you lose a life — the bar is 25% accuracy on Easy, 20% on Hard, 15% on Extreme.`,
+              t`Let a target’s ring run out and you lose one too — precision still has a clock.`,
+              t`Matching every target in its optimal move count builds your streak.`,
+              t`Targets arrive faster the longer you last, but each still gets its full ring.`,
             ]}
           />
           <ModeCard
             mode="speed"
             facts={[
-              'A shorter clock — the sooner you hit, the more it scores.',
-              'The clock keeps tightening as your run goes on, less and less each time.',
-              'Hit while most of the ring is left to build your combo streak.',
-              'A slow hit breaks the streak; let a target run out and you lose a life.',
+              t`A shorter clock — the sooner you hit, the more it scores.`,
+              t`The clock keeps tightening as your run goes on, less and less each time.`,
+              t`Hit while most of the ring is left to build your combo streak.`,
+              t`A slow hit breaks the streak; let a target run out and you lose a life.`,
             ]}
           />
 
           <Body>
-            {
-              '\nAccuracy leans almost entirely on precision; Speed on the clock. Each keeps its own streak: Accuracy wants the fewest moves, Speed wants you early on the ring.'
-            }
+            {t`\nAccuracy leans almost entirely on precision; Speed on the clock. Each keeps its own streak: Accuracy wants the fewest moves, Speed wants you early on the ring.`}
           </Body>
 
           {/* Champions — the marks the boards hand out, explained where a player who
               has just seen one on a row will look for them. */}
           <SectionHeader section="champions" onMeasure={measure} />
           <Body>
-            {
-              'Hold the all-time record on a mode’s Extreme board and you carry its mark. It travels with your name everywhere it is drawn — the boards, your own row, a multiplayer room — so the hardest boards say who holds them without anyone having to look them up.'
-            }
+            {t`Hold the all-time record on a mode’s Extreme board and you carry its mark. It travels with your name everywhere it is drawn — the boards, your own row, a multiplayer room — so the hardest boards say who holds them without anyone having to look them up.`}
           </Body>
           <Card>
             <Bullet color={MODE_GRADIENT.accuracy[0]}>
-              🦉 The owl is Accuracy at its hardest. That board rewards the exact route,
-              and the owl is the eye that finds it.
+              <Trans>
+                🦉 The owl is Accuracy at its hardest. That board rewards the exact route,
+                and the owl is the eye that finds it.
+              </Trans>
             </Bullet>
             <Bullet color={MODE_GRADIENT.speed[0]}>
-              🦅 The eagle is Speed at its hardest, for the dive rather than the search.
+              <Trans>
+                🦅 The eagle is Speed at its hardest, for the dive rather than the search.
+              </Trans>
             </Bullet>
             <Bullet color={GAME_SCALE[4]}>
-              👑 The crown is both at once — the rarest thing in the game, and the only
-              way to wear one mark instead of two.
+              <Trans>
+                👑 The crown is both at once — the rarest thing in the game, and the only
+                way to wear one mark instead of two.
+              </Trans>
             </Bullet>
           </Card>
           <Body>
-            {
-              '\nA mark is only ever lent. Take somebody’s record and it moves to you; lose yours and it leaves with the board.'
-            }
+            {t`\nA mark is only ever lent. Take somebody’s record and it moves to you; lose yours and it leaves with the board.`}
           </Body>
 
           {/* Achievements — straight after the marks, because the sentence above ends
               on "only ever lent" and this is the opposite kind of reward. */}
           <SectionHeader section="achievements" onMeasure={measure} />
           <Body>
-            {
-              'Achievements are the other kind. Nothing can take one back: they are earned once and yours for good, and they are measured against you rather than against anybody else — so they are there to be collected whether or not your score is ever good enough for a board.\n\nThere are dozens, and they ask for all sorts of things.'
-            }
+            {t`Achievements are the other kind. Nothing can take one back: they are earned once and yours for good, and they are measured against you rather than against anybody else — so they are there to be collected whether or not your score is ever good enough for a board.\n\nThere are dozens, and they ask for all sorts of things.`}
           </Body>
           <Card>
             <Bullet color={ACHIEVEMENT_SCALE[3]}>
-              Scores, one ladder per mode — Accuracy and Speed ask for opposite things, so
-              each has its own rungs to climb.
+              <Trans>
+                Scores, one ladder per mode — Accuracy and Speed ask for opposite things,
+                so each has its own rungs to climb.
+              </Trans>
             </Bullet>
             <Bullet color={ACHIEVEMENT_SCALE[3]}>
-              Skill inside a single run: a long streak, the top multiplier, a stretch
-              without losing a life.
+              <Trans>
+                Skill inside a single run: a long streak, the top multiplier, a stretch
+                without losing a life.
+              </Trans>
             </Bullet>
             <Bullet color={ACHIEVEMENT_SCALE[3]}>
-              Sticking with it — targets landed across every run you have ever played, and
-              days played in a row.
+              <Trans>
+                Sticking with it — targets landed across every run you have ever played,
+                and days played in a row.
+              </Trans>
             </Bullet>
             <Bullet color={ACHIEVEMENT_SCALE[3]}>
-              A few nobody is told about until they happen.
+              <Trans>A few nobody is told about until they happen.</Trans>
             </Bullet>
           </Card>
           <Body>
-            {
-              '\nEarn one mid-run and the score bar says so in green. The whole list is behind the bar under NINE on the start screen, along with how far along you are on the ones you have not got yet.'
-            }
+            {t`\nEarn one mid-run and the score bar says so in green. The whole list is behind the bar under NINE on the start screen, along with how far along you are on the ones you have not got yet.`}
           </Body>
 
           {/* Multiplayer */}
           <SectionHeader section="multiplayer" onMeasure={measure} />
           <Body>
-            {
-              'Pick “With friends” on the start screen. Create a game and share the four-digit code, or type a friend’s code to join. Two players are enough to start, and the one who created the room starts it.\n\nEveryone dials the same ten targets, one at a time, on their own grid. There are no lives — every target scores, and how it scores is the mode the host picked:'
-            }
+            {t`Pick “With friends” on the start screen. Create a game and share the four-digit code, or type a friend’s code to join. Two players are enough to start, and the one who created the room starts it.\n\nEveryone dials the same ten targets, one at a time, on their own grid. There are no lives — every target scores, and how it scores is the mode the host picked:`}
           </Body>
           {/* The same cards as the modes section, so a mode reads the same wherever
               it is met — only the badge and the facts change, because multiplayer
@@ -570,32 +573,30 @@ export function HowToPlayOverlay({
           <ModeCard
             mode="accuracy"
             facts={[
-              'Ten seconds a target, the same one for everybody.',
-              'Everyone who hits is ranked by how few moves it took.',
-              'The best takes the most points; the last to land it takes none.',
+              t`Ten seconds a target, the same one for everybody.`,
+              t`Everyone who hits is ranked by how few moves it took.`,
+              t`The best takes the most points; the last to land it takes none.`,
             ]}
           />
           <ModeCard
             mode="speed"
             facts={[
-              'Seven seconds a target — the clock everyone races.',
-              'Only the first player to land it scores.',
-              'One point, winner takes all — everyone else gets nothing.',
+              t`Seven seconds a target — the clock everyone races.`,
+              t`Only the first player to land it scores.`,
+              t`One point, winner takes all — everyone else gets nothing.`,
             ]}
           />
           <Body>
-            {
-              '\nAfter the tenth target everyone’s score goes up on one list. The host can pick a mode and deal another game to the same room, so nobody has to swap codes again.'
-            }
+            {t`\nAfter the tenth target everyone’s score goes up on one list. The host can pick a mode and deal another game to the same room, so nobody has to swap codes again.`}
           </Body>
 
           {/* Tips */}
           <SectionHeader section="tips" onMeasure={measure} />
           {/* Shared with the rotating panel in Trainee's menu slot — see
             constants/tips.ts. Editing there updates both. */}
-          {TIPS.map((tip) => (
-            <Bullet key={tip} color={SECTIONS.tips.color}>
-              {tip}
+          {TIPS.map((tip, i) => (
+            <Bullet key={i} color={SECTIONS.tips.color}>
+              {t(tip)}
             </Bullet>
           ))}
 
@@ -609,7 +610,7 @@ export function HowToPlayOverlay({
               selectable={false}
               className="font-mono text-[13px] font-black tracking-[2px] text-on-strong"
             >
-              GOT IT
+              <Trans>GOT IT</Trans>
             </Text>
           </Pressable>
         </ScrollView>

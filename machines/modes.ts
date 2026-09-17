@@ -1,3 +1,6 @@
+import type { MessageDescriptor } from '@lingui/core'
+import { msg } from '@lingui/core/macro'
+
 export type Mode = 'trainee' | 'accuracy' | 'speed'
 
 export const MODE_ORDER: Mode[] = ['trainee', 'accuracy', 'speed']
@@ -11,7 +14,7 @@ export type StreakTrigger = 'optimal' | 'fast' | 'clear' | 'none'
 export const FAST_HIT_THRESHOLD = 0.6
 
 export type ModeConfig = {
-  label: string
+  label: MessageDescriptor
   baseTimeout: number
   weights: { acc: number; spd: number }
   lives: number // Number.POSITIVE_INFINITY = no life loss (trainee)
@@ -31,7 +34,7 @@ type RampTarget = 'clock' | 'spawn' | 'none'
 
 export const MODES: Record<Mode, ModeConfig> = {
   trainee: {
-    label: 'TRAINEE',
+    label: msg`TRAINEE`,
     baseTimeout: 22000,
     weights: { acc: 2 / 3, spd: 1 / 3 },
     lives: Number.POSITIVE_INFINITY,
@@ -39,7 +42,7 @@ export const MODES: Record<Mode, ModeConfig> = {
     ramps: 'none',
   },
   accuracy: {
-    label: 'ACCURACY',
+    label: msg`ACCURACY`,
     baseTimeout: 22000,
     weights: { acc: 0.85, spd: 0.15 },
     lives: 3,
@@ -47,7 +50,7 @@ export const MODES: Record<Mode, ModeConfig> = {
     ramps: 'spawn',
   },
   speed: {
-    label: 'SPEED',
+    label: msg`SPEED`,
     // Accuracy's 22 000 / 1.5 — Speed runs half again as fast, not nearly three
     // times, which was more punishing than distinguishing.
     baseTimeout: 14667,
@@ -63,10 +66,10 @@ export type Difficulty = 'easy' | 'hard' | 'extreme'
 export const DIFFICULTY_ORDER: Difficulty[] = ['easy', 'hard', 'extreme']
 
 export type DifficultyConfig = {
-  label: string
+  label: MessageDescriptor
   // The label at a glance, for rows too tight to spell it out — the medal line under
   // the title. Lives beside the label so the two cannot drift.
-  code: string
+  code: MessageDescriptor
   timeoutScale: number
   maxTargets: number
   // Accuracy mode: a hit scoring below this costs a life (see costsLife in game.ts).
@@ -80,22 +83,22 @@ export type DifficultyConfig = {
 
 export const DIFFICULTIES: Record<Difficulty, DifficultyConfig> = {
   easy: {
-    label: 'EASY',
-    code: 'ESY',
+    label: msg`EASY`,
+    code: msg`ESY`,
     timeoutScale: 1.3,
     maxTargets: 3,
     wastefulThreshold: 0.25,
   },
   hard: {
-    label: 'HARD',
-    code: 'HRD',
+    label: msg`HARD`,
+    code: msg`HRD`,
     timeoutScale: 0.75,
     maxTargets: 3,
     wastefulThreshold: 0.2,
   },
   extreme: {
-    label: 'EXTREME',
-    code: 'EXT',
+    label: msg`EXTREME`,
+    code: msg`EXT`,
     timeoutScale: 0.55,
     maxTargets: 4,
     wastefulThreshold: 0.15,
@@ -159,14 +162,14 @@ export const DARK_MULTIPLAYER_GRADIENT = {
   speed: ['#0A3D37', DARK_MODE_GRADIENT.speed[1]],
 } as const satisfies Record<ScoredMode, readonly [string, string]>
 
-export const MODE_DESCRIPTIONS: Record<Mode | 'arcade', string> = {
-  trainee: `Learn the ropes.
+export const MODE_DESCRIPTIONS: Record<Mode | 'arcade', MessageDescriptor> = {
+  trainee: msg`Learn the ropes.
 No lives, no rush.`,
-  accuracy: `Fewest moves win. 
+  accuracy: msg`Fewest moves win. 
 Precision over speed.`,
-  speed: `Race the clock. 
+  speed: msg`Race the clock. 
 Fast hits build big combos.`,
-  arcade: `New adventure.
+  arcade: msg`New adventure.
 Levels, bonuses, sidequests.`,
 }
 
@@ -184,7 +187,7 @@ export function getDifficultyColor(mode: Mode, difficulty: Difficulty): string {
 
 // Locked, UI-only teaser — NOT a playable Mode yet.
 export const ARCADE_TEASER = {
-  label: 'ARCADE',
+  label: msg`ARCADE`,
   tag: 'SOON',
 } as const
 

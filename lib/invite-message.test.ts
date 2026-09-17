@@ -1,23 +1,33 @@
 import { describe, expect, it } from 'vitest'
 
-import { inviteMessage } from './invite-message'
+import { boardName, shouldBoast, titleCase } from './invite-message'
 
-describe('inviteMessage', () => {
-  it('names the best and the board it was set on', () => {
-    expect(inviteMessage('accuracy', 'hard', 4820)).toBe(
-      'My best at Nine is 4820 — Accuracy, Hard. Think you can beat it?',
-    )
+describe('shouldBoast', () => {
+  it('names the best when there is one on a scored board', () => {
+    expect(shouldBoast('accuracy', 4820)).toBe(true)
   })
 
   it('describes the game instead when the board has no best yet', () => {
-    expect(inviteMessage('speed', 'extreme', 0)).toBe(
-      'Nine buttons, one number to hit. Come take a run at it.',
-    )
+    expect(shouldBoast('speed', 0)).toBe(false)
   })
 
   it('never brags on trainee, which keeps no board', () => {
-    expect(inviteMessage('trainee', 'easy', 9999)).toBe(
-      'Nine buttons, one number to hit. Come take a run at it.',
-    )
+    expect(shouldBoast('trainee', 9999)).toBe(false)
+  })
+})
+
+describe('boardName', () => {
+  it('drops the UI shout to something that reads in a chat thread', () => {
+    expect(boardName('ACCURACY', 'HARD')).toBe('Accuracy, Hard')
+  })
+
+  it('works on whatever the active locale resolved to', () => {
+    expect(boardName('PŘESNOST', 'TĚŽKÁ')).toBe('Přesnost, Těžká')
+  })
+})
+
+describe('titleCase', () => {
+  it('leaves an empty label alone', () => {
+    expect(titleCase('')).toBe('')
   })
 })

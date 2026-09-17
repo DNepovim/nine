@@ -1,4 +1,5 @@
 import { AntDesign } from '@expo/vector-icons'
+import { useLingui } from '@lingui/react/macro'
 import { useMachine } from '@xstate/react'
 import { useFonts } from 'expo-font'
 import { isNotNull, isOneOf } from 'narrowland'
@@ -233,6 +234,7 @@ function HeartIcon({ filled, emptyColor }: { filled: boolean; emptyColor: string
 }
 
 export default function GameScreen() {
+  const { t } = useLingui()
   const { colorScheme, toggleTheme } = useTheme()
   const isDark = colorScheme === 'dark'
   const [state, send] = useMachine(gameMachine)
@@ -880,14 +882,14 @@ export default function GameScreen() {
                   className="font-mono text-[13px] font-black tracking-[2px]"
                   style={{ color: MODE_GRADIENT[mode][0] }}
                 >
-                  {MODES[mode].label}
+                  {t(MODES[mode].label)}
                 </Text>
                 {isOneOf(mode, ['accuracy', 'speed']) && (
                   <Text
                     selectable={false}
                     className="font-mono text-[10px] font-bold tracking-[1px] text-dim"
                   >
-                    {DIFFICULTIES[difficulty].label.toLowerCase()}
+                    {t(DIFFICULTIES[difficulty].label).toLowerCase()}
                   </Text>
                 )}
               </View>

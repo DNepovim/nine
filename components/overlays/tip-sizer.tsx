@@ -1,3 +1,5 @@
+import type { MessageDescriptor } from '@lingui/core'
+import { useLingui } from '@lingui/react/macro'
 import { Text, View } from 'react-native'
 
 // Lays out the tips the panel will actually show, at the panel's own width, and reports
@@ -19,21 +21,24 @@ export function TipSizer({
   tips,
   onMeasure,
 }: {
-  tips: readonly string[]
+  tips: readonly MessageDescriptor[]
   onMeasure: (height: number) => void
 }) {
+  // Measures the tips as the player will actually read them: Czech runs longer than
+  // English, and a box sized from the source text would clip it.
+  const { t } = useLingui()
   return (
     <View aria-hidden className="absolute left-4 right-4 opacity-0" pointerEvents="none">
-      {tips.map((tip) => (
+      {tips.map((tip, i) => (
         <Text
-          key={tip}
+          key={i}
           selectable={false}
           className="text-center font-mono text-[12px] font-medium leading-[19px] text-primary"
           onLayout={(e) => {
             onMeasure(e.nativeEvent.layout.height)
           }}
         >
-          {tip}
+          {t(tip)}
         </Text>
       ))}
     </View>

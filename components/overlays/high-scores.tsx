@@ -1,4 +1,6 @@
-import { Trans } from '@lingui/react/macro'
+import type { MessageDescriptor } from '@lingui/core'
+import { msg } from '@lingui/core/macro'
+import { Trans, useLingui } from '@lingui/react/macro'
 import { useFonts } from 'expo-font'
 import { LinearGradient } from 'expo-linear-gradient'
 import { useCallback, useEffect, useRef, useState } from 'react'
@@ -24,10 +26,10 @@ import { PublishScoresButton } from './publish-scores-button'
 import { TabMedal } from './tab-medal'
 import { TabPanel } from './tab-panel'
 
-const TABS: { key: LeaderboardTab; label: string }[] = [
-  { key: 'today', label: 'TODAY' },
-  { key: 'week', label: 'THIS WEEK' },
-  { key: 'forever', label: 'EVER' },
+const TABS: { key: LeaderboardTab; label: MessageDescriptor }[] = [
+  { key: 'today', label: msg`TODAY` },
+  { key: 'week', label: msg`THIS WEEK` },
+  { key: 'forever', label: msg`EVER` },
 ]
 
 // `longestMedalTab` takes exactly the two fields it needs to judge a rank, not the
@@ -78,6 +80,7 @@ export function HighScores({
   // holding it. Omitted anywhere pinning is off.
   runScore?: number
 }) {
+  const { t } = useLingui()
   // Loaded once here rather than per row: the board draws six of them, and every
   // score in the app wears the seven-segment face. `mono` stands in until it lands.
   const [dsegLoaded] = useFonts({ DSEG7: DSEG7Font })
@@ -228,7 +231,7 @@ export function HighScores({
                 className="font-mono text-[9px] font-bold tracking-[1px] text-primary"
                 style={glow}
               >
-                {label}
+                {t(label)}
               </Text>
               {/* Says the player holds a place on this period without their having to
                   open it — the tabs rotate, so a medal on a tab they are not looking at

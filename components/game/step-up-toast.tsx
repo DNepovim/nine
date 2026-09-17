@@ -1,3 +1,4 @@
+import { Trans, useLingui } from '@lingui/react/macro'
 import { LinearGradient } from 'expo-linear-gradient'
 import { Pressable, Text, View } from 'react-native'
 import Animated, { Easing, FadeOut, SlideInUp } from 'react-native-reanimated'
@@ -43,6 +44,10 @@ export function StepUpToast({
   mode: Mode
   onPress: () => void
 }) {
+  const { t } = useLingui()
+  // Named rather than inlined, so the translated line can put the mode wherever
+  // its own grammar wants it.
+  const modeName = t(MODES[mode].label)
   return (
     <Animated.View
       entering={SlideInUp.duration(320).easing(Easing.out(Easing.cubic))}
@@ -83,7 +88,7 @@ export function StepUpToast({
               numberOfLines={1}
               className="font-mono text-[12px] font-black tracking-[2px] text-on-strong"
             >
-              TRY {MODES[mode].label}
+              <Trans>TRY {modeName}</Trans>
             </Text>
           </LinearGradient>
         </Pressable>

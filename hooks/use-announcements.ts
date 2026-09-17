@@ -1,3 +1,4 @@
+import { i18n } from '@lingui/core'
 import { useEffect, useRef, useState } from 'react'
 
 import { ACHIEVEMENTS, type AchievementId } from '@/constants/achievements'
@@ -148,7 +149,7 @@ export function useAnnouncements({
       announcementFor(
         'achievement',
         Math.random(),
-        ACHIEVEMENTS[next].title.toUpperCase(),
+        i18n._(ACHIEVEMENTS[next].title).toUpperCase(),
       ),
     )
     onAchievementAnnouncedRef.current(next)

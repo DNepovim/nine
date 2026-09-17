@@ -1,3 +1,4 @@
+import { useLingui } from '@lingui/react/macro'
 import { LinearGradient } from 'expo-linear-gradient'
 import { Text, View } from 'react-native'
 
@@ -20,9 +21,10 @@ export function BoardBadges({
   gameMode: Mode
   difficulty: Difficulty
 }) {
+  const { t } = useLingui()
   return (
     <View className="mb-5 flex-row items-center gap-2">
-      {[MODES[gameMode].label, DIFFICULTIES[difficulty].label].map((label) => (
+      {[t(MODES[gameMode].label), t(DIFFICULTIES[difficulty].label)].map((label) => (
         <View key={label} className="overflow-hidden rounded-lg">
           <LinearGradient
             colors={[...MODE_GRADIENT[gameMode]]}

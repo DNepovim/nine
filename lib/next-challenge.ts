@@ -1,10 +1,17 @@
-import { DIFFICULTIES, MODES, type Difficulty, type Mode } from '@/machines/modes'
+import { type Difficulty, type Mode } from '@/machines/modes'
 
 // What the game-over screen offers next to "play again": the same run one rung
 // harder. Losing is the moment a player is most willing to be dared, and the dare
 // only works if it is one press away — asking them to walk back through the menu to
 // change difficulty is how a board never gets tried.
-export type Challenge = { mode: Mode; difficulty: Difficulty; label: string }
+// `kind` rather than a finished label: the words are a rung name dropped into a
+// sentence, and which half a sentence puts first is the translation's business, not
+// this module's. The screen builds the line; this decides which line it is.
+export type Challenge = {
+  mode: Mode
+  difficulty: Difficulty
+  kind: 'stepUp' | 'stepDown' | 'tryMode'
+}
 
 const NEXT_DIFFICULTY = {
   easy: 'hard',
@@ -38,11 +45,11 @@ export const earnedChallenge = (hits: number, strikes: number): boolean =>
 export function nextChallenge(mode: Mode, difficulty: Difficulty): Challenge {
   const harder = NEXT_DIFFICULTY[difficulty]
   if (harder !== null) {
-    return { mode, difficulty: harder, label: `STEP UP TO ${DIFFICULTIES[harder].label}` }
+    return { mode, difficulty: harder, kind: 'stepUp' }
   }
   const other = OTHER_MODE[mode]
   // "STEP UP" would be a lie sideways: Speed is not above Accuracy, just different.
-  return { mode: other, difficulty, label: `TRY ${MODES[other].label}` }
+  return { mode: other, difficulty, kind: 'tryMode' }
 }
 
 const PREV_DIFFICULTY = {
@@ -70,12 +77,12 @@ export function easierChallenge(mode: Mode, difficulty: Difficulty): Challenge {
     return {
       mode,
       difficulty: easier,
-      label: `STEP DOWN TO ${DIFFICULTIES[easier].label}`,
+      kind: 'stepDown',
     }
   }
   // Already on Easy — Trainee is the full step down: no clock, no lives, nothing left
   // to ease. Difficulty stays as it was and is ignored on the Trainee board.
-  return { mode: 'trainee', difficulty, label: 'TRY TRAINEE' }
+  return { mode: 'trainee', difficulty, kind: 'tryMode' }
 }
 
 // What the game-over screen offers, if anything — up on a run that showed it was

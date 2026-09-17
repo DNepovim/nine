@@ -1,3 +1,4 @@
+import { useLingui } from '@lingui/react/macro'
 import { LinearGradient } from 'expo-linear-gradient'
 import { useEffect, useRef, useState } from 'react'
 import { Pressable, View } from 'react-native'
@@ -43,6 +44,7 @@ export function DifficultySelector({
   onSetDifficulty: (d: Difficulty) => void
   gradPhase: SharedValue<number>
 }) {
+  const { t } = useLingui()
   // State (not ref) so the pill-position effect re-runs when layouts arrive.
   const [layouts, setLayouts] = useState<({ x: number; width: number } | null)[]>(() =>
     DIFFICULTY_ORDER.map(() => null),
@@ -214,7 +216,7 @@ export function DifficultySelector({
               className="font-mono text-[11px] font-black tracking-[1.5px]"
               style={textStyles[i]}
             >
-              {DIFFICULTIES[d].label}
+              {t(DIFFICULTIES[d].label)}
             </Animated.Text>
           </Pressable>
         ))}

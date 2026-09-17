@@ -1,3 +1,4 @@
+import { useLingui } from '@lingui/react/macro'
 import { isEmptyArray } from 'narrowland'
 import { Fragment } from 'react'
 import { Text, View } from 'react-native'
@@ -22,6 +23,7 @@ const PERIOD_CODES = {
 // No cap here any more: `toMedals` keeps one medal per mode, so the line is as long as
 // there are modes to win in and cannot outgrow the title above it.
 export function MedalLine({ medals }: { medals: readonly Medal[] }) {
+  const { t } = useLingui()
   if (isEmptyArray(medals)) return null
 
   return (
@@ -45,7 +47,7 @@ export function MedalLine({ medals }: { medals: readonly Medal[] }) {
               className="font-mono text-[9px] font-black leading-[13px] tracking-[1px]"
               style={{ color: MODE_GRADIENT[medal.mode][0] }}
             >
-              {DIFFICULTIES[medal.difficulty].code}
+              {t(DIFFICULTIES[medal.difficulty].code)}
             </Text>
             <Text
               selectable={false}

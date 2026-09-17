@@ -1,3 +1,6 @@
+import type { MessageDescriptor } from '@lingui/core'
+import { msg } from '@lingui/core/macro'
+
 // Every achievement the game has, in the order the achievements screen lists them.
 //
 // An achievement is permanent: earned once, never lost, measured against the player's own
@@ -106,9 +109,9 @@ export type AchievementDef = {
   emblem: string
   // At most TITLE_MAX characters, upper-case. This is what the announcement bar shouts,
   // which is where the cap comes from.
-  title: string
+  title: MessageDescriptor
   // One line, on the achievements screen. Sentence case — the title is the shouting.
-  hint: string
+  hint: MessageDescriptor
   // The goal, for the ones worth counting towards. Its absence means the achievement is
   // a yes or a no and the screen shows no progress bar.
   target?: number
@@ -132,83 +135,83 @@ export const ACHIEVEMENTS = {
   firstHit: {
     group: 'firstSteps',
     emblem: '👆',
-    title: 'FIRST HIT',
-    hint: 'Land your first target.',
+    title: msg`FIRST HIT`,
+    hint: msg`Land your first target.`,
   },
   graduate: {
     group: 'firstSteps',
     emblem: '🎓',
-    title: 'GRADUATE',
+    title: msg`GRADUATE`,
     // The app stores one flag for "done with the tutorial" and does not tell reaching the
     // end from deciding you have seen enough. The wording follows what is actually known.
-    hint: 'Get through the tutorial.',
+    hint: msg`Get through the tutorial.`,
   },
   firstRun: {
     group: 'firstSteps',
     emblem: '🏁',
-    title: 'FIRST RUN',
-    hint: 'Finish a run on a scored board.',
+    title: msg`FIRST RUN`,
+    hint: msg`Finish a run on a scored board.`,
   },
   allThree: {
     group: 'firstSteps',
     emblem: '🗺️',
-    title: 'ALL THREE',
-    hint: 'Play Trainee, Accuracy and Speed.',
+    title: msg`ALL THREE`,
+    hint: msg`Play Trainee, Accuracy and Speed.`,
   },
   upARung: {
     group: 'firstSteps',
     emblem: '🎚️',
-    title: 'UP A RUNG',
-    hint: 'Play a Hard board.',
+    title: msg`UP A RUNG`,
+    hint: msg`Play a Hard board.`,
   },
   intoTheDeep: {
     group: 'firstSteps',
     emblem: '🌋',
-    title: 'INTO THE DEEP',
-    hint: 'Play an Extreme board.',
+    title: msg`INTO THE DEEP`,
+    hint: msg`Play an Extreme board.`,
   },
 
   // ── Accuracy ───────────────────────────────────────────────────────────────────
   steadyHand: {
     group: 'accuracy',
     emblem: '🎯',
-    title: 'STEADY HAND',
-    hint: 'Score 250 in Accuracy.',
+    title: msg`STEADY HAND`,
+    hint: msg`Score 250 in Accuracy.`,
     target: 250,
   },
   fineWork: {
     group: 'accuracy',
     emblem: '🪡',
-    title: 'FINE WORK',
-    hint: 'Score 1 000 in Accuracy.',
+    title: msg`FINE WORK`,
+    hint: msg`Score 1 000 in Accuracy.`,
     target: 1000,
   },
   surgeon: {
     group: 'accuracy',
     emblem: '📐',
-    title: 'SURGEON',
-    hint: 'Score 2 500 in Accuracy.',
+    title: msg`SURGEON`,
+    hint: msg`Score 2 500 in Accuracy.`,
     target: 2500,
   },
   immaculate: {
     group: 'accuracy',
     emblem: '💎',
-    title: 'IMMACULATE',
-    hint: 'Score 5 000 in Accuracy.',
+    title: msg`IMMACULATE`,
+    hint: msg`Score 5 000 in Accuracy.`,
     target: 5000,
   },
   perfectionist: {
     group: 'accuracy',
     emblem: '🧿',
-    title: 'PERFECTIONIST',
-    hint: 'Score 10 000 in Accuracy.',
+    title: msg`PERFECTIONIST`,
+    hint: msg`Score 10 000 in Accuracy.`,
     target: 10000,
   },
   mountaineer: {
     group: 'accuracy',
     emblem: '⛰️',
-    title: 'MOUNTAINEER',
-    hint: 'Score 1 000 on Accuracy Extreme.',
+    title: msg`MOUNTAINEER`,
+    hint: msg`Score 1 000 on Accuracy Extreme.`,
     target: 1000,
   },
 
@@ -216,43 +219,43 @@ export const ACHIEVEMENTS = {
   fastStart: {
     group: 'speed',
     emblem: '🏃',
-    title: 'FAST START',
-    hint: 'Score 250 in Speed.',
+    title: msg`FAST START`,
+    hint: msg`Score 250 in Speed.`,
     target: 250,
   },
   slipstream: {
     group: 'speed',
     emblem: '💨',
-    title: 'SLIPSTREAM',
-    hint: 'Score 1 000 in Speed.',
+    title: msg`SLIPSTREAM`,
+    hint: msg`Score 1 000 in Speed.`,
     target: 1000,
   },
   afterburner: {
     group: 'speed',
     emblem: '🚀',
-    title: 'AFTERBURNER',
-    hint: 'Score 2 500 in Speed.',
+    title: msg`AFTERBURNER`,
+    hint: msg`Score 2 500 in Speed.`,
     target: 2500,
   },
   lightning: {
     group: 'speed',
     emblem: '⚡',
-    title: 'LIGHTNING',
-    hint: 'Score 5 000 in Speed.',
+    title: msg`LIGHTNING`,
+    hint: msg`Score 5 000 in Speed.`,
     target: 5000,
   },
   terminalVelocity: {
     group: 'speed',
     emblem: '🌠',
-    title: 'TERMINAL VELOCITY',
-    hint: 'Score 10 000 in Speed.',
+    title: msg`TERMINAL VELOCITY`,
+    hint: msg`Score 10 000 in Speed.`,
     target: 10000,
   },
   daredevil: {
     group: 'speed',
     emblem: '🎢',
-    title: 'DAREDEVIL',
-    hint: 'Score 1 000 on Speed Extreme.',
+    title: msg`DAREDEVIL`,
+    hint: msg`Score 1 000 on Speed Extreme.`,
     target: 1000,
   },
 
@@ -261,42 +264,42 @@ export const ACHIEVEMENTS = {
   flawlessTen: {
     group: 'mastery',
     emblem: '✨',
-    title: 'FLAWLESS TEN',
-    hint: 'Extend a streak ten times in a row.',
+    title: msg`FLAWLESS TEN`,
+    hint: msg`Extend a streak ten times in a row.`,
     target: 10,
   },
   maxMultiplier: {
     group: 'mastery',
     emblem: '🔥',
-    title: 'MAX MULTIPLIER',
-    hint: 'Reach the ×8 multiplier.',
+    title: msg`MAX MULTIPLIER`,
+    hint: msg`Reach the ×8 multiplier.`,
   },
   // Not "finish a run without losing a life" — a run *ends* because its lives ran out, so
   // that could never be earned by anyone.
   unscathed: {
     group: 'mastery',
     emblem: '🧊',
-    title: 'UNSCATHED',
-    hint: 'Reach 25 hits in one run before losing a life.',
+    title: msg`UNSCATHED`,
+    hint: msg`Reach 25 hits in one run before losing a life.`,
     target: 25,
   },
   deadEye: {
     group: 'mastery',
     emblem: '👁️',
-    title: 'DEAD EYE',
-    hint: 'Average 95% accuracy over a run of 20 hits or more.',
+    title: msg`DEAD EYE`,
+    hint: msg`Average 95% accuracy over a run of 20 hits or more.`,
   },
   blur: {
     group: 'mastery',
     emblem: '🌀',
-    title: 'BLUR',
-    hint: 'Average 90% speed over a run of 20 hits or more.',
+    title: msg`BLUR`,
+    hint: msg`Average 90% speed over a run of 20 hits or more.`,
   },
   perfectRoute: {
     group: 'mastery',
     emblem: '🧮',
-    title: 'PERFECT ROUTE',
-    hint: 'Take the shortest route to 25 targets in one run.',
+    title: msg`PERFECT ROUTE`,
+    hint: msg`Take the shortest route to 25 targets in one run.`,
     target: 25,
   },
 
@@ -304,56 +307,56 @@ export const ACHIEVEMENTS = {
   tenRuns: {
     group: 'endurance',
     emblem: '🔁',
-    title: 'TEN RUNS',
-    hint: 'Finish 10 runs.',
+    title: msg`TEN RUNS`,
+    hint: msg`Finish 10 runs.`,
     target: 10,
   },
   hundredRuns: {
     group: 'endurance',
     emblem: '💠',
-    title: 'HUNDRED RUNS',
-    hint: 'Finish 100 runs.',
+    title: msg`HUNDRED RUNS`,
+    hint: msg`Finish 100 runs.`,
     target: 100,
   },
   thousandHits: {
     group: 'endurance',
     emblem: '👊',
-    title: 'THOUSAND HITS',
-    hint: 'Land 1 000 targets across every run.',
+    title: msg`THOUSAND HITS`,
+    hint: msg`Land 1 000 targets across every run.`,
     target: 1000,
   },
   tenThousandHits: {
     group: 'endurance',
     emblem: '🌌',
-    title: 'TEN THOUSAND HITS',
-    hint: 'Land 10 000 targets across every run.',
+    title: msg`TEN THOUSAND HITS`,
+    hint: msg`Land 10 000 targets across every run.`,
     target: 10000,
   },
   twoInARow: {
     group: 'endurance',
     emblem: '📅',
-    title: 'TWO IN A ROW',
-    hint: 'Play on two consecutive days.',
+    title: msg`TWO IN A ROW`,
+    hint: msg`Play on two consecutive days.`,
     target: 2,
   },
   sevenDayStreak: {
     group: 'endurance',
     emblem: '🗓️',
-    title: 'SEVEN DAY STREAK',
-    hint: 'Play seven days running.',
+    title: msg`SEVEN DAY STREAK`,
+    hint: msg`Play seven days running.`,
     target: 7,
   },
   longHaul: {
     group: 'endurance',
     emblem: '⏱️',
-    title: 'LONG HAUL',
-    hint: 'Keep a single run going for ten minutes.',
+    title: msg`LONG HAUL`,
+    hint: msg`Keep a single run going for ten minutes.`,
   },
   allSixBoards: {
     group: 'endurance',
     emblem: '🧭',
-    title: 'ALL SIX BOARDS',
-    hint: 'Post a score on every mode and difficulty.',
+    title: msg`ALL SIX BOARDS`,
+    hint: msg`Post a score on every mode and difficulty.`,
     target: 6,
   },
 
@@ -361,35 +364,35 @@ export const ACHIEVEMENTS = {
   onTheBoard: {
     group: 'boards',
     emblem: '⭐',
-    title: 'ON THE BOARD',
-    hint: 'Finish in the top three on any board.',
+    title: msg`ON THE BOARD`,
+    hint: msg`Finish in the top three on any board.`,
   },
   topOfTheBoard: {
     group: 'boards',
     emblem: '🎖️',
-    title: 'TOP OF THE BOARD',
-    hint: 'Take first place on any board.',
+    title: msg`TOP OF THE BOARD`,
+    hint: msg`Take first place on any board.`,
   },
   // The one achievement allowed the crown, because it is the crown: the game-over screen
   // already pays it out for holding both Extreme all-time boards at once.
   untouchable: {
     group: 'boards',
     emblem: '👑',
-    title: 'UNTOUCHABLE',
-    hint: 'Hold first all-time on both Extreme boards at once.',
+    title: msg`UNTOUCHABLE`,
+    hint: msg`Hold first all-time on both Extreme boards at once.`,
   },
   tenBests: {
     group: 'boards',
     emblem: '📈',
-    title: 'TEN BESTS',
-    hint: 'Beat your own best ten times.',
+    title: msg`TEN BESTS`,
+    hint: msg`Beat your own best ten times.`,
     target: 10,
   },
   earlyBird: {
     group: 'boards',
     emblem: '🌅',
-    title: 'EARLY BIRD',
-    hint: "Open a day's board with the first score on it.",
+    title: msg`EARLY BIRD`,
+    hint: msg`Open a day's board with the first score on it.`,
   },
 
   // ── Held boards ────────────────────────────────────────────────────────────────
@@ -398,43 +401,43 @@ export const ACHIEVEMENTS = {
   heldAccEasy: {
     group: 'held',
     emblem: '🛡️',
-    title: 'HELD ACC ESY',
-    hint: 'Hold the Accuracy Easy all-time record for seven days.',
+    title: msg`HELD ACC ESY`,
+    hint: msg`Hold the Accuracy Easy all-time record for seven days.`,
     target: 7,
   },
   heldAccHard: {
     group: 'held',
     emblem: '🛡️',
-    title: 'HELD ACC HRD',
-    hint: 'Hold the Accuracy Hard all-time record for seven days.',
+    title: msg`HELD ACC HRD`,
+    hint: msg`Hold the Accuracy Hard all-time record for seven days.`,
     target: 7,
   },
   heldAccExtreme: {
     group: 'held',
     emblem: '🛡️',
-    title: 'HELD ACC EXT',
-    hint: 'Hold the Accuracy Extreme all-time record for seven days.',
+    title: msg`HELD ACC EXT`,
+    hint: msg`Hold the Accuracy Extreme all-time record for seven days.`,
     target: 7,
   },
   heldSpeedEasy: {
     group: 'held',
     emblem: '🛡️',
-    title: 'HELD SPD ESY',
-    hint: 'Hold the Speed Easy all-time record for seven days.',
+    title: msg`HELD SPD ESY`,
+    hint: msg`Hold the Speed Easy all-time record for seven days.`,
     target: 7,
   },
   heldSpeedHard: {
     group: 'held',
     emblem: '🛡️',
-    title: 'HELD SPD HRD',
-    hint: 'Hold the Speed Hard all-time record for seven days.',
+    title: msg`HELD SPD HRD`,
+    hint: msg`Hold the Speed Hard all-time record for seven days.`,
     target: 7,
   },
   heldSpeedExtreme: {
     group: 'held',
     emblem: '🛡️',
-    title: 'HELD SPD EXT',
-    hint: 'Hold the Speed Extreme all-time record for seven days.',
+    title: msg`HELD SPD EXT`,
+    hint: msg`Hold the Speed Extreme all-time record for seven days.`,
     target: 7,
   },
 
@@ -442,35 +445,35 @@ export const ACHIEVEMENTS = {
   roomForTwo: {
     group: 'friends',
     emblem: '🤝',
-    title: 'ROOM FOR TWO',
-    hint: 'Finish a run in a room with someone else.',
+    title: msg`ROOM FOR TWO`,
+    hint: msg`Finish a run in a room with someone else.`,
   },
   winner: {
     group: 'friends',
     emblem: '🏆',
-    title: 'WINNER',
-    hint: 'Win a run in a room.',
+    title: msg`WINNER`,
+    hint: msg`Win a run in a room.`,
   },
   fullHouse: {
     group: 'friends',
     emblem: '🎪',
-    title: 'FULL HOUSE',
-    hint: 'Play a full room — four players, the most one holds.',
+    title: msg`FULL HOUSE`,
+    hint: msg`Play a full room — four players, the most one holds.`,
   },
 
   // ── Secret ─────────────────────────────────────────────────────────────────────
   theLongWay: {
     group: 'secret',
     emblem: '🐢',
-    title: 'THE LONG WAY',
-    hint: 'Land a target after thirty presses or more.',
+    title: msg`THE LONG WAY`,
+    hint: msg`Land a target after thirty presses or more.`,
     secret: true,
   },
   nightShift: {
     group: 'secret',
     emblem: '🌙',
-    title: 'NIGHT SHIFT',
-    hint: 'Finish a run between 2am and 4am.',
+    title: msg`NIGHT SHIFT`,
+    hint: msg`Finish a run between 2am and 4am.`,
     secret: true,
   },
 } as const satisfies Record<AchievementId, AchievementDef>

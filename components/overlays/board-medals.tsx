@@ -1,3 +1,6 @@
+import type { MessageDescriptor } from '@lingui/core'
+import { msg } from '@lingui/core/macro'
+import { useLingui } from '@lingui/react/macro'
 import { isEmptyArray } from 'narrowland'
 import { Text, View } from 'react-native'
 
@@ -10,10 +13,10 @@ import { MODE_GRADIENT, type Mode } from '@/machines/game'
 // The board's own words for its periods, so a medal and the tab it was won on say the
 // same thing.
 const PERIOD_LABEL = {
-  ever: 'EVER',
-  week: 'THIS WEEK',
-  today: 'TODAY',
-} as const satisfies Record<Period, string>
+  ever: msg`EVER`,
+  week: msg`THIS WEEK`,
+  today: msg`TODAY`,
+} as const satisfies Record<Period, MessageDescriptor>
 
 // Where the run leaves the player standing, under the score.
 //
@@ -34,6 +37,7 @@ export function BoardMedals({
   // against gold before a pale streak even crosses it.
   shadow?: boolean
 }) {
+  const { t } = useLingui()
   if (isEmptyArray(medals)) return null
 
   return (
@@ -51,7 +55,7 @@ export function BoardMedals({
               shadow ? ON_GOLD_LABEL_SHADOW : null,
             ]}
           >
-            {PERIOD_LABEL[period]}
+            {t(PERIOD_LABEL[period])}
           </Text>
         </View>
       ))}

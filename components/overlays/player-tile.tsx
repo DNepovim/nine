@@ -1,5 +1,6 @@
 import { AntDesign } from '@expo/vector-icons'
-import { Trans } from '@lingui/react/macro'
+import { msg } from '@lingui/core/macro'
+import { Trans, useLingui } from '@lingui/react/macro'
 import { LinearGradient } from 'expo-linear-gradient'
 import { Text, View } from 'react-native'
 
@@ -74,6 +75,7 @@ export function PlayerTile({
   score?: number
   ready?: boolean
 }) {
+  const { t } = useLingui()
   // Before the empty-slot return: hooks cannot sit behind a condition.
   const champions = useChampionsContext()
 
@@ -111,7 +113,7 @@ export function PlayerTile({
         : isHost
           ? 'HOST'
           : isMe
-            ? 'YOU'
+            ? t(msg`YOU`)
             : null
 
   return (

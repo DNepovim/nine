@@ -1,3 +1,4 @@
+import { Trans } from '@lingui/react/macro'
 import { Pressable, SectionList, Text, View } from 'react-native'
 
 import {
@@ -47,7 +48,7 @@ export function AchievementsOverlay({
         selectable={false}
         className="mb-1 font-mono text-[20px] font-black tracking-[3px] text-primary"
       >
-        ACHIEVEMENTS
+        <Trans>ACHIEVEMENTS</Trans>
       </Text>
       <Text
         selectable={false}
@@ -88,7 +89,7 @@ export function AchievementsOverlay({
           selectable={false}
           className="font-mono text-[13px] font-black tracking-[2px] text-on-strong"
         >
-          DONE
+          <Trans>DONE</Trans>
         </Text>
       </Pressable>
     </View>

@@ -1,3 +1,5 @@
+import { msg } from '@lingui/core/macro'
+import { useLingui } from '@lingui/react/macro'
 import { Text, View } from 'react-native'
 
 import { achievement, type AchievementId } from '@/constants/achievements'
@@ -7,8 +9,8 @@ import { cn } from '@/lib/cn'
 import { formatShortDate } from '@/lib/format-date'
 
 // A secret one keeps its name as well as its rule. Naming it would be telling.
-const SECRET_TITLE = '???'
-const SECRET_HINT = 'Do something nobody thought to ask for.'
+const SECRET_TITLE = msg`???`
+const SECRET_HINT = msg`Do something nobody thought to ask for.`
 const SECRET_EMBLEM = '🔒'
 
 // One achievement on the list: what it is, how to get it, and either the day it was
@@ -28,6 +30,7 @@ export function AchievementRow({
   // meaningless for the ones with nothing to count.
   progress: number
 }) {
+  const { t } = useLingui()
   const { colorScheme } = useTheme()
   const def = achievement(id)
   const earned = earnedAt !== null
@@ -55,7 +58,7 @@ export function AchievementRow({
             )}
             style={earned ? { color: ACHIEVEMENT_INK[colorScheme] } : null}
           >
-            {hidden ? SECRET_TITLE : def.title}
+            {hidden ? t(SECRET_TITLE) : t(def.title)}
           </Text>
           <Text
             selectable={false}
@@ -76,7 +79,7 @@ export function AchievementRow({
             !earned && 'opacity-70',
           )}
         >
-          {hidden ? SECRET_HINT : def.hint}
+          {hidden ? t(SECRET_HINT) : t(def.hint)}
         </Text>
 
         {/* A bar only where there is something to count, and only while it still counts

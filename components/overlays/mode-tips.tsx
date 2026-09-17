@@ -1,4 +1,4 @@
-import { Trans } from '@lingui/react/macro'
+import { Trans, useLingui } from '@lingui/react/macro'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Text, View } from 'react-native'
 import { Gesture, GestureDetector } from 'react-native-gesture-handler'
@@ -106,6 +106,7 @@ export function ModeTips() {
 
   // TIPS is a non-empty tuple and TIP_COUNT is at least one, so the fallback is
   // unreachable — it is here because the index type cannot say so.
+  const { t } = useLingui()
   const tip = tips[index] ?? TIPS[0]
 
   const measure = useCallback((height: number) => {
@@ -204,7 +205,7 @@ export function ModeTips() {
                 selectable={false}
                 className="text-center font-mono text-[12px] font-medium leading-[19px] text-primary"
               >
-                {tip}
+                {t(tip)}
               </Text>
             </Animated.View>
           </View>

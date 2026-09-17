@@ -15,8 +15,8 @@ const item = (id: string) => ({
   id,
   icon: 'sparkles' as const,
   accent: '#4C7EFF',
-  title: id,
-  body: 'body',
+  title: { id, message: id },
+  body: { id: 'body', message: 'body' },
 })
 
 const RELEASES: Release[] = [

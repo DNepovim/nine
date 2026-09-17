@@ -1,5 +1,5 @@
 import { Ionicons } from '@expo/vector-icons'
-import { Trans } from '@lingui/react/macro'
+import { Trans, useLingui } from '@lingui/react/macro'
 import * as Clipboard from 'expo-clipboard'
 import { LinearGradient } from 'expo-linear-gradient'
 import { isOneOf } from 'narrowland'
@@ -50,6 +50,7 @@ export function MultiplayerWaiting({
   onStart: () => void
   onSetMode: (mode: MultiMode) => void
 }) {
+  const { t } = useLingui()
   const canStart = isAdmin && players.length >= 2
   const { colorScheme } = useTheme()
   const dimColor = colorScheme === 'dark' ? '#504e6e' : '#aaa69e'
@@ -154,7 +155,7 @@ export function MultiplayerWaiting({
               selectable={false}
               className="px-6 text-center font-mono text-[10px] font-bold tracking-[0.5px] text-dim"
             >
-              {MODE_DESCRIPTIONS[mode]}
+              {t(MODE_DESCRIPTIONS[mode])}
             </Text>
           </View>
         )}

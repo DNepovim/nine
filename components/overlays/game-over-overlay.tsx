@@ -1,5 +1,5 @@
 import { Ionicons } from '@expo/vector-icons'
-import { Trans } from '@lingui/react/macro'
+import { Trans, useLingui } from '@lingui/react/macro'
 import { LinearGradient } from 'expo-linear-gradient'
 import { isOneOf } from 'narrowland'
 import { VariableContextProvider } from 'nativewind'
@@ -29,6 +29,7 @@ import {
   type Difficulty,
   type Mode,
 } from '@/machines/game'
+import { DIFFICULTIES, MODES } from '@/machines/modes'
 
 import { BoardBadges } from './board-badges'
 import { BoardMedals } from './board-medals'
@@ -112,10 +113,15 @@ export function GameOverOverlay({
   titleHidden?: boolean
   onTitleLayout?: (centerY: number) => void
 }) {
+  const { t } = useLingui()
   const titleRef = useRef<View>(null)
   const { colorScheme } = useTheme()
   const dimColor = colorScheme === 'dark' ? '#504e6e' : '#aaa69e'
   const challenge = runChallenge(gameMode, difficulty, hits, strikes)
+  // Named so the catalog carries one `TRY {modeName}` shared with the step-up toast,
+  // and so a translation can put the rung wherever its own grammar wants it.
+  const rungName = challenge === null ? '' : t(DIFFICULTIES[challenge.difficulty].label)
+  const modeName = challenge === null ? '' : t(MODES[challenge.mode].label)
 
   // What this run put on each period of this board: the medal the player can go and see
   // on the board afterwards, and only when this run is what earned it. Not their
@@ -278,7 +284,13 @@ export function GameOverOverlay({
                     numberOfLines={1}
                     className="font-mono text-[13px] font-black tracking-[2px] text-primary"
                   >
-                    {challenge.label}
+                    {challenge.kind === 'stepUp' ? (
+                      <Trans>STEP UP TO {rungName}</Trans>
+                    ) : challenge.kind === 'stepDown' ? (
+                      <Trans>STEP DOWN TO {rungName}</Trans>
+                    ) : (
+                      <Trans>TRY {modeName}</Trans>
+                    )}
                   </Text>
                 </Pressable>
               )}

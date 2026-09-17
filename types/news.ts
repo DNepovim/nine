@@ -1,4 +1,5 @@
 import type { Ionicons } from '@expo/vector-icons'
+import type { MessageDescriptor } from '@lingui/core'
 
 type IoniconName = keyof typeof Ionicons.glyphMap
 
@@ -9,8 +10,11 @@ export type NewsItem = {
   id: string
   icon: IoniconName
   accent: string
-  title: string
-  body: string // markdown
+  // Descriptors rather than strings: the copy is resolved by whatever draws it, so
+  // a language change re-renders the card instead of leaving whichever text was
+  // current when this module first loaded.
+  title: MessageDescriptor
+  body: MessageDescriptor // markdown
 }
 
 // A dated bundle. Several items can ship together.

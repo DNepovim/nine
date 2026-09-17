@@ -89,7 +89,7 @@ const gameOver = (
   run: Pick<typeof RUN, 'score' | 'hits' | 'strikes'> = RUN,
 ): Variant => ({
   key: `go-${screen}-${mode}-${difficulty}-${record ?? 'none'}-${run.hits}`,
-  label: `${MODE_CODE[mode]} · ${DIFFICULTIES[difficulty].code} · ${
+  label: `${MODE_CODE[mode]} · ${DIFFICULTIES[difficulty].code.message ?? ''} · ${
     record === null ? '—' : RANGE_LABEL[record]
   } · ${emblemFor(screen, mode)}`,
   render: (close) => (

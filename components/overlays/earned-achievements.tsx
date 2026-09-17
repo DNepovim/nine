@@ -1,3 +1,4 @@
+import { Trans, useLingui } from '@lingui/react/macro'
 import { isNonEmptyArray } from 'narrowland'
 import { Text, View } from 'react-native'
 
@@ -23,6 +24,7 @@ export function EarnedAchievements({
   // Set on the gold and mode-painted game-over screens.
   halo?: boolean
 }) {
+  const { t } = useLingui()
   const { colorScheme } = useTheme()
   if (!isNonEmptyArray(ids)) return null
 
@@ -35,7 +37,7 @@ export function EarnedAchievements({
         className="font-mono text-[8px] font-bold tracking-[1.5px] text-dim"
         style={shadow}
       >
-        EARNED
+        <Trans>EARNED</Trans>
       </Text>
       {ids.map((id) => (
         <View
@@ -53,7 +55,7 @@ export function EarnedAchievements({
             // outside it — inside, the ink just has to suit the card.
             style={halo ? null : { color: ACHIEVEMENT_INK[colorScheme] }}
           >
-            {ACHIEVEMENTS[id].title}
+            {t(ACHIEVEMENTS[id].title)}
           </Text>
         </View>
       ))}

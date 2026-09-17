@@ -1,3 +1,4 @@
+import { useLingui } from '@lingui/react/macro'
 import { LinearGradient } from 'expo-linear-gradient'
 import { useEffect, useRef, useState } from 'react'
 import { Pressable, Text, View } from 'react-native'
@@ -45,6 +46,7 @@ export function ModeSelector({
   gradient?: Partial<Record<Mode | 'arcade', readonly [string, string]>>
   accentIndex?: 0 | 1
 }) {
+  const { t } = useLingui()
   const source = { ...MODE_GRADIENT, ...gradient }
   const pillColors = (f: Mode | 'arcade'): [string, string] =>
     source[f] as [string, string]
@@ -176,7 +178,7 @@ export function ModeSelector({
                   className="font-mono text-[11px] font-black tracking-[1.5px]"
                   style={{ color: isActive ? '#FFFFFF' : source.arcade[0] }}
                 >
-                  {ARCADE_TEASER.label}
+                  {t(ARCADE_TEASER.label)}
                 </Text>
                 <CornerBadge label={ARCADE_TEASER.tag} />
               </Pressable>
@@ -205,7 +207,7 @@ export function ModeSelector({
                 className="font-mono text-[11px] font-black tracking-[1.5px]"
                 style={{ color: isActive ? '#FFFFFF' : source[m][accentIndex] }}
               >
-                {MODES[m].label}
+                {t(MODES[m].label)}
               </Text>
             </Pressable>
           )
@@ -215,7 +217,7 @@ export function ModeSelector({
         selectable={false}
         className="mt-3 px-8 text-center font-mono text-[10px] font-bold text-dim leading-5"
       >
-        {MODE_DESCRIPTIONS[focused]}
+        {t(MODE_DESCRIPTIONS[focused])}
       </Text>
     </View>
   )

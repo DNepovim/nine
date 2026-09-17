@@ -1,4 +1,5 @@
 import { Ionicons } from '@expo/vector-icons'
+import { useLingui } from '@lingui/react/macro'
 import { Text, View } from 'react-native'
 
 import { MarkdownText } from '@/components/markdown-text'
@@ -8,6 +9,8 @@ import type { Release } from '@/types/news'
 // One dated release in the archive: the day as a heading, then each of its
 // announcements beneath.
 export function NewsRelease({ release }: { release: Release }) {
+  // Resolves the descriptors each item carries, and subscribes to the active locale.
+  const { t } = useLingui()
   return (
     <View className="mb-8">
       <Text
@@ -31,10 +34,10 @@ export function NewsRelease({ release }: { release: Release }) {
               className="flex-1 font-mono text-[13px] font-black tracking-[1.5px]"
               style={{ color: item.accent }}
             >
-              {item.title.toUpperCase()}
+              {t(item.title).toUpperCase()}
             </Text>
           </View>
-          <MarkdownText source={item.body} accent={item.accent} />
+          <MarkdownText source={t(item.body)} accent={item.accent} />
         </View>
       ))}
     </View>

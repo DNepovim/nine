@@ -1,4 +1,4 @@
-import { Trans } from '@lingui/react/macro'
+import { Trans, useLingui } from '@lingui/react/macro'
 import { LinearGradient } from 'expo-linear-gradient'
 import { isNonEmptyArray, isOneOf } from 'narrowland'
 import { useEffect } from 'react'
@@ -49,6 +49,7 @@ export function MultiplayerGameOver({
   onStartNext: () => void
   onLeave: () => void
 }) {
+  const { t } = useLingui()
   const gradPhase = useSharedValue(0)
   const gradStartSv = useSharedValue<string>(MULTIPLAYER_GRADIENT[mode][0])
   const gradEndSv = useSharedValue<string>(MULTIPLAYER_GRADIENT[mode][1])
@@ -134,7 +135,7 @@ export function MultiplayerGameOver({
               selectable={false}
               className="px-6 text-center font-mono text-[10px] font-bold tracking-[0.5px] text-dim"
             >
-              {MODE_DESCRIPTIONS[mode]}
+              {t(MODE_DESCRIPTIONS[mode])}
             </Text>
           </View>
         )}

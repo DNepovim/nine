@@ -1,5 +1,5 @@
 import { Ionicons } from '@expo/vector-icons'
-import { Trans } from '@lingui/react/macro'
+import { Trans, useLingui } from '@lingui/react/macro'
 import { LinearGradient } from 'expo-linear-gradient'
 import { isNonEmptyString, isOneOf } from 'narrowland'
 import { useEffect, useState } from 'react'
@@ -19,7 +19,7 @@ import { useTheme } from '@/hooks/use-theme'
 import { useViewport } from '@/hooks/use-viewport'
 import { championMark } from '@/lib/champions'
 import { cn } from '@/lib/cn'
-import { inviteMessage, SHARE_URL } from '@/lib/invite-message'
+import { boardName, SHARE_URL, shouldBoast } from '@/lib/invite-message'
 import type { Medal } from '@/lib/medals'
 import {
   DARK_MODE_GRADIENT,
@@ -30,6 +30,7 @@ import {
   type Difficulty,
   type Mode,
 } from '@/machines/game'
+import { DIFFICULTIES, MODES } from '@/machines/modes'
 
 import { AchievementProgress } from './achievement-progress'
 import { AnimatedLetter } from './animated-letter'
@@ -102,6 +103,7 @@ export function MenuOverlay({
   // The code entry itself lives on its own screen now — this just opens it.
   onOpenJoinRoom: () => void
 }) {
+  const { t } = useLingui()
   const { colorScheme } = useTheme()
   const dimColor = colorScheme === 'dark' ? '#504e6e' : '#aaa69e'
   // Same mark the leaderboard, the pause screen and a room wear beside this
@@ -418,7 +420,16 @@ export function MenuOverlay({
             </Pressable>
             <Pressable
               onPress={() => {
-                const invite = inviteMessage(gameMode, difficulty, bestScore)
+                // The sentence lives here rather than in lib/ because it is the
+                // one place that knows the active language; lib/ keeps the
+                // decision and the board name, which are what a test can pin.
+                const board = boardName(
+                  t(MODES[gameMode].label),
+                  t(DIFFICULTIES[difficulty].label),
+                )
+                const invite = shouldBoast(gameMode, bestScore)
+                  ? t`My best at Nine is ${bestScore} — ${board}. Think you can beat it?`
+                  : t`Nine buttons, one number to hit. Come take a run at it.`
                 // iOS takes the link as its own item, so the sheet can offer it to
                 // AirDrop and Copy Link; Android ignores `url` and needs it inline.
                 void Share.share(

@@ -1,5 +1,5 @@
 import { AntDesign } from '@expo/vector-icons'
-import { Trans } from '@lingui/react/macro'
+import { Trans, useLingui } from '@lingui/react/macro'
 import { LinearGradient } from 'expo-linear-gradient'
 import { Text, View } from 'react-native'
 
@@ -7,8 +7,9 @@ import { GuideBullet } from '@/components/guide/guide-bullet'
 import { MODE_DESCRIPTIONS, MODE_GRADIENT, MODES, type Mode } from '@/machines/game'
 
 export function ModeCard({ mode, facts }: { mode: Mode; facts: string[] }) {
+  const { t } = useLingui()
   const [from, to] = MODE_GRADIENT[mode]
-  const [line1, line2] = MODE_DESCRIPTIONS[mode].split('\n')
+  const [line1, line2] = t(MODE_DESCRIPTIONS[mode]).split('\n')
   return (
     <View className="mt-3 overflow-hidden rounded-2xl bg-card">
       <LinearGradient
@@ -21,7 +22,7 @@ export function ModeCard({ mode, facts }: { mode: Mode; facts: string[] }) {
           selectable={false}
           className="font-mono text-[13px] font-black tracking-[2px] text-on-strong"
         >
-          {MODES[mode].label}
+          {t(MODES[mode].label)}
         </Text>
         <View className="flex-row items-center gap-1">
           {MODES[mode].lives === Number.POSITIVE_INFINITY ? (

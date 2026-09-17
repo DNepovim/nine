@@ -1,3 +1,4 @@
+import { Trans } from '@lingui/react/macro'
 import { LinearGradient } from 'expo-linear-gradient'
 import { useCallback, useEffect, useState } from 'react'
 import { StyleSheet } from 'react-native'
@@ -157,7 +158,7 @@ export function SplashScreen({ onDone }: { onDone: () => void }) {
             subtitleStyle,
           ]}
         >
-          {"Let's multiply"}
+          <Trans>Let's multiply</Trans>
         </Animated.Text>
 
         {/* Bottom attribution — inside contentStyle so it fades out with the rest */}

@@ -9,15 +9,15 @@
 // announcement and praise pools do it: the choice stays pure and testable, and the
 // randomness lives at the call site where it can be taken once per mount instead of on
 // every render.
-export function pickTips(
-  tips: readonly string[],
+export function pickTips<T>(
+  tips: readonly T[],
   count: number,
   rolls: readonly number[],
-): string[] {
+): T[] {
   // A partial shuffle: each pick comes out of the pool, so the same tip cannot appear
   // twice however the rolls fall.
   const pool = [...tips]
-  const taken: string[] = []
+  const taken: T[] = []
   const wanted = Math.min(count, pool.length)
 
   for (let i = 0; i < wanted; i++) {

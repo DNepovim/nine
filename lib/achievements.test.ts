@@ -1,3 +1,4 @@
+import { i18n } from '@lingui/core'
 import { describe, expect, it } from 'vitest'
 
 import {
@@ -10,7 +11,10 @@ import {
 } from '@/constants/achievements'
 import { MAX_MESSAGE_LENGTH } from '@/lib/announcements'
 import { emptyCareer, observeHeld, type Career } from '@/lib/career'
+import { LOCALES } from '@/lib/i18n/locale'
 import type { BoardStanding } from '@/lib/medals'
+import { messages as cs } from '@/locales/cs/messages'
+import { messages as en } from '@/locales/en/messages'
 import type { Stats } from '@/machines/game'
 
 import { earned, isEarnedBy, progressOf, type AchievementFacts } from './achievements'
@@ -73,11 +77,17 @@ const standing = (over: Partial<BoardStanding> = {}): BoardStanding => ({
 })
 
 describe('the catalogue', () => {
-  it('fits every title in the announcement bar', () => {
-    const longest = Math.max(
-      ...ACHIEVEMENT_IDS.map((id) => ACHIEVEMENTS[id].title.length),
-    )
-    expect(longest).toBeLessThanOrEqual(TITLE_MAX)
+  it('fits every title in the announcement bar, in every language', () => {
+    // Measured from the compiled catalogs rather than the source literals: Czech runs
+    // longer than English, and a bar that fits the source is not a bar that fits.
+    i18n.load({ en, cs })
+    for (const locale of LOCALES) {
+      i18n.activate(locale)
+      const longest = Math.max(
+        ...ACHIEVEMENT_IDS.map((id) => i18n._(ACHIEVEMENTS[id].title).length),
+      )
+      expect(longest, locale).toBeLessThanOrEqual(TITLE_MAX)
+    }
     // The bar's own cap, minus the longest template's prefix. A title that fits TITLE_MAX
     // and not this would mean the two numbers had drifted apart.
     expect(TITLE_MAX + 'Unlocked: '.length).toBeLessThanOrEqual(MAX_MESSAGE_LENGTH)

@@ -39,7 +39,7 @@ describe('nextChallenge', () => {
     expect(nextChallenge('accuracy', 'easy')).toEqual({
       mode: 'accuracy',
       difficulty: 'hard',
-      label: 'STEP UP TO HARD',
+      kind: 'stepUp',
     })
   })
 
@@ -47,7 +47,7 @@ describe('nextChallenge', () => {
     expect(nextChallenge('speed', 'hard')).toEqual({
       mode: 'speed',
       difficulty: 'extreme',
-      label: 'STEP UP TO EXTREME',
+      kind: 'stepUp',
     })
   })
 
@@ -55,7 +55,7 @@ describe('nextChallenge', () => {
     expect(nextChallenge('accuracy', 'extreme')).toEqual({
       mode: 'speed',
       difficulty: 'extreme',
-      label: 'TRY SPEED',
+      kind: 'tryMode',
     })
   })
 
@@ -63,7 +63,7 @@ describe('nextChallenge', () => {
     expect(nextChallenge('speed', 'extreme')).toEqual({
       mode: 'accuracy',
       difficulty: 'extreme',
-      label: 'TRY ACCURACY',
+      kind: 'tryMode',
     })
   })
 
@@ -71,7 +71,7 @@ describe('nextChallenge', () => {
     expect(nextChallenge('trainee', 'extreme')).toEqual({
       mode: 'accuracy',
       difficulty: 'extreme',
-      label: 'TRY ACCURACY',
+      kind: 'tryMode',
     })
   })
 })
@@ -96,7 +96,7 @@ describe('easierChallenge', () => {
     expect(easierChallenge('speed', 'extreme')).toEqual({
       mode: 'speed',
       difficulty: 'hard',
-      label: 'STEP DOWN TO HARD',
+      kind: 'stepDown',
     })
   })
 
@@ -104,7 +104,7 @@ describe('easierChallenge', () => {
     expect(easierChallenge('accuracy', 'hard')).toEqual({
       mode: 'accuracy',
       difficulty: 'easy',
-      label: 'STEP DOWN TO EASY',
+      kind: 'stepDown',
     })
   })
 
@@ -112,12 +112,12 @@ describe('easierChallenge', () => {
     expect(easierChallenge('accuracy', 'easy')).toEqual({
       mode: 'trainee',
       difficulty: 'easy',
-      label: 'TRY TRAINEE',
+      kind: 'tryMode',
     })
     expect(easierChallenge('speed', 'easy')).toEqual({
       mode: 'trainee',
       difficulty: 'easy',
-      label: 'TRY TRAINEE',
+      kind: 'tryMode',
     })
   })
 })

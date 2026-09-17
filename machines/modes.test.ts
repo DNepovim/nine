@@ -184,7 +184,7 @@ describe('colors and descriptions', () => {
   it('mode gradient stops chain correctly (end of N = start of N+1)', () => {
     expect(MODE_GRADIENT.trainee[1]).toBe(MODE_GRADIENT.accuracy[0])
     expect(MODE_GRADIENT.accuracy[1]).toBe(MODE_GRADIENT.speed[0])
-    expect(MODE_DESCRIPTIONS.speed.length).toBeGreaterThan(0)
+    expect(MODE_DESCRIPTIONS.speed.message?.length ?? 0).toBeGreaterThan(0)
   })
 
   it('getDifficultyColor returns gradient endpoints for easy/extreme and hex for others', () => {

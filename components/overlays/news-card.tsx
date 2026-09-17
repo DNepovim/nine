@@ -1,4 +1,5 @@
 import { Ionicons } from '@expo/vector-icons'
+import { useLingui } from '@lingui/react/macro'
 import { Text, View } from 'react-native'
 
 import { MarkdownText } from '@/components/markdown-text'
@@ -7,6 +8,9 @@ import type { NewsItem } from '@/types/news'
 // One announcement. Sized by its content — the dialog around it decides how
 // much room that gets.
 export function NewsCard({ item }: { item: NewsItem }) {
+  // `t` resolves the descriptors the item carries, and subscribes this card to the
+  // active locale so a switch re-renders it.
+  const { t } = useLingui()
   return (
     <View>
       <View className="items-center">
@@ -22,12 +26,12 @@ export function NewsCard({ item }: { item: NewsItem }) {
           className="mt-4 text-center font-mono text-[17px] font-black tracking-[2px]"
           style={{ color: item.accent }}
         >
-          {item.title.toUpperCase()}
+          {t(item.title).toUpperCase()}
         </Text>
       </View>
 
       <View className="mt-2">
-        <MarkdownText source={item.body} accent={item.accent} />
+        <MarkdownText source={t(item.body)} accent={item.accent} />
       </View>
     </View>
   )
