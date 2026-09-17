@@ -1,40 +1,17 @@
 import { describe, expect, it } from 'vitest'
 
-import { LOCALES, resolveSystemLocale, storedLocale, type Locale } from './locale'
+import { DEFAULT_LOCALE, LOCALES, storedLocale, type Locale } from './locale'
 
-describe('resolveSystemLocale', () => {
-  it('takes Czech when the device asks for it', () => {
-    expect(resolveSystemLocale(['cs-CZ'])).toBe('cs')
-  })
-
-  it('reads the language, not the region', () => {
-    // A Czech speaker on a device set to Slovakia still gets Czech.
-    expect(resolveSystemLocale(['cs-SK'])).toBe('cs')
-    expect(resolveSystemLocale(['cs'])).toBe('cs')
-  })
-
-  it('falls back to English for a language we do not speak', () => {
-    expect(resolveSystemLocale(['de-DE'])).toBe('en')
-    expect(resolveSystemLocale(['sk-SK'])).toBe('en')
-  })
-
-  it('takes the first tag we speak rather than the first tag', () => {
-    // Device preference order: a player whose first choice we cannot serve still
-    // gets their second if we speak it.
-    expect(resolveSystemLocale(['sk-SK', 'cs-CZ', 'en-GB'])).toBe('cs')
-  })
-
-  it('falls back to English when the device says nothing', () => {
-    expect(resolveSystemLocale([])).toBe('en')
-  })
-
-  it('is not fooled by case or stray whitespace', () => {
-    expect(resolveSystemLocale([' CS-cz '])).toBe('cs')
-  })
-
-  it('lists every locale the app speaks', () => {
+describe('the locales the app speaks', () => {
+  it('lists them, English first', () => {
     const all: Locale[] = [...LOCALES]
     expect(all).toStrictEqual(['en', 'cs'])
+  })
+
+  it('starts in English rather than in whatever the device asks for', () => {
+    // Deliberate: the device's language is never consulted, so a fresh install is in
+    // English until the player says otherwise. See hooks/use-locale.tsx.
+    expect(DEFAULT_LOCALE).toBe('en')
   })
 })
 

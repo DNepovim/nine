@@ -102,10 +102,12 @@ function testing — no renderer, no provider, no jsdom.
 
 ### Locale resolution and persistence
 
-`expo-localization` supplies the system default: the first tag whose `languageCode` is
-`cs` selects Czech, anything else English. A user choice overrides it and persists under
-`LOCALE_KEY = 'nine.locale.v1'`. Resolution is a pure function — tag list in, locale out
-— tested directly.
+**English is the default, and the device's own language is never consulted.** (Reversed
+on 2026-09-17: the first build read the system locale, which meant a Czech phone got a
+Czech game nobody had asked for, and a default nobody could reproduce when a screen
+looked wrong. The switch is two taps away in options.) A choice persists under
+`LOCALE_KEY = 'nine.locale.v1'`; while the key is absent the app is in English.
+`expo-localization` went with the behaviour it existed for.
 
 `I18nProvider` wraps the tree in `app/_layout.tsx`, alongside `AppThemeProvider`.
 Components use `useLingui()` so a switch re-renders them.
@@ -213,7 +215,7 @@ characters is the width of the announcement bar, not a preference.
 Stated plainly, because it is the price of the choice and the plan should not discover it
 later:
 
-- Three new build-time dependencies plus `expo-localization`, a new `babel.config.js`, a
+- Three new build-time dependencies, a new `babel.config.js`, a
   `lingui.config.ts`, and a compile step in front of four existing scripts.
 - `.eas/workflows/deploy.yml` and `preview.yml` each gain a compile step; without it,
   typecheck and knip fail on missing catalogs.
@@ -225,11 +227,11 @@ later:
 
 Three phases, each shippable on its own.
 
-| Phase | Contents                                                                                                                                                                         | Leaves the app                                      |
-| ----- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------- |
-| 1     | Lingui + Babel + Vitest wiring, `lingui.config.ts`, CI compile steps, `expo-localization`, persistence + the `use-display-options` repair, options control, `components/` chrome | Switcher works; chrome Czech, game text English     |
-| 2     | `lib/` game text — announcements, coach lines, hit praise, game-over titles, dates, server errors                                                                                | Gameplay fully Czech; four-letter decision resolved |
-| 3     | How-to-play guide via `<Trans>`, news archive                                                                                                                                    | Everything Czech                                    |
+| Phase | Contents                                                                                                                                                    | Leaves the app                                      |
+| ----- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------- |
+| 1     | Lingui + Babel + Vitest wiring, `lingui.config.ts`, CI compile steps, persistence + the `use-display-options` repair, options control, `components/` chrome | Switcher works; chrome Czech, game text English     |
+| 2     | `lib/` game text — announcements, coach lines, hit praise, game-over titles, dates, server errors                                                           | Gameplay fully Czech; four-letter decision resolved |
+| 3     | How-to-play guide via `<Trans>`, news archive                                                                                                               | Everything Czech                                    |
 
 All the toolchain risk is in phase 1, and it is larger than it was under the dictionary
 design — the NativeWind/Metro overlap and the Vitest macro wiring are the two places

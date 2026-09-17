@@ -20,9 +20,8 @@ export const ACHIEVEMENTS_KEY = 'nine.achievements.v1'
 export const LOCAL_SCORES_KEY = 'nine.scores.v1'
 export const SEEN_NEWS_KEY = 'nine.seen-news.v1'
 export const TUTORIAL_KEY = 'nine.tutorial.v1'
-// Absent until the player picks a language in options. While it is absent the device's
-// own preference decides on every launch, so changing the phone's language changes the
-// app's — which stops being true the moment they choose for themselves.
+// Absent until the player picks a language in options; while it is absent the app is in
+// English. The device's own language is never consulted — see hooks/use-locale.tsx.
 export const LOCALE_KEY = 'nine.locale.v1'
 
 // Keys no build reads any more, cleared once on boot so the retired data does not sit on
