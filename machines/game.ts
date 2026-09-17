@@ -116,6 +116,10 @@ type Context = {
   difficulty: Difficulty
   lives: number
   streak: number
+  // The longest streak this run has reached. `streak` is the one running now and goes
+  // back to nothing every time it breaks, so by game over it says nothing about how the
+  // run went — this is what the career store folds in.
+  maxStreak: number
   // Hits that landed on a streak, over the whole run — `streak` only knows the one
   // running now. It is what says whether a run was played well or merely played.
   strikes: number
@@ -167,6 +171,7 @@ const freshGame = (mode: Mode, seq: number, now: number) => ({
   score: 0,
   lives: MODES[mode].lives,
   streak: 0,
+  maxStreak: 0,
   strikes: 0,
   accSum: 0,
   spdSum: 0,
@@ -398,6 +403,7 @@ function applyGrid(context: Context, newGrid: Grid, now: number) {
     hits,
     score,
     streak,
+    maxStreak: Math.max(context.maxStreak, streak),
     strikes,
     accSum: newAccSum,
     spdSum: newSpdSum,
@@ -421,6 +427,7 @@ export const gameMachine = createMachine({
     difficulty: 'hard' as Difficulty,
     lives: 3,
     streak: 0,
+    maxStreak: 0,
     strikes: 0,
     accSum: 0,
     spdSum: 0,
