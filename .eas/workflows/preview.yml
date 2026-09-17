@@ -18,12 +18,24 @@ on:
       - reopened
       - synchronize
 
+# The Lingui CLI is ESM-only and needs Node 22.19+ — it calls `fs.globSync`, which does
+# not exist before Node 22. EAS images default to Node 20, so `pnpm i18n:compile` failed
+# on the first deploy that ran it. `22` is nvm syntax for the latest 22.x, which keeps
+# this on an LTS major rather than following `latest` onto whatever ships next.
+defaults:
+  tools:
+    node: 22
+
 jobs:
   check:
     name: Static checks
     steps:
       - uses: eas/checkout
       - uses: eas/install_node_modules
+      - name: Node version
+        # Printed so a version mismatch is visible in the log rather than inferred
+        # from a SyntaxError three steps later.
+        run: node --version
       - name: Compile message catalogs
         # Generated output, not committed — knip and tsc both read them, so this
         # has to run before any gate that resolves imports.
