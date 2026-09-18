@@ -93,7 +93,16 @@ export function TaskPrompt({
             selectable={false}
             className={cn(
               'font-mono text-[12px] font-bold leading-[18px]',
-              hasAction && 'text-dim',
+              // Primary, not dim. The card is the lesson's colour at 9% over the
+              // surface, and `dim` on that is 1.9:1 in light and 2.3:1 in dark — a
+              // rendering of the one sentence that says what to do, in a tone meant for
+              // asides. Primary takes it to 13.7:1 and 12.4:1 and matches the heading
+              // sentence directly above, which made the same call for the same reason.
+              //
+              // Primary rather than a darker grey on purpose: darker only reads as more
+              // contrast in the light theme — in dark it is the wrong direction, and
+              // this token inverts where a hex would not.
+              hasAction && 'text-primary',
             )}
             style={hasAction ? undefined : { color }}
           >
