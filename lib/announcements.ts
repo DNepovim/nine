@@ -89,11 +89,18 @@ const ANNOUNCEMENT_MESSAGES = {
     'Untouchable',
   ],
 
-  // An achievement. The name is the achievement's own title, upper-cased by the caller,
-  // so it is the only thing shouting in the bar — the same arrangement the rival lines
-  // use for a nickname. Keep the longest prefix here at 10 characters: it is what
-  // TITLE_MAX in constants/achievements.ts is measured against.
-  achievement: ['Unlocked: {name}', '{name} unlocked', 'Achieved: {name}'],
+  // An achievement. `{name}` is its emblem and its title, upper-cased by the caller, so
+  // the emblem says which one it is before the words are read and the title is the only
+  // thing shouting — the same arrangement the rival lines use for a nickname.
+  //
+  // One line rather than a pool: the others each carry three wordings so a milestone
+  // does not always greet you the same way, but an achievement already varies by its own
+  // name and emblem, and "achieved" is the word the app settled on for getting one.
+  //
+  // This spends 12 of the bar's 40 characters — the emblem and its space, then
+  // " achieved" — which is what TITLE_MAX in constants/achievements.ts is measured
+  // against: 22 + 12 leaves six to spare.
+  achievement: ['{name} achieved'],
 
   // Opening an empty board, which is not the same as topping a busy one. The lines say
   // the board was bare rather than that you are ahead — there is nobody to be ahead of

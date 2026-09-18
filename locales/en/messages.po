@@ -158,10 +158,6 @@ msgstr "ACCURACY"
 msgid "Accuracy — how close to the fewest possible moves you were."
 msgstr "Accuracy — how close to the fewest possible moves you were."
 
-#: components/overlays/earned-achievements.tsx:42
-msgid "ACHIEVED"
-msgstr "ACHIEVED"
-
 #: components/overlays/achievement-progress.tsx:15
 #: components/overlays/achievements-overlay.tsx:54
 #: components/overlays/how-to-play-overlay.tsx:38
@@ -507,7 +503,7 @@ msgstr "Hold first all-time on both Extreme boards at once."
 msgid "Hold the all-time record on a mode’s Extreme board and you carry its mark. It travels with your name everywhere it is drawn — the boards, your own row, a multiplayer room — so the hardest boards say who holds them without anyone having to look them up."
 msgstr "Hold the all-time record on a mode’s Extreme board and you carry its mark. It travels with your name everywhere it is drawn — the boards, your own row, a multiplayer room — so the hardest boards say who holds them without anyone having to look them up."
 
-#: components/overlays/game-over-overlay.tsx:314
+#: components/overlays/game-over-overlay.tsx:313
 msgid "HOME"
 msgstr "HOME"
 
@@ -750,7 +746,7 @@ msgstr "Play a full room — four players, the most one holds."
 msgid "Play a Hard board."
 msgstr "Play a Hard board."
 
-#: components/overlays/game-over-overlay.tsx:272
+#: components/overlays/game-over-overlay.tsx:271
 #: components/overlays/multiplayer-game-over.tsx:191
 msgid "PLAY AGAIN"
 msgstr "PLAY AGAIN"
@@ -972,11 +968,11 @@ msgstr "START GAME"
 msgid "STEADY HAND"
 msgstr "STEADY HAND"
 
-#: components/overlays/game-over-overlay.tsx:291
+#: components/overlays/game-over-overlay.tsx:290
 msgid "STEP DOWN TO {rungName}"
 msgstr "STEP DOWN TO {rungName}"
 
-#: components/overlays/game-over-overlay.tsx:289
+#: components/overlays/game-over-overlay.tsx:288
 msgid "STEP UP TO {rungName}"
 msgstr "STEP UP TO {rungName}"
 
@@ -1178,7 +1174,7 @@ msgid "Trainee now says when a move went to waste, and what a hit cost."
 msgstr "Trainee now says when a move went to waste, and what a hit cost."
 
 #: components/game/step-up-toast.tsx:91
-#: components/overlays/game-over-overlay.tsx:293
+#: components/overlays/game-over-overlay.tsx:292
 msgid "TRY {modeName}"
 msgstr "TRY {modeName}"
 

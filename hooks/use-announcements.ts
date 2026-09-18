@@ -150,7 +150,7 @@ export function useAnnouncements({
       announcementFor(
         'achievement',
         Math.random(),
-        i18n._(ACHIEVEMENTS[next.id].title).toUpperCase(),
+        `${ACHIEVEMENTS[next.id].emblem} ${i18n._(ACHIEVEMENTS[next.id].title).toUpperCase()}`,
       ),
     )
     onAchievementAnnouncedRef.current(next)

@@ -1,15 +1,17 @@
-import { Trans, useLingui } from '@lingui/react/macro'
+import { useLingui } from '@lingui/react/macro'
 import { isNonEmptyArray } from 'narrowland'
 import { Text, View } from 'react-native'
 
 import { ACHIEVEMENTS } from '@/constants/achievements'
 import { ACHIEVEMENT_INK } from '@/constants/colors'
-import { ON_GOLD_LABEL_SHADOW } from '@/constants/theme'
 import { useTheme } from '@/hooks/use-theme'
 import { awardKey, type Award } from '@/lib/achievements'
 import { DIFFICULTIES } from '@/machines/modes'
 
-// What this run earned for good, under the numbers that only describe it.
+// What this run achieved for good, under the numbers that only describe it.
+//
+// No heading over them. A chip is an emblem and a name — it already says what it is, and
+// a word above a row that only ever holds achievements was labelling the obvious.
 //
 // Silent on an ordinary run, which is most of them — a row that appeared on every game
 // over would stop meaning anything by the third one.
@@ -30,17 +32,8 @@ export function EarnedAchievements({
   const { colorScheme } = useTheme()
   if (!isNonEmptyArray(awards)) return null
 
-  const shadow = halo ? ON_GOLD_LABEL_SHADOW : null
-
   return (
     <View className="mb-6 w-full flex-row flex-wrap items-center justify-center gap-1.5">
-      <Text
-        selectable={false}
-        className="font-mono text-[8px] font-bold tracking-[1.5px] text-dim"
-        style={shadow}
-      >
-        <Trans>ACHIEVED</Trans>
-      </Text>
       {awards.map((award) => (
         <View
           key={awardKey(award)}

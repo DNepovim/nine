@@ -158,10 +158,6 @@ msgstr "PŘESNOST"
 msgid "Accuracy — how close to the fewest possible moves you were."
 msgstr "Přesnost — jak blízko jsi byl nejmenšímu možnému počtu tahů."
 
-#: components/overlays/earned-achievements.tsx:42
-msgid "ACHIEVED"
-msgstr "ZÍSKÁNO"
-
 #: components/overlays/achievement-progress.tsx:15
 #: components/overlays/achievements-overlay.tsx:54
 #: components/overlays/how-to-play-overlay.tsx:38
@@ -507,7 +503,7 @@ msgstr "Drž první místo všech dob na obou Extrémních žebříčcích nará
 msgid "Hold the all-time record on a mode’s Extreme board and you carry its mark. It travels with your name everywhere it is drawn — the boards, your own row, a multiplayer room — so the hardest boards say who holds them without anyone having to look them up."
 msgstr "Když držíš rekord všech dob na žebříčku Extreme některého módu, nosíš jeho odznak. Putuje s tvým jménem všude, kde se objeví — po žebříčcích, ve tvém vlastním řádku i v místnosti pro víc hráčů — takže nejtěžší žebříčky samy říkají, kdo je drží."
 
-#: components/overlays/game-over-overlay.tsx:314
+#: components/overlays/game-over-overlay.tsx:313
 msgid "HOME"
 msgstr "DOMŮ"
 
@@ -750,7 +746,7 @@ msgstr "Zahraj si v plné místnosti — čtyři hráči, víc se jich nevejde."
 msgid "Play a Hard board."
 msgstr "Zahraj si Těžký žebříček."
 
-#: components/overlays/game-over-overlay.tsx:272
+#: components/overlays/game-over-overlay.tsx:271
 #: components/overlays/multiplayer-game-over.tsx:191
 msgid "PLAY AGAIN"
 msgstr "HRÁT ZNOVU"
@@ -972,11 +968,11 @@ msgstr "SPUSTIT HRU"
 msgid "STEADY HAND"
 msgstr "PEVNÁ RUKA"
 
-#: components/overlays/game-over-overlay.tsx:291
+#: components/overlays/game-over-overlay.tsx:290
 msgid "STEP DOWN TO {rungName}"
 msgstr "SESTUP NA {rungName}"
 
-#: components/overlays/game-over-overlay.tsx:289
+#: components/overlays/game-over-overlay.tsx:288
 msgid "STEP UP TO {rungName}"
 msgstr "POSUŇ SE NA {rungName}"
 
@@ -1178,7 +1174,7 @@ msgid "Trainee now says when a move went to waste, and what a hit cost."
 msgstr "Nováček teď řekne, kdy přišel tah nazmar a co tě zásah stál."
 
 #: components/game/step-up-toast.tsx:91
-#: components/overlays/game-over-overlay.tsx:293
+#: components/overlays/game-over-overlay.tsx:292
 msgid "TRY {modeName}"
 msgstr "ZKUS {modeName}"
 

@@ -190,9 +190,14 @@ describe('messageFor', () => {
 
 describe('message pools', () => {
   it('gives every record more than one line', () => {
-    for (const id of IDS) {
-      expect(messagePool(id).length).toBeGreaterThan(1)
+    // Except the achievement, which has exactly one: it already varies by the emblem
+    // and name substituted into it, so a second wording would vary what is already
+    // varying. Named rather than filtered loosely, so a pool that loses its variety by
+    // accident still fails here.
+    for (const id of IDS.filter((each) => each !== 'achievement')) {
+      expect(messagePool(id).length, id).toBeGreaterThan(1)
     }
+    expect(messagePool('achievement')).toHaveLength(1)
   })
 
   it('has no duplicate lines within a pool', () => {
