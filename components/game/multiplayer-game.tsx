@@ -8,7 +8,6 @@ import { MultiplayerCorner } from '@/components/game/multiplayer-corner'
 import { PieCountdown } from '@/components/game/pie-countdown'
 import { ScoreDigit } from '@/components/game/score-digit'
 import { PIE_SIZE } from '@/constants/game'
-import { useGameDialSize } from '@/hooks/use-game-dial-size'
 import { useMultiplayerDial } from '@/hooks/use-multiplayer-dial'
 import { useScoreDirection } from '@/hooks/use-score-direction'
 import { valueProgress } from '@/lib/value-progress'
@@ -64,7 +63,7 @@ export function MultiplayerGame({
 }) {
   const { t } = useLingui()
   const insets = useSafeAreaInsets()
-  const dialSize = useGameDialSize()
+  const [dialSize, setDialSize] = useState(0)
 
   const { grid, handlePress, handleSet } = useMultiplayerDial({
     targetValue: currentTarget?.value ?? null,
@@ -262,7 +261,13 @@ export function MultiplayerGame({
       </View>
 
       {/* ── Dial ── */}
-      <View className="flex-1 items-center justify-center">
+      <View
+        className="flex-1 items-center justify-center"
+        onLayout={(e) => {
+          const { width, height } = e.nativeEvent.layout
+          setDialSize(Math.min(width, height))
+        }}
+      >
         <View
           style={{ width: dialSize, height: dialSize }}
           className="flex-row flex-wrap"

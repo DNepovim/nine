@@ -1,21 +1,19 @@
 import { readFileSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
 
-// Every surface that draws a dial button, and the one hook all of them must size from.
+// Every tutorial surface that draws a dial, and the one hook all of them size from.
 //
-// A button is the same size wherever it is drawn. That used to be a comment and an
-// approximation: the game measured its own laid-out area with `onLayout` while the
-// tutorial reconstructed the same number from constants, so the two agreed only as
-// closely as the constants happened to be right — and when a lesson was given an
-// `extraChrome` argument to make room for its heading, the tutorial's button fell to
-// 30pt against the game's 78pt on a 667pt screen.
+// The game and multiplayer are deliberately absent. They measure their own laid-out
+// area with `onLayout`, and an attempt to move them onto this hook shipped a dial small
+// enough to stack nine buttons in a column — the arithmetic here models the layout
+// rather than observing it, and on a real device the model was wrong. Measuring is the
+// behaviour that works; this hook is the tutorial's way of asking what the game will
+// measure, and it is an approximation, which is the honest description of it.
 //
-// So this is asserted rather than described. Reading the files is the point: a new
-// screen that measures its own dial, or an argument creeping back into the hook, is
-// exactly the kind of change that looks harmless in review.
+// What this still pins is the regression that started it: a lesson passing
+// `extraChrome` so its heading had room, which put the tutorial's button at 30pt
+// against the game's 78pt on a 667pt screen.
 const DRAWS_A_DIAL = [
-  'app/(tabs)/index.tsx',
-  'components/game/multiplayer-game.tsx',
   'components/overlays/tutorial/lessons/controls-lesson.tsx',
   'components/overlays/tutorial/lessons/goal-lesson.tsx',
   'components/overlays/tutorial/lessons/strategy-lesson.tsx',
@@ -25,7 +23,7 @@ const DRAWS_A_DIAL = [
 
 const read = (path: string): string => readFileSync(path, 'utf8')
 
-describe('the dial button is one size everywhere', () => {
+describe('every lesson sizes its dial the same way', () => {
   it('sizes every dial from the shared hook', () => {
     for (const path of DRAWS_A_DIAL) {
       expect(read(path), path).toContain('useGameDialSize()')
@@ -43,7 +41,8 @@ describe('the dial button is one size everywhere', () => {
   })
 
   it('measures no dial of its own', () => {
-    // A screen that sets its own dial size from `onLayout` is back to two sources.
+    // A lesson cannot measure: its own chrome is what makes its space differ from the
+    // game's, so measuring is exactly how the two drift apart.
     for (const path of DRAWS_A_DIAL) {
       expect(read(path), path).not.toContain('setDialSize')
     }
