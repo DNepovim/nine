@@ -79,19 +79,6 @@ export const STEP_ACCENT_COLORS: readonly string[] = Array.from(
 // the success state registers before the screen changes.
 export const AUTO_ADVANCE_MS = 1100
 
-// Extra chrome useGameDialSize has no way to know about on its own: the tutorial's
-// own stepper and BACK/SKIP/NEXT row above every lesson, plus whatever that lesson
-// stacks above its dial. Passed in as `extraChrome` so the dial gives up exactly
-// this much rather than the space it hands the lesson's own heading and callout —
-// without it, the two were free to grow into each other on a short screen.
-//
-// Two sizes rather than one per lesson: everything with a LessonHeading and a
-// TaskPrompt (controls, weights, strategy, swipe) wears roughly the same amount
-// regardless of which colour or copy it carries; the opening goal screen's single
-// line of instruction is the one screen light enough to need less.
-export const LESSON_HEADER_SHRINK = 290
-export const GOAL_HEADER_SHRINK = 160
-
 // Cell indices in the flat 3×3 grid. Top-left is the ×1 fine-tuner, top-middle a
 // ×2 mid-weight, bottom-right the ×9 heavy hitter.
 export const FINE_CELL = 0

@@ -85,6 +85,18 @@ msgstr "— NEDOSTUPNÉ —"
 msgid "???"
 msgstr "???"
 
+#: components/overlays/tutorial/lessons/swipe-lesson.tsx:50
+msgid "{FIRST_REACH}. Same move on the 2× button — straight to 9 again, that’s {OVERSHOOT}."
+msgstr "{FIRST_REACH}. Stejný pohyb na tlačítku 2× — zase rovnou na 9, to je {OVERSHOOT}."
+
+#: components/overlays/tutorial/lessons/swipe-lesson.tsx:56
+msgid "{OVERSHOOT} is over {SWIPE_TARGET}. Clear the 1× button and land it exactly."
+msgstr "{OVERSHOOT} je víc než {SWIPE_TARGET}. Vynuluj tlačítko 1× a tref to přesně."
+
+#: components/overlays/tutorial/lessons/swipe-lesson.tsx:65
+msgid "{SWIPE_TARGET} exactly — two swipes out, one swipe back."
+msgstr "Přesně {SWIPE_TARGET} — dvě švihnutí tam, jedno zpátky."
+
 #: components/guide/mode-card.tsx:33
 msgid "∞ LIVES"
 msgstr "∞ ŽIVOTŮ"
@@ -105,7 +117,7 @@ msgstr "🦉 Sova je Přesnost v nejtěžší podobě. Ten žebříček odměňu
 msgid "A button on 9 goes to 0 in a single tap — quicker than swiping there."
 msgstr "Tlačítko na devítce přeskočí na nulu jedním ťuknutím — rychleji než švihnutím."
 
-#: components/overlays/tutorial/lessons/weights-lesson.tsx:131
+#: components/overlays/tutorial/lessons/weights-lesson.tsx:130
 msgid "A button’s weight is its row × its column — the small print above it."
 msgstr "Váha tlačítka je jeho řádek × jeho sloupec — drobné písmo nad ním."
 
@@ -196,6 +208,10 @@ msgstr "VŠECH ŠEST"
 msgid "ALL THREE"
 msgstr "VŠECHNY TŘI"
 
+#: components/overlays/tutorial/lessons/controls-lesson.tsx:45
+msgid "and straight back to 0."
+msgstr "a rovnou zpátky na 0."
+
 #: components/overlays/feedback-overlay.tsx:189
 msgid "Anything at all — what broke, what annoyed you, what you wish it did. The mode, difficulty and score you are on go with it."
 msgstr "Cokoliv — co se rozbilo, co tě štvalo, co by sis přál. Mód, obtížnost a skóre se pošlou s tím."
@@ -245,7 +261,7 @@ msgstr "Nejlepší skóre nahoře"
 msgid "BLUR"
 msgstr "ROZMAZANĚ"
 
-#: components/overlays/tutorial/lessons/goal-lesson.tsx:96
+#: components/overlays/tutorial/lessons/goal-lesson.tsx:95
 msgid "But how?"
 msgstr "Ale jak?"
 
@@ -274,11 +290,11 @@ msgstr "ZVOL SI PŘEZDÍVKU"
 msgid "Choose Add to Home Screen"
 msgstr "Zvol Přidat na plochu"
 
-#: components/overlays/tutorial/lessons/strategy-lesson.tsx:95
+#: components/overlays/tutorial/lessons/strategy-lesson.tsx:94
 msgid "COARSE, THEN FINE"
 msgstr "NAHRUBO, POTOM NAJEMNO"
 
-#: components/overlays/tutorial/lessons/weights-lesson.tsx:174
+#: components/overlays/tutorial/lessons/weights-lesson.tsx:173
 msgid "COLUMN"
 msgstr "SLOUPEC"
 
@@ -300,7 +316,7 @@ msgid "CONTINUE TUTORIAL"
 msgstr "POKRAČOVAT V NÁVODU"
 
 #: components/overlays/how-to-play-overlay.tsx:32
-#: components/overlays/tutorial/lessons/controls-lesson.tsx:76
+#: components/overlays/tutorial/lessons/controls-lesson.tsx:83
 msgid "CONTROLS"
 msgstr "OVLÁDÁNÍ"
 
@@ -367,6 +383,10 @@ msgstr "VŠE"
 #: constants/tips.ts:17
 msgid "Every button tops out at nine times its weight: 81 on the 9×, 9 on a 1×. Knowing the ceilings is what tells you which button can close a gap, and in how few moves."
 msgstr "Každé tlačítko končí na devítinásobku své váhy: 81 u 9×, 9 u 1×. Znát stropy je to, co ti napoví, které tlačítko mezeru zavře — a na kolik tahů."
+
+#: components/overlays/tutorial/lessons/controls-lesson.tsx:42
+msgid "every tap adds 1."
+msgstr "každé ťuknutí přidá 1."
 
 #: components/overlays/how-to-play-overlay.tsx:577
 msgid "Everyone who hits is ranked by how few moves it took."
@@ -466,7 +486,7 @@ msgstr "ABSOLVENT"
 msgid "HARD"
 msgstr "TĚŽKÁ"
 
-#: components/overlays/tutorial/lessons/strategy-lesson.tsx:96
+#: components/overlays/tutorial/lessons/strategy-lesson.tsx:95
 msgid "Heavy buttons cover the distance. Light buttons land the exact number."
 msgstr "Těžká tlačítka ujedou vzdálenost. Lehká trefí přesné číslo."
 
@@ -632,7 +652,7 @@ msgstr "MAX NÁSOBITEL"
 msgid "MODES"
 msgstr "MÓDY"
 
-#: components/game/multiplayer-game.tsx:158
+#: components/game/multiplayer-game.tsx:159
 #: components/overlays/how-to-play-overlay.tsx:39
 msgid "MULTIPLAYER"
 msgstr "VÍCE HRÁČŮ"
@@ -779,7 +799,7 @@ msgstr "Hraj obouruč, palec na každé straně mřížky. Natahovat se přes ce
 msgid "PLAYERS"
 msgstr "HRÁČI"
 
-#: components/overlays/tutorial/lessons/weights-lesson.tsx:130
+#: components/overlays/tutorial/lessons/weights-lesson.tsx:129
 msgid "POSITION IS POWER"
 msgstr "POZICE JE SÍLA"
 
@@ -821,7 +841,7 @@ msgstr "VÝSLEDKY"
 msgid "ROOM FOR TWO"
 msgstr "MÍSTO PRO DVA"
 
-#: components/overlays/tutorial/lessons/weights-lesson.tsx:158
+#: components/overlays/tutorial/lessons/weights-lesson.tsx:157
 msgid "ROW"
 msgstr "ŘÁDEK"
 
@@ -980,6 +1000,10 @@ msgstr "POSUŇ SE NA {rungName}"
 msgid "Sticking with it — targets landed across every run you have ever played, and days played in a row."
 msgstr "Vytrvalost — cíle složené za všechny hry dohromady a dny odehrané v řadě."
 
+#: components/overlays/tutorial/lessons/controls-lesson.tsx:44
+msgid "straight to 9 in one move."
+msgstr "rovnou na 9 jedním tahem."
+
 #: components/overlays/how-to-play-overlay.tsx:462
 msgid "Streak — consecutive perfect plays multiply your points ×2 → ×4 → ×8. One imperfect hit and you start again."
 msgstr "Série — dokonalé tahy za sebou násobí body ×2 → ×4 → ×8. Stačí jeden nedokonalý zásah a začínáš od začátku."
@@ -988,7 +1012,22 @@ msgstr "Série — dokonalé tahy za sebou násobí body ×2 → ×4 → ×8. St
 msgid "SURGEON"
 msgstr "CHIRURG"
 
-#: components/overlays/tutorial/lessons/swipe-lesson.tsx:94
+#: components/overlays/tutorial/lessons/controls-lesson.tsx:43
+msgid "SWIPE DOWN"
+msgstr "ŠVIHNI DOLŮ"
+
+#: components/overlays/tutorial/lessons/controls-lesson.tsx:45
+#: components/overlays/tutorial/lessons/swipe-lesson.tsx:55
+msgid "SWIPE LEFT"
+msgstr "ŠVIHNI DOLEVA"
+
+#: components/overlays/tutorial/lessons/controls-lesson.tsx:44
+#: components/overlays/tutorial/lessons/swipe-lesson.tsx:41
+#: components/overlays/tutorial/lessons/swipe-lesson.tsx:47
+msgid "SWIPE RIGHT"
+msgstr "ŠVIHNI DOPRAVA"
+
+#: components/overlays/tutorial/lessons/swipe-lesson.tsx:100
 msgid "SWIPE SHORTCUTS"
 msgstr "ZKRATKY SVIHNUTÍM"
 
@@ -1011,6 +1050,10 @@ msgstr "Když dojdeš k cíli oklikou, Nováček ti teď ukáže tu zkratku — 
 #: constants/achievements.ts:297
 msgid "Take the shortest route to 25 targets in one run."
 msgstr "Slož v jedné hře 25 cílů nejkratší cestou."
+
+#: components/overlays/tutorial/lessons/controls-lesson.tsx:42
+msgid "TAP"
+msgstr "ŤUKNI"
 
 #: components/overlays/how-to-play-overlay.tsx:33
 msgid "TARGETS & THE CLOCK"
@@ -1051,6 +1094,18 @@ msgstr "MEZNÍ RYCHLOST"
 #: components/overlays/feedback-overlay.tsx:160
 msgid "THANK YOU"
 msgstr "DÍKY"
+
+#: components/overlays/tutorial/lessons/controls-lesson.tsx:43
+msgid "that takes 1 back off."
+msgstr "to zase jednu ubere."
+
+#: components/overlays/tutorial/lessons/controls-lesson.tsx:52
+msgid "That’s every move the dial has."
+msgstr "To jsou všechny pohyby, které číselník umí."
+
+#: components/overlays/tutorial/lessons/swipe-lesson.tsx:42
+msgid "the 1× button jumps straight to 9 — no tapping nine times."
+msgstr "tlačítko 1× skočí rovnou na 9 — nemusíš ťukat devětkrát."
 
 #: components/overlays/how-to-play-overlay.tsx:578
 msgid "The best takes the most points; the last to land it takes none."
@@ -1127,7 +1182,7 @@ msgstr "TISÍC ZÁSAHŮ"
 msgid "Three lives, and every score reaches the board."
 msgstr "Tři životy a každé skóre se dostane na žebříček."
 
-#: components/overlays/tutorial/lessons/controls-lesson.tsx:77
+#: components/overlays/tutorial/lessons/controls-lesson.tsx:84
 msgid "Three moves, one button. Try them in order."
 msgstr "Tři pohyby, jedno tlačítko. Vyzkoušej je popořadě."
 
@@ -1210,7 +1265,7 @@ msgstr "NEDOTKNUTELNÝ"
 msgid "UP A RUNG"
 msgstr "O PŘÍČKU VÝŠ"
 
-#: components/overlays/tutorial/lessons/weights-lesson.tsx:190
+#: components/overlays/tutorial/lessons/weights-lesson.tsx:189
 msgid "VALUE"
 msgstr "HODNOTA"
 

@@ -28,13 +28,16 @@ export const SUM_ROW_HEIGHT = 50
 // size Trainee actually gives it rather than the size an un-badged mode would.
 const TRAINEE_STATS_SHRINK = 30
 
-export function useGameDialSize(
-  // Chrome above the dial that this calculation has no way to see on its own — the
-  // tutorial's stepper and nav row, and a lesson's own heading and callout, none of
-  // which exist in a real run. Zero for the real game, where HUD_HEIGHT already
-  // covers everything above the dial. See constants/tutorial.ts.
-  extraChrome = 0,
-): number {
+// Takes nothing. A button is the same size wherever it is drawn — the game, a lesson,
+// the controls screen — and the only thing it may vary with is the viewport.
+//
+// It briefly took an `extraChrome` argument so a lesson could hand back room for its
+// heading and callout. That bought the copy its space out of the one thing this function
+// exists to hold still: on a 667pt screen it left the tutorial's button at 30pt against
+// the game's 78pt, so the gesture a player practised was not the gesture they would
+// make. A lesson's chrome comes out of DialStage's `above` band instead, which is
+// `flex: 1` and so gives way to zero before the dial gives up a pixel.
+export function useGameDialSize(): number {
   // The area the app actually occupies, not the browser window it may be framed
   // in — on desktop web, `useWindowDimensions` reports the whole page, and a dial
   // sized from that ran well past the phone frame the tutorial actually renders in.
@@ -44,9 +47,6 @@ export function useGameDialSize(
   // size between modes. Imported rather than written out again: it is one of the numbers
   // this calculation exists to track.
   const chrome = SCREEN_PADDING_Y + BEST_SCORES_HEIGHT + HUD_HEIGHT + SUM_ROW_HEIGHT
-  // extraChrome comes off before the half-and-half split, not after: unlike the
-  // Trainee-stats asymmetry below, it isn't content the targets area can absorb —
-  // it sits above both halves, so both have to give up the room together.
-  const dialArea = (height - chrome - extraChrome) / 2 - TRAINEE_STATS_SHRINK
+  const dialArea = (height - chrome) / 2 - TRAINEE_STATS_SHRINK
   return Math.max(0, Math.floor(Math.min(width - SCREEN_PADDING_X, dialArea)))
 }

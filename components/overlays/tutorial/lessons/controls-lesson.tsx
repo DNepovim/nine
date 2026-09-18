@@ -1,4 +1,6 @@
-import { Trans } from '@lingui/react/macro'
+import type { MessageDescriptor } from '@lingui/core'
+import { msg } from '@lingui/core/macro'
+import { Trans, useLingui } from '@lingui/react/macro'
 import { useEffect, useState } from 'react'
 import { View } from 'react-native'
 
@@ -10,7 +12,6 @@ import { TaskPrompt } from '@/components/overlays/tutorial/task-prompt'
 import { ThumbHint, type ThumbGesture } from '@/components/overlays/tutorial/thumb-hint'
 import {
   CONTROLS_START_VALUE,
-  LESSON_HEADER_SHRINK,
   STEP_ACCENT_COLORS,
   STEP_COLORS,
 } from '@/constants/tutorial'
@@ -28,22 +29,27 @@ const ACCENT = STEP_ACCENT_COLORS[1] ?? '#9c73c9'
 // The hit flash a key wears at 9 — Trainee's, the run this tutorial ends in.
 const [PEAK_FROM, PEAK_TO] = DARK_MODE_GRADIENT.trainee
 
-// Swipe up is deliberately absent — tap already covers +1, so it's one gesture fewer to
-// learn for the same result. Swipe left is absent for the same reason: swipe right
-// already teaches "a horizontal swipe jumps to the far edge", so its mirror would
-// repeat the lesson rather than add one.
+// Both horizontal swipes are taught, and next to each other. The pair is the point —
+// knowing a swipe jumps to the far edge is only half of it if you cannot say which edge,
+// and a player who has practised only one reaches for a tap when they want the other.
+//
+// Swipe up stays absent: tap already covers +1, so it is one gesture fewer to learn for
+// the same result.
 //
 // The gesture is named on its own so the callout can set it apart from the reason: the
 // arrow, the words and the thumb over the button then all say the same direction.
 const GESTURE_TASKS = [
-  { gesture: 'tap', action: 'TAP', detail: 'every tap adds 1.' },
-  { gesture: 'down', action: 'SWIPE DOWN', detail: 'that takes 1 back off.' },
-  { gesture: 'right', action: 'SWIPE RIGHT', detail: 'straight to 9 in one move.' },
+  { gesture: 'tap', action: msg`TAP`, detail: msg`every tap adds 1.` },
+  { gesture: 'down', action: msg`SWIPE DOWN`, detail: msg`that takes 1 back off.` },
+  { gesture: 'right', action: msg`SWIPE RIGHT`, detail: msg`straight to 9 in one move.` },
+  { gesture: 'left', action: msg`SWIPE LEFT`, detail: msg`and straight back to 0.` },
 ] as const satisfies readonly {
   gesture: ThumbGesture
-  action: string
-  detail: string
+  action: MessageDescriptor
+  detail: MessageDescriptor
 }[]
+
+const ALL_DONE = msg`That’s every move the dial has.`
 
 export function ControlsLesson({ isDark, onComplete }: LessonProps) {
   // Value and sub-step move as one: checking the gesture inside the updater keeps
@@ -52,7 +58,8 @@ export function ControlsLesson({ isDark, onComplete }: LessonProps) {
     value: CONTROLS_START_VALUE,
     taskIndex: 0,
   }))
-  const dialSize = useGameDialSize(LESSON_HEADER_SHRINK)
+  const { t } = useLingui()
+  const dialSize = useGameDialSize()
   const cellSize = Math.floor(dialSize / GRID_SIZE)
   const task = GESTURE_TASKS[taskIndex]
 
@@ -63,7 +70,7 @@ export function ControlsLesson({ isDark, onComplete }: LessonProps) {
   // Only the gesture the current sub-step asks for does anything at all — and
   // because performing it moves the sub-step on, each one works exactly once.
   // Everything else leaves the button untouched, so the taught order holds and
-  // the value walks a fixed path: 5 → 6 → 5 → 9.
+  // the value walks a fixed path: 5 → 6 → 5 → 9 → 0.
   const attempt = (gesture: ThumbGesture, next: (current: number) => number) => {
     setState((current) => {
       if (GESTURE_TASKS[current.taskIndex]?.gesture !== gesture) return current
@@ -78,8 +85,8 @@ export function ControlsLesson({ isDark, onComplete }: LessonProps) {
       </LessonHeading>
 
       <TaskPrompt
-        text={task === undefined ? 'That’s every move the dial has.' : task.detail}
-        action={task?.action}
+        text={t(task === undefined ? ALL_DONE : task.detail)}
+        action={task === undefined ? undefined : t(task.action)}
         gesture={task?.gesture}
         done={task === undefined}
         color={COLOR}

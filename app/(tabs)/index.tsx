@@ -60,6 +60,7 @@ import { useDisplayedTargets } from '@/hooks/use-displayed-targets'
 import { useDyingSequence } from '@/hooks/use-dying-sequence'
 import { useFloatingPoints } from '@/hooks/use-floating-points'
 import { useFloatingStat } from '@/hooks/use-floating-stat'
+import { useGameDialSize } from '@/hooks/use-game-dial-size'
 import { useHitCelebration } from '@/hooks/use-hit-celebration'
 import { useInstallPrompt } from '@/hooks/use-install-prompt'
 import { useMultiplayerGame } from '@/hooks/use-multiplayer-game'
@@ -639,7 +640,7 @@ export default function GameScreen() {
 
   // Dial pad is a square sized to fit its container (min of width/height), so it
   // never overflows over the score above it.
-  const [dialSize, setDialSize] = useState(0)
+  const dialSize = useGameDialSize()
 
   const currentMultiplier = streakMultiplier(streak)
 
@@ -1074,13 +1075,7 @@ export default function GameScreen() {
           </View>
 
           {/* ── Dial pad — bottom two thirds ── */}
-          <View
-            className="flex-1 items-center justify-center"
-            onLayout={(e) => {
-              const { width, height } = e.nativeEvent.layout
-              setDialSize(Math.min(width, height))
-            }}
-          >
+          <View className="flex-1 items-center justify-center">
             <View
               style={{ width: dialSize, height: dialSize }}
               className="flex-row flex-wrap"

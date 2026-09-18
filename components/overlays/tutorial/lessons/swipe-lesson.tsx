@@ -1,4 +1,6 @@
-import { Trans } from '@lingui/react/macro'
+import type { MessageDescriptor } from '@lingui/core'
+import { msg } from '@lingui/core/macro'
+import { Trans, useLingui } from '@lingui/react/macro'
 import { useEffect, useState } from 'react'
 import { Text, View } from 'react-native'
 
@@ -11,7 +13,6 @@ import { TaskPrompt } from '@/components/overlays/tutorial/task-prompt'
 import type { ThumbGesture } from '@/components/overlays/tutorial/thumb-hint'
 import {
   FINE_CELL,
-  LESSON_HEADER_SHRINK,
   MID_CELL,
   STEP_ACCENT_COLORS,
   STEP_COLORS,
@@ -37,27 +38,31 @@ const ROUTE_TASKS = [
   {
     cell: FINE_CELL,
     gesture: 'right',
-    action: 'SWIPE RIGHT',
-    detail: 'the 1× button jumps straight to 9 — no tapping nine times.',
+    action: msg`SWIPE RIGHT`,
+    detail: msg`the 1× button jumps straight to 9 — no tapping nine times.`,
   },
   {
     cell: MID_CELL,
     gesture: 'right',
-    action: 'SWIPE RIGHT',
-    detail: `${FIRST_REACH}. Same move on the 2× button — straight to 9 again, that’s ${OVERSHOOT}.`,
+    action: msg`SWIPE RIGHT`,
+    // The running totals are placeholders, so a translation can put them where its own
+    // sentence wants them rather than where English happens to.
+    detail: msg`${FIRST_REACH}. Same move on the 2× button — straight to 9 again, that’s ${OVERSHOOT}.`,
   },
   {
     cell: FINE_CELL,
     gesture: 'left',
-    action: 'SWIPE LEFT',
-    detail: `${OVERSHOOT} is over ${SWIPE_TARGET}. Clear the 1× button and land it exactly.`,
+    action: msg`SWIPE LEFT`,
+    detail: msg`${OVERSHOOT} is over ${SWIPE_TARGET}. Clear the 1× button and land it exactly.`,
   },
 ] as const satisfies readonly {
   cell: number
   gesture: ThumbGesture
-  action: string
-  detail: string
+  action: MessageDescriptor
+  detail: MessageDescriptor
 }[]
+
+const ROUTE_DONE = msg`${SWIPE_TARGET} exactly — two swipes out, one swipe back.`
 
 export function SwipeLesson({ isDark, onComplete }: LessonProps) {
   // Board and task move together: checking the task inside the updater keeps two
@@ -67,8 +72,9 @@ export function SwipeLesson({ isDark, onComplete }: LessonProps) {
     taskIndex: number
   }>(() => ({ cells: emptyCells(), taskIndex: 0 }))
   const [ringKey, setRingKey] = useState(0)
+  const { t } = useLingui()
   const [ranOut, setRanOut] = useState(false)
-  const dialSize = useGameDialSize(LESSON_HEADER_SHRINK)
+  const dialSize = useGameDialSize()
   const task = ROUTE_TASKS[taskIndex]
 
   useEffect(() => {
@@ -98,12 +104,8 @@ export function SwipeLesson({ isDark, onComplete }: LessonProps) {
       </LessonHeading>
 
       <TaskPrompt
-        text={
-          task === undefined
-            ? `${SWIPE_TARGET} exactly — two swipes out, one swipe back.`
-            : task.detail
-        }
-        action={task?.action}
+        text={t(task === undefined ? ROUTE_DONE : task.detail)}
+        action={task === undefined ? undefined : t(task.action)}
         gesture={task?.gesture}
         done={task === undefined}
         color={COLOR}

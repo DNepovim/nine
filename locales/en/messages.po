@@ -85,6 +85,18 @@ msgstr "— UNAVAILABLE —"
 msgid "???"
 msgstr "???"
 
+#: components/overlays/tutorial/lessons/swipe-lesson.tsx:50
+msgid "{FIRST_REACH}. Same move on the 2× button — straight to 9 again, that’s {OVERSHOOT}."
+msgstr "{FIRST_REACH}. Same move on the 2× button — straight to 9 again, that’s {OVERSHOOT}."
+
+#: components/overlays/tutorial/lessons/swipe-lesson.tsx:56
+msgid "{OVERSHOOT} is over {SWIPE_TARGET}. Clear the 1× button and land it exactly."
+msgstr "{OVERSHOOT} is over {SWIPE_TARGET}. Clear the 1× button and land it exactly."
+
+#: components/overlays/tutorial/lessons/swipe-lesson.tsx:65
+msgid "{SWIPE_TARGET} exactly — two swipes out, one swipe back."
+msgstr "{SWIPE_TARGET} exactly — two swipes out, one swipe back."
+
 #: components/guide/mode-card.tsx:33
 msgid "∞ LIVES"
 msgstr "∞ LIVES"
@@ -105,7 +117,7 @@ msgstr "🦉 The owl is Accuracy at its hardest. That board rewards the exact ro
 msgid "A button on 9 goes to 0 in a single tap — quicker than swiping there."
 msgstr "A button on 9 goes to 0 in a single tap — quicker than swiping there."
 
-#: components/overlays/tutorial/lessons/weights-lesson.tsx:131
+#: components/overlays/tutorial/lessons/weights-lesson.tsx:130
 msgid "A button’s weight is its row × its column — the small print above it."
 msgstr "A button’s weight is its row × its column — the small print above it."
 
@@ -196,6 +208,10 @@ msgstr "ALL SIX BOARDS"
 msgid "ALL THREE"
 msgstr "ALL THREE"
 
+#: components/overlays/tutorial/lessons/controls-lesson.tsx:45
+msgid "and straight back to 0."
+msgstr "and straight back to 0."
+
 #: components/overlays/feedback-overlay.tsx:189
 msgid "Anything at all — what broke, what annoyed you, what you wish it did. The mode, difficulty and score you are on go with it."
 msgstr "Anything at all — what broke, what annoyed you, what you wish it did. The mode, difficulty and score you are on go with it."
@@ -245,7 +261,7 @@ msgstr "Best scores, up top"
 msgid "BLUR"
 msgstr "BLUR"
 
-#: components/overlays/tutorial/lessons/goal-lesson.tsx:96
+#: components/overlays/tutorial/lessons/goal-lesson.tsx:95
 msgid "But how?"
 msgstr "But how?"
 
@@ -274,11 +290,11 @@ msgstr "CHOOSE A NICKNAME"
 msgid "Choose Add to Home Screen"
 msgstr "Choose Add to Home Screen"
 
-#: components/overlays/tutorial/lessons/strategy-lesson.tsx:95
+#: components/overlays/tutorial/lessons/strategy-lesson.tsx:94
 msgid "COARSE, THEN FINE"
 msgstr "COARSE, THEN FINE"
 
-#: components/overlays/tutorial/lessons/weights-lesson.tsx:174
+#: components/overlays/tutorial/lessons/weights-lesson.tsx:173
 msgid "COLUMN"
 msgstr "COLUMN"
 
@@ -300,7 +316,7 @@ msgid "CONTINUE TUTORIAL"
 msgstr "CONTINUE TUTORIAL"
 
 #: components/overlays/how-to-play-overlay.tsx:32
-#: components/overlays/tutorial/lessons/controls-lesson.tsx:76
+#: components/overlays/tutorial/lessons/controls-lesson.tsx:83
 msgid "CONTROLS"
 msgstr "CONTROLS"
 
@@ -367,6 +383,10 @@ msgstr "EVER"
 #: constants/tips.ts:17
 msgid "Every button tops out at nine times its weight: 81 on the 9×, 9 on a 1×. Knowing the ceilings is what tells you which button can close a gap, and in how few moves."
 msgstr "Every button tops out at nine times its weight: 81 on the 9×, 9 on a 1×. Knowing the ceilings is what tells you which button can close a gap, and in how few moves."
+
+#: components/overlays/tutorial/lessons/controls-lesson.tsx:42
+msgid "every tap adds 1."
+msgstr "every tap adds 1."
 
 #: components/overlays/how-to-play-overlay.tsx:577
 msgid "Everyone who hits is ranked by how few moves it took."
@@ -466,7 +486,7 @@ msgstr "GRADUATE"
 msgid "HARD"
 msgstr "HARD"
 
-#: components/overlays/tutorial/lessons/strategy-lesson.tsx:96
+#: components/overlays/tutorial/lessons/strategy-lesson.tsx:95
 msgid "Heavy buttons cover the distance. Light buttons land the exact number."
 msgstr "Heavy buttons cover the distance. Light buttons land the exact number."
 
@@ -632,7 +652,7 @@ msgstr "MAX MULTIPLIER"
 msgid "MODES"
 msgstr "MODES"
 
-#: components/game/multiplayer-game.tsx:158
+#: components/game/multiplayer-game.tsx:159
 #: components/overlays/how-to-play-overlay.tsx:39
 msgid "MULTIPLAYER"
 msgstr "MULTIPLAYER"
@@ -779,7 +799,7 @@ msgstr "Play with two hands, a thumb to each side of the grid. Reaching across f
 msgid "PLAYERS"
 msgstr "PLAYERS"
 
-#: components/overlays/tutorial/lessons/weights-lesson.tsx:130
+#: components/overlays/tutorial/lessons/weights-lesson.tsx:129
 msgid "POSITION IS POWER"
 msgstr "POSITION IS POWER"
 
@@ -821,7 +841,7 @@ msgstr "RESULTS"
 msgid "ROOM FOR TWO"
 msgstr "ROOM FOR TWO"
 
-#: components/overlays/tutorial/lessons/weights-lesson.tsx:158
+#: components/overlays/tutorial/lessons/weights-lesson.tsx:157
 msgid "ROW"
 msgstr "ROW"
 
@@ -980,6 +1000,10 @@ msgstr "STEP UP TO {rungName}"
 msgid "Sticking with it — targets landed across every run you have ever played, and days played in a row."
 msgstr "Sticking with it — targets landed across every run you have ever played, and days played in a row."
 
+#: components/overlays/tutorial/lessons/controls-lesson.tsx:44
+msgid "straight to 9 in one move."
+msgstr "straight to 9 in one move."
+
 #: components/overlays/how-to-play-overlay.tsx:462
 msgid "Streak — consecutive perfect plays multiply your points ×2 → ×4 → ×8. One imperfect hit and you start again."
 msgstr "Streak — consecutive perfect plays multiply your points ×2 → ×4 → ×8. One imperfect hit and you start again."
@@ -988,7 +1012,22 @@ msgstr "Streak — consecutive perfect plays multiply your points ×2 → ×4 �
 msgid "SURGEON"
 msgstr "SURGEON"
 
-#: components/overlays/tutorial/lessons/swipe-lesson.tsx:94
+#: components/overlays/tutorial/lessons/controls-lesson.tsx:43
+msgid "SWIPE DOWN"
+msgstr "SWIPE DOWN"
+
+#: components/overlays/tutorial/lessons/controls-lesson.tsx:45
+#: components/overlays/tutorial/lessons/swipe-lesson.tsx:55
+msgid "SWIPE LEFT"
+msgstr "SWIPE LEFT"
+
+#: components/overlays/tutorial/lessons/controls-lesson.tsx:44
+#: components/overlays/tutorial/lessons/swipe-lesson.tsx:41
+#: components/overlays/tutorial/lessons/swipe-lesson.tsx:47
+msgid "SWIPE RIGHT"
+msgstr "SWIPE RIGHT"
+
+#: components/overlays/tutorial/lessons/swipe-lesson.tsx:100
 msgid "SWIPE SHORTCUTS"
 msgstr "SWIPE SHORTCUTS"
 
@@ -1011,6 +1050,10 @@ msgstr "Take the long road to a target and Trainee now shows you the short one �
 #: constants/achievements.ts:297
 msgid "Take the shortest route to 25 targets in one run."
 msgstr "Take the shortest route to 25 targets in one run."
+
+#: components/overlays/tutorial/lessons/controls-lesson.tsx:42
+msgid "TAP"
+msgstr "TAP"
 
 #: components/overlays/how-to-play-overlay.tsx:33
 msgid "TARGETS & THE CLOCK"
@@ -1051,6 +1094,18 @@ msgstr "TERMINAL VELOCITY"
 #: components/overlays/feedback-overlay.tsx:160
 msgid "THANK YOU"
 msgstr "THANK YOU"
+
+#: components/overlays/tutorial/lessons/controls-lesson.tsx:43
+msgid "that takes 1 back off."
+msgstr "that takes 1 back off."
+
+#: components/overlays/tutorial/lessons/controls-lesson.tsx:52
+msgid "That’s every move the dial has."
+msgstr "That’s every move the dial has."
+
+#: components/overlays/tutorial/lessons/swipe-lesson.tsx:42
+msgid "the 1× button jumps straight to 9 — no tapping nine times."
+msgstr "the 1× button jumps straight to 9 — no tapping nine times."
 
 #: components/overlays/how-to-play-overlay.tsx:578
 msgid "The best takes the most points; the last to land it takes none."
@@ -1127,7 +1182,7 @@ msgstr "THOUSAND HITS"
 msgid "Three lives, and every score reaches the board."
 msgstr "Three lives, and every score reaches the board."
 
-#: components/overlays/tutorial/lessons/controls-lesson.tsx:77
+#: components/overlays/tutorial/lessons/controls-lesson.tsx:84
 msgid "Three moves, one button. Try them in order."
 msgstr "Three moves, one button. Try them in order."
 
@@ -1210,7 +1265,7 @@ msgstr "UNTOUCHABLE"
 msgid "UP A RUNG"
 msgstr "UP A RUNG"
 
-#: components/overlays/tutorial/lessons/weights-lesson.tsx:190
+#: components/overlays/tutorial/lessons/weights-lesson.tsx:189
 msgid "VALUE"
 msgstr "VALUE"
 
