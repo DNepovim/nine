@@ -695,8 +695,24 @@ export const gameMachine = createMachine({
             playingSince: event.now,
           })),
         },
-        // "New game" from the pause/settings menu returns to the intro menu.
+        // Both ways out of a pause. HOME returns to the intro; RESTART abandons the
+        // run where it stands and deals a fresh one on the same board, the way PLAY
+        // AGAIN does from game over — the only difference being that the run being
+        // discarded is still live. Its score is submitted by the caller before either
+        // fires, so leaving early still counts for the leaderboard.
         MENU: { target: 'menu' },
+        RESTART: {
+          target: 'playing',
+          actions: assign(
+            ({
+              context,
+              event,
+            }: {
+              context: Context
+              event: Extract<Event, { type: 'RESTART' }>
+            }) => freshGame(context.mode, context.hitBatch.seq, event.now),
+          ),
+        },
         // TARGET_EXPIRED is deliberately not handled here. A paused run has no clock
         // running — every countdown is frozen where it stood — so nothing can time out
         // while paused, and an expiry that arrives anyway is one that was already in

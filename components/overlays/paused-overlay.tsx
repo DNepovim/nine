@@ -38,7 +38,8 @@ export function PausedOverlay({
   avgAccuracy,
   avgSpeed,
   onContinue,
-  onNewGame,
+  onRestart,
+  onMenu,
   onOpenAdvanced,
   onAddNickname,
 }: {
@@ -52,7 +53,8 @@ export function PausedOverlay({
   avgAccuracy: number
   avgSpeed: number
   onContinue: () => void
-  onNewGame: () => void
+  onRestart: () => void
+  onMenu: () => void
   onOpenAdvanced: () => void
   onAddNickname: () => void
 }) {
@@ -129,28 +131,44 @@ export function PausedOverlay({
               </LinearGradient>
             </Pressable>
             <Pressable
-              onPress={onNewGame}
+              onPress={onRestart}
               className="items-center rounded-2xl bg-card py-4"
             >
               <Text
                 selectable={false}
                 className="font-mono text-[13px] font-black tracking-[2px] text-primary"
               >
-                <Trans>END RUN</Trans>
+                <Trans>RESTART RUN</Trans>
               </Text>
             </Pressable>
           </View>
-          <Pressable onPress={onOpenAdvanced} hitSlop={10}>
-            <View className="flex-row items-center gap-1">
-              <Ionicons name="settings-outline" size={10} color={dimColor} />
-              <Text
-                selectable={false}
-                className="font-mono text-[10px] font-bold tracking-[1.8px] text-dim"
-              >
-                <Trans>OPTIONS</Trans>
-              </Text>
-            </View>
-          </Pressable>
+          {/* The two ways off this screen that are not the run itself, in the dim
+              link dress game over uses for the same pair of jobs — small enough that
+              neither competes with CONTINUE, which is what most pauses end with. */}
+          <View className="items-center gap-4">
+            <Pressable onPress={onMenu} hitSlop={10}>
+              <View className="flex-row items-center gap-1">
+                <Ionicons name="home-outline" size={10} color={dimColor} />
+                <Text
+                  selectable={false}
+                  className="font-mono text-[10px] font-bold tracking-[1.8px] text-dim"
+                >
+                  <Trans>HOME</Trans>
+                </Text>
+              </View>
+            </Pressable>
+            <Pressable onPress={onOpenAdvanced} hitSlop={10}>
+              <View className="flex-row items-center gap-1">
+                <Ionicons name="settings-outline" size={10} color={dimColor} />
+                <Text
+                  selectable={false}
+                  className="font-mono text-[10px] font-bold tracking-[1.8px] text-dim"
+                >
+                  <Trans>OPTIONS</Trans>
+                </Text>
+              </View>
+            </Pressable>
+          </View>
         </View>
       </View>
     </Screen>

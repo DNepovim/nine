@@ -1232,7 +1232,14 @@ export default function GameScreen() {
             onContinue={() => {
               send({ type: 'RESUME', now: Date.now() })
             }}
-            onNewGame={() => {
+            onRestart={() => {
+              // The run being abandoned is still live, so its score goes to the board
+              // before the fresh one replaces it — same as leaving for the intro.
+              endRunEarly()
+              send({ type: 'RESTART', now: Date.now() })
+              track('run_started', { mode, difficulty, from: 'restart' })
+            }}
+            onMenu={() => {
               endRunEarly()
               send({ type: 'MENU' })
             }}

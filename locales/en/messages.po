@@ -117,7 +117,7 @@ msgstr "🦉 The owl is Accuracy at its hardest. That board rewards the exact ro
 msgid "A button on 9 goes to 0 in a single tap — quicker than swiping there."
 msgstr "A button on 9 goes to 0 in a single tap — quicker than swiping there."
 
-#: components/overlays/tutorial/lessons/weights-lesson.tsx:130
+#: components/overlays/tutorial/lessons/weights-lesson.tsx:131
 msgid "A button’s weight is its row × its column — the small print above it."
 msgstr "A button’s weight is its row × its column — the small print above it."
 
@@ -261,7 +261,7 @@ msgstr "Best scores, up top"
 msgid "BLUR"
 msgstr "BLUR"
 
-#: components/overlays/tutorial/lessons/goal-lesson.tsx:95
+#: components/overlays/tutorial/lessons/goal-lesson.tsx:96
 msgid "But how?"
 msgstr "But how?"
 
@@ -290,11 +290,11 @@ msgstr "CHOOSE A NICKNAME"
 msgid "Choose Add to Home Screen"
 msgstr "Choose Add to Home Screen"
 
-#: components/overlays/tutorial/lessons/strategy-lesson.tsx:94
+#: components/overlays/tutorial/lessons/strategy-lesson.tsx:95
 msgid "COARSE, THEN FINE"
 msgstr "COARSE, THEN FINE"
 
-#: components/overlays/tutorial/lessons/weights-lesson.tsx:173
+#: components/overlays/tutorial/lessons/weights-lesson.tsx:174
 msgid "COLUMN"
 msgstr "COLUMN"
 
@@ -307,7 +307,7 @@ msgid "CONNECT TO THE INTERNET TO PLAY WITH FRIENDS"
 msgstr "CONNECT TO THE INTERNET TO PLAY WITH FRIENDS"
 
 #: components/overlays/multiplayer-menu.tsx:43
-#: components/overlays/paused-overlay.tsx:127
+#: components/overlays/paused-overlay.tsx:129
 msgid "CONTINUE"
 msgstr "CONTINUE"
 
@@ -316,7 +316,7 @@ msgid "CONTINUE TUTORIAL"
 msgstr "CONTINUE TUTORIAL"
 
 #: components/overlays/how-to-play-overlay.tsx:32
-#: components/overlays/tutorial/lessons/controls-lesson.tsx:83
+#: components/overlays/tutorial/lessons/controls-lesson.tsx:84
 msgid "CONTROLS"
 msgstr "CONTROLS"
 
@@ -363,8 +363,8 @@ msgid "EASY"
 msgstr "EASY"
 
 #: components/overlays/paused-overlay.tsx:139
-msgid "END RUN"
-msgstr "END RUN"
+#~ msgid "END RUN"
+#~ msgstr "END RUN"
 
 #: components/overlays/join-room-overlay.tsx:47
 msgid "ENTER ROOM CODE"
@@ -486,7 +486,7 @@ msgstr "GRADUATE"
 msgid "HARD"
 msgstr "HARD"
 
-#: components/overlays/tutorial/lessons/strategy-lesson.tsx:95
+#: components/overlays/tutorial/lessons/strategy-lesson.tsx:96
 msgid "Heavy buttons cover the distance. Light buttons land the exact number."
 msgstr "Heavy buttons cover the distance. Light buttons land the exact number."
 
@@ -524,6 +524,7 @@ msgid "Hold the all-time record on a mode’s Extreme board and you carry its ma
 msgstr "Hold the all-time record on a mode’s Extreme board and you carry its mark. It travels with your name everywhere it is drawn — the boards, your own row, a multiplayer room — so the hardest boards say who holds them without anyone having to look them up."
 
 #: components/overlays/game-over-overlay.tsx:313
+#: components/overlays/paused-overlay.tsx:156
 msgid "HOME"
 msgstr "HOME"
 
@@ -738,7 +739,7 @@ msgid "Open a session on an easier difficulty. The first run is a warm-up, and t
 msgstr "Open a session on an easier difficulty. The first run is a warm-up, and the weights come back slower than you remember them."
 
 #: components/overlays/menu-overlay.tsx:422
-#: components/overlays/paused-overlay.tsx:150
+#: components/overlays/paused-overlay.tsx:167
 msgid "OPTIONS"
 msgstr "OPTIONS"
 
@@ -799,7 +800,7 @@ msgstr "Play with two hands, a thumb to each side of the grid. Reaching across f
 msgid "PLAYERS"
 msgstr "PLAYERS"
 
-#: components/overlays/tutorial/lessons/weights-lesson.tsx:129
+#: components/overlays/tutorial/lessons/weights-lesson.tsx:130
 msgid "POSITION IS POWER"
 msgstr "POSITION IS POWER"
 
@@ -833,6 +834,10 @@ msgstr "READY"
 msgid "Records, celebrated"
 msgstr "Records, celebrated"
 
+#: components/overlays/paused-overlay.tsx:141
+msgid "RESTART RUN"
+msgstr "RESTART RUN"
+
 #: components/overlays/multiplayer-game-over.tsx:150
 msgid "RESULTS"
 msgstr "RESULTS"
@@ -841,7 +846,7 @@ msgstr "RESULTS"
 msgid "ROOM FOR TWO"
 msgstr "ROOM FOR TWO"
 
-#: components/overlays/tutorial/lessons/weights-lesson.tsx:157
+#: components/overlays/tutorial/lessons/weights-lesson.tsx:158
 msgid "ROW"
 msgstr "ROW"
 
@@ -1027,7 +1032,7 @@ msgstr "SWIPE LEFT"
 msgid "SWIPE RIGHT"
 msgstr "SWIPE RIGHT"
 
-#: components/overlays/tutorial/lessons/swipe-lesson.tsx:100
+#: components/overlays/tutorial/lessons/swipe-lesson.tsx:101
 msgid "SWIPE SHORTCUTS"
 msgstr "SWIPE SHORTCUTS"
 
@@ -1182,7 +1187,7 @@ msgstr "THOUSAND HITS"
 msgid "Three lives, and every score reaches the board."
 msgstr "Three lives, and every score reaches the board."
 
-#: components/overlays/tutorial/lessons/controls-lesson.tsx:84
+#: components/overlays/tutorial/lessons/controls-lesson.tsx:85
 msgid "Three moves, one button. Try them in order."
 msgstr "Three moves, one button. Try them in order."
 
@@ -1265,7 +1270,7 @@ msgstr "UNTOUCHABLE"
 msgid "UP A RUNG"
 msgstr "UP A RUNG"
 
-#: components/overlays/tutorial/lessons/weights-lesson.tsx:189
+#: components/overlays/tutorial/lessons/weights-lesson.tsx:190
 msgid "VALUE"
 msgstr "VALUE"
 

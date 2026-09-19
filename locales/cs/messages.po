@@ -117,7 +117,7 @@ msgstr "🦉 Sova je Přesnost v nejtěžší podobě. Ten žebříček odměňu
 msgid "A button on 9 goes to 0 in a single tap — quicker than swiping there."
 msgstr "Tlačítko na devítce přeskočí na nulu jedním ťuknutím — rychleji než švihnutím."
 
-#: components/overlays/tutorial/lessons/weights-lesson.tsx:130
+#: components/overlays/tutorial/lessons/weights-lesson.tsx:131
 msgid "A button’s weight is its row × its column — the small print above it."
 msgstr "Váha tlačítka je jeho řádek × jeho sloupec — drobné písmo nad ním."
 
@@ -261,7 +261,7 @@ msgstr "Nejlepší skóre nahoře"
 msgid "BLUR"
 msgstr "ROZMAZANĚ"
 
-#: components/overlays/tutorial/lessons/goal-lesson.tsx:95
+#: components/overlays/tutorial/lessons/goal-lesson.tsx:96
 msgid "But how?"
 msgstr "Ale jak?"
 
@@ -290,11 +290,11 @@ msgstr "ZVOL SI PŘEZDÍVKU"
 msgid "Choose Add to Home Screen"
 msgstr "Zvol Přidat na plochu"
 
-#: components/overlays/tutorial/lessons/strategy-lesson.tsx:94
+#: components/overlays/tutorial/lessons/strategy-lesson.tsx:95
 msgid "COARSE, THEN FINE"
 msgstr "NAHRUBO, POTOM NAJEMNO"
 
-#: components/overlays/tutorial/lessons/weights-lesson.tsx:173
+#: components/overlays/tutorial/lessons/weights-lesson.tsx:174
 msgid "COLUMN"
 msgstr "SLOUPEC"
 
@@ -307,7 +307,7 @@ msgid "CONNECT TO THE INTERNET TO PLAY WITH FRIENDS"
 msgstr "PŘIPOJ SE K INTERNETU A HRAJ S PŘÁTELI"
 
 #: components/overlays/multiplayer-menu.tsx:43
-#: components/overlays/paused-overlay.tsx:127
+#: components/overlays/paused-overlay.tsx:129
 msgid "CONTINUE"
 msgstr "POKRAČOVAT"
 
@@ -316,7 +316,7 @@ msgid "CONTINUE TUTORIAL"
 msgstr "POKRAČOVAT V NÁVODU"
 
 #: components/overlays/how-to-play-overlay.tsx:32
-#: components/overlays/tutorial/lessons/controls-lesson.tsx:83
+#: components/overlays/tutorial/lessons/controls-lesson.tsx:84
 msgid "CONTROLS"
 msgstr "OVLÁDÁNÍ"
 
@@ -363,8 +363,8 @@ msgid "EASY"
 msgstr "LEHKÁ"
 
 #: components/overlays/paused-overlay.tsx:139
-msgid "END RUN"
-msgstr "UKONČIT HRU"
+#~ msgid "END RUN"
+#~ msgstr "UKONČIT HRU"
 
 #: components/overlays/join-room-overlay.tsx:47
 msgid "ENTER ROOM CODE"
@@ -486,7 +486,7 @@ msgstr "ABSOLVENT"
 msgid "HARD"
 msgstr "TĚŽKÁ"
 
-#: components/overlays/tutorial/lessons/strategy-lesson.tsx:95
+#: components/overlays/tutorial/lessons/strategy-lesson.tsx:96
 msgid "Heavy buttons cover the distance. Light buttons land the exact number."
 msgstr "Těžká tlačítka ujedou vzdálenost. Lehká trefí přesné číslo."
 
@@ -524,6 +524,7 @@ msgid "Hold the all-time record on a mode’s Extreme board and you carry its ma
 msgstr "Když držíš rekord všech dob na žebříčku Extreme některého módu, nosíš jeho odznak. Putuje s tvým jménem všude, kde se objeví — po žebříčcích, ve tvém vlastním řádku i v místnosti pro víc hráčů — takže nejtěžší žebříčky samy říkají, kdo je drží."
 
 #: components/overlays/game-over-overlay.tsx:313
+#: components/overlays/paused-overlay.tsx:156
 msgid "HOME"
 msgstr "DOMŮ"
 
@@ -738,7 +739,7 @@ msgid "Open a session on an easier difficulty. The first run is a warm-up, and t
 msgstr "Začínej na lehčí obtížnosti. První hra je rozehřívací a váhy se ti vybaví pomaleji, než si pamatuješ."
 
 #: components/overlays/menu-overlay.tsx:422
-#: components/overlays/paused-overlay.tsx:150
+#: components/overlays/paused-overlay.tsx:167
 msgid "OPTIONS"
 msgstr "NASTAVENÍ"
 
@@ -799,7 +800,7 @@ msgstr "Hraj obouruč, palec na každé straně mřížky. Natahovat se přes ce
 msgid "PLAYERS"
 msgstr "HRÁČI"
 
-#: components/overlays/tutorial/lessons/weights-lesson.tsx:129
+#: components/overlays/tutorial/lessons/weights-lesson.tsx:130
 msgid "POSITION IS POWER"
 msgstr "POZICE JE SÍLA"
 
@@ -833,6 +834,10 @@ msgstr "PŘIPRAVEN"
 msgid "Records, celebrated"
 msgstr "Rekordy se slaví"
 
+#: components/overlays/paused-overlay.tsx:141
+msgid "RESTART RUN"
+msgstr "ZAČÍT ZNOVU"
+
 #: components/overlays/multiplayer-game-over.tsx:150
 msgid "RESULTS"
 msgstr "VÝSLEDKY"
@@ -841,7 +846,7 @@ msgstr "VÝSLEDKY"
 msgid "ROOM FOR TWO"
 msgstr "MÍSTO PRO DVA"
 
-#: components/overlays/tutorial/lessons/weights-lesson.tsx:157
+#: components/overlays/tutorial/lessons/weights-lesson.tsx:158
 msgid "ROW"
 msgstr "ŘÁDEK"
 
@@ -1027,7 +1032,7 @@ msgstr "ŠVIHNI DOLEVA"
 msgid "SWIPE RIGHT"
 msgstr "ŠVIHNI DOPRAVA"
 
-#: components/overlays/tutorial/lessons/swipe-lesson.tsx:100
+#: components/overlays/tutorial/lessons/swipe-lesson.tsx:101
 msgid "SWIPE SHORTCUTS"
 msgstr "ZKRATKY SVIHNUTÍM"
 
@@ -1182,7 +1187,7 @@ msgstr "TISÍC ZÁSAHŮ"
 msgid "Three lives, and every score reaches the board."
 msgstr "Tři životy a každé skóre se dostane na žebříček."
 
-#: components/overlays/tutorial/lessons/controls-lesson.tsx:84
+#: components/overlays/tutorial/lessons/controls-lesson.tsx:85
 msgid "Three moves, one button. Try them in order."
 msgstr "Tři pohyby, jedno tlačítko. Vyzkoušej je popořadě."
 
@@ -1265,7 +1270,7 @@ msgstr "NEDOTKNUTELNÝ"
 msgid "UP A RUNG"
 msgstr "O PŘÍČKU VÝŠ"
 
-#: components/overlays/tutorial/lessons/weights-lesson.tsx:189
+#: components/overlays/tutorial/lessons/weights-lesson.tsx:190
 msgid "VALUE"
 msgstr "HODNOTA"
 

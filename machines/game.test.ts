@@ -388,8 +388,7 @@ describe('a new run does not inherit the last one', () => {
     actor.send({ type: 'PRESS', index: 8, delta: 1, now: 0 })
     expect(actor.getSnapshot().context.hitBatch.hits).toHaveLength(1)
 
-    // Accuracy has three lives, so three expiries are what reaches game over —
-    // the only state RESTART is handled in.
+    // Accuracy has three lives, so three expiries are what reaches game over.
     for (const value of [100, 101, 102]) {
       actor.send({ type: 'ADD_TARGET', value, at: 0 })
       const id = actor.getSnapshot().context.targets[0]?.id ?? 0
@@ -399,6 +398,36 @@ describe('a new run does not inherit the last one', () => {
 
     actor.send({ type: 'RESTART', now: 0 })
     expect(actor.getSnapshot().context.hitBatch.hits).toEqual([])
+  })
+
+  it('deals a fresh run when RESTART comes from a pause', () => {
+    // RESTART used to be a game-over event only. The pause screen offers it now, which
+    // means it has to land on a run that is still standing: score on the board, lives
+    // spent, targets in the air. All of it goes.
+    const actor = start('accuracy')
+    actor.send({ type: 'ADD_TARGET', value: 9, at: 0 })
+    actor.send({ type: 'PRESS', index: 8, delta: 1, now: 0 })
+    actor.send({ type: 'PAUSE', now: 1000 })
+    expect(actor.getSnapshot().value).toBe('paused')
+    expect(actor.getSnapshot().context.score).toBeGreaterThan(0)
+
+    actor.send({ type: 'RESTART', now: 2000 })
+    const after = actor.getSnapshot()
+    expect(after.value).toBe('playing')
+    expect(after.context.score).toBe(0)
+    expect(after.context.hits).toBe(0)
+    expect(after.context.targets).toEqual([])
+    expect(after.context.hitBatch.hits).toEqual([])
+  })
+
+  it('times a pause-restarted run from the restart, not from the first start', () => {
+    // The paused run's elapsed time must not follow it into the fresh one, or a
+    // speed board would record a run that began before the player asked for it.
+    const actor = start('accuracy')
+    actor.send({ type: 'PAUSE', now: 30_000 })
+    actor.send({ type: 'RESTART', now: 45_000 })
+    expect(actor.getSnapshot().context.playingSince).toBe(45_000)
+    expect(actor.getSnapshot().context.elapsedMs).toBe(0)
   })
 
   it('carries no clean hit from another mode into a trainee run', () => {

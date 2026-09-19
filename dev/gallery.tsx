@@ -146,7 +146,8 @@ const paused = (mode: Mode): Variant => ({
       avgAccuracy={RUN.avgAccuracy}
       avgSpeed={RUN.avgSpeed}
       onContinue={close}
-      onNewGame={close}
+      onRestart={close}
+      onMenu={close}
       onOpenAdvanced={noop}
       onAddNickname={noop}
     />
