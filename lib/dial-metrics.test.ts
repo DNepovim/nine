@@ -138,8 +138,19 @@ describe('the dial fits the screen it is drawn on', () => {
     }
   })
 
-  it('never returns a negative button', () => {
-    expect(dialMetrics({ width: 0, height: 0 }).button).toBe(0)
-    expect(dialMetrics({ width: 10, height: 10 }).button).toBe(0)
+  it('draws no square at all when the viewport has not been measured', () => {
+    // WebKit reports a 0x0 window on the first render, and on a phone nothing ever
+    // resizes to correct it. This shipped: nine zero-width buttons inside a 24pt box,
+    // their digits running down the screen. `useViewport` no longer passes the zero
+    // through, and this is the second lock — a dial with no button has no square.
+    for (const blind of [
+      { width: 0, height: 0 },
+      { width: 0, height: 667 },
+      { width: 10, height: 10 },
+    ]) {
+      const metrics = dialMetrics(blind)
+      expect(metrics.button, `${blind.width}x${blind.height}`).toBe(0)
+      expect(metrics.size, `${blind.width}x${blind.height}`).toBe(0)
+    }
   })
 })

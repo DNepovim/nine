@@ -50,5 +50,10 @@ export function dialMetrics(viewport: { width: number; height: number }): DialMe
   // by 58pt in a sideways window. The button is what the layout is built from, so it
   // is what the cap has to reach.
   const button = Math.max(0, Math.floor((square - GAP * 2) / 3))
+  // A viewport of zero is not a small screen, it is a screen not measured yet — and it
+  // reached production once, as a 24pt box holding nine buttons with no width and their
+  // digits spilling down the page. There is no dial without a button, so it has no
+  // square either, and what draws in that box is nothing rather than wreckage.
+  if (button === 0) return { button: 0, gap: GAP, size: 0 }
   return { button, gap: GAP, size: button * 3 + GAP * 2 }
 }
