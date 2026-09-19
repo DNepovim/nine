@@ -2,6 +2,7 @@ import { View } from 'react-native'
 
 import { DialButton } from '@/components/game/dial-button'
 import { ThumbHint, type ThumbGesture } from '@/components/overlays/tutorial/thumb-hint'
+import { useDialMetrics } from '@/hooks/use-dial-metrics'
 import { cellWeight, GRID_SIZE } from '@/lib/tutorial-grid'
 import { DARK_MODE_GRADIENT } from '@/machines/modes'
 
@@ -16,7 +17,6 @@ const [PEAK_FROM, PEAK_TO] = DARK_MODE_GRADIENT.trainee
 export function LiveDialGrid({
   cells,
   isDark,
-  size,
   showWeights,
   showMax = true,
   hintCell,
@@ -27,7 +27,6 @@ export function LiveDialGrid({
 }: {
   cells: readonly number[]
   isDark: boolean
-  size: number
   showWeights: boolean
   showMax?: boolean
   hintCell: number | null
@@ -36,11 +35,13 @@ export function LiveDialGrid({
   onDelta: (index: number, delta: 1 | -1) => void
   onSet: (index: number, value: number) => void
 }) {
-  const cellSize = Math.floor(size / GRID_SIZE)
+  // Asked for here rather than passed in: this is the real dial, so it takes the same
+  // number the game does instead of whatever a lesson thought to hand it.
+  const { button: cellSize, gap, size } = useDialMetrics()
   if (cellSize <= 0) return null
 
   return (
-    <View style={{ width: size, height: size }} className="flex-row flex-wrap">
+    <View style={{ width: size, height: size, gap }} className="flex-row flex-wrap">
       {cells.map((value, index) => (
         <DialButton
           key={index}
@@ -67,8 +68,10 @@ export function LiveDialGrid({
           pointerEvents="none"
           className="absolute items-center justify-center"
           style={{
-            left: (hintCell % GRID_SIZE) * cellSize,
-            top: Math.floor(hintCell / GRID_SIZE) * cellSize,
+            // The gaps sit between cells, so a cell's offset carries one per column
+            // or row already passed.
+            left: (hintCell % GRID_SIZE) * (cellSize + gap),
+            top: Math.floor(hintCell / GRID_SIZE) * (cellSize + gap),
             width: cellSize,
             height: cellSize,
           }}

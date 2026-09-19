@@ -19,7 +19,7 @@ import {
   GOAL_TARGET,
   STEP_COLORS,
 } from '@/constants/tutorial'
-import { useGameDialSize } from '@/hooks/use-game-dial-size'
+import { useDialMetrics } from '@/hooks/use-dial-metrics'
 import { useSplash } from '@/hooks/use-splash'
 import { dialCell, emptyCells, setCell, sumCells } from '@/lib/tutorial-grid'
 import type { LessonProps } from '@/types/tutorial'
@@ -36,7 +36,8 @@ const COLOR = STEP_COLORS[0] ?? '#4C7EFF'
 export function GoalLesson({ isDark, onComplete, onDismiss }: LessonProps) {
   const [cells, setCells] = useState<readonly number[]>(emptyCells)
   const [showHitChoice, setShowHitChoice] = useState(false)
-  const dialSize = useGameDialSize()
+  const dial = useDialMetrics()
+  const dialSize = dial.size
   const howOpacity = useSharedValue(0)
   const hit = sumCells(cells) === GOAL_TARGET
   // The tutorial is mounted beneath the intro splash, so nothing here may start
@@ -103,7 +104,6 @@ export function GoalLesson({ isDark, onComplete, onDismiss }: LessonProps) {
         <LiveDialGrid
           cells={cells}
           isDark={isDark}
-          size={dialSize}
           showWeights={false}
           hintCell={null}
           hintGesture="tap"

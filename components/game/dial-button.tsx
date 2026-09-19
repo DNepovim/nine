@@ -28,17 +28,13 @@ const BADGE_BORDER_COLOR = GRAYSCALE[3]
 const RAMP_MAX = 8
 const TINT_TIMING = { duration: 260, easing: Easing.out(Easing.quad) }
 
-// Space reserved around the pill for its shadow and for the two badges below to
-// sit half in, half out of. Also what BADGE_OFFSET below is measured from.
-const PADDING = 10
-
 // Trainee's weight and max badges — small discs riding the pill's own rim rather
 // than text stacked inside it, so they read off a chip built for contrast instead
 // of fighting the pill's own animated fill colour.
 //
-// MIN still has to hold up on the smallest phones the dial ships on (an ~72px
-// cell there, going by useGameDialSize): even at that floor there's over 15px of
-// clearance between a MIN-sized badge and the digit, so raising the floor along
+// MIN still has to hold up on the smallest phones the dial ships on — an 81pt cell
+// there, going by useDialMetrics, and the pill now fills all of it rather than 61pt of
+// it — so a MIN-sized badge keeps well clear of the digit, and raising the floor along
 // with the ratio makes every device's badge bigger rather than only the roomy ones.
 const BADGE_MIN = 22
 const BADGE_MAX = 34
@@ -190,19 +186,24 @@ export function DialButton({
     color: interpolateColor(peakProgress.value, [0, 1], [palette.text, palette.peakText]),
   }))
 
-  // The pill's own radius, inset by PADDING on every side.
-  const radius = (size - PADDING * 2) / 2
+  // The pill fills its box, so its radius is simply half of it. There used to be 10pt
+  // of padding here, reserving room for the shadow and for the badges to straddle. It
+  // also sat inside every button, which put 20pt on top of the 12pt gap the dial lays
+  // out — the space between two pills read as 32, and the gap in the layout was not
+  // the gap on the screen.
+  const radius = size / 2
   const badgeSize = Math.min(
     BADGE_MAX,
     Math.max(BADGE_MIN, Math.round(size * BADGE_RATIO)),
   )
-  // Where a badge centred on the pill's rim, on the diagonal toward a corner,
-  // lands: PADDING plus the distance from that corner in to the circle — a
-  // circle's closest approach to its bounding square's corner is radius short of
-  // it on both axes, by Math.SQRT1_2 (cos/sin 45°). Expressed as a top/left (or,
-  // mirrored, bottom/right) offset from the outer box so the badge's own centre,
-  // not its corner, sits exactly on the rim.
-  const badgeOffset = PADDING + radius * (1 - Math.SQRT1_2) - badgeSize / 2
+  // Where a badge centred on the pill's rim, on the diagonal toward a corner, lands:
+  // the distance from that corner in to the circle — a circle's closest approach to its
+  // bounding square's corner is radius short of it on both axes, by Math.SQRT1_2
+  // (cos/sin 45°). Expressed as a top/left (or, mirrored, bottom/right) offset from the
+  // box so the badge's own centre, not its corner, sits exactly on the rim. It stays
+  // positive at every size the dial produces, so a badge still lands inside the box
+  // rather than hanging off it.
+  const badgeOffset = radius * (1 - Math.SQRT1_2) - badgeSize / 2
 
   return (
     <GestureDetector gesture={gesture}>
@@ -210,7 +211,7 @@ export function DialButton({
           derive height from aspect-ratio on wrapping flex children. The two
           badges below are positioned against this box, not the pill inside it,
           so they can straddle the pill's rim rather than being clipped by it. */}
-      <View style={{ width: size, height: size, padding: PADDING }}>
+      <View style={{ width: size, height: size }}>
         <Animated.View
           style={[
             {

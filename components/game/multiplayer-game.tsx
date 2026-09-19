@@ -8,6 +8,7 @@ import { MultiplayerCorner } from '@/components/game/multiplayer-corner'
 import { PieCountdown } from '@/components/game/pie-countdown'
 import { ScoreDigit } from '@/components/game/score-digit'
 import { PIE_SIZE } from '@/constants/game'
+import { SUM_ROW_HEIGHT, useDialMetrics } from '@/hooks/use-dial-metrics'
 import { useMultiplayerDial } from '@/hooks/use-multiplayer-dial'
 import { useScoreDirection } from '@/hooks/use-score-direction'
 import { valueProgress } from '@/lib/value-progress'
@@ -63,7 +64,7 @@ export function MultiplayerGame({
 }) {
   const { t } = useLingui()
   const insets = useSafeAreaInsets()
-  const [dialSize, setDialSize] = useState(0)
+  const dial = useDialMetrics()
 
   const { grid, handlePress, handleSet } = useMultiplayerDial({
     targetValue: currentTarget?.value ?? null,
@@ -244,7 +245,8 @@ export function MultiplayerGame({
       </View>
 
       {/* ── Sum display ── */}
-      <View className="items-center py-1.5">
+      {/* Reserved, so the dial sits at one height whatever the sum reads. */}
+      <View className="items-center justify-center" style={{ height: SUM_ROW_HEIGHT }}>
         <View className="flex-row">
           {String(sum)
             .split('')
@@ -261,15 +263,12 @@ export function MultiplayerGame({
       </View>
 
       {/* ── Dial ── */}
-      <View
-        className="flex-1 items-center justify-center"
-        onLayout={(e) => {
-          const { width, height } = e.nativeEvent.layout
-          setDialSize(Math.min(width, height))
-        }}
-      >
+      {/* Content height, not a share of the remainder — the same reason as the single
+          player screen: the dial's size comes from the width, so it cannot be asked to
+          fit inside half of whatever height is left. */}
+      <View className="items-center">
         <View
-          style={{ width: dialSize, height: dialSize }}
+          style={{ width: dial.size, height: dial.size, gap: dial.gap }}
           className="flex-row flex-wrap"
         >
           {grid.flat().map((value, index) => (
@@ -277,7 +276,7 @@ export function MultiplayerGame({
               key={index}
               value={value}
               isDark={isDark}
-              size={Math.floor(dialSize / 3)}
+              size={dial.button}
               weight={(Math.floor(index / 3) + 1) * ((index % 3) + 1)}
               showSum={false}
               trainee={false}

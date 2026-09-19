@@ -15,8 +15,8 @@ import {
   STEP_ACCENT_COLORS,
   STEP_COLORS,
 } from '@/constants/tutorial'
-import { useGameDialSize } from '@/hooks/use-game-dial-size'
-import { dialValue, GRID_SIZE } from '@/lib/tutorial-grid'
+import { useDialMetrics } from '@/hooks/use-dial-metrics'
+import { dialValue } from '@/lib/tutorial-grid'
 import { DARK_MODE_GRADIENT } from '@/machines/modes'
 import type { LessonProps } from '@/types/tutorial'
 
@@ -59,8 +59,9 @@ export function ControlsLesson({ isDark, onComplete }: LessonProps) {
     taskIndex: 0,
   }))
   const { t } = useLingui()
-  const dialSize = useGameDialSize()
-  const cellSize = Math.floor(dialSize / GRID_SIZE)
+  const dial = useDialMetrics()
+  const dialSize = dial.size
+  const cellSize = dial.button
   const task = GESTURE_TASKS[taskIndex]
 
   useEffect(() => {

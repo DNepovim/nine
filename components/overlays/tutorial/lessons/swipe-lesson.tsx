@@ -19,7 +19,7 @@ import {
   SWIPE_RING_MS,
   SWIPE_TARGET,
 } from '@/constants/tutorial'
-import { useGameDialSize } from '@/hooks/use-game-dial-size'
+import { useDialMetrics } from '@/hooks/use-dial-metrics'
 import { cellWeight, emptyCells, setCell, sumCells } from '@/lib/tutorial-grid'
 import type { LessonProps } from '@/types/tutorial'
 
@@ -74,7 +74,8 @@ export function SwipeLesson({ isDark, onComplete }: LessonProps) {
   const [ringKey, setRingKey] = useState(0)
   const { t } = useLingui()
   const [ranOut, setRanOut] = useState(false)
-  const dialSize = useGameDialSize()
+  const dial = useDialMetrics()
+  const dialSize = dial.size
   const task = ROUTE_TASKS[taskIndex]
 
   useEffect(() => {
@@ -141,7 +142,6 @@ export function SwipeLesson({ isDark, onComplete }: LessonProps) {
         <LiveDialGrid
           cells={cells}
           isDark={isDark}
-          size={dialSize}
           showWeights
           hintCell={task?.cell ?? null}
           hintGesture={task?.gesture ?? 'tap'}

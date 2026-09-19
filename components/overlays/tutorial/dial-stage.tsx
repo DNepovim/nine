@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react'
 import { View } from 'react-native'
 
-import { SUM_ROW_HEIGHT } from '@/hooks/use-game-dial-size'
+import { SUM_ROW_HEIGHT } from '@/hooks/use-dial-metrics'
 
 // Mirrors the lower half of the game screen: a flexible targets area, the sum
 // readout in its fixed slot, then the dial pad. Lessons compose into these three

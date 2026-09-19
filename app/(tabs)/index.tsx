@@ -54,6 +54,7 @@ import { useAnnouncements } from '@/hooks/use-announcements'
 import { useAppUpdate } from '@/hooks/use-app-update'
 import { BoardProvider, useBoard } from '@/hooks/use-board'
 import { ChampionsProvider, useChampions } from '@/hooks/use-champions'
+import { SUM_ROW_HEIGHT, useDialMetrics } from '@/hooks/use-dial-metrics'
 import { useDisplayOptions } from '@/hooks/use-display-options'
 import { useDisplayScore } from '@/hooks/use-display-score'
 import { useDisplayedTargets } from '@/hooks/use-displayed-targets'
@@ -639,7 +640,7 @@ export default function GameScreen() {
 
   // Dial pad is a square sized to fit its container (min of width/height), so it
   // never overflows over the score above it.
-  const [dialSize, setDialSize] = useState(0)
+  const dial = useDialMetrics()
 
   const currentMultiplier = streakMultiplier(streak)
 
@@ -1057,7 +1058,13 @@ export default function GameScreen() {
           </View>
 
           {/* ── Score above dial ── */}
-          <View className="items-center py-1.5">
+          {/* A reserved slot rather than whatever the digits need, so the dial sits at
+              the same height whether the sum is 0 or 324 — and the same height a lesson
+              puts it at, since DialStage reserves this too. */}
+          <View
+            className="items-center justify-center"
+            style={{ height: SUM_ROW_HEIGHT }}
+          >
             <View className="flex-row">
               {String(sum)
                 .split('')
@@ -1073,16 +1080,15 @@ export default function GameScreen() {
             </View>
           </View>
 
-          {/* ── Dial pad — bottom two thirds ── */}
-          <View
-            className="flex-1 items-center justify-center"
-            onLayout={(e) => {
-              const { width, height } = e.nativeEvent.layout
-              setDialSize(Math.min(width, height))
-            }}
-          >
+          {/* ── Dial pad ── */}
+          {/* Its own content's height, not a share of what is left. Splitting the
+              remainder with the targets area is what cropped the bottom row on a short
+              screen: the dial's size comes from the width now, so half the leftover
+              height is not a number it can be asked to fit inside. The targets area
+              above takes the slack instead. */}
+          <View className="items-center">
             <View
-              style={{ width: dialSize, height: dialSize }}
+              style={{ width: dial.size, height: dial.size, gap: dial.gap }}
               className="flex-row flex-wrap"
             >
               {grid.flat().map((value, index) => (
@@ -1090,7 +1096,7 @@ export default function GameScreen() {
                   key={index}
                   value={value}
                   isDark={isDark}
-                  size={Math.floor(dialSize / 3)}
+                  size={dial.button}
                   weight={cellWeight(index)}
                   showSum={showSum}
                   trainee={mode === 'trainee'}

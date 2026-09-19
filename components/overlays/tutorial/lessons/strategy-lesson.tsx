@@ -18,7 +18,7 @@ import {
   STRATEGY_RING_MS,
   STRATEGY_TARGET,
 } from '@/constants/tutorial'
-import { useGameDialSize } from '@/hooks/use-game-dial-size'
+import { useDialMetrics } from '@/hooks/use-dial-metrics'
 import { cellWeight, dialCell, emptyCells, setCell, sumCells } from '@/lib/tutorial-grid'
 import type { LessonProps } from '@/types/tutorial'
 
@@ -55,7 +55,8 @@ export function StrategyLesson({ isDark, onComplete }: LessonProps) {
   // Bumping the key remounts the ring, which is how a fresh target is dealt.
   const [ringKey, setRingKey] = useState(0)
   const [ranOut, setRanOut] = useState(false)
-  const dialSize = useGameDialSize()
+  const dial = useDialMetrics()
+  const dialSize = dial.size
 
   const sum = sumCells(cells)
   const hit = sum === STRATEGY_TARGET
@@ -131,7 +132,6 @@ export function StrategyLesson({ isDark, onComplete }: LessonProps) {
         <LiveDialGrid
           cells={cells}
           isDark={isDark}
-          size={dialSize}
           showWeights
           hintCell={hintCell()}
           hintGesture={sum > STRATEGY_TARGET ? 'left' : 'tap'}

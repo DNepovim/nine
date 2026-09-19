@@ -18,7 +18,7 @@ import {
   WEIGHTS_CLEAR_DELAY_MS,
   WEIGHTS_TAPS,
 } from '@/constants/tutorial'
-import { useGameDialSize } from '@/hooks/use-game-dial-size'
+import { useDialMetrics } from '@/hooks/use-dial-metrics'
 import { cn } from '@/lib/cn'
 import {
   cellCol,
@@ -93,8 +93,9 @@ export function WeightsLesson({ isDark, onComplete }: LessonProps) {
     round: number
     taps: number
   }>(() => ({ cells: emptyCells(), round: 0, taps: 0 }))
-  const dialSize = useGameDialSize()
-  const cellSize = Math.floor(dialSize / GRID_SIZE)
+  const dial = useDialMetrics()
+  const dialSize = dial.size
+  const cellSize = dial.button
   const current = WEIGHT_ROUNDS[round]
   const finished = WEIGHT_ROUNDS[round - 1]
   const parts = equationParts(taps, current, finished)
@@ -213,7 +214,6 @@ export function WeightsLesson({ isDark, onComplete }: LessonProps) {
           <LiveDialGrid
             cells={cells}
             isDark={isDark}
-            size={dialSize}
             showWeights
             showMax={false}
             // The hint stops once the round is satisfied — it has nothing left to ask for

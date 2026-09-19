@@ -8,10 +8,6 @@
     "lingui.config.ts"
   ],
   "project": ["**/*.{ts,tsx}"],
-  "ignoreDependencies": [
-    "babel-preset-expo",
-    "posthog-js",
-    "@lingui/babel-plugin-lingui-macro"
-  ],
+  "ignoreDependencies": ["posthog-js"],
   "ignore": ["**/*.web.ts", "**/*.web.tsx"]
 }

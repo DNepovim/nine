@@ -68,7 +68,7 @@ const ROW_HEIGHT = 14
 // the absolutely-positioned menu button has to come up by exactly this much to
 // stay level with the NINE row — deriving it beats a second hard-coded number
 // that would silently drift if any of these changed.
-export const BEST_SCORES_HEIGHT = ROW_HEIGHT + 4 + 1 + 6
+const BEST_SCORES_HEIGHT = ROW_HEIGHT + 4 + 1 + 6
 
 // A hairline strip above the top bar: the player's best on this board next to the
 // day, week and all-time bests. Your own best always shows, as 0 until you set one —
