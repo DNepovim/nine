@@ -3,7 +3,8 @@ import { type StyleProp, type ViewStyle } from 'react-native'
 import Animated, { type AnimatedStyle } from 'react-native-reanimated'
 
 import { type DyingPhase } from '@/hooks/use-dying-sequence'
-import type { Award } from '@/lib/achievements'
+import type { AchievementStore } from '@/lib/achievement-store'
+import type { AchievementFacts, Award } from '@/lib/achievements'
 import type { Period } from '@/lib/announcements'
 import type { RecordScreen } from '@/lib/champions'
 import { gameOverTitle } from '@/lib/game-over-title'
@@ -41,6 +42,8 @@ export function GameOverSequence({
   avgAccuracy,
   avgSpeed,
   achievements,
+  achievementStore,
+  achievementFacts,
   onPlayAgain,
   onChallenge,
   onMenu,
@@ -70,6 +73,9 @@ export function GameOverSequence({
   avgAccuracy: number
   avgSpeed: number
   achievements: readonly Award[]
+  // Passed straight through to the game over screen; see EarnedAchievements.
+  achievementStore: AchievementStore
+  achievementFacts: AchievementFacts
   onPlayAgain: () => void
   onChallenge: (mode: Mode, difficulty: Difficulty) => void
   onMenu: () => void
@@ -120,6 +126,8 @@ export function GameOverSequence({
           avgAccuracy={avgAccuracy}
           avgSpeed={avgSpeed}
           achievements={achievements}
+          achievementStore={achievementStore}
+          achievementFacts={achievementFacts}
           titleHidden={!revealed}
           onTitleLayout={onTitleLayout}
           onPlayAgain={onPlayAgain}

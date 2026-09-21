@@ -13,11 +13,17 @@ import Animated, {
 } from 'react-native-reanimated'
 
 import { Screen } from '@/components/screen'
-import { GOLD_DIM_INK, GOLD_SCREEN_TOKENS, MODE_SCREEN_TOKENS } from '@/constants/colors'
+import {
+  DIM_INK,
+  GOLD_DIM_INK,
+  GOLD_SCREEN_TOKENS,
+  MODE_SCREEN_TOKENS,
+} from '@/constants/colors'
 import { CROWN_CORONA, ON_GOLD_LABEL_SHADOW } from '@/constants/theme'
 import { useBoardContext } from '@/hooks/use-board'
 import { useTheme } from '@/hooks/use-theme'
-import type { Award } from '@/lib/achievements'
+import type { AchievementStore } from '@/lib/achievement-store'
+import type { AchievementFacts, Award } from '@/lib/achievements'
 import type { Period } from '@/lib/announcements'
 import { currentBoardMedals } from '@/lib/board-medals'
 import type { RecordScreen } from '@/lib/champions'
@@ -75,6 +81,8 @@ export function GameOverOverlay({
   avgAccuracy,
   avgSpeed,
   achievements,
+  achievementStore,
+  achievementFacts,
   onPlayAgain,
   onChallenge,
   onMenu,
@@ -102,6 +110,9 @@ export function GameOverOverlay({
   avgSpeed: number
   // What this run earned for good — empty on most runs, and silent when it is.
   achievements: readonly Award[]
+  // Only for the card a tapped chip opens — see EarnedAchievements.
+  achievementStore: AchievementStore
+  achievementFacts: AchievementFacts
   // Straight back into a run on this same board.
   onPlayAgain: () => void
   // Into a run on the board one rung up, or one down — see `runChallenge`.
@@ -116,7 +127,7 @@ export function GameOverOverlay({
   const { t } = useLingui()
   const titleRef = useRef<View>(null)
   const { colorScheme } = useTheme()
-  const dimColor = colorScheme === 'dark' ? '#504e6e' : '#aaa69e'
+  const dimColor = DIM_INK[colorScheme]
   const challenge = runChallenge(gameMode, difficulty, hits, strikes)
   // Named so the catalog carries one `TRY {modeName}` shared with the step-up toast,
   // and so a translation can put the rung wherever its own grammar wants it.
@@ -233,7 +244,12 @@ export function GameOverOverlay({
             {/* Under the run's own numbers and above the board: what this run *did* is a
                 description of the run, and what it earned is something the player keeps
                 — which belongs nearer the boards than the stopwatch. */}
-            <EarnedAchievements awards={achievements} halo={painted} />
+            <EarnedAchievements
+              awards={achievements}
+              store={achievementStore}
+              facts={achievementFacts}
+              halo={painted}
+            />
 
             {isOneOf(gameMode, ['accuracy', 'speed']) && (
               <HighScores
