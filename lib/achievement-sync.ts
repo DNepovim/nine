@@ -2,10 +2,15 @@ import { isNonEmptyArray, isOneOf } from 'narrowland'
 
 import { isKnownAchievement } from '@/lib/achievement-store'
 import type { AchievementStore, EarnedAchievement } from '@/lib/achievement-store'
+import type { Stage } from '@/lib/achievements'
 import { captureError } from '@/lib/analytics'
 import { isNetworkFailure, noteRequest } from '@/lib/connectivity'
 import { supabase } from '@/lib/supabase'
-import { DIFFICULTY_ORDER, type Difficulty } from '@/machines/modes'
+import { DIFFICULTY_ORDER, SCORED_MODES } from '@/machines/modes'
+
+// Every stage this build can name — both axes. A row naming one it cannot place is
+// dropped rather than guessed at; see `toStage`.
+const ALL_STAGES = [...DIFFICULTY_ORDER, ...SCORED_MODES] as const
 
 // The server's copy of what the player has earned.
 //
@@ -27,8 +32,8 @@ type AchievementRow = {
 
 // The server's empty string is the client's null: one identity, two spellings, mapped
 // here so nothing above this file has to know the column exists.
-const toStage = (value: string): Difficulty | null | undefined =>
-  value === '' ? null : isOneOf(value, DIFFICULTY_ORDER) ? value : undefined
+const toStage = (value: string): Stage | null | undefined =>
+  value === '' ? null : isOneOf(value, ALL_STAGES) ? value : undefined
 
 // Everything the server holds for this player. Null — not an empty store — when the ask
 // itself failed, so a flaky read is never mistaken for a player who has earned nothing.

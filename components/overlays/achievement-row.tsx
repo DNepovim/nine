@@ -5,9 +5,9 @@ import { Text, View } from 'react-native'
 import { achievement, type AchievementId } from '@/constants/achievements'
 import { ACHIEVEMENT_INK } from '@/constants/colors'
 import { useTheme } from '@/hooks/use-theme'
+import { STAGE_AXES, STAGE_CODE, type Stage } from '@/lib/achievements'
 import { cn } from '@/lib/cn'
 import { formatShortDate } from '@/lib/format-date'
-import { DIFFICULTIES, DIFFICULTY_ORDER, type Difficulty } from '@/machines/modes'
 
 // A secret one keeps its name as well as its rule. Naming it would be telling.
 const SECRET_TITLE = msg`???`
@@ -29,18 +29,23 @@ export function AchievementRow({
   // ISO 8601, or null for one not yet achieved. For a staged one this is the first
   // stage's moment — the row's three pips say which boards are done.
   earnedAt: string | null
-  // Which boards a staged achievement has been cleared on. Empty for the rest.
-  stages: readonly Difficulty[]
+  // Which stages a staged achievement has been cleared on. Empty for the rest.
+  stages: readonly Stage[]
   // How far along on each board, out of the achievement's own target. An unstaged
   // achievement answers the same number three times — its rules never read the board —
   // and only one bar is drawn for it. Ignored once earned, and meaningless for the ones
   // with nothing to count.
-  progress: Record<Difficulty, number>
+  progress: Record<Stage, number>
 }) {
   const { t } = useLingui()
   const { colorScheme } = useTheme()
   const def = achievement(id)
-  const staged = def.staged === true
+  // The axis this one is staged along, or undefined if it is cleared once. Every stage
+  // drawn below comes from it, so a mode-staged achievement shows its two modes where a
+  // board-staged one shows its three difficulties.
+  const axis = def.staged
+  const stageList = axis === undefined ? [] : STAGE_AXES[axis]
+  const staged = axis !== undefined
   const earned = earnedAt !== null
   // A secret stays secret until it is earned — then it is just an achievement.
   const hidden = def.secret === true && !earned
@@ -73,7 +78,7 @@ export function AchievementRow({
             className="font-mono text-[8px] font-bold tracking-[1px] text-dim"
           >
             {staged
-              ? `${stages.length}/${DIFFICULTY_ORDER.length}`
+              ? `${stages.length}/${stageList.length}`
               : earnedAt !== null
                 ? formatShortDate(earnedAt)
                 : target === undefined
@@ -95,16 +100,18 @@ export function AchievementRow({
         {/* One bar per board for a staged achievement, easiest first — the same order
             the difficulty selector reads in. A full bar is a cleared board, so the bars
             say both which boards are done and how close the rest are; the code beside
-            each says which board it is, since left-to-right alone would not. */}
-        {staged && target !== undefined && (
+            each says which board it is, since left-to-right alone would not. Drawn for
+            the staged ones with nothing to count as well — there the bar is full or
+            empty, which is still the only place the row says *which* boards are done. */}
+        {staged && (
           <View className="mt-1 flex-row items-center gap-2">
-            {DIFFICULTY_ORDER.map((stage) => (
+            {stageList.map((stage) => (
               <View key={stage} className="flex-1 flex-row items-center gap-1">
                 <Text
                   selectable={false}
                   className="font-mono text-[7px] font-bold tracking-[0.5px] text-dim"
                 >
-                  {t(DIFFICULTIES[stage].code)}
+                  {t(STAGE_CODE[stage])}
                 </Text>
                 <View className="h-[3px] flex-1 overflow-hidden rounded-full bg-elevated">
                   <View
@@ -112,7 +119,9 @@ export function AchievementRow({
                     style={{
                       width: stages.includes(stage)
                         ? '100%'
-                        : `${Math.round((100 * progress[stage]) / target)}%`,
+                        : target === undefined
+                          ? '0%'
+                          : `${Math.round((100 * progress[stage]) / target)}%`,
                       backgroundColor: ACHIEVEMENT_INK[colorScheme],
                     }}
                   />

@@ -248,6 +248,7 @@ export function useAchievements(input: AchievementsInput): Achievements {
         hits: live.hits,
         strikes: live.strikes,
         maxStreak: live.maxStreak,
+        parHits: tallyRef.current.parHits,
         cleanHits: tallyRef.current.cleanHits,
         elapsedMs: live.elapsedMs,
         day: todayISO(),

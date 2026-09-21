@@ -111,12 +111,22 @@ export type AchievementDef = {
   target?: number
   // Listed as ??? until earned.
   secret?: true
-  // Cleared once per board rather than once. A staged achievement is achieved three
-  // times — Easy, Hard and Extreme — each on its own board, each with its own date, and
-  // a harder board never implies an easier one. The hint says what the target is; the
-  // board it was met on is the stage.
-  staged?: true
+  // Cleared once per stage rather than once, and which axis it is staged along.
+  //
+  // `difficulty` is the usual one: the achievement is achieved three times — Easy, Hard
+  // and Extreme — each on its own board, each with its own date, and a harder board
+  // never implies an easier one. The hint says what the target is; the board it was met
+  // on is the stage.
+  //
+  // `mode` is for the handful whose hint already names a board, where difficulty would
+  // be staging an achievement along the axis it has already fixed. INTO THE DEEP asks
+  // for a hit on Extreme — the question left is which Extreme, so Accuracy and Speed are
+  // its two stages.
+  staged?: StageAxis
 }
+
+// Which axis a staged achievement is cleared along; see `staged`.
+export type StageAxis = 'difficulty' | 'mode'
 
 // The announcement bar holds 40 characters (MAX_MESSAGE_LENGTH in lib/announcements.ts)
 // and the longest template spends 10 of them on "Unlocked: ". A title past this would be
@@ -168,6 +178,10 @@ export const ACHIEVEMENTS = {
     emblem: '🌋',
     title: msg`INTO THE DEEP`,
     hint: msg`Land a hit on an Extreme board.`,
+    // Staged by mode rather than by difficulty: the rule already fixes Extreme, so
+    // staging it by board would ask the same question of Easy and Hard, which nothing
+    // can ever answer. Accuracy Extreme and Speed Extreme are two different dives.
+    staged: 'mode',
   },
 
   // ── Accuracy ───────────────────────────────────────────────────────────────────
@@ -177,7 +191,7 @@ export const ACHIEVEMENTS = {
     title: msg`STEADY HAND`,
     hint: msg`Score 250 in Accuracy.`,
     target: 250,
-    staged: true,
+    staged: 'difficulty',
   },
   fineWork: {
     group: 'accuracy',
@@ -185,7 +199,7 @@ export const ACHIEVEMENTS = {
     title: msg`FINE WORK`,
     hint: msg`Score 1 000 in Accuracy.`,
     target: 1000,
-    staged: true,
+    staged: 'difficulty',
   },
   surgeon: {
     group: 'accuracy',
@@ -193,7 +207,7 @@ export const ACHIEVEMENTS = {
     title: msg`SURGEON`,
     hint: msg`Score 2 500 in Accuracy.`,
     target: 2500,
-    staged: true,
+    staged: 'difficulty',
   },
   immaculate: {
     group: 'accuracy',
@@ -201,7 +215,7 @@ export const ACHIEVEMENTS = {
     title: msg`IMMACULATE`,
     hint: msg`Score 5 000 in Accuracy.`,
     target: 5000,
-    staged: true,
+    staged: 'difficulty',
   },
   perfectionist: {
     group: 'accuracy',
@@ -209,7 +223,7 @@ export const ACHIEVEMENTS = {
     title: msg`PERFECTIONIST`,
     hint: msg`Score 10 000 in Accuracy.`,
     target: 10000,
-    staged: true,
+    staged: 'difficulty',
   },
 
   // ── Speed ──────────────────────────────────────────────────────────────────────
@@ -219,7 +233,7 @@ export const ACHIEVEMENTS = {
     title: msg`FAST START`,
     hint: msg`Score 250 in Speed.`,
     target: 250,
-    staged: true,
+    staged: 'difficulty',
   },
   slipstream: {
     group: 'speed',
@@ -227,7 +241,7 @@ export const ACHIEVEMENTS = {
     title: msg`SLIPSTREAM`,
     hint: msg`Score 1 000 in Speed.`,
     target: 1000,
-    staged: true,
+    staged: 'difficulty',
   },
   afterburner: {
     group: 'speed',
@@ -235,7 +249,7 @@ export const ACHIEVEMENTS = {
     title: msg`AFTERBURNER`,
     hint: msg`Score 2 500 in Speed.`,
     target: 2500,
-    staged: true,
+    staged: 'difficulty',
   },
   lightning: {
     group: 'speed',
@@ -243,7 +257,7 @@ export const ACHIEVEMENTS = {
     title: msg`LIGHTNING`,
     hint: msg`Score 5 000 in Speed.`,
     target: 5000,
-    staged: true,
+    staged: 'difficulty',
   },
   terminalVelocity: {
     group: 'speed',
@@ -251,23 +265,28 @@ export const ACHIEVEMENTS = {
     title: msg`TERMINAL VELOCITY`,
     hint: msg`Score 10 000 in Speed.`,
     target: 10000,
-    staged: true,
+    staged: 'difficulty',
   },
 
   // ── Mastery ────────────────────────────────────────────────────────────────────
-  // Skill inside one run, rather than a total that patience alone reaches.
+  // Skill inside one run, rather than a total that patience alone reaches. Every one is
+  // staged: a clean twenty-five on Easy and a clean twenty-five on Extreme are not the
+  // same feat, and a mastery row that a single Easy run closed for good was saying they
+  // were. Trainee clears no stage — it has no difficulty selector and no board.
   flawlessTen: {
     group: 'mastery',
     emblem: '✨',
     title: msg`FLAWLESS TEN`,
     hint: msg`Extend a streak ten times in a row.`,
     target: 10,
+    staged: 'difficulty',
   },
   maxMultiplier: {
     group: 'mastery',
     emblem: '🔥',
     title: msg`MAX MULTIPLIER`,
     hint: msg`Reach the ×8 multiplier.`,
+    staged: 'difficulty',
   },
   // Not "finish a run without losing a life" — a run *ends* because its lives ran out, so
   // that could never be earned by anyone.
@@ -277,18 +296,21 @@ export const ACHIEVEMENTS = {
     title: msg`UNSCATHED`,
     hint: msg`Reach 25 hits in one run before losing a life.`,
     target: 25,
+    staged: 'difficulty',
   },
   deadEye: {
     group: 'mastery',
     emblem: '👁️',
     title: msg`DEAD EYE`,
     hint: msg`Average 95% accuracy over a run of 20 hits or more.`,
+    staged: 'difficulty',
   },
   blur: {
     group: 'mastery',
     emblem: '🌀',
     title: msg`BLUR`,
     hint: msg`Average 90% speed over a run of 20 hits or more.`,
+    staged: 'difficulty',
   },
   perfectRoute: {
     group: 'mastery',
@@ -296,6 +318,7 @@ export const ACHIEVEMENTS = {
     title: msg`PERFECT ROUTE`,
     hint: msg`Take the shortest route to 25 targets in one run.`,
     target: 25,
+    staged: 'difficulty',
   },
 
   // ── Endurance ──────────────────────────────────────────────────────────────────
@@ -356,17 +379,22 @@ export const ACHIEVEMENTS = {
   },
 
   // ── Boards ─────────────────────────────────────────────────────────────────────
+  // Both staged: a podium on Easy is not a podium on Extreme, and the two rows spent
+  // their whole lives closed by whichever board the player happened to be best at.
+  // UNTOUCHABLE stays unstaged — it names its own board.
   onTheBoard: {
     group: 'boards',
     emblem: '⭐',
     title: msg`ON THE BOARD`,
-    hint: msg`Finish in the top three on any board.`,
+    hint: msg`Finish in the top three on a board.`,
+    staged: 'difficulty',
   },
   topOfTheBoard: {
     group: 'boards',
     emblem: '🎖️',
     title: msg`TOP OF THE BOARD`,
-    hint: msg`Take first place on any board.`,
+    hint: msg`Take first place on a board.`,
+    staged: 'difficulty',
   },
   // The one achievement allowed the crown, because it is the crown: the game-over screen
   // already pays it out for holding both Extreme all-time boards at once.
@@ -398,14 +426,14 @@ export const ACHIEVEMENTS = {
     emblem: '🛡️',
     title: msg`HELD ACCURACY`,
     hint: msg`Hold an Accuracy all-time record for seven days.`,
-    staged: true,
+    staged: 'difficulty',
   },
   heldSpeed: {
     group: 'held',
     emblem: '🏰',
     title: msg`HELD SPEED`,
     hint: msg`Hold a Speed all-time record for seven days.`,
-    staged: true,
+    staged: 'difficulty',
   },
 
   // ── With friends ───────────────────────────────────────────────────────────────

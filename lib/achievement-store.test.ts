@@ -27,6 +27,40 @@ const staged = (
   synced = false,
 ) => ({ id, stage, earnedAt, synced }) as const
 
+describe('restaging', () => {
+  it('reads a boardless award for a staged achievement as the Easy stage', () => {
+    // Written by a build where UNSCATHED was cleared once. Staging it renamed what the
+    // player holds, and an award nobody can name any more is an achievement quietly
+    // taken back — so the earliest board it could have been is the one it lands on.
+    const legacy: AchievementStore = [
+      {
+        id: 'unscathed',
+        stage: null,
+        earnedAt: '2026-08-01T00:00:00.000Z',
+        synced: true,
+      },
+    ]
+    const [held, ...rest] = mergeEarned(legacy, EMPTY_STORE)
+    expect(rest).toEqual([])
+    expect(held?.stage).toBe('easy')
+    expect(held?.earnedAt).toBe('2026-08-01T00:00:00.000Z')
+    // The server still has it under the old name, so it goes back on the queue.
+    expect(held?.synced).toBe(false)
+  })
+
+  it('leaves the other boards of a restaged achievement to be cleared', () => {
+    const legacy: AchievementStore = [
+      {
+        id: 'unscathed',
+        stage: null,
+        earnedAt: '2026-08-01T00:00:00.000Z',
+        synced: true,
+      },
+    ]
+    expect(stagesOf(mergeEarned(legacy, EMPTY_STORE), 'unscathed')).toEqual(['easy'])
+  })
+})
+
 describe('mergeEarned', () => {
   it('takes the union of both sides', () => {
     const local: AchievementStore = [entry('firstHit', '2026-09-01T00:00:00.000Z')]

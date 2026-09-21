@@ -1,10 +1,26 @@
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { isNonEmptyArray, isOneOf } from 'narrowland'
 
-import { ACHIEVEMENT_IDS, type AchievementId } from '@/constants/achievements'
+import {
+  achievement,
+  ACHIEVEMENT_IDS,
+  type AchievementId,
+  type StageAxis,
+} from '@/constants/achievements'
 import { ACHIEVEMENTS_KEY } from '@/constants/storage'
-import { awardKey, awardsOf, type Award } from '@/lib/achievements'
-import { DIFFICULTY_ORDER, type Difficulty } from '@/machines/modes'
+import {
+  awardKey,
+  awardsOf,
+  STAGE_AXES,
+  type Award,
+  type Stage,
+} from '@/lib/achievements'
+import { DIFFICULTY_ORDER, SCORED_MODES } from '@/machines/modes'
+
+// Every stage any axis can name, for reading a stored award back. A device that has run
+// a newer build can hold a stage this one has never heard of; it is dropped rather than
+// carried, the same way an unknown id is.
+const ALL_STAGES = [...DIFFICULTY_ORDER, ...SCORED_MODES] as const
 
 // One achievement the player holds.
 //
@@ -13,10 +29,10 @@ import { DIFFICULTY_ORDER, type Difficulty } from '@/machines/modes'
 // would quietly rewrite the player's history.
 export type EarnedAchievement = {
   id: AchievementId
-  // The board it was cleared on, for a staged achievement; null for the rest. A staged
-  // achievement holds up to three of these, each with its own moment — a harder board
-  // never stands in for an easier one.
-  stage: Difficulty | null
+  // The stage it was cleared on, for a staged achievement; null for the rest. A staged
+  // achievement holds one of these per stage, each with its own moment — a harder board
+  // never stands in for an easier one, and neither mode stands in for the other.
+  stage: Stage | null
   earnedAt: string // ISO 8601
   // Whether the server has it. The device is what the app reads; this is the queue.
   synced: boolean
@@ -36,6 +52,38 @@ export const EMPTY_STORE: AchievementStore = []
 export const isKnownAchievement = (id: string): id is AchievementId =>
   isOneOf(id, ACHIEVEMENT_IDS)
 
+// What a boardless award becomes when its achievement has since been staged.
+//
+// The two axes answer this differently because only one of them is ordered. Difficulty
+// has a floor: we know the player did it, we do not know on which board, and Easy is the
+// honest least it can have been — the other two stages are still theirs to clear. Mode
+// has no floor. Neither Accuracy nor Speed is the lesser one, so naming either would be
+// inventing a fact about a player's history; every stage is granted instead, which is
+// the reading that takes nothing back.
+const GRANDFATHERED = {
+  difficulty: ['easy'],
+  mode: SCORED_MODES,
+} as const satisfies Record<StageAxis, readonly Stage[]>
+
+// What a stored award means under this build's catalogue.
+//
+// Staging an achievement that used to be cleared once renames what the player holds —
+// `flawlessTen` becomes `flawlessTen:easy`, and a boardless award nobody can name any
+// more is an achievement quietly taken back. Nothing is ever taken back, so such an award
+// is re-read onto the stages above. Unstaging runs the same way in reverse, and a stage
+// belonging to the other axis — an achievement restaged from difficulty to mode — is
+// re-read the same way, since `intoTheDeep:easy` names a board this build cannot place
+// either. All of them are marked unsynced so the server hears the award under its new
+// name rather than keeping the old one for ever.
+const restage = (entry: EarnedAchievement): EarnedAchievement[] => {
+  const axis = achievement(entry.id).staged
+  if (axis === undefined) {
+    return entry.stage === null ? [entry] : [{ ...entry, stage: null, synced: false }]
+  }
+  if (entry.stage !== null && isOneOf(entry.stage, STAGE_AXES[axis])) return [entry]
+  return GRANDFATHERED[axis].map((stage) => ({ ...entry, stage, synced: false }))
+}
+
 // Merges two sets of earned achievements, keeping the earlier moment for anything in
 // both.
 //
@@ -47,7 +95,7 @@ export function mergeEarned(
   remote: AchievementStore,
 ): AchievementStore {
   const merged = new Map<string, EarnedAchievement>()
-  for (const entry of [...local, ...remote]) {
+  for (const entry of [...local, ...remote].flatMap(restage)) {
     const key = awardKey(entry)
     const held = merged.get(key)
     if (held === undefined) {
@@ -97,7 +145,7 @@ export const idsOf = (store: AchievementStore): AchievementId[] => [
 ]
 
 // Which boards a staged achievement has been cleared on.
-export const stagesOf = (store: AchievementStore, id: AchievementId): Difficulty[] =>
+export const stagesOf = (store: AchievementStore, id: AchievementId): Stage[] =>
   store.flatMap((entry) => (entry.id === id && entry.stage !== null ? entry.stage : []))
 
 export const unsyncedOf = (store: AchievementStore): EarnedAchievement[] =>
@@ -116,7 +164,7 @@ export async function readAchievements(): Promise<AchievementStore> {
     if (raw === null) return EMPTY_STORE
     const parsed: unknown = JSON.parse(raw)
     if (!Array.isArray(parsed)) return EMPTY_STORE
-    return parsed.flatMap((entry: unknown) => (isEntry(entry) ? [entry] : []))
+    return parsed.flatMap((entry: unknown) => (isEntry(entry) ? restage(entry) : []))
   } catch {
     return EMPTY_STORE
   }
@@ -128,7 +176,7 @@ const isEntry = (value: unknown): value is EarnedAchievement => {
   return (
     typeof entry.id === 'string' &&
     isKnownAchievement(entry.id) &&
-    (entry.stage === null || isOneOf(entry.stage, DIFFICULTY_ORDER)) &&
+    (entry.stage === null || isOneOf(entry.stage, ALL_STAGES)) &&
     typeof entry.earnedAt === 'string' &&
     typeof entry.synced === 'boolean'
   )

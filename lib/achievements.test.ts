@@ -14,7 +14,7 @@ import { LOCALES } from '@/lib/i18n/locale'
 import type { BoardStanding } from '@/lib/medals'
 import { messages as cs } from '@/locales/cs/messages'
 import { messages as en } from '@/locales/en/messages'
-import type { Stats } from '@/machines/game'
+import { DIFFICULTY_ORDER, type Stats } from '@/machines/game'
 
 import {
   earned,
@@ -224,6 +224,45 @@ describe('mastery', () => {
     ).toBe(true)
   })
 
+  it('asks a mastery achievement for the board it is being asked about', () => {
+    // The mastery figures are kept per board because the rows are staged: a clean
+    // twenty-five on Easy is not a clean twenty-five on Extreme.
+    const hard = facts({
+      career: career({ bestCleanHitsBy: { easy: 0, hard: 30, extreme: 0 } }),
+    })
+    expect(isEarnedBy('unscathed', hard, 'hard')).toBe(true)
+    expect(isEarnedBy('unscathed', hard, 'easy')).toBe(false)
+    expect(isEarnedBy('unscathed', hard, 'extreme')).toBe(false)
+  })
+
+  it('clears the stage the run in progress is on, and no other', () => {
+    const f = facts({
+      run: { ...facts().run, mode: 'speed', difficulty: 'extreme', maxStreak: 10 },
+    })
+    expect(isEarnedBy('flawlessTen', f, 'extreme')).toBe(true)
+    expect(isEarnedBy('flawlessTen', f, 'easy')).toBe(false)
+  })
+
+  it('clears no stage from a trainee run', () => {
+    // Trainee has no difficulty selector, so the difficulty it carries is not a board.
+    const practice = facts({
+      run: {
+        ...facts().run,
+        mode: 'trainee',
+        difficulty: 'easy',
+        hits: 40,
+        cleanHits: 40,
+        parHits: 30,
+        avgAccuracy: 100,
+      },
+    })
+    for (const stage of DIFFICULTY_ORDER) {
+      expect(isEarnedBy('unscathed', practice, stage)).toBe(false)
+      expect(isEarnedBy('perfectRoute', practice, stage)).toBe(false)
+      expect(isEarnedBy('deadEye', practice, stage)).toBe(false)
+    }
+  })
+
   it('refuses DEAD EYE on a run too short to have an average', () => {
     const short = facts({ run: { ...facts().run, hits: 8, avgAccuracy: 100 } })
     expect(isEarnedBy('deadEye', short)).toBe(false)
@@ -282,6 +321,17 @@ describe('boards', () => {
   it('earns TOP OF THE BOARD from a gold on any period', () => {
     const f = facts({ standings: [standing({ period: 'today', rank: 1 })] })
     expect(isEarnedBy('topOfTheBoard', f)).toBe(true)
+  })
+
+  it('keeps a board achievement to the difficulty it was reached on', () => {
+    // A podium on Easy and a podium on Extreme were the same row until these were
+    // staged; the stage is the difficulty, and either mode counts towards it.
+    const f = facts({
+      standings: [standing({ mode: 'speed', difficulty: 'hard', rank: 3 })],
+    })
+    expect(isEarnedBy('onTheBoard', f, 'hard')).toBe(true)
+    expect(isEarnedBy('onTheBoard', f, 'easy')).toBe(false)
+    expect(isEarnedBy('topOfTheBoard', f, 'hard')).toBe(false)
   })
 
   it('does not hand a medal to a player with no score', () => {
@@ -372,10 +422,15 @@ describe('stageProgress', () => {
     // The three bars under a staged row read this. A big score on Hard must not fill
     // the Extreme bar — that is the same rule the stages themselves keep.
     const f = facts({ stats: withBest('accuracy', 'hard', 600) })
+    // Every stage of both axes, so one shape answers for a row staged either way. The
+    // mode keys are zero here because FINE WORK is staged by board: its rule reads a
+    // difficulty, and there is no such thing as its progress on Accuracy.
     expect(stageProgress('fineWork', f)).toStrictEqual({
       easy: 0,
       hard: 600,
       extreme: 0,
+      accuracy: 0,
+      speed: 0,
     })
   })
 

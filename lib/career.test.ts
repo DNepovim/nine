@@ -19,6 +19,7 @@ const run = (over: Partial<RunSummary> = {}): RunSummary => ({
   hits: 12,
   strikes: 5,
   maxStreak: 3,
+  parHits: 4,
   cleanHits: 8,
   elapsedMs: 60_000,
   day: '2026-09-17',
@@ -46,14 +47,40 @@ describe('foldRun', () => {
     expect(next.strikes).toBe(5)
   })
 
-  it('keeps the highest streak rather than the latest', () => {
-    const next = foldRun(career({ bestStreak: 7 }), run({ maxStreak: 3 }))
-    expect(next.bestStreak).toBe(7)
+  it('keeps the highest streak rather than the latest, on the board it was set on', () => {
+    const held = career({ bestStreakBy: { easy: 7, hard: 0, extreme: 0 } })
+    const next = foldRun(held, run({ maxStreak: 3 }))
+    expect(next.bestStreakBy.easy).toBe(7)
+    expect(foldRun(held, run({ maxStreak: 11 })).bestStreakBy.easy).toBe(11)
   })
 
   it('keeps the longest clean stretch rather than the latest', () => {
-    const next = foldRun(career({ bestCleanHits: 30 }), run({ cleanHits: 8 }))
-    expect(next.bestCleanHits).toBe(30)
+    const held = career({ bestCleanHitsBy: { easy: 30, hard: 0, extreme: 0 } })
+    expect(foldRun(held, run({ cleanHits: 8 })).bestCleanHitsBy.easy).toBe(30)
+  })
+
+  it('raises the mastery bests only on the board the run was played on', () => {
+    // The mastery achievements are staged, so a streak on Hard says nothing about
+    // Extreme — the career has to remember which board each figure was reached on.
+    const next = foldRun(
+      emptyCareer(),
+      run({ difficulty: 'hard', maxStreak: 12, cleanHits: 30, parHits: 27 }),
+    )
+    expect(next.bestStreakBy).toEqual({ easy: 0, hard: 12, extreme: 0 })
+    expect(next.bestCleanHitsBy).toEqual({ easy: 0, hard: 30, extreme: 0 })
+    expect(next.bestParHitsBy).toEqual({ easy: 0, hard: 27, extreme: 0 })
+  })
+
+  it('raises no mastery best from a trainee run', () => {
+    // Trainee has no difficulty selector and no board, so the difficulty it happens to
+    // carry cannot be a stage — and its lives never run out, which would make every
+    // trainee run a clean one.
+    const next = foldRun(
+      emptyCareer(),
+      run({ mode: 'trainee', difficulty: 'extreme', maxStreak: 15, cleanHits: 40 }),
+    )
+    expect(next.bestStreakBy).toEqual({ easy: 0, hard: 0, extreme: 0 })
+    expect(next.bestCleanHitsBy).toEqual({ easy: 0, hard: 0, extreme: 0 })
   })
 
   it('counts a personal best only when the run set one', () => {

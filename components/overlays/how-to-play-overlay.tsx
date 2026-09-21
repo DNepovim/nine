@@ -559,7 +559,7 @@ export function HowToPlayOverlay({
             </Bullet>
           </Card>
           <Body>
-            {t`\nAchieve one mid-run and the score bar says so in green. The whole list is behind the bar under NINE on the start screen, along with how far along you are on the ones you have not got yet.`}
+            {t`\nAchieve one mid-run and the score bar says so in green. Most are asked once per difficulty — Easy, Hard and Extreme count separately, and the list draws a bar for each. The whole list is behind the bar under NINE on the start screen, along with how far along you are on the ones you have not got yet.`}
           </Body>
 
           {/* Multiplayer */}

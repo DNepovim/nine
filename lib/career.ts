@@ -21,12 +21,16 @@ export type Career = {
   points: number
   // Hits that landed on a streak, over every run.
   strikes: number
-  // The longest streak ever reached, in any run.
-  bestStreak: number
-  // The most hits reached in one run *before the first life was lost*. Not "a run
-  // finished without losing a life" — see cleanHits on RunSummary for why that cannot
-  // happen.
-  bestCleanHits: number
+  // The three figures the mastery achievements count, kept per difficulty because those
+  // achievements are staged by board: the longest streak ever reached, the most hits
+  // reached *before the first life was lost* (not "a run finished without losing a life"
+  // — see cleanHits on RunSummary for why that cannot happen), and the most hits taken in
+  // exactly the optimal number of presses. Trainee raises none of them: it has no
+  // difficulty selector, so the difficulty it happens to carry says nothing about which
+  // board the feat belongs to.
+  bestStreakBy: Record<Difficulty, number>
+  bestCleanHitsBy: Record<Difficulty, number>
+  bestParHitsBy: Record<Difficulty, number>
   // How many times a run has beaten the player's own stored best.
   personalBests: number
   longestRunMs: number
@@ -67,6 +71,8 @@ export type RunSummary = {
   strikes: number
   // The longest streak this run reached, not the one it ended on.
   maxStreak: number
+  // Hits taken in exactly the optimal number of presses.
+  parHits: number
   // How many hits had landed when the first life was lost — the whole run's hits if none
   // ever was.
   //
@@ -90,13 +96,18 @@ export const ALL_BOARDS: readonly string[] = SCORED_MODES.flatMap((mode) =>
   DIFFICULTY_ORDER.map((difficulty) => boardKey(mode, difficulty)),
 )
 
+// No board has been played yet, on any difficulty. A fresh object each time — these are
+// folded into by copy, and a shared one would be a default every career pointed at.
+const noBests = (): Record<Difficulty, number> => ({ easy: 0, hard: 0, extreme: 0 })
+
 export const emptyCareer = (): Career => ({
   runs: 0,
   hits: 0,
   points: 0,
   strikes: 0,
-  bestStreak: 0,
-  bestCleanHits: 0,
+  bestStreakBy: noBests(),
+  bestCleanHitsBy: noBests(),
+  bestParHitsBy: noBests(),
   personalBests: 0,
   longestRunMs: 0,
   boardsPlayed: [],
@@ -135,6 +146,15 @@ export function dayStreakWith(career: Career, day: string): number {
   return 1
 }
 
+// Raises one difficulty's best, or hands the record straight back — both when the run
+// did not beat it and when there is no stage to raise, which is every trainee run.
+const raise = (
+  bests: Record<Difficulty, number>,
+  stage: Difficulty | null,
+  value: number,
+): Record<Difficulty, number> =>
+  stage === null || value <= bests[stage] ? bests : { ...bests, [stage]: value }
+
 // Appends a value to a set-like list, or hands the list straight back — both when the
 // value is already there and when there is nothing to add. Returning the same array
 // matters: `useCareer` only writes when the fold produced something new.
@@ -152,6 +172,9 @@ export function foldRun(career: Career, run: RunSummary): Career {
   // anything on the one it was played on.
   const board =
     run.score > 0 && run.mode !== 'trainee' ? boardKey(run.mode, run.difficulty) : null
+  // Which board's mastery the run counts towards. Scoring nothing is no bar here — the
+  // mastery figures are about what happened in the run, not about what reached a board.
+  const stage = run.mode === 'trainee' ? null : run.difficulty
 
   return {
     ...career,
@@ -159,8 +182,9 @@ export function foldRun(career: Career, run: RunSummary): Career {
     hits: career.hits + run.hits,
     points: career.points + run.score,
     strikes: career.strikes + run.strikes,
-    bestStreak: Math.max(career.bestStreak, run.maxStreak),
-    bestCleanHits: Math.max(career.bestCleanHits, run.cleanHits),
+    bestStreakBy: raise(career.bestStreakBy, stage, run.maxStreak),
+    bestCleanHitsBy: raise(career.bestCleanHitsBy, stage, run.cleanHits),
+    bestParHitsBy: raise(career.bestParHitsBy, stage, run.parHits),
     personalBests: career.personalBests + (run.personalBest ? 1 : 0),
     longestRunMs: Math.max(career.longestRunMs, run.elapsedMs),
     boardsPlayed: withValue(career.boardsPlayed, board),
