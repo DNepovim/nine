@@ -6,6 +6,7 @@ import { Text, View } from 'react-native'
 import type { PeriodBoard } from '@/hooks/use-board'
 import { useChampionsContext } from '@/hooks/use-champions'
 import { championMark } from '@/lib/champions'
+import { cn } from '@/lib/cn'
 import { displayRows } from '@/lib/leaderboard-rows'
 
 import { ScoreRow } from './score-row'
@@ -19,8 +20,17 @@ const ANONYMOUS_LABEL = msg`YOU`
 const UNPUBLISHED_NOTE = msg`NOT PUBLISHED`
 const UNSYNCED_NOTE = msg`NOT SYNCED`
 
-// What the game-over screen has room for.
+// What the game-over screen has room for, against the five everywhere else.
 const COMPACT_ROWS = 3
+const FULL_ROWS = 5
+
+// A ScoreRow is 24px tall, so a board of five stands 120px. Every state of the panel
+// claims that height — skeletons, a message, or a period holding fewer rows than it has
+// room for — because the panel shrinking between them is the whole screen jumping each
+// time the player switches mode or difficulty and the board reloads. A min, not a fixed
+// height: the player's own row below the cut is allowed to make the board taller.
+const BODY_HEIGHT = 'min-h-[120px]'
+const COMPACT_BODY_HEIGHT = 'min-h-[72px]'
 
 export function TabPanel({
   data,
@@ -48,11 +58,12 @@ export function TabPanel({
 }) {
   const { t } = useLingui()
   const champions = useChampionsContext()
+  const bodyHeight = compact ? COMPACT_BODY_HEIGHT : BODY_HEIGHT
 
   if (data.loading) {
     return (
-      <View style={{ width }}>
-        {[1, 2, 3, 4, 5].map((i) => (
+      <View style={{ width }} className={bodyHeight}>
+        {Array.from({ length: compact ? COMPACT_ROWS : FULL_ROWS }, (_, i) => (
           <SkeletonRow key={i} />
         ))}
       </View>
@@ -78,7 +89,7 @@ export function TabPanel({
   )
   if (data.error !== null && isEmptyArray(rows)) {
     return (
-      <View style={{ width }} className="items-center py-4">
+      <View style={{ width }} className={cn('items-center justify-center', bodyHeight)}>
         <Text selectable={false} className="font-mono text-[9px] font-bold text-dim">
           <Trans>— UNAVAILABLE —</Trans>
         </Text>
@@ -96,7 +107,7 @@ export function TabPanel({
 
   if (isEmptyArray(rows)) {
     return (
-      <View style={{ width }} className="items-center py-4">
+      <View style={{ width }} className={cn('items-center justify-center', bodyHeight)}>
         <Text selectable={false} className="font-mono text-[9px] font-bold text-dim">
           <Trans>— NO SCORES YET —</Trans>
         </Text>
@@ -105,12 +116,13 @@ export function TabPanel({
   }
 
   return (
-    <View style={{ width }}>
+    <View style={{ width }} className={bodyHeight}>
       {rows.map((row) => (
         <ScoreRow
           key={row.key}
           entry={{
             rank: row.rank,
+            userId: row.userId,
             mark: championMark(row.userId, champions),
             nickname: row.nickname,
             score: row.score,
@@ -136,6 +148,7 @@ export function TabPanel({
           <ScoreRow
             entry={{
               rank: myRank.rank,
+              userId,
               mark: championMark(userId, champions),
               nickname,
               score: data.myBest,
