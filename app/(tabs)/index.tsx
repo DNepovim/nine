@@ -62,7 +62,7 @@ import { useDyingSequence } from '@/hooks/use-dying-sequence'
 import { useFloatingPoints } from '@/hooks/use-floating-points'
 import { useFloatingStat } from '@/hooks/use-floating-stat'
 import { useHitCelebration } from '@/hooks/use-hit-celebration'
-import { useInstallPrompt } from '@/hooks/use-install-prompt'
+import { useInstall } from '@/hooks/use-install'
 import { useMultiplayerGame } from '@/hooks/use-multiplayer-game'
 import { useMultiplayerRoom } from '@/hooks/use-multiplayer-room'
 import { useMyMedals } from '@/hooks/use-my-medals'
@@ -73,6 +73,7 @@ import { usePersistedStats } from '@/hooks/use-persisted-stats'
 import { useRivalRecords } from '@/hooks/use-rival-records'
 import { useScoreDirection } from '@/hooks/use-score-direction'
 import { useScoreSubmission } from '@/hooks/use-score-submission'
+import { useSplash } from '@/hooks/use-splash'
 import { useStepUp } from '@/hooks/use-step-up'
 import { useSupabaseAuth } from '@/hooks/use-supabase-auth'
 import { useTargetSpawner } from '@/hooks/use-target-spawner'
@@ -296,7 +297,8 @@ export default function GameScreen() {
     track('screen_opened', { screen: OVERLAY_SCREENS[menuOverlay] })
   }, [menuOverlay])
   const whatsNew = useWhatsNew()
-  const installPrompt = useInstallPrompt()
+  const installPrompt = useInstall()
+  const { done: splashDone } = useSplash()
   const { ready: updateReady, apply: applyUpdate } = useAppUpdate()
 
   // Close advanced options whenever the game starts or resumes so that pausing
@@ -1356,8 +1358,14 @@ export default function GameScreen() {
           )}
 
         {/* ── Install prompt — web only, and only once the news has had its turn.
-          Every launch until the player installs: closing it lasts the session. ── */}
-        {isMenu &&
+          Every launch until the player installs: closing it lasts the session.
+
+          The ask normally happens earlier, over the splash, where it comes before the
+          tutorial instead of behind it (app/_layout.tsx). This is the launch that has
+          no splash to hold — the reload a service-worker update ends in — so `splashDone`
+          is what keeps the two copies from ever being up at once. ── */}
+        {splashDone &&
+          isMenu &&
           menuOverlay === 'none' &&
           !isMultiActive &&
           !tutorial.visible &&

@@ -1,6 +1,7 @@
 import { Ionicons } from '@expo/vector-icons'
 import { Trans } from '@lingui/react/macro'
 import { LinearGradient } from 'expo-linear-gradient'
+import { useEffect } from 'react'
 import { Pressable, Text, View } from 'react-native'
 import Animated, {
   Easing,
@@ -24,6 +25,12 @@ type IoniconName = keyof typeof Ionicons.glyphMap
 const BORDER = 2
 const RADIUS = 26
 const EXIT_MS = 160
+
+// Arriving: the card rises the last bit of the way into the middle as it fades up,
+// so it reads as coming forward rather than being switched on. It leaves by
+// shrinking instead — an entrance played backwards would look like a mistake.
+const ENTER_MS = 260
+const ENTER_OFFSET = 18
 
 const CTA_LABEL = {
   prompt: 'INSTALL',
@@ -83,11 +90,22 @@ export function InstallOverlay({
 }) {
   const { colorScheme } = useTheme()
   const dotColor = colorScheme === 'dark' ? '#2A2B44' : '#D4D0C8'
-  const fade = useSharedValue(1)
+  const fade = useSharedValue(0)
   const scale = useSharedValue(1)
+  const lift = useSharedValue(ENTER_OFFSET)
   const fadeStyle = useAnimatedStyle(() => ({ opacity: fade.value }))
-  const cardStyle = useAnimatedStyle(() => ({ transform: [{ scale: scale.value }] }))
+  const cardStyle = useAnimatedStyle(() => ({
+    transform: [{ translateY: lift.value }, { scale: scale.value }],
+  }))
   const stepOne = STEP_ONE[target]
+
+  useEffect(() => {
+    fade.value = withTiming(1, { duration: ENTER_MS })
+    lift.value = withTiming(0, {
+      duration: ENTER_MS,
+      easing: Easing.out(Easing.cubic),
+    })
+  }, [])
 
   // Shrink away rather than blinking out. onDismiss unmounts us, so it waits
   // for the animation to finish.

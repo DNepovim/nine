@@ -8,7 +8,7 @@ import {
 } from '@react-navigation/native'
 import { Stack, type ErrorBoundaryProps } from 'expo-router'
 import { StatusBar } from 'expo-status-bar'
-import { lazy, Suspense, useEffect } from 'react'
+import { lazy, Suspense, useEffect, useState } from 'react'
 import { useWindowDimensions, View } from 'react-native'
 import { GestureHandlerRootView } from 'react-native-gesture-handler'
 import Animated, { useAnimatedStyle } from 'react-native-reanimated'
@@ -16,8 +16,10 @@ import Animated, { useAnimatedStyle } from 'react-native-reanimated'
 import '@/global.css'
 
 import { CrashScreen } from '@/components/crash-screen'
+import { InstallOverlay } from '@/components/overlays/install-overlay'
 import { PhoneFrame } from '@/components/phone-frame'
 import { SplashScreen } from '@/components/splash-screen'
+import { InstallProvider, useInstall } from '@/hooks/use-install'
 import { LocaleProvider } from '@/hooks/use-locale'
 import { SplashProvider, useSplash } from '@/hooks/use-splash'
 import { AppThemeProvider, useTheme } from '@/hooks/use-theme'
@@ -71,6 +73,20 @@ const AppDarkTheme: Theme = {
 function ThemedApp() {
   const { colorScheme, transitionOpacity, transitionColor } = useTheme()
   const { done: splashDone, finish: finishSplash } = useSplash()
+  const install = useInstall()
+
+  // Add to home screen is asked on the way in, over the splash — the first launch is
+  // exactly the launch worth asking on, and it is also the one where the tutorial
+  // opens the moment the splash clears. Asking afterwards meant asking behind it.
+  //
+  // The splash holds at the end of its intro for as long as there is something to ask,
+  // so the popup lands on a still screen; answering it clears the target, which lets
+  // the exit play and the game start. The intro screen keeps its own copy of the popup
+  // (app/(tabs)/index.tsx) for the launch that has no splash to hold: the reload a
+  // service-worker update ends in.
+  const [introDone, setIntroDone] = useState(false)
+  // Null rather than 'none', so the popup can only be rendered with something to say.
+  const askInstall = install.target === 'none' ? null : install.target
 
   const overlayStyle = useAnimatedStyle(() => ({
     opacity: transitionOpacity.value,
@@ -96,7 +112,34 @@ function ThemedApp() {
           overlayStyle,
         ]}
       />
-      {!splashDone && <SplashScreen onDone={finishSplash} />}
+      {!splashDone && (
+        <SplashScreen
+          hold={askInstall !== null}
+          onDone={finishSplash}
+          onIntroDone={() => {
+            setIntroDone(true)
+          }}
+        />
+      )}
+      {/* Over the splash rather than under it — the splash is zIndex 100. */}
+      {!splashDone && introDone && askInstall !== null && (
+        <View
+          style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            zIndex: 101,
+          }}
+        >
+          <InstallOverlay
+            target={askInstall}
+            onInstall={install.install}
+            onDismiss={install.dismiss}
+          />
+        </View>
+      )}
     </ThemeProvider>
   )
 }
@@ -142,7 +185,9 @@ export default function RootLayout() {
             <View style={{ flex: 1 }}>
               <PhoneFrame>
                 <SplashProvider>
-                  <ThemedApp />
+                  <InstallProvider>
+                    <ThemedApp />
+                  </InstallProvider>
                 </SplashProvider>
               </PhoneFrame>
             </View>
