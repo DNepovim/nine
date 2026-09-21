@@ -5,6 +5,7 @@ import { isOneOf } from 'narrowland'
 import { Pressable, Text, View } from 'react-native'
 
 import { Screen } from '@/components/screen'
+import { DIM_INK } from '@/constants/colors'
 import { useTheme } from '@/hooks/use-theme'
 import {
   DARK_MODE_GRADIENT,
@@ -59,7 +60,7 @@ export function PausedOverlay({
   onAddNickname: () => void
 }) {
   const { colorScheme } = useTheme()
-  const dimColor = colorScheme === 'dark' ? '#504e6e' : '#aaa69e'
+  const dimColor = DIM_INK[colorScheme]
 
   return (
     <Screen overlay>

@@ -115,7 +115,10 @@ export function MenuButton({
       {showLabel && (
         <Text
           selectable={false}
-          className="font-mono text-[14px] font-black tracking-[3px] text-muted"
+          // Secondary ink, not `muted`: muted is a hairline colour and put this label at
+          // about 1.3:1 on the light surface, which is a word you can only find by
+          // knowing it is there.
+          className="font-mono text-[14px] font-black tracking-[3px] text-dim"
         >
           {paused ? 'CLOSE' : 'MENU'}
         </Text>

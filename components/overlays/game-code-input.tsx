@@ -9,6 +9,9 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated'
 
+import { DIM_INK } from '@/constants/colors'
+import { useTheme } from '@/hooks/use-theme'
+
 import { CodeKeyboard } from './code-keyboard'
 
 // A box's digit landing — the same pop-and-settle a dial key's tap gets
@@ -72,7 +75,12 @@ export function GameCodeInput({
   accentColors: [string, string]
   joinError: string | null
 }) {
+  const { colorScheme } = useTheme()
   const accentColor = accentColors[0]
+  // An empty slot: the secondary ink at a quarter strength, themed rather than one fixed
+  // grey — the same colour sat on the light surface and the dark one before this, and
+  // could only be seen on one of them.
+  const empty = DIM_INK[colorScheme] + '40'
   const [wrong, setWrong] = useState(false)
   const prevJoinError = useRef(joinError)
 
@@ -104,7 +112,7 @@ export function GameCodeInput({
       <View className="flex-row gap-3">
         {[0, 1, 2, 3].map((i) => {
           const digit = value[i] ?? ''
-          const color = wrong ? WRONG_COLOR : digit ? accentColor : '#aaa69e40'
+          const color = wrong ? WRONG_COLOR : digit ? accentColor : empty
           return (
             <View
               key={i}
@@ -114,7 +122,7 @@ export function GameCodeInput({
                   ? WRONG_COLOR + 'CC'
                   : digit
                     ? accentColor + '80'
-                    : '#aaa69e40',
+                    : empty,
                 backgroundColor: wrong
                   ? WRONG_COLOR + '1F'
                   : digit

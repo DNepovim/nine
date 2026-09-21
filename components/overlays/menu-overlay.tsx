@@ -14,6 +14,7 @@ import Animated, {
 
 import { Screen } from '@/components/screen'
 import type { AchievementId } from '@/constants/achievements'
+import { DIM_INK } from '@/constants/colors'
 import { useChampionsContext } from '@/hooks/use-champions'
 import { useOnline } from '@/hooks/use-online'
 import { useTheme } from '@/hooks/use-theme'
@@ -110,7 +111,7 @@ export function MenuOverlay({
 }) {
   const { t } = useLingui()
   const { colorScheme } = useTheme()
-  const dimColor = colorScheme === 'dark' ? '#504e6e' : '#aaa69e'
+  const dimColor = DIM_INK[colorScheme]
   // Same mark the leaderboard, the pause screen and a room wear beside this
   // player's name — worn here over the title itself, since the title is this
   // player's too.

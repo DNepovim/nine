@@ -7,6 +7,7 @@ import { LocaleToggle } from '@/components/locale-toggle'
 import { OptionCheckbox } from '@/components/overlays/option-checkbox'
 import { Screen } from '@/components/screen'
 import { ThemeToggle } from '@/components/theme-toggle'
+import { DIM_INK } from '@/constants/colors'
 import { useLocale } from '@/hooks/use-locale'
 import { buildInfo } from '@/lib/build-info'
 
@@ -115,7 +116,7 @@ export function AdvancedOptionsOverlay({
         >
           <Trans>WHAT’S NEW</Trans>
         </Text>
-        <AntDesign name="right" size={14} color="#aaa69e" />
+        <AntDesign name="right" size={14} color={DIM_INK[isDark ? 'dark' : 'light']} />
       </Pressable>
 
       {/* Build stamp — the line to quote in a bug report. */}

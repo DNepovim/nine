@@ -236,7 +236,11 @@ export function SplashScreen({
               fontFamily: mono,
               fontSize: 11,
               fontWeight: '700' as const,
-              color: 'rgba(255,255,255,0.5)',
+              // Full white: at half strength this byline measured about 2:1 against
+              // the spectrum behind it, which is a line you can see is there and cannot
+              // read. White on the blue end is 3.7:1 — the most the gradient allows
+              // without inking the app's own byline in near-black.
+              color: '#FFFFFF',
               letterSpacing: 2,
             },
             subtitleStyle,

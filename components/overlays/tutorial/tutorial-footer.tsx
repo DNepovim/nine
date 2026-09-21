@@ -3,6 +3,8 @@ import { Trans } from '@lingui/react/macro'
 import { Pressable, Text, View } from 'react-native'
 
 import { TutorialNextButton } from '@/components/overlays/tutorial/tutorial-next-button'
+import { DIM_INK } from '@/constants/colors'
+import { useTheme } from '@/hooks/use-theme'
 import { cn } from '@/lib/cn'
 
 // The top bar carries the whole of navigation: back, the dismiss link, and forward.
@@ -35,6 +37,9 @@ export function TutorialFooter({
   onNext: () => void
   onDismiss: () => void
 }) {
+  // The chevrons are the BACK and NEXT labels' own glyphs, so they take the label's ink
+  // rather than a fixed grey that only held up in one theme.
+  const { colorScheme } = useTheme()
   return (
     <View className="mt-3 flex-row items-center gap-2">
       <Pressable
@@ -45,7 +50,7 @@ export function TutorialFooter({
           isFirst && 'opacity-[0.3]',
         )}
       >
-        <Ionicons name="chevron-back" size={13} color="#aaa69e" />
+        <Ionicons name="chevron-back" size={13} color={DIM_INK[colorScheme]} />
         <Text
           selectable={false}
           className="font-mono text-[11px] font-black tracking-[1px] text-dim"

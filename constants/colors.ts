@@ -31,6 +31,18 @@ export const GOLD_SCALE = ['#FFD166', '#FF8C00', '#FFE8A3', '#F4A261'] as const
 // being a smudge. Dark has no such problem and takes the vivid one.
 export const GOLD_INK = { light: '#B8860B', dark: '#FFD24A' } as const
 
+// The `--color-dim` token as JavaScript, for the places a colour is computed instead of
+// classed: an icon's `color` prop, a text input's placeholder, a worklet interpolating
+// between two inks. Both values are the ones in global.css and must move with them —
+// before this existed the same two hexes were copied into a dozen components, and half
+// of those copies were a single fixed grey that only held up in one theme.
+//
+// Both stops clear 4.5:1 on their own surface *and* on the card above it: about 5.1:1 and
+// 4.6:1 in light, 5.0:1 and 4.5:1 in dark. That is as light as this ink goes — the card is
+// the tighter of the two backgrounds, and a step further drops it under the bar. Secondary
+// text is still the app's quietest voice; it is no longer the one nobody can read.
+export const DIM_INK = { light: '#6A655C', dark: '#7F7DA3' } as const
+
 // Earning an achievement: the one hue the app had left. Modes own blue through amber,
 // gold marks a board record you *currently hold*, teal means multiplayer and grey means a
 // record just left you. An achievement is permanent and belongs to nobody else, so it
@@ -120,12 +132,13 @@ export const SCORE_COLORS = {
 // rather than every component growing a prop for one case.
 //
 // The scale supplies the surfaces; the inks are chosen against #FFD166: near-black for
-// primary (about 10:1), a dark goldenrod for secondary (about 3.3:1, softer than primary
-// without dropping out), and the light theme's darker green for the score, because the
-// dark theme's brighter one falls to about 2:1 on gold.
+// primary (about 12:1), a dark goldenrod for secondary (about 4.6:1 — still clearly
+// softer than primary, and no longer the 3.4:1 it was, which is a line you could see was
+// there and not quite read), and the light theme's darker green for the score, because
+// the dark theme's brighter one falls to about 2:1 on gold.
 // The gold screen's secondary ink, for the few places a colour is computed in JS
 // instead of coming from a class — those cannot see the re-bound tokens.
-export const GOLD_DIM_INK = '#8A6D1F'
+export const GOLD_DIM_INK = '#715919'
 
 export const GOLD_SCREEN_TOKENS = {
   '--color-surface': GOLD_SCALE[0],
@@ -138,7 +151,7 @@ export const GOLD_SCREEN_TOKENS = {
   '--color-on-strong': '#FFE8A3',
   '--color-score': '#147A32',
   '--color-dial': '#1C1928',
-  '--color-factor': '#8A6D1F',
+  '--color-factor': GOLD_DIM_INK,
   '--color-pie': '#1C1928',
 } as const
 

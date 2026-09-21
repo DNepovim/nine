@@ -88,7 +88,12 @@ export function NicknameModal({
             onSubmitEditing={() => {
               void handleSave()
             }}
-            className="mb-2 rounded-lg border border-dim/30 bg-background px-3 py-2 font-mono text-[13px] font-bold tracking-[1px] text-primary"
+            className="mb-2 rounded-lg border border-dim/30 bg-background px-3 py-2 font-mono font-bold tracking-[1px] text-primary"
+            // Mobile Safari zooms the whole page in on focus for any input under 16px —
+            // the one web quirk with no CSS opt-out, only a bigger font. Native has no
+            // such behaviour, so it keeps the smaller size the rest of the card uses.
+            // Same trade the feedback sheet's input makes.
+            style={{ fontSize: Platform.OS === 'web' ? 16 : 13 }}
           />
 
           {error !== null && (

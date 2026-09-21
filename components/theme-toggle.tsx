@@ -8,6 +8,8 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated'
 
+import { DIM_INK } from '@/constants/colors'
+
 const TOGGLE_W = 72
 const TOGGLE_H = 30
 const PAD = 4
@@ -43,7 +45,7 @@ export function ThemeToggle({
     transform: [{ translateX: knobX.value }],
   }))
 
-  const iconDim = isDark ? '#504E6E' : '#AAA69E'
+  const iconDim = DIM_INK[isDark ? 'dark' : 'light']
   const iconActive = isDark ? '#D8D2F4' : '#1C1928'
 
   return (

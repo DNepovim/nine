@@ -10,6 +10,7 @@ import { Easing, useSharedValue, withRepeat, withTiming } from 'react-native-rea
 import { ModeSelector } from '@/components/overlays/mode-selector'
 import { PLAYER_GRADIENTS, PlayerTile } from '@/components/overlays/player-tile'
 import { Screen } from '@/components/screen'
+import { DIM_INK } from '@/constants/colors'
 import { useTheme } from '@/hooks/use-theme'
 import { cn } from '@/lib/cn'
 import { SHARE_URL } from '@/lib/invite-message'
@@ -53,7 +54,7 @@ export function MultiplayerWaiting({
   const { t } = useLingui()
   const canStart = isAdmin && players.length >= 2
   const { colorScheme } = useTheme()
-  const dimColor = colorScheme === 'dark' ? '#504e6e' : '#aaa69e'
+  const dimColor = DIM_INK[colorScheme]
   const gradPhase = useSharedValue(0)
   const [copied, setCopied] = useState(false)
   useEffect(() => {

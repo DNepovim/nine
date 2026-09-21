@@ -11,6 +11,8 @@ import Animated, {
 } from 'react-native-reanimated'
 
 import { CornerBadge } from '@/components/overlays/corner-badge'
+import { DIM_INK } from '@/constants/colors'
+import { useTheme } from '@/hooks/use-theme'
 import { MODE_GRADIENT, MULTIPLAYER_GRADIENT, type Mode } from '@/machines/game'
 
 export type PlayMode = 'alone' | 'friends'
@@ -47,6 +49,11 @@ export function PlayModeTab({
   gradPhase: SharedValue<number>
   onSelect: (pm: PlayMode) => void
 }) {
+  // The unselected label's ink. One fixed grey sat here before, chosen to survive both
+  // themes and readable on neither; the tab strip has a card under it, so it takes the
+  // secondary ink of the theme it is actually in.
+  const { colorScheme } = useTheme()
+  const idle = DIM_INK[colorScheme]
   const [layouts, setLayouts] = useState<({ x: number; width: number } | null)[]>(() =>
     PLAY_MODES.map(() => null),
   )
@@ -63,10 +70,10 @@ export function PlayModeTab({
     transform: [{ translateX: Math.sin(gradPhase.value * Math.PI * 2) * 12 }],
   }))
   const textStyle0 = useAnimatedStyle(() => ({
-    color: lerpHex('#aaa69e', '#FFFFFF', sel0.value),
+    color: lerpHex(idle, '#FFFFFF', sel0.value),
   }))
   const textStyle1 = useAnimatedStyle(() => ({
-    color: lerpHex('#aaa69e', '#FFFFFF', sel1.value),
+    color: lerpHex(idle, '#FFFFFF', sel1.value),
   }))
 
   useEffect(() => {

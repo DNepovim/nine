@@ -4,6 +4,7 @@ import { LinearGradient } from 'expo-linear-gradient'
 import { Pressable, Text, View } from 'react-native'
 
 import { Screen } from '@/components/screen'
+import { DIM_INK } from '@/constants/colors'
 import { useTheme } from '@/hooks/use-theme'
 import type { TitleWords } from '@/lib/game-over-title'
 import { DARK_MODE_GRADIENT, type Difficulty, type Mode } from '@/machines/game'
@@ -44,7 +45,7 @@ export function StepUpOverlay({
   onOtherMode: () => void
 }) {
   const { colorScheme } = useTheme()
-  const dimColor = colorScheme === 'dark' ? '#504e6e' : '#aaa69e'
+  const dimColor = DIM_INK[colorScheme]
 
   return (
     <Screen overlay>

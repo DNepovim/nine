@@ -13,8 +13,8 @@
   --color-card: #e8e4dc; /* raised cards, pills, toggle track */
   --color-strong: #1c1928; /* primary buttons / active pills */
   --color-elevated: #fdfcfa; /* empty hearts, toggle knob */
-  --color-muted: #d4d0c8; /* faint labels, dot menu, pie track */
-  --color-dim: #aaa69e; /* secondary text */
+  --color-muted: #d4d0c8; /* hairlines, dot menu, pie track — never text */
+  --color-dim: #6a655c; /* secondary text — 5.1:1 on surface, 4.6:1 on card */
   --color-primary: #1c1928; /* primary text */
   --color-score: #147a32; /* digital score readout */
   --color-dial: #1c1928; /* dial button numerals */
@@ -29,7 +29,7 @@
   --color-strong: #1c1d30;
   --color-elevated: #1c1d30;
   --color-muted: #2a2b44;
-  --color-dim: #504e6e;
+  --color-dim: #7f7da3; /* 5.0:1 on surface, 4.5:1 on card */
   --color-primary: #d8d2f4;
   --color-score: #2fb35a;
   --color-dial: #c8c2e8;
@@ -123,7 +123,7 @@ textarea {
     position: fixed;
     inset: 0;
     z-index: 9999;
-    background-color: var(--color-dim, #aaa69e);
+    background-color: var(--color-dim, #6a655c);
     /* Portrait phone ringed by two arcing arrows — one over the top ending on the
        right, one under the bottom ending on the left. The pair is rotationally
        symmetric, which is what makes it read as turning rather than as a bracket.
@@ -152,7 +152,7 @@ textarea {
     font-size: 20px;
     font-weight: 900;
     letter-spacing: 6px;
-    color: var(--color-dim, #aaa69e);
+    color: var(--color-dim, #6a655c);
   }
   body::after {
     content: 'THIS GAME WORKS ONLY IN PORTRAIT';
@@ -167,8 +167,7 @@ textarea {
     font-size: 10px;
     font-weight: 700;
     letter-spacing: 2px;
-    color: var(--color-dim, #aaa69e);
-    opacity: 0.75;
+    color: var(--color-dim, #6a655c);
   }
 }
 

@@ -1,36 +1,13 @@
 import { Ionicons } from '@expo/vector-icons'
 import { Trans } from '@lingui/react/macro'
-import { LinearGradient } from 'expo-linear-gradient'
-import { useEffect } from 'react'
 import { Pressable, Text, View } from 'react-native'
-import Animated, {
-  Easing,
-  useAnimatedStyle,
-  useSharedValue,
-  withTiming,
-} from 'react-native-reanimated'
-import { scheduleOnRN } from 'react-native-worklets'
 
-import { MenuButton } from '@/components/game/menu-button'
 import { InstallSteps } from '@/components/overlays/install-steps'
-import { APP_VIOLET, SPECTRUM } from '@/constants/colors'
-import { useTheme } from '@/hooks/use-theme'
+import { ModalCard } from '@/components/overlays/modal-card'
+import { APP_VIOLET } from '@/constants/colors'
 import type { InstallableTarget } from '@/types/install'
 
 type IoniconName = keyof typeof Ionicons.glyphMap
-
-// The what's-new shell: the gradient is a padded backdrop with the card on top,
-// which is how you get a gradient border without borderImage — unsupported in
-// React Native.
-const BORDER = 2
-const RADIUS = 26
-const EXIT_MS = 160
-
-// Arriving: the card rises the last bit of the way into the middle as it fades up,
-// so it reads as coming forward rather than being switched on. It leaves by
-// shrinking instead — an entrance played backwards would look like a mistake.
-const ENTER_MS = 260
-const ENTER_OFFSET = 18
 
 const CTA_LABEL = {
   prompt: 'INSTALL',
@@ -88,120 +65,60 @@ export function InstallOverlay({
   onInstall: () => void
   onDismiss: () => void
 }) {
-  const { colorScheme } = useTheme()
-  const dotColor = colorScheme === 'dark' ? '#2A2B44' : '#D4D0C8'
-  const fade = useSharedValue(0)
-  const scale = useSharedValue(1)
-  const lift = useSharedValue(ENTER_OFFSET)
-  const fadeStyle = useAnimatedStyle(() => ({ opacity: fade.value }))
-  const cardStyle = useAnimatedStyle(() => ({
-    transform: [{ translateY: lift.value }, { scale: scale.value }],
-  }))
   const stepOne = STEP_ONE[target]
 
-  useEffect(() => {
-    fade.value = withTiming(1, { duration: ENTER_MS })
-    lift.value = withTiming(0, {
-      duration: ENTER_MS,
-      easing: Easing.out(Easing.cubic),
-    })
-  }, [])
-
-  // Shrink away rather than blinking out. onDismiss unmounts us, so it waits
-  // for the animation to finish.
-  const close = () => {
-    fade.value = withTiming(0, { duration: EXIT_MS })
-    scale.value = withTiming(
-      0.92,
-      { duration: EXIT_MS, easing: Easing.in(Easing.quad) },
-      (finished) => {
-        'worklet'
-        if (finished) scheduleOnRN(onDismiss)
-      },
-    )
-  }
-
   return (
-    <Animated.View
-      className="absolute inset-0 items-center justify-center px-4"
-      style={[{ zIndex: 40, backgroundColor: 'rgba(10,10,18,0.55)' }, fadeStyle]}
-    >
-      <Animated.View style={[{ width: '90%', maxWidth: 460 }, cardStyle]}>
-        <LinearGradient
-          colors={[...SPECTRUM]}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={{ borderRadius: RADIUS, padding: BORDER }}
-        >
-          <View
-            className="bg-surface px-5 pb-5 pt-4"
-            style={{ borderRadius: RADIUS - BORDER }}
-          >
-            <View className="mb-1 flex-row items-center justify-between">
-              <Text
-                selectable={false}
-                className="font-mono text-[11px] font-bold tracking-[2px] text-dim"
-              >
-                <Trans>INSTALL</Trans>
-              </Text>
-              <MenuButton
-                visible
-                paused
-                showLabel={false}
-                onToggle={close}
-                color={dotColor}
-              />
+    <ModalCard title={<Trans>INSTALL</Trans>} onDismiss={onDismiss}>
+      {(close) => (
+        <>
+          <View className="items-center pt-2">
+            <View
+              className="h-16 w-16 items-center justify-center rounded-2xl"
+              style={{ backgroundColor: `${APP_VIOLET}26` }}
+            >
+              <Ionicons name="phone-portrait-outline" size={30} color={APP_VIOLET} />
             </View>
 
-            <View className="items-center pt-2">
-              <View
-                className="h-16 w-16 items-center justify-center rounded-2xl"
-                style={{ backgroundColor: `${APP_VIOLET}26` }}
-              >
-                <Ionicons name="phone-portrait-outline" size={30} color={APP_VIOLET} />
-              </View>
+            <Text
+              selectable={false}
+              className="mt-4 text-center font-mono text-[17px] font-black tracking-[2px]"
+              style={{ color: APP_VIOLET }}
+            >
+              <Trans>ADD TO HOME SCREEN</Trans>
+            </Text>
 
-              <Text
-                selectable={false}
-                className="mt-4 text-center font-mono text-[17px] font-black tracking-[2px]"
-                style={{ color: APP_VIOLET }}
-              >
-                <Trans>ADD TO HOME SCREEN</Trans>
-              </Text>
-
-              <Text
-                selectable={false}
-                className="mt-2 text-center font-mono text-[12px] leading-[18px] text-dim"
-              >
-                {BODY[target]}
-              </Text>
-            </View>
-
-            {stepOne !== null && <InstallSteps stepOne={stepOne} />}
-
-            <View className="mt-4 flex-row items-center justify-center">
-              <Pressable
-                onPress={() => {
-                  // No exit animation on the install path: prompt() has to stay
-                  // in the press to keep its user activation, and the browser's
-                  // own dialog covers the card the moment it opens.
-                  if (target === 'prompt') onInstall()
-                  else close()
-                }}
-                className="flex-row items-center justify-center gap-2 rounded-2xl bg-strong px-6 py-3.5"
-              >
-                <Text
-                  selectable={false}
-                  className="font-mono text-[12px] font-black tracking-[1.5px] text-on-strong"
-                >
-                  {CTA_LABEL[target]}
-                </Text>
-                <Ionicons name={CTA_ICON[target]} size={14} color="#d8d2f4" />
-              </Pressable>
-            </View>
+            <Text
+              selectable={false}
+              className="mt-2 text-center font-mono text-[12px] leading-[18px] text-dim"
+            >
+              {BODY[target]}
+            </Text>
           </View>
-        </LinearGradient>
-      </Animated.View>
-    </Animated.View>
+
+          {stepOne !== null && <InstallSteps stepOne={stepOne} />}
+
+          <View className="mt-4 flex-row items-center justify-center">
+            <Pressable
+              onPress={() => {
+                // No exit animation on the install path: prompt() has to stay
+                // in the press to keep its user activation, and the browser's
+                // own dialog covers the card the moment it opens.
+                if (target === 'prompt') onInstall()
+                else close()
+              }}
+              className="flex-row items-center justify-center gap-2 rounded-2xl bg-strong px-6 py-3.5"
+            >
+              <Text
+                selectable={false}
+                className="font-mono text-[12px] font-black tracking-[1.5px] text-on-strong"
+              >
+                {CTA_LABEL[target]}
+              </Text>
+              <Ionicons name={CTA_ICON[target]} size={14} color="#d8d2f4" />
+            </Pressable>
+          </View>
+        </>
+      )}
+    </ModalCard>
   )
 }
