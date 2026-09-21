@@ -21,12 +21,21 @@ import type { Difficulty, Mode } from '@/machines/game'
 // session actually making the request rather than from a prop threaded down through the
 // screen. Nothing here can send it under the wrong id, and the overlay needs no
 // knowledge of who the player is.
-export async function submitFeedback(
-  message: string,
-  mode: Mode,
-  difficulty: Difficulty,
-  score: number,
-): Promise<FeedbackSent> {
+export async function submitFeedback({
+  message,
+  mode,
+  difficulty,
+  score,
+  gameState,
+}: {
+  message: string
+  mode: Mode
+  difficulty: Difficulty
+  score: number
+  // The paused run this was written from, from `gameSnapshot` — see lib/feedback-state.ts.
+  // Null from every other screen, where there is no run in flight to describe.
+  gameState: unknown
+}): Promise<FeedbackSent> {
   const trimmed = message.trim().slice(0, MAX_FEEDBACK_LENGTH)
 
   const { error } = await supabase.from('feedback').insert({
@@ -35,6 +44,7 @@ export async function submitFeedback(
     difficulty,
     score,
     build: BUILD_ID,
+    game_state: gameState,
   })
   noteRequest(error)
 
