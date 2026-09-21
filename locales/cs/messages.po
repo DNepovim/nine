@@ -40,10 +40,10 @@ msgstr ""
 #: components/overlays/how-to-play-overlay.tsx:562
 msgid ""
 "\n"
-"Achieve one mid-run and the score bar says so in green. The whole list is behind the bar under NINE on the start screen, along with how far along you are on the ones you have not got yet."
+"Achieve one mid-run and the score bar says so in green. Most are asked once per difficulty — Easy, Hard and Extreme count separately, and the list draws a bar for each. The whole list is behind the bar under NINE on the start screen, along with how far along you are on the ones you have not got yet."
 msgstr ""
 "\n"
-"Když nějakého dosáhneš během hry, lišta se skóre to zeleně oznámí. Celý seznam najdeš pod nápisem NINE na úvodní obrazovce — i s tím, jak daleko máš k těm, které ti zatím chybí."
+"Když nějakého dosáhneš během hry, lišta se skóre to zeleně oznámí. Většina se plní zvlášť pro každou obtížnost — Lehká, Těžká i Extrémní se počítají samostatně a seznam ke každé kreslí vlastní proužek. Celý seznam najdeš pod nápisem NINE na úvodní obrazovce — i s tím, jak daleko máš k těm, které ti zatím chybí."
 
 #: components/overlays/how-to-play-overlay.tsx:590
 msgid ""
@@ -69,7 +69,7 @@ msgstr ""
 "\n"
 "Ťuknutím počítáš nahoru — z devítky se překlopíš zpátky na nulu. Švihnutím dolů se vrátíš o jedničku, švihnutím doleva nebo doprava skočíš rovnou na 0 nebo 9. Tip: v Nastavení zapni „Zobrazit součet v tlačítkách“ a uvidíš, čím každé tlačítko právě přispívá."
 
-#: components/overlays/tab-panel.tsx:101
+#: components/overlays/tab-panel.tsx:112
 msgid "— NO SCORES YET —"
 msgstr "— ZATÍM ŽÁDNÉ SKÓRE —"
 
@@ -77,7 +77,7 @@ msgstr "— ZATÍM ŽÁDNÉ SKÓRE —"
 msgid "— OFFLINE —"
 msgstr "— OFFLINE —"
 
-#: components/overlays/tab-panel.tsx:83
+#: components/overlays/tab-panel.tsx:94
 msgid "— UNAVAILABLE —"
 msgstr "— NEDOSTUPNÉ —"
 
@@ -97,7 +97,7 @@ msgstr "{OVERSHOOT} je víc než {SWIPE_TARGET}. Vynuluj tlačítko 1× a tref t
 msgid "{SWIPE_TARGET} exactly — two swipes out, one swipe back."
 msgstr "Přesně {SWIPE_TARGET} — dvě švihnutí tam, jedno zpátky."
 
-#: components/overlays/recent-winners.tsx:32
+#: components/overlays/recent-winners.tsx:33
 msgid "<0/> won last week"
 msgstr "<0/> ovládl minulý týden"
 
@@ -105,7 +105,7 @@ msgstr "<0/> ovládl minulý týden"
 msgid "<0/> won yesterday"
 msgstr "<0/> ovládl včerejšek"
 
-#: components/overlays/recent-winners.tsx:37
+#: components/overlays/recent-winners.tsx:39
 msgid "<0/> won yesterday and last week"
 msgstr "<0/> ovládl včerejšek i minulý týden"
 
@@ -141,7 +141,7 @@ msgstr "Řádek trenéra pod statistikami ti řekne, kdy přišel tah nazmar a c
 msgid "A few nobody is told about until they happen."
 msgstr "Pár z nich se nikomu neprozradí, dokud na ně nedojde."
 
-#: constants/news.ts:92
+#: constants/news.ts:104
 msgid "A fresh face"
 msgstr "Nová tvář"
 
@@ -153,7 +153,7 @@ msgstr "Na mřížce se objeví zářící cílové číslo. Nastav devět tlač
 "\n"
 "Každé tlačítko nese číslici 0–9, ale kolik doopravdy váží, rozhoduje jeho místo. Váha tlačítka je pořadí jeho řádku × pořadí jeho sloupce — řádky se číslují 1–3 shora dolů, sloupce 1–3 zleva doprava — takže k součtu přidá řádek × sloupec × hodnotu."
 
-#: constants/news.ts:21
+#: constants/news.ts:33
 msgid "A record is only ever lent — someone takes it back eventually. Achievements are the other kind: achieved once and yours for good, measured against nobody but yourself. Some are waiting where you would not think to look."
 msgstr "Rekord je vždycky jen zapůjčený — dřív nebo později ti ho někdo sebere. Úspěchy jsou ten druhý druh: dosáhneš jich jednou a máš je napořád, a poměřuješ se u nich sám se sebou. Některé čekají tam, kde bys je nehledal."
 
@@ -165,13 +165,18 @@ msgstr "Kratší čas — čím dřív trefíš, tím víc to hodí."
 msgid "A slow hit breaks the streak; let a target run out and you lose a life."
 msgstr "Pomalý zásah sérii přeruší, a když cíli vyprší čas, přijdeš i o život."
 
-#: constants/news.ts:128
+#: constants/news.ts:140
 msgid "A thin line above the game now shows your best on this board next to today's, this week's and the all-time high.\n"
 "\n"
 "It stays out of the way for the first few seconds of a run."
 msgstr "Tenká lišta nad hrou teď ukazuje tvoje maximum na tomhle žebříčku vedle dnešního, týdenního a rekordu všech dob.\n"
 "\n"
 "Prvních pár vteřin hry se drží stranou."
+
+#: components/overlays/player-profile-overlay.tsx:33
+#: lib/achievements.ts:138
+msgid "ACC"
+msgstr "PŘES"
 
 #: components/game/trainee-stats.tsx:55
 #: machines/modes.ts:45
@@ -196,7 +201,7 @@ msgstr "Úspěchy jsou ten druhý druh. Nikdo ti je nevezme: dosáhneš jich jed
 "\n"
 "Jsou jich desítky a chtějí po tobě kdeco."
 
-#: components/overlays/install-overlay.tsx:169
+#: components/overlays/install-overlay.tsx:87
 msgid "ADD TO HOME SCREEN"
 msgstr "PŘIDAT NA PLOCHU"
 
@@ -204,19 +209,19 @@ msgstr "PŘIDAT NA PLOCHU"
 msgid "ADD YOUR NICKNAME"
 msgstr "PŘIDEJ PŘEZDÍVKU"
 
-#: components/overlays/advanced-options-overlay.tsx:74
+#: components/overlays/advanced-options-overlay.tsx:75
 msgid "ADVANCED"
 msgstr "POKROČILÉ"
 
-#: constants/achievements.ts:235
+#: constants/achievements.ts:249
 msgid "AFTERBURNER"
 msgstr "FORSÁŽ"
 
-#: constants/achievements.ts:353
+#: constants/achievements.ts:376
 msgid "ALL SIX BOARDS"
 msgstr "VŠECH ŠEST"
 
-#: constants/achievements.ts:157
+#: constants/achievements.ts:167
 msgid "ALL THREE"
 msgstr "VŠECHNY TŘI"
 
@@ -224,7 +229,11 @@ msgstr "VŠECHNY TŘI"
 msgid "and straight back to 0."
 msgstr "a rovnou zpátky na 0."
 
-#: components/overlays/feedback-overlay.tsx:189
+#: components/overlays/feedback-overlay.tsx:151
+msgid "Anything at all — what broke, what annoyed you, what you wish it did. The mode, difficulty and score you are on go with it, and so does the run you have paused."
+msgstr "Cokoliv — co se rozbilo, co tě štvalo, co by sis přál. Mód, obtížnost a skóre se pošlou s tím — a spolu s nimi i rozehraná hra, kterou máš pozastavenou."
+
+#: components/overlays/feedback-overlay.tsx:146
 msgid "Anything at all — what broke, what annoyed you, what you wish it did. The mode, difficulty and score you are on go with it."
 msgstr "Cokoliv — co se rozbilo, co tě štvalo, co by sis přál. Mód, obtížnost a skóre se pošlou s tím."
 
@@ -236,40 +245,46 @@ msgstr "ARKÁDA"
 msgid "Ask whoever created the room for their 4-digit code."
 msgstr "Zeptej se toho, kdo hru založil, na jeho čtyřmístný kód."
 
-#: constants/achievements.ts:291
+#: constants/achievements.ts:312
 msgid "Average 90% speed over a run of 20 hits or more."
 msgstr "Udrž průměr 90 % rychlosti ve hře o 20 a více zásazích."
 
-#: constants/achievements.ts:285
+#: constants/achievements.ts:305
 msgid "Average 95% accuracy over a run of 20 hits or more."
 msgstr "Udrž průměr 95 % přesnosti ve hře o 20 a více zásazích."
 
-#: components/overlays/run-stats.tsx:36
+#: components/overlays/player-profile-overlay.tsx:150
+#: components/overlays/run-stats.tsx:37
 msgid "AVG ACC"
 msgstr "PRŮM PŘES"
 
-#: components/overlays/run-stats.tsx:37
+#: components/overlays/player-profile-overlay.tsx:151
+#: components/overlays/run-stats.tsx:38
 msgid "AVG SPD"
 msgstr "PRŮM RYCH"
 
-#: components/overlays/tutorial/tutorial-footer.tsx:53
-#: components/overlays/whats-new-overlay.tsx:142
+#: components/overlays/tutorial/tutorial-footer.tsx:58
+#: components/overlays/whats-new-overlay.tsx:80
 msgid "BACK"
 msgstr "ZPĚT"
 
-#: constants/news.ts:81
+#: constants/news.ts:93
 msgid "Beat a record and the game makes a fuss about it."
 msgstr "Když překonáš rekord, hra z toho udělá událost."
 
-#: constants/achievements.ts:383
+#: constants/achievements.ts:411
 msgid "Beat your own best ten times."
 msgstr "Překonej vlastní rekord desetkrát."
 
-#: constants/news.ts:127
+#: components/overlays/player-profile-overlay.tsx:181
+msgid "BEST"
+msgstr "NEJLEPŠÍ"
+
+#: constants/news.ts:139
 msgid "Best scores, up top"
 msgstr "Nejlepší skóre nahoře"
 
-#: constants/achievements.ts:290
+#: constants/achievements.ts:311
 msgid "BLUR"
 msgstr "ROZMAZANĚ"
 
@@ -282,7 +297,7 @@ msgid "Buttons show their weight and max, so you can learn the math."
 msgstr "Tlačítka ukazují svou váhu i maximum, takže se na nich dá naučit počítat."
 
 #: components/overlays/join-room-overlay.tsx:91
-#: components/overlays/multiplayer-waiting.tsx:238
+#: components/overlays/multiplayer-waiting.tsx:239
 msgid "CANCEL"
 msgstr "ZRUŠIT"
 
@@ -314,12 +329,12 @@ msgstr "SLOUPEC"
 msgid "Come back to Trainee once you have been scoring a while. It is the only place to take a route apart with no run riding on it."
 msgstr "Až budeš chvíli sbírat body, vrať se k Nováčkovi. Je to jediné místo, kde si můžeš cestu rozebrat, aniž by na tom visela hra."
 
-#: components/overlays/menu-overlay.tsx:385
+#: components/overlays/menu-overlay.tsx:386
 msgid "CONNECT TO THE INTERNET TO PLAY WITH FRIENDS"
 msgstr "PŘIPOJ SE K INTERNETU A HRAJ S PŘÁTELI"
 
 #: components/overlays/multiplayer-menu.tsx:43
-#: components/overlays/paused-overlay.tsx:129
+#: components/overlays/paused-overlay.tsx:130
 msgid "CONTINUE"
 msgstr "POKRAČOVAT"
 
@@ -332,11 +347,16 @@ msgstr "POKRAČOVAT V NÁVODU"
 msgid "CONTROLS"
 msgstr "OVLÁDÁNÍ"
 
-#: components/overlays/menu-overlay.tsx:347
+#. placeholder {0}: formatReleaseDate(COUNTING_SINCE)
+#: components/overlays/player-profile-overlay.tsx:158
+msgid "COUNTING SINCE {0}"
+msgstr "POČÍTÁNO OD {0}"
+
+#: components/overlays/menu-overlay.tsx:348
 msgid "CREATE ROOM"
 msgstr "VYTVOŘIT HRU"
 
-#: constants/achievements.ts:284
+#: constants/achievements.ts:304
 msgid "DEAD EYE"
 msgstr "OSTROSTŘELEC"
 
@@ -344,7 +364,7 @@ msgstr "OSTROSTŘELEC"
 msgid "DIAL THE GRID · MATCH THE NUMBER"
 msgstr "NASTAV MŘÍŽKU · TREF ČÍSLO"
 
-#: components/overlays/advanced-options-overlay.tsx:80
+#: components/overlays/advanced-options-overlay.tsx:81
 msgid "Display value × row × column"
 msgstr "Zobrazit hodnotu × řádek × sloupec"
 
@@ -353,7 +373,7 @@ msgid "Do something nobody thought to ask for."
 msgstr "Udělej něco, co nikoho nenapadlo chtít."
 
 #: components/overlays/achievements-overlay.tsx:96
-#: components/overlays/advanced-options-overlay.tsx:140
+#: components/overlays/advanced-options-overlay.tsx:141
 #: components/overlays/news-archive-overlay.tsx:49
 msgid "DONE"
 msgstr "HOTOVO"
@@ -366,7 +386,7 @@ msgstr "např. ACE_9"
 msgid "Each target carries a shrinking ring — its countdown. Land the sum before the ring empties. The colour behind the ring tells you the target’s hundreds at a glance: plain grey under 100, violet in the 100s, rose in the 200s, amber in the 300s — so 223 never passes for 123. Several targets can share the board at once (up to 3, or 4 on Extreme), and new ones keep arriving, so pick your order wisely. Both scored modes tighten as you go, in opposite ways. In Speed each new target arrives with a slightly shorter ring than the last. In Accuracy the ring never shrinks — you always get the full time to think — but targets start arriving closer together, so the board fills up around you. Either squeeze eases off as it goes, so a long run gets harder without ever running away from you."
 msgstr "Každý cíl má kolem sebe kruh, který se zmenšuje — to je jeho odpočet. Slož součet dřív, než se kruh uzavře. Barva za kruhem ti na první pohled napoví stovky: šedá pod 100, fialová ve stovkách, růžová ve dvoustovkách, jantarová ve třístovkách — 223 se ti tak nikdy nesplete se 123. Na mřížce může být několik cílů najednou (až tři, na Extrémní čtyři) a další pořád přibývají, takže si dobře rozmysli pořadí. Oba bodované módy se postupně přitvrzují, každý po svém. V Rychlosti přiletí každý další cíl s o něco kratším odpočtem než ten předchozí. V Přesnosti se odpočet nezkracuje — na rozmyšlenou máš pokaždé plný čas — zato cíle začnou chodit hustěji za sebou a mřížka se ti plní. Obě přitvrzení časem povolují, takže je dlouhá hra čím dál těžší, ale nikdy ti neuteče."
 
-#: constants/achievements.ts:389
+#: constants/achievements.ts:417
 msgid "EARLY BIRD"
 msgstr "RANNÍ PTÁČE"
 
@@ -408,7 +428,7 @@ msgstr "VŠECHNO, CO SE ZMĚNILO"
 msgid "EXT"
 msgstr "EXT"
 
-#: constants/achievements.ts:263
+#: constants/achievements.ts:280
 msgid "Extend a streak ten times in a row."
 msgstr "Prodluž sérii desetkrát za sebou."
 
@@ -416,11 +436,11 @@ msgstr "Prodluž sérii desetkrát za sebou."
 msgid "EXTREME"
 msgstr "EXTRÉMNÍ"
 
-#: constants/achievements.ts:219
+#: constants/achievements.ts:233
 msgid "FAST START"
 msgstr "RYCHLÝ START"
 
-#: components/overlays/feedback-overlay.tsx:142
+#: components/overlays/feedback-overlay.tsx:99
 msgid "FEEDBACK"
 msgstr "ZPĚTNÁ VAZBA"
 
@@ -430,55 +450,55 @@ msgid "Fewest moves win. \n"
 msgstr "Vyhrává nejmíň tahů. \n"
 "Preciznost před rychlostí."
 
-#: constants/achievements.ts:185
+#: constants/achievements.ts:199
 msgid "FINE WORK"
 msgstr "DOBRÁ PRÁCE"
 
-#: constants/achievements.ts:306
+#: constants/achievements.ts:329
 msgid "Finish 10 runs."
 msgstr "Dohraj 10 her."
 
-#: constants/achievements.ts:313
+#: constants/achievements.ts:336
 msgid "Finish 100 runs."
 msgstr "Dohraj 100 her."
 
-#: constants/achievements.ts:443
+#: constants/achievements.ts:471
 msgid "Finish a run between 2am and 4am."
 msgstr "Dohraj hru mezi druhou a čtvrtou ráno."
 
-#: constants/achievements.ts:416
+#: constants/achievements.ts:444
 msgid "Finish a run in a room with someone else."
 msgstr "Dohraj hru v místnosti s někým dalším."
 
-#: constants/achievements.ts:152
+#: constants/achievements.ts:162
 msgid "Finish a run on a scored board."
 msgstr "Dohraj hru na bodovaném žebříčku."
 
-#: constants/achievements.ts:363
-msgid "Finish in the top three on any board."
-msgstr "Skonči na některém žebříčku do třetího místa."
+#: constants/achievements.ts:389
+msgid "Finish in the top three on a board."
+msgstr "Skonči na žebříčku do třetího místa."
 
-#: constants/achievements.ts:137
+#: constants/achievements.ts:147
 msgid "FIRST HIT"
 msgstr "PRVNÍ ZÁSAH"
 
-#: constants/achievements.ts:151
+#: constants/achievements.ts:161
 msgid "FIRST RUN"
 msgstr "PRVNÍ HRA"
 
-#: constants/achievements.ts:262
+#: constants/achievements.ts:279
 msgid "FLAWLESS TEN"
 msgstr "BEZCHYBNÝCH DESET"
 
-#: constants/achievements.ts:427
+#: constants/achievements.ts:455
 msgid "FULL HOUSE"
 msgstr "PLNÝ DŮM"
 
-#: components/overlays/multiplayer-waiting.tsx:95
+#: components/overlays/multiplayer-waiting.tsx:96
 msgid "GAME CODE"
 msgstr "KÓD HRY"
 
-#: constants/achievements.ts:146
+#: constants/achievements.ts:156
 msgid "Get through the tutorial."
 msgstr "Projdi návodem."
 
@@ -486,7 +506,7 @@ msgstr "Projdi návodem."
 msgid "GOT IT"
 msgstr "ROZUMÍM"
 
-#: constants/achievements.ts:143
+#: constants/achievements.ts:153
 msgid "GRADUATE"
 msgstr "ABSOLVENT"
 
@@ -498,11 +518,11 @@ msgstr "TĚŽKÁ"
 msgid "Heavy buttons cover the distance. Light buttons land the exact number."
 msgstr "Těžká tlačítka ujedou vzdálenost. Lehká trefí přesné číslo."
 
-#: constants/achievements.ts:399
+#: constants/achievements.ts:427
 msgid "HELD ACCURACY"
 msgstr "DRŽEL PŘESNOST"
 
-#: constants/achievements.ts:406
+#: constants/achievements.ts:434
 msgid "HELD SPEED"
 msgstr "DRŽEL RYCHLOST"
 
@@ -511,19 +531,20 @@ msgid "Hit while most of the ring is left to build your combo streak."
 msgstr "Trefuj, dokud je kruh z větší části plný, a poroste ti combo."
 
 #: components/game/trainee-stats.tsx:53
-#: components/overlays/run-stats.tsx:34
+#: components/overlays/player-profile-overlay.tsx:149
+#: components/overlays/run-stats.tsx:35
 msgid "HITS"
 msgstr "ZÁSAHY"
 
-#: constants/achievements.ts:407
+#: constants/achievements.ts:435
 msgid "Hold a Speed all-time record for seven days."
 msgstr "Drž rekord všech dob v Rychlosti sedm dní."
 
-#: constants/achievements.ts:400
+#: constants/achievements.ts:428
 msgid "Hold an Accuracy all-time record for seven days."
 msgstr "Drž rekord všech dob v Přesnosti sedm dní."
 
-#: constants/achievements.ts:377
+#: constants/achievements.ts:405
 msgid "Hold first all-time on both Extreme boards at once."
 msgstr "Drž první místo všech dob na obou Extrémních žebříčcích naráz."
 
@@ -531,13 +552,13 @@ msgstr "Drž první místo všech dob na obou Extrémních žebříčcích nará
 msgid "Hold the all-time record on a mode’s Extreme board and you carry its mark. It travels with your name everywhere it is drawn — the boards, your own row, a multiplayer room — so the hardest boards say who holds them without anyone having to look them up."
 msgstr "Když držíš rekord všech dob na žebříčku Extreme některého módu, nosíš jeho odznak. Putuje s tvým jménem všude, kde se objeví — po žebříčcích, ve tvém vlastním řádku i v místnosti pro víc hráčů — takže nejtěžší žebříčky samy říkají, kdo je drží."
 
-#: components/overlays/game-over-overlay.tsx:313
-#: components/overlays/paused-overlay.tsx:156
+#: components/overlays/game-over-overlay.tsx:329
+#: components/overlays/paused-overlay.tsx:157
 msgid "HOME"
 msgstr "DOMŮ"
 
 #: components/overlays/how-to-play-overlay.tsx:377
-#: components/overlays/menu-overlay.tsx:478
+#: components/overlays/menu-overlay.tsx:479
 msgid "HOW TO PLAY"
 msgstr "JAK HRÁT"
 
@@ -545,11 +566,11 @@ msgstr "JAK HRÁT"
 msgid "HRD"
 msgstr "TĚŽ"
 
-#: constants/achievements.ts:312
+#: constants/achievements.ts:335
 msgid "HUNDRED RUNS"
 msgstr "STO HER"
 
-#: constants/achievements.ts:201
+#: constants/achievements.ts:215
 msgid "IMMACULATE"
 msgstr "NEPOSKVRNĚNÝ"
 
@@ -561,52 +582,52 @@ msgstr "V Přesnosti si naplánuj cestu, než se něčeho dotkneš — každý t
 msgid "In Speed, go for whichever target sits closest to the current sum — fewer moves means more of the ring left, and the ring is what feeds your combo."
 msgstr "V Rychlosti jdi po tom cíli, který je nejblíž současnému součtu — míň tahů znamená víc zbylého času, a právě čas živí combo."
 
-#: components/overlays/install-overlay.tsx:145
+#: components/overlays/install-overlay.tsx:71
 msgid "INSTALL"
 msgstr "NAINSTALOVAT"
 
-#: constants/achievements.ts:169
+#: constants/achievements.ts:179
 msgid "INTO THE DEEP"
 msgstr "DO HLOUBKY"
 
-#: components/overlays/feedback-overlay.tsx:166
+#: components/overlays/feedback-overlay.tsx:118
 msgid "It went straight to the person who makes this. No reply to expect — but it is read."
 msgstr "Šlo to rovnou člověku, který to dělá. Odpověď nečekej — ale čte se to."
 
 #: components/overlays/join-room-overlay.tsx:81
-#: components/overlays/menu-overlay.tsx:365
+#: components/overlays/menu-overlay.tsx:366
 msgid "JOIN ROOM"
 msgstr "PŘIPOJIT SE"
 
-#: components/overlays/game-code-input.tsx:102
+#: components/overlays/game-code-input.tsx:110
 msgid "JOIN WITH CODE"
 msgstr "PŘIPOJIT SE KÓDEM"
 
-#: constants/achievements.ts:348
+#: constants/achievements.ts:371
 msgid "Keep a single run going for ten minutes."
 msgstr "Udrž jednu hru v běhu deset minut."
 
-#: constants/achievements.ts:320
+#: constants/achievements.ts:343
 msgid "Land 1 000 targets across every run."
 msgstr "Slož 1 000 cílů napříč všemi hrami."
 
-#: constants/achievements.ts:327
+#: constants/achievements.ts:350
 msgid "Land 10 000 targets across every run."
 msgstr "Slož 10 000 cílů napříč všemi hrami."
 
-#: constants/achievements.ts:170
+#: constants/achievements.ts:180
 msgid "Land a hit on an Extreme board."
 msgstr "Tref cíl na Extrémním žebříčku."
 
-#: constants/achievements.ts:436
+#: constants/achievements.ts:464
 msgid "Land a target after thirty presses or more."
 msgstr "Slož cíl po třiceti a více stiscích."
 
-#: constants/achievements.ts:138
+#: constants/achievements.ts:148
 msgid "Land your first target."
 msgstr "Slož svůj první cíl."
 
-#: components/overlays/advanced-options-overlay.tsx:101
+#: components/overlays/advanced-options-overlay.tsx:102
 msgid "LANGUAGE"
 msgstr "JAZYK"
 
@@ -636,15 +657,19 @@ msgstr "Když cíli vyprší čas, přijdeš o život i tady — ani preciznost 
 msgid "Let's multiply"
 msgstr "Pojďme násobit"
 
-#: constants/achievements.ts:243
+#: constants/achievements.ts:257
 msgid "LIGHTNING"
 msgstr "BLESK"
 
-#: constants/achievements.ts:347
+#: components/overlays/player-profile-overlay.tsx:133
+msgid "LOADING…"
+msgstr "NAČÍTÁNÍ…"
+
+#: constants/achievements.ts:370
 msgid "LONG HAUL"
 msgstr "DLOUHÁ TRAŤ"
 
-#: constants/news.ts:44
+#: constants/news.ts:56
 msgid "Marks for the hardest boards"
 msgstr "Odznaky za nejtěžší žebříčky"
 
@@ -652,7 +677,7 @@ msgstr "Odznaky za nejtěžší žebříčky"
 msgid "Matching every target in its optimal move count builds your streak."
 msgstr "Sérii ti staví každý cíl složený na optimální počet tahů."
 
-#: constants/achievements.ts:269
+#: constants/achievements.ts:287
 msgid "MAX MULTIPLIER"
 msgstr "MAX NÁSOBITEL"
 
@@ -666,11 +691,11 @@ msgstr "MÓDY"
 msgid "MULTIPLAYER"
 msgstr "VÍCE HRÁČŮ"
 
-#: components/overlays/menu-overlay.tsx:449
+#: components/overlays/menu-overlay.tsx:450
 msgid "My best at Nine is {bestScore} — {board}. Think you can beat it?"
 msgstr "Moje maximum v Nine je {bestScore} — {board}. Myslíš, že to překonáš?"
 
-#: constants/news.ts:104
+#: constants/news.ts:116
 msgid "Never miss an update"
 msgstr "Neuteče ti žádná novinka"
 
@@ -688,15 +713,15 @@ msgstr "PĚKNÝ ZÁSAH"
 msgid "NICK"
 msgstr "NICK"
 
-#: constants/achievements.ts:442
+#: constants/achievements.ts:470
 msgid "NIGHT SHIFT"
 msgstr "NOČNÍ SMĚNA"
 
-#: components/overlays/menu-overlay.tsx:450
+#: components/overlays/menu-overlay.tsx:451
 msgid "Nine buttons, one number to hit. Come take a run at it."
 msgstr "Devět tlačítek, jedno číslo k trefení. Pojď si to zkusit."
 
-#: constants/news.ts:93
+#: constants/news.ts:105
 msgid "Nine has a new look, and it goes all the way down.\n"
 "\n"
 "- The icon now carries the same **blue-to-red spectrum** as the splash\n"
@@ -710,11 +735,15 @@ msgstr "Nine má nový vzhled, a to skrz naskrz.\n"
 "\n"
 "Pod tím je to pořád stejná hra. Jen teď vypadá sama jako sebe."
 
-#: components/overlays/tab-panel.tsx:19
+#: components/overlays/player-profile-overlay.tsx:233
+msgid "No runs counted yet."
+msgstr "Zatím tu není započítaná žádná hra."
+
+#: components/overlays/tab-panel.tsx:20
 msgid "NOT PUBLISHED"
 msgstr "NEZVEŘEJNĚNO"
 
-#: components/overlays/tab-panel.tsx:20
+#: components/overlays/tab-panel.tsx:21
 msgid "NOT SYNCED"
 msgstr "NESYNCHRONIZOVÁNO"
 
@@ -726,7 +755,7 @@ msgstr "Není to tvoje chyba. Chyba byla nahlášena — zkus to znovu, a pokud 
 msgid "Nothing announced yet."
 msgstr "Zatím nic oznámeného."
 
-#: constants/achievements.ts:362
+#: constants/achievements.ts:388
 msgid "ON THE BOARD"
 msgstr "NA ŽEBŘÍČKU"
 
@@ -738,7 +767,7 @@ msgstr "Jeden bod, vítěz bere vše — ostatní nedostanou nic."
 msgid "Only the first player to land it scores."
 msgstr "Body dostane jen ten, kdo to složí první."
 
-#: constants/achievements.ts:390
+#: constants/achievements.ts:418
 msgid "Open a day's board with the first score on it."
 msgstr "Otevři denní žebříček prvním skóre."
 
@@ -746,16 +775,16 @@ msgstr "Otevři denní žebříček prvním skóre."
 msgid "Open a session on an easier difficulty. The first run is a warm-up, and the weights come back slower than you remember them."
 msgstr "Začínej na lehčí obtížnosti. První hra je rozehřívací a váhy se ti vybaví pomaleji, než si pamatuješ."
 
-#: components/overlays/menu-overlay.tsx:435
-#: components/overlays/paused-overlay.tsx:167
+#: components/overlays/menu-overlay.tsx:436
+#: components/overlays/paused-overlay.tsx:168
 msgid "OPTIONS"
 msgstr "NASTAVENÍ"
 
-#: constants/achievements.ts:296
+#: constants/achievements.ts:318
 msgid "PERFECT ROUTE"
 msgstr "DOKONALÁ CESTA"
 
-#: constants/achievements.ts:209
+#: constants/achievements.ts:223
 msgid "PERFECTIONIST"
 msgstr "PERFEKCIONISTA"
 
@@ -767,28 +796,28 @@ msgstr "Na úvodní obrazovce zvol „S přáteli“. Založ hru a pošli ostatn
 "\n"
 "Všichni dostanou stejných deset cílů, jeden po druhém, každý na svou mřížku. Životy tu nejsou — bodují se všechny cíle a jak, to určuje mód, který vybral zakladatel:"
 
-#: constants/achievements.ts:428
+#: constants/achievements.ts:456
 msgid "Play a full room — four players, the most one holds."
 msgstr "Zahraj si v plné místnosti — čtyři hráči, víc se jich nevejde."
 
-#: constants/achievements.ts:164
+#: constants/achievements.ts:174
 msgid "Play a Hard board."
 msgstr "Zahraj si Těžký žebříček."
 
-#: components/overlays/game-over-overlay.tsx:271
+#: components/overlays/game-over-overlay.tsx:287
 #: components/overlays/multiplayer-game-over.tsx:191
 msgid "PLAY AGAIN"
 msgstr "HRÁT ZNOVU"
 
-#: components/overlays/menu-overlay.tsx:421
+#: components/overlays/menu-overlay.tsx:422
 msgid "PLAY GAME"
 msgstr "HRÁT"
 
-#: constants/achievements.ts:334
+#: constants/achievements.ts:357
 msgid "Play on two consecutive days."
 msgstr "Zahraj si dva dny po sobě."
 
-#: constants/achievements.ts:341
+#: constants/achievements.ts:364
 msgid "Play seven days running."
 msgstr "Zahraj si sedm dní v řadě."
 
@@ -796,7 +825,7 @@ msgstr "Zahraj si sedm dní v řadě."
 msgid "PLAY THE TUTORIAL"
 msgstr "SPUSTIT NÁVOD"
 
-#: constants/achievements.ts:158
+#: constants/achievements.ts:168
 msgid "Play Trainee, Accuracy and Speed."
 msgstr "Zahraj si Nováčka, Přesnost i Rychlost."
 
@@ -804,7 +833,11 @@ msgstr "Zahraj si Nováčka, Přesnost i Rychlost."
 msgid "Play with two hands, a thumb to each side of the grid. Reaching across for every button is time the ring is already spending."
 msgstr "Hraj obouruč, palec na každé straně mřížky. Natahovat se přes celou mřížku pro každé tlačítko stojí čas, který mezitím utíká."
 
-#: components/overlays/multiplayer-waiting.tsx:170
+#: components/overlays/player-profile-overlay.tsx:75
+msgid "PLAYER"
+msgstr "HRÁČ"
+
+#: components/overlays/multiplayer-waiting.tsx:171
 msgid "PLAYERS"
 msgstr "HRÁČI"
 
@@ -812,7 +845,7 @@ msgstr "HRÁČI"
 msgid "POSITION IS POWER"
 msgstr "POZICE JE SÍLA"
 
-#: constants/achievements.ts:354
+#: constants/achievements.ts:377
 msgid "Post a score on every mode and difficulty."
 msgstr "Zapiš skóre v každém módu a obtížnosti."
 
@@ -826,11 +859,11 @@ msgid "Race the clock. \n"
 msgstr "Závoď s časem. \n"
 "Rychlé zásahy staví velká comba."
 
-#: constants/achievements.ts:278
+#: constants/achievements.ts:297
 msgid "Reach 25 hits in one run before losing a life."
 msgstr "Dosáhni v jedné hře 25 zásahů, než přijdeš o život."
 
-#: constants/achievements.ts:270
+#: constants/achievements.ts:288
 msgid "Reach the ×8 multiplier."
 msgstr "Dosáhni násobitele ×8."
 
@@ -838,11 +871,15 @@ msgstr "Dosáhni násobitele ×8."
 msgid "READY"
 msgstr "PŘIPRAVEN"
 
-#: constants/news.ts:80
+#: components/overlays/player-profile-overlay.tsx:213
+msgid "RECORDS HELD, EVER"
+msgstr "HISTORIE REKORDŮ"
+
+#: constants/news.ts:92
 msgid "Records, celebrated"
 msgstr "Rekordy se slaví"
 
-#: components/overlays/paused-overlay.tsx:141
+#: components/overlays/paused-overlay.tsx:142
 msgid "RESTART RUN"
 msgstr "ZAČÍT ZNOVU"
 
@@ -850,13 +887,18 @@ msgstr "ZAČÍT ZNOVU"
 msgid "RESULTS"
 msgstr "VÝSLEDKY"
 
-#: constants/achievements.ts:415
+#: constants/achievements.ts:443
 msgid "ROOM FOR TWO"
 msgstr "MÍSTO PRO DVA"
 
 #: components/overlays/tutorial/lessons/weights-lesson.tsx:158
 msgid "ROW"
 msgstr "ŘÁDEK"
+
+#: components/overlays/player-profile-overlay.tsx:148
+#: components/overlays/player-profile-overlay.tsx:175
+msgid "RUNS"
+msgstr "HRY"
 
 #: components/overlays/how-to-play-overlay.tsx:449
 msgid "Same grid, different pressure. Difficulty (Easy / Hard / Extreme) tightens the clock and adds targets.\n"
@@ -871,46 +913,47 @@ msgid "Same grid, different pressure. Swipe through the three."
 msgstr "Stejná mřížka, jiný tlak. Projeď si všechny tři."
 
 #: components/overlays/high-scores.tsx:279
+#: components/overlays/player-profile-overlay.tsx:144
 msgid "SCORE"
 msgstr "SKÓRE"
 
-#: constants/achievements.ts:186
+#: constants/achievements.ts:200
 msgid "Score 1 000 in Accuracy."
 msgstr "Získej 1 000 bodů v Přesnosti."
 
-#: constants/achievements.ts:228
+#: constants/achievements.ts:242
 msgid "Score 1 000 in Speed."
 msgstr "Získej 1 000 bodů v Rychlosti."
 
-#: constants/achievements.ts:210
+#: constants/achievements.ts:224
 msgid "Score 10 000 in Accuracy."
 msgstr "Získej 10 000 bodů v Přesnosti."
 
-#: constants/achievements.ts:252
+#: constants/achievements.ts:266
 msgid "Score 10 000 in Speed."
 msgstr "Získej 10 000 bodů v Rychlosti."
 
-#: constants/achievements.ts:194
+#: constants/achievements.ts:208
 msgid "Score 2 500 in Accuracy."
 msgstr "Získej 2 500 bodů v Přesnosti."
 
-#: constants/achievements.ts:236
+#: constants/achievements.ts:250
 msgid "Score 2 500 in Speed."
 msgstr "Získej 2 500 bodů v Rychlosti."
 
-#: constants/achievements.ts:178
+#: constants/achievements.ts:192
 msgid "Score 250 in Accuracy."
 msgstr "Získej 250 bodů v Přesnosti."
 
-#: constants/achievements.ts:220
+#: constants/achievements.ts:234
 msgid "Score 250 in Speed."
 msgstr "Získej 250 bodů v Rychlosti."
 
-#: constants/achievements.ts:202
+#: constants/achievements.ts:216
 msgid "Score 5 000 in Accuracy."
 msgstr "Získej 5 000 bodů v Přesnosti."
 
-#: constants/achievements.ts:244
+#: constants/achievements.ts:258
 msgid "Score 5 000 in Speed."
 msgstr "Získej 5 000 bodů v Rychlosti."
 
@@ -922,7 +965,7 @@ msgstr "Skóre odměňuje preciznost: slož každý cíl na co nejmíň tahů."
 msgid "Scores, one ladder per mode — Accuracy and Speed ask for opposite things, so each has its own rungs to climb."
 msgstr "Skóre, pro každý mód vlastní žebřík — Přesnost a Rychlost chtějí opačné věci, takže i příčky má každá své."
 
-#: constants/news.ts:56
+#: constants/news.ts:68
 msgid "See the better way"
 msgstr "Podívej se na lepší cestu"
 
@@ -930,7 +973,7 @@ msgstr "Podívej se na lepší cestu"
 msgid "Set the coarse 9× / 6× buttons first to get near the target, then fine-tune with the 1× / 2× buttons."
 msgstr "Nejdřív nastav hrubá tlačítka 9× / 6×, aby ses dostal blízko k cíli, a pak dolaď tlačítky 1× / 2×."
 
-#: constants/achievements.ts:340
+#: constants/achievements.ts:363
 msgid "SEVEN DAY STREAK"
 msgstr "SEDM DNÍ V ŘADĚ"
 
@@ -938,20 +981,25 @@ msgstr "SEDM DNÍ V ŘADĚ"
 msgid "Seven seconds a target — the clock everyone races."
 msgstr "Sedm vteřin na cíl — stejný čas pro všechny."
 
-#: components/overlays/menu-overlay.tsx:467
-#: components/overlays/multiplayer-waiting.tsx:126
+#: components/overlays/menu-overlay.tsx:468
+#: components/overlays/multiplayer-waiting.tsx:127
 msgid "SHARE"
 msgstr "SDÍLET"
 
-#: components/overlays/advanced-options-overlay.tsx:79
+#: components/overlays/advanced-options-overlay.tsx:80
 msgid "SHOW SUM IN BUTTONS"
 msgstr "ZOBRAZIT SOUČET V TLAČÍTKÁCH"
+
+#. placeholder {0}: formatShortDate(tookAt)
+#: components/overlays/profile-reign-row.tsx:33
+msgid "SINCE {0}"
+msgstr "OD {0}"
 
 #: components/overlays/how-to-play-overlay.tsx:546
 msgid "Skill inside a single run: a long streak, the top multiplier, a stretch without losing a life."
 msgstr "Dovednost v jedné hře: dlouhá série, nejvyšší násobitel, úsek bez ztráty života."
 
-#: components/overlays/nickname-modal.tsx:112
+#: components/overlays/nickname-modal.tsx:117
 msgid "SKIP"
 msgstr "PŘESKOČIT"
 
@@ -959,13 +1007,18 @@ msgstr "PŘESKOČIT"
 msgid "SKIP TUTORIAL"
 msgstr "PŘESKOČIT NÁVOD"
 
-#: constants/achievements.ts:227
+#: constants/achievements.ts:241
 msgid "SLIPSTREAM"
 msgstr "ZÁVĚTŘÍ"
 
 #: components/crash-screen.tsx:14
 msgid "SOMETHING BROKE"
 msgstr "NĚCO SE ROZBILO"
+
+#: components/overlays/player-profile-overlay.tsx:34
+#: lib/achievements.ts:139
+msgid "SPD"
+msgstr "RYCH"
 
 #: components/game/trainee-stats.tsx:59
 #: machines/modes.ts:53
@@ -976,36 +1029,36 @@ msgstr "RYCHLOST"
 msgid "Speed — how much time was left on the ring. Land it with most of the ring intact and it pays a bonus on top."
 msgstr "Rychlost — kolik času zbylo na kruhu. Když trefíš s kruhem z větší části plným, přidá se bonus navrch."
 
-#: constants/news.ts:143
+#: constants/news.ts:155
 msgid "Speed combos, rebuilt"
 msgstr "Combo v Rychlosti přestavěné"
 
-#: constants/news.ts:136
+#: constants/news.ts:148
 msgid "Speed eases off"
 msgstr "Rychlost povolila"
 
-#: constants/news.ts:137
+#: constants/news.ts:149
 msgid "Speed mode was brutal. Now it is merely fast — about half again as long on every target."
 msgstr "Mód Rychlost byl brutální. Teď je jenom rychlý — na každý cíl máš zhruba o polovinu času víc."
 
-#: constants/news.ts:115
+#: constants/news.ts:127
 msgid "Spot your nines"
 msgstr "Devítky na první pohled"
 
-#: components/overlays/multiplayer-waiting.tsx:215
-#: components/overlays/step-up-overlay.tsx:85
+#: components/overlays/multiplayer-waiting.tsx:216
+#: components/overlays/step-up-overlay.tsx:86
 msgid "START GAME"
 msgstr "SPUSTIT HRU"
 
-#: constants/achievements.ts:177
+#: constants/achievements.ts:191
 msgid "STEADY HAND"
 msgstr "PEVNÁ RUKA"
 
-#: components/overlays/game-over-overlay.tsx:290
+#: components/overlays/game-over-overlay.tsx:306
 msgid "STEP DOWN TO {rungName}"
 msgstr "SESTUP NA {rungName}"
 
-#: components/overlays/game-over-overlay.tsx:288
+#: components/overlays/game-over-overlay.tsx:304
 msgid "STEP UP TO {rungName}"
 msgstr "POSUŇ SE NA {rungName}"
 
@@ -1021,7 +1074,7 @@ msgstr "rovnou na 9 jedním tahem."
 msgid "Streak — consecutive perfect plays multiply your points ×2 → ×4 → ×8. One imperfect hit and you start again."
 msgstr "Série — dokonalé tahy za sebou násobí body ×2 → ×4 → ×8. Stačí jeden nedokonalý zásah a začínáš od začátku."
 
-#: constants/achievements.ts:193
+#: constants/achievements.ts:207
 msgid "SURGEON"
 msgstr "CHIRURG"
 
@@ -1048,25 +1101,29 @@ msgstr "ZKRATKY SVIHNUTÍM"
 msgid "Swipe to 0 or 9 to reset a button in a single gesture instead of tapping through."
 msgstr "Švihnutím na 0 nebo 9 vynuluješ tlačítko jediným gestem místo proťukávání."
 
-#: constants/achievements.ts:369
-msgid "Take first place on any board."
-msgstr "Obsaď na některém žebříčku první místo."
+#: constants/achievements.ts:396
+msgid "Take first place on a board."
+msgstr "Obsaď na žebříčku první místo."
 
-#: constants/news.ts:45
+#: constants/news.ts:57
 msgid "Take the all-time record on a mode’s Extreme board and you carry its mark beside your name everywhere — an owl for Accuracy, an eagle for Speed, a crown for both. Take one and the game over screen celebrates it properly."
 msgstr "Když získáš rekord všech dob na žebříčku Extreme některého módu, nosíš pak jeho odznak u svého jména všude — sovu za Přesnost, orla za Rychlost, korunu za obojí. A když nějaký padne, obrazovka konce hry to pořádně oslaví."
 
-#: constants/news.ts:57
+#: constants/news.ts:69
 msgid "Take the long road to a target and Trainee now shows you the short one — the keys that would have done it, in the order to press them."
 msgstr "Když dojdeš k cíli oklikou, Nováček ti teď ukáže tu zkratku — která tlačítka by to zvládla a v jakém pořadí je zmáčknout."
 
-#: constants/achievements.ts:297
+#: constants/achievements.ts:319
 msgid "Take the shortest route to 25 targets in one run."
 msgstr "Slož v jedné hře 25 cílů nejkratší cestou."
 
 #: components/overlays/tutorial/lessons/controls-lesson.tsx:42
 msgid "TAP"
 msgstr "ŤUKNI"
+
+#: constants/news.ts:19
+msgid "Tap any name — on a board, in a room, on the winners line — and their profile opens: the mark they carry, what they have played, the medals they hold and the records they once held. A name on a leaderboard is a player now, not a row."
+msgstr "Ťukni na kterékoliv jméno — na žebříčku, v místnosti, na řádku vítězů — a otevře se jeho profil: odznak, který nosí, co všechno odehrál, medaile, které právě drží, i rekordy, které kdy držel. Jméno na žebříčku už není řádek, ale hráč."
 
 #: components/overlays/how-to-play-overlay.tsx:33
 msgid "TARGETS & THE CLOCK"
@@ -1076,7 +1133,7 @@ msgstr "CÍLE A ČAS"
 msgid "Targets arrive faster the longer you last, but each still gets its full ring."
 msgstr "Čím dýl vydržíš, tím rychleji cíle přilétají, ale každý pořád dostane celý odpočet."
 
-#: constants/news.ts:32
+#: constants/news.ts:44
 msgid "Tell me what you think"
 msgstr "Řekni mi, co si myslíš"
 
@@ -1084,11 +1141,11 @@ msgstr "Řekni mi, co si myslíš"
 msgid "TELL US"
 msgstr "NAPIŠ NÁM"
 
-#: constants/achievements.ts:382
+#: constants/achievements.ts:410
 msgid "TEN BESTS"
 msgstr "DESET REKORDŮ"
 
-#: constants/achievements.ts:305
+#: constants/achievements.ts:328
 msgid "TEN RUNS"
 msgstr "DESET HER"
 
@@ -1096,15 +1153,15 @@ msgstr "DESET HER"
 msgid "Ten seconds a target, the same one for everybody."
 msgstr "Deset vteřin na cíl, pro všechny stejný."
 
-#: constants/achievements.ts:326
+#: constants/achievements.ts:349
 msgid "TEN THOUSAND HITS"
 msgstr "DESET TISÍC ZÁSAHŮ"
 
-#: constants/achievements.ts:251
+#: constants/achievements.ts:265
 msgid "TERMINAL VELOCITY"
 msgstr "MEZNÍ RYCHLOST"
 
-#: components/overlays/feedback-overlay.tsx:160
+#: components/overlays/feedback-overlay.tsx:112
 msgid "THANK YOU"
 msgstr "DÍKY"
 
@@ -1132,7 +1189,7 @@ msgstr "Čas se s postupující hrou zkracuje, pokaždé o něco míň."
 msgid "The dial maxes out at 324, every button on 9. Worth remembering — it places a target in the range the moment you read it."
 msgstr "Číselník končí na 324, každé tlačítko na devítce. Vyplatí se to pamatovat — zařadí ti to cíl do rozsahu hned, jak ho přečteš."
 
-#: constants/news.ts:116
+#: constants/news.ts:128
 msgid "The dial tells you more at a glance.\n"
 "\n"
 "- Buttons still brighten as you dial higher\n"
@@ -1150,19 +1207,19 @@ msgstr "Číselník toho na první pohled řekne víc.\n"
 msgid "THE GOAL"
 msgstr "CÍL HRY"
 
-#: constants/achievements.ts:435
+#: constants/achievements.ts:463
 msgid "THE LONG WAY"
 msgstr "OKLIKOU"
 
-#: components/overlays/advanced-options-overlay.tsx:90
+#: components/overlays/advanced-options-overlay.tsx:91
 msgid "THEME"
 msgstr "VZHLED"
 
-#: constants/news.ts:33
+#: constants/news.ts:45
 msgid "There is a little FEEDBACK tab tucked into the bottom-right corner, on every screen except a live run. Anything goes — what broke, what annoyed you, what you wish the game did. It lands straight with the person who makes Nine, and it is read."
 msgstr "V pravém dolním rohu je schovaná záložka ZPĚTNÁ VAZBA, na každé obrazovce kromě rozehrané hry. Napiš cokoliv — co se rozbilo, co tě štvalo, co by sis přál. Jde to rovnou člověku, který Nine dělá, a čte se to."
 
-#: constants/news.ts:20
+#: constants/news.ts:32
 msgid "Things you keep"
 msgstr "Co ti zůstane"
 
@@ -1170,7 +1227,7 @@ msgstr "Co ti zůstane"
 msgid "Think in horizontal swipes before you tap. Left sends a button to 0 and right to 9, and each is one move however far it travels — a big gap is often two swipes and a tap rather than a dozen taps."
 msgstr "Než začneš ťukat, zkus myslet ve vodorovných švihnutích. Doleva pošle tlačítko na nulu, doprava na devítku, a každé je jeden tah, ať urazí jakkoliv daleko — velkou mezeru často zavřeš dvěma švihnutími a ťuknutím místo tuctu ťuknutí."
 
-#: constants/news.ts:105
+#: constants/news.ts:117
 msgid "This is how Nine will tell you what changed.\n"
 "\n"
 "- New things show up here next time you open the app\n"
@@ -1182,16 +1239,20 @@ msgstr "Takhle ti Nine řekne, co se změnilo.\n"
 "- Nebyl jsi tu dlouho? Uvidíš **všechno, co ti uteklo**, od nejstaršího\n"
 "- Starší novinky najdeš v Nastavení → Co je nového"
 
+#: components/overlays/player-profile-overlay.tsx:112
+msgid "This profile could not be loaded."
+msgstr "Profil se nepodařilo načíst."
+
 #: components/overlays/board-medals.tsx:17
 #: components/overlays/high-scores.tsx:31
 msgid "THIS WEEK"
 msgstr "TENTO TÝDEN"
 
-#: constants/achievements.ts:319
+#: constants/achievements.ts:342
 msgid "THOUSAND HITS"
 msgstr "TISÍC ZÁSAHŮ"
 
-#: components/overlays/step-up-overlay.tsx:64
+#: components/overlays/step-up-overlay.tsx:65
 msgid "Three lives, and every score reaches the board."
 msgstr "Tři životy a každé skóre se dostane na žebříček."
 
@@ -1199,7 +1260,7 @@ msgstr "Tři životy a každé skóre se dostane na žebříček."
 msgid "Three moves, one button. Try them in order."
 msgstr "Tři pohyby, jedno tlačítko. Vyzkoušej je popořadě."
 
-#: components/overlays/run-stats.tsx:35
+#: components/overlays/run-stats.tsx:36
 msgid "TIME"
 msgstr "ČAS"
 
@@ -1221,7 +1282,7 @@ msgstr "PRO ZVEŘEJNĚNÍ SVÝCH REKORDŮ"
 msgid "TODAY"
 msgstr "DNES"
 
-#: constants/achievements.ts:368
+#: constants/achievements.ts:395
 msgid "TOP OF THE BOARD"
 msgstr "ŠPICE ŽEBŘÍČKU"
 
@@ -1229,7 +1290,7 @@ msgstr "ŠPICE ŽEBŘÍČKU"
 msgid "TRAINEE"
 msgstr "NOVÁČEK"
 
-#: constants/news.ts:68
+#: constants/news.ts:80
 msgid "Trainee coaches you"
 msgstr "Nováček tě vede"
 
@@ -1237,20 +1298,21 @@ msgstr "Nováček tě vede"
 msgid "Trainee has no timer and no lives — use it to learn how the weights behave before chasing scores."
 msgstr "Nováček nemá časomíru ani životy — nauč se na něm, jak se váhy chovají, než se pustíš za skóre."
 
-#: constants/news.ts:69
+#: constants/news.ts:81
 msgid "Trainee now says when a move went to waste, and what a hit cost."
 msgstr "Nováček teď řekne, kdy přišel tah nazmar a co tě zásah stál."
 
 #: components/game/step-up-toast.tsx:91
-#: components/overlays/game-over-overlay.tsx:292
+#: components/overlays/game-over-overlay.tsx:308
 msgid "TRY {modeName}"
 msgstr "ZKUS {modeName}"
 
 #: components/crash-screen.tsx:33
+#: components/overlays/player-profile-overlay.tsx:122
 msgid "TRY AGAIN"
 msgstr "ZKUSIT ZNOVU"
 
-#: components/overlays/step-up-overlay.tsx:100
+#: components/overlays/step-up-overlay.tsx:101
 msgid "TRY ANOTHER MODE"
 msgstr "ZKUS JINÝ MÓD"
 
@@ -1258,23 +1320,23 @@ msgstr "ZKUS JINÝ MÓD"
 msgid "Turn on SHOW SUM IN BUTTONS under Options. Each button then reads out what it is contributing, so the arithmetic sits on the grid instead of in your head."
 msgstr "V Nastavení zapni ZOBRAZIT SOUČET V TLAČÍTKÁCH. Každé tlačítko pak ukazuje, čím zrovna přispívá, takže počítání máš na mřížce místo v hlavě."
 
-#: constants/achievements.ts:333
+#: constants/achievements.ts:356
 msgid "TWO IN A ROW"
 msgstr "DVA V ŘADĚ"
 
-#: components/overlays/feedback-overlay.tsx:201
+#: components/overlays/feedback-overlay.tsx:165
 msgid "Type here"
 msgstr "Piš sem"
 
-#: constants/achievements.ts:277
+#: constants/achievements.ts:296
 msgid "UNSCATHED"
 msgstr "BEZ ŠRÁMU"
 
-#: constants/achievements.ts:376
+#: constants/achievements.ts:404
 msgid "UNTOUCHABLE"
 msgstr "NEDOTKNUTELNÝ"
 
-#: constants/achievements.ts:163
+#: constants/achievements.ts:173
 msgid "UP A RUNG"
 msgstr "O PŘÍČKU VÝŠ"
 
@@ -1282,11 +1344,11 @@ msgstr "O PŘÍČKU VÝŠ"
 msgid "VALUE"
 msgstr "HODNOTA"
 
-#: components/overlays/player-tile.tsx:94
+#: components/overlays/player-tile.tsx:123
 msgid "WAITING"
 msgstr "ČEKÁ"
 
-#: components/overlays/multiplayer-waiting.tsx:228
+#: components/overlays/multiplayer-waiting.tsx:229
 msgid "WAITING FOR HOST"
 msgstr "ČEKÁ SE NA ZAKLADATELE"
 
@@ -1306,27 +1368,31 @@ msgstr "TÝDEN"
 msgid "WEIGHT = ROW ORDER × COLUMN ORDER"
 msgstr "VÁHA = POŘADÍ ŘÁDKU × POŘADÍ SLOUPCE"
 
-#: components/overlays/advanced-options-overlay.tsx:116
+#: components/overlays/advanced-options-overlay.tsx:117
 #: components/overlays/news-archive-overlay.tsx:19
-#: components/overlays/whats-new-overlay.tsx:91
+#: components/overlays/whats-new-overlay.tsx:36
 msgid "WHAT’S NEW"
 msgstr "CO JE NOVÉHO"
 
-#: constants/achievements.ts:422
+#: constants/news.ts:18
+msgid "Who is that, anyway"
+msgstr "Kdo to vlastně je"
+
+#: constants/achievements.ts:450
 msgid "Win a run in a room."
 msgstr "Vyhraj hru v místnosti."
 
-#: constants/achievements.ts:421
+#: constants/achievements.ts:449
 msgid "WINNER"
 msgstr "VÍTĚZ"
 
 #: components/game/best-scores-line.tsx:32
-#: components/overlays/player-tile.tsx:116
-#: components/overlays/tab-panel.tsx:15
+#: components/overlays/player-tile.tsx:130
+#: components/overlays/tab-panel.tsx:16
 msgid "YOU"
 msgstr "TY"
 
-#: components/overlays/menu-overlay.tsx:379
+#: components/overlays/menu-overlay.tsx:380
 #: components/overlays/offline-notice.tsx:17
 msgid "YOU'RE OFFLINE"
 msgstr "JSI OFFLINE"
@@ -1335,7 +1401,7 @@ msgstr "JSI OFFLINE"
 msgid "Your name appears on the leaderboard."
 msgstr "Tvoje jméno se objeví na žebříčku."
 
-#: constants/news.ts:144
+#: constants/news.ts:156
 msgid "Your Speed combo now grows on every quick hit instead of waiting for a clear board — but a slow one breaks it.\n"
 "\n"
 "Land a target with most of its ring still full and it pays extra."

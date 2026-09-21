@@ -1,7 +1,8 @@
 import { msg } from '@lingui/core/macro'
 import { useLingui } from '@lingui/react/macro'
-import { Text, View } from 'react-native'
+import { View } from 'react-native'
 
+import { StatCell } from '@/components/overlays/stat-cell'
 import { ON_GOLD_LABEL_SHADOW } from '@/constants/theme'
 import { formatGameTime } from '@/lib/duration'
 
@@ -40,24 +41,7 @@ export function RunStats({
   return (
     <View className="mb-6 w-full flex-row items-start justify-center gap-5">
       {cells.map(({ key, label, value }) => (
-        <View key={key} className="items-center">
-          <Text
-            selectable={false}
-            numberOfLines={1}
-            className="font-mono text-[12px] font-bold tracking-[0.5px] text-primary"
-            style={shadow}
-          >
-            {value}
-          </Text>
-          <Text
-            selectable={false}
-            numberOfLines={1}
-            className="mt-0.5 font-mono text-[8px] font-bold tracking-[1px] text-dim"
-            style={shadow}
-          >
-            {t(label)}
-          </Text>
-        </View>
+        <StatCell key={key} label={t(label)} value={value} shadow={shadow} />
       ))}
     </View>
   )

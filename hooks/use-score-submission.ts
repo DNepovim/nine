@@ -5,6 +5,7 @@ import { AppState } from 'react-native'
 import { useLocalScores } from '@/hooks/use-local-scores'
 import { useOnline } from '@/hooks/use-online'
 import { pendingOf } from '@/lib/local-scores'
+import { flushRunTotals } from '@/lib/run-submission'
 import { flushPendingScores, submitScore } from '@/lib/score-submission'
 import type { Difficulty, Mode } from '@/machines/game'
 
@@ -20,6 +21,22 @@ export function useScoreSubmission(
 ) {
   const online = useOnline()
   const hasPending = isNonEmptyArray(pendingOf(useLocalScores()))
+
+  // The run counters, on the same reasoning as the scores below: a run played offline is
+  // still a run the player played, and the connection coming back is what makes it worth
+  // sending. No nickname needed, though — a counter is not a board row — so this is the
+  // one flush that runs for a player who has never named themselves.
+  useEffect(() => {
+    if (!isReady || userId === null) return
+    void flushRunTotals(userId)
+    // A phone that regained signal while backgrounded has nothing else to announce it.
+    const subscription = AppState.addEventListener('change', (state) => {
+      if (state === 'active') void flushRunTotals(userId)
+    })
+    return () => {
+      subscription.remove()
+    }
+  }, [isReady, userId, online])
 
   // Publishing is possible the moment there is a nickname, and the queue is drained
   // then and there — that first flush is what moves a player's local records onto the

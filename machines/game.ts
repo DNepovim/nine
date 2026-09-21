@@ -62,7 +62,9 @@ const emptyDifficultyStats = (): Record<Difficulty, DifficultyStats> => ({
   extreme: { score: 0, hits: 0 },
 })
 
-const emptyStats = (): Stats => ({
+// Exported for the dev gallery, which needs a blank one to stand in for a real player's
+// figures — see dev/gallery.tsx.
+export const emptyStats = (): Stats => ({
   trainee: emptyDifficultyStats(),
   accuracy: emptyDifficultyStats(),
   speed: emptyDifficultyStats(),

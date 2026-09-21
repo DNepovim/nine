@@ -9,6 +9,18 @@ import type { Release } from '@/types/news'
 // different announcement or players who already saw the old one will miss it.
 export const RELEASES: Release[] = [
   {
+    date: '2026-09-22',
+    items: [
+      {
+        id: 'player-profile',
+        icon: 'person-circle-outline',
+        accent: '#7273D2',
+        title: msg`Who is that, anyway`,
+        body: msg`Tap any name — on a board, in a room, on the winners line — and their profile opens: the mark they carry, what they have played, the medals they hold and the records they once held. A name on a leaderboard is a player now, not a row.`,
+      },
+    ],
+  },
+  {
     date: '2026-09-17',
     items: [
       {

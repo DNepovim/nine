@@ -6,12 +6,16 @@ import { GameOverOverlay } from '@/components/overlays/game-over-overlay'
 import { HowToPlayOverlay } from '@/components/overlays/how-to-play-overlay'
 import { PausedOverlay } from '@/components/overlays/paused-overlay'
 import { StepUpOverlay } from '@/components/overlays/step-up-overlay'
+import { EMPTY_STORE } from '@/lib/achievement-store'
+import type { AchievementFacts } from '@/lib/achievements'
 import type { Period } from '@/lib/announcements'
+import { emptyCareer } from '@/lib/career'
 import type { RecordScreen } from '@/lib/champions'
 import { gameOverTitle } from '@/lib/game-over-title'
 import { invitePool, openerPool, STEP_UP_BOARD, STEP_UP_REASONS } from '@/lib/step-up'
 import {
   DIFFICULTIES,
+  emptyStats,
   type Difficulty,
   type Mode,
   type ScoredMode,
@@ -50,6 +54,35 @@ const RUN = {
     { id: 'flawlessTen', stage: null },
     { id: 'steadyHand', stage: 'extreme' },
   ] as const,
+}
+
+// Blank figures behind the card a tapped achievement chip opens. The gallery is for
+// looking at the screens, not at one player's progress — every bar in that card sits at
+// zero here, which is still enough to see the card itself.
+const FACTS: AchievementFacts = {
+  career: emptyCareer(),
+  stats: emptyStats(),
+  run: {
+    mode: 'accuracy',
+    difficulty: 'extreme',
+    score: RUN.score,
+    hits: RUN.hits,
+    maxStreak: 0,
+    cleanHits: 0,
+    parHits: 0,
+    longestRoute: 0,
+    elapsedMs: RUN.gameTimeMs,
+    avgAccuracy: RUN.avgAccuracy,
+    avgSpeed: RUN.avgSpeed,
+    personalBest: false,
+    finished: true,
+    endedAt: new Date(),
+  },
+  standings: [],
+  crown: false,
+  crossed: [],
+  tutorialDone: true,
+  now: new Date(),
 }
 
 const noop = () => {
@@ -124,6 +157,8 @@ const gameOver = (
       avgAccuracy={RUN.avgAccuracy}
       avgSpeed={RUN.avgSpeed}
       achievements={RUN.achievements}
+      achievementStore={EMPTY_STORE}
+      achievementFacts={FACTS}
       onPlayAgain={close}
       onChallenge={close}
       onMenu={close}

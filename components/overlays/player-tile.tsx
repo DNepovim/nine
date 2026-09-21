@@ -2,9 +2,13 @@ import { AntDesign } from '@expo/vector-icons'
 import { msg } from '@lingui/core/macro'
 import { Trans, useLingui } from '@lingui/react/macro'
 import { LinearGradient } from 'expo-linear-gradient'
-import { Text, View } from 'react-native'
+import { isNonEmptyString } from 'narrowland'
+import { Pressable, Text, View } from 'react-native'
 
+import { DIM_INK } from '@/constants/colors'
 import { useChampionsContext } from '@/hooks/use-champions'
+import { useOpenProfile } from '@/hooks/use-profile-modal'
+import { useTheme } from '@/hooks/use-theme'
 import { championMark } from '@/lib/champions'
 import { rankMedal } from '@/lib/rank-emoji'
 
@@ -50,6 +54,26 @@ function Chip({ label }: { label: string }) {
   )
 }
 
+// What the corner chip says when there is no medal to show instead. Rank first — a
+// finished room is about where everyone came — then the room's two standing facts.
+function chipLabel({
+  rank,
+  isHost,
+  isMe,
+  you,
+}: {
+  rank: number | undefined
+  isHost: boolean
+  isMe: boolean
+  // Translated by the caller: this sits outside the component, where the macro's hook
+  // cannot reach.
+  you: string
+}): string | null {
+  if (rank !== undefined) return ordinal(rank)
+  if (isHost) return 'HOST'
+  return isMe ? you : null
+}
+
 // One attendee tile: a gradient card with an initial-avatar, a HOST/rank/YOU
 // badge, and the nickname. In results mode it also shows rank + score + ready.
 // An empty slot renders a dashed placeholder. Used in both the waiting room and
@@ -78,13 +102,18 @@ export function PlayerTile({
   const { t } = useLingui()
   // Before the empty-slot return: hooks cannot sit behind a condition.
   const champions = useChampionsContext()
+  const openProfile = useOpenProfile()
+  const { colorScheme } = useTheme()
+  // A tile is a name like any other, so it opens the same profile. An empty slot and a
+  // room joined before ids were carried have nobody to open.
+  const profileId = isNonEmptyString(userId) ? userId : null
 
   if (nickname === undefined) {
     return (
       <View style={{ width: '48%' }}>
         <View
           className="h-24 items-center justify-center rounded-2xl border-2 border-dashed"
-          style={{ borderColor: '#aaa69e33' }}
+          style={{ borderColor: DIM_INK[colorScheme] + '33' }}
         >
           <View className="h-2 w-2 animate-pulse rounded-full bg-dim" />
           <Text
@@ -98,6 +127,7 @@ export function PlayerTile({
     )
   }
 
+  const you = t(msg`YOU`)
   const initial = nickname.trim().charAt(0).toUpperCase() || '?'
   // The board's crown and birds follow a player into a room: the same two ids answer it
   // here, so a champion is recognisable wherever their name is drawn.
@@ -105,19 +135,20 @@ export function PlayerTile({
   // Medals only: a room can end with four or five players, and the board's mark for
   // last place is a joke about missing the cut, which does not apply here.
   const medal = rank === undefined ? null : rankMedal(rank)
-  const cornerLabel =
-    medal !== null
-      ? null
-      : rank !== undefined
-        ? ordinal(rank)
-        : isHost
-          ? 'HOST'
-          : isMe
-            ? t(msg`YOU`)
-            : null
+  const cornerLabel = medal !== null ? null : chipLabel({ rank, isHost, isMe, you })
 
   return (
-    <View style={{ width: '48%' }}>
+    <Pressable
+      style={{ width: '48%' }}
+      onPress={
+        profileId === null
+          ? undefined
+          : () => {
+              openProfile(profileId)
+            }
+      }
+      disabled={profileId === null}
+    >
       <LinearGradient
         colors={[gradient[0], gradient[1]]}
         start={{ x: 0, y: 0 }}
@@ -173,6 +204,6 @@ export function PlayerTile({
           )}
         </View>
       </LinearGradient>
-    </View>
+    </Pressable>
   )
 }

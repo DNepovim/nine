@@ -8,6 +8,11 @@ import {
   weekStart,
   type LeaderboardTab,
 } from '@/lib/leaderboard-period'
+import {
+  shapeProfile,
+  type PlayerProfile,
+  type PlayerProfileResponse,
+} from '@/lib/player-profile'
 import type { Winner } from '@/lib/recent-winners'
 import { supabase } from '@/lib/supabase'
 import type { Difficulty, Mode } from '@/machines/game'
@@ -89,6 +94,32 @@ export async function fetchMyMedals(
   noteRequest(res.error)
   if (res.error) return { rows: [], error: res.error.message }
   return { rows: (res.data as MyMedalRow[] | null) ?? [], error: null }
+}
+
+// One round trip for the whole profile modal. Four requests for one screen are four
+// answers that can disagree, and this one sits behind a tap that should feel instant.
+//
+// The period bounds go up with the call the way `my_medals` takes its own: the app draws
+// them on the Prague clock, and a second definition in SQL is a second thing to keep in
+// step. The champion mark is deliberately not in the response — `useChampions` already
+// knows both Extreme leaders, and asking again here would let the modal contradict the
+// row that opened it.
+export async function fetchPlayerProfile(
+  userId: string,
+): Promise<{ profile: PlayerProfile | null; error: string | null }> {
+  const today = todayISO()
+  const res = await supabase.rpc('player_profile', {
+    p_user_id: userId,
+    p_today: today,
+    p_week_since: weekStart(today),
+  })
+  noteRequest(res.error)
+  if (res.error) return { profile: null, error: res.error.message }
+  const raw = res.data as PlayerProfileResponse | null
+  // A profile nobody could read is not an empty profile — the modal says so rather than
+  // drawing a player with nothing on any board.
+  if (raw === null) return { profile: null, error: 'empty response' }
+  return { profile: shapeProfile(raw), error: null }
 }
 
 export async function fetchMyRank(

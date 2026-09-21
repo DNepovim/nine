@@ -18,6 +18,11 @@ export const ACHIEVEMENTS_KEY = 'nine.achievements.v1'
 // Every run the device remembers, published or not — see lib/local-scores.ts. Replaces
 // the separate pending queue and daily-bests stores, which held the same runs twice.
 export const LOCAL_SCORES_KEY = 'nine.scores.v1'
+// Finished runs whose lifetime counters have not reached the server yet — see
+// lib/run-totals.ts. Separate from LOCAL_SCORES_KEY because the two answer different
+// questions: that store keeps the best run per board per day, and a counter needs every
+// run, including the ones that beat nothing.
+export const RUN_TOTALS_KEY = 'nine.run-totals.v1'
 export const SEEN_NEWS_KEY = 'nine.seen-news.v1'
 export const TUTORIAL_KEY = 'nine.tutorial.v1'
 // Absent until the player picks a language in options; while it is absent the app is in

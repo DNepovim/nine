@@ -23,20 +23,22 @@ import { getDifficultyColor, type Difficulty, type Mode } from '@/machines/game'
 // which is what lets the Czech put the name where Czech wants it — the translated
 // message carries a `<0/>` the translator moves, not a fixed word order.
 const SENTENCES = {
-  yesterday: ({ nickname, mark, color }: WinnerNameProps) => (
+  yesterday: ({ userId, nickname, mark, color }: WinnerNameProps) => (
     <Trans>
-      <WinnerName nickname={nickname} mark={mark} color={color} /> won yesterday
+      <WinnerName userId={userId} nickname={nickname} mark={mark} color={color} /> won
+      yesterday
     </Trans>
   ),
-  lastWeek: ({ nickname, mark, color }: WinnerNameProps) => (
+  lastWeek: ({ userId, nickname, mark, color }: WinnerNameProps) => (
     <Trans>
-      <WinnerName nickname={nickname} mark={mark} color={color} /> won last week
+      <WinnerName userId={userId} nickname={nickname} mark={mark} color={color} /> won
+      last week
     </Trans>
   ),
-  both: ({ nickname, mark, color }: WinnerNameProps) => (
+  both: ({ userId, nickname, mark, color }: WinnerNameProps) => (
     <Trans>
-      <WinnerName nickname={nickname} mark={mark} color={color} /> won yesterday and last
-      week
+      <WinnerName userId={userId} nickname={nickname} mark={mark} color={color} /> won
+      yesterday and last week
     </Trans>
   ),
 } as const satisfies Record<WinnerWindow, (props: WinnerNameProps) => ReactNode>
@@ -127,6 +129,7 @@ export function RecentWinners({
           className="text-center font-mono text-[10px] leading-[15px] text-dim"
         >
           {SENTENCES[line.window]({
+            userId: line.winner.userId,
             nickname: line.winner.nickname,
             mark: championMark(line.winner.userId, champions),
             color: getDifficultyColor(gameMode, difficulty),

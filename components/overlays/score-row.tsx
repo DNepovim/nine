@@ -1,12 +1,18 @@
-import { Text, View } from 'react-native'
+import { isNonEmptyString } from 'narrowland'
+import { Pressable, Text, View } from 'react-native'
 
 import { ON_GOLD_LABEL_SHADOW } from '@/constants/theme'
+import { useOpenProfile } from '@/hooks/use-profile-modal'
 import { cn } from '@/lib/cn'
 import { rankEmoji } from '@/lib/rank-emoji'
 import { timeAgo } from '@/lib/time-ago'
 
 export type ScoreEntry = {
   rank: number
+  // Whose row it is. A row with an id opens that player's profile when tapped; a local
+  // score that has not reached the board has none, and there is no profile behind it
+  // yet to open.
+  userId?: string | null
   // The crown or bird this player wears everywhere their name appears, or null.
   mark: string | null
   nickname: string
@@ -32,6 +38,9 @@ export function ScoreRow({
   // Set on the gold game-over screen: these rows sit straight on the celebration.
   halo?: boolean
 }) {
+  const openProfile = useOpenProfile()
+  // Every server row carries an id; only the local unpublished row does not.
+  const profileId = isNonEmptyString(entry.userId) ? entry.userId : null
   const highlight = entry.isUser === true
   const glow = halo ? ON_GOLD_LABEL_SHADOW : null
   const accentStyle = highlight ? { color: accentColor } : undefined
@@ -44,8 +53,21 @@ export function ScoreRow({
     entry.achievedAt === undefined ? null : timeAgo(entry.achievedAt, Date.now())
   const note = entry.note ?? age
   return (
-    <View
-      className="flex-row items-center rounded-lg px-2 py-1"
+    <Pressable
+      // A name is the way into its player's profile, everywhere a name is drawn. The
+      // whole row is the target rather than the text: a 10px nickname is not a tap
+      // target, and the rank and score beside it belong to the same player.
+      onPress={
+        profileId === null
+          ? undefined
+          : () => {
+              openProfile(profileId)
+            }
+      }
+      disabled={profileId === null}
+      // 24px: the 16px line below plus py-1, stated rather than left to font metrics so
+      // SkeletonRow can stand exactly as tall and the board holds still while it loads.
+      className="h-6 flex-row items-center rounded-lg px-2 py-1"
       style={highlight ? { backgroundColor: accentColor + '20' } : undefined}
     >
       {/* An emoji needs more room than the 10px numeral it replaces, and a fixed line
@@ -108,6 +130,6 @@ export function ScoreRow({
       >
         {entry.score}
       </Text>
-    </View>
+    </Pressable>
   )
 }
