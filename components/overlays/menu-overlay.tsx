@@ -41,6 +41,7 @@ import { MedalLine } from './medal-line'
 import { ModeSelector } from './mode-selector'
 import { ModeTips } from './mode-tips'
 import { PlayModeTab, type PlayMode } from './play-mode-tab'
+import { RecentWinners } from './recent-winners'
 
 const shadow = {
   shadowColor: '#000',
@@ -269,7 +270,14 @@ export function MenuOverlay({
                   two panels together, so ARCADE's SOON badge, which deliberately hangs
                   past its own tab (see CornerBadge), was free to cross from this panel's
                   space into WITH FRIENDS' once this one slid off to make room for it. */}
-              <View style={{ width: effectivePanelWidth, overflow: 'hidden' }}>
+              {/* One gap between every row of this panel, rather than each row
+                  carrying a bottom margin of its own — the rows come and go with the
+                  focused mode, and spacing that lives on the parent cannot leave a
+                  margin behind under whichever row happens to be last. */}
+              <View
+                className="gap-2"
+                style={{ width: effectivePanelWidth, overflow: 'hidden' }}
+              >
                 <ModeSelector
                   focused={focused}
                   gradPhase={gradPhase}
@@ -289,13 +297,18 @@ export function MenuOverlay({
                 {/* Trainee's half of this slot: no board to show, so it teaches
                     instead. Arcade stays empty — it isn't playable yet. */}
                 {focused === 'trainee' && <ModeTips />}
+                {/* Who has been taking this board lately, then where it stands now —
+                    both about the board the pills above just picked. */}
                 {isOneOf(focused, ['accuracy', 'speed']) && (
-                  <HighScores
-                    gameMode={gameMode}
-                    userId={userId}
-                    nickname={nickname}
-                    onAddNickname={onAddNickname}
-                  />
+                  <>
+                    <RecentWinners gameMode={gameMode} difficulty={difficulty} />
+                    <HighScores
+                      gameMode={gameMode}
+                      userId={userId}
+                      nickname={nickname}
+                      onAddNickname={onAddNickname}
+                    />
+                  </>
                 )}
               </View>
 

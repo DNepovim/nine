@@ -1,11 +1,14 @@
 import type { Leader } from '@/lib/announcements'
 import { noteRequest } from '@/lib/connectivity'
 import {
+  previousDay,
+  previousWeek,
   tabSince,
   todayISO,
   weekStart,
   type LeaderboardTab,
 } from '@/lib/leaderboard-period'
+import type { Winner } from '@/lib/recent-winners'
 import { supabase } from '@/lib/supabase'
 import type { Difficulty, Mode } from '@/machines/game'
 
@@ -104,4 +107,56 @@ export async function fetchMyRank(
   if (res.error) return { row: null, error: res.error.message }
   const rows = (res.data as MyRankRow[] | null) ?? []
   return { row: rows[0] ?? null, error: null }
+}
+
+// One closed window's winner, as the `past_winners` RPC returns it. `period` is the
+// window it answers for — 'yesterday' or 'last_week'.
+type PastWinnerRow = {
+  period: string
+  user_id: string
+  nickname: string
+  best_score: number
+}
+
+export type PastWinners = {
+  yesterday: Winner | null
+  lastWeek: Winner | null
+}
+
+export const NO_PAST_WINNERS: PastWinners = { yesterday: null, lastWeek: null }
+
+const winnerIn = (rows: PastWinnerRow[], period: string): Winner | null => {
+  const row = rows.find((r) => r.period === period)
+  if (row === undefined) return null
+  return { userId: row.user_id, nickname: row.nickname }
+}
+
+// Who took this board yesterday, and who took it last week.
+//
+// Both windows in one request, and both bounds computed here on the Prague clock, so
+// the two sentences of the stripe can never be drawn from two different ideas of when
+// yesterday was. A window nobody played comes back absent, which reads as null.
+export async function fetchPastWinners(
+  mode: Mode,
+  difficulty: Difficulty,
+): Promise<{ winners: PastWinners; error: string | null }> {
+  const today = todayISO()
+  const week = previousWeek(today)
+  const res = await supabase.rpc('past_winners', {
+    p_mode: mode,
+    p_difficulty: difficulty,
+    p_yesterday: previousDay(today),
+    p_week_from: week.from,
+    p_week_to: week.to,
+  })
+  noteRequest(res.error)
+  if (res.error) return { winners: NO_PAST_WINNERS, error: res.error.message }
+  const rows = (res.data as PastWinnerRow[] | null) ?? []
+  return {
+    winners: {
+      yesterday: winnerIn(rows, 'yesterday'),
+      lastWeek: winnerIn(rows, 'last_week'),
+    },
+    error: null,
+  }
 }

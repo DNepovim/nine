@@ -64,6 +64,25 @@ export function weekStart(day: string): string {
   return d.toISOString().slice(0, 10)
 }
 
+// The day before `day`. ISO days are handled at UTC midnight throughout — the Prague
+// offset is already spent in turning an instant into a day string, so stepping between
+// days is plain calendar arithmetic from here on.
+export function previousDay(day: string): string {
+  const d = new Date(`${day}T00:00:00Z`)
+  d.setUTCDate(d.getUTCDate() - 1)
+  return d.toISOString().slice(0, 10)
+}
+
+// The Monday-to-Sunday week before the one containing `day`, inclusive at both ends.
+//
+// The week that has finished, in other words — never the one in progress. Derived from
+// `weekStart` rather than by subtracting seven days, so the two can never disagree about
+// where a week begins, and so the bounds stay right across a year boundary.
+export function previousWeek(day: string): { from: string; to: string } {
+  const to = previousDay(weekStart(day))
+  return { from: weekStart(to), to }
+}
+
 // The inclusive lower bound for a tab, or null for all of time. `today` is passed in
 // rather than read from the clock so callers — and tests — can pin it.
 export function tabSince(tab: LeaderboardTab, today: string): string | null {

@@ -3,6 +3,8 @@ import { describe, expect, it } from 'vitest'
 import {
   dayInPrague,
   msUntilNextDay,
+  previousDay,
+  previousWeek,
   qualifiesForTab,
   tabSince,
   weekStart,
@@ -138,5 +140,41 @@ describe('msUntilNextDay', () => {
     const next = new Date(at.getTime() + msUntilNextDay(at))
     expect(dayInPrague(next)).not.toBe(dayInPrague(at))
     expect(dayInPrague(new Date(next.getTime() - 1))).toBe(dayInPrague(at))
+  })
+})
+
+describe('previousDay', () => {
+  it('steps back one day', () => {
+    expect(previousDay('2026-09-21')).toBe('2026-09-20')
+  })
+
+  it('crosses into the previous month', () => {
+    expect(previousDay('2026-09-01')).toBe('2026-08-31')
+  })
+
+  it('crosses into the previous year', () => {
+    expect(previousDay('2026-01-01')).toBe('2025-12-31')
+  })
+})
+
+describe('previousWeek', () => {
+  it('is the Monday-to-Sunday week before the one containing the day', () => {
+    // 2026-09-21 is a Monday, so its own week has only just begun.
+    expect(previousWeek('2026-09-21')).toEqual({ from: '2026-09-14', to: '2026-09-20' })
+  })
+
+  it('reads the same from any day inside the current week', () => {
+    // Sunday 2026-09-20 closes the week that began Monday 2026-09-14.
+    expect(previousWeek('2026-09-20')).toEqual({ from: '2026-09-07', to: '2026-09-13' })
+  })
+
+  it('crosses into the previous year', () => {
+    // Friday 2026-01-02 sits in the week starting Monday 2025-12-29.
+    expect(previousWeek('2026-01-02')).toEqual({ from: '2025-12-22', to: '2025-12-28' })
+  })
+
+  it('ends the day before the current week starts', () => {
+    const day = '2026-03-01'
+    expect(previousWeek(day).to).toBe(previousDay(weekStart(day)))
   })
 })
