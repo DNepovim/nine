@@ -145,8 +145,10 @@ export function PausedOverlay({
           </View>
           {/* The two ways off this screen that are not the run itself, in the dim
               link dress game over uses for the same pair of jobs — small enough that
-              neither competes with CONTINUE, which is what most pauses end with. */}
-          <View className="items-center gap-4">
+              neither competes with CONTINUE, which is what most pauses end with.
+              Side by side in the same row the intro screen ends with, so the links
+              under a screen's buttons sit the same way wherever you meet them. */}
+          <View className="flex-row flex-wrap items-center justify-center gap-x-5 gap-y-2">
             <Pressable onPress={onMenu} hitSlop={10}>
               <View className="flex-row items-center gap-1">
                 <Ionicons name="home-outline" size={10} color={dimColor} />
