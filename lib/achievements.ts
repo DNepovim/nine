@@ -35,8 +35,20 @@ import { MAX_ROOM_PLAYERS } from '@/types/multiplayer'
 // it, and the two are kept apart on purpose: `career` is always the career as it stood
 // when the run began, so a rule that wants a lifetime total writes `career.hits +
 // run.hits` and means the same thing whether the run is halfway through or over.
-type RunFacts = {
-  mode: Mode
+export type RunFacts = {
+  // Which mode the run is in, and null when there is no run.
+  //
+  // Between two runs the machine still holds the last one's score, hits and streak —
+  // `freshGame` clears them as the next run starts, not as the last one ended — while
+  // `mode` and `difficulty` follow whatever the intro screen is now showing. Handed to
+  // the rules as one run, those two halves are a run nobody played: 15 000 in Accuracy
+  // on Easy cleared TERMINAL VELOCITY on Speed Extreme, on a board the player had not
+  // touched. So a run that is not happening names no mode, and `NO_RUN` below is the
+  // only shape the rest of the app may say that in.
+  mode: Mode | null
+  // Never read without the mode beside it — every rule that asks which board a run is
+  // on asks whether there is a run first — so no run leaves this at Easy rather than
+  // making every one of them narrow a second null.
   difficulty: Difficulty
   score: number
   hits: number
@@ -57,6 +69,30 @@ type RunFacts = {
   finished: boolean
   // When the run ended — read only by the finished rules.
   endedAt: Date
+}
+
+// No run at all: the intro screen, between two of them.
+//
+// Every figure is zero rather than the last run's, because the last run is already in
+// the career and the stats by the time this is asked — the machine's context is simply
+// still holding it. A rule that reads the run from here learns nothing, which is the
+// right amount to learn about a run that is not happening.
+export const NO_RUN: RunFacts = {
+  mode: null,
+  difficulty: 'easy',
+  score: 0,
+  hits: 0,
+  maxStreak: 0,
+  cleanHits: 0,
+  parHits: 0,
+  longestRoute: 0,
+  elapsedMs: 0,
+  avgAccuracy: 0,
+  avgSpeed: 0,
+  personalBest: false,
+  finished: false,
+  // Read only by the finished rules, and this run never finished.
+  endedAt: new Date(0),
 }
 
 export type AchievementFacts = {
@@ -101,8 +137,10 @@ export type BoardMark = { mode: ScoredMode; difficulty: Difficulty; posted: bool
 
 // All six, in the app's own order: mode, then easiest difficulty first.
 const boardsPosted = (f: AchievementFacts): BoardMark[] => {
-  const scored = isOneOf(f.run.mode, SCORED_MODES) && f.run.score > 0
-  const here = scored ? boardKey(f.run.mode, f.run.difficulty) : null
+  const here =
+    isOneOf(f.run.mode, SCORED_MODES) && f.run.score > 0
+      ? boardKey(f.run.mode, f.run.difficulty)
+      : null
   return SCORED_MODES.flatMap((mode) =>
     DIFFICULTY_ORDER.map((difficulty) => {
       const key = boardKey(mode, difficulty)
@@ -255,7 +293,7 @@ const RULES = {
   firstRun: (f) =>
     f.career.boardsPlayed.length > 0 ||
     (f.run.finished && isOneOf(f.run.mode, SCORED_MODES)),
-  allThree: (f) => new Set([...f.career.modesPlayed, f.run.mode]).size >= MODE_COUNT,
+  allThree: (f) => modesPlayed(f).size >= MODE_COUNT,
   upARung: (f) => playedDifficulty(f, 'hard'),
   // A hit rather than a board opened: Extreme is the one rung where turning up is
   // not the achievement. Asked of the run alone — the career remembers which
@@ -386,6 +424,14 @@ const finishedRuns = (f: AchievementFacts): number =>
 const dayStreak = (f: AchievementFacts): number =>
   dayStreakWith(f.career, dayInPrague(f.now))
 
+// Every mode the player has ever played, the live run's own included — the career only
+// hears about a run when it ends, and a run in progress is a mode played. No run adds
+// nothing: standing on the intro screen with Speed selected is not playing Speed.
+const modesPlayed = (f: AchievementFacts): Set<string> =>
+  new Set(
+    f.run.mode === null ? f.career.modesPlayed : [...f.career.modesPlayed, f.run.mode],
+  )
+
 const playedDifficulty = (f: AchievementFacts, difficulty: Difficulty): boolean =>
   f.career.difficultiesPlayed.includes(difficulty) ||
   (isOneOf(f.run.mode, SCORED_MODES) && f.run.difficulty === difficulty)
@@ -398,7 +444,7 @@ const PROGRESS = {
   firstHit: (f) => f.career.hits + f.run.hits,
   graduate: () => 0,
   firstRun: () => 0,
-  allThree: (f) => new Set([...f.career.modesPlayed, f.run.mode]).size,
+  allThree: (f) => modesPlayed(f).size,
   upARung: () => 0,
   intoTheDeep: () => 0,
 

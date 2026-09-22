@@ -19,6 +19,7 @@ import { DIFFICULTY_ORDER, type Stats } from '@/machines/game'
 import {
   earned,
   isEarnedBy,
+  NO_RUN,
   progressOf,
   stageProgress,
   type AchievementFacts,
@@ -525,6 +526,51 @@ describe('earned', () => {
     const f = facts({ career: career({ hits: 1, runs: 10 }), tutorialDone: true })
     const ids = earned(f).map((award) => award.id)
     expect(ids.indexOf('firstHit')).toBeLessThan(ids.indexOf('tenRuns'))
+  })
+})
+
+describe('between runs', () => {
+  // The intro screen is not a run. The machine still holds the last run's score, hits and
+  // streak there — it clears them as the next run starts — while the mode and difficulty
+  // follow the selector the player is tapping. `NO_RUN` is what the rules are handed
+  // instead, and every case below was earned on a board nobody had played.
+
+  it('does not clear a score ladder on the board the selector is showing', () => {
+    // 15 000 in Accuracy on Easy, then HOME, then Speed and Extreme on the selector.
+    const played = facts({
+      run: { ...facts().run, mode: 'speed', difficulty: 'extreme', score: 15000 },
+    })
+    expect(isEarnedBy('terminalVelocity', played, 'extreme')).toBe(true)
+    expect(isEarnedBy('terminalVelocity', facts({ run: NO_RUN }), 'extreme')).toBe(false)
+  })
+
+  it('does not land a hit on Extreme by selecting Extreme', () => {
+    expect(isEarnedBy('intoTheDeep', facts({ run: NO_RUN }), 'speed')).toBe(false)
+  })
+
+  it('does not carry the last run’s streak onto another board', () => {
+    expect(isEarnedBy('maxMultiplier', facts({ run: NO_RUN }), 'extreme')).toBe(false)
+  })
+
+  it('does not play a mode by tapping its tab', () => {
+    const f = facts({
+      career: career({ modesPlayed: ['trainee', 'accuracy'] }),
+      run: NO_RUN,
+    })
+    expect(isEarnedBy('allThree', f)).toBe(false)
+    expect(progressOf('allThree', f)).toBe(0)
+  })
+
+  it('does not play a Hard board by selecting one', () => {
+    expect(isEarnedBy('upARung', facts({ run: NO_RUN }))).toBe(false)
+  })
+
+  it('still earns everything the career and the stats answer for', () => {
+    // Nothing is lost by dropping the run: a finished one is in the career and the stats
+    // by the time this pass runs, which is what makes the ladders retroactive at all.
+    const f = facts({ stats: withBest('speed', 'easy', 15000), run: NO_RUN })
+    expect(isEarnedBy('terminalVelocity', f, 'easy')).toBe(true)
+    expect(isEarnedBy('terminalVelocity', f, 'hard')).toBe(false)
   })
 })
 

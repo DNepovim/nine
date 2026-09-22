@@ -28,7 +28,13 @@ import {
   type AchievementStore,
 } from '@/lib/achievement-store'
 import { fetchAchievements, pushAchievements } from '@/lib/achievement-sync'
-import { earned, holdsBoard, type AchievementFacts, type Award } from '@/lib/achievements'
+import {
+  earned,
+  holdsBoard,
+  NO_RUN,
+  type AchievementFacts,
+  type Award,
+} from '@/lib/achievements'
 import type { AnnouncementId } from '@/lib/announcements'
 import { boardKey, foldMultiplayer, foldRun, observeHeld } from '@/lib/career'
 import { todayISO } from '@/lib/leaderboard-period'
@@ -374,28 +380,36 @@ export function useAchievementQueue(inRun: boolean): {
 }
 
 // Everything the rules ask about except the career, which the phase owns.
+//
+// A run only while there is one. Off a run the machine's context is the last run's
+// figures beside the mode and difficulty the intro screen is now showing, and the two
+// halves together describe a run nobody played — see `NO_RUN`. Nothing is lost by
+// dropping them: a finished run is in the career and the stats before this is asked
+// again, and those are what the between-runs pass is reading anyway.
 const worldFacts = (
   input: AchievementsInput,
   tally: RunTally,
   finished: boolean,
 ): Omit<AchievementFacts, 'career'> => ({
   stats: input.stats,
-  run: {
-    mode: input.mode,
-    difficulty: input.difficulty,
-    score: input.score,
-    hits: input.hits,
-    maxStreak: input.maxStreak,
-    cleanHits: tally.cleanHits,
-    parHits: tally.parHits,
-    longestRoute: tally.longestRoute,
-    elapsedMs: input.elapsedMs,
-    avgAccuracy: input.avgAccuracy,
-    avgSpeed: input.avgSpeed,
-    personalBest: input.personalBest,
-    finished,
-    endedAt: new Date(),
-  },
+  run: !input.inRun
+    ? NO_RUN
+    : {
+        mode: input.mode,
+        difficulty: input.difficulty,
+        score: input.score,
+        hits: input.hits,
+        maxStreak: input.maxStreak,
+        cleanHits: tally.cleanHits,
+        parHits: tally.parHits,
+        longestRoute: tally.longestRoute,
+        elapsedMs: input.elapsedMs,
+        avgAccuracy: input.avgAccuracy,
+        avgSpeed: input.avgSpeed,
+        personalBest: input.personalBest,
+        finished,
+        endedAt: new Date(),
+      },
   standings: input.standings,
   crown: input.crown,
   crossed: input.crossed,
