@@ -490,7 +490,11 @@ export default function GameScreen() {
   // board and beating your own best are both things the bar has already worked out, and
   // working them out a second time here is how the two would come to disagree.
   const achievements = useAchievements({
-    inRun,
+    // Game over is part of the run here, unlike everywhere else `inRun` is used. The
+    // pass that answers "did this run finish on nothing" happens at game over, and
+    // `stepAchievements` drops any pass made outside a run — so a hook told the run was
+    // already over threw away the one evaluation that could see `finished`.
+    inRun: inRun || isGameOver,
     finished: isGameOver,
     mode,
     difficulty,

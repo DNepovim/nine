@@ -161,6 +161,38 @@ describe('stepAchievements', () => {
     )
     expect(over.unlocked.map((a) => a.id)).toContain('tenRuns')
   })
+
+  it('catches an achievement only a finished run can answer', () => {
+    // GOOSE EGG is the shape with no career fallback at all: nothing but the pass made
+    // at game over can ever see it, so if that pass is lost the achievement is not late,
+    // it is unreachable.
+    const scoredNothing = (finished: boolean) =>
+      input({ facts: worldFacts({ run: { ...worldFacts().run, finished } }) })
+
+    const mid = stepAchievements(IDLE, scoredNothing(false))
+    expect(mid.unlocked.map((a) => a.id)).not.toContain('gooseEgg')
+
+    const over = stepAchievements(mid.phase, scoredNothing(true))
+    expect(over.unlocked.map((a) => a.id)).toContain('gooseEgg')
+  })
+
+  it('drops the finished pass if the caller has already called the run over', () => {
+    // The contract behind `inRun: inRun || isGameOver` at the hook's call site. Reaching
+    // game over does not end the run as far as this is concerned — the finished pass is
+    // part of it, and a caller that flips `inRun` first loses every achievement that
+    // reads `finished`. This is exactly what shipped broken, and the phase machine
+    // cannot tell the difference: from in here a run that is over is simply over.
+    const mid = stepAchievements(IDLE, input())
+    const over = stepAchievements(
+      mid.phase,
+      input({
+        inRun: false,
+        facts: worldFacts({ run: { ...worldFacts().run, finished: true } }),
+      }),
+    )
+    expect(over.unlocked).toEqual([])
+    expect(over.phase).toEqual(IDLE)
+  })
 })
 
 describe('foldBatch', () => {
