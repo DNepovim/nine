@@ -83,7 +83,7 @@ import { useTheme } from '@/hooks/use-theme'
 import { useTraineeCoach } from '@/hooks/use-trainee-coach'
 import { useTutorial } from '@/hooks/use-tutorial'
 import { useWhatsNew } from '@/hooks/use-whats-new'
-import { latestAchievement } from '@/lib/achievement-store'
+import { idsOf, latestAchievement } from '@/lib/achievement-store'
 import { identify, track } from '@/lib/analytics'
 import type { AnalyticsEvents } from '@/lib/analytics-events'
 import {
@@ -1454,7 +1454,7 @@ export default function GameScreen() {
               nickname={nickname}
               bestScore={stats[mode][difficulty].score}
               medals={medals}
-              achievementsEarned={achievements.store.length}
+              achievementsEarned={idsOf(achievements.store).length}
               achievementsLatest={latestAchievement(achievements.store)}
               achievementsLoaded={achievements.loaded}
               onOpenAchievements={() => {
