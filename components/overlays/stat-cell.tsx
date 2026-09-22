@@ -38,9 +38,19 @@ export function StatCell({
 }) {
   return (
     <View className="items-center">
+      {/* Deliberately not `numberOfLines={1}`, which is what cropped a duration to
+          "1′0…". The overhang above is a negative margin, so the cell sizes itself to
+          the value *minus* one mark and then offers the value that width back — an exact
+          fit, which sub-pixel rounding turns into an overflow, which a line limit turns
+          into an ellipsis. Only the values wide enough to be what sizes their own cell
+          were affected, which is why a run under a minute always looked fine.
+
+          Nothing here can wrap instead: a stat value is one token with no space in it,
+          so with no line limit it simply overflows — which is what the overhang is
+          asking for in the first place. The label below keeps its limit, because
+          `AVG ACC` does have a space and would break in two. */}
       <Text
         selectable={false}
-        numberOfLines={1}
         className="font-mono text-[12px] font-bold tracking-[0.5px] text-primary"
         style={[shadow, overhang ? { marginRight: -MARK_OVERHANG } : null]}
       >
