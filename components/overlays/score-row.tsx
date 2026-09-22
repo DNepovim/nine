@@ -4,8 +4,20 @@ import { Pressable, Text, View } from 'react-native'
 import { ON_GOLD_LABEL_SHADOW } from '@/constants/theme'
 import { useOpenProfile } from '@/hooks/use-profile-modal'
 import { cn } from '@/lib/cn'
-import { rankEmoji } from '@/lib/rank-emoji'
+import { rankEmoji, rankMark } from '@/lib/rank-emoji'
+import type { RankMark } from '@/lib/rank-emoji'
 import { timeAgo } from '@/lib/time-ago'
+
+// A fixed line height on all three keeps a row the same height whichever mark it
+// shows — the board's five rows would otherwise stand taller than the player's own row
+// below the cut. The sizes differ because the glyphs do: a numeral is small, a medal
+// needs more room than the numeral it replaces, and the potato and the pig fill their
+// box where a medal leaves a margin, so they take a notch less to weigh the same.
+const RANK_MARK_SIZES = {
+  medal: 'text-[13px]',
+  creature: 'text-[11px]',
+  number: 'text-[10px]',
+} as const satisfies Record<RankMark, string>
 
 export type ScoreEntry = {
   rank: number
@@ -70,15 +82,11 @@ export function ScoreRow({
       className="h-6 flex-row items-center rounded-lg px-2 py-1"
       style={highlight ? { backgroundColor: accentColor + '20' } : undefined}
     >
-      {/* An emoji needs more room than the 10px numeral it replaces, and a fixed line
-          height on both keeps a row the same height whichever it shows — the board's
-          five rows would otherwise stand taller than the player's own row below the
-          cut. */}
       <Text
         selectable={false}
         className={cn(
           'w-7 font-mono font-bold leading-[16px] text-dim',
-          emoji === null ? 'text-[10px]' : 'text-[13px]',
+          RANK_MARK_SIZES[rankMark(entry.rank)],
         )}
         style={[accentStyle, glow]}
       >

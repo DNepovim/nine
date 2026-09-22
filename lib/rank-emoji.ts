@@ -27,3 +27,14 @@ export const rankMedal = (rank: number): string | null =>
 // below the cut and falls back to its number.
 export const rankEmoji = (rank: number): string | null =>
   isOneOf(rank, BOARD_RANKS) ? BOARD_EMOJI[rank] : null
+
+// What a row's rank column is drawing. The three are not one size: a medal is a small
+// shape sitting inside its glyph's box, while the potato and the pig fill theirs and
+// read a size bigger at the same font size. Callers size by kind rather than singling
+// out the two ranks themselves.
+export type RankMark = 'medal' | 'creature' | 'number'
+
+export const rankMark = (rank: number): RankMark => {
+  if (isOneOf(rank, MEDAL_RANKS)) return 'medal'
+  return isOneOf(rank, BOARD_RANKS) ? 'creature' : 'number'
+}
