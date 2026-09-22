@@ -75,6 +75,11 @@ type Fetched = {
 
 type FetchedByTab = Record<LeaderboardTab, Fetched>
 
+// What one board is showing right now, and which board that is. The two travel together
+// so a fetch that lands after the player has moved on can be told apart from one that
+// still belongs on screen.
+type Shown = { key: string; fetched: FetchedByTab; loaded: boolean }
+
 const LOADING: Fetched = { rows: [], myRank: null, loading: true, error: null }
 const EMPTY: Fetched = { rows: [], myRank: null, loading: false, error: null }
 
@@ -98,6 +103,21 @@ const NO_BOARD: Board = {
   forever: NO_PERIOD,
   loaded: true,
   refresh: () => Promise.resolve(),
+}
+
+// Identifies a board the way the fetch does: the three things a read depends on. The
+// player is part of it because their own rank is fetched alongside the top five, so two
+// players signed in one after the other must not read each other's cached board.
+const boardKey = (mode: Mode, difficulty: Difficulty, userId: string | null): string =>
+  `${mode}|${difficulty}|${userId ?? 'anon'}`
+
+// What to show the moment a board is asked for: whatever it last held, or skeletons if
+// this is the first time the player has opened it. A cached board counts as loaded —
+// callers waiting on `loaded` are waiting for numbers to read, and these are numbers to
+// read, a re-read behind them notwithstanding.
+const shownFor = (cache: Map<string, FetchedByTab>, key: string): Shown => {
+  const cached = cache.get(key)
+  return { key, fetched: cached ?? ALL_LOADING, loaded: cached !== undefined }
 }
 
 async function loadTab(
@@ -169,48 +189,57 @@ export function useBoard(
   difficulty: Difficulty,
   userId: string | null,
 ): Board {
-  const [fetched, setFetched] = useState<FetchedByTab>(ALL_LOADING)
-  const [loaded, setLoaded] = useState(false)
+  // Every board the player has opened this session. Mode and difficulty are tabs on the
+  // intro, and a board they have already seen must not fall back to skeletons while it
+  // re-reads — the rows it showed a moment ago are the best answer there is until the
+  // fresh ones land, and a board that empties and refills on every tap is the screen
+  // jumping for nothing. The re-read behind it is what keeps them honest.
+  const cacheRef = useRef<Map<string, FetchedByTab>>(new Map())
+
   // Bumped when the day boards roll over, both to re-run the timer and to re-read the
   // clock the local windows are measured against.
   const [dayEpoch, setDayEpoch] = useState(0)
 
   const abortedRef = useRef(false)
-  const hasDataRef = useRef(false)
 
   const localScores = useLocalScores()
 
-  // `showLoading` = true on first load (show skeletons), false on a Realtime-triggered
-  // or scheduled re-fetch, so a background refresh never flickers the UI.
-  const fetchAll = useCallback(
-    async (showLoading: boolean) => {
-      if (showLoading) {
-        setFetched(ALL_LOADING)
-        setLoaded(false)
-        hasDataRef.current = false
-      }
+  const key = boardKey(mode, difficulty, userId)
+  const [shown, setShown] = useState<Shown>(() => shownFor(cacheRef.current, key))
+  // Switched here rather than in the effect below: an effect runs after the commit, so
+  // the frame the player's tap paints would still hold the board they just left.
+  if (shown.key !== key) setShown(shownFor(cacheRef.current, key))
+  const { fetched, loaded } = shown
 
-      const [today, week, forever] = await Promise.all(
-        TABS.map((tab) => loadTab(mode, difficulty, tab, userId)),
-      )
-      if (abortedRef.current) return
-      if (today === undefined || week === undefined || forever === undefined) return
+  const fetchAll = useCallback(async () => {
+    // Read once, up front: by the time this resolves the player may have switched, and
+    // the answer belongs to the board that was asked, not the one now on screen.
+    const asked = boardKey(mode, difficulty, userId)
 
-      setLoaded(true)
+    const [today, week, forever] = await Promise.all(
+      TABS.map((tab) => loadTab(mode, difficulty, tab, userId)),
+    )
+    if (abortedRef.current) return
+    if (today === undefined || week === undefined || forever === undefined) return
+
+    const next = { today, week, forever }
+    // Cached on success only, and whether or not this board is still the one showing —
+    // a read that lands late is still a read, and it is what that board opens with next
+    // time. A failed read caches nothing: an error is not a board.
+    const anyError = today.error ?? week.error ?? forever.error
+    if (anyError === null) cacheRef.current.set(asked, next)
+
+    setShown((prev) => {
+      if (prev.key !== asked) return prev
       // A silent failure when we already have rows keeps the last good ones: the player
       // cannot tell a board that failed to load from one that emptied, so blanking it
       // would be the worse lie. A successful fetch always wins, empty result included —
       // that is what lets a board clear when the day rolls over.
-      const anyError = today.error ?? week.error ?? forever.error
-      if (anyError === null) {
-        hasDataRef.current = true
-        setFetched({ today, week, forever })
-        return
-      }
-      if (!hasDataRef.current) setFetched({ today, week, forever })
-    },
-    [mode, difficulty, userId],
-  )
+      if (anyError !== null && cacheRef.current.has(asked))
+        return { ...prev, loaded: true }
+      return { key: asked, fetched: next, loaded: true }
+    })
+  }, [mode, difficulty, userId])
 
   // Stable ref so the Realtime callback and the rollover timer always reach the latest
   // fetchAll without tearing the channel down on every render.
@@ -221,8 +250,7 @@ export function useBoard(
     if (mode === 'trainee') return
 
     abortedRef.current = false
-    hasDataRef.current = false
-    void fetchAll(true)
+    void fetchAll()
 
     // The app's one live connection tells us when any board moves; this is the board we
     // are showing, so everything else passes. A null move is a gap we cannot see into —
@@ -237,7 +265,7 @@ export function useBoard(
         return
       }
       clearTimeout(coalesce)
-      coalesce = setTimeout(() => void fetchAllRef.current(false), COALESCE_MS)
+      coalesce = setTimeout(() => void fetchAllRef.current(), COALESCE_MS)
     })
 
     return () => {
@@ -254,7 +282,11 @@ export function useBoard(
     if (mode === 'trainee') return
     const timer = setTimeout(() => {
       setDayEpoch((epoch) => epoch + 1)
-      void fetchAllRef.current(false)
+      // Every cached board's today and week rows belong to the day that just ended, so
+      // none of them may be shown again. The boards on screen re-read immediately; the
+      // rest go back to loading from scratch, which is the truth about them now.
+      cacheRef.current.clear()
+      void fetchAllRef.current()
     }, msUntilNextDay())
     return () => {
       clearTimeout(timer)
@@ -263,7 +295,7 @@ export function useBoard(
 
   const refresh = useCallback(async () => {
     if (mode === 'trainee') return
-    await fetchAll(false)
+    await fetchAll()
   }, [mode, fetchAll])
 
   // Bumping `dayEpoch` re-renders, which is what re-reads the clock here: the local
