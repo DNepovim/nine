@@ -116,3 +116,47 @@ export function stepAchievements(phase: AchievementPhase, input: RunInput): RunS
   if (!input.ready) return { phase, unlocked: QUIET }
   return evaluate({ started: true, career: input.career, fired: [] }, input)
 }
+
+// ── What is still waiting for the announcement bar ───────────────────────────
+
+// An award belongs to the run it was unlocked in, and the bar is a mid-run thing. GOOSE
+// EGG is the clearest case: it can only be answered by the pass made at game over, when
+// the bar is already gone, so it is a leftover the instant it exists — and the game-over
+// screen has paid it out by the time the player sees it anyway.
+//
+// The run boundary lives in the value rather than in an effect, and for the same reason
+// the rest of this file is pure. The queue is written by the achievements and read by the
+// bar, two effects in the same commit: clearing it in a third only *schedules* the clear,
+// so on the one commit where a run begins the bar still read the render it was given —
+// the last run's leftovers — and put one of them up. Stepped on every read and every
+// write, there is no commit where the two can disagree.
+export type AwardQueue = {
+  // Whether a run was on when the queue was last written.
+  inRun: boolean
+  waiting: readonly Award[]
+}
+
+// Shared so that a queue stepped twice hands back the same empty array, and an effect
+// keyed on it does not re-run for every render of a run with nothing waiting.
+const NOTHING: readonly Award[] = []
+
+export const EMPTY_QUEUE: AwardQueue = { inRun: false, waiting: NOTHING }
+
+// The queue as of now. A run beginning empties it; a run ending leaves it alone, since
+// nothing can reach the bar again until the next one starts.
+export function stepQueue(queue: AwardQueue, inRun: boolean): AwardQueue {
+  if (queue.inRun === inRun) return queue
+  return { inRun, waiting: inRun ? NOTHING : queue.waiting }
+}
+
+// Adds what a step just unlocked, oldest first.
+export const queueAwards = (queue: AwardQueue, awards: readonly Award[]): AwardQueue => ({
+  ...queue,
+  waiting: [...queue.waiting, ...awards],
+})
+
+// Drops one that has had its turn.
+export const dropAward = (queue: AwardQueue, award: Award): AwardQueue => {
+  const key = awardKey(award)
+  return { ...queue, waiting: queue.waiting.filter((held) => awardKey(held) !== key) }
+}

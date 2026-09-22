@@ -57,6 +57,17 @@ const NAME_TOKEN = '{name}'
 // The longest line the bar can hold at 9px mono, once a name is substituted in.
 export const MAX_MESSAGE_LENGTH = 40
 
+// How long a line holds the bar before the scores come back.
+export const ANNOUNCEMENT_MS = 5000
+
+// How long the bar's wipe takes, on or off — see components/game/announcement-bar.tsx.
+//
+// The bar needs it to run the wipe and the hook needs it to wait the wipe out, which is
+// why it is here rather than in either of them. A line ending is not the bar emptying:
+// the sweep that takes it away is still running, and whoever takes the bar before it
+// lands has its message swapped in over the top rather than following it on.
+export const ANNOUNCEMENT_SWEEP_MS = 750
+
 export function displayName(nickname: string | null): string {
   const trimmed = nickname?.trim() ?? ''
   if (trimmed === '') return UNKNOWN_NAME

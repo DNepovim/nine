@@ -9,9 +9,11 @@ import Animated, {
 } from 'react-native-reanimated'
 import { scheduleOnRN } from 'react-native-worklets'
 
-// Unhurried: the wipe is the whole effect, and at 14px tall it needs the time to be
-// read as a movement rather than a flicker.
-const SWEEP_MS = 750
+// Unhurried: the wipe is the whole effect, and at 14px tall it needs the time to be read
+// as a movement rather than a flicker. Shared with the hook, which waits it out between
+// two announcements so the second follows the first rather than replacing it.
+import { ANNOUNCEMENT_SWEEP_MS } from '@/lib/announcements'
+
 // A gentle start, then a long glide out — the edge gets going, then settles rather
 // than stopping dead.
 const SWEEP_EASING = Easing.bezier(0.33, 0, 0.15, 1)
@@ -59,7 +61,7 @@ export function AnnouncementBar({
     edge.value = 0
     edge.value = withTiming(
       width,
-      { duration: SWEEP_MS, easing: SWEEP_EASING },
+      { duration: ANNOUNCEMENT_SWEEP_MS, easing: SWEEP_EASING },
       (finished) => {
         if (finished && leaving) scheduleOnRN(onExited)
       },

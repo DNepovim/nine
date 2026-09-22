@@ -1,14 +1,18 @@
 import { describe, expect, it } from 'vitest'
 
-import type { AchievementFacts } from '@/lib/achievements'
+import type { AchievementFacts, Award } from '@/lib/achievements'
 import { emptyCareer, type Career } from '@/lib/career'
 import type { HitInfo } from '@/machines/game'
 
 import {
+  dropAward,
+  EMPTY_QUEUE,
   EMPTY_TALLY,
   foldBatch,
   IDLE,
+  queueAwards,
   stepAchievements,
+  stepQueue,
   type AchievementPhase,
   type RunInput,
 } from './achievement-run'
@@ -237,5 +241,43 @@ describe('foldBatch', () => {
     expect(after.cleanHits).toBe(12)
     // The rest of the run still counts towards everything else.
     expect(after.parHits).toBe(2)
+  })
+})
+
+describe('stepQueue', () => {
+  const goose: Award = { id: 'gooseEgg', stage: null }
+  const tenRuns: Award = { id: 'tenRuns', stage: null }
+
+  it('holds an award for the bar while the run it was unlocked in is still on', () => {
+    const queued = queueAwards(stepQueue(EMPTY_QUEUE, true), [tenRuns])
+    expect(stepQueue(queued, true).waiting).toEqual([tenRuns])
+  })
+
+  it('drops what the last run left behind the moment the next one starts', () => {
+    // GOOSE EGG is unlocked by the pass made at game over, when the bar is already gone,
+    // so it can only ever be a leftover — and the leftover was taking the bar of the
+    // *next* run, seconds after the game-over screen had already paid it out.
+    const over = queueAwards(EMPTY_QUEUE, [goose])
+    expect(stepQueue(over, true).waiting).toEqual([])
+  })
+
+  it('leaves a leftover be while no run is on', () => {
+    // Nothing can take the bar between runs anyway, and the queue is not what the
+    // game-over screen reads — so there is nothing to gain by emptying it early.
+    const over = queueAwards(EMPTY_QUEUE, [goose])
+    expect(stepQueue(over, false).waiting).toEqual([goose])
+  })
+
+  it('steps a write as well as a read, so a leftover cannot ride in on a push', () => {
+    // The whole point of the boundary living in the value: a run that starts and then
+    // unlocks something must not hand the bar the last run's award first.
+    const over = queueAwards(EMPTY_QUEUE, [goose])
+    const next = queueAwards(stepQueue(over, true), [tenRuns])
+    expect(next.waiting).toEqual([tenRuns])
+  })
+
+  it('drops an award once it has had its turn', () => {
+    const queued = queueAwards(stepQueue(EMPTY_QUEUE, true), [tenRuns, goose])
+    expect(dropAward(queued, tenRuns).waiting).toEqual([goose])
   })
 })

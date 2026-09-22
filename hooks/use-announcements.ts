@@ -7,13 +7,15 @@ import type { Award } from '@/lib/achievements'
 import { IDLE, stepRun, type RunPhase } from '@/lib/announcement-run'
 import {
   ANNOUNCEMENT_IDS,
+  ANNOUNCEMENT_MS,
+  ANNOUNCEMENT_SWEEP_MS,
   announcementFor,
   type Announcement,
   type AnnouncementId,
 } from '@/lib/announcements'
 
-// How long an announcement holds the bar before the scores come back.
-const ANNOUNCEMENT_MS = 5000
+// The bar's whole turn: the message, then the wipe that takes it away.
+const BAR_MS = ANNOUNCEMENT_MS + ANNOUNCEMENT_SWEEP_MS
 
 // The current announcement, or null when the bar should show scores.
 //
@@ -76,12 +78,14 @@ export function useAnnouncements({
   const [taken, setTaken] = useState<AnnouncementId[]>([])
   const phaseRef = useRef<RunPhase>(IDLE)
   const lastRivalSeqRef = useRef(0)
-  // Set while one of your own records is on the bar, so nothing else can displace it.
-  const ownUntilRef = useRef(0)
-  // Set while anything at all is on the bar. A record may take the bar from an
-  // achievement; an achievement may not take it from a rival mid-line, because two
-  // announcements in the same five seconds is a flicker rather than two moments.
-  const busyUntilRef = useRef(0)
+  // When the bar is next free — the message's own five seconds, then its wipe.
+  //
+  // `current` going null is the message ending, not the bar emptying: the sweep that
+  // takes it away is still running for `ANNOUNCEMENT_SWEEP_MS` after. Anything that
+  // takes the bar in that window has its message swapped in over the top of the one on
+  // its way out, which reads as one announcement turning into another rather than as two
+  // — so the queue waits this out and each one gets its own way in and its own way out.
+  const freeAtRef = useRef(0)
   const onAchievementAnnouncedRef = useRef(onAchievementAnnounced)
   onAchievementAnnouncedRef.current = onAchievementAnnounced
   // Kept current without becoming an effect dependency: the step effect keys on the
@@ -120,8 +124,7 @@ export function useAnnouncements({
     // and the run carries on either way — submission is fire-and-forget.
     if (step.publish) onBoardRecordRef.current()
 
-    ownUntilRef.current = Date.now() + ANNOUNCEMENT_MS
-    busyUntilRef.current = ownUntilRef.current
+    freeAtRef.current = Date.now() + BAR_MS
     setCurrent(announcementFor(step.announce, Math.random()))
   }, [
     inRun,
@@ -141,31 +144,44 @@ export function useAnnouncements({
   // news is *dropped* — by the time the bar frees up, someone else leading is no longer
   // news. An achievement is queued, because it happens once and being swallowed by a
   // record that landed in the same second would be losing it for good.
+  //
+  // Queued, and then *waited for*: the bar has to be empty and its wipe has to have
+  // landed. Taking it the instant `current` cleared is what made a run that unlocked
+  // three at once show the first, swap the second in over it, and only then play an
+  // entrance — one announcement turning into another instead of three of them in turn.
   useEffect(() => {
     const next = achievements[0]
-    if (!inRun || next === undefined) return
-    if (Date.now() < busyUntilRef.current) return
-    busyUntilRef.current = Date.now() + ANNOUNCEMENT_MS
-    setCurrent(
-      announcementFor(
-        'achievement',
-        Math.random(),
-        `${ACHIEVEMENTS[next.id].emblem} ${i18n._(ACHIEVEMENTS[next.id].title).toUpperCase()}`,
-      ),
-    )
-    onAchievementAnnouncedRef.current(next)
+    if (!inRun || next === undefined || current !== null) return
+    // Zero for the first of a run, when there is no wipe to wait out.
+    const wait = Math.max(0, freeAtRef.current - Date.now())
+    const id = setTimeout(() => {
+      freeAtRef.current = Date.now() + BAR_MS
+      setCurrent(
+        announcementFor(
+          'achievement',
+          Math.random(),
+          `${ACHIEVEMENTS[next.id].emblem} ${i18n._(ACHIEVEMENTS[next.id].title).toUpperCase()}`,
+        ),
+      )
+      onAchievementAnnouncedRef.current(next)
+    }, wait)
+    return () => {
+      clearTimeout(id)
+    }
   }, [inRun, achievements, current])
 
   useEffect(() => {
     if (!inRun || rival === null) return
     if (rival.seq === lastRivalSeqRef.current) return
     lastRivalSeqRef.current = rival.seq
-    // Your own moment always wins the bar; the rival's is dropped rather than queued,
-    // because by the time yours clears theirs is old news.
-    if (Date.now() < ownUntilRef.current) return
-    busyUntilRef.current = Date.now() + ANNOUNCEMENT_MS
+    // Your own moments always win the bar; the rival's is dropped rather than queued,
+    // because by the time yours clears theirs is old news. Dropped through the wipe as
+    // well as through the message — cutting an exit short to report that someone else
+    // is ahead is the least worthy interruption the bar has.
+    if (current !== null || Date.now() < freeAtRef.current) return
+    freeAtRef.current = Date.now() + BAR_MS
     setCurrent(announcementFor(rival.id, Math.random(), rival.name))
-  }, [inRun, rival])
+  }, [inRun, rival, current])
 
   // The dismissal timer lives with the announcement, not with the score that
   // triggered it — tying it to `score` would cancel the timer on the next hit.

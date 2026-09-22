@@ -4,11 +4,16 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { ACHIEVEMENT_IDS, type AchievementId } from '@/constants/achievements'
 import { useCareer } from '@/hooks/use-career'
 import {
+  dropAward,
+  EMPTY_QUEUE,
   EMPTY_TALLY,
   foldBatch,
   IDLE,
+  queueAwards,
   stepAchievements,
+  stepQueue,
   type AchievementPhase,
+  type AwardQueue,
   type RunTally,
 } from '@/lib/achievement-run'
 import {
@@ -23,13 +28,7 @@ import {
   type AchievementStore,
 } from '@/lib/achievement-store'
 import { fetchAchievements, pushAchievements } from '@/lib/achievement-sync'
-import {
-  awardKey,
-  earned,
-  holdsBoard,
-  type AchievementFacts,
-  type Award,
-} from '@/lib/achievements'
+import { earned, holdsBoard, type AchievementFacts, type Award } from '@/lib/achievements'
 import type { AnnouncementId } from '@/lib/announcements'
 import { boardKey, foldMultiplayer, foldRun, observeHeld } from '@/lib/career'
 import { todayISO } from '@/lib/leaderboard-period'
@@ -346,29 +345,32 @@ export function useAchievements(input: AchievementsInput): Achievements {
 // board-shaped achievements. Neither can be declared after the other, so the one thing
 // they share is declared before both.
 //
-// Cleared as a run starts rather than as one ends — the game-over screen is still up, and
-// anything left over belongs to the run the player is looking at.
+// Emptied as a run starts rather than as one ends — the game-over screen is still up, and
+// anything left over belongs to the run the player is looking at. That boundary is
+// `stepQueue`'s and not an effect's: an effect could only schedule the emptying, and the
+// bar announces from the same commit, so a leftover was reaching the bar of the next run.
 export function useAchievementQueue(inRun: boolean): {
   queue: readonly Award[]
   push: (awards: readonly Award[]) => void
   announced: (award: Award) => void
 } {
-  const [queue, setQueue] = useState<readonly Award[]>([])
-
-  useEffect(() => {
-    if (inRun) setQueue([])
-  }, [inRun])
+  const [queue, setQueue] = useState<AwardQueue>(EMPTY_QUEUE)
+  // The two writers run long after the render that made them, so the run they are
+  // stepping against has to be read at the moment they fire rather than closed over.
+  const inRunRef = useRef(inRun)
+  inRunRef.current = inRun
 
   const push = useCallback((awards: readonly Award[]) => {
-    setQueue((held) => [...held, ...awards])
+    setQueue((held) => queueAwards(stepQueue(held, inRunRef.current), awards))
   }, [])
 
   const announced = useCallback((award: Award) => {
-    const key = awardKey(award)
-    setQueue((held) => held.filter((queued) => awardKey(queued) !== key))
+    setQueue((held) => dropAward(stepQueue(held, inRunRef.current), award))
   }, [])
 
-  return { queue, push, announced }
+  // Stepped on the way out as well as on the way in, so the stored `inRun` lagging a
+  // render behind is invisible: nothing reads the state without stepping it first.
+  return { queue: stepQueue(queue, inRun).waiting, push, announced }
 }
 
 // Everything the rules ask about except the career, which the phase owns.
