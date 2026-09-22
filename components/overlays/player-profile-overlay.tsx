@@ -22,9 +22,17 @@ import { usePlayerProfile } from '@/hooks/use-player-profile'
 import { useTheme } from '@/hooks/use-theme'
 import { useViewport } from '@/hooks/use-viewport'
 import { championMark } from '@/lib/champions'
+import { formatGameTime } from '@/lib/duration'
 import { formatReleaseDate } from '@/lib/format-date'
 import { averagePercent, boardRows, lifetimeOf } from '@/lib/player-profile'
-import { MODE_GRADIENT, MODES, SCORED_MODES, type ScoredMode } from '@/machines/game'
+import {
+  DIFFICULTIES,
+  DIFFICULTY_ORDER,
+  MODE_GRADIENT,
+  MODES,
+  SCORED_MODES,
+  type ScoredMode,
+} from '@/machines/game'
 
 // The day the player joined. No profile carries a real join date yet, so every one of
 // them reads the same day — the day profiles shipped — until the RPC can answer for it.
@@ -74,6 +82,11 @@ export function PlayerProfileOverlay({
   const avgSpeed =
     lifetime === null ? null : averagePercent(lifetime.spdSum, lifetime.hits)
   const percent = (value: number | null): string => (value === null ? '—' : `${value}%`)
+  // ESY ×0.5 · HRD ×1 · EXT ×2, in the app's own difficulty order — what the rating
+  // under the figure is weighted by, and the only thing said about it.
+  const weights = DIFFICULTY_ORDER.map(
+    (level) => `${t(DIFFICULTIES[level].code)} ×${DIFFICULTIES[level].scoreWeight}`,
+  ).join(' · ')
   // A device running ahead of this build can hold an achievement this one has never heard
   // of, and the server counts what it was sent. Held to the catalogue so the pair always
   // reads as a fraction — this build cannot name more than it knows.
@@ -146,17 +159,49 @@ export function PlayerProfileOverlay({
 
             {profile !== null && lifetime !== null && (
               <>
-                <ProfileScore score={lifetime.score} digitFont={digitFont} />
+                {/* The weighted total, not the raw one — Easy counts half and Extreme
+                    double, so a career is judged by where it was spent rather than by
+                    how long it was. RATING and not SCORE because the per-board table
+                    lower down still shows what each board was actually scored, and the
+                    two numbers are not meant to add up to each other. */}
+                <ProfileScore score={lifetime.rating} digitFont={digitFont} />
+
+                {/* A number that deliberately disagrees with the table under it has to
+                    say why, and this is the only screen it appears on. The weights say
+                    it on their own: three difficulty codes against three multipliers is
+                    not a figure anyone reads as a plain total, and it is the whole of
+                    what a label plus a sentence was spending four lines to get across.
+
+                    Read from `DIFFICULTIES` so it cannot come to disagree with the
+                    arithmetic it is explaining — `lifetimeOf` weights by these same
+                    numbers. The short codes, because this is exactly the row too tight
+                    to spell them out that they exist for. */}
                 <Text
                   selectable={false}
-                  className="mb-4 mt-0.5 text-center font-mono text-[8px] font-bold tracking-[1px] text-dim"
+                  className="mb-4 mt-1 text-center font-mono text-[8px] font-bold tracking-[1px] text-dim"
                 >
-                  <Trans>SCORE</Trans>
+                  {weights}
                 </Text>
 
-                <View className="mb-5 w-full flex-row items-start justify-center gap-5">
+                {/* Five cells rather than four, so the gap comes in a step: RUNS and
+                    HITS count what happened, TIME says over how long, and the two
+                    averages say how well. The Czech labels are the widest — PRŮM PŘES
+                    twice over — and at gap-5 the row ran out of room on a narrow
+                    phone. */}
+                <View className="mb-5 w-full flex-row items-start justify-center gap-4">
                   <StatCell label={t`RUNS`} value={String(lifetime.runs)} />
                   <StatCell label={t`HITS`} value={String(lifetime.hits)} />
+                  {/* A career with nothing counted says 0, not 0″. On the pause and
+                      game over screens a duration of zero seconds is a real answer about
+                      a real run; here it means no run has been timed yet, and a unit mark
+                      on it dresses an absence as a measurement. The overhang goes with
+                      the mark — a bare 0 has nothing hanging out, and pulling it left
+                      anyway would sit it off centre over its own label. */}
+                  <StatCell
+                    label={t`TIME`}
+                    value={lifetime.timeMs > 0 ? formatGameTime(lifetime.timeMs) : '0'}
+                    overhang={lifetime.timeMs > 0}
+                  />
                   <StatCell label={t`AVG ACC`} value={percent(avgAccuracy)} />
                   <StatCell label={t`AVG SPD`} value={percent(avgSpeed)} />
                 </View>

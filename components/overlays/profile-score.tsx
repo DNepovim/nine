@@ -2,12 +2,13 @@ import { Text, View } from 'react-native'
 
 import { compactNumber } from '@/lib/compact-number'
 
-// Everything the player has ever scored, on one line under their name.
+// The player's rating, on one line under their name — everything they have ever scored,
+// weighted by the difficulty it was scored on.
 //
 // The seven-segment face every score in the app wears, at headline size — and shortened,
 // because a career total runs into the millions and the full figure would either wrap or
-// shrink until it stopped reading as a headline. The exact numbers live in the per-board
-// table below.
+// shrink until it stopped reading as a headline. The exact, unweighted numbers live in
+// the per-board table below.
 //
 // The suffix is set in mono beside the digits rather than with them: DSEG7 draws digits
 // from seven segments and has no letter to make a `k` out of.

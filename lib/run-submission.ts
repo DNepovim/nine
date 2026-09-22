@@ -32,6 +32,7 @@ async function sendRun(run: PendingRun): Promise<Sent> {
     p_hits: run.hits,
     p_acc_sum: run.accSum,
     p_spd_sum: run.spdSum,
+    p_elapsed_ms: run.elapsedMs,
   })
   noteRequest(error)
   if (error === null) return 'counted'
@@ -61,6 +62,7 @@ export async function countRun(
     hits: number
     accSum: number
     spdSum: number
+    elapsedMs: number
   },
 ): Promise<void> {
   const pending: PendingRun = {

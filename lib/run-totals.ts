@@ -23,8 +23,15 @@ export type PendingRun = {
   // to the board's totals; an average is the sum over the hits, computed on read.
   accSum: number
   spdSum: number
+  // How long the run was actually played, as the machine froze it — pause time excluded.
+  elapsedMs: number
   endedAt: string // ISO 8601
 }
+
+// The same run as a queue written by an earlier build has it: everything but the newest
+// field. A device updating mid-queue is the ordinary case, not an edge one — the runs it
+// is still holding were written by the build before this.
+type StoredRun = Omit<PendingRun, 'elapsedMs'> & { elapsedMs?: number }
 
 // What the queue is bounded by. A device that plays without ever reaching the server —
 // no connection, no account yet — must not accumulate rows forever, and a month-old run
@@ -57,7 +64,12 @@ export async function readRunTotals(): Promise<PendingRun[]> {
   try {
     const raw = await AsyncStorage.getItem(RUN_TOTALS_KEY)
     if (raw === null) return []
-    return JSON.parse(raw) as PendingRun[]
+    // A run queued before this build knew to time it lands with a length of zero, which
+    // is the truth about what was recorded rather than a guess dressed as a measurement.
+    return (JSON.parse(raw) as StoredRun[]).map((run) => ({
+      ...run,
+      elapsedMs: run.elapsedMs ?? 0,
+    }))
   } catch {
     return []
   }

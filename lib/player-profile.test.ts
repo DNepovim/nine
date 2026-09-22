@@ -5,6 +5,7 @@ import {
   boardRows,
   EMPTY_PROFILE,
   lifetimeOf,
+  ratingOf,
   shapeProfile,
   sortReigns,
   type BoardTotals,
@@ -20,6 +21,7 @@ const totals = (over: Partial<BoardTotals> = {}): BoardTotals => ({
   scoreSum: 8000,
   accSum: 34,
   spdSum: 20,
+  timeMs: 90_000,
   ...over,
 })
 
@@ -66,7 +68,50 @@ describe('lifetimeOf', () => {
           spdSum: 26,
         }),
       ]),
-    ).toEqual({ runs: 10, hits: 70, score: 20000, accSum: 55, spdSum: 46 })
+    ).toEqual({
+      runs: 10,
+      hits: 70,
+      score: 20000,
+      timeMs: 180_000,
+      rating: 20000,
+      accSum: 55,
+      spdSum: 46,
+    })
+  })
+
+  it('adds the time every board was played for', () => {
+    // The one counter the lifetime row could not answer before the server kept it.
+    const lifetime = lifetimeOf([
+      totals({ timeMs: 90_000 }),
+      totals({ mode: 'speed', timeMs: 150_000 }),
+    ])
+    expect(lifetime.timeMs).toBe(240_000)
+  })
+
+  it('weights every board by the difficulty it was scored on', () => {
+    // Easy at half, Hard at itself, Extreme at double — so the same ten thousand points
+    // is worth 5 000, 10 000 or 20 000 depending on where it was spent.
+    const rating = (difficulty: BoardTotals['difficulty']) =>
+      lifetimeOf([totals({ difficulty, scoreSum: 10000 })]).rating
+    expect(rating('easy')).toBe(5000)
+    expect(rating('hard')).toBe(10000)
+    expect(rating('extreme')).toBe(20000)
+  })
+
+  it('keeps the raw total beside the rating, so the per-board table still adds up', () => {
+    const lifetime = lifetimeOf([
+      totals({ difficulty: 'easy', scoreSum: 10000 }),
+      totals({ difficulty: 'extreme', scoreSum: 10000 }),
+    ])
+    expect(lifetime.score).toBe(20000)
+    expect(lifetime.rating).toBe(25000)
+  })
+
+  it('rounds the rating once, not once per board', () => {
+    // Half-weighting an odd total lands on a half point. Three of them rounded apart
+    // would come to 4 503 and disagree with the boards they were added from.
+    const odd = totals({ difficulty: 'easy', scoreSum: 3001 })
+    expect(lifetimeOf([odd, odd, odd]).rating).toBe(4502)
   })
 
   it('sums both factors over every board, whichever mode it is', () => {
@@ -81,7 +126,27 @@ describe('lifetimeOf', () => {
   })
 
   it('is zeroes for a player with no counted runs', () => {
-    expect(lifetimeOf([])).toEqual({ runs: 0, hits: 0, score: 0, accSum: 0, spdSum: 0 })
+    expect(lifetimeOf([])).toEqual({
+      runs: 0,
+      hits: 0,
+      score: 0,
+      timeMs: 0,
+      rating: 0,
+      accSum: 0,
+      spdSum: 0,
+    })
+  })
+})
+
+describe('ratingOf', () => {
+  it('weights one run by the board it was played on', () => {
+    expect(ratingOf(10000, 'easy')).toBe(5000)
+    expect(ratingOf(10000, 'hard')).toBe(10000)
+    expect(ratingOf(10000, 'extreme')).toBe(20000)
+  })
+
+  it('rounds a half point rather than showing one', () => {
+    expect(ratingOf(3001, 'easy')).toBe(1501)
   })
 })
 

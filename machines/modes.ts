@@ -79,8 +79,24 @@ export type DifficultyConfig = {
   // to call out. Extreme's clock is already the run's whole fight; asking for a tight
   // route on top of it would be punishing the same thing twice.
   wastefulThreshold: number
+  // What a point scored here is worth once boards are added together — see
+  // `lifetimeOf` in lib/player-profile.ts, the one place in the app that sums across
+  // difficulties.
+  //
+  // A hit is worth the same hundred points whatever the difficulty: `computeHitPoints`
+  // has no difficulty term, and difficulty is spent entirely on the clock above. But a
+  // longer clock lifts both factors that hundred is blended from — more seconds to find
+  // the optimal route, more of the ring left when the hit lands — and keeps lives alive
+  // longer, so Easy pays more per hit *and* more hits per run. Added up flat, a career
+  // spent on Easy outranks one spent on Extreme. This is what puts that right.
+  //
+  // Deliberately not applied to a run, a board or a record: a leaderboard is already one
+  // mode × difficulty, so nothing there is ever compared across the three.
+  scoreWeight: number
 }
 
+// Hard is the one that counts for itself, with Easy at half and Extreme at double — a
+// ×4 spread across the three, and a rule short enough to say out loud.
 export const DIFFICULTIES: Record<Difficulty, DifficultyConfig> = {
   easy: {
     label: msg`EASY`,
@@ -88,6 +104,7 @@ export const DIFFICULTIES: Record<Difficulty, DifficultyConfig> = {
     timeoutScale: 1.45,
     maxTargets: 3,
     wastefulThreshold: 0.25,
+    scoreWeight: 0.5,
   },
   hard: {
     label: msg`HARD`,
@@ -95,6 +112,7 @@ export const DIFFICULTIES: Record<Difficulty, DifficultyConfig> = {
     timeoutScale: 0.75,
     maxTargets: 3,
     wastefulThreshold: 0.2,
+    scoreWeight: 1,
   },
   extreme: {
     label: msg`EXTREME`,
@@ -102,6 +120,7 @@ export const DIFFICULTIES: Record<Difficulty, DifficultyConfig> = {
     timeoutScale: 0.5,
     maxTargets: 4,
     wastefulThreshold: 0.15,
+    scoreWeight: 2,
   },
 }
 

@@ -29,9 +29,11 @@ import { currentBoardMedals } from '@/lib/board-medals'
 import type { RecordScreen } from '@/lib/champions'
 import type { TitleWords } from '@/lib/game-over-title'
 import { runChallenge } from '@/lib/next-challenge'
+import { ratingOf } from '@/lib/player-profile'
 import {
   DARK_MODE_GRADIENT,
   MODE_GRADIENT,
+  SCORED_MODES,
   type Difficulty,
   type Mode,
 } from '@/machines/game'
@@ -230,6 +232,24 @@ export function GameOverOverlay({
               color={MODE_GRADIENT[gameMode][0]}
               glow={painted ? WHITE_GLOW : `${MODE_GRADIENT[gameMode][0]}99`}
             />
+
+            {/* What the run is worth away from this board. The score above is what was
+                scored here; this is what it counts for once it is added to the other
+                five, where a point from Extreme is worth four from Easy — see
+                `scoreWeight` in machines/modes.ts. The profile explains the weights in
+                full; one line here is what makes a player wonder enough to go and look.
+
+                Only where there is a rating to add to: Trainee reaches no board and no
+                counter, and a run that scored nothing adds nothing worth a line. */}
+            {isOneOf(gameMode, SCORED_MODES) && score > 0 && (
+              <Text
+                selectable={false}
+                className="mb-2 font-mono text-[9px] font-bold tracking-[1px] text-dim"
+                style={painted ? ON_GOLD_LABEL_SHADOW : null}
+              >
+                <Trans>+{ratingOf(score, difficulty)} TO YOUR RATING</Trans>
+              </Text>
+            )}
 
             <BoardMedals medals={medals} gameMode={gameMode} shadow={painted} />
 

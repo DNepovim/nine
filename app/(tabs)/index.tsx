@@ -647,8 +647,19 @@ export default function GameScreen() {
       hits,
       accSum,
       spdSum,
+      elapsedMs,
     })
-  }, [isGameOver, mode, difficulty, state.context.score, hits, accSum, spdSum, userId])
+  }, [
+    isGameOver,
+    mode,
+    difficulty,
+    state.context.score,
+    hits,
+    accSum,
+    spdSum,
+    elapsedMs,
+    userId,
+  ])
 
   // Ending a run yourself from the pause menu still counts: submit the score and ask
   // for a nickname exactly as running out of lives does. The game-over effect below
@@ -660,7 +671,7 @@ export default function GameScreen() {
     // the player played, and "how many runs" is not "how many went well".
     if (!countedRunRef.current) {
       countedRunRef.current = true
-      void countRun(userId, { mode, difficulty, score, hits, accSum, spdSum })
+      void countRun(userId, { mode, difficulty, score, hits, accSum, spdSum, elapsedMs })
     }
     if (score <= 0) return
     submitScore(mode, difficulty, score, hits)

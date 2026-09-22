@@ -13,6 +13,7 @@ const run = (runId: string, endedAt = '2026-09-21T11:00:00.000Z'): PendingRun =>
   hits: 14,
   accSum: 11.2,
   spdSum: 6.4,
+  elapsedMs: 96_000,
   endedAt,
 })
 

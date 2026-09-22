@@ -9,6 +9,7 @@ import {
   type MedalPeriod,
 } from '@/lib/medals'
 import {
+  DIFFICULTIES,
   DIFFICULTY_ORDER,
   SCORED_MODES,
   type Difficulty,
@@ -31,6 +32,9 @@ export type BoardTotals = {
   scoreSum: number
   accSum: number
   spdSum: number
+  // How long this board has been played, summed over its runs. Zero for a board whose
+  // runs were all counted before the server kept time.
+  timeMs: number
 }
 
 type BoardBest = {
@@ -85,7 +89,19 @@ export type BoardRow = {
 export type Lifetime = {
   runs: number
   hits: number
+  // Every point the player has scored, added up as scored. What the per-board table
+  // below the headline adds up to, and the only figure here that is a *score*.
   score: number
+  // How long the player has spent playing, over every board.
+  timeMs: number
+  // The same points weighted by the difficulty they were scored on — see `scoreWeight`
+  // in machines/modes.ts, which is also where the reason lives.
+  //
+  // Kept beside the raw total rather than replacing it, and named something else on
+  // purpose: a weighted figure no longer equals the table under it, and a number
+  // labelled SCORE that disagrees with every score on the same screen is a fourth thing
+  // called score. A rating is a standing; a score is what a run was worth.
+  rating: number
   accSum: number
   spdSum: number
 }
@@ -107,19 +123,37 @@ const AVERAGE_SUM = {
 export const averagePercent = (sum: number, hits: number): number | null =>
   hits > 0 ? Math.round((100 * sum) / hits) : null
 
+const EMPTY_LIFETIME: Lifetime = {
+  runs: 0,
+  hits: 0,
+  score: 0,
+  timeMs: 0,
+  rating: 0,
+  accSum: 0,
+  spdSum: 0,
+}
+
 // Everything the player has done on every board, added up. Derived rather than stored —
 // a seventh row holding the same fact is a seventh chance to disagree with it.
-export const lifetimeOf = (totals: readonly BoardTotals[]): Lifetime =>
-  totals.reduce<Lifetime>(
-    (sum, board) => ({
-      runs: sum.runs + board.runs,
-      hits: sum.hits + board.hits,
-      score: sum.score + board.scoreSum,
-      accSum: sum.accSum + board.accSum,
-      spdSum: sum.spdSum + board.spdSum,
+//
+// The rating is rounded once here rather than per board: a half-weighted board can land
+// on a half point, and rounding six of those before adding them is how a total comes to
+// be three off the sum of its parts.
+export function lifetimeOf(totals: readonly BoardTotals[]): Lifetime {
+  const sum = totals.reduce<Lifetime>(
+    (held, board) => ({
+      runs: held.runs + board.runs,
+      hits: held.hits + board.hits,
+      score: held.score + board.scoreSum,
+      timeMs: held.timeMs + board.timeMs,
+      rating: held.rating + board.scoreSum * DIFFICULTIES[board.difficulty].scoreWeight,
+      accSum: held.accSum + board.accSum,
+      spdSum: held.spdSum + board.spdSum,
     }),
-    { runs: 0, hits: 0, score: 0, accSum: 0, spdSum: 0 },
+    EMPTY_LIFETIME,
   )
+  return { ...sum, rating: Math.round(sum.rating) }
+}
 
 // The six boards in the app's own order — mode, then difficulty — whether or not the
 // player has ever touched them. A board never played is a row of dashes, which says
@@ -147,6 +181,16 @@ export function boardRows(profile: PlayerProfile): BoardRow[] {
   )
 }
 
+// What one run adds to a rating: its score, weighted by the board it was played on.
+//
+// For display only — nothing per-run is stored, and `lifetimeOf` always re-derives the
+// career figure from the boards' own sums. Which is also the answer to the rounding: a
+// half-weighted odd score lands on a half point, rounded here for one line on the game
+// over screen and rounded once at the end there. The two are the same arithmetic read at
+// two different moments, not two tallies that have to agree to the point.
+export const ratingOf = (score: number, difficulty: Difficulty): number =>
+  Math.round(score * DIFFICULTIES[difficulty].scoreWeight)
+
 // Newest first. A player's most recent reign is the one they are most likely to still
 // be holding, and an open reign is the headline of the list.
 export const sortReigns = (reigns: readonly Reign[]): Reign[] =>
@@ -170,6 +214,9 @@ export type PlayerProfileResponse = {
     scoreSum: number
     accSum: number
     spdSum: number
+    // Absent, not zero, from a server still running the RPC as it was before the
+    // counters kept time — the same shape `achievements` above is read in.
+    timeMs?: number
   })[]
   bests: (RawBoard & { bestScore: number; hits: number; achievedAt: string })[]
   medals: (RawBoard & { period: string; rank: number; bestScore: number })[]
@@ -228,6 +275,7 @@ const pickTotals = (
   scoreSum: row.scoreSum,
   accSum: row.accSum,
   spdSum: row.spdSum,
+  timeMs: row.timeMs ?? 0,
 })
 
 export const EMPTY_PROFILE: PlayerProfile = {
