@@ -102,8 +102,9 @@ export function ScoreRow({
         </Text>
         {/* One slot, two things that are never both true: a published row says how
             long its record has stood, an unpublished one says why it is not on the
-            board. The note wins outright — "5M AGO" beside NOT PUBLISHED would be
-            timing a record the board has never seen. */}
+            board. The note wins outright — "5 min ago" beside NOT PUBLISHED would be
+            timing a record the board has never seen. The two registers differ on
+            purpose: lower case for the aside, capitals for the warning. */}
         {note !== null && (
           <Text
             selectable={false}

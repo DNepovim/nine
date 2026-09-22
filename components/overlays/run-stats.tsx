@@ -31,17 +31,26 @@ export function RunStats({
 }) {
   const { t } = useLingui()
   const shadow = halo ? ON_GOLD_LABEL_SHADOW : null
+  // TIME is the one value that ends in a unit mark, and its ″ hangs outside the cell so
+  // that the digits — not the digits plus the mark — are what sits centred over the
+  // label. A percentage's % is part of the number it is written on, and stays in.
   const cells = [
-    { key: 'hits', label: msg`HITS`, value: `${hits}` },
-    { key: 'time', label: msg`TIME`, value: formatGameTime(gameTimeMs) },
-    { key: 'acc', label: msg`AVG ACC`, value: `${avgAccuracy}%` },
-    { key: 'spd', label: msg`AVG SPD`, value: `${avgSpeed}%` },
+    { key: 'hits', label: msg`HITS`, value: `${hits}`, overhang: false },
+    { key: 'time', label: msg`TIME`, value: formatGameTime(gameTimeMs), overhang: true },
+    { key: 'acc', label: msg`AVG ACC`, value: `${avgAccuracy}%`, overhang: false },
+    { key: 'spd', label: msg`AVG SPD`, value: `${avgSpeed}%`, overhang: false },
   ]
 
   return (
     <View className="mb-6 w-full flex-row items-start justify-center gap-5">
-      {cells.map(({ key, label, value }) => (
-        <StatCell key={key} label={t(label)} value={value} shadow={shadow} />
+      {cells.map(({ key, label, value, overhang }) => (
+        <StatCell
+          key={key}
+          label={t(label)}
+          value={value}
+          shadow={shadow}
+          overhang={overhang}
+        />
       ))}
     </View>
   )
