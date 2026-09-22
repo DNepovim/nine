@@ -243,6 +243,17 @@ describe('shapeProfile', () => {
     expect(shaped.medals).toEqual([])
   })
 
+  it('reads the achievement count straight through', () => {
+    expect(shapeProfile({ ...raw, achievements: 12 }).achievements).toBe(12)
+  })
+
+  it('reads a server that does not count achievements yet as none', () => {
+    // The RPC that answers it ships in its own migration, and a client can reach a
+    // server that has not run it. Absent is not a number, and zero is the only reading
+    // that cannot overstate what the player holds.
+    expect(shapeProfile(raw).achievements).toBe(0)
+  })
+
   it('reads a player with nothing on any board', () => {
     expect(
       shapeProfile({ nickname: null, totals: [], bests: [], medals: [], reigns: [] }),

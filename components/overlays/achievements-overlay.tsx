@@ -13,7 +13,7 @@ import { ACHIEVEMENT_INK } from '@/constants/colors'
 import { useTheme } from '@/hooks/use-theme'
 import { firstEarnedAt, idsOf, stagesOf } from '@/lib/achievement-store'
 import type { AchievementStore } from '@/lib/achievement-store'
-import { stageProgress, type AchievementFacts } from '@/lib/achievements'
+import { boardMarks, stageProgress, type AchievementFacts } from '@/lib/achievements'
 
 import { AchievementRow } from './achievement-row'
 
@@ -80,6 +80,7 @@ export function AchievementsOverlay({
             earnedAt={earnedAt.get(item) ?? null}
             stages={stagesOf(store, item)}
             progress={stageProgress(item, facts)}
+            boards={boardMarks(item, facts)}
           />
         )}
       />

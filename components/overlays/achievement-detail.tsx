@@ -14,7 +14,7 @@ import { PageDots } from '@/components/page-dots'
 import type { AchievementId } from '@/constants/achievements'
 import { ACHIEVEMENT_SCALE } from '@/constants/colors'
 import { firstEarnedAt, stagesOf, type AchievementStore } from '@/lib/achievement-store'
-import { stageProgress, type AchievementFacts } from '@/lib/achievements'
+import { boardMarks, stageProgress, type AchievementFacts } from '@/lib/achievements'
 
 // The what's-new dialog's edge, in the achievement green rather than the spectrum: this
 // card belongs to one achievement, and green is what the app says that with everywhere
@@ -179,6 +179,7 @@ export function AchievementDetail({
                           earnedAt={firstEarnedAt(store, id)}
                           stages={stagesOf(store, id)}
                           progress={stageProgress(id, facts)}
+                          boards={boardMarks(id, facts)}
                         />
                       </View>
                     </LinearGradient>

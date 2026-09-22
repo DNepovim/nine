@@ -9,7 +9,13 @@ import {
   type StageAxis,
 } from '@/constants/achievements'
 import type { AnnouncementId } from '@/lib/announcements'
-import { boardKey, dayStreakWith, heldDays, type Career } from '@/lib/career'
+import {
+  boardKey,
+  dayStreakWith,
+  heldDays,
+  POOR_RUN_SCORE,
+  type Career,
+} from '@/lib/career'
 import { dayInPrague } from '@/lib/leaderboard-period'
 import type { BoardStanding } from '@/lib/medals'
 import {
@@ -89,14 +95,30 @@ const bestOn = (f: AchievementFacts, mode: ScoredMode, difficulty: Stage): numbe
   )
 }
 
-// Every board a score has been posted on, this run included.
-const boardsPlayed = (f: AchievementFacts): number => {
+// One of the six boards, and whether a score has ever been posted on it — this run
+// included, since the career does not know about the run until it ends.
+export type BoardMark = { mode: ScoredMode; difficulty: Difficulty; posted: boolean }
+
+// All six, in the app's own order: mode, then easiest difficulty first.
+const boardsPosted = (f: AchievementFacts): BoardMark[] => {
   const scored = isOneOf(f.run.mode, SCORED_MODES) && f.run.score > 0
   const here = scored ? boardKey(f.run.mode, f.run.difficulty) : null
-  return here === null || f.career.boardsPlayed.includes(here)
-    ? f.career.boardsPlayed.length
-    : f.career.boardsPlayed.length + 1
+  return SCORED_MODES.flatMap((mode) =>
+    DIFFICULTY_ORDER.map((difficulty) => {
+      const key = boardKey(mode, difficulty)
+      return {
+        mode,
+        difficulty,
+        posted: key === here || f.career.boardsPlayed.includes(key),
+      }
+    }),
+  )
 }
+
+// Every board a score has been posted on, this run included. Counted off the same six
+// marks the row draws, so the number and the boards beside it cannot disagree.
+const boardsPlayed = (f: AchievementFacts): number =>
+  boardsPosted(f).filter((board) => board.posted).length
 
 const standingOn = (
   f: AchievementFacts,
@@ -195,6 +217,33 @@ const parHitsOn = (f: AchievementFacts, stage: Stage): number => {
 const standsAt = (f: AchievementFacts, stage: Stage, rank: number): boolean =>
   f.standings.some((s) => s.difficulty === stage && s.rank <= rank && s.score > 0)
 
+// Whether the player stands first all-time on one board. THE OWL and THE EAGLE ask it
+// of a mode's Extreme board — where standing first is what the bird means — and the hook
+// that feeds `observeHeld` asks it once per board; one definition of "holding", so a bird
+// awarded and a hold being timed can never disagree about it.
+export const holdsBoard = (
+  f: AchievementFacts,
+  mode: ScoredMode,
+  difficulty: Difficulty,
+): boolean => standingOn(f, mode, difficulty) === 1
+
+// A run that barely happened, as the career counts them. Asked of the live run as well,
+// since the rules read the career as it stood before it — see `POOR_RUN_SCORE` for what
+// "barely" is and why the number lives over there.
+const poorRuns = (f: AchievementFacts): number =>
+  f.career.poorRunStreak +
+  (f.run.finished && isOneOf(f.run.mode, SCORED_MODES) && f.run.score < POOR_RUN_SCORE
+    ? 1
+    : 0)
+
+// A number that reads the same backwards. Four digits or more, so every score under a
+// thousand is not quietly a palindrome — 77 is a small number, not a curiosity.
+const readsBothWays = (score: number): boolean => {
+  const digits = String(score)
+  if (digits.length < PALINDROME_DIGITS) return false
+  return Array.from(digits).every((digit, i) => digit === digits[digits.length - 1 - i])
+}
+
 // ── The rules ────────────────────────────────────────────────────────────────────
 //
 // One predicate per achievement, over a Record of the id union — so an achievement added
@@ -252,6 +301,8 @@ const RULES = {
 
   onTheBoard: (f, stage) => standsAt(f, stage, 3),
   topOfTheBoard: (f, stage) => standsAt(f, stage, 1),
+  theOwl: (f) => holdsBoard(f, 'accuracy', 'extreme'),
+  theEagle: (f) => holdsBoard(f, 'speed', 'extreme'),
   untouchable: (f) => f.crown,
   tenBests: (f) => f.career.personalBests + (f.run.personalBest ? 1 : 0) >= 10,
   // Opening the week's board opens the day's too, so either counts.
@@ -270,6 +321,28 @@ const RULES = {
     const hour = f.run.endedAt.getHours()
     return hour >= NIGHT_FROM && hour < NIGHT_UNTIL
   },
+  // Trainee never ends and keeps no score, so the runs that can finish on nothing are
+  // the scored ones — which is also the only place scoring nothing means anything.
+  gooseEgg: (f) =>
+    f.run.finished && isOneOf(f.run.mode, SCORED_MODES) && f.run.score === 0,
+  inAndOut: (f) => f.run.finished && f.run.elapsedMs < SHORT_VISIT_MS,
+  roughPatch: (f) => poorRuns(f) >= POOR_RUN_STREAK,
+  // Not waited for the end: a run this slow twenty targets in is not going to speed up,
+  // and the joke lands better while it is still happening.
+  scenicRoute: (f) =>
+    f.run.mode === 'speed' && f.run.hits >= SCENIC_HITS && f.run.avgSpeed < SCENIC_SPEED,
+  eternalStudent: (f) => f.run.mode === 'trainee' && f.run.elapsedMs >= HALF_HOUR_MS,
+  touchGrass: (f) => Math.max(f.career.longestRunMs, f.run.elapsedMs) >= AN_HOUR_MS,
+  roundNumber: (f) =>
+    f.run.finished && f.run.score > 0 && f.run.score % ROUND_SCORE === 0,
+  palindrome: (f) => f.run.finished && readsBothWays(f.run.score),
+  nineNineNine: (f) => f.career.hits + f.run.hits >= NINE_HUNDRED_NINETY_NINE,
+  goodSport: (f) =>
+    f.career.multiplayerRuns >= GOOD_SPORT_ROOMS && f.career.multiplayerWins === 0,
+  noJoke: (f) =>
+    f.run.finished &&
+    f.run.endedAt.getMonth() === APRIL &&
+    f.run.endedAt.getDate() === FOOLS_DAY,
 } as const satisfies Record<
   AchievementId,
   // `stage` is the board being asked about. Unstaged rules ignore it and are asked once
@@ -280,6 +353,23 @@ const RULES = {
 
 const MODE_COUNT = 3
 const ALL_BOARD_COUNT = SCORED_MODES.length * DIFFICULTY_ORDER.length
+
+// The secret ones' numbers. Each is arbitrary in the way a punchline is — the joke is
+// that the app was counting at all — so they are named here rather than left in the
+// rules, where a bare 1_800_000 says nothing about what it is measuring.
+const SHORT_VISIT_MS = 10_000
+const HALF_HOUR_MS = 1_800_000
+const AN_HOUR_MS = 3_600_000
+const POOR_RUN_STREAK = 5
+const SCENIC_HITS = 20
+const SCENIC_SPEED = 20
+const ROUND_SCORE = 1000
+const PALINDROME_DIGITS = 4
+const NINE_HUNDRED_NINETY_NINE = 999
+const GOOD_SPORT_ROOMS = 5
+// `getMonth` counts from zero, which is the whole reason this is named.
+const APRIL = 3
+const FOOLS_DAY = 1
 
 const finishedRuns = (f: AchievementFacts): number =>
   f.career.runs + (f.run.finished ? 1 : 0)
@@ -342,6 +432,8 @@ const PROGRESS = {
 
   onTheBoard: () => 0,
   topOfTheBoard: () => 0,
+  theOwl: () => 0,
+  theEagle: () => 0,
   untouchable: () => 0,
   tenBests: (f) => f.career.personalBests + (f.run.personalBest ? 1 : 0),
   earlyBird: () => 0,
@@ -355,6 +447,17 @@ const PROGRESS = {
 
   theLongWay: () => 0,
   nightShift: () => 0,
+  gooseEgg: () => 0,
+  inAndOut: () => 0,
+  roughPatch: () => 0,
+  scenicRoute: () => 0,
+  eternalStudent: () => 0,
+  touchGrass: () => 0,
+  roundNumber: () => 0,
+  palindrome: () => 0,
+  nineNineNine: () => 0,
+  goodSport: () => 0,
+  noJoke: () => 0,
 } as const satisfies Record<
   AchievementId,
   (facts: AchievementFacts, stage: Stage) => number
@@ -408,15 +511,17 @@ export const isEarnedBy = (
   stage: Stage = firstStageOf(id),
 ): boolean => RULES[id](facts, stage)
 
-// A rank of 1 on a board's all-time list, or null for a board the player is not on. The
-// achievements themselves do not read this — the career's `heldSince` is what watches
-// the boards — but the hook that feeds `observeHeld` needs exactly this question asked
-// once per board, and asking it here keeps the definition of "holding" in one place.
-export const holdsBoard = (
-  f: AchievementFacts,
-  mode: ScoredMode,
-  difficulty: Difficulty,
-): boolean => standingOn(f, mode, difficulty) === 1
+// Which of the six boards an achievement is spread over, or null for the ones that are
+// not about the boards at all.
+//
+// Only ALL SIX BOARDS is: its rule counts boards rather than stages, so the row's own
+// three bars cannot say which of the six are done and a bare 4/6 does not either. The
+// question belongs here, beside the rule that asks it, rather than in a view that would
+// have to know what the achievement means.
+export const boardMarks = (
+  id: AchievementId,
+  facts: AchievementFacts,
+): BoardMark[] | null => (id === 'allSixBoards' ? boardsPosted(facts) : null)
 
 // How far along an achievement is on each board — what the row's three bars read.
 //

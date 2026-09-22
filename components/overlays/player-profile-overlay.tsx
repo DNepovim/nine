@@ -14,19 +14,23 @@ import { ProfileName } from '@/components/overlays/profile-name'
 import { ProfileReignRow } from '@/components/overlays/profile-reign-row'
 import { ProfileScore } from '@/components/overlays/profile-score'
 import { StatCell } from '@/components/overlays/stat-cell'
+import { ACHIEVEMENT_COUNT } from '@/constants/achievements'
+import { ACHIEVEMENT_INK } from '@/constants/colors'
 import { mono } from '@/constants/theme'
 import { useChampionsContext } from '@/hooks/use-champions'
 import { usePlayerProfile } from '@/hooks/use-player-profile'
+import { useTheme } from '@/hooks/use-theme'
 import { useViewport } from '@/hooks/use-viewport'
 import { championMark } from '@/lib/champions'
 import { formatReleaseDate } from '@/lib/format-date'
 import { averagePercent, boardRows, lifetimeOf } from '@/lib/player-profile'
 import { MODE_GRADIENT, MODES, SCORED_MODES, type ScoredMode } from '@/machines/game'
 
-// The day the counters started. Every lifetime number below is counted from here, and a
-// player who has been at this for a year would otherwise read as a newcomer — the app
-// saying "3 runs" about someone with a year behind them is the app lying about them.
-const COUNTING_SINCE = '2026-09-21'
+// The day the player joined. No profile carries a real join date yet, so every one of
+// them reads the same day — the day profiles shipped — until the RPC can answer for it.
+// The line is here for the same reason the counters' start date was: a player who has
+// been at this a while should not read as someone who turned up this morning.
+const JOINED_ON = '2026-09-22'
 
 // What each mode is judged on, as the column heading over its own average.
 const AVERAGE_LABEL = {
@@ -51,6 +55,7 @@ export function PlayerProfileOverlay({
   onClose: () => void
 }) {
   const { t } = useLingui()
+  const { colorScheme } = useTheme()
   const { height } = useViewport()
   const [dsegLoaded] = useFonts({ DSEG7: DSEG7Font })
   const digitFont = dsegLoaded ? 'DSEG7' : mono
@@ -69,6 +74,11 @@ export function PlayerProfileOverlay({
   const avgSpeed =
     lifetime === null ? null : averagePercent(lifetime.spdSum, lifetime.hits)
   const percent = (value: number | null): string => (value === null ? '—' : `${value}%`)
+  // A device running ahead of this build can hold an achievement this one has never heard
+  // of, and the server counts what it was sent. Held to the catalogue so the pair always
+  // reads as a fraction — this build cannot name more than it knows.
+  const shownAchievements =
+    profile === null ? 0 : Math.min(profile.achievements, ACHIEVEMENT_COUNT)
 
   return (
     <ModalCard
@@ -151,11 +161,30 @@ export function PlayerProfileOverlay({
                   <StatCell label={t`AVG SPD`} value={percent(avgSpeed)} />
                 </View>
 
+                {/* Counted against the whole catalogue, the way the player's own
+                    achievements screen counts it — and in the green nothing but an
+                    achievement wears, so the one number here that cannot be taken away
+                    does not read as another board stat. The server's count, even on your
+                    own profile: what a device has earned but not yet synced is the
+                    achievements screen's business, and a profile is what anyone tapping
+                    the name would see. */}
+                <Text
+                  selectable={false}
+                  className="mb-1 text-center font-mono text-[8px] font-bold tracking-[1px] text-dim"
+                >
+                  <Trans>
+                    <Text style={{ color: ACHIEVEMENT_INK[colorScheme] }}>
+                      {shownAchievements}
+                    </Text>{' '}
+                    OF {ACHIEVEMENT_COUNT} ACHIEVEMENTS
+                  </Trans>
+                </Text>
+
                 <Text
                   selectable={false}
                   className="mb-5 text-center font-mono text-[8px] tracking-[0.5px] text-dim"
                 >
-                  <Trans>COUNTING SINCE {formatReleaseDate(COUNTING_SINCE)}</Trans>
+                  <Trans>joined {formatReleaseDate(JOINED_ON)}</Trans>
                 </Text>
 
                 {SCORED_MODES.map((mode) => (

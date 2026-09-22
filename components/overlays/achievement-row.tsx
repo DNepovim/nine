@@ -5,9 +5,10 @@ import { Text, View } from 'react-native'
 import { achievement, type AchievementId } from '@/constants/achievements'
 import { ACHIEVEMENT_INK } from '@/constants/colors'
 import { useTheme } from '@/hooks/use-theme'
-import { STAGE_AXES, STAGE_CODE, type Stage } from '@/lib/achievements'
+import { STAGE_AXES, STAGE_CODE, type BoardMark, type Stage } from '@/lib/achievements'
 import { cn } from '@/lib/cn'
 import { formatShortDate } from '@/lib/format-date'
+import { DIFFICULTY_ORDER, SCORED_MODES } from '@/machines/game'
 
 // A secret one keeps its name as well as its rule. Naming it would be telling.
 const SECRET_TITLE = msg`???`
@@ -24,6 +25,7 @@ export function AchievementRow({
   earnedAt,
   stages,
   progress,
+  boards,
 }: {
   id: AchievementId
   // ISO 8601, or null for one not yet achieved. For a staged one this is the first
@@ -36,6 +38,9 @@ export function AchievementRow({
   // and only one bar is drawn for it. Ignored once earned, and meaningless for the ones
   // with nothing to count.
   progress: Record<Stage, number>
+  // The six boards and which of them carry a score, for the one achievement that is
+  // about all of them at once; null for everything else. See `boardMarks`.
+  boards: readonly BoardMark[] | null
 }) {
   const { t } = useLingui()
   const { colorScheme } = useTheme()
@@ -131,9 +136,56 @@ export function AchievementRow({
           </View>
         )}
 
+        {/* Which boards are done and which are not, for the row whose count cannot say
+            it: one line per mode, three bars along it in the difficulty selector's own
+            order, each full or empty. The same bars and the same codes the staged rows
+            wear — a board that has a score reads here the way a cleared stage does
+            anywhere else. Gone once the achievement is earned, like the bar it replaces:
+            by then all six are full, which says nothing the date does not. */}
+        {boards !== null && !earned && (
+          <View className="mt-1 gap-1">
+            {SCORED_MODES.map((mode) => (
+              <View key={mode} className="flex-row items-center gap-2">
+                <Text
+                  selectable={false}
+                  className="w-6 font-mono text-[7px] font-bold tracking-[0.5px] text-dim"
+                >
+                  {t(STAGE_CODE[mode])}
+                </Text>
+                {DIFFICULTY_ORDER.map((difficulty) => (
+                  <View key={difficulty} className="flex-1 flex-row items-center gap-1">
+                    <Text
+                      selectable={false}
+                      className="font-mono text-[7px] font-bold tracking-[0.5px] text-dim"
+                    >
+                      {t(STAGE_CODE[difficulty])}
+                    </Text>
+                    <View className="h-[3px] flex-1 overflow-hidden rounded-full bg-elevated">
+                      <View
+                        className="h-full rounded-full"
+                        style={{
+                          width: boards.some(
+                            (board) =>
+                              board.mode === mode &&
+                              board.difficulty === difficulty &&
+                              board.posted,
+                          )
+                            ? '100%'
+                            : '0%',
+                          backgroundColor: ACHIEVEMENT_INK[colorScheme],
+                        }}
+                      />
+                    </View>
+                  </View>
+                ))}
+              </View>
+            ))}
+          </View>
+        )}
+
         {/* A bar only where there is something to count, and only while it still counts
             for something — an earned achievement is done, not 7/7. */}
-        {!staged && !earned && target !== undefined && (
+        {!staged && boards === null && !earned && target !== undefined && (
           <View className="mt-1 h-[3px] w-full overflow-hidden rounded-full bg-elevated">
             <View
               className="h-full rounded-full"

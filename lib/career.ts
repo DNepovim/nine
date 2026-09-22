@@ -49,6 +49,10 @@ export type Career = {
   lastDay: string | null
   dayStreak: number
   bestDayStreak: number
+  // Finished runs in a row that scored under `POOR_RUN_SCORE`, reset by the first one
+  // that does better. The only counter here that can fall, and it falls the same way the
+  // day streak does: back to nothing, rather than backwards.
+  poorRunStreak: number
   multiplayerRuns: number
   multiplayerWins: number
   // The most players ever in a room with them, themselves included.
@@ -116,6 +120,7 @@ export const emptyCareer = (): Career => ({
   lastDay: null,
   dayStreak: 0,
   bestDayStreak: 0,
+  poorRunStreak: 0,
   multiplayerRuns: 0,
   multiplayerWins: 0,
   biggestRoom: 0,
@@ -123,6 +128,12 @@ export const emptyCareer = (): Career => ({
 })
 
 const DAY_MS = 86_400_000
+
+// What counts as a run that went nowhere. Deliberately low and mode-blind: points are
+// not comparable between Accuracy and Speed, and this is not trying to measure a bad run
+// — only one that barely got started. Lives here rather than with the achievement that
+// reads it, because the fold is what decides, and two numbers would eventually differ.
+export const POOR_RUN_SCORE = 100
 
 // The ISO day after `day`. Days are 'YYYY-MM-DD' throughout, so this is the only place
 // that has to turn one back into a date.
@@ -198,6 +209,14 @@ export function foldRun(career: Career, run: RunSummary): Career {
     lastDay:
       career.lastDay === null || run.day > career.lastDay ? run.day : career.lastDay,
     dayStreak,
+    // Trainee is left out: it keeps no board and no score worth the name, so a quiet
+    // practice run is not a run that went badly.
+    poorRunStreak:
+      run.mode === 'trainee'
+        ? career.poorRunStreak
+        : run.score < POOR_RUN_SCORE
+          ? career.poorRunStreak + 1
+          : 0,
     bestDayStreak: Math.max(career.bestDayStreak, dayStreak),
   }
 }

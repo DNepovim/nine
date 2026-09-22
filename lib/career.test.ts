@@ -54,6 +54,18 @@ describe('foldRun', () => {
     expect(foldRun(held, run({ maxStreak: 11 })).bestStreakBy.easy).toBe(11)
   })
 
+  it('counts runs that went nowhere, and forgets them on the first that did not', () => {
+    const three = career({ poorRunStreak: 3 })
+    expect(foldRun(three, run({ score: 40 })).poorRunStreak).toBe(4)
+    expect(foldRun(three, run({ score: 400 })).poorRunStreak).toBe(0)
+  })
+
+  it('does not hold a practice run against the player', () => {
+    const three = career({ poorRunStreak: 3 })
+    const practice = run({ mode: 'trainee', score: 0 })
+    expect(foldRun(three, practice).poorRunStreak).toBe(3)
+  })
+
   it('keeps the longest clean stretch rather than the latest', () => {
     const held = career({ bestCleanHitsBy: { easy: 30, hard: 0, extreme: 0 } })
     expect(foldRun(held, run({ cleanHits: 8 })).bestCleanHitsBy.easy).toBe(30)

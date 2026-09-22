@@ -103,13 +103,22 @@ describe('the catalogue', () => {
     expect(new Set(titles).size).toBe(titles.length)
   })
 
-  it('never wears an emblem the app already owns', () => {
-    // 🦉 and 🦅 are the game-over screen's Extreme all-time birds, and the crown belongs
-    // to the achievement that *is* the crown.
+  it('lends a champion mark only to the achievement that is that mark', () => {
+    // 🦉, 🦅 and 👑 mean something everywhere else in the app — one Extreme all-time
+    // board, the other, both — so each is worn by exactly the one achievement about it
+    // and by nothing else.
     const emblems = ACHIEVEMENT_IDS.map((id) => ACHIEVEMENTS[id].emblem)
-    expect(emblems).not.toContain('🦉')
-    expect(emblems).not.toContain('🦅')
+    expect(emblems.filter((e) => e === '🦉')).toEqual(['🦉'])
+    expect(emblems.filter((e) => e === '🦅')).toEqual(['🦅'])
     expect(emblems.filter((e) => e === '👑')).toEqual(['👑'])
+    expect(ACHIEVEMENTS.theOwl.emblem).toBe('🦉')
+    expect(ACHIEVEMENTS.theEagle.emblem).toBe('🦅')
+    expect(ACHIEVEMENTS.untouchable.emblem).toBe('👑')
+  })
+
+  it('gives every achievement a unique emblem', () => {
+    const emblems = ACHIEVEMENT_IDS.map((id) => ACHIEVEMENTS[id].emblem)
+    expect(new Set(emblems).size).toBe(emblems.length)
   })
 
   it('puts every id in exactly one group', () => {
@@ -339,6 +348,23 @@ describe('boards', () => {
     expect(isEarnedBy('onTheBoard', f)).toBe(false)
   })
 
+  it("earns a bird for first all-time on that mode's Extreme board", () => {
+    const owl = facts({
+      standings: [standing({ mode: 'accuracy', difficulty: 'extreme', rank: 1 })],
+    })
+    expect(isEarnedBy('theOwl', owl)).toBe(true)
+    expect(isEarnedBy('theEagle', owl)).toBe(false)
+  })
+
+  it('gives no bird for second place, another period or an easier board', () => {
+    const second = standing({ mode: 'speed', difficulty: 'extreme', rank: 2 })
+    expect(isEarnedBy('theEagle', facts({ standings: [second] }))).toBe(false)
+    const today = standing({ mode: 'speed', difficulty: 'extreme', period: 'today' })
+    expect(isEarnedBy('theEagle', facts({ standings: [today] }))).toBe(false)
+    const hard = standing({ mode: 'speed', difficulty: 'hard' })
+    expect(isEarnedBy('theEagle', facts({ standings: [hard] }))).toBe(false)
+  })
+
   it('earns EARLY BIRD from opening the day or the week', () => {
     expect(isEarnedBy('earlyBird', facts({ crossed: ['weekFirst'] }))).toBe(true)
     expect(isEarnedBy('earlyBird', facts({ crossed: ['record'] }))).toBe(false)
@@ -360,6 +386,107 @@ describe('held boards', () => {
     expect(isEarnedBy('heldSpeed', f, 'extreme')).toBe(true)
     expect(isEarnedBy('heldSpeed', f, 'easy')).toBe(false)
     expect(isEarnedBy('heldAccuracy', f, 'extreme')).toBe(false)
+  })
+})
+
+describe('the secret ones', () => {
+  const ended = (over: Partial<AchievementFacts['run']> = {}): AchievementFacts =>
+    facts({ run: { ...facts().run, finished: true, ...over } })
+
+  it('earns GOOSE EGG for a scored run that scored nothing', () => {
+    expect(isEarnedBy('gooseEgg', ended({ score: 0 }))).toBe(true)
+    expect(isEarnedBy('gooseEgg', ended({ score: 10 }))).toBe(false)
+    // Trainee keeps no score, so scoring none of it is not the joke.
+    expect(isEarnedBy('gooseEgg', ended({ mode: 'trainee', score: 0 }))).toBe(false)
+  })
+
+  it('earns IN AND OUT for a run over in seconds', () => {
+    expect(isEarnedBy('inAndOut', ended({ elapsedMs: 9_000 }))).toBe(true)
+    expect(isEarnedBy('inAndOut', ended({ elapsedMs: 11_000 }))).toBe(false)
+  })
+
+  it('earns ROUGH PATCH on the fifth poor run, counting the one just finished', () => {
+    const four = career({ poorRunStreak: 4 })
+    expect(isEarnedBy('roughPatch', facts({ career: four }))).toBe(false)
+    const fifth = facts({
+      career: four,
+      run: { ...facts().run, finished: true, score: 0 },
+    })
+    expect(isEarnedBy('roughPatch', fifth)).toBe(true)
+    const good = facts({
+      career: four,
+      run: { ...facts().run, finished: true, score: 900 },
+    })
+    expect(isEarnedBy('roughPatch', good)).toBe(false)
+  })
+
+  it('earns SCENIC ROUTE for a slow twenty in Speed, mid-run', () => {
+    const slow = facts({
+      run: { ...facts().run, mode: 'speed', hits: 20, avgSpeed: 12 },
+    })
+    expect(isEarnedBy('scenicRoute', slow)).toBe(true)
+    const quick = facts({
+      run: { ...facts().run, mode: 'speed', hits: 20, avgSpeed: 55 },
+    })
+    expect(isEarnedBy('scenicRoute', quick)).toBe(false)
+    const wrongMode = facts({
+      run: { ...facts().run, mode: 'accuracy', hits: 20, avgSpeed: 12 },
+    })
+    expect(isEarnedBy('scenicRoute', wrongMode)).toBe(false)
+  })
+
+  it('earns ETERNAL STUDENT for half an hour of practice', () => {
+    const long = facts({ run: { ...facts().run, mode: 'trainee', elapsedMs: 1_900_000 } })
+    expect(isEarnedBy('eternalStudent', long)).toBe(true)
+    const scored = facts({ run: { ...facts().run, mode: 'speed', elapsedMs: 1_900_000 } })
+    expect(isEarnedBy('eternalStudent', scored)).toBe(false)
+  })
+
+  it('earns TOUCH GRASS from the longest run ever, this one included', () => {
+    expect(
+      isEarnedBy('touchGrass', facts({ career: career({ longestRunMs: 3_700_000 }) })),
+    ).toBe(true)
+    expect(isEarnedBy('touchGrass', ended({ elapsedMs: 3_700_000 }))).toBe(true)
+    expect(isEarnedBy('touchGrass', ended({ elapsedMs: 600_000 }))).toBe(false)
+  })
+
+  it('earns ROUND NUMBER only on an exact thousand', () => {
+    expect(isEarnedBy('roundNumber', ended({ score: 3000 }))).toBe(true)
+    expect(isEarnedBy('roundNumber', ended({ score: 3001 }))).toBe(false)
+    // Nothing is not a round number, it is nothing — GOOSE EGG has that one.
+    expect(isEarnedBy('roundNumber', ended({ score: 0 }))).toBe(false)
+  })
+
+  it('earns PALINDROME on four digits or more that read both ways', () => {
+    expect(isEarnedBy('palindrome', ended({ score: 1221 }))).toBe(true)
+    expect(isEarnedBy('palindrome', ended({ score: 12321 }))).toBe(true)
+    expect(isEarnedBy('palindrome', ended({ score: 1234 }))).toBe(false)
+    expect(isEarnedBy('palindrome', ended({ score: 99 }))).toBe(false)
+  })
+
+  it('earns NINE NINE NINE on the 999th target of a career', () => {
+    const nearly = career({ hits: 990 })
+    expect(isEarnedBy('nineNineNine', facts({ career: nearly }))).toBe(false)
+    const there = facts({ career: nearly, run: { ...facts().run, hits: 9 } })
+    expect(isEarnedBy('nineNineNine', there)).toBe(true)
+  })
+
+  it('earns GOOD SPORT for five rooms and no wins', () => {
+    const played = career({ multiplayerRuns: 5 })
+    expect(isEarnedBy('goodSport', facts({ career: played }))).toBe(true)
+    const won = career({ multiplayerRuns: 5, multiplayerWins: 1 })
+    expect(isEarnedBy('goodSport', facts({ career: won }))).toBe(false)
+  })
+
+  it('earns NO JOKE only on the first of April', () => {
+    const on = (iso: string): AchievementFacts => {
+      const day = new Date(iso)
+      day.setHours(12, 0, 0, 0)
+      return ended({ endedAt: day })
+    }
+    expect(isEarnedBy('noJoke', on('2027-04-01'))).toBe(true)
+    expect(isEarnedBy('noJoke', on('2027-04-02'))).toBe(false)
+    expect(isEarnedBy('noJoke', on('2027-01-04'))).toBe(false)
   })
 })
 

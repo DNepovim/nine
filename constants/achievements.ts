@@ -60,8 +60,8 @@ export const ACHIEVEMENT_IDS = [
   'lightning',
   'terminalVelocity',
 
-  'flawlessTen',
   'maxMultiplier',
+  'flawlessTen',
   'unscathed',
   'deadEye',
   'blur',
@@ -78,6 +78,8 @@ export const ACHIEVEMENT_IDS = [
 
   'onTheBoard',
   'topOfTheBoard',
+  'theOwl',
+  'theEagle',
   'untouchable',
   'tenBests',
   'earlyBird',
@@ -91,15 +93,26 @@ export const ACHIEVEMENT_IDS = [
 
   'theLongWay',
   'nightShift',
+  'gooseEgg',
+  'inAndOut',
+  'roughPatch',
+  'scenicRoute',
+  'eternalStudent',
+  'touchGrass',
+  'roundNumber',
+  'palindrome',
+  'nineNineNine',
+  'goodSport',
+  'noJoke',
 ] as const
 
 export type AchievementId = (typeof ACHIEVEMENT_IDS)[number]
 
 export type AchievementDef = {
   group: AchievementGroup
-  // One emoji, and never one the app already owns: 🦉 and 🦅 are the game-over screen's
-  // Extreme all-time birds, and 👑 is the crown — so the only achievement wearing the
-  // crown is the one that *is* the crown.
+  // One emoji, and never one the app already owns by a different meaning. The three
+  // champion marks are the exception, and only on the three achievements that *are*
+  // those marks: 🦉 and 🦅 for one Extreme all-time board, 👑 for holding both.
   emblem: string
   // At most TITLE_MAX characters, upper-case. This is what the announcement bar shouts,
   // which is where the cap comes from.
@@ -273,19 +286,19 @@ export const ACHIEVEMENTS = {
   // staged: a clean twenty-five on Easy and a clean twenty-five on Extreme are not the
   // same feat, and a mastery row that a single Easy run closed for good was saying they
   // were. Trainee clears no stage — it has no difficulty selector and no board.
+  maxMultiplier: {
+    group: 'mastery',
+    emblem: '🔥',
+    title: msg`MAX MULTIPLIER`,
+    hint: msg`Reach the ×8 multiplier.`,
+    staged: 'difficulty',
+  },
   flawlessTen: {
     group: 'mastery',
     emblem: '✨',
     title: msg`FLAWLESS TEN`,
     hint: msg`Extend a streak ten times in a row.`,
     target: 10,
-    staged: 'difficulty',
-  },
-  maxMultiplier: {
-    group: 'mastery',
-    emblem: '🔥',
-    title: msg`MAX MULTIPLIER`,
-    hint: msg`Reach the ×8 multiplier.`,
     staged: 'difficulty',
   },
   // Not "finish a run without losing a life" — a run *ends* because its lives ran out, so
@@ -396,6 +409,22 @@ export const ACHIEVEMENTS = {
     hint: msg`Take first place on a board.`,
     staged: 'difficulty',
   },
+  // The two birds and the crown, in the order a player collects them: one Extreme
+  // all-time board, then the other. Each wears the mark it is about — the same mark the
+  // game over screen pays out and every name in the app carries — because an achievement
+  // for becoming the owl that showed some other emblem would be about something else.
+  theOwl: {
+    group: 'boards',
+    emblem: '🦉',
+    title: msg`THE OWL`,
+    hint: msg`Hold first all-time on Extreme Accuracy.`,
+  },
+  theEagle: {
+    group: 'boards',
+    emblem: '🦅',
+    title: msg`THE EAGLE`,
+    hint: msg`Hold first all-time on Extreme Speed.`,
+  },
   // The one achievement allowed the crown, because it is the crown: the game-over screen
   // already pays it out for holding both Extreme all-time boards at once.
   untouchable: {
@@ -469,6 +498,86 @@ export const ACHIEVEMENTS = {
     emblem: '🌙',
     title: msg`NIGHT SHIFT`,
     hint: msg`Finish a run between 2am and 4am.`,
+    secret: true,
+  },
+  gooseEgg: {
+    group: 'secret',
+    emblem: '🥚',
+    title: msg`GOOSE EGG`,
+    hint: msg`Finish a run without scoring a single point.`,
+    secret: true,
+  },
+  inAndOut: {
+    group: 'secret',
+    emblem: '🚪',
+    title: msg`IN AND OUT`,
+    hint: msg`Lose every life in under ten seconds.`,
+    secret: true,
+  },
+  roughPatch: {
+    group: 'secret',
+    emblem: '🩹',
+    title: msg`ROUGH PATCH`,
+    hint: msg`Finish five runs in a row, none of them worth talking about.`,
+    secret: true,
+  },
+  scenicRoute: {
+    group: 'secret',
+    emblem: '🐌',
+    title: msg`SCENIC ROUTE`,
+    hint: msg`Take twenty targets in Speed averaging under 20% speed.`,
+    secret: true,
+  },
+  eternalStudent: {
+    group: 'secret',
+    emblem: '📚',
+    title: msg`ETERNAL STUDENT`,
+    hint: msg`Spend half an hour in Trainee without leaving.`,
+    secret: true,
+  },
+  touchGrass: {
+    group: 'secret',
+    emblem: '🌱',
+    title: msg`TOUCH GRASS`,
+    hint: msg`Keep a single run going for a whole hour.`,
+    secret: true,
+  },
+  roundNumber: {
+    group: 'secret',
+    emblem: '🎱',
+    title: msg`ROUND NUMBER`,
+    hint: msg`Finish on a score that is an exact multiple of a thousand.`,
+    secret: true,
+  },
+  palindrome: {
+    group: 'secret',
+    emblem: '🪞',
+    title: msg`PALINDROME`,
+    hint: msg`Finish on a score of four digits or more that reads the same backwards.`,
+    secret: true,
+  },
+  // The one number in the game that needs no explaining, in the one place the app can
+  // put it: nine hundred and ninety-nine targets, one short of the thousand the endurance
+  // row already counts.
+  nineNineNine: {
+    group: 'secret',
+    emblem: '🎰',
+    title: msg`NINE NINE NINE`,
+    hint: msg`Land your 999th target.`,
+    secret: true,
+  },
+  goodSport: {
+    group: 'secret',
+    emblem: '🫂',
+    title: msg`GOOD SPORT`,
+    hint: msg`Play five runs with friends and win none of them.`,
+    secret: true,
+  },
+  noJoke: {
+    group: 'secret',
+    emblem: '🃏',
+    title: msg`NO JOKE`,
+    hint: msg`Finish a run on the first of April.`,
     secret: true,
   },
 } as const satisfies Record<AchievementId, AchievementDef>

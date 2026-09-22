@@ -55,6 +55,9 @@ export type PlayerProfile = {
   // Null for a player who has no nickname, which is also a player no board can show —
   // so in practice this is never the name behind a tap, only a guard the type keeps.
   nickname: string | null
+  // How many achievements they hold, counted once per achievement however many stages it
+  // has — the same number their own achievements screen puts against the catalogue.
+  achievements: number
   totals: BoardTotals[]
   bests: BoardBest[]
   // The same one-per-mode reduction the intro screen's line under the title uses, from
@@ -158,6 +161,9 @@ type RawBoard = { mode: string; difficulty: string }
 
 export type PlayerProfileResponse = {
   nickname: string | null
+  // Absent, not zero, from a server still running the RPC as it was before profiles
+  // counted achievements — which is what the `?? 0` below is for.
+  achievements?: number
   totals: (RawBoard & {
     runs: number
     hits: number
@@ -181,6 +187,7 @@ const isMedalPeriod = (value: string): value is MedalPeriod =>
 export function shapeProfile(raw: PlayerProfileResponse): PlayerProfile {
   return {
     nickname: raw.nickname,
+    achievements: raw.achievements ?? 0,
     totals: raw.totals.flatMap((row) => {
       const on = board(row)
       return on === null ? [] : [{ ...on, ...pickTotals(row) }]
@@ -225,6 +232,7 @@ const pickTotals = (
 
 export const EMPTY_PROFILE: PlayerProfile = {
   nickname: null,
+  achievements: 0,
   totals: [],
   bests: [],
   medals: [],

@@ -18,6 +18,15 @@ export const RELEASES: Release[] = [
         title: msg`Who is that, anyway`,
         body: msg`Tap any name — on a board, in a room, on the winners line — and their profile opens: the mark they carry, what they have played, the medals they hold and the records they once held. A name on a leaderboard is a player now, not a row.`,
       },
+      {
+        id: 'more-achievements',
+        icon: 'sparkles',
+        // The achievement green again, for the same reason the first achievements
+        // announcement used it — see the design guide.
+        accent: '#1E9448',
+        title: msg`More to find`,
+        body: msg`There are a dozen more achievements to stumble into now — a couple for the very best runs, and rather more for the runs that went nowhere at all. Profiles count them too, so you can see how many someone else has found.`,
+      },
     ],
   },
   {

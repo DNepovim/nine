@@ -555,7 +555,7 @@ export function HowToPlayOverlay({
               </Trans>
             </Bullet>
             <Bullet color={ACHIEVEMENT_SCALE[3]}>
-              <Trans>A few nobody is told about until they happen.</Trans>
+              <Trans>A stack of them nobody is told about until they happen.</Trans>
             </Bullet>
           </Card>
           <Body>
