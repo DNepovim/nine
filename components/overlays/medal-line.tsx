@@ -27,7 +27,7 @@ export function MedalLine({ medals }: { medals: readonly Medal[] }) {
   if (isEmptyArray(medals)) return null
 
   return (
-    <View className="mb-4 flex-row items-center justify-center gap-1.5">
+    <View className="flex-row items-center justify-center gap-1.5">
       {medals.map((medal, i) => (
         <Fragment key={medal.mode}>
           {i > 0 && (

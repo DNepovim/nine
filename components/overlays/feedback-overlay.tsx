@@ -6,6 +6,7 @@ import { Platform, Pressable, Text, TextInput } from 'react-native'
 
 import { ModalCard } from '@/components/overlays/modal-card'
 import { DIM_INK } from '@/constants/colors'
+import { useLocale } from '@/hooks/use-locale'
 import { useTheme } from '@/hooks/use-theme'
 import { cn } from '@/lib/cn'
 import { MAX_FEEDBACK_LENGTH } from '@/lib/feedback-outcome'
@@ -67,6 +68,7 @@ export function FeedbackOverlay({
 }) {
   // `t` rather than <Trans>: a TextInput placeholder takes a string, not a node.
   const { t } = useLingui()
+  const { locale } = useLocale()
   const { colorScheme } = useTheme()
   const modeColor = MODE_GRADIENT[gameMode][0]
   const [message, setMessage] = useState('')
@@ -89,6 +91,7 @@ export function FeedbackOverlay({
         mode: gameMode,
         difficulty,
         score,
+        locale,
         gameState,
       }),
     )
@@ -116,8 +119,8 @@ export function FeedbackOverlay({
                 className="mb-6 font-mono text-[12px] leading-[19px] text-dim"
               >
                 <Trans>
-                  It went straight to the person who makes this. No reply to expect — but
-                  it is read.
+                  It went straight to the person who makes this, and it is read. If it
+                  gets an answer, you will find one here next time you open the game.
                 </Trans>
               </Text>
               <Pressable

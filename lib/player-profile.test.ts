@@ -312,6 +312,19 @@ describe('shapeProfile', () => {
     expect(shapeProfile({ ...raw, achievements: 12 }).achievements).toBe(12)
   })
 
+  it('reads the motto straight through', () => {
+    expect(shapeProfile({ ...raw, motto: 'I dial faster than I think' }).motto).toBe(
+      'I dial faster than I think',
+    )
+  })
+
+  it('reads a server that does not know about mottoes yet as having none', () => {
+    // Same reason as the achievement count below: the column ships in its own migration,
+    // and a client can reach a server that has not run it. Absent is a player with no
+    // motto, which is what most players are anyway.
+    expect(shapeProfile(raw).motto).toBeNull()
+  })
+
   it('reads a server that does not count achievements yet as none', () => {
     // The RPC that answers it ships in its own migration, and a client can reach a
     // server that has not run it. Absent is not a number, and zero is the only reading

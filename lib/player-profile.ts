@@ -59,6 +59,10 @@ export type PlayerProfile = {
   // Null for a player who has no nickname, which is also a player no board can show —
   // so in practice this is never the name behind a tap, only a guard the type keeps.
   nickname: string | null
+  // The one line on this screen the player wrote rather than earned. Null for a player
+  // who has not written one, which is most of them — an absent motto draws nothing at
+  // all rather than an empty line under the name.
+  motto: string | null
   // How many achievements they hold, counted once per achievement however many stages it
   // has — the same number their own achievements screen puts against the catalogue.
   achievements: number
@@ -205,6 +209,10 @@ type RawBoard = { mode: string; difficulty: string }
 
 export type PlayerProfileResponse = {
   nickname: string | null
+  // Absent, not null, from a server that predates the motto column — read the same way
+  // `achievements` and `timeMs` below are, so a device talking to an older server draws
+  // a profile without one rather than failing to draw it.
+  motto?: string | null
   // Absent, not zero, from a server still running the RPC as it was before profiles
   // counted achievements — which is what the `?? 0` below is for.
   achievements?: number
@@ -234,6 +242,7 @@ const isMedalPeriod = (value: string): value is MedalPeriod =>
 export function shapeProfile(raw: PlayerProfileResponse): PlayerProfile {
   return {
     nickname: raw.nickname,
+    motto: raw.motto ?? null,
     achievements: raw.achievements ?? 0,
     totals: raw.totals.flatMap((row) => {
       const on = board(row)
@@ -280,6 +289,7 @@ const pickTotals = (
 
 export const EMPTY_PROFILE: PlayerProfile = {
   nickname: null,
+  motto: null,
   achievements: 0,
   totals: [],
   bests: [],

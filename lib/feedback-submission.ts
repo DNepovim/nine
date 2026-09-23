@@ -6,6 +6,7 @@ import {
   MAX_FEEDBACK_LENGTH,
   type FeedbackSent,
 } from '@/lib/feedback-outcome'
+import type { Locale } from '@/lib/i18n/locale'
 import { supabase } from '@/lib/supabase'
 import type { Difficulty, Mode } from '@/machines/game'
 
@@ -26,12 +27,17 @@ export async function submitFeedback({
   mode,
   difficulty,
   score,
+  locale,
   gameState,
 }: {
   message: string
   mode: Mode
   difficulty: Difficulty
   score: number
+  // The language the game was in as they wrote. Answers are written by hand, and this is
+  // the only thing in the row that says which one to write in — see
+  // supabase/migrations/20260923000001_feedback_locale.sql.
+  locale: Locale
   // The paused run this was written from, from `gameSnapshot` — see lib/feedback-state.ts.
   // Null from every other screen, where there is no run in flight to describe.
   gameState: unknown
@@ -43,6 +49,7 @@ export async function submitFeedback({
     mode,
     difficulty,
     score,
+    locale,
     build: BUILD_ID,
     game_state: gameState,
   })

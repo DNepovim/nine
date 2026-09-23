@@ -122,6 +122,23 @@ export async function fetchPlayerProfile(
   return { profile: shapeProfile(raw), error: null }
 }
 
+// Writing the player's own motto. Null removes it.
+//
+// Straight at the row rather than through an RPC: `profiles` already lets a player
+// update their own row and nobody else's — it is how the nickname beside it is written —
+// and the column's check constraint is what a value of the wrong shape runs into.
+//
+// The caller has already put the text through `normalizeMotto`; this does not clean it
+// again. One place decides what a motto looks like.
+export async function saveMotto(
+  userId: string,
+  motto: string | null,
+): Promise<{ error: string | null }> {
+  const res = await supabase.from('profiles').update({ motto }).eq('id', userId)
+  noteRequest(res.error)
+  return { error: res.error?.message ?? null }
+}
+
 export async function fetchMyRank(
   userId: string,
   mode: Mode,

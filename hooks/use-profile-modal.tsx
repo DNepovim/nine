@@ -16,7 +16,15 @@ const ProfileModalContext = createContext<(userId: string) => void>(() => {})
 export const useOpenProfile = (): ((userId: string) => void) =>
   useContext(ProfileModalContext)
 
-export function PlayerProfileProvider({ children }: { children: ReactNode }) {
+export function PlayerProfileProvider({
+  children,
+  // Who is looking, so a profile can tell when it is the player's own and offer them
+  // their motto to write. Null until the anonymous sign-in has landed.
+  viewerId,
+}: {
+  children: ReactNode
+  viewerId: string | null
+}) {
   const [userId, setUserId] = useState<string | null>(null)
   // Stable, so every name in the tree does not re-render when a profile opens.
   const open = useCallback((id: string) => {
@@ -30,6 +38,7 @@ export function PlayerProfileProvider({ children }: { children: ReactNode }) {
       {userId !== null && (
         <PlayerProfileOverlay
           userId={userId}
+          viewerId={viewerId}
           onClose={() => {
             setUserId(null)
           }}

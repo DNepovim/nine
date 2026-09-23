@@ -33,6 +33,7 @@ import { TraineeStats } from '@/components/game/trainee-stats'
 import { AchievementsOverlay } from '@/components/overlays/achievements-overlay'
 import { AdvancedOptionsOverlay } from '@/components/overlays/advanced-options-overlay'
 import { FeedbackOverlay } from '@/components/overlays/feedback-overlay'
+import { FeedbackReplyOverlay } from '@/components/overlays/feedback-reply-overlay'
 import { GameOverSequence } from '@/components/overlays/game-over-sequence'
 import { HowToPlayOverlay } from '@/components/overlays/how-to-play-overlay'
 import { InstallOverlay } from '@/components/overlays/install-overlay'
@@ -59,6 +60,7 @@ import { useDisplayOptions } from '@/hooks/use-display-options'
 import { useDisplayScore } from '@/hooks/use-display-score'
 import { useDisplayedTargets } from '@/hooks/use-displayed-targets'
 import { useDyingSequence } from '@/hooks/use-dying-sequence'
+import { useFeedbackReplies } from '@/hooks/use-feedback-replies'
 import { useFloatingPoints } from '@/hooks/use-floating-points'
 import { useFloatingStat } from '@/hooks/use-floating-stat'
 import { useHitCelebration } from '@/hooks/use-hit-celebration'
@@ -368,6 +370,12 @@ export default function GameScreen() {
   }, [userId, nickname])
 
   const { submit: submitScore } = useScoreSubmission(userId, nickname, isReady)
+
+  // Answers to messages the player sent, asked for once the session is known. Shown on
+  // the intro, ahead of the news — a reply written to you personally outranks a release
+  // note, and both wait for the tutorial.
+  const feedbackReplies = useFeedbackReplies(userId, isReady)
+
   const [showNicknameModal, setShowNicknameModal] = useState(false)
 
   // The one board store. Every surface that shows a score reads it — the strip above
@@ -900,7 +908,7 @@ export default function GameScreen() {
     <ChampionsProvider value={champions}>
       {/* Inside the champions provider: a profile wears the same crown or bird the row
           that opened it does, read from the one store rather than fetched again. */}
-      <PlayerProfileProvider>
+      <PlayerProfileProvider viewerId={userId}>
         <BoardProvider value={board}>
           {/* The celebration sits before the Screen so it paints behind the game's own UI.
             Keyed on the announcement so each one plays from the start, and so escalating
@@ -1426,14 +1434,37 @@ export default function GameScreen() {
             />
           )}
 
-          {/* ── What's new — announcements the player hasn't seen yet ── */}
-          {/* Never over the tutorial. A first-ever launch has nothing unseen to show
-            (use-whats-new.ts marks everything seen when there is no record at all), but
-            the tutorial replays from How to Play, and a returning player can have both. */}
+          {/* ── A reply to something the player sent ── */}
+          {/* First of the three launch dialogs. Somebody answering what you wrote is the
+            one of them addressed to you by name, and it would be a poor thing to meet
+            after two screens of announcements. Several queue and are shown one at a
+            time, oldest first — see hooks/use-feedback-replies.ts. */}
           {isMenu &&
             menuOverlay === 'none' &&
             !isMultiActive &&
             !tutorial.visible &&
+            feedbackReplies.reply !== null && (
+              <FeedbackReplyOverlay
+                gameMode={mode}
+                answer={feedbackReplies.reply.answer}
+                onDismiss={feedbackReplies.dismiss}
+              />
+            )}
+
+          {/* ── What's new — announcements the player hasn't seen yet ── */}
+          {/* Never over the tutorial. A first-ever launch has nothing unseen to show
+            (use-whats-new.ts marks everything seen when there is no record at all), but
+            the tutorial replays from How to Play, and a returning player can have both.
+
+            Waits on the reply request the same way the install prompt waits on this one:
+            `ready` is what says "asked and answered", and painting before it would put
+            the news up only to have a reply land on top of it. */}
+          {isMenu &&
+            menuOverlay === 'none' &&
+            !isMultiActive &&
+            !tutorial.visible &&
+            feedbackReplies.ready &&
+            feedbackReplies.reply === null &&
             whatsNew.visible && (
               <WhatsNewOverlay items={whatsNew.unseen} onDismiss={whatsNew.dismiss} />
             )}
@@ -1450,6 +1481,8 @@ export default function GameScreen() {
             menuOverlay === 'none' &&
             !isMultiActive &&
             !tutorial.visible &&
+            feedbackReplies.ready &&
+            feedbackReplies.reply === null &&
             whatsNew.ready &&
             !whatsNew.visible &&
             installPrompt.target !== 'none' && (

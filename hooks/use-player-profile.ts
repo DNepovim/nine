@@ -16,6 +16,10 @@ export function usePlayerProfile(userId: string): {
   loading: boolean
   error: string | null
   reload: () => void
+  // Applied to what is already on screen after the player saves their own motto, rather
+  // than answered by a second read. The write has already succeeded by then, and a
+  // refetch would spend a round trip to be told the one thing this hook already knows.
+  applyMotto: (motto: string | null) => void
 } {
   const [profile, setProfile] = useState<PlayerProfile | null>(
     () => cache.get(userId) ?? null,
@@ -52,5 +56,19 @@ export function usePlayerProfile(userId: string): {
     }
   }, [load])
 
-  return { profile, loading, error, reload: load }
+  // The cache is written too. It is what a reopened profile is drawn from, and a motto
+  // that reverted the moment the modal was dismissed would read as a failed save.
+  const applyMotto = useCallback(
+    (motto: string | null) => {
+      setProfile((held) => {
+        if (held === null) return held
+        const next = { ...held, motto }
+        cache.set(userId, next)
+        return next
+      })
+    },
+    [userId],
+  )
+
+  return { profile, loading, error, reload: load, applyMotto }
 }

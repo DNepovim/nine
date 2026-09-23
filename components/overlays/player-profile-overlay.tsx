@@ -2,14 +2,16 @@ import type { MessageDescriptor } from '@lingui/core'
 import { msg } from '@lingui/core/macro'
 import { Trans, useLingui } from '@lingui/react/macro'
 import { useFonts } from 'expo-font'
-import { isEmptyArray, isNonEmptyArray } from 'narrowland'
-import { Fragment } from 'react'
+import { isEmptyArray, isNonEmptyArray, isNonEmptyString } from 'narrowland'
+import { useState } from 'react'
 import { Pressable, ScrollView, Text, View } from 'react-native'
 
 import DSEG7Font from '@/assets/fonts/DSEG7Classic-Bold.ttf'
 import { MedalLine } from '@/components/overlays/medal-line'
 import { ModalCard } from '@/components/overlays/modal-card'
+import { MottoModal } from '@/components/overlays/motto-modal'
 import { ProfileBoardRow } from '@/components/overlays/profile-board-row'
+import { ProfileMotto } from '@/components/overlays/profile-motto'
 import { ProfileName } from '@/components/overlays/profile-name'
 import { ProfileReignRow } from '@/components/overlays/profile-reign-row'
 import { ProfileScore } from '@/components/overlays/profile-score'
@@ -24,6 +26,7 @@ import { useViewport } from '@/hooks/use-viewport'
 import { championMark } from '@/lib/champions'
 import { formatGameTime } from '@/lib/duration'
 import { formatReleaseDate } from '@/lib/format-date'
+import { saveMotto } from '@/lib/leaderboard'
 import { averagePercent, boardRows, lifetimeOf } from '@/lib/player-profile'
 import {
   DIFFICULTIES,
@@ -57,9 +60,13 @@ const AVERAGE_LABEL = {
 // player; that the player is you changes nothing about what it says.
 export function PlayerProfileOverlay({
   userId,
+  viewerId,
   onClose,
 }: {
   userId: string
+  // Who is looking. Null before the anonymous sign-in has landed, which is the only
+  // state where a player cannot yet be recognised as themselves.
+  viewerId: string | null
   onClose: () => void
 }) {
   const { t } = useLingui()
@@ -67,7 +74,12 @@ export function PlayerProfileOverlay({
   const { height } = useViewport()
   const [dsegLoaded] = useFonts({ DSEG7: DSEG7Font })
   const digitFont = dsegLoaded ? 'DSEG7' : mono
-  const { profile, loading, error, reload } = usePlayerProfile(userId)
+  const { profile, loading, error, reload, applyMotto } = usePlayerProfile(userId)
+  const [editingMotto, setEditingMotto] = useState(false)
+  // The one thing this modal does differently for the player holding the phone. Every
+  // number on it still reads the same either way — a profile is public data, and that it
+  // is yours changes nothing about what it says, only about what you may rewrite.
+  const isMine = viewerId !== null && viewerId === userId
   // Read from the context rather than fetched here: the two Extreme leaders are already
   // known and kept live off the board connection, and a second read would let this modal
   // contradict the row that opened it.
@@ -101,72 +113,92 @@ export function PlayerProfileOverlay({
     >
       {() => (
         <>
-          {/* The mark sits above the name, as it does on every row that wears one. */}
-          {mark !== null && (
-            <Text
-              selectable={false}
-              className="mb-1 text-center text-[30px] leading-[34px]"
-            >
-              {mark}
-            </Text>
-          )}
-          {profile !== null && <ProfileName nickname={profile.nickname ?? '…'} />}
-          {/* Under the name, the way the intro screen puts it under the title — same
-                component, same one-per-mode reduction, so a player's medals read the
-                same wherever they are drawn. */}
-          {profile !== null && <MedalLine medals={profile.medals} />}
+          {/* One rhythm for the whole modal: every item in this column is separated by
+              the same gap, and nothing in it carries a margin of its own. The pieces
+              that used to bring their own — the medal line, the motto — hand that back
+              to their parent now, so this column alone decides the spacing.
 
-          {/* flexShrink lets a long profile scroll while a short one stays its own
-                height — without it the ScrollView would claim the whole cap. */}
-          <ScrollView
-            showsVerticalScrollIndicator={false}
-            style={{ flexGrow: 0, flexShrink: 1 }}
-            contentContainerStyle={{ paddingVertical: 8 }}
-          >
-            {/* A profile nobody could read shows what went wrong and offers another
-                  go. It never falls back to zeroes, which are indistinguishable from a
-                  real player who has not played yet. */}
-            {profile === null && error !== null && (
-              <View className="items-center py-4">
-                <Text
-                  selectable={false}
-                  className="mb-4 text-center font-mono text-[11px] text-dim"
-                >
-                  <Trans>This profile could not be loaded.</Trans>
-                </Text>
-                <Pressable
-                  onPress={reload}
-                  className="items-center rounded-2xl bg-card px-6 py-3"
-                >
-                  <Text
-                    selectable={false}
-                    className="font-mono text-[11px] font-black tracking-[2px] text-primary"
-                  >
-                    <Trans>TRY AGAIN</Trans>
-                  </Text>
-                </Pressable>
-              </View>
-            )}
-
-            {profile === null && error === null && loading && (
-              <Text
-                selectable={false}
-                className="py-6 text-center font-mono text-[11px] text-dim"
-              >
-                <Trans>LOADING…</Trans>
+              `shrink` because the ScrollView below still has to give way inside the
+              card's own height cap. */}
+          <View className="shrink gap-3">
+            {/* The mark sits above the name, as it does on every row that wears one. */}
+            {mark !== null && (
+              <Text selectable={false} className="text-center text-[30px] leading-[34px]">
+                {mark}
               </Text>
             )}
+            {profile !== null && <ProfileName nickname={profile.nickname ?? '…'} />}
+            {/* Between the name and the medals: the one line here the player wrote rather
+                than earned. Editable only on your own profile, and only once you have a
+                nickname — without one you are on no board, so there is no profile for a
+                motto to appear on. */}
+            {profile !== null && (
+              <ProfileMotto
+                motto={profile.motto}
+                editable={isMine && isNonEmptyString(profile.nickname)}
+                onEdit={() => {
+                  setEditingMotto(true)
+                }}
+              />
+            )}
+            {/* Under the name, the way the intro screen puts it under the title — same
+                component, same one-per-mode reduction, so a player's medals read the
+                same wherever they are drawn. */}
+            {profile !== null && <MedalLine medals={profile.medals} />}
 
-            {profile !== null && lifetime !== null && (
-              <>
-                {/* The weighted total, not the raw one — Easy counts half and Extreme
+            {/* flexShrink lets a long profile scroll while a short one stays its own
+                height — without it the ScrollView would claim the whole cap. The inner
+                column carries the gap; the scroll edges are left flush so the rhythm
+                does not change where the scrolling starts. */}
+            <ScrollView
+              showsVerticalScrollIndicator={false}
+              style={{ flexGrow: 0, flexShrink: 1 }}
+            >
+              <View className="gap-3">
+                {/* A profile nobody could read shows what went wrong and offers another
+                  go. It never falls back to zeroes, which are indistinguishable from a
+                  real player who has not played yet. */}
+                {profile === null && error !== null && (
+                  <View className="items-center gap-3 py-4">
+                    <Text
+                      selectable={false}
+                      className="text-center font-mono text-[11px] text-dim"
+                    >
+                      <Trans>This profile could not be loaded.</Trans>
+                    </Text>
+                    <Pressable
+                      onPress={reload}
+                      className="items-center rounded-2xl bg-card px-6 py-3"
+                    >
+                      <Text
+                        selectable={false}
+                        className="font-mono text-[11px] font-black tracking-[2px] text-primary"
+                      >
+                        <Trans>TRY AGAIN</Trans>
+                      </Text>
+                    </Pressable>
+                  </View>
+                )}
+
+                {profile === null && error === null && loading && (
+                  <Text
+                    selectable={false}
+                    className="py-6 text-center font-mono text-[11px] text-dim"
+                  >
+                    <Trans>LOADING…</Trans>
+                  </Text>
+                )}
+
+                {profile !== null && lifetime !== null && (
+                  <>
+                    {/* The weighted total, not the raw one — Easy counts half and Extreme
                     double, so a career is judged by where it was spent rather than by
                     how long it was. RATING and not SCORE because the per-board table
                     lower down still shows what each board was actually scored, and the
                     two numbers are not meant to add up to each other. */}
-                <ProfileScore score={lifetime.rating} digitFont={digitFont} />
+                    <ProfileScore score={lifetime.rating} digitFont={digitFont} />
 
-                {/* A number that deliberately disagrees with the table under it has to
+                    {/* A number that deliberately disagrees with the table under it has to
                     say why, and this is the only screen it appears on. The weights say
                     it on their own: three difficulty codes against three multipliers is
                     not a figure anyone reads as a plain total, and it is the whole of
@@ -176,140 +208,166 @@ export function PlayerProfileOverlay({
                     arithmetic it is explaining — `lifetimeOf` weights by these same
                     numbers. The short codes, because this is exactly the row too tight
                     to spell them out that they exist for. */}
-                <Text
-                  selectable={false}
-                  className="mb-4 mt-1 text-center font-mono text-[8px] font-bold tracking-[1px] text-dim"
-                >
-                  {weights}
-                </Text>
+                    <Text
+                      selectable={false}
+                      className="text-center font-mono text-[8px] font-bold tracking-[1px] text-dim"
+                    >
+                      {weights}
+                    </Text>
 
-                {/* Five cells rather than four, so the gap comes in a step: RUNS and
+                    {/* Five cells rather than four, so the gap comes in a step: RUNS and
                     HITS count what happened, TIME says over how long, and the two
                     averages say how well. The Czech labels are the widest — PRŮM PŘES
                     twice over — and at gap-5 the row ran out of room on a narrow
                     phone. */}
-                <View className="mb-5 w-full flex-row items-start justify-center gap-4">
-                  <StatCell label={t`RUNS`} value={String(lifetime.runs)} />
-                  <StatCell label={t`HITS`} value={String(lifetime.hits)} />
-                  {/* A career with nothing counted says 0, not 0″. On the pause and
+                    <View className="w-full flex-row items-start justify-center gap-4">
+                      <StatCell label={t`RUNS`} value={String(lifetime.runs)} />
+                      <StatCell label={t`HITS`} value={String(lifetime.hits)} />
+                      {/* A career with nothing counted says 0, not 0″. On the pause and
                       game over screens a duration of zero seconds is a real answer about
                       a real run; here it means no run has been timed yet, and a unit mark
                       on it dresses an absence as a measurement. The overhang goes with
                       the mark — a bare 0 has nothing hanging out, and pulling it left
                       anyway would sit it off centre over its own label. */}
-                  <StatCell
-                    label={t`TIME`}
-                    value={lifetime.timeMs > 0 ? formatGameTime(lifetime.timeMs) : '0'}
-                    overhang={lifetime.timeMs > 0}
-                  />
-                  <StatCell label={t`AVG ACC`} value={percent(avgAccuracy)} />
-                  <StatCell label={t`AVG SPD`} value={percent(avgSpeed)} />
-                </View>
+                      <StatCell
+                        label={t`TIME`}
+                        value={
+                          lifetime.timeMs > 0 ? formatGameTime(lifetime.timeMs) : '0'
+                        }
+                        overhang={lifetime.timeMs > 0}
+                      />
+                      <StatCell label={t`AVG ACC`} value={percent(avgAccuracy)} />
+                      <StatCell label={t`AVG SPD`} value={percent(avgSpeed)} />
+                    </View>
 
-                {/* Counted against the whole catalogue, the way the player's own
+                    {/* Counted against the whole catalogue, the way the player's own
                     achievements screen counts it — and in the green nothing but an
                     achievement wears, so the one number here that cannot be taken away
                     does not read as another board stat. The server's count, even on your
                     own profile: what a device has earned but not yet synced is the
                     achievements screen's business, and a profile is what anyone tapping
                     the name would see. */}
-                <Text
-                  selectable={false}
-                  className="mb-1 text-center font-mono text-[8px] font-bold tracking-[1px] text-dim"
-                >
-                  <Trans>
-                    <Text style={{ color: ACHIEVEMENT_INK[colorScheme] }}>
-                      {shownAchievements}
-                    </Text>{' '}
-                    OF {ACHIEVEMENT_COUNT} ACHIEVEMENTS
-                  </Trans>
-                </Text>
-
-                <Text
-                  selectable={false}
-                  className="mb-5 text-center font-mono text-[8px] tracking-[0.5px] text-dim"
-                >
-                  <Trans>joined {formatReleaseDate(JOINED_ON)}</Trans>
-                </Text>
-
-                {SCORED_MODES.map((mode) => (
-                  <Fragment key={mode}>
-                    <View className="mt-1 h-7 flex-row items-end">
-                      <Text
-                        selectable={false}
-                        className="flex-1 font-mono text-[11px] font-black tracking-[2px]"
-                        style={{ color: MODE_GRADIENT[mode][0] }}
-                      >
-                        {t(MODES[mode].label)}
-                      </Text>
-                      <Text
-                        selectable={false}
-                        className="w-14 text-right font-mono text-[8px] font-bold tracking-[1px] text-dim"
-                      >
-                        <Trans>RUNS</Trans>
-                      </Text>
-                      <Text
-                        selectable={false}
-                        className="w-20 text-right font-mono text-[8px] font-bold tracking-[1px] text-dim"
-                      >
-                        <Trans>BEST</Trans>
-                      </Text>
-                      <Text
-                        selectable={false}
-                        className="w-16 text-right font-mono text-[8px] font-bold tracking-[1px] text-dim"
-                      >
-                        {t(AVERAGE_LABEL[mode])}
-                      </Text>
-                    </View>
-                    {rows
-                      .filter((row) => row.mode === mode)
-                      .map((row) => (
-                        <ProfileBoardRow
-                          key={row.difficulty}
-                          mode={row.mode}
-                          difficulty={row.difficulty}
-                          runs={row.runs}
-                          best={row.best}
-                          average={row.average}
-                        />
-                      ))}
-                  </Fragment>
-                ))}
-
-                {/* Omitted rather than shown empty: a heading over nothing reads as
-                      something the player lost, which is exactly what it is not. */}
-                {isNonEmptyArray(profile.reigns) && (
-                  <>
                     <Text
                       selectable={false}
-                      className="mb-1 mt-6 font-mono text-[9px] font-black tracking-[2px] text-dim"
+                      className="text-center font-mono text-[8px] font-bold tracking-[1px] text-dim"
                     >
-                      <Trans>RECORDS HELD, EVER</Trans>
+                      <Trans>
+                        <Text style={{ color: ACHIEVEMENT_INK[colorScheme] }}>
+                          {shownAchievements}
+                        </Text>{' '}
+                        OF {ACHIEVEMENT_COUNT} ACHIEVEMENTS
+                      </Trans>
                     </Text>
-                    {profile.reigns.map((reign) => (
-                      <ProfileReignRow
-                        key={`${reign.mode}:${reign.difficulty}:${reign.tookAt}`}
-                        mode={reign.mode}
-                        difficulty={reign.difficulty}
-                        score={reign.score}
-                        tookAt={reign.tookAt}
-                        lostAt={reign.lostAt}
-                      />
+
+                    <Text
+                      selectable={false}
+                      className="text-center font-mono text-[8px] tracking-[0.5px] text-dim"
+                    >
+                      <Trans>joined {formatReleaseDate(JOINED_ON)}</Trans>
+                    </Text>
+
+                    {SCORED_MODES.map((mode) => (
+                      <View key={mode}>
+                        <View className="h-7 flex-row items-end">
+                          <Text
+                            selectable={false}
+                            className="flex-1 font-mono text-[11px] font-black tracking-[2px]"
+                            style={{ color: MODE_GRADIENT[mode][0] }}
+                          >
+                            {t(MODES[mode].label)}
+                          </Text>
+                          <Text
+                            selectable={false}
+                            className="w-14 text-right font-mono text-[8px] font-bold tracking-[1px] text-dim"
+                          >
+                            <Trans>RUNS</Trans>
+                          </Text>
+                          <Text
+                            selectable={false}
+                            className="w-20 text-right font-mono text-[8px] font-bold tracking-[1px] text-dim"
+                          >
+                            <Trans>BEST</Trans>
+                          </Text>
+                          <Text
+                            selectable={false}
+                            className="w-16 text-right font-mono text-[8px] font-bold tracking-[1px] text-dim"
+                          >
+                            {t(AVERAGE_LABEL[mode])}
+                          </Text>
+                        </View>
+                        {rows
+                          .filter((row) => row.mode === mode)
+                          .map((row) => (
+                            <ProfileBoardRow
+                              key={row.difficulty}
+                              mode={row.mode}
+                              difficulty={row.difficulty}
+                              runs={row.runs}
+                              best={row.best}
+                              average={row.average}
+                            />
+                          ))}
+                      </View>
                     ))}
+
+                    {/* Omitted rather than shown empty: a heading over nothing reads as
+                      something the player lost, which is exactly what it is not. */}
+                    {isNonEmptyArray(profile.reigns) && (
+                      <View>
+                        <View className="h-7 flex-row items-end">
+                          <Text
+                            selectable={false}
+                            className="font-mono text-[9px] font-black tracking-[2px] text-dim"
+                          >
+                            <Trans>RECORDS HELD, EVER</Trans>
+                          </Text>
+                        </View>
+                        {profile.reigns.map((reign) => (
+                          <ProfileReignRow
+                            key={`${reign.mode}:${reign.difficulty}:${reign.tookAt}`}
+                            mode={reign.mode}
+                            difficulty={reign.difficulty}
+                            score={reign.score}
+                            tookAt={reign.tookAt}
+                            lostAt={reign.lostAt}
+                          />
+                        ))}
+                      </View>
+                    )}
+
+                    {lifetime.runs === 0 && isEmptyArray(profile.bests) && (
+                      <Text
+                        selectable={false}
+                        className="text-center font-mono text-[10px] text-dim"
+                      >
+                        <Trans>No runs counted yet.</Trans>
+                      </Text>
+                    )}
                   </>
                 )}
+              </View>
+            </ScrollView>
+          </View>
 
-                {lifetime.runs === 0 && isEmptyArray(profile.bests) && (
-                  <Text
-                    selectable={false}
-                    className="mt-6 text-center font-mono text-[10px] text-dim"
-                  >
-                    <Trans>No runs counted yet.</Trans>
-                  </Text>
-                )}
-              </>
-            )}
-          </ScrollView>
+          {editingMotto && profile !== null && (
+            <MottoModal
+              motto={profile.motto}
+              onSave={async (next) => {
+                const res = await saveMotto(userId, next)
+                if (res.error === null) {
+                  // Applied to what is already on screen rather than refetched: the write
+                  // has landed, and the profile behind this modal differs from the one
+                  // already drawn by exactly this line.
+                  applyMotto(next)
+                  setEditingMotto(false)
+                }
+                return res
+              }}
+              onCancel={() => {
+                setEditingMotto(false)
+              }}
+            />
+          )}
         </>
       )}
     </ModalCard>

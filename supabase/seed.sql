@@ -56,6 +56,15 @@ begin
   update public.profiles set nickname = 'PIXEL'   where id = u7;
   update public.profiles set nickname = 'VORTEX'  where id = u8;
 
+  -- ── Mottoes ─────────────────────────────────────────────────────────────────
+  -- Four of the eight, deliberately. A profile with no motto is the common case and
+  -- has to be as easy to look at in development as one with a motto in it — including
+  -- the longest one the column will take, which is where the line wraps.
+  update public.profiles set motto = 'I dial faster than I think'                        where id = u1;
+  update public.profiles set motto = 'Fifty characters is exactly this long, and no more' where id = u3;
+  update public.profiles set motto = 'Here for the extreme boards'                       where id = u5;
+  update public.profiles set motto = 'Still chasing that first gold'                     where id = u8;
+
   -- ── All-time best scores ────────────────────────────────────────────────────
   insert into public.scores (user_id, mode, difficulty, best_score, hits, updated_at) values
     -- accuracy / easy

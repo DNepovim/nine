@@ -69,7 +69,7 @@ msgstr ""
 "\n"
 "Tap to count up — 9 wraps back to 0 — swipe down to step back one, and swipe left or right to jump straight to 0 or 9. Tip: turn on “Show sum in buttons” under Options to see each button’s live contribution."
 
-#: components/overlays/tab-panel.tsx:112
+#: components/overlays/tab-panel.tsx:129
 msgid "— NO SCORES YET —"
 msgstr "— NO SCORES YET —"
 
@@ -77,7 +77,7 @@ msgstr "— NO SCORES YET —"
 msgid "— OFFLINE —"
 msgstr "— OFFLINE —"
 
-#: components/overlays/tab-panel.tsx:94
+#: components/overlays/tab-panel.tsx:104
 msgid "— UNAVAILABLE —"
 msgstr "— UNAVAILABLE —"
 
@@ -114,7 +114,7 @@ msgstr "<0/> won yesterday"
 msgid "<0/> won yesterday and last week"
 msgstr "<0/> won yesterday and last week"
 
-#: components/overlays/player-profile-overlay.tsx:203
+#: components/overlays/player-profile-overlay.tsx:245
 msgid "<0>{shownAchievements}</0> OF {ACHIEVEMENT_COUNT} ACHIEVEMENTS"
 msgstr "<0>{shownAchievements}</0> OF {ACHIEVEMENT_COUNT} ACHIEVEMENTS"
 
@@ -162,6 +162,10 @@ msgstr "A glowing target number floats onto the board. Turn the nine dial button
 msgid "A record is only ever lent — someone takes it back eventually. Achievements are the other kind: achieved once and yours for good, measured against nobody but yourself. Some are waiting where you would not think to look."
 msgstr "A record is only ever lent — someone takes it back eventually. Achievements are the other kind: achieved once and yours for good, measured against nobody but yourself. Some are waiting where you would not think to look."
 
+#: components/overlays/feedback-reply-overlay.tsx:37
+msgid "A REPLY"
+msgstr "A REPLY"
+
 #: components/overlays/how-to-play-overlay.tsx:492
 msgid "A shorter clock — the sooner you hit, the more it scores."
 msgstr "A shorter clock — the sooner you hit, the more it scores."
@@ -182,7 +186,7 @@ msgstr "A thin line above the game now shows your best on this board next to tod
 "\n"
 "It stays out of the way for the first few seconds of a run."
 
-#: components/overlays/player-profile-overlay.tsx:44
+#: components/overlays/player-profile-overlay.tsx:48
 #: lib/achievements.ts:198
 msgid "ACC"
 msgstr "ACC"
@@ -209,6 +213,10 @@ msgid "Achievements are the other kind. Nothing can take one back: they are achi
 msgstr "Achievements are the other kind. Nothing can take one back: they are achieved once and yours for good, and they are measured against you rather than against anybody else — so they are there to be collected whether or not your score is ever good enough for a board.\n"
 "\n"
 "There are dozens, and they ask for all sorts of things."
+
+#: components/overlays/profile-motto.tsx:50
+msgid "ADD MOTTO"
+msgstr "ADD MOTTO"
 
 #: components/overlays/install-overlay.tsx:87
 msgid "ADD TO HOME SCREEN"
@@ -238,11 +246,11 @@ msgstr "ALL THREE"
 msgid "and straight back to 0."
 msgstr "and straight back to 0."
 
-#: components/overlays/feedback-overlay.tsx:151
+#: components/overlays/feedback-overlay.tsx:154
 msgid "Anything at all — what broke, what annoyed you, what you wish it did. The mode, difficulty and score you are on go with it, and so does the run you have paused."
 msgstr "Anything at all — what broke, what annoyed you, what you wish it did. The mode, difficulty and score you are on go with it, and so does the run you have paused."
 
-#: components/overlays/feedback-overlay.tsx:146
+#: components/overlays/feedback-overlay.tsx:149
 msgid "Anything at all — what broke, what annoyed you, what you wish it did. The mode, difficulty and score you are on go with it."
 msgstr "Anything at all — what broke, what annoyed you, what you wish it did. The mode, difficulty and score you are on go with it."
 
@@ -262,12 +270,12 @@ msgstr "Average 90% speed over a run of 20 hits or more."
 msgid "Average 95% accuracy over a run of 20 hits or more."
 msgstr "Average 95% accuracy over a run of 20 hits or more."
 
-#: components/overlays/player-profile-overlay.tsx:188
+#: components/overlays/player-profile-overlay.tsx:230
 #: components/overlays/run-stats.tsx:40
 msgid "AVG ACC"
 msgstr "AVG ACC"
 
-#: components/overlays/player-profile-overlay.tsx:189
+#: components/overlays/player-profile-overlay.tsx:231
 #: components/overlays/run-stats.tsx:41
 msgid "AVG SPD"
 msgstr "AVG SPD"
@@ -285,7 +293,7 @@ msgstr "Beat a record and the game makes a fuss about it."
 msgid "Beat your own best ten times."
 msgstr "Beat your own best ten times."
 
-#: components/overlays/player-profile-overlay.tsx:238
+#: components/overlays/player-profile-overlay.tsx:280
 msgid "BEST"
 msgstr "BEST"
 
@@ -306,6 +314,7 @@ msgid "Buttons show their weight and max, so you can learn the math."
 msgstr "Buttons show their weight and max, so you can learn the math."
 
 #: components/overlays/join-room-overlay.tsx:91
+#: components/overlays/motto-modal.tsx:130
 #: components/overlays/multiplayer-waiting.tsx:239
 msgid "CANCEL"
 msgstr "CANCEL"
@@ -386,6 +395,10 @@ msgstr "DONE"
 msgid "e.g. ACE_9"
 msgstr "e.g. ACE_9"
 
+#: components/overlays/motto-modal.tsx:83
+msgid "e.g. I dial faster than I think"
+msgstr "e.g. I dial faster than I think"
+
 #: components/overlays/how-to-play-overlay.tsx:442
 msgid "Each target carries a shrinking ring — its countdown. Land the sum before the ring empties. The colour behind the ring tells you the target’s hundreds at a glance: plain grey under 100, violet in the 100s, rose in the 200s, amber in the 300s — so 223 never passes for 123. Several targets can share the board at once (up to 3, or 4 on Extreme), and new ones keep arriving, so pick your order wisely. Both scored modes tighten as you go, in opposite ways. In Speed each new target arrives with a slightly shorter ring than the last. In Accuracy the ring never shrinks — you always get the full time to think — but targets start arriving closer together, so the board fills up around you. Either squeeze eases off as it goes, so a long run gets harder without ever running away from you."
 msgstr "Each target carries a shrinking ring — its countdown. Land the sum before the ring empties. The colour behind the ring tells you the target’s hundreds at a glance: plain grey under 100, violet in the 100s, rose in the 200s, amber in the 300s — so 223 never passes for 123. Several targets can share the board at once (up to 3, or 4 on Extreme), and new ones keep arriving, so pick your order wisely. Both scored modes tighten as you go, in opposite ways. In Speed each new target arrives with a slightly shorter ring than the last. In Accuracy the ring never shrinks — you always get the full time to think — but targets start arriving closer together, so the board fills up around you. Either squeeze eases off as it goes, so a long run gets harder without ever running away from you."
@@ -448,7 +461,7 @@ msgstr "EXTREME"
 msgid "FAST START"
 msgstr "FAST START"
 
-#: components/overlays/feedback-overlay.tsx:99
+#: components/overlays/feedback-overlay.tsx:102
 msgid "FEEDBACK"
 msgstr "FEEDBACK"
 
@@ -538,6 +551,7 @@ msgstr "GOOD SPORT"
 msgid "GOOSE EGG"
 msgstr "GOOSE EGG"
 
+#: components/overlays/feedback-reply-overlay.tsx:69
 #: components/overlays/how-to-play-overlay.tsx:613
 msgid "GOT IT"
 msgstr "GOT IT"
@@ -567,7 +581,7 @@ msgid "Hit while most of the ring is left to build your combo streak."
 msgstr "Hit while most of the ring is left to build your combo streak."
 
 #: components/game/trainee-stats.tsx:53
-#: components/overlays/player-profile-overlay.tsx:187
+#: components/overlays/player-profile-overlay.tsx:218
 #: components/overlays/run-stats.tsx:38
 msgid "HITS"
 msgstr "HITS"
@@ -638,9 +652,9 @@ msgstr "INSTALL"
 msgid "INTO THE DEEP"
 msgstr "INTO THE DEEP"
 
-#: components/overlays/feedback-overlay.tsx:118
-msgid "It went straight to the person who makes this. No reply to expect — but it is read."
-msgstr "It went straight to the person who makes this. No reply to expect — but it is read."
+#: components/overlays/feedback-overlay.tsx:121
+msgid "It went straight to the person who makes this, and it is read. If it gets an answer, you will find one here next time you open the game."
+msgstr "It went straight to the person who makes this, and it is read. If it gets an answer, you will find one here next time you open the game."
 
 #: components/overlays/join-room-overlay.tsx:81
 #: components/overlays/menu-overlay.tsx:366
@@ -652,7 +666,7 @@ msgid "JOIN WITH CODE"
 msgstr "JOIN WITH CODE"
 
 #. placeholder {0}: formatReleaseDate(JOINED_ON)
-#: components/overlays/player-profile-overlay.tsx:215
+#: components/overlays/player-profile-overlay.tsx:257
 msgid "joined {0}"
 msgstr "joined {0}"
 
@@ -714,7 +728,7 @@ msgstr "LEAVE GAME"
 msgid "Let a target’s ring run out and you lose one too — precision still has a clock."
 msgstr "Let a target’s ring run out and you lose one too — precision still has a clock."
 
-#: components/splash-screen.tsx:225
+#: components/splash-screen.tsx:182
 msgid "Let's multiply"
 msgstr "Let's multiply"
 
@@ -722,7 +736,7 @@ msgstr "Let's multiply"
 msgid "LIGHTNING"
 msgstr "LIGHTNING"
 
-#: components/overlays/player-profile-overlay.tsx:155
+#: components/overlays/player-profile-overlay.tsx:181
 msgid "LOADING…"
 msgstr "LOADING…"
 
@@ -812,7 +826,7 @@ msgstr "NINE NINE NINE"
 msgid "NO JOKE"
 msgstr "NO JOKE"
 
-#: components/overlays/player-profile-overlay.tsx:290
+#: components/overlays/player-profile-overlay.tsx:332
 msgid "No runs counted yet."
 msgstr "No runs counted yet."
 
@@ -835,6 +849,10 @@ msgstr "Nothing announced yet."
 #: constants/achievements.ts:401
 msgid "ON THE BOARD"
 msgstr "ON THE BOARD"
+
+#: components/overlays/motto-modal.tsx:74
+msgid "One line under your name, for anyone who opens your profile."
+msgstr "One line under your name, for anyone who opens your profile."
 
 #: components/overlays/how-to-play-overlay.tsx:586
 msgid "One point, winner takes all — everyone else gets nothing."
@@ -918,7 +936,7 @@ msgstr "Play Trainee, Accuracy and Speed."
 msgid "Play with two hands, a thumb to each side of the grid. Reaching across for every button is time the ring is already spending."
 msgstr "Play with two hands, a thumb to each side of the grid. Reaching across for every button is time the ring is already spending."
 
-#: components/overlays/player-profile-overlay.tsx:97
+#: components/overlays/player-profile-overlay.tsx:110
 msgid "PLAYER"
 msgstr "PLAYER"
 
@@ -956,13 +974,17 @@ msgstr "Reach the ×8 multiplier."
 msgid "READY"
 msgstr "READY"
 
-#: components/overlays/player-profile-overlay.tsx:270
+#: components/overlays/player-profile-overlay.tsx:312
 msgid "RECORDS HELD, EVER"
 msgstr "RECORDS HELD, EVER"
 
 #: constants/news.ts:101
 msgid "Records, celebrated"
 msgstr "Records, celebrated"
+
+#: components/overlays/motto-modal.tsx:149
+msgid "REMOVE"
+msgstr "REMOVE"
 
 #: components/overlays/paused-overlay.tsx:142
 msgid "RESTART RUN"
@@ -988,8 +1010,8 @@ msgstr "ROUND NUMBER"
 msgid "ROW"
 msgstr "ROW"
 
-#: components/overlays/player-profile-overlay.tsx:186
-#: components/overlays/player-profile-overlay.tsx:232
+#: components/overlays/player-profile-overlay.tsx:217
+#: components/overlays/player-profile-overlay.tsx:274
 msgid "RUNS"
 msgstr "RUNS"
 
@@ -1004,6 +1026,14 @@ msgstr "Same grid, different pressure. Difficulty (Easy / Hard / Extreme) tighte
 #: components/overlays/tutorial/lessons/modes-lesson.tsx:141
 msgid "Same grid, different pressure. Swipe through the three."
 msgstr "Same grid, different pressure. Swipe through the three."
+
+#: components/overlays/motto-modal.tsx:150
+msgid "SAVE"
+msgstr "SAVE"
+
+#: components/overlays/motto-modal.tsx:148
+msgid "SAVING…"
+msgstr "SAVING…"
 
 #: constants/achievements.ts:527
 msgid "SCENIC ROUTE"
@@ -1111,7 +1141,11 @@ msgstr "SLIPSTREAM"
 msgid "SOMETHING BROKE"
 msgstr "SOMETHING BROKE"
 
-#: components/overlays/player-profile-overlay.tsx:45
+#: components/overlays/motto-modal.tsx:54
+msgid "Something went wrong, try again"
+msgstr "Something went wrong, try again"
+
+#: components/overlays/player-profile-overlay.tsx:49
 #: lib/achievements.ts:199
 msgid "SPD"
 msgstr "SPD"
@@ -1265,9 +1299,13 @@ msgstr "TEN THOUSAND HITS"
 msgid "TERMINAL VELOCITY"
 msgstr "TERMINAL VELOCITY"
 
-#: components/overlays/feedback-overlay.tsx:112
+#: components/overlays/feedback-overlay.tsx:115
 msgid "THANK YOU"
 msgstr "THANK YOU"
+
+#: components/overlays/motto-modal.tsx:48
+msgid "That is longer than {MOTTO_MAX} characters."
+msgstr "That is longer than {MOTTO_MAX} characters."
 
 #: components/overlays/tutorial/lessons/controls-lesson.tsx:43
 msgid "that takes 1 back off."
@@ -1355,7 +1393,7 @@ msgstr "This is how Nine will tell you what changed.\n"
 "- Been away a while? You'll see **everything you missed**, oldest first\n"
 "- Past updates live in Options → What’s new"
 
-#: components/overlays/player-profile-overlay.tsx:134
+#: components/overlays/player-profile-overlay.tsx:160
 msgid "This profile could not be loaded."
 msgstr "This profile could not be loaded."
 
@@ -1376,6 +1414,7 @@ msgstr "Three lives, and every score reaches the board."
 msgid "Three moves, one button. Try them in order."
 msgstr "Three moves, one button. Try them in order."
 
+#: components/overlays/player-profile-overlay.tsx:226
 #: components/overlays/run-stats.tsx:39
 msgid "TIME"
 msgstr "TIME"
@@ -1391,6 +1430,10 @@ msgstr "TIPS & TRICKS"
 #: components/overlays/publish-scores-button.tsx:39
 msgid "TO PUBLISH YOUR BESTS"
 msgstr "TO PUBLISH YOUR BESTS"
+
+#: components/overlays/feedback-reply-overlay.tsx:49
+msgid "TO SOMETHING YOU SENT"
+msgstr "TO SOMETHING YOU SENT"
 
 #: components/game/best-scores-line.tsx:33
 #: components/overlays/board-medals.tsx:18
@@ -1428,7 +1471,7 @@ msgid "TRY {modeName}"
 msgstr "TRY {modeName}"
 
 #: components/crash-screen.tsx:33
-#: components/overlays/player-profile-overlay.tsx:144
+#: components/overlays/player-profile-overlay.tsx:170
 msgid "TRY AGAIN"
 msgstr "TRY AGAIN"
 
@@ -1444,7 +1487,7 @@ msgstr "Turn on SHOW SUM IN BUTTONS under Options. Each button then reads out wh
 msgid "TWO IN A ROW"
 msgstr "TWO IN A ROW"
 
-#: components/overlays/feedback-overlay.tsx:165
+#: components/overlays/feedback-overlay.tsx:168
 msgid "Type here"
 msgstr "Type here"
 
@@ -1516,6 +1559,10 @@ msgstr "YOU"
 #: components/overlays/offline-notice.tsx:17
 msgid "YOU'RE OFFLINE"
 msgstr "YOU'RE OFFLINE"
+
+#: components/overlays/motto-modal.tsx:68
+msgid "YOUR MOTTO"
+msgstr "YOUR MOTTO"
 
 #: components/overlays/nickname-modal.tsx:74
 msgid "Your name appears on the leaderboard."

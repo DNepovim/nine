@@ -39,12 +39,13 @@ Two naming traps here: `multiplayer-menu.tsx` is **not** the multiplayer intro �
 
 ### Other key words
 
-| Term           | Meaning                                                                                                                                                              |
-| -------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **mode**       | Trainee / Accuracy / Speed — `Mode` in `machines/modes.ts`. Not `PlayMode` (alone / friends) and not `MultiMode` (the two scored modes only).                        |
-| **difficulty** | Easy / Hard / Extreme — `Difficulty` in `machines/modes.ts`.                                                                                                         |
-| **run**        | One game from start to game over. "END RUN", "run stats", "this run" — never "round" or "session".                                                                   |
-| **board**      | One mode × difficulty pairing, i.e. one leaderboard. Careful: the How to Play copy uses "board" for the 3×3 playfield — call that the **grid** in code and comments. |
+| Term           | Meaning                                                                                                                                                                                                                                                                         |
+| -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **mode**       | Trainee / Accuracy / Speed — `Mode` in `machines/modes.ts`. Not `PlayMode` (alone / friends) and not `MultiMode` (the two scored modes only).                                                                                                                                   |
+| **difficulty** | Easy / Hard / Extreme — `Difficulty` in `machines/modes.ts`.                                                                                                                                                                                                                    |
+| **run**        | One game from start to game over. "END RUN", "run stats", "this run" — never "round" or "session".                                                                                                                                                                              |
+| **board**      | One mode × difficulty pairing, i.e. one leaderboard. Careful: the How to Play copy uses "board" for the 3×3 playfield — call that the **grid** in code and comments.                                                                                                            |
+| **motto**      | The one line a player writes about themselves, under their nickname on their profile. At most 50 characters. `profiles.motto`, `lib/motto.ts`, `profile-motto.tsx`. Not a "claim" — that word already means a medal standing (`toMedals` keeps a player's best claim per mode). |
 
 Three words for three different rewards, and they are not interchangeable:
 

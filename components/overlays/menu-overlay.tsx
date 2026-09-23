@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons'
 import { Trans, useLingui } from '@lingui/react/macro'
 import { LinearGradient } from 'expo-linear-gradient'
-import { isNonEmptyString, isOneOf } from 'narrowland'
+import { isNonEmptyArray, isNonEmptyString, isOneOf } from 'narrowland'
 import { useEffect, useState } from 'react'
 import { Platform, Pressable, Share, Text, View } from 'react-native'
 import Animated, {
@@ -225,8 +225,15 @@ export function MenuOverlay({
           </View>
 
           {/* What the player holds across all six boards, all-time. Silent until they
-              have a podium finish, so the title keeps its space on a fresh install. */}
-          <MedalLine medals={medals} />
+              have a podium finish, so the title keeps its space on a fresh install —
+              which is why the emptiness is checked out here rather than left to the
+              line's own null: the margin belongs to this column, and a margin around
+              nothing would open a gap on exactly that install. */}
+          {isNonEmptyArray(medals) && (
+            <View className="mb-4">
+              <MedalLine medals={medals} />
+            </View>
+          )}
 
           {/* Unlike the medal line above, this is never silent. A medal line with nothing
               in it is a player who has not won anything; a strip with nothing in it is a
