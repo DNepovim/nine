@@ -40,6 +40,18 @@ export function formatReleaseDate(iso: string): string {
   return `${Number(day)} ${name} ${year ?? ''}`.trim()
 }
 
+// A bare ISO day ('2026-09-22') as '22 SEP'. Parsed by hand for the same reason
+// `formatReleaseDate` is: `Date` reads a bare ISO day as UTC and shifts it a day
+// backwards for anyone west of Greenwich — and a day that is the whole subject of the
+// line it sits on is the worst possible one to be off by one.
+export function formatShortDay(iso: string): string {
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso)
+  if (match === null) return iso
+  const [, , month, day] = match
+  const name = SHORT_MONTHS[Number(month) - 1]
+  return name === undefined ? iso : `${Number(day)} ${name}`
+}
+
 // A full ISO timestamp ('2026-09-17T08:31:00.000Z') as '17 SEP', on the reader's own
 // clock. Unlike `formatReleaseDate` this takes an instant rather than a bare day, so
 // `Date` can be trusted with it: an instant carries its own zone, and reading it back in

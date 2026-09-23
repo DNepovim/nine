@@ -181,6 +181,14 @@ export function PlayerTile({
           )}
         </View>
 
+        {/* White, and deliberately not the gradient every other name in the app now
+            wears. This is the one surface where a name is not drawn on the app's own
+            background but on a saturated card, and the name ink is mid-tone by
+            construction — that is what makes it read on both themes everywhere else.
+            Mid-tone on mid-tone measures about 1.0–1.3:1 against the three colours this
+            card can be, against 3.7–3.9:1 for white. There is no version of the gradient
+            that survives here, so the tile says who by name alone and lets the card go
+            on saying which room. */}
         <View className="flex-row items-end justify-between gap-1">
           <Text
             selectable={false}

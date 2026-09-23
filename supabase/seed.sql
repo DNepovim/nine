@@ -155,4 +155,53 @@ begin
                   hits       = excluded.hits,
                   updated_at = excluded.updated_at;
 
+  -- ── Lifetime counters ───────────────────────────────────────────────────────
+  -- What the profile modal's RUNS / HITS / TIME / AVG ACC / AVG SPD are read from, and
+  -- now also what every nickname in the app is coloured by — see lib/name-gradient.ts.
+  -- Without these the seed has eight players whose averages are all null, which reads on
+  -- screen as a board of grey names and a profile full of dashes.
+  --
+  -- `acc_sum` and `spd_sum` are sums over hits, never averages: each row is written as
+  -- `hits × the factor this player plays at`, so their career average comes out at that
+  -- factor exactly however the rows are combined. That is the same shape `record_run`
+  -- accumulates, so nothing here is a special case the real writer could not produce.
+  --
+  -- The eight are spread deliberately rather than realistically. The pair is a two-axis
+  -- design space, and a seed clustered in the middle of it would make every name the
+  -- same colour and hide exactly what wants looking at:
+  --
+  --   ACE_9  94/91  vivid at both ends      DOMINO 96/42  exact and slow
+  --   SPEEDY 51/104 quick and rough         BLAZE  68/66  unremarkable at both
+  --   NOVA   44/38  thin                    KIRO   88/57  accuracy player
+  --   PIXEL  33/29  nearly colourless       VORTEX 61/117 past the fast band
+  --
+  -- VORTEX is over 100 on purpose: `speedReward` pays above the fast band and
+  -- `averagePercent` deliberately does not clamp, so a real player can exceed it and the
+  -- colour has to stop at the hue rather than overshoot into something else.
+  insert into public.player_totals
+    (user_id, mode, difficulty, runs, hits, score_sum, acc_sum, spd_sum, time_ms) values
+    (u1, 'accuracy', 'easy', 16, 187, 3184, 175.78, 170.17, 1520000),
+    (u1, 'speed',    'easy',  9, 112, 1893, 105.28, 101.92,  855000),
+    (u2, 'accuracy', 'easy', 15, 174, 2961, 167.04,  73.08, 1425000),
+    (u2, 'speed',    'easy',  9, 104, 1768,  99.84,  43.68,  855000),
+    (u3, 'accuracy', 'easy', 13, 161, 2737,  82.11, 167.44, 1235000),
+    (u3, 'speed',    'easy',  8,  97, 1649,  49.47, 100.88,  760000),
+    (u4, 'accuracy', 'easy', 12, 148, 2516, 100.64,  97.68, 1140000),
+    (u4, 'speed',    'easy', 10, 124, 2108,  84.32,  81.84,  950000),
+    (u5, 'accuracy', 'easy', 11, 132, 2244,  58.08,  50.16, 1045000),
+    (u5, 'speed',    'easy',  7,  86, 1462,  37.84,  32.68,  665000),
+    (u6, 'accuracy', 'easy', 10, 119, 2023, 104.72,  67.83,  950000),
+    (u6, 'speed',    'easy', 10, 118, 2006, 103.84,  67.26,  950000),
+    (u7, 'accuracy', 'easy',  9, 104, 1768,  34.32,  30.16,  855000),
+    (u7, 'speed',    'easy',  6,  77, 1309,  25.41,  22.33,  570000),
+    (u8, 'accuracy', 'easy',  8,  91, 1547,  55.51, 106.47,  760000),
+    (u8, 'speed',    'easy',  6,  77, 1309,  46.97,  90.09,  570000)
+  on conflict (user_id, mode, difficulty)
+    do update set runs      = excluded.runs,
+                  hits      = excluded.hits,
+                  score_sum = excluded.score_sum,
+                  acc_sum   = excluded.acc_sum,
+                  spd_sum   = excluded.spd_sum,
+                  time_ms   = excluded.time_ms;
+
 end $$;

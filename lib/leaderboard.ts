@@ -1,6 +1,10 @@
+import { isEmptyArray, isOneOf } from 'narrowland'
+
 import type { Leader } from '@/lib/announcements'
 import { noteRequest } from '@/lib/connectivity'
+import { isDifficulty } from '@/lib/is-difficulty'
 import {
+  nextDay,
   previousDay,
   previousWeek,
   tabSince,
@@ -15,7 +19,8 @@ import {
 } from '@/lib/player-profile'
 import type { Winner } from '@/lib/recent-winners'
 import { supabase } from '@/lib/supabase'
-import type { Difficulty, Mode } from '@/machines/game'
+import { WIN_PERIODS, type Award } from '@/lib/winnings'
+import { SCORED_MODES, type Difficulty, type Mode } from '@/machines/game'
 
 export type { LeaderboardTab }
 
@@ -28,6 +33,11 @@ export type LeaderboardRow = {
   // When the record was set — the row's `updated_at`, as an ISO string. Drives the
   // "how long it has stood" mark beside the nickname.
   achieved_at: string
+  // The player's lifetime factor averages, which is what their name is coloured by —
+  // see lib/name-gradient.ts. Null for a player whose runs all predate `player_totals`:
+  // the board still lists them, and their name is simply drawn uncoloured.
+  avg_acc: number | null
+  avg_spd: number | null
 }
 
 export type MyRankRow = {
@@ -79,6 +89,33 @@ export const leaderOf = (rows: LeaderboardRow[]): Leader | null => {
   return { score: top.best_score, userId: top.user_id, nickname: top.nickname }
 }
 
+// One player's lifetime factor averages, as `players_factors` answers for them. Both
+// null where the counters have never seen them.
+export type PlayerFactorsRow = {
+  user_id: string
+  avg_acc: number | null
+  avg_spd: number | null
+}
+
+// What a set of names should be coloured by, for the places no board row can say.
+//
+// A board row carries its player's averages already; this is for the three surfaces that
+// draw a name without one — the player's own row below the board's cut, the intro
+// greeting, and a multiplayer room. Keyed by id so a caller can look each name up.
+//
+// Every id asked about comes back, with nulls where nothing has been counted, so an
+// absent entry means the request failed rather than that the player is new.
+export async function fetchPlayerFactors(
+  userIds: readonly string[],
+): Promise<{ factors: Map<string, PlayerFactorsRow>; error: string | null }> {
+  if (isEmptyArray(userIds)) return { factors: new Map(), error: null }
+  const res = await supabase.rpc('players_factors', { p_users: userIds })
+  noteRequest(res.error)
+  if (res.error) return { factors: new Map(), error: res.error.message }
+  const rows = (res.data as PlayerFactorsRow[] | null) ?? []
+  return { factors: new Map(rows.map((row) => [row.user_id, row])), error: null }
+}
+
 // One row per board × period the player has a score on — the whole medal line in a
 // single request. The period bounds go up with the call so the server never has to
 // know what "this week" means; see the `my_medals` migration.
@@ -122,6 +159,53 @@ export async function fetchPlayerProfile(
   return { profile: shapeProfile(raw), error: null }
 }
 
+// What this player won in every window that closed since they were last told.
+//
+// Rows are validated on the way in the way every other board read here is: the database
+// has no idea what a `ScoredMode` is, so a row whose mode or difficulty it does not
+// recognise is dropped rather than trusted. The award itself is never asked for — the
+// server returns what a window was won with, and `lib/winnings.ts` decides what that is
+// worth, so the difficulty weighting has exactly one definition.
+export async function fetchMyWinnings(
+  userId: string,
+  range: { from: string; to: string },
+): Promise<{ awards: Award[]; error: string | null }> {
+  const res = await supabase.rpc('my_winnings', {
+    p_user_id: userId,
+    p_from_day: range.from,
+    // The RPC's upper bound is exclusive and means "today", so the inclusive last day the
+    // caller wants is handed over as the day after it.
+    p_today: nextDay(range.to),
+  })
+  noteRequest(res.error)
+  if (res.error) return { awards: [], error: res.error.message }
+  const rows = (res.data as WinningsRow[] | null) ?? []
+  return { awards: rows.flatMap(toAward), error: null }
+}
+
+type WinningsRow = {
+  period: string
+  mode: string
+  difficulty: string
+  won_on: string
+  best_score: number
+}
+
+const toAward = (row: WinningsRow): Award[] =>
+  isOneOf(row.period, WIN_PERIODS) &&
+  isOneOf(row.mode, SCORED_MODES) &&
+  isDifficulty(row.difficulty)
+    ? [
+        {
+          period: row.period,
+          mode: row.mode,
+          difficulty: row.difficulty,
+          wonOn: row.won_on,
+          score: row.best_score,
+        },
+      ]
+    : []
+
 // Writing the player's own motto. Null removes it.
 //
 // Straight at the row rather than through an RPC: `profiles` already lets a player
@@ -164,6 +248,8 @@ type PastWinnerRow = {
   user_id: string
   nickname: string
   best_score: number
+  avg_acc: number | null
+  avg_spd: number | null
 }
 
 export type PastWinners = {
@@ -176,7 +262,12 @@ export const NO_PAST_WINNERS: PastWinners = { yesterday: null, lastWeek: null }
 const winnerIn = (rows: PastWinnerRow[], period: string): Winner | null => {
   const row = rows.find((r) => r.period === period)
   if (row === undefined) return null
-  return { userId: row.user_id, nickname: row.nickname }
+  return {
+    userId: row.user_id,
+    nickname: row.nickname,
+    avgAccuracy: row.avg_acc,
+    avgSpeed: row.avg_spd,
+  }
 }
 
 // Who took this board yesterday, and who took it last week.

@@ -2,8 +2,10 @@ import { describe, expect, it } from 'vitest'
 
 import { winnerLines } from './recent-winners'
 
-const ADA = { userId: 'ada', nickname: 'ADA' }
-const GRACE = { userId: 'grace', nickname: 'GRACE' }
+// The averages ride along on a winner because the stripe colours their name by them;
+// `winnerLines` never reads them, so they are the same on both and simply carried.
+const ADA = { userId: 'ada', nickname: 'ADA', avgAccuracy: 91, avgSpeed: 64 }
+const GRACE = { userId: 'grace', nickname: 'GRACE', avgAccuracy: 55, avgSpeed: 103 }
 
 describe('winnerLines', () => {
   it('says nothing when neither window has a winner', () => {
@@ -36,7 +38,7 @@ describe('winnerLines', () => {
   })
 
   it('takes the later nickname when a player renamed between the two windows', () => {
-    const renamed = { userId: 'ada', nickname: 'ADA_LOVELACE' }
+    const renamed = { ...ADA, nickname: 'ADA_LOVELACE' }
     expect(winnerLines({ yesterday: renamed, lastWeek: ADA })).toEqual([
       { window: 'both', winner: renamed },
     ])

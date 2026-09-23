@@ -35,7 +35,15 @@ type RampTarget = 'clock' | 'spawn' | 'none'
 export const MODES: Record<Mode, ModeConfig> = {
   trainee: {
     label: msg`TRAINEE`,
-    baseTimeout: 22000,
+    // Double Accuracy's, and the one clock in the app that is not part of the test.
+    // Trainee is where the weights get learned, and a route worked out with time to
+    // spare teaches more than one found in a hurry — at the Easy pace it always runs
+    // at, that is a little over a minute on each target.
+    //
+    // The gap between arrivals follows it, being a third of the clock: targets last
+    // twice as long here and turn up half as often, so the board stays as full as it
+    // was and simply moves at half the speed.
+    baseTimeout: 44000,
     weights: { acc: 2 / 3, spd: 1 / 3 },
     lives: Number.POSITIVE_INFINITY,
     streak: 'none',
@@ -257,8 +265,13 @@ export const effectiveSpawnInterval = (
   mode: Mode,
   difficulty: Difficulty,
   hits: number,
+  // The clock a target actually gets, when that is not the one the mode table would
+  // give. Only Trainee passes it, because only Trainee's clock is the player's to set —
+  // and the gap has to follow it, or halving the clock would leave the board emptying
+  // out between arrivals that still came at the old pace.
+  timeoutMs?: number,
 ): number => {
-  const base = rampedTimeout(mode, difficulty, hits) / 3
+  const base = (timeoutMs ?? rampedTimeout(mode, difficulty, hits)) / 3
   return Math.round(MODES[mode].ramps === 'spawn' ? decayed(base, hits) : base)
 }
 

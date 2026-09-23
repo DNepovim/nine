@@ -53,6 +53,10 @@ export function MultiplayerCorner({
         end={{ x: 1, y: 1 }}
         className="rounded-[10px] px-2 py-1.5 items-center gap-0.5"
       >
+        {/* White rather than the name gradient, for the same reason the room's tiles
+            are — see player-tile.tsx. This one sits on the mode gradient at 11px and
+            already carries an opacity cut for the other player; there is nothing left to
+            spend on hue. */}
         <Text
           selectable={false}
           numberOfLines={1}

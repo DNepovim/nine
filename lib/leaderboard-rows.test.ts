@@ -12,6 +12,8 @@ const row = (nickname: string, best_score: number): LeaderboardRow => ({
   best_score,
   hits: 1,
   achieved_at: ACHIEVED_AT,
+  avg_acc: 80,
+  avg_spd: 60,
 })
 
 const board = [row('ACE', 2140), row('BOLT', 1980), row('CIRA', 1720)]
@@ -67,7 +69,27 @@ describe('displayRows', () => {
         unpublished: true,
         // No board timestamp: the score has never reached the board.
         achievedAt: null,
+        // Nothing to colour the name with either. The board is empty, so there is no
+        // published row of this player's to borrow their averages from.
+        avgAccuracy: null,
+        avgSpeed: null,
       },
+    ])
+  })
+
+  it('colours the local row from the player’s own published row', () => {
+    // A player can appear twice on one board — once published, once with a fresher local
+    // score. Two different-coloured copies of one name would read as two players.
+    const mine: LeaderboardRow = {
+      ...row('ACE', 2140),
+      user_id: 'me',
+      avg_acc: 93,
+      avg_spd: 47,
+    }
+    const out = displayRows([mine], 'me', { score: 2400, label: 'ACE' })
+    expect(out.map((r) => [r.avgAccuracy, r.avgSpeed])).toEqual([
+      [93, 47],
+      [93, 47],
     ])
   })
 

@@ -73,6 +73,14 @@ export function previousDay(day: string): string {
   return d.toISOString().slice(0, 10)
 }
 
+// The day after `day`. The mirror of `previousDay`, and the same plain calendar
+// arithmetic: the Prague offset is already spent turning an instant into a day string.
+export function nextDay(day: string): string {
+  const d = new Date(`${day}T00:00:00Z`)
+  d.setUTCDate(d.getUTCDate() + 1)
+  return d.toISOString().slice(0, 10)
+}
+
 // The Monday-to-Sunday week before the one containing `day`, inclusive at both ends.
 //
 // The week that has finished, in other words — never the one in progress. Derived from

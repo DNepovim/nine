@@ -14,7 +14,7 @@ import { useChampionsContext } from '@/hooks/use-champions'
 import { useRecentWinners } from '@/hooks/use-recent-winners'
 import { championMark } from '@/lib/champions'
 import type { WinnerWindow } from '@/lib/recent-winners'
-import { getDifficultyColor, type Difficulty, type Mode } from '@/machines/game'
+import type { Difficulty, Mode } from '@/machines/game'
 
 // The three things the stripe can say. A value map rather than a branch, so a new
 // window could not be added to `WinnerWindow` without a sentence to go with it.
@@ -23,22 +23,19 @@ import { getDifficultyColor, type Difficulty, type Mode } from '@/machines/game'
 // which is what lets the Czech put the name where Czech wants it — the translated
 // message carries a `<0/>` the translator moves, not a fixed word order.
 const SENTENCES = {
-  yesterday: ({ userId, nickname, mark, color }: WinnerNameProps) => (
+  yesterday: (props: WinnerNameProps) => (
     <Trans>
-      <WinnerName userId={userId} nickname={nickname} mark={mark} color={color} /> won
-      yesterday
+      <WinnerName {...props} /> won yesterday
     </Trans>
   ),
-  lastWeek: ({ userId, nickname, mark, color }: WinnerNameProps) => (
+  lastWeek: (props: WinnerNameProps) => (
     <Trans>
-      <WinnerName userId={userId} nickname={nickname} mark={mark} color={color} /> won
-      last week
+      <WinnerName {...props} /> won last week
     </Trans>
   ),
-  both: ({ userId, nickname, mark, color }: WinnerNameProps) => (
+  both: (props: WinnerNameProps) => (
     <Trans>
-      <WinnerName userId={userId} nickname={nickname} mark={mark} color={color} /> won
-      yesterday and last week
+      <WinnerName {...props} /> won yesterday and last week
     </Trans>
   ),
 } as const satisfies Record<WinnerWindow, (props: WinnerNameProps) => ReactNode>
@@ -144,7 +141,8 @@ export function RecentWinners({
               userId: line.winner.userId,
               nickname: line.winner.nickname,
               mark: championMark(line.winner.userId, champions),
-              color: getDifficultyColor(gameMode, difficulty),
+              avgAccuracy: line.winner.avgAccuracy,
+              avgSpeed: line.winner.avgSpeed,
             })}
           </Text>
         </Animated.View>

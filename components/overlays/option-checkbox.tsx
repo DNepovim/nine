@@ -9,6 +9,8 @@ import Animated, {
 } from 'react-native-reanimated'
 import Svg, { Path } from 'react-native-svg'
 
+import { cn } from '@/lib/cn'
+
 const BOX = 28
 const TICK_COLOR = '#D8D2F4'
 
@@ -39,7 +41,17 @@ const FILL_FROM = 0.7
 
 const AnimatedPath = Animated.createAnimatedComponent(Path)
 
-export function OptionCheckbox({ checked }: { checked: boolean }) {
+export function OptionCheckbox({
+  checked,
+  onCard = false,
+}: {
+  checked: boolean
+  // Set by a checkbox sitting on a `card` tile rather than on the screen itself. The
+  // empty box is `card`-coloured, so on a card it would be the same colour on the same
+  // colour and simply vanish; `surface` is the screen's own ground, which reads against
+  // a card in both themes and makes an unticked box look punched out of the tile.
+  onCard?: boolean
+}) {
   const progress = useSharedValue(checked ? 1 : 0)
 
   useEffect(() => {
@@ -61,7 +73,10 @@ export function OptionCheckbox({ checked }: { checked: boolean }) {
 
   return (
     <View
-      className="items-center justify-center rounded-lg bg-card"
+      className={cn(
+        'items-center justify-center rounded-lg',
+        onCard ? 'border border-muted bg-surface' : 'bg-card',
+      )}
       style={{ width: BOX, height: BOX }}
     >
       <Animated.View

@@ -24,8 +24,8 @@ import { DialButton } from '@/components/game/dial-button'
 import { FloatingLifeLoss } from '@/components/game/floating-life-loss'
 import { FloatingPoints } from '@/components/game/floating-points'
 import { FloatingStat } from '@/components/game/floating-stat'
-import { MenuButton } from '@/components/game/menu-button'
 import { MultiplayerGame } from '@/components/game/multiplayer-game'
+import { PauseButton } from '@/components/game/pause-button'
 import { ScoreDigit } from '@/components/game/score-digit'
 import { StepUpToast } from '@/components/game/step-up-toast'
 import { TargetCard } from '@/components/game/target-card'
@@ -65,6 +65,7 @@ import { useFloatingPoints } from '@/hooks/use-floating-points'
 import { useFloatingStat } from '@/hooks/use-floating-stat'
 import { useHitCelebration } from '@/hooks/use-hit-celebration'
 import { useInstall } from '@/hooks/use-install'
+import { useLostMedals } from '@/hooks/use-lost-medals'
 import { useMultiplayerGame } from '@/hooks/use-multiplayer-game'
 import { useMultiplayerRoom } from '@/hooks/use-multiplayer-room'
 import { useMyMedals } from '@/hooks/use-my-medals'
@@ -73,6 +74,7 @@ import { usePauseOnBlur } from '@/hooks/use-pause-on-blur'
 import { usePersistedDifficulty } from '@/hooks/use-persisted-difficulty'
 import { usePersistedMode } from '@/hooks/use-persisted-mode'
 import { usePersistedStats } from '@/hooks/use-persisted-stats'
+import { usePopupDeck } from '@/hooks/use-popup-deck'
 import { PlayerProfileProvider } from '@/hooks/use-profile-modal'
 import { useRivalRecords } from '@/hooks/use-rival-records'
 import { useScoreDirection } from '@/hooks/use-score-direction'
@@ -84,7 +86,6 @@ import { useTargetSpawner } from '@/hooks/use-target-spawner'
 import { useTheme } from '@/hooks/use-theme'
 import { useTraineeCoach } from '@/hooks/use-trainee-coach'
 import { useTutorial } from '@/hooks/use-tutorial'
-import { useWhatsNew } from '@/hooks/use-whats-new'
 import { idsOf, latestAchievement } from '@/lib/achievement-store'
 import { identify, track } from '@/lib/analytics'
 import type { AnalyticsEvents } from '@/lib/analytics-events'
@@ -103,6 +104,7 @@ import { runChallenge } from '@/lib/next-challenge'
 import { heldPeriods, medalPeriods } from '@/lib/record-medals'
 import { countRun } from '@/lib/run-submission'
 import { STEP_UP_BOARD } from '@/lib/step-up'
+import { multiplierColor } from '@/lib/streak-badge'
 import { valueProgress } from '@/lib/value-progress'
 import {
   computeSum,
@@ -173,11 +175,6 @@ const OVERLAY_SCREENS = {
   Exclude<MenuOverlayName, 'none'>,
   AnalyticsEvents['screen_opened']['screen']
 >
-
-// Where the menu button sits, level with the NINE row. One number for every mode:
-// the best-scores strip occupies its height in all of them, Trainee included, so
-// there is no longer a mode whose top bar starts higher than the rest.
-const MENU_TOP = 36
 
 // A record measured against a board that cannot be trusted — offline, reading
 // whatever it last managed to load — is not a record worth telling the player
@@ -295,7 +292,23 @@ export default function GameScreen() {
   usePersistedStats(stats, send)
   usePersistedDifficulty(difficulty, send)
   usePersistedMode(mode, send)
-  const { showSum, toggleSum } = useDisplayOptions()
+  const {
+    showSum,
+    toggleSum,
+    showPar,
+    togglePar,
+    traineeTimeoutMs,
+    setTraineeTimeoutMs,
+    corners,
+    setCorner,
+  } = useDisplayOptions()
+
+  // The machine spawns targets with it, so the setting has to reach the context — on
+  // hydration and on every change after. Mid-run is fine: it is read at spawn, so the
+  // targets already in flight keep the clock they were given.
+  useEffect(() => {
+    send({ type: 'SET_TRAINEE_TIMEOUT', ms: traineeTimeoutMs })
+  }, [traineeTimeoutMs, send])
   // Which menu-level overlay is open. Only one shows at a time, and the menu
   // itself is hidden while any of them is open — a single source of truth avoids
   // z-order/gating clashes between separate booleans.
@@ -322,7 +335,6 @@ export default function GameScreen() {
     if (menuOverlay === 'none') return
     track('screen_opened', { screen: OVERLAY_SCREENS[menuOverlay] })
   }, [menuOverlay])
-  const whatsNew = useWhatsNew()
   const installPrompt = useInstall()
   const { done: splashDone } = useSplash()
   const { ready: updateReady, apply: applyUpdate } = useAppUpdate()
@@ -368,6 +380,10 @@ export default function GameScreen() {
   useEffect(() => {
     if (userId !== null) identify(userId, nickname)
   }, [userId, nickname])
+
+  // Below `useSupabaseAuth`, which it reads: the winnings half of the deck is per player,
+  // and there is nothing to ask the server for until there is a player to ask about.
+  const whatsNew = usePopupDeck(userId)
 
   const { submit: submitScore } = useScoreSubmission(userId, nickname, isReady)
 
@@ -454,7 +470,12 @@ export default function GameScreen() {
   // Every board the player stands on. Read here rather than inside the intro screen,
   // which unmounts for the whole run — the achievements need it while one is going, and
   // one request answers for both.
-  const { medals, standings } = useMyMedals(userId)
+  const { medals, standings, loaded: medalsLoaded } = useMyMedals(userId)
+
+  // What rivals took off that line while nobody was looking. Held here rather than in the
+  // intro screen, which unmounts for the whole run: the news has to survive being shown
+  // once and not come back at the end of every run — see useLostMedals.
+  const lostMedals = useLostMedals({ standings, loaded: medalsLoaded, userId })
 
   // Shared by the two hooks below, and declared above both because each needs something
   // from the other: the bar reads the queue, and the achievements read the bar's own
@@ -711,6 +732,7 @@ export default function GameScreen() {
     mode,
     difficulty,
     hits,
+    traineeTimeoutMs: state.context.traineeTimeoutMs,
     currentSum: sum,
     takenValues: targets.map((t) => t.value),
     send,
@@ -990,8 +1012,20 @@ export default function GameScreen() {
                 >
                   NINE
                 </Text>
-                {/* right: spacer balancing the absolute dots menu button */}
-                <View className="flex-1" />
+                {/* right: PAUSE, balancing the mode/difficulty block on the left.
+                    Only while a run is actually going — the pause screen is a full
+                    overlay, so it covers this slot rather than needing a button of its
+                    own on top. */}
+                <View className="flex-1 flex-row items-center justify-end">
+                  {isPlaying && (
+                    <PauseButton
+                      color={MODE_GRADIENT[mode][0]}
+                      onPress={() => {
+                        send({ type: 'PAUSE', now: Date.now() })
+                      }}
+                    />
+                  )}
+                </View>
               </View>
 
               {/* Row 2 — hearts · center stat · score cluster */}
@@ -1069,14 +1103,7 @@ export default function GameScreen() {
                           <Text
                             selectable={false}
                             className="font-mono text-[11px] font-black tracking-[1px]"
-                            style={{
-                              color:
-                                currentMultiplier >= 8
-                                  ? '#E5534B'
-                                  : currentMultiplier >= 4
-                                    ? '#7273D2'
-                                    : '#4C7EFF',
-                            }}
+                            style={{ color: multiplierColor(currentMultiplier) }}
                           >
                             {`×${currentMultiplier}`}
                           </Text>
@@ -1132,7 +1159,11 @@ export default function GameScreen() {
                     // The clock this target spawned with, so a ring never retargets
                     // mid-flight when Speed's timeout tightens.
                     duration={target.duration}
-                    par={mode === 'trainee' ? computePar(grid, target.value) : undefined}
+                    par={
+                      mode === 'trainee' && showPar
+                        ? computePar(grid, target.value)
+                        : undefined
+                    }
                     dying={isGameOver}
                     frozen={isPaused}
                     onExpire={() => {
@@ -1189,6 +1220,7 @@ export default function GameScreen() {
                     weight={cellWeight(index)}
                     showSum={showSum}
                     trainee={mode === 'trainee'}
+                    corners={corners}
                     peakFrom={DARK_MODE_GRADIENT[mode][0]}
                     peakTo={DARK_MODE_GRADIENT[mode][1]}
                     onDelta={(delta) => {
@@ -1320,6 +1352,12 @@ export default function GameScreen() {
               gameTimeMs={elapsedMs}
               avgAccuracy={avgAccuracy}
               avgSpeed={avgSpeed}
+              corners={corners}
+              onSelectCorner={setCorner}
+              showPar={showPar}
+              onTogglePar={togglePar}
+              traineeTimeoutMs={traineeTimeoutMs}
+              onSetTraineeTimeout={setTraineeTimeoutMs}
               onContinue={() => {
                 send({ type: 'RESUME', now: Date.now() })
               }}
@@ -1466,7 +1504,7 @@ export default function GameScreen() {
             feedbackReplies.ready &&
             feedbackReplies.reply === null &&
             whatsNew.visible && (
-              <WhatsNewOverlay items={whatsNew.unseen} onDismiss={whatsNew.dismiss} />
+              <WhatsNewOverlay cards={whatsNew.cards} onDismiss={whatsNew.dismiss} />
             )}
 
           {/* ── Install prompt — web only, and only once the news has had its turn.
@@ -1502,6 +1540,8 @@ export default function GameScreen() {
               nickname={nickname}
               bestScore={stats[mode][difficulty].score}
               medals={medals}
+              lostMedals={lostMedals.news}
+              onLostMedalsSeen={lostMedals.dismiss}
               achievementsEarned={idsOf(achievements.store).length}
               achievementsLatest={latestAchievement(achievements.store)}
               achievementsLoaded={achievements.loaded}
@@ -1589,25 +1629,6 @@ export default function GameScreen() {
             onSkip={() => {
               setShowNicknameModal(false)
               setPendingMultiAction(null)
-            }}
-          />
-
-          {/* Persistent menu button — same spot in game & pause; morphs grid↔cross.
-            Sits level with the NINE row, so it clears the best-scores strip above
-            it. Trainee renders no strip, so it comes up by exactly that strip's
-            height rather than by a second number that could drift from it. */}
-          <MenuButton
-            visible={isPlaying || isPaused}
-            paused={isPaused}
-            onToggle={() => {
-              send({ type: isPaused ? 'RESUME' : 'PAUSE', now: Date.now() })
-            }}
-            color={isDark ? '#2A2B44' : '#D4D0C8'}
-            style={{
-              position: 'absolute',
-              top: MENU_TOP,
-              right: 18,
-              zIndex: 20,
             }}
           />
 

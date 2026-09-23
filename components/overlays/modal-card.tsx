@@ -119,13 +119,7 @@ export function ModalCard({
               </View>
               {/* The same 5-dot cross the pause screen closes with, unlabelled — a
                   dialog header already reads as one. */}
-              <MenuButton
-                visible
-                paused
-                showLabel={false}
-                onToggle={close}
-                color={dotColor}
-              />
+              <MenuButton showLabel={false} onToggle={close} color={dotColor} />
             </View>
             {children(close)}
           </View>

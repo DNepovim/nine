@@ -16,6 +16,7 @@ export function useTargetSpawner({
   mode,
   difficulty,
   hits,
+  traineeTimeoutMs,
   currentSum,
   takenValues,
   send,
@@ -26,6 +27,9 @@ export function useTargetSpawner({
   difficulty: Difficulty
   // Drives the cadence in ramping modes: more hits, shorter gap between arrivals.
   hits: number
+  // Trainee's player-set clock, from the machine's own context so the gap and the ring
+  // are always read off the same number.
+  traineeTimeoutMs: number
   currentSum: number
   takenValues: number[]
   send: GameSend
@@ -41,8 +45,14 @@ export function useTargetSpawner({
 
   // Latest cadence, likewise read when a spawn fires rather than when the wait is
   // armed. See startCadence for why that matters.
-  const intervalRef = useRef(effectiveSpawnInterval(mode, difficulty, hits))
-  intervalRef.current = effectiveSpawnInterval(mode, difficulty, hits)
+  const spawnEvery = effectiveSpawnInterval(
+    mode,
+    difficulty,
+    hits,
+    mode === 'trainee' ? traineeTimeoutMs : undefined,
+  )
+  const intervalRef = useRef(spawnEvery)
+  intervalRef.current = spawnEvery
 
   const spawnTarget = useCallback(() => {
     const { sum, values } = excludeRef.current

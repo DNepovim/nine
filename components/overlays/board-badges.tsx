@@ -19,12 +19,20 @@ export function BoardBadges({
   difficulty,
 }: {
   gameMode: Mode
-  difficulty: Difficulty
+  // Left out by a run with no difficulty to record. Trainee has no selector and takes
+  // the Easy pace whatever the menu last had selected, so a pill naming one there would
+  // be reporting a choice the player never made.
+  difficulty?: Difficulty
 }) {
   const { t } = useLingui()
+  const labels =
+    difficulty === undefined
+      ? [t(MODES[gameMode].label)]
+      : [t(MODES[gameMode].label), t(DIFFICULTIES[difficulty].label)]
+
   return (
     <View className="mb-5 flex-row items-center gap-2">
-      {[t(MODES[gameMode].label), t(DIFFICULTIES[difficulty].label)].map((label) => (
+      {labels.map((label) => (
         <View key={label} className="overflow-hidden rounded-lg">
           <LinearGradient
             colors={[...MODE_GRADIENT[gameMode]]}

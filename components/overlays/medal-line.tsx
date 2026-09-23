@@ -3,18 +3,9 @@ import { isEmptyArray } from 'narrowland'
 import { Fragment } from 'react'
 import { Text, View } from 'react-native'
 
-import type { Medal, MedalPeriod } from '@/lib/medals'
+import { PERIOD_CODES, type Medal } from '@/lib/medals'
 import { rankMedal } from '@/lib/rank-emoji'
 import { DIFFICULTIES, MODE_GRADIENT } from '@/machines/game'
-
-// How long the board has stood, in the same clipped register as the difficulty code
-// beside it. A medal without this reads as all-time, which is the rarest of the three
-// and the one nobody should be handed by default.
-const PERIOD_CODES = {
-  today: 'DAY',
-  week: 'WK',
-  ever: 'ALL',
-} as const satisfies Record<MedalPeriod, string>
 
 // The player's best claim in each mode, under the title. The difficulty is spelled; the
 // mode is the colour it is spelled in — the same accent the leaderboard gives that mode,

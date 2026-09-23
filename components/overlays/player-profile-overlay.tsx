@@ -85,7 +85,7 @@ export function PlayerProfileOverlay({
   // contradict the row that opened it.
   const mark = championMark(userId, useChampionsContext())
 
-  const lifetime = profile === null ? null : lifetimeOf(profile.totals)
+  const lifetime = profile === null ? null : lifetimeOf(profile.totals, profile.winnings)
   const rows = profile === null ? [] : boardRows(profile)
   // Both factors over every hit the player has landed, in either mode — the same pair
   // the game over screen shows for a single run.
@@ -127,7 +127,15 @@ export function PlayerProfileOverlay({
                 {mark}
               </Text>
             )}
-            {profile !== null && <ProfileName nickname={profile.nickname ?? '…'} />}
+            {/* The same two averages the stat row below prints, handed to the name so
+                the colour and the numbers explaining it can never disagree. */}
+            {profile !== null && (
+              <ProfileName
+                nickname={profile.nickname ?? '…'}
+                avgAccuracy={avgAccuracy}
+                avgSpeed={avgSpeed}
+              />
+            )}
             {/* Between the name and the medals: the one line here the player wrote rather
                 than earned. Editable only on your own profile, and only once you have a
                 nickname — without one you are on no board, so there is no profile for a
@@ -213,6 +221,18 @@ export function PlayerProfileOverlay({
                       className="text-center font-mono text-[8px] font-bold tracking-[1px] text-dim"
                     >
                       {weights}
+                    </Text>
+
+                    {/* The weights explain how every part of the figure is weighted, but
+                    no longer the whole of where it came from: taking a board's day or
+                    week pays into the same number, at half rate for a day and full for a
+                    week. One line, because a player who has never won one has nothing to
+                    read here and a player who has knows exactly what it means. */}
+                    <Text
+                      selectable={false}
+                      className="text-center font-mono text-[8px] font-bold tracking-[1px] text-dim"
+                    >
+                      <Trans>PLUS EVERY DAY AND WEEK WON</Trans>
                     </Text>
 
                     {/* Five cells rather than four, so the gap comes in a step: RUNS and

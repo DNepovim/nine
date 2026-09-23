@@ -3,6 +3,7 @@ import { assign, createMachine } from 'xstate'
 
 import {
   DIFFICULTIES,
+  effectiveTimeout,
   FAST_HIT_THRESHOLD,
   MODES,
   rampedTimeout,
@@ -116,6 +117,11 @@ type Context = {
   stats: Stats // best { score, hits } per mode × difficulty (best by score)
   mode: Mode
   difficulty: Difficulty
+  // How long a Trainee target lasts, in ms. Trainee alone, and settable from its pause
+  // screen: practice is the one place where the clock is the player's to choose rather
+  // than the thing being tested. Every other mode reads `rampedTimeout`, which is the
+  // run's own difficulty and cannot be negotiated with.
+  traineeTimeoutMs: number
   lives: number
   streak: number
   // The longest streak this run has reached. `streak` is the one running now and goes
@@ -155,6 +161,7 @@ type Event =
   | { type: 'MENU' }
   | { type: 'SET_MODE'; mode: Mode }
   | { type: 'SET_DIFFICULTY'; difficulty: Difficulty }
+  | { type: 'SET_TRAINEE_TIMEOUT'; ms: number }
   | { type: 'HYDRATE_STATS'; stats: Partial<Stats> }
   | { type: 'PRESS'; index: number; delta: 1 | -1; now: number }
   | { type: 'SET_CELL'; index: number; value: number; now: number }
@@ -434,6 +441,7 @@ export const gameMachine = createMachine({
     stats: emptyStats(),
     mode: 'accuracy' as Mode,
     difficulty: 'hard' as Difficulty,
+    traineeTimeoutMs: effectiveTimeout('trainee', 'easy'),
     lives: 3,
     streak: 0,
     maxStreak: 0,
@@ -448,6 +456,16 @@ export const gameMachine = createMachine({
     runSeq: 0,
   } satisfies Context,
   on: {
+    // Settable at any time, including mid-run — a player who finds a target too quick
+    // should not have to end the run to say so. It is read when a target spawns, so the
+    // ones already in flight keep the clock they were given.
+    SET_TRAINEE_TIMEOUT: {
+      actions: assign(
+        ({ event }: { event: Extract<Event, { type: 'SET_TRAINEE_TIMEOUT' }> }) => ({
+          traineeTimeoutMs: event.ms,
+        }),
+      ),
+    },
     // Load persisted per-mode×difficulty stats on app start.
     HYDRATE_STATS: {
       actions: assign(
@@ -684,7 +702,10 @@ export const gameMachine = createMachine({
                   id: context.nextTargetId,
                   value: event.value,
                   spawnedAt: event.at,
-                  duration: rampedTimeout(context.mode, context.difficulty, context.hits),
+                  duration:
+                    context.mode === 'trainee'
+                      ? context.traineeTimeoutMs
+                      : rampedTimeout(context.mode, context.difficulty, context.hits),
                   refAt: event.at,
                   refGrid: context.grid,
                   par: computePar(context.grid, event.value),

@@ -472,7 +472,7 @@ export function HowToPlayOverlay({
             mode="trainee"
             facts={[
               t`Pure practice — no lives, no score, and a relaxed clock.`,
-              t`Buttons show their weight and max, so you can learn the math.`,
+              t`Buttons can show their weight, their ceiling, and what each is giving right now — pick which from the pause screen.`,
               t`A coach line under the stat row says when a move was wasted, and what a hit cost.`,
             ]}
           />
@@ -615,10 +615,8 @@ export function HowToPlayOverlay({
           </Pressable>
         </ScrollView>
 
-        {/* Close — same 5-dot cross + CLOSE label and position as the pause menu. */}
+        {/* Close — the same 5-dot cross + CLOSE label every dialog carries. */}
         <MenuButton
-          visible
-          paused
           onToggle={onClose}
           color={dotColor}
           style={{ position: 'absolute', top: 12, right: 18, zIndex: 20 }}

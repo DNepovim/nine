@@ -7,12 +7,27 @@ import Animated, {
 
 import { mono } from '@/constants/theme'
 
-// One of DialButton's two corner hints: the weight at top-left, the key's ceiling
-// at bottom-right. Mirrors the pill's own fill exactly — the same ramp, the same
-// peak gradient, driven by the same shared values — so the badge reads as part of
-// the button rather than a sticker sitting on it. The border is what keeps it
-// legible when its fill and the pill's happen to match: a ring in the mode's own
-// CTA colour, constant while the fill underneath keeps animating.
+export type BadgeCorner = 'topLeft' | 'topRight' | 'bottomLeft' | 'bottomRight'
+
+// Where each corner puts the badge, as the offset from the two edges it sits between.
+// One entry per corner rather than a pair of ternaries, so a corner that is added here
+// cannot be one the layout quietly ignores.
+const CORNER_POSITION = {
+  topLeft: (offset: number) => ({ top: offset, left: offset }),
+  topRight: (offset: number) => ({ top: offset, right: offset }),
+  bottomLeft: (offset: number) => ({ bottom: offset, left: offset }),
+  bottomRight: (offset: number) => ({ bottom: offset, right: offset }),
+} as const satisfies Record<
+  BadgeCorner,
+  (offset: number) => { top?: number; bottom?: number; left?: number; right?: number }
+>
+
+// One of DialButton's corner hints — see constants/dial-hints.ts for what the four of
+// them say. Mirrors the pill's own fill exactly — the same ramp, the same peak gradient,
+// driven by the same shared values — so the badge reads as part of the button rather
+// than a sticker sitting on it. The border is what keeps it legible when its fill and
+// the pill's happen to match: a ring in the mode's own CTA colour, constant while the
+// fill underneath keeps animating.
 export function DialBadge({
   label,
   size,
@@ -35,7 +50,7 @@ export function DialBadge({
   size: number
   fontSize: number
   offset: number
-  corner: 'topLeft' | 'bottomRight'
+  corner: BadgeCorner
   low: string
   high: string
   text: string
@@ -48,10 +63,7 @@ export function DialBadge({
   peakProgress: SharedValue<number>
   scale: SharedValue<number>
 }) {
-  const position =
-    corner === 'topLeft'
-      ? { top: offset, left: offset }
-      : { bottom: offset, right: offset }
+  const position = CORNER_POSITION[corner](offset)
 
   const badgeStyle = useAnimatedStyle(() => ({
     transform: [{ scale: scale.value }],

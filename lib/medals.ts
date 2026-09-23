@@ -16,6 +16,15 @@ export const MEDAL_PERIODS = ['ever', 'week', 'today'] as const satisfies readon
   ...MedalPeriod[],
 ]
 
+// How long the board a medal stands on has stood, in the clipped register the medal line
+// sets it in. A medal without this reads as all-time, which is the rarest of the three
+// and the one nobody should be handed by default.
+export const PERIOD_CODES = {
+  today: 'DAY',
+  week: 'WK',
+  ever: 'ALL',
+} as const satisfies Record<MedalPeriod, string>
+
 // One board's standing for the player: where they sit and what they scored.
 export type BoardStanding = {
   mode: ScoredMode
@@ -53,17 +62,23 @@ const modeWeight = (mode: ScoredMode): number => SCORED_MODES.indexOf(mode)
 // the more a place on it says.
 const periodWeight = (period: MedalPeriod): number => MEDAL_PERIODS.indexOf(period)
 
-// Which of two medals is the better claim.
+// Medals ordered by the claim they make, best first.
 //
 // The period is decided first and the metal second, which is the whole ordering: a
 // bronze that has stood all week beats a silver from this morning, because the day's
-// board empties tonight and the week's does not. Difficulty settles what is left.
-const isBetter = (candidate: Medal, held: Medal): boolean => {
-  const period = periodWeight(candidate.period) - periodWeight(held.period)
-  if (period !== 0) return period < 0
-  if (candidate.rank !== held.rank) return candidate.rank < held.rank
-  return difficultyWeight(candidate.difficulty) < difficultyWeight(held.difficulty)
-}
+// board empties tonight and the week's does not. Difficulty settles what is left, and
+// the mode settles nothing — it is there only so the order is total, which a sort needs
+// and `isBetterMedal` never did.
+export const byBestClaim = (a: Medal, b: Medal): number =>
+  periodWeight(a.period) - periodWeight(b.period) ||
+  a.rank - b.rank ||
+  difficultyWeight(a.difficulty) - difficultyWeight(b.difficulty) ||
+  modeWeight(a.mode) - modeWeight(b.mode)
+
+// Which of two medals is the better claim. The same rule as a yes or no — `bestPerMode`
+// only ever asks it of two medals in one mode, where the mode tiebreak cannot fire.
+const isBetterMedal = (candidate: Medal, held: Medal): boolean =>
+  byBestClaim(candidate, held) < 0
 
 // One medal per mode, so the line is never longer than there are modes to win in.
 //
@@ -74,7 +89,7 @@ const bestPerMode = (medals: readonly Medal[]): Medal[] => {
   const best = new Map<ScoredMode, Medal>()
   for (const medal of medals) {
     const held = best.get(medal.mode)
-    if (held === undefined || isBetter(medal, held)) best.set(medal.mode, medal)
+    if (held === undefined || isBetterMedal(medal, held)) best.set(medal.mode, medal)
   }
   return [...best.values()]
 }

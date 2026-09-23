@@ -1,6 +1,7 @@
 import { isNonEmptyString } from 'narrowland'
 import { Pressable, Text, View } from 'react-native'
 
+import { GradientName } from '@/components/gradient-name'
 import { ON_GOLD_LABEL_SHADOW } from '@/constants/theme'
 import { useOpenProfile } from '@/hooks/use-profile-modal'
 import { cn } from '@/lib/cn'
@@ -30,6 +31,10 @@ export type ScoreEntry = {
   nickname: string
   score: number
   isUser?: boolean
+  // What the nickname is coloured by — see lib/name-gradient.ts. Null for a player the
+  // counters have never seen, whose name is drawn uncoloured.
+  avgAccuracy: number | null
+  avgSpeed: number | null
   // Set on a local record that has not reached the board yet — the row says why.
   note?: string
   // When the record was set, ISO. Undefined for a row with no board timestamp.
@@ -101,13 +106,18 @@ export function ScoreRow({
             {entry.mark}
           </Text>
         )}
-        <Text
-          selectable={false}
-          className="font-mono text-[10px] font-bold tracking-[0.5px] text-primary"
-          style={[accentStyle, glow]}
-        >
-          {entry.nickname}
-        </Text>
+        {/* The one text on this row that is not the board's colour but the player's.
+            Deliberately not accented on the player's own row any more: the name now
+            carries what the player has done, and repainting it in the board's accent
+            would overwrite exactly that. The tinted background and the accented rank
+            already say which row is theirs. */}
+        <GradientName
+          nickname={entry.nickname}
+          avgAccuracy={entry.avgAccuracy}
+          avgSpeed={entry.avgSpeed}
+          className="font-mono text-[10px] font-bold tracking-[0.5px]"
+          style={glow}
+        />
         {/* One slot, two things that are never both true: a published row says how
             long its record has stood, an unpublished one says why it is not on the
             board. The note wins outright — "5 min ago" beside NOT PUBLISHED would be
@@ -129,9 +139,9 @@ export function ScoreRow({
           readout. A board of scores set in the label ink was the one place a number
           did not look like one.
 
-          Deliberately not accented on the player's own row: the tinted background,
-          rank and nickname already say which row is theirs, and a score column that
-          changes colour on one line stops reading as a column. */}
+          Deliberately not accented on the player's own row: the tinted background and
+          the rank already say which row is theirs, and a score column that changes
+          colour on one line stops reading as a column. */}
       <Text
         selectable={false}
         className="text-[10px] tracking-[1px] text-score"

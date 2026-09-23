@@ -15,6 +15,12 @@ import { scheduleOnRN } from 'react-native-worklets'
 
 import { DialBadge } from '@/components/game/dial-badge'
 import { DIAL_COLORS, GRAYSCALE } from '@/constants/colors'
+import {
+  DEFAULT_DIAL_CORNERS,
+  DIAL_CORNERS,
+  type DialCorners,
+  type DialHint,
+} from '@/constants/dial-hints'
 import { SWIPE_THRESHOLD } from '@/constants/game'
 import { mono } from '@/constants/theme'
 
@@ -42,6 +48,16 @@ const BADGE_RATIO = 0.28
 const BADGE_FONT_SIZE = 12
 const BADGE_BORDER = 1
 
+// What each hint prints. The weight wears its × so it cannot be mistaken for one of the
+// three sums around it — those are all in the same units as the target, and this one is
+// not. `room` and `giving` always add up to `ceiling`, which is the whole lesson.
+const HINT_LABEL = {
+  weight: (_value: number, weight: number) => `${weight}×`,
+  ceiling: (_value: number, weight: number) => `${9 * weight}`,
+  giving: (value: number, weight: number) => `${value * weight}`,
+  room: (value: number, weight: number) => `${(9 - value) * weight}`,
+} as const satisfies Record<DialHint, (value: number, weight: number) => string>
+
 export function DialButton({
   value,
   isDark,
@@ -51,7 +67,7 @@ export function DialButton({
   trainee,
   peakFrom,
   peakTo,
-  showMax = true,
+  corners = DEFAULT_DIAL_CORNERS,
   onDelta,
   onSet,
 }: {
@@ -64,9 +80,11 @@ export function DialButton({
   // The mode's dark CTA gradient, worn by the button at its maximum value.
   peakFrom: string
   peakTo: string
-  // The trainee layout also prints the button's ceiling under the digit. The
-  // tutorial turns it off while it's teaching the factor on its own.
-  showMax?: boolean
+  // Which number rides each corner, for a trainee layout — see constants/dial-hints.ts.
+  // Read from the player's own options in the game; left at the defaults everywhere
+  // else, and narrowed by the tutorial while it teaches one at a time. Ignored entirely
+  // when `trainee` is false, which has no badges at all.
+  corners?: DialCorners
   onDelta: (delta: 1 | -1) => void
   onSet: (value: number) => void
 }) {
@@ -260,50 +278,35 @@ export function DialButton({
           </Animated.Text>
         </Animated.View>
 
-        {/* The weight and the key's ceiling, as fixed facts pinned to the pill's
-            rim rather than stacked with the digit. Top-left reads as "what this
-            key is worth"; bottom-right, on the corner the value climbs toward,
-            as "the most it can give." */}
-        {trainee && (
-          <DialBadge
-            label={`${weight}×`}
-            size={badgeSize}
-            fontSize={BADGE_FONT_SIZE}
-            offset={badgeOffset}
-            corner="topLeft"
-            low={palette.low}
-            high={palette.high}
-            text={palette.text}
-            peakText={palette.peakText}
-            peakFrom={peakFrom}
-            peakTo={peakTo}
-            borderColor={BADGE_BORDER_COLOR}
-            borderWidth={BADGE_BORDER}
-            rampProgress={rampProgress}
-            peakProgress={peakProgress}
-            scale={scale}
-          />
-        )}
-        {trainee && showMax && (
-          <DialBadge
-            label={`${9 * weight}`}
-            size={badgeSize}
-            fontSize={BADGE_FONT_SIZE}
-            offset={badgeOffset}
-            corner="bottomRight"
-            low={palette.low}
-            high={palette.high}
-            text={palette.text}
-            peakText={palette.peakText}
-            peakFrom={peakFrom}
-            peakTo={peakTo}
-            borderColor={BADGE_BORDER_COLOR}
-            borderWidth={BADGE_BORDER}
-            rampProgress={rampProgress}
-            peakProgress={peakProgress}
-            scale={scale}
-          />
-        )}
+        {/* The corner numbers, as facts pinned to the pill's rim rather than stacked
+            with the digit. Each rides the corner it is about: what the key is worth
+            top-left, what it could still add top-right, what it gives now bottom-left,
+            and its ceiling bottom-right, on the corner the value climbs toward. */}
+        {trainee &&
+          DIAL_CORNERS.flatMap((corner) => {
+            const hint = corners[corner]
+            return hint === null ? [] : [{ corner, hint }]
+          }).map(({ corner, hint }) => (
+            <DialBadge
+              key={corner}
+              label={HINT_LABEL[hint](value, weight)}
+              size={badgeSize}
+              fontSize={BADGE_FONT_SIZE}
+              offset={badgeOffset}
+              corner={corner}
+              low={palette.low}
+              high={palette.high}
+              text={palette.text}
+              peakText={palette.peakText}
+              peakFrom={peakFrom}
+              peakTo={peakTo}
+              borderColor={BADGE_BORDER_COLOR}
+              borderWidth={BADGE_BORDER}
+              rampProgress={rampProgress}
+              peakProgress={peakProgress}
+              scale={scale}
+            />
+          ))}
       </View>
     </GestureDetector>
   )

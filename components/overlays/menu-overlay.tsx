@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons'
 import { Trans, useLingui } from '@lingui/react/macro'
 import { LinearGradient } from 'expo-linear-gradient'
-import { isNonEmptyArray, isNonEmptyString, isOneOf } from 'narrowland'
+import { isNonEmptyString, isOneOf } from 'narrowland'
 import { useEffect, useState } from 'react'
 import { Platform, Pressable, Share, Text, View } from 'react-native'
 import Animated, {
@@ -12,11 +12,14 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated'
 
+import { GradientName } from '@/components/gradient-name'
 import { Screen } from '@/components/screen'
 import type { AchievementId } from '@/constants/achievements'
 import { DIM_INK } from '@/constants/colors'
 import { useChampionsContext } from '@/hooks/use-champions'
+import type { LostMedalNews } from '@/hooks/use-lost-medals'
 import { useOnline } from '@/hooks/use-online'
+import { EMPTY_IDS, usePlayerFactors } from '@/hooks/use-player-factors'
 import { useTheme } from '@/hooks/use-theme'
 import { useViewport } from '@/hooks/use-viewport'
 import { championMark } from '@/lib/champions'
@@ -38,7 +41,7 @@ import { AchievementProgress } from './achievement-progress'
 import { AnimatedLetter } from './animated-letter'
 import { DifficultySelector } from './difficulty-selector'
 import { HighScores } from './high-scores'
-import { MedalLine } from './medal-line'
+import { MedalSlot } from './medal-slot'
 import { ModeSelector } from './mode-selector'
 import { ModeTips } from './mode-tips'
 import { PlayModeTab, type PlayMode } from './play-mode-tab'
@@ -58,6 +61,8 @@ export function MenuOverlay({
   nickname,
   bestScore,
   medals,
+  lostMedals,
+  onLostMedalsSeen,
   achievementsEarned,
   achievementsLatest,
   achievementsLoaded,
@@ -84,6 +89,13 @@ export function MenuOverlay({
   // here: this screen unmounts for the whole run, and the achievements need the same one
   // request while a run is going.
   medals: readonly Medal[]
+  // The medals a rival took while the app was closed, with the names they went to,
+  // announced one after another in the medal line's own slot before the medals themselves
+  // appear there. Read by the game screen for the same reason the medals are: this screen
+  // unmounts for the whole run, and the answer they are diffed against arrives with the
+  // one request that is already going.
+  lostMedals: readonly LostMedalNews[]
+  onLostMedalsSeen: () => void
   // How many of the catalogue the player holds.
   achievementsEarned: number
   // The most recently achieved one, or null before there is one.
@@ -117,6 +129,9 @@ export function MenuOverlay({
   // player's too.
   const champions = useChampionsContext()
   const mark = championMark(userId, champions)
+  // Just the player's own, for the greeting above the title — the one name on this
+  // screen with no board row behind it to carry its averages.
+  const myFactors = usePlayerFactors(userId === null ? EMPTY_IDS : [userId])
   // Creating or joining a room is a Supabase round trip either way, so both are
   // dead ends with no connection — disabled rather than left to fail after a tap.
   const online = useOnline()
@@ -184,14 +199,23 @@ export function MenuOverlay({
       <View className="w-full items-center">
         {/* Top section */}
         <View className="w-full items-center">
-          {/* Greeting — only shown when nickname is set */}
+          {/* Greeting — only shown when nickname is set. The player's own name is
+              drawn the way their name is drawn everywhere else, in the gradient their
+              averages earn; the words around it stay dim, so the one coloured thing on
+              the line is the one word that is theirs. */}
           <Text
             selectable={false}
             className="mb-2 font-mono text-[11px] font-bold tracking-[0.5px] text-dim"
           >
-            {isNonEmptyString(nickname)
-              ? `Hi ${nickname}, let's multiply`
-              : `Let's multiply`}
+            {isNonEmptyString(nickname) ? (
+              <>
+                {`Hi `}
+                <GradientName nickname={nickname} {...myFactors(userId)} />
+                {`, let's multiply`}
+              </>
+            ) : (
+              `Let's multiply`
+            )}
           </Text>
 
           {/* The mark this player wears everywhere their name does, over the one
@@ -224,16 +248,10 @@ export function MenuOverlay({
             ))}
           </View>
 
-          {/* What the player holds across all six boards, all-time. Silent until they
-              have a podium finish, so the title keeps its space on a fresh install —
-              which is why the emptiness is checked out here rather than left to the
-              line's own null: the margin belongs to this column, and a margin around
-              nothing would open a gap on exactly that install. */}
-          {isNonEmptyArray(medals) && (
-            <View className="mb-4">
-              <MedalLine medals={medals} />
-            </View>
-          )}
+          {/* What the player holds across all six boards, all-time — and, for a few
+              seconds first, one by one, whatever a rival took off it while the app was
+              closed. The slot owns its own emptiness and its own margin; see MedalSlot. */}
+          <MedalSlot medals={medals} news={lostMedals} onNewsSeen={onLostMedalsSeen} />
 
           {/* Unlike the medal line above, this is never silent. A medal line with nothing
               in it is a player who has not won anything; a strip with nothing in it is a

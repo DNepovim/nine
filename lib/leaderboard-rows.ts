@@ -13,6 +13,10 @@ export type DisplayRow = {
   // When the record was set, or null for the local row — a score that has not reached
   // the board has no board timestamp, and the row says it is unpublished instead.
   achievedAt: string | null
+  // What the nickname is coloured by. Null where the server has counted nothing for
+  // this player — see lib/name-gradient.ts.
+  avgAccuracy: number | null
+  avgSpeed: number | null
 }
 
 const LIMIT = 5
@@ -38,6 +42,8 @@ export function displayRows(
     isUser: row.user_id === userId,
     unpublished: false,
     achievedAt: row.achieved_at,
+    avgAccuracy: row.avg_acc,
+    avgSpeed: row.avg_spd,
   }))
 
   if (unpublished === null) {
@@ -46,6 +52,12 @@ export function displayRows(
 
   const above = server.filter((row) => row.score >= unpublished.score)
   const below = server.filter((row) => row.score < unpublished.score)
+  // Coloured from the player's own published row where they have one, so their name is
+  // the same colour on both of the rows that are theirs. This board is the only place a
+  // player can appear twice, and two different-coloured copies of one name would read as
+  // two players. Null where they are not on the board at all — a device with no user, or
+  // no nickname yet — which is the honest answer rather than a borrowed one.
+  const mine = server.find((row) => row.isUser)
   const local: DisplayRow = {
     key: 'unpublished',
     rank: 0,
@@ -55,6 +67,8 @@ export function displayRows(
     isUser: true,
     unpublished: true,
     achievedAt: null,
+    avgAccuracy: mine?.avgAccuracy ?? null,
+    avgSpeed: mine?.avgSpeed ?? null,
   }
 
   return [...above, local, ...below]

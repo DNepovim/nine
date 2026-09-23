@@ -45,8 +45,13 @@ const toStanding = (row: MyMedalRow): BoardStanding | null => {
 export function useMyMedals(userId: string | null): {
   medals: Medal[]
   standings: BoardStanding[]
+  loaded: boolean
 } {
   const [standings, setStandings] = useState<BoardStanding[]>([])
+  // Whether the answer above is one the server gave. A player who stands on nothing and
+  // a player nobody has asked about both show an empty list, and anything diffing one
+  // visit against the next has to tell them apart — see useLostMedals.
+  const [loaded, setLoaded] = useState(false)
   // Bumped on every load and unmount, so a slow response for a user who has since
   // changed can tell and drop itself.
   const requestIdRef = useRef(0)
@@ -64,6 +69,7 @@ export function useMyMedals(userId: string | null): {
     if (requestIdRef.current !== requestId) return
     heldRef.current = new Set(rows.map(keyOf))
     setStandings(rows.flatMap((row) => toStanding(row) ?? []))
+    setLoaded(true)
   }, [])
 
   useEffect(() => {
@@ -71,6 +77,7 @@ export function useMyMedals(userId: string | null): {
       requestIdRef.current++
       heldRef.current = new Set()
       setStandings([])
+      setLoaded(false)
       return
     }
     void load(userId)
@@ -98,5 +105,5 @@ export function useMyMedals(userId: string | null): {
   // The medal line wants one claim per mode; the achievements want every board the player
   // stands on, because `toMedals` keeps the *best* claim and a gold today would vanish
   // behind a bronze all-time. Both come out of the same one request.
-  return { medals: toMedals(standings), standings }
+  return { medals: toMedals(standings), standings, loaded }
 }

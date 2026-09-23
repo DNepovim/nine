@@ -4,7 +4,16 @@
 
 // A board's winner for one closed window. The id is what the both-won check turns on,
 // and what a champion mark is looked up by.
-export type Winner = { userId: string; nickname: string }
+//
+// The two averages ride along because the stripe writes the winner's name, and a name
+// is coloured by them everywhere the app draws one — see lib/name-gradient.ts. Null
+// where the counters have never seen this player.
+export type Winner = {
+  userId: string
+  nickname: string
+  avgAccuracy: number | null
+  avgSpeed: number | null
+}
 
 // Which sentence a line is. `both` is not a third window — it is the two collapsing
 // into one, because "ADA took yesterday" followed by "ADA took last week" reads as a

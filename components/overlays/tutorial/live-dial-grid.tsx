@@ -2,6 +2,7 @@ import { View } from 'react-native'
 
 import { DialButton } from '@/components/game/dial-button'
 import { ThumbHint, type ThumbGesture } from '@/components/overlays/tutorial/thumb-hint'
+import { DEFAULT_DIAL_CORNERS } from '@/constants/dial-hints'
 import { useDialMetrics } from '@/hooks/use-dial-metrics'
 import { cellWeight, GRID_SIZE } from '@/lib/tutorial-grid'
 import { DARK_MODE_GRADIENT } from '@/machines/modes'
@@ -28,6 +29,8 @@ export function LiveDialGrid({
   cells: readonly number[]
   isDark: boolean
   showWeights: boolean
+  // The lesson teaching the weight on its own hides the ceiling under it, so the one
+  // number on screen is the one being talked about.
   showMax?: boolean
   hintCell: number | null
   hintGesture: ThumbGesture
@@ -53,7 +56,7 @@ export function LiveDialGrid({
           peakTo={PEAK_TO}
           showSum={false}
           trainee={showWeights}
-          showMax={showMax}
+          corners={{ ...DEFAULT_DIAL_CORNERS, bottomRight: showMax ? 'ceiling' : null }}
           onDelta={(delta) => {
             onDelta(index, delta)
           }}

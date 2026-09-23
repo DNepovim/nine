@@ -23,7 +23,17 @@ export const LOCAL_SCORES_KEY = 'nine.scores.v1'
 // questions: that store keeps the best run per board per day, and a counter needs every
 // run, including the ones that beat nothing.
 export const RUN_TOTALS_KEY = 'nine.run-totals.v1'
+// Where the player stood on every board the last time the app looked, with the Prague
+// day it looked on — see lib/lost-medals.ts. Only ever compared against a fresh answer
+// from the same question, so it holds no truth of its own: losing it costs one greeting,
+// not a record.
+export const SEEN_STANDINGS_KEY = 'nine.seen-standings.v1'
 export const SEEN_NEWS_KEY = 'nine.seen-news.v1'
+// The last day whose winnings have already been announced. A day, not a list of windows:
+// everything closed after it is owed, and everything on or before it has been told. Local
+// rather than server-side, like SEEN_NEWS_KEY — a reinstall loses the telling, never the
+// winnings themselves, which are derived from the boards.
+export const SEEN_WINNINGS_KEY = 'nine.seen-winnings.v1'
 export const TUTORIAL_KEY = 'nine.tutorial.v1'
 // Absent until the player picks a language in options; while it is absent the app is in
 // English. The device's own language is never consulted — see hooks/use-locale.tsx.

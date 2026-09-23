@@ -8,6 +8,7 @@ import {
   type Medal,
   type MedalPeriod,
 } from '@/lib/medals'
+import { winningsValue, type BoardWinnings } from '@/lib/winnings'
 import {
   DIFFICULTIES,
   DIFFICULTY_ORDER,
@@ -72,6 +73,10 @@ export type PlayerProfile = {
   // the same function — a player's best claim in each mode, not all eighteen standings.
   medals: Medal[]
   reigns: Reign[]
+  // The winning scores this player has taken on each board, summed over all history and
+  // split by window so each half can be weighted. Empty for a player who has never taken
+  // a day, and also for any player when the server predates winnings.
+  winnings: BoardWinnings[]
 }
 
 // One row of the modal's per-board block: what this player has done on one board.
@@ -98,13 +103,19 @@ export type Lifetime = {
   score: number
   // How long the player has spent playing, over every board.
   timeMs: number
-  // The same points weighted by the difficulty they were scored on — see `scoreWeight`
-  // in machines/modes.ts, which is also where the reason lives.
+  // What the player is judged on: every point they have scored weighted by the difficulty
+  // it was scored on — see `scoreWeight` in machines/modes.ts — plus everything their
+  // winnings have paid for taking a board's day or week off the other players.
   //
   // Kept beside the raw total rather than replacing it, and named something else on
   // purpose: a weighted figure no longer equals the table under it, and a number
   // labelled SCORE that disagrees with every score on the same screen is a fourth thing
   // called score. A rating is a standing; a score is what a run was worth.
+  //
+  // Winnings ride the same weighting rather than a second one, at half rate for a day and
+  // full for a week, so the ESY ×0.5 · HRD ×1 · EXT ×2 the modal prints still describes
+  // how every part of this figure is weighted — though no longer the whole of where it
+  // came from, which is why the modal says so under it.
   rating: number
   accSum: number
   spdSum: number
@@ -142,8 +153,14 @@ const EMPTY_LIFETIME: Lifetime = {
 //
 // The rating is rounded once here rather than per board: a half-weighted board can land
 // on a half point, and rounding six of those before adding them is how a total comes to
-// be three off the sum of its parts.
-export function lifetimeOf(totals: readonly BoardTotals[]): Lifetime {
+// be three off the sum of its parts. Winnings join the sum unrounded for the same reason.
+//
+// `winnings` defaults to none rather than being required, because that is the honest
+// reading of a server that has never heard of them — see `winnings?` on the response.
+export function lifetimeOf(
+  totals: readonly BoardTotals[],
+  winnings: readonly BoardWinnings[] = [],
+): Lifetime {
   const sum = totals.reduce<Lifetime>(
     (held, board) => ({
       runs: held.runs + board.runs,
@@ -156,7 +173,7 @@ export function lifetimeOf(totals: readonly BoardTotals[]): Lifetime {
     }),
     EMPTY_LIFETIME,
   )
-  return { ...sum, rating: Math.round(sum.rating) }
+  return { ...sum, rating: Math.round(sum.rating + winningsValue(winnings)) }
 }
 
 // The six boards in the app's own order — mode, then difficulty — whether or not the
@@ -229,6 +246,10 @@ export type PlayerProfileResponse = {
   bests: (RawBoard & { bestScore: number; hits: number; achievedAt: string })[]
   medals: (RawBoard & { period: string; rank: number; bestScore: number })[]
   reigns: (RawBoard & { score: number; tookAt: string; lostAt: string | null })[]
+  // Absent, not empty, from a server that predates winnings — read the same way
+  // `achievements` and `timeMs` above are, so an older server draws a rating without
+  // them rather than failing to draw a profile at all.
+  winnings?: (RawBoard & { daySum: number; weekSum: number })[]
 }
 
 const board = (raw: RawBoard): { mode: ScoredMode; difficulty: Difficulty } | null =>
@@ -273,6 +294,10 @@ export function shapeProfile(raw: PlayerProfileResponse): PlayerProfile {
           : [{ ...on, score: row.score, tookAt: row.tookAt, lostAt: row.lostAt }]
       }),
     ),
+    winnings: (raw.winnings ?? []).flatMap((row) => {
+      const on = board(row)
+      return on === null ? [] : [{ ...on, daySum: row.daySum, weekSum: row.weekSum }]
+    }),
   }
 }
 
@@ -295,4 +320,5 @@ export const EMPTY_PROFILE: PlayerProfile = {
   bests: [],
   medals: [],
   reigns: [],
+  winnings: [],
 }

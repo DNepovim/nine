@@ -5,6 +5,7 @@ import { Text, View } from 'react-native'
 
 import type { PeriodBoard } from '@/hooks/use-board'
 import { useChampionsContext } from '@/hooks/use-champions'
+import { EMPTY_IDS, usePlayerFactors } from '@/hooks/use-player-factors'
 import { championMark } from '@/lib/champions'
 import { cn } from '@/lib/cn'
 import { displayRows } from '@/lib/leaderboard-rows'
@@ -68,6 +69,9 @@ export function TabPanel({
 }) {
   const { t } = useLingui()
   const champions = useChampionsContext()
+  // Only ever the player's own id, and only so their row below the cut has a colour.
+  // Every other row on this board carries its player's averages already.
+  const myFactors = usePlayerFactors(userId === null ? EMPTY_IDS : [userId])
   const bodyHeight = compact ? COMPACT_BODY_HEIGHT : BODY_HEIGHT
 
   if (data.loading) {
@@ -146,6 +150,8 @@ export function TabPanel({
             isUser: row.isUser,
             note: row.unpublished ? note : undefined,
             achievedAt: row.achievedAt ?? undefined,
+            avgAccuracy: row.avgAccuracy,
+            avgSpeed: row.avgSpeed,
           }}
           accentColor={accentColor}
           digitFont={digitFont}
@@ -174,6 +180,7 @@ export function TabPanel({
               score: data.myBest,
               isUser: true,
               note: data.unpublished === null ? undefined : note,
+              ...myFactors(userId),
             }}
             accentColor={accentColor}
             digitFont={digitFont}

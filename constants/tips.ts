@@ -12,7 +12,7 @@ export const TIPS = [
   msg`Swipe to 0 or 9 to reset a button in a single gesture instead of tapping through.`,
   msg`In Accuracy, plan your route before you touch anything — every extra move costs you.`,
   msg`In Speed, go for whichever target sits closest to the current sum — fewer moves means more of the ring left, and the ring is what feeds your combo.`,
-  msg`Trainee has no timer and no lives — use it to learn how the weights behave before chasing scores.`,
+  msg`Trainee has the longest clock in the game and no lives to lose — use it to learn how the weights behave before chasing scores.`,
   msg`A button on 9 goes to 0 in a single tap — quicker than swiping there.`,
   msg`Every button tops out at nine times its weight: 81 on the 9×, 9 on a 1×. Knowing the ceilings is what tells you which button can close a gap, and in how few moves.`,
   msg`The dial maxes out at 324, every button on 9. Worth remembering — it places a target in the range the moment you read it.`,

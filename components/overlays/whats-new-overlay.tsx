@@ -4,32 +4,37 @@ import { useState } from 'react'
 import { Pressable, ScrollView, Text, View } from 'react-native'
 
 import { ModalCard } from '@/components/overlays/modal-card'
-import { NewsCard } from '@/components/overlays/news-card'
+import { popupAccent, PopupCardView } from '@/components/overlays/popup-card-view'
 import { PageDots } from '@/components/page-dots'
 import { DIM_INK } from '@/constants/colors'
 import { useTheme } from '@/hooks/use-theme'
 import { useViewport } from '@/hooks/use-viewport'
 import { cn } from '@/lib/cn'
-import type { NewsItem } from '@/types/news'
+import type { PopupCard } from '@/types/popup'
 
-// A dialog, not a screen: as tall as its content, capped so a long announcement
-// scrolls rather than running off the display.
+// A dialog, not a screen: as tall as its content, capped so a long page scrolls rather
+// than running off the display.
+//
+// Pages of more than one kind since winnings arrived — what you won while you were away,
+// then what changed in the app. One dialog with two pages rather than two dialogs in a
+// row, which is what a Monday would otherwise be.
 export function WhatsNewOverlay({
-  items,
+  cards,
   onDismiss,
 }: {
-  items: readonly NewsItem[]
+  cards: readonly PopupCard[]
   onDismiss: () => void
 }) {
   const [index, setIndex] = useState(0)
   const { height } = useViewport()
   const { colorScheme } = useTheme()
 
-  const item = items[index]
-  if (item === undefined) return null
+  const card = cards[index]
+  if (card === undefined) return null
 
+  const accent = popupAccent(card)
   const isFirst = index === 0
-  const isLast = index === items.length - 1
+  const isLast = index === cards.length - 1
 
   return (
     <ModalCard
@@ -46,22 +51,22 @@ export function WhatsNewOverlay({
             style={{ flexGrow: 0, flexShrink: 1 }}
             contentContainerStyle={{ paddingVertical: 8 }}
           >
-            <NewsCard item={item} />
+            <PopupCardView card={card} />
           </ScrollView>
 
-          {items.length > 1 && (
+          {cards.length > 1 && (
             <View className="mt-3">
               <PageDots
-                total={items.length}
+                total={cards.length}
                 current={index}
-                color={item.accent}
+                color={accent}
                 onSelect={setIndex}
               />
             </View>
           )}
 
           <View className="mt-3 flex-row items-center justify-center gap-3">
-            {items.length > 1 && (
+            {cards.length > 1 && (
               <Pressable
                 onPress={() => {
                   setIndex((current) => current - 1)

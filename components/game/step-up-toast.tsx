@@ -6,8 +6,8 @@ import Animated, { Easing, FadeOut, SlideInUp } from 'react-native-reanimated'
 import { DARK_MODE_GRADIENT, MODES, type Mode } from '@/machines/game'
 
 // Where it floats. Above the top bar rather than inside the layout: Trainee reclaims the
-// best-scores band it would otherwise sit in (see MENU_TOP), so anything in the flow here
-// would push the whole board down the moment it appeared.
+// best-scores band it would otherwise sit in, so anything in the flow here would push the
+// whole board down the moment it appeared.
 const TOP = 8
 
 const shadow = {

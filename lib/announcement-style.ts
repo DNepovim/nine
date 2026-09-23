@@ -53,6 +53,14 @@ const ON_STRONG = '#D8D2F4'
 
 // Everything an announcement needs to look right, resolved for the current mode.
 //
+// This owns the bar's ink outright, including the rival's nickname inside the message.
+// Every other name in the app is drawn in the gradient its player's averages earn — see
+// lib/name-gradient.ts — and this is the one surface that cannot follow: the name ink is
+// mid-tone by design, and against the five backgrounds resolved below it measures
+// between about 1.0:1 on the game scale and 2.2:1 on the CTA scale. The bar is also the
+// one place a name arrives as text inside a message string rather than as a component,
+// so there is nothing to colour separately even where the contrast allowed it.
+//
 // Only `cta` varies with the mode being played; the rest are fixed. The bar takes just
 // the two darkest greys rather than the whole ramp — the pale end would drop white text
 // to about 1.9:1 — while the implosion still falls in all four.

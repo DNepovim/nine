@@ -12,6 +12,7 @@ import Animated, {
 
 import { APP_BLUE, APP_RED } from '@/constants/colors'
 import { mono } from '@/constants/theme'
+import { multiplierColor } from '@/lib/streak-badge'
 
 export function FloatingPoints({
   points,
@@ -85,7 +86,7 @@ export function FloatingPoints({
             fontFamily: mono,
             fontWeight: '900',
             fontSize: 11,
-            color: '#E7B44C',
+            color: multiplierColor(multiplier),
           }}
         >
           ×{multiplier}

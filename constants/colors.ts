@@ -61,6 +61,33 @@ export const ACHIEVEMENT_BAR_INK = '#12210F'
 // carries its own pair: about 5.4:1 on #F3EFE9, about 10:1 on #0B0C14.
 export const ACHIEVEMENT_INK = { light: '#217A3D', dark: '#7FE08A' } as const
 
+// A player's nickname, which is drawn in a gradient from Accuracy's hue to Speed's with
+// each end faded by that player's lifetime average in the factor — see
+// lib/name-gradient.ts for the colour, and the profile modal for where it explains
+// itself.
+//
+// A themed pair for the same reason GOLD_INK and ACHIEVEMENT_INK are pairs: the mode
+// scale is tuned to *be* a colour, not to carry text at 10px. `MODE_GRADIENT.speed[1]`
+// on the light card is about 2.9:1, and the grey a new player's name fades to is about
+// 3.6:1 on the dark card — both under the 4.5:1 the app's own `text-dim` holds.
+//
+// So the light pair is the two mode stops taken 23% toward black and the dark pair is
+// them taken 4% toward white. Both hues move by the same amount in each theme, which is
+// what keeps the gradient between them even — shifting one stop alone would put a bend
+// in the middle of every name.
+//
+// Only the hues themselves are tuned, because `desaturate` fades toward a grey of equal
+// relative luminance and contrast is a function of luminance alone: a name at a blank
+// career has the same contrast as one at a perfect career. The worst case across both
+// surfaces of a theme is about 4.53:1 in light and 4.54:1 in dark, and
+// `name-gradient.test.ts` holds every saturation to it.
+//
+// The ordering matches `nameStops`: accuracy first, speed second.
+export const NAME_INK = {
+  light: ['#5859a2', '#b0403a'],
+  dark: ['#7879d4', '#e65a52'],
+} as const satisfies Record<'light' | 'dark', readonly [string, string]>
+
 // Losing a record you held: the colour drained out. Kept to mid-tones with the app's
 // faint violet cast — a true black-to-white ramp would put half its steps on the wrong
 // side of one surface or the other, where these read on both.
