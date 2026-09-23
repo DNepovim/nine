@@ -24,13 +24,23 @@ const UNSYNCED_NOTE = msg`NOT SYNCED`
 const COMPACT_ROWS = 3
 const FULL_ROWS = 5
 
-// A ScoreRow is 24px tall, so a board of five stands 120px. Every state of the panel
-// claims that height — skeletons, a message, or a period holding fewer rows than it has
-// room for — because the panel shrinking between them is the whole screen jumping each
-// time the player switches mode or difficulty and the board reloads. A min, not a fixed
-// height: the player's own row below the cut is allowed to make the board taller.
-const BODY_HEIGHT = 'min-h-[120px]'
-const COMPACT_BODY_HEIGHT = 'min-h-[72px]'
+// What the block below the cut costs: the ⋯ and the player's own row, one slot each.
+// They come out of the five rather than being added to them — see BODY_HEIGHT.
+const CUT_SLOTS = 2
+
+// A ScoreRow is 24px tall, so a board of five stands 120px. Every state of the panel is
+// exactly that tall — skeletons, a message, a period holding fewer rows than it has room
+// for, and a period showing the player below the cut — because a panel that changes
+// height is the whole screen jumping underneath it.
+//
+// A fixed height, not a minimum. It used to be a minimum, with the row below the cut
+// allowed to make the board taller: that is 45px arriving after the skeleton has gone,
+// so every player outside the top five watched the board grow and everything under it
+// drop. The five slots are now the budget rather than the floor — when the cut block is
+// there it takes two of them and three leaders are shown, which is the trade for never
+// holding blank space open on the boards where the player is already up top.
+const BODY_HEIGHT = 'h-[120px]'
+const COMPACT_BODY_HEIGHT = 'h-[72px]'
 
 export function TabPanel({
   data,
@@ -81,13 +91,13 @@ export function TabPanel({
   // The board could not be read — offline, most likely. A record held on the device is
   // still the player's, so it stands on its own rather than vanishing with the board;
   // the notice underneath says why it is alone up there.
-  const rows = displayRows(
+  const leaders = displayRows(
     data.error === null ? data.rows : [],
     userId,
     unpublished,
     compact ? COMPACT_ROWS : undefined,
   )
-  if (data.error !== null && isEmptyArray(rows)) {
+  if (data.error !== null && isEmptyArray(leaders)) {
     return (
       <View style={{ width }} className={cn('items-center justify-center', bodyHeight)}>
         <Text selectable={false} className="font-mono text-[9px] font-bold text-dim">
@@ -103,7 +113,14 @@ export function TabPanel({
   // Whether the player is already up there — asked of the rows on screen rather than of
   // the server rank, because a local record can put them on the board while the server
   // still ranks them far down, and they must not appear twice.
-  const userIsInTop5 = rows.some((row) => row.isUser)
+  const userIsInTop5 = leaders.some((row) => row.isUser)
+  // Whether the block below the cut is going to be drawn, decided before the rows are
+  // trimmed for it. Asked of the full five: a player outside them cannot be inside the
+  // three that are left, so trimming can never change the answer.
+  const showCut = !compact && myRank !== null && !userIsInTop5 && nickname !== null
+  // The cut block takes two of the five slots, so the leaders give up two. This is what
+  // keeps the panel one height whether or not the player is on the board.
+  const rows = showCut ? leaders.slice(0, FULL_ROWS - CUT_SLOTS) : leaders
 
   if (isEmptyArray(rows)) {
     return (
@@ -135,9 +152,12 @@ export function TabPanel({
           halo={halo}
         />
       ))}
-      {!compact && myRank !== null && !userIsInTop5 && nickname !== null && (
+      {showCut && (
         <>
-          <View className="items-center py-1">
+          {/* One slot exactly, stated rather than left to font metrics — the same reason
+              ScoreRow states its own 24px. Left to the glyph, this row was a couple of
+              pixels of its own and the board no longer added up to five. */}
+          <View className="h-6 items-center justify-center">
             <Text
               selectable={false}
               className="font-mono text-[11px] tracking-[6px] text-dim"

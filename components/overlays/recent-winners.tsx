@@ -50,6 +50,18 @@ const SENTENCES = {
 const CYCLE_MS = 2000
 const FADE_MS = 200
 
+// One line, always — matching the `leading-[15px]` the sentence is set in.
+//
+// The slot is held open whether or not there is anything to say, and whether or not the
+// answer has come back yet. It used to collapse to nothing, on the reasoning that a board
+// nobody has won should not hold a blank line between the pills and the leaderboard — but
+// the stripe cannot tell "nobody won this board" from "we have not asked yet", and it
+// clears itself on every board switch. So it collapsed on load and again on every change
+// of mode or difficulty, then sprang back when the answer landed: 23px of the screen
+// moving a second or two after it had settled — this line plus the column's own 8px gap,
+// measured in the browser as the one layout shift the intro screen had left.
+const LINE_HEIGHT = 15
+
 // Who took this board yesterday, and who took it last week — the stripe between the
 // difficulty pills and the leaderboard.
 //
@@ -115,27 +127,28 @@ export function RecentWinners({
   // is showing would otherwise leave nothing on screen.
   const line = lines[index] ?? lines[0]
 
-  // Nothing to say takes no room at all, not even the parent's gap — a board nobody
-  // has won yet would otherwise hold a blank line open between the pills and the
-  // leaderboard.
-  if (line === undefined) return null
-
   return (
-    <View className="w-full max-w-3xs self-center">
-      <Animated.View style={fadeStyle}>
-        <Text
-          selectable={false}
-          numberOfLines={2}
-          className="text-center font-mono text-[10px] leading-[15px] text-dim"
-        >
-          {SENTENCES[line.window]({
-            userId: line.winner.userId,
-            nickname: line.winner.nickname,
-            mark: championMark(line.winner.userId, champions),
-            color: getDifficultyColor(gameMode, difficulty),
-          })}
-        </Text>
-      </Animated.View>
+    <View className="w-full max-w-3xs self-center" style={{ height: LINE_HEIGHT }}>
+      {line !== undefined && (
+        <Animated.View style={fadeStyle}>
+          {/* One line rather than two: the slot above is one line, and a sentence that
+              wrapped would grow past it — the same jump by another route. Only a long
+              nickname on the longest of the three sentences comes close, and an aside
+              that trails off reads better than a board that hops. */}
+          <Text
+            selectable={false}
+            numberOfLines={1}
+            className="text-center font-mono text-[10px] leading-[15px] text-dim"
+          >
+            {SENTENCES[line.window]({
+              userId: line.winner.userId,
+              nickname: line.winner.nickname,
+              mark: championMark(line.winner.userId, champions),
+              color: getDifficultyColor(gameMode, difficulty),
+            })}
+          </Text>
+        </Animated.View>
+      )}
     </View>
   )
 }
