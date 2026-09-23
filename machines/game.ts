@@ -139,6 +139,12 @@ type Context = {
   // whenever the run is not actively being played, which is also how a screen showing
   // `elapsedMs` can tell it is reading a finished number rather than a moving target.
   playingSince: number | null
+  // Which run this is, counted from the first. Nothing inside the machine reads it: it
+  // is for the per-run bookkeeping kept outside — the achievements' tally and its frozen
+  // career — which has no other way to tell one run from the next. PLAY AGAIN goes
+  // straight from `gameOver` to `playing` and RESTART from a pause never leaves
+  // `playing` at all, so there is no commit where a watcher sees no run in progress.
+  runSeq: number
 }
 
 type Event =
@@ -167,11 +173,11 @@ export type GameSend = (event: Event) => void
 // mode, since nothing else clears them. Carrying them into a new run opened it with
 // a stale hit already on Trainee's stat row and still able to earn a confetti
 // shower, before the player had touched the dial.
-const freshGame = (mode: Mode, seq: number, now: number) => ({
+const freshGame = (context: Context, now: number) => ({
   grid: initialGrid,
   hits: 0,
   score: 0,
-  lives: MODES[mode].lives,
+  lives: MODES[context.mode].lives,
   streak: 0,
   maxStreak: 0,
   strikes: 0,
@@ -179,9 +185,10 @@ const freshGame = (mode: Mode, seq: number, now: number) => ({
   spdSum: 0,
   targets: [] as Target[],
   nextTargetId: 0,
-  hitBatch: { seq, hits: [] as HitInfo[] },
+  hitBatch: { seq: context.hitBatch.seq, hits: [] as HitInfo[] },
   elapsedMs: 0,
   playingSince: now,
+  runSeq: context.runSeq + 1,
 })
 
 // Folds the run's current active stretch into `elapsedMs` and clears `playingSince`,
@@ -438,6 +445,7 @@ export const gameMachine = createMachine({
     hitBatch: { seq: 0, hits: [] as HitInfo[] },
     elapsedMs: 0,
     playingSince: null,
+    runSeq: 0,
   } satisfies Context,
   on: {
     // Load persisted per-mode×difficulty stats on app start.
@@ -475,7 +483,7 @@ export const gameMachine = createMachine({
             }: {
               context: Context
               event: Extract<Event, { type: 'START' }>
-            }) => freshGame(context.mode, context.hitBatch.seq, event.now),
+            }) => freshGame(context, event.now),
           ),
         },
         SET_MODE: {
@@ -712,7 +720,7 @@ export const gameMachine = createMachine({
             }: {
               context: Context
               event: Extract<Event, { type: 'RESTART' }>
-            }) => freshGame(context.mode, context.hitBatch.seq, event.now),
+            }) => freshGame(context, event.now),
           ),
         },
         // TARGET_EXPIRED is deliberately not handled here. A paused run has no clock
@@ -749,7 +757,7 @@ export const gameMachine = createMachine({
             }: {
               context: Context
               event: Extract<Event, { type: 'RESTART' }>
-            }) => freshGame(context.mode, context.hitBatch.seq, event.now),
+            }) => freshGame(context, event.now),
           ),
         },
       },

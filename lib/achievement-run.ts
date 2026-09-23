@@ -15,6 +15,12 @@ import type { HitInfo } from '@/machines/game'
 // run itself where it matters.
 export type AchievementPhase = {
   started: boolean
+  // The run this phase belongs to, as the machine numbers them. The one thing that can
+  // tell two runs apart from out here: `inRun` covers game over too — the finished pass
+  // needs it to — and PLAY AGAIN goes straight from there back into playing, so it never
+  // falls between two runs. A phase that waited for it kept the first run's frozen
+  // career and its list of what had already fired for every run after.
+  runSeq: number
   career: Career
   // Every award unlocked this run, as `awardKey` names it, so one stage announces once
   // land past its bar.
@@ -23,6 +29,13 @@ export type AchievementPhase = {
 
 // The per-run figures no single snapshot can answer, accumulated batch by batch.
 export type RunTally = {
+  // The run these figures belong to. Carried in the value rather than left to whoever
+  // owns the tally, because "whoever owns the tally" is an effect and the run boundary
+  // it has to clear on is invisible from out there — see `AchievementPhase.runSeq`. A
+  // batch from a run this tally has never heard of starts it over, so the one thing that
+  // can never happen is the thing that did: one run's par hits added to the next one's,
+  // and PERFECT ROUTE paid out on a chain of runs rather than on a run.
+  runSeq: number
   // Hits landed while the lives were still whole. A run *ends* because its lives ran out,
   // so "without losing a life" can only ever describe a stretch inside a run.
   cleanHits: number
@@ -32,9 +45,14 @@ export type RunTally = {
   longestRoute: number
 }
 
-export const EMPTY_TALLY: RunTally = { cleanHits: 0, parHits: 0, longestRoute: 0 }
+export const EMPTY_TALLY: RunTally = {
+  runSeq: -1,
+  cleanHits: 0,
+  parHits: 0,
+  longestRoute: 0,
+}
 
-// Folds one resolved hit batch into the run's tally.
+// Folds one resolved hit batch into the run's tally, starting over for a new run.
 //
 // `totalHits` is the run's hit count *after* this batch, not the batch's size: the clean
 // stretch is "how far the run had got", and re-deriving it from the count is what keeps it
@@ -42,23 +60,40 @@ export const EMPTY_TALLY: RunTally = { cleanHits: 0, parHits: 0, longestRoute: 0
 export function foldBatch(
   tally: RunTally,
   {
+    runSeq,
     hits,
     totalHits,
     livesFull,
-  }: { hits: readonly HitInfo[]; totalHits: number; livesFull: boolean },
+  }: {
+    runSeq: number
+    hits: readonly HitInfo[]
+    totalHits: number
+    livesFull: boolean
+  },
 ): RunTally {
+  const held = tally.runSeq === runSeq ? tally : EMPTY_TALLY
   return {
-    cleanHits: livesFull ? Math.max(tally.cleanHits, totalHits) : tally.cleanHits,
-    parHits: tally.parHits + hits.filter((hit) => hit.steps === hit.par).length,
+    runSeq,
+    cleanHits: livesFull ? Math.max(held.cleanHits, totalHits) : held.cleanHits,
+    parHits: held.parHits + hits.filter((hit) => hit.steps === hit.par).length,
     longestRoute: hits.reduce(
       (most, hit) => Math.max(most, hit.steps),
-      tally.longestRoute,
+      held.longestRoute,
     ),
   }
 }
 
+// The tally as it stands for one run: its own figures, or nothing at all when everything
+// it holds belongs to a run that is over. What a reader asks, so a run that has landed no
+// hits yet cannot read the last one's.
+export const tallyFor = (tally: RunTally, runSeq: number): RunTally =>
+  tally.runSeq === runSeq ? tally : EMPTY_TALLY
+
 export type RunInput = {
   inRun: boolean
+  // Which run this is. A number it has not seen before is a new run, whatever `inRun`
+  // says — see `AchievementPhase.runSeq`.
+  runSeq: number
   // Whether the career has been read from storage yet. Freezing before it has means
   // freezing zeroes, and a lifetime total of zero unlocks THOUSAND HITS on the first hit
   // of the first run after a cold start — for a player who passed it months ago.
@@ -81,6 +116,8 @@ export type RunStep = {
 
 export const IDLE: AchievementPhase = {
   started: false,
+  // No run at all, and no run is ever numbered this, so the first one always reads as new.
+  runSeq: -1,
   career: emptyCareer(),
   fired: [],
 }
@@ -106,15 +143,18 @@ function evaluate(phase: AchievementPhase, input: RunInput): RunStep {
 // One step of a run's achievements. The rules, in order:
 //
 //   - not in a run       → back to idle, ready for the next one
+//   - same run, started  → ignore the incoming career entirely
 //   - not ready yet      → freeze nothing
-//   - ready, not started → freeze the career now, then measure what the run has *already*
+//   - a run not seen yet → freeze the career now, then measure what the run has *already*
 //                          done, so a late read catches up rather than missing it
-//   - started            → ignore the incoming career entirely
 export function stepAchievements(phase: AchievementPhase, input: RunInput): RunStep {
   if (!input.inRun) return { phase: IDLE, unlocked: QUIET }
-  if (phase.started) return evaluate(phase, input)
+  if (phase.started && phase.runSeq === input.runSeq) return evaluate(phase, input)
   if (!input.ready) return { phase, unlocked: QUIET }
-  return evaluate({ started: true, career: input.career, fired: [] }, input)
+  return evaluate(
+    { started: true, runSeq: input.runSeq, career: input.career, fired: [] },
+    input,
+  )
 }
 
 // ── What is still waiting for the announcement bar ───────────────────────────

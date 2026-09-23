@@ -13,6 +13,7 @@ import {
   queueAwards,
   stepAchievements,
   stepQueue,
+  tallyFor,
   type AchievementPhase,
   type RunInput,
 } from './achievement-run'
@@ -57,6 +58,7 @@ const worldFacts = (
 
 const input = (over: Partial<RunInput> = {}): RunInput => ({
   inRun: true,
+  runSeq: 0,
   ready: true,
   career: emptyCareer(),
   facts: worldFacts(),
@@ -92,6 +94,7 @@ describe('stepAchievements', () => {
   it('goes back to idle when the run is over', () => {
     const started: AchievementPhase = {
       started: true,
+      runSeq: 0,
       career: emptyCareer(),
       fired: ['firstHit'],
     }
@@ -197,11 +200,30 @@ describe('stepAchievements', () => {
     expect(over.unlocked).toEqual([])
     expect(over.phase).toEqual(IDLE)
   })
+
+  it('freezes the career again when the next run begins', () => {
+    // PLAY AGAIN goes straight from gameOver to playing and RESTART never leaves it, so
+    // `inRun` does not fall between two runs and the phase cannot wait for it. Told the
+    // run's number, it starts over: the second run measures against the career as it
+    // stood once the first was folded in, rather than against the one frozen before it.
+    const first = stepAchievements(IDLE, withHits(20))
+    expect(first.phase.career.hits).toBe(0)
+    expect(first.phase.fired).toContain('firstHit')
+
+    const folded = { ...emptyCareer(), hits: 20 }
+    const next = stepAchievements(first.phase, {
+      ...withHits(1, folded),
+      runSeq: 1,
+    })
+    expect(next.phase.runSeq).toBe(1)
+    expect(next.phase.career.hits).toBe(20)
+  })
 })
 
 describe('foldBatch', () => {
   it('counts hits taken in exactly the optimal number of presses', () => {
     const tally = foldBatch(EMPTY_TALLY, {
+      runSeq: 1,
       hits: [hit(3, 3), hit(5, 3)],
       totalHits: 2,
       livesFull: true,
@@ -211,6 +233,7 @@ describe('foldBatch', () => {
 
   it('keeps the longest route any single hit took', () => {
     const tally = foldBatch(EMPTY_TALLY, {
+      runSeq: 1,
       hits: [hit(31, 3), hit(4, 4)],
       totalHits: 2,
       livesFull: true,
@@ -220,6 +243,7 @@ describe('foldBatch', () => {
 
   it('tracks the clean stretch as the run count while the lives are whole', () => {
     const tally = foldBatch(EMPTY_TALLY, {
+      runSeq: 1,
       hits: [hit(3, 3)],
       totalHits: 12,
       livesFull: true,
@@ -229,11 +253,13 @@ describe('foldBatch', () => {
 
   it('freezes the clean stretch the moment a life goes', () => {
     const clean = foldBatch(EMPTY_TALLY, {
+      runSeq: 1,
       hits: [hit(3, 3)],
       totalHits: 12,
       livesFull: true,
     })
     const after = foldBatch(clean, {
+      runSeq: 1,
       hits: [hit(3, 3)],
       totalHits: 20,
       livesFull: false,
@@ -241,6 +267,45 @@ describe('foldBatch', () => {
     expect(after.cleanHits).toBe(12)
     // The rest of the run still counts towards everything else.
     expect(after.parHits).toBe(2)
+  })
+
+  it('starts over for the next run rather than adding to the last one', () => {
+    // What shipped broken. PLAY AGAIN never lets `inRun` fall, so the tally the hook
+    // kept was cleared by nothing and every run added to the one before it: PERFECT
+    // ROUTE, which wants 25 optimal hits in *one* run, was paying out on a chain of
+    // them — and then on the next run too, on whichever board that one happened to be.
+    const first = foldBatch(EMPTY_TALLY, {
+      runSeq: 1,
+      hits: [hit(3, 3), hit(4, 4), hit(9, 3)],
+      totalHits: 3,
+      livesFull: true,
+    })
+    expect(first.parHits).toBe(2)
+
+    const next = foldBatch(first, {
+      runSeq: 2,
+      hits: [hit(3, 3)],
+      totalHits: 1,
+      livesFull: true,
+    })
+    expect(next.parHits).toBe(1)
+    expect(next.cleanHits).toBe(1)
+    expect(next.longestRoute).toBe(3)
+  })
+})
+
+describe('tallyFor', () => {
+  it('reads nothing off a run that is over', () => {
+    // A new run that has landed no hits yet has no tally of its own — the ref still
+    // holds the last one's. Asked for this run, it answers zeroes.
+    const last = foldBatch(EMPTY_TALLY, {
+      runSeq: 1,
+      hits: [hit(3, 3)],
+      totalHits: 30,
+      livesFull: true,
+    })
+    expect(tallyFor(last, 1)).toBe(last)
+    expect(tallyFor(last, 2)).toEqual(EMPTY_TALLY)
   })
 })
 

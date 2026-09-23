@@ -495,6 +495,10 @@ export default function GameScreen() {
     // `stepAchievements` drops any pass made outside a run — so a hook told the run was
     // already over threw away the one evaluation that could see `finished`.
     inRun: inRun || isGameOver,
+    // Which run this is. `inRun` above cannot mark the boundary between two of them —
+    // PLAY AGAIN goes straight from game over back into playing — so the machine's own
+    // count is what tells the hook a new run has started.
+    runSeq: state.context.runSeq,
     finished: isGameOver,
     mode,
     difficulty,

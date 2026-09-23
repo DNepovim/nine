@@ -538,3 +538,40 @@ describe('run clock', () => {
     expect(actor.getSnapshot().context.elapsedMs).toBe(500)
   })
 })
+
+describe('run identity', () => {
+  // Every run gets its own number, because the per-run bookkeeping outside the machine
+  // has no other way to tell one from the next: PLAY AGAIN goes straight from gameOver
+  // to playing, and RESTART from a pause never leaves `playing` at all, so nothing a
+  // screen can watch goes quiet in between.
+  it('counts up on every fresh run, and holds still otherwise', () => {
+    const actor = start('accuracy')
+    const first = actor.getSnapshot().context.runSeq
+
+    actor.send({ type: 'ADD_TARGET', value: 9, at: 0 })
+    actor.send({ type: 'PRESS', index: 8, delta: 1, now: 0 })
+    expect(actor.getSnapshot().context.runSeq).toBe(first)
+
+    actor.send({ type: 'PAUSE', now: 1000 })
+    actor.send({ type: 'RESUME', now: 2000 })
+    expect(actor.getSnapshot().context.runSeq).toBe(first)
+
+    // RESTART from a pause deals a new run without `playing` ever being left.
+    actor.send({ type: 'PAUSE', now: 2500 })
+    actor.send({ type: 'RESTART', now: 3000 })
+    const second = actor.getSnapshot().context.runSeq
+    expect(second).toBeGreaterThan(first)
+
+    // Three expiries reach game over on Accuracy, and PLAY AGAIN deals the next run.
+    for (const value of [100, 101, 102]) {
+      actor.send({ type: 'ADD_TARGET', value, at: 3000 })
+      const id = actor.getSnapshot().context.targets[0]?.id ?? 0
+      actor.send({ type: 'TARGET_EXPIRED', id, now: 3000 })
+    }
+    expect(actor.getSnapshot().value).toBe('gameOver')
+    expect(actor.getSnapshot().context.runSeq).toBe(second)
+
+    actor.send({ type: 'RESTART', now: 4000 })
+    expect(actor.getSnapshot().context.runSeq).toBeGreaterThan(second)
+  })
+})

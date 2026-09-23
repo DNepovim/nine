@@ -12,6 +12,7 @@ import {
   queueAwards,
   stepAchievements,
   stepQueue,
+  tallyFor,
   type AchievementPhase,
   type AwardQueue,
   type RunTally,
@@ -51,6 +52,14 @@ import {
 
 export type AchievementsInput = {
   inRun: boolean
+  // Which run this is, from the machine. The run boundary cannot be read off `inRun`
+  // here: game over is part of the run as far as this hook is concerned — the pass that
+  // answers `finished` happens there — and PLAY AGAIN goes straight from game over back
+  // into playing, while RESTART from a pause never leaves it at all. So `inRun` stays
+  // true across a whole PLAY AGAIN chain, and everything per-run that keyed on it — the
+  // tally, the announcement budget, what the game-over screen shows, the frozen career —
+  // carried the first run's figures into every run after it.
+  runSeq: number
   // The game-over edge. The final pass runs here — some achievements can only be
   // answered by a run that is over — and the career is folded in straight after.
   finished: boolean
@@ -170,6 +179,17 @@ export function useAchievements(input: AchievementsInput): Achievements {
 
   // ── The run ─────────────────────────────────────────────────────────────────
 
+  // A run resets the per-run bookkeeping the moment it starts, not when the last one
+  // ended: the game-over screen is still showing what this run earned while it is up.
+  // Keyed on the run's own number rather than on `inRun`, which does not fall between
+  // two runs — see `AchievementsInput.runSeq`. The tally and the phase carry their own
+  // run and clear themselves; what is left here is the announcement budget and the list
+  // the game-over screen reads.
+  useEffect(() => {
+    announcedRef.current = 0
+    setRunEarned([])
+  }, [input.runSeq])
+
   // Every resolved hit batch, folded once. The tally answers the three things no single
   // snapshot can — the clean stretch, the par hits and the longest route.
   useEffect(() => {
@@ -178,24 +198,26 @@ export function useAchievements(input: AchievementsInput): Achievements {
     batchSeqRef.current = input.batch.seq
     if (!isNonEmptyArray(input.batch.hits)) return
     tallyRef.current = foldBatch(tallyRef.current, {
+      runSeq: input.runSeq,
       hits: input.batch.hits,
       totalHits: input.hits,
       // Trainee's lives are Infinity, which is never spent, so its whole run is clean.
       livesFull: input.lives >= MODES[input.mode].lives,
     })
-  }, [input.inRun, input.batch, input.hits, input.lives, input.mode])
+  }, [input.inRun, input.runSeq, input.batch, input.hits, input.lives, input.mode])
 
   const evaluate = useCallback(
     (finished: boolean) => {
       const live = inputRef.current
       const step = stepAchievements(phaseRef.current, {
         inRun: live.inRun,
+        runSeq: live.runSeq,
         // Nothing is frozen until the career and the store have both answered. A run that
         // starts first catches up the moment they land — `stepAchievements` measures what
         // the run has already done at the instant it freezes.
         ready: careerLoaded && storeLoaded,
         career: careerRef.current,
-        facts: worldFacts(live, tallyRef.current, finished),
+        facts: worldFacts(live, tallyFor(tallyRef.current, live.runSeq), finished),
         held: keysOf(storeRef.current),
       })
       phaseRef.current = step.phase
@@ -210,20 +232,12 @@ export function useAchievements(input: AchievementsInput): Achievements {
     [careerLoaded, storeLoaded, persist],
   )
 
-  // A run resets the per-run bookkeeping the moment it starts, not when the last one
-  // ended: the game-over screen is still showing what this run earned while it is up.
-  useEffect(() => {
-    if (!input.inRun) return
-    tallyRef.current = EMPTY_TALLY
-    announcedRef.current = 0
-    setRunEarned([])
-  }, [input.inRun])
-
   useEffect(() => {
     evaluate(false)
   }, [
     evaluate,
     input.inRun,
+    input.runSeq,
     input.score,
     input.hits,
     input.maxStreak,
@@ -245,6 +259,7 @@ export function useAchievements(input: AchievementsInput): Achievements {
     if (!input.finished) return
     evaluate(true)
     const live = inputRef.current
+    const tally = tallyFor(tallyRef.current, live.runSeq)
     updateCareer((current) =>
       foldRun(current, {
         mode: live.mode,
@@ -253,8 +268,8 @@ export function useAchievements(input: AchievementsInput): Achievements {
         hits: live.hits,
         strikes: live.strikes,
         maxStreak: live.maxStreak,
-        parHits: tallyRef.current.parHits,
-        cleanHits: tallyRef.current.cleanHits,
+        parHits: tally.parHits,
+        cleanHits: tally.cleanHits,
         elapsedMs: live.elapsedMs,
         day: todayISO(),
         personalBest: live.personalBest,
@@ -268,7 +283,8 @@ export function useAchievements(input: AchievementsInput): Achievements {
   // start, and the boards are the only thing that knows the player is on top of one.
   useEffect(() => {
     if (!careerLoaded) return
-    const facts = worldFacts(inputRef.current, tallyRef.current, false)
+    const live = inputRef.current
+    const facts = worldFacts(live, tallyFor(tallyRef.current, live.runSeq), false)
     const held = SCORED_MODES.flatMap((mode) =>
       DIFFICULTY_ORDER.filter((difficulty) =>
         holdsBoard({ ...facts, career: careerRef.current }, mode, difficulty),
@@ -296,7 +312,8 @@ export function useAchievements(input: AchievementsInput): Achievements {
   // room is not a run of the machine's and never freezes a career.
   useEffect(() => {
     if (input.inRun || !careerLoaded || !storeLoaded) return
-    const facts = worldFacts(inputRef.current, tallyRef.current, false)
+    const live = inputRef.current
+    const facts = worldFacts(live, tallyFor(tallyRef.current, live.runSeq), false)
     const all = earned({ ...facts, career: careerRef.current })
     const next = addEarned(storeRef.current, all, new Date().toISOString())
     if (next !== storeRef.current) persist(next)
@@ -339,7 +356,10 @@ export function useAchievements(input: AchievementsInput): Achievements {
     store,
     loaded: storeLoaded,
     runEarned,
-    facts: { ...worldFacts(input, tallyRef.current, false), career },
+    facts: {
+      ...worldFacts(input, tallyFor(tallyRef.current, input.runSeq), false),
+      career,
+    },
     recordMultiplayer,
   }
 }
