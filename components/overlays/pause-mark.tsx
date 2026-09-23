@@ -51,7 +51,14 @@ export function PauseMark({ gameMode }: { gameMode: Mode }) {
         // tint goes on the gradient rather than on the whole bar: an opacity here would
         // take the rim and the far edge down with it, and those carry their own — a lit
         // edge is the one part of a pane that is not see-through.
-        <View key={bar} style={GLASS_PANE_SHADOW}>
+        //
+        // The same float the title letters ride, on the same two clocks the first two of
+        // them use: a big glass mark in this app breathes, and a pair of bars holding
+        // perfectly still where NINE and the game-over title drift would read as a
+        // picture of the mark rather than the mark. Different periods per bar for the
+        // same reason the letters have them — in step they would pump, out of step they
+        // wander.
+        <View key={bar} className={`letter-float-${bar}`} style={GLASS_PANE_SHADOW}>
           <View
             className="overflow-hidden"
             style={{ width: BAR_WIDTH, height: BAR_HEIGHT }}

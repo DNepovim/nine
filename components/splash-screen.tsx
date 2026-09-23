@@ -9,15 +9,12 @@ import Animated, {
   useSharedValue,
   withDelay,
   withRepeat,
-  withSequence,
   withTiming,
 } from 'react-native-reanimated'
 import { scheduleOnRN } from 'react-native-worklets'
 
+import { SPLASH_WORDMARK_GAP, SplashWordmark } from '@/components/splash-wordmark'
 import { mono } from '@/constants/theme'
-
-const NINE_CHARS = ['N', 'I', 'N', 'E'] as const
-const FLOAT_PERIODS = [8000, 9500, 7500, 9000] as const
 
 // The intro — the logo fades in, then the subtitle under it. INTRO_MS is the moment
 // the last of that has landed: the one point in the sequence where the splash is
@@ -32,44 +29,6 @@ const INTRO_MS = SUB_IN_DELAY + SUB_IN_MS
 // has been held instead — whatever was covering it is gone and the player is waiting.
 const REST_MS = 2200
 const RESUME_MS = 250
-
-function FloatingLetter({ char, period }: { char: string; period: number }) {
-  const translateY = useSharedValue(0)
-
-  useEffect(() => {
-    translateY.value = withRepeat(
-      withSequence(
-        withTiming(-4, { duration: period / 2, easing: Easing.inOut(Easing.ease) }),
-        withTiming(0, { duration: period / 2, easing: Easing.inOut(Easing.ease) }),
-      ),
-      -1,
-      false,
-    )
-  }, [])
-
-  const style = useAnimatedStyle(() => ({
-    transform: [{ translateY: translateY.value }],
-  }))
-
-  return (
-    <Animated.Text
-      selectable={false}
-      style={[
-        {
-          fontFamily: mono,
-          fontSize: 80,
-          fontWeight: '900' as const,
-          color: '#FFFFFF',
-          includeFontPadding: false,
-          letterSpacing: 4,
-        },
-        style,
-      ]}
-    >
-      {char}
-    </Animated.Text>
-  )
-}
 
 export function SplashScreen({
   onDone,
@@ -204,9 +163,7 @@ export function SplashScreen({
       {/* Centered text content */}
       <Animated.View style={[styles.absolute, styles.center, contentStyle]}>
         <Animated.View style={[styles.row, nineStyle]}>
-          {NINE_CHARS.map((char, i) => (
-            <FloatingLetter key={i} char={char} period={FLOAT_PERIODS[i] ?? 1600} />
-          ))}
+          <SplashWordmark />
         </Animated.View>
         <Animated.Text
           selectable={false}
@@ -267,6 +224,8 @@ const styles = StyleSheet.create({
   },
   row: {
     flexDirection: 'row',
-    gap: 12,
+    // The wordmark's own spacing: each letter is drawn in a box wider than its glyph, so
+    // the padding it carries is most of what stands between two of them.
+    gap: SPLASH_WORDMARK_GAP,
   },
 })

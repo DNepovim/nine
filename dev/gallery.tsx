@@ -6,6 +6,7 @@ import { GameOverOverlay } from '@/components/overlays/game-over-overlay'
 import { HowToPlayOverlay } from '@/components/overlays/how-to-play-overlay'
 import { PausedOverlay } from '@/components/overlays/paused-overlay'
 import { StepUpOverlay } from '@/components/overlays/step-up-overlay'
+import { SplashScreen } from '@/components/splash-screen'
 import { EMPTY_STORE } from '@/lib/achievement-store'
 import type { AchievementFacts } from '@/lib/achievements'
 import type { Period } from '@/lib/announcements'
@@ -190,6 +191,27 @@ const paused = (mode: Mode): Variant => ({
 })
 
 const SECTIONS: Section[] = [
+  {
+    // First in the list because it is first on screen. Two of them, because half of what
+    // this screen is is a sequence: HELD is the finished picture, standing still for as
+    // long as it is looked at — the same still frame the install popup is shown over —
+    // and PLAY runs the whole thing through and closes itself on the way out.
+    title: 'SPLASH',
+    items: [
+      {
+        key: 'splash-held',
+        label: 'HELD',
+        render: (close) => <SplashScreen onDone={close} hold onIntroDone={noop} />,
+      },
+      {
+        key: 'splash-play',
+        label: 'PLAY',
+        render: (close) => (
+          <SplashScreen onDone={close} hold={false} onIntroDone={noop} />
+        ),
+      },
+    ],
+  },
   {
     // Read down the column: no record, then each period, then the all-time ladder from
     // a tinted screen to a painted one to a reign.
