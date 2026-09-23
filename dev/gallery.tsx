@@ -7,6 +7,8 @@ import { HowToPlayOverlay } from '@/components/overlays/how-to-play-overlay'
 import { PausedOverlay } from '@/components/overlays/paused-overlay'
 import { StepUpOverlay } from '@/components/overlays/step-up-overlay'
 import { SplashScreen } from '@/components/splash-screen'
+import type { ShapeKind } from '@/dev/weekly-recap/recap'
+import { WeeklyRecapOverlay } from '@/dev/weekly-recap/recap-overlay'
 import { EMPTY_STORE } from '@/lib/achievement-store'
 import type { AchievementFacts } from '@/lib/achievements'
 import type { Period } from '@/lib/announcements'
@@ -190,6 +192,27 @@ const paused = (mode: Mode): Variant => ({
   ),
 })
 
+// The weekly recap, one entry per week shape. The shape is what the prose is chosen by,
+// so it is also the only axis worth a row of buttons: a sweep and a scattered week are
+// different sentences, where two different sweeps are the same sentence twice.
+//
+// Each screen rolls its own week to fit the shape and carries NEW WEEK / REPHRASE, so a
+// phrasing that only reads well on one set of facts has nowhere to hide.
+const SHAPE_LABELS = {
+  sweep: 'SWEEP',
+  sweepBut: 'ALL BUT ONE',
+  split: 'SPLIT',
+  scattered: 'SCATTERED',
+  quiet: 'QUIET',
+  empty: 'EMPTY',
+} as const satisfies Record<ShapeKind, string>
+
+const recap = (kind: ShapeKind): Variant => ({
+  key: `recap-${kind}`,
+  label: SHAPE_LABELS[kind],
+  render: (close) => <WeeklyRecapOverlay kind={kind} onDismiss={close} />,
+})
+
 const SECTIONS: Section[] = [
   {
     // First in the list because it is first on screen. Two of them, because half of what
@@ -246,6 +269,18 @@ const SECTIONS: Section[] = [
         // nowhere to lead — it closes the guide, same as the done button.
         render: (close) => <HowToPlayOverlay onClose={close} onStartTutorial={close} />,
       },
+    ],
+  },
+  {
+    // Read down the column: from one player taking everything to nobody taking anything.
+    title: 'WEEKLY RECAP',
+    items: [
+      recap('sweep'),
+      recap('sweepBut'),
+      recap('split'),
+      recap('scattered'),
+      recap('quiet'),
+      recap('empty'),
     ],
   },
   {
