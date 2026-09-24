@@ -94,26 +94,39 @@ const bestPerMode = (medals: readonly Medal[]): Medal[] => {
   return [...best.values()]
 }
 
+// Every medal the player currently holds, best claim first — all six boards across all
+// three windows, with nothing reduced away.
+//
+// What the medals screen lists. `toMedals` boils the same standings down to the one line
+// under the title, where nine entries saying one thing is the problem; on a screen opened
+// to see exactly what you hold, that reduction is the thing being asked for back.
+export function heldMedals(standings: readonly BoardStanding[]): Medal[] {
+  return standings
+    .flatMap((standing) => {
+      const rank = medalRank(standing.rank, standing.score)
+      return rank === null
+        ? []
+        : [
+            {
+              mode: standing.mode,
+              difficulty: standing.difficulty,
+              period: standing.period,
+              rank,
+            },
+          ]
+    })
+    .sort(byBestClaim)
+}
+
 // The player's standing across every board, reduced to one medal per mode.
 //
 // Ordered by mode rather than by metal, so each mode keeps its own slot: the medals are
 // told apart by the colour of the difficulty beside them, and a line whose entries
 // swapped places as ranks changed would make that colour hard to trust.
 export function toMedals(standings: readonly BoardStanding[]): Medal[] {
-  const medals = standings.flatMap((standing) => {
-    const rank = medalRank(standing.rank, standing.score)
-    return rank === null
-      ? []
-      : [
-          {
-            mode: standing.mode,
-            difficulty: standing.difficulty,
-            period: standing.period,
-            rank,
-          },
-        ]
-  })
-  return bestPerMode(medals).sort((a, b) => modeWeight(a.mode) - modeWeight(b.mode))
+  return bestPerMode(heldMedals(standings)).sort(
+    (a, b) => modeWeight(a.mode) - modeWeight(b.mode),
+  )
 }
 
 // Longest board first: forever says more than a week, which says more than a day —

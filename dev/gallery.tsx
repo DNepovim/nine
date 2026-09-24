@@ -203,6 +203,7 @@ const intro = (
       achievementsLatest="flawlessTen"
       achievementsLoaded
       onOpenAchievements={close}
+      onOpenMedals={close}
       onPlay={close}
       onSetMode={noop}
       onSetDifficulty={noop}

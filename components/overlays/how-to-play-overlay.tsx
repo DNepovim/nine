@@ -11,6 +11,7 @@ import { scheduleOnRN } from 'react-native-worklets'
 
 import { MenuButton } from '@/components/game/menu-button'
 import { ACHIEVEMENT_SCALE, GAME_SCALE } from '@/constants/colors'
+import { SHOW_MULTIPLAYER } from '@/constants/features'
 import { TIPS } from '@/constants/tips'
 import { useTheme } from '@/hooks/use-theme'
 import { MODE_DESCRIPTIONS, MODE_GRADIENT, MODES, type Mode } from '@/machines/game'
@@ -55,7 +56,7 @@ const MODE_ICONS = {
   speed: 'flash',
 } as const satisfies Record<Mode, IoniconName>
 
-const SECTION_ORDER = [
+const ALL_SECTIONS = [
   'goal',
   'controls',
   'targets',
@@ -65,6 +66,14 @@ const SECTION_ORDER = [
   'multiplayer',
   'tips',
 ] as const satisfies readonly SectionKey[]
+
+// What the guide actually offers. Multiplayer leaves with the tab that leads to it —
+// a chapter telling a player to pick a choice the intro no longer shows is the guide
+// being wrong, which is worse than the guide being short. Filtered in one place so the
+// contents list and the page below it cannot disagree about what is here.
+const SECTION_ORDER: readonly SectionKey[] = ALL_SECTIONS.filter(
+  (key) => SHOW_MULTIPLAYER || key !== 'multiplayer',
+)
 
 // ── Reusable building blocks ────────────────────────────────────────────────
 
@@ -104,7 +113,7 @@ function SectionHeader({
 }
 
 // What the guide covers, in order, straight under the title — so a player sees the
-// shape of it before scrolling and knows the multiplayer part exists at all. Set inline
+// shape of it before scrolling and knows how far down the page goes. Set inline
 // and wrapping rather than stacked: six titles down the page would push the guide
 // itself below the fold, which is the opposite of what a contents list is for.
 //
@@ -560,36 +569,40 @@ export function HowToPlayOverlay({
             </Bullet>
           </Card>
           <Body>
-            {t`\nAchieve one mid-run and the score bar says so in green. Most are asked once per difficulty — Easy, Hard and Extreme count separately, and the list draws a bar for each. The whole list is behind the bar under NINE on the start screen, along with how far along you are on the ones you have not got yet.`}
+            {t`\nAchieve one mid-run and the score bar says so in green. Most are asked once per difficulty — Easy, Hard and Extreme count separately, and the list draws a bar for each. The whole list is behind the achievements line under NINE on the start screen, along with how far along you are on the ones you have not got yet.`}
           </Body>
 
-          {/* Multiplayer */}
-          <SectionHeader section="multiplayer" onMeasure={measure} />
-          <Body>
-            {t`Pick “With friends” on the start screen. Create a game and share the four-digit code, or type a friend’s code to join. Two players are enough to start, and the one who created the room starts it.\n\nEveryone dials the same ten targets, one at a time, on their own grid. There are no lives — every target scores, and how it scores is the mode the host picked:`}
-          </Body>
-          {/* The same cards as the modes section, so a mode reads the same wherever
+          {/* Multiplayer. Gone with the tab that leads to it — see SHOW_MULTIPLAYER. */}
+          {SHOW_MULTIPLAYER && (
+            <>
+              <SectionHeader section="multiplayer" onMeasure={measure} />
+              <Body>
+                {t`Pick “With friends” on the start screen. Create a game and share the four-digit code, or type a friend’s code to join. Two players are enough to start, and the one who created the room starts it.\n\nEveryone dials the same ten targets, one at a time, on their own grid. There are no lives — every target scores, and how it scores is the mode the host picked:`}
+              </Body>
+              {/* The same cards as the modes section, so a mode reads the same wherever
               it is met — only the badge and the facts change, because multiplayer
               keeps no lives and scores by rank rather than by points. */}
-          <ModeCard
-            mode="accuracy"
-            facts={[
-              t`Ten seconds a target, the same one for everybody.`,
-              t`Everyone who hits is ranked by how few moves it took.`,
-              t`The best takes the most points; the last to land it takes none.`,
-            ]}
-          />
-          <ModeCard
-            mode="speed"
-            facts={[
-              t`Seven seconds a target — the clock everyone races.`,
-              t`Only the first player to land it scores.`,
-              t`One point, winner takes all — everyone else gets nothing.`,
-            ]}
-          />
-          <Body>
-            {t`\nAfter the tenth target everyone’s score goes up on one list. The host can pick a mode and deal another game to the same room, so nobody has to swap codes again.`}
-          </Body>
+              <ModeCard
+                mode="accuracy"
+                facts={[
+                  t`Ten seconds a target, the same one for everybody.`,
+                  t`Everyone who hits is ranked by how few moves it took.`,
+                  t`The best takes the most points; the last to land it takes none.`,
+                ]}
+              />
+              <ModeCard
+                mode="speed"
+                facts={[
+                  t`Seven seconds a target — the clock everyone races.`,
+                  t`Only the first player to land it scores.`,
+                  t`One point, winner takes all — everyone else gets nothing.`,
+                ]}
+              />
+              <Body>
+                {t`\nAfter the tenth target everyone’s score goes up on one list. The host can pick a mode and deal another game to the same room, so nobody has to swap codes again.`}
+              </Body>
+            </>
+          )}
 
           {/* Tips */}
           <SectionHeader section="tips" onMeasure={measure} />

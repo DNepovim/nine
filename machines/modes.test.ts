@@ -113,16 +113,22 @@ describe('effectiveSpawnInterval', () => {
 
   it('follows a clock handed to it rather than the mode table one', () => {
     // Trainee's clock is the player's to set, and the gap has to move with it.
-    expect(effectiveSpawnInterval('trainee', 'easy', 0, 30000)).toBe(10000)
     expect(effectiveSpawnInterval('trainee', 'easy', 0, 12000)).toBe(4000)
+    expect(effectiveSpawnInterval('trainee', 'easy', 0, 18000)).toBe(6000)
   })
 
-  it('reads the mode table when no clock is handed to it', () => {
-    // Every mode but Trainee calls it this way, so the three-argument form has to keep
-    // answering exactly as it did before the fourth was added.
-    expect(effectiveSpawnInterval('trainee', 'easy', 0)).toBe(
-      Math.round(effectiveTimeout('trainee', 'easy') / 3),
-    )
+  it('holds Trainee at seven seconds once a third of its clock would be longer', () => {
+    // The two rules meet at 21 s rather than stepping: a third of it is the cap exactly.
+    expect(effectiveSpawnInterval('trainee', 'easy', 0, 21000)).toBe(7000)
+    expect(effectiveSpawnInterval('trainee', 'easy', 0, 21001)).toBe(7000)
+    expect(effectiveSpawnInterval('trainee', 'easy', 0, 60000)).toBe(7000)
+  })
+
+  it('caps the mode table clock too, which is past the cap on its own', () => {
+    // Every mode but Trainee calls the three-argument form, so it has to keep answering
+    // the same as the four-argument one does for the clock the table would hand out.
+    expect(effectiveTimeout('trainee', 'easy') / 3).toBeGreaterThan(7000)
+    expect(effectiveSpawnInterval('trainee', 'easy', 0)).toBe(7000)
   })
 
   it('stays flat in Trainee, which ramps nothing', () => {

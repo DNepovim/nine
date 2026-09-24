@@ -36,7 +36,14 @@ export type AnalyticsEvents = {
     to: Difficulty
   }
   screen_opened: {
-    screen: 'how_to_play' | 'options' | 'news' | 'feedback' | 'join_room' | 'achievements'
+    screen:
+      | 'how_to_play'
+      | 'options'
+      | 'news'
+      | 'feedback'
+      | 'join_room'
+      | 'achievements'
+      | 'medals'
   }
   multiplayer_room: { action: 'created' | 'joined' | 'finished'; players: number }
 }

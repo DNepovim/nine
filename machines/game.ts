@@ -161,7 +161,7 @@ type Event =
   | { type: 'MENU' }
   | { type: 'SET_MODE'; mode: Mode }
   | { type: 'SET_DIFFICULTY'; difficulty: Difficulty }
-  | { type: 'SET_TRAINEE_TIMEOUT'; ms: number }
+  | { type: 'SET_TRAINEE_TIMEOUT'; ms: number; now: number }
   | { type: 'HYDRATE_STATS'; stats: Partial<Stats> }
   | { type: 'PRESS'; index: number; delta: 1 | -1; now: number }
   | { type: 'SET_CELL'; index: number; value: number; now: number }
@@ -206,6 +206,20 @@ const stopClock = (context: Context, now: number) => ({
   elapsedMs: context.elapsedMs + (now - (context.playingSince ?? now)),
   playingSince: null,
 })
+
+// Puts a live target on a clock of `ms` without moving its ring: the time it has used
+// is scaled by the same factor as the time it was given, so `timeLeft / duration` comes
+// out exactly where it was. A target that spawned this instant stays full, one a hair
+// from running out stays a hair from running out.
+const rescaleClock = (target: Target, ms: number, now: number): Target => {
+  if (target.duration <= 0 || ms === target.duration) return target
+  const ratio = ms / target.duration
+  return {
+    ...target,
+    duration: ms,
+    spawnedAt: now - (now - target.spawnedAt) * ratio,
+  }
+}
 
 const bestByScore = (
   prev: DifficultyStats,
@@ -457,12 +471,30 @@ export const gameMachine = createMachine({
   } satisfies Context,
   on: {
     // Settable at any time, including mid-run — a player who finds a target too quick
-    // should not have to end the run to say so. It is read when a target spawns, so the
-    // ones already in flight keep the clock they were given.
+    // should not have to end the run to say so, and the usual moment for it is a pause,
+    // with a target sitting on the board waiting for the answer.
+    //
+    // So the ones already in flight move onto the new clock too, keeping the share of
+    // it they had left: half a ring stays half a ring, of however many seconds the
+    // player just chose. `spawnedAt` is scaled along with the duration rather than left
+    // where it was, because the fraction — which is what the countdown draws and what
+    // the speed bonus reads — is the thing being held still, not the elapsed time.
+    // Only Trainee's own clock is rewritten; Speed's ramp deals each target a timeout
+    // of its own, and a target in flight there keeps the ring it started with.
     SET_TRAINEE_TIMEOUT: {
       actions: assign(
-        ({ event }: { event: Extract<Event, { type: 'SET_TRAINEE_TIMEOUT' }> }) => ({
+        ({
+          context,
+          event,
+        }: {
+          context: Context
+          event: Extract<Event, { type: 'SET_TRAINEE_TIMEOUT' }>
+        }) => ({
           traineeTimeoutMs: event.ms,
+          targets:
+            context.mode === 'trainee'
+              ? context.targets.map((t) => rescaleClock(t, event.ms, event.now))
+              : context.targets,
         }),
       ),
     },

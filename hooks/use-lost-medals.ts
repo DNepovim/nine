@@ -3,6 +3,7 @@ import { isNonEmptyArray } from 'narrowland'
 import { useCallback, useEffect, useRef, useState } from 'react'
 
 import { SEEN_STANDINGS_KEY } from '@/constants/storage'
+import { recordTakenMedals } from '@/hooks/use-medal-history'
 import { readPersisted } from '@/lib/hydration'
 import { fetchTop5 } from '@/lib/leaderboard'
 import { dayInPrague } from '@/lib/leaderboard-period'
@@ -98,6 +99,10 @@ export function useLostMedals({
           return { loss, taker: takerOf(rows, loss, userId) }
         }),
       )
+      // Written down before anything is shown, and whether or not this screen is still
+      // here to show it — the line under the title says each of these once and hands the
+      // slot back, and the medals screen behind it is where they are kept afterwards.
+      void recordTakenMedals(announced)
       if (!live.current) return
       setNews(announced)
     },

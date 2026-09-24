@@ -64,13 +64,18 @@ export function weekStart(day: string): string {
   return d.toISOString().slice(0, 10)
 }
 
-// The day before `day`. ISO days are handled at UTC midnight throughout — the Prague
-// offset is already spent in turning an instant into a day string, so stepping between
-// days is plain calendar arithmetic from here on.
-export function previousDay(day: string): string {
+// `count` days before `day`. ISO days are handled at UTC midnight throughout — the
+// Prague offset is already spent in turning an instant into a day string, so stepping
+// between days is plain calendar arithmetic from here on.
+export function minusDays(day: string, count: number): string {
   const d = new Date(`${day}T00:00:00Z`)
-  d.setUTCDate(d.getUTCDate() - 1)
+  d.setUTCDate(d.getUTCDate() - count)
   return d.toISOString().slice(0, 10)
+}
+
+// The day before `day`.
+export function previousDay(day: string): string {
+  return minusDays(day, 1)
 }
 
 // The day after `day`. The mirror of `previousDay`, and the same plain calendar

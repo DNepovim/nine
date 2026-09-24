@@ -29,7 +29,7 @@ const FULL_ROWS = 5
 // They come out of the five rather than being added to them — see BODY_HEIGHT.
 const CUT_SLOTS = 2
 
-// A ScoreRow is 24px tall, so a board of five stands 120px. Every state of the panel is
+// A ScoreRow is 18px tall, so a board of five stands 90px. Every state of the panel is
 // exactly that tall — skeletons, a message, a period holding fewer rows than it has room
 // for, and a period showing the player below the cut — because a panel that changes
 // height is the whole screen jumping underneath it.
@@ -40,8 +40,8 @@ const CUT_SLOTS = 2
 // drop. The five slots are now the budget rather than the floor — when the cut block is
 // there it takes two of them and three leaders are shown, which is the trade for never
 // holding blank space open on the boards where the player is already up top.
-const BODY_HEIGHT = 'h-[120px]'
-const COMPACT_BODY_HEIGHT = 'h-[72px]'
+const BODY_HEIGHT = 'h-[90px]'
+const COMPACT_BODY_HEIGHT = 'h-[54px]'
 
 export function TabPanel({
   data,
@@ -161,9 +161,9 @@ export function TabPanel({
       {showCut && (
         <>
           {/* One slot exactly, stated rather than left to font metrics — the same reason
-              ScoreRow states its own 24px. Left to the glyph, this row was a couple of
+              ScoreRow states its own 18px. Left to the glyph, this row was a couple of
               pixels of its own and the board no longer added up to five. */}
-          <View className="h-6 items-center justify-center">
+          <View className="h-[18px] items-center justify-center">
             <Text
               selectable={false}
               className="font-mono text-[11px] tracking-[6px] text-dim"

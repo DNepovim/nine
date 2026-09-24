@@ -575,3 +575,43 @@ describe('run identity', () => {
     expect(actor.getSnapshot().context.runSeq).toBeGreaterThan(second)
   })
 })
+
+describe('trainee timeout set mid-run', () => {
+  const traineeAt = (ms: number) => {
+    const actor = createActor(gameMachine)
+    actor.start()
+    actor.send({ type: 'SET_MODE', mode: 'trainee' })
+    actor.send({ type: 'SET_TRAINEE_TIMEOUT', ms, now: 0 })
+    actor.send({ type: 'START', now: 0 })
+    return actor
+  }
+
+  it('moves a live target onto the new clock, keeping the share it had left', () => {
+    const actor = traineeAt(10_000)
+    actor.send({ type: 'ADD_TARGET', value: 9, at: 0 })
+    // A quarter of the ring gone, and the player doubles the clock: three quarters of
+    // twenty seconds is fifteen, not the seven and a half it had a moment ago.
+    actor.send({ type: 'SET_TRAINEE_TIMEOUT', ms: 20_000, now: 2_500 })
+    const target = actor.getSnapshot().context.targets[0]
+    expect(target?.duration).toBe(20_000)
+    expect(20_000 - (2_500 - (target?.spawnedAt ?? 0))).toBe(15_000)
+  })
+
+  it('shortens a live target the same way', () => {
+    const actor = traineeAt(10_000)
+    actor.send({ type: 'ADD_TARGET', value: 9, at: 0 })
+    actor.send({ type: 'SET_TRAINEE_TIMEOUT', ms: 4_000, now: 5_000 })
+    const target = actor.getSnapshot().context.targets[0]
+    expect(target?.duration).toBe(4_000)
+    // Half the ring left, of four seconds now.
+    expect(4_000 - (5_000 - (target?.spawnedAt ?? 0))).toBe(2_000)
+  })
+
+  it('leaves a run in another mode on the clock it was dealt', () => {
+    const actor = start('speed')
+    actor.send({ type: 'ADD_TARGET', value: 9, at: 0 })
+    const before = actor.getSnapshot().context.targets[0]
+    actor.send({ type: 'SET_TRAINEE_TIMEOUT', ms: 20_000, now: 1_000 })
+    expect(actor.getSnapshot().context.targets[0]).toEqual(before)
+  })
+})

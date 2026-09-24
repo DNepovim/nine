@@ -125,7 +125,12 @@ export function RecentWinners({
   const line = lines[index] ?? lines[0]
 
   return (
-    <View className="w-full max-w-3xs self-center" style={{ height: LINE_HEIGHT }}>
+    // The one row in this column that sets its own top gap. The panel spaces every row
+    // the same 8px, which reads right between the pills and between the pills and the
+    // board — but the stripe is an aside about the board below it rather than another
+    // control, and at the shared gap it sat closer to the switchers above than it
+    // belonged. Half a gap more (12px) is what separates it from them.
+    <View className="mt-1 w-full max-w-3xs self-center" style={{ height: LINE_HEIGHT }}>
       {line !== undefined && (
         <Animated.View style={fadeStyle}>
           {/* One line rather than two: the slot above is one line, and a sentence that

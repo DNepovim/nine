@@ -40,9 +40,10 @@ export const MODES: Record<Mode, ModeConfig> = {
     // spare teaches more than one found in a hurry — at the Easy pace it always runs
     // at, that is a little over a minute on each target.
     //
-    // The gap between arrivals follows it, being a third of the clock: targets last
-    // twice as long here and turn up half as often, so the board stays as full as it
-    // was and simply moves at half the speed.
+    // The gap between arrivals follows it, being a third of the clock — up to a point.
+    // At this length a third would be twenty seconds of empty board, so the gap holds at
+    // TRAINEE_MAX_SPAWN_MS instead: the long ring buys time on the target, and the board
+    // stays as busy as any other mode's.
     baseTimeout: 44000,
     weights: { acc: 2 / 3, spd: 1 / 3 },
     lives: Number.POSITIVE_INFINITY,
@@ -189,15 +190,14 @@ export const DARK_MULTIPLAYER_GRADIENT = {
   speed: ['#0A3D37', DARK_MODE_GRADIENT.speed[1]],
 } as const satisfies Record<ScoredMode, readonly [string, string]>
 
+// One line each. The pills above already name the mode, so the second sentence these
+// used to open with was saying it again — and it cost the intro screen a line of height
+// on every mode.
 export const MODE_DESCRIPTIONS: Record<Mode | 'arcade', MessageDescriptor> = {
-  trainee: msg`Learn the ropes.
-No lives, no rush.`,
-  accuracy: msg`Fewest moves win. 
-Precision over speed.`,
-  speed: msg`Race the clock. 
-Fast hits build big combos.`,
-  arcade: msg`New adventure.
-Levels, bonuses, sidequests.`,
+  trainee: msg`No lives, no rush.`,
+  accuracy: msg`Precision over speed.`,
+  speed: msg`Fast hits build big combos.`,
+  arcade: msg`Levels, bonuses, sidequests.`,
 }
 
 // Difficulty is a position on the mode gradient: easy = start, extreme = end.
@@ -252,9 +252,22 @@ export function rampedTimeout(mode: Mode, difficulty: Difficulty, hits: number):
   return MODES[mode].ramps === 'clock' ? Math.round(decayed(base, hits)) : base
 }
 
-// Targets spawn every 1/3 of the clock a target would get right now.
+// The longest Trainee ever waits between arrivals, however long its clock is set to.
 //
-// Under a `clock` ramp that is all it takes: the gap follows the ring down, so the
+// A third of the ring is the right gap while the ring is short: the board stays about as
+// full as the clock is generous. It stops being the right gap somewhere around here —
+// Trainee's own default clock is a minute, and a third of that is twenty seconds of one
+// lonely target while the player sits on a route they worked out in five. A long clock is
+// meant to buy time on the target, not time with nothing to look at.
+//
+// Seven seconds is exactly a third of twenty-one, so the two rules meet rather than step:
+// under a 21-second clock the gap is still a third of it, over one it holds here.
+const TRAINEE_MAX_SPAWN_MS = 7000
+
+// Targets spawn every 1/3 of the clock a target would get right now, and in Trainee never
+// more than TRAINEE_MAX_SPAWN_MS apart.
+//
+// Under a `clock` ramp the third is all it takes: the gap follows the ring down, so the
 // board keeps roughly the same number of targets on it all run long.
 //
 // Under a `spawn` ramp the clock never moves, so the same decay is applied here
@@ -272,6 +285,9 @@ export const effectiveSpawnInterval = (
   timeoutMs?: number,
 ): number => {
   const base = (timeoutMs ?? rampedTimeout(mode, difficulty, hits)) / 3
+  // Capped on the mode rather than on whether a clock was handed in, so Trainee answers
+  // the same either way — the mode table's own clock is past the cap too.
+  if (mode === 'trainee') return Math.round(Math.min(base, TRAINEE_MAX_SPAWN_MS))
   return Math.round(MODES[mode].ramps === 'spawn' ? decayed(base, hits) : base)
 }
 

@@ -112,6 +112,9 @@ const medalOf = (loss: MedalLoss): Medal => ({
 // How many are said out loud. A bad night across four boards is a real night, but it is
 // also most of a minute of a screen the player opened to press PLAY — and what falls off
 // the end is the smallest claims, which is what the ordering below is for.
+// These are also the ones the week's list keeps, since they are the ones a taker gets
+// looked up for — a loss with nobody's name on it is half the record, and asking for more
+// names means more requests on a launch that has already had a bad night.
 const MAX_ANNOUNCED = 3
 
 // The losses worth announcing, biggest claim first.

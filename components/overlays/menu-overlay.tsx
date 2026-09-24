@@ -16,6 +16,7 @@ import { GradientName } from '@/components/gradient-name'
 import { Screen } from '@/components/screen'
 import type { AchievementId } from '@/constants/achievements'
 import { DIM_INK } from '@/constants/colors'
+import { SHOW_MULTIPLAYER } from '@/constants/features'
 import { useChampionsContext } from '@/hooks/use-champions'
 import type { LostMedalNews } from '@/hooks/use-lost-medals'
 import { useOnline } from '@/hooks/use-online'
@@ -31,6 +32,7 @@ import {
   DARK_MULTIPLAYER_GRADIENT,
   lerpColor,
   MODE_GRADIENT,
+  MODE_ORDER,
   MULTIPLAYER_GRADIENT,
   type Difficulty,
   type Mode,
@@ -41,11 +43,11 @@ import { AchievementProgress } from './achievement-progress'
 import { AnimatedLetter } from './animated-letter'
 import { DifficultySelector } from './difficulty-selector'
 import { HighScores } from './high-scores'
-import { MedalSlot } from './medal-slot'
 import { ModeSelector } from './mode-selector'
 import { ModeTips } from './mode-tips'
 import { PlayModeTab, type PlayMode } from './play-mode-tab'
 import { RecentWinners } from './recent-winners'
+import { TitleSlot } from './title-slot'
 
 const shadow = {
   shadowColor: '#000',
@@ -53,6 +55,12 @@ const shadow = {
   shadowOffset: { width: 0, height: 6 },
   shadowRadius: 12,
 }
+
+// The mode pills this screen shows. ARCADE is left out: it is a teaser for something
+// that is not playable yet, and a tab that cannot be pressed into anything is the first
+// row to cut when the screen is short. ModeSelector still knows it — `MODE_ITEMS` there
+// is what brings it back.
+const INTRO_MODES: (Mode | 'arcade')[] = [...MODE_ORDER]
 
 export function MenuOverlay({
   gameMode,
@@ -67,6 +75,7 @@ export function MenuOverlay({
   achievementsLatest,
   achievementsLoaded,
   onOpenAchievements,
+  onOpenMedals,
   initialPlayMode = 'alone',
   onPlay,
   onPlayModeChange,
@@ -104,6 +113,10 @@ export function MenuOverlay({
   // at a player who holds thirty.
   achievementsLoaded: boolean
   onOpenAchievements: () => void
+  // The list behind the medal line: everything the player holds, and what the week took
+  // off them. Owned by the caller like the achievements list is — both are screens over
+  // this one, not pieces of it.
+  onOpenMedals: () => void
   initialPlayMode?: PlayMode
   onPlay: () => void
   // Fired on every ALONE / WITH FRIENDS toggle, not just at mount — this screen
@@ -248,30 +261,39 @@ export function MenuOverlay({
             ))}
           </View>
 
-          {/* What the player holds across all six boards, all-time — and, for a few
-              seconds first, one by one, whatever a rival took off it while the app was
-              closed. The slot owns its own emptiness and its own margin; see MedalSlot. */}
-          <MedalSlot medals={medals} news={lostMedals} onNewsSeen={onLostMedalsSeen} />
+          {/* The one line under the title. What the player holds across all six boards
+              and the last thing they achieved take turns in it, and for a few seconds on
+              open, one by one, whatever a rival took off them while the app was closed
+              covers both. The slot owns its own emptiness, its height and its margin;
+              see TitleSlot. */}
+          <TitleSlot
+            medals={medals}
+            news={lostMedals}
+            onNewsSeen={onLostMedalsSeen}
+            onPressMedals={onOpenMedals}
+            achievements={
+              achievementsLoaded ? (
+                <AchievementProgress
+                  earned={achievementsEarned}
+                  latest={achievementsLatest}
+                  onPress={onOpenAchievements}
+                />
+              ) : null
+            }
+          />
 
-          {/* Unlike the medal line above, this is never silent. A medal line with nothing
-              in it is a player who has not won anything; a strip with nothing in it is a
-              player who has not found the feature, and hiding the front door from exactly
-              them is backwards. */}
-          {achievementsLoaded && (
-            <AchievementProgress
-              earned={achievementsEarned}
-              latest={achievementsLatest}
-              onPress={onOpenAchievements}
+          {/* ALONE / WITH FRIENDS tabs. Hidden while the intro screen is being fitted
+              into a short phone: the tab is what is gone, not the feature — the panel
+              below still carries both doors in, and every multiplayer screen past them
+              is untouched. See SHOW_MULTIPLAYER. */}
+          {SHOW_MULTIPLAYER && (
+            <PlayModeTab
+              playMode={playMode}
+              gameMode={gameMode}
+              gradPhase={gradPhase}
+              onSelect={handlePlayModeSelect}
             />
           )}
-
-          {/* ALONE / WITH FRIENDS tabs */}
-          <PlayModeTab
-            playMode={playMode}
-            gameMode={gameMode}
-            gradPhase={gradPhase}
-            onSelect={handlePlayModeSelect}
-          />
 
           {/* Horizontally paging content panels — translateX avoids the Safari
               scrollTo-on-overflow:hidden bug that breaks the tab switch on web */}
@@ -306,6 +328,7 @@ export function MenuOverlay({
               >
                 <ModeSelector
                   focused={focused}
+                  items={INTRO_MODES}
                   gradPhase={gradPhase}
                   onSelect={(m) => {
                     setFocused(m)

@@ -28,6 +28,11 @@ export const RUN_TOTALS_KEY = 'nine.run-totals.v1'
 // from the same question, so it holds no truth of its own: losing it costs one greeting,
 // not a record.
 export const SEEN_STANDINGS_KEY = 'nine.seen-standings.v1'
+// The medals taken off the player in the last week, with whoever the board named at the
+// time — see lib/medal-history.ts. Written by the same launch-time diff that announces
+// them under the title, and read by the medals screen behind that line. Local only: it is
+// a record of what was said, not of what is true, and the boards themselves are the truth.
+export const MEDAL_HISTORY_KEY = 'nine.medal-history.v1'
 export const SEEN_NEWS_KEY = 'nine.seen-news.v1'
 // The last day whose winnings have already been announced. A day, not a list of windows:
 // everything closed after it is owed, and everything on or before it has been told. Local

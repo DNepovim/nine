@@ -38,6 +38,7 @@ import { GameOverSequence } from '@/components/overlays/game-over-sequence'
 import { HowToPlayOverlay } from '@/components/overlays/how-to-play-overlay'
 import { InstallOverlay } from '@/components/overlays/install-overlay'
 import { JoinRoomOverlay } from '@/components/overlays/join-room-overlay'
+import { MedalsOverlay } from '@/components/overlays/medals-overlay'
 import { MenuOverlay } from '@/components/overlays/menu-overlay'
 import { MultiplayerGameOver } from '@/components/overlays/multiplayer-game-over'
 import { MultiplayerMenu } from '@/components/overlays/multiplayer-menu'
@@ -66,6 +67,7 @@ import { useFloatingStat } from '@/hooks/use-floating-stat'
 import { useHitCelebration } from '@/hooks/use-hit-celebration'
 import { useInstall } from '@/hooks/use-install'
 import { useLostMedals } from '@/hooks/use-lost-medals'
+import { useMedalHistory } from '@/hooks/use-medal-history'
 import { useMultiplayerGame } from '@/hooks/use-multiplayer-game'
 import { useMultiplayerRoom } from '@/hooks/use-multiplayer-room'
 import { useMyMedals } from '@/hooks/use-my-medals'
@@ -162,8 +164,14 @@ const BOOKMARK_REVEAL_DELAY_MS = 500
 // The menu-level overlays, one open at a time. 'none' means the screen under them —
 // the intro or the pause screen — is what shows. Feedback is not here: it is a
 // dialog over whatever is showing, not a screen of its own.
-type MenuOverlayName =
-  'none' | 'advanced' | 'howToPlay' | 'news' | 'joinRoom' | 'achievements'
+type MenuOverlayName = 'none' | 'advanced' | 'howToPlay' | 'news' | 'joinRoom'
+
+// The two dialogs behind the line under the title: everything the player holds, and
+// everything there is to achieve. Deliberately not `menuOverlay` — that one takes the
+// intro down to put a screen of its own in its place, and these are dialogs *over* the
+// intro, the way feedback is. Routed through it, their scrim would have the game grid
+// behind it rather than the screen they were opened from.
+type TitleDialog = 'none' | 'medals' | 'achievements'
 
 // Overlay names → the screen names the warehouse knows, so the event table stays the
 // only place that spells them. 'none' has no row: it is a closing, not an opening.
@@ -172,7 +180,6 @@ const OVERLAY_SCREENS = {
   howToPlay: 'how_to_play',
   news: 'news',
   joinRoom: 'join_room',
-  achievements: 'achievements',
 } as const satisfies Record<
   Exclude<MenuOverlayName, 'none'>,
   AnalyticsEvents['screen_opened']['screen']
@@ -310,15 +317,17 @@ export default function GameScreen() {
   } = useDisplayOptions()
 
   // The machine spawns targets with it, so the setting has to reach the context — on
-  // hydration and on every change after. Mid-run is fine: it is read at spawn, so the
-  // targets already in flight keep the clock they were given.
+  // hydration and on every change after. Mid-run is fine: the targets already in flight
+  // are moved onto the new clock keeping the share of it they had left, which is what
+  // makes changing it from a pause show its effect on the target you are looking at.
   useEffect(() => {
-    send({ type: 'SET_TRAINEE_TIMEOUT', ms: traineeTimeoutMs })
+    send({ type: 'SET_TRAINEE_TIMEOUT', ms: traineeTimeoutMs, now: Date.now() })
   }, [traineeTimeoutMs, send])
   // Which menu-level overlay is open. Only one shows at a time, and the menu
   // itself is hidden while any of them is open — a single source of truth avoids
   // z-order/gating clashes between separate booleans.
   const [menuOverlay, setMenuOverlay] = useState<MenuOverlayName>('none')
+  const [titleDialog, setTitleDialog] = useState<TitleDialog>('none')
   // The feedback dialog floats over whatever is showing rather than replacing it, so
   // it is its own boolean instead of a member of the overlay union above.
   const [feedbackOpen, setFeedbackOpen] = useState(false)
@@ -512,6 +521,9 @@ export default function GameScreen() {
   // intro screen, which unmounts for the whole run: the news has to survive being shown
   // once and not come back at the end of every run — see useLostMedals.
   const lostMedals = useLostMedals({ standings, loaded: medalsLoaded, userId })
+  // What the week took off the player, for the list behind the medal line. Written by the
+  // diff above at launch; read here so the list is standing by the time it is opened.
+  const medalHistory = useMedalHistory()
 
   // Shared by the two hooks below, and declared above both because each needs something
   // from the other: the bar reads the queue, and the achievements read the bar's own
@@ -776,6 +788,7 @@ export default function GameScreen() {
   const { floats, removeFloat } = useFloatingPoints(hitBatch)
   const { displayedTargets, removeDisplayed, onContainerLayout } = useDisplayedTargets({
     machineTargets: targets,
+    hitBatch,
     isPlaying,
     stateValue: stateName,
   })
@@ -952,11 +965,14 @@ export default function GameScreen() {
   // was being typed, and in a multiplayer room it would drop the player out of it.
   useEffect(() => {
     if (!updateReady || !onIntro || showNicknameModal) return
+    // The intro is still underneath these two, but a reload while the player is reading
+    // the catalogue is the same lost place as a reload over any other open thing.
+    if (titleDialog !== 'none') return
     const timer = setTimeout(applyUpdate, UPDATE_SETTLE_MS)
     return () => {
       clearTimeout(timer)
     }
-  }, [updateReady, applyUpdate, onIntro, showNicknameModal])
+  }, [updateReady, applyUpdate, onIntro, showNicknameModal, titleDialog])
 
   return (
     // Every board on screen reads this one store, so the intro, the pause screen and
@@ -1454,17 +1470,6 @@ export default function GameScreen() {
             />
           )}
 
-          {/* ── Everything there is to earn, and what's been earned ── */}
-          {menuOverlay === 'achievements' && (
-            <AchievementsOverlay
-              store={achievements.store}
-              facts={achievements.facts}
-              onClose={() => {
-                setMenuOverlay('none')
-              }}
-            />
-          )}
-
           {/* ── How to play guide ── */}
           {menuOverlay === 'howToPlay' && (
             <HowToPlayOverlay
@@ -1577,7 +1582,12 @@ export default function GameScreen() {
               achievementsLatest={latestAchievement(achievements.store)}
               achievementsLoaded={achievements.loaded}
               onOpenAchievements={() => {
-                setMenuOverlay('achievements')
+                setTitleDialog('achievements')
+                track('screen_opened', { screen: 'achievements' })
+              }}
+              onOpenMedals={() => {
+                setTitleDialog('medals')
+                track('screen_opened', { screen: 'medals' })
               }}
               initialPlayMode={menuInitialTab}
               onPlayModeChange={setMenuInitialTab}
@@ -1632,6 +1642,27 @@ export default function GameScreen() {
               }}
             />
           )}
+          {/* ── The two dialogs behind the line under the title, drawn over whatever
+              screen opened them rather than in place of it — see TitleDialog ── */}
+          {titleDialog === 'medals' && (
+            <MedalsOverlay
+              standings={standings}
+              history={medalHistory}
+              onClose={() => {
+                setTitleDialog('none')
+              }}
+            />
+          )}
+          {titleDialog === 'achievements' && (
+            <AchievementsOverlay
+              store={achievements.store}
+              facts={achievements.facts}
+              onClose={() => {
+                setTitleDialog('none')
+              }}
+            />
+          )}
+
           {feedbackOpen && (
             <FeedbackOverlay
               gameMode={mode}

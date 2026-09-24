@@ -21,9 +21,13 @@ const EMPTY_TITLE = msg`ACHIEVEMENTS`
 // were, where the emblem and the title say what you actually did. The count carries the
 // progress on its own.
 //
-// Never silent, unlike the medal line above it. A medal line with nothing in it is a
-// player who has not won anything; this line with nothing in it is a player who has not
-// found the feature, and hiding the front door from exactly them is backwards.
+// Never silent, unlike the medal line it now shares a slot with. A medal line with
+// nothing in it is a player who has not won anything; this line with nothing in it is a
+// player who has not found the feature, and hiding the front door from exactly them is
+// backwards.
+//
+// No margin of its own: it stands in TitleSlot, which owns the line's height and the gap
+// under it because the medal line has to stand in exactly the same space.
 export function AchievementProgress({
   earned,
   latest,
@@ -41,7 +45,7 @@ export function AchievementProgress({
   const def = latest === null ? null : achievement(latest)
 
   return (
-    <Pressable onPress={onPress} hitSlop={8} className="mb-4 flex-row items-center gap-2">
+    <Pressable onPress={onPress} hitSlop={8} className="flex-row items-center gap-2">
       <Text selectable={false} className="text-[13px] leading-[16px]">
         {def?.emblem ?? EMPTY_EMBLEM}
       </Text>

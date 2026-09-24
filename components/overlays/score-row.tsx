@@ -82,15 +82,18 @@ export function ScoreRow({
             }
       }
       disabled={profileId === null}
-      // 24px: the 16px line below plus py-1, stated rather than left to font metrics so
-      // SkeletonRow can stand exactly as tall and the board holds still while it loads.
-      className="h-6 flex-row items-center rounded-lg px-2 py-1"
+      // 18px: the 14px line below plus the two pixels a 13px medal glyph wants either
+      // side of it, stated rather than left to font metrics so SkeletonRow can stand
+      // exactly as tall and the board holds still while it loads. The row carries no
+      // vertical padding of its own any more — five of these are the tallest thing on
+      // the intro screen, and the padding was the cheapest 30px on it.
+      className="h-[18px] flex-row items-center rounded-lg px-2"
       style={highlight ? { backgroundColor: accentColor + '20' } : undefined}
     >
       <Text
         selectable={false}
         className={cn(
-          'w-7 font-mono font-bold leading-[16px] text-dim',
+          'w-7 font-mono font-bold leading-[14px] text-dim',
           RANK_MARK_SIZES[rankMark(entry.rank)],
         )}
         style={[accentStyle, glow]}
