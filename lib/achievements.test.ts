@@ -17,6 +17,8 @@ import { messages as en } from '@/locales/en/messages'
 import { DIFFICULTY_ORDER, type Stats } from '@/machines/game'
 
 import {
+  achievementAnnouncement,
+  achievementCard,
   earned,
   isEarnedBy,
   NO_RUN,
@@ -619,5 +621,66 @@ describe('stageProgress', () => {
   it('clamps to the target, so a bar can never overrun', () => {
     const f = facts({ stats: withBest('accuracy', 'easy', 99999) })
     expect(stageProgress('fineWork', f).easy).toBe(1000)
+  })
+})
+
+describe('achievementCard', () => {
+  it('opens on the one that was asked about', () => {
+    const awards = [
+      { id: 'firstHit', stage: null },
+      { id: 'fineWork', stage: 'easy' },
+    ] as const
+    expect(achievementCard(awards, 'fineWork')).toEqual({
+      ids: ['firstHit', 'fineWork'],
+      start: 1,
+    })
+  })
+
+  it('gives two stages of one achievement a single page', () => {
+    const awards = [
+      { id: 'fineWork', stage: 'easy' },
+      { id: 'fineWork', stage: 'hard' },
+    ] as const
+    expect(achievementCard(awards, 'fineWork')).toEqual({ ids: ['fineWork'], start: 0 })
+  })
+
+  it('opens one that is not in the list on its own', () => {
+    expect(achievementCard([{ id: 'firstHit', stage: null }], 'fineWork')).toEqual({
+      ids: ['fineWork'],
+      start: 0,
+    })
+  })
+
+  it('answers a run that earned nothing', () => {
+    expect(achievementCard([], 'firstHit')).toEqual({ ids: ['firstHit'], start: 0 })
+  })
+})
+
+describe('achievementAnnouncement', () => {
+  it('names the achievement with its emblem and shouts its title', () => {
+    i18n.load({ en, cs })
+    i18n.activate('en')
+    const announcement = achievementAnnouncement('firstHit', 0)
+    expect(announcement.id).toBe('achievement')
+    expect(announcement.message).toBe(
+      `${ACHIEVEMENTS.firstHit.emblem} FIRST HIT achieved`,
+    )
+  })
+
+  it('carries the achievement itself, so the bar can open its card', () => {
+    expect(achievementAnnouncement('firstHit', 0).achievement).toBe('firstHit')
+  })
+
+  it('fits the bar for every achievement, in every language', () => {
+    // The end of what the title cap is for: TITLE_MAX bounds the title, this bounds the
+    // line the bar actually draws, emblem and wording included.
+    i18n.load({ en, cs })
+    for (const locale of LOCALES) {
+      i18n.activate(locale)
+      for (const id of ACHIEVEMENT_IDS) {
+        const { message } = achievementAnnouncement(id, 0)
+        expect(message.length, `${locale} ${id}`).toBeLessThanOrEqual(MAX_MESSAGE_LENGTH)
+      }
+    }
   })
 })

@@ -3,7 +3,7 @@ import { msg } from '@lingui/core/macro'
 import { Trans, useLingui } from '@lingui/react/macro'
 import { useFonts } from 'expo-font'
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { Text, View } from 'react-native'
+import { Pressable, Text, View } from 'react-native'
 import Animated, {
   Easing,
   useAnimatedStyle,
@@ -14,6 +14,7 @@ import Animated, {
 import DSEG7Font from '@/assets/fonts/DSEG7Classic-Bold.ttf'
 import { AnnouncementBar } from '@/components/game/announcement-bar'
 import { BestScoreCell } from '@/components/game/best-score-cell'
+import type { AchievementId } from '@/constants/achievements'
 import { GOLD_INK, SPECTRUM } from '@/constants/colors'
 import { mono } from '@/constants/theme'
 import { useOnline } from '@/hooks/use-online'
@@ -82,6 +83,7 @@ export function BestScoresLine({
   inRun,
   mode,
   announcement,
+  onOpenAchievement,
   score,
   yourBest,
   loaded,
@@ -99,6 +101,10 @@ export function BestScoresLine({
   mode: Mode
   // While set, the bar carries this message instead of the scores.
   announcement: Announcement | null
+  // Tapping a line that names an achievement opens it. Only that one line answers: a
+  // record is a moment with nothing behind it to read, where an achievement is a thing
+  // the player keeps and the bar only has room for its name.
+  onOpenAchievement: (id: AchievementId) => void
   // The live score — read only to find which of the four cells below is worth a
   // nudge, never displayed itself. See lib/near-record.ts.
   score: number
@@ -219,6 +225,10 @@ export function BestScoresLine({
   const shown: ShownBest[] = revealed
     ? shownKeys.map((key) => ({ key, value: values[key] ?? 0, mine: heldByMe[key] }))
     : []
+  // The achievement the bar is currently offering to open, if any. Nothing to open while
+  // the line is wiping away: a message on its way out is not one to be asked about, and
+  // the pause it would bring on would land after it had gone.
+  const openable = leaving ? undefined : pinned?.achievement
   // Only once the run is actually chasing these numbers — mid-reveal or mid-announcement
   // is not the moment to also draw the eye toward one cell over the others.
   const nearKey =
@@ -273,6 +283,19 @@ export function BestScoresLine({
             {...announcementStyle(pinned.id, mode)}
             leaving={leaving}
             onExited={handleExited}
+          />
+        )}
+        {/* Over the bar rather than inside it: the bar is a wipe with a message clipped
+            to a moving window, and a press target that grew with the window would be
+            unhittable for the first frames of a line. The hit area is generous because
+            the strip is a hairline — 14px is nothing to aim at with a thumb. */}
+        {openable !== undefined && (
+          <Pressable
+            className="absolute inset-0"
+            hitSlop={8}
+            onPress={() => {
+              onOpenAchievement(openable)
+            }}
           />
         )}
       </View>

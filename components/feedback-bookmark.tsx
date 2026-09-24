@@ -15,6 +15,7 @@ import Animated, {
 import { scheduleOnRN } from 'react-native-worklets'
 
 import { SWIPE_THRESHOLD } from '@/constants/game'
+import { LAYER } from '@/constants/layers'
 import { MODE_GRADIENT, type Mode } from '@/machines/game'
 
 const ICON_ZONE = 44
@@ -131,7 +132,11 @@ export function FeedbackBookmark({
     <GestureDetector gesture={gesture}>
       <Animated.View
         className="absolute bottom-16 right-0 flex-row items-center rounded-l-2xl border border-r-0 bg-surface"
-        style={[{ borderColor: color, height: ICON_ZONE }, SHADOW, rectStyle]}
+        style={[
+          { borderColor: color, height: ICON_ZONE, zIndex: LAYER.bookmark },
+          SHADOW,
+          rectStyle,
+        ]}
       >
         <Animated.View
           className="items-center justify-center"

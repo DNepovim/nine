@@ -30,6 +30,7 @@ import { ScoreDigit } from '@/components/game/score-digit'
 import { StepUpToast } from '@/components/game/step-up-toast'
 import { TargetCard } from '@/components/game/target-card'
 import { TraineeStats } from '@/components/game/trainee-stats'
+import { AchievementDetail } from '@/components/overlays/achievement-detail'
 import { AchievementsOverlay } from '@/components/overlays/achievements-overlay'
 import { AdvancedOptionsOverlay } from '@/components/overlays/advanced-options-overlay'
 import { FeedbackOverlay } from '@/components/overlays/feedback-overlay'
@@ -50,6 +51,7 @@ import { StepUpOverlay } from '@/components/overlays/step-up-overlay'
 import { TutorialOverlay } from '@/components/overlays/tutorial/tutorial-overlay'
 import { WhatsNewOverlay } from '@/components/overlays/whats-new-overlay'
 import { Screen } from '@/components/screen'
+import type { AchievementId } from '@/constants/achievements'
 import { mono } from '@/constants/theme'
 import { useAchievementQueue, useAchievements } from '@/hooks/use-achievements'
 import { useAnnouncements } from '@/hooks/use-announcements'
@@ -90,6 +92,7 @@ import { useTraineeCoach } from '@/hooks/use-trainee-coach'
 import { useTutorial } from '@/hooks/use-tutorial'
 import { useWelcome } from '@/hooks/use-welcome'
 import { idsOf, latestAchievement } from '@/lib/achievement-store'
+import { achievementCard } from '@/lib/achievements'
 import { identify, track } from '@/lib/analytics'
 import type { AnalyticsEvents } from '@/lib/analytics-events'
 import {
@@ -208,20 +211,28 @@ function feedbackGameState(
 
 // Every screen but a live run gets the bookmark — except game over, which holds it
 // back until the death cinematic has actually landed (see gameOverBookmarkReady).
+//
+// A lesson counts as a live run: it hands the player a real dial, and a tab a thumb
+// could graze has no more business there than it has over the game. The archive keeps
+// its DONE button exactly where the bookmark would land.
 function showFeedbackBookmark({
   isPlaying,
   showMultiGame,
   feedbackOpen,
   isGameOver,
   gameOverBookmarkReady,
+  inLesson,
+  inArchive,
 }: {
   isPlaying: boolean
   showMultiGame: boolean
   feedbackOpen: boolean
   isGameOver: boolean
   gameOverBookmarkReady: boolean
+  inLesson: boolean
+  inArchive: boolean
 }): boolean {
-  if (isPlaying || showMultiGame || feedbackOpen) return false
+  if (isPlaying || showMultiGame || feedbackOpen || inLesson || inArchive) return false
   return !isGameOver || gameOverBookmarkReady
 }
 
@@ -478,6 +489,12 @@ export default function GameScreen() {
     playedScored,
     fromWelcome: welcome.welcomed,
   })
+  // Which achievement the announcement bar was tapped for, or null. The run is paused
+  // behind the card rather than running on under it: an achievement is worth stopping for,
+  // and reading one while targets expire is how a player loses a life to their own
+  // curiosity. Dismissing leaves them on the pause screen, which carries the same row.
+  const [askedAchievement, setAskedAchievement] = useState<AchievementId | null>(null)
+
   // Open while the transitional screen is up. The run is paused behind it rather than
   // abandoned, so backing out through the intro leaves nothing half-finished.
   const [stepUpOpen, setStepUpOpen] = useState(false)
@@ -766,14 +783,6 @@ export default function GameScreen() {
   const direction = useScoreDirection(sum)
   const displayScore = useDisplayScore(state.context.score)
 
-  const stateName = isMenu
-    ? 'menu'
-    : isPlaying
-      ? 'playing'
-      : isPaused
-        ? 'paused'
-        : 'gameOver'
-
   useTargetSpawner({
     isPlaying,
     targetCount: targets.length,
@@ -789,8 +798,7 @@ export default function GameScreen() {
   const { displayedTargets, removeDisplayed, onContainerLayout } = useDisplayedTargets({
     machineTargets: targets,
     hitBatch,
-    isPlaying,
-    stateValue: stateName,
+    runSeq: state.context.runSeq,
   })
 
   // Dial pad is a square sized to fit its container (min of width/height), so it
@@ -1027,6 +1035,10 @@ export default function GameScreen() {
               inRun={inRun}
               mode={mode}
               announcement={announcement}
+              onOpenAchievement={(id) => {
+                send({ type: 'PAUSE', now: Date.now() })
+                setAskedAchievement(id)
+              }}
               score={state.context.score}
               yourBest={stats[mode][difficulty].score}
               loaded={board.loaded}
@@ -1412,6 +1424,9 @@ export default function GameScreen() {
               gameTimeMs={elapsedMs}
               avgAccuracy={avgAccuracy}
               avgSpeed={avgSpeed}
+              achievements={achievements.runEarned}
+              achievementStore={achievements.store}
+              achievementFacts={achievements.facts}
               corners={corners}
               onSelectCorner={setCorner}
               showPar={showPar}
@@ -1441,6 +1456,22 @@ export default function GameScreen() {
               }}
               onAddNickname={() => {
                 setShowNicknameModal(true)
+              }}
+            />
+          )}
+
+          {/* ── The card a tapped announcement opens ──
+              After the pause screen it brought on, so it lands over it rather than
+              under. The same card the chips on the pause and game over screens open,
+              over everything the run has earned so far and opened on the one the bar
+              was naming. */}
+          {askedAchievement !== null && (
+            <AchievementDetail
+              {...achievementCard(achievements.runEarned, askedAchievement)}
+              store={achievements.store}
+              facts={achievements.facts}
+              onDismiss={() => {
+                setAskedAchievement(null)
               }}
             />
           )}
@@ -1629,6 +1660,8 @@ export default function GameScreen() {
             feedbackOpen,
             isGameOver,
             gameOverBookmarkReady,
+            inLesson: tutorial.visible,
+            inArchive: menuOverlay === 'news',
           }) && (
             <FeedbackBookmark
               mode={mode}

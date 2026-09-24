@@ -1,3 +1,4 @@
+import { i18n } from '@lingui/core'
 import { useSyncExternalStore } from 'react'
 import { Pressable, ScrollView, Text, View } from 'react-native'
 
@@ -10,13 +11,20 @@ import { PlayerProfileOverlay } from '@/components/overlays/player-profile-overl
 import { StepUpOverlay } from '@/components/overlays/step-up-overlay'
 import { WhatsNewOverlay } from '@/components/overlays/whats-new-overlay'
 import { SplashScreen } from '@/components/splash-screen'
+import {
+  achievement,
+  ACHIEVEMENT_IDS,
+  type AchievementId,
+} from '@/constants/achievements'
 import { DEFAULT_DIAL_CORNERS } from '@/constants/dial-hints'
+import { GalleryButton } from '@/dev/gallery-button'
 import type { ShapeKind } from '@/dev/weekly-recap/recap'
 import { WeeklyRecapOverlay } from '@/dev/weekly-recap/recap-overlay'
+import { requestAnnouncement } from '@/hooks/use-announcement-request'
 import type { LostMedalNews } from '@/hooks/use-lost-medals'
 import { EMPTY_STORE } from '@/lib/achievement-store'
-import type { AchievementFacts } from '@/lib/achievements'
-import type { Period } from '@/lib/announcements'
+import { achievementAnnouncement, type AchievementFacts } from '@/lib/achievements'
+import { announcementFor, type AnnouncementId, type Period } from '@/lib/announcements'
 import { emptyCareer } from '@/lib/career'
 import type { RecordScreen } from '@/lib/champions'
 import { gameOverTitle } from '@/lib/game-over-title'
@@ -281,6 +289,11 @@ const paused = (mode: Mode): Variant => ({
       gameTimeMs={RUN.gameTimeMs}
       avgAccuracy={RUN.avgAccuracy}
       avgSpeed={RUN.avgSpeed}
+      // The same run the game-over stage shows, so the row can be compared on the two
+      // screens that carry it.
+      achievements={RUN.achievements}
+      achievementStore={EMPTY_STORE}
+      achievementFacts={FACTS}
       // The defaults, so the row shows a set corner and an empty one at once. Nothing
       // to change here: a variant is a render function with no state of its own.
       corners={DEFAULT_DIAL_CORNERS}
@@ -573,6 +586,86 @@ const SECTIONS: Section[] = [
   },
 ]
 
+// ── The announcement bar ────────────────────────────────────────────────────────
+//
+// Buttons rather than screens. The bar lives inside the game screen and is driven by a
+// hook, so these ask the running app for a line instead of drawing one over it — which is
+// the only way to see the wipe, the queue and the celebration that come with it.
+//
+// Mid-run only: the bar is the best-scores strip wearing another coat, and off a run
+// there is no strip on screen to take over. A press made anywhere else is dropped rather
+// than kept waiting, so nothing fires into a run that did not ask for it.
+type Action = { key: string; label: string; run: () => void }
+type ActionSection = { title: string; items: Action[] }
+
+// One rival for all of their news, short enough to leave the words around it room.
+const RIVAL_NAME = 'PETR'
+
+// A roll per press, the way a run takes one: the pools carry three or four wordings each
+// and a fixed roll would only ever show the first.
+const line = (id: AnnouncementId, label: string, name?: string): Action => ({
+  key: `announce-${id}`,
+  label,
+  run: () => {
+    requestAnnouncement(announcementFor(id, Math.random(), name))
+  },
+})
+
+// The achievement is chosen at the press rather than in this list, so LONGEST is the
+// longest title in whichever language the app is currently in.
+const unlock = (key: string, label: string, pick: () => AchievementId): Action => ({
+  key: `announce-achievement-${key}`,
+  label,
+  run: () => {
+    requestAnnouncement(achievementAnnouncement(pick(), Math.random()))
+  },
+})
+
+const titleLength = (id: AchievementId): number => i18n._(achievement(id).title).length
+
+const longestTitle = (): AchievementId =>
+  ACHIEVEMENT_IDS.reduce((longest, id) =>
+    titleLength(id) > titleLength(longest) ? id : longest,
+  )
+
+const ANNOUNCE: ActionSection[] = [
+  {
+    // Your own, in the ladder's own order: the personal best, then the three boards
+    // biggest last, then the two openings. Each one plays a different celebration.
+    title: 'ANNOUNCE · YOURS',
+    items: [
+      line('record', 'BEST'),
+      line('today', 'TODAY'),
+      line('week', 'WEEK'),
+      line('ever', 'EVER'),
+      line('todayFirst', 'TODAY 1ST'),
+      line('weekFirst', 'WEEK 1ST'),
+    ],
+  },
+  {
+    // Someone else's. The first three are news and play nothing at all; the last three
+    // are the same boards taken off you, and each plays the jump run backwards.
+    title: 'ANNOUNCE · RIVAL',
+    items: [
+      line('todayRaised', 'TODAY UP', RIVAL_NAME),
+      line('weekRaised', 'WEEK UP', RIVAL_NAME),
+      line('everRaised', 'EVER UP', RIVAL_NAME),
+      line('todayLost', 'TODAY LOST', RIVAL_NAME),
+      line('weekLost', 'WEEK LOST', RIVAL_NAME),
+      line('everLost', 'EVER LOST', RIVAL_NAME),
+    ],
+  },
+  {
+    // Both carry the achievement itself, so tapping the bar opens its card the way a real
+    // unlock does. LONGEST is what the bar's 40 characters were measured against.
+    title: 'ANNOUNCE · EARNED',
+    items: [
+      unlock('typical', 'TYPICAL', () => 'firstHit'),
+      unlock('longest', 'LONGEST', longestTitle),
+    ],
+  },
+]
+
 const ALL_VARIANTS = SECTIONS.flatMap((section) => section.items)
 
 // Which screen is on show, kept in the module rather than in a component.
@@ -633,6 +726,39 @@ export function GallerySwitcher() {
     <View className="h-full w-52 border-r border-muted bg-surface">
       <View className="flex-1 overflow-hidden">
         <ScrollView contentContainerStyle={{ padding: 8, gap: 10 }}>
+          {/* First, because unlike everything below it these need the app itself running
+              underneath — and because a button that fires and is done has nothing to
+              scroll back to. Whatever screen is on show is closed on the way, since the
+              bar is at the top of the one behind it. */}
+          {ANNOUNCE.map((section) => (
+            <View key={section.title} className="gap-1.5">
+              <Text
+                selectable={false}
+                className="font-mono text-[8px] font-black tracking-[1.5px] text-dim"
+              >
+                {section.title}
+              </Text>
+              <View className="flex-row flex-wrap gap-1.5">
+                {section.items.map((action) => (
+                  <GalleryButton
+                    key={action.key}
+                    label={action.label}
+                    onPress={() => {
+                      show(null)
+                      action.run()
+                    }}
+                  />
+                ))}
+              </View>
+            </View>
+          ))}
+          <Text
+            selectable={false}
+            className="font-mono text-[8px] font-bold tracking-[1px] text-dim"
+          >
+            ↑ MID-RUN ONLY
+          </Text>
+
           {SECTIONS.map((section) => (
             <View key={section.title} className="gap-1.5">
               <Text
@@ -643,28 +769,14 @@ export function GallerySwitcher() {
               </Text>
               <View className="flex-row flex-wrap gap-1.5">
                 {section.items.map((v) => (
-                  <Pressable
+                  <GalleryButton
                     key={v.key}
+                    label={v.label}
+                    selected={v.key === shown}
                     onPress={() => {
                       show(v.key)
                     }}
-                    className={
-                      v.key === shown
-                        ? 'rounded-lg bg-strong px-2 py-1.5'
-                        : 'rounded-lg bg-card px-2 py-1.5'
-                    }
-                  >
-                    <Text
-                      selectable={false}
-                      className={
-                        v.key === shown
-                          ? 'font-mono text-[9px] font-bold tracking-[0.5px] text-on-strong'
-                          : 'font-mono text-[9px] font-bold tracking-[0.5px] text-primary'
-                      }
-                    >
-                      {v.label}
-                    </Text>
-                  </Pressable>
+                  />
                 ))}
               </View>
             </View>

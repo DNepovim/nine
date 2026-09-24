@@ -20,15 +20,17 @@ const exitFor = (value: number, hits: readonly HitInfo[]): TargetExit => {
 export function useDisplayedTargets({
   machineTargets,
   hitBatch,
-  isPlaying,
-  stateValue,
+  runSeq,
 }: {
   machineTargets: Target[]
   // The press that just landed, if any. It is what tells a target the player dialled
   // from one the clock took, and a wasteful Accuracy hit from a clean one.
   hitBatch: HitBatch
-  isPlaying: boolean
-  stateValue: string
+  // Which run these targets belong to. Every fresh deal bumps it — including RESTART
+  // from a pause, which never passes through the menu or game over and so cannot be
+  // spotted from the state name alone. RESUME leaves it where it is, which is what
+  // keeps a resumed board intact.
+  runSeq: number
 }) {
   const [displayedTargets, setDisplayedTargets] = useState<DisplayTarget[]>([])
   const containerSize = useRef({ width: 0, height: 0 })
@@ -68,14 +70,15 @@ export function useDisplayedTargets({
     })
   }, [machineTargets])
 
-  // Clear displayed targets when starting a fresh game.
-  const prevStateRef = useRef(stateValue)
+  // Clear displayed targets when a fresh run is dealt. Anything left over belongs to
+  // the run just abandoned — including targets still playing their exit — and letting
+  // it animate on over the new board is the least of it: the list keys on ids, so a
+  // leftover is also what an arriving target has to get past to be drawn at all.
+  const prevRunSeq = useRef(runSeq)
   useEffect(() => {
-    const prev = prevStateRef.current
-    const wasMenuOrGameOver = prev === 'menu' || prev === 'gameOver'
-    if (wasMenuOrGameOver && isPlaying) setDisplayedTargets([])
-    prevStateRef.current = stateValue
-  }, [stateValue, isPlaying])
+    if (runSeq !== prevRunSeq.current) setDisplayedTargets([])
+    prevRunSeq.current = runSeq
+  }, [runSeq])
 
   const removeDisplayed = (id: number) => {
     setDisplayedTargets((prev) => prev.filter((t) => t.id !== id))

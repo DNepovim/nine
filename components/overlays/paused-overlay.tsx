@@ -10,6 +10,8 @@ import { Screen } from '@/components/screen'
 import { DIM_INK } from '@/constants/colors'
 import type { DialCorners, DialHint } from '@/constants/dial-hints'
 import { useTheme } from '@/hooks/use-theme'
+import type { AchievementStore } from '@/lib/achievement-store'
+import type { AchievementFacts, Award } from '@/lib/achievements'
 import {
   DARK_MODE_GRADIENT,
   MODE_GRADIENT,
@@ -19,6 +21,7 @@ import {
 
 import { BoardBadges } from './board-badges'
 import { DialHintModal } from './dial-hint-modal'
+import { EarnedAchievements } from './earned-achievements'
 import { HighScores } from './high-scores'
 import { PauseMark } from './pause-mark'
 import { RunStats } from './run-stats'
@@ -42,6 +45,9 @@ export function PausedOverlay({
   gameTimeMs,
   avgAccuracy,
   avgSpeed,
+  achievements,
+  achievementStore,
+  achievementFacts,
   corners,
   onSelectCorner,
   showPar,
@@ -67,6 +73,14 @@ export function PausedOverlay({
   gameTimeMs: number
   avgAccuracy: number
   avgSpeed: number
+  // What the run has earned for good so far — the same row the game-over screen carries,
+  // and silent on the runs that have earned nothing. A pause is the other moment a player
+  // can read one: the bar names an achievement for five seconds and then it is gone, and
+  // tapping it lands here.
+  achievements: readonly Award[]
+  // Only for the card a tapped chip opens — see EarnedAchievements.
+  achievementStore: AchievementStore
+  achievementFacts: AchievementFacts
   // What the dial is printing in each corner of a key, and the way to change one.
   // Trainee only — no other mode draws them, so no other mode shows the row.
   corners: DialCorners
@@ -127,6 +141,14 @@ export function PausedOverlay({
               gameTimeMs={gameTimeMs}
               avgAccuracy={avgAccuracy}
               avgSpeed={avgSpeed}
+            />
+
+            {/* Under the run's own numbers, where the game-over screen puts it too: what
+              the run *did* describes the run, and what it earned is something kept. */}
+            <EarnedAchievements
+              awards={achievements}
+              store={achievementStore}
+              facts={achievementFacts}
             />
 
             {/* Where the rotating tip used to be. A pause in Trainee is the moment the

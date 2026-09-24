@@ -105,12 +105,10 @@ export function PlayerProfileOverlay({
   const shownAchievements =
     profile === null ? 0 : Math.min(profile.achievements, ACHIEVEMENT_COUNT)
 
+  // No title on the card: its first line is the player's own name, and a PLAYER label
+  // over it was the header saying what the line below it already said.
   return (
-    <ModalCard
-      title={<Trans>PLAYER</Trans>}
-      onDismiss={onClose}
-      maxHeight={height * 0.85}
-    >
+    <ModalCard onDismiss={onClose} maxHeight={height * 0.85}>
       {() => (
         <>
           {/* One rhythm for the whole modal: every item in this column is separated by

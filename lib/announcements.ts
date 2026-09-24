@@ -1,5 +1,7 @@
 import { isOneOf } from 'narrowland'
 
+import type { AchievementId } from '@/constants/achievements'
+
 // Announcements take over the best-scores bar for a moment when something worth
 // saying happens mid-run — a record you broke, or one a rival took.
 //
@@ -29,7 +31,15 @@ export const ANNOUNCEMENT_IDS = [
 
 export type AnnouncementId = (typeof ANNOUNCEMENT_IDS)[number]
 
-export type Announcement = { id: AnnouncementId; message: string }
+// `achievement` is set on the one id that carries them all, and says which one the line
+// is about — the message only carries its name, and the card the bar opens when tapped
+// is about a particular achievement. Absent on every other line: nothing else on the bar
+// has anything to open.
+export type Announcement = {
+  id: AnnouncementId
+  message: string
+  achievement?: AchievementId
+}
 
 // The three board periods, biggest first.
 export const PERIODS = ['ever', 'week', 'today'] as const

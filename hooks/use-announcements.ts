@@ -1,9 +1,11 @@
-import { i18n } from '@lingui/core'
 import { useEffect, useRef, useState } from 'react'
 
-import { ACHIEVEMENTS } from '@/constants/achievements'
+import {
+  clearAnnouncementRequest,
+  useAnnouncementRequest,
+} from '@/hooks/use-announcement-request'
 import type { RivalAnnouncement } from '@/hooks/use-rival-records'
-import type { Award } from '@/lib/achievements'
+import { achievementAnnouncement, type Award } from '@/lib/achievements'
 import {
   dropAnnouncement,
   NOTHING,
@@ -182,11 +184,25 @@ export function useAnnouncements({
   useEffect(() => {
     const next = achievements[0]
     if (!inRun || next === undefined) return
-    const name = `${ACHIEVEMENTS[next.id].emblem} ${i18n._(ACHIEVEMENTS[next.id].title).toUpperCase()}`
-    const announcement = announcementFor('achievement', Math.random(), name)
+    const announcement = achievementAnnouncement(next.id, Math.random())
     setQueue((held) => queueAnnouncement(held, { announcement, own: false }))
     onAchievementAnnouncedRef.current(next)
   }, [inRun, achievements])
+
+  // A line asked for from the dev sidebar. It joins the queue like anything else, so a
+  // button shows what a run shows — the opening quiet, one line at a time, each with its
+  // own way in and out — rather than a message painted straight onto the bar.
+  //
+  // Taken whether or not there is a run to show it in: the bar is the best-scores strip,
+  // which nothing but a run puts on screen, and a press made on the intro screen must not
+  // lie in wait for the next one.
+  const requested = useAnnouncementRequest()
+  useEffect(() => {
+    if (requested === null) return
+    clearAnnouncementRequest()
+    if (!inRun) return
+    setQueue((held) => queueAnnouncement(held, { announcement: requested, own: false }))
+  }, [inRun, requested])
 
   useEffect(() => {
     if (!inRun || rival === null) return

@@ -12,6 +12,7 @@ import { scheduleOnRN } from 'react-native-worklets'
 
 import { MenuButton } from '@/components/game/menu-button'
 import { SPECTRUM } from '@/constants/colors'
+import { LAYER } from '@/constants/layers'
 import { useTheme } from '@/hooks/use-theme'
 import { cn } from '@/lib/cn'
 
@@ -46,7 +47,10 @@ export function ModalCard({
   maxHeight,
   children,
 }: {
-  title: ReactNode
+  // Left off by a dialog whose subject names itself — the profile card, whose first
+  // line is the player's own nickname. The header row keeps its height either way: the
+  // close button is the taller of the two things in it.
+  title?: ReactNode
   // A dialog that speaks for the run it was opened from wears that mode's colour here;
   // the rest sit back in dim, which is what makes the coloured one read as particular.
   titleColor?: string
@@ -90,7 +94,10 @@ export function ModalCard({
   return (
     <Animated.View
       className="absolute inset-0 items-center justify-center px-4"
-      style={[{ zIndex: 40, backgroundColor: 'rgba(10,10,18,0.55)' }, fadeStyle]}
+      style={[
+        { zIndex: LAYER.dialog, backgroundColor: 'rgba(10,10,18,0.55)' },
+        fadeStyle,
+      ]}
     >
       <Animated.View style={[{ width: '90%', maxWidth: 460 }, cardStyle]}>
         <LinearGradient
@@ -104,18 +111,22 @@ export function ModalCard({
             style={{ borderRadius: RADIUS - BORDER, flexShrink: 1 }}
           >
             <View className="mb-1 flex-row items-center justify-between">
+              {/* Kept even when empty: it is what holds the close button over on the
+                  right, and `justify-between` with one child would put it on the left. */}
               <View className="flex-row items-center gap-1.5">
                 {icon}
-                <Text
-                  selectable={false}
-                  className={cn(
-                    'font-mono text-[11px] font-bold tracking-[2px]',
-                    titleColor === undefined && 'text-dim',
-                  )}
-                  style={titleColor === undefined ? undefined : { color: titleColor }}
-                >
-                  {title}
-                </Text>
+                {title !== undefined && (
+                  <Text
+                    selectable={false}
+                    className={cn(
+                      'font-mono text-[11px] font-bold tracking-[2px]',
+                      titleColor === undefined && 'text-dim',
+                    )}
+                    style={titleColor === undefined ? undefined : { color: titleColor }}
+                  >
+                    {title}
+                  </Text>
+                )}
               </View>
               {/* The same 5-dot cross the pause screen closes with, unlabelled — a
                   dialog header already reads as one. */}

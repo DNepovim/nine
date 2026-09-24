@@ -9,6 +9,7 @@ import { ACHIEVEMENT_INK } from '@/constants/colors'
 import { useTheme } from '@/hooks/use-theme'
 import type { AchievementStore } from '@/lib/achievement-store'
 import {
+  achievementCard,
   awardKey,
   STAGE_CODE,
   type AchievementFacts,
@@ -53,10 +54,9 @@ export function EarnedAchievements({
   if (!isNonEmptyArray(awards)) return null
 
   // The card opens as a slider over everything the run earned, so a player who unlocked
-  // three can read all three without going back out to the row between them. Over the
-  // achievements rather than over the chips: two stages of the same one are two chips and
-  // a single card, since the card is about the achievement.
-  const ids = [...new Set(awards.map((award) => award.id))]
+  // three can read all three without going back out to the row between them. Shared with
+  // the announcement bar, which opens the same card on a tap mid-run.
+  const card = asked === null ? null : achievementCard(awards, asked)
 
   return (
     <View className="mb-6 w-full flex-row flex-wrap items-center justify-center gap-1.5">
@@ -95,10 +95,10 @@ export function EarnedAchievements({
           )}
         </Pressable>
       ))}
-      {asked !== null && (
+      {card !== null && (
         <AchievementDetail
-          ids={ids}
-          start={Math.max(0, ids.indexOf(asked))}
+          ids={card.ids}
+          start={card.start}
           store={store}
           facts={facts}
           onDismiss={() => {

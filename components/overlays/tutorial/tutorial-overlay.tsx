@@ -1,5 +1,4 @@
 import type { ComponentType } from 'react'
-import { View } from 'react-native'
 
 import { ControlsLesson } from '@/components/overlays/tutorial/lessons/controls-lesson'
 import { GoalLesson } from '@/components/overlays/tutorial/lessons/goal-lesson'
@@ -9,6 +8,7 @@ import { SwipeLesson } from '@/components/overlays/tutorial/lessons/swipe-lesson
 import { WeightsLesson } from '@/components/overlays/tutorial/lessons/weights-lesson'
 import { TutorialFooter } from '@/components/overlays/tutorial/tutorial-footer'
 import { TutorialStepper } from '@/components/overlays/tutorial/tutorial-stepper'
+import { ScreenLayer } from '@/components/screen'
 import { STEP_CTA, type TutorialStepId } from '@/constants/tutorial'
 import type { LessonProps } from '@/types/tutorial'
 
@@ -49,7 +49,7 @@ export function TutorialOverlay({
   // screen and, unlike a row of controls, a slim tap target sitting close to the
   // notch/status bar reads fine — the old pt-14 was leaving that whole strip empty.
   return (
-    <View className="absolute inset-0 bg-surface px-4 pb-2 pt-6" style={{ zIndex: 30 }}>
+    <ScreenLayer className="px-4 pb-2 pt-6">
       <TutorialStepper step={step} onSelect={onSelectStep} />
 
       <TutorialFooter
@@ -68,6 +68,6 @@ export function TutorialOverlay({
         onComplete={onStepDone}
         onDismiss={onDismiss}
       />
-    </View>
+    </ScreenLayer>
   )
 }

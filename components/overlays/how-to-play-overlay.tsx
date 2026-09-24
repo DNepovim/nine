@@ -10,6 +10,7 @@ import { Gesture, GestureDetector } from 'react-native-gesture-handler'
 import { scheduleOnRN } from 'react-native-worklets'
 
 import { MenuButton } from '@/components/game/menu-button'
+import { ScreenLayer } from '@/components/screen'
 import { ACHIEVEMENT_SCALE, GAME_SCALE } from '@/constants/colors'
 import { SHOW_MULTIPLAYER } from '@/constants/features'
 import { TIPS } from '@/constants/tips'
@@ -368,7 +369,7 @@ export function HowToPlayOverlay({
 
   return (
     <GestureDetector gesture={edgeSwipe}>
-      <View className="absolute inset-0 bg-surface">
+      <ScreenLayer>
         <ScrollView
           ref={scrollRef}
           contentContainerStyle={{
@@ -569,7 +570,7 @@ export function HowToPlayOverlay({
             </Bullet>
           </Card>
           <Body>
-            {t`\nAchieve one mid-run and the score bar says so in green. Most are asked once per difficulty — Easy, Hard and Extreme count separately, and the list draws a bar for each. The whole list is behind the achievements line under NINE on the start screen, along with how far along you are on the ones you have not got yet.`}
+            {t`\nAchieve one mid-run and the score bar says so in green — tap that line and the run pauses so you can read what the achievement asked of you. Most are asked once per difficulty — Easy, Hard and Extreme count separately, and the list draws a bar for each. The whole list is behind the achievements line under NINE on the start screen, along with how far along you are on the ones you have not got yet.`}
           </Body>
 
           {/* Multiplayer. Gone with the tab that leads to it — see SHOW_MULTIPLAYER. */}
@@ -635,7 +636,7 @@ export function HowToPlayOverlay({
           color={dotColor}
           style={{ position: 'absolute', top: 12, right: 18, zIndex: 20 }}
         />
-      </View>
+      </ScreenLayer>
     </GestureDetector>
   )
 }

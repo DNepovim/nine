@@ -420,6 +420,23 @@ describe('a new run does not inherit the last one', () => {
     expect(after.context.hitBatch.hits).toEqual([])
   })
 
+  it('gives a restarted run target ids the abandoned one never used', () => {
+    // The bug this pins: ids restarted at 0 with every run, so the first target of a
+    // fresh run wore the id of one still animating off the board from the last. The
+    // display list keys on that id, mistook the arrival for the departure, and dropped
+    // it — a restart from a pause that opened on an empty board.
+    const actor = start('accuracy')
+    actor.send({ type: 'ADD_TARGET', value: 9, at: 0 })
+    actor.send({ type: 'ADD_TARGET', value: 11, at: 0 })
+    const spent = actor.getSnapshot().context.targets.map((t) => t.id)
+
+    actor.send({ type: 'PAUSE', now: 1000 })
+    actor.send({ type: 'RESTART', now: 2000 })
+    actor.send({ type: 'ADD_TARGET', value: 7, at: 2000 })
+    const [fresh] = actor.getSnapshot().context.targets
+    expect(spent).not.toContain(fresh?.id)
+  })
+
   it('times a pause-restarted run from the restart, not from the first start', () => {
     // The paused run's elapsed time must not follow it into the fresh one, or a
     // speed board would record a run that began before the player asked for it.

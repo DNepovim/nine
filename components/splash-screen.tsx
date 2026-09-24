@@ -14,6 +14,7 @@ import Animated, {
 import { scheduleOnRN } from 'react-native-worklets'
 
 import { SPLASH_WORDMARK_GAP, SplashWordmark } from '@/components/splash-wordmark'
+import { LAYER } from '@/constants/layers'
 import { mono } from '@/constants/theme'
 
 // The intro — the logo fades in, then the subtitle under it. INTRO_MS is the moment
@@ -156,7 +157,7 @@ export function SplashScreen({
   }))
 
   return (
-    <Animated.View style={[styles.absolute, { zIndex: 100 }, bgStyle]}>
+    <Animated.View style={[styles.absolute, { zIndex: LAYER.splash }, bgStyle]}>
       <LinearGradient
         colors={['#4C7EFF', '#7273D2', '#c36282', '#E5534B']}
         locations={locations}

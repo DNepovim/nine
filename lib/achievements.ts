@@ -1,4 +1,4 @@
-import type { MessageDescriptor } from '@lingui/core'
+import { i18n, type MessageDescriptor } from '@lingui/core'
 import { msg } from '@lingui/core/macro'
 import { isOneOf } from 'narrowland'
 
@@ -8,7 +8,11 @@ import {
   type AchievementId,
   type StageAxis,
 } from '@/constants/achievements'
-import type { AnnouncementId } from '@/lib/announcements'
+import {
+  announcementFor,
+  type Announcement,
+  type AnnouncementId,
+} from '@/lib/announcements'
 import {
   boardKey,
   dayStreakWith,
@@ -516,6 +520,43 @@ export type Award = { id: AchievementId; stage: Stage | null }
 // The stable name for an award, so a set can hold it and the store can key on it.
 export const awardKey = ({ id, stage }: Award): string =>
   stage === null ? id : `${id}:${stage}`
+
+// The line the bar shouts when one is achieved.
+//
+// The emblem and the title, upper-cased, so the emblem says which one it is before the
+// words are read and the title is the only thing shouting — the same arrangement the
+// rival lines use for a nickname. `roll` picks the wording the way every other line is
+// picked, and the achievement itself travels with the line so a tap on the bar can open
+// its card.
+export const achievementAnnouncement = (
+  id: AchievementId,
+  roll: number,
+): Announcement => ({
+  ...announcementFor(
+    'achievement',
+    roll,
+    `${achievement(id).emblem} ${i18n._(achievement(id).title).toUpperCase()}`,
+  ),
+  achievement: id,
+})
+
+// The pages a detail card opens over, and which of them to open on.
+//
+// One page per achievement rather than per award: two stages of the same one are two
+// chips and a single card, since the card is about the achievement. The order is the
+// order the awards came in, so the pages read the way the chips do.
+//
+// An achievement the run has not earned — the announcement bar tapped for one that
+// arrived after the list was read — opens on its own rather than being dropped, which is
+// also what answers a run that earned nothing else.
+export const achievementCard = (
+  awards: readonly Award[],
+  asked: AchievementId,
+): { ids: readonly AchievementId[]; start: number } => {
+  const ids = [...new Set(awards.map((award) => award.id))]
+  const start = ids.indexOf(asked)
+  return start === -1 ? { ids: [asked], start: 0 } : { ids, start }
+}
 
 // Every stage a staged achievement can be cleared on, or the single unstaged award.
 export const awardsOf = (id: AchievementId): Award[] => {

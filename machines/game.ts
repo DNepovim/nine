@@ -191,7 +191,11 @@ const freshGame = (context: Context, now: number) => ({
   accSum: 0,
   spdSum: 0,
   targets: [] as Target[],
-  nextTargetId: 0,
+  // Cleared off the board, but the counter keeps climbing for the same reason the hit
+  // batch's seq does: the UI keys a target's animations on its id, and a restart from a
+  // pause leaves the last run's targets still animating off. An id dealt twice would
+  // read to the display list as the departing target, not the arriving one.
+  nextTargetId: context.nextTargetId,
   hitBatch: { seq: context.hitBatch.seq, hits: [] as HitInfo[] },
   elapsedMs: 0,
   playingSince: now,

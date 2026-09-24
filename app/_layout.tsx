@@ -19,6 +19,7 @@ import { CrashScreen } from '@/components/crash-screen'
 import { InstallOverlay } from '@/components/overlays/install-overlay'
 import { PhoneFrame } from '@/components/phone-frame'
 import { SplashScreen } from '@/components/splash-screen'
+import { LAYER } from '@/constants/layers'
 import { InstallProvider, useInstall } from '@/hooks/use-install'
 import { LocaleProvider } from '@/hooks/use-locale'
 import { SplashProvider, useSplash } from '@/hooks/use-splash'
@@ -126,7 +127,7 @@ function ThemedApp() {
           }}
         />
       )}
-      {/* Over the splash rather than under it — the splash is zIndex 100. */}
+      {/* Over the splash rather than under it — see LAYER. */}
       {!splashDone && introDone && askInstall !== null && (
         <View
           style={{
@@ -135,7 +136,7 @@ function ThemedApp() {
             left: 0,
             right: 0,
             bottom: 0,
-            zIndex: 101,
+            zIndex: LAYER.splashPrompt,
           }}
         >
           <InstallOverlay

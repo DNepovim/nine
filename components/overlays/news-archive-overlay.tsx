@@ -1,7 +1,8 @@
 import { Trans } from '@lingui/react/macro'
-import { FlatList, Pressable, Text, View } from 'react-native'
+import { FlatList, Pressable, Text } from 'react-native'
 
 import { NewsRelease } from '@/components/overlays/news-release'
+import { ScreenLayer } from '@/components/screen'
 import { RELEASES } from '@/constants/news'
 import type { Release } from '@/types/news'
 
@@ -11,7 +12,7 @@ const keyOf = (release: Release) => release.date
 // releases accumulate — only what's on screen is rendered.
 export function NewsArchiveOverlay({ onClose }: { onClose: () => void }) {
   return (
-    <View className="absolute inset-0 bg-surface px-6 pb-6 pt-16" style={{ zIndex: 40 }}>
+    <ScreenLayer className="px-6 pb-6 pt-16">
       <Text
         selectable={false}
         className="mb-1 font-mono text-[20px] font-black tracking-[3px] text-primary"
@@ -49,6 +50,6 @@ export function NewsArchiveOverlay({ onClose }: { onClose: () => void }) {
           <Trans>DONE</Trans>
         </Text>
       </Pressable>
-    </View>
+    </ScreenLayer>
   )
 }
