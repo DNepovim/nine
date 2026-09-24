@@ -45,10 +45,12 @@ export const DIAL_CORNERS = [
   'bottomRight',
 ] as const satisfies readonly BadgeCorner[]
 
-// Every tile that offers one of these stands this tall — the four on the pause screen
-// and the rows of the dialog they open. The number comes from the tallest thing any of
-// them holds, a 28pt checkbox with its padding, and is shared so the two never drift.
-export const HINT_TILE_HEIGHT = 48
+// Every tile that offers one of these stands this tall — the ones on the pause screen
+// and the rows of the dialog they open. The number is the tallest thing any of them
+// holds, a 28pt checkbox, and the least padding that still reads as a tile around it;
+// shared so the two never drift. Trainee's pause screen carries nine of these tiles
+// plus a slider, so what a tile spends on air it spends nine times over.
+export const HINT_TILE_HEIGHT = 40
 
 // What the Trainee clock slider offers, in ms. Both ends are read off the mode table
 // rather than typed in, so they follow the game's own tuning instead of drifting from it.
@@ -73,13 +75,13 @@ export const DIAL_CORNER_LABEL = {
   bottomRight: msg`BOTTOM RIGHT`,
 } as const satisfies Record<BadgeCorner, MessageDescriptor>
 
-// What Trainee has always printed: the weight up at the corner the key is labelled
-// from, the ceiling down on the corner its value climbs toward. The other two start
-// empty — four numbers on every key is a lot to meet unannounced, and a player who
-// wants them is one pause away from them.
+// One number to start with: the weight, up at the corner the key is labelled from. It
+// is the only one a player cannot work out by looking at the key, which is what earns
+// it the default — every other hint, here and on the board, starts off and is one pause
+// away. A dial that opens quiet is a dial somebody can be taught, a number at a time.
 export const DEFAULT_DIAL_CORNERS = {
   topLeft: 'weight',
   topRight: null,
   bottomLeft: null,
-  bottomRight: 'ceiling',
+  bottomRight: null,
 } as const satisfies DialCorners

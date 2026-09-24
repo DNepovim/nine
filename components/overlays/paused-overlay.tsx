@@ -46,6 +46,10 @@ export function PausedOverlay({
   onSelectCorner,
   showPar,
   onTogglePar,
+  showStats,
+  onToggleStats,
+  showRoute,
+  onToggleRoute,
   traineeTimeoutMs,
   onSetTraineeTimeout,
   onContinue,
@@ -69,6 +73,10 @@ export function PausedOverlay({
   onSelectCorner: (corner: BadgeCorner, hint: DialHint | null) => void
   showPar: boolean
   onTogglePar: () => void
+  showStats: boolean
+  onToggleStats: () => void
+  showRoute: boolean
+  onToggleRoute: () => void
   traineeTimeoutMs: number
   onSetTraineeTimeout: (ms: number) => void
   onContinue: () => void
@@ -132,6 +140,10 @@ export function PausedOverlay({
                   onEdit={setEditingCorner}
                   showPar={showPar}
                   onTogglePar={onTogglePar}
+                  showStats={showStats}
+                  onToggleStats={onToggleStats}
+                  showRoute={showRoute}
+                  onToggleRoute={onToggleRoute}
                   traineeTimeoutMs={traineeTimeoutMs}
                   onSetTraineeTimeout={onSetTraineeTimeout}
                 />

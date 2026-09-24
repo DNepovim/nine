@@ -4,6 +4,16 @@ import { Pressable, Text } from 'react-native'
 
 // The way out of a run, sitting in the top row beside NINE.
 //
+// Says MENU, not PAUSE: pausing is what it does, but what waits behind it is a screen of
+// choices — continue, restart, end the run, options, share. A word named after the side
+// effect undersells all five. The glyph stays the pause bars, which are the clearest
+// thing the row can say about what pressing it does to the run in progress.
+//
+// The component keeps the name `PauseButton` deliberately. It sends PAUSE and opens the
+// screen this app calls pause, while `menu` in code means the *intro* screen — a
+// `MenuButton` here would read as the way back to the start screen, which is the one
+// thing this is not. The word on it is copy; the name is what it does.
+//
 // In the row rather than floating over it: the slot it occupies used to be an empty
 // spacer whose only job was to balance an absolutely positioned button, and a layout
 // that has to be counterweighted is one position change away from drifting. Being in
@@ -34,7 +44,7 @@ export function PauseButton({ color, onPress }: { color: string; onPress: () => 
         selectable={false}
         className="font-mono text-[10px] font-bold tracking-[1px] text-dim"
       >
-        <Trans>PAUSE</Trans>
+        <Trans>MENU</Trans>
       </Text>
       <Ionicons
         name="pause"

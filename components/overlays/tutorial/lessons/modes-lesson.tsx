@@ -47,7 +47,7 @@ const MODE_FACTS = {
   trainee: [
     'No lives, no score, a relaxed clock — practice.',
     'Buttons show their weight, like the last two screens.',
-    'Each target wears a grey badge: the fewest moves needed to hit it from here.',
+    'Pause any time to switch on more: fewest-moves badges, your hit stats, the route.',
   ],
   accuracy: [
     'Solve each target in the fewest possible moves.',

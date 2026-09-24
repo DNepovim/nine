@@ -297,6 +297,10 @@ export default function GameScreen() {
     toggleSum,
     showPar,
     togglePar,
+    showStats,
+    toggleStats,
+    showRoute,
+    toggleRoute,
     traineeTimeoutMs,
     setTraineeTimeoutMs,
     corners,
@@ -1012,10 +1016,10 @@ export default function GameScreen() {
                 >
                   NINE
                 </Text>
-                {/* right: PAUSE, balancing the mode/difficulty block on the left.
-                    Only while a run is actually going — the pause screen is a full
-                    overlay, so it covers this slot rather than needing a button of its
-                    own on top. */}
+                {/* right: MENU, balancing the mode/difficulty block on the left.
+                    Only while a run is actually going — the pause screen it opens is a
+                    full overlay, so it covers this slot rather than needing a button of
+                    its own on top. */}
                 <View className="flex-1 flex-row items-center justify-end">
                   {isPlaying && (
                     <PauseButton
@@ -1143,6 +1147,8 @@ export default function GameScreen() {
                   hits={hits}
                   batch={hitBatch}
                   praise={celebration.message ?? coach.line}
+                  showStats={showStats}
+                  showRoute={showRoute}
                   route={coach.route}
                   routeStart={coach.routeStart}
                   routeTarget={coach.routeTarget}
@@ -1356,6 +1362,10 @@ export default function GameScreen() {
               onSelectCorner={setCorner}
               showPar={showPar}
               onTogglePar={togglePar}
+              showStats={showStats}
+              onToggleStats={toggleStats}
+              showRoute={showRoute}
+              onToggleRoute={toggleRoute}
               traineeTimeoutMs={traineeTimeoutMs}
               onSetTraineeTimeout={setTraineeTimeoutMs}
               onContinue={() => {

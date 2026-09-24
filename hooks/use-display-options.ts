@@ -18,6 +18,8 @@ import { effectiveTimeout } from '@/machines/game'
 type StoredOptions = {
   showSum?: boolean
   showPar?: boolean
+  showStats?: boolean
+  showRoute?: boolean
   traineeTimeoutMs?: number
   // What each corner shows, stored under the corner's own name. Read field by field
   // below, which is why this needed no new key: a record written by a build that had
@@ -37,9 +39,16 @@ const storedHint = (raw: unknown): DialHint | null | undefined => {
 // number Trainee prints in each corner of a key — see constants/dial-hints.ts.
 export function useDisplayOptions() {
   const [showSum, setShowSum] = useState(false)
-  // The fewest-moves number on each target. On by default: it is what Trainee has always
-  // printed, and it is the one number there that says how well a route could have gone.
-  const [showPar, setShowPar] = useState(true)
+  // The three below are the rest of what Trainee can print, and all three start off for
+  // the same reason the keys do: a first run should be a board, a dial and a target, and
+  // every number past that is one the player turns on when they want it explained.
+  //
+  // The fewest-moves number on each target.
+  const [showPar, setShowPar] = useState(false)
+  // The HITS / ACCURACY / SPEED row above the board.
+  const [showStats, setShowStats] = useState(false)
+  // The keys to press for the optimal route, drawn under the coach's line.
+  const [showRoute, setShowRoute] = useState(false)
   // Where Trainee's clock starts: exactly what the mode table says, so a player who
   // never touches the slider gets the clock the game was tuned with.
   const [traineeTimeoutMs, setTraineeTimeoutMs] = useState(() =>
@@ -60,6 +69,8 @@ export function useDisplayOptions() {
       )
       if (typeof value?.showSum === 'boolean') setShowSum(value.showSum)
       if (typeof value?.showPar === 'boolean') setShowPar(value.showPar)
+      if (typeof value?.showStats === 'boolean') setShowStats(value.showStats)
+      if (typeof value?.showRoute === 'boolean') setShowRoute(value.showRoute)
       // Finite or not at all: a stored NaN would spawn targets that never expire, which
       // is a stuck run rather than a slow one. Held inside the slider's own range too, so
       // a value written by a build with wider ends cannot park the handle off the track.
@@ -90,9 +101,16 @@ export function useDisplayOptions() {
     if (!mayPersist.current) return
     AsyncStorage.setItem(
       OPTIONS_KEY,
-      JSON.stringify({ showSum, showPar, traineeTimeoutMs, corners }),
+      JSON.stringify({
+        showSum,
+        showPar,
+        showStats,
+        showRoute,
+        traineeTimeoutMs,
+        corners,
+      }),
     ).catch(() => {})
-  }, [showSum, showPar, traineeTimeoutMs, corners])
+  }, [showSum, showPar, showStats, showRoute, traineeTimeoutMs, corners])
 
   const toggleSum = useCallback(() => {
     setShowSum((value) => !value)
@@ -100,6 +118,14 @@ export function useDisplayOptions() {
 
   const togglePar = useCallback(() => {
     setShowPar((value) => !value)
+  }, [])
+
+  const toggleStats = useCallback(() => {
+    setShowStats((value) => !value)
+  }, [])
+
+  const toggleRoute = useCallback(() => {
+    setShowRoute((value) => !value)
   }, [])
 
   const setCorner = useCallback((corner: BadgeCorner, hint: DialHint | null) => {
@@ -111,6 +137,10 @@ export function useDisplayOptions() {
     toggleSum,
     showPar,
     togglePar,
+    showStats,
+    toggleStats,
+    showRoute,
+    toggleRoute,
     traineeTimeoutMs,
     setTraineeTimeoutMs,
     corners,

@@ -472,8 +472,9 @@ export function HowToPlayOverlay({
             mode="trainee"
             facts={[
               t`Pure practice — no lives, no score, and a relaxed clock.`,
-              t`Buttons can show their weight, their ceiling, and what each is giving right now — pick which from the pause screen.`,
-              t`A coach line under the stat row says when a move was wasted, and what a hit cost.`,
+              t`Buttons can show their weight, their ceiling, and what each is giving right now — pick which from MENU during a run.`,
+              t`A coach line says when a move was wasted, and what a hit cost.`,
+              t`Your hit count, the last hit’s accuracy and speed, the fewest moves each target needs, and the route you should have pressed — all off until you switch them on from MENU.`,
             ]}
           />
           <ModeCard
