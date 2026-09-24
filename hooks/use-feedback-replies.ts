@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 
+import { buildInfo } from '@/lib/build-info'
 import { noteRequest } from '@/lib/connectivity'
 import { toReplies, type FeedbackReply } from '@/lib/feedback-reply'
 import { supabase } from '@/lib/supabase'
@@ -13,6 +14,13 @@ import { supabase } from '@/lib/supabase'
 //
 // Several answers queue rather than stack: `dismiss` marks the current one seen and the
 // next takes its place, oldest first, which is the order the server sends them in.
+//
+// The build asking goes with the request, because an answer may be waiting for one. A
+// reply that says "fixed" is worse than no reply at all when it is read on the build that
+// still has the bug — and on the web that is the ordinary case, not a rare one: the
+// service worker serves its cached bundle until it chooses to swap. `my_feedback_replies`
+// holds such an answer back until the stamp it is given is new enough — see
+// supabase/migrations/20260924000000_feedback_reply_build.sql.
 export function useFeedbackReplies(
   userId: string | null,
   // Auth having settled, either way — `isReady` from `useSupabaseAuth`. Waited for so
@@ -43,7 +51,11 @@ export function useFeedbackReplies(
 
     const requestId = ++requestIdRef.current
     void (async () => {
-      const res = await supabase.rpc('my_feedback_replies')
+      const res = await supabase.rpc('my_feedback_replies', {
+        // Null under `expo start`, where there is no build id to read. The server treats
+        // that as a build too unknown to qualify, so a gated answer stays put.
+        p_build: buildInfo().stamp,
+      })
       noteRequest(res.error)
       if (requestIdRef.current !== requestId) return
       // A failure is silence: the answer keeps its unseen stamp on the server and comes
