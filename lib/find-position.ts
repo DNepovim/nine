@@ -2,7 +2,7 @@ import { CARD_GAP, PIE_SIZE } from '@/constants/game'
 import type { DisplayTarget, Position } from '@/types/game'
 
 const overlaps = (position: Position, target: DisplayTarget): boolean =>
-  !target.exiting &&
+  target.exit === null &&
   position.x < target.position.x + PIE_SIZE &&
   position.x + PIE_SIZE > target.position.x &&
   position.y < target.position.y + PIE_SIZE &&
@@ -20,7 +20,7 @@ export function findPosition(
   const maxY = containerH - PIE_SIZE - CARD_GAP
   if (maxX <= 0 || maxY <= 0) return { x: CARD_GAP, y: CARD_GAP }
 
-  const active = existing.filter((target) => !target.exiting)
+  const active = existing.filter((target) => target.exit === null)
 
   let best: Position = { x: CARD_GAP, y: CARD_GAP }
   let bestClearance = -Infinity

@@ -102,6 +102,11 @@ export const GAME_SCALE = ['#4C7EFF', '#7273D2', '#c36282', '#E5534B', '#FF8C00'
 // to parse. The numeral sits directly on this, so these stay near the plain track's
 // lightness: light theme carries the near-black `pie` ink, dark theme white. Band 0
 // keeps the untinted track, which makes "no colour" the sub-100 signal.
+// The countdown numeral's ink as a value, for the one place that has to animate away
+// from it: a lost target's number crossfades to white. Mirrors `--color-pie` in
+// global.css — the token still paints it everywhere else, and the two are one colour.
+export const PIE_INK = { light: '#171421', dark: '#FFFFFF' } as const
+
 export const TARGET_BAND_TRACK = {
   light: { 0: '#D4D0C8', 1: '#CFCBEE', 2: '#EBC7D2', 3: '#F2DCB4' },
   dark: { 0: '#2A2B44', 1: '#2E2A55', 2: '#4A2434', 3: '#4A3213' },

@@ -9,7 +9,7 @@ import Animated, {
 } from 'react-native-reanimated'
 import { scheduleOnRN } from 'react-native-worklets'
 
-import { PieCountdown } from '@/components/game/pie-countdown'
+import { PieCountdown, TARGET_EXIT_MS } from '@/components/game/pie-countdown'
 import { mono } from '@/constants/theme'
 import type { DisplayTarget } from '@/types/game'
 
@@ -42,19 +42,24 @@ export function TargetCard({
   }, [])
 
   useEffect(() => {
-    // On game over the target isn't removed from the machine, so `exiting` never
-    // flips — drive the freeze-and-shrink straight off the `dying` prop instead.
+    // On game over the target isn't removed from the machine, so it never picks up an
+    // exit — drive the freeze-and-shrink straight off the `dying` prop instead.
     if (dying) {
       scale.value = withTiming(0.4, { duration: 500, easing: Easing.in(Easing.quad) })
       opacity.value = withTiming(0, { duration: 500, easing: Easing.in(Easing.quad) })
       return
     }
-    if (!target.exiting) return
-    scale.value = withSpring(1.15, { damping: 10, stiffness: 300 })
-    opacity.value = withTiming(0, { duration: 250 }, (finished) => {
-      if (finished) scheduleOnRN(onExitComplete)
-    })
-  }, [target.exiting, dying])
+    if (target.exit === null) return
+    // Either exit, the card only fades and holds its size: the movement worth watching
+    // is inside the pie, and the fade is what carries the par badge out with it.
+    opacity.value = withTiming(
+      0,
+      { duration: TARGET_EXIT_MS, easing: Easing.in(Easing.quad) },
+      (finished) => {
+        if (finished) scheduleOnRN(onExitComplete)
+      },
+    )
+  }, [target.exit, dying])
 
   const animStyle = useAnimatedStyle(() => ({
     transform: [{ scale: scale.value }],
@@ -75,8 +80,9 @@ export function TargetCard({
       <PieCountdown
         value={target.value}
         isDark={isDark}
-        active={!target.exiting && !dying && !frozen}
+        active={target.exit === null && !dying && !frozen}
         duration={duration}
+        exit={target.exit}
         onComplete={onExpire}
       />
       {par !== undefined && (
