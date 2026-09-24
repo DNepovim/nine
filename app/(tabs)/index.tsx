@@ -1042,10 +1042,14 @@ export default function GameScreen() {
                     </Text>
                   )}
                 </View>
-                {/* center: NINE — tinted by difficulty shade of mode color */}
+                {/* center: NINE — tinted by difficulty shade of mode color.
+                    The tracking is added after every letter, the E included, so the
+                    word sits in a box 8px wider than itself on the right. Matching
+                    that on the left is what actually centres the letters between the
+                    two flex-1 columns; without it they hang 4px to the left. */}
                 <Text
                   selectable={false}
-                  className="font-mono text-[24px] font-black tracking-[8px]"
+                  className="font-mono text-[24px] font-black tracking-[8px] pl-[8px]"
                   style={{ color: getDifficultyColor(mode, difficulty) }}
                 >
                   NINE

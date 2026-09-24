@@ -162,10 +162,12 @@ export function MultiplayerGame({
         <View className="items-center">
           <Text
             selectable={false}
-            className="font-mono text-[24px] font-black tracking-[8px]"
+            className="font-mono text-[24px] font-black tracking-[8px] pl-[8px]"
             style={{ color: myGradient[1] }}
           >
-            {/* The game's name, the one string that is the same in every language. */}
+            {/* The game's name, the one string that is the same in every language.
+                The left padding answers the tracking the last letter carries, which
+                would otherwise leave the word 4px left of the bar's centre. */}
             NINE
           </Text>
           <Text
