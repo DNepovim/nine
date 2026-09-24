@@ -214,11 +214,24 @@ const toAward = (row: WinningsRow): Award[] =>
 //
 // The caller has already put the text through `normalizeMotto`; this does not clean it
 // again. One place decides what a motto looks like.
+//
+// The row is read back on purpose. A bare update answers 204 No Content whether it wrote
+// one row or none — a write filtered out by the row policy, or aimed at an id that is not
+// the signed-in player's, is indistinguishable from a write that landed. That is how a
+// motto came to appear under the nickname, on a screen told the save had succeeded, while
+// nothing had been stored. Asking for the row makes the server say which it was: it comes
+// back 200 with the motto on success, and `single` turns no row at all into an error the
+// player is shown rather than a success they are told about.
 export async function saveMotto(
   userId: string,
   motto: string | null,
 ): Promise<{ error: string | null }> {
-  const res = await supabase.from('profiles').update({ motto }).eq('id', userId)
+  const res = await supabase
+    .from('profiles')
+    .update({ motto })
+    .eq('id', userId)
+    .select('motto')
+    .single()
   noteRequest(res.error)
   return { error: res.error?.message ?? null }
 }
