@@ -9,33 +9,37 @@ import {
 import type { HitBatch, Mode } from '@/machines/game'
 import { cleanHitReason } from '@/machines/scoring'
 
-// How long the toast holds before it withdraws on its own. Longer than a praise line,
-// which has nothing to press — this one is asking a question, and the player is watching
-// the board rather than the top of the screen.
-const HOLD_MS = 8000
-
 // Trainee's invitation to a scored board: whether to make it, and the words for it.
 //
-// The offer is made at most once per run and never at all to someone who has already
-// posted a scored score — the whole point is introducing the boards to a player who has
-// not found them, and there is nothing to introduce twice.
+// The offer holds until the player answers it. It used to withdraw itself after a few
+// seconds, on the reasoning that a run gets one of these at most — but a player who is
+// mid-target when it arrives has every reason to finish the target first, and a question
+// that takes itself back while you are busy is one you never got asked. So it waits, and
+// the toast carries its own way out.
+//
+// It is made at most once per run and never at all to someone who has already posted a
+// scored score — the whole point is introducing the boards to a player who has not found
+// them, and there is nothing to introduce twice.
 export function useStepUp({
   inRun,
   mode,
   batch,
   hits,
   playedScored,
-  fromTutorial,
+  fromWelcome,
 }: {
-  // Playing, not paused. A frozen run should not be interrupted by an offer.
+  // Playing or paused, not the whole app being open. Pauses are deliberately inside the
+  // run rather than outside it: a new offer can only arrive on a freshly resolved batch,
+  // which never happens while frozen, and counting a pause as the end of the run would
+  // let a dismissed toast come back the moment the player resumed.
   inRun: boolean
   mode: Mode
   batch: HitBatch
   hits: number
   playedScored: boolean
-  // Whether this run began on the tutorial's closing CTA, which lowers the bar to a
-  // hit count — see TUTORIAL_HITS in lib/step-up.ts.
-  fromTutorial: boolean
+  // Whether this install opened with the welcome run, which lowers the bar to a hit
+  // count — see WELCOME_HITS in lib/step-up.ts.
+  fromWelcome: boolean
 }): { message: StepUpMessage | null; dismiss: () => void } {
   const [message, setMessage] = useState<StepUpMessage | null>(null)
   const stateRef = useRef(initialStepUp())
@@ -46,8 +50,9 @@ export function useStepUp({
 
   const active = inRun && mode === 'trainee'
 
-  // A run's own clock, so the floor is time actually spent playing rather than time
-  // since the app opened.
+  // A run's own clock, so the floor is time in this run rather than time since the app
+  // opened. It keeps running through a pause, which is the honest reading anyway: a
+  // player who stepped away and came back has been at this a while.
   useEffect(() => {
     if (!active) {
       stateRef.current = initialStepUp()
@@ -70,7 +75,7 @@ export function useStepUp({
       hits,
       elapsedMs: Date.now() - startedAtRef.current,
       playedScored,
-      fromTutorial,
+      fromWelcome,
     })
     stateRef.current = result.state
     if (result.offer === null) return
@@ -78,17 +83,7 @@ export function useStepUp({
     // while the player is reading it. The reason picks the pool: only one of them has
     // watched the player do something worth mentioning.
     setMessage(stepUpMessage(result.offer, Math.random(), Math.random()))
-  }, [active, batch, hits, playedScored, fromTutorial])
-
-  useEffect(() => {
-    if (message === null) return
-    const timer = setTimeout(() => {
-      setMessage(null)
-    }, HOLD_MS)
-    return () => {
-      clearTimeout(timer)
-    }
-  }, [message])
+  }, [active, batch, hits, playedScored, fromWelcome])
 
   const dismiss = useCallback(() => {
     setMessage(null)

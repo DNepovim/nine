@@ -32,10 +32,14 @@ const RESUME_MS = 250
 
 export function SplashScreen({
   onDone,
+  onExit,
   hold,
   onIntroDone,
 }: {
   onDone: () => void
+  // The exit has started: the content is scaling away and the background is about to go
+  // with it. Whatever should be underneath when it does has this long to get ready.
+  onExit: () => void
   // Keep the finished logo on screen instead of playing the exit. Set while the
   // install popup is up: it is shown over the splash, so what is underneath it must
   // stay covered — the game and the tutorial are already mounted down there.
@@ -120,6 +124,7 @@ export function SplashScreen({
     const timer = setTimeout(
       () => {
         leaving.current = true
+        onExit()
         contentScale.value = withTiming(1.35, {
           duration: 2250,
           easing: Easing.in(Easing.ease),

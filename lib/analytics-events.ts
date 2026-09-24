@@ -13,8 +13,9 @@ export type AnalyticsEvents = {
     mode: Mode
     difficulty: Difficulty
     // What put the player into this run, which is the whole question behind the
-    // challenge button: did they choose the board or accept the one offered?
-    from: 'menu' | 'play_again' | 'challenge' | 'restart'
+    // challenge button: did they choose the board or accept the one offered? 'welcome' is
+    // the one nobody chose — the practice run a first launch opens into by itself.
+    from: 'menu' | 'play_again' | 'challenge' | 'restart' | 'welcome'
   }
   run_finished: {
     mode: Mode

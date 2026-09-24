@@ -2,9 +2,22 @@ import { createContext, use, useCallback, useMemo, useState, type ReactNode } fr
 
 import { consumeUpdateReload } from '@/lib/update-reload'
 
-type SplashState = { done: boolean; finish: () => void }
+type SplashState = {
+  // The logo has begun its exit. The screen underneath is already being uncovered, so
+  // anything that wants to be the thing revealed has to be running by now — waiting for
+  // `done` means being revealed as an empty room and arriving afterwards.
+  exiting: boolean
+  done: boolean
+  beginExit: () => void
+  finish: () => void
+}
 
-const SplashContext = createContext<SplashState>({ done: false, finish: () => {} })
+const SplashContext = createContext<SplashState>({
+  exiting: false,
+  done: false,
+  beginExit: () => {},
+  finish: () => {},
+})
 
 // The intro splash covers the whole app while the screens beneath it are already
 // mounted. Anything time-based down there — the tutorial's opening countdown —
@@ -17,10 +30,19 @@ const SplashContext = createContext<SplashState>({ done: false, finish: () => {}
 // it, and never on a cold start.
 export function SplashProvider({ children }: { children: ReactNode }) {
   const [done, setDone] = useState(consumeUpdateReload)
+  const [exiting, setExiting] = useState(false)
+  const beginExit = useCallback(() => {
+    setExiting(true)
+  }, [])
   const finish = useCallback(() => {
     setDone(true)
   }, [])
-  const value = useMemo(() => ({ done, finish }), [done, finish])
+  // `|| done` for the launch with no splash to leave — the reload a service-worker update
+  // ends in starts already finished, and nothing will ever call beginExit on it.
+  const value = useMemo(
+    () => ({ exiting: exiting || done, done, beginExit, finish }),
+    [exiting, done, beginExit, finish],
+  )
   return <SplashContext value={value}>{children}</SplashContext>
 }
 

@@ -19,20 +19,14 @@ import { cn } from '@/lib/cn'
 export function TutorialFooter({
   isFirst,
   isLast,
-  showNext,
   nextLabel,
-  dismissLabel,
   onPrev,
   onNext,
   onDismiss,
 }: {
   isFirst: boolean
   isLast: boolean
-  // Hidden while a gated screen is still waiting on its task — finishing it carries the
-  // player forward without anything to press.
-  showNext: boolean
   nextLabel: string
-  dismissLabel: string
   onPrev: () => void
   onNext: () => void
   onDismiss: () => void
@@ -66,13 +60,11 @@ export function TutorialFooter({
           selectable={false}
           className="font-mono text-[10px] font-bold tracking-[1px] text-dim underline"
         >
-          {dismissLabel}
+          <Trans>SKIP</Trans>
         </Text>
       </Pressable>
 
-      {showNext && (
-        <TutorialNextButton label={nextLabel} isLast={isLast} onPress={onNext} />
-      )}
+      <TutorialNextButton label={nextLabel} isLast={isLast} onPress={onNext} />
     </View>
   )
 }

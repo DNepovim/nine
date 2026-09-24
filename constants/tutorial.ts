@@ -19,18 +19,6 @@ export type TutorialStepId = (typeof TUTORIAL_STEPS)[number]
 
 export const TUTORIAL_STEP_COUNT = TUTORIAL_STEPS.length
 
-// Screens that report their own completion — by finishing a task, or on the
-// opening screen by its countdown running out. In the gated run these carry the
-// player forward themselves and so need no CTA; the rest show one.
-export const STEP_SELF_ADVANCES = {
-  goal: true,
-  controls: true,
-  weights: true,
-  strategy: true,
-  swipe: true,
-  modes: false,
-} as const satisfies Record<TutorialStepId, boolean>
-
 // Where the forward button goes, per screen — the destination, not a sentence about
 // it. A bare "NEXT" says nothing, but the full invitation ("SEE WHY POSITION MATTERS")
 // made for a button the size of a primary CTA, sharing the dial screens' one flexible

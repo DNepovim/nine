@@ -9,7 +9,7 @@ import {
   openerPool,
   stepUpMessage,
   stepUpReducer,
-  TUTORIAL_HITS,
+  WELCOME_HITS,
   type StepUpFacts,
   type StepUpState,
 } from './step-up'
@@ -19,7 +19,7 @@ const facts = (over: Partial<StepUpFacts> = {}): StepUpFacts => ({
   hits: MIN_HITS,
   elapsedMs: MIN_RUN_MS,
   playedScored: false,
-  fromTutorial: false,
+  fromWelcome: false,
   ...over,
 })
 
@@ -86,43 +86,42 @@ describe('stepUpReducer', () => {
   })
 })
 
-// A run started from the tutorial's closing CTA. The player has just been taught the
-// game and has never seen a scored board, so the offer is owed to them on hit count
-// alone — how well those hits went is beside the point.
-describe('stepUpReducer, straight out of the tutorial', () => {
-  const fromTutorial = (count: number, over: Partial<StepUpFacts> = {}) =>
+// A player whose first launch opened straight into Trainee. They have never seen a scored
+// board, so the offer is owed to them on hit count alone — how well those hits went is
+// beside the point. And it stays owed: the flag is persisted, so this is every practice
+// run they have until they take it, not only their first.
+describe('stepUpReducer, for a welcomed player', () => {
+  const fromWelcome = (count: number, over: Partial<StepUpFacts> = {}) =>
     Array.from({ length: count }, (_unused, index) =>
-      facts({ fromTutorial: true, hits: index + 1, ...over }),
+      facts({ fromWelcome: true, hits: index + 1, ...over }),
     )
 
   it('offers on hit count alone, with nothing clean about the run', () => {
-    const messy = fromTutorial(TUTORIAL_HITS, { clean: false })
+    const messy = fromWelcome(WELCOME_HITS, { clean: false })
     expect(play(messy).offers).toBe(1)
-    expect(play(messy).last).toBe('tutorial')
+    expect(play(messy).last).toBe('welcome')
   })
 
   it('says nothing one hit short', () => {
-    expect(play(fromTutorial(TUTORIAL_HITS - 1, { clean: false })).offers).toBe(0)
+    expect(play(fromWelcome(WELCOME_HITS - 1, { clean: false })).offers).toBe(0)
   })
 
   it('does not wait out the clock the clean bar waits out', () => {
-    expect(play(fromTutorial(TUTORIAL_HITS, { clean: false, elapsedMs: 0 })).offers).toBe(
-      1,
-    )
+    expect(play(fromWelcome(WELCOME_HITS, { clean: false, elapsedMs: 0 })).offers).toBe(1)
   })
 
   it('still offers only once', () => {
-    expect(play(fromTutorial(TUTORIAL_HITS * 3, { clean: false })).offers).toBe(1)
+    expect(play(fromWelcome(WELCOME_HITS * 3, { clean: false })).offers).toBe(1)
   })
 
-  it('stays quiet for a veteran replaying the tutorial', () => {
+  it('stays quiet for a welcomed player who has since posted a scored score', () => {
     // They already know the boards exist, so there is nothing to introduce.
-    const played = fromTutorial(TUTORIAL_HITS * 2, { clean: false, playedScored: true })
+    const played = fromWelcome(WELCOME_HITS * 2, { clean: false, playedScored: true })
     expect(play(played).offers).toBe(0)
   })
 
-  it('leaves a run not started from the tutorial on the clean bar', () => {
-    const messy = Array.from({ length: TUTORIAL_HITS * 2 }, (_unused, index) =>
+  it('leaves a player who was never welcomed on the clean bar', () => {
+    const messy = Array.from({ length: WELCOME_HITS * 2 }, (_unused, index) =>
       facts({ clean: false, hits: index + 1 }),
     )
     expect(play(messy).offers).toBe(0)
@@ -130,14 +129,14 @@ describe('stepUpReducer, straight out of the tutorial', () => {
 
   it('credits the streak over the hit count when both bars clear on the same hit', () => {
     // Five messy hits, then five clean — the tenth hit is the moment both bars are
-    // met at once (MIN_HITS and TUTORIAL_HITS are the same number), and 'clean' is
+    // met at once (MIN_HITS and WELCOME_HITS are the same number), and 'clean' is
     // the one that actually says something, so it is the one checked first.
     const inputs = [
       ...Array.from({ length: 5 }, (_unused, index) =>
-        facts({ fromTutorial: true, clean: false, hits: index + 1 }),
+        facts({ fromWelcome: true, clean: false, hits: index + 1 }),
       ),
       ...Array.from({ length: 5 }, (_unused, index) =>
-        facts({ fromTutorial: true, clean: true, hits: index + 6 }),
+        facts({ fromWelcome: true, clean: true, hits: index + 6 }),
       ),
     ]
     expect(play(inputs).last).toBe('clean')
@@ -182,22 +181,22 @@ describe('stepUpMessage', () => {
 
   it('offers more than one way of saying each half', () => {
     expect(openerPool('clean').length).toBeGreaterThan(1)
-    expect(openerPool('tutorial').length).toBeGreaterThan(1)
+    expect(openerPool('welcome').length).toBeGreaterThan(1)
     expect(invitePool().length).toBeGreaterThan(1)
   })
 
-  it('never congratulates a tutorial run on how it went', () => {
-    // The tutorial offer fires whatever the hits looked like, so an opener claiming
+  it('never congratulates a welcomed player on how the run went', () => {
+    // The welcome offer fires whatever the hits looked like, so an opener claiming
     // a streak or good play would be telling a player something untrue about it.
-    expect(openerPool('tutorial')).not.toEqual(
+    expect(openerPool('welcome')).not.toEqual(
       expect.arrayContaining([...openerPool('clean')]),
     )
-    for (const line of openerPool('tutorial')) {
+    for (const line of openerPool('welcome')) {
       expect(line).not.toContain(String(CLEAN_RUN))
     }
   })
 
-  it('draws tutorial openers from their own pool', () => {
-    expect(openerPool('tutorial')).toContain(stepUpMessage('tutorial', 0, 0).opener)
+  it('draws welcome openers from their own pool', () => {
+    expect(openerPool('welcome')).toContain(stepUpMessage('welcome', 0, 0).opener)
   })
 })

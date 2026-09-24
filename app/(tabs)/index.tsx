@@ -86,6 +86,7 @@ import { useTargetSpawner } from '@/hooks/use-target-spawner'
 import { useTheme } from '@/hooks/use-theme'
 import { useTraineeCoach } from '@/hooks/use-trainee-coach'
 import { useTutorial } from '@/hooks/use-tutorial'
+import { useWelcome } from '@/hooks/use-welcome'
 import { idsOf, latestAchievement } from '@/lib/achievement-store'
 import { identify, track } from '@/lib/analytics'
 import type { AnalyticsEvents } from '@/lib/analytics-events'
@@ -106,6 +107,7 @@ import { countRun } from '@/lib/run-submission'
 import { STEP_UP_BOARD } from '@/lib/step-up'
 import { multiplierColor } from '@/lib/streak-badge'
 import { valueProgress } from '@/lib/value-progress'
+import { WELCOME_BOARD } from '@/lib/welcome'
 import {
   computeSum,
   DARK_MODE_GRADIENT,
@@ -340,7 +342,7 @@ export default function GameScreen() {
     track('screen_opened', { screen: OVERLAY_SCREENS[menuOverlay] })
   }, [menuOverlay])
   const installPrompt = useInstall()
-  const { done: splashDone } = useSplash()
+  const { exiting: splashExiting, done: splashDone } = useSplash()
   const { ready: updateReady, apply: applyUpdate } = useAppUpdate()
 
   // Close advanced options whenever the game starts or resumes so that pausing
@@ -349,20 +351,9 @@ export default function GameScreen() {
     if (isPlaying) setMenuOverlay('none')
   }, [isPlaying])
 
-  // Onboarding: opens itself under the splash on a first launch, and is
-  // replayable from How to Play.
+  // The guide. Opened from How to Play and nowhere else — a first launch gets the
+  // welcome run below instead of a wall of lessons.
   const tutorial = useTutorial()
-
-  // True only for the run the tutorial's closing CTA started, which is offered a scored
-  // board on hit count alone — see TUTORIAL_HITS in lib/step-up.ts. Cleared on the way
-  // back to the intro, and every other way of starting a run passes through there (or
-  // through game over, which Trainee's infinite lives never reach), so no later run can
-  // inherit the lower bar.
-  const [fromTutorial, setFromTutorial] = useState(false)
-
-  useEffect(() => {
-    if (isMenu) setFromTutorial(false)
-  }, [isMenu])
 
   const handleTutorialNext = useCallback(() => {
     if (!tutorial.isLast) {
@@ -371,10 +362,51 @@ export default function GameScreen() {
     }
     // The last screen's CTA drops the player straight into a Trainee run.
     tutorial.dismiss()
-    setFromTutorial(true)
     send({ type: 'SET_MODE', mode: 'trainee' })
     send({ type: 'START', now: Date.now() })
   }, [tutorial, send])
+
+  // A device nobody has played on opens into a practice run rather than into the intro:
+  // the fastest thing the app can say about itself is the game itself, and Trainee's
+  // infinite lives and coach hints make it the one mode that can be walked into cold.
+  const welcome = useWelcome()
+
+  // Put the machine on the welcome board as soon as the launch is known to owe a run —
+  // before the splash lifts, and separately from starting it.
+  //
+  // Starting has to wait for the splash (below), and React is free to run that effect a
+  // frame or more after the logo clears. Whatever the board is set to is what those frames
+  // show, and the machine's own default context is Accuracy Hard — so without this the
+  // welcome opens on the wrong board and corrects itself in front of the player.
+  useEffect(() => {
+    if (!welcome.pending || !isMenu) return
+    send({ type: 'SET_MODE', mode: WELCOME_BOARD.mode })
+    send({ type: 'SET_DIFFICULTY', difficulty: WELCOME_BOARD.difficulty })
+  }, [welcome.pending, isMenu, send])
+
+  // Started as the splash begins its exit, not once it has gone: the logo spends its last
+  // few seconds scaling away over a fading background, and a run dealt at the end of that
+  // is a run the player watches arrive into an empty screen. Dealt at the start of it, the
+  // fade uncovers a game already in motion.
+  //
+  // Costing the first target a few seconds of clock is what buys that, and Trainee's is
+  // the one clock in the app that can spare them — a little over a minute per target, so
+  // the exit takes about five per cent of the first one and nothing after it.
+  //
+  // `menu` because START is only accepted there. `taken` runs first — it closes `pending`,
+  // so a re-render mid-effect cannot start a second run over the first.
+  //
+  // The board is set again here rather than trusted from above: these are the two events
+  // START reads, and a persisted mode landing in between — the hydration hooks send the
+  // same events — would otherwise deal the run on a board nobody chose.
+  useEffect(() => {
+    if (!welcome.pending || !splashExiting || !isMenu) return
+    welcome.taken()
+    send({ type: 'SET_MODE', mode: WELCOME_BOARD.mode })
+    send({ type: 'SET_DIFFICULTY', difficulty: WELCOME_BOARD.difficulty })
+    send({ type: 'START', now: Date.now() })
+    track('run_started', { ...WELCOME_BOARD, from: 'welcome' })
+  }, [welcome, splashExiting, isMenu, send])
 
   const { userId, nickname, isReady, updateNickname } = useSupabaseAuth()
 
@@ -430,12 +462,12 @@ export default function GameScreen() {
     DIFFICULTY_ORDER.some((level) => stats[scored][level].score > 0),
   )
   const stepUp = useStepUp({
-    inRun: isPlaying,
+    inRun,
     mode,
     batch: hitBatch,
     hits,
     playedScored,
-    fromTutorial,
+    fromWelcome: welcome.welcomed,
   })
   // Open while the transitional screen is up. The run is paused behind it rather than
   // abandoned, so backing out through the intro leaves nothing half-finished.
@@ -873,6 +905,18 @@ export default function GameScreen() {
   const showMultiResults = isNotNull(multiRoom.room) && multiGame.phase === 'results'
   const isMultiActive = showMultiWaiting || showMultiGame || showMultiResults
 
+  // The intro proper: the machine is idle, nothing is stacked over it, and the opening
+  // Trainee run — if this launch owes one — is neither still being decided nor still on
+  // its way in. Everything the start screen paints hangs off this one answer, so no two of
+  // them can disagree about whether the player is actually looking at the intro.
+  const onIntro =
+    isMenu &&
+    menuOverlay === 'none' &&
+    !isMultiActive &&
+    !tutorial.visible &&
+    welcome.decided &&
+    !welcome.pending
+
   // A shared run reaching its results screen is the run finishing, and the roster at
   // that moment is who was in it. Edge-latched: the screen stays up while everyone
   // reads it, and one run is one event.
@@ -907,26 +951,12 @@ export default function GameScreen() {
   // nothing: mid-run it would throw the run away, over an overlay it would lose whatever
   // was being typed, and in a multiplayer room it would drop the player out of it.
   useEffect(() => {
-    const settled =
-      isMenu &&
-      menuOverlay === 'none' &&
-      !isMultiActive &&
-      !showNicknameModal &&
-      !tutorial.visible
-    if (!updateReady || !settled) return
+    if (!updateReady || !onIntro || showNicknameModal) return
     const timer = setTimeout(applyUpdate, UPDATE_SETTLE_MS)
     return () => {
       clearTimeout(timer)
     }
-  }, [
-    updateReady,
-    applyUpdate,
-    isMenu,
-    menuOverlay,
-    isMultiActive,
-    showNicknameModal,
-    tutorial.visible,
-  ])
+  }, [updateReady, applyUpdate, onIntro, showNicknameModal])
 
   return (
     // Every board on screen reads this one store, so the intro, the pause screen and
@@ -952,8 +982,11 @@ export default function GameScreen() {
 
           {/* Trainee only, once a run, and never for a player who already knows the
             boards exist. Floats over the top bars rather than sitting in the layout —
-            Trainee reclaims the band a strip would occupy. */}
-          {stepUp.message !== null && !stepUpOpen && (
+            Trainee reclaims the band a strip would occupy. Holds until it is answered,
+            which is why it carries NOT NOW — and holds through a pause rather than being
+            withdrawn by one, which is why it is drawn only while the run is live: an
+            unanswered offer belongs over the dial, not over the pause screen. */}
+          {isPlaying && stepUp.message !== null && !stepUpOpen && (
             <StepUpToast
               opener={stepUp.message.opener}
               invite={stepUp.message.invite}
@@ -965,6 +998,7 @@ export default function GameScreen() {
                 stepUp.dismiss()
                 setStepUpOpen(true)
               }}
+              onDismiss={stepUp.dismiss}
             />
           )}
 
@@ -1435,7 +1469,7 @@ export default function GameScreen() {
               }}
               onStartTutorial={() => {
                 setMenuOverlay('none')
-                tutorial.openReview()
+                tutorial.open()
               }}
             />
           )}
@@ -1458,20 +1492,13 @@ export default function GameScreen() {
           {tutorial.visible && (
             <TutorialOverlay
               isDark={isDark}
-              mode={tutorial.mode}
               step={tutorial.step}
               stepId={tutorial.stepId}
-              showNext={tutorial.showNext}
-              canResume={tutorial.canResume}
-              resumeStep={tutorial.resumeStep}
               isLast={tutorial.isLast}
               onPrev={() => {
                 tutorial.goTo(tutorial.step - 1)
               }}
               onNext={handleTutorialNext}
-              onResume={() => {
-                tutorial.goTo(tutorial.resumeStep)
-              }}
               onSelectStep={(index) => {
                 tutorial.goTo(index)
               }}
@@ -1487,17 +1514,13 @@ export default function GameScreen() {
             one of them addressed to you by name, and it would be a poor thing to meet
             after two screens of announcements. Several queue and are shown one at a
             time, oldest first — see hooks/use-feedback-replies.ts. */}
-          {isMenu &&
-            menuOverlay === 'none' &&
-            !isMultiActive &&
-            !tutorial.visible &&
-            feedbackReplies.reply !== null && (
-              <FeedbackReplyOverlay
-                gameMode={mode}
-                answer={feedbackReplies.reply.answer}
-                onDismiss={feedbackReplies.dismiss}
-              />
-            )}
+          {onIntro && feedbackReplies.reply !== null && (
+            <FeedbackReplyOverlay
+              gameMode={mode}
+              answer={feedbackReplies.reply.answer}
+              onDismiss={feedbackReplies.dismiss}
+            />
+          )}
 
           {/* ── What's new — announcements the player hasn't seen yet ── */}
           {/* Never over the tutorial. A first-ever launch has nothing unseen to show
@@ -1507,10 +1530,7 @@ export default function GameScreen() {
             Waits on the reply request the same way the install prompt waits on this one:
             `ready` is what says "asked and answered", and painting before it would put
             the news up only to have a reply land on top of it. */}
-          {isMenu &&
-            menuOverlay === 'none' &&
-            !isMultiActive &&
-            !tutorial.visible &&
+          {onIntro &&
             feedbackReplies.ready &&
             feedbackReplies.reply === null &&
             whatsNew.visible && (
@@ -1525,10 +1545,7 @@ export default function GameScreen() {
             no splash to hold — the reload a service-worker update ends in — so `splashDone`
             is what keeps the two copies from ever being up at once. ── */}
           {splashDone &&
-            isMenu &&
-            menuOverlay === 'none' &&
-            !isMultiActive &&
-            !tutorial.visible &&
+            onIntro &&
             feedbackReplies.ready &&
             feedbackReplies.reply === null &&
             whatsNew.ready &&
@@ -1542,7 +1559,7 @@ export default function GameScreen() {
             )}
 
           {/* ── Menu overlay ── */}
-          {isMenu && menuOverlay === 'none' && !isMultiActive && !tutorial.visible && (
+          {onIntro && (
             <MenuOverlay
               gameMode={mode}
               difficulty={difficulty}

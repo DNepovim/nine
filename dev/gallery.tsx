@@ -21,7 +21,13 @@ import { emptyCareer } from '@/lib/career'
 import type { RecordScreen } from '@/lib/champions'
 import { gameOverTitle } from '@/lib/game-over-title'
 import type { Medal, MedalPeriod } from '@/lib/medals'
-import { invitePool, openerPool, STEP_UP_BOARD, STEP_UP_REASONS } from '@/lib/step-up'
+import {
+  invitePool,
+  openerPool,
+  STEP_UP_BOARD,
+  STEP_UP_REASONS,
+  type StepUpReason,
+} from '@/lib/step-up'
 import type { Award } from '@/lib/winnings'
 import { awardBlocks } from '@/lib/winnings-announcement'
 import {
@@ -105,6 +111,13 @@ const MODE_CODE = {
   accuracy: 'ACC',
   speed: 'SPD',
 } as const satisfies Record<Mode, string>
+
+// Which bar opened the step-up toast, one letter, so a switcher label can stay short
+// enough to read at a glance.
+const REASON_TAGS = {
+  clean: 'C',
+  welcome: 'W',
+} as const satisfies Record<StepUpReason, string>
 
 // What the run took, in the switcher's own shorthand. An em dash for a run that took
 // nothing, which is a variant worth having: the ordinary game over is the one most
@@ -271,8 +284,13 @@ const paused = (mode: Mode): Variant => ({
       // to change here: a variant is a render function with no state of its own.
       corners={DEFAULT_DIAL_CORNERS}
       onSelectCorner={() => undefined}
+      // One of the three on, so the stack shows a ticked box and an empty one at once.
       showPar
       onTogglePar={() => undefined}
+      showStats={false}
+      onToggleStats={() => undefined}
+      showRoute={false}
+      onToggleRoute={() => undefined}
       traineeTimeoutMs={64000}
       onSetTraineeTimeout={() => undefined}
       onContinue={close}
@@ -404,13 +422,15 @@ const SECTIONS: Section[] = [
       {
         key: 'splash-held',
         label: 'HELD',
-        render: (close) => <SplashScreen onDone={close} hold onIntroDone={noop} />,
+        render: (close) => (
+          <SplashScreen onDone={close} onExit={noop} hold onIntroDone={noop} />
+        ),
       },
       {
         key: 'splash-play',
         label: 'PLAY',
         render: (close) => (
-          <SplashScreen onDone={close} hold={false} onIntroDone={noop} />
+          <SplashScreen onDone={close} onExit={noop} hold={false} onIntroDone={noop} />
         ),
       },
     ],
@@ -529,19 +549,20 @@ const SECTIONS: Section[] = [
       },
       // Every opener against every invitation, so the pairing that reads worst is the
       // one being looked at rather than the one nobody rolled. Both pools: the clean-run
-      // offer praises the player, the tutorial one only counts targets, and they have to
+      // offer praises the player, the welcome one only counts targets, and they have to
       // sit next to the same invitations without either reading oddly.
       ...STEP_UP_REASONS.flatMap((reason) =>
         openerPool(reason).flatMap((opener, o) =>
           invitePool().map((invite, i) => ({
             key: `step-up-toast-${reason}-${o}-${i}`,
-            label: `TOAST ${reason === 'clean' ? 'C' : 'T'}${o + 1}${String.fromCharCode(97 + i)}`,
+            label: `TOAST ${REASON_TAGS[reason]}${o + 1}${String.fromCharCode(97 + i)}`,
             render: (close: () => void) => (
               <StepUpToast
                 opener={opener}
                 invite={invite}
                 mode={STEP_UP_BOARD.mode}
                 onPress={close}
+                onDismiss={close}
               />
             ),
           })),

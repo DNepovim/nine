@@ -72,7 +72,11 @@ const AppDarkTheme: Theme = {
 
 function ThemedApp() {
   const { colorScheme, transitionOpacity, transitionColor } = useTheme()
-  const { done: splashDone, finish: finishSplash } = useSplash()
+  const {
+    done: splashDone,
+    beginExit: beginSplashExit,
+    finish: finishSplash,
+  } = useSplash()
   const install = useInstall()
 
   // Add to home screen is asked on the way in, over the splash — the first launch is
@@ -116,6 +120,7 @@ function ThemedApp() {
         <SplashScreen
           hold={askInstall !== null}
           onDone={finishSplash}
+          onExit={beginSplashExit}
           onIntroDone={() => {
             setIntroDone(true)
           }}

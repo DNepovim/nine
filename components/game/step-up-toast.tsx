@@ -27,14 +27,17 @@ const MARK = '🔥'
 // Trainee's invitation to a scored board, floating over the top bars mid-run.
 //
 // It carries the destination's colour, not Trainee's: the button is a door to Accuracy,
-// and wearing the mode it leads to is what the mode selector already does. Dismissing is
-// deliberately absent — it withdraws on its own, and a run gets one of these at most, so
-// there is nothing to escape from.
+// and wearing the mode it leads to is what the mode selector already does.
+//
+// NOT NOW is not decoration. This one waits for an answer instead of withdrawing on its
+// own, and where it floats is the top bar — NINE and the way out of the run are behind
+// it. A question that holds has to be answerable both ways.
 export function StepUpToast({
   opener,
   invite,
   mode,
   onPress,
+  onDismiss,
 }: {
   opener: string
   invite: string
@@ -43,6 +46,7 @@ export function StepUpToast({
   // whole job is to be glanced at.
   mode: Mode
   onPress: () => void
+  onDismiss: () => void
 }) {
   const { t } = useLingui()
   // Named rather than inlined, so the translated line can put the mode wherever
@@ -91,6 +95,17 @@ export function StepUpToast({
               <Trans>TRY {modeName}</Trans>
             </Text>
           </LinearGradient>
+        </Pressable>
+
+        {/* The small-label voice, a size below the invitation it turns down, so the
+            offer is still the thing being read. */}
+        <Pressable onPress={onDismiss} className="mt-1 items-center py-2">
+          <Text
+            selectable={false}
+            className="font-mono text-[10px] font-bold tracking-[1px] text-dim underline"
+          >
+            <Trans>NOT NOW</Trans>
+          </Text>
         </Pressable>
       </View>
     </Animated.View>

@@ -35,6 +35,11 @@ export const SEEN_NEWS_KEY = 'nine.seen-news.v1'
 // winnings themselves, which are derived from the boards.
 export const SEEN_WINNINGS_KEY = 'nine.seen-winnings.v1'
 export const TUTORIAL_KEY = 'nine.tutorial.v1'
+// Whether this device has had its opening Trainee run — the welcome that a first launch
+// drops straight into, in place of the tutorial that used to take the screen over. The
+// stored flag outlives that one run: it is also what keeps Trainee's invitation to a
+// scored board coming back. See lib/welcome.ts.
+export const WELCOME_KEY = 'nine.welcome.v1'
 // Absent until the player picks a language in options; while it is absent the app is in
 // English. The device's own language is never consulted — see hooks/use-locale.tsx.
 export const LOCALE_KEY = 'nine.locale.v1'

@@ -21,12 +21,16 @@ export const CLEAN_RUN = 5
 export const MIN_HITS = 10
 export const MIN_RUN_MS = 60_000
 
-// A run that began on the tutorial's closing CTA gets asked on hit count alone — no
-// clean streak, no clock. That player was taught the game ninety seconds ago and has
-// never seen a scored board; the offer is the last step of the tutorial rather than a
-// reward for playing well, so waiting for evidence of playing well would strand exactly
-// the player it was written for. Ten targets is long enough to have found the rhythm.
-export const TUTORIAL_HITS = 10
+// A player whose first launch opened straight into Trainee gets asked on hit count alone
+// — no clean streak, no clock. They have never seen a scored board, so the offer is how
+// they find out the boards exist rather than a reward for playing well, and waiting for
+// evidence of playing well would strand exactly the player it was written for. Ten
+// targets is long enough to have found the rhythm.
+//
+// Unlike the run itself, this does not expire with the launch that opened it. The bar
+// stays low in every practice run until the player has actually posted a scored score —
+// which is the same thing that switches the offer off for good, below.
+export const WELCOME_HITS = 10
 
 // Where the offer points. Easy on purpose: Trainee hands out infinite lives, so even a
 // player clearing Extreme practice has never once been under the pressure of losing, and
@@ -54,8 +58,9 @@ export type StepUpFacts = {
   // Whether the player has ever posted a score on a scored board. They know the real
   // modes exist, so there is nothing to introduce and the offer would only be noise.
   playedScored: boolean
-  // Whether this run began on the tutorial's closing CTA rather than from the intro.
-  fromTutorial: boolean
+  // Whether this install opened with the welcome run — see lib/welcome.ts. Persisted, so
+  // this is true of every Trainee run the player has, not only the first one.
+  fromWelcome: boolean
 }
 
 // Which bar was cleared. The offer says different things depending: one has watched the
@@ -63,7 +68,7 @@ export type StepUpFacts = {
 //
 // A list rather than a bare union so the screen gallery can enumerate them and show
 // every wording — a reason added here turns up there without being remembered.
-export const STEP_UP_REASONS = ['clean', 'tutorial'] as const
+export const STEP_UP_REASONS = ['clean', 'welcome'] as const
 export type StepUpReason = (typeof STEP_UP_REASONS)[number]
 
 // One resolved batch in, at most one offer out.
@@ -75,9 +80,8 @@ export function stepUpReducer(
 
   const reason = (): StepUpReason | null => {
     if (state.offered || facts.playedScored) return null
-    // Checked first, but it is the slower bar in practice: five clean hits arrive well
-    // before ten of anything, so a tutorial graduate playing well still gets the
-    // opener that says so.
+    // Checked first, so a welcomed player who is also on a roll by their tenth target
+    // gets the opener that says so rather than the one that only counts.
     if (
       cleanRun >= CLEAN_RUN &&
       facts.hits >= MIN_HITS &&
@@ -85,7 +89,7 @@ export function stepUpReducer(
     ) {
       return 'clean'
     }
-    if (facts.fromTutorial && facts.hits >= TUTORIAL_HITS) return 'tutorial'
+    if (facts.fromWelcome && facts.hits >= WELCOME_HITS) return 'welcome'
     return null
   }
 
@@ -100,13 +104,13 @@ export function stepUpReducer(
 // out, so raising a bar can never leave the words claiming a different number.
 //
 // One opener pool per reason. The clean-run openers are about how the player is doing,
-// which the tutorial offer has no standing to claim: it fires on ten targets however
-// they went, so it marks the milestone and leaves the praise out of it. The invitations
-// are shared — that half is the same question either way.
+// which the welcome offer has no standing to claim: it fires on ten targets however they
+// went, so it marks the milestone and leaves the praise out of it. The invitations are
+// shared — that half is the same question either way.
 const OPENERS = {
   clean: ["You're playing well.", `${CLEAN_RUN} clean in a row.`, 'Nice streak.'],
-  tutorial: [
-    `That's ${TUTORIAL_HITS} targets.`,
+  welcome: [
+    `That's ${WELCOME_HITS} targets.`,
     "You've got the idea.",
     "That's the practice done.",
   ],
