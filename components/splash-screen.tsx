@@ -229,8 +229,8 @@ const styles = StyleSheet.create({
   },
   row: {
     flexDirection: 'row',
-    // The wordmark's own spacing: each letter is drawn in a box wider than its glyph, so
-    // the padding it carries is most of what stands between two of them.
+    // All of the space between two letters — the glyphs carry none of their own, so that
+    // this row measures the word and not the word plus a tail. See SPLASH_WORDMARK_GAP.
     gap: SPLASH_WORDMARK_GAP,
   },
 })

@@ -56,12 +56,16 @@ const FOOT_OVERSHOOT = 8
 // whatever hue is behind it and only takes the light out of it.
 const FOOT_SHADE = 'rgba(0, 0, 0, 0.22)'
 
+// No letter spacing here, and the gap below carries all of it instead. Each letter is its
+// own Text, so spacing could only ever be added *after* the one glyph in it: it widened
+// the box, which read as more room between two letters, and left the same 4px hanging off
+// the end of the E where there is no next letter to separate. That tail is part of the
+// row, so centring the row put the word half of it left of centre.
 const GLYPH: StyleProp<TextStyle> = {
   fontFamily: mono,
   fontSize: FONT_SIZE,
   lineHeight: LINE_HEIGHT,
   fontWeight: '900',
-  letterSpacing: 4,
   includeFontPadding: false,
 }
 
@@ -103,7 +107,10 @@ function SplashLetter({ char, index }: { char: string; index: number }) {
         style={{
           position: 'absolute',
           left: 0,
-          right: 0,
+          // Past the right of the box for the same reason the window overshoots below:
+          // it is free, and a glyph emboldened past its cell keeps its foot either way.
+          // The letter spacing used to leave this slack behind; now it is asked for.
+          right: -FOOT_OVERSHOOT,
           top: CAP_FOOT - GLASS_FAR_PX,
           height: GLASS_FAR_PX + FOOT_OVERSHOOT,
           overflow: 'hidden',
@@ -141,5 +148,8 @@ export function SplashWordmark() {
   )
 }
 
-// The row's spacing, back to what it was: the letters carry no padding of their own now.
-export const SPLASH_WORDMARK_GAP = 12
+// The whole of the space between two letters: the 12 the row always had, plus the 4 the
+// glyphs used to contribute out of their own boxes. Moving it here changes nothing about
+// where the letters sit next to each other and everything about where the word sits in
+// the screen — the row is now exactly as wide as the ink in it.
+export const SPLASH_WORDMARK_GAP = 16
