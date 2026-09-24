@@ -154,9 +154,18 @@ export function TitleSlot({
   // Held off while there is news to tell — the sequence above owns the same `fade`, and
   // two things driving one opacity is the line blinking out mid-sentence. The gate is
   // the news itself rather than `showing`, which stays full after the sequence ends.
+  //
+  // A swap that has been stood down does not get the last word. It lands a frame after
+  // the fade that earned it — out to a worklet and back — so one can still be in the air
+  // when news arrives and this effect is torn down. Landing then would put the opacity
+  // back to 1 over the fade the news had only just started; that fade is what the
+  // sequence waits on to begin, and a cancelled one never calls back. The losses would
+  // go untold for the whole launch, with nothing left to re-trigger them.
   useEffect(() => {
     if (count < 2 || isNonEmptyArray(news) || current !== undefined) return
+    let stoodDown = false
     const enter = () => {
+      if (stoodDown) return
       setFace((shown) => (shown + 1) % count)
       fade.value = withTiming(1, { duration: FADE_MS, easing: Easing.out(Easing.ease) })
     }
@@ -172,6 +181,7 @@ export function TitleSlot({
       )
     }, CYCLE_MS)
     return () => {
+      stoodDown = true
       clearInterval(id)
     }
   }, [count, news, current, fade])
