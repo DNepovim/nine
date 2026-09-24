@@ -68,6 +68,19 @@ export const ANNOUNCEMENT_MS = 5000
 // lands has its message swapped in over the top rather than following it on.
 export const ANNOUNCEMENT_SWEEP_MS = 750
 
+// The beat a run settles on, measured from the moment it starts.
+//
+// Nothing is announced before it. A record crossed on the very first hit — a first run
+// opening an empty board, every time — used to take the bar while the player was still
+// looking at the dial, and was sweeping away before they had looked up. The opening
+// seconds belong to the game; anything crossed in them stacks and is shown in turn once
+// the bar opens.
+//
+// It is the same beat the best-scores strip reveals its numbers on
+// (components/game/best-scores-line.tsx), so the top of the screen comes to life once
+// rather than twice.
+export const RUN_SETTLE_MS = 1500
+
 export function displayName(nickname: string | null): string {
   const trimmed = nickname?.trim() ?? ''
   if (trimmed === '') return UNKNOWN_NAME

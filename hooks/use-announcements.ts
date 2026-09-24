@@ -4,12 +4,19 @@ import { useEffect, useRef, useState } from 'react'
 import { ACHIEVEMENTS } from '@/constants/achievements'
 import type { RivalAnnouncement } from '@/hooks/use-rival-records'
 import type { Award } from '@/lib/achievements'
+import {
+  dropAnnouncement,
+  NOTHING,
+  queueAnnouncement,
+  type Waiting,
+} from '@/lib/announcement-queue'
 import { IDLE, stepRun, type RunPhase } from '@/lib/announcement-run'
 import {
   ANNOUNCEMENT_IDS,
   ANNOUNCEMENT_MS,
   ANNOUNCEMENT_SWEEP_MS,
   announcementFor,
+  RUN_SETTLE_MS,
   type Announcement,
   type AnnouncementId,
 } from '@/lib/announcements'
@@ -20,9 +27,15 @@ const BAR_MS = ANNOUNCEMENT_MS + ANNOUNCEMENT_SWEEP_MS
 // The current announcement, or null when the bar should show scores.
 //
 // All of the deciding lives in `lib/announcement-run.ts` — when to freeze the targets,
-// what a score has crossed, what is worth publishing. This hook is what turns those
-// answers into a bar, a timer and a submission, and it holds the parts that are genuinely
-// about the passage of time: the rival's turn at the bar, and the dismissal.
+// what a score has crossed, what is worth publishing — and the order they wait in lives
+// in `lib/announcement-queue.ts`. This hook is what turns those answers into a bar, a
+// timer and a submission, and it holds the parts that are genuinely about the passage of
+// time: the run's opening quiet, each message's turn, and the dismissal.
+//
+// Nothing takes the bar in a run's first `RUN_SETTLE_MS`. Everything that happens in
+// them waits, and is then shown one after another rather than all at once over the top
+// of each other — a first run opening an empty board crosses its first record on its
+// first hit, and used to have the line come and go before the player had looked up.
 //
 // The personal-best check needs the best the run *started* with, because the machine
 // folds each hit straight into `stats` (machines/game.ts) — so the stored best climbs
@@ -65,19 +78,26 @@ export function useAnnouncements({
   // are never dropped: an achievement happens once in a player's life, so one that cannot
   // have the bar right now waits for it.
   achievements: readonly Award[]
-  // Called once one has had its turn, so the queue moves on.
+  // Called once one has joined the queue, so the queue outside moves on.
   onAchievementAnnounced: (award: Award) => void
   // Called the instant a board record falls, so the score reaches the board while
   // the run is still going and rivals hear about it now rather than at game over.
   onBoardRecord: () => void
 }): { announcement: Announcement | null; crossed: AnnouncementId[] } {
   const [current, setCurrent] = useState<Announcement | null>(null)
+  // Everything waiting its turn at the bar, in the order it will get it.
+  const [queue, setQueue] = useState<readonly Waiting[]>(NOTHING)
   // Everything this run has crossed, kept as state as well as in the phase below: the bar
   // only needs the latest crossing, but the game-over screen needs the whole run's
   // tally, and it reads it after the bar has long since cleared.
   const [taken, setTaken] = useState<AnnouncementId[]>([])
   const phaseRef = useRef<RunPhase>(IDLE)
   const lastRivalSeqRef = useRef(0)
+  // When the bar opens for this run — its start plus the settling beat. Ahead of the
+  // first message rather than folded into `freeAtRef` below, because the two answer
+  // different questions: a bar nobody has used yet is quiet, not busy, and news that
+  // lands in the quiet is still news when it lifts.
+  const openAtRef = useRef(0)
   // When the bar is next free — the message's own five seconds, then its wipe.
   //
   // `current` going null is the message ending, not the bar emptying: the sweep that
@@ -92,6 +112,16 @@ export function useAnnouncements({
   // score and must not re-run because the parent handed us a new closure.
   const onBoardRecordRef = useRef(onBoardRecord)
   onBoardRecordRef.current = onBoardRecord
+
+  // The run's opening quiet, timed from the run and not from the targets freezing: a
+  // board that answers late must not push the first announcement late with it. Declared
+  // above everything that reads these two, so a record crossed in the very commit a run
+  // starts is already measured against an open bar rather than a stale one.
+  useEffect(() => {
+    if (!inRun) return
+    openAtRef.current = Date.now() + RUN_SETTLE_MS
+    freeAtRef.current = 0
+  }, [inRun])
 
   useEffect(() => {
     const started = phaseRef.current.started
@@ -112,6 +142,7 @@ export function useAnnouncements({
 
     if (!inRun) {
       setCurrent(null)
+      setQueue(NOTHING)
       return
     }
     // Cleared as the run's targets are frozen rather than as the last run ended: the
@@ -124,8 +155,8 @@ export function useAnnouncements({
     // and the run carries on either way — submission is fire-and-forget.
     if (step.publish) onBoardRecordRef.current()
 
-    freeAtRef.current = Date.now() + BAR_MS
-    setCurrent(announcementFor(step.announce, Math.random()))
+    const announcement = announcementFor(step.announce, Math.random())
+    setQueue((held) => queueAnnouncement(held, { announcement, own: true }))
   }, [
     inRun,
     ready,
@@ -143,32 +174,19 @@ export function useAnnouncements({
   // What separates them is not only the order but what happens to the loser. A rival's
   // news is *dropped* — by the time the bar frees up, someone else leading is no longer
   // news. An achievement is queued, because it happens once and being swallowed by a
-  // record that landed in the same second would be losing it for good.
+  // record that landed in the same second would be losing it for good. A record of your
+  // own goes to the front of the queue, but not over the top of what is showing.
   //
-  // Queued, and then *waited for*: the bar has to be empty and its wipe has to have
-  // landed. Taking it the instant `current` cleared is what made a run that unlocked
-  // three at once show the first, swap the second in over it, and only then play an
-  // entrance — one announcement turning into another instead of three of them in turn.
+  // Taken off the outer queue the moment it joins this one: from here on it has a place
+  // in the order, and leaving it on both would announce it twice.
   useEffect(() => {
     const next = achievements[0]
-    if (!inRun || next === undefined || current !== null) return
-    // Zero for the first of a run, when there is no wipe to wait out.
-    const wait = Math.max(0, freeAtRef.current - Date.now())
-    const id = setTimeout(() => {
-      freeAtRef.current = Date.now() + BAR_MS
-      setCurrent(
-        announcementFor(
-          'achievement',
-          Math.random(),
-          `${ACHIEVEMENTS[next.id].emblem} ${i18n._(ACHIEVEMENTS[next.id].title).toUpperCase()}`,
-        ),
-      )
-      onAchievementAnnouncedRef.current(next)
-    }, wait)
-    return () => {
-      clearTimeout(id)
-    }
-  }, [inRun, achievements, current])
+    if (!inRun || next === undefined) return
+    const name = `${ACHIEVEMENTS[next.id].emblem} ${i18n._(ACHIEVEMENTS[next.id].title).toUpperCase()}`
+    const announcement = announcementFor('achievement', Math.random(), name)
+    setQueue((held) => queueAnnouncement(held, { announcement, own: false }))
+    onAchievementAnnouncedRef.current(next)
+  }, [inRun, achievements])
 
   useEffect(() => {
     if (!inRun || rival === null) return
@@ -177,11 +195,32 @@ export function useAnnouncements({
     // Your own moments always win the bar; the rival's is dropped rather than queued,
     // because by the time yours clears theirs is old news. Dropped through the wipe as
     // well as through the message — cutting an exit short to report that someone else
-    // is ahead is the least worthy interruption the bar has.
-    if (current !== null || Date.now() < freeAtRef.current) return
-    freeAtRef.current = Date.now() + BAR_MS
-    setCurrent(announcementFor(rival.id, Math.random(), rival.name))
-  }, [inRun, rival, current])
+    // is ahead is the least worthy interruption the bar has. The run's opening quiet is
+    // not the bar being used, so news that lands there waits for it like anything else.
+    if (current !== null || queue.length > 0 || Date.now() < freeAtRef.current) return
+    const announcement = announcementFor(rival.id, Math.random(), rival.name)
+    setQueue((held) => queueAnnouncement(held, { announcement, own: false }))
+  }, [inRun, rival, current, queue])
+
+  // Whose turn it is. The wait is an absolute moment and not a duration, so a queue that
+  // grows while one is pending reschedules without pushing back the one in front.
+  useEffect(() => {
+    const next = queue[0]
+    if (!inRun || current !== null || next === undefined) return
+    const wait = Math.max(
+      0,
+      openAtRef.current - Date.now(),
+      freeAtRef.current - Date.now(),
+    )
+    const id = setTimeout(() => {
+      freeAtRef.current = Date.now() + BAR_MS
+      setCurrent(next.announcement)
+      setQueue((held) => dropAnnouncement(held, next))
+    }, wait)
+    return () => {
+      clearTimeout(id)
+    }
+  }, [inRun, current, queue])
 
   // The dismissal timer lives with the announcement, not with the score that
   // triggered it — tying it to `score` would cancel the timer on the next hit.

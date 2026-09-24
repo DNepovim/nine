@@ -19,7 +19,7 @@ import { mono } from '@/constants/theme'
 import { useOnline } from '@/hooks/use-online'
 import { useTheme } from '@/hooks/use-theme'
 import { announcementStyle } from '@/lib/announcement-style'
-import type { Announcement } from '@/lib/announcements'
+import { RUN_SETTLE_MS, type Announcement } from '@/lib/announcements'
 import { nearestRecord } from '@/lib/near-record'
 import type { Mode } from '@/machines/modes'
 
@@ -54,7 +54,10 @@ const BEST_ORDER = ['you', 'today', 'week', 'ever'] as const satisfies readonly 
 // strip empty for a whole run. The countdown is tied to the run and not to mount: this
 // component lives inside the always-mounted game Screen, so a mount timer would expire
 // while the player was still on the menu overlay.
-const REVEAL_DELAY_MS = 1500
+//
+// The delay is the run's settling beat, shared with the announcements that cover this
+// same row: the numbers arriving and the bar finding its voice are one moment, not two.
+const REVEAL_DELAY_MS = RUN_SETTLE_MS
 const REVEAL_MAX_MS = 5000
 const REVEAL_MS = 400
 const DROP_FROM = -6
@@ -261,8 +264,9 @@ export function BestScoresLine({
             </Text>
           )}
         </Animated.View>
-        {/* Covers the scores, and deliberately ignores the reveal gate — a record
-            broken before the scores appear still deserves to be announced. */}
+        {/* Covers the scores. Nothing reaches it before the reveal — the bar holds a
+            run's first announcement for the same RUN_SETTLE_MS — but it ignores the
+            gate all the same: a board that never loads must not also silence the bar. */}
         {pinned !== null && (
           <AnnouncementBar
             message={pinned.message}
