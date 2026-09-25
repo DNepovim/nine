@@ -19,6 +19,7 @@ import { CrashScreen } from '@/components/crash-screen'
 import { InstallOverlay } from '@/components/overlays/install-overlay'
 import { PhoneFrame } from '@/components/phone-frame'
 import { SplashScreen } from '@/components/splash-screen'
+import { SURFACE } from '@/constants/colors'
 import { LAYER } from '@/constants/layers'
 import { InstallProvider, useInstall } from '@/hooks/use-install'
 import { LocaleProvider } from '@/hooks/use-locale'
@@ -61,15 +62,16 @@ export function ErrorBoundary({ error, retry }: ErrorBoundaryProps) {
 
 // Match navigation background to the app's surface tokens so the iOS status
 // bar area blends with the screen background instead of showing the default
-// white / near-black navigation theme color.
+// white / near-black navigation theme color. From SURFACE rather than two hexes
+// of their own: a copy here would go stale the day the surface moves.
 const LightTheme: Theme = {
   ...DefaultTheme,
-  colors: { ...DefaultTheme.colors, background: '#f3efe9' },
+  colors: { ...DefaultTheme.colors, background: SURFACE.light },
 }
 
 const AppDarkTheme: Theme = {
   ...DarkTheme,
-  colors: { ...DarkTheme.colors, background: '#0b0c14' },
+  colors: { ...DarkTheme.colors, background: SURFACE.dark },
 }
 
 function ThemedApp() {
@@ -85,8 +87,8 @@ function ThemedApp() {
   const { probing: probingSavedRun } = useSavedRun()
 
   // Add to home screen is asked on the way in, over the splash — the first launch is
-  // exactly the launch worth asking on, and it is also the one where the tutorial
-  // opens the moment the splash clears. Asking afterwards meant asking behind it.
+  // exactly the launch worth asking on, and it is also the one where the welcome run
+  // starts the moment the splash clears. Asking afterwards meant asking behind it.
   //
   // The splash holds at the end of its intro for as long as there is something to ask,
   // so the popup lands on a still screen; answering it clears the target, which lets

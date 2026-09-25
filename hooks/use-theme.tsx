@@ -32,10 +32,22 @@ export function AppThemeProvider({ children }: { children: ReactNode }) {
   // Appearance.setColorScheme, so toggle the `.dark` class on the document root
   // (which activates the class-based dark CSS). On native, set the Appearance
   // scheme (react-native-css resolves `.dark:root` variables from it).
+  //
+  // The same moment owns the `theme-color` tag, which is the only say we get over
+  // the chrome the phone draws around us: Safari's top bar, and the status bar over
+  // an installed app. It is written here rather than declared once in +html.tsx
+  // because the scheme is ours to toggle, not the OS's to announce — a media-query
+  // tag would answer to the phone's setting and contradict the screen underneath it.
+  // Landing mid-cross-fade is right: the overlay is at full opacity in the target
+  // colour by then, so the bar changes under cover with everything else.
   useEffect(() => {
     if (Platform.OS === 'web') {
       if (typeof document !== 'undefined') {
         document.documentElement.classList.toggle('dark', colorScheme === 'dark')
+        const themeColor = document.querySelector('meta[name="theme-color"]')
+        if (themeColor instanceof HTMLMetaElement) {
+          themeColor.content = SURFACE[colorScheme]
+        }
       }
     } else {
       Appearance.setColorScheme(colorScheme)

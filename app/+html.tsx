@@ -1,6 +1,8 @@
 import { ScrollViewStyleReset } from 'expo-router/html'
 import type { PropsWithChildren } from 'react'
 
+import { SURFACE } from '@/constants/colors'
+
 // This file is web-only and used to configure the root HTML for every
 // web page during static rendering.
 // The contents of this function only run in Node.js environments and
@@ -18,10 +20,19 @@ export default function Root({ children }: PropsWithChildren) {
 
         {/* PWA manifest and theming. */}
         <link rel="manifest" href="/manifest.json" />
-        <meta name="theme-color" content="#7273D2" />
+        {/* The colour the phone paints its own chrome in: Safari's top bar, and the
+            status bar above an installed app. The app's surface, so that chrome reads
+            as part of the screen rather than a band above it — and the light one,
+            because the app always boots light whatever the phone is set to. It does
+            not stay light: AppThemeProvider rewrites this tag on every theme toggle,
+            which is why the value is here and not a `prefers-color-scheme` pair. */}
+        <meta name="theme-color" content={SURFACE.light} />
 
         {/* iOS standalone / add-to-home-screen support. */}
         <meta name="apple-mobile-web-app-capable" content="yes" />
+        {/* Deliberately not `black-translucent`: that would put the game under the
+            status bar, and pin its text to white — unreadable on the parchment
+            surface. Opaque lets iOS pick the ink to suit the colour above. */}
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
         <meta name="apple-mobile-web-app-title" content="nine" />
         <link rel="apple-touch-icon" href="/pwa-192.png" />
