@@ -7,7 +7,6 @@ import { GameOverOverlay } from '@/components/overlays/game-over-overlay'
 import { HowToPlayOverlay } from '@/components/overlays/how-to-play-overlay'
 import { MenuOverlay } from '@/components/overlays/menu-overlay'
 import { PausedOverlay } from '@/components/overlays/paused-overlay'
-import { PlayerProfileOverlay } from '@/components/overlays/player-profile-overlay'
 import { StepUpOverlay } from '@/components/overlays/step-up-overlay'
 import { WhatsNewOverlay } from '@/components/overlays/whats-new-overlay'
 import { SplashScreen } from '@/components/splash-screen'
@@ -18,6 +17,7 @@ import {
 } from '@/constants/achievements'
 import { DEFAULT_DIAL_CORNERS } from '@/constants/dial-hints'
 import { GalleryButton } from '@/dev/gallery-button'
+import { ProfileVariant } from '@/dev/profile-variant'
 import type { ShapeKind } from '@/dev/weekly-recap/recap'
 import { WeeklyRecapOverlay } from '@/dev/weekly-recap/recap-overlay'
 import { requestAnnouncement } from '@/hooks/use-announcement-request'
@@ -411,15 +411,32 @@ const SEED_PLAYERS = {
   PIXEL: '5eed0000-0000-0000-0000-000000000007',
 } as const
 
+// Who is doing the looking on each of the not-yours entries, so COMPARE WITH ME has a real
+// career on both sides of its table. The fullest of the seeded players everywhere except on
+// their own profile, where the second fullest stands in — a viewer who is also the viewed
+// player is the `mine` entry, and these are the other one.
+const GALLERY_VIEWER = {
+  ACE_9: SEED_PLAYERS.DOMINO,
+  DOMINO: SEED_PLAYERS.ACE_9,
+  VORTEX: SEED_PLAYERS.ACE_9,
+  BLAZE: SEED_PLAYERS.ACE_9,
+  PIXEL: SEED_PLAYERS.ACE_9,
+} as const satisfies Record<keyof typeof SEED_PLAYERS, string>
+
 const profile = (name: keyof typeof SEED_PLAYERS, mine = false): Variant => ({
   key: `profile-${name}${mine ? '-me' : ''}`,
   label: mine ? `${name} · ME` : name,
   render: (close) => (
-    <PlayerProfileOverlay
+    <ProfileVariant
       userId={SEED_PLAYERS[name]}
       // Viewing your own profile is the one thing this modal does differently — the motto
       // becomes editable — so it gets its own entry rather than being reasoned about.
-      viewerId={mine ? SEED_PLAYERS[name] : 'dev'}
+      //
+      // Another seeded player when it is not yours, not a made-up id: COMPARE WITH ME goes
+      // and fetches the viewer's own profile, and a viewer the database has never heard of
+      // would put the compare table permanently in its error state here. Whoever is being
+      // viewed cannot also be the viewer, or the modal would read as your own.
+      viewerId={mine ? SEED_PLAYERS[name] : GALLERY_VIEWER[name]}
       onClose={close}
     />
   ),
@@ -437,14 +454,20 @@ const SECTIONS: Section[] = [
         key: 'splash-held',
         label: 'HELD',
         render: (close) => (
-          <SplashScreen onDone={close} onExit={noop} hold onIntroDone={noop} />
+          <SplashScreen onDone={close} onExit={noop} hold ready onIntroDone={noop} />
         ),
       },
       {
         key: 'splash-play',
         label: 'PLAY',
         render: (close) => (
-          <SplashScreen onDone={close} onExit={noop} hold={false} onIntroDone={noop} />
+          <SplashScreen
+            onDone={close}
+            onExit={noop}
+            hold={false}
+            ready
+            onIntroDone={noop}
+          />
         ),
       },
     ],

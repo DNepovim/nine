@@ -27,15 +27,13 @@ import { championMark } from '@/lib/champions'
 import { formatGameTime } from '@/lib/duration'
 import { formatReleaseDate } from '@/lib/format-date'
 import { saveMotto } from '@/lib/leaderboard'
-import { averagePercent, boardRows, lifetimeOf } from '@/lib/player-profile'
 import {
-  DIFFICULTIES,
-  DIFFICULTY_ORDER,
-  MODE_GRADIENT,
-  MODES,
-  SCORED_MODES,
-  type ScoredMode,
-} from '@/machines/game'
+  averagePercent,
+  boardRows,
+  lifetimeOf,
+  type PlayerProfile,
+} from '@/lib/player-profile'
+import { MODE_GRADIENT, MODES, SCORED_MODES, type ScoredMode } from '@/machines/game'
 
 // The day the player joined. No profile carries a real join date yet, so every one of
 // them reads the same day — the day profiles shipped — until the RPC can answer for it.
@@ -61,12 +59,17 @@ const AVERAGE_LABEL = {
 export function PlayerProfileOverlay({
   userId,
   viewerId,
+  onCompare,
   onClose,
 }: {
   userId: string
   // Who is looking. Null before the anonymous sign-in has landed, which is the only
   // state where a player cannot yet be recognised as themselves.
   viewerId: string | null
+  // Hands this profile up to be set against the viewer's own. Undefined where there is
+  // nobody to set it against — before the sign-in has landed — which is also what takes
+  // the button off the card.
+  onCompare?: (profile: PlayerProfile) => void
   onClose: () => void
 }) {
   const { t } = useLingui()
@@ -94,11 +97,6 @@ export function PlayerProfileOverlay({
   const avgSpeed =
     lifetime === null ? null : averagePercent(lifetime.spdSum, lifetime.hits)
   const percent = (value: number | null): string => (value === null ? '—' : `${value}%`)
-  // ESY ×0.5 · HRD ×1 · EXT ×2, in the app's own difficulty order — what the rating
-  // under the figure is weighted by, and the only thing said about it.
-  const weights = DIFFICULTY_ORDER.map(
-    (level) => `${t(DIFFICULTIES[level].code)} ×${DIFFICULTIES[level].scoreWeight}`,
-  ).join(' · ')
   // A device running ahead of this build can hold an achievement this one has never heard
   // of, and the server counts what it was sent. Held to the catalogue so the pair always
   // reads as a fraction — this build cannot name more than it knows.
@@ -109,7 +107,7 @@ export function PlayerProfileOverlay({
   // over it was the header saying what the line below it already said.
   return (
     <ModalCard onDismiss={onClose} maxHeight={height * 0.85}>
-      {() => (
+      {(close) => (
         <>
           {/* One rhythm for the whole modal: every item in this column is separated by
               the same gap, and nothing in it carries a margin of its own. The pieces
@@ -203,35 +201,6 @@ export function PlayerProfileOverlay({
                     lower down still shows what each board was actually scored, and the
                     two numbers are not meant to add up to each other. */}
                     <ProfileScore score={lifetime.rating} digitFont={digitFont} />
-
-                    {/* A number that deliberately disagrees with the table under it has to
-                    say why, and this is the only screen it appears on. The weights say
-                    it on their own: three difficulty codes against three multipliers is
-                    not a figure anyone reads as a plain total, and it is the whole of
-                    what a label plus a sentence was spending four lines to get across.
-
-                    Read from `DIFFICULTIES` so it cannot come to disagree with the
-                    arithmetic it is explaining — `lifetimeOf` weights by these same
-                    numbers. The short codes, because this is exactly the row too tight
-                    to spell them out that they exist for. */}
-                    <Text
-                      selectable={false}
-                      className="text-center font-mono text-[8px] font-bold tracking-[1px] text-dim"
-                    >
-                      {weights}
-                    </Text>
-
-                    {/* The weights explain how every part of the figure is weighted, but
-                    no longer the whole of where it came from: taking a board's day or
-                    week pays into the same number, at half rate for a day and full for a
-                    week. One line, because a player who has never won one has nothing to
-                    read here and a player who has knows exactly what it means. */}
-                    <Text
-                      selectable={false}
-                      className="text-center font-mono text-[8px] font-bold tracking-[1px] text-dim"
-                    >
-                      <Trans>PLUS EVERY DAY AND WEEK WON</Trans>
-                    </Text>
 
                     {/* Five cells rather than four, so the gap comes in a step: RUNS and
                     HITS count what happened, TIME says over how long, and the two
@@ -365,6 +334,51 @@ export function PlayerProfileOverlay({
                 )}
               </View>
             </ScrollView>
+
+            {/* Below the scroll rather than at the end of it: a career long enough to
+                scroll is exactly the one worth measuring yourself against, and a button
+                that had to be scrolled to would be hidden on precisely those profiles.
+
+                Only on someone else's, and only once the viewer is known — a table of a
+                player against themselves has a winner on no row and nothing to say. */}
+            {profile !== null && !isMine && onCompare !== undefined && (
+              <Pressable
+                onPress={() => {
+                  // The table takes this profile's place rather than opening over it: the
+                  // two say the same things about the same player, and stacking one on the
+                  // other left the player two cards deep to get back out of. Asked for
+                  // before `close`, so the comparison is already fading up as this card
+                  // fades out — the cross-fade a screen change makes, in a dialog.
+                  onCompare(profile)
+                  close()
+                }}
+                className="items-center rounded-2xl bg-card px-6 py-3"
+              >
+                <Text
+                  selectable={false}
+                  className="font-mono text-[11px] font-black tracking-[2px] text-primary"
+                >
+                  <Trans>COMPARE WITH ME</Trans>
+                </Text>
+              </Pressable>
+            )}
+
+            {/* The way out, at the end of the card as well as in its corner. The 5-dot
+                cross in the header is where a dialog is closed from; on a card this long
+                it is also the one control that has scrolled a thumb's length away by the
+                time you are done reading. The stronger fill under COMPARE WITH ME rather
+                than beside it: closing is what you do here, comparing is what you might. */}
+            <Pressable
+              onPress={close}
+              className="items-center rounded-2xl bg-strong py-3.5"
+            >
+              <Text
+                selectable={false}
+                className="font-mono text-[12px] font-black tracking-[1.5px] text-on-strong"
+              >
+                <Trans>CLOSE</Trans>
+              </Text>
+            </Pressable>
           </View>
 
           {editingMotto && profile !== null && (
