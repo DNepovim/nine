@@ -26,18 +26,25 @@ import { Pressable, Text } from 'react-native'
 // as the thing the eye lands on.
 const ICON = 24
 
+// Ionicons' pause glyph is drawn narrow for its height — two hairlines with a wide gap,
+// which reads as thinner than the type beside it. Stretching it horizontally gives the
+// bars the weight the row wants without touching their height.
+const GLYPH_WIDEN = 1.2
+
 // Ionicons draw inside a square with transparent padding, so a glyph flushed to the end
 // of its row still stops short of the edge. The score below is a text run with no such
 // inset, and the two columns visibly failed to line up. This cancels the padding so the
-// bars sit over the score's last digit rather than a few pixels inside it.
-const GLYPH_INSET = -3
+// bars sit over the score's last digit rather than a few pixels inside it. The widening
+// above is a transform, so it never reaches layout — the half it spills past the right
+// edge has to be paid back here by hand.
+const GLYPH_INSET = -3 + (ICON * (GLYPH_WIDEN - 1)) / 2
 
 export function PauseButton({ color, onPress }: { color: string; onPress: () => void }) {
   return (
     <Pressable
       onPress={onPress}
       hitSlop={14}
-      className="flex-row items-center gap-1.5"
+      className="flex-row items-center gap-1"
       accessibilityRole="button"
     >
       <Text
@@ -50,7 +57,10 @@ export function PauseButton({ color, onPress }: { color: string; onPress: () => 
         name="pause"
         size={ICON}
         color={color}
-        style={{ marginRight: GLYPH_INSET }}
+        style={{
+          marginRight: GLYPH_INSET,
+          transform: [{ scaleX: GLYPH_WIDEN }],
+        }}
       />
     </Pressable>
   )
