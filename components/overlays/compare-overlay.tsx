@@ -33,8 +33,11 @@ export function CompareOverlay({
 
   const comparison = myProfile === null ? null : compareProfiles(myProfile, theirProfile)
 
+  // `replacing`: this table only ever opens from the bottom of a profile card, and it
+  // opens under that card. It is covered for the length of the profile's exit, so it is
+  // there in full the moment that card clears rather than fading up through it.
   return (
-    <ModalCard title={t`COMPARE`} onDismiss={onClose} maxHeight={height * 0.85}>
+    <ModalCard title={t`COMPARE`} onDismiss={onClose} maxHeight={height * 0.85} replacing>
       {(close) => (
         <View className="shrink gap-3">
           {/* Who is in which column, stated once at the top rather than left to the

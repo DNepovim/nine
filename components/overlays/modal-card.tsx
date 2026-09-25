@@ -45,6 +45,7 @@ export function ModalCard({
   icon,
   onDismiss,
   maxHeight,
+  replacing = false,
   children,
 }: {
   // Left off by a dialog whose subject names itself — the profile card, whose first
@@ -56,6 +57,12 @@ export function ModalCard({
   titleColor?: string
   // Drawn before the title, for a dialog whose subject has a mark of its own.
   icon?: ReactNode
+  // Set by a dialog that opens *underneath* the one it takes the place of — the
+  // comparison under the profile it was asked for from. It is covered at the moment it
+  // mounts, so there is nothing for an entrance to play to; worse, two scrims fading in
+  // opposite directions thin out together and let the game flash between the cards. This
+  // one is simply already there when the card above it clears.
+  replacing?: boolean
   // Called once the exit animation has finished, never at the moment it starts — this is
   // what unmounts the dialog, and unmounting it early is what the animation is for.
   onDismiss: () => void
@@ -66,15 +73,16 @@ export function ModalCard({
 }) {
   const { colorScheme } = useTheme()
   const dotColor = colorScheme === 'dark' ? '#2A2B44' : '#D4D0C8'
-  const fade = useSharedValue(0)
+  const fade = useSharedValue(replacing ? 1 : 0)
   const scale = useSharedValue(1)
-  const lift = useSharedValue(ENTER_OFFSET)
+  const lift = useSharedValue(replacing ? 0 : ENTER_OFFSET)
   const fadeStyle = useAnimatedStyle(() => ({ opacity: fade.value }))
   const cardStyle = useAnimatedStyle(() => ({
     transform: [{ translateY: lift.value }, { scale: scale.value }],
   }))
 
   useEffect(() => {
+    if (replacing) return
     fade.value = withTiming(1, { duration: ENTER_MS })
     lift.value = withTiming(0, { duration: ENTER_MS, easing: Easing.out(Easing.cubic) })
   }, [])

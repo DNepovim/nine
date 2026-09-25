@@ -46,22 +46,12 @@ export function PlayerProfileProvider({
   return (
     <ProfileModalContext.Provider value={value}>
       {children}
-      {userId !== null && (
-        <PlayerProfileOverlay
-          userId={userId}
-          viewerId={viewerId}
-          // Left off while the sign-in has not landed: there is no viewer to compare
-          // against yet, and the card reads the absence of this as "no button".
-          onCompare={viewerId === null ? undefined : setRival}
-          onClose={() => {
-            setUserId(null)
-          }}
-        />
-      )}
-      {/* Both can be mounted for the length of one exit animation — the profile fading
-          out while the table fades in. That overlap is the transition, not a state:
-          `onCompare` fires before the card closes precisely so the two cross rather than
-          the screen going bare between them.
+      {/* Drawn before the profile so it sits under it. Both are mounted for the length of
+          one exit animation — `onCompare` fires before the card closes precisely so the
+          two cross rather than the screen going bare between them — and the order is what
+          makes that a cross-fade: the table is up in full behind the profile, and the
+          profile fades off it. Sibling dialogs share one z-index, so this is the only
+          thing deciding which of the two is on top.
 
           Closing this returns the player to whatever they opened the name from. The
           profile is already gone by then, and putting it back would make a table they
@@ -72,6 +62,18 @@ export function PlayerProfileProvider({
           theirProfile={rival}
           onClose={() => {
             setRival(null)
+          }}
+        />
+      )}
+      {userId !== null && (
+        <PlayerProfileOverlay
+          userId={userId}
+          viewerId={viewerId}
+          // Left off while the sign-in has not landed: there is no viewer to compare
+          // against yet, and the card reads the absence of this as "no button".
+          onCompare={viewerId === null ? undefined : setRival}
+          onClose={() => {
+            setUserId(null)
           }}
         />
       )}
