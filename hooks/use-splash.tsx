@@ -29,8 +29,8 @@ const SplashContext = createContext<SplashState>({
 })
 
 // The intro splash covers the whole app while the screens beneath it are already
-// mounted. Anything time-based down there — the tutorial's opening countdown —
-// has to wait for this, or it burns through while nobody can see it.
+// mounted. Anything time-based down there — a target's ring, the welcome run — has to
+// wait for this, or it burns through while nobody can see it.
 //
 // It starts already finished when this launch is the reload a service-worker update ends
 // in. The player was looking at the app a second ago and did not ask to go anywhere, so

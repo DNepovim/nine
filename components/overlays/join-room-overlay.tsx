@@ -19,9 +19,9 @@ const shadow = {
 const CODE_LENGTH = 4
 
 // Its own screen rather than a panel on the intro: the code, the keyboard and a
-// CTA are the whole of the task here, and giving them the screen the tutorial or
-// options gets is what makes JOIN ROOM a destination instead of a field to fill in
-// on the way past.
+// CTA are the whole of the task here, and giving them the screen the guide or options
+// gets is what makes JOIN ROOM a destination instead of a field to fill in on the way
+// past.
 //
 // Joining is the button's job now, not the fourth digit's — WITH FRIENDS used to
 // submit the moment a code hit length 4, which meant a mistyped digit could send a

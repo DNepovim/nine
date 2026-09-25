@@ -170,7 +170,12 @@ export function ModeSelector({
                     bgRight.value = e.nativeEvent.layout.x + e.nativeEvent.layout.width
                   }
                 }}
-                className="px-2 py-2"
+                // Tighter than the text wants on its own — the pill behind the tabs
+                // takes its height from this padding, and a shorter pill leaves the
+                // intro's stack of rows room to breathe. hitSlop puts back the touch
+                // the padding no longer provides.
+                className="px-2 py-1"
+                hitSlop={{ top: 6, bottom: 6 }}
                 style={!isActive ? { opacity: 0.6 } : undefined}
               >
                 <Text
@@ -200,7 +205,8 @@ export function ModeSelector({
                   bgRight.value = e.nativeEvent.layout.x + e.nativeEvent.layout.width
                 }
               }}
-              className="px-2 py-2"
+              className="px-2 py-1"
+              hitSlop={{ top: 6, bottom: 6 }}
             >
               <Text
                 selectable={false}

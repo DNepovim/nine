@@ -44,7 +44,7 @@ export function SplashScreen({
   onExit: () => void
   // Keep the finished logo on screen instead of playing the exit. Set while the
   // install popup is up: it is shown over the splash, so what is underneath it must
-  // stay covered — the game and the tutorial are already mounted down there.
+  // stay covered — the game is already mounted down there.
   hold: boolean
   // Whether the logo may start at all. False while the launch is still asking storage
   // whether it owes the player a run in progress: a splash that had begun fading its

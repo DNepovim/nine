@@ -31,6 +31,17 @@ const TABS = ['today', 'week', 'forever'] as const satisfies readonly [
   ...LeaderboardTab[],
 ]
 
+// Whoever is top of a board, as the app has to draw them: the name, and the two career
+// averages that name is coloured by. The three travel together because they are never
+// read apart — a nickname without its factors is a name in the wrong colour.
+export type RecordHolder = {
+  // Whose profile the strip opens when their record is tapped.
+  userId: string
+  nickname: string
+  avgAccuracy: number | null
+  avgSpeed: number | null
+}
+
 // One period of one board (mode × difficulty), as everything on screen sees it.
 export type PeriodBoard = {
   rows: LeaderboardRow[]
@@ -43,6 +54,9 @@ export type PeriodBoard = {
   // Whether that record is the player's own. False on a board with no record at all,
   // so nothing has to check for both.
   recordIsMine: boolean
+  // Who set it, as the board spells them. Null on a board with no record — the same
+  // silence `record` keeps, and for the same reason: nobody holds nothing.
+  recordHolder: RecordHolder | null
   // Known to hold no score at all — the request came back and brought nothing. False
   // whenever we could not find out, so a board we failed to read is never mistaken for
   // an empty one.
@@ -89,6 +103,7 @@ const NO_PERIOD: PeriodBoard = {
   ...EMPTY,
   record: null,
   recordIsMine: false,
+  recordHolder: null,
   empty: false,
   myBest: 0,
   unpublished: null,
@@ -168,6 +183,15 @@ function toPeriod(
     ...fetched,
     record: top?.best_score ?? null,
     recordIsMine: top !== undefined && userId !== null && top.user_id === userId,
+    recordHolder:
+      top === undefined
+        ? null
+        : {
+            userId: top.user_id,
+            nickname: top.nickname,
+            avgAccuracy: top.avg_acc,
+            avgSpeed: top.avg_spd,
+          },
     empty: fetched.error === null && !fetched.loading && fetched.rows.length === 0,
     myBest: Math.max(serverBest, local ?? 0),
     unpublished,

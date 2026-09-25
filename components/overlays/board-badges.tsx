@@ -10,6 +10,18 @@ import {
   type Mode,
 } from '@/machines/game'
 
+// Lifted off the screen the way every other gradient pill here is — the pill itself
+// carries the colour, the shadow says it sits above the copy around it. On the outer
+// view, not the clipped one: `overflow-hidden` is what keeps the gradient inside the
+// corners, and a clipped layer casts no shadow.
+const shadow = {
+  shadowColor: '#000',
+  shadowOpacity: 0.2,
+  shadowOffset: { width: 0, height: 3 },
+  shadowRadius: 6,
+  elevation: 3,
+}
+
 // Which board the run was played on, worn the way the menu wears it: the mode and its
 // difficulty as gradient pills, the same white-on-mode-gradient the selectors give the
 // option you picked. There they are the choice; here they are the record of it, so
@@ -33,12 +45,19 @@ export function BoardBadges({
   return (
     <View className="mb-5 flex-row items-center gap-2">
       {labels.map((label) => (
-        <View key={label} className="overflow-hidden rounded-lg">
+        <View
+          key={label}
+          className="rounded-lg"
+          // The opaque ground iOS draws the shadow from: a transparent view has no
+          // shape to cast one, and this is the gradient's own first stop, so nothing
+          // of it shows past the pill on top.
+          style={{ ...shadow, backgroundColor: MODE_GRADIENT[gameMode][0] }}
+        >
           <LinearGradient
             colors={[...MODE_GRADIENT[gameMode]]}
             start={{ x: 0, y: 0.5 }}
             end={{ x: 1, y: 0.5 }}
-            className="px-3 py-1"
+            className="overflow-hidden rounded-lg px-3 py-1"
           >
             <Text
               selectable={false}

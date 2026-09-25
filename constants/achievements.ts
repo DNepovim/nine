@@ -164,9 +164,10 @@ export const ACHIEVEMENTS = {
     group: 'firstSteps',
     emblem: '🎓',
     title: msg`GRADUATE`,
-    // The app stores one flag for "done with the tutorial" and does not tell reaching the
-    // end from deciding you have seen enough. The wording follows what is actually known.
-    hint: msg`Get through the tutorial.`,
+    // The app stores one flag for "the guide has been closed" and does not tell reading it
+    // through from scrolling to the one section you came for. The wording follows what is
+    // actually known — opening it is the whole of the ask.
+    hint: msg`Open the How to Play guide.`,
   },
   firstRun: {
     group: 'firstSteps',

@@ -209,7 +209,10 @@ export function DifficultySelector({
                 return next
               })
             }}
-            className="px-2 py-1"
+            // See ModeSelector: the row's height is this padding, and hitSlop keeps
+            // the tap the same size as the copy gets shorter.
+            className="px-2 py-0.5"
+            hitSlop={{ top: 6, bottom: 6 }}
           >
             <Animated.Text
               selectable={false}

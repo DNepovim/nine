@@ -2,10 +2,14 @@ import { Trans } from '@lingui/react/macro'
 import { LinearGradient } from 'expo-linear-gradient'
 import { Pressable, Text, View } from 'react-native'
 
-// Shown under the board while the player has unpublished local scores and no
-// nickname — the one thing standing between those scores and the real leaderboard.
+// Shown under the board for as long as the player has no nickname — the one thing
+// standing between their scores and the real leaderboard, whether those scores are
+// already on the device or still to be played.
+//
 // The button carries the call to action; the reason sits under it, outside the pill,
-// so the button itself stays as short as the mode gradients it borrows from.
+// so the button itself stays as short as the mode gradients it borrows from. The reason
+// reads forward on purpose — a player with nothing saved yet is being told what the
+// nickname is for, not what it would rescue.
 export function PublishScoresButton({
   from,
   to,

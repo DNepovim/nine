@@ -48,7 +48,6 @@ import { NewsArchiveOverlay } from '@/components/overlays/news-archive-overlay'
 import { NicknameModal } from '@/components/overlays/nickname-modal'
 import { PausedOverlay } from '@/components/overlays/paused-overlay'
 import { StepUpOverlay } from '@/components/overlays/step-up-overlay'
-import { TutorialOverlay } from '@/components/overlays/tutorial/tutorial-overlay'
 import { WhatsNewOverlay } from '@/components/overlays/whats-new-overlay'
 import { Screen } from '@/components/screen'
 import type { AchievementId } from '@/constants/achievements'
@@ -67,6 +66,7 @@ import { useFeedbackReplies } from '@/hooks/use-feedback-replies'
 import { useFloatingPoints } from '@/hooks/use-floating-points'
 import { useFloatingStat } from '@/hooks/use-floating-stat'
 import { useHitCelebration } from '@/hooks/use-hit-celebration'
+import { useHowToPlay } from '@/hooks/use-how-to-play'
 import { useInstall } from '@/hooks/use-install'
 import { useLostMedals } from '@/hooks/use-lost-medals'
 import { useMedalHistory } from '@/hooks/use-medal-history'
@@ -91,7 +91,6 @@ import { useSupabaseAuth } from '@/hooks/use-supabase-auth'
 import { useTargetSpawner } from '@/hooks/use-target-spawner'
 import { useTheme } from '@/hooks/use-theme'
 import { useTraineeCoach } from '@/hooks/use-trainee-coach'
-import { useTutorial } from '@/hooks/use-tutorial'
 import { useWelcome } from '@/hooks/use-welcome'
 import { idsOf, latestAchievement } from '@/lib/achievement-store'
 import { achievementCard } from '@/lib/achievements'
@@ -216,16 +215,14 @@ function feedbackGameState(
 // Every screen but a live run gets the bookmark — except game over, which holds it
 // back until the death cinematic has actually landed (see gameOverBookmarkReady).
 //
-// A lesson counts as a live run: it hands the player a real dial, and a tab a thumb
-// could graze has no more business there than it has over the game. The archive keeps
-// its DONE button exactly where the bookmark would land.
+// The archive keeps its DONE button exactly where the bookmark would land, so it takes
+// the tab away for as long as it is up.
 function showFeedbackBookmark({
   isPlaying,
   showMultiGame,
   feedbackOpen,
   isGameOver,
   gameOverBookmarkReady,
-  inLesson,
   inArchive,
 }: {
   isPlaying: boolean
@@ -233,10 +230,9 @@ function showFeedbackBookmark({
   feedbackOpen: boolean
   isGameOver: boolean
   gameOverBookmarkReady: boolean
-  inLesson: boolean
   inArchive: boolean
 }): boolean {
-  if (isPlaying || showMultiGame || feedbackOpen || inLesson || inArchive) return false
+  if (isPlaying || showMultiGame || feedbackOpen || inArchive) return false
   return !isGameOver || gameOverBookmarkReady
 }
 
@@ -398,20 +394,8 @@ export default function GameScreen() {
     if (isPlaying) setMenuOverlay('none')
   }, [isPlaying])
 
-  // The guide. Opened from How to Play and nowhere else — a first launch gets the
-  // welcome run below instead of a wall of lessons.
-  const tutorial = useTutorial()
-
-  const handleTutorialNext = useCallback(() => {
-    if (!tutorial.isLast) {
-      tutorial.goTo(tutorial.step + 1)
-      return
-    }
-    // The last screen's CTA drops the player straight into a Trainee run.
-    tutorial.dismiss()
-    send({ type: 'SET_MODE', mode: 'trainee' })
-    send({ type: 'START', now: Date.now() })
-  }, [tutorial, send])
+  // Whether the guide has been read, for the one achievement that asks.
+  const howToPlay = useHowToPlay()
 
   // A device nobody has played on opens into a practice run rather than into the intro:
   // the fastest thing the app can say about itself is the game itself, and Trainee's
@@ -472,7 +456,7 @@ export default function GameScreen() {
 
   // Answers to messages the player sent, asked for once the session is known. Shown on
   // the intro, ahead of the news — a reply written to you personally outranks a release
-  // note, and both wait for the tutorial.
+  // note.
   const feedbackReplies = useFeedbackReplies(userId, isReady)
 
   const [showNicknameModal, setShowNicknameModal] = useState(false)
@@ -639,7 +623,7 @@ export default function GameScreen() {
     // screen pays out for, read from the same two ids.
     crown: holdsCrown(userId, champions),
     crossed,
-    tutorialDone: tutorial.finished,
+    guideRead: howToPlay.read,
     userId,
     onUnlocked: achievementQueue.push,
   })
@@ -974,7 +958,6 @@ export default function GameScreen() {
     isMenu &&
     menuOverlay === 'none' &&
     !isMultiActive &&
-    !tutorial.visible &&
     welcome.decided &&
     !welcome.pending &&
     // A run the app was closed on is still being asked about, or is on its way into the
@@ -1083,12 +1066,19 @@ export default function GameScreen() {
                 send({ type: 'PAUSE', now: Date.now() })
                 setAskedAchievement(id)
               }}
+              onPause={() => {
+                send({ type: 'PAUSE', now: Date.now() })
+              }}
+              viewerId={userId}
               score={state.context.score}
               yourBest={stats[mode][difficulty].score}
               loaded={board.loaded}
               todayIsMine={board.today.recordIsMine}
               weekIsMine={board.week.recordIsMine}
               everIsMine={board.forever.recordIsMine}
+              todayHolder={board.today.recordHolder}
+              weekHolder={board.week.recordHolder}
+              everHolder={board.forever.recordHolder}
               today={bestToday}
               week={bestWeek}
               ever={bestEver}
@@ -1550,10 +1540,7 @@ export default function GameScreen() {
             <HowToPlayOverlay
               onClose={() => {
                 setMenuOverlay('none')
-              }}
-              onStartTutorial={() => {
-                setMenuOverlay('none')
-                tutorial.open()
+                howToPlay.markRead()
               }}
             />
           )}
@@ -1572,27 +1559,6 @@ export default function GameScreen() {
             />
           )}
 
-          {/* ── Tutorial ── */}
-          {tutorial.visible && (
-            <TutorialOverlay
-              isDark={isDark}
-              step={tutorial.step}
-              stepId={tutorial.stepId}
-              isLast={tutorial.isLast}
-              onPrev={() => {
-                tutorial.goTo(tutorial.step - 1)
-              }}
-              onNext={handleTutorialNext}
-              onSelectStep={(index) => {
-                tutorial.goTo(index)
-              }}
-              onStepDone={() => {
-                tutorial.markStepDone(tutorial.step)
-              }}
-              onDismiss={tutorial.dismiss}
-            />
-          )}
-
           {/* ── A reply to something the player sent ── */}
           {/* First of the three launch dialogs. Somebody answering what you wrote is the
             one of them addressed to you by name, and it would be a poor thing to meet
@@ -1608,9 +1574,8 @@ export default function GameScreen() {
           )}
 
           {/* ── What's new — announcements the player hasn't seen yet ── */}
-          {/* Never over the tutorial. A first-ever launch has nothing unseen to show
-            (use-whats-new.ts marks everything seen when there is no record at all), but
-            the tutorial replays from How to Play, and a returning player can have both.
+          {/* A first-ever launch has nothing unseen to show — use-whats-new.ts marks
+            everything seen when there is no record at all.
 
             Waits on the reply request the same way the install prompt waits on this one:
             `ready` is what says "asked and answered", and painting before it would put
@@ -1625,10 +1590,9 @@ export default function GameScreen() {
           {/* ── Install prompt — web only, and only once the news has had its turn.
             Every launch until the player installs: closing it lasts the session.
 
-            The ask normally happens earlier, over the splash, where it comes before the
-            tutorial instead of behind it (app/_layout.tsx). This is the launch that has
-            no splash to hold — the reload a service-worker update ends in — so `splashDone`
-            is what keeps the two copies from ever being up at once. ── */}
+            The ask normally happens earlier, over the splash (app/_layout.tsx). This is
+            the launch that has no splash to hold — the reload a service-worker update ends
+            in — so `splashDone` is what keeps the two copies from ever being up at once. ── */}
           {splashDone &&
             onIntro &&
             feedbackReplies.ready &&
@@ -1705,7 +1669,6 @@ export default function GameScreen() {
             feedbackOpen,
             isGameOver,
             gameOverBookmarkReady,
-            inLesson: tutorial.visible,
             inArchive: menuOverlay === 'news',
           }) && (
             <FeedbackBookmark

@@ -6,23 +6,18 @@ import { dialMetrics } from '@/lib/dial-metrics'
 // Every file that draws a dial button, and the one hook all of them size from.
 //
 // This is asserted rather than described because two earlier attempts at it failed in
-// production. The first let a lesson pass `extraChrome` so its heading had room, which
-// put the tutorial's button at 30pt against the game's 78pt. The second moved the game
+// production. The first let a screen pass `extraChrome` so its heading had room, which
+// put that screen's button at 30pt against the game's 78pt. The second moved the game
 // onto a hook that derived the dial from leftover *height* — the HUD, the score strip,
 // the sum row, Trainee's stat block, four hand-maintained numbers modelling a layout
 // nobody measured — and it was wrong by enough on a real phone that the buttons stopped
 // fitting three to a row and the dial collapsed into a column.
 //
 // Width is what makes the third attempt hold: the dial spans it, and nothing stacked
-// above the dial can change how wide the screen is. So a lesson and a run genuinely get
-// the same number, and the guarantee is a property of the arithmetic rather than a hope
-// about constants.
-const DRAWS_A_DIAL = [
-  'app/(tabs)/index.tsx',
-  'components/game/multiplayer-game.tsx',
-  'components/overlays/tutorial/live-dial-grid.tsx',
-  'components/overlays/tutorial/lessons/controls-lesson.tsx',
-]
+// above the dial can change how wide the screen is. So a solo run and a shared one
+// genuinely get the same number, and the guarantee is a property of the arithmetic
+// rather than a hope about constants.
+const DRAWS_A_DIAL = ['app/(tabs)/index.tsx', 'components/game/multiplayer-game.tsx']
 
 const read = (path: string): string => readFileSync(path, 'utf8')
 const hook = () => read('hooks/use-dial-metrics.ts')
@@ -52,17 +47,10 @@ describe('the dial button is one size everywhere', () => {
   it('reserves the sum row on every screen that draws a dial', () => {
     // The slot above the dial is a fixed height, not whatever the digits happen to
     // need. Two reasons, and the second is why this is asserted: the dial does not
-    // shift when the sum goes from 0 to 324, and a lesson puts it at the same height a
-    // run does — which is half of what "the same dial everywhere" means. The other
-    // half is the button size above.
-    // The files that own a vertical layout, rather than every file that draws a
-    // button: the grid is handed its place, and a lesson gets the slot from DialStage.
-    const OWNS_THE_COLUMN = [
-      'app/(tabs)/index.tsx',
-      'components/game/multiplayer-game.tsx',
-      'components/overlays/tutorial/dial-stage.tsx',
-    ]
-    for (const path of OWNS_THE_COLUMN) {
+    // shift when the sum goes from 0 to 324, and a shared run puts it at the same
+    // height a solo one does — which is half of what "the same dial everywhere" means.
+    // The other half is the button size above.
+    for (const path of DRAWS_A_DIAL) {
       expect(read(path), path).toContain('SUM_ROW_HEIGHT')
     }
   })

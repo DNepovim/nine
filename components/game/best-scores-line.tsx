@@ -13,11 +13,13 @@ import Animated, {
 
 import DSEG7Font from '@/assets/fonts/DSEG7Classic-Bold.ttf'
 import { AnnouncementBar } from '@/components/game/announcement-bar'
-import { BestScoreCell } from '@/components/game/best-score-cell'
+import { BEST_CELL_HEIGHT, BestScoreCell } from '@/components/game/best-score-cell'
 import type { AchievementId } from '@/constants/achievements'
 import { GOLD_INK, SPECTRUM } from '@/constants/colors'
 import { mono } from '@/constants/theme'
+import type { RecordHolder } from '@/hooks/use-board'
 import { useOnline } from '@/hooks/use-online'
+import { useOpenProfile } from '@/hooks/use-profile-modal'
 import { useTheme } from '@/hooks/use-theme'
 import { announcementStyle } from '@/lib/announcement-style'
 import { RUN_SETTLE_MS, type Announcement } from '@/lib/announcements'
@@ -26,15 +28,35 @@ import type { Mode } from '@/machines/modes'
 
 type BestKey = 'you' | 'today' | 'week' | 'ever'
 
-// A score that survived the "is there anything to show?" filter.
-type ShownBest = { key: BestKey; value: number; mine: boolean }
+// A score that survived the "is there anything to show?" filter, with whatever goes on
+// the line under it: a player to name, or a word where a name would be the wrong thing
+// to write. Never both, and never neither — see `secondLine`.
+type ShownBest = {
+  key: BestKey
+  value: number
+  mine: boolean
+  holder: RecordHolder | null
+  sub: string | null
+  // Whose profile this cell opens, or null where there is nobody behind it to read.
+  profileId: string | null
+}
 
 const BEST_LABELS = {
-  you: msg`YOU`,
+  you: msg`YOUR`,
   today: msg`TODAY`,
   week: msg`WEEK`,
   ever: msg`EVER`,
 } as const satisfies Record<BestKey, MessageDescriptor>
+
+// The player's own cell is one phrase across the cell's two lines — YOUR / BEST — where
+// the other three are a period over the player holding it. It reads as a label rather
+// than as a name because that is what it is: the one score on this row that is not a
+// record anybody holds, just the best the device remembers.
+const YOUR_BEST = msg`BEST`
+
+// A record the player holds names them as YOU. Their own nickname would be the board
+// telling them who they are, and it is the only name on the row they already know.
+const HELD_BY_ME = msg`YOU`
 
 // One step along the game spectrum per score, coolest to hottest: your own best,
 // then the day, the week, and all time.
@@ -63,16 +85,16 @@ const REVEAL_MAX_MS = 5000
 const REVEAL_MS = 400
 const DROP_FROM = -6
 
-// The row's height is fixed so the empty bar reserves exactly the space the scores
-// will occupy — otherwise the whole top bar would jump down when they appear.
-const ROW_HEIGHT = 14
-
-// What the whole strip occupies: the row, the gap above its hairline, the rule
-// itself, and the margin below. Exported because Trainee renders no strip, and
-// the absolutely-positioned menu button has to come up by exactly this much to
-// stay level with the NINE row — deriving it beats a second hard-coded number
-// that would silently drift if any of these changed.
-const BEST_SCORES_HEIGHT = ROW_HEIGHT + 4 + 1 + 6
+// What the whole strip occupies: the row of cells, the gap above its hairline, the rule
+// itself, and the margin below. The row is one cell high, and that height is the cell's
+// to state — a label over a name, as tall as the number beside them. It is fixed either
+// way, so the empty bar reserves exactly the space the scores will occupy rather than
+// letting the whole top bar jump down when they appear.
+//
+// Exported because Trainee renders no strip, and the absolutely-positioned menu button
+// has to come up by exactly this much to stay level with the NINE row — deriving it
+// beats a second hard-coded number that would silently drift if any of these changed.
+const BEST_SCORES_HEIGHT = BEST_CELL_HEIGHT + 4 + 1 + 6
 
 // A hairline strip above the top bar: the player's best on this board next to the
 // day, week and all-time bests. Your own best always shows, as 0 until you set one —
@@ -84,6 +106,8 @@ export function BestScoresLine({
   mode,
   announcement,
   onOpenAchievement,
+  onPause,
+  viewerId,
   score,
   yourBest,
   loaded,
@@ -93,6 +117,9 @@ export function BestScoresLine({
   todayIsMine,
   weekIsMine,
   everIsMine,
+  todayHolder,
+  weekHolder,
+  everHolder,
 }: {
   // True for the whole of a run, pauses included, so resuming does not restart the
   // countdown — the same notion of "in a run" the menu button uses.
@@ -105,6 +132,16 @@ export function BestScoresLine({
   // record is a moment with nothing behind it to read, where an achievement is a thing
   // the player keeps and the bar only has room for its name.
   onOpenAchievement: (id: AchievementId) => void
+  // Stops the run, because tapping a name here opens a modal to read and a run does not
+  // wait. The profile itself is opened from inside this component rather than handed up:
+  // the provider that owns that modal is mounted below the game screen, so this is the
+  // first place in the tree that can ask for it. The screen is left with the one half of
+  // the gesture it alone can do.
+  onPause: () => void
+  // Who is looking, so the cell that says YOUR BEST can open their own profile — it is
+  // the one score on the row with no board row behind it to name. Null before the
+  // anonymous sign-in has landed, which takes the press off that cell and nothing else.
+  viewerId: string | null
   // The live score — read only to find which of the four cells below is worth a
   // nudge, never displayed itself. See lib/near-record.ts.
   score: number
@@ -120,9 +157,17 @@ export function BestScoresLine({
   todayIsMine: boolean
   weekIsMine: boolean
   everIsMine: boolean
+  // Who holds each board's record, with the averages their name is coloured by. Null for
+  // a board with no record on it, or one whose rows have not arrived. The player's own
+  // record is named by the flags above instead: a nickname is what the board calls
+  // somebody else, and reading your own back at you is the one place it is the wrong word.
+  todayHolder: RecordHolder | null
+  weekHolder: RecordHolder | null
+  everHolder: RecordHolder | null
 }) {
   const { t } = useLingui()
   const { colorScheme } = useTheme()
+  const openProfile = useOpenProfile()
   const online = useOnline()
   const [dsegLoaded] = useFonts({ DSEG7: DSEG7Font })
   const [delayDone, setDelayDone] = useState(false)
@@ -215,6 +260,31 @@ export function BestScoresLine({
     ever: everIsMine,
   } as const satisfies Record<BestKey, boolean>
 
+  const holders = {
+    you: null,
+    today: todayHolder,
+    week: weekHolder,
+    ever: everHolder,
+  } as const satisfies Record<BestKey, RecordHolder | null>
+
+  // Whose profile each cell opens. A record the player holds resolves to the same id
+  // either way — the board's top row *is* them — so ownership needs no case of its own.
+  const profileIds = {
+    you: viewerId,
+    today: todayHolder?.userId ?? null,
+    week: weekHolder?.userId ?? null,
+    ever: everHolder?.userId ?? null,
+  } as const satisfies Record<BestKey, string | null>
+
+  // What goes under each label. Exactly one of the two is ever set: the player's own
+  // cell and a record they hold say a word, every other cell draws a name, and a board
+  // with no record at all leaves the line empty rather than inventing a holder for it.
+  const secondLine = (key: BestKey): Pick<ShownBest, 'holder' | 'sub'> => {
+    if (key === 'you') return { holder: null, sub: t(YOUR_BEST) }
+    if (heldByMe[key]) return { holder: null, sub: t(HELD_BY_ME) }
+    return { holder: holders[key], sub: null }
+  }
+
   const digitFont = dsegLoaded ? 'DSEG7' : mono
   const mineColor = GOLD_INK[colorScheme === 'dark' ? 'dark' : 'light']
   // An untouched board reads as 0 rather than vanishing and leaving a ragged row.
@@ -223,7 +293,13 @@ export function BestScoresLine({
   // than one that simply cannot be reached.
   const shownKeys = online ? BEST_ORDER : (['you'] as const satisfies readonly BestKey[])
   const shown: ShownBest[] = revealed
-    ? shownKeys.map((key) => ({ key, value: values[key] ?? 0, mine: heldByMe[key] }))
+    ? shownKeys.map((key) => ({
+        key,
+        value: values[key] ?? 0,
+        mine: heldByMe[key],
+        profileId: profileIds[key],
+        ...secondLine(key),
+      }))
     : []
   // The achievement the bar is currently offering to open, if any. Nothing to open while
   // the line is wiping away: a message on its way out is not one to be asked about, and
@@ -245,24 +321,36 @@ export function BestScoresLine({
 
   return (
     <View className="mb-1.5">
-      <View style={{ height: ROW_HEIGHT }}>
+      <View style={{ height: BEST_CELL_HEIGHT }}>
         <Animated.View
           style={[
             { position: 'absolute', top: 0, right: 0, bottom: 0, left: 0 },
             revealStyle,
           ]}
-          className="flex-row items-baseline justify-between"
+          className="flex-row items-center justify-between"
         >
-          {shown.map(({ key, value, mine }) => (
+          {shown.map(({ key, value, mine, holder, sub, profileId }) => (
             <BestScoreCell
               key={key}
               label={t(BEST_LABELS[key])}
               value={value}
               color={BEST_COLORS[key]}
               digitFont={digitFont}
+              holder={holder}
+              sub={sub}
               mine={mine}
               mineColor={mineColor}
               pulsing={key === nearKey}
+              // The run stops first. A profile is a card to read, and reading it while
+              // the targets keep coming is losing a run to a tap.
+              onPress={
+                profileId === null
+                  ? undefined
+                  : () => {
+                      onPause()
+                      openProfile(profileId)
+                    }
+              }
             />
           ))}
           {revealed && !online && (

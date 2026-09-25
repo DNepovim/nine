@@ -9,8 +9,8 @@ import Animated, {
 } from 'react-native-reanimated'
 import { scheduleOnRN } from 'react-native-worklets'
 
-// Unhurried: the wipe is the whole effect, and at 14px tall it needs the time to be read
-// as a movement rather than a flicker. Shared with the hook, which waits it out between
+// Unhurried: the wipe is the whole effect, and on a strip this thin it needs the time to
+// be read as a movement rather than a flicker. Shared with the hook, which waits it out between
 // two announcements so the second follows the first rather than replacing it.
 import { ANNOUNCEMENT_SWEEP_MS } from '@/lib/announcements'
 

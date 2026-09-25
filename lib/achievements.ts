@@ -117,7 +117,7 @@ export type AchievementFacts = {
   crown: boolean
   // What this run has taken, from the announcement bar's own reckoning.
   crossed: readonly AnnouncementId[]
-  tutorialDone: boolean
+  guideRead: boolean
   now: Date
 }
 
@@ -293,7 +293,7 @@ const readsBothWays = (score: number): boolean => {
 // `announcement-effect.tsx` uses to make an announcement without an effect impossible.
 const RULES = {
   firstHit: (f) => f.career.hits + f.run.hits >= 1,
-  graduate: (f) => f.tutorialDone,
+  graduate: (f) => f.guideRead,
   firstRun: (f) =>
     f.career.boardsPlayed.length > 0 ||
     (f.run.finished && isOneOf(f.run.mode, SCORED_MODES)),

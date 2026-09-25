@@ -68,7 +68,7 @@ const facts = (over: Partial<AchievementFacts> = {}): AchievementFacts => ({
   standings: [],
   crown: false,
   crossed: [],
-  tutorialDone: false,
+  guideRead: false,
   now: new Date('2026-09-17T12:00:00.000Z'),
   ...over,
 })
@@ -525,7 +525,7 @@ describe('earned', () => {
   })
 
   it('returns ids in catalogue order', () => {
-    const f = facts({ career: career({ hits: 1, runs: 10 }), tutorialDone: true })
+    const f = facts({ career: career({ hits: 1, runs: 10 }), guideRead: true })
     const ids = earned(f).map((award) => award.id)
     expect(ids.indexOf('firstHit')).toBeLessThan(ids.indexOf('tenRuns'))
   })
@@ -588,7 +588,7 @@ describe('progressOf', () => {
   })
 
   it('answers zero for an achievement with nothing to count', () => {
-    expect(progressOf('graduate', facts({ tutorialDone: true }))).toBe(0)
+    expect(progressOf('graduate', facts({ guideRead: true }))).toBe(0)
   })
 })
 

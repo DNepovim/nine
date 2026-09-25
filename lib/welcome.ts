@@ -6,8 +6,8 @@ import type { Difficulty, Mode } from '@/machines/game'
 //
 // A player who opens the app for the first time does not get a guide across their screen
 // — they get a Trainee run already going, with the coach's hints teaching in place of the
-// lesson they would have read. The tutorial is still there, one press away in How to
-// Play; it just no longer takes the opening for itself.
+// lesson they would have read. How to Play is still there for anyone who wants reading;
+// it just never takes the opening for itself.
 //
 // The stored flag outlives that one run. It is the second thing this file is for: a
 // player welcomed this way has never seen a scored board, so Trainee keeps offering them

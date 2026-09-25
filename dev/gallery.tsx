@@ -3,6 +3,7 @@ import { useSyncExternalStore } from 'react'
 import { Pressable, ScrollView, Text, View } from 'react-native'
 
 import { StepUpToast } from '@/components/game/step-up-toast'
+import { FeedbackReplyOverlay } from '@/components/overlays/feedback-reply-overlay'
 import { GameOverOverlay } from '@/components/overlays/game-over-overlay'
 import { HowToPlayOverlay } from '@/components/overlays/how-to-play-overlay'
 import { MenuOverlay } from '@/components/overlays/menu-overlay'
@@ -18,15 +19,28 @@ import {
 import { DEFAULT_DIAL_CORNERS } from '@/constants/dial-hints'
 import { GalleryButton } from '@/dev/gallery-button'
 import { ProfileVariant } from '@/dev/profile-variant'
+import {
+  NAME_TAG,
+  SCORE_TAG,
+  ScoreStripVariant,
+  type NameLength,
+  type ScoreLength,
+} from '@/dev/score-strip-variant'
 import type { ShapeKind } from '@/dev/weekly-recap/recap'
 import { WeeklyRecapOverlay } from '@/dev/weekly-recap/recap-overlay'
-import { requestAnnouncement } from '@/hooks/use-announcement-request'
+import { requestAnnouncements } from '@/hooks/use-announcement-request'
 import type { LostMedalNews } from '@/hooks/use-lost-medals'
 import { EMPTY_STORE } from '@/lib/achievement-store'
 import { achievementAnnouncement, type AchievementFacts } from '@/lib/achievements'
-import { announcementFor, type AnnouncementId, type Period } from '@/lib/announcements'
+import {
+  announcementFor,
+  type Announcement,
+  type AnnouncementId,
+  type Period,
+} from '@/lib/announcements'
 import { emptyCareer } from '@/lib/career'
 import type { RecordScreen } from '@/lib/champions'
+import type { FeedbackQuote } from '@/lib/feedback-reply'
 import { gameOverTitle } from '@/lib/game-over-title'
 import type { Medal, MedalPeriod } from '@/lib/medals'
 import {
@@ -106,7 +120,7 @@ const FACTS: AchievementFacts = {
   standings: [],
   crown: false,
   crossed: [],
-  tutorialDone: true,
+  guideRead: true,
   now: new Date(),
 }
 
@@ -442,6 +456,98 @@ const profile = (name: keyof typeof SEED_PLAYERS, mine = false): Variant => ({
   ),
 })
 
+// The answer to a message, as the launch dialog would show it. What varies is the shape
+// of the two texts in the card — a sentence, a couple of bullets, or an answer long enough
+// to scroll — and whether the message being answered came back with it at all.
+//
+// Worth a row of buttons because this is the one dialog nobody can summon on purpose: it
+// needs a row in `feedback` with an answer written by hand, an unseen stamp, and a build
+// gate that lets it through. Seeing the card normally means writing yourself a message and
+// answering it in the database.
+//
+// A fixed date rather than the clock's: the line above the quote is part of what is being
+// looked at, and a date that moves between two runs cannot be compared.
+const SENT_AT = '2026-09-23T18:42:11.000Z'
+
+const QUOTE: FeedbackQuote = {
+  message:
+    'Speed on extreme is great but the strip at the bottom keeps flashing a score I never got. Maybe it is the streak?',
+  sentAt: SENT_AT,
+}
+
+// The longest message a player can send — MAX_FEEDBACK_LENGTH, 800 characters — so the
+// three-line clamp above the answer has something to clamp. A quote that fitted would
+// prove nothing about the case that does not.
+const LONG_QUOTE: FeedbackQuote = {
+  message:
+    'I have been playing since the first week and I want to say the speed mode on extreme is the best thing in the app, but I keep running into the same thing and I am not sure whether it is a bug or whether I am reading the screen wrong. When I miss a target and the strike lands, the counter under the grid carries on for a beat as if the streak were still going, and then it snaps back to zero. The score in the top bar does not do this, only the strip. It happens most when I am dialling fast, which is most of the time on extreme, so it might be that the strip is simply a frame behind everything else and I am seeing the old number. It is not stopping me playing and honestly I only noticed because I was trying to beat my own best on the week board and kept glancing down. Thank you for making this, it is the only game on my phone.',
+  sentAt: SENT_AT,
+}
+
+// The ordinary reply: one sentence, because most answers are one sentence.
+const SHORT_ANSWER =
+  'Fixed in this build — the strip was a frame behind the strike. Thanks for writing in.'
+
+// The shape a longer answer should take rather than a wall of prose, and the one that
+// shows the accent: the bullets and the bold both take the mode colour.
+const BULLET_ANSWER = `Good catch, and it was two things rather than one:
+
+- The streak counter kept counting for a frame after a strike landed.
+- The strip underneath redrew a beat behind the top bar, so you saw the old number twice.
+
+**Both are in this build.** If the count still drifts, send another one — the game state comes with it and that is what found this.`
+
+// Long enough to scroll inside the card's 85% cap, with a heading and a rule in it, so
+// what is being looked at is the scrolling answer against the quote that stays put.
+const LONG_ANSWER = `Thank you — this one took a while to find and your message is what found it.
+
+## What was happening
+
+The strip under the grid reads the run's streak, and the streak was being cleared one frame later than the strike that clears it. On easy that frame passes before your eye gets there. On extreme, dialling as fast as you were, it lands right under the number you were watching.
+
+- The counter is cleared with the strike now, in the same tick.
+- The strip redraws from the same figures as the top bar, so the two cannot disagree again.
+
+---
+
+## What it does not change
+
+Your scores stand. Nothing about scoring moved — the streak the score was paid on was always the right one, it was only the number on screen that lagged.
+
+One more thing, since you mentioned the week board: the strip shows your best for the board you are on, so on extreme it will not follow you to hard. That is deliberate, not the same bug wearing another coat.
+
+Keep them coming.`
+
+const reply = (
+  label: string,
+  answer: string,
+  quote: FeedbackQuote | null,
+  // The card wears the mode colour of the run behind it, which is why two of the entries
+  // below differ in nothing else.
+  mode: Mode = 'accuracy',
+): Variant => ({
+  key: `reply-${label}`,
+  label,
+  render: (close) => (
+    <FeedbackReplyOverlay
+      gameMode={mode}
+      answer={answer}
+      quote={quote}
+      onDismiss={close}
+    />
+  ),
+})
+
+// One cell of the name-length × score-length grid. Every combination rather than a
+// switcher, because the two axes fail differently — a long name is cut to fit, a long
+// number is not — and it is the pairs that are worth looking at: the row has to hold a
+// six-figure record with a sixteen-character name beside it.
+const strip = (names: NameLength, scores: ScoreLength): Variant => ({
+  key: `strip-${names}-${scores}`,
+  label: `${NAME_TAG[names]} · ${SCORE_TAG[scores]}`,
+  render: (close) => <ScoreStripVariant names={names} scores={scores} onClose={close} />,
+})
+
 const SECTIONS: Section[] = [
   {
     // First in the list because it is first on screen. Two of them, because half of what
@@ -501,6 +607,19 @@ const SECTIONS: Section[] = [
     ],
   },
   {
+    // The one row of the game screen drawn from other people's data, and so the one that
+    // breaks on theirs. Each button is a name length and a score length, in that order.
+    title: 'SCORE STRIP · NAME · SCORE',
+    items: [
+      strip('short', 'three'),
+      strip('short', 'five'),
+      strip('short', 'six'),
+      strip('long', 'three'),
+      strip('long', 'five'),
+      strip('long', 'six'),
+    ],
+  },
+  {
     // Read down the column: no record, then each period, then the all-time ladder from
     // a tinted screen to a painted one to a reign.
     title: 'GAME OVER',
@@ -530,9 +649,7 @@ const SECTIONS: Section[] = [
       {
         key: 'how-to-play',
         label: 'HOW TO PLAY',
-        // The gallery shows one component at a time, so the tutorial entry point has
-        // nowhere to lead — it closes the guide, same as the done button.
-        render: (close) => <HowToPlayOverlay onClose={close} onStartTutorial={close} />,
+        render: (close) => <HowToPlayOverlay onClose={close} />,
       },
     ],
   },
@@ -546,6 +663,24 @@ const SECTIONS: Section[] = [
       profile('VORTEX'),
       profile('BLAZE'),
       profile('PIXEL'),
+    ],
+  },
+  {
+    // First of the three launch dialogs, so first of the three here. Read down the
+    // column: the ordinary sentence, then the two longer shapes, then the two halves
+    // that can be missing or oversized, then the same answer in the other two modes.
+    title: 'FEEDBACK REPLY',
+    items: [
+      reply('SHORT', SHORT_ANSWER, QUOTE),
+      reply('BULLETS', BULLET_ANSWER, QUOTE),
+      reply('LONG', LONG_ANSWER, QUOTE),
+      // A message at the 800-character cap, clamped to three lines above a short answer.
+      reply('LONG QUOTE', SHORT_ANSWER, LONG_QUOTE),
+      // A database without the quote migration — see FeedbackReply.quote. The answer
+      // starts at the top of the card and nothing is left where the quote was.
+      reply('NO QUOTE', BULLET_ANSWER, null),
+      reply(MODE_CODE.speed, BULLET_ANSWER, QUOTE, 'speed'),
+      reply(MODE_CODE.trainee, BULLET_ANSWER, QUOTE, 'trainee'),
     ],
   },
   {
@@ -626,11 +761,14 @@ const RIVAL_NAME = 'PETR'
 
 // A roll per press, the way a run takes one: the pools carry three or four wordings each
 // and a fixed roll would only ever show the first.
+const roll = (id: AnnouncementId, name?: string): Announcement =>
+  announcementFor(id, Math.random(), name)
+
 const line = (id: AnnouncementId, label: string, name?: string): Action => ({
   key: `announce-${id}`,
   label,
   run: () => {
-    requestAnnouncement(announcementFor(id, Math.random(), name))
+    requestAnnouncements([roll(id, name)])
   },
 })
 
@@ -640,7 +778,54 @@ const unlock = (key: string, label: string, pick: () => AchievementId): Action =
   key: `announce-achievement-${key}`,
   label,
   run: () => {
-    requestAnnouncement(achievementAnnouncement(pick(), Math.random()))
+    requestAnnouncements([achievementAnnouncement(pick(), Math.random())])
+  },
+})
+
+// One button, one id, one label — the three lists below are the ids the bar can be asked
+// for, and the sections and the bursts are both built from them so neither can name a
+// line the other does not have.
+type Line = { id: AnnouncementId; label: string }
+
+// Your own, in the ladder's own order: the personal best, then the three boards biggest
+// last, then the two openings. Each one plays a different celebration.
+const YOURS: readonly Line[] = [
+  { id: 'record', label: 'BEST' },
+  { id: 'today', label: 'TODAY' },
+  { id: 'week', label: 'WEEK' },
+  { id: 'ever', label: 'EVER' },
+  { id: 'todayFirst', label: 'TODAY 1ST' },
+  { id: 'weekFirst', label: 'WEEK 1ST' },
+]
+
+// Someone else pulling ahead of you. News, and plays nothing at all.
+const RAISED: readonly Line[] = [
+  { id: 'todayRaised', label: 'TODAY UP' },
+  { id: 'weekRaised', label: 'WEEK UP' },
+  { id: 'everRaised', label: 'EVER UP' },
+]
+
+// The same boards taken off you. Each plays the jump run backwards.
+const LOST: readonly Line[] = [
+  { id: 'todayLost', label: 'TODAY LOST' },
+  { id: 'weekLost', label: 'WEEK LOST' },
+  { id: 'everLost', label: 'EVER LOST' },
+]
+
+const rolls = (lines: readonly Line[], name?: string): Announcement[] =>
+  lines.map(({ id }) => roll(id, name))
+
+// Several lines from one press, which is the only way to see the part of the bar that a
+// single line cannot show: the queue. A run hands it a backlog — two records crossed on
+// consecutive hits, an achievement unlocked by the hit that broke a board — and what
+// matters then is not the message but the joins between messages: each one's own way in,
+// its five seconds, its wipe, and the gap before the next is allowed to start. Pressing
+// two buttons quickly builds a queue too, but not a repeatable one.
+const burst = (label: string, build: () => readonly Announcement[]): Action => ({
+  key: `announce-burst-${label}`,
+  label,
+  run: () => {
+    requestAnnouncements(build())
   },
 })
 
@@ -653,30 +838,13 @@ const longestTitle = (): AchievementId =>
 
 const ANNOUNCE: ActionSection[] = [
   {
-    // Your own, in the ladder's own order: the personal best, then the three boards
-    // biggest last, then the two openings. Each one plays a different celebration.
     title: 'ANNOUNCE · YOURS',
-    items: [
-      line('record', 'BEST'),
-      line('today', 'TODAY'),
-      line('week', 'WEEK'),
-      line('ever', 'EVER'),
-      line('todayFirst', 'TODAY 1ST'),
-      line('weekFirst', 'WEEK 1ST'),
-    ],
+    items: YOURS.map(({ id, label }) => line(id, label)),
   },
   {
-    // Someone else's. The first three are news and play nothing at all; the last three
-    // are the same boards taken off you, and each plays the jump run backwards.
+    // Someone else's, raised first and then taken.
     title: 'ANNOUNCE · RIVAL',
-    items: [
-      line('todayRaised', 'TODAY UP', RIVAL_NAME),
-      line('weekRaised', 'WEEK UP', RIVAL_NAME),
-      line('everRaised', 'EVER UP', RIVAL_NAME),
-      line('todayLost', 'TODAY LOST', RIVAL_NAME),
-      line('weekLost', 'WEEK LOST', RIVAL_NAME),
-      line('everLost', 'EVER LOST', RIVAL_NAME),
-    ],
+    items: [...RAISED, ...LOST].map(({ id, label }) => line(id, label, RIVAL_NAME)),
   },
   {
     // Both carry the achievement itself, so tapping the bar opens its card the way a real
@@ -685,6 +853,35 @@ const ANNOUNCE: ActionSection[] = [
     items: [
       unlock('typical', 'TYPICAL', () => 'firstHit'),
       unlock('longest', 'LONGEST', longestTitle),
+    ],
+  },
+  {
+    // Read down the row: a plausible run, then the whole of your own ladder, then three
+    // that undo themselves, then the three kinds against each other, then everything the
+    // three sections above can ask for — around a minute and a half of bar, which is the
+    // case that says whether the queue drains cleanly or drifts.
+    title: 'ANNOUNCE · IN A ROW',
+    items: [
+      // What a good run actually crosses in its first handful of hits: the personal best
+      // and then the two smaller boards, back to back, three celebrations deep.
+      burst('YOURS ×3', () => rolls(YOURS.slice(0, 3))),
+      burst('LADDER ×6', () => rolls(YOURS)),
+      // Three losses running, each one playing the jump backwards — the heaviest thing
+      // the bar does, three times with nothing in between but the wipes.
+      burst('LOST ×3', () => rolls(LOST, RIVAL_NAME)),
+      // One of each kind, in the ladder's order. All three arrive `own: false` from here,
+      // so what is being looked at is the order this list is in rather than the sorting —
+      // that lives in lib/announcement-queue.ts and is pinned by its own tests.
+      burst('MIXED', () => [
+        roll('ever'),
+        achievementAnnouncement('flawlessTen', Math.random()),
+        roll('weekRaised', RIVAL_NAME),
+      ]),
+      burst('ALL', () => [
+        ...rolls(YOURS),
+        ...rolls([...RAISED, ...LOST], RIVAL_NAME),
+        achievementAnnouncement(longestTitle(), Math.random()),
+      ]),
     ],
   },
 ]

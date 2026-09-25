@@ -81,9 +81,8 @@ export function DialButton({
   peakFrom: string
   peakTo: string
   // Which number rides each corner, for a trainee layout — see constants/dial-hints.ts.
-  // Read from the player's own options in the game; left at the defaults everywhere
-  // else, and narrowed by the tutorial while it teaches one at a time. Ignored entirely
-  // when `trainee` is false, which has no badges at all.
+  // Read from the player's own options in the game and left at the defaults everywhere
+  // else. Ignored entirely when `trainee` is false, which has no badges at all.
   corners?: DialCorners
   onDelta: (delta: 1 | -1) => void
   onSet: (value: number) => void

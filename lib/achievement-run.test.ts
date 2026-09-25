@@ -51,7 +51,7 @@ const worldFacts = (
   standings: [],
   crown: false,
   crossed: [],
-  tutorialDone: false,
+  guideRead: false,
   now: new Date('2026-09-17T12:00:00.000Z'),
   ...over,
 })

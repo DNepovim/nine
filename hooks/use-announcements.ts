@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
 
 import {
-  clearAnnouncementRequest,
-  useAnnouncementRequest,
+  clearAnnouncementRequests,
+  useAnnouncementRequests,
 } from '@/hooks/use-announcement-request'
 import type { RivalAnnouncement } from '@/hooks/use-rival-records'
 import { achievementAnnouncement, type Award } from '@/lib/achievements'
@@ -189,19 +189,29 @@ export function useAnnouncements({
     onAchievementAnnouncedRef.current(next)
   }, [inRun, achievements])
 
-  // A line asked for from the dev sidebar. It joins the queue like anything else, so a
+  // Lines asked for from the dev sidebar. They join the queue like anything else, so a
   // button shows what a run shows — the opening quiet, one line at a time, each with its
   // own way in and out — rather than a message painted straight onto the bar.
   //
-  // Taken whether or not there is a run to show it in: the bar is the best-scores strip,
+  // Several at once are appended in the order they were asked for, which is how a press
+  // that asks for a burst shows the one thing a single line cannot: what the bar does with
+  // a backlog. All of them `own: false`, so none cuts ahead of the others.
+  //
+  // Taken whether or not there is a run to show them in: the bar is the best-scores strip,
   // which nothing but a run puts on screen, and a press made on the intro screen must not
   // lie in wait for the next one.
-  const requested = useAnnouncementRequest()
+  const requested = useAnnouncementRequests()
   useEffect(() => {
-    if (requested === null) return
-    clearAnnouncementRequest()
+    if (requested.length === 0) return
+    clearAnnouncementRequests()
     if (!inRun) return
-    setQueue((held) => queueAnnouncement(held, { announcement: requested, own: false }))
+    setQueue((held) =>
+      requested.reduce(
+        (waiting, announcement) =>
+          queueAnnouncement(waiting, { announcement, own: false }),
+        held,
+      ),
+    )
   }, [inRun, requested])
 
   useEffect(() => {

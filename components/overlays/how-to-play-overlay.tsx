@@ -327,13 +327,7 @@ const CLOSE_VELOCITY = 800
 // so it reads as a heading with a page under it instead of a cropped line.
 const JUMP_MARGIN = 20
 
-export function HowToPlayOverlay({
-  onClose,
-  onStartTutorial,
-}: {
-  onClose: () => void
-  onStartTutorial: () => void
-}) {
+export function HowToPlayOverlay({ onClose }: { onClose: () => void }) {
   const { t } = useLingui()
   const { colorScheme } = useTheme()
   const dotColor = colorScheme === 'dark' ? '#2A2B44' : '#D4D0C8'
@@ -392,36 +386,6 @@ export function HowToPlayOverlay({
           >
             <Trans>DIAL THE GRID · MATCH THE NUMBER</Trans>
           </Text>
-
-          {/* Hands-on tutorial — above the contents list because doing it beats reading
-            about it, and the guide below is the reference version for anyone who would
-            rather read. Wears the goal section's blue, the first colour of the scale. */}
-          <Pressable
-            onPress={onStartTutorial}
-            className="mt-5 flex-row items-center gap-3 rounded-2xl bg-card p-4"
-          >
-            <View
-              className="h-9 w-9 items-center justify-center rounded-xl"
-              style={{ backgroundColor: `${SECTIONS.goal.color}26` }}
-            >
-              <Ionicons name="play" size={17} color={SECTIONS.goal.color} />
-            </View>
-            <View className="flex-1">
-              <Text
-                selectable={false}
-                className="font-mono text-[13px] font-black tracking-[1.5px] text-primary"
-              >
-                <Trans>PLAY THE TUTORIAL</Trans>
-              </Text>
-              <Text
-                selectable={false}
-                className="mt-0.5 font-mono text-[11px] font-medium text-dim"
-              >
-                <Trans>Learn by doing — six quick, hands-on steps.</Trans>
-              </Text>
-            </View>
-            <Ionicons name="chevron-forward" size={16} color={dotColor} />
-          </Pressable>
 
           <Contents onJump={jump} />
 

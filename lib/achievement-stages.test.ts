@@ -34,7 +34,7 @@ const factsFor = (
   standings: [],
   crown: false,
   crossed: [],
-  tutorialDone: true,
+  guideRead: true,
   now: new Date('2026-09-22T12:00:00Z'),
 })
 

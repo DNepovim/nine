@@ -61,10 +61,10 @@ export function HighScores({
   gameMode: Mode
   userId: string | null
   nickname: string | null
-  // Opens the nickname prompt so the player's local bests can be published. Omitted
-  // by the game over screen, which asks for a nickname of its own accord the moment
-  // the run ends — a button offering the prompt behind it would be the same question
-  // twice.
+  // Opens the nickname prompt, which is what puts a player's scores on the board at
+  // all. Omitted by the game over screen, which asks for a nickname of its own accord
+  // the moment the run ends — a button offering the prompt behind it would be the same
+  // question twice.
   onAddNickname?: () => void
   // Set on the gold game-over screen, where the board sits on the celebration.
   halo?: boolean
@@ -326,7 +326,12 @@ export function HighScores({
 
       {!online && <OfflineNotice unsynced={hasUnpublished} />}
 
-      {hasUnpublished && nickname === null && onAddNickname !== undefined && (
+      {/* Whether or not the player has anything to publish yet. It used to wait for a
+          local best, which meant the one player most in need of the prompt — somebody
+          who has just arrived, is looking at three boards full of other people's names
+          and has no idea their own could be there — was the one player not offered it.
+          A nickname is worth having before the first score, not after it. */}
+      {nickname === null && onAddNickname !== undefined && (
         <PublishScoresButton
           from={gradientColors[0]}
           to={gradientColors[1]}

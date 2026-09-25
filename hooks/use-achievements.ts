@@ -81,7 +81,7 @@ export type AchievementsInput = {
   standings: readonly BoardStanding[]
   crown: boolean
   crossed: readonly AnnouncementId[]
-  tutorialDone: boolean
+  guideRead: boolean
   userId: string | null
   // Called with everything a step just unlocked, oldest first. The queue itself lives
   // outside this hook — see `useAchievementQueue` — because the announcement bar has to
@@ -246,7 +246,7 @@ export function useAchievements(input: AchievementsInput): Achievements {
     input.standings,
     input.crown,
     input.crossed,
-    input.tutorialDone,
+    input.guideRead,
   ])
 
   // The finished pass, then the fold — in that order. The rules read the career as it
@@ -325,7 +325,7 @@ export function useAchievements(input: AchievementsInput): Achievements {
     input.stats,
     input.standings,
     input.crown,
-    input.tutorialDone,
+    input.guideRead,
     persist,
   ])
 
@@ -433,6 +433,6 @@ const worldFacts = (
   standings: input.standings,
   crown: input.crown,
   crossed: input.crossed,
-  tutorialDone: input.tutorialDone,
+  guideRead: input.guideRead,
   now: new Date(),
 })
