@@ -82,6 +82,7 @@ export function TargetCard({
         isDark={isDark}
         active={target.exit === null && !dying && !frozen}
         duration={duration}
+        startProgress={target.startProgress}
         exit={target.exit}
         onComplete={onExpire}
       />

@@ -54,6 +54,7 @@ export function PieCountdown({
   size = PIE_SIZE,
   backgroundColor,
   exit = null,
+  startProgress = 1,
 }: {
   value: number
   isDark: boolean
@@ -64,13 +65,18 @@ export function PieCountdown({
   backgroundColor?: string
   // The target is leaving: stop the clock and play the exit it left by.
   exit?: TargetExit | null
+  // Where the clock starts, as a fraction of `duration`. Full for every target that
+  // spawns while the app is open; less for one put back from storage mid-clock, which
+  // has to come back holding what it had left rather than a whole clock over again.
+  // Read once, at mount — see lib/target-clock.ts.
+  startProgress?: number
 }) {
   const scale = size / PIE_SIZE
   const radius = size / 4
   const stroke = size / 2
   const circumference = 2 * Math.PI * radius
 
-  const progress = useSharedValue(1) // 1 = full, 0 = empty
+  const progress = useSharedValue(startProgress) // 1 = full, 0 = empty
   const ringScale = useSharedValue(1)
   const ringOpacity = useSharedValue(1)
   const numberScale = useSharedValue(1)

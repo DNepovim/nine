@@ -632,3 +632,131 @@ describe('trainee timeout set mid-run', () => {
     expect(actor.getSnapshot().context.targets[0]).toEqual(before)
   })
 })
+
+describe('a pause stops the targets as well as the score', () => {
+  const hit = (pauseAt: number, resumeAt: number, pressAt: number) => {
+    const actor = createActor(gameMachine)
+    actor.start()
+    actor.send({ type: 'SET_MODE', mode: 'accuracy' })
+    actor.send({ type: 'START', now: 0 })
+    actor.send({ type: 'ADD_TARGET', value: 1, at: 0 })
+    actor.send({ type: 'PAUSE', now: pauseAt })
+    actor.send({ type: 'RESUME', now: resumeAt })
+    // The dial's top-left cell has weight 1, so one press takes the sum to 1.
+    actor.send({ type: 'PRESS', index: 0, delta: 1, now: pressAt })
+    return actor.getSnapshot().context.hitBatch.hits[0]
+  }
+
+  it('gives a target back the clock it was frozen with', () => {
+    // A minute in the pause screen is a minute nobody played. The ring the player is
+    // looking at freezes; before this the machine's own reading did not, so the pie
+    // showed half a clock left and the hit scored as though there were none.
+    expect(hit(100, 60_000, 60_100)?.progress).toBeGreaterThan(0.9)
+  })
+
+  it('charges the target for the time actually played', () => {
+    // Both runs played exactly 1000ms before the press; only one of them spent a
+    // minute in the pause screen in between.
+    const paused = hit(1_000, 60_000, 60_000)
+    const straight = hit(1_000, 1_000, 1_000)
+    expect(paused?.progress).toBeCloseTo(straight?.progress ?? 0, 5)
+  })
+
+  it('leaves the clock of an unpaused run exactly as it was', () => {
+    const actor = createActor(gameMachine)
+    actor.start()
+    actor.send({ type: 'START', now: 0 })
+    actor.send({ type: 'ADD_TARGET', value: 1, at: 0 })
+    const before = actor.getSnapshot().context.targets[0]?.spawnedAt
+    actor.send({ type: 'PRESS', index: 0, delta: 1, now: 500 })
+    expect(before).toBe(0)
+  })
+})
+
+describe('restoring a run the app was closed on', () => {
+  const run = {
+    grid: [
+      [1, 2, 3],
+      [4, 5, 6],
+      [7, 8, 9],
+    ] as Grid,
+    hits: 6,
+    score: 4200,
+    mode: 'speed' as const,
+    difficulty: 'extreme' as const,
+    lives: 2,
+    streak: 3,
+    maxStreak: 4,
+    strikes: 5,
+    accSum: 4.5,
+    spdSum: 3.25,
+    targets: [
+      {
+        id: 11,
+        value: 88,
+        spawnedAt: 1_000,
+        duration: 5_000,
+        refAt: 1_000,
+        refGrid: [
+          [0, 0, 0],
+          [0, 0, 0],
+          [0, 0, 0],
+        ] as Grid,
+        par: 3,
+        userSteps: 1,
+      },
+    ],
+    nextTargetId: 12,
+    elapsedMs: 42_000,
+    runSeq: 7,
+  }
+
+  it('lands paused rather than playing', () => {
+    const actor = createActor(gameMachine)
+    actor.start()
+    actor.send({ type: 'RESTORE', run, now: 0 })
+    expect(actor.getSnapshot().value).toBe('paused')
+  })
+
+  it('brings the whole run back with it', () => {
+    const actor = createActor(gameMachine)
+    actor.start()
+    actor.send({ type: 'RESTORE', run, now: 0 })
+    const context = actor.getSnapshot().context
+    expect(context.score).toBe(4200)
+    expect(context.mode).toBe('speed')
+    expect(context.difficulty).toBe('extreme')
+    expect(context.lives).toBe(2)
+    expect(context.streak).toBe(3)
+    expect(context.elapsedMs).toBe(42_000)
+    expect(context.runSeq).toBe(7)
+    expect(context.targets).toEqual(run.targets)
+  })
+
+  it('comes back with no clock running and nothing floating', () => {
+    const actor = createActor(gameMachine)
+    actor.start()
+    actor.send({ type: 'RESTORE', run, now: 0 })
+    expect(actor.getSnapshot().context.playingSince).toBeNull()
+    expect(actor.getSnapshot().context.hitBatch.hits).toEqual([])
+  })
+
+  it('resumes into the run it restored rather than a fresh one', () => {
+    const actor = createActor(gameMachine)
+    actor.start()
+    actor.send({ type: 'RESTORE', run, now: 0 })
+    actor.send({ type: 'RESUME', now: 50_000 })
+    expect(actor.getSnapshot().value).toBe('playing')
+    expect(actor.getSnapshot().context.score).toBe(4200)
+    expect(actor.getSnapshot().context.playingSince).toBe(50_000)
+  })
+
+  it('counts the next run on from the restored one', () => {
+    const actor = createActor(gameMachine)
+    actor.start()
+    actor.send({ type: 'RESTORE', run, now: 0 })
+    actor.send({ type: 'RESTART', now: 0 })
+    expect(actor.getSnapshot().context.runSeq).toBe(8)
+    expect(actor.getSnapshot().context.score).toBe(0)
+  })
+})

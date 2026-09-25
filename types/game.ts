@@ -8,8 +8,15 @@ export type Position = { x: number; y: number }
 export type TargetExit = 'hit' | 'failed'
 
 // A machine target augmented with its on-screen placement and the exit it is playing,
-// `null` while it is still live.
-export type DisplayTarget = Target & { exit: TargetExit | null; position: Position }
+// `null` while it is still live. `startProgress` is where its ring begins — a fraction
+// of the duration, fixed when the target is placed. Full for anything that spawned
+// while the app was open, and less for a target put back from storage mid-clock; see
+// lib/target-clock.ts.
+export type DisplayTarget = Target & {
+  exit: TargetExit | null
+  position: Position
+  startProgress: number
+}
 
 // Which hundred a target's value falls in — 0 for 0–99 through 3 for 300+. MAX_TARGET
 // is 324, so these four cover the range. The countdown pie tints its track by band so

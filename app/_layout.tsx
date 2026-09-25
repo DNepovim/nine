@@ -22,6 +22,7 @@ import { SplashScreen } from '@/components/splash-screen'
 import { LAYER } from '@/constants/layers'
 import { InstallProvider, useInstall } from '@/hooks/use-install'
 import { LocaleProvider } from '@/hooks/use-locale'
+import { SavedRunProvider, useSavedRun } from '@/hooks/use-saved-run'
 import { SplashProvider, useSplash } from '@/hooks/use-splash'
 import { AppThemeProvider, useTheme } from '@/hooks/use-theme'
 import { captureError, initAnalytics } from '@/lib/analytics'
@@ -79,6 +80,9 @@ function ThemedApp() {
     finish: finishSplash,
   } = useSplash()
   const install = useInstall()
+  // Held at frame zero while the launch asks storage whether it owes the player a run in
+  // progress — see SplashScreen's `ready`.
+  const { probing: probingSavedRun } = useSavedRun()
 
   // Add to home screen is asked on the way in, over the splash — the first launch is
   // exactly the launch worth asking on, and it is also the one where the tutorial
@@ -120,6 +124,7 @@ function ThemedApp() {
       {!splashDone && (
         <SplashScreen
           hold={askInstall !== null}
+          ready={!probingSavedRun}
           onDone={finishSplash}
           onExit={beginSplashExit}
           onIntroDone={() => {
@@ -190,11 +195,15 @@ export default function RootLayout() {
               in there with the rest of the app, not over the top of it. */}
             <View style={{ flex: 1 }}>
               <PhoneFrame>
-                <SplashProvider>
-                  <InstallProvider>
-                    <ThemedApp />
-                  </InstallProvider>
-                </SplashProvider>
+                {/* Outside the splash provider, which reads it: a launch opening onto
+                    a run the app was closed on has no logo to play. */}
+                <SavedRunProvider>
+                  <SplashProvider>
+                    <InstallProvider>
+                      <ThemedApp />
+                    </InstallProvider>
+                  </SplashProvider>
+                </SavedRunProvider>
               </PhoneFrame>
             </View>
           </View>

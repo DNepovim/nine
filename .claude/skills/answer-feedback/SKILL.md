@@ -7,13 +7,17 @@ description: Use when answering a player's feedback — `/answer-feedback <row i
 
 A player wrote something. This is the reply, and the run that delivers it.
 
-Read `supabase/migrations/20260923000000_feedback_reply.sql` and
-`…20260924000000_feedback_reply_build.sql` before changing anything here — they
+Read `supabase/migrations/20260923000000_feedback_reply.sql`,
+`…20260924000000_feedback_reply_build.sql` and
+`…20260925000000_feedback_reply_quote.sql` before changing anything here — they
 own the delivery. What matters at this end:
 
 - The answer arrives as a dialog on the intro screen, **once**, and is then
   marked seen.
-- The player never sees their own message beside it. The answer stands alone.
+- The player's own message is quoted above it, dated, clamped to three lines. The
+  answer no longer has to re-state the question — but it is a **clamped** quote of
+  a message up to 800 characters long, so a reply to the third point of a long one
+  still has to name which point.
 - `answer_needs_build` holds it back until the player runs a build at least that
   new — a stamp, `yymmdd.HHMM`, the half of a build id after the dash.
 - Re-writing an `answer` **re-sends** it: the trigger clears `answer_seen_at`.
@@ -91,8 +95,9 @@ conversation that led here. Not a guess at what might happen one day.
   Bold sparingly.
 - First person, the person who makes Nine. No support-desk voice: no "we value
   your feedback", no ticket numbers, no "our team".
-- It has to make sense to someone who does not remember exactly what they wrote.
-  Name the thing before answering about it.
+- The quote above it shows the opening of what they wrote, so the answer need not
+  repeat it back. It must still make sense to someone reading a message they sent
+  weeks ago: answer the thing, do not merely agree with it.
 - Use the domain language in `CLAUDE.md` — a **run**, the **grid**, a **board**,
   a **record** vs a **medal** vs an **achievement**. The player reads those words
   in the game; anything else reads as a different app.

@@ -39,6 +39,12 @@ export const SEEN_NEWS_KEY = 'nine.seen-news.v1'
 // rather than server-side, like SEEN_NEWS_KEY — a reinstall loses the telling, never the
 // winnings themselves, which are derived from the boards.
 export const SEEN_WINNINGS_KEY = 'nine.seen-winnings.v1'
+// The run the app was last closed on, live or paused — see lib/saved-run.ts. Written
+// when a run is put down and cleared the moment there is no longer one to come back to,
+// so a key that exists always means a run in progress. Versioned on the shape of what is
+// stored, not on the scoring mechanics: a run is only ever read back by the build that
+// wrote it minutes earlier, and a key it cannot parse is simply skipped.
+export const RUN_KEY = 'nine.run.v1'
 export const TUTORIAL_KEY = 'nine.tutorial.v1'
 // Whether this device has had its opening Trainee run — the welcome that a first launch
 // drops straight into, in place of the tutorial that used to take the screen over. The

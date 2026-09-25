@@ -145,6 +145,9 @@ type Context = {
   // whenever the run is not actively being played, which is also how a screen showing
   // `elapsedMs` can tell it is reading a finished number rather than a moving target.
   playingSince: number | null
+  // When the run was paused, or null while it is being played. What RESUME hands the
+  // targets their clocks back from — see `resumeClocks`.
+  pausedAt: number | null
   // Which run this is, counted from the first. Nothing inside the machine reads it: it
   // is for the per-run bookkeeping kept outside — the achievements' tally and its frozen
   // career — which has no other way to tell one run from the next. PLAY AGAIN goes
@@ -152,6 +155,29 @@ type Context = {
   // `playing` at all, so there is no commit where a watcher sees no run in progress.
   runSeq: number
 }
+
+// The slice of a run worth putting back when the app is opened on one it was closed on
+// — everything that says where the run stood, and nothing that is kept under a key of
+// its own (`stats`, `traineeTimeoutMs`) or that describes the last press rather than the
+// run (`hitBatch`). Written and read by lib/saved-run.ts.
+export type RestoredRun = Pick<
+  Context,
+  | 'grid'
+  | 'hits'
+  | 'score'
+  | 'mode'
+  | 'difficulty'
+  | 'lives'
+  | 'streak'
+  | 'maxStreak'
+  | 'strikes'
+  | 'accSum'
+  | 'spdSum'
+  | 'targets'
+  | 'nextTargetId'
+  | 'elapsedMs'
+  | 'runSeq'
+>
 
 type Event =
   | { type: 'START'; now: number }
@@ -163,6 +189,7 @@ type Event =
   | { type: 'SET_DIFFICULTY'; difficulty: Difficulty }
   | { type: 'SET_TRAINEE_TIMEOUT'; ms: number; now: number }
   | { type: 'HYDRATE_STATS'; stats: Partial<Stats> }
+  | { type: 'RESTORE'; run: RestoredRun; now: number }
   | { type: 'PRESS'; index: number; delta: 1 | -1; now: number }
   | { type: 'SET_CELL'; index: number; value: number; now: number }
   | { type: 'ADD_TARGET'; value: number; at: number }
@@ -199,6 +226,7 @@ const freshGame = (context: Context, now: number) => ({
   hitBatch: { seq: context.hitBatch.seq, hits: [] as HitInfo[] },
   elapsedMs: 0,
   playingSince: now,
+  pausedAt: null,
   runSeq: context.runSeq + 1,
 })
 
@@ -210,6 +238,35 @@ const stopClock = (context: Context, now: number) => ({
   elapsedMs: context.elapsedMs + (now - (context.playingSince ?? now)),
   playingSince: null,
 })
+
+// The same, for the one exit that is coming back: a pause also has to remember when it
+// began, or RESUME has no way of knowing how long the board has been standing still.
+const pauseClock = (context: Context, now: number) => ({
+  ...stopClock(context, now),
+  pausedAt: now,
+})
+
+// Hands every target back the clock it was stopped with.
+//
+// A target's countdown is `now - spawnedAt` measured against its duration, and `now`
+// keeps moving while the run is paused — so a board frozen for a minute comes back
+// having spent a minute nobody played. The ring the player watches froze correctly (it
+// is a Reanimated clock, cancelled the moment the run stops being active), which is
+// exactly how the two came to disagree: the pie showed half a clock left and the hit
+// scored as though there were none.
+//
+// Sliding both of a target's moments forward by the time spent away leaves every reading
+// where it was, which is what the pause screen promises — a pause costs nothing and
+// gives nothing.
+const resumeClocks = (context: Context, now: number): Target[] => {
+  const away = now - (context.pausedAt ?? now)
+  if (away <= 0) return context.targets
+  return context.targets.map((target) => ({
+    ...target,
+    spawnedAt: target.spawnedAt + away,
+    refAt: target.refAt + away,
+  }))
+}
 
 // Puts a live target on a clock of `ms` without moving its ring: the time it has used
 // is scaled by the same factor as the time it was given, so `timeLeft / duration` comes
@@ -471,6 +528,7 @@ export const gameMachine = createMachine({
     hitBatch: { seq: 0, hits: [] as HitInfo[] },
     elapsedMs: 0,
     playingSince: null,
+    pausedAt: null,
     runSeq: 0,
   } satisfies Context,
   on: {
@@ -497,7 +555,12 @@ export const gameMachine = createMachine({
           traineeTimeoutMs: event.ms,
           targets:
             context.mode === 'trainee'
-              ? context.targets.map((t) => rescaleClock(t, event.ms, event.now))
+              ? // Measured from the moment the board stopped, not from now: the usual
+                // place to move this slider is the pause screen, and a paused target's
+                // clock is the one it was frozen with.
+                context.targets.map((t) =>
+                  rescaleClock(t, event.ms, context.pausedAt ?? event.now),
+                )
               : context.targets,
         }),
       ),
@@ -528,6 +591,27 @@ export const gameMachine = createMachine({
   states: {
     menu: {
       on: {
+        // A run the app was closed on, put back where it stood — see lib/saved-run.ts.
+        // It lands in `paused` rather than in `playing`: the player is arriving, not
+        // mid-press, and every countdown has to stay frozen until they say go. That is
+        // what `paused` already means here, so a restored run needs no state of its own.
+        RESTORE: {
+          target: 'paused',
+          actions: assign(
+            ({ event }: { event: Extract<Event, { type: 'RESTORE' }> }) => ({
+              ...event.run,
+              // Nothing is running yet. `hitBatch` is deliberately left alone: it
+              // describes a press made before the app closed, and a restored board opens
+              // with nothing floating over it.
+              playingSince: null,
+              // The board has been standing still since this moment, as far as the
+              // targets are concerned — their clocks were laid back down against it.
+              // Whatever the player spends reading the pause screen is time away, and
+              // RESUME gives it back to them.
+              pausedAt: event.now,
+            }),
+          ),
+        },
         START: {
           target: 'playing',
           actions: assign(
@@ -567,7 +651,7 @@ export const gameMachine = createMachine({
             }: {
               context: Context
               event: Extract<Event, { type: 'PAUSE' }>
-            }) => stopClock(context, event.now),
+            }) => pauseClock(context, event.now),
           ),
         },
         PRESS: [
@@ -758,9 +842,19 @@ export const gameMachine = createMachine({
       on: {
         RESUME: {
           target: 'playing',
-          actions: assign(({ event }: { event: Extract<Event, { type: 'RESUME' }> }) => ({
-            playingSince: event.now,
-          })),
+          actions: assign(
+            ({
+              context,
+              event,
+            }: {
+              context: Context
+              event: Extract<Event, { type: 'RESUME' }>
+            }) => ({
+              playingSince: event.now,
+              targets: resumeClocks(context, event.now),
+              pausedAt: null,
+            }),
+          ),
         },
         // Both ways out of a pause. HOME returns to the intro; RESTART abandons the
         // run where it stands and deals a fresh one on the same board, the way PLAY

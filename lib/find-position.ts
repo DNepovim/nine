@@ -8,6 +8,21 @@ const overlaps = (position: Position, target: DisplayTarget): boolean =>
   position.y < target.position.y + PIE_SIZE &&
   position.y + PIE_SIZE > target.position.y
 
+// Whether a spot is one this board can still use. Asked of a position remembered from
+// the launch before: the same device gives the same board back, but a browser window
+// resized between the two would leave a card hanging off the edge. A container that has
+// not been measured yet answers yes — an unmeasured board is no reason to throw away a
+// spot that was good for it.
+export function fitsContainer(
+  position: Position,
+  containerW: number,
+  containerH: number,
+): boolean {
+  if (containerW <= 0 || containerH <= 0) return true
+  if (position.x < 0 || position.y < 0) return false
+  return position.x + PIE_SIZE <= containerW && position.y + PIE_SIZE <= containerH
+}
+
 // Picks a non-overlapping card position inside the container. If the board is so
 // tight no clear spot is found, falls back to the least-crowded candidate (the
 // one farthest from its nearest neighbour) rather than a blind overlap.

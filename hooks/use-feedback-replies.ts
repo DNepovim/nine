@@ -15,6 +15,11 @@ import { supabase } from '@/lib/supabase'
 // Several answers queue rather than stack: `dismiss` marks the current one seen and the
 // next takes its place, oldest first, which is the order the server sends them in.
 //
+// The message each answer answers comes back with it, dated, and is quoted in the dialog —
+// see supabase/migrations/20260925000000_feedback_reply_quote.sql. It is the player's own
+// text returning to the player who typed it, which is why it is allowed to cross a wire
+// that returns nothing else about the row.
+//
 // The build asking goes with the request, because an answer may be waiting for one. A
 // reply that says "fixed" is worse than no reply at all when it is read on the build that
 // still has the bug — and on the web that is the ordinary case, not a rare one: the

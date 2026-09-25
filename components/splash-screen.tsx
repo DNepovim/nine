@@ -35,6 +35,7 @@ export function SplashScreen({
   onDone,
   onExit,
   hold,
+  ready,
   onIntroDone,
 }: {
   onDone: () => void
@@ -45,6 +46,11 @@ export function SplashScreen({
   // install popup is up: it is shown over the splash, so what is underneath it must
   // stay covered — the game and the tutorial are already mounted down there.
   hold: boolean
+  // Whether the logo may start at all. False while the launch is still asking storage
+  // whether it owes the player a run in progress: a splash that had begun fading its
+  // logo in would have to snap it away again the moment the answer came back. Held at
+  // frame zero the gradient is all there is to see, which is what a launch shows anyway.
+  ready: boolean
   // The intro has landed. Whatever wants to be shown over a finished splash waits
   // for this rather than for a duration of its own.
   onIntroDone: () => void
@@ -87,6 +93,7 @@ export function SplashScreen({
   const leaving = useRef(false)
 
   useEffect(() => {
+    if (!ready) return
     // Threshold animation — asynchronous periods so they never sync up
     loc1.value = withRepeat(
       withTiming(0.45, { duration: 4200, easing: Easing.inOut(Easing.ease) }),
@@ -113,7 +120,7 @@ export function SplashScreen({
     return () => {
       clearTimeout(timer)
     }
-  }, [])
+  }, [ready])
 
   useEffect(() => {
     if (!introDone || leaving.current) return

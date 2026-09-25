@@ -77,10 +77,12 @@ import { useOnline } from '@/hooks/use-online'
 import { usePauseOnBlur } from '@/hooks/use-pause-on-blur'
 import { usePersistedDifficulty } from '@/hooks/use-persisted-difficulty'
 import { usePersistedMode } from '@/hooks/use-persisted-mode'
+import { usePersistedRun } from '@/hooks/use-persisted-run'
 import { usePersistedStats } from '@/hooks/use-persisted-stats'
 import { usePopupDeck } from '@/hooks/use-popup-deck'
 import { PlayerProfileProvider } from '@/hooks/use-profile-modal'
 import { useRivalRecords } from '@/hooks/use-rival-records'
+import { useSavedRun } from '@/hooks/use-saved-run'
 import { useScoreDirection } from '@/hooks/use-score-direction'
 import { useScoreSubmission } from '@/hooks/use-score-submission'
 import { useSplash } from '@/hooks/use-splash'
@@ -109,6 +111,7 @@ import { leaderOf } from '@/lib/leaderboard'
 import { runChallenge } from '@/lib/next-challenge'
 import { heldPeriods, medalPeriods } from '@/lib/record-medals'
 import { countRun } from '@/lib/run-submission'
+import { restoreRun, savedPositions } from '@/lib/saved-run'
 import { STEP_UP_BOARD } from '@/lib/step-up'
 import { multiplierColor } from '@/lib/streak-badge'
 import { valueProgress } from '@/lib/value-progress'
@@ -126,6 +129,7 @@ import {
   streakMultiplier,
 } from '@/machines/game'
 import { cellWeight, computePar } from '@/machines/scoring'
+import type { Position } from '@/types/game'
 import type { MultiMode } from '@/types/multiplayer'
 
 // The screen gallery's stage, in development only — the screen being looked at, drawn
@@ -312,6 +316,29 @@ export default function GameScreen() {
   usePersistedStats(stats, send)
   usePersistedDifficulty(difficulty, send)
   usePersistedMode(mode, send)
+
+  // The run the app was last closed on. Put back paused, before anything else this
+  // launch does with the machine: RESTORE carries the board it was played on, so a
+  // persisted mode landing either side of it cannot deal the run somewhere else.
+  //
+  // `taken` first, in the same commit as the send, so the intro is never painted in the
+  // gap between storage answering and the machine holding the run — see `onIntro`.
+  const savedRun = useSavedRun()
+  // Where the restored run's targets were sitting when the app was closed. State rather
+  // than a ref because the display list reads it as it places them, which happens in the
+  // render RESTORE causes — and both are set here, in one commit.
+  const [restoredPositions, setRestoredPositions] = useState<
+    ReadonlyMap<number, Position>
+  >(() => new Map())
+  useEffect(() => {
+    if (savedRun.pending === null || !isMenu) return
+    // One reading of the clock for both: the ages are laid back down against it, and it
+    // is the moment the restored board has been standing still since.
+    const now = Date.now()
+    setRestoredPositions(savedPositions(savedRun.pending))
+    savedRun.taken()
+    send({ type: 'RESTORE', run: restoreRun(savedRun.pending, now), now })
+  }, [savedRun, isMenu, send])
   const {
     showSum,
     toggleSum,
@@ -799,6 +826,19 @@ export default function GameScreen() {
     machineTargets: targets,
     hitBatch,
     runSeq: state.context.runSeq,
+    restoredPositions,
+  })
+
+  // Keeps the device's copy of the run in step with this one, so closing the app on it
+  // is not losing it. Below the display list because it writes the board down as the
+  // player sees it — targets and the spots they are sitting in — and only the list
+  // knows the second half.
+  usePersistedRun({
+    inRun,
+    isPaused,
+    run: state.context,
+    placed: displayedTargets,
+    settled: savedRun.settled,
   })
 
   // Dial pad is a square sized to fit its container (min of width/height), so it
@@ -936,7 +976,11 @@ export default function GameScreen() {
     !isMultiActive &&
     !tutorial.visible &&
     welcome.decided &&
-    !welcome.pending
+    !welcome.pending &&
+    // A run the app was closed on is still being asked about, or is on its way into the
+    // machine. Either way the player is about to be looking at a pause screen, and the
+    // start screen has no business flashing up in front of it.
+    savedRun.settled
 
   // A shared run reaching its results screen is the run finishing, and the roster at
   // that moment is who was in it. Edge-latched: the screen stays up while everyone
@@ -1558,6 +1602,7 @@ export default function GameScreen() {
             <FeedbackReplyOverlay
               gameMode={mode}
               answer={feedbackReplies.reply.answer}
+              quote={feedbackReplies.reply.quote}
               onDismiss={feedbackReplies.dismiss}
             />
           )}

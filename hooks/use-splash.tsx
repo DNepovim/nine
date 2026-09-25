@@ -1,5 +1,14 @@
-import { createContext, use, useCallback, useMemo, useState, type ReactNode } from 'react'
+import {
+  createContext,
+  use,
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+  type ReactNode,
+} from 'react'
 
+import { useSavedRun } from '@/hooks/use-saved-run'
 import { consumeUpdateReload } from '@/lib/update-reload'
 
 type SplashState = {
@@ -31,6 +40,16 @@ const SplashContext = createContext<SplashState>({
 export function SplashProvider({ children }: { children: ReactNode }) {
   const [done, setDone] = useState(consumeUpdateReload)
   const [exiting, setExiting] = useState(false)
+
+  // The other launch with no logo to play: the app is opening onto a run it was closed
+  // on. The player is being handed back a game they were in the middle of, and making
+  // them sit through the wordmark first would read as having lost it. `setDone` is
+  // sticky, so taking the run a frame later cannot bring the splash back.
+  const savedRun = useSavedRun()
+  useEffect(() => {
+    if (savedRun.pending !== null) setDone(true)
+  }, [savedRun.pending])
+
   const beginExit = useCallback(() => {
     setExiting(true)
   }, [])
