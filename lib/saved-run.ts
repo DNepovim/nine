@@ -44,6 +44,10 @@ type SavedTarget = {
 export type SavedRun = {
   mode: Mode
   difficulty: Difficulty
+  // Whether the run was the tutorial. Optional on the way in rather than required: a run
+  // written by a build from before the tutorial existed has no such field, and it was
+  // plain practice — see `parseSavedRun`.
+  tutorial?: boolean
   grid: Grid
   hits: number
   score: number
@@ -58,6 +62,11 @@ export type SavedRun = {
   strikes: number
   accSum: number
   spdSum: number
+  // The best single hit of the run, on each factor. Optional on the way in for the same
+  // reason `tutorial` is: a run written by a build from before these were kept has
+  // neither field, and it is still a run worth putting back — see `parseSavedRun`.
+  bestAcc?: number
+  bestSpd?: number
   elapsedMs: number
   nextTargetId: number
   runSeq: number
@@ -164,6 +173,7 @@ export function toSavedRun(
   return {
     mode: run.mode,
     difficulty: run.difficulty,
+    tutorial: run.tutorial,
     grid: run.grid,
     hits: run.hits,
     score: run.score,
@@ -173,6 +183,8 @@ export function toSavedRun(
     strikes: run.strikes,
     accSum: run.accSum,
     spdSum: run.spdSum,
+    bestAcc: run.bestAcc,
+    bestSpd: run.bestSpd,
     // The same fold every exit from `playing` does to the clock, because this is one.
     // A run closed on while it was still running has a stretch of play the context has
     // not banked yet, and losing it would hand the player back a shorter run than the
@@ -223,9 +235,17 @@ export function parseSavedRun(value: unknown): SavedRun | null {
   if (!isFigure(accSum) || !isFigure(spdSum) || !isFigure(elapsedMs)) return null
   if (!isFigure(nextTargetId) || !isFigure(runSeq)) return null
 
+  // Anything that is not a number is a run with no best kept — a build from before
+  // these existed, which is every run stored today. Discarding the whole run over a
+  // stat it was never asked for would be trading the game for the scoreboard.
+  const best = (figure: unknown): number => (isFigure(figure) ? figure : 0)
+
   return {
     mode,
     difficulty,
+    // Anything but `true` is a run that was not the tutorial, which covers both a run
+    // written before the field existed and one written with it false.
+    tutorial: value.tutorial === true,
     grid,
     hits,
     score,
@@ -235,6 +255,8 @@ export function parseSavedRun(value: unknown): SavedRun | null {
     strikes,
     accSum,
     spdSum,
+    bestAcc: best(value.bestAcc),
+    bestSpd: best(value.bestSpd),
     elapsedMs,
     nextTargetId,
     runSeq,
@@ -248,6 +270,7 @@ export function restoreRun(saved: SavedRun, now: number): RestoredRun {
   return {
     mode: saved.mode,
     difficulty: saved.difficulty,
+    tutorial: saved.tutorial === true,
     grid: saved.grid,
     hits: saved.hits,
     score: saved.score,
@@ -257,6 +280,8 @@ export function restoreRun(saved: SavedRun, now: number): RestoredRun {
     strikes: saved.strikes,
     accSum: saved.accSum,
     spdSum: saved.spdSum,
+    bestAcc: saved.bestAcc ?? 0,
+    bestSpd: saved.bestSpd ?? 0,
     elapsedMs: saved.elapsedMs,
     nextTargetId: saved.nextTargetId,
     runSeq: saved.runSeq,

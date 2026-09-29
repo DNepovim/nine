@@ -10,7 +10,8 @@ import {
   View,
 } from 'react-native'
 
-const NICK_RE = /^[\p{L}\p{N}_]{3,16}$/u
+import { useOnline } from '@/hooks/use-online'
+import { NICK_MAX, NICK_MIN, nicknameProblem } from '@/lib/nickname'
 
 export function NicknameModal({
   visible,
@@ -23,14 +24,31 @@ export function NicknameModal({
 }) {
   // `t` rather than <Trans>: a TextInput placeholder takes a string, not a node.
   const { t } = useLingui()
+  const online = useOnline()
   const [value, setValue] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
 
+  // A nickname is claimed on the server or not at all — the name has to be checked
+  // against everyone else's. So with the connection down there is nothing to press:
+  // SAVE dims and the line under the field says why, rather than letting the player
+  // type a name and meet a failure at the end of it. SKIP still works, because
+  // dismissing this costs nothing and needs no network.
+  const canSave = online && !saving
+
   const handleSave = async () => {
+    if (!canSave) return
     const trimmed = value.trim()
-    if (!NICK_RE.test(trimmed)) {
-      setError('3–16 chars, letters/numbers/underscore only')
+    const problem = nicknameProblem(trimmed)
+    if (problem !== null) {
+      // The emoji case gets its own line: the general rule names what is allowed without
+      // ever saying what was wrong, and a player who typed a rocket reads it as an
+      // invitation to try a different picture.
+      setError(
+        problem === 'emoji'
+          ? 'No emoji — letters, numbers and _ only'
+          : `${NICK_MIN}–${NICK_MAX} chars, letters/numbers/underscore only`,
+      )
       return
     }
     setSaving(true)
@@ -83,7 +101,7 @@ export function NicknameModal({
             placeholder={t`e.g. ACE_9`}
             autoCapitalize="none"
             autoCorrect={false}
-            maxLength={16}
+            maxLength={NICK_MAX}
             returnKeyType="done"
             onSubmitEditing={() => {
               void handleSave()
@@ -105,6 +123,15 @@ export function NicknameModal({
             </Text>
           )}
 
+          {error === null && !online && (
+            <Text
+              selectable={false}
+              className="mb-3 font-mono text-[9px] font-bold tracking-[0.5px] text-dim"
+            >
+              <Trans>No connection — a nickname can only be claimed online.</Trans>
+            </Text>
+          )}
+
           <View className="mt-2 flex-row gap-3">
             <Pressable
               onPress={handleSkip}
@@ -122,9 +149,9 @@ export function NicknameModal({
               onPress={() => {
                 void handleSave()
               }}
-              disabled={saving}
+              disabled={!canSave}
               className="flex-1 items-center rounded-xl bg-primary py-3"
-              style={{ opacity: saving ? 0.5 : 1 }}
+              style={{ opacity: canSave ? 1 : 0.5 }}
             >
               <Text
                 selectable={false}

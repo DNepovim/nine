@@ -48,12 +48,15 @@ const snapshot = (over: Partial<RunSnapshot> = {}): RunSnapshot => ({
   score: 1234,
   mode: 'accuracy',
   difficulty: 'hard',
+  tutorial: false,
   lives: 2,
   streak: 3,
   maxStreak: 5,
   strikes: 4,
   accSum: 5.5,
   spdSum: 4.25,
+  bestAcc: 0.8,
+  bestSpd: 0.65,
   targets: [target()],
   nextTargetId: 9,
   elapsedMs: 20_000,
@@ -119,6 +122,24 @@ describe('restoreRun', () => {
     expect(restoreRun(saved, 5_000).lives).toBe(Number.POSITIVE_INFINITY)
   })
 
+  it('brings a tutorial run back as the tutorial', () => {
+    const saved = toSavedRun(snapshot({ mode: 'trainee', tutorial: true }), SPOTS, 5_000)
+    const parsed = parseSavedRun(roundTrip(saved))
+    expect(parsed).not.toBeNull()
+    if (parsed === null) return
+    expect(restoreRun(parsed, 5_000).tutorial).toBe(true)
+  })
+
+  it('reads a run stored before the tutorial existed as plain practice', () => {
+    const saved = toSavedRun(snapshot(), SPOTS, 5_000)
+    // `undefined` is how JSON drops a field, so this is a run written by a build that
+    // never had one.
+    const parsed = parseSavedRun(roundTrip({ ...saved, tutorial: undefined }))
+    expect(parsed).not.toBeNull()
+    if (parsed === null) return
+    expect(restoreRun(parsed, 5_000).tutorial).toBe(false)
+  })
+
   it('carries the run through a full round trip', () => {
     const saved = toSavedRun(snapshot(), SPOTS, 5_000)
     const parsed = parseSavedRun(roundTrip(saved))
@@ -128,6 +149,30 @@ describe('restoreRun', () => {
     expect(restored.score).toBe(1234)
     expect(restored.grid).toEqual(GRID)
     expect(restored.targets).toEqual(snapshot().targets)
+  })
+
+  it('brings the run best hits back with it', () => {
+    const saved = toSavedRun(snapshot(), SPOTS, 5_000)
+    const parsed = parseSavedRun(roundTrip(saved))
+    expect(parsed).not.toBeNull()
+    if (parsed === null) return
+    const restored = restoreRun(parsed, 5_000)
+    expect(restored.bestAcc).toBeCloseTo(0.8)
+    expect(restored.bestSpd).toBeCloseTo(0.65)
+  })
+
+  it('reads a run stored before the bests existed as having none', () => {
+    const saved = toSavedRun(snapshot(), SPOTS, 5_000)
+    // A run written by a build that kept no best. It is still a run worth putting
+    // back, so the two stats start at nothing rather than the whole thing being lost.
+    const parsed = parseSavedRun(
+      roundTrip({ ...saved, bestAcc: undefined, bestSpd: undefined }),
+    )
+    expect(parsed).not.toBeNull()
+    if (parsed === null) return
+    const restored = restoreRun(parsed, 5_000)
+    expect(restored.bestAcc).toBe(0)
+    expect(restored.bestSpd).toBe(0)
   })
 })
 

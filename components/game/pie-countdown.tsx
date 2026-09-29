@@ -55,6 +55,7 @@ export function PieCountdown({
   backgroundColor,
   exit = null,
   startProgress = 1,
+  clocked = true,
 }: {
   value: number
   isDark: boolean
@@ -70,6 +71,12 @@ export function PieCountdown({
   // has to come back holding what it had left rather than a whole clock over again.
   // Read once, at mount — see lib/target-clock.ts.
   startProgress?: number
+  // Whether this target is on a clock at all. False in the tutorial, which takes the
+  // countdown off the board entirely: the arcs are not drawn — a full ring that never
+  // moves would promise a clock there is none of — so what is left is the band-tinted
+  // disc with the number on it, and nothing on it can run out. The exits below are
+  // untouched; a target still collapses under its number when it is hit.
+  clocked?: boolean
 }) {
   const scale = size / PIE_SIZE
   const radius = size / 4
@@ -84,6 +91,8 @@ export function PieCountdown({
   // 0 = the clock's own colours, 1 = the red disc a lost target turns into.
   const failColor = useSharedValue(0)
   const failed = exit === 'failed'
+  // A clock has to be both running and there in the first place.
+  const running = active && clocked
   // The multiplayer hit-flash owns the track while it lasts, so the band yields to it.
   const trackColor =
     backgroundColor ?? TARGET_BAND_TRACK[isDark ? 'dark' : 'light'][targetBand(value)]
@@ -99,7 +108,7 @@ export function PieCountdown({
   // running out has a hair of clock when the run resumes. That is what makes pausing
   // cost nothing and give nothing.
   useEffect(() => {
-    if (!active) {
+    if (!running) {
       cancelAnimation(progress)
       return
     }
@@ -113,7 +122,7 @@ export function PieCountdown({
         if (finished) scheduleOnRN(onComplete)
       },
     )
-  }, [active])
+  }, [running])
 
   // The two exits are the same length and opposite in every other way. A hit lets the
   // number out of the ring that was timing it; a loss buries it in one — the clock's
@@ -196,28 +205,35 @@ export function PieCountdown({
             strokeWidth={stroke}
             fill="none"
           />
-          <AnimatedCircle
-            cx={cx}
-            cy={cy}
-            r={radius}
-            stroke={APP_BLUE}
-            strokeWidth={stroke}
-            fill="none"
-            strokeDasharray={circumference}
-            animatedProps={animatedProps}
-            transform={`rotate(-90, ${cx}, ${cy})`}
-          />
-          <AnimatedCircle
-            cx={cx}
-            cy={cy}
-            r={radius}
-            stroke={APP_RED}
-            strokeWidth={stroke}
-            fill="none"
-            strokeDasharray={circumference}
-            animatedProps={redProps}
-            transform={`rotate(-90, ${cx}, ${cy})`}
-          />
+          {/* The clock itself, over the band-tinted track: what is left of it in blue,
+              what has gone in red. Both are the countdown, so a target with no clock
+              draws neither and the track is the whole disc. */}
+          {clocked && (
+            <>
+              <AnimatedCircle
+                cx={cx}
+                cy={cy}
+                r={radius}
+                stroke={APP_BLUE}
+                strokeWidth={stroke}
+                fill="none"
+                strokeDasharray={circumference}
+                animatedProps={animatedProps}
+                transform={`rotate(-90, ${cx}, ${cy})`}
+              />
+              <AnimatedCircle
+                cx={cx}
+                cy={cy}
+                r={radius}
+                stroke={APP_RED}
+                strokeWidth={stroke}
+                fill="none"
+                strokeDasharray={circumference}
+                animatedProps={redProps}
+                transform={`rotate(-90, ${cx}, ${cy})`}
+              />
+            </>
+          )}
         </Svg>
         <Animated.View
           className="absolute inset-0 rounded-full"

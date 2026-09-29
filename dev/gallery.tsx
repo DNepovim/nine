@@ -1,5 +1,5 @@
 import { i18n } from '@lingui/core'
-import { useSyncExternalStore } from 'react'
+import { useState } from 'react'
 import { Pressable, ScrollView, Text, View } from 'react-native'
 
 import { StepUpToast } from '@/components/game/step-up-toast'
@@ -18,6 +18,17 @@ import {
 } from '@/constants/achievements'
 import { DEFAULT_DIAL_CORNERS } from '@/constants/dial-hints'
 import { GalleryButton } from '@/dev/gallery-button'
+import {
+  isVariant,
+  type Action,
+  type Entry,
+  type Section,
+  type Tier,
+  type Variant,
+} from '@/dev/gallery-entry'
+import { GallerySearch } from '@/dev/gallery-search'
+import { GallerySection } from '@/dev/gallery-section'
+import { openSection, show, useOpenSection, useShown } from '@/dev/gallery-state'
 import { ProfileVariant } from '@/dev/profile-variant'
 import {
   NAME_TAG,
@@ -26,9 +37,11 @@ import {
   type NameLength,
   type ScoreLength,
 } from '@/dev/score-strip-variant'
+import { StrikeVariant } from '@/dev/strike-variant'
 import type { ShapeKind } from '@/dev/weekly-recap/recap'
 import { WeeklyRecapOverlay } from '@/dev/weekly-recap/recap-overlay'
 import { requestAnnouncements } from '@/hooks/use-announcement-request'
+import { ChampionsProvider } from '@/hooks/use-champions'
 import type { LostMedalNews } from '@/hooks/use-lost-medals'
 import { EMPTY_STORE } from '@/lib/achievement-store'
 import { achievementAnnouncement, type AchievementFacts } from '@/lib/achievements'
@@ -39,7 +52,7 @@ import {
   type Period,
 } from '@/lib/announcements'
 import { emptyCareer } from '@/lib/career'
-import type { RecordScreen } from '@/lib/champions'
+import { NO_CHAMPIONS, type Champions, type RecordScreen } from '@/lib/champions'
 import type { FeedbackQuote } from '@/lib/feedback-reply'
 import { gameOverTitle } from '@/lib/game-over-title'
 import type { Medal, MedalPeriod } from '@/lib/medals'
@@ -73,21 +86,17 @@ import {
 // would have to fake all four, and a faked board store is a second implementation of
 // the thing being looked at.
 
-type Variant = {
-  key: string
-  label: string
-  render: (close: () => void) => React.ReactElement
-}
-
-type Section = { title: string; items: Variant[] }
-
 const RUN = {
   score: 4820,
   hits: 37,
   gameTimeMs: 4 * 60_000 + 12_000,
   strikes: 6,
+  maxStreak: 4,
   avgAccuracy: 84,
   avgSpeed: 71,
+  // A best well clear of the average, which is what the pair is there to show.
+  bestAccuracy: 100,
+  bestSpeed: 93,
   // Two, so the row can be seen wrapping beside the EARNED label.
   achievements: [
     { id: 'flawlessTen', stage: null },
@@ -208,33 +217,41 @@ const intro = (
   label: string,
   lostMedals: readonly LostMedalNews[],
   medals: readonly Medal[],
+  // Which Extreme all-time boards this player holds, and so which mark the screen wears
+  // over its title. Nobody by default — the mark is rare, and the ordinary intro is the
+  // one most players see. The variants that pass something are there for the bubble it
+  // opens; the screen reads this through a context, so it has to be provided rather than
+  // passed in as a prop.
+  champions: Champions = NO_CHAMPIONS,
 ): Variant => ({
   key: `intro-${label}`,
   label,
   render: (close) => (
-    <MenuOverlay
-      gameMode="speed"
-      difficulty="extreme"
-      userId="dev"
-      nickname="DONDA"
-      bestScore={RUN.score}
-      medals={medals}
-      lostMedals={lostMedals}
-      onLostMedalsSeen={noop}
-      achievementsEarned={12}
-      achievementsLatest="flawlessTen"
-      achievementsLoaded
-      onOpenAchievements={close}
-      onOpenMedals={close}
-      onPlay={close}
-      onSetMode={noop}
-      onSetDifficulty={noop}
-      onOpenAdvanced={close}
-      onAddNickname={close}
-      onHowToPlay={close}
-      onCreateRoom={close}
-      onOpenJoinRoom={close}
-    />
+    <ChampionsProvider value={champions}>
+      <MenuOverlay
+        gameMode="speed"
+        difficulty="extreme"
+        userId="dev"
+        nickname="DONDA"
+        bestScore={RUN.score}
+        medals={medals}
+        lostMedals={lostMedals}
+        onLostMedalsSeen={noop}
+        achievementsEarned={12}
+        achievementsLatest="flawlessTen"
+        achievementsLoaded
+        onOpenAchievements={close}
+        onOpenMedals={close}
+        onPlay={close}
+        onSetMode={noop}
+        onSetDifficulty={noop}
+        onOpenAdvanced={close}
+        onAddNickname={close}
+        onHowToPlay={close}
+        onCreateRoom={close}
+        onOpenJoinRoom={close}
+      />
+    </ChampionsProvider>
   ),
 })
 
@@ -277,8 +294,11 @@ const gameOver = (
         },
         0,
       )}
+      maxStreak={RUN.maxStreak}
       avgAccuracy={RUN.avgAccuracy}
       avgSpeed={RUN.avgSpeed}
+      bestAccuracy={RUN.bestAccuracy}
+      bestSpeed={RUN.bestSpeed}
       achievements={RUN.achievements}
       achievementStore={EMPTY_STORE}
       achievementFacts={FACTS}
@@ -289,20 +309,27 @@ const gameOver = (
   ),
 })
 
-const paused = (mode: Mode): Variant => ({
-  key: `paused-${mode}`,
-  label: MODE_CODE[mode],
+// `tutorial` is a variant of the Trainee screen rather than a mode of its own — the same
+// pause with the display options taken off it.
+const paused = (mode: Mode, tutorial = false): Variant => ({
+  key: `paused-${mode}${tutorial ? '-tutorial' : ''}`,
+  label: tutorial ? 'TUT' : MODE_CODE[mode],
   render: (close) => (
     <PausedOverlay
       gameMode={mode}
+      tutorial={tutorial}
       difficulty="hard"
       userId="dev"
       nickname="DONDA"
       score={RUN.score}
       hits={RUN.hits}
       gameTimeMs={RUN.gameTimeMs}
+      strikes={RUN.strikes}
+      maxStreak={RUN.maxStreak}
       avgAccuracy={RUN.avgAccuracy}
       avgSpeed={RUN.avgSpeed}
+      bestAccuracy={RUN.bestAccuracy}
+      bestSpeed={RUN.bestSpeed}
       // The same run the game-over stage shows, so the row can be compared on the two
       // screens that carry it.
       achievements={RUN.achievements}
@@ -548,7 +575,9 @@ const strip = (names: NameLength, scores: ScoreLength): Variant => ({
   render: (close) => <ScoreStripVariant names={names} scores={scores} onClose={close} />,
 })
 
-const SECTIONS: Section[] = [
+// The screens, in the order they are met in the app: the splash, then the intro, then a
+// run's endings, then the things reached from a menu.
+const SCREENS: Section[] = [
   {
     // First in the list because it is first on screen. Two of them, because half of what
     // this screen is is a sequence: HELD is the finished picture, standing still for as
@@ -607,6 +636,24 @@ const SECTIONS: Section[] = [
     ],
   },
   {
+    // The same screen again, worn by the three players who have taken an Extreme all-time
+    // board. A section of its own rather than three more rows under INTRO: those are all
+    // about the medal line and read as one set, and the mark is a different part of the
+    // screen with a different thing to look at — tap the emoji over the greeting and the
+    // bubble it opens is what these are here for.
+    //
+    // Nothing is taken in any of them. The mark and the loss sequence both live at the
+    // top of the screen, and a variant running both at once would be two things moving
+    // over each other.
+    title: 'INTRO · MARK',
+    items: [
+      intro('OWL', [], MEDALS_KEPT, { accuracy: 'dev', speed: null }),
+      intro('EAGLE', [], MEDALS_KEPT, { accuracy: null, speed: 'dev' }),
+      // Both boards at once, which is the crown.
+      intro('CROWN', [], MEDALS_KEPT, { accuracy: 'dev', speed: 'dev' }),
+    ],
+  },
+  {
     // The one row of the game screen drawn from other people's data, and so the one that
     // breaks on theirs. Each button is a name length and a score length, in that order.
     title: 'SCORE STRIP · NAME · SCORE',
@@ -641,7 +688,12 @@ const SECTIONS: Section[] = [
   },
   {
     title: 'PAUSE',
-    items: [paused('accuracy'), paused('speed'), paused('trainee')],
+    items: [
+      paused('accuracy'),
+      paused('speed'),
+      paused('trainee'),
+      paused('trainee', true),
+    ],
   },
   {
     title: 'GUIDE',
@@ -649,7 +701,7 @@ const SECTIONS: Section[] = [
       {
         key: 'how-to-play',
         label: 'HOW TO PLAY',
-        render: (close) => <HowToPlayOverlay onClose={close} />,
+        render: (close) => <HowToPlayOverlay onClose={close} onTryTutorial={close} />,
       },
     ],
   },
@@ -705,6 +757,10 @@ const SECTIONS: Section[] = [
     ],
   },
   {
+    // The offer itself, which is a screen and waits to be answered. Its toast is the
+    // other half of the same feature and lives under EFFECTS — it slides in, sits for a
+    // few seconds and takes itself away, which is a different thing to look at and a
+    // different thing to look for.
     title: 'STEP UP',
     items: [
       {
@@ -719,27 +775,81 @@ const SECTIONS: Section[] = [
           />
         ),
       },
-      // Every opener against every invitation, so the pairing that reads worst is the
-      // one being looked at rather than the one nobody rolled. Both pools: the clean-run
-      // offer praises the player, the welcome one only counts targets, and they have to
-      // sit next to the same invitations without either reading oddly.
-      ...STEP_UP_REASONS.flatMap((reason) =>
-        openerPool(reason).flatMap((opener, o) =>
-          invitePool().map((invite, i) => ({
-            key: `step-up-toast-${reason}-${o}-${i}`,
-            label: `TOAST ${REASON_TAGS[reason]}${o + 1}${String.fromCharCode(97 + i)}`,
-            render: (close: () => void) => (
-              <StepUpToast
-                opener={opener}
-                invite={invite}
-                mode={STEP_UP_BOARD.mode}
-                onPress={close}
-                onDismiss={close}
-              />
-            ),
-          })),
-        ),
+    ],
+  },
+]
+
+// The moments: short things that play over the app and end on their own. Split out from
+// the screens because the difference decides how they are used — a screen is put up and
+// studied, one of these is fired and fired again, and half of them are over before a
+// hand is back on the mouse.
+const EFFECTS: Section[] = [
+  {
+    // Every opener against every invitation, so the pairing that reads worst is the one
+    // being looked at rather than the one nobody rolled. Both pools: the clean-run offer
+    // praises the player, the welcome one only counts targets, and they have to sit next
+    // to the same invitations without either reading oddly.
+    title: 'STEP UP TOAST',
+    items: STEP_UP_REASONS.flatMap((reason) =>
+      openerPool(reason).flatMap((opener, o) =>
+        invitePool().map((invite, i) => ({
+          key: `step-up-toast-${reason}-${o}-${i}`,
+          label: `${REASON_TAGS[reason]}${o + 1}${String.fromCharCode(97 + i)}`,
+          render: (close: () => void) => (
+            <StepUpToast
+              opener={opener}
+              invite={invite}
+              mode={STEP_UP_BOARD.mode}
+              onPress={close}
+              onDismiss={close}
+            />
+          ),
+        })),
       ),
+    ),
+  },
+  {
+    // The only thing in the gallery that is tapped over and over: every entry here is
+    // under a quarter of a second, and a strike needs a live multiplier to see in a real
+    // run. Every mode, because what each one fires is the point — and Speed twice, since
+    // sharing one burst between two targets is the case the rounds are dealt for.
+    title: 'HIT',
+    items: [
+      {
+        key: 'strike-trainee',
+        label: 'TRAINEE SYNC',
+        render: (close: () => void) => (
+          <StrikeVariant mode="trainee" targets={1} onClose={close} />
+        ),
+      },
+      {
+        key: 'strike-accuracy',
+        label: 'ACCURACY SNIPER',
+        render: (close: () => void) => (
+          <StrikeVariant mode="accuracy" targets={1} onClose={close} />
+        ),
+      },
+      {
+        key: 'strike-speed',
+        label: 'SPEED BURST',
+        render: (close: () => void) => (
+          <StrikeVariant mode="speed" targets={1} onClose={close} />
+        ),
+      },
+      {
+        key: 'strike-speed-two',
+        label: 'SPEED · TWO',
+        render: (close: () => void) => (
+          <StrikeVariant mode="speed" targets={2} onClose={close} />
+        ),
+      },
+      {
+        key: 'strike-accuracy-two',
+        label: 'ACCURACY · TWO',
+        render: (close: () => void) => (
+          <StrikeVariant mode="accuracy" targets={2} onClose={close} />
+        ),
+      },
     ],
   },
 ]
@@ -752,9 +862,10 @@ const SECTIONS: Section[] = [
 //
 // Mid-run only: the bar is the best-scores strip wearing another coat, and off a run
 // there is no strip on screen to take over. A press made anywhere else is dropped rather
-// than kept waiting, so nothing fires into a run that did not ask for it.
-type Action = { key: string; label: string; run: () => void }
-type ActionSection = { title: string; items: Action[] }
+// than kept waiting, so nothing fires into a run that did not ask for it. That condition
+// is why these are a tier of their own with it written in the heading, and why they sit
+// at the bottom: they are the only entries in the gallery that can be pressed and do
+// nothing, and the reason has to be in view before the press rather than after it.
 
 // One rival for all of their news, short enough to leave the words around it room.
 const RIVAL_NAME = 'PETR'
@@ -836,7 +947,7 @@ const longestTitle = (): AchievementId =>
     titleLength(id) > titleLength(longest) ? id : longest,
   )
 
-const ANNOUNCE: ActionSection[] = [
+const ANNOUNCE: Section[] = [
   {
     title: 'ANNOUNCE · YOURS',
     items: YOURS.map(({ id, label }) => line(id, label)),
@@ -886,33 +997,41 @@ const ANNOUNCE: ActionSection[] = [
   },
 ]
 
-const ALL_VARIANTS = SECTIONS.flatMap((section) => section.items)
-
-// Which screen is on show, kept in the module rather than in a component.
+// ── The picker ──────────────────────────────────────────────────────────────────
 //
-// The picker and the screen it shows are mounted in different trees: on desktop the app
-// runs inside a phone frame, the picker sits on the desk outside it, and the screen has
-// to render inside the app where the board store and the theme are. A module-level store
-// is what lets two mount points that share no parent agree, without threading a provider
-// across the frame.
-let shownKey: string | null = null
-const listeners = new Set<() => void>()
+// Three tiers, cut by what a press does rather than by where the thing sits in the app.
+// Where it sits is already in its section heading; what is nowhere else is whether
+// pressing it puts something up that stays, plays something that takes itself away, or
+// asks the running game for a line. Only the last kind can be pressed to no effect at
+// all, so it goes at the bottom with its condition in the heading rather than in a
+// footnote underneath it.
+const TIERS: Tier[] = [
+  { title: 'SCREENS', sections: SCREENS },
+  { title: 'EFFECTS', sections: EFFECTS },
+  { title: 'BAR', note: 'MID-RUN ONLY', sections: ANNOUNCE },
+]
 
-const subscribe = (fn: () => void) => {
-  listeners.add(fn)
-  return () => {
-    listeners.delete(fn)
-  }
+const ALL_SECTIONS = TIERS.flatMap((tier) => tier.sections)
+
+// Only the screens. An action leaves nothing behind for the stage to hold, so it can
+// never be what is on show.
+const ALL_VARIANTS = ALL_SECTIONS.flatMap((section) => section.items).filter(isVariant)
+
+type Result = { section: string; entry: Entry }
+
+// Matched against the heading and the label together, so a query can come at an entry
+// from either end: `crown` reaches it by its own name, `game over` by the section it is
+// one of eleven in. Which matters more than it sounds — half the labels in here are only
+// meaningful under their heading, and `TWO` on its own is not a searchable word.
+const matching = (query: string): Result[] => {
+  const needle = query.trim().toLowerCase()
+  if (needle.length === 0) return []
+  return ALL_SECTIONS.flatMap((section) =>
+    section.items
+      .filter((entry) => `${section.title} ${entry.label}`.toLowerCase().includes(needle))
+      .map((entry) => ({ section: section.title, entry })),
+  )
 }
-
-const getShown = () => shownKey
-
-const show = (key: string | null) => {
-  shownKey = key
-  for (const fn of listeners) fn()
-}
-
-const useShown = () => useSyncExternalStore(subscribe, getShown, getShown)
 
 // Renders inside the app — within the frame on desktop, and within the providers the
 // overlays read from.
@@ -941,66 +1060,97 @@ export function GalleryStage() {
 // grab and a wheel does not move it.
 export function GallerySwitcher() {
   const shown = useShown()
+  const open = useOpenSection()
+  // Local rather than in the store: the fold and the chosen screen are worth carrying
+  // across a reload, a half-typed query is not.
+  const [query, setQuery] = useState('')
+
+  const results = matching(query)
+  const searching = query.trim().length > 0
+
+  const press = ({ section, entry }: Result) => {
+    if (isVariant(entry)) {
+      show(entry.key, section)
+      return
+    }
+    // Whatever is on show is closed on the way, since the bar these fire into is at the
+    // top of the screen behind it.
+    show(null, section)
+    entry.run()
+  }
 
   return (
-    <View className="h-full w-52 border-r border-muted bg-surface">
+    <View className="h-full w-64 border-r border-muted bg-surface">
       <View className="flex-1 overflow-hidden">
-        <ScrollView contentContainerStyle={{ padding: 8, gap: 10 }}>
-          {/* First, because unlike everything below it these need the app itself running
-              underneath — and because a button that fires and is done has nothing to
-              scroll back to. Whatever screen is on show is closed on the way, since the
-              bar is at the top of the one behind it. */}
-          {ANNOUNCE.map((section) => (
-            <View key={section.title} className="gap-1.5">
-              <Text
-                selectable={false}
-                className="font-mono text-[8px] font-black tracking-[1.5px] text-dim"
-              >
-                {section.title}
-              </Text>
-              <View className="flex-row flex-wrap gap-1.5">
-                {section.items.map((action) => (
-                  <GalleryButton
-                    key={action.key}
-                    label={action.label}
-                    onPress={() => {
-                      show(null)
-                      action.run()
-                    }}
-                  />
-                ))}
-              </View>
-            </View>
-          ))}
-          <Text
-            selectable={false}
-            className="font-mono text-[8px] font-bold tracking-[1px] text-dim"
-          >
-            ↑ MID-RUN ONLY
-          </Text>
+        <GallerySearch query={query} matches={results.length} onChange={setQuery} />
 
-          {SECTIONS.map((section) => (
-            <View key={section.title} className="gap-1.5">
-              <Text
-                selectable={false}
-                className="font-mono text-[8px] font-black tracking-[1.5px] text-dim"
-              >
-                {section.title}
-              </Text>
-              <View className="flex-row flex-wrap gap-1.5">
-                {section.items.map((v) => (
-                  <GalleryButton
-                    key={v.key}
-                    label={v.label}
-                    selected={v.key === shown}
-                    onPress={() => {
-                      show(v.key)
+        <ScrollView contentContainerStyle={{ padding: 8, gap: 10 }}>
+          {searching && results.length === 0 && (
+            <Text
+              selectable={false}
+              className="font-mono text-[11px] font-bold tracking-[1px] text-dim"
+            >
+              NOTHING
+            </Text>
+          )}
+
+          {/* A query takes the tiers and the folds off entirely. The grouping is there to
+              make ninety entries findable, and once a search has narrowed them to five
+              it is only depth to click through — so the results come flat, each wearing
+              the heading it lost. */}
+          {searching && (
+            <View className="flex-row flex-wrap gap-1.5">
+              {results.map((result) => (
+                <GalleryButton
+                  key={result.entry.key}
+                  label={result.entry.label}
+                  hint={result.section}
+                  selected={result.entry.key === shown}
+                  onPress={() => {
+                    press(result)
+                  }}
+                />
+              ))}
+            </View>
+          )}
+
+          {!searching &&
+            TIERS.map((tier) => (
+              <View key={tier.title} className="gap-1.5">
+                <View className="flex-row items-baseline gap-1.5 border-b border-muted pb-1">
+                  <Text
+                    selectable={false}
+                    className="font-mono text-[12px] font-black tracking-[2px] text-primary"
+                  >
+                    {tier.title}
+                  </Text>
+                  {tier.note !== undefined && (
+                    <Text
+                      selectable={false}
+                      className="font-mono text-[9px] font-bold tracking-[1px] text-dim"
+                    >
+                      {tier.note}
+                    </Text>
+                  )}
+                </View>
+
+                {tier.sections.map((section) => (
+                  <GallerySection
+                    key={section.title}
+                    title={section.title}
+                    items={section.items}
+                    open={section.title === open}
+                    shown={shown}
+                    onToggle={() => {
+                      openSection(section.title === open ? null : section.title)
+                    }}
+                    onPress={(entry) => {
+                      press({ section: section.title, entry })
                     }}
                   />
                 ))}
               </View>
-            </View>
-          ))}
+            ))}
         </ScrollView>
 
         {/* Outside the scroller, so the way back to the app is always reachable however
@@ -1013,7 +1163,7 @@ export function GallerySwitcher() {
         >
           <Text
             selectable={false}
-            className="font-mono text-[9px] font-bold tracking-[1px] text-dim"
+            className="font-mono text-[11px] font-bold tracking-[1px] text-dim"
           >
             CLOSE
           </Text>

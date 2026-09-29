@@ -1,6 +1,8 @@
 import type { MessageDescriptor } from '@lingui/core'
 import { msg } from '@lingui/core/macro'
 
+import { TUTORIAL_LABEL } from '@/constants/tutorial'
+
 export type Mode = 'trainee' | 'accuracy' | 'speed'
 
 export const MODE_ORDER: Mode[] = ['trainee', 'accuracy', 'speed']
@@ -69,6 +71,16 @@ export const MODES: Record<Mode, ModeConfig> = {
     ramps: 'clock',
   },
 }
+
+// What to call the run a player is in. The mode's own label everywhere but the tutorial,
+// which is Trainee underneath and says so nowhere — see TUTORIAL_LABEL.
+//
+// One function rather than a check at each screen, because there are two screens showing
+// this and a third would have had to be told: the game screen's top bar and the badge on
+// the pause screen under it. Anything naming a *board* keeps using `MODES[mode].label` —
+// a leaderboard, a medal, a challenge — since none of those is ever the tutorial.
+export const runLabel = (mode: Mode, tutorial: boolean): MessageDescriptor =>
+  tutorial ? TUTORIAL_LABEL : MODES[mode].label
 
 export type Difficulty = 'easy' | 'hard' | 'extreme'
 

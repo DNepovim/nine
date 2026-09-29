@@ -5,7 +5,7 @@ import { Text, View } from 'react-native'
 import {
   DIFFICULTIES,
   MODE_GRADIENT,
-  MODES,
+  runLabel,
   type Difficulty,
   type Mode,
 } from '@/machines/game'
@@ -29,18 +29,22 @@ const shadow = {
 export function BoardBadges({
   gameMode,
   difficulty,
+  tutorial = false,
 }: {
   gameMode: Mode
   // Left out by a run with no difficulty to record. Trainee has no selector and takes
   // the Easy pace whatever the menu last had selected, so a pill naming one there would
   // be reporting a choice the player never made.
   difficulty?: Difficulty
+  // The run is the tutorial, so the first pill names that rather than the mode under it.
+  // Default off: the two screens that report a *board* — game over, and the challenge
+  // being offered — are never showing one.
+  tutorial?: boolean
 }) {
   const { t } = useLingui()
+  const mode = t(runLabel(gameMode, tutorial))
   const labels =
-    difficulty === undefined
-      ? [t(MODES[gameMode].label)]
-      : [t(MODES[gameMode].label), t(DIFFICULTIES[difficulty].label)]
+    difficulty === undefined ? [mode] : [mode, t(DIFFICULTIES[difficulty].label)]
 
   return (
     <View className="mb-5 flex-row items-center gap-2">

@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
+import { TUTORIAL_LABEL } from '@/constants/tutorial'
 import {
   DIFFICULTIES,
   DIFFICULTY_ORDER,
@@ -12,6 +13,7 @@ import {
   MODE_ORDER,
   MODES,
   rampedTimeout,
+  runLabel,
   streakMultiplier,
 } from '@/machines/modes'
 
@@ -217,5 +219,18 @@ describe('colors and descriptions', () => {
     expect(lerpColor('#000000', '#ffffff', 0)).toBe('#000000')
     expect(lerpColor('#000000', '#ffffff', 1)).toBe('#ffffff')
     expect(lerpColor('#000000', '#ffffff', 0.5)).toBe('#808080')
+  })
+})
+
+describe('runLabel', () => {
+  it('names the mode in every run that is not the tutorial', () => {
+    for (const mode of MODE_ORDER) {
+      expect(runLabel(mode, false)).toBe(MODES[mode].label)
+    }
+  })
+
+  it('names the tutorial rather than the Trainee it is built out of', () => {
+    expect(runLabel('trainee', true)).toBe(TUTORIAL_LABEL)
+    expect(runLabel('trainee', true)).not.toBe(MODES.trainee.label)
   })
 })

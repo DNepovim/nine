@@ -10,7 +10,7 @@ import DSEG7Font from '@/assets/fonts/DSEG7Classic-Bold.ttf'
 import { MedalLine } from '@/components/overlays/medal-line'
 import { ModalCard } from '@/components/overlays/modal-card'
 import { MottoModal } from '@/components/overlays/motto-modal'
-import { ProfileBoardRow } from '@/components/overlays/profile-board-row'
+import { BOARD_COLUMNS, ProfileBoardRow } from '@/components/overlays/profile-board-row'
 import { ProfileMotto } from '@/components/overlays/profile-motto'
 import { ProfileName } from '@/components/overlays/profile-name'
 import { ProfileReignRow } from '@/components/overlays/profile-reign-row'
@@ -24,6 +24,7 @@ import { usePlayerProfile } from '@/hooks/use-player-profile'
 import { useTheme } from '@/hooks/use-theme'
 import { useViewport } from '@/hooks/use-viewport'
 import { championMark } from '@/lib/champions'
+import { cn } from '@/lib/cn'
 import { formatGameTime } from '@/lib/duration'
 import { formatReleaseDate } from '@/lib/format-date'
 import { saveMotto } from '@/lib/leaderboard'
@@ -41,11 +42,56 @@ import { MODE_GRADIENT, MODES, SCORED_MODES, type ScoredMode } from '@/machines/
 // been at this a while should not read as someone who turned up this morning.
 const JOINED_ON = '2026-09-22'
 
-// What each mode is judged on, as the column heading over its own average.
-const AVERAGE_LABEL = {
+// What each mode is judged on — the second line of both of its factor columns, the
+// average and the best alike.
+const FACTOR_LABEL = {
   accuracy: msg`ACC`,
   speed: msg`SPD`,
 } as const satisfies Record<ScoredMode, MessageDescriptor>
+
+// One column heading over the per-board table, stacked rather than spelled across.
+//
+// Two words on two lines for the same reason `StatCell` puts its label under its number:
+// stacked, a column is as wide as its widest word instead of as wide as both put
+// together. Four columns and a spelled difficulty is what a 320pt phone holds, and
+// `BEST SCORE` on one line is the thing that does not fit in it.
+//
+// Bottom-aligned by the row, so a one-word heading sits on the same line as the second
+// word of a two-word one and the headings read as a single band rather than as four
+// labels at four heights.
+function ColumnHead({
+  width,
+  top,
+  bottom,
+}: {
+  // One of `BOARD_COLUMNS` — the widths are declared beside the row that has to match
+  // them, never picked again here.
+  width: string
+  // Absent on a heading that is one word, which is then simply the only line.
+  top?: string
+  bottom: string
+}) {
+  return (
+    <View className={cn(width, 'items-end')}>
+      {top !== undefined && (
+        <Text
+          selectable={false}
+          numberOfLines={1}
+          className="font-mono text-[8px] font-bold tracking-[1px] text-dim"
+        >
+          {top}
+        </Text>
+      )}
+      <Text
+        selectable={false}
+        numberOfLines={1}
+        className="font-mono text-[8px] font-bold tracking-[1px] text-dim"
+      >
+        {bottom}
+      </Text>
+    </View>
+  )
+}
 
 // One player, as every board in the app already knows them plus everything no board
 // could say. Opened by tapping a name — on a leaderboard, the winners stripe, a
@@ -255,32 +301,37 @@ export function PlayerProfileOverlay({
 
                     {SCORED_MODES.map((mode) => (
                       <View key={mode}>
-                        <View className="h-7 flex-row items-end">
+                        {/* Taller than the rows under it, because these headings are two
+                        lines where a row is one. */}
+                        <View className="h-9 flex-row items-end">
                           <Text
                             selectable={false}
+                            numberOfLines={1}
                             className="flex-1 font-mono text-[11px] font-black tracking-[2px]"
                             style={{ color: MODE_GRADIENT[mode][0] }}
                           >
                             {t(MODES[mode].label)}
                           </Text>
-                          <Text
-                            selectable={false}
-                            className="w-14 text-right font-mono text-[8px] font-bold tracking-[1px] text-dim"
-                          >
-                            <Trans>RUNS</Trans>
-                          </Text>
-                          <Text
-                            selectable={false}
-                            className="w-20 text-right font-mono text-[8px] font-bold tracking-[1px] text-dim"
-                          >
-                            <Trans>BEST</Trans>
-                          </Text>
-                          <Text
-                            selectable={false}
-                            className="w-16 text-right font-mono text-[8px] font-bold tracking-[1px] text-dim"
-                          >
-                            {t(AVERAGE_LABEL[mode])}
-                          </Text>
+                          <ColumnHead width={BOARD_COLUMNS.runs} bottom={t`RUNS`} />
+                          <ColumnHead
+                            width={BOARD_COLUMNS.best}
+                            top={t`BEST`}
+                            bottom={t`SCORE`}
+                          />
+                          {/* The mode's own factor twice: how it usually goes, then the
+                          once it all landed. Both second lines come from the same
+                          message, so the pair can never end up asking about two
+                          different things. */}
+                          <ColumnHead
+                            width={BOARD_COLUMNS.average}
+                            top={t`AVG`}
+                            bottom={t(FACTOR_LABEL[mode])}
+                          />
+                          <ColumnHead
+                            width={BOARD_COLUMNS.bestFactor}
+                            top={t`BEST`}
+                            bottom={t(FACTOR_LABEL[mode])}
+                          />
                         </View>
                         {rows
                           .filter((row) => row.mode === mode)
@@ -292,6 +343,7 @@ export function PlayerProfileOverlay({
                               runs={row.runs}
                               best={row.best}
                               average={row.average}
+                              bestFactor={row.bestFactor}
                             />
                           ))}
                       </View>

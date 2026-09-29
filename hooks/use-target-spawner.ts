@@ -1,6 +1,12 @@
 import { useCallback, useEffect, useRef } from 'react'
 
-import { MAX_TARGET } from '@/constants/game'
+import { TUTORIAL_TARGET_REACH } from '@/constants/tutorial'
+import {
+  FULL_TARGET_RANGE,
+  pickTargetValue,
+  rangeAround,
+  type TargetRange,
+} from '@/lib/target-value'
 import {
   effectiveSpawnInterval,
   type Difficulty,
@@ -10,6 +16,9 @@ import {
 
 // Spawns targets every effectiveSpawnInterval (first immediately) while playing;
 // clearing the board spawns the next one right away and restarts the cadence.
+//
+// The tutorial runs no cadence at all: the board holds one target, and the respawn on a
+// cleared board is the only thing that ever deals another — see constants/tutorial.ts.
 export function useTargetSpawner({
   isPlaying,
   targetCount,
@@ -17,6 +26,7 @@ export function useTargetSpawner({
   difficulty,
   hits,
   traineeTimeoutMs,
+  tutorial,
   currentSum,
   takenValues,
   send,
@@ -30,6 +40,9 @@ export function useTargetSpawner({
   // Trainee's player-set clock, from the machine's own context so the gap and the ring
   // are always read off the same number.
   traineeTimeoutMs: number
+  // The run is the tutorial. Both halves of its spawning rule are read off this: one
+  // target at a time, and the next one within reach of the last.
+  tutorial: boolean
   currentSum: number
   takenValues: number[]
   send: GameSend
@@ -42,6 +55,12 @@ export function useTargetSpawner({
     values: takenValues,
   })
   excludeRef.current = { sum: currentSum, values: takenValues }
+
+  // Read at spawn time for the same reason: `spawnTarget` is the callback the cadence
+  // and the respawn both hold, and depending on this would rebuild both on a change
+  // that only matters when a target is actually being dealt.
+  const tutorialRef = useRef(tutorial)
+  tutorialRef.current = tutorial
 
   // Latest cadence, likewise read when a spawn fires rather than when the wait is
   // armed. See startCadence for why that matters.
@@ -56,23 +75,19 @@ export function useTargetSpawner({
 
   const spawnTarget = useCallback(() => {
     const { sum, values } = excludeRef.current
+    // The tutorial keeps the next target within reach of the one just hit — which is the
+    // sum standing on the dial, because hitting a target is what put it there. Every
+    // other mode draws from the whole range.
+    const range: TargetRange = tutorialRef.current
+      ? rangeAround(sum, TUTORIAL_TARGET_REACH)
+      : FULL_TARGET_RANGE
     // Never spawn a target that's already the dialled sum, or a duplicate of a
     // target already on the board.
-    const taken = new Set<number>([sum, ...values])
-    let value = Math.floor(Math.random() * (MAX_TARGET + 1))
-    if (taken.has(value)) {
-      const base = value
-      for (let d = 1; d <= MAX_TARGET; d++) {
-        if (base + d <= MAX_TARGET && !taken.has(base + d)) {
-          value = base + d
-          break
-        }
-        if (base - d >= 0 && !taken.has(base - d)) {
-          value = base - d
-          break
-        }
-      }
-    }
+    const value = pickTargetValue({
+      roll: Math.random(),
+      taken: [sum, ...values],
+      range,
+    })
     send({ type: 'ADD_TARGET', value, at: Date.now() })
   }, [send])
 
@@ -106,11 +121,13 @@ export function useTargetSpawner({
     // Coming back from a pause the board still holds everything it had, and spawning
     // here would hand the player an extra target for having paused.
     if (targetCountRef.current === 0) spawnTarget()
-    startCadence()
+    // No cadence in the tutorial: the one target standing is the whole board until it is
+    // hit, and the respawn below is what deals the next.
+    if (!tutorial) startCadence()
     return () => {
       if (spawnTimer.current) clearTimeout(spawnTimer.current)
     }
-  }, [isPlaying, spawnTarget, startCadence])
+  }, [isPlaying, tutorial, spawnTarget, startCadence])
 
   // Immediate respawn when a hit clears the board mid-game. Reset the tracker
   // whenever we're not playing so a fresh game's targets→0 reset isn't mistaken
@@ -123,8 +140,8 @@ export function useTargetSpawner({
     }
     if (prevTargetCount.current > 0 && targetCount === 0) {
       spawnTarget()
-      startCadence()
+      if (!tutorial) startCadence()
     }
     prevTargetCount.current = targetCount
-  }, [targetCount, isPlaying, spawnTarget, startCadence])
+  }, [targetCount, isPlaying, tutorial, spawnTarget, startCadence])
 }

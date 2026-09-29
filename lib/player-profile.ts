@@ -33,6 +33,12 @@ export type BoardTotals = {
   scoreSum: number
   accSum: number
   spdSum: number
+  // The best single run this board has seen, per factor, already a percentage — unlike
+  // the sums above, which are only ever divided on read. Zero for a board whose runs all
+  // predate the server keeping a best, which is why `boardRows` reads a zero as nothing
+  // rather than as a run that landed no accuracy at all.
+  bestAcc: number
+  bestSpd: number
   // How long this board has been played, summed over its runs. Zero for a board whose
   // runs were all counted before the server kept time.
   timeMs: number
@@ -90,6 +96,10 @@ export type BoardRow = {
   // Accuracy for an Accuracy board, speed for a Speed board, as a percentage. Null when
   // no hit has been counted there, which is not the same as zero.
   average: number | null
+  // The same factor at its best rather than on average — the single run where it all
+  // landed. Null for a board whose runs all predate the server keeping one, so a career
+  // started before this shipped reads a dash there until it is played again.
+  bestFactor: number | null
 }
 
 // The factor sums travel with the totals so the modal can show one lifetime average per
@@ -127,6 +137,13 @@ export type Lifetime = {
 const AVERAGE_SUM = {
   accuracy: (totals: BoardTotals) => totals.accSum,
   speed: (totals: BoardTotals) => totals.spdSum,
+} as const satisfies Record<ScoredMode, (totals: BoardTotals) => number>
+
+// And which best goes with it. The same one-question-per-mode rule: an Accuracy board is
+// asked for its most exact run, a Speed board for its fastest.
+const BEST_FACTOR = {
+  accuracy: (totals: BoardTotals) => totals.bestAcc,
+  speed: (totals: BoardTotals) => totals.bestSpd,
 } as const satisfies Record<ScoredMode, (totals: BoardTotals) => number>
 
 // A factor sum over its hits, as a percentage. The same formula the game over screen
@@ -197,6 +214,16 @@ export function boardRows(profile: PlayerProfile): BoardRow[] {
           totals === undefined
             ? null
             : averagePercent(AVERAGE_SUM[mode](totals), totals.hits),
+        // A zero is not a result here, for the same reason it is not one in `bests`: the
+        // column starts empty for every board that was played before the server kept a
+        // best, and a board that reads 0% is a board somebody played appallingly rather
+        // than one nobody has played on this build. Rounded on the way out, as the
+        // average beside it is — the server keeps the raw percentage so the two figures
+        // are rounded once, in the same place.
+        bestFactor:
+          totals === undefined || BEST_FACTOR[mode](totals) <= 0
+            ? null
+            : Math.round(BEST_FACTOR[mode](totals)),
       }
     }),
   )
@@ -239,6 +266,10 @@ export type PlayerProfileResponse = {
     scoreSum: number
     accSum: number
     spdSum: number
+    // Absent, not zero, from a server still running the RPC as it was before the
+    // counters kept a best run — the same shape `timeMs` below is read in.
+    bestAcc?: number
+    bestSpd?: number
     // Absent, not zero, from a server still running the RPC as it was before the
     // counters kept time — the same shape `achievements` above is read in.
     timeMs?: number
@@ -309,6 +340,8 @@ const pickTotals = (
   scoreSum: row.scoreSum,
   accSum: row.accSum,
   spdSum: row.spdSum,
+  bestAcc: row.bestAcc ?? 0,
+  bestSpd: row.bestSpd ?? 0,
   timeMs: row.timeMs ?? 0,
 })
 

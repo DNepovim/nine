@@ -307,6 +307,51 @@ describe('run stat accumulators', () => {
     expect(spdSum).toBeGreaterThanOrEqual(0)
     expect(spdSum).toBeLessThanOrEqual(1)
   })
+
+  it('keeps the best single hit, not the last one', () => {
+    const actor = start('accuracy')
+    // An optimal hit, taken at once: both factors as high as they go.
+    actor.send({ type: 'ADD_TARGET', value: 9, at: 0 })
+    actor.send({ type: 'PRESS', index: 8, delta: 1, now: 0 })
+    const peak = actor.getSnapshot().context
+    expect(peak.bestAcc).toBeCloseTo(1)
+    expect(peak.bestSpd).toBeCloseTo(1)
+
+    // Then a worse one — a wasted step, and most of the ring spent. Neither best
+    // may follow it down.
+    actor.send({ type: 'ADD_TARGET', value: 11, at: 0 })
+    actor.send({ type: 'PRESS', index: 0, delta: 1, now: 10_000 })
+    actor.send({ type: 'PRESS', index: 0, delta: 1, now: 10_000 })
+    const after = actor.getSnapshot().context
+    expect(after.hits).toBe(2)
+    expect(after.bestAcc).toBeCloseTo(1)
+    expect(after.bestSpd).toBeCloseTo(1)
+  })
+
+  it('raises a best when a later hit beats it', () => {
+    const actor = start('accuracy')
+    // A wasteful first hit: par 1, two steps → accFactor 1 - 1/3.
+    actor.send({ type: 'ADD_TARGET', value: 2, at: 0 })
+    actor.send({ type: 'PRESS', index: 0, delta: 1, now: 0 })
+    actor.send({ type: 'PRESS', index: 0, delta: 1, now: 0 })
+    expect(actor.getSnapshot().context.bestAcc).toBeCloseTo(2 / 3)
+
+    // Then an optimal one, which is what the run's best becomes.
+    actor.send({ type: 'ADD_TARGET', value: 11, at: 0 })
+    actor.send({ type: 'PRESS', index: 8, delta: 1, now: 0 })
+    expect(actor.getSnapshot().context.bestAcc).toBeCloseTo(1)
+  })
+
+  it('starts a fresh run with no best to beat', () => {
+    const actor = start('accuracy')
+    actor.send({ type: 'ADD_TARGET', value: 9, at: 0 })
+    actor.send({ type: 'PRESS', index: 8, delta: 1, now: 0 })
+    actor.send({ type: 'PAUSE', now: 100 })
+    actor.send({ type: 'RESTART', now: 200 })
+    const context = actor.getSnapshot().context
+    expect(context.bestAcc).toBe(0)
+    expect(context.bestSpd).toBe(0)
+  })
 })
 
 describe('hit batch reports the route', () => {
@@ -690,6 +735,8 @@ describe('restoring a run the app was closed on', () => {
     strikes: 5,
     accSum: 4.5,
     spdSum: 3.25,
+    bestAcc: 0.875,
+    bestSpd: 0.5,
     targets: [
       {
         id: 11,
@@ -709,6 +756,7 @@ describe('restoring a run the app was closed on', () => {
     nextTargetId: 12,
     elapsedMs: 42_000,
     runSeq: 7,
+    tutorial: false,
   }
 
   it('lands paused rather than playing', () => {
@@ -728,6 +776,8 @@ describe('restoring a run the app was closed on', () => {
     expect(context.difficulty).toBe('extreme')
     expect(context.lives).toBe(2)
     expect(context.streak).toBe(3)
+    expect(context.bestAcc).toBe(0.875)
+    expect(context.bestSpd).toBe(0.5)
     expect(context.elapsedMs).toBe(42_000)
     expect(context.runSeq).toBe(7)
     expect(context.targets).toEqual(run.targets)
@@ -758,5 +808,76 @@ describe('restoring a run the app was closed on', () => {
     actor.send({ type: 'RESTART', now: 0 })
     expect(actor.getSnapshot().context.runSeq).toBe(8)
     expect(actor.getSnapshot().context.score).toBe(0)
+  })
+})
+
+describe('the tutorial', () => {
+  // Trainee on the Easy board, which is what the welcome and the guide's TRY IT both
+  // deal. What makes it the tutorial is the flag on START, not the mode.
+  const startTutorial = () => {
+    const actor = createActor(gameMachine)
+    actor.start()
+    actor.send({ type: 'SET_MODE', mode: 'trainee' })
+    actor.send({ type: 'SET_DIFFICULTY', difficulty: 'easy' })
+    actor.send({ type: 'START', now: 0, tutorial: true })
+    return actor
+  }
+
+  it('is off in a run started without it', () => {
+    expect(start('trainee').getSnapshot().context.tutorial).toBe(false)
+  })
+
+  it('holds the board to one target, where Easy would take three', () => {
+    const actor = startTutorial()
+    actor.send({ type: 'ADD_TARGET', value: 40, at: 0 })
+    actor.send({ type: 'ADD_TARGET', value: 60, at: 0 })
+    actor.send({ type: 'ADD_TARGET', value: 80, at: 0 })
+    expect(actor.getSnapshot().context.targets).toHaveLength(1)
+    expect(actor.getSnapshot().context.targets[0]?.value).toBe(40)
+  })
+
+  it('takes the next target once the one standing is hit', () => {
+    const actor = startTutorial()
+    // Top-left key, weight 1: one press puts the sum on 1.
+    actor.send({ type: 'ADD_TARGET', value: 1, at: 0 })
+    actor.send({ type: 'PRESS', index: 0, delta: 1, now: 100 })
+    expect(actor.getSnapshot().context.targets).toHaveLength(0)
+    actor.send({ type: 'ADD_TARGET', value: 40, at: 200 })
+    expect(actor.getSnapshot().context.targets).toHaveLength(1)
+  })
+
+  it('scores a hit as if no clock had run, however long it took', () => {
+    const actor = startTutorial()
+    actor.send({ type: 'ADD_TARGET', value: 1, at: 0 })
+    // Well past the clock the target was dealt — in any other run this would have
+    // expired, and a hit landed here would carry no speed at all.
+    actor.send({ type: 'PRESS', index: 0, delta: 1, now: 10 * 60 * 1000 })
+    const hit = actor.getSnapshot().context.hitBatch.hits[0]
+    expect(hit?.spdFactor).toBe(1)
+    expect(actor.getSnapshot().context.spdSum).toBe(1)
+  })
+
+  it('stays the tutorial across a pause and a resume', () => {
+    const actor = startTutorial()
+    actor.send({ type: 'PAUSE', now: 1000 })
+    actor.send({ type: 'RESUME', now: 2000 })
+    expect(actor.getSnapshot().context.tutorial).toBe(true)
+  })
+
+  it('deals another tutorial on RESTART rather than dropping into practice', () => {
+    const actor = startTutorial()
+    actor.send({ type: 'PAUSE', now: 1000 })
+    actor.send({ type: 'RESTART', now: 2000 })
+    expect(actor.getSnapshot().context.tutorial).toBe(true)
+  })
+
+  it('is left behind by the next run started without it', () => {
+    const actor = startTutorial()
+    // Out through the pause screen, which is the only way back to the intro from a run.
+    actor.send({ type: 'PAUSE', now: 1000 })
+    actor.send({ type: 'MENU' })
+    actor.send({ type: 'SET_MODE', mode: 'accuracy' })
+    actor.send({ type: 'START', now: 3000 })
+    expect(actor.getSnapshot().context.tutorial).toBe(false)
   })
 })

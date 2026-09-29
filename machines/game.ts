@@ -1,6 +1,8 @@
 import { isNonEmptyArray } from 'narrowland'
 import { assign, createMachine } from 'xstate'
 
+import { TUTORIAL_MAX_TARGETS } from '@/constants/tutorial'
+
 import {
   DIFFICULTIES,
   effectiveTimeout,
@@ -28,6 +30,7 @@ export {
   MODE_ORDER,
   MODES,
   MULTIPLAYER_GRADIENT,
+  runLabel,
   SCORED_MODES,
   effectiveSpawnInterval,
   effectiveTimeout,
@@ -122,6 +125,12 @@ type Context = {
   // than the thing being tested. Every other mode reads `rampedTimeout`, which is the
   // run's own difficulty and cannot be negotiated with.
   traineeTimeoutMs: number
+  // This run is the tutorial — the one a first launch opens on. A property of the run
+  // rather than a mode of its own: everything else about it is Trainee, down to the
+  // colour, so `mode` stays `trainee` and every rule that asks about the mode keeps the
+  // answer it already had. What it changes is in constants/tutorial.ts, and each of the
+  // three places that reads it says which rule it is keeping.
+  tutorial: boolean
   lives: number
   streak: number
   // The longest streak this run has reached. `streak` is the one running now and goes
@@ -133,6 +142,14 @@ type Context = {
   strikes: number
   accSum: number
   spdSum: number
+  // The best any single hit of this run managed, on each of the two factors the score
+  // is blended from. A sum says how the run went on average; these say how well it can
+  // be played, which is the number a player chases. Kept as the raw 0–1 factors the
+  // scoring returns — the screens showing them are what turn them into a percentage.
+  //
+  // Both are a high-water mark, so a worse hit after them changes nothing.
+  bestAcc: number
+  bestSpd: number
   targets: Target[]
   nextTargetId: number
   hitBatch: HitBatch
@@ -167,12 +184,15 @@ export type RestoredRun = Pick<
   | 'score'
   | 'mode'
   | 'difficulty'
+  | 'tutorial'
   | 'lives'
   | 'streak'
   | 'maxStreak'
   | 'strikes'
   | 'accSum'
   | 'spdSum'
+  | 'bestAcc'
+  | 'bestSpd'
   | 'targets'
   | 'nextTargetId'
   | 'elapsedMs'
@@ -180,7 +200,10 @@ export type RestoredRun = Pick<
 >
 
 type Event =
-  | { type: 'START'; now: number }
+  // `tutorial` opens the run as the tutorial rather than as plain practice. Sent by the
+  // welcome, and by the guide's TRY IT button; absent everywhere else, which is a
+  // scored-or-practice run as before.
+  | { type: 'START'; now: number; tutorial?: boolean }
   | { type: 'PAUSE'; now: number }
   | { type: 'RESUME'; now: number }
   | { type: 'RESTART'; now: number }
@@ -207,8 +230,13 @@ export type GameSend = (event: Event) => void
 // mode, since nothing else clears them. Carrying them into a new run opened it with
 // a stale hit already on Trainee's stat row and still able to earn a confetti
 // shower, before the player had touched the dial.
-const freshGame = (context: Context, now: number) => ({
+//
+// `tutorial` is handed in rather than carried over, because it is the one thing about a
+// fresh run that the event decides and the last run cannot: START says whether this is
+// the tutorial, and RESTART hands back what the run being restarted was.
+const freshGame = (context: Context, now: number, tutorial: boolean) => ({
   grid: initialGrid,
+  tutorial,
   hits: 0,
   score: 0,
   lives: MODES[context.mode].lives,
@@ -217,6 +245,8 @@ const freshGame = (context: Context, now: number) => ({
   strikes: 0,
   accSum: 0,
   spdSum: 0,
+  bestAcc: 0,
+  bestSpd: 0,
   targets: [] as Target[],
   // Cleared off the board, but the counter keeps climbing for the same reason the hit
   // batch's seq does: the UI keys a target's animations on its id, and a restart from a
@@ -320,6 +350,24 @@ type StreakFacts = {
   clearedBoard: boolean
 }
 
+// How much of a target's clock is left when a press lands on it, which is what the speed
+// half of its points is measured from. Each target is scored against the clock it was
+// given, not the run's current one.
+//
+// A tutorial target is scored as if none of its clock had run, because none of it did:
+// the countdown is off there, and measuring against the wall clock instead would let the
+// speed half decay to nothing while the player reads the board — the very thing taking
+// the clock away was meant to allow.
+const clockLeft = (target: Target, tutorial: boolean, now: number): number =>
+  tutorial ? target.duration : Math.max(0, target.duration - (now - target.spawnedAt))
+
+// How many targets may share the board. The difficulty's number, except in the tutorial,
+// which holds to one: nothing new arrives there until the target standing is hit, so a
+// learner is never behind before they have understood the first one. The spawner keeps
+// the other half of that rule — it runs no cadence at all in the tutorial.
+const maxTargetsOn = (context: Context): number =>
+  context.tutorial ? TUTORIAL_MAX_TARGETS : DIFFICULTIES[context.difficulty].maxTargets
+
 // Whether a hit batch extends the streak. One predicate per trigger, so adding a
 // mode's rule means adding a row here rather than another branch in a conditional.
 const STREAK_TRIGGERED = {
@@ -369,8 +417,7 @@ function applyGrid(context: Context, newGrid: Grid, now: number) {
 
   for (const t of matched) {
     const userSteps = t.userSteps + 1
-    // Each target is scored against the clock it was given, not the run's current one.
-    const timeLeft = Math.max(0, t.duration - (now - t.spawnedAt))
+    const timeLeft = clockLeft(t, context.tutorial, now)
     const progress = t.duration > 0 ? Math.min(1, Math.max(0, timeLeft / t.duration)) : 0
     const pts = computeHitPoints({
       par: t.par,
@@ -462,6 +509,18 @@ function applyGrid(context: Context, newGrid: Grid, now: number) {
   const newAccSum = context.accSum + accAdded
   const newSpdSum = context.spdSum + spdAdded
 
+  // The run's high-water marks. Folded over the whole batch rather than the first
+  // target in it: one press can clear two targets, and the better of the two is as
+  // much the run's best as a hit taken on its own would be.
+  const bestAcc = perTarget.reduce(
+    (best, p) => Math.max(best, p.accFactor),
+    context.bestAcc,
+  )
+  const bestSpd = perTarget.reduce(
+    (best, p) => Math.max(best, p.spdFactor),
+    context.bestSpd,
+  )
+
   // Trainee keeps no best. It is a practice mode with no board, and tracking one
   // meant the personal-best celebration fired on the first hit of a later run —
   // practice runs are short, so the stored best was low enough to clear at once.
@@ -498,6 +557,8 @@ function applyGrid(context: Context, newGrid: Grid, now: number) {
     strikes,
     accSum: newAccSum,
     spdSum: newSpdSum,
+    bestAcc,
+    bestSpd,
     stats,
     hitBatch,
     lives: newLives,
@@ -517,12 +578,15 @@ export const gameMachine = createMachine({
     mode: 'accuracy' as Mode,
     difficulty: 'hard' as Difficulty,
     traineeTimeoutMs: effectiveTimeout('trainee', 'easy'),
+    tutorial: false,
     lives: 3,
     streak: 0,
     maxStreak: 0,
     strikes: 0,
     accSum: 0,
     spdSum: 0,
+    bestAcc: 0,
+    bestSpd: 0,
     targets: [] as Target[],
     nextTargetId: 0,
     hitBatch: { seq: 0, hits: [] as HitInfo[] },
@@ -621,7 +685,7 @@ export const gameMachine = createMachine({
             }: {
               context: Context
               event: Extract<Event, { type: 'START' }>
-            }) => freshGame(context, event.now),
+            }) => freshGame(context, event.now, event.tutorial === true),
           ),
         },
         SET_MODE: {
@@ -807,7 +871,7 @@ export const gameMachine = createMachine({
         ],
         ADD_TARGET: {
           guard: ({ context }: { context: Context }) =>
-            context.targets.length < DIFFICULTIES[context.difficulty].maxTargets,
+            context.targets.length < maxTargetsOn(context),
           actions: assign(
             ({
               context,
@@ -871,7 +935,7 @@ export const gameMachine = createMachine({
             }: {
               context: Context
               event: Extract<Event, { type: 'RESTART' }>
-            }) => freshGame(context, event.now),
+            }) => freshGame(context, event.now, context.tutorial),
           ),
         },
         // TARGET_EXPIRED is deliberately not handled here. A paused run has no clock
@@ -908,7 +972,7 @@ export const gameMachine = createMachine({
             }: {
               context: Context
               event: Extract<Event, { type: 'RESTART' }>
-            }) => freshGame(context, event.now),
+            }) => freshGame(context, event.now, context.tutorial),
           ),
         },
       },

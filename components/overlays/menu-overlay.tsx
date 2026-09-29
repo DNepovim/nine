@@ -47,6 +47,7 @@ import { ModeSelector } from './mode-selector'
 import { ModeTips } from './mode-tips'
 import { PlayModeTab, type PlayMode } from './play-mode-tab'
 import { RecentWinners } from './recent-winners'
+import { TitleMark } from './title-mark'
 import { TitleSlot } from './title-slot'
 
 const shadow = {
@@ -212,6 +213,13 @@ export function MenuOverlay({
       <View className="w-full items-center">
         {/* Top section */}
         <View className="w-full items-center">
+          {/* The mark this player wears everywhere their name does, crowning the whole
+              block rather than sitting between the greeting and the title — it is the
+              rarest thing on the screen, and the top is where the eye starts. Silent for
+              everyone who hasn't taken an Extreme all-time board, and tappable for
+              anyone who has yet to find out what the thing over their name is. */}
+          {mark !== null && <TitleMark mark={mark} />}
+
           {/* Greeting — only shown when nickname is set. The player's own name is
               drawn the way their name is drawn everywhere else, in the gradient their
               averages earn; the words around it stay dim, so the one coloured thing on
@@ -230,18 +238,6 @@ export function MenuOverlay({
               `Let's multiply`
             )}
           </Text>
-
-          {/* The mark this player wears everywhere their name does, over the one
-              title that's always theirs — silent for everyone who hasn't taken an
-              Extreme all-time board. */}
-          {mark !== null && (
-            <Text
-              selectable={false}
-              className="letter-float-1 mb-1 text-[26px] leading-[30px]"
-            >
-              {mark}
-            </Text>
-          )}
 
           {/* NINE title */}
           <View className="mb-4 flex-row gap-3">

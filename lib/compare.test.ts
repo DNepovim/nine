@@ -11,6 +11,8 @@ const totals = (over: Partial<BoardTotals> = {}): BoardTotals => ({
   scoreSum: 0,
   accSum: 0,
   spdSum: 0,
+  bestAcc: 0,
+  bestSpd: 0,
   timeMs: 0,
   ...over,
 })

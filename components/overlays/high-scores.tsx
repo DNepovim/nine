@@ -335,6 +335,7 @@ export function HighScores({
         <PublishScoresButton
           from={gradientColors[0]}
           to={gradientColors[1]}
+          disabled={!online}
           onPress={onAddNickname}
         />
       )}

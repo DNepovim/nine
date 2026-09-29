@@ -20,6 +20,7 @@ export function TargetCard({
   par,
   dying = false,
   frozen = false,
+  clocked = true,
   onExpire,
   onExitComplete,
 }: {
@@ -30,6 +31,10 @@ export function TargetCard({
   dying?: boolean
   // The run is paused: hold the clock where it is until play resumes.
   frozen?: boolean
+  // Whether this target has a clock to run down at all — false in the tutorial, where a
+  // target waits as long as it takes and leaves only when it is hit. Not the same thing
+  // as `frozen`, which is a clock stopped for a moment; see PieCountdown.
+  clocked?: boolean
   onExpire: () => void
   onExitComplete: () => void
 }) {
@@ -81,6 +86,7 @@ export function TargetCard({
         value={target.value}
         isDark={isDark}
         active={target.exit === null && !dying && !frozen}
+        clocked={clocked}
         duration={duration}
         startProgress={target.startProgress}
         exit={target.exit}

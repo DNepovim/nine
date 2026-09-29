@@ -80,8 +80,11 @@ export function GameOverOverlay({
   record,
   screen,
   titleWords,
+  maxStreak,
   avgAccuracy,
   avgSpeed,
+  bestAccuracy,
+  bestSpeed,
   achievements,
   achievementStore,
   achievementFacts,
@@ -98,7 +101,8 @@ export function GameOverOverlay({
   score: number
   hits: number
   gameTimeMs: number
-  // How many of those hits landed on a streak — the challenge is offered on it.
+  // How many of those hits landed on a streak — the challenge is offered on it, and the
+  // run stats report it.
   strikes: number
   // The biggest board record this run took, or null for a run that took none. Drives
   // the celebration behind the screen, and the gold when it is the all-time one.
@@ -108,8 +112,13 @@ export function GameOverOverlay({
   screen: RecordScreen
   // Decided by the sequence so the flying copy and this one always agree.
   titleWords: TitleWords
+  // The longest that streak ever got, which is the other half of what `strikes` says.
+  maxStreak: number
   avgAccuracy: number
   avgSpeed: number
+  // The best any one hit of the run managed, on each factor.
+  bestAccuracy: number
+  bestSpeed: number
   // What this run earned for good — empty on most runs, and silent when it is.
   achievements: readonly Award[]
   // Only for the card a tapped chip opens — see EarnedAchievements.
@@ -254,10 +263,15 @@ export function GameOverOverlay({
             <BoardMedals medals={medals} gameMode={gameMode} shadow={painted} />
 
             <RunStats
+              gameMode={gameMode}
               hits={hits}
               gameTimeMs={gameTimeMs}
+              strikes={strikes}
+              maxStreak={maxStreak}
               avgAccuracy={avgAccuracy}
               avgSpeed={avgSpeed}
+              bestAccuracy={bestAccuracy}
+              bestSpeed={bestSpeed}
               halo={painted}
             />
 

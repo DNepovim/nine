@@ -5,9 +5,11 @@ import type { Difficulty, Mode } from '@/machines/game'
 // The first launch, and what the device remembers about it.
 //
 // A player who opens the app for the first time does not get a guide across their screen
-// — they get a Trainee run already going, with the coach's hints teaching in place of the
-// lesson they would have read. How to Play is still there for anyone who wants reading;
-// it just never takes the opening for itself.
+// — they get a run already going: the tutorial, which is Trainee with its clock, its
+// cadence and its options taken off, so there is one target on the board and nothing on
+// it that can be lost. How to Play is still there for anyone who wants reading, and its
+// TRY IT button deals the same run again; it just never takes the opening for itself.
+// What the tutorial changes and why is in constants/tutorial.ts.
 //
 // The stored flag outlives that one run. It is the second thing this file is for: a
 // player welcomed this way has never seen a scored board, so Trainee keeps offering them
@@ -18,6 +20,9 @@ import type { Difficulty, Mode } from '@/machines/game'
 // own default context is Accuracy Hard. Somebody who has never played gets practice with
 // unlimited lives and the gentlest clock — the same reasoning behind STEP_UP_BOARD's
 // Easy: the one board you can be dropped onto without having been told anything first.
+//
+// The board, not the run. Being the tutorial is the `tutorial` flag on the START event,
+// and this is where that run is played.
 export const WELCOME_BOARD = { mode: 'trainee', difficulty: 'easy' } as const satisfies {
   mode: Mode
   difficulty: Difficulty

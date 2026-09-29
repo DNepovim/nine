@@ -4,7 +4,7 @@ import { useMachine } from '@xstate/react'
 import { useFonts } from 'expo-font'
 import { isNotNull, isOneOf } from 'narrowland'
 import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { AppState, Text, View } from 'react-native'
+import { AppState, Text, View, type LayoutChangeEvent } from 'react-native'
 import Animated, {
   Easing,
   useAnimatedStyle,
@@ -24,10 +24,12 @@ import { DialButton } from '@/components/game/dial-button'
 import { FloatingLifeLoss } from '@/components/game/floating-life-loss'
 import { FloatingPoints } from '@/components/game/floating-points'
 import { FloatingStat } from '@/components/game/floating-stat'
+import { HitSync } from '@/components/game/hit-sync'
 import { MultiplayerGame } from '@/components/game/multiplayer-game'
 import { PauseButton } from '@/components/game/pause-button'
 import { ScoreDigit } from '@/components/game/score-digit'
 import { StepUpToast } from '@/components/game/step-up-toast'
+import { StrikeShot } from '@/components/game/strike-shot'
 import { TargetCard } from '@/components/game/target-card'
 import { TraineeStats } from '@/components/game/trainee-stats'
 import { AchievementDetail } from '@/components/overlays/achievement-detail'
@@ -51,6 +53,8 @@ import { StepUpOverlay } from '@/components/overlays/step-up-overlay'
 import { WhatsNewOverlay } from '@/components/overlays/whats-new-overlay'
 import { Screen } from '@/components/screen'
 import type { AchievementId } from '@/constants/achievements'
+import { DEFAULT_DIAL_CORNERS } from '@/constants/dial-hints'
+import { PIE_SIZE } from '@/constants/game'
 import { mono } from '@/constants/theme'
 import { useAchievementQueue, useAchievements } from '@/hooks/use-achievements'
 import { useAnnouncements } from '@/hooks/use-announcements'
@@ -87,6 +91,7 @@ import { useScoreDirection } from '@/hooks/use-score-direction'
 import { useScoreSubmission } from '@/hooks/use-score-submission'
 import { useSplash } from '@/hooks/use-splash'
 import { useStepUp } from '@/hooks/use-step-up'
+import { useStrikeShots, type ShotAim } from '@/hooks/use-strike-shots'
 import { useSupabaseAuth } from '@/hooks/use-supabase-auth'
 import { useTargetSpawner } from '@/hooks/use-target-spawner'
 import { useTheme } from '@/hooks/use-theme'
@@ -124,6 +129,7 @@ import {
   getDifficultyColor,
   MODE_GRADIENT,
   MODES,
+  runLabel,
   SCORED_MODES,
   streakMultiplier,
 } from '@/machines/game'
@@ -295,8 +301,11 @@ export default function GameScreen() {
     strikes,
     accSum,
     spdSum,
+    bestAcc,
+    bestSpd,
     hits,
     elapsedMs,
+    tutorial,
   } = state.context
   const isPlaying = state.matches('playing')
   const isMenu = state.matches('menu')
@@ -397,9 +406,11 @@ export default function GameScreen() {
   // Whether the guide has been read, for the one achievement that asks.
   const howToPlay = useHowToPlay()
 
-  // A device nobody has played on opens into a practice run rather than into the intro:
-  // the fastest thing the app can say about itself is the game itself, and Trainee's
-  // infinite lives and coach hints make it the one mode that can be walked into cold.
+  // A device nobody has played on opens into a run rather than into the intro: the
+  // fastest thing the app can say about itself is the game itself. What it opens is the
+  // tutorial — Trainee with its clock, its cadence and its options taken off, so there is
+  // nothing on the board that can be lost or misread before anything has been explained.
+  // See constants/tutorial.ts.
   const welcome = useWelcome()
 
   // Put the machine on the welcome board as soon as the launch is known to owe a run —
@@ -435,7 +446,7 @@ export default function GameScreen() {
     welcome.taken()
     send({ type: 'SET_MODE', mode: WELCOME_BOARD.mode })
     send({ type: 'SET_DIFFICULTY', difficulty: WELCOME_BOARD.difficulty })
-    send({ type: 'START', now: Date.now() })
+    send({ type: 'START', now: Date.now(), tutorial: true })
     track('run_started', { ...WELCOME_BOARD, from: 'welcome' })
   }, [welcome, splashExiting, isMenu, send])
 
@@ -530,7 +541,10 @@ export default function GameScreen() {
     grid,
     targets,
     batch: hitBatch,
-    muted: celebration.message !== null,
+    // Muted for the whole of a tutorial run as well as while a celebration owns the line:
+    // the stat block its line is drawn in is not on screen there, and a coach whose lines
+    // go nowhere is a route solved on every press for nothing.
+    muted: celebration.message !== null || tutorial,
   })
 
   const online = useOnline()
@@ -539,6 +553,10 @@ export default function GameScreen() {
   // for both, and a run's average is one of the few things a rule cannot re-derive.
   const avgAccuracy = hits > 0 ? Math.round((100 * accSum) / hits) : 0
   const avgSpeed = hits > 0 ? Math.round((100 * spdSum) / hits) : 0
+  // The same 0–1 factors as a percentage. No division: these are one hit's own figure
+  // rather than a share of the run, so a run with no hits in it reads 0 on its own.
+  const bestAccuracy = Math.round(100 * bestAcc)
+  const bestSpeed = Math.round(100 * bestSpd)
 
   // Every board the player stands on. Read here rather than inside the intro screen,
   // which unmounts for the whole run — the achievements need it while one is going, and
@@ -801,6 +819,7 @@ export default function GameScreen() {
     difficulty,
     hits,
     traineeTimeoutMs: state.context.traineeTimeoutMs,
+    tutorial,
     currentSum: sum,
     takenValues: targets.map((t) => t.value),
     send,
@@ -812,6 +831,39 @@ export default function GameScreen() {
     runSeq: state.context.runSeq,
     restoredPositions,
   })
+
+  // Where the board sits inside the effect layer over it, taken from the same layout
+  // event that sizes it for target placement. A shot needs the board's origin as well
+  // as its size: a target's position is measured from the board, and the sum row the
+  // shot leaves from is measured from the box holding both.
+  const boardRect = useRef({ x: 0, y: 0, width: 0, height: 0 })
+  const noteBoardRect = (event: LayoutChangeEvent) => {
+    const { x, y, width, height } = event.nativeEvent.layout
+    boardRect.current = { x, y, width, height }
+  }
+
+  // Where a strike fires from and what it is aimed at. The muzzle is the middle of the
+  // sum row, which follows the board directly, so its centre is the board's own bottom
+  // edge plus half the row the layout reserves — no second measurement needed.
+  const aimShot = (value: number): ShotAim | null => {
+    const board = boardRect.current
+    if (board.width === 0) return null
+    // Live targets never share a value, so the hit carrying this one names one card.
+    const target = displayedTargets.find((entry) => entry.value === value)
+    if (target === undefined) return null
+    return {
+      from: {
+        x: board.x + board.width / 2,
+        y: board.y + board.height + SUM_ROW_HEIGHT / 2,
+      },
+      to: {
+        x: board.x + target.position.x + PIE_SIZE / 2,
+        y: board.y + target.position.y + PIE_SIZE / 2,
+      },
+    }
+  }
+
+  const { shots, removeShot } = useStrikeShots({ mode, hitBatch, aim: aimShot })
 
   // Keeps the device's copy of the run in step with this one, so closing the app on it
   // is not losing it. Below the display list because it writes the board down as the
@@ -1093,7 +1145,7 @@ export default function GameScreen() {
                     className="font-mono text-[13px] font-black tracking-[2px]"
                     style={{ color: MODE_GRADIENT[mode][0] }}
                   >
-                    {t(MODES[mode].label)}
+                    {t(runLabel(mode, tutorial))}
                   </Text>
                   {isOneOf(mode, ['accuracy', 'speed']) && (
                     <Text
@@ -1230,79 +1282,123 @@ export default function GameScreen() {
               </View>
             </View>
 
-            {/* Target numbers */}
+            {/* The board and the sum row in one box, because a strike's shot crosses
+                between them: the layer at the end of it is absolute over both, and this
+                is the only space where the muzzle and the target it is aimed at are
+                measured from the same origin. */}
             <View className="flex-1">
-              {/* Trainee's readout — how many targets they have cleared and how the press
-                they just made actually went, which is what a learner wants and a score
-                cannot tell them.
+              {/* Target numbers */}
+              <View className="flex-1">
+                {/* Trainee's readout — how many targets they have cleared and how the press
+                  they just made actually went, which is what a learner wants and a score
+                  cannot tell them.
 
-                It sits inside the targets area rather than up in the top bar, and that is
-                a layout constraint rather than a design preference: the bar's height comes
-                out of the same leftover the dial is sized from, and this block is ~85px
-                against the bests strip's 25, which took about 10px off every dial button
-                in Trainee alone. Down here it costs the spawn canvas instead — which has
-                room to give, and which is measured below, so targets never land under it. */}
-              {mode === 'trainee' && (
-                <TraineeStats
-                  hits={hits}
-                  batch={hitBatch}
-                  praise={celebration.message ?? coach.line}
-                  showStats={showStats}
-                  showRoute={showRoute}
-                  route={coach.route}
-                  routeStart={coach.routeStart}
-                  routeTarget={coach.routeTarget}
-                />
-              )}
-              {/* The canvas the targets actually spawn into. It carries the measurement,
-                so its bounds are whatever is left after the readout above. */}
-              <View ref={targetsAreaRef} className="flex-1" onLayout={onContainerLayout}>
-                {displayedTargets.map((target) => (
-                  <TargetCard
-                    key={target.id}
-                    target={target}
-                    isDark={isDark}
-                    // The clock this target spawned with, so a ring never retargets
-                    // mid-flight when Speed's timeout tightens.
-                    duration={target.duration}
-                    par={
-                      mode === 'trainee' && showPar
-                        ? computePar(grid, target.value)
-                        : undefined
-                    }
-                    dying={isGameOver}
-                    frozen={isPaused}
-                    onExpire={() => {
-                      send({ type: 'TARGET_EXPIRED', id: target.id, now: Date.now() })
-                    }}
-                    onExitComplete={() => {
-                      removeDisplayed(target.id)
+                  It sits inside the targets area rather than up in the top bar, and that is
+                  a layout constraint rather than a design preference: the bar's height comes
+                  out of the same leftover the dial is sized from, and this block is ~85px
+                  against the bests strip's 25, which took about 10px off every dial button
+                  in Trainee alone. Down here it costs the spawn canvas instead — which has
+                  room to give, and which is measured below, so targets never land under it.
+
+                  Nothing of it in the tutorial. Every figure here is a reading of a run
+                  that has barely started, and the line under them coaches a press the
+                  player has not been told how to make yet — the teaching there is the
+                  tooltips still to come, and this would be talking over them. */}
+                {mode === 'trainee' && !tutorial && (
+                  <TraineeStats
+                    hits={hits}
+                    batch={hitBatch}
+                    praise={celebration.message ?? coach.line}
+                    showStats={showStats}
+                    showRoute={showRoute}
+                    route={coach.route}
+                    routeStart={coach.routeStart}
+                    routeTarget={coach.routeTarget}
+                  />
+                )}
+                {/* The canvas the targets actually spawn into. It carries the measurement,
+                  so its bounds are whatever is left after the readout above. */}
+                <View
+                  ref={targetsAreaRef}
+                  className="flex-1"
+                  onLayout={(event) => {
+                    onContainerLayout(event)
+                    noteBoardRect(event)
+                  }}
+                >
+                  {displayedTargets.map((target) => (
+                    <TargetCard
+                      key={target.id}
+                      target={target}
+                      isDark={isDark}
+                      // The clock this target spawned with, so a ring never retargets
+                      // mid-flight when Speed's timeout tightens.
+                      duration={target.duration}
+                      par={
+                        mode === 'trainee' && showPar && !tutorial
+                          ? computePar(grid, target.value)
+                          : undefined
+                      }
+                      dying={isGameOver}
+                      frozen={isPaused}
+                      // A tutorial target has no clock at all: it waits as long as it
+                      // takes and leaves only when it is hit.
+                      clocked={!tutorial}
+                      onExpire={() => {
+                        send({ type: 'TARGET_EXPIRED', id: target.id, now: Date.now() })
+                      }}
+                      onExitComplete={() => {
+                        removeDisplayed(target.id)
+                      }}
+                    />
+                  ))}
+                </View>
+              </View>
+
+              {/* ── Score above dial ── */}
+              {/* A reserved slot rather than whatever the digits need, so the dial sits at
+                  the same height whether the sum is 0 or 324 — and the same height a lesson
+                  puts it at, since DialStage reserves this too. */}
+              <View
+                className="items-center justify-center"
+                style={{ height: SUM_ROW_HEIGHT }}
+              >
+                {/* The sum's half of a hit — it swells as the target's number swells
+                    out of the ring collapsing above. */}
+                <HitSync seq={hitBatch.seq}>
+                  <View className="flex-row">
+                    {String(sum)
+                      .split('')
+                      .map((digit, i, arr) => (
+                        <ScoreDigit
+                          key={arr.length - 1 - i}
+                          digit={digit}
+                          direction={direction}
+                          isDark={isDark}
+                          progress={valueProgress(sum)}
+                        />
+                      ))}
+                  </View>
+                </HitSync>
+              </View>
+
+              {/* ── Strike shots ── */}
+              <View pointerEvents="none" className="absolute inset-0 overflow-visible">
+                {shots.map((shot) => (
+                  <StrikeShot
+                    key={shot.id}
+                    kind={shot.kind}
+                    fromX={shot.from.x}
+                    fromY={shot.from.y}
+                    toX={shot.to.x}
+                    toY={shot.to.y}
+                    radius={PIE_SIZE / 2}
+                    rounds={shot.rounds}
+                    onDone={() => {
+                      removeShot(shot.id)
                     }}
                   />
                 ))}
-              </View>
-            </View>
-
-            {/* ── Score above dial ── */}
-            {/* A reserved slot rather than whatever the digits need, so the dial sits at
-                the same height whether the sum is 0 or 324 — and the same height a lesson
-                puts it at, since DialStage reserves this too. */}
-            <View
-              className="items-center justify-center"
-              style={{ height: SUM_ROW_HEIGHT }}
-            >
-              <View className="flex-row">
-                {String(sum)
-                  .split('')
-                  .map((digit, i, arr) => (
-                    <ScoreDigit
-                      key={arr.length - 1 - i}
-                      digit={digit}
-                      direction={direction}
-                      isDark={isDark}
-                      progress={valueProgress(sum)}
-                    />
-                  ))}
               </View>
             </View>
 
@@ -1324,9 +1420,13 @@ export default function GameScreen() {
                     isDark={isDark}
                     size={dial.button}
                     weight={cellWeight(index)}
-                    showSum={showSum}
+                    showSum={showSum && !tutorial}
                     trainee={mode === 'trainee'}
-                    corners={corners}
+                    // The tutorial prints the weight and nothing else, whatever the
+                    // player has since chosen for practice: it is the one number a key
+                    // cannot be worked out without, and every other corner is a lesson
+                    // that has not been given yet.
+                    corners={tutorial ? DEFAULT_DIAL_CORNERS : corners}
                     peakFrom={DARK_MODE_GRADIENT[mode][0]}
                     peakTo={DARK_MODE_GRADIENT[mode][1]}
                     onDelta={(delta) => {
@@ -1378,8 +1478,11 @@ export default function GameScreen() {
             screen={runScreen}
             personalBest={crossed.includes('record')}
             titleRoll={titleRoll}
+            maxStreak={maxStreak}
             avgAccuracy={avgAccuracy}
             avgSpeed={avgSpeed}
+            bestAccuracy={bestAccuracy}
+            bestSpeed={bestSpeed}
             achievements={achievements.runEarned}
             achievementStore={achievements.store}
             achievementFacts={achievements.facts}
@@ -1456,11 +1559,16 @@ export default function GameScreen() {
               score={state.context.score}
               hits={state.context.hits}
               gameTimeMs={elapsedMs}
+              strikes={strikes}
+              maxStreak={maxStreak}
               avgAccuracy={avgAccuracy}
               avgSpeed={avgSpeed}
+              bestAccuracy={bestAccuracy}
+              bestSpeed={bestSpeed}
               achievements={achievements.runEarned}
               achievementStore={achievements.store}
               achievementFacts={achievements.facts}
+              tutorial={tutorial}
               corners={corners}
               onSelectCorner={setCorner}
               showPar={showPar}
@@ -1541,6 +1649,19 @@ export default function GameScreen() {
               onClose={() => {
                 setMenuOverlay('none')
                 howToPlay.markRead()
+              }}
+              // The same run a first launch opens on, asked for this time. Reaching the
+              // bottom of the guide is reading it, whichever button is pressed there, so
+              // this marks it read exactly as GOT IT does. The board is set here for the
+              // reason the welcome sets it: these are the two events START reads, and a
+              // persisted mode landing in between would deal the run somewhere else.
+              onTryTutorial={() => {
+                setMenuOverlay('none')
+                howToPlay.markRead()
+                send({ type: 'SET_MODE', mode: WELCOME_BOARD.mode })
+                send({ type: 'SET_DIFFICULTY', difficulty: WELCOME_BOARD.difficulty })
+                send({ type: 'START', now: Date.now(), tutorial: true })
+                track('run_started', { ...WELCOME_BOARD, from: 'guide' })
               }}
             />
           )}

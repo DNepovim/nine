@@ -45,11 +45,12 @@ export const SEEN_WINNINGS_KEY = 'nine.seen-winnings.v1'
 // stored, not on the scoring mechanics: a run is only ever read back by the build that
 // wrote it minutes earlier, and a key it cannot parse is simply skipped.
 export const RUN_KEY = 'nine.run.v1'
-// Whether the player has read the How to Play guide — set when they close it. The one
-// thing that reads it is the GRADUATE achievement, which used to ask the same question of
-// the hands-on tutorial that opened from the same screen. See lib/how-to-play.ts.
+// Whether the player has read the How to Play guide — set when they close it, by either
+// button at the bottom. The one thing that reads it is the GRADUATE achievement, which
+// used to ask the same question of a hands-on walkthrough that opened from the same
+// screen. See lib/how-to-play.ts.
 export const HOW_TO_PLAY_KEY = 'nine.how-to-play.v1'
-// Whether this device has had its opening Trainee run — the welcome that a first launch
+// Whether this device has had its opening tutorial run — the welcome that a first launch
 // drops straight into. The stored flag outlives that one run: it is also what keeps
 // Trainee's invitation to a scored board coming back. See lib/welcome.ts.
 export const WELCOME_KEY = 'nine.welcome.v1'

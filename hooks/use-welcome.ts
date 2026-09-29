@@ -15,7 +15,7 @@ const persist = (welcome: Welcome) => {
   AsyncStorage.setItem(WELCOME_KEY, serializeWelcome(welcome)).catch(() => {})
 }
 
-// The opening Trainee run: whether this launch owes one, and whether this install ever
+// The opening tutorial run: whether this launch owes one, and whether this install ever
 // had one.
 //
 // Read once on mount and never again. A storage failure leaves both answers false, which

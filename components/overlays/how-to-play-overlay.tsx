@@ -15,7 +15,13 @@ import { ACHIEVEMENT_SCALE, GAME_SCALE } from '@/constants/colors'
 import { SHOW_MULTIPLAYER } from '@/constants/features'
 import { TIPS } from '@/constants/tips'
 import { useTheme } from '@/hooks/use-theme'
-import { MODE_DESCRIPTIONS, MODE_GRADIENT, MODES, type Mode } from '@/machines/game'
+import {
+  DARK_MODE_GRADIENT,
+  MODE_DESCRIPTIONS,
+  MODE_GRADIENT,
+  MODES,
+  type Mode,
+} from '@/machines/game'
 
 // The cell weights, row-major: value × (row+1) × (col+1). Mirrors computeSum.
 const WEIGHTS = [
@@ -327,7 +333,15 @@ const CLOSE_VELOCITY = 800
 // so it reads as a heading with a page under it instead of a cropped line.
 const JUMP_MARGIN = 20
 
-export function HowToPlayOverlay({ onClose }: { onClose: () => void }) {
+export function HowToPlayOverlay({
+  onClose,
+  onTryTutorial,
+}: {
+  onClose: () => void
+  // Deals the tutorial and closes the guide. The run a first launch opens on, and this
+  // is the only other door to it — see constants/tutorial.ts.
+  onTryTutorial: () => void
+}) {
   const { t } = useLingui()
   const { colorScheme } = useTheme()
   const dotColor = colorScheme === 'dark' ? '#2A2B44' : '#D4D0C8'
@@ -579,19 +593,46 @@ export function HowToPlayOverlay({ onClose }: { onClose: () => void }) {
             </Bullet>
           ))}
 
-          {/* Done */}
-          <Pressable
-            onPress={onClose}
-            className="mt-10 items-center self-center rounded-2xl bg-strong py-4"
-            style={{ width: 224 }}
-          >
+          {/* Done — and, above it, the other way out.
+            
+              A guide can be read, but the dial is what teaches it, so the offer to go and
+              play comes first. It wears Trainee's CTA gradient because that is the board
+              it lands on, and the line under it says what the tutorial takes off that
+              board rather than repeating what the button already says. */}
+          <View className="mt-10 self-center" style={{ width: 224 }}>
+            <Pressable onPress={onTryTutorial} className="overflow-hidden rounded-2xl">
+              <LinearGradient
+                colors={[...DARK_MODE_GRADIENT.trainee]}
+                start={{ x: 0, y: 0.5 }}
+                end={{ x: 1, y: 0.5 }}
+                className="items-center py-4"
+              >
+                <Text
+                  selectable={false}
+                  className="font-mono text-[13px] font-black tracking-[2px] text-on-strong"
+                >
+                  <Trans>TRY IT</Trans>
+                </Text>
+              </LinearGradient>
+            </Pressable>
             <Text
               selectable={false}
-              className="font-mono text-[13px] font-black tracking-[2px] text-on-strong"
+              className="mt-2 text-center font-mono text-[9px] font-bold tracking-[1.5px] text-dim"
             >
-              <Trans>GOT IT</Trans>
+              <Trans>ONE TARGET · NO CLOCK · NO LIVES</Trans>
             </Text>
-          </Pressable>
+            <Pressable
+              onPress={onClose}
+              className="mt-4 items-center rounded-2xl bg-strong py-4"
+            >
+              <Text
+                selectable={false}
+                className="font-mono text-[13px] font-black tracking-[2px] text-on-strong"
+              >
+                <Trans>GOT IT</Trans>
+              </Text>
+            </Pressable>
+          </View>
         </ScrollView>
 
         {/* Close — the same 5-dot cross + CLOSE label every dialog carries. */}

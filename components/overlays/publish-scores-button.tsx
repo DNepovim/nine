@@ -2,6 +2,8 @@ import { Trans } from '@lingui/react/macro'
 import { LinearGradient } from 'expo-linear-gradient'
 import { Pressable, Text, View } from 'react-native'
 
+import { cn } from '@/lib/cn'
+
 // Shown under the board for as long as the player has no nickname — the one thing
 // standing between their scores and the real leaderboard, whether those scores are
 // already on the device or still to be played.
@@ -10,18 +12,29 @@ import { Pressable, Text, View } from 'react-native'
 // so the button itself stays as short as the mode gradients it borrows from. The reason
 // reads forward on purpose — a player with nothing saved yet is being told what the
 // nickname is for, not what it would rescue.
+//
+// Offline it dims and stops answering: claiming a nickname is a Supabase round trip, so
+// there is nothing behind the tap until the connection is back. The reason is already on
+// screen — `OfflineNotice` sits directly above it.
 export function PublishScoresButton({
   from,
   to,
+  disabled = false,
   onPress,
 }: {
   from: string
   to: string
+  disabled?: boolean
   onPress: () => void
 }) {
   return (
     <View className="mt-3 items-center">
-      <Pressable onPress={onPress} hitSlop={8} className="overflow-hidden rounded-xl">
+      <Pressable
+        onPress={onPress}
+        disabled={disabled}
+        hitSlop={8}
+        className={cn('overflow-hidden rounded-xl', disabled && 'opacity-40')}
+      >
         <LinearGradient
           colors={[from, to]}
           start={{ x: 0, y: 0.5 }}

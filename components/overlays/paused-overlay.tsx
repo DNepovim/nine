@@ -37,14 +37,19 @@ const shadow = {
 
 export function PausedOverlay({
   gameMode,
+  tutorial,
   difficulty,
   userId,
   nickname,
   score,
   hits,
   gameTimeMs,
+  strikes,
+  maxStreak,
   avgAccuracy,
   avgSpeed,
+  bestAccuracy,
+  bestSpeed,
   achievements,
   achievementStore,
   achievementFacts,
@@ -65,14 +70,22 @@ export function PausedOverlay({
   onAddNickname,
 }: {
   gameMode: Mode
+  // The run is the tutorial. It is Trainee in every other respect, so this screen is the
+  // Trainee pause screen with the display options taken off it — there is nothing here
+  // to change yet, and a grid of nine switches is not what a first run should open on.
+  tutorial: boolean
   difficulty: Difficulty
   userId: string | null
   nickname: string | null
   score: number
   hits: number
   gameTimeMs: number
+  strikes: number
+  maxStreak: number
   avgAccuracy: number
   avgSpeed: number
+  bestAccuracy: number
+  bestSpeed: number
   // What the run has earned for good so far — the same row the game-over screen carries,
   // and silent on the runs that have earned nothing. A pause is the other moment a player
   // can read one: the bar names an achievement for five seconds and then it is gone, and
@@ -121,6 +134,7 @@ export function PausedOverlay({
               the menu happens to be sitting on is not what the run was played at. */}
             <BoardBadges
               gameMode={gameMode}
+              tutorial={tutorial}
               difficulty={gameMode === 'trainee' ? undefined : difficulty}
             />
 
@@ -137,10 +151,15 @@ export function PausedOverlay({
             )}
 
             <RunStats
+              gameMode={gameMode}
               hits={hits}
               gameTimeMs={gameTimeMs}
+              strikes={strikes}
+              maxStreak={maxStreak}
               avgAccuracy={avgAccuracy}
               avgSpeed={avgSpeed}
+              bestAccuracy={bestAccuracy}
+              bestSpeed={bestSpeed}
             />
 
             {/* Under the run's own numbers, where the game-over screen puts it too: what
@@ -154,8 +173,14 @@ export function PausedOverlay({
             {/* Where the rotating tip used to be. A pause in Trainee is the moment the
               dial is on screen and nothing is running, so it is the one place worth
               spending on switches that change what the keys say — and four of them do
-              not fit anywhere a tip would also have sat. */}
-            {gameMode === 'trainee' && (
+              not fit anywhere a tip would also have sat.
+
+              Not in the tutorial. The dial there prints the one number it cannot be
+              read without, and everything else is off — so a grid offering to turn nine
+              more of them on is a choice made before the first one has been understood.
+              CONTINUE, END RUN and the display settings behind OPTIONS all stay: those
+              are the ways off this screen, not lessons. */}
+            {gameMode === 'trainee' && !tutorial && (
               <View className="mb-5 w-full">
                 <TraineeDisplayOptions
                   corners={corners}

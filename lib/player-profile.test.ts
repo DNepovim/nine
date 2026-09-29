@@ -21,6 +21,8 @@ const totals = (over: Partial<BoardTotals> = {}): BoardTotals => ({
   scoreSum: 8000,
   accSum: 34,
   spdSum: 20,
+  bestAcc: 0,
+  bestSpd: 0,
   timeMs: 90_000,
   ...over,
 })
@@ -182,6 +184,29 @@ describe('boardRows', () => {
     expect(row?.runs).toBe(0)
     expect(row?.average).toBeNull()
     expect(row?.best).toBeNull()
+    expect(row?.bestFactor).toBeNull()
+  })
+
+  it('takes the best run from the factor its own mode is judged on', () => {
+    const rows = boardRows(
+      profile({
+        totals: [
+          totals({ mode: 'accuracy', bestAcc: 96.5, bestSpd: 71.5 }),
+          totals({ mode: 'speed', bestAcc: 71.5, bestSpd: 96.5 }),
+        ],
+      }),
+    )
+    expect(rows.find((row) => row.mode === 'accuracy' && row.runs > 0)?.bestFactor).toBe(
+      97,
+    )
+    expect(rows.find((row) => row.mode === 'speed' && row.runs > 0)?.bestFactor).toBe(97)
+  })
+
+  it('reads a board played before the server kept a best as nothing, not as zero', () => {
+    const rows = boardRows(profile({ totals: [totals({ bestAcc: 0, bestSpd: 0 })] }))
+    const row = rows.find((entry) => entry.runs > 0)
+    expect(row?.average).not.toBeNull()
+    expect(row?.bestFactor).toBeNull()
   })
 
   it('keeps a best set before the counters existed', () => {
@@ -323,6 +348,23 @@ describe('shapeProfile', () => {
     // and a client can reach a server that has not run it. Absent is a player with no
     // motto, which is what most players are anyway.
     expect(shapeProfile(raw).motto).toBeNull()
+  })
+
+  it('reads the best run on each factor straight through', () => {
+    const shaped = shapeProfile({
+      ...raw,
+      totals: [{ ...rawTotals, bestAcc: 96.5, bestSpd: 71.5 }],
+    })
+    expect(shaped.totals[0]?.bestAcc).toBe(96.5)
+    expect(shaped.totals[0]?.bestSpd).toBe(71.5)
+  })
+
+  it('reads a server that does not keep a best run yet as none kept', () => {
+    // The columns ship in their own migration, and a client can reach a server that has
+    // not run it. Zero is what `boardRows` then draws as a dash — the board has a best,
+    // the server just has never been told what it was.
+    expect(shapeProfile(raw).totals[0]?.bestAcc).toBe(0)
+    expect(shapeProfile(raw).totals[0]?.bestSpd).toBe(0)
   })
 
   it('reads a server that does not count achievements yet as none', () => {
