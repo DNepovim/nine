@@ -62,3 +62,27 @@ export function formatShortDate(iso: string): string {
   const month = SHORT_MONTHS[at.getMonth()]
   return month === undefined ? '' : `${at.getDate()} ${month}`
 }
+
+// Whole months between a bare ISO day and an instant, on the reader's own clock, or null
+// if the day is not one. Counted in calendar months rather than in 30-day blocks, because
+// the line it feeds is read against a calendar: joined on the 22nd of last month is "a
+// month ago" on the 22nd of this one, whatever either month happened to be worth in days.
+//
+// Parsed by hand for the reason `formatReleaseDate` is — `Date` reads a bare ISO day as
+// UTC and shifts it a day back for anyone west of Greenwich — and a day out here is a
+// whole month out for the two days either side of the anniversary.
+export function monthsSince(iso: string, now: Date): number | null {
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso)
+  if (match === null) return null
+  const [, year, month, day] = match
+  const from = { year: Number(year), month: Number(month), day: Number(day) }
+  if (from.month < 1 || from.month > 12) return null
+
+  const months = (now.getFullYear() - from.year) * 12 + (now.getMonth() + 1 - from.month)
+  // The day of the month says whether the last one has actually come round. Without it,
+  // a profile joined on the 30th would read as a month old on the 1st.
+  const whole = now.getDate() < from.day ? months - 1 : months
+  // A join day in the future is nobody's real history — a clock set wrong, or the
+  // placeholder date outliving the day it was written. It reads as brand new.
+  return Math.max(0, whole)
+}

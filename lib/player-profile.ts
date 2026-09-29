@@ -113,20 +113,21 @@ export type Lifetime = {
   score: number
   // How long the player has spent playing, over every board.
   timeMs: number
-  // What the player is judged on: every point they have scored weighted by the difficulty
+  // What a career comes to: every point the player has scored weighted by the difficulty
   // it was scored on — see `scoreWeight` in machines/modes.ts — plus everything their
   // winnings have paid for taking a board's day or week off the other players.
   //
   // Kept beside the raw total rather than replacing it, and named something else on
   // purpose: a weighted figure no longer equals the table under it, and a number
   // labelled SCORE that disagrees with every score on the same screen is a fourth thing
-  // called score. A rating is a standing; a score is what a run was worth.
+  // called score. A fortune is what a career has amassed, priced by where it was spent; a
+  // score is what one run was worth.
   //
   // Winnings ride the same weighting rather than a second one, at half rate for a day and
   // full for a week, so the ESY ×0.5 · HRD ×1 · EXT ×2 the modal prints still describes
   // how every part of this figure is weighted — though no longer the whole of where it
   // came from, which is why the modal says so under it.
-  rating: number
+  fortune: number
   accSum: number
   spdSum: number
 }
@@ -160,7 +161,7 @@ const EMPTY_LIFETIME: Lifetime = {
   hits: 0,
   score: 0,
   timeMs: 0,
-  rating: 0,
+  fortune: 0,
   accSum: 0,
   spdSum: 0,
 }
@@ -168,7 +169,7 @@ const EMPTY_LIFETIME: Lifetime = {
 // Everything the player has done on every board, added up. Derived rather than stored —
 // a seventh row holding the same fact is a seventh chance to disagree with it.
 //
-// The rating is rounded once here rather than per board: a half-weighted board can land
+// The fortune is rounded once here rather than per board: a half-weighted board can land
 // on a half point, and rounding six of those before adding them is how a total comes to
 // be three off the sum of its parts. Winnings join the sum unrounded for the same reason.
 //
@@ -184,13 +185,13 @@ export function lifetimeOf(
       hits: held.hits + board.hits,
       score: held.score + board.scoreSum,
       timeMs: held.timeMs + board.timeMs,
-      rating: held.rating + board.scoreSum * DIFFICULTIES[board.difficulty].scoreWeight,
+      fortune: held.fortune + board.scoreSum * DIFFICULTIES[board.difficulty].scoreWeight,
       accSum: held.accSum + board.accSum,
       spdSum: held.spdSum + board.spdSum,
     }),
     EMPTY_LIFETIME,
   )
-  return { ...sum, rating: Math.round(sum.rating + winningsValue(winnings)) }
+  return { ...sum, fortune: Math.round(sum.fortune + winningsValue(winnings)) }
 }
 
 // The six boards in the app's own order — mode, then difficulty — whether or not the
@@ -229,14 +230,14 @@ export function boardRows(profile: PlayerProfile): BoardRow[] {
   )
 }
 
-// What one run adds to a rating: its score, weighted by the board it was played on.
+// What one run adds to a fortune: its score, weighted by the board it was played on.
 //
 // For display only — nothing per-run is stored, and `lifetimeOf` always re-derives the
 // career figure from the boards' own sums. Which is also the answer to the rounding: a
 // half-weighted odd score lands on a half point, rounded here for one line on the game
 // over screen and rounded once at the end there. The two are the same arithmetic read at
 // two different moments, not two tallies that have to agree to the point.
-export const ratingOf = (score: number, difficulty: Difficulty): number =>
+export const fortuneOf = (score: number, difficulty: Difficulty): number =>
   Math.round(score * DIFFICULTIES[difficulty].scoreWeight)
 
 // Newest first. A player's most recent reign is the one they are most likely to still
@@ -278,7 +279,7 @@ export type PlayerProfileResponse = {
   medals: (RawBoard & { period: string; rank: number; bestScore: number })[]
   reigns: (RawBoard & { score: number; tookAt: string; lostAt: string | null })[]
   // Absent, not empty, from a server that predates winnings — read the same way
-  // `achievements` and `timeMs` above are, so an older server draws a rating without
+  // `achievements` and `timeMs` above are, so an older server draws a fortune without
   // them rather than failing to draw a profile at all.
   winnings?: (RawBoard & { daySum: number; weekSum: number })[]
 }

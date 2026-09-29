@@ -2,7 +2,7 @@ import { Text, View } from 'react-native'
 
 import { compactNumber } from '@/lib/compact-number'
 
-// The player's rating, on one line under their name — everything they have ever scored,
+// The player's fortune, on one line under their name — everything they have ever scored,
 // weighted by the difficulty it was scored on.
 //
 // The seven-segment face every score in the app wears, at headline size — and shortened,

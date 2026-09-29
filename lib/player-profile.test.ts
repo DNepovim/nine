@@ -4,8 +4,8 @@ import {
   averagePercent,
   boardRows,
   EMPTY_PROFILE,
+  fortuneOf,
   lifetimeOf,
-  ratingOf,
   shapeProfile,
   sortReigns,
   type BoardTotals,
@@ -75,7 +75,7 @@ describe('lifetimeOf', () => {
       hits: 70,
       score: 20000,
       timeMs: 180_000,
-      rating: 20000,
+      fortune: 20000,
       accSum: 55,
       spdSum: 46,
     })
@@ -93,27 +93,27 @@ describe('lifetimeOf', () => {
   it('weights every board by the difficulty it was scored on', () => {
     // Easy at half, Hard at itself, Extreme at double — so the same ten thousand points
     // is worth 5 000, 10 000 or 20 000 depending on where it was spent.
-    const rating = (difficulty: BoardTotals['difficulty']) =>
-      lifetimeOf([totals({ difficulty, scoreSum: 10000 })]).rating
-    expect(rating('easy')).toBe(5000)
-    expect(rating('hard')).toBe(10000)
-    expect(rating('extreme')).toBe(20000)
+    const fortune = (difficulty: BoardTotals['difficulty']) =>
+      lifetimeOf([totals({ difficulty, scoreSum: 10000 })]).fortune
+    expect(fortune('easy')).toBe(5000)
+    expect(fortune('hard')).toBe(10000)
+    expect(fortune('extreme')).toBe(20000)
   })
 
-  it('keeps the raw total beside the rating, so the per-board table still adds up', () => {
+  it('keeps the raw total beside the fortune, so the per-board table still adds up', () => {
     const lifetime = lifetimeOf([
       totals({ difficulty: 'easy', scoreSum: 10000 }),
       totals({ difficulty: 'extreme', scoreSum: 10000 }),
     ])
     expect(lifetime.score).toBe(20000)
-    expect(lifetime.rating).toBe(25000)
+    expect(lifetime.fortune).toBe(25000)
   })
 
-  it('rounds the rating once, not once per board', () => {
+  it('rounds the fortune once, not once per board', () => {
     // Half-weighting an odd total lands on a half point. Three of them rounded apart
     // would come to 4 503 and disagree with the boards they were added from.
     const odd = totals({ difficulty: 'easy', scoreSum: 3001 })
-    expect(lifetimeOf([odd, odd, odd]).rating).toBe(4502)
+    expect(lifetimeOf([odd, odd, odd]).fortune).toBe(4502)
   })
 
   it('sums both factors over every board, whichever mode it is', () => {
@@ -133,22 +133,22 @@ describe('lifetimeOf', () => {
       hits: 0,
       score: 0,
       timeMs: 0,
-      rating: 0,
+      fortune: 0,
       accSum: 0,
       spdSum: 0,
     })
   })
 })
 
-describe('ratingOf', () => {
+describe('fortuneOf', () => {
   it('weights one run by the board it was played on', () => {
-    expect(ratingOf(10000, 'easy')).toBe(5000)
-    expect(ratingOf(10000, 'hard')).toBe(10000)
-    expect(ratingOf(10000, 'extreme')).toBe(20000)
+    expect(fortuneOf(10000, 'easy')).toBe(5000)
+    expect(fortuneOf(10000, 'hard')).toBe(10000)
+    expect(fortuneOf(10000, 'extreme')).toBe(20000)
   })
 
   it('rounds a half point rather than showing one', () => {
-    expect(ratingOf(3001, 'easy')).toBe(1501)
+    expect(fortuneOf(3001, 'easy')).toBe(1501)
   })
 })
 

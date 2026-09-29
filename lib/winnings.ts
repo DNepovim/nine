@@ -60,7 +60,7 @@ export type BoardWinnings = {
 }
 
 // Unrounded for the same reason `awardValue` is: `lifetimeOf` adds this to the scored
-// rating and rounds the sum once.
+// fortune and rounds the sum once.
 export const winningsValue = (boards: readonly BoardWinnings[]): number =>
   boards.reduce(
     (sum, board) =>

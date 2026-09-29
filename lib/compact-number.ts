@@ -27,3 +27,11 @@ export function compactNumber(total: number): CompactNumber {
   const digits = Math.abs(scaled) < 9.95 ? 1 : 0
   return { value: scaled.toFixed(digits).replace(/\.0$/, ''), suffix: unit.suffix }
 }
+
+// The same shortening as one string, for the places that set a number in a face which
+// has letters in it too — a stat cell's mono, rather than the seven-segment score face
+// the split above exists for.
+export function compactText(total: number): string {
+  const { value, suffix } = compactNumber(total)
+  return `${value}${suffix}`
+}

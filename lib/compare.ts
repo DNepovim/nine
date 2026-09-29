@@ -23,7 +23,7 @@ import {
 // prints above its per-board table, so the two screens can never disagree about what a
 // career consists of.
 export const COMPARE_STATS = [
-  'rating',
+  'fortune',
   'runs',
   'hits',
   'time',
@@ -40,7 +40,7 @@ export type CompareStat = (typeof COMPARE_STATS)[number]
 // They are still shown, because how much of it there is is the context the judged rows are
 // read in.
 export const JUDGED_STATS: readonly CompareStat[] = [
-  'rating',
+  'fortune',
   'accuracy',
   'speed',
   'achievements',
@@ -99,7 +99,7 @@ const leaderOf = (mine: number | null, theirs: number | null): CompareSide => {
 // runs really is no runs, but an average over no hits is a question the player has not
 // answered yet.
 const STAT_VALUE = {
-  rating: (career) => career.lifetime.rating,
+  fortune: (career) => career.lifetime.fortune,
   runs: (career) => career.lifetime.runs,
   hits: (career) => career.lifetime.hits,
   time: (career) => career.lifetime.timeMs,

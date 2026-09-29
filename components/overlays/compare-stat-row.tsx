@@ -12,7 +12,7 @@ import { formatGameTime } from '@/lib/duration'
 const NOTHING = '—'
 
 const STAT_LABEL = {
-  rating: msg`RATING`,
+  fortune: msg`FORTUNE`,
   runs: msg`RUNS`,
   hits: msg`HITS`,
   time: msg`TIME`,
@@ -29,7 +29,7 @@ const STAT_LABEL = {
 // seconds is a real answer about a real run, and here it means no run has been timed yet.
 // The profile's TIME cell draws the same distinction.
 const FORMAT = {
-  rating: (value) => String(value),
+  fortune: (value) => String(value),
   runs: (value) => String(value),
   hits: (value) => String(value),
   time: (value) => (value > 0 ? formatGameTime(value) : '0'),

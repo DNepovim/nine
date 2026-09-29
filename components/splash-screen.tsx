@@ -16,6 +16,7 @@ import { scheduleOnRN } from 'react-native-worklets'
 import { SPLASH_WORDMARK_GAP, SplashWordmark } from '@/components/splash-wordmark'
 import { LAYER } from '@/constants/layers'
 import { mono } from '@/constants/theme'
+import { GLASS_SHADOW } from '@/lib/glass'
 
 // The intro — the logo fades in, then the subtitle under it. INTRO_MS is the moment
 // the last of that has landed: the one point in the sequence where the splash is
@@ -30,6 +31,16 @@ const INTRO_MS = SUB_IN_DELAY + SUB_IN_MS
 // has been held instead — whatever was covering it is gone and the player is waiting.
 const REST_MS = 2200
 const RESUME_MS = 250
+
+// The wordmark's shadow, tightened for small type. GLASS_SHADOW is cut for an 80px
+// glyph: its 3px drop under a 13px line reads as a second, blurrier line under the
+// first rather than as the lift off the gradient it is there to give. The colour is
+// the app's one shadow colour, unchanged — only the geometry scales with the text.
+const SUBTITLE_SHADOW = {
+  ...GLASS_SHADOW,
+  textShadowOffset: { width: 0, height: 1 },
+  textShadowRadius: 4,
+} as const
 
 export function SplashScreen({
   onDone,
@@ -188,6 +199,7 @@ export function SplashScreen({
               color: 'rgba(255,255,255,0.85)',
               letterSpacing: 2,
               marginTop: 20,
+              ...SUBTITLE_SHADOW,
             },
             subtitleStyle,
           ]}

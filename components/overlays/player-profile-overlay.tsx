@@ -1,6 +1,6 @@
 import type { MessageDescriptor } from '@lingui/core'
 import { msg } from '@lingui/core/macro'
-import { Trans, useLingui } from '@lingui/react/macro'
+import { Plural, Trans, useLingui } from '@lingui/react/macro'
 import { useFonts } from 'expo-font'
 import { isEmptyArray, isNonEmptyArray, isNonEmptyString } from 'narrowland'
 import { useState } from 'react'
@@ -25,8 +25,9 @@ import { useTheme } from '@/hooks/use-theme'
 import { useViewport } from '@/hooks/use-viewport'
 import { championMark } from '@/lib/champions'
 import { cn } from '@/lib/cn'
+import { compactText } from '@/lib/compact-number'
 import { formatGameTime } from '@/lib/duration'
-import { formatReleaseDate } from '@/lib/format-date'
+import { monthsSince } from '@/lib/format-date'
 import { saveMotto } from '@/lib/leaderboard'
 import {
   averagePercent,
@@ -41,6 +42,10 @@ import { MODE_GRADIENT, MODES, SCORED_MODES, type ScoredMode } from '@/machines/
 // The line is here for the same reason the counters' start date was: a player who has
 // been at this a while should not read as someone who turned up this morning.
 const JOINED_ON = '2026-09-22'
+
+// Past this many months the line counts years instead. A profile two years old that said
+// "joined 24 months ago" would be asking the reader to do the division.
+const MONTHS_IN_YEAR = 12
 
 // What each mode is judged on — the second line of both of its factor columns, the
 // average and the best alike.
@@ -149,6 +154,11 @@ export function PlayerProfileOverlay({
   const shownAchievements =
     profile === null ? 0 : Math.min(profile.achievements, ACHIEVEMENT_COUNT)
 
+  // Read once when the modal opens rather than on every render. The answer changes once
+  // a month, so nothing is lost by freezing it, and a clock read mid-render is a value
+  // the compiler is free to take at a different moment than you meant.
+  const [joinedMonths] = useState(() => monthsSince(JOINED_ON, new Date()))
+
   // No title on the card: its first line is the player's own name, and a PLAYER label
   // over it was the header saying what the line below it already said.
   return (
@@ -190,6 +200,38 @@ export function PlayerProfileOverlay({
                   setEditingMotto(true)
                 }}
               />
+            )}
+            {/* How long they have been at this, under the name where the rest of who
+                they are is. In months rather than on a date: a date is a fact to be
+                looked up, and the only thing anyone reads it for is the answer this
+                gives directly. Sentence case and narrow tracking, like the motto above
+                it — the same reasoning, that a line of prose set in the house's wide
+                caps reads as another heading.
+
+                Sized under the motto rather than beside it. The motto is the line the
+                player chose; this one is the app's footnote to the name, and the two
+                sitting at the same weight would read as two mottos. */}
+            {profile !== null && joinedMonths !== null && (
+              <Text
+                selectable={false}
+                className="text-center font-mono text-[9px] tracking-[0.3px] text-dim"
+              >
+                {joinedMonths < 1 ? (
+                  <Trans>joined this month</Trans>
+                ) : joinedMonths < MONTHS_IN_YEAR ? (
+                  <Plural
+                    value={joinedMonths}
+                    one="joined a month ago"
+                    other="joined # months ago"
+                  />
+                ) : (
+                  <Plural
+                    value={Math.floor(joinedMonths / MONTHS_IN_YEAR)}
+                    one="joined a year ago"
+                    other="joined # years ago"
+                  />
+                )}
+              </Text>
             )}
             {/* Under the name, the way the intro screen puts it under the title — same
                 component, same one-per-mode reduction, so a player's medals read the
@@ -243,10 +285,10 @@ export function PlayerProfileOverlay({
                   <>
                     {/* The weighted total, not the raw one — Easy counts half and Extreme
                     double, so a career is judged by where it was spent rather than by
-                    how long it was. RATING and not SCORE because the per-board table
+                    how long it was. FORTUNE and not SCORE because the per-board table
                     lower down still shows what each board was actually scored, and the
                     two numbers are not meant to add up to each other. */}
-                    <ProfileScore score={lifetime.rating} digitFont={digitFont} />
+                    <ProfileScore score={lifetime.fortune} digitFont={digitFont} />
 
                     {/* Five cells rather than four, so the gap comes in a step: RUNS and
                     HITS count what happened, TIME says over how long, and the two
@@ -254,8 +296,13 @@ export function PlayerProfileOverlay({
                     twice over — and at gap-5 the row ran out of room on a narrow
                     phone. */}
                     <View className="w-full flex-row items-start justify-center gap-4">
-                      <StatCell label={t`RUNS`} value={String(lifetime.runs)} />
-                      <StatCell label={t`HITS`} value={String(lifetime.hits)} />
+                      {/* Shortened past a thousand, the way the fortune above them
+                      already is: a career of 6 214 runs and 58 900 hits written out in
+                      full would make those two cells several times as wide as the three
+                      beside them, and the row is laid out to fit five. A lifetime total
+                      is read for its size, not its last three digits. */}
+                      <StatCell label={t`RUNS`} value={compactText(lifetime.runs)} />
+                      <StatCell label={t`HITS`} value={compactText(lifetime.hits)} />
                       {/* A career with nothing counted says 0, not 0″. On the pause and
                       game over screens a duration of zero seconds is a real answer about
                       a real run; here it means no run has been timed yet, and a unit mark
@@ -290,13 +337,6 @@ export function PlayerProfileOverlay({
                         </Text>{' '}
                         OF {ACHIEVEMENT_COUNT} ACHIEVEMENTS
                       </Trans>
-                    </Text>
-
-                    <Text
-                      selectable={false}
-                      className="text-center font-mono text-[8px] tracking-[0.5px] text-dim"
-                    >
-                      <Trans>joined {formatReleaseDate(JOINED_ON)}</Trans>
                     </Text>
 
                     {SCORED_MODES.map((mode) => (

@@ -15,16 +15,14 @@ import type { Mode } from '@/machines/modes'
 // together — which is what used to squeeze `AVG ACC` onto two lines when the row ran out
 // of room. It costs one line of height across the whole row, not four.
 
-// Three to a line. Six numbers in one row would have each of them narrower than the
-// label under it; two rows of three keep every cell as wide as it needs to be and give
+// Three to a line, laid out as a grid rather than as centred rows. Six numbers in one
+// row would have each of them narrower than the label under it; two rows of three give
 // the run's shape and the run's quality a line each.
-const PER_ROW = 3
-
-const chunked = <T,>(cells: readonly T[]): T[][] => {
-  const rows: T[][] = []
-  for (let i = 0; i < cells.length; i += PER_ROW) rows.push(cells.slice(i, i + PER_ROW))
-  return rows
-}
+//
+// Every cell takes a fixed third of the width and the row wraps on its own, so the
+// columns line up between the two rows — TOP CHAIN sits under HITS, whatever the digits
+// in either happen to be. Centred rows sized each cell to its own value, which left the
+// second line offset from the first by however much wider its numbers were.
 
 export function RunStats({
   gameMode,
@@ -113,24 +111,13 @@ export function RunStats({
   ]
 
   return (
-    <View className="mb-6 w-full items-center gap-3">
-      {chunked(cells).map((row) => (
-        // Keyed on the row's first cell rather than its index: the rows a mode deals are
-        // fixed, so the first key names the row as well as a counter would and survives
-        // a mode change without React pairing one mode's row with another's.
-        <View
-          key={row[0]?.key}
-          className="w-full flex-row items-start justify-center gap-5"
-        >
-          {row.map(({ key, label, value, overhang }) => (
-            <StatCell
-              key={key}
-              label={t(label)}
-              value={value}
-              shadow={shadow}
-              overhang={overhang}
-            />
-          ))}
+    <View className="mb-6 w-full flex-row flex-wrap items-start gap-y-3">
+      {cells.map(({ key, label, value, overhang }) => (
+        // The third is on the wrapper and the cell centres itself inside it, rather than
+        // the cell being stretched to the third: `StatCell` sizes itself to its value so
+        // that a hanging unit mark can still be pulled out of it.
+        <View key={key} className="w-1/3 items-center">
+          <StatCell label={t(label)} value={value} shadow={shadow} overhang={overhang} />
         </View>
       ))}
     </View>

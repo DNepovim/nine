@@ -1,11 +1,8 @@
 import { describe, expect, it } from 'vitest'
 
-import { compactNumber } from './compact-number'
+import { compactNumber, compactText } from './compact-number'
 
-const shown = (total: number): string => {
-  const { value, suffix } = compactNumber(total)
-  return `${value}${suffix}`
-}
+const shown = compactText
 
 describe('compactNumber', () => {
   it('leaves anything under a thousand alone', () => {
@@ -39,5 +36,10 @@ describe('compactNumber', () => {
 
   it('rounds a fractional total before deciding anything', () => {
     expect(shown(999.6)).toBe('1k')
+  })
+
+  it('joins the two halves for the faces that can set both', () => {
+    expect(compactText(6200)).toBe('6.2k')
+    expect(compactText(940)).toBe('940')
   })
 })

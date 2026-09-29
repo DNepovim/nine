@@ -29,7 +29,7 @@ import { currentBoardMedals } from '@/lib/board-medals'
 import type { RecordScreen } from '@/lib/champions'
 import type { TitleWords } from '@/lib/game-over-title'
 import { runChallenge } from '@/lib/next-challenge'
-import { ratingOf } from '@/lib/player-profile'
+import { fortuneOf } from '@/lib/player-profile'
 import {
   DARK_MODE_GRADIENT,
   MODE_GRADIENT,
@@ -248,7 +248,7 @@ export function GameOverOverlay({
                 `scoreWeight` in machines/modes.ts. The profile explains the weights in
                 full; one line here is what makes a player wonder enough to go and look.
 
-                Only where there is a rating to add to: Trainee reaches no board and no
+                Only where there is a fortune to add to: Trainee reaches no board and no
                 counter, and a run that scored nothing adds nothing worth a line. */}
             {isOneOf(gameMode, SCORED_MODES) && score > 0 && (
               <Text
@@ -256,7 +256,7 @@ export function GameOverOverlay({
                 className="mb-2 font-mono text-[9px] font-bold tracking-[1px] text-dim"
                 style={painted ? ON_GOLD_LABEL_SHADOW : null}
               >
-                <Trans>+{ratingOf(score, difficulty)} TO YOUR RATING</Trans>
+                <Trans>+{fortuneOf(score, difficulty)} TO YOUR FORTUNE</Trans>
               </Text>
             )}
 

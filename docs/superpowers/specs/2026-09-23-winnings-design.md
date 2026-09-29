@@ -2,6 +2,11 @@
 
 Date: 2026-09-23
 
+> **Renamed since.** What this document calls the _rating_ is now the **fortune** —
+> `Lifetime.fortune`, `fortuneOf`, and FORTUNE / JMĚNÍ on screen. A rating implies a
+> judgement that can fall; this figure only ever grows, and what it measures is a career
+> priced by the boards it was spent on. The arithmetic below is unchanged.
+
 ## Goal
 
 Taking a board for a day, or for a week, pays. The score you won it with is weighted by

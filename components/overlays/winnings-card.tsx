@@ -9,7 +9,7 @@ import type { AwardBlock } from '@/lib/winnings-announcement'
 import { DIFFICULTIES, getDifficultyColor, MODES } from '@/machines/game'
 
 // What the player won while they were away: the boards they took, what each paid, and
-// what the lot of it added to their rating.
+// what the lot of it added to their fortune.
 //
 // The accent is APP_VIOLET rather than gold or the achievement green, and deliberately so.
 // Gold means a record you *currently hold* and green means an achievement you *keep*;
@@ -101,7 +101,7 @@ export function WinningsCard({ blocks }: { blocks: readonly AwardBlock[] }) {
           selectable={false}
           className="font-mono text-[9px] font-bold tracking-[1px] text-dim"
         >
-          <Trans>ADDED TO YOUR RATING</Trans>
+          <Trans>ADDED TO YOUR FORTUNE</Trans>
         </Text>
         <Text
           selectable={false}
