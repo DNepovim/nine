@@ -43,6 +43,7 @@ import { WeeklyRecapOverlay } from '@/dev/weekly-recap/recap-overlay'
 import { requestAnnouncements } from '@/hooks/use-announcement-request'
 import { ChampionsProvider } from '@/hooks/use-champions'
 import type { LostMedalNews } from '@/hooks/use-lost-medals'
+import { requestTutorial } from '@/hooks/use-tutorial-request'
 import { EMPTY_STORE } from '@/lib/achievement-store'
 import { achievementAnnouncement, type AchievementFacts } from '@/lib/achievements'
 import {
@@ -426,7 +427,7 @@ const winnings = (label: keyof typeof WINNINGS_CASES): Variant => ({
 
 // The profile modal, against the players `supabase/seed.sql` creates. Not a mock: the
 // overlay fetches its own profile, and pointing it at a real seeded id is what lets the
-// gallery show the real RPC, the real rating and the real winnings arithmetic rather than
+// gallery show the real RPC, the real fortune and the real winnings arithmetic rather than
 // a hand-built object that would agree with itself no matter what the server did.
 //
 // Needs the local stack — `pnpm db:start && pnpm db:reset`. Against an empty or remote
@@ -436,7 +437,7 @@ const winnings = (label: keyof typeof WINNINGS_CASES): Variant => ({
 // The ids are the seed's own. If the seed's players change, these go stale and say so
 // loudly by failing to load.
 const SEED_PLAYERS = {
-  // Five days and a week — the fullest rating the seed produces.
+  // Five days and a week — the fullest fortune the seed produces.
   ACE_9: '5eed0000-0000-0000-0000-000000000001',
   // Two days and a week, on two different boards.
   DOMINO: '5eed0000-0000-0000-0000-000000000002',
@@ -447,7 +448,7 @@ const SEED_PLAYERS = {
   // career says anything at all: if the middle of the range reads as nothing, most
   // players see nothing.
   BLAZE: '5eed0000-0000-0000-0000-000000000004',
-  // Has only ever played today, so has won nothing: the rating is scored points alone and
+  // Has only ever played today, so has won nothing: the fortune is scored points alone and
   // the line under it promises winnings that are not there yet.
   PIXEL: '5eed0000-0000-0000-0000-000000000007',
 } as const
@@ -706,7 +707,7 @@ const SCREENS: Section[] = [
     ],
   },
   {
-    // Where winnings actually surface: folded into RATING, under the line that says so.
+    // Where winnings actually surface: folded into FORTUNE, under the line that says so.
     title: 'PROFILE',
     items: [
       profile('ACE_9'),
@@ -1005,10 +1006,32 @@ const ANNOUNCE: Section[] = [
 // asks the running game for a line. Only the last kind can be pressed to no effect at
 // all, so it goes at the bottom with its condition in the heading rather than in a
 // footnote underneath it.
+// The one thing in here that changes what the app is doing rather than what it is showing.
+//
+// It has a tier of its own because the cut between the other three is what a press leaves
+// behind — a screen that stays, a moment that goes, a line for the bar — and this leaves a
+// game in progress. Nothing to close, and nothing that takes itself away: the run is the
+// app now, and the way out of it is the way out of any run.
+const RUNS: Section[] = [
+  {
+    // The tutorial has no entry on the intro, and its own opening only happens on a device
+    // with nothing on it — so without this, seeing the lesson means clearing storage.
+    title: 'TUTORIAL',
+    items: [
+      {
+        key: 'run-tutorial',
+        label: 'RUN THE LESSON',
+        run: requestTutorial,
+      } satisfies Action,
+    ],
+  },
+]
+
 const TIERS: Tier[] = [
   { title: 'SCREENS', sections: SCREENS },
   { title: 'EFFECTS', sections: EFFECTS },
   { title: 'BAR', note: 'MID-RUN ONLY', sections: ANNOUNCE },
+  { title: 'RUN', note: 'REPLACES THE RUN', sections: RUNS },
 ]
 
 const ALL_SECTIONS = TIERS.flatMap((tier) => tier.sections)

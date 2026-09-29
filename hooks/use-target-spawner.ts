@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef } from 'react'
 
-import { TUTORIAL_TARGET_REACH } from '@/constants/tutorial'
+import { scriptedTarget, TUTORIAL_TARGET_REACH } from '@/constants/tutorial'
 import {
   FULL_TARGET_RANGE,
   pickTargetValue,
@@ -57,10 +57,10 @@ export function useTargetSpawner({
   excludeRef.current = { sum: currentSum, values: takenValues }
 
   // Read at spawn time for the same reason: `spawnTarget` is the callback the cadence
-  // and the respawn both hold, and depending on this would rebuild both on a change
-  // that only matters when a target is actually being dealt.
-  const tutorialRef = useRef(tutorial)
-  tutorialRef.current = tutorial
+  // and the respawn both hold, and depending on either of these would rebuild both on a
+  // change that only matters when a target is actually being dealt.
+  const tutorialRef = useRef({ tutorial, hits })
+  tutorialRef.current = { tutorial, hits }
 
   // Latest cadence, likewise read when a spawn fires rather than when the wait is
   // armed. See startCadence for why that matters.
@@ -75,10 +75,20 @@ export function useTargetSpawner({
 
   const spawnTarget = useCallback(() => {
     const { sum, values } = excludeRef.current
-    // The tutorial keeps the next target within reach of the one just hit — which is the
-    // sum standing on the dial, because hitting a target is what put it there. Every
-    // other mode draws from the whole range.
-    const range: TargetRange = tutorialRef.current
+    const { tutorial: onTutorial, hits: landed } = tutorialRef.current
+    // The lesson's own targets, dealt rather than rolled: each one is a board chosen to make
+    // one move the obvious answer, and the lesson has a line ready for it. The first of them
+    // is dealt by the machine at START, so what comes through here is the rest of the script
+    // — and then nothing, once it has run out. See constants/tutorial.ts.
+    const scripted = onTutorial ? scriptedTarget(landed) : null
+    if (scripted !== null) {
+      send({ type: 'ADD_TARGET', value: scripted, at: Date.now() })
+      return
+    }
+    // Past the script, the tutorial keeps every target within reach of the one just hit —
+    // which is the sum standing on the dial, because hitting a target is what put it there.
+    // Every other mode draws from the whole range.
+    const range: TargetRange = onTutorial
       ? rangeAround(sum, TUTORIAL_TARGET_REACH)
       : FULL_TARGET_RANGE
     // Never spawn a target that's already the dialled sum, or a duplicate of a

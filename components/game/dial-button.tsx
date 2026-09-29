@@ -1,6 +1,5 @@
 import { LinearGradient } from 'expo-linear-gradient'
 import { useEffect } from 'react'
-import { View } from 'react-native'
 import { Gesture, GestureDetector } from 'react-native-gesture-handler'
 import Animated, {
   Easing,
@@ -14,6 +13,7 @@ import Animated, {
 import { scheduleOnRN } from 'react-native-worklets'
 
 import { DialBadge } from '@/components/game/dial-badge'
+import { DialPulse } from '@/components/game/dial-pulse'
 import { DIAL_COLORS, GRAYSCALE } from '@/constants/colors'
 import {
   DEFAULT_DIAL_CORNERS,
@@ -23,6 +23,7 @@ import {
 } from '@/constants/dial-hints'
 import { SWIPE_THRESHOLD } from '@/constants/game'
 import { mono } from '@/constants/theme'
+import type { DialControl } from '@/machines/tutorial-lesson'
 
 // The badges' ring, constant regardless of mode or theme — a mode-coloured border
 // tied it to whichever pair a button happened to be animating through, which read
@@ -33,6 +34,16 @@ const BADGE_BORDER_COLOR = GRAYSCALE[3]
 // Values 0..8 ride the low → high tint ramp; 9 is the mode's CTA gradient.
 const RAMP_MAX = 8
 const TINT_TIMING = { duration: 260, easing: Easing.out(Easing.quad) }
+
+// How far a key dims while the tutorial has it shut, and how long it takes either way.
+//
+// The same clock as the tint above, because the two land together: the moment the lesson
+// hands the dial back, eight keys brighten and the ninth loses its halo, and two speeds
+// there would read as two separate events. Eased out on the way up and in on the way down,
+// the app's rule for anything arriving and anything leaving.
+const DIM = 0.35
+const DIM_UP = { duration: 260, easing: Easing.out(Easing.quad) }
+const DIM_DOWN = { duration: 260, easing: Easing.in(Easing.quad) }
 
 // Trainee's weight and max badges — small discs riding the pill's own rim rather
 // than text stacked inside it, so they read off a chip built for contrast instead
@@ -68,6 +79,8 @@ export function DialButton({
   peakFrom,
   peakTo,
   corners = DEFAULT_DIAL_CORNERS,
+  control = 'full',
+  hinted = false,
   onDelta,
   onSet,
 }: {
@@ -84,6 +97,13 @@ export function DialButton({
   // Read from the player's own options in the game and left at the defaults everywhere
   // else. Ignored entirely when `trainee` is false, which has no badges at all.
   corners?: DialCorners
+  // What this key will take. `full` in the game; the tutorial's guided route is the only
+  // thing that ever narrows it — see machines/tutorial-lesson.ts.
+  control?: DialControl
+  // The key the tutorial is asking for, wearing the halo that says so. Separate from
+  // `control` because they are different statements: one is what the key will accept, the
+  // other is what the player is being pointed at.
+  hinted?: boolean
   onDelta: (delta: 1 | -1) => void
   onSet: (value: number) => void
 }) {
@@ -94,6 +114,15 @@ export function DialButton({
   const numScale = useSharedValue(1)
   const rampProgress = useSharedValue(Math.min(value, RAMP_MAX) / RAMP_MAX)
   const peakProgress = useSharedValue(value === 9 ? 1 : 0)
+  // Starts where the key already stands rather than at full: a key that is dead on its
+  // first render — every key but one, the moment a tutorial's guided route begins — should
+  // be dim from the first frame, not fade down into it.
+  const live = useSharedValue(control === 'off' ? DIM : 1)
+
+  useEffect(() => {
+    const waking = control !== 'off'
+    live.value = withTiming(waking ? 1 : DIM, waking ? DIM_UP : DIM_DOWN)
+  }, [control])
 
   // Animate the button tint whenever its value changes.
   useEffect(() => {
@@ -154,12 +183,23 @@ export function DialButton({
 
   const gesture = Gesture.Pan()
     .minDistance(0)
+    // A dead key takes nothing at all: no press, and no squash under the thumb either,
+    // which would promise something it is not going to do.
+    .enabled(control !== 'off')
     .onBegin(() => {
       'worklet'
       scale.value = withSpring(0.94, { damping: 20, stiffness: 260 })
     })
     .onEnd((e) => {
       'worklet'
+      // Every gesture reads as a tap where only taps are taken. The tutorial's guided
+      // route is the one place that happens: its keys are all one tap short of where they
+      // need to be, and a swipe there would leave the route asking for a gesture the
+      // lesson has not reached yet.
+      if (control === 'tap') {
+        animateTap()
+        return
+      }
       // Dominant axis decides the gesture: horizontal sets 0/9, vertical ±1.
       // Skip the number animation when the value wouldn't change (already 0/9).
       if (Math.abs(e.translationX) > Math.abs(e.translationY)) {
@@ -192,6 +232,8 @@ export function DialButton({
   // The CTA gradient crossfades in over the ramp — every tint change, including
   // the jump to and from 9, is a timed transition.
   const peakStyle = useAnimatedStyle(() => ({ opacity: peakProgress.value }))
+
+  const liveStyle = useAnimatedStyle(() => ({ opacity: live.value }))
 
   const numStyle = useAnimatedStyle(() => ({
     transform: [{ translateY: numTranslateY.value }, { scale: numScale.value }],
@@ -228,7 +270,10 @@ export function DialButton({
           derive height from aspect-ratio on wrapping flex children. The two
           badges below are positioned against this box, not the pill inside it,
           so they can straddle the pill's rim rather than being clipped by it. */}
-      <View style={{ width: size, height: size }}>
+      <Animated.View style={[{ width: size, height: size }, liveStyle]}>
+        {/* Outside the pill, so it is drawn over the surface between keys rather than
+            over a fill this blue would disappear into. */}
+        {hinted && <DialPulse />}
         <Animated.View
           style={[
             {
@@ -306,7 +351,7 @@ export function DialButton({
               scale={scale}
             />
           ))}
-      </View>
+      </Animated.View>
     </GestureDetector>
   )
 }

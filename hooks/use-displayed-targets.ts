@@ -41,6 +41,10 @@ export function useDisplayedTargets({
 }) {
   const [displayedTargets, setDisplayedTargets] = useState<DisplayTarget[]>([])
   const containerSize = useRef({ width: 0, height: 0 })
+  // The same measurement again, as state. The ref above is read at placement time and must
+  // not cause a render; this is for the tutorial, which puts a card beside a target — above
+  // it or below it depending on the room — and so has to re-render when the canvas changes.
+  const [canvas, setCanvas] = useState({ width: 0, height: 0 })
   const lastHitSeq = useRef(hitBatch.seq)
   const prevRunSeq = useRef(runSeq)
 
@@ -117,7 +121,11 @@ export function useDisplayedTargets({
       width: event.nativeEvent.layout.width,
       height: event.nativeEvent.layout.height,
     }
+    setCanvas({
+      width: event.nativeEvent.layout.width,
+      height: event.nativeEvent.layout.height,
+    })
   }
 
-  return { displayedTargets, removeDisplayed, onContainerLayout }
+  return { displayedTargets, removeDisplayed, onContainerLayout, canvas }
 }

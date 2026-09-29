@@ -163,6 +163,15 @@ drops to `0.3px` to suit. Wide tracking is a caps device; it reads as airy on pr
 Covered by the `code-guide` skill for the mechanics (Reanimated, module-level
 components). Design-wise:
 
+- **Nothing appears or disappears without animating.** This app has no hard cuts: a view
+  that pops into existence, or vanishes between two frames, reads as a bug rather than as a
+  change. Whenever you write a conditional render, decide its entrance and its exit in the
+  same breath — `entering` / `exiting` on an `Animated.View` (`FadeIn`, `FadeInDown`,
+  `FadeOut`, `SlideInUp`) is how the rest of the app does it, and the exit needs the view
+  being unmounted to be the animated one, not a wrapper around it. The same goes for
+  anything changing **in place**: a colour, a number, a size, a position all move through
+  `withTiming` or `withSpring` rather than being assigned. If something genuinely must not
+  animate, that is a decision worth a comment saying why.
 - Entrances drop in and fade up together; hairlines fade **in place** — a 1px rule
   sliding reads as a glitch where numbers sliding reads as motion.
 - Celebrations spread their element starts across the whole effect so they build

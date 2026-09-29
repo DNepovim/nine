@@ -4,7 +4,7 @@ import { useMachine } from '@xstate/react'
 import { useFonts } from 'expo-font'
 import { isNotNull, isOneOf } from 'narrowland'
 import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { AppState, Text, View, type LayoutChangeEvent } from 'react-native'
+import { AppState, Pressable, Text, View, type LayoutChangeEvent } from 'react-native'
 import Animated, {
   Easing,
   useAnimatedStyle,
@@ -32,6 +32,7 @@ import { StepUpToast } from '@/components/game/step-up-toast'
 import { StrikeShot } from '@/components/game/strike-shot'
 import { TargetCard } from '@/components/game/target-card'
 import { TraineeStats } from '@/components/game/trainee-stats'
+import { TutorialCard } from '@/components/game/tutorial-card'
 import { AchievementDetail } from '@/components/overlays/achievement-detail'
 import { AchievementsOverlay } from '@/components/overlays/achievements-overlay'
 import { AdvancedOptionsOverlay } from '@/components/overlays/advanced-options-overlay'
@@ -56,6 +57,7 @@ import type { AchievementId } from '@/constants/achievements'
 import { DEFAULT_DIAL_CORNERS } from '@/constants/dial-hints'
 import { PIE_SIZE } from '@/constants/game'
 import { mono } from '@/constants/theme'
+import { TUTORIAL_BANNER_HEIGHT } from '@/constants/tutorial'
 import { useAchievementQueue, useAchievements } from '@/hooks/use-achievements'
 import { useAnnouncements } from '@/hooks/use-announcements'
 import { useAppUpdate } from '@/hooks/use-app-update'
@@ -96,6 +98,8 @@ import { useSupabaseAuth } from '@/hooks/use-supabase-auth'
 import { useTargetSpawner } from '@/hooks/use-target-spawner'
 import { useTheme } from '@/hooks/use-theme'
 import { useTraineeCoach } from '@/hooks/use-trainee-coach'
+import { useTutorialLesson } from '@/hooks/use-tutorial-lesson'
+import { useTutorialRequests } from '@/hooks/use-tutorial-request'
 import { useWelcome } from '@/hooks/use-welcome'
 import { idsOf, latestAchievement } from '@/lib/achievement-store'
 import { achievementCard } from '@/lib/achievements'
@@ -118,6 +122,7 @@ import { countRun } from '@/lib/run-submission'
 import { restoreRun, savedPositions } from '@/lib/saved-run'
 import { STEP_UP_BOARD } from '@/lib/step-up'
 import { multiplierColor } from '@/lib/streak-badge'
+import { tipForTarget } from '@/lib/tutorial-tip'
 import { valueProgress } from '@/lib/value-progress'
 import { WELCOME_BOARD } from '@/lib/welcome'
 import {
@@ -134,6 +139,7 @@ import {
   streakMultiplier,
 } from '@/machines/game'
 import { cellWeight, computePar } from '@/machines/scoring'
+import { keyControl } from '@/machines/tutorial-lesson'
 import type { Position } from '@/types/game'
 import type { MultiMode } from '@/types/multiplayer'
 
@@ -406,6 +412,44 @@ export default function GameScreen() {
   // Whether the guide has been read, for the one achievement that asks.
   const howToPlay = useHowToPlay()
 
+  // Deals the tutorial on its own board. Shared by the three doors into it — the welcome, the
+  // guide's TRY IT, and the dev sidebar — so all three agree on the board it is played on.
+  //
+  // The board is sent again here rather than trusted from wherever the caller left it: these
+  // are the two events START reads, and a persisted mode landing in between — the hydration
+  // hooks send the same events — would otherwise deal the run somewhere else.
+  const startTutorial = useCallback(
+    // What to report the run as, or `null` for one nobody chose: a run dealt from the dev
+    // sidebar would otherwise show up in the funnel as a player taking the tutorial.
+    (from: 'welcome' | 'guide' | null) => {
+      send({ type: 'SET_MODE', mode: WELCOME_BOARD.mode })
+      send({ type: 'SET_DIFFICULTY', difficulty: WELCOME_BOARD.difficulty })
+      send({ type: 'START', now: Date.now(), tutorial: true })
+      if (from !== null) track('run_started', { ...WELCOME_BOARD, from })
+    },
+    [send],
+  )
+
+  // The dev sidebar's way in — see hooks/use-tutorial-request.ts. Zero in a production
+  // build, where nothing ever asks.
+  const tutorialsAsked = useTutorialRequests()
+  const tutorialsDealt = useRef(tutorialsAsked)
+  useEffect(() => {
+    if (tutorialsAsked === tutorialsDealt.current) return
+    tutorialsDealt.current = tutorialsAsked
+    // START is only accepted on the intro, so the run standing — if there is one — has to be
+    // put down first. All three go whatever state the machine is in: a state with no handler
+    // for one of them drops it, and the ones that land still walk playing → paused → menu.
+    //
+    // The run being replaced is abandoned rather than ended: no score is submitted on the way
+    // out, where END RUN would have. That is the right trade for a dev button and the wrong
+    // one for anything a player can press.
+    send({ type: 'PAUSE', now: Date.now() })
+    send({ type: 'MENU' })
+    setMenuOverlay('none')
+    startTutorial(null)
+  }, [tutorialsAsked, send, startTutorial])
+
   // A device nobody has played on opens into a run rather than into the intro: the
   // fastest thing the app can say about itself is the game itself. What it opens is the
   // tutorial — Trainee with its clock, its cadence and its options taken off, so there is
@@ -444,11 +488,8 @@ export default function GameScreen() {
   useEffect(() => {
     if (!welcome.pending || !splashExiting || !isMenu) return
     welcome.taken()
-    send({ type: 'SET_MODE', mode: WELCOME_BOARD.mode })
-    send({ type: 'SET_DIFFICULTY', difficulty: WELCOME_BOARD.difficulty })
-    send({ type: 'START', now: Date.now(), tutorial: true })
-    track('run_started', { ...WELCOME_BOARD, from: 'welcome' })
-  }, [welcome, splashExiting, isMenu, send])
+    startTutorial('welcome')
+  }, [welcome, splashExiting, isMenu, startTutorial])
 
   const { userId, nickname, isReady, updateNickname } = useSupabaseAuth()
 
@@ -825,12 +866,35 @@ export default function GameScreen() {
     send,
   })
   const { floats, removeFloat } = useFloatingPoints(hitBatch)
-  const { displayedTargets, removeDisplayed, onContainerLayout } = useDisplayedTargets({
-    machineTargets: targets,
-    hitBatch,
+  const { displayedTargets, removeDisplayed, onContainerLayout, canvas } =
+    useDisplayedTargets({
+      machineTargets: targets,
+      hitBatch,
+      runSeq: state.context.runSeq,
+      restoredPositions,
+    })
+
+  // The tutorial's lesson: what it is saying, and how much of the dial it is holding while
+  // it says it. Silent and inert in every run that is not a tutorial, and in a tutorial put
+  // back from storage with hits already on it.
+  const lesson = useTutorialLesson({
+    tutorial,
+    isPlaying,
     runSeq: state.context.runSeq,
-    restoredPositions,
+    hits,
+    batch: hitBatch,
+    grid,
+    targets,
   })
+
+  // Where the lesson's card goes while it is pointing at the target, and which way its beak
+  // turns — beside the target, on whichever side of it the canvas has room for. The
+  // tutorial holds one target, so there is never a question of which.
+  const lessonTarget = displayedTargets[0]
+  const tip =
+    lessonTarget === undefined
+      ? null
+      : tipForTarget(lessonTarget.position, canvas.height, TUTORIAL_BANNER_HEIGHT)
 
   // Where the board sits inside the effect layer over it, taken from the same layout
   // event that sizes it for target placement. A shot needs the board's origin as well
@@ -1316,6 +1380,26 @@ export default function GameScreen() {
                     routeTarget={coach.routeTarget}
                   />
                 )}
+
+                {/* The band the tutorial talks in, in the slot the readout above would have
+                  taken, and held open for the whole run rather than appearing with the words.
+
+                  Reserved for the same reason the bests strip is reserved in Trainee: this
+                  sits above the spawn canvas, so a card arriving would shorten the canvas
+                  under a target already placed in the taller one. Held open, the canvas is
+                  one size from the first target to the last — and the two pointing cards
+                  below, which are measured against that canvas, cannot be moved by a banner
+                  arriving somewhere else. */}
+                {tutorial && (
+                  <View
+                    className="justify-center px-1"
+                    style={{ height: TUTORIAL_BANNER_HEIGHT }}
+                  >
+                    {lesson.voice === 'banner' && lesson.line !== null && (
+                      <TutorialCard text={t(lesson.line)} beak="none" />
+                    )}
+                  </View>
+                )}
                 {/* The canvas the targets actually spawn into. It carries the measurement,
                   so its bounds are whatever is left after the readout above. */}
                 <View
@@ -1352,6 +1436,31 @@ export default function GameScreen() {
                       }}
                     />
                   ))}
+                  {/* The lesson's two pointing cards. The first goes beside the target,
+                    above or below it as the canvas allows — see lib/tutorial-tip.ts. The
+                    second goes at the foot of the canvas with its beak turned down at the
+                    sum row directly beneath, which is the one thing on the screen whose
+                    place never moves. */}
+                  {/* Placed on the card itself rather than on a wrapper around it: the
+                    card is the view being mounted and unmounted, so it has to be the one
+                    carrying the position its exit animation plays out from. */}
+                  {lesson.voice === 'targetTip' &&
+                    lesson.line !== null &&
+                    tip !== null && (
+                      <TutorialCard
+                        text={t(lesson.line)}
+                        beak={tip.beak}
+                        anchorX={tip.beakAt}
+                        style={{ position: 'absolute', left: 0, right: 0, top: tip.top }}
+                      />
+                    )}
+                  {lesson.voice === 'sumTip' && lesson.line !== null && (
+                    <TutorialCard
+                      text={t(lesson.line)}
+                      beak="down"
+                      style={{ position: 'absolute', left: 0, right: 0, bottom: 8 }}
+                    />
+                  )}
                 </View>
               </View>
 
@@ -1427,14 +1536,20 @@ export default function GameScreen() {
                     // cannot be worked out without, and every other corner is a lesson
                     // that has not been given yet.
                     corners={tutorial ? DEFAULT_DIAL_CORNERS : corners}
+                    // What this key will take, and whether it is the one being asked for.
+                    // `full` in every run but a guided tutorial route.
+                    control={keyControl(lesson.dial, lesson.liveKey, index)}
+                    hinted={lesson.liveKey === index}
                     peakFrom={DARK_MODE_GRADIENT[mode][0]}
                     peakTo={DARK_MODE_GRADIENT[mode][1]}
                     onDelta={(delta) => {
                       coach.notePress(index, delta)
+                      lesson.notePress(delta)
                       send({ type: 'PRESS', index, delta, now: Date.now() })
                     }}
                     onSet={(cellValue) => {
                       coach.noteSet(index, cellValue)
+                      lesson.noteSet(cellValue)
                       send({ type: 'SET_CELL', index, value: cellValue, now: Date.now() })
                     }}
                   />
@@ -1442,6 +1557,23 @@ export default function GameScreen() {
               </View>
             </View>
           </Screen>
+
+          {/* ── Tap-through for the lesson's two pointing cards ── */}
+          {/* A card asking to be read holds the dial shut, and this is the other half of
+              that: a tap anywhere is how the player says they have read it, rather than
+              waiting out a clock they cannot see. Mounted only while a card is up, so
+              nothing catches a press that belongs to the game.
+
+              Over the screen rather than inside it: every key is already inert underneath
+              — the dial is `off` at these steps — so this exists to hear the tap, not to
+              block one, and the whole viewport is where a tap may land. */}
+          {lesson.onTapThrough !== null && (
+            <Pressable
+              onPress={lesson.onTapThrough}
+              className="absolute bottom-0 left-0 right-0 top-0"
+              accessibilityLabel={t`Continue the tutorial`}
+            />
+          )}
 
           {/* ── Life-loss flash — red tint over the game screen ── */}
           <Animated.View
@@ -1658,10 +1790,7 @@ export default function GameScreen() {
               onTryTutorial={() => {
                 setMenuOverlay('none')
                 howToPlay.markRead()
-                send({ type: 'SET_MODE', mode: WELCOME_BOARD.mode })
-                send({ type: 'SET_DIFFICULTY', difficulty: WELCOME_BOARD.difficulty })
-                send({ type: 'START', now: Date.now(), tutorial: true })
-                track('run_started', { ...WELCOME_BOARD, from: 'guide' })
+                startTutorial('guide')
               }}
             />
           )}

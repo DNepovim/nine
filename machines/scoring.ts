@@ -132,25 +132,49 @@ function extendLayer(costs: number[], weight: number, from: number): Layer {
   return { costs: next, choice }
 }
 
-// Walks the layers back from the target, totalling the steps each weight is owed.
+// One key's share of an optimal route: which button to move, where it stands and where
+// it has to end up, and the cheapest gesture for getting it there.
 //
-// Keyed by weight rather than by button, because the two keys sharing a weight are
-// interchangeable to the sum — a step on either moves the total by the same amount, so
-// splitting them into "1× ②  ›  1× ②" reported the same instruction twice.
+// Where `RouteStep` is keyed by weight, this is keyed by button. The two are different
+// questions: printing a route as instructions wants the weight, because a step on either
+// key of a pair moves the sum by the same amount — but pointing at a button to press
+// wants the button, and the tutorial has to point.
+export type KeyStep = Omit<RouteStep, 'weight'> & {
+  index: number
+  from: number
+  to: number
+  weight: number
+}
+
+// Walks the layers back from the target, collecting what each button is owed.
 //
-// Buttons already at the right value contribute nothing, and drop out.
-function readRoute(values: number[], layers: Layer[], target: number): RouteStep[] {
-  const route: RouteStep[] = []
+// Buttons already at the right value contribute nothing, and drop out. `null` is a
+// target this board cannot reach at all, which is what the callers turn into an empty
+// route rather than a route to nowhere.
+function readKeyPlan(
+  values: number[],
+  layers: Layer[],
+  target: number,
+): KeyStep[] | null {
+  const plan: KeyStep[] = []
   let sum = target
   for (let i = 8; i >= 0; i--) {
     const value = layers[i]?.choice[sum] ?? -1
-    if (value < 0) return []
+    if (value < 0) return null
     const weight = WEIGHTS[i] ?? 0
-    const plan = movePlan(values[i] ?? 0, value)
-    if (plan.steps > 0) route.push({ weight, ...plan })
+    const from = values[i] ?? 0
+    const move = movePlan(from, value)
+    if (move.steps > 0) plan.push({ index: i, from, to: value, weight, ...move })
     sum -= weight * value
   }
-  return route
+  return plan
+}
+
+// The same walk, keyed by weight — see `readKeyPlan` for why there are two.
+function readRoute(values: number[], layers: Layer[], target: number): RouteStep[] {
+  const plan = readKeyPlan(values, layers, target)
+  if (plan === null) return []
+  return plan.map(({ index: _index, from: _from, to: _to, ...step }) => step)
 }
 
 // Two keys of the same weight move the sum by the same amount, so asking for one step
@@ -189,10 +213,8 @@ const merged = (route: readonly RouteStep[]): RouteStep[] => {
 //
 // Coarsest weight first, matching how the game is taught — get near the target with ×9
 // and ×6, then trim with the fine keys.
-export function computeRoute(grid: Grid, target: number): RouteStep[] {
-  if (target < 0 || target > MAX_SUM) return []
-  const values = grid.flat()
-
+// The DP laid out one button at a time, so a route can be walked back out of it.
+function planLayers(values: number[]): Layer[] {
   const start = new Array<number>(MAX_SUM + 1).fill(INF)
   start[0] = 0
   const layers: Layer[] = []
@@ -202,10 +224,36 @@ export function computeRoute(grid: Grid, target: number): RouteStep[] {
     layers.push(layer)
     costs = layer.costs
   }
+  return layers
+}
 
-  if (!Number.isFinite(costs[target] ?? INF)) return []
+// Whether the last layer can reach the target at all.
+const reaches = (layers: Layer[], target: number): boolean =>
+  Number.isFinite(layers[8]?.costs[target] ?? INF)
 
+export function computeRoute(grid: Grid, target: number): RouteStep[] {
+  if (target < 0 || target > MAX_SUM) return []
+  const values = grid.flat()
+  const layers = planLayers(values)
+  if (!reaches(layers, target)) return []
   return merged(readRoute(values, layers, target)).sort((a, b) => b.weight - a.weight)
+}
+
+// The same optimal route as a list of buttons to move, coarsest first — the order the
+// game is taught in, and the order the tutorial walks a player through.
+//
+// Unmerged, because merging is what makes a route readable and what makes it unpointable:
+// "2× ③" is one instruction and two buttons. The tutorial lights one button at a time, so
+// it needs them apart.
+export function computeKeyPlan(grid: Grid, target: number): KeyStep[] {
+  if (target < 0 || target > MAX_SUM) return []
+  const values = grid.flat()
+  const layers = planLayers(values)
+  if (!reaches(layers, target)) return []
+  const plan = readKeyPlan(values, layers, target)
+  // Sorted by weight alone, on a walk that already ran coarsest button first: the sort
+  // is stable, so two keys of the same weight keep that order rather than swapping.
+  return plan === null ? [] : [...plan].sort((a, b) => b.weight - a.weight)
 }
 
 // Gentler difference-based accuracy: 1 at optimal, decaying with wasted steps.

@@ -1,7 +1,7 @@
 import { isNonEmptyArray } from 'narrowland'
 import { assign, createMachine } from 'xstate'
 
-import { TUTORIAL_MAX_TARGETS } from '@/constants/tutorial'
+import { TUTORIAL_MAX_TARGETS, TUTORIAL_OPENING_TARGET } from '@/constants/tutorial'
 
 import {
   DIFFICULTIES,
@@ -111,6 +111,46 @@ const initialGrid: Grid = [
   [0, 0, 0],
   [0, 0, 0],
   [0, 0, 0],
+]
+
+// The board every tutorial opens on, with TUTORIAL_OPENING_TARGET already standing on it.
+//
+// A dial of nine zeros is the right opening for a run and the wrong one for a lesson: it
+// is the one board where every key looks alike and nothing on it has happened yet, so
+// there is nothing to point at and no reason one key should be pressed before another.
+// This one sums to 185 against a target of 204, a gap of 19 — and 19 is 9 + 6 + 4, one tap
+// each on three keys of three different weights. The lesson walks them coarsest first,
+// which is the order the whole game is played in, and the three sit in three different
+// parts of the dial: the corner, the bottom edge, the middle.
+//
+// The digits are five different ones with no zero among them, which took some finding —
+// a board has to average about five per key to sum this high, and the obvious ways to get
+// there are a row of sevens or a lone zero surrounded by nines. Neither is a dial anybody
+// would recognise as a position they could have played themselves, and a first lesson
+// standing on one teaches that the game deals oddities.
+//
+// Fixed rather than dealt, and that is the point: the cards name the two numbers on
+// screen, so the lesson has to know what they are. A test pins the route the pair
+// produces, so a change to either number that spoils the lesson fails rather than ships.
+const TUTORIAL_OPENING_GRID: Grid = [
+  [6, 2, 8],
+  [2, 6, 2],
+  [5, 4, 8],
+]
+
+// The one target a tutorial opens holding. Dealt here rather than by the spawner because
+// the spawner rolls a value, and the lesson's first target is not a roll.
+const openingTargets = (id: number, duration: number, now: number): Target[] => [
+  {
+    id,
+    value: TUTORIAL_OPENING_TARGET,
+    spawnedAt: now,
+    duration,
+    refAt: now,
+    refGrid: TUTORIAL_OPENING_GRID,
+    par: computePar(TUTORIAL_OPENING_GRID, TUTORIAL_OPENING_TARGET),
+    userSteps: 0,
+  },
 ]
 
 type Context = {
@@ -235,7 +275,9 @@ export type GameSend = (event: Event) => void
 // fresh run that the event decides and the last run cannot: START says whether this is
 // the tutorial, and RESTART hands back what the run being restarted was.
 const freshGame = (context: Context, now: number, tutorial: boolean) => ({
-  grid: initialGrid,
+  // The tutorial opens on a board and a target of its own; every other run opens on nine
+  // zeros and an empty board for the spawner to fill.
+  grid: tutorial ? TUTORIAL_OPENING_GRID : initialGrid,
   tutorial,
   hits: 0,
   score: 0,
@@ -247,12 +289,15 @@ const freshGame = (context: Context, now: number, tutorial: boolean) => ({
   spdSum: 0,
   bestAcc: 0,
   bestSpd: 0,
-  targets: [] as Target[],
+  targets: tutorial
+    ? openingTargets(context.nextTargetId, context.traineeTimeoutMs, now)
+    : ([] as Target[]),
   // Cleared off the board, but the counter keeps climbing for the same reason the hit
   // batch's seq does: the UI keys a target's animations on its id, and a restart from a
   // pause leaves the last run's targets still animating off. An id dealt twice would
-  // read to the display list as the departing target, not the arriving one.
-  nextTargetId: context.nextTargetId,
+  // read to the display list as the departing target, not the arriving one. The tutorial
+  // spends one on the target it opens holding.
+  nextTargetId: context.nextTargetId + (tutorial ? 1 : 0),
   hitBatch: { seq: context.hitBatch.seq, hits: [] as HitInfo[] },
   elapsedMs: 0,
   playingSince: now,

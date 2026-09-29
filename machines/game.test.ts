@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { createActor } from 'xstate'
 
+import { TUTORIAL_OPENING_TARGET } from '@/constants/tutorial'
 import {
   buildPressGrid,
   buildSetGrid,
@@ -823,24 +824,36 @@ describe('the tutorial', () => {
     return actor
   }
 
+  // The opening walked to its target: the three taps the lesson guides, in the order
+  // `computeKeyPlan` gives them — ⑨ then ⑥ then ④. Pinned as a route in
+  // machines/tutorial-lesson.test.ts; here it is just the way to land the first hit.
+  const hitTheOpening = (actor: ReturnType<typeof startTutorial>, now = 100) => {
+    for (const index of [8, 7, 4]) {
+      actor.send({ type: 'PRESS', index, delta: 1, now })
+    }
+  }
+
   it('is off in a run started without it', () => {
     expect(start('trainee').getSnapshot().context.tutorial).toBe(false)
+  })
+
+  it('opens holding one target of its own', () => {
+    const actor = startTutorial()
+    expect(actor.getSnapshot().context.targets).toHaveLength(1)
   })
 
   it('holds the board to one target, where Easy would take three', () => {
     const actor = startTutorial()
     actor.send({ type: 'ADD_TARGET', value: 40, at: 0 })
     actor.send({ type: 'ADD_TARGET', value: 60, at: 0 })
-    actor.send({ type: 'ADD_TARGET', value: 80, at: 0 })
     expect(actor.getSnapshot().context.targets).toHaveLength(1)
-    expect(actor.getSnapshot().context.targets[0]?.value).toBe(40)
+    // The one it opened with, not the ones offered after it.
+    expect(actor.getSnapshot().context.targets[0]?.value).toBe(TUTORIAL_OPENING_TARGET)
   })
 
   it('takes the next target once the one standing is hit', () => {
     const actor = startTutorial()
-    // Top-left key, weight 1: one press puts the sum on 1.
-    actor.send({ type: 'ADD_TARGET', value: 1, at: 0 })
-    actor.send({ type: 'PRESS', index: 0, delta: 1, now: 100 })
+    hitTheOpening(actor)
     expect(actor.getSnapshot().context.targets).toHaveLength(0)
     actor.send({ type: 'ADD_TARGET', value: 40, at: 200 })
     expect(actor.getSnapshot().context.targets).toHaveLength(1)
@@ -848,10 +861,9 @@ describe('the tutorial', () => {
 
   it('scores a hit as if no clock had run, however long it took', () => {
     const actor = startTutorial()
-    actor.send({ type: 'ADD_TARGET', value: 1, at: 0 })
     // Well past the clock the target was dealt — in any other run this would have
     // expired, and a hit landed here would carry no speed at all.
-    actor.send({ type: 'PRESS', index: 0, delta: 1, now: 10 * 60 * 1000 })
+    hitTheOpening(actor, 10 * 60 * 1000)
     const hit = actor.getSnapshot().context.hitBatch.hits[0]
     expect(hit?.spdFactor).toBe(1)
     expect(actor.getSnapshot().context.spdSum).toBe(1)
