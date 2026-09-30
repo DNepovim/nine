@@ -42,7 +42,7 @@ The grid a rewound board stands on, derived from the lesson's own script rather 
 
 **Why the grid moves to `constants/`, not into the new file:** Task 3 makes
 `machines/game.ts` import `tutorialBoardEntry`. If `lib/tutorial-board.ts` owned
-the opening grid, `game.ts` and `tutorial-board.ts` would each import a *value*
+the opening grid, `game.ts` and `tutorial-board.ts` would each import a _value_
 from the other — a real runtime cycle. Parked in `constants/tutorial.ts`, which
 imports nothing but Lingui, the only edge pointing back at `game.ts` from either
 file is `import type { Grid }`, which erases at build time. It is also where the
@@ -588,12 +588,12 @@ The script already maps a hit count to the lesson it opens. A rewind reuses that
 Add to `machines/tutorial-lesson.test.ts`, inside the existing `describe('the lesson script', …)`:
 
 ```ts
-  // What a rewind reads. The table's index 0 used to be dead — no hit lands at nought —
-  // and the stepper going back to the opening board is the one thing that reads it. It
-  // was already the right answer, which is why a rewind needs no second table.
-  it('opens the board a rewind lands on from the same table a hit does', () => {
-    expect(LESSON_AFTER_HIT[0]).toBe(FIRST_STEP)
-  })
+// What a rewind reads. The table's index 0 used to be dead — no hit lands at nought —
+// and the stepper going back to the opening board is the one thing that reads it. It
+// was already the right answer, which is why a rewind needs no second table.
+it('opens the board a rewind lands on from the same table a hit does', () => {
+  expect(LESSON_AFTER_HIT[0]).toBe(FIRST_STEP)
+})
 ```
 
 - [ ] **Step 2: Run the test to verify it passes already**
@@ -654,19 +654,19 @@ export function useTutorialLesson({
 Then add this effect directly beneath the existing `dealt` effect that watches `runSeq`:
 
 ```ts
-  // A rewind, followed. The board under the player has moved to a scripted one, so the
-  // lesson goes to the step that board opens on — the same table a hit reads, indexed by
-  // the same hit count.
-  //
-  // Set rather than sent through `lessonStep`, which short-circuits at `done`: a player
-  // going back after the script has run out would otherwise be put on a scripted board
-  // with the lesson still saying nothing.
-  const rewound = useRef(rewindSeq)
-  useEffect(() => {
-    if (rewound.current === rewindSeq) return
-    rewound.current = rewindSeq
-    setStep(LESSON_AFTER_HIT[openingRef.current.hits] ?? 'done')
-  }, [rewindSeq])
+// A rewind, followed. The board under the player has moved to a scripted one, so the
+// lesson goes to the step that board opens on — the same table a hit reads, indexed by
+// the same hit count.
+//
+// Set rather than sent through `lessonStep`, which short-circuits at `done`: a player
+// going back after the script has run out would otherwise be put on a scripted board
+// with the lesson still saying nothing.
+const rewound = useRef(rewindSeq)
+useEffect(() => {
+  if (rewound.current === rewindSeq) return
+  rewound.current = rewindSeq
+  setStep(LESSON_AFTER_HIT[openingRef.current.hits] ?? 'done')
+}, [rewindSeq])
 ```
 
 `openingRef` is already kept current on every render (`openingRef.current = { tutorial, hits }`), so it carries the hit count the machine has just been rewound to. Add `LESSON_AFTER_HIT` to the existing import from `@/machines/tutorial-lesson`.
@@ -844,9 +844,7 @@ export function TutorialStepper({
                 player gets on is how much of it has come up. */}
               <Text
                 selectable={false}
-                className={
-                  state === 'locked' ? `${NUMBER_CLASS} text-dim` : NUMBER_CLASS
-                }
+                className={state === 'locked' ? `${NUMBER_CLASS} text-dim` : NUMBER_CLASS}
                 style={{ color: numberColor(state) }}
               >
                 {board + 1}
@@ -873,34 +871,34 @@ export function TutorialStepper({
 In `app/(tabs)/index.tsx`, beside the other run-scoped state near the lesson wiring (~line 877, just above the `useTutorialLesson` call), add:
 
 ```tsx
-  // How far into the lesson the player has got, and how many times the stepper has put
-  // them back.
-  //
-  // `furthest` is a high-water mark rather than a stored step: raised by play, never by
-  // the stepper, and seeded from the run's own hit count — so a tutorial put back from
-  // storage mid-run arrives with everything it had already played behind it, and nothing
-  // extra has to be persisted for that.
-  const [furthestStep, setFurthestStep] = useState(0)
-  // Only ever climbs, and only the screen reads it — the lesson wants to know that a
-  // rewind happened, not which one.
-  const [rewindSeq, setRewindSeq] = useState(0)
+// How far into the lesson the player has got, and how many times the stepper has put
+// them back.
+//
+// `furthest` is a high-water mark rather than a stored step: raised by play, never by
+// the stepper, and seeded from the run's own hit count — so a tutorial put back from
+// storage mid-run arrives with everything it had already played behind it, and nothing
+// extra has to be persisted for that.
+const [furthestStep, setFurthestStep] = useState(0)
+// Only ever climbs, and only the screen reads it — the lesson wants to know that a
+// rewind happened, not which one.
+const [rewindSeq, setRewindSeq] = useState(0)
 
-  // Raised by play alone. A rewind drops `hits`, and the max is what makes that drop
-  // invisible here: ground covered stays covered.
-  useEffect(() => {
-    setFurthestStep((reached) => Math.max(reached, hits))
-  }, [hits])
+// Raised by play alone. A rewind drops `hits`, and the max is what makes that drop
+// invisible here: ground covered stays covered.
+useEffect(() => {
+  setFurthestStep((reached) => Math.max(reached, hits))
+}, [hits])
 
-  // A fresh run starts the mark over, seeded from the hit count that run arrived with —
-  // nought for a run just dealt, and whatever it had already played for one put back from
-  // storage. Read through a ref rather than depended on, for the reason the lesson does
-  // the same: `hits` moves inside a run, and an effect watching it would reset the mark
-  // on the first hit of the very run it was tracking.
-  const hitsRef = useRef(hits)
-  hitsRef.current = hits
-  useEffect(() => {
-    setFurthestStep(hitsRef.current)
-  }, [state.context.runSeq])
+// A fresh run starts the mark over, seeded from the hit count that run arrived with —
+// nought for a run just dealt, and whatever it had already played for one put back from
+// storage. Read through a ref rather than depended on, for the reason the lesson does
+// the same: `hits` moves inside a run, and an effect watching it would reset the mark
+// on the first hit of the very run it was tracking.
+const hitsRef = useRef(hits)
+hitsRef.current = hits
+useEffect(() => {
+  setFurthestStep(hitsRef.current)
+}, [state.context.runSeq])
 ```
 
 - [ ] **Step 3: Pass the rewind counter to the lesson**
@@ -908,16 +906,16 @@ In `app/(tabs)/index.tsx`, beside the other run-scoped state near the lesson wir
 At the `useTutorialLesson` call (~line 880), replace the literal `0` left by Task 4:
 
 ```tsx
-  const lesson = useTutorialLesson({
-    tutorial,
-    isPlaying,
-    runSeq: state.context.runSeq,
-    rewindSeq,
-    hits,
-    batch: state.context.hitBatch,
-    grid: state.context.grid,
-    targets: state.context.targets,
-  })
+const lesson = useTutorialLesson({
+  tutorial,
+  isPlaying,
+  runSeq: state.context.runSeq,
+  rewindSeq,
+  hits,
+  batch: state.context.hitBatch,
+  grid: state.context.grid,
+  targets: state.context.targets,
+})
 ```
 
 Keep every other argument exactly as the file already has it — the list above names the ones that matter, not a replacement for what is there.
@@ -927,20 +925,24 @@ Keep every other argument exactly as the file already has it — the list above 
 In `app/(tabs)/index.tsx`, inside the targets area, directly **above** the `{tutorial && (` block that holds the banner band (~line 1393):
 
 ```tsx
-                {/* Where the player is in the lesson. Above the band the lesson talks in,
+{
+  /* Where the player is in the lesson. Above the band the lesson talks in,
                   so the two read top to bottom: which step this is, then what it says.
                   Tutorial runs only, and a fixed height for the same reason the band
-                  below it is — see TUTORIAL_STEPPER_HEIGHT. */}
-                {tutorial && (
-                  <TutorialStepper
-                    current={hits}
-                    furthest={furthestStep}
-                    onGo={(board) => {
-                      send({ type: 'REWIND', board, now: Date.now() })
-                      setRewindSeq((seq) => seq + 1)
-                    }}
-                  />
-                )}
+                  below it is — see TUTORIAL_STEPPER_HEIGHT. */
+}
+{
+  tutorial && (
+    <TutorialStepper
+      current={hits}
+      furthest={furthestStep}
+      onGo={(board) => {
+        send({ type: 'REWIND', board, now: Date.now() })
+        setRewindSeq((seq) => seq + 1)
+      }}
+    />
+  )
+}
 ```
 
 Add the import beside the other `@/components/game/*` imports:
@@ -1117,33 +1119,33 @@ export function TutorialCurtain({
 In `app/(tabs)/index.tsx`, replace the effect that currently starts the welcome run (~line 489):
 
 ```tsx
-  useEffect(() => {
-    if (!welcome.pending || !splashExiting || !isMenu) return
-    welcome.taken()
-    startTutorial('welcome')
-  }, [welcome, splashExiting, isMenu, startTutorial])
+useEffect(() => {
+  if (!welcome.pending || !splashExiting || !isMenu) return
+  welcome.taken()
+  startTutorial('welcome')
+}, [welcome, splashExiting, isMenu, startTutorial])
 ```
 
 with a curtain phase, and rewrite the comment block above it — the run is no longer dealt as the splash leaves:
 
 ```tsx
-  // A first launch does not go straight from the logo into the lesson. It pauses on a
-  // curtain that says what is about to happen, and the lesson fades up through it.
-  //
-  // The curtain is raised as the splash *begins* its exit, so the logo scales away onto a
-  // screen that is already there rather than onto an empty one — the same hand-off the
-  // splash was written for. The run itself is dealt when the curtain starts to lift,
-  // which is what puts a board with a target already springing in under the last of the
-  // words. See components/tutorial-curtain.tsx.
-  //
-  // `menu` because START is only accepted there. `taken` runs first — it closes
-  // `pending`, so a re-render mid-effect cannot raise a second curtain over the first.
-  const [curtain, setCurtain] = useState<'down' | 'up'>('down')
-  useEffect(() => {
-    if (!welcome.pending || !splashExiting || !isMenu) return
-    welcome.taken()
-    setCurtain('up')
-  }, [welcome, splashExiting, isMenu])
+// A first launch does not go straight from the logo into the lesson. It pauses on a
+// curtain that says what is about to happen, and the lesson fades up through it.
+//
+// The curtain is raised as the splash *begins* its exit, so the logo scales away onto a
+// screen that is already there rather than onto an empty one — the same hand-off the
+// splash was written for. The run itself is dealt when the curtain starts to lift,
+// which is what puts a board with a target already springing in under the last of the
+// words. See components/tutorial-curtain.tsx.
+//
+// `menu` because START is only accepted there. `taken` runs first — it closes
+// `pending`, so a re-render mid-effect cannot raise a second curtain over the first.
+const [curtain, setCurtain] = useState<'down' | 'up'>('down')
+useEffect(() => {
+  if (!welcome.pending || !splashExiting || !isMenu) return
+  welcome.taken()
+  setCurtain('up')
+}, [welcome, splashExiting, isMenu])
 ```
 
 - [ ] **Step 4: Render it**
@@ -1151,16 +1153,18 @@ with a curtain phase, and rewrite the comment block above it — the run is no l
 In the same file, beside the other full-viewport overlays — put it last among them, so nothing the screen already stacks can land on top of it (its `zIndex` settles the order, but rendering it last keeps the source honest about it):
 
 ```tsx
-      {curtain === 'up' && (
-        <TutorialCurtain
-          onLift={() => {
-            startTutorial('welcome')
-          }}
-          onGone={() => {
-            setCurtain('down')
-          }}
-        />
-      )}
+{
+  curtain === 'up' && (
+    <TutorialCurtain
+      onLift={() => {
+        startTutorial('welcome')
+      }}
+      onGone={() => {
+        setCurtain('down')
+      }}
+    />
+  )
+}
 ```
 
 Add the import beside the other `@/components/*` imports:
@@ -1250,7 +1254,7 @@ import { useLingui } from '@lingui/react/macro'
 Call it at the top of `TutorialStepper`'s body and at the top of `Arrow`'s:
 
 ```tsx
-  const { t } = useLingui()
+const { t } = useLingui()
 ```
 
 Then replace the three literals:

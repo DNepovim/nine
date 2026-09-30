@@ -14,13 +14,13 @@ begins to leave. Two changes to that:
 One step per fixed board the tutorial deals, so five: `TUTORIAL_TARGETS` is the
 list, and step _n_ is the board standing when the run's hit count is _n − 1_.
 
-| Step | Target | What it teaches                 |
-| ---- | ------ | ------------------------------- |
+| Step | Target | What it teaches                       |
+| ---- | ------ | ------------------------------------- |
 | ①    | 204    | the opening, guided one key at a time |
-| ②    | 211    | the first board played alone    |
-| ③    | 202    | the swipe down                  |
-| ④    | 24     | the swipe left                  |
-| ⑤    | 216    | the swipe right                 |
+| ②    | 211    | the first board played alone          |
+| ③    | 202    | the swipe down                        |
+| ④    | 24     | the swipe left                        |
+| ⑤    | 216    | the swipe right                       |
 
 The three cards on the opening board — the target tip, the sum tip, the guided
 route — share step ①; they are beats of one board, not boards of their own. The
@@ -50,7 +50,7 @@ reads, with a Czech string alongside it.
 
 ### The sequence
 
-The welcome run is dealt today as the splash *begins* its exit, so the fade
+The welcome run is dealt today as the splash _begins_ its exit, so the fade
 uncovers a game already in motion. The curtain takes that slot, and hands the
 same trick on:
 
@@ -87,11 +87,11 @@ already placed in it.
 
 Three states for a number:
 
-| State   | Looks like                | Tappable |
-| ------- | ------------------------- | -------- |
-| current | filled, tutorial blue     | no       |
-| visited | outlined, tutorial blue   | yes      |
-| locked  | dim, no outline           | no       |
+| State   | Looks like              | Tappable |
+| ------- | ----------------------- | -------- |
+| current | filled, tutorial blue   | no       |
+| visited | outlined, tutorial blue | yes      |
+| locked  | dim, no outline         | no       |
 
 PREV is live while the current step is above ①. NEXT is live only while the
 current step is below the furthest reached — which is the whole of the
@@ -138,7 +138,7 @@ numbers:
 
 - `n === 0` → `TUTORIAL_OPENING_GRID`
 - otherwise → the grid reached by applying `computeKeyPlan(previous,
-  TUTORIAL_TARGETS[n - 1])` to the previous entry grid, setting each key in the
+TUTORIAL_TARGETS[n - 1])` to the previous entry grid, setting each key in the
   plan to its `to`.
 
 Derived rather than recorded. The alternative was a ledger snapshotting the grid
