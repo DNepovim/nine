@@ -471,16 +471,17 @@ In `machines/game.ts`, add to the `Event` union directly beneath the `ADD_TARGET
 
 - [ ] **Step 4: Add the imports**
 
-At the top of `machines/game.ts`, extend the existing `@/constants/tutorial` import to include `scriptedTarget` and `TUTORIAL_TARGETS`, and the `@/lib/tutorial-board` import added in Task 1 to include `tutorialBoardEntry`:
+At the top of `machines/game.ts`, extend the existing `@/constants/tutorial` import to include `scriptedTarget` and `TUTORIAL_TARGETS`, and add a new import for the helper Task 1 created. Task 1 left `TUTORIAL_OPENING_GRID` in `@/constants/tutorial`, **not** in `@/lib/tutorial-board` — it must stay there, or the two files import values from each other and the cycle Task 1 exists to avoid comes back:
 
 ```ts
 import {
   scriptedTarget,
   TUTORIAL_MAX_TARGETS,
+  TUTORIAL_OPENING_GRID,
   TUTORIAL_OPENING_TARGET,
   TUTORIAL_TARGETS,
 } from '@/constants/tutorial'
-import { TUTORIAL_OPENING_GRID, tutorialBoardEntry } from '@/lib/tutorial-board'
+import { tutorialBoardEntry } from '@/lib/tutorial-board'
 ```
 
 - [ ] **Step 5: Add the handler**
