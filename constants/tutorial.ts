@@ -30,31 +30,6 @@ import type { Grid } from '@/machines/game'
 // machines/modes.ts is what picks between the two, so no screen has to remember.
 export const TUTORIAL_LABEL = msg`TUTORIAL`
 
-// The targets the lesson deals itself, in order, before the spawner starts rolling them.
-//
-// Every one is fixed, and each is chosen to make one gesture the obvious answer — the
-// lesson teaches the dial by dealing boards that ask for each move in turn:
-//
-//   204  the opening, on TUTORIAL_OPENING_GRID (185). Three taps up, guided one key at a
-//        time: ⑨ 8→9, ⑥ 4→5, ④ 6→7. Nothing here needs a swipe.
-//   211  seven above the sum the first hit leaves, and the first the player takes alone.
-//        ⑥ 5→6 then ① 6→7 — the coarse key covers the ground, the finest trims the last
-//        point, which is the whole idea of the dial in two taps.
-//   202  nine below. Taps only climb, so this is the first board that cannot be answered
-//        without a swipe down, and the lesson says so.
-//   24   far below anything reachable by stepping. Emptying keys outright — a swipe left —
-//        is the only sane way down, and a dozen swipe-downs is what makes that plain.
-//   216  far above. The same argument the other way: keys have to be filled to nine, and
-//        a swipe right is what does it.
-//
-// Fixed rather than rolled because a rolled target cannot be taught against: it may land
-// anywhere, including exactly where the lesson was about to say nothing is. The sum after
-// each hit is known exactly — it is the target just cleared — so each of these sits a
-// known distance from the board the player is standing on, whatever route they took to it.
-//
-// From the sixth target on the run is an ordinary tutorial run: rolled, within
-// TUTORIAL_TARGET_REACH of the one just hit. `machines/tutorial-lesson.ts` walks its own
-// steps off this same list, and a test holds the two to the same length.
 // The board every tutorial opens on, with TUTORIAL_OPENING_TARGET already standing on it.
 //
 // A dial of nine zeros is the right opening for a run and the wrong one for a lesson: it
@@ -80,6 +55,31 @@ export const TUTORIAL_OPENING_GRID: Grid = [
   [5, 4, 8],
 ]
 
+// The targets the lesson deals itself, in order, before the spawner starts rolling them.
+//
+// Every one is fixed, and each is chosen to make one gesture the obvious answer — the
+// lesson teaches the dial by dealing boards that ask for each move in turn:
+//
+//   204  the opening, on TUTORIAL_OPENING_GRID (185). Three taps up, guided one key at a
+//        time: ⑨ 8→9, ⑥ 4→5, ④ 6→7. Nothing here needs a swipe.
+//   211  seven above the sum the first hit leaves, and the first the player takes alone.
+//        ⑥ 5→6 then ① 6→7 — the coarse key covers the ground, the finest trims the last
+//        point, which is the whole idea of the dial in two taps.
+//   202  nine below. Taps only climb, so this is the first board that cannot be answered
+//        without a swipe down, and the lesson says so.
+//   24   far below anything reachable by stepping. Emptying keys outright — a swipe left —
+//        is the only sane way down, and a dozen swipe-downs is what makes that plain.
+//   216  far above. The same argument the other way: keys have to be filled to nine, and
+//        a swipe right is what does it.
+//
+// Fixed rather than rolled because a rolled target cannot be taught against: it may land
+// anywhere, including exactly where the lesson was about to say nothing is. The sum after
+// each hit is known exactly — it is the target just cleared — so each of these sits a
+// known distance from the board the player is standing on, whatever route they took to it.
+//
+// From the sixth target on the run is an ordinary tutorial run: rolled, within
+// TUTORIAL_TARGET_REACH of the one just hit. `machines/tutorial-lesson.ts` walks its own
+// steps off this same list, and a test holds the two to the same length.
 export const TUTORIAL_TARGETS = [204, 211, 202, 24, 216] as const
 
 // The first of them. Dealt by the machine at START rather than by the spawner, because a
