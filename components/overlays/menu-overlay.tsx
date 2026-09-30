@@ -16,8 +16,8 @@ import { GradientName } from '@/components/gradient-name'
 import { Screen } from '@/components/screen'
 import type { AchievementId } from '@/constants/achievements'
 import { DIM_INK } from '@/constants/colors'
-import { SHOW_MULTIPLAYER } from '@/constants/features'
 import { useChampionsContext } from '@/hooks/use-champions'
+import { useFlag } from '@/hooks/use-flags'
 import type { LostMedalNews } from '@/hooks/use-lost-medals'
 import { useOnline } from '@/hooks/use-online'
 import { EMPTY_IDS, usePlayerFactors } from '@/hooks/use-player-factors'
@@ -149,6 +149,7 @@ export function MenuOverlay({
   // Creating or joining a room is a Supabase round trip either way, so both are
   // dead ends with no connection — disabled rather than left to fail after a tap.
   const online = useOnline()
+  const showMultiplayer = useFlag('multiplayer')
   const [focused, setFocused] = useState<Mode | 'arcade'>(gameMode)
   const [playMode, setPlayMode] = useState<PlayMode>(initialPlayMode)
   const [panelWidth, setPanelWidth] = useState(0)
@@ -278,11 +279,12 @@ export function MenuOverlay({
             }
           />
 
-          {/* ALONE / WITH FRIENDS tabs. Hidden while the intro screen is being fitted
-              into a short phone: the tab is what is gone, not the feature — the panel
-              below still carries both doors in, and every multiplayer screen past them
-              is untouched. See SHOW_MULTIPLAYER. */}
-          {SHOW_MULTIPLAYER && (
+          {/* ALONE / WITH FRIENDS tabs. Hidden from players while the intro screen is
+              being fitted into a short phone: the tab is what is gone, not the feature —
+              the panel below still carries both doors in, and every multiplayer screen
+              past them is untouched. Shown to a tester, who is who it has to be
+              reachable by. See the multiplayer flag in constants/features.ts. */}
+          {showMultiplayer && (
             <PlayModeTab
               playMode={playMode}
               gameMode={gameMode}

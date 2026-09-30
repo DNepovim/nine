@@ -4,7 +4,7 @@ import { msg } from '@lingui/core/macro'
 import { Trans, useLingui } from '@lingui/react/macro'
 import { LinearGradient } from 'expo-linear-gradient'
 import type { ReactNode } from 'react'
-import { useRef } from 'react'
+import { useMemo, useRef } from 'react'
 import { Pressable, ScrollView, Text, View } from 'react-native'
 import { Gesture, GestureDetector } from 'react-native-gesture-handler'
 import { scheduleOnRN } from 'react-native-worklets'
@@ -12,8 +12,8 @@ import { scheduleOnRN } from 'react-native-worklets'
 import { MenuButton } from '@/components/game/menu-button'
 import { ScreenLayer } from '@/components/screen'
 import { ACHIEVEMENT_SCALE, GAME_SCALE } from '@/constants/colors'
-import { SHOW_MULTIPLAYER } from '@/constants/features'
 import { TIPS } from '@/constants/tips'
+import { useFlag } from '@/hooks/use-flags'
 import { useTheme } from '@/hooks/use-theme'
 import {
   DARK_MODE_GRADIENT,
@@ -78,9 +78,12 @@ const ALL_SECTIONS = [
 // a chapter telling a player to pick a choice the intro no longer shows is the guide
 // being wrong, which is worse than the guide being short. Filtered in one place so the
 // contents list and the page below it cannot disagree about what is here.
-const SECTION_ORDER: readonly SectionKey[] = ALL_SECTIONS.filter(
-  (key) => SHOW_MULTIPLAYER || key !== 'multiplayer',
-)
+//
+// A function rather than the constant it used to be: what the guide offers now depends
+// on the reader's role, which is not known when this module is loaded.
+function sectionOrder(showMultiplayer: boolean): readonly SectionKey[] {
+  return ALL_SECTIONS.filter((key) => showMultiplayer || key !== 'multiplayer')
+}
 
 // ── Reusable building blocks ────────────────────────────────────────────────
 
@@ -128,11 +131,19 @@ function SectionHeader({
 // further down, so the list reads as the page in miniature and a title is recognised
 // again on arrival. The icons also do the separating that dots used to, one mark at
 // the start of every entry, so nothing sits between them but space.
-function Contents({ onJump }: { onJump: (section: SectionKey) => void }) {
+function Contents({
+  sections,
+  onJump,
+}: {
+  // Handed down rather than worked out again here, so the list and the page below it
+  // are filtered by one decision instead of two that agree until they don't.
+  sections: readonly SectionKey[]
+  onJump: (section: SectionKey) => void
+}) {
   const { t } = useLingui()
   return (
     <View className="mt-4 flex-row flex-wrap items-center gap-x-3.5 gap-y-2">
-      {SECTION_ORDER.map((key) => (
+      {sections.map((key) => (
         <Pressable
           key={key}
           onPress={() => {
@@ -346,6 +357,11 @@ export function HowToPlayOverlay({
   const { colorScheme } = useTheme()
   const dotColor = colorScheme === 'dark' ? '#2A2B44' : '#D4D0C8'
 
+  // Read once and used twice — by the contents list and by the chapter itself — so the
+  // list cannot offer a jump to a section that is not on the page.
+  const showMultiplayer = useFlag('multiplayer')
+  const sections = useMemo(() => sectionOrder(showMultiplayer), [showMultiplayer])
+
   const scrollRef = useRef<ScrollView>(null)
   // Filled by each header as it lays out. A ref, not state: these positions are read
   // on a tap and never rendered, so storing them in state would re-render the whole
@@ -401,7 +417,7 @@ export function HowToPlayOverlay({
             <Trans>DIAL THE GRID · MATCH THE NUMBER</Trans>
           </Text>
 
-          <Contents onJump={jump} />
+          <Contents sections={sections} onJump={jump} />
 
           {/* Goal */}
           <SectionHeader section="goal" onMeasure={measure} />
@@ -551,8 +567,9 @@ export function HowToPlayOverlay({
             {t`\nAchieve one mid-run and the score bar says so in green — tap that line and the run pauses so you can read what the achievement asked of you. Most are asked once per difficulty — Easy, Hard and Extreme count separately, and the list draws a bar for each. The whole list is behind the achievements line under NINE on the start screen, along with how far along you are on the ones you have not got yet.`}
           </Body>
 
-          {/* Multiplayer. Gone with the tab that leads to it — see SHOW_MULTIPLAYER. */}
-          {SHOW_MULTIPLAYER && (
+          {/* Multiplayer. Gone with the tab that leads to it — see the multiplayer
+              flag in constants/features.ts. */}
+          {showMultiplayer && (
             <>
               <SectionHeader section="multiplayer" onMeasure={measure} />
               <Body>

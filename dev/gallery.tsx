@@ -42,6 +42,7 @@ import type { ShapeKind } from '@/dev/weekly-recap/recap'
 import { WeeklyRecapOverlay } from '@/dev/weekly-recap/recap-overlay'
 import { requestAnnouncements } from '@/hooks/use-announcement-request'
 import { ChampionsProvider } from '@/hooks/use-champions'
+import { FlagsProvider } from '@/hooks/use-flags'
 import type { LostMedalNews } from '@/hooks/use-lost-medals'
 import { requestTutorial } from '@/hooks/use-tutorial-request'
 import { EMPTY_STORE } from '@/lib/achievement-store'
@@ -228,31 +229,36 @@ const intro = (
   key: `intro-${label}`,
   label,
   render: (close) => (
-    <ChampionsProvider value={champions}>
-      <MenuOverlay
-        gameMode="speed"
-        difficulty="extreme"
-        userId="dev"
-        nickname="DONDA"
-        bestScore={RUN.score}
-        medals={medals}
-        lostMedals={lostMedals}
-        onLostMedalsSeen={noop}
-        achievementsEarned={12}
-        achievementsLatest="flawlessTen"
-        achievementsLoaded
-        onOpenAchievements={close}
-        onOpenMedals={close}
-        onPlay={close}
-        onSetMode={noop}
-        onSetDifficulty={noop}
-        onOpenAdvanced={close}
-        onAddNickname={close}
-        onHowToPlay={close}
-        onCreateRoom={close}
-        onOpenJoinRoom={close}
-      />
-    </ChampionsProvider>
+    // Admin, so the gallery is shown every screen there is. A gallery exists to put a
+    // screen in front of you; one that hid the With friends tabs because the desk it
+    // runs on has no role would be a gallery with a hole in it.
+    <FlagsProvider role="admin">
+      <ChampionsProvider value={champions}>
+        <MenuOverlay
+          gameMode="speed"
+          difficulty="extreme"
+          userId="dev"
+          nickname="DONDA"
+          bestScore={RUN.score}
+          medals={medals}
+          lostMedals={lostMedals}
+          onLostMedalsSeen={noop}
+          achievementsEarned={12}
+          achievementsLatest="flawlessTen"
+          achievementsLoaded
+          onOpenAchievements={close}
+          onOpenMedals={close}
+          onPlay={close}
+          onSetMode={noop}
+          onSetDifficulty={noop}
+          onOpenAdvanced={close}
+          onAddNickname={close}
+          onHowToPlay={close}
+          onCreateRoom={close}
+          onOpenJoinRoom={close}
+        />
+      </ChampionsProvider>
+    </FlagsProvider>
   ),
 })
 
@@ -702,7 +708,13 @@ const SCREENS: Section[] = [
       {
         key: 'how-to-play',
         label: 'HOW TO PLAY',
-        render: (close) => <HowToPlayOverlay onClose={close} onTryTutorial={close} />,
+        // Admin for the same reason the intro entry is: the multiplayer chapter is a
+        // page of this guide and the gallery is where it gets looked at.
+        render: (close) => (
+          <FlagsProvider role="admin">
+            <HowToPlayOverlay onClose={close} onTryTutorial={close} />
+          </FlagsProvider>
+        ),
       },
     ],
   },

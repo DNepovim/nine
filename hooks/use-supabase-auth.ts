@@ -1,10 +1,18 @@
 import { useEffect, useState } from 'react'
 
+import { parseRole, type Role } from '@/lib/role'
 import { supabase } from '@/lib/supabase'
 
 type AuthState = {
   userId: string | null
   nickname: string | null
+  // What this player may be shown — null for all but a handful. Read here rather than
+  // asked for separately because the select below already runs once per launch, so a
+  // role costs nothing extra; handed on to FlagsProvider, which is what reads it.
+  //
+  // Once per launch is also the whole story of when a role takes effect: it is set by
+  // hand in SQL, and the device picks it up on its next start.
+  role: Role | null
   isReady: boolean
   updateNickname: (name: string) => Promise<{ error: string | null }>
 }
@@ -12,6 +20,7 @@ type AuthState = {
 export function useSupabaseAuth(): AuthState {
   const [userId, setUserId] = useState<string | null>(null)
   const [nickname, setNickname] = useState<string | null>(null)
+  const [role, setRole] = useState<Role | null>(null)
   const [isReady, setIsReady] = useState(false)
 
   useEffect(() => {
@@ -22,6 +31,7 @@ export function useSupabaseAuth(): AuthState {
       } = await supabase.auth.getSession()
       let uid = session?.user.id ?? null
       let nick: string | null = null
+      let held: Role | null = null
 
       if (uid !== null) {
         // Reading the nickname doubles as checking the session is real. A stored session
@@ -30,9 +40,12 @@ export function useSupabaseAuth(): AuthState {
         // and nothing in the app ever signs out, so a device left holding one is a device
         // where every write fails the `profiles` foreign key from then on. Scores,
         // achievements, feedback: all of it filed under an `auth.uid()` that is not there.
+        // The role rides along with the nickname rather than in a request of its own:
+        // this one already has to happen, and two asks about one row are two answers
+        // that can disagree about whether the row is there.
         const { data, error } = await supabase
           .from('profiles')
-          .select('nickname')
+          .select('nickname, role')
           .eq('id', uid)
           .maybeSingle()
 
@@ -46,6 +59,8 @@ export function useSupabaseAuth(): AuthState {
           uid = null
         } else {
           nick = typeof data?.nickname === 'string' ? data.nickname : null
+          // A role this build has never heard of is an ordinary player — see parseRole.
+          held = parseRole(data?.role)
         }
       }
 
@@ -59,6 +74,7 @@ export function useSupabaseAuth(): AuthState {
       if (uid !== null) {
         setUserId(uid)
         setNickname(nick)
+        setRole(held)
       }
 
       setIsReady(true)
@@ -79,5 +95,5 @@ export function useSupabaseAuth(): AuthState {
     return { error: null }
   }
 
-  return { userId, nickname, isReady, updateNickname }
+  return { userId, nickname, role, isReady, updateNickname }
 }
