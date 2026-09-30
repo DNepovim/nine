@@ -288,6 +288,10 @@ msgstr "AVG SPD"
 msgid "BACK"
 msgstr "BACK"
 
+#: components/game/tutorial-stepper.tsx:103
+msgid "Back a step"
+msgstr "Back a step"
+
 #: constants/news.ts:102
 msgid "Beat a record and the game makes a fuss about it."
 msgstr "Beat a record and the game makes a fuss about it."
@@ -386,7 +390,7 @@ msgstr "CONNECT TO THE INTERNET TO PLAY WITH FRIENDS"
 msgid "CONTINUE"
 msgstr "CONTINUE"
 
-#: app/(tabs)/index.tsx:1574
+#: app/(tabs)/index.tsx:1618
 msgid "Continue the tutorial"
 msgstr "Continue the tutorial"
 
@@ -569,6 +573,10 @@ msgstr "FLAWLESS TEN"
 #: components/overlays/compare-stat-row.tsx:15
 msgid "FORTUNE"
 msgstr "FORTUNE"
+
+#: components/game/tutorial-stepper.tsx:153
+msgid "Forward a step"
+msgstr "Forward a step"
 
 #: constants/achievements.ts:485
 msgid "FULL HOUSE"
@@ -760,6 +768,10 @@ msgstr "LEAVE GAME"
 msgid "Let a target’s ring run out and you lose one too — precision still has a clock."
 msgstr "Let a target’s ring run out and you lose one too — precision still has a clock."
 
+#: components/tutorial-curtain.tsx:92
+msgid "LET'S LEARN THE GAME"
+msgstr "LET'S LEARN THE GAME"
+
 #: components/splash-screen.tsx:207
 msgid "Let's multiply"
 msgstr "Let's multiply"
@@ -785,7 +797,7 @@ msgstr "LONG HAUL"
 msgid "Lose every life in under ten seconds."
 msgstr "Lose every life in under ten seconds."
 
-#: machines/tutorial-lesson.ts:207
+#: machines/tutorial-lesson.ts:208
 msgid "LOWER NOW — SWIPE A KEY DOWN"
 msgstr "LOWER NOW — SWIPE A KEY DOWN"
 
@@ -1246,6 +1258,11 @@ msgstr "START GAME"
 msgid "STEADY HAND"
 msgstr "STEADY HAND"
 
+#. placeholder {0}: board + 1
+#: components/game/tutorial-stepper.tsx:120
+msgid "Step {0}"
+msgstr "Step {0}"
+
 #: components/overlays/game-over-overlay.tsx:340
 msgid "STEP DOWN TO {rungName}"
 msgstr "STEP DOWN TO {rungName}"
@@ -1266,7 +1283,7 @@ msgstr "Streak — consecutive perfect plays multiply your points ×2 → ×4 �
 msgid "STRIKES"
 msgstr "STRIKES"
 
-#: machines/tutorial-lesson.ts:205
+#: machines/tutorial-lesson.ts:206
 msgid "STRUCK — THE NEXT IS YOURS"
 msgstr "STRUCK — THE NEXT IS YOURS"
 
@@ -1274,11 +1291,11 @@ msgstr "STRUCK — THE NEXT IS YOURS"
 msgid "SURGEON"
 msgstr "SURGEON"
 
-#: machines/tutorial-lesson.ts:211
+#: machines/tutorial-lesson.ts:212
 msgid "SWIPE LEFT TO EMPTY A KEY"
 msgstr "SWIPE LEFT TO EMPTY A KEY"
 
-#: machines/tutorial-lesson.ts:212
+#: machines/tutorial-lesson.ts:213
 msgid "SWIPE RIGHT TO FILL A KEY"
 msgstr "SWIPE RIGHT TO FILL A KEY"
 
@@ -1324,7 +1341,7 @@ msgstr "TAKEN IN THE LAST {HISTORY_DAYS} DAYS"
 msgid "Tap any name — on a board, in a room, on the winners line — and their profile opens: the mark they carry, what they have played, the medals they hold and the records they once held. A name on a leaderboard is a player now, not a row."
 msgstr "Tap any name — on a board, in a room, on the winners line — and their profile opens: the mark they carry, what they have played, the medals they hold and the records they once held. A name on a leaderboard is a player now, not a row."
 
-#: machines/tutorial-lesson.ts:204
+#: machines/tutorial-lesson.ts:205
 msgid "TAP THE KEY THAT GLOWS"
 msgstr "TAP THE KEY THAT GLOWS"
 
@@ -1368,7 +1385,7 @@ msgstr "TERMINAL VELOCITY"
 msgid "THANK YOU"
 msgstr "THANK YOU"
 
-#: machines/tutorial-lesson.ts:216
+#: machines/tutorial-lesson.ts:217
 msgid "THAT IS EVERY MOVE — LET’S TRAIN"
 msgstr "THAT IS EVERY MOVE — LET’S TRAIN"
 
@@ -1419,7 +1436,7 @@ msgstr "THE GOAL"
 msgid "THE LONG WAY"
 msgstr "THE LONG WAY"
 
-#: machines/tutorial-lesson.ts:200
+#: machines/tutorial-lesson.ts:201
 msgid "THE MARK TO MEET"
 msgstr "THE MARK TO MEET"
 
@@ -1568,7 +1585,7 @@ msgstr "TRY IT"
 msgid "Turn on SHOW SUM IN BUTTONS under Options. Each button then reads out what it is contributing, so the arithmetic sits on the grid instead of in your head."
 msgstr "Turn on SHOW SUM IN BUTTONS under Options. Each button then reads out what it is contributing, so the arithmetic sits on the grid instead of in your head."
 
-#: constants/tutorial.ts:29
+#: constants/tutorial.ts:31
 msgid "TUTORIAL"
 msgstr "TUTORIAL"
 
@@ -1687,6 +1704,6 @@ msgstr "Your Speed combo now grows on every quick hit instead of waiting for a c
 "\n"
 "Land a target with most of its ring still full and it pays extra."
 
-#: machines/tutorial-lesson.ts:201
+#: machines/tutorial-lesson.ts:202
 msgid "YOUR TOTAL — BRING IT LEVEL"
 msgstr "YOUR TOTAL — BRING IT LEVEL"

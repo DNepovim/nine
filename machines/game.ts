@@ -953,9 +953,7 @@ export const gameMachine = createMachine({
             context: Context
             event: Extract<Event, { type: 'REWIND' }>
           }) =>
-            context.tutorial &&
-            event.board >= 0 &&
-            event.board < TUTORIAL_TARGETS.length,
+            context.tutorial && event.board >= 0 && event.board < TUTORIAL_TARGETS.length,
           actions: assign(
             ({
               context,

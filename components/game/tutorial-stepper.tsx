@@ -1,3 +1,4 @@
+import { useLingui } from '@lingui/react/macro'
 import { Pressable, Text, View } from 'react-native'
 
 import {
@@ -90,6 +91,7 @@ export function TutorialStepper({
   furthest: number
   onGo: (board: number) => void
 }) {
+  const { t } = useLingui()
   return (
     <View
       className="flex-row items-center justify-center"
@@ -98,7 +100,7 @@ export function TutorialStepper({
       <Arrow
         glyph="‹"
         live={canGoBack(current)}
-        label="Back a step"
+        label={t`Back a step`}
         onPress={() => {
           onGo(current - 1)
         }}
@@ -115,7 +117,7 @@ export function TutorialStepper({
                 onGo(board)
               }}
               accessibilityRole="button"
-              accessibilityLabel={`Step ${board + 1}`}
+              accessibilityLabel={t`Step ${board + 1}`}
               accessibilityState={{
                 disabled: state !== 'visited',
                 selected: state === 'current',
@@ -134,9 +136,7 @@ export function TutorialStepper({
                 player gets on is how much of it has come up. */}
               <Text
                 selectable={false}
-                className={
-                  state === 'locked' ? `${NUMBER_CLASS} text-dim` : NUMBER_CLASS
-                }
+                className={state === 'locked' ? `${NUMBER_CLASS} text-dim` : NUMBER_CLASS}
                 style={{ color: numberColor(state) }}
               >
                 {board + 1}
@@ -148,7 +148,7 @@ export function TutorialStepper({
       <Arrow
         glyph="›"
         live={canGoForward(current, furthest)}
-        label="Forward a step"
+        label={t`Forward a step`}
         onPress={() => {
           onGo(current + 1)
         }}

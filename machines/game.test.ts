@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { createActor } from 'xstate'
 
 import { TUTORIAL_OPENING_TARGET, TUTORIAL_TARGETS } from '@/constants/tutorial'
+import { tutorialBoardEntry } from '@/lib/tutorial-board'
 import {
   buildPressGrid,
   buildSetGrid,
@@ -10,7 +11,6 @@ import {
   type Grid,
 } from '@/machines/game'
 import { cleanHitReason } from '@/machines/scoring'
-import { tutorialBoardEntry } from '@/lib/tutorial-board'
 
 const start = (mode: 'trainee' | 'accuracy' | 'speed') => {
   const actor = createActor(gameMachine)
