@@ -1,5 +1,5 @@
 import { Trans } from '@lingui/react/macro'
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
 import { Pressable, Text } from 'react-native'
 import Animated, {
   Easing,
@@ -44,8 +44,15 @@ export function TutorialCurtain({
   const opacity = useSharedValue(1)
 
   // One-way, whether the hold ran out or a thumb cut it short.
+  //
+  // Latched on this side rather than read off the opacity: a write to a shared value is
+  // posted to the UI thread and lands there when it lands, so a thumb racing the hold's
+  // own timer can read a full curtain twice and deal the run twice with it. A plain ref
+  // is set in the same tick it is tested.
+  const lifted = useRef(false)
   const lift = () => {
-    if (opacity.value < 1) return
+    if (lifted.current) return
+    lifted.current = true
     onLift()
     opacity.value = withTiming(
       0,
