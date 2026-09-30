@@ -3,12 +3,12 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { Pressable, Text, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
-import { DialButton } from '@/components/game/dial-button'
+import { Dial } from '@/components/game/dial'
 import { MultiplayerCorner } from '@/components/game/multiplayer-corner'
 import { PieCountdown } from '@/components/game/pie-countdown'
 import { ScoreDigit } from '@/components/game/score-digit'
 import { PIE_SIZE } from '@/constants/game'
-import { SUM_ROW_HEIGHT, useDialMetrics } from '@/hooks/use-dial-metrics'
+import { SUM_ROW_HEIGHT } from '@/hooks/use-dial-metrics'
 import { useMultiplayerDial } from '@/hooks/use-multiplayer-dial'
 import { useScoreDirection } from '@/hooks/use-score-direction'
 import { valueProgress } from '@/lib/value-progress'
@@ -64,7 +64,6 @@ export function MultiplayerGame({
 }) {
   const { t } = useLingui()
   const insets = useSafeAreaInsets()
-  const dial = useDialMetrics()
 
   const { grid, handlePress, handleSet } = useMultiplayerDial({
     targetValue: currentTarget?.value ?? null,
@@ -268,32 +267,16 @@ export function MultiplayerGame({
       {/* Content height, not a share of the remainder — the same reason as the single
           player screen: the dial's size comes from the width, so it cannot be asked to
           fit inside half of whatever height is left. */}
-      <View className="items-center">
-        <View
-          style={{ width: dial.size, height: dial.size, gap: dial.gap }}
-          className="flex-row flex-wrap"
-        >
-          {grid.flat().map((value, index) => (
-            <DialButton
-              key={index}
-              value={value}
-              isDark={isDark}
-              size={dial.button}
-              weight={(Math.floor(index / 3) + 1) * ((index % 3) + 1)}
-              showSum={false}
-              trainee={false}
-              peakFrom={DARK_MULTIPLAYER_GRADIENT[mode][0]}
-              peakTo={DARK_MULTIPLAYER_GRADIENT[mode][1]}
-              onDelta={(delta) => {
-                handlePress(index, delta)
-              }}
-              onSet={(v) => {
-                handleSet(index, v)
-              }}
-            />
-          ))}
-        </View>
-      </View>
+      <Dial
+        values={grid.flat()}
+        isDark={isDark}
+        showSum={false}
+        trainee={false}
+        peakFrom={DARK_MULTIPLAYER_GRADIENT[mode][0]}
+        peakTo={DARK_MULTIPLAYER_GRADIENT[mode][1]}
+        onDelta={handlePress}
+        onSet={handleSet}
+      />
     </View>
   )
 }

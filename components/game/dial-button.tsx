@@ -1,14 +1,15 @@
 import { LinearGradient } from 'expo-linear-gradient'
 import { useEffect } from 'react'
-import { Gesture, GestureDetector } from 'react-native-gesture-handler'
 import Animated, {
   Easing,
   interpolateColor,
+  useAnimatedReaction,
   useAnimatedStyle,
   useSharedValue,
   withSequence,
   withSpring,
   withTiming,
+  type SharedValue,
 } from 'react-native-reanimated'
 import { scheduleOnRN } from 'react-native-worklets'
 
@@ -21,8 +22,13 @@ import {
   type DialCorners,
   type DialHint,
 } from '@/constants/dial-hints'
-import { SWIPE_THRESHOLD } from '@/constants/game'
 import { mono } from '@/constants/theme'
+import {
+  MOVE_EFFECT,
+  NO_COMMAND,
+  type DialCommand,
+  type DialMove,
+} from '@/lib/dial-gesture'
 import type { DialControl } from '@/machines/tutorial-lesson'
 
 // The badges' ring, constant regardless of mode or theme — a mode-coloured border
@@ -59,6 +65,22 @@ const BADGE_RATIO = 0.28
 const BADGE_FONT_SIZE = 12
 const BADGE_BORDER = 1
 
+// Which way the digit leaves for each move. Up and right raise the key, so the old
+// digit is pushed off the top; down and left lower it, so it drops off the bottom.
+// A tap has no flip at all — it pops the digit in place — so it is not in here.
+const FLIP_DIR = {
+  up: -1,
+  right: -1,
+  down: 1,
+  left: 1,
+} as const satisfies Record<Exclude<DialMove, 'tap'>, 1 | -1>
+
+// The squash under a thumb and its release. Stiffer going in than coming out: arriving
+// under the finger should read as instant, leaving as settling.
+const PRESS_SCALE = 0.94
+const PRESS_IN = { damping: 20, stiffness: 260 }
+const PRESS_OUT = { damping: 16, stiffness: 140 }
+
 // What each hint prints. The weight wears its × so it cannot be mistaken for one of the
 // three sums around it — those are all in the same units as the target, and this one is
 // not. `room` and `giving` always add up to `ceiling`, which is the whole lesson.
@@ -70,6 +92,7 @@ const HINT_LABEL = {
 } as const satisfies Record<DialHint, (value: number, weight: number) => string>
 
 export function DialButton({
+  index,
   value,
   isDark,
   size,
@@ -78,12 +101,17 @@ export function DialButton({
   trainee,
   peakFrom,
   peakTo,
+  commands,
+  pressed,
+  inFlight,
   corners = DEFAULT_DIAL_CORNERS,
   control = 'full',
   hinted = false,
   onDelta,
   onSet,
 }: {
+  // Where this key sits in the dial, which is the only name the pan above knows it by.
+  index: number
   value: number
   isDark: boolean
   size: number
@@ -93,6 +121,16 @@ export function DialButton({
   // The mode's dark CTA gradient, worn by the button at its maximum value.
   peakFrom: string
   peakTo: string
+  // What the dial's pan has done to each key, and which key is under the thumb. Both are
+  // written on the UI thread by the one gesture that spans all nine — see
+  // components/game/dial.tsx — so a key reacts in the frame the finger leaves it rather
+  // than a render later.
+  commands: SharedValue<readonly DialCommand[]>
+  pressed: SharedValue<number>
+  // How many changes the dial has decided but not yet sent. Counted up there as a key is
+  // told, counted down here as the key sends it, so the pan knows when its copy of the
+  // grid has stopped running ahead of the one on screen.
+  inFlight: SharedValue<number>
   // Which number rides each corner, for a trainee layout — see constants/dial-hints.ts.
   // Read from the player's own options in the game and left at the defaults everywhere
   // else. Ignored entirely when `trainee` is false, which has no badges at all.
@@ -134,39 +172,42 @@ export function DialButton({
     peakProgress.value = withTiming(value === 9 ? 1 : 0, TINT_TIMING)
   }, [value])
 
-  const animateSwipe = (delta: 1 | -1) => {
+  // What this key owes the machine: a change whose digit has flown out but not yet flown
+  // back in. The event is sent on the way back, so the digit and the sum above the dial
+  // turn over together — but a finger crossing this key again before then cancels that
+  // animation, and the event would go with it. So a new move pays off the old one first,
+  // and a scrub the animation cannot keep up with loses frames rather than presses.
+  const owed = useSharedValue<DialMove | null>(null)
+
+  const fire = (move: DialMove) => {
     'worklet'
-    const exitDir = delta === 1 ? -1 : 1
-
-    translateY.value = withSequence(
-      withTiming(exitDir * 7, { duration: 100 }),
-      withSpring(0, { damping: 18, stiffness: 120, mass: 0.8 }),
-    )
-
-    numOpacity.value = withTiming(0, { duration: 110 })
-    numTranslateY.value = withTiming(exitDir * 18, { duration: 110 }, (finished) => {
-      if (!finished) return
-      scheduleOnRN(onDelta, delta)
-      numTranslateY.value = exitDir * -18
-      numTranslateY.value = withSpring(0, { damping: 22, stiffness: 160 })
-      numOpacity.value = withTiming(1, { duration: 130 })
-    })
+    inFlight.value -= 1
+    const { step, set } = MOVE_EFFECT[move]
+    if (step === null) scheduleOnRN(onSet, set)
+    else scheduleOnRN(onDelta, step)
   }
 
-  // Left/right swipe sets an absolute value (left → 0, right → 9), animated the
-  // same way as an up/down swipe. exitDir: -1 = up (increase), 1 = down (decrease).
-  const animateSet = (newValue: number, exitDir: 1 | -1) => {
+  const settle = () => {
+    'worklet'
+    const move = owed.value
+    if (move === null) return
+    owed.value = null
+    fire(move)
+  }
+
+  // The digit leaves the way the finger sent it and comes back from the other side.
+  const animateFlip = (dir: 1 | -1) => {
     'worklet'
     translateY.value = withSequence(
-      withTiming(exitDir * 7, { duration: 100 }),
+      withTiming(dir * 7, { duration: 100 }),
       withSpring(0, { damping: 18, stiffness: 120, mass: 0.8 }),
     )
 
     numOpacity.value = withTiming(0, { duration: 110 })
-    numTranslateY.value = withTiming(exitDir * 18, { duration: 110 }, (finished) => {
+    numTranslateY.value = withTiming(dir * 18, { duration: 110 }, (finished) => {
       if (!finished) return
-      scheduleOnRN(onSet, newValue)
-      numTranslateY.value = exitDir * -18
+      settle()
+      numTranslateY.value = dir * -18
       numTranslateY.value = withSpring(0, { damping: 22, stiffness: 160 })
       numOpacity.value = withTiming(1, { duration: 130 })
     })
@@ -178,46 +219,43 @@ export function DialButton({
       withTiming(1.15, { duration: 90 }),
       withSpring(1, { damping: 18, stiffness: 160 }),
     )
-    scheduleOnRN(onDelta, 1)
   }
 
-  const gesture = Gesture.Pan()
-    .minDistance(0)
-    // A dead key takes nothing at all: no press, and no squash under the thumb either,
-    // which would promise something it is not going to do.
-    .enabled(control !== 'off')
-    .onBegin(() => {
-      'worklet'
-      scale.value = withSpring(0.94, { damping: 20, stiffness: 260 })
-    })
-    .onEnd((e) => {
-      'worklet'
-      // Every gesture reads as a tap where only taps are taken. The tutorial's guided
-      // route is the one place that happens: its keys are all one tap short of where they
-      // need to be, and a swipe there would leave the route asking for a gesture the
-      // lesson has not reached yet.
-      if (control === 'tap') {
-        animateTap()
-        return
-      }
-      // Dominant axis decides the gesture: horizontal sets 0/9, vertical ±1.
-      // Skip the number animation when the value wouldn't change (already 0/9).
-      if (Math.abs(e.translationX) > Math.abs(e.translationY)) {
-        if (e.translationX < -SWIPE_THRESHOLD) {
-          if (value !== 0) animateSet(0, 1)
-        } else if (e.translationX > SWIPE_THRESHOLD) {
-          if (value !== 9) animateSet(9, -1)
-        } else animateTap()
-      } else {
-        if (e.translationY < -SWIPE_THRESHOLD) animateSwipe(1)
-        else if (e.translationY > SWIPE_THRESHOLD) animateSwipe(-1)
-        else animateTap()
-      }
-    })
-    .onFinalize(() => {
-      'worklet'
-      scale.value = withSpring(1, { damping: 16, stiffness: 140 })
-    })
+  const run = (move: DialMove) => {
+    'worklet'
+    settle()
+    // A tap has nothing to wait for: the digit pops where it stands rather than leaving,
+    // so there is no flight for the press to be owed across.
+    if (move === 'tap') {
+      animateTap()
+      fire('tap')
+      return
+    }
+    owed.value = move
+    animateFlip(FLIP_DIR[move])
+  }
+
+  // The squash follows the thumb rather than belonging to a press. One gesture crosses
+  // several keys now, and each takes the squash as the finger arrives and gives it up as
+  // it leaves — so what is under the finger is always the key that is about to change.
+  useAnimatedReaction(
+    () => pressed.value === index,
+    (down, was) => {
+      if (down === was) return
+      scale.value = withSpring(down ? PRESS_SCALE : 1, down ? PRESS_IN : PRESS_OUT)
+    },
+  )
+
+  // How a key hears that the pan just left it. Keyed on the counter rather than the move:
+  // leaving the same key the same way twice running is two changes, and comparing the
+  // moves would see one.
+  useAnimatedReaction(
+    () => commands.value[index] ?? NO_COMMAND,
+    (command, previous) => {
+      if (previous === null || command.seq === previous.seq) return
+      run(command.move)
+    },
+  )
 
   const palette = isDark ? DIAL_COLORS.dark : DIAL_COLORS.light
   const btnStyle = useAnimatedStyle(() => ({
@@ -265,93 +303,95 @@ export function DialButton({
   const badgeOffset = radius * (1 - Math.SQRT1_2) - badgeSize / 2
 
   return (
-    <GestureDetector gesture={gesture}>
-      {/* Explicit pixel size (not w-1/3 + aspect-square): iOS WebKit fails to
-          derive height from aspect-ratio on wrapping flex children. The two
-          badges below are positioned against this box, not the pill inside it,
-          so they can straddle the pill's rim rather than being clipped by it. */}
-      <Animated.View style={[{ width: size, height: size }, liveStyle]}>
-        {/* Outside the pill, so it is drawn over the surface between keys rather than
+    // Explicit pixel size (not w-1/3 + aspect-square): iOS WebKit fails to derive height
+    // from aspect-ratio on wrapping flex children. The two badges below are positioned
+    // against this box, not the pill inside it, so they can straddle the pill's rim
+    // rather than being clipped by it.
+    //
+    // No gesture of its own: nine separate pans could each only ever hear the key the
+    // finger landed on, and a drag across the dial has to be heard by all of them. The
+    // one pan that is lives on the square above — components/game/dial.tsx.
+    <Animated.View style={[{ width: size, height: size }, liveStyle]}>
+      {/* Outside the pill, so it is drawn over the surface between keys rather than
             over a fill this blue would disappear into. */}
-        {hinted && <DialPulse />}
+      {hinted && <DialPulse />}
+      <Animated.View
+        style={[
+          {
+            flex: 1,
+            borderRadius: 999,
+            justifyContent: 'center' as const,
+            alignItems: 'center' as const,
+            shadowColor: isDark ? '#04040C' : '#1C1928',
+            shadowOpacity: isDark ? 0.9 : 0.13,
+            shadowOffset: { width: 0, height: 6 },
+            shadowRadius: 10,
+          },
+          btnStyle,
+        ]}
+      >
+        {/* Rounded on its own rather than clipped by the pill — `overflow:
+              hidden` on the parent would clip away the button's shadow too. */}
         <Animated.View
+          pointerEvents="none"
           style={[
-            {
-              flex: 1,
-              borderRadius: 999,
-              justifyContent: 'center' as const,
-              alignItems: 'center' as const,
-              shadowColor: isDark ? '#04040C' : '#1C1928',
-              shadowOpacity: isDark ? 0.9 : 0.13,
-              shadowOffset: { width: 0, height: 6 },
-              shadowRadius: 10,
-            },
-            btnStyle,
+            { position: 'absolute', top: 0, right: 0, bottom: 0, left: 0 },
+            peakStyle,
           ]}
         >
-          {/* Rounded on its own rather than clipped by the pill — `overflow:
-              hidden` on the parent would clip away the button's shadow too. */}
-          <Animated.View
-            pointerEvents="none"
-            style={[
-              { position: 'absolute', top: 0, right: 0, bottom: 0, left: 0 },
-              peakStyle,
-            ]}
-          >
-            <LinearGradient
-              colors={[peakFrom, peakTo]}
-              start={{ x: 0, y: 0.5 }}
-              end={{ x: 1, y: 0.5 }}
-              style={{ flex: 1, borderRadius: 999 }}
-            />
-          </Animated.View>
-          <Animated.Text
-            selectable={false}
-            style={[
-              {
-                fontSize: 30,
-                fontFamily: mono,
-                fontWeight: '500' as const,
-                includeFontPadding: false,
-              },
-              digitStyle,
-              numStyle,
-            ]}
-          >
-            {showSum ? value * weight : value}
-          </Animated.Text>
+          <LinearGradient
+            colors={[peakFrom, peakTo]}
+            start={{ x: 0, y: 0.5 }}
+            end={{ x: 1, y: 0.5 }}
+            style={{ flex: 1, borderRadius: 999 }}
+          />
         </Animated.View>
+        <Animated.Text
+          selectable={false}
+          style={[
+            {
+              fontSize: 30,
+              fontFamily: mono,
+              fontWeight: '500' as const,
+              includeFontPadding: false,
+            },
+            digitStyle,
+            numStyle,
+          ]}
+        >
+          {showSum ? value * weight : value}
+        </Animated.Text>
+      </Animated.View>
 
-        {/* The corner numbers, as facts pinned to the pill's rim rather than stacked
+      {/* The corner numbers, as facts pinned to the pill's rim rather than stacked
             with the digit. Each rides the corner it is about: what the key is worth
             top-left, what it could still add top-right, what it gives now bottom-left,
             and its ceiling bottom-right, on the corner the value climbs toward. */}
-        {trainee &&
-          DIAL_CORNERS.flatMap((corner) => {
-            const hint = corners[corner]
-            return hint === null ? [] : [{ corner, hint }]
-          }).map(({ corner, hint }) => (
-            <DialBadge
-              key={corner}
-              label={HINT_LABEL[hint](value, weight)}
-              size={badgeSize}
-              fontSize={BADGE_FONT_SIZE}
-              offset={badgeOffset}
-              corner={corner}
-              low={palette.low}
-              high={palette.high}
-              text={palette.text}
-              peakText={palette.peakText}
-              peakFrom={peakFrom}
-              peakTo={peakTo}
-              borderColor={BADGE_BORDER_COLOR}
-              borderWidth={BADGE_BORDER}
-              rampProgress={rampProgress}
-              peakProgress={peakProgress}
-              scale={scale}
-            />
-          ))}
-      </Animated.View>
-    </GestureDetector>
+      {trainee &&
+        DIAL_CORNERS.flatMap((corner) => {
+          const hint = corners[corner]
+          return hint === null ? [] : [{ corner, hint }]
+        }).map(({ corner, hint }) => (
+          <DialBadge
+            key={corner}
+            label={HINT_LABEL[hint](value, weight)}
+            size={badgeSize}
+            fontSize={BADGE_FONT_SIZE}
+            offset={badgeOffset}
+            corner={corner}
+            low={palette.low}
+            high={palette.high}
+            text={palette.text}
+            peakText={palette.peakText}
+            peakFrom={peakFrom}
+            peakTo={peakTo}
+            borderColor={BADGE_BORDER_COLOR}
+            borderWidth={BADGE_BORDER}
+            rampProgress={rampProgress}
+            peakProgress={peakProgress}
+            scale={scale}
+          />
+        ))}
+    </Animated.View>
   )
 }

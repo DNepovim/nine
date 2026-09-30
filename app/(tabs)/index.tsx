@@ -20,7 +20,7 @@ import { FeedbackBookmark } from '@/components/feedback-bookmark'
 import { AnnouncementEffect } from '@/components/game/announcement-effect'
 import { BestScoresLine } from '@/components/game/best-scores-line'
 import { Confetti } from '@/components/game/confetti'
-import { DialButton } from '@/components/game/dial-button'
+import { Dial } from '@/components/game/dial'
 import { FloatingLifeLoss } from '@/components/game/floating-life-loss'
 import { FloatingPoints } from '@/components/game/floating-points'
 import { FloatingStat } from '@/components/game/floating-stat'
@@ -65,7 +65,7 @@ import { useAnnouncements } from '@/hooks/use-announcements'
 import { useAppUpdate } from '@/hooks/use-app-update'
 import { BoardProvider, useBoard } from '@/hooks/use-board'
 import { ChampionsProvider, useChampions } from '@/hooks/use-champions'
-import { SUM_ROW_HEIGHT, useDialMetrics } from '@/hooks/use-dial-metrics'
+import { SUM_ROW_HEIGHT } from '@/hooks/use-dial-metrics'
 import { useDisplayOptions } from '@/hooks/use-display-options'
 import { useDisplayScore } from '@/hooks/use-display-score'
 import { useDisplayedTargets } from '@/hooks/use-displayed-targets'
@@ -117,6 +117,7 @@ import {
 } from '@/lib/announcements'
 import { currentBoardMedals } from '@/lib/board-medals'
 import { holdsCrown, recordScreen, type RecordScreen } from '@/lib/champions'
+import { DIAL_CELLS } from '@/lib/dial-gesture'
 import { gameSnapshot } from '@/lib/feedback-state'
 import { leaderOf } from '@/lib/leaderboard'
 import { runChallenge } from '@/lib/next-challenge'
@@ -142,7 +143,7 @@ import {
   SCORED_MODES,
   streakMultiplier,
 } from '@/machines/game'
-import { cellWeight, computePar } from '@/machines/scoring'
+import { computePar } from '@/machines/scoring'
 import { keyControl } from '@/machines/tutorial-lesson'
 import type { Position } from '@/types/game'
 import type { MultiMode } from '@/types/multiplayer'
@@ -1014,9 +1015,12 @@ export default function GameScreen() {
     settled: savedRun.settled,
   })
 
-  // Dial pad is a square sized to fit its container (min of width/height), so it
-  // never overflows over the score above it.
-  const dial = useDialMetrics()
+  // What each of the nine keys will take. `full` throughout every run but a guided
+  // tutorial route, where the lesson lights one key and shuts the other eight.
+  const dialControls = useMemo(
+    () => DIAL_CELLS.map((index) => keyControl(lesson.dial, lesson.liveKey, index)),
+    [lesson.dial, lesson.liveKey],
+  )
 
   const currentMultiplier = streakMultiplier(streak)
 
@@ -1623,50 +1627,33 @@ export default function GameScreen() {
                 screen: the dial's size comes from the width now, so half the leftover
                 height is not a number it can be asked to fit inside. The targets area
                 above takes the slack instead. */}
-              <View className="items-center">
-                <View
-                  style={{ width: dial.size, height: dial.size, gap: dial.gap }}
-                  className="flex-row flex-wrap"
-                >
-                  {grid.flat().map((value, index) => (
-                    <DialButton
-                      key={index}
-                      value={value}
-                      isDark={isDark}
-                      size={dial.button}
-                      weight={cellWeight(index)}
-                      showSum={showSum && !tutorial}
-                      trainee={mode === 'trainee'}
-                      // The tutorial prints the weight and nothing else, whatever the
-                      // player has since chosen for practice: it is the one number a key
-                      // cannot be worked out without, and every other corner is a lesson
-                      // that has not been given yet.
-                      corners={tutorial ? DEFAULT_DIAL_CORNERS : corners}
-                      // What this key will take, and whether it is the one being asked for.
-                      // `full` in every run but a guided tutorial route.
-                      control={keyControl(lesson.dial, lesson.liveKey, index)}
-                      hinted={lesson.liveKey === index}
-                      peakFrom={DARK_MODE_GRADIENT[mode][0]}
-                      peakTo={DARK_MODE_GRADIENT[mode][1]}
-                      onDelta={(delta) => {
-                        coach.notePress(index, delta)
-                        lesson.notePress(delta)
-                        send({ type: 'PRESS', index, delta, now: Date.now() })
-                      }}
-                      onSet={(cellValue) => {
-                        coach.noteSet(index, cellValue)
-                        lesson.noteSet(cellValue)
-                        send({
-                          type: 'SET_CELL',
-                          index,
-                          value: cellValue,
-                          now: Date.now(),
-                        })
-                      }}
-                    />
-                  ))}
-                </View>
-              </View>
+              <Dial
+                values={grid.flat()}
+                isDark={isDark}
+                showSum={showSum && !tutorial}
+                trainee={mode === 'trainee'}
+                // The tutorial prints the weight and nothing else, whatever the player
+                // has since chosen for practice: it is the one number a key cannot be
+                // worked out without, and every other corner is a lesson that has not
+                // been given yet.
+                corners={tutorial ? DEFAULT_DIAL_CORNERS : corners}
+                // What each key will take, and which one is being asked for. `full`
+                // everywhere in every run but a guided tutorial route.
+                controls={dialControls}
+                liveKey={lesson.liveKey}
+                peakFrom={DARK_MODE_GRADIENT[mode][0]}
+                peakTo={DARK_MODE_GRADIENT[mode][1]}
+                onDelta={(index, delta) => {
+                  coach.notePress(index, delta)
+                  lesson.notePress(delta)
+                  send({ type: 'PRESS', index, delta, now: Date.now() })
+                }}
+                onSet={(index, cellValue) => {
+                  coach.noteSet(index, cellValue)
+                  lesson.noteSet(cellValue)
+                  send({ type: 'SET_CELL', index, value: cellValue, now: Date.now() })
+                }}
+              />
             </Screen>
 
             {/* ── Tap-through for the lesson's two pointing cards ── */}

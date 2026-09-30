@@ -9,6 +9,18 @@ import type { Release } from '@/types/news'
 // different announcement or players who already saw the old one will miss it.
 export const RELEASES: Release[] = [
   {
+    date: '2026-09-30',
+    items: [
+      {
+        id: 'dial-drag',
+        icon: 'hand-left-outline',
+        accent: '#4C7EFF',
+        title: msg`One sweep, three keys`,
+        body: msg`Your finger no longer has to come off the glass. Drag across the dial and every button you pass through takes the direction you left it by — one sweep along a row is three keys set.`,
+      },
+    ],
+  },
+  {
     date: '2026-09-22',
     items: [
       {

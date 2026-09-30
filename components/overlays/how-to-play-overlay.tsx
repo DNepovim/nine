@@ -437,7 +437,7 @@ export function HowToPlayOverlay({
             <ControlsDiagram />
           </Card>
           <Body>
-            {t`\nTap to count up — 9 wraps back to 0 — swipe down to step back one, and swipe left or right to jump straight to 0 or 9. Tip: turn on “Show sum in buttons” under Options to see each button’s live contribution.`}
+            {t`\nTap to count up — 9 wraps back to 0 — swipe down to step back one, and swipe left or right to jump straight to 0 or 9.\n\nYou can keep going without lifting your finger. Drag across the dial and each button takes the direction you leave it by, so one sweep right along a row sets all three to 9. Change your mind on a button and only the way you leave it counts. Tip: turn on “Show sum in buttons” under Options to see each button’s live contribution.`}
           </Body>
 
           {/* Targets & clock */}

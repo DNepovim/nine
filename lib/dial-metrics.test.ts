@@ -17,7 +17,12 @@ import { dialMetrics } from '@/lib/dial-metrics'
 // above the dial can change how wide the screen is. So a solo run and a shared one
 // genuinely get the same number, and the guarantee is a property of the arithmetic
 // rather than a hope about constants.
-const DRAWS_A_DIAL = ['app/(tabs)/index.tsx', 'components/game/multiplayer-game.tsx']
+// One file draws the dial now, and both screens render it — which is a stronger version
+// of the guarantee below than two files agreeing ever was.
+const DRAWS_A_DIAL = ['components/game/dial.tsx']
+
+// The screens that stack the sum row above that dial.
+const SITS_ABOVE_A_DIAL = ['app/(tabs)/index.tsx', 'components/game/multiplayer-game.tsx']
 
 const read = (path: string): string => readFileSync(path, 'utf8')
 const hook = () => read('hooks/use-dial-metrics.ts')
@@ -50,8 +55,16 @@ describe('the dial button is one size everywhere', () => {
     // shift when the sum goes from 0 to 324, and a shared run puts it at the same
     // height a solo one does — which is half of what "the same dial everywhere" means.
     // The other half is the button size above.
-    for (const path of DRAWS_A_DIAL) {
+    for (const path of SITS_ABOVE_A_DIAL) {
       expect(read(path), path).toContain('SUM_ROW_HEIGHT')
+    }
+  })
+
+  it('leaves the keys to the one component that lays them out', () => {
+    // A screen reaching for a key directly is a screen laying out its own dial, and
+    // the gesture that spans all nine only exists on the square they share.
+    for (const path of SITS_ABOVE_A_DIAL) {
+      expect(read(path), path).not.toContain('DialButton')
     }
   })
 
