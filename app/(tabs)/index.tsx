@@ -881,6 +881,9 @@ export default function GameScreen() {
     tutorial,
     isPlaying,
     runSeq: state.context.runSeq,
+    // A placeholder until the stepper sends real rewinds (Task 5); no rewind reaches the
+    // lesson before then.
+    rewindSeq: 0,
     hits,
     batch: hitBatch,
     grid,

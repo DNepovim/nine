@@ -82,10 +82,11 @@ const ON_ADVANCE = {
 // The lesson each hit opens, indexed by the run's hit count — so the hit that clears
 // `TUTORIAL_TARGETS[n]` opens the lesson for the target dealt in its place.
 //
-// One entry per scripted target, plus two that are not boards: index 0 is never read — no
-// hit has landed at nought, and what the opening target gets instead is the guided route —
-// and the last is the sign-off, which answers the hit that clears the final scripted board
-// and has a rolled one behind it. Past the end of the list the script is over.
+// One entry per scripted target, plus two that are not boards: index 0 answers no hit —
+// none lands at nought — but it is what the stepper reads going back to the opening board,
+// and it is FIRST_STEP, so a rewind and a fresh deal open the lesson the same way. The
+// last is the sign-off, which answers the hit that clears the final scripted board and has
+// a rolled one behind it. Past the end of the list the script is over.
 export const LESSON_AFTER_HIT: readonly LessonStep[] = [
   'waiting',
   'congrats',

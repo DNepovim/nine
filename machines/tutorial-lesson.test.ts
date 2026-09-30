@@ -135,6 +135,13 @@ describe('the lesson script', () => {
       expect(dismissedByTap(step)).toBe(LESSON_DIAL[step] === 'off')
     }
   })
+
+  // What a rewind reads. The table's index 0 used to be dead — no hit lands at nought —
+  // and the stepper going back to the opening board is the one thing that reads it. It
+  // was already the right answer, which is why a rewind needs no second table.
+  it('opens the board a rewind lands on from the same table a hit does', () => {
+    expect(LESSON_AFTER_HIT[0]).toBe(FIRST_STEP)
+  })
 })
 
 describe('the opening the lesson is built on', () => {

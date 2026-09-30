@@ -6,6 +6,7 @@ import { computeKeyPlan } from '@/machines/scoring'
 import {
   dismissedByTap,
   FIRST_STEP,
+  LESSON_AFTER_HIT,
   LESSON_DIAL,
   LESSON_HOLD_MS,
   LESSON_LINE,
@@ -24,6 +25,7 @@ export function useTutorialLesson({
   tutorial,
   isPlaying,
   runSeq,
+  rewindSeq,
   hits,
   batch,
   grid,
@@ -38,6 +40,10 @@ export function useTutorialLesson({
   // Which run this is. Every fresh deal restarts the lesson, and every run that is not a
   // tutorial has none.
   runSeq: number
+  // How many rewinds the stepper has sent this session. A counter for the reason `runSeq`
+  // is one: going back to the board already under the player is a real request, and a
+  // flag would have nothing to change.
+  rewindSeq: number
   hits: number
   batch: HitBatch
   grid: Grid
@@ -62,6 +68,20 @@ export function useTutorialLesson({
     const { tutorial: isTutorial, hits: landed } = openingRef.current
     setStep(isTutorial && landed === 0 ? FIRST_STEP : 'done')
   }, [runSeq])
+
+  // A rewind, followed. The board under the player has moved to a scripted one, so the
+  // lesson goes to the step that board opens on — the same table a hit reads, indexed by
+  // the same hit count.
+  //
+  // Set rather than sent through `lessonStep`, which short-circuits at `done`: a player
+  // going back after the script has run out would otherwise be put on a scripted board
+  // with the lesson still saying nothing.
+  const rewound = useRef(rewindSeq)
+  useEffect(() => {
+    if (rewound.current === rewindSeq) return
+    rewound.current = rewindSeq
+    setStep(LESSON_AFTER_HIT[openingRef.current.hits] ?? 'done')
+  }, [rewindSeq])
 
   const active = tutorial && isPlaying
 
