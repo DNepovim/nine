@@ -1,5 +1,7 @@
 import { msg } from '@lingui/core/macro'
 
+import type { Grid } from '@/machines/game'
+
 // The tutorial: the run a first launch opens on, and the three rules that make it one.
 //
 // Not a mode of its own. It is Trainee with everything that can wait taken off it — the
@@ -53,6 +55,31 @@ export const TUTORIAL_LABEL = msg`TUTORIAL`
 // From the sixth target on the run is an ordinary tutorial run: rolled, within
 // TUTORIAL_TARGET_REACH of the one just hit. `machines/tutorial-lesson.ts` walks its own
 // steps off this same list, and a test holds the two to the same length.
+// The board every tutorial opens on, with TUTORIAL_OPENING_TARGET already standing on it.
+//
+// A dial of nine zeros is the right opening for a run and the wrong one for a lesson: it
+// is the one board where every key looks alike and nothing on it has happened yet, so
+// there is nothing to point at and no reason one key should be pressed before another.
+// This one sums to 185 against a target of 204, a gap of 19 — and 19 is 9 + 6 + 4, one tap
+// each on three keys of three different weights. The lesson walks them coarsest first,
+// which is the order the whole game is played in, and the three sit in three different
+// parts of the dial: the corner, the bottom edge, the middle.
+//
+// The digits are five different ones with no zero among them, which took some finding —
+// a board has to average about five per key to sum this high, and the obvious ways to get
+// there are a row of sevens or a lone zero surrounded by nines. Neither is a dial anybody
+// would recognise as a position they could have played themselves, and a first lesson
+// standing on one teaches that the game deals oddities.
+//
+// Fixed rather than dealt, and that is the point: the cards name the two numbers on
+// screen, so the lesson has to know what they are. A test pins the route the pair
+// produces, so a change to either number that spoils the lesson fails rather than ships.
+export const TUTORIAL_OPENING_GRID: Grid = [
+  [6, 2, 8],
+  [2, 6, 2],
+  [5, 4, 8],
+]
+
 export const TUTORIAL_TARGETS = [204, 211, 202, 24, 216] as const
 
 // The first of them. Dealt by the machine at START rather than by the spawner, because a

@@ -1,7 +1,11 @@
 import { isNonEmptyArray } from 'narrowland'
 import { assign, createMachine } from 'xstate'
 
-import { TUTORIAL_MAX_TARGETS, TUTORIAL_OPENING_TARGET } from '@/constants/tutorial'
+import {
+  TUTORIAL_MAX_TARGETS,
+  TUTORIAL_OPENING_GRID,
+  TUTORIAL_OPENING_TARGET,
+} from '@/constants/tutorial'
 
 import {
   DIFFICULTIES,
@@ -111,31 +115,6 @@ const initialGrid: Grid = [
   [0, 0, 0],
   [0, 0, 0],
   [0, 0, 0],
-]
-
-// The board every tutorial opens on, with TUTORIAL_OPENING_TARGET already standing on it.
-//
-// A dial of nine zeros is the right opening for a run and the wrong one for a lesson: it
-// is the one board where every key looks alike and nothing on it has happened yet, so
-// there is nothing to point at and no reason one key should be pressed before another.
-// This one sums to 185 against a target of 204, a gap of 19 — and 19 is 9 + 6 + 4, one tap
-// each on three keys of three different weights. The lesson walks them coarsest first,
-// which is the order the whole game is played in, and the three sit in three different
-// parts of the dial: the corner, the bottom edge, the middle.
-//
-// The digits are five different ones with no zero among them, which took some finding —
-// a board has to average about five per key to sum this high, and the obvious ways to get
-// there are a row of sevens or a lone zero surrounded by nines. Neither is a dial anybody
-// would recognise as a position they could have played themselves, and a first lesson
-// standing on one teaches that the game deals oddities.
-//
-// Fixed rather than dealt, and that is the point: the cards name the two numbers on
-// screen, so the lesson has to know what they are. A test pins the route the pair
-// produces, so a change to either number that spoils the lesson fails rather than ships.
-const TUTORIAL_OPENING_GRID: Grid = [
-  [6, 2, 8],
-  [2, 6, 2],
-  [5, 4, 8],
 ]
 
 // The one target a tutorial opens holding. Dealt here rather than by the spawner because
