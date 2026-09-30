@@ -16,6 +16,10 @@ export const LAYER = {
   bookmark: 11,
   // Dialogs: they cover a screen without replacing it, scrim and all.
   dialog: 40,
+  // The curtain a first launch pauses on, between the logo leaving and the lesson
+  // arriving. Over every screen and every dialog, because it replaces the lot for as long
+  // as it is up — and under the splash, which is still fading out above it.
+  curtain: 50,
   // The cold-start logo, over everything the app has managed to build behind it.
   splash: 100,
   // The one thing allowed over the splash — the install prompt it holds for.

@@ -54,6 +54,7 @@ import { PausedOverlay } from '@/components/overlays/paused-overlay'
 import { StepUpOverlay } from '@/components/overlays/step-up-overlay'
 import { WhatsNewOverlay } from '@/components/overlays/whats-new-overlay'
 import { Screen } from '@/components/screen'
+import { TutorialCurtain } from '@/components/tutorial-curtain'
 import type { AchievementId } from '@/constants/achievements'
 import { DEFAULT_DIAL_CORNERS } from '@/constants/dial-hints'
 import { PIE_SIZE } from '@/constants/game'
@@ -471,26 +472,23 @@ export default function GameScreen() {
     send({ type: 'SET_DIFFICULTY', difficulty: WELCOME_BOARD.difficulty })
   }, [welcome.pending, isMenu, send])
 
-  // Started as the splash begins its exit, not once it has gone: the logo spends its last
-  // few seconds scaling away over a fading background, and a run dealt at the end of that
-  // is a run the player watches arrive into an empty screen. Dealt at the start of it, the
-  // fade uncovers a game already in motion.
+  // A first launch does not go straight from the logo into the lesson. It pauses on a
+  // curtain that says what is about to happen, and the lesson fades up through it.
   //
-  // Costing the first target a few seconds of clock is what buys that, and Trainee's is
-  // the one clock in the app that can spare them — a little over a minute per target, so
-  // the exit takes about five per cent of the first one and nothing after it.
+  // The curtain is raised as the splash *begins* its exit, so the logo scales away onto a
+  // screen that is already there rather than onto an empty one — the same hand-off the
+  // splash was written for. The run itself is dealt when the curtain starts to lift,
+  // which is what puts a board with a target already springing in under the last of the
+  // words. See components/tutorial-curtain.tsx.
   //
-  // `menu` because START is only accepted there. `taken` runs first — it closes `pending`,
-  // so a re-render mid-effect cannot start a second run over the first.
-  //
-  // The board is set again here rather than trusted from above: these are the two events
-  // START reads, and a persisted mode landing in between — the hydration hooks send the
-  // same events — would otherwise deal the run on a board nobody chose.
+  // `menu` because START is only accepted there. `taken` runs first — it closes
+  // `pending`, so a re-render mid-effect cannot raise a second curtain over the first.
+  const [curtain, setCurtain] = useState<'down' | 'up'>('down')
   useEffect(() => {
     if (!welcome.pending || !splashExiting || !isMenu) return
     welcome.taken()
-    startTutorial('welcome')
-  }, [welcome, splashExiting, isMenu, startTutorial])
+    setCurtain('up')
+  }, [welcome, splashExiting, isMenu])
 
   const { userId, nickname, isReady, updateNickname } = useSupabaseAuth()
 
@@ -1107,6 +1105,7 @@ export default function GameScreen() {
     !isMultiActive &&
     welcome.decided &&
     !welcome.pending &&
+    curtain === 'down' &&
     // A run the app was closed on is still being asked about, or is on its way into the
     // machine. Either way the player is about to be looking at a pause screen, and the
     // start screen has no business flashing up in front of it.
@@ -2094,6 +2093,20 @@ export default function GameScreen() {
               onLeave={() => {
                 setMenuInitialTab('friends')
                 void multiRoom.leave()
+              }}
+            />
+          )}
+
+          {/* ── The curtain a first launch pauses on, between the logo leaving and the
+              lesson arriving. Last among the full-viewport overlays so nothing the screen
+              already stacks can land on top of it — see the welcome effect above. ── */}
+          {curtain === 'up' && (
+            <TutorialCurtain
+              onLift={() => {
+                startTutorial('welcome')
+              }}
+              onGone={() => {
+                setCurtain('down')
               }}
             />
           )}
