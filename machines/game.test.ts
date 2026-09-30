@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { createActor } from 'xstate'
 
-import { TUTORIAL_OPENING_TARGET } from '@/constants/tutorial'
+import { TUTORIAL_OPENING_TARGET, TUTORIAL_TARGETS } from '@/constants/tutorial'
 import {
   buildPressGrid,
   buildSetGrid,
@@ -10,6 +10,7 @@ import {
   type Grid,
 } from '@/machines/game'
 import { cleanHitReason } from '@/machines/scoring'
+import { tutorialBoardEntry } from '@/lib/tutorial-board'
 
 const start = (mode: 'trainee' | 'accuracy' | 'speed') => {
   const actor = createActor(gameMachine)
@@ -891,5 +892,74 @@ describe('the tutorial', () => {
     actor.send({ type: 'SET_MODE', mode: 'accuracy' })
     actor.send({ type: 'START', now: 3000 })
     expect(actor.getSnapshot().context.tutorial).toBe(false)
+  })
+})
+
+describe('rewinding a tutorial', () => {
+  // A tutorial run standing on the board `hits` says, started fresh.
+  const tutorialAt = (hits: number) => {
+    const actor = createActor(gameMachine).start()
+    actor.send({ type: 'SET_MODE', mode: 'trainee' })
+    actor.send({ type: 'SET_DIFFICULTY', difficulty: 'easy' })
+    actor.send({ type: 'START', now: 0, tutorial: true })
+    actor.send({ type: 'REWIND', board: hits, now: 1 })
+    return actor
+  }
+
+  it('puts the run back on that board’s grid, target and hit count', () => {
+    const { context } = tutorialAt(3).getSnapshot()
+    expect(context.hits).toBe(3)
+    expect(context.grid).toEqual(tutorialBoardEntry(3))
+    expect(context.targets).toHaveLength(1)
+    expect(context.targets[0]?.value).toBe(TUTORIAL_TARGETS[3])
+  })
+
+  it('goes back to the opening board too', () => {
+    const { context } = tutorialAt(0).getSnapshot()
+    expect(context.hits).toBe(0)
+    expect(context.grid).toEqual(tutorialBoardEntry(0))
+    expect(context.targets[0]?.value).toBe(TUTORIAL_TARGETS[0])
+  })
+
+  // The target has to arrive under an id nothing on screen is still animating out under,
+  // for the same reason a fresh run spends one: the display list keys a target's
+  // animations on it, and an id dealt twice reads as the departing target.
+  it('deals the target a fresh id', () => {
+    const actor = createActor(gameMachine).start()
+    actor.send({ type: 'SET_MODE', mode: 'trainee' })
+    actor.send({ type: 'SET_DIFFICULTY', difficulty: 'easy' })
+    actor.send({ type: 'START', now: 0, tutorial: true })
+    const before = actor.getSnapshot().context.targets[0]?.id
+    actor.send({ type: 'REWIND', board: 2, now: 1 })
+    expect(actor.getSnapshot().context.targets[0]?.id).not.toBe(before)
+  })
+
+  it('stays in play', () => {
+    expect(tutorialAt(2).getSnapshot().value).toBe('playing')
+  })
+
+  // The guard, and the reason the event can be sent from a screen that does not check
+  // first: a run that is not a tutorial has no scripted board to be put back to.
+  it('is ignored in a run that is not a tutorial', () => {
+    const actor = createActor(gameMachine).start()
+    actor.send({ type: 'SET_MODE', mode: 'accuracy' })
+    actor.send({ type: 'SET_DIFFICULTY', difficulty: 'hard' })
+    actor.send({ type: 'START', now: 0 })
+    const before = actor.getSnapshot().context.grid
+    actor.send({ type: 'REWIND', board: 2, now: 1 })
+    const { context } = actor.getSnapshot()
+    expect(context.hits).toBe(0)
+    expect(context.grid).toEqual(before)
+  })
+
+  // Past the script there is no board to go back to. Nothing asks, but a rewind that
+  // dealt an undefined target would put a blank card on the board.
+  it('is ignored past the end of the script', () => {
+    const actor = createActor(gameMachine).start()
+    actor.send({ type: 'SET_MODE', mode: 'trainee' })
+    actor.send({ type: 'SET_DIFFICULTY', difficulty: 'easy' })
+    actor.send({ type: 'START', now: 0, tutorial: true })
+    actor.send({ type: 'REWIND', board: TUTORIAL_TARGETS.length, now: 1 })
+    expect(actor.getSnapshot().context.hits).toBe(0)
   })
 })

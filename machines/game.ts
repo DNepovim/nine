@@ -2,10 +2,13 @@ import { isNonEmptyArray } from 'narrowland'
 import { assign, createMachine } from 'xstate'
 
 import {
+  scriptedTarget,
   TUTORIAL_MAX_TARGETS,
   TUTORIAL_OPENING_GRID,
   TUTORIAL_OPENING_TARGET,
+  TUTORIAL_TARGETS,
 } from '@/constants/tutorial'
+import { tutorialBoardEntry } from '@/lib/tutorial-board'
 
 import {
   DIFFICULTIES,
@@ -235,6 +238,10 @@ type Event =
   | { type: 'PRESS'; index: number; delta: 1 | -1; now: number }
   | { type: 'SET_CELL'; index: number; value: number; now: number }
   | { type: 'ADD_TARGET'; value: number; at: number }
+  // Puts a tutorial back on a board the player has already played — the stepper's one
+  // event. `board` is the hit count being returned to, counted from nought, so it is the
+  // same index that addresses TUTORIAL_TARGETS and LESSON_AFTER_HIT.
+  | { type: 'REWIND'; board: number; now: number }
   | { type: 'TARGET_EXPIRED'; id: number; now: number }
 
 // The machine's `send` function, for hooks that dispatch events.
@@ -922,6 +929,68 @@ export const gameMachine = createMachine({
               ],
               nextTargetId: context.nextTargetId + 1,
             }),
+          ),
+        },
+        // The stepper going back, or forward over ground already covered — see
+        // lib/tutorial-stepper.ts for which of those it will offer.
+        //
+        // A whole board at once: the hit count, the grid and the target standing on it
+        // move together, because any two of them apart is a board the lesson's words are
+        // not true of. The grid is derived rather than remembered — see
+        // lib/tutorial-board.ts.
+        //
+        // The target is dealt here rather than left to the spawner, which only ever deals
+        // into a cleared board and so stays quiet with this one standing.
+        //
+        // Score, streak and the run clock are deliberately untouched. A tutorial submits
+        // nothing and shows no score, so there is nothing here for a rewind to inflate,
+        // and stopping the clock would be a second rule to keep in step for no gain.
+        REWIND: {
+          guard: ({
+            context,
+            event,
+          }: {
+            context: Context
+            event: Extract<Event, { type: 'REWIND' }>
+          }) =>
+            context.tutorial &&
+            event.board >= 0 &&
+            event.board < TUTORIAL_TARGETS.length,
+          actions: assign(
+            ({
+              context,
+              event,
+            }: {
+              context: Context
+              event: Extract<Event, { type: 'REWIND' }>
+            }) => {
+              const grid = tutorialBoardEntry(event.board)
+              const value = scriptedTarget(event.board) ?? TUTORIAL_OPENING_TARGET
+              return {
+                hits: event.board,
+                grid,
+                targets: [
+                  {
+                    id: context.nextTargetId,
+                    value,
+                    spawnedAt: event.now,
+                    // Trainee's own clock, which the tutorial never runs down —
+                    // `clockLeft` reads a tutorial target as untouched. Carried anyway so
+                    // the target is the same shape as every other.
+                    duration: context.traineeTimeoutMs,
+                    refAt: event.now,
+                    refGrid: grid,
+                    par: computePar(grid, value),
+                    userSteps: 0,
+                  },
+                ],
+                nextTargetId: context.nextTargetId + 1,
+                // Emptied, seq kept — exactly what `freshGame` does, and for the same
+                // reason: the hits describe a press made before the rewind, and the seq
+                // keys animations that have to keep climbing across one.
+                hitBatch: { seq: context.hitBatch.seq, hits: [] as HitInfo[] },
+              }
+            },
           ),
         },
       },
