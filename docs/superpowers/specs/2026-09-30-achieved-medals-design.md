@@ -48,16 +48,16 @@ Worse, nothing stores a run. `docs/scores.md` is the whole write path — `daily
 holds `best_score` and `hits` for the best run of a day, and `player_totals` holds
 six counters. Strikes, top chain, best accuracy, best speed, how long the run took:
 computed in the machine, shown once on the game over screen, never sent anywhere. The
-`player_totals` migration says it in as many words — *"No per-run rows"* — and this
+`player_totals` migration says it in as many words — _"No per-run rows"_ — and this
 design breaks that rule on purpose, bounded to runs that reach a podium.
 
-| Wanted                    | Source today                                    |
-| ------------------------- | ----------------------------------------------- |
-| Which medal, board, score | derivable from `daily_scores` / `scores`        |
-| The day it was won        | `updated_at` on the score that won it           |
+| Wanted                    | Source today                                      |
+| ------------------------- | ------------------------------------------------- |
+| Which medal, board, score | derivable from `daily_scores` / `scores`          |
+| The day it was won        | `updated_at` on the score that won it             |
 | How long it was held      | **nothing** — only rank 1 EVER, in `board_reigns` |
-| Who took it               | **nothing**                                     |
-| The run's stats           | **nothing** — never left the device             |
+| Who took it               | **nothing**                                       |
+| The run's stats           | **nothing** — never left the device               |
 
 ## Data model
 
@@ -202,11 +202,11 @@ lets expiry go unwritten.
 The reason a closed holding carries is decided by where its player ended up on that
 same board and window, which the podium just computed already says:
 
-| Where they are now | `lost_reason` | `taker_id`    | `now_rank` |
-| ------------------ | ------------- | ------------- | ---------- |
-| A better place     | `improved`    | null          | the better rank |
-| A worse place      | `taken`       | the new occupant | the worse rank |
-| Off the podium     | `taken`       | the new occupant | null       |
+| Where they are now | `lost_reason` | `taker_id`       | `now_rank`      |
+| ------------------ | ------------- | ---------------- | --------------- |
+| A better place     | `improved`    | null             | the better rank |
+| A worse place      | `taken`       | the new occupant | the worse rank  |
+| Off the podium     | `taken`       | the new occupant | null            |
 
 Which is the whole of "how did he lose it", and it falls out of a slot diff without a
 special case. A and B, gold and silver, B improves past A: the rank-one slot closes
@@ -410,13 +410,13 @@ score and the day — the mode in its own accent from `MODE_GRADIENT`, as
 `BoardLabel` in `medals-overlay.tsx` already draws it. The second is the answer to
 how long and how it went:
 
-| End        | Second line                            |
-| ---------- | -------------------------------------- |
-| still held | `held 9 days · still holding`          |
-| `taken`    | `held 9 days · taken by NIKA — kept 🥈` |
-| `taken`, off the podium | `held 9 days · taken by NIKA` |
-| `improved` | `held 2 days · you took 🥇`            |
-| `expired`  | `held 6 h · the day ended`             |
+| End                     | Second line                             |
+| ----------------------- | --------------------------------------- |
+| still held              | `held 9 days · still holding`           |
+| `taken`                 | `held 9 days · taken by NIKA — kept 🥈` |
+| `taken`, off the podium | `held 9 days · taken by NIKA`           |
+| `improved`              | `held 2 days · you took 🥇`             |
+| `expired`               | `held 6 h · the day ended`              |
 
 A still-held row is the one thing on this list that is also current, and it is drawn
 at full strength; everything else is drained to `GRAYSCALE`, the same way
