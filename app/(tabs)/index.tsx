@@ -120,6 +120,7 @@ import { gameSnapshot } from '@/lib/feedback-state'
 import { leaderOf } from '@/lib/leaderboard'
 import { runChallenge } from '@/lib/next-challenge'
 import { heldPeriods, medalPeriods } from '@/lib/record-medals'
+import { newRunId } from '@/lib/run-id'
 import { countRun } from '@/lib/run-submission'
 import { restoreRun, savedPositions } from '@/lib/saved-run'
 import { STEP_UP_BOARD } from '@/lib/step-up'
@@ -313,6 +314,7 @@ export default function GameScreen() {
     bestSpd,
     hits,
     elapsedMs,
+    runId,
     tutorial,
   } = state.context
   const isPlaying = state.matches('playing')
@@ -350,7 +352,7 @@ export default function GameScreen() {
     const now = Date.now()
     setRestoredPositions(savedPositions(savedRun.pending))
     savedRun.taken()
-    send({ type: 'RESTORE', run: restoreRun(savedRun.pending, now), now })
+    send({ type: 'RESTORE', run: restoreRun(savedRun.pending, now, newRunId()), now })
   }, [savedRun, isMenu, send])
   const {
     showSum,
@@ -426,7 +428,7 @@ export default function GameScreen() {
     (from: 'welcome' | 'guide' | null) => {
       send({ type: 'SET_MODE', mode: WELCOME_BOARD.mode })
       send({ type: 'SET_DIFFICULTY', difficulty: WELCOME_BOARD.difficulty })
-      send({ type: 'START', now: Date.now(), tutorial: true })
+      send({ type: 'START', now: Date.now(), runId: newRunId(), tutorial: true })
       if (from !== null) track('run_started', { ...WELCOME_BOARD, from })
     },
     [send],
@@ -647,6 +649,27 @@ export default function GameScreen() {
     // write can never spoil the final one.
     onBoardRecord: () => {
       submitScore(mode, difficulty, state.context.score, state.context.hits)
+      // The counters go with it. A record is what takes a run's score public, and a run
+      // whose score is on the board while its counters are still on the device is how a
+      // profile came to show a best no career of its own could account for. Not final:
+      // the run is still being played, and the post that closes it comes at game over.
+      //
+      // `elapsedMs` is short by the stretch being played right now — the machine only
+      // banks it on leaving `playing` — which costs nothing, because the server keeps
+      // the highest figure a run has ever posted and the last post carries the lot.
+      if (isOneOf(mode, ['accuracy', 'speed'])) {
+        void countRun(userId, {
+          runId,
+          mode,
+          difficulty,
+          score: state.context.score,
+          hits: state.context.hits,
+          accSum: state.context.accSum,
+          spdSum: state.context.spdSum,
+          elapsedMs: state.context.elapsedMs,
+          final: false,
+        })
+      }
     },
   })
 
@@ -795,13 +818,14 @@ export default function GameScreen() {
     refreshBoard,
   ])
 
-  // Lifetime counters, once per finished run.
+  // The post that closes the run. Its counters have been going up with every board
+  // record it set (see `onBoardRecord`); this is the last word on them, and the server
+  // takes nothing under this run's name afterwards.
   //
-  // Deliberately not folded into `submitScore`: that one is sent several times a run —
-  // the moment a board record falls, again at game over — because it upserts a best and
-  // repeating it is harmless. A counter incremented in the same place would report five
-  // runs for one. The ref is the other half of that: this effect's inputs settle over a
-  // few renders after game over, and only the first of them is the run.
+  // The ref is what keeps it to one: this effect's inputs settle over a few renders
+  // after game over, and only the first of them is the run. A repeat would be harmless —
+  // the server would find the run already closed and do nothing — but it is a round trip
+  // to be told so.
   const countedRunRef = useRef(false)
   useEffect(() => {
     if (!isGameOver) {
@@ -811,6 +835,7 @@ export default function GameScreen() {
     if (countedRunRef.current || !isOneOf(mode, ['accuracy', 'speed'])) return
     countedRunRef.current = true
     void countRun(userId, {
+      runId,
       mode,
       difficulty,
       score: state.context.score,
@@ -818,6 +843,7 @@ export default function GameScreen() {
       accSum,
       spdSum,
       elapsedMs,
+      final: true,
     })
   }, [
     isGameOver,
@@ -828,6 +854,7 @@ export default function GameScreen() {
     accSum,
     spdSum,
     elapsedMs,
+    runId,
     userId,
   ])
 
@@ -841,7 +868,17 @@ export default function GameScreen() {
     // the player played, and "how many runs" is not "how many went well".
     if (!countedRunRef.current) {
       countedRunRef.current = true
-      void countRun(userId, { mode, difficulty, score, hits, accSum, spdSum, elapsedMs })
+      void countRun(userId, {
+        runId,
+        mode,
+        difficulty,
+        score,
+        hits,
+        accSum,
+        spdSum,
+        elapsedMs,
+        final: true,
+      })
     }
     if (score <= 0) return
     submitScore(mode, difficulty, score, hits)
@@ -1674,7 +1711,7 @@ export default function GameScreen() {
             achievementStore={achievements.store}
             achievementFacts={achievements.facts}
             onPlayAgain={() => {
-              send({ type: 'RESTART', now: Date.now() })
+              send({ type: 'RESTART', now: Date.now(), runId: newRunId() })
               track('run_started', { mode, difficulty, from: 'play_again' })
             }}
             onChallenge={(nextMode, nextDifficulty) => {
@@ -1682,7 +1719,7 @@ export default function GameScreen() {
               // the player just accepted — and the persistence hooks remember it.
               send({ type: 'SET_MODE', mode: nextMode })
               send({ type: 'SET_DIFFICULTY', difficulty: nextDifficulty })
-              send({ type: 'RESTART', now: Date.now() })
+              send({ type: 'RESTART', now: Date.now(), runId: newRunId() })
               track('challenge_accepted', {
                 mode,
                 difficulty,
@@ -1715,7 +1752,7 @@ export default function GameScreen() {
                 send({ type: 'MENU' })
                 send({ type: 'SET_MODE', mode: STEP_UP_BOARD.mode })
                 send({ type: 'SET_DIFFICULTY', difficulty: STEP_UP_BOARD.difficulty })
-                send({ type: 'START', now: Date.now() })
+                send({ type: 'START', now: Date.now(), runId: newRunId() })
                 setStepUpOpen(false)
                 track('challenge_accepted', {
                   mode,
@@ -1773,7 +1810,7 @@ export default function GameScreen() {
                 // The run being abandoned is still live, so its score goes to the board
                 // before the fresh one replaces it — same as leaving for the intro.
                 endRunEarly()
-                send({ type: 'RESTART', now: Date.now() })
+                send({ type: 'RESTART', now: Date.now(), runId: newRunId() })
                 track('run_started', { mode, difficulty, from: 'restart' })
               }}
               onMenu={() => {
@@ -1938,7 +1975,7 @@ export default function GameScreen() {
               onPlayModeChange={setMenuInitialTab}
               onPlay={() => {
                 setMenuInitialTab('alone')
-                send({ type: 'START', now: Date.now() })
+                send({ type: 'START', now: Date.now(), runId: newRunId() })
                 track('run_started', { mode, difficulty, from: 'menu' })
               }}
               onSetMode={(next) => {

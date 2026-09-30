@@ -61,6 +61,7 @@ const snapshot = (over: Partial<RunSnapshot> = {}): RunSnapshot => ({
   nextTargetId: 9,
   elapsedMs: 20_000,
   runSeq: 2,
+  runId: 'run-7',
   playingSince: null,
   ...over,
 })
@@ -96,17 +97,44 @@ describe('toSavedRun', () => {
   })
 })
 
+// A run posts its counters while it is still being played, so the name it posts under
+// has to survive being put away — a run resumed under a second one is counted twice.
+describe('what a stored run is called', () => {
+  it('survives the trip through storage', () => {
+    const parsed = parseSavedRun(roundTrip(toSavedRun(snapshot(), SPOTS, 5_000)))
+    expect(parsed).not.toBeNull()
+    if (parsed === null) return
+    expect(restoreRun(parsed, 5_000, 'fresh').runId).toBe('run-7')
+  })
+
+  it('takes the fresh one when the run was put away before runs had names', () => {
+    const { runId, ...older } = toSavedRun(snapshot(), SPOTS, 5_000)
+    expect(runId).toBe('run-7')
+    const parsed = parseSavedRun(roundTrip(older))
+    expect(parsed).not.toBeNull()
+    if (parsed === null) return
+    expect(restoreRun(parsed, 5_000, 'fresh').runId).toBe('fresh')
+  })
+
+  it('takes the fresh one when what was stored is not a name', () => {
+    const parsed = parseSavedRun({ ...toSavedRun(snapshot(), SPOTS, 5_000), runId: 12 })
+    expect(parsed).not.toBeNull()
+    if (parsed === null) return
+    expect(restoreRun(parsed, 5_000, 'fresh').runId).toBe('fresh')
+  })
+})
+
 describe('restoreRun', () => {
   it('lays the ages back against the clock it comes back to', () => {
     const saved = toSavedRun(snapshot(), SPOTS, 5_000)
-    const restored = restoreRun(saved, 1_000_000)
+    const restored = restoreRun(saved, 1_000_000, 'fresh')
     expect(restored.targets[0]?.spawnedAt).toBe(996_000)
     expect(restored.targets[0]?.refAt).toBe(996_500)
   })
 
   it('gives a target back the share of its clock it had left', () => {
     const saved = toSavedRun(snapshot(), SPOTS, 5_000)
-    const restored = restoreRun(saved, 1_000_000)
+    const restored = restoreRun(saved, 1_000_000, 'fresh')
     const put = restored.targets[0]
     expect(put).toBeDefined()
     if (put === undefined) return
@@ -119,7 +147,7 @@ describe('restoreRun', () => {
       SPOTS,
       5_000,
     )
-    expect(restoreRun(saved, 5_000).lives).toBe(Number.POSITIVE_INFINITY)
+    expect(restoreRun(saved, 5_000, 'fresh').lives).toBe(Number.POSITIVE_INFINITY)
   })
 
   it('brings a tutorial run back as the tutorial', () => {
@@ -127,7 +155,7 @@ describe('restoreRun', () => {
     const parsed = parseSavedRun(roundTrip(saved))
     expect(parsed).not.toBeNull()
     if (parsed === null) return
-    expect(restoreRun(parsed, 5_000).tutorial).toBe(true)
+    expect(restoreRun(parsed, 5_000, 'fresh').tutorial).toBe(true)
   })
 
   it('reads a run stored before the tutorial existed as plain practice', () => {
@@ -137,7 +165,7 @@ describe('restoreRun', () => {
     const parsed = parseSavedRun(roundTrip({ ...saved, tutorial: undefined }))
     expect(parsed).not.toBeNull()
     if (parsed === null) return
-    expect(restoreRun(parsed, 5_000).tutorial).toBe(false)
+    expect(restoreRun(parsed, 5_000, 'fresh').tutorial).toBe(false)
   })
 
   it('carries the run through a full round trip', () => {
@@ -145,7 +173,7 @@ describe('restoreRun', () => {
     const parsed = parseSavedRun(roundTrip(saved))
     expect(parsed).not.toBeNull()
     if (parsed === null) return
-    const restored = restoreRun(parsed, 5_000)
+    const restored = restoreRun(parsed, 5_000, 'fresh')
     expect(restored.score).toBe(1234)
     expect(restored.grid).toEqual(GRID)
     expect(restored.targets).toEqual(snapshot().targets)
@@ -156,7 +184,7 @@ describe('restoreRun', () => {
     const parsed = parseSavedRun(roundTrip(saved))
     expect(parsed).not.toBeNull()
     if (parsed === null) return
-    const restored = restoreRun(parsed, 5_000)
+    const restored = restoreRun(parsed, 5_000, 'fresh')
     expect(restored.bestAcc).toBeCloseTo(0.8)
     expect(restored.bestSpd).toBeCloseTo(0.65)
   })
@@ -170,7 +198,7 @@ describe('restoreRun', () => {
     )
     expect(parsed).not.toBeNull()
     if (parsed === null) return
-    const restored = restoreRun(parsed, 5_000)
+    const restored = restoreRun(parsed, 5_000, 'fresh')
     expect(restored.bestAcc).toBe(0)
     expect(restored.bestSpd).toBe(0)
   })

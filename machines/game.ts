@@ -193,6 +193,16 @@ type Context = {
   // straight from `gameOver` to `playing` and RESTART from a pause never leaves
   // `playing` at all, so there is no commit where a watcher sees no run in progress.
   runSeq: number
+  // What this run is called on the server, for as long as it lasts. `runSeq` cannot do
+  // the job: it counts runs within a launch and starts again at zero on the next one, so
+  // it says nothing about which run a device means.
+  //
+  // Handed in on START and RESTART rather than minted here, for the same reason `now` is
+  // — the machine reads no clocks and no randomness. It is put away with the run and
+  // comes back with it (lib/saved-run.ts), because a run is posted to the counters while
+  // it is still being played: a run resumed under a second name would be counted twice.
+  // Empty outside a run, which is the one state nothing ever posts from.
+  runId: string
 }
 
 // The slice of a run worth putting back when the app is opened on one it was closed on
@@ -219,16 +229,17 @@ export type RestoredRun = Pick<
   | 'nextTargetId'
   | 'elapsedMs'
   | 'runSeq'
+  | 'runId'
 >
 
 type Event =
   // `tutorial` opens the run as the tutorial rather than as plain practice. Sent by the
   // welcome, and by the guide's TRY IT button; absent everywhere else, which is a
   // scored-or-practice run as before.
-  | { type: 'START'; now: number; tutorial?: boolean }
+  | { type: 'START'; now: number; runId: string; tutorial?: boolean }
   | { type: 'PAUSE'; now: number }
   | { type: 'RESUME'; now: number }
-  | { type: 'RESTART'; now: number }
+  | { type: 'RESTART'; now: number; runId: string }
   | { type: 'MENU' }
   | { type: 'SET_MODE'; mode: Mode }
   | { type: 'SET_DIFFICULTY'; difficulty: Difficulty }
@@ -260,7 +271,7 @@ export type GameSend = (event: Event) => void
 // `tutorial` is handed in rather than carried over, because it is the one thing about a
 // fresh run that the event decides and the last run cannot: START says whether this is
 // the tutorial, and RESTART hands back what the run being restarted was.
-const freshGame = (context: Context, now: number, tutorial: boolean) => ({
+const freshGame = (context: Context, now: number, tutorial: boolean, runId: string) => ({
   // The tutorial opens on a board and a target of its own; every other run opens on nine
   // zeros and an empty board for the spawner to fill.
   grid: tutorial ? TUTORIAL_OPENING_GRID : initialGrid,
@@ -289,6 +300,7 @@ const freshGame = (context: Context, now: number, tutorial: boolean) => ({
   playingSince: now,
   pausedAt: null,
   runSeq: context.runSeq + 1,
+  runId,
 })
 
 // Folds the run's current active stretch into `elapsedMs` and clears `playingSince`,
@@ -625,6 +637,7 @@ export const gameMachine = createMachine({
     playingSince: null,
     pausedAt: null,
     runSeq: 0,
+    runId: '',
   } satisfies Context,
   on: {
     // Settable at any time, including mid-run — a player who finds a target too quick
@@ -716,7 +729,7 @@ export const gameMachine = createMachine({
             }: {
               context: Context
               event: Extract<Event, { type: 'START' }>
-            }) => freshGame(context, event.now, event.tutorial === true),
+            }) => freshGame(context, event.now, event.tutorial === true, event.runId),
           ),
         },
         SET_MODE: {
@@ -1026,7 +1039,7 @@ export const gameMachine = createMachine({
             }: {
               context: Context
               event: Extract<Event, { type: 'RESTART' }>
-            }) => freshGame(context, event.now, context.tutorial),
+            }) => freshGame(context, event.now, context.tutorial, event.runId),
           ),
         },
         // TARGET_EXPIRED is deliberately not handled here. A paused run has no clock
@@ -1063,7 +1076,7 @@ export const gameMachine = createMachine({
             }: {
               context: Context
               event: Extract<Event, { type: 'RESTART' }>
-            }) => freshGame(context, event.now, context.tutorial),
+            }) => freshGame(context, event.now, context.tutorial, event.runId),
           ),
         },
       },

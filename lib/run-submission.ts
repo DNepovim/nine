@@ -2,11 +2,11 @@ import { isEmptyArray } from 'narrowland'
 
 import { captureError } from '@/lib/analytics'
 import { isNetworkFailure, noteRequest } from '@/lib/connectivity'
-import { newRunId } from '@/lib/run-id'
 import {
-  dropRun,
+  dropRuns,
   queueRun,
   readRunTotals,
+  sentKey,
   writeRunTotals,
   type PendingRun,
 } from '@/lib/run-totals'
@@ -17,12 +17,14 @@ import type { Difficulty, ScoredMode } from '@/machines/modes'
 // reason that was not the connection, so asking again will be rejected again.
 type Sent = 'counted' | 'offline' | 'refused'
 
-// One run, added to the player's lifetime counters.
+// One run, as its lifetime counters stand.
 //
-// Deliberately not folded into `submitScore`: that one is called several times per run —
-// on every board record as it happens, again at game over, again from END RUN — because
-// it upserts a best and repeating it is harmless. A counter incremented in the same
-// place would report five runs for one.
+// Sent wherever `submitScore` is sent — on every board record as it happens, again at
+// game over, again from END RUN — because the two describe one run and a profile whose
+// board has heard about a run its counters have not is a profile disagreeing with
+// itself. Repeating it is harmless: the server holds the run's figures against its id
+// and moves the totals by the difference, so a second post of the same run adds nothing
+// and a later one adds only what the run gained in between.
 async function sendRun(run: PendingRun): Promise<Sent> {
   const { error } = await supabase.rpc('record_run', {
     p_run_id: run.runId,
@@ -33,6 +35,7 @@ async function sendRun(run: PendingRun): Promise<Sent> {
     p_acc_sum: run.accSum,
     p_spd_sum: run.spdSum,
     p_elapsed_ms: run.elapsedMs,
+    p_final: run.final,
   })
   noteRequest(error)
   if (error === null) return 'counted'
@@ -48,14 +51,18 @@ async function sendRun(run: PendingRun): Promise<Sent> {
   return 'refused'
 }
 
-// Records a finished run: remembered on the device first, sent second.
+// Records where a run stands: remembered on the device first, sent second.
 //
 // The order is the point. A run enqueued before anything is sent survives a crash
 // between the two, and a device with no account yet — or no connection — keeps the run
 // until there is one. Nothing here is conditional on the send being possible.
+//
+// Called more than once for a run that posts before it is over, and the queue keeps only
+// the latest — see `queueRun`.
 export async function countRun(
   userId: string | null,
   run: {
+    runId: string
     mode: ScoredMode
     difficulty: Difficulty
     score: number
@@ -63,13 +70,10 @@ export async function countRun(
     accSum: number
     spdSum: number
     elapsedMs: number
+    final: boolean
   },
 ): Promise<void> {
-  const pending: PendingRun = {
-    ...run,
-    runId: newRunId(),
-    endedAt: new Date().toISOString(),
-  }
+  const pending: PendingRun = { ...run, postedAt: new Date().toISOString() }
   const store = await readRunTotals()
   await writeRunTotals(queueRun(store, pending))
   if (userId === null) return
@@ -89,16 +93,20 @@ export async function flushRunTotals(userId: string): Promise<void> {
     const queue = await readRunTotals()
     if (isEmptyArray(queue)) return
 
-    let next = queue
+    const landed = new Set<string>()
     for (const run of queue) {
       const sent = await sendRun(run)
       // Offline keeps the entry: the connection coming back is exactly what makes it
       // worth trying again. A refusal drops it — the server will refuse it again, and a
       // queue that keeps retrying one bad run never reaches the good ones behind it.
-      if (sent !== 'offline') next = dropRun(next, run.runId)
       if (sent === 'offline') break
+      landed.add(sentKey(run))
     }
-    if (next !== queue) await writeRunTotals(next)
+    if (landed.size === 0) return
+    // Against the queue as it stands now, not the one this pass started from: a run
+    // still being played posts again while this is draining, and writing back the older
+    // copy would throw that post away — see `dropRuns`.
+    await writeRunTotals(dropRuns(await readRunTotals(), landed))
   } finally {
     flushing = false
   }

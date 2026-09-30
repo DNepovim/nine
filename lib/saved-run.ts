@@ -1,4 +1,12 @@
-import { isArray, isDefined, isNotNull, isNumber, isObject, isOneOf } from 'narrowland'
+import {
+  isArray,
+  isDefined,
+  isNonEmptyString,
+  isNotNull,
+  isNumber,
+  isObject,
+  isOneOf,
+} from 'narrowland'
 
 import {
   DIFFICULTY_ORDER,
@@ -70,6 +78,11 @@ export type SavedRun = {
   elapsedMs: number
   nextTargetId: number
   runSeq: number
+  // What the server calls this run. Optional on the way in for the same reason
+  // `tutorial` is: a run written before the counters knew a run by name has none, and
+  // `restoreRun` gives it a fresh one — which is exactly what it had before this, since
+  // nothing had been posted under the old one either.
+  runId?: string
   targets: SavedTarget[]
 }
 
@@ -192,6 +205,7 @@ export function toSavedRun(
     elapsedMs: run.elapsedMs + (now - (run.playingSince ?? now)),
     nextTargetId: run.nextTargetId,
     runSeq: run.runSeq,
+    runId: run.runId,
     targets: run.targets.map((target) => ({
       id: target.id,
       value: target.value,
@@ -260,13 +274,18 @@ export function parseSavedRun(value: unknown): SavedRun | null {
     elapsedMs,
     nextTargetId,
     runSeq,
+    // Anything that is not a name is a run with none — see `runId` on `SavedRun`.
+    runId: isNonEmptyString(value.runId) ? value.runId : undefined,
     targets,
   }
 }
 
 // Lays the stored ages back down against the clock the app has come back to. `now` is
 // the moment the run is being handed to the machine.
-export function restoreRun(saved: SavedRun, now: number): RestoredRun {
+// `freshId` is what the run is called if it has never been called anything — a run put
+// away by a build from before the counters named them. Passed in rather than minted
+// here: nothing in this file reads a clock or a die, and the run id is both.
+export function restoreRun(saved: SavedRun, now: number, freshId: string): RestoredRun {
   return {
     mode: saved.mode,
     difficulty: saved.difficulty,
@@ -285,6 +304,7 @@ export function restoreRun(saved: SavedRun, now: number): RestoredRun {
     elapsedMs: saved.elapsedMs,
     nextTargetId: saved.nextTargetId,
     runSeq: saved.runSeq,
+    runId: saved.runId ?? freshId,
     targets: saved.targets.map((target) => ({
       id: target.id,
       value: target.value,

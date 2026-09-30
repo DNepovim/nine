@@ -12,11 +12,16 @@ import {
 } from '@/machines/game'
 import { cleanHitReason } from '@/machines/scoring'
 
+// A name per run, because START and RESTART each deal a new one. Nothing here reads it —
+// it belongs to the lifetime counters outside the machine — so a legible one will do.
+let runs = 0
+const nextRunId = () => `run-${++runs}`
+
 const start = (mode: 'trainee' | 'accuracy' | 'speed') => {
   const actor = createActor(gameMachine)
   actor.start()
   actor.send({ type: 'SET_MODE', mode })
-  actor.send({ type: 'START', now: 0 })
+  actor.send({ type: 'START', now: 0, runId: nextRunId() })
   return actor
 }
 
@@ -118,7 +123,7 @@ describe('strikes', () => {
 
     actor.send({ type: 'PAUSE', now: 0 })
     actor.send({ type: 'MENU' })
-    actor.send({ type: 'START', now: 0 })
+    actor.send({ type: 'START', now: 0, runId: nextRunId() })
     expect(actor.getSnapshot().context.strikes).toBe(0)
   })
 })
@@ -349,7 +354,7 @@ describe('run stat accumulators', () => {
     actor.send({ type: 'ADD_TARGET', value: 9, at: 0 })
     actor.send({ type: 'PRESS', index: 8, delta: 1, now: 0 })
     actor.send({ type: 'PAUSE', now: 100 })
-    actor.send({ type: 'RESTART', now: 200 })
+    actor.send({ type: 'RESTART', now: 200, runId: nextRunId() })
     const context = actor.getSnapshot().context
     expect(context.bestAcc).toBe(0)
     expect(context.bestSpd).toBe(0)
@@ -421,7 +426,7 @@ describe('a new run does not inherit the last one', () => {
 
     actor.send({ type: 'PAUSE', now: 0 })
     actor.send({ type: 'MENU' })
-    actor.send({ type: 'START', now: 0 })
+    actor.send({ type: 'START', now: 0, runId: nextRunId() })
     const fresh = actor.getSnapshot().context.hitBatch
     // Emptied, so nothing describes a press from the previous run — but the seq
     // keeps climbing, because the UI keys its animations on it.
@@ -443,7 +448,7 @@ describe('a new run does not inherit the last one', () => {
     }
     expect(actor.getSnapshot().value).toBe('gameOver')
 
-    actor.send({ type: 'RESTART', now: 0 })
+    actor.send({ type: 'RESTART', now: 0, runId: nextRunId() })
     expect(actor.getSnapshot().context.hitBatch.hits).toEqual([])
   })
 
@@ -458,7 +463,7 @@ describe('a new run does not inherit the last one', () => {
     expect(actor.getSnapshot().value).toBe('paused')
     expect(actor.getSnapshot().context.score).toBeGreaterThan(0)
 
-    actor.send({ type: 'RESTART', now: 2000 })
+    actor.send({ type: 'RESTART', now: 2000, runId: nextRunId() })
     const after = actor.getSnapshot()
     expect(after.value).toBe('playing')
     expect(after.context.score).toBe(0)
@@ -478,7 +483,7 @@ describe('a new run does not inherit the last one', () => {
     const spent = actor.getSnapshot().context.targets.map((t) => t.id)
 
     actor.send({ type: 'PAUSE', now: 1000 })
-    actor.send({ type: 'RESTART', now: 2000 })
+    actor.send({ type: 'RESTART', now: 2000, runId: nextRunId() })
     actor.send({ type: 'ADD_TARGET', value: 7, at: 2000 })
     const [fresh] = actor.getSnapshot().context.targets
     expect(spent).not.toContain(fresh?.id)
@@ -489,7 +494,7 @@ describe('a new run does not inherit the last one', () => {
     // speed board would record a run that began before the player asked for it.
     const actor = start('accuracy')
     actor.send({ type: 'PAUSE', now: 30_000 })
-    actor.send({ type: 'RESTART', now: 45_000 })
+    actor.send({ type: 'RESTART', now: 45_000, runId: nextRunId() })
     expect(actor.getSnapshot().context.playingSince).toBe(45_000)
     expect(actor.getSnapshot().context.elapsedMs).toBe(0)
   })
@@ -507,7 +512,7 @@ describe('a new run does not inherit the last one', () => {
     actor.send({ type: 'PAUSE', now: 0 })
     actor.send({ type: 'MENU' })
     actor.send({ type: 'SET_MODE', mode: 'trainee' })
-    actor.send({ type: 'START', now: 0 })
+    actor.send({ type: 'START', now: 0, runId: nextRunId() })
     expect(cleanHitReason(actor.getSnapshot().context.hitBatch.hits)).toBeNull()
   })
 })
@@ -517,7 +522,7 @@ describe('run clock', () => {
     const actor = createActor(gameMachine)
     actor.start()
     actor.send({ type: 'SET_MODE', mode: 'accuracy' })
-    actor.send({ type: 'START', now: 1000 })
+    actor.send({ type: 'START', now: 1000, runId: nextRunId() })
     return actor
   }
 
@@ -596,7 +601,7 @@ describe('run clock', () => {
     }
     expect(actor.getSnapshot().value).toBe('gameOver')
 
-    actor.send({ type: 'RESTART', now: 10_000 })
+    actor.send({ type: 'RESTART', now: 10_000, runId: nextRunId() })
     expect(actor.getSnapshot().context.elapsedMs).toBe(0)
     actor.send({ type: 'PAUSE', now: 10_500 })
     expect(actor.getSnapshot().context.elapsedMs).toBe(500)
@@ -622,7 +627,7 @@ describe('run identity', () => {
 
     // RESTART from a pause deals a new run without `playing` ever being left.
     actor.send({ type: 'PAUSE', now: 2500 })
-    actor.send({ type: 'RESTART', now: 3000 })
+    actor.send({ type: 'RESTART', now: 3000, runId: nextRunId() })
     const second = actor.getSnapshot().context.runSeq
     expect(second).toBeGreaterThan(first)
 
@@ -635,7 +640,7 @@ describe('run identity', () => {
     expect(actor.getSnapshot().value).toBe('gameOver')
     expect(actor.getSnapshot().context.runSeq).toBe(second)
 
-    actor.send({ type: 'RESTART', now: 4000 })
+    actor.send({ type: 'RESTART', now: 4000, runId: nextRunId() })
     expect(actor.getSnapshot().context.runSeq).toBeGreaterThan(second)
   })
 })
@@ -646,7 +651,7 @@ describe('trainee timeout set mid-run', () => {
     actor.start()
     actor.send({ type: 'SET_MODE', mode: 'trainee' })
     actor.send({ type: 'SET_TRAINEE_TIMEOUT', ms, now: 0 })
-    actor.send({ type: 'START', now: 0 })
+    actor.send({ type: 'START', now: 0, runId: nextRunId() })
     return actor
   }
 
@@ -685,7 +690,7 @@ describe('a pause stops the targets as well as the score', () => {
     const actor = createActor(gameMachine)
     actor.start()
     actor.send({ type: 'SET_MODE', mode: 'accuracy' })
-    actor.send({ type: 'START', now: 0 })
+    actor.send({ type: 'START', now: 0, runId: nextRunId() })
     actor.send({ type: 'ADD_TARGET', value: 1, at: 0 })
     actor.send({ type: 'PAUSE', now: pauseAt })
     actor.send({ type: 'RESUME', now: resumeAt })
@@ -712,7 +717,7 @@ describe('a pause stops the targets as well as the score', () => {
   it('leaves the clock of an unpaused run exactly as it was', () => {
     const actor = createActor(gameMachine)
     actor.start()
-    actor.send({ type: 'START', now: 0 })
+    actor.send({ type: 'START', now: 0, runId: nextRunId() })
     actor.send({ type: 'ADD_TARGET', value: 1, at: 0 })
     const before = actor.getSnapshot().context.targets[0]?.spawnedAt
     actor.send({ type: 'PRESS', index: 0, delta: 1, now: 500 })
@@ -758,6 +763,7 @@ describe('restoring a run the app was closed on', () => {
     nextTargetId: 12,
     elapsedMs: 42_000,
     runSeq: 7,
+    runId: 'run-restored',
     tutorial: false,
   }
 
@@ -807,9 +813,59 @@ describe('restoring a run the app was closed on', () => {
     const actor = createActor(gameMachine)
     actor.start()
     actor.send({ type: 'RESTORE', run, now: 0 })
-    actor.send({ type: 'RESTART', now: 0 })
+    actor.send({ type: 'RESTART', now: 0, runId: nextRunId() })
     expect(actor.getSnapshot().context.runSeq).toBe(8)
     expect(actor.getSnapshot().context.score).toBe(0)
+  })
+
+  // What keeps a resumed run from being counted as a second one: it posts its counters
+  // while it is still being played, and the server holds them against this name.
+  it('comes back under the name it was put away with', () => {
+    const actor = createActor(gameMachine)
+    actor.start()
+    actor.send({ type: 'RESTORE', run, now: 0 })
+    expect(actor.getSnapshot().context.runId).toBe('run-restored')
+  })
+
+  it('leaves the restored run its name when it is resumed and played on', () => {
+    const actor = createActor(gameMachine)
+    actor.start()
+    actor.send({ type: 'RESTORE', run, now: 0 })
+    actor.send({ type: 'RESUME', now: 50_000 })
+    expect(actor.getSnapshot().context.runId).toBe('run-restored')
+  })
+})
+
+describe('what a run is called', () => {
+  it('takes the name START deals it', () => {
+    const actor = createActor(gameMachine)
+    actor.start()
+    actor.send({ type: 'START', now: 0, runId: 'run-first' })
+    expect(actor.getSnapshot().context.runId).toBe('run-first')
+  })
+
+  it('has no name on the intro, where nothing is ever posted', () => {
+    const actor = createActor(gameMachine)
+    actor.start()
+    expect(actor.getSnapshot().context.runId).toBe('')
+  })
+
+  it('takes a new one on every restart, so two runs are never one', () => {
+    const actor = createActor(gameMachine)
+    actor.start()
+    actor.send({ type: 'START', now: 0, runId: 'run-first' })
+    actor.send({ type: 'PAUSE', now: 100 })
+    actor.send({ type: 'RESTART', now: 200, runId: 'run-second' })
+    expect(actor.getSnapshot().context.runId).toBe('run-second')
+  })
+
+  it('keeps it across a pause and a resume, which are one run', () => {
+    const actor = createActor(gameMachine)
+    actor.start()
+    actor.send({ type: 'START', now: 0, runId: 'run-first' })
+    actor.send({ type: 'PAUSE', now: 100 })
+    actor.send({ type: 'RESUME', now: 900 })
+    expect(actor.getSnapshot().context.runId).toBe('run-first')
   })
 })
 
@@ -821,7 +877,7 @@ describe('the tutorial', () => {
     actor.start()
     actor.send({ type: 'SET_MODE', mode: 'trainee' })
     actor.send({ type: 'SET_DIFFICULTY', difficulty: 'easy' })
-    actor.send({ type: 'START', now: 0, tutorial: true })
+    actor.send({ type: 'START', now: 0, runId: nextRunId(), tutorial: true })
     return actor
   }
 
@@ -880,7 +936,7 @@ describe('the tutorial', () => {
   it('deals another tutorial on RESTART rather than dropping into practice', () => {
     const actor = startTutorial()
     actor.send({ type: 'PAUSE', now: 1000 })
-    actor.send({ type: 'RESTART', now: 2000 })
+    actor.send({ type: 'RESTART', now: 2000, runId: nextRunId() })
     expect(actor.getSnapshot().context.tutorial).toBe(true)
   })
 
@@ -890,7 +946,7 @@ describe('the tutorial', () => {
     actor.send({ type: 'PAUSE', now: 1000 })
     actor.send({ type: 'MENU' })
     actor.send({ type: 'SET_MODE', mode: 'accuracy' })
-    actor.send({ type: 'START', now: 3000 })
+    actor.send({ type: 'START', now: 3000, runId: nextRunId() })
     expect(actor.getSnapshot().context.tutorial).toBe(false)
   })
 })
@@ -901,7 +957,7 @@ describe('rewinding a tutorial', () => {
     const actor = createActor(gameMachine).start()
     actor.send({ type: 'SET_MODE', mode: 'trainee' })
     actor.send({ type: 'SET_DIFFICULTY', difficulty: 'easy' })
-    actor.send({ type: 'START', now: 0, tutorial: true })
+    actor.send({ type: 'START', now: 0, runId: nextRunId(), tutorial: true })
     actor.send({ type: 'REWIND', board: hits, now: 1 })
     return actor
   }
@@ -928,7 +984,7 @@ describe('rewinding a tutorial', () => {
     const actor = createActor(gameMachine).start()
     actor.send({ type: 'SET_MODE', mode: 'trainee' })
     actor.send({ type: 'SET_DIFFICULTY', difficulty: 'easy' })
-    actor.send({ type: 'START', now: 0, tutorial: true })
+    actor.send({ type: 'START', now: 0, runId: nextRunId(), tutorial: true })
     const before = actor.getSnapshot().context.targets[0]?.id
     actor.send({ type: 'REWIND', board: 2, now: 1 })
     expect(actor.getSnapshot().context.targets[0]?.id).not.toBe(before)
@@ -944,7 +1000,7 @@ describe('rewinding a tutorial', () => {
     const actor = createActor(gameMachine).start()
     actor.send({ type: 'SET_MODE', mode: 'accuracy' })
     actor.send({ type: 'SET_DIFFICULTY', difficulty: 'hard' })
-    actor.send({ type: 'START', now: 0 })
+    actor.send({ type: 'START', now: 0, runId: nextRunId() })
     const before = actor.getSnapshot().context.grid
     actor.send({ type: 'REWIND', board: 2, now: 1 })
     const { context } = actor.getSnapshot()
@@ -958,7 +1014,7 @@ describe('rewinding a tutorial', () => {
     const actor = createActor(gameMachine).start()
     actor.send({ type: 'SET_MODE', mode: 'trainee' })
     actor.send({ type: 'SET_DIFFICULTY', difficulty: 'easy' })
-    actor.send({ type: 'START', now: 0, tutorial: true })
+    actor.send({ type: 'START', now: 0, runId: nextRunId(), tutorial: true })
     actor.send({ type: 'REWIND', board: TUTORIAL_TARGETS.length, now: 1 })
     expect(actor.getSnapshot().context.hits).toBe(0)
   })

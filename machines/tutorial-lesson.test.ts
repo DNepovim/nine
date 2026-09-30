@@ -46,6 +46,11 @@ const tapThrough = (from: LessonStep, times: number): LessonStep => {
   return step
 }
 
+// A name per run, because START and RESTART each deal a new one. Nothing here reads it —
+// it belongs to the lifetime counters outside the machine — so a legible one will do.
+let runs = 0
+const nextRunId = () => `run-${++runs}`
+
 describe('the lesson script', () => {
   it('opens on the beat before its first word', () => {
     expect(FIRST_STEP).toBe('waiting')
@@ -153,7 +158,7 @@ describe('the opening the lesson is built on', () => {
     const actor = createActor(gameMachine)
     actor.start()
     actor.send({ type: 'SET_MODE', mode: 'trainee' })
-    actor.send({ type: 'START', now: 0, tutorial: true })
+    actor.send({ type: 'START', now: 0, runId: nextRunId(), tutorial: true })
     const { grid, targets } = actor.getSnapshot().context
     const target = targets[0]
     expect(target).toBeDefined()
@@ -278,7 +283,7 @@ describe('the second target the lesson deals', () => {
     const actor = createActor(gameMachine)
     actor.start()
     actor.send({ type: 'SET_MODE', mode: 'trainee' })
-    actor.send({ type: 'START', now: 0, tutorial: true })
+    actor.send({ type: 'START', now: 0, runId: nextRunId(), tutorial: true })
     for (const index of [8, 7, 4]) {
       actor.send({ type: 'PRESS', index, delta: 1, now: 100 })
     }
