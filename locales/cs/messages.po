@@ -300,7 +300,7 @@ msgstr "PRŮM RYCH"
 msgid "BACK"
 msgstr "ZPĚT"
 
-#: components/game/tutorial-stepper.tsx:103
+#: components/game/tutorial-stepper.tsx:110
 msgid "Back a step"
 msgstr "O krok zpět"
 
@@ -402,7 +402,7 @@ msgstr "PŘIPOJ SE K INTERNETU A HRAJ S PŘÁTELI"
 msgid "CONTINUE"
 msgstr "POKRAČOVAT"
 
-#: app/(tabs)/index.tsx:1656
+#: app/(tabs)/index.tsx:1711
 msgid "Continue the tutorial"
 msgstr "Pokračovat v tutoriálu"
 
@@ -590,7 +590,7 @@ msgstr "BEZCHYBNÝCH DESET"
 msgid "FORTUNE"
 msgstr "JMĚNÍ"
 
-#: components/game/tutorial-stepper.tsx:153
+#: components/game/tutorial-stepper.tsx:158
 msgid "Forward a step"
 msgstr "O krok vpřed"
 
@@ -784,7 +784,7 @@ msgstr "OPUSTIT HRU"
 msgid "Let a target’s ring run out and you lose one too — precision still has a clock."
 msgstr "Když cíli vyprší čas, přijdeš o život i tady — ani preciznost neběží bez času."
 
-#: components/tutorial-curtain.tsx:92
+#: components/tutorial-curtain.tsx:99
 msgid "LET'S LEARN THE GAME"
 msgstr "POJĎME SE NAUČIT HRU"
 
@@ -1279,7 +1279,7 @@ msgid "STEADY HAND"
 msgstr "PEVNÁ RUKA"
 
 #. placeholder {0}: board + 1
-#: components/game/tutorial-stepper.tsx:120
+#: components/game/tutorial-stepper.tsx:127
 msgid "Step {0}"
 msgstr "Krok {0}"
 

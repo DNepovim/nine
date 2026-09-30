@@ -54,7 +54,12 @@ import {
   type Period,
 } from '@/lib/announcements'
 import { emptyCareer } from '@/lib/career'
-import { NO_CHAMPIONS, type Champions, type RecordScreen } from '@/lib/champions'
+import {
+  championMark,
+  NO_CHAMPIONS,
+  type Champions,
+  type RecordScreen,
+} from '@/lib/champions'
 import type { FeedbackQuote } from '@/lib/feedback-reply'
 import { gameOverTitle } from '@/lib/game-over-title'
 import type { Medal, MedalPeriod } from '@/lib/medals'
@@ -471,24 +476,42 @@ const GALLERY_VIEWER = {
   PIXEL: SEED_PLAYERS.ACE_9,
 } as const satisfies Record<keyof typeof SEED_PLAYERS, string>
 
-const profile = (name: keyof typeof SEED_PLAYERS, mine = false): Variant => ({
-  key: `profile-${name}${mine ? '-me' : ''}`,
-  label: mine ? `${name} · ME` : name,
-  render: (close) => (
-    <ProfileVariant
-      userId={SEED_PLAYERS[name]}
-      // Viewing your own profile is the one thing this modal does differently — the motto
-      // becomes editable — so it gets its own entry rather than being reasoned about.
-      //
-      // Another seeded player when it is not yours, not a made-up id: COMPARE WITH ME goes
-      // and fetches the viewer's own profile, and a viewer the database has never heard of
-      // would put the compare table permanently in its error state here. Whoever is being
-      // viewed cannot also be the viewer, or the modal would read as your own.
-      viewerId={mine ? SEED_PLAYERS[name] : GALLERY_VIEWER[name]}
-      onClose={close}
-    />
-  ),
-})
+const profile = (
+  name: keyof typeof SEED_PLAYERS,
+  mine = false,
+  // Which Extreme all-time boards this player holds, and so which mark the card wears
+  // over their name. Nobody by default — a mark is rare, and the ordinary profile is the
+  // one every entry below is about. The variants that pass something are there for the
+  // bubble a tap on the mark opens, which says a different thing on your own card than on
+  // somebody else's; like the intro, the card reads this through a context.
+  champions: Champions = NO_CHAMPIONS,
+): Variant => {
+  const mark = championMark(SEED_PLAYERS[name], champions)
+  const worn = mark === null ? '' : `${mark} `
+  const who = mine ? `${name} · ME` : name
+  return {
+    key: `profile-${name}${mine ? '-me' : ''}${mark === null ? '' : '-marked'}`,
+    label: `${worn}${who}`,
+    render: (close) => (
+      <ChampionsProvider value={champions}>
+        <ProfileVariant
+          userId={SEED_PLAYERS[name]}
+          // Viewing your own profile is the one thing this modal does differently — the
+          // motto becomes editable — so it gets its own entry rather than being reasoned
+          // about.
+          //
+          // Another seeded player when it is not yours, not a made-up id: COMPARE WITH ME
+          // goes and fetches the viewer's own profile, and a viewer the database has never
+          // heard of would put the compare table permanently in its error state here.
+          // Whoever is being viewed cannot also be the viewer, or the modal would read as
+          // your own.
+          viewerId={mine ? SEED_PLAYERS[name] : GALLERY_VIEWER[name]}
+          onClose={close}
+        />
+      </ChampionsProvider>
+    ),
+  }
+}
 
 // The answer to a message, as the launch dialog would show it. What varies is the shape
 // of the two texts in the card — a sentence, a couple of bullets, or an answer long enough
@@ -724,6 +747,14 @@ const SCREENS: Section[] = [
     items: [
       profile('ACE_9'),
       profile('ACE_9', true),
+      // The crown on your own card and the owl on somebody else's — the two voices the
+      // mark's bubble speaks in, which is the only thing about it that is not the same
+      // component the intro crowns its title with.
+      profile('ACE_9', true, {
+        accuracy: SEED_PLAYERS.ACE_9,
+        speed: SEED_PLAYERS.ACE_9,
+      }),
+      profile('DOMINO', false, { accuracy: SEED_PLAYERS.DOMINO, speed: null }),
       profile('DOMINO'),
       profile('VORTEX'),
       profile('BLAZE'),

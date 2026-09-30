@@ -219,7 +219,7 @@ export function MenuOverlay({
               rarest thing on the screen, and the top is where the eye starts. Silent for
               everyone who hasn't taken an Extreme all-time board, and tappable for
               anyone who has yet to find out what the thing over their name is. */}
-          {mark !== null && <TitleMark mark={mark} />}
+          {mark !== null && <TitleMark mark={mark} mine float className="mb-1" />}
 
           {/* Greeting — only shown when nickname is set. The player's own name is
               drawn the way their name is drawn everywhere else, in the gradient their

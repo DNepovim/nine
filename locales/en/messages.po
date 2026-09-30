@@ -300,7 +300,7 @@ msgstr "AVG SPD"
 msgid "BACK"
 msgstr "BACK"
 
-#: components/game/tutorial-stepper.tsx:103
+#: components/game/tutorial-stepper.tsx:110
 msgid "Back a step"
 msgstr "Back a step"
 
@@ -402,7 +402,7 @@ msgstr "CONNECT TO THE INTERNET TO PLAY WITH FRIENDS"
 msgid "CONTINUE"
 msgstr "CONTINUE"
 
-#: app/(tabs)/index.tsx:1656
+#: app/(tabs)/index.tsx:1711
 msgid "Continue the tutorial"
 msgstr "Continue the tutorial"
 
@@ -590,7 +590,7 @@ msgstr "FLAWLESS TEN"
 msgid "FORTUNE"
 msgstr "FORTUNE"
 
-#: components/game/tutorial-stepper.tsx:153
+#: components/game/tutorial-stepper.tsx:158
 msgid "Forward a step"
 msgstr "Forward a step"
 
@@ -784,7 +784,7 @@ msgstr "LEAVE GAME"
 msgid "Let a target’s ring run out and you lose one too — precision still has a clock."
 msgstr "Let a target’s ring run out and you lose one too — precision still has a clock."
 
-#: components/tutorial-curtain.tsx:92
+#: components/tutorial-curtain.tsx:99
 msgid "LET'S LEARN THE GAME"
 msgstr "LET'S LEARN THE GAME"
 
@@ -1279,7 +1279,7 @@ msgid "STEADY HAND"
 msgstr "STEADY HAND"
 
 #. placeholder {0}: board + 1
-#: components/game/tutorial-stepper.tsx:120
+#: components/game/tutorial-stepper.tsx:127
 msgid "Step {0}"
 msgstr "Step {0}"
 

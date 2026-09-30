@@ -7,14 +7,22 @@ import Animated, { FadeIn, FadeOut } from 'react-native-reanimated'
 
 import { GAME_SCALE } from '@/constants/colors'
 import type { ChampionMark } from '@/lib/champions'
+import { cn } from '@/lib/cn'
 import { MODE_GRADIENT } from '@/machines/game'
 
-// The mark's own line height, and so the height of the box the bubble hangs off.
-const MARK_HEIGHT = 30
+// How big the mark is drawn where nothing says otherwise — the intro's size, over the
+// title. The profile card draws it a little larger, over the name.
+const MARK_SIZE = 26
 
-// Fits inside the narrowest phone the intro is drawn on, with room to spare on either
-// side — a bubble that reached the screen's edges would read as a panel rather than as
-// something pointing at one emoji.
+// The leading the mark is set on, and so the difference between the glyph's size and the
+// height of the box the bubble hangs off.
+const LEADING = 4
+
+// How wide the bubble is drawn wherever there is room for it. It fits inside the
+// narrowest phone the intro is drawn on with room to spare on either side — a bubble that
+// reached the screen's edges would read as a panel rather than as something pointing at
+// one emoji. Where there is less room than this — the profile card on a small phone — the
+// bubble gives the difference up rather than hanging off the card.
 const BUBBLE_WIDTH = 264
 
 // The caret over the bubble, drawn as a rotated square whose upper half sticks out past
@@ -40,10 +48,12 @@ const shadow = {
   shadowRadius: 12,
 }
 
-// What each mark says, in the player's own terms — this is the one place a mark is
-// always the reader's, so it speaks to them rather than about whoever wears it.
+// What each mark says, in two voices — the reader's own mark over the intro's title, and
+// somebody else's over the name on their profile. Same fact, same brag, and only the
+// person it is about changes: a line that switched to a caption the moment it was not
+// yours would make the mark read as smaller on the profile of the player who took it.
 //
-// Each one brags on the player's behalf before it explains itself: the bird is held up,
+// Each one brags on the wearer's behalf before it explains itself: the bird is held up,
 // and then the player is put above it. A line that only said which board it came from
 // would be a caption, and the mark is a reward.
 //
@@ -54,39 +64,67 @@ const MARK_COPY = {
   '🦉': {
     tint: MODE_GRADIENT.accuracy[0],
     title: msg`THE OWL`,
-    body: msg`An owl can hear a mouse under half a metre of snow. You are the more exact one — Extreme Accuracy's all-time record is yours.`,
+    mine: msg`An owl can hear a mouse under half a metre of snow. You are the more exact one — Extreme Accuracy's all-time record is yours.`,
+    theirs: msg`An owl can hear a mouse under half a metre of snow. This player is the more exact one — Extreme Accuracy's all-time record is theirs.`,
   },
   '🦅': {
     tint: MODE_GRADIENT.speed[0],
     title: msg`THE EAGLE`,
-    body: msg`An eagle dives at 240 km/h. You are the quicker one — Extreme Speed's all-time record is yours.`,
+    mine: msg`An eagle dives at 240 km/h. You are the quicker one — Extreme Speed's all-time record is yours.`,
+    theirs: msg`An eagle dives at 240 km/h. This player is the quicker one — Extreme Speed's all-time record is theirs.`,
   },
   '👑': {
     tint: GAME_SCALE[4],
     title: msg`THE CROWN`,
-    body: msg`The owl's ear and the eagle's dive, and you out-do both: the all-time record on Extreme Accuracy and Extreme Speed at once.`,
+    mine: msg`The owl's ear and the eagle's dive, and you out-do both: the all-time record on Extreme Accuracy and Extreme Speed at once.`,
+    theirs: msg`The owl's ear and the eagle's dive, and this player out-does both: the all-time record on Extreme Accuracy and Extreme Speed at once.`,
   },
 } as const satisfies Record<
   ChampionMark,
-  { tint: string; title: MessageDescriptor; body: MessageDescriptor }
+  {
+    tint: string
+    title: MessageDescriptor
+    mine: MessageDescriptor
+    theirs: MessageDescriptor
+  }
 >
 
-// The mark this player wears everywhere their name does, worn here over the title
-// itself, with a bubble explaining it.
+// The mark a player wears everywhere their name does, drawn large with a bubble
+// explaining it: over NINE on the intro, where it is the reader's own, and over the name
+// on a profile card, where it is whoever that card is about.
 //
 // The mark arrives unannounced — a board changes hands while the app is shut and an emoji
 // the player has never seen is suddenly sitting over NINE — so it has to be able to say
 // what it is. The guide's champions section says the same thing at length; this is the
-// answer to a tap on the mark, which is where the question is actually asked.
+// answer to a tap on the mark, which is where the question is actually asked. And a mark
+// on somebody else's profile raises the same question from the other side, which is why
+// the same tap answers it there.
 //
-// The bubble hangs below. The mark sits at the very top of the screen's content, so there
-// is nothing above it to open into — what is above is the edge of the phone. Below there
-// is the greeting and the title, which the bubble covers for as long as it is up. It is
-// absolutely placed, so nothing on the screen moves to make room for it.
-export function TitleMark({ mark }: { mark: ChampionMark }) {
+// The bubble hangs below. The mark sits at the very top of whatever it crowns, so there
+// is nothing above it to open into — what is above is the edge of the phone or the edge
+// of the card. Below there is the greeting and the title, or the name and the motto,
+// which the bubble covers for as long as it is up. It is absolutely placed, so nothing
+// around it moves to make room for it.
+export function TitleMark({
+  mark,
+  // Whose mark this is, which is the only thing that changes the words.
+  mine,
+  size = MARK_SIZE,
+  // The drift the intro's title letters ride, which the mark joins when it stands among
+  // them. Off inside the profile card, where nothing else moves.
+  float = false,
+  className,
+}: {
+  mark: ChampionMark
+  mine: boolean
+  size?: number
+  float?: boolean
+  className?: string
+}) {
   const { t } = useLingui()
   const [open, setOpen] = useState(false)
-  const { tint, title, body } = MARK_COPY[mark]
+  const { tint, title } = MARK_COPY[mark]
+  const body = mine ? MARK_COPY[mark].mine : MARK_COPY[mark].theirs
 
   useEffect(() => {
     if (!open) return
@@ -99,10 +137,17 @@ export function TitleMark({ mark }: { mark: ChampionMark }) {
   }, [open])
 
   return (
-    // Lifted above the title beside it: the bubble is a child of this box, and siblings
-    // later in the tree paint over earlier ones, so without this it would open behind
-    // the four letters it is meant to float over.
-    <View className="z-50 mb-1 items-center" style={{ height: MARK_HEIGHT }}>
+    // Lifted above whatever comes after it: the bubble is a child of this box, and
+    // siblings later in the tree paint over earlier ones, so without this it would open
+    // behind the four letters — or the name — it is meant to float over.
+    //
+    // Full width rather than as wide as the emoji, because an absolutely placed child is
+    // laid out inside its parent — the bubble can only be as wide as this box gives it
+    // room to be, and a box the width of one glyph would wrap the copy a word per line.
+    <View
+      className={cn('z-50 w-full items-center', className)}
+      style={{ height: size + LEADING }}
+    >
       <Pressable
         onPress={() => {
           setOpen((wasOpen) => !wasOpen)
@@ -111,7 +156,11 @@ export function TitleMark({ mark }: { mark: ChampionMark }) {
         accessibilityRole="button"
         accessibilityLabel={t(title)}
       >
-        <Text selectable={false} className="letter-float-1 text-[26px] leading-[30px]">
+        <Text
+          selectable={false}
+          className={cn(float && 'letter-float-1')}
+          style={{ fontSize: size, lineHeight: size + LEADING }}
+        >
           {mark}
         </Text>
       </Pressable>
@@ -121,7 +170,17 @@ export function TitleMark({ mark }: { mark: ChampionMark }) {
           entering={FadeIn.duration(160)}
           exiting={FadeOut.duration(140)}
           className="absolute items-center"
-          style={{ top: MARK_HEIGHT + GAP, width: BUBBLE_WIDTH }}
+          // Its own width, given up where there is less room than that: the intro has
+          // the whole screen to open into and gets the full bubble, while inside the
+          // profile card on a small phone the second half takes over and the bubble comes
+          // in to the card's own width. A percentage rather than a measurement, so
+          // neither place has to know the other's numbers — it reads against this box,
+          // which is why the box is full width.
+          style={{
+            top: size + LEADING + GAP,
+            width: BUBBLE_WIDTH,
+            maxWidth: '100%',
+          }}
         >
           {/* Any tap closes it. There is nothing in here to act on, so an X to aim at
               would be a control standing between the player and the screen. */}

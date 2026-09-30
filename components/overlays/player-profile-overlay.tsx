@@ -16,6 +16,7 @@ import { ProfileName } from '@/components/overlays/profile-name'
 import { ProfileReignRow } from '@/components/overlays/profile-reign-row'
 import { ProfileScore } from '@/components/overlays/profile-score'
 import { StatCell } from '@/components/overlays/stat-cell'
+import { TitleMark } from '@/components/overlays/title-mark'
 import { ACHIEVEMENT_COUNT } from '@/constants/achievements'
 import { ACHIEVEMENT_INK } from '@/constants/colors'
 import { mono } from '@/constants/theme'
@@ -42,6 +43,11 @@ import { MODE_GRADIENT, MODES, SCORED_MODES, type ScoredMode } from '@/machines/
 // The line is here for the same reason the counters' start date was: a player who has
 // been at this a while should not read as someone who turned up this morning.
 const JOINED_ON = '2026-09-22'
+
+// The mark over the name, a little larger than the intro draws it over the title. The
+// intro's has four glass letters under it to be read against; here it is the first thing
+// on the card, with only 12px caps below, so the same size would read as a stray emoji.
+const MARK_SIZE = 30
 
 // Past this many months the line counts years instead. A profile two years old that said
 // "joined 24 months ago" would be asking the reader to do the division.
@@ -173,12 +179,13 @@ export function PlayerProfileOverlay({
               `shrink` because the ScrollView below still has to give way inside the
               card's own height cap. */}
           <View className="shrink gap-3">
-            {/* The mark sits above the name, as it does on every row that wears one. */}
-            {mark !== null && (
-              <Text selectable={false} className="text-center text-[30px] leading-[34px]">
-                {mark}
-              </Text>
-            )}
+            {/* The mark sits above the name, as it does on every row that wears one —
+                and the same component the intro crowns its title with, so a tap on it
+                answers the same question here. This is where the question is asked more
+                often than anywhere else: on the intro the mark is your own and you at
+                least know you took something, whereas a crown over a stranger's name is
+                a stranger's crown, with nothing on the card to say what it took. */}
+            {mark !== null && <TitleMark mark={mark} mine={isMine} size={MARK_SIZE} />}
             {/* The same two averages the stat row below prints, handed to the name so
                 the colour and the numbers explaining it can never disagree. */}
             {profile !== null && (
