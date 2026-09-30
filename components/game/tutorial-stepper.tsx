@@ -4,6 +4,7 @@ import { Pressable, Text, View } from 'react-native'
 import {
   canGoBack,
   canGoForward,
+  previousStep,
   stepState,
   TUTORIAL_STEPS,
   type StepState,
@@ -85,24 +86,30 @@ export function TutorialStepper({
   current,
   // The highest they have reached this run. Raised by play, never by this.
   furthest,
+  // Whether the row may be used at all. False while one of the lesson's cards is up: a
+  // card holds the whole viewport to hear the tap that dismisses it, so every press on
+  // this row goes to the card instead, and a row that looked live while that was true
+  // would be offering something it cannot do. Passes on its own, when the card does.
+  live,
   onGo,
 }: {
   current: number
   furthest: number
+  live: boolean
   onGo: (board: number) => void
 }) {
   const { t } = useLingui()
   return (
     <View
       className="flex-row items-center justify-center"
-      style={{ height: TUTORIAL_STEPPER_HEIGHT }}
+      style={{ height: TUTORIAL_STEPPER_HEIGHT, opacity: live ? 1 : 0.35 }}
     >
       <Arrow
         glyph="‹"
-        live={canGoBack(current)}
+        live={live && canGoBack(current)}
         label={t`Back a step`}
         onPress={() => {
-          onGo(current - 1)
+          onGo(previousStep(current))
         }}
       />
       <View className="flex-row items-center gap-2 px-2">
@@ -112,14 +119,14 @@ export function TutorialStepper({
           return (
             <Pressable
               key={board}
-              disabled={state !== 'visited'}
+              disabled={!live || state !== 'visited'}
               onPress={() => {
                 onGo(board)
               }}
               accessibilityRole="button"
               accessibilityLabel={t`Step ${board + 1}`}
               accessibilityState={{
-                disabled: state !== 'visited',
+                disabled: !live || state !== 'visited',
                 selected: state === 'current',
               }}
               hitSlop={6}
@@ -147,7 +154,7 @@ export function TutorialStepper({
       </View>
       <Arrow
         glyph="›"
-        live={canGoForward(current, furthest)}
+        live={live && canGoForward(current, furthest)}
         label={t`Forward a step`}
         onPress={() => {
           onGo(current + 1)

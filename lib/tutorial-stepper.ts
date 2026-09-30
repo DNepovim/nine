@@ -32,8 +32,23 @@ export const stepState = (
 // PREV, live anywhere but the opening board.
 export const canGoBack = (current: number): boolean => current > 0
 
+// Which board PREV lands on. One back, except from past the script — a tutorial run
+// carries on past ⑤ with rolled targets, so `current` routinely reads 5, 6, 7 — where it
+// lands on the last scripted board instead. The machine only rewinds to a board the
+// script has, and a step down from 6 would be a step onto a board that does not exist.
+export const previousStep = (current: number): number =>
+  Math.min(current - 1, TUTORIAL_STEPS - 1)
+
 // NEXT, live only for a player standing behind their own furthest — which is to say,
 // only for one who went back. This is the whole of the no-skipping rule: the stepper can
 // return ground it gave up and can never hand out ground the player has not played.
+//
+// Bounded by the script as well, because `furthest` is not: a player who cleared ⑤ and
+// went back is standing behind a high-water mark of 5 or more, and forward from ④ would
+// be a rewind the machine refuses — a lit arrow that does nothing. So the walk forward
+// stops on ⑤ and the player clears it to reach free play again, rather than being carried
+// past the script by an arrow. The row has no number for where that would put them, and
+// this is the honest reading of that: the stepper returns ground, and the last of the
+// ground it can return is the last board it draws.
 export const canGoForward = (current: number, furthest: number): boolean =>
-  current < furthest
+  current < furthest && current + 1 < TUTORIAL_STEPS

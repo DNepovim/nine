@@ -481,14 +481,17 @@ export default function GameScreen() {
   // which is what puts a board with a target already springing in under the last of the
   // words. See components/tutorial-curtain.tsx.
   //
-  // `menu` because START is only accepted there. `taken` runs first — it closes
-  // `pending`, so a re-render mid-effect cannot raise a second curtain over the first.
+  // `menu` because START is only accepted there. What keeps a second curtain from going
+  // up over the first is the curtain's own state rather than `pending`: the launch is
+  // written down as welcomed when the run is dealt, not when the words appear — an app
+  // killed under them would otherwise come back to an install marked as having had a
+  // tutorial it never got — so `pending` is still true for the whole hold, and only
+  // `curtain` can say that one is already there.
   const [curtain, setCurtain] = useState<'down' | 'up'>('down')
   useEffect(() => {
-    if (!welcome.pending || !splashExiting || !isMenu) return
-    welcome.taken()
+    if (curtain !== 'down' || !welcome.pending || !splashExiting || !isMenu) return
     setCurtain('up')
-  }, [welcome, splashExiting, isMenu])
+  }, [curtain, welcome.pending, splashExiting, isMenu])
 
   const { userId, nickname, isReady, updateNickname } = useSupabaseAuth()
 
@@ -865,14 +868,6 @@ export default function GameScreen() {
     send,
   })
   const { floats, removeFloat } = useFloatingPoints(hitBatch)
-  const { displayedTargets, removeDisplayed, onContainerLayout, canvas } =
-    useDisplayedTargets({
-      machineTargets: targets,
-      hitBatch,
-      runSeq: state.context.runSeq,
-      restoredPositions,
-    })
-
   // How far into the lesson the player has got, and how many times the stepper has put
   // them back.
   //
@@ -881,9 +876,20 @@ export default function GameScreen() {
   // storage mid-run arrives with everything it had already played behind it, and nothing
   // extra has to be persisted for that.
   const [furthestStep, setFurthestStep] = useState(0)
-  // Only ever climbs, and only the screen reads it — the lesson wants to know that a
-  // rewind happened, not which one.
+  // Only ever climbs, and nobody reads the number itself — the lesson and the display
+  // list both want to know that a rewind happened, not which one. Declared above the two
+  // hooks that take it, which is why it sits ahead of the board rather than beside the
+  // stepper that raises it.
   const [rewindSeq, setRewindSeq] = useState(0)
+
+  const { displayedTargets, removeDisplayed, onContainerLayout, canvas } =
+    useDisplayedTargets({
+      machineTargets: targets,
+      hitBatch,
+      runSeq: state.context.runSeq,
+      rewindSeq,
+      restoredPositions,
+    })
 
   // Raised by play alone. A rewind drops `hits`, and the max is what makes that drop
   // invisible here: ground covered stays covered.
@@ -1414,11 +1420,16 @@ export default function GameScreen() {
                 {/* Where the player is in the lesson. Above the band the lesson talks in,
                   so the two read top to bottom: which step this is, then what it says.
                   Tutorial runs only, and a fixed height for the same reason the band
-                  below it is — see TUTORIAL_STEPPER_HEIGHT. */}
+                  below it is — see components/game/tutorial-stepper.tsx.
+
+                  Dark while one of the lesson's cards is up: the card's tap-through takes
+                  the whole viewport, including this row, so a press here would only turn
+                  the card's page. `onTapThrough` is non-null exactly at those steps. */}
                 {tutorial && (
                   <TutorialStepper
                     current={hits}
                     furthest={furthestStep}
+                    live={lesson.onTapThrough === null}
                     onGo={(board) => {
                       send({ type: 'REWIND', board, now: Date.now() })
                       setRewindSeq((seq) => seq + 1)
@@ -2104,6 +2115,10 @@ export default function GameScreen() {
             <TutorialCurtain
               onLift={() => {
                 startTutorial('welcome')
+                // Written down beside the run it records, not when the curtain went up:
+                // this is the flag that says this install has had its tutorial, and a
+                // launch killed under the words has had nothing.
+                welcome.taken()
               }}
               onGone={() => {
                 setCurtain('down')

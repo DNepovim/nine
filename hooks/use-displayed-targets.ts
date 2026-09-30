@@ -17,11 +17,13 @@ const exitFor = (value: number, hits: readonly HitInfo[]): TargetExit => {
 
 // Mirrors the machine's targets into a display list that outlives removals long
 // enough to play exit animations, assigns each new target a non-overlapping
-// position, and clears the list when a fresh game starts.
+// position, and clears the list when a fresh game starts or the stepper puts a tutorial
+// run back on an earlier board.
 export function useDisplayedTargets({
   machineTargets,
   hitBatch,
   runSeq,
+  rewindSeq,
   restoredPositions,
 }: {
   machineTargets: Target[]
@@ -33,6 +35,10 @@ export function useDisplayedTargets({
   // spotted from the state name alone. RESUME leaves it where it is, which is what
   // keeps a resumed board intact.
   runSeq: number
+  // How many times the stepper has put this run back on an earlier board. A rewind
+  // replaces the board without dealing a run, so it moves neither of the two counters
+  // above — see the clear below for why this one has to be here.
+  rewindSeq: number
   // Where each target of a run put back from storage was sitting when the app was
   // closed, by id — see lib/saved-run.ts. Empty on every other launch, and it stays
   // usable for the whole run: `nextTargetId` is restored along with the board, so no
@@ -47,6 +53,7 @@ export function useDisplayedTargets({
   const [canvas, setCanvas] = useState({ width: 0, height: 0 })
   const lastHitSeq = useRef(hitBatch.seq)
   const prevRunSeq = useRef(runSeq)
+  const prevRewindSeq = useRef(rewindSeq)
 
   useEffect(() => {
     const now = Date.now()
@@ -62,8 +69,17 @@ export function useDisplayedTargets({
     // targets already on it, so the clear ran a moment after they were placed and wiped
     // every one — leaving a board that looked empty until the next press re-placed the
     // lot at once.
-    const freshDeal = runSeq !== prevRunSeq.current
+    //
+    // A rewind is the same case for a different reason. It replaces the board without
+    // dealing a run, so nothing here would mark it: the target it takes off is still
+    // standing, falls out of `live`, and is exited with no hit to explain it — which is
+    // the *failure* exit, the squash and fade that means the clock took it. In the one
+    // run where nothing can be lost, every use of the stepper would show the player a
+    // loss. Cleared instead, the board the player stepped back to simply arrives.
+    const clearsBoard =
+      runSeq !== prevRunSeq.current || rewindSeq !== prevRewindSeq.current
     prevRunSeq.current = runSeq
+    prevRewindSeq.current = rewindSeq
 
     const live = new Map(machineTargets.map((t) => [t.id, t]))
     // Only a batch we haven't seen yet explains this update. Without one, whatever
@@ -71,7 +87,7 @@ export function useDisplayedTargets({
     const hits = hitBatch.seq === lastHitSeq.current ? [] : hitBatch.hits
     lastHitSeq.current = hitBatch.seq
     setDisplayedTargets((prev) => {
-      const standing = freshDeal ? [] : prev
+      const standing = clearsBoard ? [] : prev
       const updated = standing.map((t) => {
         if (t.exit !== null) return t
         const current = live.get(t.id)
@@ -110,7 +126,7 @@ export function useDisplayedTargets({
         })
       return [...updated, ...incoming]
     })
-  }, [machineTargets, runSeq])
+  }, [machineTargets, runSeq, rewindSeq])
 
   const removeDisplayed = (id: number) => {
     setDisplayedTargets((prev) => prev.filter((t) => t.id !== id))

@@ -4,6 +4,7 @@ import { TUTORIAL_TARGETS } from '@/constants/tutorial'
 import {
   canGoBack,
   canGoForward,
+  previousStep,
   stepState,
   TUTORIAL_STEPS,
 } from '@/lib/tutorial-stepper'
@@ -54,5 +55,29 @@ describe('the stepper', () => {
     expect(stepState(past - 1, past, past)).toBe('visited')
     expect(canGoForward(past, past)).toBe(false)
     expect(canGoBack(past)).toBe(true)
+  })
+
+  // PREV from a rolled board, two targets past the sign-off. A step down from six would
+  // ask for a board the script has not got, the machine would refuse it, and the arrow
+  // would be lit over nothing — so the step down from anywhere past the script is onto
+  // the last board the script has.
+  it('steps back onto the last scripted board from past the script', () => {
+    expect(previousStep(TUTORIAL_STEPS + 1)).toBe(TUTORIAL_STEPS - 1)
+    expect(previousStep(TUTORIAL_STEPS)).toBe(TUTORIAL_STEPS - 1)
+  })
+
+  it('steps back one board from inside the script', () => {
+    expect(previousStep(1)).toBe(0)
+    expect(previousStep(TUTORIAL_STEPS - 1)).toBe(TUTORIAL_STEPS - 2)
+  })
+
+  // The other half of the same bound. A player who cleared the last board stands at a
+  // furthest of five with only five numbers to stand on, so walking forward would run out
+  // of row before it ran out of ground covered: NEXT goes dark on the last number and the
+  // player plays that board to reach free play again.
+  it('stops the walk forward on the last scripted board', () => {
+    const cleared = TUTORIAL_STEPS
+    expect(canGoForward(TUTORIAL_STEPS - 2, cleared)).toBe(true)
+    expect(canGoForward(TUTORIAL_STEPS - 1, cleared)).toBe(false)
   })
 })
