@@ -33,6 +33,7 @@ import { StrikeShot } from '@/components/game/strike-shot'
 import { TargetCard } from '@/components/game/target-card'
 import { TraineeStats } from '@/components/game/trainee-stats'
 import { TutorialCard } from '@/components/game/tutorial-card'
+import { TutorialStepper } from '@/components/game/tutorial-stepper'
 import { AchievementDetail } from '@/components/overlays/achievement-detail'
 import { AchievementsOverlay } from '@/components/overlays/achievements-overlay'
 import { AdvancedOptionsOverlay } from '@/components/overlays/advanced-options-overlay'
@@ -874,6 +875,35 @@ export default function GameScreen() {
       restoredPositions,
     })
 
+  // How far into the lesson the player has got, and how many times the stepper has put
+  // them back.
+  //
+  // `furthest` is a high-water mark rather than a stored step: raised by play, never by
+  // the stepper, and seeded from the run's own hit count — so a tutorial put back from
+  // storage mid-run arrives with everything it had already played behind it, and nothing
+  // extra has to be persisted for that.
+  const [furthestStep, setFurthestStep] = useState(0)
+  // Only ever climbs, and only the screen reads it — the lesson wants to know that a
+  // rewind happened, not which one.
+  const [rewindSeq, setRewindSeq] = useState(0)
+
+  // Raised by play alone. A rewind drops `hits`, and the max is what makes that drop
+  // invisible here: ground covered stays covered.
+  useEffect(() => {
+    setFurthestStep((reached) => Math.max(reached, hits))
+  }, [hits])
+
+  // A fresh run starts the mark over, seeded from the hit count that run arrived with —
+  // nought for a run just dealt, and whatever it had already played for one put back from
+  // storage. Read through a ref rather than depended on, for the reason the lesson does
+  // the same: `hits` moves inside a run, and an effect watching it would reset the mark
+  // on the first hit of the very run it was tracking.
+  const hitsRef = useRef(hits)
+  hitsRef.current = hits
+  useEffect(() => {
+    setFurthestStep(hitsRef.current)
+  }, [state.context.runSeq])
+
   // The tutorial's lesson: what it is saying, and how much of the dial it is holding while
   // it says it. Silent and inert in every run that is not a tutorial, and in a tutorial put
   // back from storage with hits already on it.
@@ -881,9 +911,7 @@ export default function GameScreen() {
     tutorial,
     isPlaying,
     runSeq: state.context.runSeq,
-    // A placeholder until the stepper sends real rewinds (Task 5); no rewind reaches the
-    // lesson before then.
-    rewindSeq: 0,
+    rewindSeq,
     hits,
     batch: hitBatch,
     grid,
@@ -1384,6 +1412,20 @@ export default function GameScreen() {
                   />
                 )}
 
+                {/* Where the player is in the lesson. Above the band the lesson talks in,
+                  so the two read top to bottom: which step this is, then what it says.
+                  Tutorial runs only, and a fixed height for the same reason the band
+                  below it is — see TUTORIAL_STEPPER_HEIGHT. */}
+                {tutorial && (
+                  <TutorialStepper
+                    current={hits}
+                    furthest={furthestStep}
+                    onGo={(board) => {
+                      send({ type: 'REWIND', board, now: Date.now() })
+                      setRewindSeq((seq) => seq + 1)
+                    }}
+                  />
+                )}
                 {/* The band the tutorial talks in, in the slot the readout above would have
                   taken, and held open for the whole run rather than appearing with the words.
 
