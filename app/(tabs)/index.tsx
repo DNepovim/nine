@@ -184,6 +184,13 @@ const UPDATE_SETTLE_MS = 2500
 // the sequence hits `done` — a beat lets that settle before something else moves.
 const BOOKMARK_REVEAL_DELAY_MS = 500
 
+// How long the board stands still after CONTINUE before the run picks up again. The
+// pause screen goes at once, so the player gets the grid, the targets and their frozen
+// clocks back with a beat to read them in — coming straight back to a running clock is
+// what made resuming cost a life. The machine ignores presses while it is still paused,
+// so the dial is inert for the beat rather than only looking it.
+const RESUME_DELAY_MS = 500
+
 // The menu-level overlays, one open at a time. 'none' means the screen under them —
 // the intro or the pause screen — is what shows. Feedback is not here: it is a
 // dialog over whatever is showing, not a screen of its own.
@@ -234,8 +241,12 @@ function feedbackGameState(
 //
 // The archive keeps its DONE button exactly where the bookmark would land, so it takes
 // the tab away for as long as it is up.
+//
+// `resuming` counts as a live run: the board is already back, and a tab appearing for
+// half a second and then leaving again is worse than one that never came.
 function showFeedbackBookmark({
   isPlaying,
+  resuming,
   showMultiGame,
   feedbackOpen,
   isGameOver,
@@ -243,13 +254,14 @@ function showFeedbackBookmark({
   inArchive,
 }: {
   isPlaying: boolean
+  resuming: boolean
   showMultiGame: boolean
   feedbackOpen: boolean
   isGameOver: boolean
   gameOverBookmarkReady: boolean
   inArchive: boolean
 }): boolean {
-  if (isPlaying || showMultiGame || feedbackOpen || inArchive) return false
+  if (isPlaying || resuming || showMultiGame || feedbackOpen || inArchive) return false
   return !isGameOver || gameOverBookmarkReady
 }
 
@@ -329,6 +341,33 @@ export default function GameScreen() {
   usePauseOnBlur(isPlaying, () => {
     send({ type: 'PAUSE', now: Date.now() })
   })
+
+  // The beat between CONTINUE and the run picking up again — see RESUME_DELAY_MS. The
+  // pause screen is gone for it, the machine is still paused through it.
+  const [resuming, setResuming] = useState(false)
+  useEffect(() => {
+    if (!resuming) return
+    const timer = setTimeout(() => {
+      setResuming(false)
+      send({ type: 'RESUME', now: Date.now() })
+    }, RESUME_DELAY_MS)
+    // The beat only runs while the app is on screen. A resume landing in a hidden tab
+    // would put the run back on a wall clock with nobody watching it — the very thing
+    // usePauseOnBlur exists to prevent, and out of its reach here because the run is not
+    // playing yet. Going away cancels it instead, leaving the pause screen where it was.
+    const subscription = AppState.addEventListener('change', (next) => {
+      if (next !== 'active') setResuming(false)
+    })
+    return () => {
+      clearTimeout(timer)
+      subscription.remove()
+    }
+  }, [resuming, send])
+  // Any other way out of the pause — HOME, END RUN, a restored run landing — drops the
+  // pending resume instead of firing it into whatever took its place.
+  useEffect(() => {
+    if (!isPaused) setResuming(false)
+  }, [isPaused])
 
   usePersistedStats(stats, send)
   usePersistedDifficulty(difficulty, send)
@@ -1780,7 +1819,7 @@ export default function GameScreen() {
               />
             )}
 
-            {isPaused && menuOverlay === 'none' && !stepUpOpen && (
+            {isPaused && menuOverlay === 'none' && !stepUpOpen && !resuming && (
               <PausedOverlay
                 gameMode={mode}
                 difficulty={difficulty}
@@ -1810,7 +1849,7 @@ export default function GameScreen() {
                 traineeTimeoutMs={traineeTimeoutMs}
                 onSetTraineeTimeout={setTraineeTimeoutMs}
                 onContinue={() => {
-                  send({ type: 'RESUME', now: Date.now() })
+                  setResuming(true)
                 }}
                 onRestart={() => {
                   // The run being abandoned is still live, so its score goes to the board
@@ -2013,6 +2052,7 @@ export default function GameScreen() {
               effect above — rather than showing the instant isGameOver flips. */}
             {showFeedbackBookmark({
               isPlaying,
+              resuming,
               showMultiGame,
               feedbackOpen,
               isGameOver,
