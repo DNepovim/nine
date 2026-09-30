@@ -245,10 +245,30 @@ export function PausedOverlay({
                   </Text>
                 </Pressable>
               )}
+              {/* The way out of the tutorial, as a button rather than the dim link the
+                other runs get. The player here has never seen the intro screen, so a
+                link labelled after a place they have not been is a door they cannot
+                read — and the one thing a player who wants out of a lesson should not
+                have to do is hunt for the exit. END TUTORIAL says what it stops; where
+                it lands is the intro, which is where they were always going next. */}
+              {tutorial && (
+                <Pressable
+                  onPress={onMenu}
+                  className="items-center rounded-2xl bg-card py-4"
+                >
+                  <Text
+                    selectable={false}
+                    className="font-mono text-[13px] font-black tracking-[2px] text-primary"
+                  >
+                    <Trans>END TUTORIAL</Trans>
+                  </Text>
+                </Pressable>
+              )}
             </View>
-            {/* The two ways off this screen that are not the run itself, in the dim
-              link dress game over uses for the same pair of jobs — small enough that
-              neither competes with CONTINUE, which is what most pauses end with.
+            {/* The ways off this screen that are not the run itself, in the dim link
+              dress game over uses for the same jobs — small enough that none of them
+              competes with CONTINUE, which is what most pauses end with. In the
+              tutorial only OPTIONS is left here; leaving is the button above.
               Side by side in the same row the intro screen ends with, so the links
               under a screen's buttons sit the same way wherever you meet them. */}
             <View className="flex-row flex-wrap items-center justify-center gap-x-5 gap-y-2">
@@ -257,17 +277,19 @@ export function PausedOverlay({
                 score goes to the board on the way out — so HOME on its own undersold it:
                 a player looking for the way out of a run should not have to learn that
                 going home is what ends one. */}
-              <Pressable onPress={onMenu} hitSlop={10}>
-                <View className="flex-row items-center gap-1">
-                  <Ionicons name="home-outline" size={10} color={dimColor} />
-                  <Text
-                    selectable={false}
-                    className="font-mono text-[10px] font-bold tracking-[1.8px] text-dim"
-                  >
-                    <Trans>END RUN</Trans>
-                  </Text>
-                </View>
-              </Pressable>
+              {!tutorial && (
+                <Pressable onPress={onMenu} hitSlop={10}>
+                  <View className="flex-row items-center gap-1">
+                    <Ionicons name="home-outline" size={10} color={dimColor} />
+                    <Text
+                      selectable={false}
+                      className="font-mono text-[10px] font-bold tracking-[1.8px] text-dim"
+                    >
+                      <Trans>END RUN</Trans>
+                    </Text>
+                  </View>
+                </Pressable>
+              )}
               <Pressable onPress={onOpenAdvanced} hitSlop={10}>
                 <View className="flex-row items-center gap-1">
                   <Ionicons name="settings-outline" size={10} color={dimColor} />

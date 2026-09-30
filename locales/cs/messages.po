@@ -448,9 +448,13 @@ msgstr "RANNÍ PTÁČE"
 msgid "EASY"
 msgstr "LEHKÁ"
 
-#: components/overlays/paused-overlay.tsx:267
+#: components/overlays/paused-overlay.tsx:288
 msgid "END RUN"
 msgstr "UKONČIT HRU"
+
+#: components/overlays/paused-overlay.tsx:263
+msgid "END TUTORIAL"
+msgstr "UKONČIT TUTORIÁL"
 
 #: components/overlays/join-room-overlay.tsx:47
 msgid "ENTER ROOM CODE"
@@ -961,7 +965,7 @@ msgid "OPTIMAL PATH"
 msgstr "NEJLEPŠÍ CESTA"
 
 #: components/overlays/menu-overlay.tsx:480
-#: components/overlays/paused-overlay.tsx:278
+#: components/overlays/paused-overlay.tsx:300
 msgid "OPTIONS"
 msgstr "NASTAVENÍ"
 
