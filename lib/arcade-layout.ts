@@ -1,0 +1,181 @@
+import { idSeed, type ArcadeWay } from '@/machines/arcade'
+
+// Arcade's geometry: a crossroad and its ways turned into points and curves, and the two
+// worklets that draw one and ride along it.
+//
+// Every spline is in its own crossroad's frame — the crossroad is the origin and the way
+// leaves it — so a way's shape never depends on where the run has got to. The screen places
+// each crossroad's box and lets the curves inside it stay local. Points, not pitches:
+// machines/arcade.ts holds the map in pitches, and this is the one place that knows how long
+// a pitch is.
+
+const TAU = Math.PI * 2
+
+// How far along the way each control point sits, and how much of the sway the far one takes.
+// The near control leans along the way in and the far one along the way out, which is what
+// makes two ways meeting at a crossroad read as one continuous line rather than as a corner.
+const CONTROL = 0.42
+const FAR_SWAY = 0.55
+
+// How far a way bends as it breathes, as a fraction of its own length. Small: this is meant
+// to read as a living line, not as a wobble.
+const SWAY = 0.06
+
+// The window each way's sway runs in. A way takes its own period from this range and its own
+// phase, so a fan of four breathes rather than pulsing in step.
+const PERIOD_MIN = 2600
+const PERIOD_STEPS = 9
+const PERIOD_STEP = 100
+const PHASE_STEPS = 17
+const PHASE_STEP = 0.37
+
+// How many segments a length measurement samples. The length only has to be long enough to
+// set a dash pattern that can cover the whole way, so a close answer is plenty.
+const SAMPLES = 24
+
+// One pitch, as a share of the canvas: how far apart two crossroads stand. A share rather
+// than a fixed size, so the same fan fits the same way on a tall phone and a short one.
+const PITCH = 0.4
+
+// How far below the first crossroad the mouth hangs.
+const STUB_REACH = 0.5
+
+export type Point = { x: number; y: number }
+
+export type Spline = {
+  // Where the way ends, relative to the crossroad it leaves.
+  toX: number
+  toY: number
+  c1x: number
+  c1y: number
+  c2x: number
+  c2y: number
+  // The unit normal of the way, which is the direction its sway bends the curve in.
+  nx: number
+  ny: number
+  amp: number
+  // Roughly how long the curve is. The draw-on and the wither are measured against it: a
+  // dash this long can hide the whole way.
+  length: number
+  period: number
+  phase: number
+}
+
+export const pitchFor = (canvasHeight: number): number => canvasHeight * PITCH
+
+// Above its callers rather than below them: the worklet transform rewrites every function in
+// here into a `const`, so a forward reference that would have hoisted throws on the way in.
+//
+// The curve always starts at the crossroad, so the first term of the cubic is zero and is
+// left out.
+function bezierAt(
+  s: Spline,
+  nearX: number,
+  nearY: number,
+  farX: number,
+  farY: number,
+  t: number,
+): Point {
+  'worklet'
+  const u = 1 - t
+  const near = 3 * u * u * t
+  const far = 3 * u * t * t
+  const end = t * t * t
+  return {
+    x: near * (s.c1x + nearX) + far * (s.c2x + farX) + end * s.toX,
+    y: near * (s.c1y + nearY) + far * (s.c2y + farY) + end * s.toY,
+  }
+}
+
+// How far the way is bent right now. One sine per way, off the screen's own clock, so every
+// way is at a different point in its own breath.
+function swayAt(s: Spline, clockMs: number): number {
+  'worklet'
+  return Math.sin((clockMs / s.period) * TAU + s.phase) * s.amp
+}
+
+// The way as an SVG path, swayed to wherever its breath has got to. Built on the UI thread
+// from `animatedProps`, so a way goes on breathing whatever React is doing.
+//
+// `cx`/`cy` say where the crossroad sits inside the box the path is drawn in — the curve is
+// measured from the crossroad, and the box has to put that origin somewhere all of its ways
+// fit around.
+export function splinePath(s: Spline, clockMs: number, cx: number, cy: number): string {
+  'worklet'
+  const k = swayAt(s, clockMs)
+  const c1x = cx + s.c1x + s.nx * k
+  const c1y = cy + s.c1y + s.ny * k
+  const c2x = cx + s.c2x + s.nx * k * FAR_SWAY
+  const c2y = cy + s.c2y + s.ny * k * FAR_SWAY
+  return `M${cx} ${cy} C${c1x} ${c1y} ${c2x} ${c2y} ${cx + s.toX} ${cy + s.toY}`
+}
+
+// Where on the way the hero is, read at the same moment the way is drawn — so it rides the
+// line rather than crossing it.
+export function splinePoint(s: Spline, t: number, clockMs: number): Point {
+  'worklet'
+  const k = swayAt(s, clockMs)
+  return bezierAt(s, s.nx * k, s.ny * k, s.nx * k * FAR_SWAY, s.ny * k * FAR_SWAY, t)
+}
+
+// Roughly how long a curve is, sampled without its sway — the breath changes the length by
+// well under a percent.
+function splineLength(s: Spline): number {
+  let total = 0
+  let prev: Point = { x: 0, y: 0 }
+  for (let i = 1; i <= SAMPLES; i++) {
+    const at = bezierAt(s, 0, 0, 0, 0, i / SAMPLES)
+    total += Math.hypot(at.x - prev.x, at.y - prev.y)
+    prev = at
+  }
+  return total
+}
+
+// The spline for a way out of a crossroad that the way in arrived at on `heading`.
+export function splineFor(way: ArcadeWay, heading: number, pitch: number): Spline {
+  const d = pitch * way.reach
+  const toX = Math.cos(way.angle) * d
+  const toY = Math.sin(way.angle) * d
+  const chord = Math.hypot(toX, toY) || 1
+  const seed = idSeed(way.to)
+  const shape = {
+    toX,
+    toY,
+    c1x: Math.cos(heading) * d * CONTROL,
+    c1y: Math.sin(heading) * d * CONTROL,
+    c2x: toX - Math.cos(way.angle) * d * CONTROL,
+    c2y: toY - Math.sin(way.angle) * d * CONTROL,
+    nx: -toY / chord,
+    ny: toX / chord,
+    amp: d * SWAY,
+    period: PERIOD_MIN + (seed % PERIOD_STEPS) * PERIOD_STEP,
+    phase: (seed % PHASE_STEPS) * PHASE_STEP,
+  }
+  // The length is of the curve, so it can only be measured once the curve exists. The chord
+  // stands in for it in the one call that measures it, and is replaced by the answer.
+  return { ...shape, length: splineLength({ ...shape, length: chord }) }
+}
+
+// The stub the mouth hangs on: a short way straight down out of the first crossroad, ending
+// in the ring a lost run falls into.
+//
+// It exists because the clock is drawn on the way *behind* the hero, and at the first
+// crossroad there is no way behind. So the first crossroad is given one — and it is also what
+// the hero rides down when that clock wins, which turns the one place the model was short
+// into the one place the clock says exactly what it costs.
+export function mouthStub(pitch: number): Spline {
+  const down = Math.PI / 2
+  return splineFor({ to: 'mouth', angle: down, reach: STUB_REACH, value: 0 }, down, pitch)
+}
+
+// A crossroad's place on the canvas, in points.
+//
+// Measured from where the run began and never re-based, which is the one decision the whole
+// screen rests on: the camera is a shared value and the map is React state, so if positions
+// were relative to wherever the hero is now, every arrival would have to shift the map and
+// reset the camera by the same vector in the same frame. In one fixed frame an arrival moves
+// nothing that is already drawn, and the two can never tear.
+export const pointsOf = (pos: Point, pitch: number): Point => ({
+  x: pos.x * pitch,
+  y: pos.y * pitch,
+})

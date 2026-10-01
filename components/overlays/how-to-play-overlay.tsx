@@ -44,6 +44,9 @@ const SECTIONS = {
   // The one section that steps off the game scale, because achievements are the one
   // reward that is not a place on a board — the green says so before the words do.
   achievements: { icon: 'trophy', title: msg`ACHIEVEMENTS`, color: ACHIEVEMENT_SCALE[3] },
+  // Arcade's own amber, which is the last stop of the scale and the one the pill, the
+  // hero and the lit way are all drawn in. Behind the `arcade` flag, like the chapter.
+  arcade: { icon: 'git-network', title: msg`ARCADE`, color: GAME_SCALE[4] },
   multiplayer: { icon: 'people', title: msg`MULTIPLAYER`, color: GAME_SCALE[3] },
   tips: { icon: 'bulb', title: msg`TIPS & TRICKS`, color: GAME_SCALE[4] },
 } as const satisfies Record<
@@ -68,21 +71,29 @@ const ALL_SECTIONS = [
   'controls',
   'targets',
   'modes',
+  'arcade',
   'champions',
   'achievements',
   'multiplayer',
   'tips',
 ] as const satisfies readonly SectionKey[]
 
-// What the guide actually offers. Multiplayer leaves with the tab that leads to it —
-// a chapter telling a player to pick a choice the intro no longer shows is the guide
-// being wrong, which is worse than the guide being short. Filtered in one place so the
-// contents list and the page below it cannot disagree about what is here.
+// What the guide actually offers. Multiplayer and arcade each leave with the door that
+// leads to them — a chapter telling a player to pick something the intro does not show is
+// the guide being wrong, which is worse than the guide being short. Filtered in one place
+// so the contents list and the page below it cannot disagree about what is here.
 //
-// A function rather than the constant it used to be: what the guide offers now depends
-// on the reader's role, which is not known when this module is loaded.
-function sectionOrder(showMultiplayer: boolean): readonly SectionKey[] {
-  return ALL_SECTIONS.filter((key) => showMultiplayer || key !== 'multiplayer')
+// A function rather than the constant it used to be: what the guide offers now depends on
+// the reader's role, which is not known when this module is loaded.
+function sectionOrder(
+  showMultiplayer: boolean,
+  showArcade: boolean,
+): readonly SectionKey[] {
+  return ALL_SECTIONS.filter((key) => {
+    if (key === 'multiplayer') return showMultiplayer
+    if (key === 'arcade') return showArcade
+    return true
+  })
 }
 
 // ── Reusable building blocks ────────────────────────────────────────────────
@@ -360,7 +371,11 @@ export function HowToPlayOverlay({
   // Read once and used twice — by the contents list and by the chapter itself — so the
   // list cannot offer a jump to a section that is not on the page.
   const showMultiplayer = useFlag('multiplayer')
-  const sections = useMemo(() => sectionOrder(showMultiplayer), [showMultiplayer])
+  const showArcade = useFlag('arcade')
+  const sections = useMemo(
+    () => sectionOrder(showMultiplayer, showArcade),
+    [showMultiplayer, showArcade],
+  )
 
   const scrollRef = useRef<ScrollView>(null)
   // Filled by each header as it lays out. A ref, not state: these positions are read
@@ -504,6 +519,46 @@ export function HowToPlayOverlay({
           <Body>
             {t`\nAccuracy leans almost entirely on precision; Speed on the clock. Each keeps its own streak: Accuracy wants the fewest moves, Speed wants you early on the ring.`}
           </Body>
+
+          {/* Arcade. Gone with the pill that leads to it — see the arcade flag in
+              constants/features.ts. */}
+          {showArcade && (
+            <>
+              <SectionHeader section="arcade" onMeasure={measure} />
+              <Body>
+                {t`Pick ARCADE on the start screen. The dial is the same dial — but the targets are not scattered any more. Two to four of them hang at the ends of ways out of the crossroad you are standing on, and the one you dial is the one you walk.`}
+              </Body>
+              <Card>
+                <Bullet color={GAME_SCALE[4]}>
+                  <Trans>
+                    Dial any target at the crossroad and you take that way. The ways you
+                    refused wither behind you.
+                  </Trans>
+                </Bullet>
+                <Bullet color={GAME_SCALE[4]}>
+                  <Trans>
+                    One clock for the whole crossroad, drawn on the way behind you: it
+                    turns red from the far end inward.
+                  </Trans>
+                </Bullet>
+                <Bullet color={GAME_SCALE[4]}>
+                  <Trans>
+                    When the red reaches you it drags you back one crossroad — and the
+                    ways you find there are the ones you left.
+                  </Trans>
+                </Bullet>
+                <Bullet color={GAME_SCALE[4]}>
+                  <Trans>
+                    Get dragged back off the first crossroad and you fall into the mouth.
+                    That is the only way a run ends.
+                  </Trans>
+                </Bullet>
+              </Card>
+              <Body>
+                {t`\nHow deep you got is the whole score: every way costs about the same number of moves, so what you are choosing is where to go, not what is cheaper. Difficulty sets the clock, and the clock keeps tightening the deeper you climb.`}
+              </Body>
+            </>
+          )}
 
           {/* Champions — the marks the boards hand out, explained where a player who
               has just seen one on a row will look for them. */}

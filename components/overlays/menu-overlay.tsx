@@ -28,6 +28,7 @@ import { cn } from '@/lib/cn'
 import { boardName, SHARE_URL, shouldBoast } from '@/lib/invite-message'
 import type { Medal } from '@/lib/medals'
 import {
+  ARCADE_TEASER,
   DARK_MODE_GRADIENT,
   DARK_MULTIPLAYER_GRADIENT,
   lerpColor,
@@ -57,11 +58,14 @@ const shadow = {
   shadowRadius: 12,
 }
 
-// The mode pills this screen shows. ARCADE is left out: it is a teaser for something
-// that is not playable yet, and a tab that cannot be pressed into anything is the first
-// row to cut when the screen is short. ModeSelector still knows it — `MODE_ITEMS` there
-// is what brings it back.
+// The mode pills this screen shows. ARCADE is left out of the player's three: it is a
+// teaser for something they cannot press into anything, and a tab that does nothing is the
+// first row to cut when the screen is short.
+//
+// Whoever holds the `arcade` flag gets it back, because for them it *is* a door — see
+// constants/features.ts.
 const INTRO_MODES: (Mode | 'arcade')[] = [...MODE_ORDER]
+const INTRO_MODES_WITH_ARCADE: (Mode | 'arcade')[] = [...MODE_ORDER, 'arcade']
 
 export function MenuOverlay({
   gameMode,
@@ -78,7 +82,10 @@ export function MenuOverlay({
   onOpenAchievements,
   onOpenMedals,
   initialPlayMode = 'alone',
+  initialFocus = gameMode,
+  onFocusChange,
   onPlay,
+  onPlayArcade,
   onPlayModeChange,
   onSetMode,
   onSetDifficulty,
@@ -119,7 +126,18 @@ export function MenuOverlay({
   // this one, not pieces of it.
   onOpenMedals: () => void
   initialPlayMode?: PlayMode
+  // Which pill is focused when this screen arrives, and every change to it. The same shape
+  // and the same reason as `initialPlayMode` above: this screen unmounts for an arcade run,
+  // and ARCADE is the one pill whose choice is committed nowhere — the three modes come
+  // back off `gameMode`, so without this a player leaving an arcade run would find the
+  // screen focused on whichever mode they played before it.
+  initialFocus?: Mode | 'arcade'
+  onFocusChange?: (focus: Mode | 'arcade') => void
   onPlay: () => void
+  // PLAY GAME with ARCADE focused. Its own door rather than a mode passed through
+  // `onPlay`, because arcade is not a `Mode`: it has no board, no lives and no place in
+  // `MODES`, and the run it starts is not the game machine's.
+  onPlayArcade: () => void
   // Fired on every ALONE / WITH FRIENDS toggle, not just at mount — this screen
   // unmounts under Options and How to Play (they render above it), which drops its
   // local `playMode` state. The caller mirrors this into whatever it feeds back as
@@ -150,7 +168,8 @@ export function MenuOverlay({
   // dead ends with no connection — disabled rather than left to fail after a tap.
   const online = useOnline()
   const showMultiplayer = useFlag('multiplayer')
-  const [focused, setFocused] = useState<Mode | 'arcade'>(gameMode)
+  const showArcade = useFlag('arcade')
+  const [focused, setFocused] = useState<Mode | 'arcade'>(initialFocus)
   const [playMode, setPlayMode] = useState<PlayMode>(initialPlayMode)
   const [panelWidth, setPanelWidth] = useState(0)
   const panelOffset = useSharedValue(0)
@@ -326,23 +345,30 @@ export function MenuOverlay({
               >
                 <ModeSelector
                   focused={focused}
-                  items={INTRO_MODES}
+                  items={showArcade ? INTRO_MODES_WITH_ARCADE : INTRO_MODES}
                   gradPhase={gradPhase}
+                  arcadeTag={showArcade ? ARCADE_TEASER.devTag : ARCADE_TEASER.tag}
                   onSelect={(m) => {
                     setFocused(m)
+                    onFocusChange?.(m)
                     if (isOneOf(m, ['trainee', 'accuracy', 'speed'])) onSetMode(m)
                   }}
                 />
-                {isOneOf(focused, ['accuracy', 'speed']) && (
+                {/* Arcade has a difficulty too — it is the clock at a crossroad, ramping
+                    on the same curve Speed's does — so the row stays where it is rather
+                    than the screen growing a second one. It picks the same stored
+                    difficulty as the scored modes: a player who likes Extreme likes it
+                    here as well. */}
+                {isOneOf(focused, ['accuracy', 'speed', 'arcade']) && (
                   <DifficultySelector
-                    gameMode={gameMode}
+                    gameMode={focused}
                     difficulty={difficulty}
                     gradPhase={gradPhase}
                     onSetDifficulty={onSetDifficulty}
                   />
                 )}
                 {/* Trainee's half of this slot: no board to show, so it teaches
-                    instead. Arcade stays empty — it isn't playable yet. */}
+                    instead. Arcade stays empty — a crossroad explains itself. */}
                 {focused === 'trainee' && <ModeTips />}
                 {/* Who has been taking this board lately, then where it stands now —
                     both about the board the pills above just picked. */}
@@ -447,16 +473,19 @@ export function MenuOverlay({
         <View className="mt-4 items-center gap-8">
           {playMode === 'alone' && (
             <Pressable
-              onPress={onPlay}
-              disabled={focused === 'arcade'}
+              onPress={focused === 'arcade' ? onPlayArcade : onPlay}
+              // Arcade is pressable now for whoever can see it, and still dead for
+              // everyone else — the badge on the pill above says SOON, and the button
+              // under it has to agree.
+              disabled={focused === 'arcade' && !showArcade}
               className={cn(
                 'w-56 overflow-hidden rounded-2xl',
-                focused === 'arcade' && 'opacity-40',
+                focused === 'arcade' && !showArcade && 'opacity-40',
               )}
               style={shadow}
             >
               <LinearGradient
-                colors={[...DARK_MODE_GRADIENT[gameMode]]}
+                colors={[...DARK_MODE_GRADIENT[focused]]}
                 start={{ x: 0, y: 0.5 }}
                 end={{ x: 1, y: 0.5 }}
                 className="items-center py-4"

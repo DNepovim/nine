@@ -39,7 +39,9 @@ export function DifficultySelector({
   onSetDifficulty,
   gradPhase,
 }: {
-  gameMode: Mode
+  // Arcade included: it keeps no board, but it does pick a difficulty, and its own pair
+  // in `MODE_GRADIENT` is what the pills are drawn from.
+  gameMode: Mode | 'arcade'
   difficulty: Difficulty
   onSetDifficulty: (d: Difficulty) => void
   gradPhase: SharedValue<number>
@@ -59,7 +61,7 @@ export function DifficultySelector({
   const [toColors, setToColors] = useState<[string, string]>(
     () => MODE_GRADIENT[gameMode] as [string, string],
   )
-  const prevGameModeRef = useRef<Mode>(gameMode)
+  const prevGameModeRef = useRef<Mode | 'arcade'>(gameMode)
   const colorFade = useSharedValue(1)
 
   // Per-item selection progress (0 = unselected, 1 = selected)

@@ -38,6 +38,9 @@ export function ModeSelector({
   // the dominant stop borrowed from singleplayer — to keep the tabs distinguishable
   // before either is tapped.
   accentIndex = 0,
+  // What ARCADE's corner says. SOON for a player, who cannot press it into anything, and
+  // DEV for whoever holds the flag that makes it playable — see constants/features.ts.
+  arcadeTag = ARCADE_TEASER.tag,
 }: {
   focused: Mode | 'arcade'
   onSelect: (m: Mode | 'arcade') => void
@@ -45,6 +48,7 @@ export function ModeSelector({
   items?: (Mode | 'arcade')[]
   gradient?: Partial<Record<Mode | 'arcade', readonly [string, string]>>
   accentIndex?: 0 | 1
+  arcadeTag?: string
 }) {
   const { t } = useLingui()
   const source = { ...MODE_GRADIENT, ...gradient }
@@ -185,7 +189,7 @@ export function ModeSelector({
                 >
                   {t(ARCADE_TEASER.label)}
                 </Text>
-                <CornerBadge label={ARCADE_TEASER.tag} />
+                <CornerBadge label={arcadeTag} />
               </Pressable>
             )
           }

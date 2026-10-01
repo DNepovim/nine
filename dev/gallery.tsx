@@ -254,6 +254,7 @@ const intro = (
           onOpenAchievements={close}
           onOpenMedals={close}
           onPlay={close}
+          onPlayArcade={close}
           onSetMode={noop}
           onSetDifficulty={noop}
           onOpenAdvanced={close}

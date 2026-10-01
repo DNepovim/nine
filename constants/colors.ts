@@ -93,6 +93,22 @@ export const NAME_INK = {
 // side of one surface or the other, where these read on both.
 export const GRAYSCALE = ['#5F5C6E', '#7A7688', '#95919F', '#B0ACB8'] as const
 
+// Arcade's amber as *text*, which `MODE_GRADIENT.arcade` cannot be — same reason and same
+// shape as GOLD_INK. #FF8C00 on the parchment surface is about 2:1: a fine stroke, a fine
+// fill, and an invisible label. So the one place arcade's colour has to *be* the text —
+// the ARCADE label on its own screen, and the depth under it — carries its own pair:
+// about 5.3:1 on #F3EFE9, about 8.3:1 on #0B0C14.
+//
+// Light is the amber taken down toward brown, which is as yellow as that surface allows
+// before a label stops being a colour and starts being a smudge. Dark takes the vivid one.
+export const ARCADE_INK = { light: '#9A4F06', dark: '#FF8C00' } as const
+
+// A way arcade's hero has not walked yet. Mirrors `--color-muted`, the token that paints
+// every other hairline in the app, and must move with it: a way ahead is drawn at exactly
+// the weight of the quietest thing on screen, so the lit way behind the hero and the amber
+// bud edges are the only warmth on the canvas.
+export const WAY_INK = { light: '#D4D0C8', dark: '#2A2B44' } as const
+
 // The game's whole scale, blue through to the arcade amber — every mode's colour at
 // once. All five are mid-tone, so unlike white they read on both themes.
 export const GAME_SCALE = ['#4C7EFF', '#7273D2', '#c36282', '#E5534B', '#FF8C00'] as const

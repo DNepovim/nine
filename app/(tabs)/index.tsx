@@ -18,6 +18,7 @@ import Animated, {
 import DSEG7Font from '@/assets/fonts/DSEG7Classic-Bold.ttf'
 import { FeedbackBookmark } from '@/components/feedback-bookmark'
 import { AnnouncementEffect } from '@/components/game/announcement-effect'
+import { ArcadeGame } from '@/components/game/arcade-game'
 import { BestScoresLine } from '@/components/game/best-scores-line'
 import { Confetti } from '@/components/game/confetti'
 import { Dial } from '@/components/game/dial'
@@ -248,6 +249,7 @@ function showFeedbackBookmark({
   isPlaying,
   resuming,
   showMultiGame,
+  inArcade,
   feedbackOpen,
   isGameOver,
   gameOverBookmarkReady,
@@ -256,12 +258,17 @@ function showFeedbackBookmark({
   isPlaying: boolean
   resuming: boolean
   showMultiGame: boolean
+  // An arcade run is a live run too, and the one screen in the app a stray tab could be
+  // grazed on is a dial somebody is dialling.
+  inArcade: boolean
   feedbackOpen: boolean
   isGameOver: boolean
   gameOverBookmarkReady: boolean
   inArchive: boolean
 }): boolean {
-  if (isPlaying || resuming || showMultiGame || feedbackOpen || inArchive) return false
+  if (isPlaying || resuming || showMultiGame || inArcade || feedbackOpen || inArchive) {
+    return false
+  }
   return !isGameOver || gameOverBookmarkReady
 }
 
@@ -421,6 +428,10 @@ export default function GameScreen() {
   // itself is hidden while any of them is open — a single source of truth avoids
   // z-order/gating clashes between separate booleans.
   const [menuOverlay, setMenuOverlay] = useState<MenuOverlayName>('none')
+  // Whether an arcade run is up. Its own boolean rather than a state of the game machine:
+  // arcade is not that machine's run — no score, no lives, no board — and the screen it
+  // puts up is mounted over the intro the way a multiplayer game is.
+  const [arcadeOpen, setArcadeOpen] = useState(false)
   const [titleDialog, setTitleDialog] = useState<TitleDialog>('none')
   // The feedback dialog floats over whatever is showing rather than replacing it, so
   // it is its own boolean instead of a member of the overlay union above.
@@ -1131,6 +1142,11 @@ export default function GameScreen() {
 
   const [showMultiMenu, setShowMultiMenu] = useState(false)
   const [menuInitialTab, setMenuInitialTab] = useState<'alone' | 'friends'>('alone')
+  // Whether the start screen was left on the ARCADE pill. Only that one bit, rather than
+  // the focused pill itself: the three modes are the machine's own `mode` and come back
+  // from there, and a second copy of them here would be free to drift from it the moment
+  // anything else in the app changed the mode.
+  const [menuOnArcade, setMenuOnArcade] = useState(false)
 
   const handleCreateRoom = useCallback(() => {
     if (!nickname) {
@@ -1190,6 +1206,7 @@ export default function GameScreen() {
     isMenu &&
     menuOverlay === 'none' &&
     !isMultiActive &&
+    !arcadeOpen &&
     welcome.decided &&
     !welcome.pending &&
     curtain === 'down' &&
@@ -2018,10 +2035,18 @@ export default function GameScreen() {
                 }}
                 initialPlayMode={menuInitialTab}
                 onPlayModeChange={setMenuInitialTab}
+                initialFocus={menuOnArcade ? 'arcade' : mode}
+                onFocusChange={(focus) => {
+                  setMenuOnArcade(focus === 'arcade')
+                }}
                 onPlay={() => {
                   setMenuInitialTab('alone')
                   send({ type: 'START', now: Date.now(), runId: newRunId() })
                   track('run_started', { mode, difficulty, from: 'menu' })
+                }}
+                onPlayArcade={() => {
+                  setMenuInitialTab('alone')
+                  setArcadeOpen(true)
                 }}
                 onSetMode={(next) => {
                   send({ type: 'SET_MODE', mode: next })
@@ -2057,6 +2082,7 @@ export default function GameScreen() {
               feedbackOpen,
               isGameOver,
               gameOverBookmarkReady,
+              inArcade: arcadeOpen,
               inArchive: menuOverlay === 'news',
             }) && (
               <FeedbackBookmark
@@ -2187,6 +2213,21 @@ export default function GameScreen() {
                 onLeave={() => {
                   setMenuInitialTab('friends')
                   void multiRoom.leave()
+                }}
+              />
+            )}
+
+            {/* ── An arcade run. Over the intro rather than inside the game screen: the
+                dial is the same dial, but what it is answering is a crossroad on a map,
+                and none of the run above — the score, the lives, the board, the saved run
+                — has anything to say about one. END takes it down, and taking it down
+                ends the run. ── */}
+            {arcadeOpen && (
+              <ArcadeGame
+                difficulty={difficulty}
+                isDark={isDark}
+                onEnd={() => {
+                  setArcadeOpen(false)
                 }}
               />
             )}

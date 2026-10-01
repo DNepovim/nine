@@ -21,6 +21,15 @@ export const FLAGS = {
   // what is hidden is the way in and the page about it, not the feature. On for testers,
   // who are the people it needs to be reachable by.
   multiplayer: 'tester',
+  // Arcade: the pill on the intro, the screen behind it, and the chapter of How to Play
+  // that explains it. A proof of concept — one way in, one way back, and a depth instead
+  // of a score — so it is floored at `developer` rather than `tester`: what it needs now
+  // is the people who can change it, not the people who can report on it.
+  //
+  // Without the flag the pill is still there, still wearing SOON, still unpressable. That
+  // is deliberate: the teaser was already a promise to players, and taking it away to
+  // build behind it would be answering a promise with an absence.
+  arcade: 'developer',
 } as const satisfies Record<string, Role>
 
 export type Flag = keyof typeof FLAGS

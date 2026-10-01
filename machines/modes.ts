@@ -209,7 +209,10 @@ export const MODE_DESCRIPTIONS: Record<Mode | 'arcade', MessageDescriptor> = {
   trainee: msg`No lives, no rush.`,
   accuracy: msg`Precision over speed.`,
   speed: msg`Fast hits build big combos.`,
-  arcade: msg`Levels, bonuses, sidequests.`,
+  // Not the teaser's "levels, bonuses, sidequests" any more. The pill is playable behind
+  // a flag now, and what is behind it is the way — so the line says what a run of it
+  // actually asks, and the promises wait until they are built.
+  arcade: msg`Climb the way, or fall back.`,
 }
 
 // Difficulty is a position on the mode gradient: easy = start, extreme = end.
@@ -219,15 +222,26 @@ const DIFFICULTY_T: Record<Difficulty, number> = {
   extreme: 1,
 }
 
-export function getDifficultyColor(mode: Mode, difficulty: Difficulty): string {
+// Arcade as well as the three modes: it has no entry in `MODES` but it does have a pair
+// in `MODE_GRADIENT`, and its difficulty is a position along that pair like any other.
+export function getDifficultyColor(
+  mode: Mode | 'arcade',
+  difficulty: Difficulty,
+): string {
   const [start, end] = MODE_GRADIENT[mode]
   return lerpColor(start, end, DIFFICULTY_T[difficulty])
 }
 
-// Locked, UI-only teaser — NOT a playable Mode yet.
+// The arcade pill on the intro. Still not a `Mode` — no board, no lives, no place in
+// `MODES` — so its label and its badge live here rather than in that table.
+//
+// Two badges, because the pill means two different things to two different readers: a
+// player without the `arcade` flag sees a teaser for something that is not theirs yet,
+// and a developer sees a door. See constants/features.ts.
 export const ARCADE_TEASER = {
   label: msg`ARCADE`,
   tag: 'SOON',
+  devTag: 'DEV',
 } as const
 
 // round(baseTimeout × timeoutScale). Trainee has no difficulty selector, so it
@@ -245,13 +259,15 @@ export const effectiveTimeout = (mode: Mode, difficulty: Difficulty): number => 
 const RAMP_HALF_LIFE_HITS = 12
 const RAMP_FLOOR_RATIO = 0.55
 
-// The ramp itself, shared by both things that tighten.
+// The ramp itself, shared by everything that tightens — including arcade, which counts
+// crossroads where Speed counts hits and is exported to for exactly that. A second copy
+// of the decay would be a second thing to tune.
 //
 // Exponential decay towards a floor: each RAMP_HALF_LIFE_HITS hits removes half of
 // whatever slack is left. That makes the contraction decelerate — the first stretch
 // of hits costs far more than the next equal stretch, and the curve never reaches
 // the floor at all, so a run tightens without ever becoming impossible.
-const decayed = (base: number, hits: number): number => {
+export const decayed = (base: number, hits: number): number => {
   const floor = base * RAMP_FLOOR_RATIO
   const remaining = 0.5 ** (Math.max(0, hits) / RAMP_HALF_LIFE_HITS)
   return floor + (base - floor) * remaining

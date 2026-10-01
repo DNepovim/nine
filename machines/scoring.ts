@@ -27,11 +27,19 @@ export function stepCost(a: number, f: number): number {
   return Math.min(wrap, 1 + f, 1 + (9 - f))
 }
 
-// Minimum total steps to move the grid to ANY configuration whose weighted sum
-// equals `target`. Steps decompose per button (each step touches one button and
-// the final sum depends only on final values), so this is an exact small DP.
-export function computePar(grid: Grid, target: number): number {
-  if (target < 0 || target > MAX_SUM) return 0
+// Minimum total steps to move the grid to ANY configuration whose weighted sum equals
+// each reachable sum — the whole table at once. Steps decompose per button (each step
+// touches one button and the final sum depends only on final values), so this is an exact
+// small DP, and the table is what the DP naturally produces.
+//
+// A sum no arrangement reaches holds `Infinity`. Callers decide what that means:
+// `computePar` answers 0, and arcade passes the sum over.
+//
+// Exported because arcade asks the question the other way round. A crossroad is two to
+// four targets chosen *by* what they cost, so what it needs is "which sums are three or
+// four steps from here" — one pass, rather than one pass per candidate it might have
+// picked.
+export function parTable(grid: Grid): readonly number[] {
   const values = grid.flat()
   const INF = Number.POSITIVE_INFINITY
   let dp = new Array<number>(MAX_SUM + 1).fill(INF)
@@ -52,7 +60,19 @@ export function computePar(grid: Grid, target: number): number {
     }
     dp = next
   }
-  return Number.isFinite(dp[target]) ? (dp[target] ?? 0) : 0
+  return dp
+}
+
+// Minimum total steps from this grid to `target`, or 0 for a target no arrangement
+// reaches — which is what an out-of-range one answers too.
+//
+// Reads the table above rather than running a DP of its own, which costs nothing: the
+// pass already allocates nine arrays of this length, and one more return value is not a
+// tenth.
+export function computePar(grid: Grid, target: number): number {
+  if (target < 0 || target > MAX_SUM) return 0
+  const par = parTable(grid)[target]
+  return par !== undefined && Number.isFinite(par) ? par : 0
 }
 
 // Which way a key is moved. Up is a tap — the dial wraps 9 → 0 — and down is a swipe
