@@ -169,7 +169,12 @@ export function MenuOverlay({
   const online = useOnline()
   const showMultiplayer = useFlag('multiplayer')
   const showArcade = useFlag('arcade')
-  const [focused, setFocused] = useState<Mode | 'arcade'>(initialFocus)
+  // A stored ARCADE focus is only honoured by a reader who can actually see the pill: the
+  // flag can be taken away between launches, and a screen opening on a tab that is not
+  // there would show the player a difficulty row with no mode above it.
+  const [focused, setFocused] = useState<Mode | 'arcade'>(
+    initialFocus === 'arcade' && !showArcade ? gameMode : initialFocus,
+  )
   const [playMode, setPlayMode] = useState<PlayMode>(initialPlayMode)
   const [panelWidth, setPanelWidth] = useState(0)
   const panelOffset = useSharedValue(0)
@@ -202,11 +207,15 @@ export function MenuOverlay({
     gradEndSv.value = activeGradient[1]
   }, [activeGradient, gradStartSv, gradEndSv])
 
-  // Highlight the remembered mode: `focused` is seeded before the persisted mode
-  // finishes hydrating into the machine, so re-sync when gameMode lands.
+  // Highlight the remembered pill. `focused` is seeded at mount, before either half of
+  // what the player was last on has landed — the machine's `mode` hydrates out of storage,
+  // and so does the bit that says they were on ARCADE — so re-sync whenever one of them
+  // arrives. ARCADE wins while it is the stored answer: the mode underneath it is the pill
+  // the player drops back onto when they leave arcade, not a change of focus, and reading
+  // it as one is what used to take them off ARCADE on every launch and on every END.
   useEffect(() => {
-    setFocused(gameMode)
-  }, [gameMode])
+    setFocused(initialFocus === 'arcade' && showArcade ? 'arcade' : gameMode)
+  }, [gameMode, initialFocus, showArcade])
 
   const panelStyle = useAnimatedStyle(() => ({
     transform: [{ translateX: panelOffset.value }],
@@ -354,12 +363,11 @@ export function MenuOverlay({
                     if (isOneOf(m, ['trainee', 'accuracy', 'speed'])) onSetMode(m)
                   }}
                 />
-                {/* Arcade has a difficulty too — it is the clock at a crossroad, ramping
-                    on the same curve Speed's does — so the row stays where it is rather
-                    than the screen growing a second one. It picks the same stored
-                    difficulty as the scored modes: a player who likes Extreme likes it
-                    here as well. */}
-                {isOneOf(focused, ['accuracy', 'speed', 'arcade']) && (
+                {/* Arcade shows no difficulty. It tightens as a run climbs, which is a
+                    difficulty that moves rather than one picked up front — and asking for
+                    a three-way choice before the player has any idea what the mode is was
+                    a dial set in the dark. */}
+                {isOneOf(focused, ['accuracy', 'speed']) && (
                   <DifficultySelector
                     gameMode={focused}
                     difficulty={difficulty}

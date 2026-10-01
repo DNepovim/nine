@@ -7,9 +7,12 @@ import Animated, {
   withDelay,
   withSpring,
   withTiming,
+  type SharedValue,
 } from 'react-native-reanimated'
 
-import { BUD_SIZE, WALK_MS, WITHER_MS } from '@/constants/arcade'
+import { TOWN_BOX, TownMark } from '@/components/game/town-mark'
+import { WALK_MS, WITHER_MS } from '@/constants/arcade'
+import { mapLabel } from '@/constants/theme'
 
 // The target at a way's end.
 //
@@ -28,18 +31,35 @@ export function WayBud({
   x,
   y,
   value,
+  name,
+  seed,
   state,
   delay,
+  turn,
   edge,
   ink,
+  line,
+  hatch,
+  face,
 }: {
   x: number
   y: number
   value: number
+  // What the place at the end of this way is called — see lib/place-names.ts.
+  name: string
+  // The crossroad's seed, which is which roofs its village wears.
+  seed: number
   state: BudState
   delay: number
+  // How far the sheet has been turned. The village turns with it — it is drawn on the map —
+  // but the number and the name are read rather than drawn, so they are turned back.
+  turn: SharedValue<number>
   edge: string
   ink: string
+  line: string
+  hatch: string
+  // The town's own face, which is also what it knocks the country out with.
+  face: string
 }) {
   const scale = useSharedValue(state === 'growing' ? 0 : 1)
   const opacity = useSharedValue(state === 'growing' ? 0 : 1)
@@ -68,29 +88,54 @@ export function WayBud({
     transform: [{ scale: scale.value }],
   }))
 
+  // Rotated about its own centre, which for a zero-size anchor is the point it stands on —
+  // so a disc turned back stays exactly where it was.
+  const upright = useAnimatedStyle(() => ({
+    transform: [{ rotate: `${-turn.value}rad` }],
+  }))
+
   return (
+    // A zero-size anchor at the end of the way, with the three parts of a settlement hung
+    // off it: the village it is, the number it is worth and the name it goes by. One
+    // animated wrapper, so the three arrive and leave as one thing.
     <Animated.View
       pointerEvents="none"
-      className="absolute items-center justify-center rounded-full bg-card"
-      style={[
-        {
-          left: x - BUD_SIZE / 2,
-          top: y - BUD_SIZE / 2,
-          width: BUD_SIZE,
-          height: BUD_SIZE,
-          borderWidth: 1.5,
-          borderColor: edge,
-        },
-        style,
-      ]}
+      style={[{ position: 'absolute', left: x, top: y }, style]}
     >
-      <Text
-        selectable={false}
-        className="font-mono text-[12px] font-black"
-        style={{ color: ink }}
+      {/* The town, and the number inside its walls. Upright as one thing: a wall with its
+          gate at the top would be a wall nobody drew, and the number is read rather than
+          drawn whichever way the sheet is lying. */}
+      <Animated.View
+        className="absolute items-center justify-center"
+        style={[
+          { left: -TOWN_BOX / 2, top: -TOWN_BOX / 2, width: TOWN_BOX, height: TOWN_BOX },
+          upright,
+        ]}
       >
-        {value}
-      </Text>
+        <TownMark seed={seed} face={face} line={line} hatch={hatch} edge={edge} />
+        <Text
+          selectable={false}
+          className="absolute font-mono text-[12px] font-black"
+          style={{ color: ink }}
+        >
+          {value}
+        </Text>
+      </Animated.View>
+      <Animated.View
+        className="absolute"
+        style={[{ left: -64, top: TOWN_BOX / 2 + 4, width: 128 }, upright]}
+      >
+        <Text
+          selectable={false}
+          // The map's own lettering — a serif, upper case and tracked, which is how a sheet
+          // like this has always named a place. In the `dim` token rather than the map ink,
+          // because it is text and so the one piece of this held to a text contrast.
+          className="text-center text-[9px] font-semibold tracking-[1.2px] text-dim"
+          style={{ fontFamily: mapLabel }}
+        >
+          {name.toUpperCase()}
+        </Text>
+      </Animated.View>
     </Animated.View>
   )
 }

@@ -9,7 +9,6 @@ import {
   isStrike,
   newMap,
   openCrossroad,
-  rngFor,
   seeded,
   START,
   straightestWay,
@@ -61,10 +60,15 @@ describe('idSeed', () => {
 
 describe('newMap', () => {
   it('starts on one crossroad, pointing up, with nothing grown yet', () => {
-    const map = newMap()
+    const map = newMap(1)
     expect(Object.keys(map)).toEqual([START])
-    expect(map[START]).toEqual({
+    const start = map[START]
+    // Named when it is created, like every crossroad — see lib/place-names.ts. The name
+    // itself is the generator's business, so this only asks that there is one.
+    expect(start?.name).toMatch(/^[A-Z][a-z]+( [A-Z][a-z]+)?$/)
+    expect({ ...start, name: '' }).toEqual({
       id: START,
+      name: '',
       from: null,
       depth: 0,
       heading: UP,
@@ -107,7 +111,7 @@ describe('wayValues', () => {
 describe('openCrossroad', () => {
   it('grows two to four ways, each with a crossroad at its end', () => {
     for (let seed = 0; seed < 25; seed++) {
-      const map = openCrossroad(newMap(), START, zeros, seeded(seed))
+      const map = openCrossroad(newMap(1), START, zeros, seed)
       const ways = map[START]?.ways ?? []
       expect(ways.length).toBeGreaterThanOrEqual(2)
       expect(ways.length).toBeLessThanOrEqual(4)
@@ -122,7 +126,7 @@ describe('openCrossroad', () => {
 
   it('climbs: every way out of a crossroad points upward', () => {
     for (let seed = 0; seed < 25; seed++) {
-      const map = openCrossroad(newMap(), START, zeros, seeded(seed))
+      const map = openCrossroad(newMap(1), START, zeros, seed)
       for (const way of map[START]?.ways ?? []) {
         // y grows downward, so a way that climbs has a negative y component — and its end
         // sits above where it started.
@@ -133,52 +137,49 @@ describe('openCrossroad', () => {
   })
 
   it('keeps a crossroad it has already answered for', () => {
-    const grown = openCrossroad(newMap(), START, zeros, seeded(11))
+    const grown = openCrossroad(newMap(1), START, zeros, 11)
     // A retreat comes back with a different grid; the ways it finds are the ones it left.
-    const again = openCrossroad(grown, START, busy, seeded(99))
+    const again = openCrossroad(grown, START, busy, 99)
     expect(again).toBe(grown)
   })
 
   it('leaves a crossroad it has never heard of alone', () => {
-    const map = newMap()
-    expect(openCrossroad(map, 'nowhere', zeros, seeded(1))).toBe(map)
+    const map = newMap(1)
+    expect(openCrossroad(map, 'nowhere', zeros, 1)).toBe(map)
   })
 })
 
 describe('rngFor', () => {
   it('grows the same crossroad the same way, however often it is asked', () => {
-    const once = openCrossroad(newMap(), START, zeros, rngFor(99, START))
-    const twice = openCrossroad(newMap(), START, zeros, rngFor(99, START))
+    const once = openCrossroad(newMap(1), START, zeros, 99)
+    const twice = openCrossroad(newMap(1), START, zeros, 99)
     expect(twice).toEqual(once)
   })
 
   it('gives two crossroads of one run fans of their own', () => {
     const elsewhere: Crossroad = {
       id: '7',
+      name: 'Elsewhere',
       from: null,
       depth: 0,
       heading: UP,
       pos: { x: 0, y: 0 },
       ways: [],
     }
-    const first = openCrossroad(newMap(), START, zeros, rngFor(99, START))[START]?.ways
-    const second = openCrossroad(
-      { ...newMap(), '7': elsewhere },
-      '7',
-      zeros,
-      rngFor(99, '7'),
-    )['7']?.ways
+    const first = openCrossroad(newMap(1), START, zeros, 99)[START]?.ways
+    const second = openCrossroad({ ...newMap(1), '7': elsewhere }, '7', zeros, 99)['7']
+      ?.ways
     expect(second).not.toEqual(first)
   })
 })
 
 describe('wayInto', () => {
   it('has nothing to answer at the start', () => {
-    expect(wayInto(openCrossroad(newMap(), START, zeros, seeded(5)), START)).toBeNull()
+    expect(wayInto(openCrossroad(newMap(1), START, zeros, 5), START)).toBeNull()
   })
 
   it('names the way that reached a crossroad', () => {
-    const map = openCrossroad(newMap(), START, zeros, seeded(5))
+    const map = openCrossroad(newMap(1), START, zeros, 5)
     const first = map[START]?.ways[0]
     expect(wayInto(map, first?.to ?? '')).toEqual(first)
   })
@@ -186,11 +187,11 @@ describe('wayInto', () => {
 
 describe('trail', () => {
   it('walks back from the hero, most recent way first', () => {
-    let map = openCrossroad(newMap(), START, zeros, seeded(2))
+    let map = openCrossroad(newMap(1), START, zeros, 2)
     const one = map[START]?.ways[0]?.to ?? ''
-    map = openCrossroad(map, one, busy, seeded(3))
+    map = openCrossroad(map, one, busy, 3)
     const two = map[one]?.ways[0]?.to ?? ''
-    map = openCrossroad(map, two, zeros, seeded(4))
+    map = openCrossroad(map, two, zeros, 4)
 
     const steps = trail(map, two, 4)
     expect(steps).toHaveLength(2)
@@ -201,18 +202,18 @@ describe('trail', () => {
   })
 
   it('stops at the depth it was asked for', () => {
-    let map = openCrossroad(newMap(), START, zeros, seeded(2))
+    let map = openCrossroad(newMap(1), START, zeros, 2)
     let at = START
     for (let i = 0; i < 5; i++) {
       const next = map[at]?.ways[0]?.to ?? ''
-      map = openCrossroad(map, next, busy, seeded(10 + i))
+      map = openCrossroad(map, next, busy, 10 + i)
       at = next
     }
     expect(trail(map, at, 3)).toHaveLength(3)
   })
 
   it('has nothing behind the start', () => {
-    expect(trail(newMap(), START, 3)).toEqual([])
+    expect(trail(newMap(1), START, 3)).toEqual([])
   })
 })
 
@@ -254,6 +255,7 @@ describe('straightestWay', () => {
   it('carries straight on, taking the way closest to the heading it arrived on', () => {
     const at: Crossroad = {
       id: '0',
+      name: 'Testbury',
       from: START,
       depth: 1,
       heading: UP,
@@ -272,6 +274,7 @@ describe('straightestWay', () => {
     // far apart the two numbers look.
     const at: Crossroad = {
       id: '0',
+      name: 'Testbury',
       from: START,
       depth: 1,
       heading: Math.PI - 0.05,
@@ -285,7 +288,7 @@ describe('straightestWay', () => {
   })
 
   it('has nothing to answer for a crossroad with no ways, or none at all', () => {
-    expect(straightestWay(newMap()[START])).toBeNull()
+    expect(straightestWay(newMap(1)[START])).toBeNull()
     expect(straightestWay(undefined)).toBeNull()
   })
 })

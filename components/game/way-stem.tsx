@@ -52,6 +52,7 @@ export function WayStem({
   delay,
   clock,
   creepMs,
+  creepFrom,
   fade,
   gradientId,
   aheadInk,
@@ -77,6 +78,9 @@ export function WayStem({
   // retreat runs, because a way that turned red is the way doing the dragging; snapping
   // it back to amber mid-pull would take the reason away.
   creepMs: number | 'held' | null
+  // Where that creep starts: nought on a fresh crossroad, and however far the red had got
+  // when the run was paused on a resumed one.
+  creepFrom: number
   fade: number
   gradientId: string
   aheadInk: string
@@ -112,10 +116,10 @@ export function WayStem({
   // lying about how much time is left.
   useEffect(() => {
     if (creepMs === 'held') return
-    creep.value = 0
+    creep.value = creepFrom
     if (creepMs === null) return
     creep.value = withTiming(1, { duration: creepMs, easing: Easing.linear })
-  }, [creepMs])
+  }, [creepMs, creepFrom])
 
   const dash = [spline.length, spline.length]
 

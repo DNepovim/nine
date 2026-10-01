@@ -560,9 +560,21 @@ export function HowToPlayOverlay({
                     That is the only way a run ends.
                   </Trans>
                 </Bullet>
+                <Bullet color={GAME_SCALE[4]}>
+                  <Trans>
+                    Every target is a village with a name, and the country between them is
+                    drawn as you climb: farmland, then forest, then hills, then mountains.
+                  </Trans>
+                </Bullet>
+                <Bullet color={GAME_SCALE[4]}>
+                  <Trans>
+                    Tap the compass in the corner to choose whether north stays at the top
+                    of the screen or the map turns to keep you pointed forward.
+                  </Trans>
+                </Bullet>
               </Card>
               <Body>
-                {t`\nHow deep you got is the whole score: every way costs about the same number of moves, so what you are choosing is where to go, not what is cheaper. Difficulty sets the clock, and the clock keeps tightening the deeper you climb.`}
+                {t`\nHow deep you got is the whole score: every way costs about the same number of moves, so what you are choosing is where to go, not what is cheaper. There is no difficulty to pick — the clock tightens the deeper you climb, which is the only one the mode has.`}
               </Body>
             </>
           )}

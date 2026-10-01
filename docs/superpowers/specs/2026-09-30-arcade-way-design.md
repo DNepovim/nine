@@ -77,9 +77,16 @@ that clock. It is also what the hero falls down when the clock wins there, so th
 one place the model was short is the one place the clock says exactly what it
 costs.
 
-The clock itself is `BASE_CLOCK` × the difficulty's `timeoutScale`, decayed by
-depth on `decayed` — the same curve Speed's clock and Accuracy's spawn gap ramp
-on, now exported from `machines/modes.ts` rather than copied.
+The clock itself is `BASE_CLOCK` decayed by depth on `decayed` — the same curve
+Speed's clock and Accuracy's spawn gap ramp on, now exported from
+`machines/modes.ts` rather than copied.
+
+**No difficulty.** One pace, and depth is what moves it: a run tightens as it
+climbs, toward 55% of where it started, which is a difficulty that happens rather
+than one picked up front. The three-way choice was on the intro for a day and was
+wrong there — it asked the player to set a dial before they had any idea what the
+mode was, and arcade already sets it for them. `crossroadClock` takes a depth and
+nothing else.
 
 ## What a crossroad offers
 
@@ -151,6 +158,180 @@ The app already frames this. `MODE_SHOT` gives each mode's streak the shot it is
 made of — Accuracy a single held beam, Speed a magazine. Arcade's strike fires the
 hero itself.
 
+## Stopping, and ending
+
+Arcade wears the app's own screens for both.
+
+The top row carries the same `PauseButton` every run has, in arcade's ink — and
+only while the hero is standing on a crossroad. Mid-flight there is no beat to
+stop: a movement is a second at most, and a screen that froze halfway along a way
+would have to be resumed into an animation that had already finished without it.
+The column keeps its width either way, so nothing in the row moves when the button
+fades out.
+
+A pause is resumable because every beat's timer is set to what is _left_ of that
+beat rather than to the whole of it. The run stamps `beatAt` on each transition,
+holds `heldMs` when it stops, and on resuming shifts `beatAt` forward by however
+long the pause lasted — so what is left is what was left. The red creeping up the
+way behind holds where it got to and carries on from there, which is why a way
+stem takes a `creepFrom` as well as a duration.
+
+Both screens are arcade's own, built from the standard pieces rather than from the
+game's overlays: `PauseMark`'s two glass bars, `GameOverTitle`'s wordmark,
+`ScoreReadout` for the depth and `StatCell` for the figures, with the CTA and the
+quiet underlined way out underneath. `PausedOverlay` itself is thirty props of the
+game machine's run — a score, lives, boards, medals, achievements, dial corners,
+Trainee's sliders — and multiplayer already keeps its own pause screen for exactly
+this reason. The two marks were widened from `Mode` to `Mode | 'arcade'`, which is
+all they needed: both read nothing but `MODE_GRADIENT`.
+
+The wordmark says `FELL BACK` — two four-letter words, which is the 4×2 grid its
+colour ramp and entrance delays are indexed by, and what actually happened rather
+than that something did.
+
+`ArcadeStats` is the row both screens share, for the same reason `RunStats` is one
+component: two screens, one answer. Strikes and time; depth is the score, so it
+stands above in the readout instead.
+
+## The map under the ways
+
+The ways no longer run through empty space. Implemented from the atlas design, and the
+shape of it is one decision: **the land is a function of where you are**, not a thing
+the run keeps.
+
+`lib/atlas-field.ts` is a hashed value-noise elevation field at three octaves, sampled
+in the map's own pitch coordinates — so it is the same answer for the same place whoever
+asks, in whatever order, and a taller canvas draws the same country bigger rather than a
+different one.
+
+`machines/arcade-land.ts` puts **one feature in each lattice cell**, and a cell's answer
+depends on nothing but its own coordinates and the run's seed. That is what makes the
+country infinite and seamless: there are no patches to stitch, no tiles to keep and
+nothing to prune, because two cells never have to agree about anything. Depth chooses the
+region and the region chooses the lattice — so the regions are bands in world space, and
+`regionAtPosition` reads one off a `y`.
+
+Four regions, three crossroads each, cycling: farmland that is mostly room, a forest that
+closes over at a 26pt lattice, hills of rises, and mountains that are 80% ranges. The
+coast, the archipelago and the open sea are designed and wait on the hydrology — a region
+with a sea level and no water drawn in it would be a promise the screen does not keep.
+
+### Marks that knock out
+
+`lib/map-marks.ts` turns a feature into path strings: a closed `body` filled with the
+_surface_ colour before it is inked, and an open `detail` of hachures and shading that is
+only stroked. The fill is the ground's own colour, so it is invisible except where it
+covers something — which is what lets a range of mountains be drawn the way ranges are,
+peak overlapping peak, instead of as a thicket of outlines.
+
+Order is the other half of it. A feature's elements are generated back to front, and each
+mark's own hachures go on immediately after its body rather than after every body on the
+feature — drawing all the bodies and then all the shading puts the far peak's hachures
+back on top of the near peak's face.
+
+A wood is the exception: one mark however many trees are in it. Within a wood the canopies
+are inked flat over each other, which is how a mass of trees is drawn anyway, and it is
+the difference between a forest costing two paths and costing four hundred.
+
+### Safezones
+
+Terrain is the only thing that yields. `use-arcade-land` builds the keep-out from the run:
+every way in sight as a segment at 0.22 pitches, every settlement at 0.3, and a candidate
+inside either is dropped rather than moved. Nudging it is how a generator ends up with
+suspicious rows of things that were all pushed out of the same spot.
+
+Terrain against terrain is deliberately _not_ fenced. With every mark knocking out the one
+behind it, two ranges meeting across a cell boundary read as one massif, and two canopies
+that touch read as one wood.
+
+### Kept, not stored
+
+The answers are cached by cell for two reasons. Generating a cell twice a frame would be
+waste; but more importantly a cell asked again later would be asked with more ways in the
+way, and the land would change behind the player as they walked.
+
+### The hero is a flame
+
+`lib/flame.ts` is a path that leans, built on the UI thread from the screen's frame clock.
+Two shapes on two sines that do not share a period, so the flicker never repeats and never
+reads as a loop. It is the only mark that can be the brightest thing on a sheet of grey ink
+without a second colour, and the only one that can move while standing still — which is
+what says a run is waiting for an answer rather than stopped.
+
+### Villages have names
+
+`lib/place-names.ts`: curated morphemes, never generated phonotactics. A proper
+onset-nucleus-coda grammar was tried first and it produces _Grarsh_ and _Crorghbridge_ —
+sounds rather than names. Every crossroad is named when it is created, from its own id, so
+a place keeps its name for the whole run; and being proper nouns, none of it is ever
+translated. The bud it replaces is still underneath: the number stays the most legible
+thing on the sheet, because it is the thing the player is dialling.
+
+### A target is a town
+
+The number a player dials has always sat in a disc. It is now that disc with the map's own
+hand put to it: a wall around it, merlons along the top of the wall, towers at the quarters
+and a gate at the foot. The face is the ground's own colour — the same knockout every mark
+on this sheet fills itself with — so a town covers the country behind it and the sheet shows
+through its walls, which is how a map draws one.
+
+The amber stays, as the ring the number sits in: the game speaking inside the map's wall. A
+town's seed decides how many merlons its wall has and whether its towers are capped, which
+is enough that no two in sight are the same wall and not so much that one stops reading as a
+town. The separate row of roofs under each target is gone — it was saying the same thing
+twice, and a target that _is_ a settlement says it better.
+
+The town turns upright with the number rather than with the sheet. A wall whose gate had
+swung to the top would be a wall nobody drew.
+
+### The lettering
+
+`mapLabel` in `constants/theme.ts`: the platform's own serif, and the only place in the app
+that is not mono.
+
+Everything else the player reads here is a readout, and a screen of digits wants a face whose
+digits line up. A drawn map is the one thing that is not: its labels are lettering on a
+sheet, and a serif is what five hundred years of maps have set them in. The village names
+and the arrival label take it, upper case and tracked; the numbers do not, because they are
+still numbers. Nothing on any other screen changes, which is the whole reason it is its own
+export rather than a change to `mono`.
+
+### Which way is up
+
+The rose in the bottom-right corner is the one control on this screen that is not the dial,
+and it switches between the two ways a map like this can be read.
+
+**North at the top** is how it has always been: the sheet is fixed, the hero turns under it,
+and the rose never moves. **Ahead at the top** turns the sheet instead — the camera takes
+`UP − heading` so the hero's own direction is always up the screen, and the rose turns with
+the land, which makes it the one mark that says which way the country is lying.
+
+The turn rides the same beat the canvas drifts on, so a walk and a rotation are one
+movement rather than two. A mode switch has no beat to borrow, so it takes `TURN_MS` of its
+own.
+
+The camera transform is anchor, then turn, then focus. With no turn it is exactly the
+translation it always was, so the usual case pays nothing for the sheet being able to
+rotate.
+
+What is drawn on the map turns with it — mountains, woods, the houses of a village, the
+ways themselves. What is _read_ does not: the target disc, the village name, the arrival
+label, `STRIKE`, and the flame, which burns upward whichever way the land is lying. Each of
+those takes the turn back out about its own centre, which for a zero-size anchor is the
+point it stands on, so turning one back leaves it exactly where it was.
+
+This is the Bloom direction from the first design, which lost to the Climb on the grounds
+that rotation costs every numeral a counter-rotation. It does — but as a mode the player
+chooses rather than the only way the screen works, that cost buys something: the two
+readings of a map, and a reason to look at the rose.
+
+### Still to come
+
+The hydrology — rivers that find lakes, lakes that drain to the sea, coastlines by
+marching squares, walled towns on islands, voyages and the things drawn in open water — is
+designed and measured but not built. It is a second system rather than more of this one,
+and it brings the three water regions with it.
+
 ## Colour
 
 Arcade's own pair, the far end of the spectrum past Speed, with a job each.
@@ -188,20 +369,24 @@ sways whatever React is doing.
 
 ## Where it lives
 
-| File                                | What it holds                                                |
-| ----------------------------------- | ------------------------------------------------------------ |
-| `constants/features.ts`             | `arcade: 'developer'`                                        |
-| `constants/arcade.ts`               | the timings and sizes every piece has to agree about         |
-| `machines/arcade.ts`                | the map, the fan, the par band, the clock — pure, and tested |
-| `lib/arcade-layout.ts`              | pitches into points; the worklets that draw and ride a curve |
-| `hooks/use-arcade-run.ts`           | the run: phases, the clock, the grid, walking and retreating |
-| `components/game/arcade-game.tsx`   | the screen — top bar, canvas, sum row, dial                  |
-| `components/game/way-stem.tsx`      | one way, drawn                                               |
-| `components/game/way-bud.tsx`       | one bud                                                      |
-| `components/game/arcade-hero.tsx`   | the hero, and the comet a strike gives it                    |
-| `components/game/arcade-strike.tsx` | the word, over the crossroad that earned it                  |
-| `components/game/arcade-mouth.tsx`  | the ring a lost run falls into                               |
-| `components/game/arcade-over.tsx`   | depth reached, and the two ways out                          |
+| File                                  | What it holds                                                |
+| ------------------------------------- | ------------------------------------------------------------ |
+| `constants/features.ts`               | `arcade: 'developer'`                                        |
+| `constants/storage.ts`                | `ARCADE_FOCUS_KEY`, the pill remembered across launches      |
+| `constants/arcade.ts`                 | the timings and sizes every piece has to agree about         |
+| `machines/arcade.ts`                  | the map, the fan, the par band, the clock — pure, and tested |
+| `lib/arcade-layout.ts`                | pitches into points; the worklets that draw and ride a curve |
+| `hooks/use-arcade-run.ts`             | the run: phases, the clock, the grid, walking and retreating |
+| `components/game/arcade-game.tsx`     | the screen — top bar, canvas, sum row, dial                  |
+| `components/game/way-stem.tsx`        | one way, drawn                                               |
+| `components/game/way-bud.tsx`         | one bud                                                      |
+| `components/game/arcade-hero.tsx`     | the hero, and the comet a strike gives it                    |
+| `components/game/arcade-strike.tsx`   | the word, over the crossroad that earned it                  |
+| `components/game/arcade-mouth.tsx`    | the ring a lost run falls into                               |
+| `components/game/arcade-over.tsx`     | the end: the wordmark, the depth, the two ways out           |
+| `components/game/arcade-paused.tsx`   | a run stopped, and the way back into it                      |
+| `components/game/arcade-stats.tsx`    | the figures both of those screens show                       |
+| `hooks/use-persisted-arcade-focus.ts` | whether the intro was last left on ARCADE                    |
 
 The screen mounts the way multiplayer's does — an absolute view over the intro,
 rather than a branch inside the game screen. Arcade is not the game machine's
@@ -215,7 +400,8 @@ run, the career and the achievements.
 - **Multiplayer and the tutorial.** Arcade is alone and unexplained for now.
 - **A resumed arcade run.** `saved-run` keeps its three modes; closing the app
   ends an arcade run.
-- **Pause.** END leaves, and leaving ends the run.
+- **A run resumed across launches.** Pausing holds a run; closing the app still
+  ends it.
 - **A tapering stroke.** The design called for a way thicker at the hero end;
   SVG gives a path one width, so a lit way is a core plus a wider soft glow.
 - **Strikes that compound.** One strike, one crossroad skipped, however many came

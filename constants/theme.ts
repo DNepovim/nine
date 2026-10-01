@@ -31,6 +31,15 @@ const Fonts = Platform.select({
 // Monospace family used across the game's numeric UI.
 export const mono = Fonts.mono
 
+// The lettering on arcade's map, and nowhere else in the app.
+//
+// Everything else the player reads is mono — that is the app's voice, and a screen of
+// digits wants a face whose digits line up. A drawn map is the one thing in here that is
+// not a readout: its labels are lettering on a sheet, and a serif is what five hundred
+// years of maps have set them in. The platform's own serif rather than a bundled face, so
+// it costs nothing to load: New York on iOS, Noto Serif on Android, Georgia on the web.
+export const mapLabel = Fonts.serif
+
 // Lifting text off the gold game-over screen.
 //
 // Gold is a light background carrying a celebration: pale streaks and confetti cross

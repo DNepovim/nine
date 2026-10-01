@@ -85,6 +85,7 @@ import { useMultiplayerRoom } from '@/hooks/use-multiplayer-room'
 import { useMyMedals } from '@/hooks/use-my-medals'
 import { useOnline } from '@/hooks/use-online'
 import { usePauseOnBlur } from '@/hooks/use-pause-on-blur'
+import { usePersistedArcadeFocus } from '@/hooks/use-persisted-arcade-focus'
 import { usePersistedDifficulty } from '@/hooks/use-persisted-difficulty'
 import { usePersistedMode } from '@/hooks/use-persisted-mode'
 import { usePersistedRun } from '@/hooks/use-persisted-run'
@@ -1136,11 +1137,12 @@ export default function GameScreen() {
 
   const [showMultiMenu, setShowMultiMenu] = useState(false)
   const [menuInitialTab, setMenuInitialTab] = useState<'alone' | 'friends'>('alone')
-  // Whether the start screen was left on the ARCADE pill. Only that one bit, rather than
-  // the focused pill itself: the three modes are the machine's own `mode` and come back
-  // from there, and a second copy of them here would be free to drift from it the moment
-  // anything else in the app changed the mode.
-  const [menuOnArcade, setMenuOnArcade] = useState(false)
+  // Whether the start screen was left on the ARCADE pill, across launches as well as
+  // across screens. Only that one bit, rather than the focused pill itself: the three
+  // modes are the machine's own `mode` and come back from there, and a second copy of them
+  // here would be free to drift from it the moment anything else changed the mode.
+  const { onArcade: menuOnArcade, setOnArcade: setMenuOnArcade } =
+    usePersistedArcadeFocus()
 
   const handleCreateRoom = useCallback(() => {
     if (!nickname) {
@@ -2212,7 +2214,6 @@ export default function GameScreen() {
                 ends the run. ── */}
             {arcadeOpen && (
               <ArcadeGame
-                difficulty={difficulty}
                 isDark={isDark}
                 onEnd={() => {
                   setArcadeOpen(false)

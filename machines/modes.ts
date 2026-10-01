@@ -222,12 +222,7 @@ const DIFFICULTY_T: Record<Difficulty, number> = {
   extreme: 1,
 }
 
-// Arcade as well as the three modes: it has no entry in `MODES` but it does have a pair
-// in `MODE_GRADIENT`, and its difficulty is a position along that pair like any other.
-export function getDifficultyColor(
-  mode: Mode | 'arcade',
-  difficulty: Difficulty,
-): string {
+export function getDifficultyColor(mode: Mode, difficulty: Difficulty): string {
   const [start, end] = MODE_GRADIENT[mode]
   return lerpColor(start, end, DIFFICULTY_T[difficulty])
 }

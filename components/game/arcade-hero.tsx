@@ -2,43 +2,42 @@ import { useEffect } from 'react'
 import { View } from 'react-native'
 import Animated, {
   Easing,
+  useAnimatedProps,
   useAnimatedStyle,
   useSharedValue,
   withRepeat,
   withTiming,
   type SharedValue,
 } from 'react-native-reanimated'
+import Svg, { G, Path } from 'react-native-svg'
 
-import { HERO_SIZE, SPARK_GAP, SPARKS } from '@/constants/arcade'
+import { HERO_SIZE } from '@/constants/arcade'
 import { splinePoint, type Spline } from '@/lib/arcade-layout'
+import { flamePath } from '@/lib/flame'
 
-// The hero: a bead of amber with a glow around it, and — when a strike sends it through a
-// crossroad without stopping — a comet's tail behind it.
+const AnimatedPath = Animated.createAnimatedComponent(Path)
+
+// The hero: a flame, and nothing else.
 //
-// Abstract on purpose. The app has no characters and no illustration in it, so a creature
-// here would be the first — and the thing that has to read at fifteen points while moving is
-// a shape rather than a face.
+// Abstract on purpose — the app has no characters and no illustration in it, so a creature
+// here would be the first. A light is also the only mark that can be the brightest thing on
+// a sheet of grey ink without needing a second colour, and the only one that can move while
+// standing still: the flame flickers at a crossroad, which is what says the run is waiting
+// for an answer rather than stopped.
 //
-// Its position is read off the same splines the ways are drawn from, at the same moment and
-// on the same thread, so it rides the line rather than crossing it as a way breathes.
+// Its position is read off the same spline the way is drawn from, at the same moment and on
+// the same thread, so it rides the line rather than crossing it as the way breathes.
 
-const GLOW = HERO_SIZE * 2.2
-const CORE = HERO_SIZE * 0.45
+// The box the flame is drawn in. Generous: the body reaches about twice the size it is given
+// and the lean takes it a quarter of that sideways.
+const BOX = HERO_SIZE * 5
+const GLOW = HERO_SIZE * 2.4
 
-// How much the bead swells while it waits at a crossroad. A pulse, not a throb: it is what
-// says the hero is waiting for an answer.
-const PULSE = 1.07
-const PULSE_MS = 760
+// How much the whole flame swells while it waits. Small — the flicker is doing the work.
+const PULSE = 1.06
+const PULSE_MS = 820
 
-// How long the tail takes to catch light and to go out again. Short, but not instant: a
-// comet that appeared between two frames would read as a different object.
-const BLAZE_MS = 160
-
-// Where the hero is at `t`, which runs 0 → 1 along one way and 1 → 2 on through a second.
-//
-// Above its callers, because the worklet transform rewrites each of these into a `const`.
-// Shared by the bead and by every spark behind it, so the tail is on the same curve as the
-// thing dragging it rather than on a straight line between two points.
+// Where the flame is at `t`, which runs 0 → 1 along one way and 1 → 2 on through a second.
 function heroAt(
   t: number,
   spline: Spline | null,
@@ -59,69 +58,6 @@ function heroAt(
   return { x: originX + at.x, y: originY + at.y }
 }
 
-type Flight = {
-  spline: Spline | null
-  originX: number
-  originY: number
-  through: Spline | null
-  throughX: number
-  throughY: number
-  progress: SharedValue<number>
-  clock: SharedValue<number>
-}
-
-// One spark of the tail, trailing its own distance behind the bead. Module level, because a
-// component declared inside another remounts on every render of it — and a spark that
-// remounted mid-flight would start its fade again from nothing.
-function HeroSpark({
-  index,
-  blaze,
-  amber,
-  flight,
-}: {
-  index: number
-  blaze: SharedValue<number>
-  amber: string
-  flight: Flight
-}) {
-  const size = HERO_SIZE * (0.78 - index * 0.11)
-  const style = useAnimatedStyle(() => {
-    const at = heroAt(
-      flight.progress.value - (index + 1) * SPARK_GAP,
-      flight.spline,
-      flight.originX,
-      flight.originY,
-      flight.through,
-      flight.throughX,
-      flight.throughY,
-      flight.clock.value,
-    )
-    return {
-      opacity: blaze.value * (0.5 - index * 0.07),
-      transform: [{ translateX: at.x }, { translateY: at.y }],
-    }
-  })
-
-  return (
-    <Animated.View
-      pointerEvents="none"
-      style={[{ position: 'absolute', left: 0, top: 0, width: 0, height: 0 }, style]}
-    >
-      <View
-        style={{
-          position: 'absolute',
-          left: -size / 2,
-          top: -size / 2,
-          width: size,
-          height: size,
-          borderRadius: size / 2,
-          backgroundColor: amber,
-        }}
-      />
-    </Animated.View>
-  )
-}
-
 export function ArcadeHero({
   originX,
   originY,
@@ -131,26 +67,27 @@ export function ArcadeHero({
   throughY,
   progress,
   clock,
+  turn,
   standing,
   rocketing,
   amber,
   core,
 }: {
-  // The crossroad the first spline is measured from — the one the hero is leaving on a walk,
-  // and the one behind it on a retreat.
+  // The crossroad the first spline is measured from — the one the flame is leaving on a
+  // walk, and the one behind it on a retreat.
   originX: number
   originY: number
-  // The way being travelled, or null while the hero stands on its crossroad.
   spline: Spline | null
-  // On a strike, the way out of the crossroad being passed through, and where that
-  // crossroad sits. Null on every other beat.
+  // On a strike, the way out of the crossroad being passed through, and where it sits.
   through: Spline | null
   throughX: number
   throughY: number
-  // How far along the movement it has got. Driven by the screen, which runs it 0 → 1 for a
-  // walk, 1 → 0 for a retreat and 0 → 2 for a strike, so one value covers them all.
+  // How far along the movement it has got: 0 → 1 for a walk, 1 → 0 for a retreat and
+  // 0 → 2 for a strike, so one value covers them all.
   progress: SharedValue<number>
   clock: SharedValue<number>
+  // The sheet's turn, taken back out. Fire goes up, whichever way the map is lying.
+  turn: SharedValue<number>
   standing: boolean
   rocketing: boolean
   amber: string
@@ -158,16 +95,6 @@ export function ArcadeHero({
 }) {
   const pulse = useSharedValue(1)
   const blaze = useSharedValue(0)
-  const flight: Flight = {
-    spline,
-    originX,
-    originY,
-    through,
-    throughX,
-    throughY,
-    progress,
-    clock,
-  }
 
   useEffect(() => {
     if (!standing) {
@@ -181,10 +108,10 @@ export function ArcadeHero({
     )
   }, [standing])
 
-  // The tail catches light for the flight and goes out on landing. Animated rather than
-  // switched, because nothing in this app appears or disappears between two frames.
+  // Under power it burns taller. Animated rather than switched, because nothing in this app
+  // changes between two frames.
   useEffect(() => {
-    blaze.value = withTiming(rocketing ? 1 : 0, { duration: BLAZE_MS })
+    blaze.value = withTiming(rocketing ? 1 : 0, { duration: 180 })
   }, [rocketing])
 
   const style = useAnimatedStyle(() => {
@@ -200,71 +127,47 @@ export function ArcadeHero({
     )
     return {
       transform: [
-        { translateX: at.x },
-        { translateY: at.y },
-        // Under power it runs a little hotter and a little bigger — the one thing on the
-        // canvas that is allowed to look like it is trying.
-        { scale: pulse.value * (1 + blaze.value * 0.22) },
+        { translateX: at.x - BOX / 2 },
+        { translateY: at.y - BOX / 2 },
+        // About the box's centre, which is the foot of the flame — so taking the sheet's
+        // turn back out leaves the fire standing exactly where it stood.
+        { rotate: `${-turn.value}rad` },
+        { scale: pulse.value * (1 + blaze.value * 0.2) },
       ],
     }
   })
 
-  const glow = useAnimatedStyle(() => ({
-    opacity: 1 + blaze.value * 1.6,
+  const body = useAnimatedProps(() => ({
+    d: flamePath(HERO_SIZE * (1 + blaze.value * 0.35), clock.value, false),
+  }))
+  const tongue = useAnimatedProps(() => ({
+    d: flamePath(HERO_SIZE * (1 + blaze.value * 0.35), clock.value, true),
   }))
 
   return (
-    <>
-      {Array.from({ length: SPARKS }, (_, index) => (
-        <HeroSpark
-          key={index}
-          index={index}
-          blaze={blaze}
-          amber={amber}
-          flight={flight}
-        />
-      ))}
-      <Animated.View
-        pointerEvents="none"
-        style={[{ position: 'absolute', left: 0, top: 0, width: 0, height: 0 }, style]}
-      >
-        <Animated.View
-          style={[
-            {
-              position: 'absolute',
-              left: -GLOW / 2,
-              top: -GLOW / 2,
-              width: GLOW,
-              height: GLOW,
-              borderRadius: GLOW / 2,
-              backgroundColor: `${amber}1F`,
-            },
-            glow,
-          ]}
-        />
-        <View
-          style={{
-            position: 'absolute',
-            left: -HERO_SIZE / 2,
-            top: -HERO_SIZE / 2,
-            width: HERO_SIZE,
-            height: HERO_SIZE,
-            borderRadius: HERO_SIZE / 2,
-            backgroundColor: amber,
-          }}
-        />
-        <View
-          style={{
-            position: 'absolute',
-            left: -CORE / 2,
-            top: -CORE / 2,
-            width: CORE,
-            height: CORE,
-            borderRadius: CORE / 2,
-            backgroundColor: core,
-          }}
-        />
-      </Animated.View>
-    </>
+    <Animated.View
+      pointerEvents="none"
+      style={[{ position: 'absolute', left: 0, top: 0, width: BOX, height: BOX }, style]}
+    >
+      <View
+        style={{
+          position: 'absolute',
+          left: (BOX - GLOW) / 2,
+          top: BOX / 2 - GLOW * 0.62,
+          width: GLOW,
+          height: GLOW,
+          borderRadius: GLOW / 2,
+          backgroundColor: `${amber}26`,
+        }}
+      />
+      <Svg width={BOX} height={BOX}>
+        {/* The flame stands at the centre of its box and rises from there, so the point the
+            spline hands back is the foot of the fire rather than the middle of it. */}
+        <G transform={`translate(${BOX / 2}, ${BOX / 2})`}>
+          <AnimatedPath animatedProps={body} fill={amber} />
+          <AnimatedPath animatedProps={tongue} fill={core} />
+        </G>
+      </Svg>
+    </Animated.View>
   )
 }

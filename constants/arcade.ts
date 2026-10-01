@@ -4,6 +4,12 @@
 // place and not the others would read as three things happening at once rather than as one
 // movement.
 
+// The card a run opens on, before a single way is drawn: how long it is up, and how long it
+// takes to leave. The leaving overlaps the first bloom underneath it — the words fade off
+// *into* the opening crossroad rather than clearing the screen and handing it over.
+export const DAWN_MS = 1500
+export const DAWN_OUT_MS = 420
+
 // A crossroad blooming: how long one way takes to draw itself on, and how far apart the
 // ways of a fan start. The bloom is over when the last of four has finished — a fan builds
 // rather than arriving all at once.
@@ -29,11 +35,6 @@ export const ROCKET_MS = 1180
 // Where the accelerating half ends and the settling half begins. Before it the hero is
 // leaving a crossroad under power; after it, arriving at one.
 export const ROCKET_SPLIT = 0.46
-
-// The comet behind a rocketing hero: how many sparks, and how far back along the way each
-// one trails. Far enough apart to read as a tail rather than as a thick bead.
-export const SPARKS = 5
-export const SPARK_GAP = 0.055
 
 // How long STRIKE stays up over the crossroad that earned it.
 export const STRIKE_MS = 900

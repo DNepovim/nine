@@ -1,9 +1,11 @@
 import { Trans } from '@lingui/react/macro'
 import { isOneOf } from 'narrowland'
 import { useEffect, useRef, useState } from 'react'
-import { Pressable, Text, View, type LayoutChangeEvent } from 'react-native'
+import { Text, View, type LayoutChangeEvent } from 'react-native'
 import Animated, {
   Easing,
+  FadeIn,
+  FadeOut,
   useAnimatedStyle,
   useFrameCallback,
   useSharedValue,
@@ -12,17 +14,24 @@ import Animated, {
 } from 'react-native-reanimated'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
+import { ArcadeDawn } from '@/components/game/arcade-dawn'
 import { ArcadeHero } from '@/components/game/arcade-hero'
 import { ArcadeMouth } from '@/components/game/arcade-mouth'
 import { ArcadeOver } from '@/components/game/arcade-over'
+import { ArcadePaused } from '@/components/game/arcade-paused'
 import { ArcadeStrike } from '@/components/game/arcade-strike'
+import { CompassRose } from '@/components/game/compass-rose'
 import { Dial } from '@/components/game/dial'
+import { LandMark } from '@/components/game/land-mark'
+import { PauseButton } from '@/components/game/pause-button'
 import { ScoreDigit } from '@/components/game/score-digit'
+import { VillageArrival } from '@/components/game/village-arrival'
 import { WayBud, type BudState } from '@/components/game/way-bud'
 import { WayStem, type StemState } from '@/components/game/way-stem'
 import { ScreenLayer } from '@/components/screen'
 import {
   ANCHOR,
+  DAWN_OUT_MS,
   FALL_MS,
   RETREAT_MS,
   ROCKET_MS,
@@ -32,7 +41,8 @@ import {
   TRAIL_DEPTH,
   WALK_MS,
 } from '@/constants/arcade'
-import { ARCADE_INK, PIE_INK, WAY_INK } from '@/constants/colors'
+import { ARCADE_INK, MAP_INK, PIE_INK, SURFACE } from '@/constants/colors'
+import { useArcadeLand } from '@/hooks/use-arcade-land'
 import { useArcadeRun, type ArcadePhase } from '@/hooks/use-arcade-run'
 import { SUM_ROW_HEIGHT } from '@/hooks/use-dial-metrics'
 import { useScoreDirection } from '@/hooks/use-score-direction'
@@ -46,8 +56,8 @@ import {
 } from '@/lib/arcade-layout'
 import { DIAL_CELLS } from '@/lib/dial-gesture'
 import { valueProgress } from '@/lib/value-progress'
+import { idSeed, UP } from '@/machines/arcade'
 import { computeSum, DARK_MODE_GRADIENT, lerpColor, MODE_GRADIENT } from '@/machines/game'
-import type { Difficulty } from '@/machines/modes'
 import type { DialControl } from '@/machines/tutorial-lesson'
 
 // The arcade screen: the way above, the dial below, and nothing between them but the sum.
@@ -86,6 +96,7 @@ const ALL_OFF: readonly DialControl[] = DIAL_CELLS.map(() => 'off')
 // How long the canvas takes to drift, per beat — the same number the hero's own travel
 // takes, because they are one movement: the hero walks, and the canvas keeps it anchored.
 const DRIFT_MS = {
+  dawn: 0,
   bloom: 0,
   open: 0,
   walk: WALK_MS,
@@ -101,6 +112,7 @@ const DRIFT_MS = {
 // and into the next; a retreat and a fall only ease in, so both read as being pulled rather
 // than as a move the player made.
 const TRAVEL = {
+  dawn: null,
   bloom: null,
   open: null,
   walk: { from: 0, to: 1, duration: WALK_MS, easing: Easing.inOut(Easing.cubic) },
@@ -120,6 +132,7 @@ const TRAVEL = {
 // dragging the hero back down — including under the game-over card, where the way that took
 // the run is the last thing drawn behind it.
 const CREEP = {
+  dawn: null,
   bloom: null,
   open: 'running',
   walk: null,
@@ -129,6 +142,9 @@ const CREEP = {
   falling: 'held',
   over: 'held',
 } as const satisfies Record<ArcadePhase, 'running' | 'held' | null>
+
+// A mode switch has no beat of its own, so the sheet takes this long to come round.
+const TURN_MS = 620
 
 // SVG ids are global in react-native-svg, and a crossroad id carries dots. One place that
 // turns one into the other, so two ways can never share a gradient.
@@ -144,6 +160,7 @@ type StemSpec = {
   state: StemState
   delay: number
   creepMs: number | 'held' | null
+  creepFrom: number
   fade: number
   gradientId: string
 }
@@ -153,22 +170,16 @@ type BudSpec = {
   x: number
   y: number
   value: number
+  name: string
+  seed: number
   state: BudState
   delay: number
 }
 
-export function ArcadeGame({
-  difficulty,
-  isDark,
-  onEnd,
-}: {
-  difficulty: Difficulty
-  isDark: boolean
-  onEnd: () => void
-}) {
+export function ArcadeGame({ isDark, onEnd }: { isDark: boolean; onEnd: () => void }) {
   const insets = useSafeAreaInsets()
   const { colorScheme } = useTheme()
-  const run = useArcadeRun(difficulty)
+  const run = useArcadeRun()
   const [canvas, setCanvas] = useState({ width: 0, height: 0 })
 
   // One clock for the whole canvas, read on the UI thread by every way's sway and by the
@@ -182,6 +193,11 @@ export function ArcadeGame({
 
   const camX = useSharedValue(0)
   const camY = useSharedValue(0)
+  // How far the sheet has been turned. Nought with north pinned to the top of the screen —
+  // where it has been until now — and whatever it takes to put the hero's heading up when
+  // the player would rather the land turned under them.
+  const camTurn = useSharedValue(0)
+  const [northUp, setNorthUp] = useState(true)
   const progress = useSharedValue(0)
   const placed = useRef(false)
 
@@ -210,6 +226,16 @@ export function ArcadeGame({
     camX.value = withTiming(driftX, { duration, easing })
     camY.value = withTiming(driftY, { duration, easing })
   }, [driftX, driftY, run.phase, run.seq, pitch])
+
+  // The sheet turns on the same beat the canvas drifts on, so the two are one movement. A
+  // mode switch has no beat of its own, so it takes a turn of its own length.
+  useEffect(() => {
+    const turn = northUp ? 0 : UP - (destination?.heading ?? UP)
+    camTurn.value = withTiming(turn, {
+      duration: DRIFT_MS[run.phase] || TURN_MS,
+      easing: Easing.inOut(Easing.cubic),
+    })
+  }, [northUp, destination?.heading, run.phase, run.seq])
 
   useEffect(() => {
     // A strike is one movement with two halves: out of the crossroad under power, then
@@ -242,8 +268,15 @@ export function ArcadeGame({
     })
   }, [run.phase, run.seq])
 
+  // Anchor, then turn, then focus. With no turn this is exactly the translation it has
+  // always been — `camX`/`camY` already carry the anchor less the focus — so the sheet
+  // being able to rotate costs the usual case nothing.
   const camera = useAnimatedStyle(() => ({
-    transform: [{ translateX: camX.value }, { translateY: camY.value }],
+    transform: [
+      { translateX: camX.value },
+      { translateY: camY.value },
+      { rotate: `${camTurn.value}rad` },
+    ],
   }))
 
   const onCanvasLayout = (event: LayoutChangeEvent) => {
@@ -256,13 +289,23 @@ export function ArcadeGame({
   const buds: BudSpec[] = []
   const stub = pitch > 0 ? mouthStub(pitch) : null
   const leaving = isOneOf(run.phase, ['walk', 'rocket', 'retreat', 'falling', 'over'])
+  // Nothing on the canvas while the card is up. Not hidden behind it — not drawn at all:
+  // every way grows itself on and every mark of the land fades itself in, and all of that
+  // playing out under an opaque card would uncover a map that had already arrived. Held
+  // back, the bloom is the reveal.
+  const dawn = run.phase === 'dawn'
   const creepPhase = CREEP[run.phase]
-  const creeping: number | 'held' | null =
-    creepPhase === 'running' ? run.clockMs : creepPhase
+  // Held where it is while the run is stopped, which is the whole of what pausing does to
+  // the canvas: the red waiting exactly where the player left it.
+  const creeping: number | 'held' | null = run.paused
+    ? 'held'
+    : creepPhase === 'running'
+      ? run.clockMs
+      : creepPhase
   const nearMouth = here !== undefined && here.depth <= TRAIL_DEPTH
   const mouthFade = here === undefined ? 0 : (FADES[here.depth] ?? 0.2)
 
-  if (pitch > 0 && here !== undefined && stub !== null) {
+  if (!dawn && pitch > 0 && here !== undefined && stub !== null) {
     const herePt = pointsOf(here.pos, pitch)
 
     // The stub, and the mouth at the foot of it. Always below where the run began, which is
@@ -279,6 +322,7 @@ export function ArcadeGame({
         // At the first crossroad there is no way behind for the clock to cool, so the stub
         // carries it — and is then what the hero rides down.
         creepMs: here.depth === 0 ? creeping : null,
+        creepFrom: run.clockFrom,
         delay: 0,
         fade: mouthFade,
         gradientId: gradientFor('stub'),
@@ -296,6 +340,7 @@ export function ArcadeGame({
         state: 'steady',
         // Only the way directly behind the hero carries the clock.
         creepMs: i === 0 ? creeping : null,
+        creepFrom: run.clockFrom,
         delay: 0,
         fade: FADES[i] ?? 0.2,
         gradientId: gradientFor(step.way.to),
@@ -316,6 +361,7 @@ export function ArcadeGame({
         // costs not a frame.
         state: chosen ? 'steady' : leaving ? 'withering' : 'growing',
         creepMs: null,
+        creepFrom: 0,
         delay: i * STAGGER_MS,
         fade: 1,
         gradientId: gradientFor(way.to),
@@ -325,6 +371,8 @@ export function ArcadeGame({
         x: herePt.x + spline.toX,
         y: herePt.y + spline.toY,
         value: way.value,
+        name: run.nameOf(way.to),
+        seed: idSeed(way.to),
         state: chosen ? 'absorbing' : leaving ? 'withering' : 'growing',
         delay: i * STAGGER_MS,
       })
@@ -362,6 +410,7 @@ export function ArcadeGame({
       lit: true,
       state: 'growing',
       creepMs: null,
+      creepFrom: 0,
       delay: 0,
       fade: 1,
       gradientId: gradientFor(skipped.key),
@@ -389,9 +438,23 @@ export function ArcadeGame({
   }
   const hero = travelling()
 
+  // What the land is, where the hero is standing. A pure function of the world and the run's
+  // seed — see hooks/use-arcade-land.ts for why the answers are kept.
+  const land = useArcadeLand({
+    seed: run.seed,
+    pitch,
+    canvas,
+    origin: here?.pos ?? { x: 0, y: 0 },
+    sight: run.sight,
+  })
+
   const sum = computeSum(run.grid)
   const direction = useScoreDirection(sum)
   const arcadeInk = ARCADE_INK[colorScheme]
+  const ink = MAP_INK[colorScheme]
+  // What every mark on the map fills itself with before it is inked: the theme's own ground,
+  // so the knockout is invisible except where it covers something.
+  const surface = SURFACE[colorScheme]
 
   return (
     <ScreenLayer>
@@ -406,11 +469,17 @@ export function ArcadeGame({
             >
               <Trans>ARCADE</Trans>
             </Text>
+            {/* Where the hero is standing, by name. The depth is the score and it is on the
+                pause screen and the end of the run; what a player wants to read mid-run is
+                the place they are in — and every crossroad has had a name since the map
+                started drawing itself one. Clipped rather than wrapped: a second line here
+                would push the whole row down. */}
             <Text
               selectable={false}
+              numberOfLines={1}
               className="font-mono text-[10px] font-bold tracking-[1px] text-dim"
             >
-              <Trans>DEPTH</Trans> {run.depth}
+              {here?.name.toUpperCase() ?? ''}
             </Text>
           </View>
           <View className="items-center">
@@ -424,15 +493,20 @@ export function ArcadeGame({
               NINE
             </Text>
           </View>
+          {/* The way out, the same one every run has — and only while the hero is
+              standing on a crossroad. Mid-flight there is no beat to stop: a movement is
+              a second at most, and a screen that froze halfway along a way would have to
+              be resumed into an animation that had already finished without it. The
+              column keeps its width either way, so nothing else in the row moves. */}
           <View className="flex-1 items-end">
-            <Pressable onPress={onEnd} hitSlop={12}>
-              <Text
-                selectable={false}
-                className="font-mono text-[11px] font-black tracking-[2px] text-dim"
+            {run.dialable && (
+              <Animated.View
+                entering={FadeIn.duration(160)}
+                exiting={FadeOut.duration(160)}
               >
-                <Trans>END</Trans>
-              </Text>
-            </Pressable>
+                <PauseButton color={arcadeInk} onPress={run.pause} />
+              </Animated.View>
+            )}
           </View>
         </View>
 
@@ -440,77 +514,137 @@ export function ArcadeGame({
         {/* Clipped, because the map runs well past what is worth looking at: the canvas is a
           window onto the climb rather than the whole of it. */}
         <View className="flex-1 overflow-hidden" onLayout={onCanvasLayout}>
-          <Animated.View
-            style={[
-              { position: 'absolute', left: 0, top: 0, width: 1, height: 1 },
-              camera,
-            ]}
-          >
-            {stems.map((stem) => (
-              <WayStem
-                key={stem.key}
-                x={stem.x}
-                y={stem.y}
-                box={box}
-                spline={stem.spline}
-                lit={stem.lit}
-                state={stem.state}
-                delay={stem.delay}
+          {/* The sheet. Mounted when the card leaves, and fading up over exactly as long as
+            the card takes to go, so the two are one handover rather than a swap. */}
+          {!dawn && (
+            <Animated.View
+              entering={FadeIn.duration(DAWN_OUT_MS)}
+              style={[
+                { position: 'absolute', left: 0, top: 0, width: 1, height: 1 },
+                camera,
+              ]}
+            >
+              {/* The country, under the ways and over nothing. Each feature is its own small
+                SVG so it can arrive on its own and leave once the hero has walked far
+                enough that nobody is looking at it. */}
+              {land.map((feature) => (
+                <LandMark
+                  key={feature.key}
+                  feature={feature}
+                  pitch={pitch}
+                  line={ink.line}
+                  hatch={ink.hatch}
+                  knockout={surface}
+                />
+              ))}
+              {stems.map((stem) => (
+                <WayStem
+                  key={stem.key}
+                  x={stem.x}
+                  y={stem.y}
+                  box={box}
+                  spline={stem.spline}
+                  lit={stem.lit}
+                  state={stem.state}
+                  delay={stem.delay}
+                  clock={clock}
+                  creepMs={stem.creepMs}
+                  creepFrom={stem.creepFrom}
+                  fade={stem.fade}
+                  gradientId={stem.gradientId}
+                  aheadInk={ink.line}
+                  amber={AMBER}
+                  ember={EMBER}
+                />
+              ))}
+              {stub !== null && nearMouth && (
+                <ArcadeMouth
+                  x={stub.toX}
+                  y={stub.toY}
+                  fade={mouthFade}
+                  ring={ink.hatch}
+                  ember={EMBER}
+                />
+              )}
+              {buds.map((bud) => (
+                <WayBud
+                  key={bud.key}
+                  x={bud.x}
+                  y={bud.y}
+                  value={bud.value}
+                  name={bud.name}
+                  seed={bud.seed}
+                  state={bud.state}
+                  delay={bud.delay}
+                  edge={BUD_EDGE}
+                  ink={PIE_INK[colorScheme]}
+                  turn={camTurn}
+                  line={ink.line}
+                  hatch={ink.hatch}
+                  face={surface}
+                />
+              ))}
+              {skipped !== null && (
+                <ArcadeStrike
+                  // Keyed on the beat, so each strike is its own word rather than one view
+                  // restarting — two in a row would otherwise share an animation.
+                  key={run.seq}
+                  x={skipped.fromX}
+                  y={skipped.fromY}
+                  turn={camTurn}
+                  ink={arcadeInk}
+                />
+              )}
+              {/* The name of the place just reached, under the flame. Keyed on the crossroad,
+                so arriving plays it once and walking on plays the next one rather than
+                restarting this one. */}
+              {here !== undefined && pitch > 0 && (
+                <VillageArrival
+                  key={here.id}
+                  x={pointsOf(here.pos, pitch).x}
+                  y={pointsOf(here.pos, pitch).y}
+                  name={here.name}
+                  turn={camTurn}
+                  ink={arcadeInk}
+                />
+              )}
+              <ArcadeHero
+                originX={hero.x}
+                originY={hero.y}
+                spline={hero.spline}
+                through={skipped?.spline ?? null}
+                throughX={skipped?.x ?? 0}
+                throughY={skipped?.y ?? 0}
+                progress={progress}
                 clock={clock}
-                creepMs={stem.creepMs}
-                fade={stem.fade}
-                gradientId={stem.gradientId}
-                aheadInk={WAY_INK[colorScheme]}
+                turn={camTurn}
+                standing={!leaving}
+                rocketing={run.phase === 'rocket'}
                 amber={AMBER}
-                ember={EMBER}
+                core={HERO_CORE}
               />
-            ))}
-            {stub !== null && nearMouth && (
-              <ArcadeMouth
-                x={stub.toX}
-                y={stub.toY}
-                fade={mouthFade}
-                ring={WAY_INK[colorScheme]}
-                ember={EMBER}
-              />
-            )}
-            {buds.map((bud) => (
-              <WayBud
-                key={bud.key}
-                x={bud.x}
-                y={bud.y}
-                value={bud.value}
-                state={bud.state}
-                delay={bud.delay}
-                edge={BUD_EDGE}
-                ink={PIE_INK[colorScheme]}
-              />
-            ))}
-            {skipped !== null && (
-              <ArcadeStrike
-                // Keyed on the beat, so each strike is its own word rather than one view
-                // restarting — two in a row would otherwise share an animation.
-                key={run.seq}
-                x={skipped.fromX}
-                y={skipped.fromY}
-                ink={arcadeInk}
-              />
-            )}
-            <ArcadeHero
-              originX={hero.x}
-              originY={hero.y}
-              spline={hero.spline}
-              through={skipped?.spline ?? null}
-              throughX={skipped?.x ?? 0}
-              throughY={skipped?.y ?? 0}
-              progress={progress}
-              clock={clock}
-              standing={!leaving}
-              rocketing={run.phase === 'rocket'}
-              amber={AMBER}
-              core={HERO_CORE}
-            />
-          </Animated.View>
+            </Animated.View>
+          )}
+
+          {/* Over the sheet rather than on it: the rose is a control and a reading, and
+              neither belongs to the part that turns. Left mounted under the card rather
+              than arriving with the sheet: a control that popped in after the words would
+              be one more thing moving at the one moment the map is asking to be read. */}
+          <CompassRose
+            turn={camTurn}
+            northUp={northUp}
+            line={ink.line}
+            hatch={ink.hatch}
+            knockout={surface}
+            onToggle={() => {
+              setNorthUp((was) => !was)
+            }}
+          />
+
+          {/* The words the run opens on, over the canvas and nothing else: the dial stays
+              where it is, dimmed, so the first thing a player sees of arcade is the place
+              being set out rather than a board already dealt. */}
+          {dawn && <ArcadeDawn ink={arcadeInk} />}
         </View>
 
         {/* ── The sum ── */}
@@ -546,10 +680,24 @@ export function ArcadeGame({
           onSet={run.set}
         />
 
+        {/* Stopped. The canvas stays exactly as it was underneath — the red on the way
+            behind holds where it got to — so continuing is the screen leaving rather than
+            the board being dealt again. */}
+        {run.paused && (
+          <ArcadePaused
+            depth={run.depth}
+            strikes={run.strikes}
+            playedMs={run.playedMs}
+            onContinue={run.resume}
+            onEnd={onEnd}
+          />
+        )}
+
         {run.phase === 'over' && (
           <ArcadeOver
             depth={run.best}
             strikes={run.strikes}
+            playedMs={run.playedMs}
             onAgain={run.restart}
             onHome={onEnd}
           />

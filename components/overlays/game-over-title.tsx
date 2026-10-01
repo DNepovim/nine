@@ -22,7 +22,9 @@ export function GameOverTitle({
   words,
   shadow = false,
 }: {
-  gameMode: Mode
+  // Arcade too, which has no entry in `MODES` but does have a pair in `MODE_GRADIENT` —
+  // and an end worth naming. See components/game/arcade-over.tsx.
+  gameMode: Mode | 'arcade'
   words: TitleWords
   // The all-time screen puts these letters on gold with a celebration behind them.
   shadow?: boolean

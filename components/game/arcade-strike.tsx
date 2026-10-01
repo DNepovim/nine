@@ -7,6 +7,7 @@ import Animated, {
   useSharedValue,
   withSequence,
   withTiming,
+  type SharedValue,
 } from 'react-native-reanimated'
 
 import { STRIKE_MS } from '@/constants/arcade'
@@ -20,7 +21,18 @@ import { STRIKE_MS } from '@/constants/arcade'
 // Mounted per strike — the screen keys it on the run's beat — so it plays once and goes.
 const RISE = 26
 
-export function ArcadeStrike({ x, y, ink }: { x: number; y: number; ink: string }) {
+export function ArcadeStrike({
+  x,
+  y,
+  turn,
+  ink,
+}: {
+  x: number
+  y: number
+  // The sheet's turn, taken back out — a word is read, not drawn on the map.
+  turn: SharedValue<number>
+  ink: string
+}) {
   const lift = useSharedValue(0)
   const opacity = useSharedValue(0)
 
@@ -39,7 +51,7 @@ export function ArcadeStrike({ x, y, ink }: { x: number; y: number; ink: string 
 
   const style = useAnimatedStyle(() => ({
     opacity: opacity.value,
-    transform: [{ translateY: lift.value }],
+    transform: [{ translateY: lift.value }, { rotate: `${-turn.value}rad` }],
   }))
 
   return (

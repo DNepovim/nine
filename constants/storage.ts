@@ -7,6 +7,11 @@ export const STATS_KEY = 'nine.stats.v4'
 export const DIFFICULTY_KEY = 'nine.difficulty.v1'
 export const MODE_KEY = 'nine.mode.v1'
 export const OPTIONS_KEY = 'nine.options.v1'
+// Whether the start screen was last left on the ARCADE pill. Its own key rather than a
+// value in MODE_KEY, because arcade is not a `Mode`: that key hydrates the game machine,
+// and a string it cannot parse would be a mode the machine has to have an opinion about.
+// A launch that cannot read this one simply opens on the stored mode.
+export const ARCADE_FOCUS_KEY = 'nine.arcade-focus.v1'
 // Lifetime totals — runs, hits, day streaks — behind the achievements. Deliberately not
 // part of STATS_KEY: that one is versioned on the scoring mechanics and dropped whenever
 // they change, and a thousand lifetime hits is a thousand lifetime hits whatever the

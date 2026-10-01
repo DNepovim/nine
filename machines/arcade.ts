@@ -1,4 +1,5 @@
 import { MAX_TARGET } from '@/constants/game'
+import { settlementName } from '@/lib/place-names'
 import type { Grid } from '@/machines/game'
 import { decayed, FAST_HIT_THRESHOLD } from '@/machines/modes'
 import { parTable, speedFactor } from '@/machines/scoring'
@@ -76,6 +77,9 @@ export type ArcadeWay = {
 
 export type Crossroad = {
   id: string
+  // What the settlement standing on it is called. Named when the crossroad is created, so a
+  // place keeps its name for the whole run however often the player walks back to it.
+  name: string
   // The crossroad this one was reached from, null at the start. Stored rather than read
   // back out of the id, which spells the same route: a retreat asks this every time, and
   // string surgery to answer it would be a second encoding of the same tree.
@@ -124,15 +128,16 @@ export function idSeed(id: string): number {
 
 // The randomness one crossroad of one run is grown from. Pure in both its arguments, so a
 // run is a seed and nothing else: the same seed walks the same map every time.
-export const rngFor = (seed: number, id: string): Rng => seeded((seed ^ idSeed(id)) >>> 0)
+const rngFor = (seed: number, id: string): Rng => seeded((seed ^ idSeed(id)) >>> 0)
 
 // A one-crossroad map: where the hero stands when a run begins, with the fan out of it not
 // yet grown. `openCrossroad` is what fills it, once the grid it should be measured against
 // is known.
-export function newMap(): ArcadeMap {
+export function newMap(seed: number): ArcadeMap {
   return {
     [START]: {
       id: START,
+      name: settlementName(rngFor(seed, `name:${START}`)),
       from: null,
       depth: 0,
       heading: UP,
@@ -188,8 +193,12 @@ export function openCrossroad(
   map: ArcadeMap,
   id: string,
   grid: Grid,
-  rng: Rng,
+  // The run's seed rather than a prepared generator: a crossroad needs two streams of
+  // randomness — one for its fan and one for the names of the places at the end of it — and
+  // the only way to keep them from shifting each other is to derive both here.
+  seed: number,
 ): ArcadeMap {
+  const rng = rngFor(seed, id)
   const at = map[id]
   if (at === undefined) return map
   if (at.ways.length > 0) return map
@@ -223,6 +232,7 @@ export function openCrossroad(
         y: at.pos.y + Math.sin(way.angle) * way.reach,
       },
       ways: [],
+      name: settlementName(rngFor(seed, `name:${way.to}`)),
     }
   }
   return grown
