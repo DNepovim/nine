@@ -543,6 +543,13 @@ export function HowToPlayOverlay({
                 </Bullet>
                 <Bullet color={GAME_SCALE[4]}>
                   <Trans>
+                    Answer while most of that clock is still full and you strike: the hero
+                    does not stop at the next crossroad, it rockets through and lands one
+                    deeper.
+                  </Trans>
+                </Bullet>
+                <Bullet color={GAME_SCALE[4]}>
+                  <Trans>
                     When the red reaches you it drags you back one crossroad — and the
                     ways you find there are the ones you left.
                   </Trans>

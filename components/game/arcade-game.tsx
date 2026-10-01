@@ -7,6 +7,7 @@ import Animated, {
   useAnimatedStyle,
   useFrameCallback,
   useSharedValue,
+  withSequence,
   withTiming,
 } from 'react-native-reanimated'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
@@ -14,6 +15,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { ArcadeHero } from '@/components/game/arcade-hero'
 import { ArcadeMouth } from '@/components/game/arcade-mouth'
 import { ArcadeOver } from '@/components/game/arcade-over'
+import { ArcadeStrike } from '@/components/game/arcade-strike'
 import { Dial } from '@/components/game/dial'
 import { ScoreDigit } from '@/components/game/score-digit'
 import { WayBud, type BudState } from '@/components/game/way-bud'
@@ -23,6 +25,8 @@ import {
   ANCHOR,
   FALL_MS,
   RETREAT_MS,
+  ROCKET_MS,
+  ROCKET_SPLIT,
   STAGGER_MS,
   STEM_BOX,
   TRAIL_DEPTH,
@@ -85,6 +89,9 @@ const DRIFT_MS = {
   bloom: 0,
   open: 0,
   walk: WALK_MS,
+  // Two ways in a little over one walk, which is the whole feel of a strike: the canvas
+  // covers twice the ground in not much more time, and what rushes past is the speed.
+  rocket: ROCKET_MS,
   retreat: RETREAT_MS,
   falling: 0,
   over: 0,
@@ -97,6 +104,9 @@ const TRAVEL = {
   bloom: null,
   open: null,
   walk: { from: 0, to: 1, duration: WALK_MS, easing: Easing.inOut(Easing.cubic) },
+  // A strike runs 0 → 2 in two timings rather than one, which is more than an entry here
+  // can say — see the effect that drives it.
+  rocket: null,
   retreat: { from: 1, to: 0, duration: RETREAT_MS, easing: Easing.in(Easing.cubic) },
   falling: { from: 0, to: 1, duration: FALL_MS, easing: Easing.in(Easing.cubic) },
   over: null,
@@ -113,6 +123,8 @@ const CREEP = {
   bloom: null,
   open: 'running',
   walk: null,
+  // Cleared, like a walk: a strike is the clock answered, and answered early.
+  rocket: null,
   retreat: 'held',
   falling: 'held',
   over: 'held',
@@ -200,6 +212,23 @@ export function ArcadeGame({
   }, [driftX, driftY, run.phase, run.seq, pitch])
 
   useEffect(() => {
+    // A strike is one movement with two halves: out of the crossroad under power, then
+    // settling into the landing two crossroads on. One `withTiming` cannot say that, and
+    // two of them in sequence is exactly what speeding up means.
+    if (run.phase === 'rocket') {
+      progress.value = 0
+      progress.value = withSequence(
+        withTiming(1, {
+          duration: ROCKET_MS * ROCKET_SPLIT,
+          easing: Easing.in(Easing.cubic),
+        }),
+        withTiming(2, {
+          duration: ROCKET_MS * (1 - ROCKET_SPLIT),
+          easing: Easing.out(Easing.cubic),
+        }),
+      )
+      return
+    }
     const travel = TRAVEL[run.phase]
     // Left where it is on a beat with no travel in it, rather than put back to nought: on
     // those beats the hero is standing on a crossroad and reads no spline at all, and
@@ -226,7 +255,7 @@ export function ArcadeGame({
   const stems: StemSpec[] = []
   const buds: BudSpec[] = []
   const stub = pitch > 0 ? mouthStub(pitch) : null
-  const leaving = isOneOf(run.phase, ['walk', 'retreat', 'falling', 'over'])
+  const leaving = isOneOf(run.phase, ['walk', 'rocket', 'retreat', 'falling', 'over'])
   const creepPhase = CREEP[run.phase]
   const creeping: number | 'held' | null =
     creepPhase === 'running' ? run.clockMs : creepPhase
@@ -275,7 +304,7 @@ export function ArcadeGame({
 
     here.ways.forEach((way, i) => {
       const spline = splineFor(way, here.heading, pitch)
-      const chosen = run.phase === 'walk' && run.moving?.to === way.to
+      const chosen = isOneOf(run.phase, ['walk', 'rocket']) && run.moving?.to === way.to
       stems.push({
         key: way.to,
         x: herePt.x,
@@ -302,12 +331,49 @@ export function ArcadeGame({
     })
   }
 
+  // The way out of the crossroad a strike never stops at, drawn from that crossroad's own
+  // place — which is the chosen way's far end, and whose heading is the angle that way
+  // arrived on.
+  //
+  // Added as `growing` rather than already drawn, so it lights up ahead of the rocket
+  // instead of appearing under it. After the landing it is the first way of the trail,
+  // under the same key and with the same geometry, so that handover costs no frame either.
+  const skipped = (() => {
+    if (pitch === 0 || here === undefined) return null
+    if (run.phase !== 'rocket' || run.moving === null || run.through === null) return null
+    const herePt = pointsOf(here.pos, pitch)
+    const chosen = splineFor(run.moving, here.heading, pitch)
+    return {
+      key: run.through.to,
+      fromX: herePt.x,
+      fromY: herePt.y,
+      x: herePt.x + chosen.toX,
+      y: herePt.y + chosen.toY,
+      spline: splineFor(run.through, run.moving.angle, pitch),
+    }
+  })()
+
+  if (skipped !== null) {
+    stems.push({
+      key: skipped.key,
+      x: skipped.x,
+      y: skipped.y,
+      spline: skipped.spline,
+      lit: true,
+      state: 'growing',
+      creepMs: null,
+      delay: 0,
+      fade: 1,
+      gradientId: gradientFor(skipped.key),
+    })
+  }
+
   // The way the hero is on, in the frame of the crossroad that way leaves — which on a
   // retreat is the one behind it, since a retreat is the way *in*, walked backwards.
   const travelling = (): { spline: Spline | null; x: number; y: number } => {
     if (pitch === 0 || here === undefined) return { spline: null, x: 0, y: 0 }
     const standingAt = pointsOf(here.pos, pitch)
-    if (run.phase === 'walk' && run.moving !== null) {
+    if (isOneOf(run.phase, ['walk', 'rocket']) && run.moving !== null) {
       return { spline: splineFor(run.moving, here.heading, pitch), ...standingAt }
     }
     if (run.phase === 'retreat' && run.moving !== null && run.parent !== undefined) {
@@ -420,13 +486,27 @@ export function ArcadeGame({
                 ink={PIE_INK[colorScheme]}
               />
             ))}
+            {skipped !== null && (
+              <ArcadeStrike
+                // Keyed on the beat, so each strike is its own word rather than one view
+                // restarting — two in a row would otherwise share an animation.
+                key={run.seq}
+                x={skipped.fromX}
+                y={skipped.fromY}
+                ink={arcadeInk}
+              />
+            )}
             <ArcadeHero
               originX={hero.x}
               originY={hero.y}
               spline={hero.spline}
+              through={skipped?.spline ?? null}
+              throughX={skipped?.x ?? 0}
+              throughY={skipped?.y ?? 0}
               progress={progress}
               clock={clock}
               standing={!leaving}
+              rocketing={run.phase === 'rocket'}
               amber={AMBER}
               core={HERO_CORE}
             />
@@ -467,7 +547,12 @@ export function ArcadeGame({
         />
 
         {run.phase === 'over' && (
-          <ArcadeOver depth={run.best} onAgain={run.restart} onHome={onEnd} />
+          <ArcadeOver
+            depth={run.best}
+            strikes={run.strikes}
+            onAgain={run.restart}
+            onHome={onEnd}
+          />
         )}
       </View>
     </ScreenLayer>

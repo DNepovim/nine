@@ -14,10 +14,14 @@ import { DARK_MODE_GRADIENT } from '@/machines/game'
 // of those while it is behind the flag. What it has is a depth.
 export function ArcadeOver({
   depth,
+  strikes,
   onAgain,
   onHome,
 }: {
   depth: number
+  // How many crossroads this run answered fast enough to rocket through. The run's one
+  // other stat, and the same word the game's own run stats use for the same claim.
+  strikes: number
   onAgain: () => void
   onHome: () => void
 }) {
@@ -47,6 +51,12 @@ export function ArcadeOver({
           className="font-mono text-[10px] font-bold tracking-[1.5px] text-dim"
         >
           <Trans>CROSSROADS DEEP</Trans>
+        </Text>
+        <Text
+          selectable={false}
+          className="mt-3 font-mono text-[10px] font-bold tracking-[1.5px] text-dim"
+        >
+          {strikes} <Trans>STRIKES</Trans>
         </Text>
       </View>
 

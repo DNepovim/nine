@@ -6,11 +6,13 @@ import { computePar } from '@/machines/scoring'
 import {
   crossroadClock,
   idSeed,
+  isStrike,
   newMap,
   openCrossroad,
   rngFor,
   seeded,
   START,
+  straightestWay,
   trail,
   UP,
   wayInto,
@@ -215,15 +217,75 @@ describe('trail', () => {
 })
 
 describe('crossroadClock', () => {
-  it('gives Easy the longest and Extreme the shortest', () => {
-    expect(crossroadClock(0, 'easy')).toBeGreaterThan(crossroadClock(0, 'hard'))
-    expect(crossroadClock(0, 'hard')).toBeGreaterThan(crossroadClock(0, 'extreme'))
+  it('gives the first crossroad the whole clock', () => {
+    expect(crossroadClock(0)).toBe(11000)
   })
 
   it('tightens as the run climbs, without ever reaching nothing', () => {
-    const start = crossroadClock(0, 'hard')
-    expect(crossroadClock(24, 'hard')).toBeLessThan(start)
-    // The curve decays toward 55% of where it began and never past it.
-    expect(crossroadClock(500, 'hard')).toBeGreaterThan(start * 0.54)
+    const start = crossroadClock(0)
+    expect(crossroadClock(24)).toBeLessThan(start)
+    // The curve decays toward 55% of where it began and never past it, so a deep run is
+    // the hardest the mode gets and is still playable.
+    expect(crossroadClock(500)).toBeGreaterThan(start * 0.54)
+  })
+})
+
+describe('isStrike', () => {
+  it('is a crossroad answered with most of its clock still full', () => {
+    expect(isStrike(9000, 12000)).toBe(true)
+  })
+
+  it('is not one answered at leisure', () => {
+    expect(isStrike(6000, 12000)).toBe(false)
+  })
+
+  it('holds to the bar Speed’s streak already uses', () => {
+    // 0.6 of the clock left, exactly — the bar is `more than`, so this is not a strike.
+    expect(isStrike(7200, 12000)).toBe(false)
+    expect(isStrike(7300, 12000)).toBe(true)
+  })
+
+  it('answers no for a crossroad with no clock at all', () => {
+    expect(isStrike(0, 0)).toBe(false)
+  })
+})
+
+describe('straightestWay', () => {
+  it('carries straight on, taking the way closest to the heading it arrived on', () => {
+    const at: Crossroad = {
+      id: '0',
+      from: START,
+      depth: 1,
+      heading: UP,
+      pos: { x: 0, y: -1 },
+      ways: [
+        { to: '0.0', angle: UP - 0.5, reach: 1, value: 10 },
+        { to: '0.1', angle: UP + 0.08, reach: 1, value: 20 },
+        { to: '0.2', angle: UP + 0.4, reach: 1, value: 30 },
+      ],
+    }
+    expect(straightestWay(at)?.to).toBe('0.1')
+  })
+
+  it('measures the bend the short way round the circle', () => {
+    // A heading just past the half-turn and a way just short of it are neighbours, however
+    // far apart the two numbers look.
+    const at: Crossroad = {
+      id: '0',
+      from: START,
+      depth: 1,
+      heading: Math.PI - 0.05,
+      pos: { x: 0, y: 0 },
+      ways: [
+        { to: '0.0', angle: -Math.PI + 0.05, reach: 1, value: 10 },
+        { to: '0.1', angle: Math.PI - 0.9, reach: 1, value: 20 },
+      ],
+    }
+    expect(straightestWay(at)?.to).toBe('0.0')
+  })
+
+  it('has nothing to answer for a crossroad with no ways, or none at all', () => {
+    expect(straightestWay(newMap()[START])).toBeNull()
+    expect(straightestWay(undefined)).toBeNull()
   })
 })

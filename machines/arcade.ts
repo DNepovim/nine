@@ -1,7 +1,7 @@
 import { MAX_TARGET } from '@/constants/game'
 import type { Grid } from '@/machines/game'
-import { decayed, DIFFICULTIES, type Difficulty } from '@/machines/modes'
-import { parTable } from '@/machines/scoring'
+import { decayed, FAST_HIT_THRESHOLD } from '@/machines/modes'
+import { parTable, speedFactor } from '@/machines/scoring'
 
 // Arcade's rules, with no pixels and no React in them: the map, what a crossroad offers,
 // and how long the hero has to answer it.
@@ -52,11 +52,17 @@ const PAR_MAX = 4
 // left it short would otherwise leave a crossroad with nowhere to go.
 const PAR_STRETCH = 6
 
-// The clock at the first crossroad, before difficulty scales it and before depth tightens
-// it. A crossroad asks for more than a target does: two to four numbers to read, a choice
-// to make, and then the three or four presses to land it. So this sits above Speed's clock
-// rather than beside it.
-const BASE_CLOCK = 15000
+// The clock at the first crossroad, before depth tightens it.
+//
+// One pace, and no difficulty on top of it. Arcade already tightens as a run climbs, which
+// is a difficulty that moves rather than one picked up front — and a three-way choice on
+// the intro was asking the player to set a dial before they had any idea what the mode
+// was. A run of this is the run of this.
+//
+// Where it sits: a crossroad asks for more than a target does — two to four numbers to
+// read, a choice to make, then the three or four presses to land it — so this is about
+// what Speed's Hard clock gives for one target, spent on a decision instead.
+const BASE_CLOCK = 11000
 
 export type ArcadeWay = {
   // The crossroad this way leads to, which is also its id.
@@ -249,12 +255,47 @@ export function trail(map: ArcadeMap, id: string, depth: number): readonly Trail
   return steps
 }
 
+// Whether a crossroad was answered fast enough to be a **strike**.
+//
+// The same bar Speed's streak is measured against — more than `FAST_HIT_THRESHOLD` of the
+// clock still full — because it is the same claim about the same kind of answer, and a mode
+// at the far end of the spectrum should not move the goalposts a player already knows.
+//
+// What a strike buys is in the hook: the hero does not stop at the crossroad it lands on.
+export function isStrike(leftMs: number, clockMs: number): boolean {
+  return speedFactor(leftMs, clockMs) > FAST_HIT_THRESHOLD
+}
+
+// The way a rocket takes through a crossroad it never stops at: the one closest to the
+// heading it arrived on.
+//
+// Momentum, in other words — and the only answer that needs no explaining on screen. A
+// random pick would read as the game choosing for you; the straightest reads as carrying
+// straight on, which is what the player just did.
+export function straightestWay(at: Crossroad | undefined): ArcadeWay | null {
+  if (at === undefined) return null
+  let best: ArcadeWay | null = null
+  let bend = Infinity
+  for (const way of at.ways) {
+    // Both angles are absolute, and either may have wrapped past π, so the difference is
+    // measured the short way round the circle.
+    const off = Math.abs(
+      Math.atan2(Math.sin(way.angle - at.heading), Math.cos(way.angle - at.heading)),
+    )
+    if (off < bend) {
+      bend = off
+      best = way
+    }
+  }
+  return best
+}
+
 // How long the hero has at a crossroad before it is pulled back down the way it came.
 //
-// Difficulty scales it and depth tightens it, on the curve everything in the app that
-// tightens already uses — so arcade gets the same decelerating squeeze Speed's clock does,
-// counting crossroads where Speed counts hits.
-export function crossroadClock(depth: number, difficulty: Difficulty): number {
-  const base = BASE_CLOCK * DIFFICULTIES[difficulty].timeoutScale
-  return Math.round(decayed(base, depth))
+// Depth is the only thing that moves it, on the curve everything in the app that tightens
+// already uses — so arcade gets the same decelerating squeeze Speed's clock does, counting
+// crossroads where Speed counts hits. Deep enough and the clock is at 55% of where it
+// started, which is the difficulty a run sets for itself.
+export function crossroadClock(depth: number): number {
+  return Math.round(decayed(BASE_CLOCK, depth))
 }

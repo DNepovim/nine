@@ -21,6 +21,23 @@ export const RETREAT_MS = 620
 // The fall into the mouth, which is the retreat the first crossroad has no room for.
 export const FALL_MS = 620
 
+// A strike: the hero taking two ways in one movement, through a crossroad it never stops
+// at. Longer than a walk but nowhere near twice as long — that gap is the whole point,
+// because it is what the player reads as speed.
+export const ROCKET_MS = 1180
+
+// Where the accelerating half ends and the settling half begins. Before it the hero is
+// leaving a crossroad under power; after it, arriving at one.
+export const ROCKET_SPLIT = 0.46
+
+// The comet behind a rocketing hero: how many sparks, and how far back along the way each
+// one trails. Far enough apart to read as a tail rather than as a thick bead.
+export const SPARKS = 5
+export const SPARK_GAP = 0.055
+
+// How long STRIKE stays up over the crossroad that earned it.
+export const STRIKE_MS = 900
+
 // Ways the hero refused, trimming from the tip back into the crossroad. Shorter than the
 // walk, so they are gone by the time it lands.
 export const WITHER_MS = 520

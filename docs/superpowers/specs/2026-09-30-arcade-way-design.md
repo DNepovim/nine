@@ -95,6 +95,62 @@ its last line left off, because a crossroad asks the question the other way roun
 Par-weighted rewards — a dearer way paying more — are the obvious first thing to
 add after this lands. Deliberately not in the POC.
 
+## The strike
+
+A crossroad answered with more than `FAST_HIT_THRESHOLD` of its clock still full
+is a **strike** — the same bar Speed's streak is measured against, because it is
+the same claim about the same kind of answer, and a mode at the far end of the
+spectrum should not move a goalpost the player already knows.
+
+What it buys is a crossroad. The hero does not stop at the one it lands on: it
+**rockets** straight through, takes the way closest to the heading it arrived on,
+and lands one crossroad deeper. One answer, two crossroads, depth plus two.
+
+The way through is the straightest rather than a random one, which is the only
+answer that needs no explaining on screen — momentum. A random pick would read as
+the game choosing for you; carrying straight on reads as what the player just
+did.
+
+It governs itself. Depth tightens the clock, so strikes make strikes harder: a run
+that rockets climbs into a clock that is harder to beat, and the skipping stops
+without a rule having to stop it.
+
+The crossroad being passed through is opened at the moment the strike is called
+rather than on arrival — the way out of it has to be a way the map already has,
+because the rocket is taking it and nothing may be rolled mid-flight. It opens
+against the same grid an arrival would have used, so the fan is the same either
+way.
+
+`STRIKE` rises over the crossroad that earned it. The rule needs saying once: a
+depth jumping by two with no explanation reads as a bug, and the same jump with
+the word over it is a rule explained in the only moment it is relevant.
+
+Deliberately still one crossroad per strike. Consecutive strikes raising the skip
+— the shape `streakMultiplier` already has — is the obvious next thing and not in
+the POC.
+
+### What the rocket looks like
+
+One movement with two halves: out of the crossroad accelerating
+(`Easing.in(cubic)` over the first 46% of `ROCKET_MS`) and settling into the
+landing (`Easing.out(cubic)`). Two ways in 1180ms against a walk's 880 — that gap
+is the whole effect, because what a player reads as speed is the canvas covering
+twice the ground in not much more time.
+
+The canvas keeps its single ease-in-out across the doubled distance, so the hero
+runs ahead of its anchor mid-flight and catches up on landing. The mismatch is
+deliberate: a rocket pinned to its anchor would not look like one.
+
+Five sparks trail the bead, each sampling the same splines a fraction of the
+movement behind it — so the tail bends along the curve instead of cutting the
+corner — and the whole comet catches light and goes out on a 160ms fade rather
+than appearing between two frames. The way ahead draws itself on as the rocket
+crosses the first way, so the hero is always flying into a lit line.
+
+The app already frames this. `MODE_SHOT` gives each mode's streak the shot it is
+made of — Accuracy a single held beam, Speed a magazine. Arcade's strike fires the
+hero itself.
+
 ## Colour
 
 Arcade's own pair, the far end of the spectrum past Speed, with a job each.
@@ -115,15 +171,16 @@ for the same reason.
 
 ## Motion
 
-| Beat    | Shape                                                               | Timing                                  |
-| ------- | ------------------------------------------------------------------- | --------------------------------------- |
-| Bloom   | each way draws on out of the crossroad, its bud landing on a spring | 520ms `Easing.out(cubic)`, 90ms stagger |
-| Sway    | a sine on the control points, perpendicular to the way              | 2.6–3.4s, amplitude 6% of length        |
-| Walk    | hero along the curve while the canvas drifts the same distance      | 880ms `Easing.inOut(cubic)`             |
-| Wither  | refused ways trim from the tip back into the crossroad              | 520ms `Easing.in(quad)`                 |
-| Absorb  | the chosen bud shrinks into the crossroad as the hero lands         | over the walk, `Easing.in(quad)`        |
-| Retreat | faster than the walk and in one motion — being pulled, not moving   | 620ms `Easing.in(cubic)`                |
-| Fall    | the hero rides the stub into the mouth                              | 620ms                                   |
+| Beat    | Shape                                                                 | Timing                                  |
+| ------- | --------------------------------------------------------------------- | --------------------------------------- |
+| Bloom   | each way draws on out of the crossroad, its bud landing on a spring   | 520ms `Easing.out(cubic)`, 90ms stagger |
+| Sway    | a sine on the control points, perpendicular to the way                | 2.6–3.4s, amplitude 6% of length        |
+| Walk    | hero along the curve while the canvas drifts the same distance        | 880ms `Easing.inOut(cubic)`             |
+| Wither  | refused ways trim from the tip back into the crossroad                | 520ms `Easing.in(quad)`                 |
+| Absorb  | the chosen bud shrinks into the crossroad as the hero lands           | over the walk, `Easing.in(quad)`        |
+| Rocket  | two ways in one movement: accelerating out, settling into the landing | 1180ms, `Easing.in` then `Easing.out`   |
+| Retreat | faster than the walk and in one motion — being pulled, not moving     | 620ms `Easing.in(cubic)`                |
+| Fall    | the hero rides the stub into the mouth                                | 620ms                                   |
 
 The sway runs off one `useFrameCallback` clock for the whole screen, read by each
 way's `animatedProps` — so the path string is built on the UI thread and a way
@@ -131,19 +188,20 @@ sways whatever React is doing.
 
 ## Where it lives
 
-| File                               | What it holds                                                |
-| ---------------------------------- | ------------------------------------------------------------ |
-| `constants/features.ts`            | `arcade: 'developer'`                                        |
-| `constants/arcade.ts`              | the timings and sizes every piece has to agree about         |
-| `machines/arcade.ts`               | the map, the fan, the par band, the clock — pure, and tested |
-| `lib/arcade-layout.ts`             | pitches into points; the worklets that draw and ride a curve |
-| `hooks/use-arcade-run.ts`          | the run: phases, the clock, the grid, walking and retreating |
-| `components/game/arcade-game.tsx`  | the screen — top bar, canvas, sum row, dial                  |
-| `components/game/way-stem.tsx`     | one way, drawn                                               |
-| `components/game/way-bud.tsx`      | one bud                                                      |
-| `components/game/arcade-hero.tsx`  | the hero                                                     |
-| `components/game/arcade-mouth.tsx` | the ring a lost run falls into                               |
-| `components/game/arcade-over.tsx`  | depth reached, and the two ways out                          |
+| File                                | What it holds                                                |
+| ----------------------------------- | ------------------------------------------------------------ |
+| `constants/features.ts`             | `arcade: 'developer'`                                        |
+| `constants/arcade.ts`               | the timings and sizes every piece has to agree about         |
+| `machines/arcade.ts`                | the map, the fan, the par band, the clock — pure, and tested |
+| `lib/arcade-layout.ts`              | pitches into points; the worklets that draw and ride a curve |
+| `hooks/use-arcade-run.ts`           | the run: phases, the clock, the grid, walking and retreating |
+| `components/game/arcade-game.tsx`   | the screen — top bar, canvas, sum row, dial                  |
+| `components/game/way-stem.tsx`      | one way, drawn                                               |
+| `components/game/way-bud.tsx`       | one bud                                                      |
+| `components/game/arcade-hero.tsx`   | the hero, and the comet a strike gives it                    |
+| `components/game/arcade-strike.tsx` | the word, over the crossroad that earned it                  |
+| `components/game/arcade-mouth.tsx`  | the ring a lost run falls into                               |
+| `components/game/arcade-over.tsx`   | depth reached, and the two ways out                          |
 
 The screen mounts the way multiplayer's does — an absolute view over the intro,
 rather than a branch inside the game screen. Arcade is not the game machine's
@@ -160,6 +218,8 @@ run, the career and the achievements.
 - **Pause.** END leaves, and leaving ends the run.
 - **A tapering stroke.** The design called for a way thicker at the hero end;
   SVG gives a path one width, so a lit way is a core plus a wider soft glow.
+- **Strikes that compound.** One strike, one crossroad skipped, however many came
+  before it.
 - **Levels, bonuses, sidequests.** The teaser's promise. The way is the thing to
   get right first.
 
