@@ -80,11 +80,8 @@ export function GameOverOverlay({
   record,
   screen,
   titleWords,
-  maxStreak,
   avgAccuracy,
   avgSpeed,
-  bestAccuracy,
-  bestSpeed,
   achievements,
   achievementStore,
   achievementFacts,
@@ -112,13 +109,8 @@ export function GameOverOverlay({
   screen: RecordScreen
   // Decided by the sequence so the flying copy and this one always agree.
   titleWords: TitleWords
-  // The longest that streak ever got, which is the other half of what `strikes` says.
-  maxStreak: number
   avgAccuracy: number
   avgSpeed: number
-  // The best any one hit of the run managed, on each factor.
-  bestAccuracy: number
-  bestSpeed: number
   // What this run earned for good — empty on most runs, and silent when it is.
   achievements: readonly Award[]
   // Only for the card a tapped chip opens — see EarnedAchievements.
@@ -267,11 +259,8 @@ export function GameOverOverlay({
               hits={hits}
               gameTimeMs={gameTimeMs}
               strikes={strikes}
-              maxStreak={maxStreak}
               avgAccuracy={avgAccuracy}
               avgSpeed={avgSpeed}
-              bestAccuracy={bestAccuracy}
-              bestSpeed={bestSpeed}
               halo={painted}
             />
 

@@ -331,8 +331,6 @@ export default function GameScreen() {
     strikes,
     accSum,
     spdSum,
-    bestAcc,
-    bestSpd,
     hits,
     elapsedMs,
     runId,
@@ -650,10 +648,6 @@ export default function GameScreen() {
   // for both, and a run's average is one of the few things a rule cannot re-derive.
   const avgAccuracy = hits > 0 ? Math.round((100 * accSum) / hits) : 0
   const avgSpeed = hits > 0 ? Math.round((100 * spdSum) / hits) : 0
-  // The same 0–1 factors as a percentage. No division: these are one hit's own figure
-  // rather than a share of the run, so a run with no hits in it reads 0 on its own.
-  const bestAccuracy = Math.round(100 * bestAcc)
-  const bestSpeed = Math.round(100 * bestSpd)
 
   // Every board the player stands on. Read here rather than inside the intro screen,
   // which unmounts for the whole run — the achievements need it while one is going, and
@@ -1764,11 +1758,8 @@ export default function GameScreen() {
               screen={runScreen}
               personalBest={crossed.includes('record')}
               titleRoll={titleRoll}
-              maxStreak={maxStreak}
               avgAccuracy={avgAccuracy}
               avgSpeed={avgSpeed}
-              bestAccuracy={bestAccuracy}
-              bestSpeed={bestSpeed}
               achievements={achievements.runEarned}
               achievementStore={achievements.store}
               achievementFacts={achievements.facts}
@@ -1846,11 +1837,8 @@ export default function GameScreen() {
                 hits={state.context.hits}
                 gameTimeMs={elapsedMs}
                 strikes={strikes}
-                maxStreak={maxStreak}
                 avgAccuracy={avgAccuracy}
                 avgSpeed={avgSpeed}
-                bestAccuracy={bestAccuracy}
-                bestSpeed={bestSpeed}
                 achievements={achievements.runEarned}
                 achievementStore={achievements.store}
                 achievementFacts={achievements.facts}

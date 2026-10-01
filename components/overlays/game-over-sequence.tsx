@@ -39,11 +39,8 @@ export function GameOverSequence({
   screen,
   personalBest,
   titleRoll,
-  maxStreak,
   avgAccuracy,
   avgSpeed,
-  bestAccuracy,
-  bestSpeed,
   achievements,
   achievementStore,
   achievementFacts,
@@ -73,11 +70,8 @@ export function GameOverSequence({
   personalBest: boolean
   // Which of the tier's three lines to use, drawn once per game over upstream.
   titleRoll: number
-  maxStreak: number
   avgAccuracy: number
   avgSpeed: number
-  bestAccuracy: number
-  bestSpeed: number
   achievements: readonly Award[]
   // Passed straight through to the game over screen; see EarnedAchievements.
   achievementStore: AchievementStore
@@ -129,11 +123,8 @@ export function GameOverSequence({
           record={medals[0] ?? null}
           screen={screen}
           titleWords={words}
-          maxStreak={maxStreak}
           avgAccuracy={avgAccuracy}
           avgSpeed={avgSpeed}
-          bestAccuracy={bestAccuracy}
-          bestSpeed={bestSpeed}
           achievements={achievements}
           achievementStore={achievementStore}
           achievementFacts={achievementFacts}

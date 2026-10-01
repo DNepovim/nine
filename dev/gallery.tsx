@@ -98,12 +98,8 @@ const RUN = {
   hits: 37,
   gameTimeMs: 4 * 60_000 + 12_000,
   strikes: 6,
-  maxStreak: 4,
   avgAccuracy: 84,
   avgSpeed: 71,
-  // A best well clear of the average, which is what the pair is there to show.
-  bestAccuracy: 100,
-  bestSpeed: 93,
   // Two, so the row can be seen wrapping beside the EARNED label.
   achievements: [
     { id: 'flawlessTen', stage: null },
@@ -307,11 +303,8 @@ const gameOver = (
         },
         0,
       )}
-      maxStreak={RUN.maxStreak}
       avgAccuracy={RUN.avgAccuracy}
       avgSpeed={RUN.avgSpeed}
-      bestAccuracy={RUN.bestAccuracy}
-      bestSpeed={RUN.bestSpeed}
       achievements={RUN.achievements}
       achievementStore={EMPTY_STORE}
       achievementFacts={FACTS}
@@ -338,11 +331,8 @@ const paused = (mode: Mode, tutorial = false): Variant => ({
       hits={RUN.hits}
       gameTimeMs={RUN.gameTimeMs}
       strikes={RUN.strikes}
-      maxStreak={RUN.maxStreak}
       avgAccuracy={RUN.avgAccuracy}
       avgSpeed={RUN.avgSpeed}
-      bestAccuracy={RUN.bestAccuracy}
-      bestSpeed={RUN.bestSpeed}
       // The same run the game-over stage shows, so the row can be compared on the two
       // screens that carry it.
       achievements={RUN.achievements}

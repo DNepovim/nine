@@ -15,110 +15,84 @@ import type { Mode } from '@/machines/modes'
 // together — which is what used to squeeze `AVG ACC` onto two lines when the row ran out
 // of room. It costs one line of height across the whole row, not four.
 
-// Three to a line, laid out as a grid rather than as centred rows. Six numbers in one
-// row would have each of them narrower than the label under it; two rows of three give
-// the run's shape and the run's quality a line each.
+// One line, whatever the mode: four numbers on a scored run and three on a trainee one.
 //
-// Every cell takes a fixed third of the width and the row wraps on its own, so the
-// columns line up between the two rows — TOP CHAIN sits under HITS, whatever the digits
-// in either happen to be. Centred rows sized each cell to its own value, which left the
-// second line offset from the first by however much wider its numbers were.
-
+// Centred as a group, with one fixed gap between cells, rather than cut into equal
+// shares or spread across the width. Each cell is as wide as its own widest line, so
+// equal columns would have left `AVG SPD` crowding its neighbours while `TIME` floated in
+// the middle of empty space. A constant gap keeps the spacing the same on a run of three
+// numbers and a run of four, and centring is what stops three of them sitting off to one
+// side of a row sized for four.
 export function RunStats({
   gameMode,
   hits,
   gameTimeMs,
   strikes,
-  maxStreak,
   avgAccuracy,
   avgSpeed,
-  bestAccuracy,
-  bestSpeed,
   halo = false,
 }: {
-  // Which of the two factor stats to show, and whether there is a chain to report at
-  // all. Decided here rather than at each screen, for the same reason the rest of this
+  // Which of the two factor stats to show, and whether there is one to show at all.
+  // Decided here rather than at each screen, for the same reason the rest of this
   // component is: two callers, one answer.
   gameMode: Mode
   hits: number
   // How long the run has been actively played — not counting time in the pause menu,
   // and frozen the instant this screen appears rather than ticking while it is open.
   gameTimeMs: number
-  // Hits that landed on a streak, over the whole run, and the longest that streak ever
-  // got. The first says how much of the run was played well, the second how well.
+  // Hits that landed on a streak, over the whole run.
   strikes: number
-  maxStreak: number
   avgAccuracy: number
   avgSpeed: number
-  // The best any one hit of the run managed. Sits beside its average, where the gap
-  // between the two is the thing worth reading.
-  bestAccuracy: number
-  bestSpeed: number
   // Set on the gold game-over screen, where these sit straight on the celebration.
   halo?: boolean
 }) {
   const { t } = useLingui()
   const shadow = halo ? ON_GOLD_LABEL_SHADOW : null
 
-  // Only the mode's own factor. Accuracy runs are won on the route and Speed runs on
-  // the clock, so the other mode's number is a stat about something the player was not
-  // being asked for — and dropping it is what leaves room for the best beside it.
+  // Only the mode's own factor. Accuracy runs are won on the route and Speed runs on the
+  // clock, so the other mode's number is a stat about something the player was not being
+  // asked for.
   const factor =
     gameMode === 'speed'
-      ? {
-          avg: msg`AVG SPD`,
-          avgValue: avgSpeed,
-          best: msg`BEST SPD`,
-          bestValue: bestSpeed,
-        }
-      : {
-          avg: msg`AVG ACC`,
-          avgValue: avgAccuracy,
-          best: msg`BEST ACC`,
-          bestValue: bestAccuracy,
-        }
+      ? { label: msg`AVG SPD`, value: avgSpeed }
+      : { label: msg`AVG ACC`, value: avgAccuracy }
 
   // TIME is the one value that ends in a unit mark, and its ″ hangs outside the cell so
   // that the digits — not the digits plus the mark — are what sits centred over the
   // label. A percentage's % is part of the number it is written on, and stays in.
   const cells = [
     { key: 'hits', label: msg`HITS`, value: `${hits}`, overhang: false },
-    { key: 'time', label: msg`TIME`, value: formatGameTime(gameTimeMs), overhang: true },
     { key: 'strikes', label: msg`STRIKES`, value: `${strikes}`, overhang: false },
-    // Trainee keeps neither the chain nor the factors. Its streak trigger is `none` —
-    // the legacy board-clear rule rather than a chain of decisions — so a TOP CHAIN cell
-    // there would read 0 for the whole of every run; and a practice mode with no board
-    // is not being measured on a route or a clock. What is left is the three numbers
-    // that still mean something: how much was hit, how long it took, and how much of it
-    // cleared the board.
+    { key: 'time', label: msg`TIME`, value: formatGameTime(gameTimeMs), overhang: true },
+    // Trainee keeps no factor. A practice mode with no board is not being measured on a
+    // route or a clock, so what is left is the three numbers that still mean something:
+    // how much was hit, how much of it cleared the board, and how long it took.
     ...(gameMode === 'trainee'
       ? []
       : [
-          { key: 'chain', label: msg`TOP CHAIN`, value: `${maxStreak}`, overhang: false },
           {
-            key: 'avg',
-            label: factor.avg,
-            value: `${factor.avgValue}%`,
-            overhang: false,
-          },
-          {
-            key: 'best',
-            label: factor.best,
-            value: `${factor.bestValue}%`,
+            key: 'factor',
+            label: factor.label,
+            value: `${factor.value}%`,
             overhang: false,
           },
         ]),
   ]
 
   return (
-    <View className="mb-6 w-full flex-row flex-wrap items-start gap-y-3">
+    // No wrapper around each cell: `StatCell` sizes itself to its value so that a hanging
+    // unit mark can be pulled back out of it, and that is exactly the width the spacing
+    // needs to work from.
+    <View className="mb-6 w-full flex-row items-start justify-center gap-x-5">
       {cells.map(({ key, label, value, overhang }) => (
-        // The third is on the wrapper and the cell centres itself inside it, rather than
-        // the cell being stretched to the third: `StatCell` sizes itself to its value so
-        // that a hanging unit mark can still be pulled out of it.
-        <View key={key} className="w-1/3 items-center">
-          <StatCell label={t(label)} value={value} shadow={shadow} overhang={overhang} />
-        </View>
+        <StatCell
+          key={key}
+          label={t(label)}
+          value={value}
+          shadow={shadow}
+          overhang={overhang}
+        />
       ))}
     </View>
   )

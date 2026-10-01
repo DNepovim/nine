@@ -9,9 +9,11 @@ import type { BadgeCorner } from '@/components/game/dial-badge'
 import { Screen } from '@/components/screen'
 import { DIM_INK } from '@/constants/colors'
 import type { DialCorners, DialHint } from '@/constants/dial-hints'
+import { useBoardContext } from '@/hooks/use-board'
 import { useTheme } from '@/hooks/use-theme'
 import type { AchievementStore } from '@/lib/achievement-store'
 import type { AchievementFacts, Award } from '@/lib/achievements'
+import { currentBoardMedals } from '@/lib/board-medals'
 import {
   DARK_MODE_GRADIENT,
   MODE_GRADIENT,
@@ -20,6 +22,7 @@ import {
 } from '@/machines/game'
 
 import { BoardBadges } from './board-badges'
+import { BoardMedals } from './board-medals'
 import { DialHintModal } from './dial-hint-modal'
 import { EarnedAchievements } from './earned-achievements'
 import { HighScores } from './high-scores'
@@ -45,11 +48,8 @@ export function PausedOverlay({
   hits,
   gameTimeMs,
   strikes,
-  maxStreak,
   avgAccuracy,
   avgSpeed,
-  bestAccuracy,
-  bestSpeed,
   achievements,
   achievementStore,
   achievementFacts,
@@ -81,11 +81,8 @@ export function PausedOverlay({
   hits: number
   gameTimeMs: number
   strikes: number
-  maxStreak: number
   avgAccuracy: number
   avgSpeed: number
-  bestAccuracy: number
-  bestSpeed: number
   // What the run has earned for good so far — the same row the game-over screen carries,
   // and silent on the runs that have earned nothing. A pause is the other moment a player
   // can read one: the bar names an achievement for five seconds and then it is gone, and
@@ -119,6 +116,18 @@ export function PausedOverlay({
   // four tiles is four tiles' worth of scrim.
   const [editingCorner, setEditingCorner] = useState<BadgeCorner | null>(null)
 
+  // Where the run would leave the player if it stopped here — the same question the
+  // game-over screen asks of the same live board, asked one screen earlier.
+  //
+  // Provisional, and honestly so. The run's score is not on the board yet, so what
+  // this compares is what the player is holding against what everyone else has
+  // already posted; a rival who goes past while the menu is open takes the medal back
+  // on the next frame. `runMedal` also answers null while an older, better run of the
+  // player's own is what the board is showing, which is the same rule that keeps a
+  // game over from claiming a medal the run did not earn.
+  const board = useBoardContext()
+  const medals = currentBoardMedals(board, score, userId)
+
   return (
     <>
       <Screen overlay>
@@ -150,16 +159,21 @@ export function PausedOverlay({
               />
             )}
 
+            {/* Above the run's own numbers, where the game-over screen puts them too:
+              a medal is what the run is worth to everyone else, and the stats under it
+              are what it was worth to the player. Trainee reaches no board, so there is
+              nothing here to stand on. */}
+            {gameMode !== 'trainee' && (
+              <BoardMedals medals={medals} gameMode={gameMode} />
+            )}
+
             <RunStats
               gameMode={gameMode}
               hits={hits}
               gameTimeMs={gameTimeMs}
               strikes={strikes}
-              maxStreak={maxStreak}
               avgAccuracy={avgAccuracy}
               avgSpeed={avgSpeed}
-              bestAccuracy={bestAccuracy}
-              bestSpeed={bestSpeed}
             />
 
             {/* Under the run's own numbers, where the game-over screen puts it too: what
