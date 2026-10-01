@@ -250,13 +250,39 @@ The answers are cached by cell for two reasons. Generating a cell twice a frame 
 waste; but more importantly a cell asked again later would be asked with more ways in the
 way, and the land would change behind the player as they walked.
 
-### The hero is a flame
+### The hero is a torch, looked down on
 
-`lib/flame.ts` is a path that leans, built on the UI thread from the screen's frame clock.
-Two shapes on two sines that do not share a period, so the flicker never repeats and never
-reads as a loop. It is the only mark that can be the brightest thing on a sheet of grey ink
-without a second colour, and the only one that can move while standing still — which is
-what says a run is waiting for an answer rather than stopped.
+A flame is the only mark that can be the brightest thing on a sheet of grey ink without a
+second colour, and the only one that can move while standing still — which is what says a
+run is waiting for an answer rather than stopped.
+
+It is drawn in plan, because the map is. A flame seen from above has no up and no lean; what
+it has is a direction it is being drawn out in. `lib/flame.ts` is that shape: a disc at rest,
+a tongue under way, in four nested coats, each ruffled on a finer grain than the one under
+it. Three coats rather than one because what makes a fire read as a fire from above is the
+_edge_ — a single filled shape, however well shaped, reads as a cut-out.
+
+The one rule the shape keeps is that **length is a translation, not a scale**. The trailing
+half is pushed along the tail and the radius is left alone, so a running flame is exactly as
+wide as a standing one and only ever longer. Scaling the radius was the first try, and a
+radius that grows at the back grows at the sides too: the flame swelled when it should have
+stretched.
+
+`lib/smoke.ts` is what it leaves behind, and it rests on one piece of physics that makes a
+wind model unnecessary: **smoke is laid into still air at the world position that made it,
+and then it only spreads and fades**. Stand still and every sample lands on the last one;
+walk, and the hero walks out from under its own smoke — which is exactly what the eye reads
+as wind blowing into the flame. A plan view then decides the rest: smoke made at a halt goes
+_up_, away from the eye, so it is a small curl at the wick and gone in under half a second,
+while smoke made under way is laid out flat across the sheet, worth three times the life and
+four times the width. One number — how fast the hero was going when a sample was laid — does
+all of it.
+
+The whole hero is one SVG box, two pitches to a side, that follows the flame. The smoke is a
+single polygon rather than a quad per sample, because a run of quads has a seam at every
+join; it fades on a radial gradient centred on the fire, which reaches nothing exactly where
+the box runs out, so what would have been a straight cut across the plume is instead the
+point it had already faded to.
 
 ### Villages have names
 
@@ -301,10 +327,15 @@ export rather than a change to `mono`.
 The rose in the bottom-right corner is the one control on this screen that is not the dial,
 and it switches between the two ways a map like this can be read.
 
-**North at the top** is how it has always been: the sheet is fixed, the hero turns under it,
+**North at the top** is the steadier of the two: the sheet is fixed, the hero turns under it,
 and the rose never moves. **Ahead at the top** turns the sheet instead — the camera takes
 `UP − heading` so the hero's own direction is always up the screen, and the rose turns with
 the land, which makes it the one mark that says which way the country is lying.
+
+Ahead is the default, and the choice is remembered: `ARCADE_ROSE_KEY`, through
+`usePersistedRose`. A screen that goes with the run cannot hold a preference, and the reading
+that turns is the one that makes the sheet a place rather than a backdrop — north pinned to
+the top is the one where nothing ever moves.
 
 The turn rides the same beat the canvas drifts on, so a walk and a rotation are one
 movement rather than two. A mode switch has no beat to borrow, so it takes `TURN_MS` of its
@@ -314,11 +345,19 @@ The camera transform is anchor, then turn, then focus. With no turn it is exactl
 translation it always was, so the usual case pays nothing for the sheet being able to
 rotate.
 
-What is drawn on the map turns with it — mountains, woods, the houses of a village, the
-ways themselves. What is _read_ does not: the target disc, the village name, the arrival
-label, `STRIKE`, and the flame, which burns upward whichever way the land is lying. Each of
-those takes the turn back out about its own centre, which for a zero-size anchor is the
-point it stands on, so turning one back leaves it exactly where it was.
+What is drawn _in plan_ turns with the sheet — the ways themselves, the walls of a town, and
+the hero, which is a fire seen from above and so has no up to keep. What is _read_ does not:
+the target numeral, the village name, the arrival label and `STRIKE`. Each of those takes the
+turn back out about its own centre, which for a zero-size anchor is the point it stands on, so
+turning one back leaves it exactly where it was.
+
+The country is the third case, and it is read like the second: a mark drawn in _profile_ has an
+up, and a mountain on its side is not a mountain. So every feature takes the turn back out
+about its **foot** — the mean of its elements' own footings, which `drawFeature` reports beside
+its box. It turns rigidly, so a range still runs the way the generator ran it and still clears
+the ways it was told to clear; and the foot rather than the box's centre, because a box is as
+tall as the tallest thing in it and turning a range about a point in the sky would swing it
+across the sheet.
 
 This is the Bloom direction from the first design, which lost to the Climb on the grounds
 that rotation costs every numeral a counter-rotation. It does — but as a mode the player

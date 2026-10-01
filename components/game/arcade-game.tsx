@@ -45,6 +45,7 @@ import { ARCADE_INK, MAP_INK, PIE_INK, SURFACE } from '@/constants/colors'
 import { useArcadeLand } from '@/hooks/use-arcade-land'
 import { useArcadeRun, type ArcadePhase } from '@/hooks/use-arcade-run'
 import { SUM_ROW_HEIGHT } from '@/hooks/use-dial-metrics'
+import { usePersistedRose } from '@/hooks/use-persisted-rose'
 import { useScoreDirection } from '@/hooks/use-score-direction'
 import { useTheme } from '@/hooks/use-theme'
 import {
@@ -86,6 +87,10 @@ const HERO_CORE = lerpColor(AMBER, '#FFFFFF', 0.62)
 // The amber at a little under half, which is as much edge as a bud can take before the ring
 // starts competing with the numeral inside it.
 const BUD_EDGE = `${AMBER}73`
+
+// How much of the sheet a village's name needs to itself before a neighbour's would cross
+// it. The label is a serif at 9pt and at most thirteen characters, which comes to about this.
+const NAME_ROOM = 74
 
 // How far back the hero's own history stays legible. The way it is standing on is at full
 // strength; what is behind that is there to say where the run came from.
@@ -171,6 +176,7 @@ type BudSpec = {
   y: number
   value: number
   name: string
+  named: boolean
   seed: number
   state: BudState
   delay: number
@@ -197,7 +203,9 @@ export function ArcadeGame({ isDark, onEnd }: { isDark: boolean; onEnd: () => vo
   // where it has been until now — and whatever it takes to put the hero's heading up when
   // the player would rather the land turned under them.
   const camTurn = useSharedValue(0)
-  const [northUp, setNorthUp] = useState(true)
+  // Which way up the player reads this map, as they last left it: ahead at the top until they
+  // say otherwise. Persisted rather than held here, because the screen goes with the run.
+  const { northUp, setNorthUp } = usePersistedRose()
   const progress = useSharedValue(0)
   const placed = useRef(false)
 
@@ -205,10 +213,13 @@ export function ArcadeGame({ isDark, onEnd }: { isDark: boolean; onEnd: () => vo
   const box = Math.ceil(pitch * STEM_BOX)
   const here = run.standing
   const destination = run.destination
-  const driftX =
-    destination === undefined ? 0 : canvas.width / 2 - destination.pos.x * pitch
-  const driftY =
-    destination === undefined ? 0 : canvas.height * ANCHOR - destination.pos.y * pitch
+  // Where the sheet has to stand for the destination to land on the anchor. The *focus*
+  // only — the anchor itself is a fixed point of the canvas and belongs to the view that
+  // pivots about it, not to the value that animates.
+  const driftX = destination === undefined ? 0 : -destination.pos.x * pitch
+  const driftY = destination === undefined ? 0 : -destination.pos.y * pitch
+  const anchorX = canvas.width / 2
+  const anchorY = canvas.height * ANCHOR
 
   // The canvas follows whatever the hero is about to be standing on. Driven off the
   // destination rather than off the arrival, so the drift and the walk are one movement —
@@ -268,15 +279,22 @@ export function ArcadeGame({ isDark, onEnd }: { isDark: boolean; onEnd: () => vo
     })
   }, [run.phase, run.seq])
 
-  // Anchor, then turn, then focus. With no turn this is exactly the translation it has
-  // always been — `camX`/`camY` already carry the anchor less the focus — so the sheet
-  // being able to rotate costs the usual case nothing.
-  const camera = useAnimatedStyle(() => ({
-    transform: [
-      { translateX: camX.value },
-      { translateY: camY.value },
-      { rotate: `${camTurn.value}rad` },
-    ],
+  // The sheet is two views, and it has to be.
+  //
+  // A transform in React Native turns about the *centre of its own view* — there is no
+  // transform origin to set. So the turn and the pan cannot live on one view: putting both
+  // on the view the world is laid out in pivots the sheet about the point the run began at,
+  // which for a hero ten crossroads up swings it clean off the screen.
+  //
+  // So the turn goes on a view with no size, positioned exactly at the anchor: its centre
+  // *is* the anchor, so that is what it turns about. The pan goes on the view inside it,
+  // which carries the world. Anchor, then turn, then focus — and with no turn it is the
+  // same translation it always was.
+  const sheetTurn = useAnimatedStyle(() => ({
+    transform: [{ rotate: `${camTurn.value}rad` }],
+  }))
+  const sheetPan = useAnimatedStyle(() => ({
+    transform: [{ translateX: camX.value }, { translateY: camY.value }],
   }))
 
   const onCanvasLayout = (event: LayoutChangeEvent) => {
@@ -372,6 +390,12 @@ export function ArcadeGame({ isDark, onEnd }: { isDark: boolean; onEnd: () => vo
         y: herePt.y + spline.toY,
         value: way.value,
         name: run.nameOf(way.to),
+        // A name needs about this much of the sheet to itself. Two towns on one fan can
+        // stand closer than that, and the later one gives its name up — which it can
+        // afford to, because arriving there names it under the flame anyway.
+        named: buds.every(
+          (other) => Math.abs(other.x - (herePt.x + spline.toX)) > NAME_ROOM,
+        ),
         seed: idSeed(way.to),
         state: chosen ? 'absorbing' : leaving ? 'withering' : 'growing',
         delay: i * STAGGER_MS,
@@ -519,110 +543,126 @@ export function ArcadeGame({ isDark, onEnd }: { isDark: boolean; onEnd: () => vo
           {!dawn && (
             <Animated.View
               entering={FadeIn.duration(DAWN_OUT_MS)}
+              // No size, and sitting on the anchor: a view's transform turns about its own
+              // centre, so this is the one place the sheet can be turned from.
               style={[
-                { position: 'absolute', left: 0, top: 0, width: 1, height: 1 },
-                camera,
+                {
+                  position: 'absolute',
+                  left: anchorX,
+                  top: anchorY,
+                  width: 0,
+                  height: 0,
+                },
+                sheetTurn,
               ]}
             >
-              {/* The country, under the ways and over nothing. Each feature is its own small
+              <Animated.View
+                style={[{ position: 'absolute', left: 0, top: 0 }, sheetPan]}
+              >
+                {/* The country, under the ways and over nothing. Each feature is its own small
                 SVG so it can arrive on its own and leave once the hero has walked far
                 enough that nobody is looking at it. */}
-              {land.map((feature) => (
-                <LandMark
-                  key={feature.key}
-                  feature={feature}
-                  pitch={pitch}
-                  line={ink.line}
-                  hatch={ink.hatch}
-                  knockout={surface}
-                />
-              ))}
-              {stems.map((stem) => (
-                <WayStem
-                  key={stem.key}
-                  x={stem.x}
-                  y={stem.y}
-                  box={box}
-                  spline={stem.spline}
-                  lit={stem.lit}
-                  state={stem.state}
-                  delay={stem.delay}
-                  clock={clock}
-                  creepMs={stem.creepMs}
-                  creepFrom={stem.creepFrom}
-                  fade={stem.fade}
-                  gradientId={stem.gradientId}
-                  aheadInk={ink.line}
-                  amber={AMBER}
-                  ember={EMBER}
-                />
-              ))}
-              {stub !== null && nearMouth && (
-                <ArcadeMouth
-                  x={stub.toX}
-                  y={stub.toY}
-                  fade={mouthFade}
-                  ring={ink.hatch}
-                  ember={EMBER}
-                />
-              )}
-              {buds.map((bud) => (
-                <WayBud
-                  key={bud.key}
-                  x={bud.x}
-                  y={bud.y}
-                  value={bud.value}
-                  name={bud.name}
-                  seed={bud.seed}
-                  state={bud.state}
-                  delay={bud.delay}
-                  edge={BUD_EDGE}
-                  ink={PIE_INK[colorScheme]}
-                  turn={camTurn}
-                  line={ink.line}
-                  hatch={ink.hatch}
-                  face={surface}
-                />
-              ))}
-              {skipped !== null && (
-                <ArcadeStrike
-                  // Keyed on the beat, so each strike is its own word rather than one view
-                  // restarting — two in a row would otherwise share an animation.
-                  key={run.seq}
-                  x={skipped.fromX}
-                  y={skipped.fromY}
-                  turn={camTurn}
-                  ink={arcadeInk}
-                />
-              )}
-              {/* The name of the place just reached, under the flame. Keyed on the crossroad,
+                {land.map((feature) => (
+                  <LandMark
+                    key={feature.key}
+                    feature={feature}
+                    pitch={pitch}
+                    turn={camTurn}
+                    line={ink.line}
+                    hatch={ink.hatch}
+                    knockout={surface}
+                  />
+                ))}
+                {stems.map((stem) => (
+                  <WayStem
+                    key={stem.key}
+                    x={stem.x}
+                    y={stem.y}
+                    box={box}
+                    spline={stem.spline}
+                    lit={stem.lit}
+                    state={stem.state}
+                    delay={stem.delay}
+                    clock={clock}
+                    creepMs={stem.creepMs}
+                    creepFrom={stem.creepFrom}
+                    fade={stem.fade}
+                    gradientId={stem.gradientId}
+                    aheadInk={ink.line}
+                    amber={AMBER}
+                    ember={EMBER}
+                  />
+                ))}
+                {stub !== null && nearMouth && (
+                  <ArcadeMouth
+                    x={stub.toX}
+                    y={stub.toY}
+                    fade={mouthFade}
+                    ring={ink.hatch}
+                    ember={EMBER}
+                  />
+                )}
+                {buds.map((bud) => (
+                  <WayBud
+                    key={bud.key}
+                    x={bud.x}
+                    y={bud.y}
+                    value={bud.value}
+                    name={bud.name}
+                    named={bud.named}
+                    seed={bud.seed}
+                    state={bud.state}
+                    delay={bud.delay}
+                    edge={BUD_EDGE}
+                    ink={PIE_INK[colorScheme]}
+                    turn={camTurn}
+                    line={ink.line}
+                    hatch={ink.hatch}
+                    face={surface}
+                  />
+                ))}
+                {skipped !== null && (
+                  <ArcadeStrike
+                    // Keyed on the beat, so each strike is its own word rather than one view
+                    // restarting — two in a row would otherwise share an animation.
+                    key={run.seq}
+                    x={skipped.fromX}
+                    y={skipped.fromY}
+                    turn={camTurn}
+                    ink={arcadeInk}
+                  />
+                )}
+                {/* The name of the place just reached, under the flame. Keyed on the crossroad,
                 so arriving plays it once and walking on plays the next one rather than
                 restarting this one. */}
-              {here !== undefined && pitch > 0 && (
-                <VillageArrival
-                  key={here.id}
-                  x={pointsOf(here.pos, pitch).x}
-                  y={pointsOf(here.pos, pitch).y}
-                  name={here.name}
-                  turn={camTurn}
-                  ink={arcadeInk}
+                {here !== undefined && pitch > 0 && (
+                  <VillageArrival
+                    key={here.id}
+                    x={pointsOf(here.pos, pitch).x}
+                    y={pointsOf(here.pos, pitch).y}
+                    name={here.name}
+                    turn={camTurn}
+                    ink={arcadeInk}
+                  />
+                )}
+                <ArcadeHero
+                  originX={hero.x}
+                  originY={hero.y}
+                  spline={hero.spline}
+                  through={skipped?.spline ?? null}
+                  throughX={skipped?.x ?? 0}
+                  throughY={skipped?.y ?? 0}
+                  progress={progress}
+                  clock={clock}
+                  pitch={pitch}
+                  standing={!leaving}
+                  rocketing={run.phase === 'rocket'}
+                  amber={AMBER}
+                  ember={EMBER}
+                  core={HERO_CORE}
+                  smoke={ink.hatch}
                 />
-              )}
-              <ArcadeHero
-                originX={hero.x}
-                originY={hero.y}
-                spline={hero.spline}
-                through={skipped?.spline ?? null}
-                throughX={skipped?.x ?? 0}
-                throughY={skipped?.y ?? 0}
-                progress={progress}
-                clock={clock}
-                turn={camTurn}
-                standing={!leaving}
-                rocketing={run.phase === 'rocket'}
-                amber={AMBER}
-                core={HERO_CORE}
-              />
+              </Animated.View>
             </Animated.View>
           )}
 

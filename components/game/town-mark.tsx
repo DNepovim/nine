@@ -89,10 +89,11 @@ export function TownMark({
             strokeWidth={0.9}
           />
         ))}
-        <Circle r={WALL - 2.8} fill="none" stroke={hatch} strokeWidth={0.7} />
         <Path d={GATE} fill="none" stroke={hatch} strokeWidth={0.8} />
-        {/* The ring the number sits in: the game's own amber, inside the map's own wall. */}
-        <Circle r={WALL - 5} fill="none" stroke={edge} strokeWidth={1.6} />
+        {/* The ring the number sits in: the game's own amber, inside the map's own wall.
+            One ring rather than two — the merlons and the towers have already said wall,
+            and a second line of it was only taking room off the number. */}
+        <Circle r={WALL - 3.5} fill="none" stroke={edge} strokeWidth={1.6} />
       </G>
     </Svg>
   )

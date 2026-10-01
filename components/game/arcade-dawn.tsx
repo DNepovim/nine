@@ -7,10 +7,11 @@ import Animated, {
   useAnimatedStyle,
   useSharedValue,
   withDelay,
+  withSequence,
   withTiming,
 } from 'react-native-reanimated'
 
-import { DAWN_OUT_MS } from '@/constants/arcade'
+import { DAWN_MS, DAWN_OUT_MS } from '@/constants/arcade'
 
 // The words an arcade run opens on, over the part of the screen the map will fill.
 //
@@ -25,14 +26,25 @@ import { DAWN_OUT_MS } from '@/constants/arcade'
 // hooks/use-arcade-run.ts, where the fan is held back until this has had its say.
 
 // The words, then the rule under them, then the question. Staggered so the card builds
-// rather than arriving in one piece.
-const LEAD_MS = 120
-const IN_MS = 420
-const RULE_MS = 520
-const TAIL_MS = 260
+// rather than arriving in one piece, and slow enough to be read at a glance rather than
+// caught — this is the one beat of a run with nothing to answer, so it is the one beat that
+// can afford to take its time.
+const LEAD_MS = 220
+const IN_MS = 620
+const RULE_MS = 760
+const TAIL_MS = 420
 
-// How far the words rise into place. Small: this is settling, not an entrance.
-const RISE = 8
+// How far the words rise into place, and how far they go on drifting for the rest of the
+// beat. The rise is settling rather than an entrance; the drift is what keeps the card from
+// standing still through a hold this long — slow enough that it is felt and not watched.
+const RISE = 10
+const DRIFT = 4
+
+// What is left of the beat once the words have landed, which is what the drift is spread
+// over. Taken from the beat itself, so retuning DAWN_MS cannot leave the card finishing its
+// movement after the map has arrived.
+const SETTLED_MS = LEAD_MS + IN_MS + 120
+const DRIFT_MS = Math.max(0, DAWN_MS - SETTLED_MS)
 
 export function ArcadeDawn({ ink }: { ink: string }) {
   const words = useSharedValue(0)
@@ -44,7 +56,10 @@ export function ArcadeDawn({ ink }: { ink: string }) {
     words.value = withDelay(LEAD_MS, withTiming(1, { duration: IN_MS }))
     lift.value = withDelay(
       LEAD_MS,
-      withTiming(0, { duration: IN_MS + 120, easing: Easing.out(Easing.cubic) }),
+      withSequence(
+        withTiming(0, { duration: IN_MS + 120, easing: Easing.out(Easing.cubic) }),
+        withTiming(-DRIFT, { duration: DRIFT_MS, easing: Easing.linear }),
+      ),
     )
     rule.value = withDelay(
       LEAD_MS + IN_MS / 2,
@@ -85,9 +100,12 @@ export function ArcadeDawn({ ink }: { ink: string }) {
         <Animated.View style={tailStyle}>
           <Text
             selectable={false}
-            className="text-center font-mono text-[9px] font-bold tracking-[1.5px] text-dim"
+            // Sentence case, so the tracking goes with it: wide letter-spacing is a caps
+            // device in here, and the one line on this card that is a question rather than a
+            // statement reads as prose.
+            className="text-center font-mono text-[12px] tracking-[0.3px] text-dim"
           >
-            <Trans>HOW DEEP CAN YOU GO?</Trans>
+            <Trans>How far can you go?</Trans>
           </Text>
         </Animated.View>
       </View>

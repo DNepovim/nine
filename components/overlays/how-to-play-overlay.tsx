@@ -568,8 +568,9 @@ export function HowToPlayOverlay({
                 </Bullet>
                 <Bullet color={GAME_SCALE[4]}>
                   <Trans>
-                    Tap the compass in the corner to choose whether north stays at the top
-                    of the screen or the map turns to keep you pointed forward.
+                    The map turns as you walk, to keep you pointed forward. Tap the
+                    compass in the corner if you would rather north stayed at the top of
+                    the screen — it remembers whichever you chose.
                   </Trans>
                 </Bullet>
               </Card>

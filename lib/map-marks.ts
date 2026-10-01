@@ -17,6 +17,12 @@ export type Drawn = {
   top: number
   width: number
   height: number
+  // Where the feature stands, in its own box: the middle of the ground its elements stand
+  // on. The sheet can be turned, and a feature drawn in profile is turned back out of that
+  // turn about this point — see components/game/land-mark.tsx. Everything the land was
+  // generated against was measured from the ground its elements stand on, so this is the
+  // point of it that a turn may not move.
+  foot: { x: number; y: number }
   // Back to front. Each one is filled and then inked before the next is begun, which is the
   // whole of how the occlusion works.
   marks: readonly Mark[]
@@ -213,6 +219,21 @@ const bounds = (feature: LandFeature, pitch: number) => {
   }
 }
 
+// Where a feature stands: the middle of its elements' own footings, which for a range is the
+// middle of the range and for a wood the middle of the stand. Not the middle of the box — the
+// box is as tall as the tallest thing in it, and a mountain's summit is not where it stands.
+function footOf(feature: LandFeature, pitch: number, ox: number, oy: number) {
+  const feet = [...feature.peaks, ...feature.bumps, ...feature.trees]
+  const sum = feet.reduce((at, one) => ({ x: at.x + one.x, y: at.y + one.y }), {
+    x: 0,
+    y: 0,
+  })
+  return {
+    x: (sum.x / feet.length) * pitch - ox,
+    y: (sum.y / feet.length) * pitch - oy,
+  }
+}
+
 // One feature, drawn: its box and its marks, back to front.
 export function drawFeature(feature: LandFeature, pitch: number): Drawn {
   const box = bounds(feature, pitch)
@@ -240,6 +261,7 @@ export function drawFeature(feature: LandFeature, pitch: number): Drawn {
     top: oy,
     width: Math.max(1, box.right - box.left),
     height: Math.max(1, box.bottom - box.top),
+    foot: footOf(feature, pitch, ox, oy),
     marks,
   }
 }

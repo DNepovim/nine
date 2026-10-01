@@ -85,6 +85,27 @@ describe('drawFeature', () => {
     expect(drawFeature(must(wood), PITCH).marks).toHaveLength(1)
   })
 
+  it('stands every feature on a foot inside the box it reports', () => {
+    for (const feature of everything) {
+      const drawn = drawFeature(feature, PITCH)
+      // The foot is the point the sheet's turn is taken back out about, so a foot outside the
+      // box would swing its country somewhere else entirely.
+      expect(drawn.foot.x).toBeGreaterThan(0)
+      expect(drawn.foot.x).toBeLessThan(drawn.width)
+      expect(drawn.foot.y).toBeGreaterThan(0)
+      expect(drawn.foot.y).toBeLessThan(drawn.height)
+    }
+  })
+
+  it('puts a feature\u2019s foot on the ground rather than in the middle of its box', () => {
+    // A box is as tall as the tallest thing in it and no deeper than its footings, so the
+    // ground is always below the middle. A foot that came out at the centre would turn a
+    // range about a point in the sky.
+    const ridge = must(everything.find((f) => f.kind === 'ridge'))
+    const drawn = drawFeature(ridge, PITCH)
+    expect(drawn.foot.y).toBeGreaterThan(drawn.height / 2)
+  })
+
   it('scales with the pitch, so a taller canvas gets the same country bigger', () => {
     const feature = must(everything.find((f) => f.kind === 'ridge'))
     const small = drawFeature(feature, 100)

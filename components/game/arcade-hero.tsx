@@ -1,23 +1,22 @@
 import { useEffect } from 'react'
-import { View } from 'react-native'
 import Animated, {
   Easing,
-  useAnimatedProps,
   useAnimatedStyle,
+  useFrameCallback,
   useSharedValue,
   withRepeat,
   withTiming,
   type SharedValue,
 } from 'react-native-reanimated'
-import Svg, { G, Path } from 'react-native-svg'
+import Svg, { G } from 'react-native-svg'
 
-import { HERO_SIZE } from '@/constants/arcade'
+import { FlameCoat } from '@/components/game/flame-coat'
+import { HeroSmoke } from '@/components/game/hero-smoke'
+import { HERO_SIZE, WALK_MS } from '@/constants/arcade'
 import { splinePoint, type Spline } from '@/lib/arcade-layout'
-import { flamePath } from '@/lib/flame'
+import { createTrail, driftTrail, LAY_MS, layTrail } from '@/lib/smoke'
 
-const AnimatedPath = Animated.createAnimatedComponent(Path)
-
-// The hero: a flame, and nothing else.
+// The hero: a torch, looked down on.
 //
 // Abstract on purpose — the app has no characters and no illustration in it, so a creature
 // here would be the first. A light is also the only mark that can be the brightest thing on
@@ -25,17 +24,87 @@ const AnimatedPath = Animated.createAnimatedComponent(Path)
 // standing still: the flame flickers at a crossroad, which is what says the run is waiting
 // for an answer rather than stopped.
 //
+// Drawn in plan, because the map is. A flame seen from above has no up and no lean; what it
+// has is a direction it is being drawn out in and a trail of smoke it has left behind. Both
+// come from one number — how fast the hero is going, measured off its own position frame by
+// frame — and neither needs to know which way the sheet has been turned. That is the gain
+// over the flame this replaced, which was drawn in profile and had to have the sheet's turn
+// taken back out of it so that fire would keep pointing up the screen.
+//
 // Its position is read off the same spline the way is drawn from, at the same moment and on
 // the same thread, so it rides the line rather than crossing it as the way breathes.
-
-// The box the flame is drawn in. Generous: the body reaches about twice the size it is given
-// and the lean takes it a quarter of that sideways.
-const BOX = HERO_SIZE * 5
-const GLOW = HERO_SIZE * 2.4
 
 // How much the whole flame swells while it waits. Small — the flicker is doing the work.
 const PULSE = 1.06
 const PULSE_MS = 820
+
+// The coats the flare is stacked from, outermost first. `radius` and `reach` are multiples of
+// the flame's own size: how wide the coat is standing still, and how far it is drawn out
+// behind at a walk. The outer coats reach further and ruffle on a coarser grain; the wick
+// barely moves and barely flickers.
+const COATS = [
+  {
+    key: 'halo',
+    tone: 'amber',
+    radius: 2.1,
+    reach: 2.2,
+    grain: 0.5,
+    amp: 0.8,
+    opacity: 0.12,
+  },
+  {
+    key: 'wisp',
+    tone: 'ember',
+    radius: 1.05,
+    reach: 2,
+    grain: 1.6,
+    amp: 1.35,
+    opacity: 0.3,
+  },
+  {
+    key: 'body',
+    tone: 'amber',
+    radius: 0.78,
+    reach: 1.7,
+    grain: 1,
+    amp: 1,
+    opacity: 0.92,
+  },
+  {
+    key: 'core',
+    tone: 'core',
+    radius: 0.3,
+    reach: 0.9,
+    grain: 2.6,
+    amp: 0.7,
+    opacity: 1,
+  },
+] as const satisfies readonly {
+  key: string
+  tone: 'amber' | 'ember' | 'core'
+  radius: number
+  reach: number
+  grain: number
+  amp: number
+  opacity: number
+}[]
+
+// How far the smoke carries, as a share of a pitch — and so, at twice that, the box the whole
+// hero is drawn in. A little over one way's length: long enough that a rocket leaves a plume
+// worth seeing, short enough that the map is never two drawings at once.
+const REACH = 1.1
+
+// The most of a walk's pace that counts as "going", so a strike reads as faster than a walk
+// rather than as the same flame.
+const TOP_SPEED = 1.5
+
+// How quickly the flame answers a change of pace. Over about a tenth of a second, which is
+// slow enough that a frame dropped here or there never shows as a flinch.
+const EASE_MS = 90
+
+// Below this share of a walk there is no heading worth reading — the flame holds the last one
+// it had rather than spinning on the noise in its own position.
+const STIRRING = 0.02
 
 // Where the flame is at `t`, which runs 0 → 1 along one way and 1 → 2 on through a second.
 function heroAt(
@@ -67,11 +136,13 @@ export function ArcadeHero({
   throughY,
   progress,
   clock,
-  turn,
+  pitch,
   standing,
   rocketing,
   amber,
+  ember,
   core,
+  smoke,
 }: {
   // The crossroad the first spline is measured from — the one the flame is leaving on a
   // walk, and the one behind it on a retreat.
@@ -86,15 +157,30 @@ export function ArcadeHero({
   // 0 → 2 for a strike, so one value covers them all.
   progress: SharedValue<number>
   clock: SharedValue<number>
-  // The sheet's turn, taken back out. Fire goes up, whichever way the map is lying.
-  turn: SharedValue<number>
+  // How far apart two crossroads stand. The flame measures its own pace against it — one
+  // pitch in one walk is what "going" means — and the smoke's reach is a share of it.
+  pitch: number
   standing: boolean
   rocketing: boolean
   amber: string
+  ember: string
   core: string
+  smoke: string
 }) {
   const pulse = useSharedValue(1)
   const blaze = useSharedValue(0)
+
+  // Where the hero is, which way it is being drawn out, and how fast it is going. Written
+  // once a frame and read by every coat and by the smoke, so the whole hero agrees with
+  // itself without working any of it out twice.
+  const atX = useSharedValue(originX)
+  const atY = useSharedValue(originY)
+  const tail = useSharedValue(0)
+  const speed = useSharedValue(0)
+  const lastX = useSharedValue(originX)
+  const lastY = useSharedValue(originY)
+  const since = useSharedValue(0)
+  const trail = useSharedValue(createTrail())
 
   useEffect(() => {
     if (!standing) {
@@ -108,13 +194,19 @@ export function ArcadeHero({
     )
   }, [standing])
 
-  // Under power it burns taller. Animated rather than switched, because nothing in this app
+  // Under power it burns harder. Animated rather than switched, because nothing in this app
   // changes between two frames.
   useEffect(() => {
     blaze.value = withTiming(rocketing ? 1 : 0, { duration: 180 })
   }, [rocketing])
 
-  const style = useAnimatedStyle(() => {
+  // The hero's own pace, read off the ground it covers rather than off the beat it is in.
+  // One rule for a walk, a retreat, a fall and a strike, and the only one that stays true
+  // through the easings at both ends of each of them.
+  useFrameCallback((frame) => {
+    const dt = frame.timeSincePreviousFrame ?? 0
+    if (dt <= 0 || pitch <= 0) return
+    const now = clock.value
     const at = heroAt(
       progress.value,
       spline,
@@ -123,49 +215,75 @@ export function ArcadeHero({
       through,
       throughX,
       throughY,
-      clock.value,
+      now,
     )
-    return {
-      transform: [
-        { translateX: at.x - BOX / 2 },
-        { translateY: at.y - BOX / 2 },
-        // About the box's centre, which is the foot of the flame — so taking the sheet's
-        // turn back out leaves the fire standing exactly where it stood.
-        { rotate: `${-turn.value}rad` },
-        { scale: pulse.value * (1 + blaze.value * 0.2) },
-      ],
+    atX.value = at.x
+    atY.value = at.y
+
+    const went = Math.hypot(at.x - lastX.value, at.y - lastY.value)
+    const heading = Math.atan2(lastY.value - at.y, lastX.value - at.x)
+    lastX.value = at.x
+    lastY.value = at.y
+
+    // A walk covers one pitch in one walk's time, so that is one. Eased rather than taken
+    // raw: a flame that answered every frame would flinch at every easing.
+    const pace = Math.min(TOP_SPEED, went / ((pitch / WALK_MS) * dt))
+    speed.value += (pace - speed.value) * Math.min(1, dt / EASE_MS)
+    if (speed.value > STIRRING) tail.value = heading
+
+    since.value += dt
+    while (since.value >= LAY_MS) {
+      since.value -= LAY_MS
+      layTrail(trail.value, at.x, at.y, speed.value, now, HERO_SIZE)
     }
+    driftTrail(trail.value, dt, now, HERO_SIZE)
   })
 
-  const body = useAnimatedProps(() => ({
-    d: flamePath(HERO_SIZE * (1 + blaze.value * 0.35), clock.value, false),
+  const reach = pitch * REACH
+  const box = reach * 2
+
+  const style = useAnimatedStyle(() => ({
+    transform: [{ translateX: atX.value - box / 2 }, { translateY: atY.value - box / 2 }],
   }))
-  const tongue = useAnimatedProps(() => ({
-    d: flamePath(HERO_SIZE * (1 + blaze.value * 0.35), clock.value, true),
-  }))
+
+  if (pitch <= 0) return null
+
+  const tones = { amber, ember, core }
 
   return (
     <Animated.View
       pointerEvents="none"
-      style={[{ position: 'absolute', left: 0, top: 0, width: BOX, height: BOX }, style]}
+      style={[{ position: 'absolute', left: 0, top: 0, width: box, height: box }, style]}
     >
-      <View
-        style={{
-          position: 'absolute',
-          left: (BOX - GLOW) / 2,
-          top: BOX / 2 - GLOW * 0.62,
-          width: GLOW,
-          height: GLOW,
-          borderRadius: GLOW / 2,
-          backgroundColor: `${amber}26`,
-        }}
-      />
-      <Svg width={BOX} height={BOX}>
-        {/* The flame stands at the centre of its box and rises from there, so the point the
-            spline hands back is the foot of the fire rather than the middle of it. */}
-        <G transform={`translate(${BOX / 2}, ${BOX / 2})`}>
-          <AnimatedPath animatedProps={body} fill={amber} />
-          <AnimatedPath animatedProps={tongue} fill={core} />
+      <Svg width={box} height={box}>
+        {/* The flame stands at the centre of its box, so the point the spline hands back is
+            the fire itself and everything else is measured from it. */}
+        <G transform={`translate(${box / 2}, ${box / 2})`}>
+          <HeroSmoke
+            trail={trail}
+            clock={clock}
+            atX={atX}
+            atY={atY}
+            reach={reach}
+            ink={smoke}
+          />
+          {COATS.map((coat) => (
+            <FlameCoat
+              key={coat.key}
+              size={HERO_SIZE}
+              radius={coat.radius}
+              reach={coat.reach}
+              grain={coat.grain}
+              amp={coat.amp}
+              fill={tones[coat.tone]}
+              opacity={coat.opacity}
+              clock={clock}
+              pulse={pulse}
+              blaze={blaze}
+              tail={tail}
+              speed={speed}
+            />
+          ))}
         </G>
       </Svg>
     </Animated.View>

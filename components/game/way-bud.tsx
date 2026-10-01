@@ -33,6 +33,7 @@ export function WayBud({
   value,
   name,
   seed,
+  named,
   state,
   delay,
   turn,
@@ -47,8 +48,12 @@ export function WayBud({
   value: number
   // What the place at the end of this way is called — see lib/place-names.ts.
   name: string
-  // The crossroad's seed, which is which roofs its village wears.
+  // The crossroad's seed, which is how many merlons its wall has.
   seed: number
+  // Whether there is room for the name. Two towns on the same fan can stand close enough
+  // that their names would cross, and a crossed name is worse than no name — the place is
+  // named again under the flame the moment the hero arrives there.
+  named: boolean
   state: BudState
   delay: number
   // How far the sheet has been turned. The village turns with it — it is drawn on the map —
@@ -113,29 +118,35 @@ export function WayBud({
         ]}
       >
         <TownMark seed={seed} face={face} line={line} hatch={hatch} edge={edge} />
+        {/* The number is the thing being read on this whole sheet, so it gets the room:
+            large enough to be answered at a glance from the far side of a fan. */}
         <Text
           selectable={false}
-          className="absolute font-mono text-[12px] font-black"
+          className="absolute font-mono text-[17px] font-black"
           style={{ color: ink }}
         >
           {value}
         </Text>
       </Animated.View>
-      <Animated.View
-        className="absolute"
-        style={[{ left: -64, top: TOWN_BOX / 2 + 4, width: 128 }, upright]}
-      >
-        <Text
-          selectable={false}
-          // The map's own lettering — a serif, upper case and tracked, which is how a sheet
-          // like this has always named a place. In the `dim` token rather than the map ink,
-          // because it is text and so the one piece of this held to a text contrast.
-          className="text-center text-[9px] font-semibold tracking-[1.2px] text-dim"
-          style={{ fontFamily: mapLabel }}
+      {named && (
+        <Animated.View
+          className="absolute"
+          style={[{ left: -54, top: TOWN_BOX / 2 + 2, width: 108 }, upright]}
         >
-          {name.toUpperCase()}
-        </Text>
-      </Animated.View>
+          <Text
+            selectable={false}
+            numberOfLines={1}
+            // The map's own lettering — a serif, upper case and tracked, which is how a
+            // sheet like this has always named a place. In the `dim` token rather than the
+            // map ink, because it is text and so the one piece of this held to a text
+            // contrast.
+            className="text-center text-[9px] font-semibold tracking-[1.2px] text-dim"
+            style={{ fontFamily: mapLabel }}
+          >
+            {name.toUpperCase()}
+          </Text>
+        </Animated.View>
+      )}
     </Animated.View>
   )
 }

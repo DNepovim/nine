@@ -12,6 +12,12 @@ export const OPTIONS_KEY = 'nine.options.v1'
 // and a string it cannot parse would be a mode the machine has to have an opinion about.
 // A launch that cannot read this one simply opens on the stored mode.
 export const ARCADE_FOCUS_KEY = 'nine.arcade-focus.v1'
+// Which of the two ways up the arcade map was last read: north pinned to the top of the
+// screen, or the hero's own heading. Its own key rather than a field in OPTIONS_KEY — that
+// one is the dial's advanced options, set on a screen this control is nowhere near, and a
+// rose tapped mid-run has no business rewriting a record of what the player chose there.
+// Absent on a first launch, which is the sheet turning: see hooks/use-persisted-rose.ts.
+export const ARCADE_ROSE_KEY = 'nine.arcade-rose.v1'
 // Lifetime totals — runs, hits, day streaks — behind the achievements. Deliberately not
 // part of STATS_KEY: that one is versioned on the scoring mechanics and dropped whenever
 // they change, and a thousand lifetime hits is a thousand lifetime hits whatever the

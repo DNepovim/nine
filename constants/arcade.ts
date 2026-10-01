@@ -7,8 +7,13 @@
 // The card a run opens on, before a single way is drawn: how long it is up, and how long it
 // takes to leave. The leaving overlaps the first bloom underneath it — the words fade off
 // *into* the opening crossroad rather than clearing the screen and handing it over.
-export const DAWN_MS = 1500
-export const DAWN_OUT_MS = 420
+//
+// The one unhurried beat in arcade, and deliberately so: everything after it is answered
+// against a clock, and a card that was gone before it had been read would be a cut dressed
+// up as an opening. Long enough to be read, to hold, and to drift — see
+// components/game/arcade-dawn.tsx, which spreads its own movement across exactly this.
+export const DAWN_MS = 2400
+export const DAWN_OUT_MS = 560
 
 // A crossroad blooming: how long one way takes to draw itself on, and how far apart the
 // ways of a fan start. The bloom is over when the last of four has finished — a fan builds
@@ -52,7 +57,9 @@ export const TRAIL_DEPTH = 3
 export const ANCHOR = 0.7
 
 // The bud that holds a target, and the hero that walks to it.
-export const BUD_SIZE = 34
+// A town is as wide as the number inside it needs, plus its wall. Three digits at the size
+// they are now want a 33pt clear circle, and the wall and its merlons stand outside that.
+export const BUD_SIZE = 42
 export const HERO_SIZE = 15
 
 // The box one crossroad's ways are drawn in, as a multiple of the pitch. A way reaches at
