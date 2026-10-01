@@ -5,6 +5,15 @@ on:
     branches:
       - main
 
+# A second push to main while a deploy is still running makes the first one obsolete —
+# and worse, whichever finishes last is what production serves, so an older commit can
+# land on top of a newer one. The newer run cancels the older instead. `group` does
+# nothing yet (EAS does not support custom concurrency groups), but the docs ask for it
+# so this keeps working once it does.
+concurrency:
+  cancel_in_progress: true
+  group: ${{ workflow.filename }}-${{ github.ref }}
+
 # The Lingui CLI is ESM-only and needs Node 22.19+ — it calls `fs.globSync`, which does
 # not exist before Node 22. EAS images default to Node 20, so `pnpm i18n:compile` failed
 # on the first deploy that ran it. `22` is nvm syntax for the latest 22.x, which keeps
