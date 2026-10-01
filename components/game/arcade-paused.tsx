@@ -45,7 +45,7 @@ export function ArcadePaused({
   const { colorScheme } = useTheme()
 
   return (
-    <Screen overlay>
+    <Screen overlay overRun>
       <View className="w-full items-center">
         <PauseMark gameMode="arcade" />
 

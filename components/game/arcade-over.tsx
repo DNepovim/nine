@@ -44,7 +44,7 @@ export function ArcadeOver({
   const { colorScheme } = useTheme()
 
   return (
-    <Screen overlay>
+    <Screen overlay overRun>
       <View className="w-full items-center">
         <View className="mb-4">
           <GameOverTitle gameMode="arcade" words={TITLE} />
