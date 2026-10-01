@@ -85,16 +85,16 @@ const REVEAL_MAX_MS = 5000
 const REVEAL_MS = 400
 const DROP_FROM = -6
 
-// What the whole strip occupies: the row of cells, the gap above its hairline, the rule
-// itself, and the margin below. The row is one cell high, and that height is the cell's
-// to state — a label over a name, as tall as the number beside them. It is fixed either
-// way, so the empty bar reserves exactly the space the scores will occupy rather than
-// letting the whole top bar jump down when they appear.
+// What the whole strip occupies: a hairline, the gap under it, the row of cells, the gap
+// above the second hairline, that rule itself, and the margin below. The row is one cell
+// high, and that height is the cell's to state — a label over a name, as tall as the
+// number beside them. It is fixed either way, so the empty bar reserves exactly the space
+// the scores will occupy rather than letting the whole top bar jump down when they appear.
 //
 // Exported because Trainee renders no strip, and the absolutely-positioned menu button
 // has to come up by exactly this much to stay level with the NINE row — deriving it
 // beats a second hard-coded number that would silently drift if any of these changed.
-const BEST_SCORES_HEIGHT = BEST_CELL_HEIGHT + 4 + 1 + 6
+const BEST_SCORES_HEIGHT = 1 + 4 + BEST_CELL_HEIGHT + 4 + 1 + 6
 
 // A hairline strip above the top bar: the player's best on this board next to the
 // day, week and all-time bests. Your own best always shows, as 0 until you set one —
@@ -242,7 +242,7 @@ export function BestScoresLine({
     transform: [{ translateY: translateY.value }],
   }))
 
-  // The rule fades in with the scores but holds still — a hairline sliding into
+  // The rules fade in with the scores but hold still — a hairline sliding into
   // place reads as a glitch, where the numbers dropping in reads as motion.
   const ruleStyle = useAnimatedStyle(() => ({ opacity: opacity.value }))
 
@@ -321,6 +321,9 @@ export function BestScoresLine({
 
   return (
     <View className="mb-1.5">
+      {/* The strip closed on both sides: the same rule above the scores as below them,
+          so the bar reads as a band of its own rather than as a lid on the top bar. */}
+      <Animated.View className="mb-1 h-px bg-muted" style={ruleStyle} />
       <View style={{ height: BEST_CELL_HEIGHT }}>
         <Animated.View
           style={[
