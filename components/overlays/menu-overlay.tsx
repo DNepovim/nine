@@ -307,11 +307,12 @@ export function MenuOverlay({
             }
           />
 
-          {/* ALONE / WITH FRIENDS tabs. Hidden from players while the intro screen is
+          {/* ALONE / WITH FRIENDS tabs. Hidden from everyone while the intro screen is
               being fitted into a short phone: the tab is what is gone, not the feature —
               the panel below still carries both doors in, and every multiplayer screen
-              past them is untouched. Shown to a tester, who is who it has to be
-              reachable by. See the multiplayer flag in constants/features.ts. */}
+              past them is untouched. With no tab there is no way onto that panel, since
+              the one thing that slides it into view is a tap on WITH FRIENDS. See the
+              multiplayer flag in constants/features.ts. */}
           {showMultiplayer && (
             <PlayModeTab
               playMode={playMode}

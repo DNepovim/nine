@@ -50,4 +50,11 @@ describe('holds', () => {
     expect(holds('tester', 'admin')).toBe(false)
     expect(holds('developer', 'admin')).toBe(false)
   })
+
+  it('keeps every role out of a floor of nobody, admin included', () => {
+    expect(holds(null, 'nobody')).toBe(false)
+    expect(holds('tester', 'nobody')).toBe(false)
+    expect(holds('developer', 'nobody')).toBe(false)
+    expect(holds('admin', 'nobody')).toBe(false)
+  })
 })

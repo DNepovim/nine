@@ -14,6 +14,13 @@ const ROLES = ['tester', 'developer', 'admin'] as const
 
 export type Role = (typeof ROLES)[number]
 
+// What a flag may be floored at: one of the roles, or nobody at all. `nobody` sits above
+// the top of the ladder rather than below its bottom — it is not "the ordinary player",
+// which is what a null role is, but "no player, whatever they hold", an admin included.
+// It is what a feature is floored at while it is off the app rather than merely unfinished:
+// the doors stay shut for everyone, and no row in `profiles` can be edited to open them.
+export type Floor = Role | 'nobody'
+
 const ROLE_RANK = {
   tester: 1,
   developer: 2,
@@ -29,7 +36,8 @@ export function parseRole(value: unknown): Role | null {
 }
 
 // Whether a player on `role` reaches a flag floored at `floor`.
-export function holds(role: Role | null, floor: Role): boolean {
+export function holds(role: Role | null, floor: Floor): boolean {
+  if (floor === 'nobody') return false
   if (role === null) return false
   return ROLE_RANK[role] >= ROLE_RANK[floor]
 }
