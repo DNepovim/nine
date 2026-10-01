@@ -8,16 +8,9 @@ import {
   pressFacts,
   type PressFacts,
 } from '@/machines/coach'
-import {
-  buildPressGrid,
-  buildSetGrid,
-  computeSum,
-  type Grid,
-  type HitBatch,
-  type Mode,
-  type Target,
-} from '@/machines/game'
+import type { HitBatch, Target } from '@/machines/game'
 import { cleanHitReason, computeRoute, type RouteStep } from '@/machines/scoring'
+import { pressGrid, setGrid, sumOf, type Grid, type RunRules } from '@/modes'
 
 // How long a coach line holds, by what it is. `null` means it holds until something
 // retires it rather than until a clock runs out.
@@ -61,14 +54,16 @@ type Showing = {
 // the last hit actually did.
 export function useTraineeCoach({
   inRun,
-  mode,
+  rules,
   grid,
   targets,
   batch,
   muted,
 }: {
   inRun: boolean
-  mode: Mode
+  // The rules the run is played under: whether it teaches at all, and the board every
+  // route in here is measured on.
+  rules: RunRules
   grid: Grid
   targets: readonly Target[]
   batch: HitBatch
@@ -79,10 +74,10 @@ export function useTraineeCoach({
   // reason — this is that rule applied to the press path too.
   muted: boolean
 }) {
-  // Trainee only, and only while playing — the same gate the celebration keeps. The
-  // other modes celebrate the run, and coaching mid-run there would talk over the
-  // thing they are actually about.
-  const active = inRun && mode === 'trainee'
+  // A teaching mode only, and only while playing — the same gate the celebration
+  // keeps. The other modes celebrate the run, and coaching mid-run there would talk
+  // over the thing they are actually about.
+  const active = inRun && rules.capabilities.coached
 
   const [showing, setShowing] = useState<Showing | null>(null)
   const coachRef = useRef(initialCoachState())
@@ -144,10 +139,11 @@ export function useTraineeCoach({
     const gridBefore = gridRef.current
     judge(
       pressFacts({
+        dial: rules.dial,
         index,
         delta,
         gridBefore,
-        gridAfter: buildPressGrid(gridBefore, index, delta),
+        gridAfter: pressGrid(rules.dial, gridBefore, index, delta),
         targets: targetsRef.current,
       }),
     )
@@ -158,10 +154,11 @@ export function useTraineeCoach({
     const gridBefore = gridRef.current
     judge(
       pressFacts({
+        dial: rules.dial,
         index,
         delta: null,
         gridBefore,
-        gridAfter: buildSetGrid(gridBefore, index, value),
+        gridAfter: setGrid(gridBefore, index, value),
         targets: targetsRef.current,
       }),
     )
@@ -199,8 +196,8 @@ export function useTraineeCoach({
     say(
       'debrief',
       debriefLine(last.steps, last.par),
-      computeRoute(last.refGrid, last.value),
-      computeSum(last.refGrid),
+      computeRoute(rules.dial, last.refGrid, last.value),
+      sumOf(rules.dial, last.refGrid),
       last.value,
     )
   }, [active, batch])

@@ -15,7 +15,7 @@ import {
   type Champions,
 } from '@/lib/champions'
 import { fetchTop5, leaderOf } from '@/lib/leaderboard'
-import { SCORED_MODES } from '@/machines/game'
+import { SCORED_MODES } from '@/modes'
 
 // A run touches both of these boards at most once, and two requests answer for both.
 // Long enough to collect the pair of events one submit makes — the write to

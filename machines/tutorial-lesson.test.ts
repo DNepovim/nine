@@ -1,13 +1,12 @@
 import { describe, expect, it } from 'vitest'
 import { createActor } from 'xstate'
 
-import { MAX_TARGET } from '@/constants/game'
 import {
   scriptedTarget,
   TUTORIAL_OPENING_TARGET,
   TUTORIAL_TARGETS,
 } from '@/constants/tutorial'
-import { buildPressGrid, computeSum, gameMachine, type Grid } from '@/machines/game'
+import { gameMachine } from '@/machines/game'
 import { computeKeyPlan, computePar } from '@/machines/scoring'
 import {
   dismissedByTap,
@@ -21,6 +20,7 @@ import {
   lessonStep,
   type LessonStep,
 } from '@/machines/tutorial-lesson'
+import { NINE_DIAL, pressGrid, sumOf, type Grid } from '@/modes'
 
 // Every step, in the order the lesson meets them. Shared by the tables below so a new step
 // cannot be added to one and forgotten in another.
@@ -170,7 +170,7 @@ describe('the opening the lesson is built on', () => {
   })
 
   it('opens on a board that is not nine zeros', () => {
-    expect(computeSum(opening().grid)).toBe(185)
+    expect(sumOf(NINE_DIAL, opening().grid)).toBe(185)
   })
 
   it('deals the same opening every time', () => {
@@ -179,7 +179,7 @@ describe('the opening the lesson is built on', () => {
 
   it('is three steps from the target', () => {
     const { grid, target } = opening()
-    expect(computePar(grid, target)).toBe(3)
+    expect(computePar(NINE_DIAL, grid, target)).toBe(3)
   })
 
   it('is reachable by taps alone, one key at a time, coarsest first', () => {
@@ -187,7 +187,7 @@ describe('the opening the lesson is built on', () => {
     const { target } = opening()
     const pressed: number[] = []
     for (let i = 0; i < 3; i++) {
-      const plan = computeKeyPlan(grid, target)
+      const plan = computeKeyPlan(NINE_DIAL, grid, target)
       const next = plan[0]
       expect(next).toBeDefined()
       if (next === undefined) return
@@ -196,9 +196,9 @@ describe('the opening the lesson is built on', () => {
       expect(next.direction).toBe('up')
       expect(next.moves).toBe(1)
       pressed.push(next.weight)
-      grid = buildPressGrid(grid, next.index, 1)
+      grid = pressGrid(NINE_DIAL, grid, next.index, 1)
     }
-    expect(computeSum(grid)).toBe(target)
+    expect(sumOf(NINE_DIAL, grid)).toBe(target)
     expect(pressed).toEqual([9, 6, 4])
   })
 })
@@ -293,11 +293,11 @@ describe('the second target the lesson deals', () => {
   const second = () => TUTORIAL_TARGETS[1]
 
   it('sits above the sum the first hit leaves, so nothing has to come back down', () => {
-    expect(second()).toBeGreaterThan(computeSum(afterTheFirstHit()))
+    expect(second()).toBeGreaterThan(sumOf(NINE_DIAL, afterTheFirstHit()))
   })
 
   it('is reachable by taps alone — the swipe is not taught yet', () => {
-    const plan = computeKeyPlan(afterTheFirstHit(), second())
+    const plan = computeKeyPlan(NINE_DIAL, afterTheFirstHit(), second())
     expect(plan.length).toBeGreaterThan(0)
     for (const step of plan) {
       expect(step.jump).toBeNull()
@@ -306,11 +306,11 @@ describe('the second target the lesson deals', () => {
   })
 
   it('is a few taps away rather than one or a dozen', () => {
-    expect(computePar(afterTheFirstHit(), second())).toBe(2)
+    expect(computePar(NINE_DIAL, afterTheFirstHit(), second())).toBe(2)
   })
 
   it('asks for a coarse key and then the finest one', () => {
-    const plan = computeKeyPlan(afterTheFirstHit(), second())
+    const plan = computeKeyPlan(NINE_DIAL, afterTheFirstHit(), second())
     expect(plan.map((step) => step.weight)).toEqual([6, 1])
   })
 })
@@ -352,7 +352,7 @@ describe('the boards the script deals', () => {
   it('keeps every board inside the range a target can hold', () => {
     for (const target of TUTORIAL_TARGETS) {
       expect(target).toBeGreaterThanOrEqual(0)
-      expect(target).toBeLessThanOrEqual(MAX_TARGET)
+      expect(target).toBeLessThanOrEqual(NINE_DIAL.maxSum)
     }
   })
 })

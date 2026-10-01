@@ -36,7 +36,7 @@ import {
   lifetimeOf,
   type PlayerProfile,
 } from '@/lib/player-profile'
-import { MODE_GRADIENT, MODES, SCORED_MODES, type ScoredMode } from '@/machines/game'
+import { gradientOf, labelOf, SCORED_MODES, type ScoredMode } from '@/modes'
 
 // The day the player joined. No profile carries a real join date yet, so every one of
 // them reads the same day — the day profiles shipped — until the RPC can answer for it.
@@ -355,9 +355,9 @@ export function PlayerProfileOverlay({
                             selectable={false}
                             numberOfLines={1}
                             className="flex-1 font-mono text-[11px] font-black tracking-[2px]"
-                            style={{ color: MODE_GRADIENT[mode][0] }}
+                            style={{ color: gradientOf(mode)[0] }}
                           >
-                            {t(MODES[mode].label)}
+                            {t(labelOf(mode))}
                           </Text>
                           <ColumnHead width={BOARD_COLUMNS.runs} bottom={t`RUNS`} />
                           <ColumnHead

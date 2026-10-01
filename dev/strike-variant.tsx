@@ -10,8 +10,8 @@ import { SUM_ROW_HEIGHT } from '@/hooks/use-dial-metrics'
 import { useStrikeShots, type ShotAim } from '@/hooks/use-strike-shots'
 import { useTheme } from '@/hooks/use-theme'
 import { valueProgress } from '@/lib/value-progress'
-import type { Grid, HitBatch, HitInfo } from '@/machines/game'
-import type { Mode } from '@/machines/modes'
+import type { HitBatch, HitInfo } from '@/machines/game'
+import { NINE_DIAL, type Grid, type Mode } from '@/modes'
 import type { Position } from '@/types/game'
 
 // Two values, and where each sits on the board. A strike needs a live multiplier, which
@@ -22,18 +22,14 @@ const SHOWN = [
   { value: 96, at: { x: 16, y: 150 } },
 ] as const satisfies readonly { value: number; at: Position }[]
 
-const BLANK_GRID: Grid = [
-  [0, 0, 0],
-  [0, 0, 0],
-  [0, 0, 0],
-]
+const BLANK_GRID: Grid = [0, 0, 0, 0, 0, 0, 0, 0, 0]
 
 // One hit of a press, as the machine would report it. Only `value` and `bonus` decide
 // what is drawn — the rest is what a HitInfo carries, filled in so this goes through the
 // same hook the game does rather than a copy of it.
 const hitOn = (value: number, bonus: boolean): HitInfo => ({
   points: 300,
-  progress: valueProgress(value),
+  progress: valueProgress(value, NINE_DIAL.maxSum),
   bonus,
   multiplier: bonus ? 4 : 1,
   accFactor: 1,
@@ -124,6 +120,7 @@ export function StrikeVariant({
               style={{ position: 'absolute', left: target.at.x, top: target.at.y }}
             >
               <PieCountdown
+                maxValue={NINE_DIAL.maxSum}
                 value={target.value}
                 isDark={isDark}
                 active={false}
@@ -146,7 +143,7 @@ export function StrikeVariant({
                     digit={digit}
                     direction={1}
                     isDark={isDark}
-                    progress={valueProgress(sum)}
+                    progress={valueProgress(sum, NINE_DIAL.maxSum)}
                   />
                 ))}
             </View>

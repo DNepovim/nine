@@ -4,7 +4,7 @@ import { mergeEarned, type AchievementStore } from '@/lib/achievement-store'
 import { awardsOf, earned, type AchievementFacts } from '@/lib/achievements'
 import { emptyCareer } from '@/lib/career'
 import { emptyStats } from '@/machines/game'
-import type { Difficulty, Mode } from '@/machines/modes'
+import { type Difficulty, type Mode } from '@/modes'
 
 // A run that landed hits on one board, with everything else blank. Enough for the two
 // rules this file is about, both of which only read the run.

@@ -10,7 +10,7 @@ import {
   type SeenStandings,
 } from '@/lib/lost-medals'
 import type { BoardStanding, MedalPeriod } from '@/lib/medals'
-import type { Difficulty, ScoredMode } from '@/machines/game'
+import { type Difficulty, type ScoredMode } from '@/modes'
 
 const standing = (
   period: MedalPeriod,

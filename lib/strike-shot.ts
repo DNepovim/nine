@@ -1,20 +1,9 @@
 import { APP_RED, GOLD_SCALE } from '@/constants/colors'
-import type { Mode } from '@/machines/modes'
 
 export type Point = { x: number; y: number }
 
-// What a strike fires. The two scored modes each get the shot their streak is made of:
-// Accuracy's chain is one exact press after another, so it draws a single held beam;
-// Speed's is a run of fast ones, so it empties a magazine. Trainee fires nothing at all
-// — its streak is the legacy board-clear rule rather than a chain of decisions, and the
-// sum's answering ring is the whole event there.
-export type ShotKind = 'sniper' | 'burst'
-
-export const MODE_SHOT = {
-  trainee: null,
-  accuracy: 'sniper',
-  speed: 'burst',
-} as const satisfies Record<Mode, ShotKind | null>
+// What a strike fires is the mode's own answer now — `shot` on its definition, so a
+// challenge inherits the shot of the mode it is based on. See modes/types.ts.
 
 // The beam runs hot at the muzzle and cools along its length: the brightest stop of the
 // gold the app already marks records in, through to the app's own red. Both are existing

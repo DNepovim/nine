@@ -16,19 +16,19 @@ import { TIPS } from '@/constants/tips'
 import { useFlag } from '@/hooks/use-flags'
 import { useTheme } from '@/hooks/use-theme'
 import {
-  DARK_MODE_GRADIENT,
-  MODE_DESCRIPTIONS,
-  MODE_GRADIENT,
-  MODES,
+  darkGradientOf,
+  descriptionOf,
+  gradientOf,
+  labelOf,
+  NINE_DIAL,
+  weightRows,
   type Mode,
-} from '@/machines/game'
+} from '@/modes'
 
-// The cell weights, row-major: value × (row+1) × (col+1). Mirrors computeSum.
-const WEIGHTS = [
-  [1, 2, 3],
-  [2, 4, 6],
-  [3, 6, 9],
-]
+// The weights the guide explains, laid out as the dial lays them out. Read off the board
+// rather than copied here: the rule it prints — weight = row order × column order — is
+// the board's own, and a second copy of the figures could drift from it.
+const WEIGHTS = weightRows(NINE_DIAL)
 
 type IoniconName = keyof typeof Ionicons.glyphMap
 
@@ -305,8 +305,8 @@ function ControlsDiagram() {
 
 function ModeCard({ mode, facts }: { mode: Mode; facts: string[] }) {
   const { t } = useLingui()
-  const [from, to] = MODE_GRADIENT[mode]
-  const [line1, line2] = t(MODE_DESCRIPTIONS[mode]).split('\n')
+  const [from, to] = gradientOf(mode)
+  const [line1, line2] = t(descriptionOf(mode)).split('\n')
   return (
     <View className="mt-3 overflow-hidden rounded-2xl bg-card">
       <LinearGradient
@@ -319,7 +319,7 @@ function ModeCard({ mode, facts }: { mode: Mode; facts: string[] }) {
           selectable={false}
           className="font-mono text-[13px] font-black tracking-[2px] text-on-strong"
         >
-          {t(MODES[mode].label)}
+          {t(labelOf(mode))}
         </Text>
         <Ionicons name={MODE_ICONS[mode]} size={15} color="#FFFFFF" />
       </LinearGradient>
@@ -587,13 +587,13 @@ export function HowToPlayOverlay({
             {t`Hold the all-time record on a mode’s Extreme board and you carry its mark. It travels with your name everywhere it is drawn — the boards, your own row, a multiplayer room — so the hardest boards say who holds them without anyone having to look them up.`}
           </Body>
           <Card>
-            <Bullet color={MODE_GRADIENT.accuracy[0]}>
+            <Bullet color={gradientOf('accuracy')[0]}>
               <Trans>
                 🦉 The owl is Accuracy at its hardest. That board rewards the exact route,
                 and the owl is the eye that finds it.
               </Trans>
             </Bullet>
-            <Bullet color={MODE_GRADIENT.speed[0]}>
+            <Bullet color={gradientOf('speed')[0]}>
               <Trans>
                 🦅 The eagle is Speed at its hardest, for the dive rather than the search.
               </Trans>
@@ -694,7 +694,7 @@ export function HowToPlayOverlay({
           <View className="mt-10 self-center" style={{ width: 224 }}>
             <Pressable onPress={onTryTutorial} className="overflow-hidden rounded-2xl">
               <LinearGradient
-                colors={[...DARK_MODE_GRADIENT.trainee]}
+                colors={[...darkGradientOf('trainee')]}
                 start={{ x: 0, y: 0.5 }}
                 end={{ x: 1, y: 0.5 }}
                 className="items-center py-4"

@@ -9,7 +9,7 @@ import { Screen } from '@/components/screen'
 import { ARCADE_INK } from '@/constants/colors'
 import { useTheme } from '@/hooks/use-theme'
 import type { TitleWords } from '@/lib/game-over-title'
-import { DARK_MODE_GRADIENT } from '@/machines/game'
+import { darkGradientOf } from '@/modes'
 
 // The end of an arcade run, on the screen the game ends on: the wordmark, the number the
 // run was worth, its figures, then PLAY AGAIN and the way home.
@@ -69,7 +69,7 @@ export function ArcadeOver({
             style={shadow}
           >
             <LinearGradient
-              colors={[...DARK_MODE_GRADIENT.arcade]}
+              colors={[...darkGradientOf('arcade')]}
               start={{ x: 0, y: 0.5 }}
               end={{ x: 1, y: 0.5 }}
               className="items-center py-4"

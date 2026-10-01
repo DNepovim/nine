@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
+import { NINE_DIAL, pressGrid, setGrid, type Grid } from '@/modes'
+
 import {
   coachReducer,
   initialCoachState,
@@ -9,14 +11,10 @@ import {
   type PressFacts,
   type PressVerdict,
 } from './coach'
-import { buildPressGrid, buildSetGrid, type Grid, type Target } from './game'
+import type { Target } from './game'
 import { computePar } from './scoring'
 
-const ZEROS: Grid = [
-  [0, 0, 0],
-  [0, 0, 0],
-  [0, 0, 0],
-]
+const ZEROS: Grid = [0, 0, 0, 0, 0, 0, 0, 0, 0]
 
 // Defaults describe a press that helped nothing, mid-route, on the ×1 key. Note
 // that repeating one unchanged `facts()` builds a tap run as well as an unhelpful
@@ -30,6 +28,7 @@ const facts = (over: Partial<PressFacts> = {}): PressFacts => ({
   gap: 0,
   routing: true,
   wrapSwipe: false,
+  fineKey: true,
   ...over,
 })
 
@@ -60,13 +59,14 @@ describe('pressFacts', () => {
     // The ×9 key up to 1 puts the sum at 9. The nearest target, 1, is now further
     // off — that key has to come back down — but 10 is one press closer than it was.
     // A press like this must not be called a mistake.
-    const after = buildPressGrid(ZEROS, 8, 1)
-    expect(computePar(ZEROS, 1)).toBe(1)
-    expect(computePar(after, 1)).toBe(2)
-    expect(computePar(ZEROS, 10)).toBe(2)
-    expect(computePar(after, 10)).toBe(1)
+    const after = pressGrid(NINE_DIAL, ZEROS, 8, 1)
+    expect(computePar(NINE_DIAL, ZEROS, 1)).toBe(1)
+    expect(computePar(NINE_DIAL, after, 1)).toBe(2)
+    expect(computePar(NINE_DIAL, ZEROS, 10)).toBe(2)
+    expect(computePar(NINE_DIAL, after, 10)).toBe(1)
 
     const result = pressFacts({
+      dial: NINE_DIAL,
       index: 8,
       delta: 1,
       gridBefore: ZEROS,
@@ -79,11 +79,12 @@ describe('pressFacts', () => {
   it('calls a press unhelpful when it advances nothing', () => {
     // The ×1 key up to 1 while the only target is 9: a swipe on the ×9 key still
     // lands it in one, so the route is no shorter than it was.
-    const after = buildPressGrid(ZEROS, 0, 1)
-    expect(computePar(ZEROS, 9)).toBe(1)
-    expect(computePar(after, 9)).toBe(1)
+    const after = pressGrid(NINE_DIAL, ZEROS, 0, 1)
+    expect(computePar(NINE_DIAL, ZEROS, 9)).toBe(1)
+    expect(computePar(NINE_DIAL, after, 9)).toBe(1)
 
     const result = pressFacts({
+      dial: NINE_DIAL,
       index: 0,
       delta: 1,
       gridBefore: ZEROS,
@@ -95,10 +96,11 @@ describe('pressFacts', () => {
 
   it('measures the gap to the nearest target by value', () => {
     const result = pressFacts({
+      dial: NINE_DIAL,
       index: 0,
       delta: 1,
       gridBefore: ZEROS,
-      gridAfter: buildPressGrid(ZEROS, 0, 1),
+      gridAfter: pressGrid(NINE_DIAL, ZEROS, 0, 1),
       targets: [target({ id: 0, value: 40 }), target({ id: 1, value: 7 })],
     })
     expect(result.gap).toBe(7)
@@ -106,30 +108,33 @@ describe('pressFacts', () => {
 
   it('calls a press an opening only while the nearest target has taken none', () => {
     const opening = pressFacts({
+      dial: NINE_DIAL,
       index: 0,
       delta: 1,
       gridBefore: ZEROS,
-      gridAfter: buildPressGrid(ZEROS, 0, 1),
+      gridAfter: pressGrid(NINE_DIAL, ZEROS, 0, 1),
       targets: [target({ value: 40, userSteps: 0 })],
     })
     expect(opening.opening).toBe(true)
 
     const midRoute = pressFacts({
+      dial: NINE_DIAL,
       index: 0,
       delta: 1,
       gridBefore: ZEROS,
-      gridAfter: buildPressGrid(ZEROS, 0, 1),
+      gridAfter: pressGrid(NINE_DIAL, ZEROS, 0, 1),
       targets: [target({ value: 40, userSteps: 2 })],
     })
     expect(midRoute.opening).toBe(false)
   })
 
-  it('reports nothing to route toward on an empty board', () => {
+  it('reports nothing to route toward on an empty dial', () => {
     const result = pressFacts({
+      dial: NINE_DIAL,
       index: 0,
       delta: 1,
       gridBefore: ZEROS,
-      gridAfter: buildPressGrid(ZEROS, 0, 1),
+      gridAfter: pressGrid(NINE_DIAL, ZEROS, 0, 1),
       targets: [],
     })
     expect(result.routing).toBe(false)
@@ -137,16 +142,13 @@ describe('pressFacts', () => {
   })
 
   it('flags a swipe left from 9 to 0 as a wrap swipe — a tap wraps there too', () => {
-    const nineAtZero: Grid = [
-      [9, 0, 0],
-      [0, 0, 0],
-      [0, 0, 0],
-    ]
+    const nineAtZero: Grid = [9, 0, 0, 0, 0, 0, 0, 0, 0]
     const result = pressFacts({
+      dial: NINE_DIAL,
       index: 0,
       delta: null,
       gridBefore: nineAtZero,
-      gridAfter: buildSetGrid(nineAtZero, 0, 0),
+      gridAfter: setGrid(nineAtZero, 0, 0),
       targets: [target({ value: 5 })],
     })
     expect(result.wrapSwipe).toBe(true)
@@ -154,42 +156,37 @@ describe('pressFacts', () => {
 
   it('does not flag a swipe right from 0 to 9 — a tap never decrements, so a tap cannot reach it', () => {
     const result = pressFacts({
+      dial: NINE_DIAL,
       index: 0,
       delta: null,
       gridBefore: ZEROS,
-      gridAfter: buildSetGrid(ZEROS, 0, 9),
+      gridAfter: setGrid(ZEROS, 0, 9),
       targets: [target({ value: 5 })],
     })
     expect(result.wrapSwipe).toBe(false)
   })
 
   it('does not flag a swipe that is not one tap away', () => {
-    const fiveAtZero: Grid = [
-      [5, 0, 0],
-      [0, 0, 0],
-      [0, 0, 0],
-    ]
+    const fiveAtZero: Grid = [5, 0, 0, 0, 0, 0, 0, 0, 0]
     const result = pressFacts({
+      dial: NINE_DIAL,
       index: 0,
       delta: null,
       gridBefore: fiveAtZero,
-      gridAfter: buildSetGrid(fiveAtZero, 0, 0),
+      gridAfter: setGrid(fiveAtZero, 0, 0),
       targets: [target({ value: 5 })],
     })
     expect(result.wrapSwipe).toBe(false)
   })
 
   it('does not flag an ordinary tap that lands on 0 from 9', () => {
-    const nineAtZero: Grid = [
-      [9, 0, 0],
-      [0, 0, 0],
-      [0, 0, 0],
-    ]
+    const nineAtZero: Grid = [9, 0, 0, 0, 0, 0, 0, 0, 0]
     const result = pressFacts({
+      dial: NINE_DIAL,
       index: 0,
       delta: 1,
       gridBefore: nineAtZero,
-      gridAfter: buildPressGrid(nineAtZero, 0, 1),
+      gridAfter: pressGrid(NINE_DIAL, nineAtZero, 0, 1),
       targets: [target({ value: 5 })],
     })
     expect(result.wrapSwipe).toBe(false)
@@ -230,7 +227,7 @@ describe('lost', () => {
     expect(verdicts).toEqual([null, null, null, null, null])
   })
 
-  it('is reset by a target leaving the board', () => {
+  it('is reset by a target leaving the dial', () => {
     const twoIn = run(initialCoachState(), [miss(0), miss(1)])
     expect(run(noteResolved(twoIn.state, 1), [miss(0), miss(1)]).verdicts).toEqual([
       null,
@@ -302,7 +299,10 @@ describe('coarse', () => {
   })
 
   it('stays quiet when a coarse key opens the route', () => {
-    expect(coachReducer(initialCoachState(), opener({ index: 8 })).verdict).toBeNull()
+    // `fineKey` rather than the index: which keys are light is the board's answer, and
+    // `pressFacts` is where it is read — see machines/coach.ts.
+    const coarse = opener({ index: 8, fineKey: false })
+    expect(coachReducer(initialCoachState(), coarse).verdict).toBeNull()
   })
 
   it('stays quiet mid-route, where a fine key is the right call', () => {
@@ -371,7 +371,7 @@ describe('one verdict per press', () => {
   })
 })
 
-describe('an empty board', () => {
+describe('an empty dial', () => {
   it('judges nothing', () => {
     const idle = facts({ routing: false })
     expect(run(initialCoachState(), [idle, idle, idle, idle]).verdicts).toEqual([

@@ -14,7 +14,7 @@ import { useChampionsContext } from '@/hooks/use-champions'
 import { useRecentWinners } from '@/hooks/use-recent-winners'
 import { championMark } from '@/lib/champions'
 import type { WinnerWindow } from '@/lib/recent-winners'
-import type { Difficulty, Mode } from '@/machines/game'
+import { type Difficulty, type ModeId } from '@/modes'
 
 // The three things the stripe can say. A value map rather than a branch, so a new
 // window could not be added to `WinnerWindow` without a sentence to go with it.
@@ -70,7 +70,7 @@ export function RecentWinners({
   gameMode,
   difficulty,
 }: {
-  gameMode: Mode
+  gameMode: ModeId
   difficulty: Difficulty
 }) {
   const lines = useRecentWinners(gameMode, difficulty)

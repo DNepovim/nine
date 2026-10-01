@@ -6,7 +6,7 @@ import type { BoardRef } from '@/lib/board-events'
 import { subscribeBoards } from '@/lib/board-live'
 import { fetchMyMedals, type MyMedalRow } from '@/lib/leaderboard'
 import { MEDAL_PERIODS, toMedals, type BoardStanding, type Medal } from '@/lib/medals'
-import { DIFFICULTY_ORDER, SCORED_MODES } from '@/machines/game'
+import { DIFFICULTY_ORDER, SCORED_MODES } from '@/modes'
 
 // A run touches every board the player holds at once, and one request answers for all
 // of them. Longer than the board's own window: this line is never mid-run urgent.

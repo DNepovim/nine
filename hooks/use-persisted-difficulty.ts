@@ -3,7 +3,8 @@ import { useEffect, useRef } from 'react'
 
 import { DIFFICULTY_KEY } from '@/constants/storage'
 import { isDifficulty } from '@/lib/is-difficulty'
-import { type Difficulty, type GameSend } from '@/machines/game'
+import { type GameSend } from '@/machines/game'
+import { type Difficulty } from '@/modes'
 
 // Restores the last chosen difficulty on mount (the machine starts in `menu`,
 // where SET_DIFFICULTY is handled) and persists it when it changes.

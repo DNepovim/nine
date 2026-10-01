@@ -2,7 +2,7 @@ import { Ionicons } from '@expo/vector-icons'
 import { Trans, useLingui } from '@lingui/react/macro'
 import { LinearGradient } from 'expo-linear-gradient'
 import { isNonEmptyString, isOneOf } from 'narrowland'
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Platform, Pressable, Share, Text, View } from 'react-native'
 import Animated, {
   Easing,
@@ -29,16 +29,20 @@ import { boardName, SHARE_URL, shouldBoast } from '@/lib/invite-message'
 import type { Medal } from '@/lib/medals'
 import {
   ARCADE_TEASER,
-  DARK_MODE_GRADIENT,
   DARK_MULTIPLAYER_GRADIENT,
+  darkGradientOf,
+  DIFFICULTIES,
+  gradientOf,
+  labelOf,
   lerpColor,
-  MODE_GRADIENT,
   MODE_ORDER,
   MULTIPLAYER_GRADIENT,
+  openModes,
+  SCORED_MODES,
+  traitsOf,
   type Difficulty,
-  type Mode,
-} from '@/machines/game'
-import { DIFFICULTIES, MODES } from '@/machines/modes'
+  type ModeId,
+} from '@/modes'
 
 import { AchievementProgress } from './achievement-progress'
 import { AnimatedLetter } from './animated-letter'
@@ -58,14 +62,28 @@ const shadow = {
   shadowRadius: 12,
 }
 
-// The mode pills this screen shows. ARCADE is left out of the player's three: it is a
-// teaser for something they cannot press into anything, and a tab that does nothing is the
-// first row to cut when the screen is short.
+// What a challenge's pill wears in its corner. A mode that is only here today has to say
+// so on the pill, or it reads as one of the permanent three.
+const CHALLENGE_TAG = '24H'
+
+// The mode pills this screen shows, in order: the player's three, then whichever
+// challenges are open right now, then ARCADE.
 //
-// Whoever holds the `arcade` flag gets it back, because for them it *is* a door — see
-// constants/features.ts.
-const INTRO_MODES: (Mode | 'arcade')[] = [...MODE_ORDER]
-const INTRO_MODES_WITH_ARCADE: (Mode | 'arcade')[] = [...MODE_ORDER, 'arcade']
+// ARCADE is left out of the player's three: it is a teaser for something they cannot
+// press into anything, and a tab that does nothing is the first row to cut when the
+// screen is short. Whoever holds the `arcade` flag gets it back, because for them it *is*
+// a door — see constants/features.ts.
+//
+// The challenges are read off the registry rather than listed here, which is the whole
+// point of their having a window: one opens and closes without this screen being touched.
+// There are none open today, so this adds nothing to the row — see modes/challenges.
+const introModes = (now: number, withArcade: boolean): ModeId[] => [
+  ...MODE_ORDER,
+  ...openModes(now)
+    .filter((mode) => mode.window !== null && mode.engine === 'targets')
+    .map((mode) => mode.id),
+  ...(withArcade ? ['arcade'] : []),
+]
 
 export function MenuOverlay({
   gameMode,
@@ -95,7 +113,7 @@ export function MenuOverlay({
   onCreateRoom,
   onOpenJoinRoom,
 }: {
-  gameMode: Mode
+  gameMode: ModeId
   difficulty: Difficulty
   userId: string | null
   nickname: string | null
@@ -131,8 +149,8 @@ export function MenuOverlay({
   // and ARCADE is the one pill whose choice is committed nowhere — the three modes come
   // back off `gameMode`, so without this a player leaving an arcade run would find the
   // screen focused on whichever mode they played before it.
-  initialFocus?: Mode | 'arcade'
-  onFocusChange?: (focus: Mode | 'arcade') => void
+  initialFocus?: ModeId
+  onFocusChange?: (focus: ModeId) => void
   onPlay: () => void
   // PLAY GAME with ARCADE focused. Its own door rather than a mode passed through
   // `onPlay`, because arcade is not a `Mode`: it has no board, no lives and no place in
@@ -144,7 +162,7 @@ export function MenuOverlay({
   // `initialPlayMode`, so remounting after either lands back on the tab the player
   // left, rather than always defaulting to ALONE.
   onPlayModeChange?: (playMode: PlayMode) => void
-  onSetMode: (mode: Mode) => void
+  onSetMode: (mode: ModeId) => void
   onSetDifficulty: (difficulty: Difficulty) => void
   onOpenAdvanced: () => void
   onAddNickname: () => void
@@ -172,9 +190,26 @@ export function MenuOverlay({
   // A stored ARCADE focus is only honoured by a reader who can actually see the pill: the
   // flag can be taken away between launches, and a screen opening on a tab that is not
   // there would show the player a difficulty row with no mode above it.
-  const [focused, setFocused] = useState<Mode | 'arcade'>(
+  const [focused, setFocused] = useState<ModeId>(
     initialFocus === 'arcade' && !showArcade ? gameMode : initialFocus,
   )
+  // Read once per open rather than per render: a window closing while the player is
+  // looking at the intro would otherwise take the pill out from under their thumb.
+  const [openedAt] = useState(() => Date.now())
+  const modeItems = useMemo(
+    () => introModes(openedAt, showArcade),
+    [openedAt, showArcade],
+  )
+  const badges: Partial<Record<string, string>> = useMemo(() => {
+    const marks: Record<string, string> = {
+      arcade: showArcade ? ARCADE_TEASER.devTag : ARCADE_TEASER.tag,
+    }
+    for (const id of modeItems) {
+      if (id.startsWith('challenge/')) marks[id] = CHALLENGE_TAG
+    }
+    return marks
+  }, [modeItems, showArcade])
+
   const [playMode, setPlayMode] = useState<PlayMode>(initialPlayMode)
   const [panelWidth, setPanelWidth] = useState(0)
   const panelOffset = useSharedValue(0)
@@ -185,10 +220,10 @@ export function MenuOverlay({
   // The title and the WITH FRIENDS pill read multiplayer's own pair while that tab is
   // open, rather than whichever singleplayer mode `focused` last was — pinned to
   // accuracy since a room is always created as accuracy.
-  const activeMode: Mode | 'arcade' | 'multiplayer' =
+  const activeMode: ModeId | 'multiplayer' =
     playMode === 'friends' ? 'multiplayer' : focused
   const activeGradient =
-    playMode === 'friends' ? MULTIPLAYER_GRADIENT.accuracy : MODE_GRADIENT[focused]
+    playMode === 'friends' ? MULTIPLAYER_GRADIENT.accuracy : gradientOf(focused)
 
   const gradPhase = useSharedValue(0)
   const gradStartSv = useSharedValue<string>(activeGradient[0])
@@ -355,20 +390,24 @@ export function MenuOverlay({
               >
                 <ModeSelector
                   focused={focused}
-                  items={showArcade ? INTRO_MODES_WITH_ARCADE : INTRO_MODES}
+                  items={modeItems}
                   gradPhase={gradPhase}
-                  arcadeTag={showArcade ? ARCADE_TEASER.devTag : ARCADE_TEASER.tag}
+                  badges={badges}
                   onSelect={(m) => {
                     setFocused(m)
                     onFocusChange?.(m)
-                    if (isOneOf(m, ['trainee', 'accuracy', 'speed'])) onSetMode(m)
+                    // ARCADE is the one pill whose choice is committed nowhere: it is a
+                    // door rather than a mode of this machine's. Everything else — the
+                    // three, and whichever challenges are open — is a run this machine
+                    // deals, so it is the mode from here on.
+                    if (m !== 'arcade') onSetMode(m)
                   }}
                 />
                 {/* Arcade shows no difficulty. It tightens as a run climbs, which is a
                     difficulty that moves rather than one picked up front — and asking for
                     a three-way choice before the player has any idea what the mode is was
                     a dial set in the dark. */}
-                {isOneOf(focused, ['accuracy', 'speed']) && (
+                {traitsOf(focused).usesDifficulty && (
                   <DifficultySelector
                     gameMode={focused}
                     difficulty={difficulty}
@@ -378,10 +417,10 @@ export function MenuOverlay({
                 )}
                 {/* Trainee's half of this slot: no board to show, so it teaches
                     instead. Arcade stays empty — a crossroad explains itself. */}
-                {focused === 'trainee' && <ModeTips />}
+                {traitsOf(focused).coached && <ModeTips />}
                 {/* Who has been taking this board lately, then where it stands now —
                     both about the board the pills above just picked. */}
-                {isOneOf(focused, ['accuracy', 'speed']) && (
+                {isOneOf(focused, SCORED_MODES) && (
                   <>
                     <RecentWinners gameMode={gameMode} difficulty={difficulty} />
                     <HighScores
@@ -494,7 +533,7 @@ export function MenuOverlay({
               style={shadow}
             >
               <LinearGradient
-                colors={[...DARK_MODE_GRADIENT[focused]]}
+                colors={[...darkGradientOf(focused)]}
                 start={{ x: 0, y: 0.5 }}
                 end={{ x: 1, y: 0.5 }}
                 className="items-center py-4"
@@ -527,7 +566,7 @@ export function MenuOverlay({
                 // one place that knows the active language; lib/ keeps the
                 // decision and the board name, which are what a test can pin.
                 const board = boardName(
-                  t(MODES[gameMode].label),
+                  t(labelOf(gameMode)),
                   t(DIFFICULTIES[difficulty].label),
                 )
                 const invite = shouldBoast(gameMode, bestScore)

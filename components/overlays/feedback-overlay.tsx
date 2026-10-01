@@ -11,7 +11,7 @@ import { useTheme } from '@/hooks/use-theme'
 import { cn } from '@/lib/cn'
 import { MAX_FEEDBACK_LENGTH } from '@/lib/feedback-outcome'
 import { submitFeedback } from '@/lib/feedback-submission'
-import { MODE_GRADIENT, type Difficulty, type Mode } from '@/machines/game'
+import { gradientOf, type Difficulty, type ModeId } from '@/modes'
 
 // Where the send got to. The two failures are separate states rather than one `error`
 // because they ask different things of the player: a lost connection is worth the same
@@ -57,7 +57,7 @@ export function FeedbackOverlay({
   gameState,
   onClose,
 }: {
-  gameMode: Mode
+  gameMode: ModeId
   difficulty: Difficulty
   score: number
   // The paused run behind this dialog, from `gameSnapshot` — see lib/feedback-state.ts.
@@ -70,7 +70,7 @@ export function FeedbackOverlay({
   const { t } = useLingui()
   const { locale } = useLocale()
   const { colorScheme } = useTheme()
-  const modeColor = MODE_GRADIENT[gameMode][0]
+  const modeColor = gradientOf(gameMode)[0]
   const [message, setMessage] = useState('')
   const [status, setStatus] = useState<Status>('idle')
 

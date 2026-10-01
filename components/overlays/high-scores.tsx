@@ -19,7 +19,7 @@ import { useOnline } from '@/hooks/use-online'
 import { useViewport } from '@/hooks/use-viewport'
 import { type LeaderboardTab } from '@/lib/leaderboard'
 import { longestMedalTab, type TabRank } from '@/lib/medals'
-import { MODE_GRADIENT, type Mode } from '@/machines/game'
+import { gradientOf, type ModeId } from '@/modes'
 
 import { OfflineNotice } from './offline-notice'
 import { PublishScoresButton } from './publish-scores-button'
@@ -58,7 +58,7 @@ export function HighScores({
   pinMedalTab = false,
   runScore,
 }: {
-  gameMode: Mode
+  gameMode: ModeId
   userId: string | null
   nickname: string | null
   // Opens the nickname prompt, which is what puts a player's scores on the board at
@@ -99,8 +99,8 @@ export function HighScores({
   const underlineLeft = useSharedValue(-999)
   const underlineRight = useSharedValue(-999)
 
-  const accentColor = MODE_GRADIENT[gameMode][0]
-  const gradientColors = MODE_GRADIENT[gameMode] as [string, string]
+  const accentColor = gradientOf(gameMode)[0]
+  const gradientColors = gradientOf(gameMode) as [string, string]
   const effectiveWidth = panelWidth > 0 ? panelWidth : windowWidth - 32
 
   const online = useOnline()

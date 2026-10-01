@@ -24,7 +24,7 @@ import { useTheme } from '@/hooks/use-theme'
 import { announcementStyle } from '@/lib/announcement-style'
 import { RUN_SETTLE_MS, type Announcement } from '@/lib/announcements'
 import { nearestRecord } from '@/lib/near-record'
-import type { Mode } from '@/machines/modes'
+import { traitsOf, type ModeId } from '@/modes'
 
 type BestKey = 'you' | 'today' | 'week' | 'ever'
 
@@ -125,7 +125,7 @@ export function BestScoresLine({
   // countdown — the same notion of "in a run" the menu button uses.
   inRun: boolean
   // Drives the announcement bar's gradient — the mode and CTA scales are per-mode.
-  mode: Mode
+  mode: ModeId
   // While set, the bar carries this message instead of the scores.
   announcement: Announcement | null
   // Tapping a line that names an achievement opens it. Only that one line answers: a
@@ -317,7 +317,7 @@ export function BestScoresLine({
   // leftover the dial is sized from, so a mode that gave this space back would get a
   // bigger dial than the others, and the dial has to be the same in every mode. After
   // the hooks, not before: the reveal timers run identically whatever the mode.
-  if (mode === 'trainee') return <View style={{ height: BEST_SCORES_HEIGHT }} />
+  if (!traitsOf(mode).scored) return <View style={{ height: BEST_SCORES_HEIGHT }} />
 
   return (
     <View className="mb-1.5">

@@ -8,7 +8,7 @@ import {
 } from '@/lib/feedback-outcome'
 import type { Locale } from '@/lib/i18n/locale'
 import { supabase } from '@/lib/supabase'
-import type { Difficulty, Mode } from '@/machines/game'
+import { type Difficulty, type ModeId } from '@/modes'
 
 // One insert, awaited, so the dialog can tell the player the truth about it.
 //
@@ -31,7 +31,7 @@ export async function submitFeedback({
   gameState,
 }: {
   message: string
-  mode: Mode
+  mode: ModeId
   difficulty: Difficulty
   score: number
   // The language the game was in as they wrote. Answers are written by hand, and this is

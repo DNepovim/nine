@@ -1,7 +1,9 @@
 import { isNonEmptyArray } from 'narrowland'
 
-import { computeSum, type Grid, type Target } from './game'
-import { cellWeight, computePar } from './scoring'
+import { sumOf, weightAt, type DialSpec, type Grid } from '@/modes'
+
+import type { Target } from './game'
+import { computePar } from './scoring'
 
 // How many presses in a row must fail to shorten the route before the coach says
 // so. One is a fumble the player already knows about; three in a row means the route
@@ -19,13 +21,14 @@ const TAP_RUN = 4
 // the coach would be wrong to say otherwise. The one figure here tuned by feel.
 const COARSE_GAP = 12
 
-// Which keys count as fine. Weights run 1, 2, 3, 2, 4, 6, 3, 6, 9.
+// Which keys count as fine. On the nine dial the weights run 1, 2, 3, 2, 4, 6, 3, 6, 9,
+// so this is the three lightest.
 const FINE_WEIGHT = 2
 
-const isFineKey = (index: number): boolean => cellWeight(index) <= FINE_WEIGHT
+const isFineKey = (dial: DialSpec, index: number): boolean =>
+  weightAt(dial, index) <= FINE_WEIGHT
 
-const cellValue = (grid: Grid, index: number): number =>
-  grid[Math.floor(index / 3)]?.[index % 3] ?? 0
+const cellValue = (grid: Grid, index: number): number => grid[index] ?? 0
 
 // Whether a swipe carried a button from 9 to 0 — the one swipe a single tap reaches
 // just as fast, since a tap always increments and wraps 9 back to 0. There is no
@@ -87,19 +90,24 @@ export type PressFacts = {
   // A swipe that set a button to 0 from 9 — the one swipe a single tap would have
   // reached in the same one step, since a tap wraps 9 back to 0.
   wrapSwipe: boolean
+  // Whether the key pressed is one of the dial's light ones. Decided here rather than
+  // in the reducer, because it is the one rule that needs the dial and the reducer is
+  // better off not knowing there is one.
+  fineKey: boolean
 }
 
 // Turns the machine's own grid and targets into facts. This is where the analysis
 // happens: `computePar` twice per live target, once for the grid before the press
 // and once for the grid after.
 export function pressFacts(opts: {
+  dial: DialSpec
   index: number
   delta: 1 | -1 | null
   gridBefore: Grid
   gridAfter: Grid
   targets: readonly Target[]
 }): PressFacts {
-  const { index, delta, gridBefore, gridAfter, targets } = opts
+  const { dial, index, delta, gridBefore, gridAfter, targets } = opts
   const wrapSwipe = isWrapSwipe(
     delta,
     cellValue(gridBefore, index),
@@ -114,10 +122,11 @@ export function pressFacts(opts: {
       gap: 0,
       routing: false,
       wrapSwipe,
+      fineKey: isFineKey(dial, index),
     }
   }
 
-  const sum = computeSum(gridBefore)
+  const sum = sumOf(dial, gridBefore)
   const nearest = targets.reduce((best, candidate) =>
     Math.abs(candidate.value - sum) < Math.abs(best.value - sum) ? candidate : best,
   )
@@ -130,7 +139,8 @@ export function pressFacts(opts: {
     // second-nearest must not be called a mistake.
     improved: targets.some(
       (candidate) =>
-        computePar(gridAfter, candidate.value) < computePar(gridBefore, candidate.value),
+        computePar(dial, gridAfter, candidate.value) <
+        computePar(dial, gridBefore, candidate.value),
     ),
     // The machine's own bookkeeping answers this: `userSteps` counts presses since
     // the target's reference was set, so zero means this press is the first.
@@ -140,6 +150,7 @@ export function pressFacts(opts: {
     gap: Math.abs(nearest.value - sum),
     routing: true,
     wrapSwipe,
+    fineKey: isFineKey(dial, index),
   }
 }
 
@@ -193,7 +204,7 @@ export function coachReducer(state: CoachState, facts: PressFacts): CoachResult 
 
   if (
     facts.opening &&
-    isFineKey(facts.index) &&
+    facts.fineKey &&
     facts.gap >= COARSE_GAP &&
     state.sinceCoarse >= HABIT_COOLDOWN_TARGETS
   ) {

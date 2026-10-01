@@ -1,6 +1,5 @@
 import {
   isArray,
-  isDefined,
   isNonEmptyString,
   isNotNull,
   isNumber,
@@ -8,15 +7,18 @@ import {
   isOneOf,
 } from 'narrowland'
 
+import type { RestoredRun } from '@/machines/game'
 import {
+  cellCount,
   DIFFICULTY_ORDER,
-  MODE_ORDER,
-  MODES,
+  isModeId,
+  runRules,
+  startingLives,
+  traitsOf,
   type Difficulty,
   type Grid,
-  type Mode,
-  type RestoredRun,
-} from '@/machines/game'
+  type ModeId,
+} from '@/modes'
 import type { DisplayTarget, Position } from '@/types/game'
 
 // A run the app was closed on, written down so the next launch can put it back.
@@ -50,7 +52,9 @@ type SavedTarget = {
 }
 
 export type SavedRun = {
-  mode: Mode
+  // Which mode the run was. A name rather than one of three: a run may be of a
+  // challenge, and a challenge's id was not in any union when this build was compiled.
+  mode: ModeId
   difficulty: Difficulty
   // Whether the run was the tutorial. Optional on the way in rather than required: a run
   // written by a build from before the tutorial existed has no such field, and it was
@@ -98,20 +102,38 @@ const isFigure = (value: unknown): value is number =>
 const isDigit = (value: unknown): value is number =>
   isFigure(value) && Number.isInteger(value) && value >= 0 && value <= 9
 
-// Three of something, or nothing. The grid is three rows and a row is three digits, and
-// `noUncheckedIndexedAccess` means neither can be read off an array without this anyway.
-const three = <T>(values: (T | null)[]): [T, T, T] | null => {
-  if (values.length !== 3) return null
-  const [first, second, third] = values
-  if (!isDefined(first) || !isDefined(second) || !isDefined(third)) return null
-  return [first, second, third]
+// A dial position, as this build writes one and as every earlier build wrote one.
+//
+// Flat now — a position is a list of digits, and the arrangement is the board's business
+// — but a run put away by a build from before that is three rows of three, so a nested
+// one is flattened on the way in rather than discarded. The alternative was throwing away
+// the run of every player who happens to update mid-game.
+const parseDigits = (value: unknown): number[] | null => {
+  if (!isArray(value)) return null
+  const flat: number[] = []
+  for (const cell of value) {
+    if (isDigit(cell)) {
+      flat.push(cell)
+      continue
+    }
+    const row = isArray(cell) ? cell : null
+    if (row === null) return null
+    for (const digit of row) {
+      if (!isDigit(digit)) return null
+      flat.push(digit)
+    }
+  }
+  return flat
 }
 
-const parseRow = (value: unknown): [number, number, number] | null =>
-  isArray(value) ? three(value.map((cell) => (isDigit(cell) ? cell : null))) : null
-
-const parseGrid = (value: unknown): Grid | null =>
-  isArray(value) ? three(value.map(parseRow)) : null
+// A position, checked against the dial the run was played on. A run stored on a board of
+// nine keys cannot be put back onto one of four, and a position with a key missing is a
+// board the player never saw — both are a run that does not come back, which lands the
+// player on the intro.
+const parseGrid = (value: unknown, keys: number): Grid | null => {
+  const flat = parseDigits(value)
+  return flat?.length === keys ? flat : null
+}
 
 // Null is a real answer — the mode that never spends them — so a value that failed to
 // parse has to be something else again.
@@ -127,9 +149,9 @@ const parsePosition = (value: unknown): Position | null => {
   return { x, y }
 }
 
-const parseTarget = (value: unknown): SavedTarget | null => {
+const parseTarget = (value: unknown, keys: number): SavedTarget | null => {
   if (!isObject<Record<string, unknown>>(value)) return null
-  const refGrid = parseGrid(value.refGrid)
+  const refGrid = parseGrid(value.refGrid, keys)
   const { id, duration, age, refAge, par, userSteps } = value
   const dialled = value.value
   if (refGrid === null) return null
@@ -228,16 +250,30 @@ export function toSavedRun(
 export function parseSavedRun(value: unknown): SavedRun | null {
   if (!isObject<Record<string, unknown>>(value)) return null
   const { mode, difficulty } = value
-  if (!isOneOf(mode, MODE_ORDER) || !isOneOf(difficulty, DIFFICULTY_ORDER)) return null
+  // A mode nothing is registered under is a run that cannot be put back: a challenge
+  // whose window closed while the app was shut, or a mode a later build removed. Nor can
+  // a mode on another engine — arcade keeps its own run, and this machine would resolve
+  // it to somebody else's rules. Either way the player lands on the intro, which is
+  // where every launch used to land.
+  if (typeof mode !== 'string' || !isModeId(mode)) return null
+  if (traitsOf(mode).engine !== 'targets') return null
+  if (!isOneOf(difficulty, DIFFICULTY_ORDER)) return null
 
-  const grid = parseGrid(value.grid)
+  // How many keys the dial this run was played on has, which every position in the run is
+  // checked against.
+  const dial = runRules(mode, difficulty).dial
+  const keys = cellCount(dial)
+
+  const grid = parseGrid(value.grid, keys)
   if (grid === null) return null
 
   const lives = parseLives(value.lives)
   if (lives === undefined) return null
 
   if (!isArray(value.targets)) return null
-  const targets = value.targets.map(parseTarget).filter(isNotNull)
+  const targets = value.targets
+    .map((target) => parseTarget(target, keys))
+    .filter(isNotNull)
   // One target that would not parse discards the whole run rather than the target: a
   // board missing one of the things on it is a run the player never played.
   if (targets.length !== value.targets.length) return null
@@ -293,7 +329,7 @@ export function restoreRun(saved: SavedRun, now: number, freshId: string): Resto
     grid: saved.grid,
     hits: saved.hits,
     score: saved.score,
-    lives: saved.lives ?? MODES[saved.mode].lives,
+    lives: saved.lives ?? startingLives(saved.mode, saved.difficulty),
     streak: saved.streak,
     maxStreak: saved.maxStreak,
     strikes: saved.strikes,

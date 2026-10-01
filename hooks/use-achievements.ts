@@ -40,15 +40,14 @@ import type { AnnouncementId } from '@/lib/announcements'
 import { boardKey, foldMultiplayer, foldRun, observeHeld } from '@/lib/career'
 import { todayISO } from '@/lib/leaderboard-period'
 import type { BoardStanding } from '@/lib/medals'
+import type { HitBatch, Stats } from '@/machines/game'
 import {
   DIFFICULTY_ORDER,
-  MODES,
   SCORED_MODES,
+  startingLives,
   type Difficulty,
-  type HitBatch,
-  type Mode,
-  type Stats,
-} from '@/machines/game'
+  type ModeId,
+} from '@/modes'
 
 export type AchievementsInput = {
   inRun: boolean
@@ -63,7 +62,7 @@ export type AchievementsInput = {
   // The game-over edge. The final pass runs here — some achievements can only be
   // answered by a run that is over — and the career is folded in straight after.
   finished: boolean
-  mode: Mode
+  mode: ModeId
   difficulty: Difficulty
   score: number
   hits: number
@@ -202,7 +201,7 @@ export function useAchievements(input: AchievementsInput): Achievements {
       hits: input.batch.hits,
       totalHits: input.hits,
       // Trainee's lives are Infinity, which is never spent, so its whole run is clean.
-      livesFull: input.lives >= MODES[input.mode].lives,
+      livesFull: input.lives >= startingLives(input.mode, input.difficulty),
     })
   }, [input.inRun, input.runSeq, input.batch, input.hits, input.lives, input.mode])
 

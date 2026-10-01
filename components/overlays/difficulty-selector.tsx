@@ -15,10 +15,10 @@ import {
   DIFFICULTIES,
   DIFFICULTY_ORDER,
   getDifficultyColor,
-  MODE_GRADIENT,
+  gradientOf,
   type Difficulty,
-  type Mode,
-} from '@/machines/game'
+  type ModeId,
+} from '@/modes'
 
 // Worklet-safe hex color lerp (mirrors the one in animated-letter.tsx)
 function lerpHex(a: string, b: string, t: number): string {
@@ -39,7 +39,7 @@ export function DifficultySelector({
   onSetDifficulty,
   gradPhase,
 }: {
-  gameMode: Mode
+  gameMode: ModeId
   difficulty: Difficulty
   onSetDifficulty: (d: Difficulty) => void
   gradPhase: SharedValue<number>
@@ -54,12 +54,12 @@ export function DifficultySelector({
   const bgRight = useSharedValue(-999)
 
   const [fromColors, setFromColors] = useState<[string, string]>(
-    () => MODE_GRADIENT[gameMode] as [string, string],
+    () => gradientOf(gameMode) as [string, string],
   )
   const [toColors, setToColors] = useState<[string, string]>(
-    () => MODE_GRADIENT[gameMode] as [string, string],
+    () => gradientOf(gameMode) as [string, string],
   )
-  const prevGameModeRef = useRef<Mode>(gameMode)
+  const prevGameModeRef = useRef<ModeId>(gameMode)
   const colorFade = useSharedValue(1)
 
   // Per-item selection progress (0 = unselected, 1 = selected)
@@ -140,8 +140,8 @@ export function DifficultySelector({
     if (prevGameModeRef.current === gameMode) return
     const prevMode = prevGameModeRef.current
     prevGameModeRef.current = gameMode
-    setFromColors(MODE_GRADIENT[prevMode] as [string, string])
-    setToColors(MODE_GRADIENT[gameMode] as [string, string])
+    setFromColors(gradientOf(prevMode) as [string, string])
+    setToColors(gradientOf(gameMode) as [string, string])
     colorFade.value = 0
     colorFade.value = withTiming(1, { duration: 350 })
   }, [gameMode, colorFade])

@@ -1,4 +1,4 @@
-import { isEmptyArray } from 'narrowland'
+import { isEmptyArray, isOneOf } from 'narrowland'
 
 import { captureError } from '@/lib/analytics'
 import { isNetworkFailure, noteRequest } from '@/lib/connectivity'
@@ -13,7 +13,7 @@ import {
   type LocalScore,
 } from '@/lib/local-scores'
 import { supabase } from '@/lib/supabase'
-import type { Difficulty, Mode } from '@/machines/game'
+import { SCORED_MODES, traitsOf, type Difficulty, type ModeId } from '@/modes'
 
 // How the server answered. `refused` is the one that matters: the write was rejected for
 // a reason that was not the connection, so asking again will be rejected again.
@@ -70,12 +70,19 @@ const applySent = (store: LocalScore[], entry: LocalScore, sent: Sent): LocalSco
 export async function submitScore(
   userId: string | null,
   nickname: string | null,
-  mode: Mode,
+  mode: ModeId,
   difficulty: Difficulty,
   score: number,
   hits: number,
 ): Promise<void> {
-  if (mode === 'trainee' || score <= 0) return
+  // Two bars, and they are different questions. `scored` is the mode's own answer to
+  // whether it keeps a board at all — practice does not. SCORED_MODES is the *server's*:
+  // `scores.mode` carries a `check (mode in ('accuracy', 'speed'))`, so a mode outside
+  // the two cannot be published however much it would like a board of its own. A
+  // challenge therefore keeps a local best and posts nothing, until that check is
+  // widened — see modes/challenges/catalog.ts.
+  if (!traitsOf(mode).scored || !isOneOf(mode, SCORED_MODES)) return
+  if (score <= 0) return
   const day = todayISO()
   const run = { mode, difficulty, day, score, hits, achievedAt: new Date().toISOString() }
 

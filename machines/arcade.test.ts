@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
-import type { Grid } from '@/machines/game'
 import { computePar } from '@/machines/scoring'
+import { NINE_DIAL, type Grid } from '@/modes'
 
 import {
   crossroadClock,
@@ -19,17 +19,9 @@ import {
   type Crossroad,
 } from './arcade'
 
-const zeros: Grid = [
-  [0, 0, 0],
-  [0, 0, 0],
-  [0, 0, 0],
-]
+const zeros: Grid = [0, 0, 0, 0, 0, 0, 0, 0, 0]
 
-const busy: Grid = [
-  [3, 7, 1],
-  [9, 2, 4],
-  [0, 6, 8],
-]
+const busy: Grid = [3, 7, 1, 9, 2, 4, 0, 6, 8]
 
 describe('seeded', () => {
   it('gives the same sequence for the same seed', () => {
@@ -83,7 +75,7 @@ describe('wayValues', () => {
     const values = wayValues(busy, 4, seeded(3))
     expect(values).toHaveLength(4)
     for (const value of values) {
-      const par = computePar(busy, value)
+      const par = computePar(NINE_DIAL, busy, value)
       expect(par).toBeGreaterThanOrEqual(3)
       expect(par).toBeLessThanOrEqual(4)
     }

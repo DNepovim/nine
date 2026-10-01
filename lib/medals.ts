@@ -1,10 +1,5 @@
 import type { LeaderboardTab } from '@/lib/leaderboard'
-import {
-  DIFFICULTY_ORDER,
-  SCORED_MODES,
-  type Difficulty,
-  type ScoredMode,
-} from '@/machines/game'
+import { DIFFICULTY_ORDER, SCORED_MODES, type Difficulty, type ScoredMode } from '@/modes'
 
 // Which board a medal was won on. `ever` is the all-time board; the other two empty
 // on the Prague clock, so a today medal is a claim about the last few hours and an

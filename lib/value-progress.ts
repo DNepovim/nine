@@ -1,5 +1,3 @@
-import { MAX_TARGET } from '@/constants/game'
-
-// Maps a numeric value to its tint progress (0 → 1) across the 0..MAX_TARGET range.
-export const valueProgress = (value: number): number =>
-  Math.min(1, Math.max(0, value / MAX_TARGET))
+// Maps a numeric value to its tint progress (0 → 1) across the range the board reaches.
+export const valueProgress = (value: number, maxSum: number): number =>
+  maxSum <= 0 ? 0 : Math.min(1, Math.max(0, value / maxSum))

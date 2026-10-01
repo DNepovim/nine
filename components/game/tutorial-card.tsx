@@ -8,11 +8,11 @@ import {
 } from 'react-native'
 import Animated, { Easing, FadeInDown, FadeOut } from 'react-native-reanimated'
 
-import { MODE_GRADIENT } from '@/machines/game'
+import { gradientOf } from '@/modes'
 
 // The tutorial's colour, worn by its card the way the tips panel and the route hint wear
 // it — a line the lesson is saying, not a line the game is reporting.
-const TINT = MODE_GRADIENT.trainee[0]
+const TINT = gradientOf('trainee')[0]
 
 // Lifted off the board, in the same dress the step-up toast wears: this floats over the
 // playfield rather than sitting in it, and the shadow is what says so before the words are

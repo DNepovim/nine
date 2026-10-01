@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
 import { SPECTRUM } from '@/constants/colors'
-import { streakMultiplier } from '@/machines/modes'
+import { streakMultiplier } from '@/modes'
 
 import { multiplierColor } from './streak-badge'
 

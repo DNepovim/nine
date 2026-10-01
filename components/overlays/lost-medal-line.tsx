@@ -9,7 +9,7 @@ import { championMark } from '@/lib/champions'
 import type { Taker } from '@/lib/lost-medals'
 import { PERIOD_CODES, type MedalPeriod } from '@/lib/medals'
 import { rankMedal } from '@/lib/rank-emoji'
-import { DIFFICULTIES, MODES, type Difficulty, type ScoredMode } from '@/machines/game'
+import { DIFFICULTIES, labelOf, type Difficulty, type ScoredMode } from '@/modes'
 
 // The medal line's own entry, with the colour drained out of it — greyscale is what the
 // app already uses for a record taken off you, and here it is half the message: the
@@ -50,7 +50,7 @@ export function LostMedalLine({
         className="font-mono text-[9px] font-black leading-[13px] tracking-[1px]"
         style={{ color: GRAYSCALE[1] }}
       >
-        {t(MODES[mode].label)} {t(DIFFICULTIES[difficulty].code)}
+        {t(labelOf(mode))} {t(DIFFICULTIES[difficulty].code)}
       </Text>
       <Text
         selectable={false}

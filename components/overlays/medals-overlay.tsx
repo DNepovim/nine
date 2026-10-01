@@ -14,7 +14,7 @@ import { formatShortDay } from '@/lib/format-date'
 import { HISTORY_DAYS, type TakenMedal } from '@/lib/medal-history'
 import { heldMedals, PERIOD_CODES, type BoardStanding, type Medal } from '@/lib/medals'
 import { rankMedal } from '@/lib/rank-emoji'
-import { DIFFICULTIES, MODE_GRADIENT, MODES } from '@/machines/game'
+import { DIFFICULTIES, gradientOf, labelOf } from '@/modes'
 
 // Which board a medal stands on, spelled out. The line under the title leaves the mode to
 // its accent, because its entries sit side by side and a hue is enough to tell them apart;
@@ -39,9 +39,9 @@ function BoardLabel({
       <Text
         selectable={false}
         className="font-mono text-[10px] font-black leading-[16px] tracking-[1px]"
-        style={{ color: drained ? GRAYSCALE[1] : MODE_GRADIENT[mode][0] }}
+        style={{ color: drained ? GRAYSCALE[1] : gradientOf(mode)[0] }}
       >
-        {t(MODES[mode].label)} {t(DIFFICULTIES[difficulty].code)}
+        {t(labelOf(mode))} {t(DIFFICULTIES[difficulty].code)}
       </Text>
       <Text
         selectable={false}

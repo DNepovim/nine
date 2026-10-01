@@ -8,7 +8,7 @@ import type { AchievementFacts, Award } from '@/lib/achievements'
 import type { Period } from '@/lib/announcements'
 import type { RecordScreen } from '@/lib/champions'
 import { gameOverTitle } from '@/lib/game-over-title'
-import { type Difficulty, type Mode } from '@/machines/game'
+import { SCORED_MODES, type Difficulty, type ModeId } from '@/modes'
 
 import { GameOverOverlay } from './game-over-overlay'
 import { GameOverTitle } from './game-over-title'
@@ -52,7 +52,7 @@ export function GameOverSequence({
   overlayStyle: StyleProp<AnimatedStyle<ViewStyle>>
   titleStyle: StyleProp<AnimatedStyle<ViewStyle>>
   onTitleLayout: (centerY: number) => void
-  gameMode: Mode
+  gameMode: ModeId
   difficulty: Difficulty
   userId: string | null
   nickname: string | null
@@ -77,7 +77,7 @@ export function GameOverSequence({
   achievementStore: AchievementStore
   achievementFacts: AchievementFacts
   onPlayAgain: () => void
-  onChallenge: (mode: Mode, difficulty: Difficulty) => void
+  onChallenge: (mode: ModeId, difficulty: Difficulty) => void
   onMenu: () => void
 }) {
   if (phase === 'idle') return null
@@ -87,7 +87,7 @@ export function GameOverSequence({
   // Trainee has infinite lives and never reaches this screen, but the title's pools are
   // keyed by scored mode — fall back rather than widen the type for a case that cannot
   // happen.
-  const scoredMode = isOneOf(gameMode, ['accuracy', 'speed']) ? gameMode : 'accuracy'
+  const scoredMode = isOneOf(gameMode, SCORED_MODES) ? gameMode : 'accuracy'
   const words = gameOverTitle(
     {
       screen,

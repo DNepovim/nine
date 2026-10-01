@@ -6,7 +6,7 @@ import type { Stage } from '@/lib/achievements'
 import { captureError } from '@/lib/analytics'
 import { isNetworkFailure, noteRequest } from '@/lib/connectivity'
 import { supabase } from '@/lib/supabase'
-import { DIFFICULTY_ORDER, SCORED_MODES } from '@/machines/modes'
+import { DIFFICULTY_ORDER, SCORED_MODES } from '@/modes'
 
 // Every stage this build can name — both axes. A row naming one it cannot place is
 // dropped rather than guessed at; see `toStage`.

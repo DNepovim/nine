@@ -14,7 +14,7 @@ import {
   type DialHint,
 } from '@/constants/dial-hints'
 import { cn } from '@/lib/cn'
-import { MODE_GRADIENT } from '@/machines/game'
+import { gradientOf } from '@/modes'
 
 // Every choice a corner has, in the order the tiles list them plus the empty one last.
 // `null` is a real option here rather than a way out of the dialog: a corner showing
@@ -46,7 +46,7 @@ export function DialHintModal({
   const { t } = useLingui()
   // Trainee's own colour: this dialog only ever opens over a Trainee pause, and the
   // pick it marks should read in the same colour the screen behind it is wearing.
-  const tint = MODE_GRADIENT.trainee[0]
+  const tint = gradientOf('trainee')[0]
 
   return (
     <ModalCard

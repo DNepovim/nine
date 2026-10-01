@@ -1,8 +1,11 @@
-import { MAX_TARGET } from '@/constants/game'
 import { settlementName } from '@/lib/place-names'
-import type { Grid } from '@/machines/game'
-import { decayed, FAST_HIT_THRESHOLD } from '@/machines/modes'
 import { parTable, speedFactor } from '@/machines/scoring'
+import { decayed, FAST_HIT_THRESHOLD, NINE_DIAL, type Grid } from '@/modes'
+
+// The dial an arcade run is played on. The same nine keys as everywhere else: the mode
+// changes where a run goes, not what is pressed to get there. Named rather than reached
+// for directly so the one place it would have to change is one place.
+export const ARCADE_DIAL = NINE_DIAL
 
 // Arcade's rules, with no pixels and no React in them: the map, what a crossroad offers,
 // and how long the hero has to answer it.
@@ -156,10 +159,10 @@ const pick = <T>(items: readonly T[], rng: Rng): T | undefined =>
 // order, or every crossroad would offer the lowest few sums in the band and a run would
 // climb through the same numbers every time.
 export function wayValues(grid: Grid, count: number, rng: Rng): readonly number[] {
-  const table = parTable(grid)
+  const table = parTable(ARCADE_DIAL, grid)
   for (let stretch = 0; stretch <= PAR_STRETCH; stretch++) {
     const candidates: number[] = []
-    for (let value = 1; value <= MAX_TARGET; value++) {
+    for (let value = 1; value <= ARCADE_DIAL.maxSum; value++) {
       const par = table[value]
       if (par === undefined || !Number.isFinite(par)) continue
       if (par >= PAR_MIN && par <= PAR_MAX + stretch) candidates.push(value)

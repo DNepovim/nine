@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 
-import { MAX_TARGET } from '@/constants/game'
 import { broadcastEvent, type GameChannel } from '@/lib/multiplayer-broadcast'
+import { NINE_DIAL } from '@/modes'
 import type {
   MultiEvent,
   MultiMode,
@@ -94,7 +94,7 @@ export function useMultiplayerGame({
     const ch = channelRef.current
     if (!ch) return
     const id = nextTargetIdRef.current++
-    const value = Math.floor(Math.random() * (MAX_TARGET + 1))
+    const value = Math.floor(Math.random() * (NINE_DIAL.maxSum + 1))
     const spawnedAt = Date.now()
     const target: MultiTarget = { id, value, spawnedAt }
 

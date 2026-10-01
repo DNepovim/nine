@@ -1,6 +1,6 @@
 import { z } from 'zod'
 
-import type { Difficulty, Mode } from '@/machines/game'
+import { type Difficulty, type Mode } from '@/modes'
 
 // The first launch, and what the device remembers about it.
 //

@@ -31,13 +31,14 @@ import type { TitleWords } from '@/lib/game-over-title'
 import { runChallenge } from '@/lib/next-challenge'
 import { fortuneOf } from '@/lib/player-profile'
 import {
-  DARK_MODE_GRADIENT,
-  MODE_GRADIENT,
+  darkGradientOf,
+  DIFFICULTIES,
+  gradientOf,
+  labelOf,
   SCORED_MODES,
   type Difficulty,
-  type Mode,
-} from '@/machines/game'
-import { DIFFICULTIES, MODES } from '@/machines/modes'
+  type ModeId,
+} from '@/modes'
 
 import { BoardBadges } from './board-badges'
 import { BoardMedals } from './board-medals'
@@ -91,7 +92,7 @@ export function GameOverOverlay({
   titleHidden = false,
   onTitleLayout,
 }: {
-  gameMode: Mode
+  gameMode: ModeId
   difficulty: Difficulty
   userId: string | null
   nickname: string | null
@@ -119,7 +120,7 @@ export function GameOverOverlay({
   // Straight back into a run on this same board.
   onPlayAgain: () => void
   // Into a run on the board one rung up, or one down — see `runChallenge`.
-  onChallenge: (mode: Mode, difficulty: Difficulty) => void
+  onChallenge: (mode: ModeId, difficulty: Difficulty) => void
   onMenu: () => void
   // When the in-game dying sequence flies its own copy of the title up into
   // place, the overlay hides its title until the hand-off completes, and reports
@@ -135,7 +136,7 @@ export function GameOverOverlay({
   // Named so the catalog carries one `TRY {modeName}` shared with the step-up toast,
   // and so a translation can put the rung wherever its own grammar wants it.
   const rungName = challenge === null ? '' : t(DIFFICULTIES[challenge.difficulty].label)
-  const modeName = challenge === null ? '' : t(MODES[challenge.mode].label)
+  const modeName = challenge === null ? '' : t(labelOf(challenge.mode))
 
   // What this run put on each period of this board: the medal the player can go and see
   // on the board afterwards, and only when this run is what earned it. Not their
@@ -146,7 +147,7 @@ export function GameOverOverlay({
   const painted = screen === 'crown' || screen === 'bird'
   const emblem = onGold
     ? EMBLEM.crown
-    : screen === 'bird' && isOneOf(gameMode, ['accuracy', 'speed'])
+    : screen === 'bird' && isOneOf(gameMode, SCORED_MODES)
       ? EMBLEM[gameMode]
       : null
   const board = useBoardContext()
@@ -230,8 +231,8 @@ export function GameOverOverlay({
                 glow turns white: the mode's hue would light gold with gold. */}
             <ScoreReadout
               score={score}
-              color={MODE_GRADIENT[gameMode][0]}
-              glow={painted ? WHITE_GLOW : `${MODE_GRADIENT[gameMode][0]}99`}
+              color={gradientOf(gameMode)[0]}
+              glow={painted ? WHITE_GLOW : `${gradientOf(gameMode)[0]}99`}
             />
 
             {/* What the run is worth away from this board. The score above is what was
@@ -274,7 +275,7 @@ export function GameOverOverlay({
               halo={painted}
             />
 
-            {isOneOf(gameMode, ['accuracy', 'speed']) && (
+            {isOneOf(gameMode, SCORED_MODES) && (
               <HighScores
                 gameMode={gameMode}
                 userId={userId}
@@ -298,7 +299,7 @@ export function GameOverOverlay({
                 style={shadow}
               >
                 <LinearGradient
-                  colors={[...DARK_MODE_GRADIENT[gameMode]]}
+                  colors={[...darkGradientOf(gameMode)]}
                   start={{ x: 0, y: 0.5 }}
                   end={{ x: 1, y: 0.5 }}
                   className="items-center py-4"

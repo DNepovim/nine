@@ -5,12 +5,12 @@ import { Text, View } from 'react-native'
 
 import { DIAL_COLORS } from '@/constants/colors'
 import { useTheme } from '@/hooks/use-theme'
-import { lerpColor, MODE_GRADIENT } from '@/machines/game'
 import type { MoveDirection, MoveJump, RouteStep } from '@/machines/scoring'
+import { gradientOf, lerpColor } from '@/modes'
 
 // Trainee's colour, worn by the pill's edge, the target and the step counts — the frame
 // stays the mode's, so the miniatures inside are the only thing wearing the dial's.
-const TINT = MODE_GRADIENT.trainee[0]
+const TINT = gradientOf('trainee')[0]
 
 // A key is drawn as a filled disc so the hint reads as buttons rather than as more
 // arithmetic — the row says "press these", and the shape is what says it.

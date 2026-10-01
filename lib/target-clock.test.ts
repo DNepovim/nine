@@ -10,11 +10,7 @@ const target = (over: Partial<Target> = {}): Target => ({
   spawnedAt: 1_000,
   duration: 8_000,
   refAt: 1_000,
-  refGrid: [
-    [0, 0, 0],
-    [0, 0, 0],
-    [0, 0, 0],
-  ],
+  refGrid: [0, 0, 0, 0, 0, 0, 0, 0, 0],
   par: 3,
   userSteps: 0,
   ...over,

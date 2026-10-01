@@ -5,7 +5,7 @@ import { Pressable, Text } from 'react-native'
 
 import { Screen } from '@/components/screen'
 import { cn } from '@/lib/cn'
-import { DARK_MULTIPLAYER_GRADIENT, MULTIPLAYER_GRADIENT } from '@/machines/game'
+import { DARK_MULTIPLAYER_GRADIENT, MULTIPLAYER_GRADIENT } from '@/modes'
 
 import { GameCodeInput } from './game-code-input'
 

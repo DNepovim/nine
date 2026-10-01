@@ -1,7 +1,7 @@
 import type { MessageDescriptor } from '@lingui/core'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
-import { type Grid, type HitBatch, type Target } from '@/machines/game'
+import { type HitBatch, type Target } from '@/machines/game'
 import { computeKeyPlan } from '@/machines/scoring'
 import {
   dismissedByTap,
@@ -17,6 +17,7 @@ import {
   type LessonVoice,
   type Swipe,
 } from '@/machines/tutorial-lesson'
+import { NINE_DIAL, type Grid } from '@/modes'
 
 // The tutorial's lesson, driven. The order of it is machines/tutorial-lesson.ts; what is
 // here is the three things only React can do — run the holds, notice the hit, and notice
@@ -148,7 +149,7 @@ export function useTutorialLesson({
   const dial: LessonDial = active ? LESSON_DIAL[step] : 'all'
   const liveKey = useMemo(() => {
     if (dial !== 'one' || chasing === undefined) return null
-    return computeKeyPlan(grid, chasing)[0]?.index ?? null
+    return computeKeyPlan(NINE_DIAL, grid, chasing)[0]?.index ?? null
   }, [dial, grid, chasing])
 
   const line: MessageDescriptor | null = active ? LESSON_LINE[step] : null

@@ -3,12 +3,7 @@ import { isNonEmptyString, isNumber, isObject, isOneOf } from 'narrowland'
 import { minusDays } from '@/lib/leaderboard-period'
 import type { MedalLoss, Taker } from '@/lib/lost-medals'
 import { byBestClaim, MEDAL_PERIODS, type Medal, type MedalPeriod } from '@/lib/medals'
-import {
-  DIFFICULTY_ORDER,
-  SCORED_MODES,
-  type Difficulty,
-  type ScoredMode,
-} from '@/machines/game'
+import { DIFFICULTY_ORDER, SCORED_MODES, type Difficulty, type ScoredMode } from '@/modes'
 
 // How far back the list of what was taken reaches, today included. A week, because that
 // is the window a player can still do something about: the week board is still open, and

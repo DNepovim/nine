@@ -3,14 +3,9 @@ import { createActor } from 'xstate'
 
 import { TUTORIAL_OPENING_TARGET, TUTORIAL_TARGETS } from '@/constants/tutorial'
 import { tutorialBoardEntry } from '@/lib/tutorial-board'
-import {
-  buildPressGrid,
-  buildSetGrid,
-  effectiveTimeout,
-  gameMachine,
-  type Grid,
-} from '@/machines/game'
+import { bestOn, gameMachine } from '@/machines/game'
 import { cleanHitReason } from '@/machines/scoring'
+import { baseClockMs, type Grid } from '@/modes'
 
 // A name per run, because START and RESTART each deal a new one. Nothing here reads it —
 // it belongs to the lifetime counters outside the machine — so a legible one will do.
@@ -43,12 +38,60 @@ describe('mode selection + lives', () => {
 })
 
 describe('per mode × difficulty stats shape', () => {
-  it('exposes a nested stats record', () => {
+  it('opens empty, and reads a board nobody has played as a blank one', () => {
+    // Sparse on purpose: a store keyed by name cannot be exhaustive over a mode list
+    // that grows every time a challenge opens, so an unplayed board has no entry and
+    // `bestOn` is what makes that the same answer as a played one with nothing on it.
     const actor = createActor(gameMachine)
     actor.start()
     const { stats } = actor.getSnapshot().context
-    expect(stats.accuracy.hard).toEqual({ score: 0, hits: 0 })
-    expect(stats.speed.extreme).toEqual({ score: 0, hits: 0 })
+    expect(stats).toEqual({})
+    expect(bestOn(stats, 'accuracy', 'hard')).toEqual({ score: 0, hits: 0 })
+    expect(bestOn(stats, 'speed', 'extreme')).toEqual({ score: 0, hits: 0 })
+    expect(bestOn(stats, 'challenge/never-registered', 'hard')).toEqual({
+      score: 0,
+      hits: 0,
+    })
+  })
+})
+
+describe('HYDRATE_STATS', () => {
+  it('keeps the bests of modes that keep a board', () => {
+    const actor = createActor(gameMachine)
+    actor.start()
+    actor.send({
+      type: 'HYDRATE_STATS',
+      stats: { accuracy: { hard: { score: 400, hits: 9 } } },
+    })
+    expect(bestOn(actor.getSnapshot().context.stats, 'accuracy', 'hard')).toEqual({
+      score: 400,
+      hits: 9,
+    })
+  })
+
+  it('drops the best of a mode that keeps none', () => {
+    // Stated as the rule rather than as Trainee's name. Trainee no longer records one,
+    // but players from before that change still have a value on disk, and loading it
+    // would keep firing the personal-best celebration on the first hit of a practice run.
+    const actor = createActor(gameMachine)
+    actor.start()
+    actor.send({
+      type: 'HYDRATE_STATS',
+      stats: { trainee: { easy: { score: 999, hits: 40 } } },
+    })
+    expect(bestOn(actor.getSnapshot().context.stats, 'trainee', 'easy').score).toBe(0)
+  })
+
+  it('drops the best of a mode nothing is registered under', () => {
+    // A challenge long out of the catalog. Its boards are not addressable, and writing
+    // them back would keep them on disk forever.
+    const actor = createActor(gameMachine)
+    actor.start()
+    actor.send({
+      type: 'HYDRATE_STATS',
+      stats: { 'challenge/long-gone': { hard: { score: 500, hits: 10 } } },
+    })
+    expect(actor.getSnapshot().context.stats).toEqual({})
   })
 })
 
@@ -205,7 +248,7 @@ describe('accuracy life loss', () => {
 })
 
 describe('speed streak (fast trigger)', () => {
-  const duration = effectiveTimeout('speed', 'hard')
+  const duration = baseClockMs('speed', 'hard')
   // A hit counts as fast while at least FAST_HIT_THRESHOLD of the ring remains, so
   // these are comfortably inside and outside that window.
   const fast = Math.round(duration * 0.1)
@@ -266,7 +309,7 @@ describe('speed ramp', () => {
     const actor = start('speed')
     actor.send({ type: 'ADD_TARGET', value: 9, at: 0 })
     const first = actor.getSnapshot().context.targets[0]?.duration
-    expect(first).toBe(effectiveTimeout('speed', 'hard'))
+    expect(first).toBe(baseClockMs('speed', 'hard'))
   })
 
   it('gives a later target a tighter clock than an earlier one', () => {
@@ -298,7 +341,7 @@ describe('speed ramp', () => {
     actor.send({ type: 'PRESS', index: 8, delta: 1, now: 0 })
     actor.send({ type: 'ADD_TARGET', value: 18, at: 0 })
     expect(actor.getSnapshot().context.targets[0]?.duration).toBe(
-      effectiveTimeout('accuracy', 'hard'),
+      baseClockMs('accuracy', 'hard'),
     )
   })
 })
@@ -383,36 +426,6 @@ describe('hit batch reports the route', () => {
     const [hit] = actor.getSnapshot().context.hitBatch.hits
     expect(hit?.steps).toBe(3)
     expect(hit?.par).toBe(1)
-  })
-})
-
-describe('grid builders', () => {
-  const zeros: Grid = [
-    [0, 0, 0],
-    [0, 0, 0],
-    [0, 0, 0],
-  ]
-
-  it('wraps a press up from 9 and down from 0', () => {
-    const nines: Grid = [
-      [9, 0, 0],
-      [0, 0, 0],
-      [0, 0, 0],
-    ]
-    expect(buildPressGrid(nines, 0, 1)[0][0]).toBe(0)
-    expect(buildPressGrid(zeros, 0, -1)[0][0]).toBe(9)
-  })
-
-  it('leaves every other cell alone', () => {
-    expect(buildPressGrid(zeros, 4, 1)).toEqual([
-      [0, 0, 0],
-      [0, 1, 0],
-      [0, 0, 0],
-    ])
-  })
-
-  it('sets a cell outright', () => {
-    expect(buildSetGrid(zeros, 8, 9)[2][2]).toBe(9)
   })
 })
 
@@ -650,7 +663,7 @@ describe('trainee timeout set mid-run', () => {
     const actor = createActor(gameMachine)
     actor.start()
     actor.send({ type: 'SET_MODE', mode: 'trainee' })
-    actor.send({ type: 'SET_TRAINEE_TIMEOUT', ms, now: 0 })
+    actor.send({ type: 'SET_PLAYER_CLOCK', ms, now: 0 })
     actor.send({ type: 'START', now: 0, runId: nextRunId() })
     return actor
   }
@@ -660,7 +673,7 @@ describe('trainee timeout set mid-run', () => {
     actor.send({ type: 'ADD_TARGET', value: 9, at: 0 })
     // A quarter of the ring gone, and the player doubles the clock: three quarters of
     // twenty seconds is fifteen, not the seven and a half it had a moment ago.
-    actor.send({ type: 'SET_TRAINEE_TIMEOUT', ms: 20_000, now: 2_500 })
+    actor.send({ type: 'SET_PLAYER_CLOCK', ms: 20_000, now: 2_500 })
     const target = actor.getSnapshot().context.targets[0]
     expect(target?.duration).toBe(20_000)
     expect(20_000 - (2_500 - (target?.spawnedAt ?? 0))).toBe(15_000)
@@ -669,7 +682,7 @@ describe('trainee timeout set mid-run', () => {
   it('shortens a live target the same way', () => {
     const actor = traineeAt(10_000)
     actor.send({ type: 'ADD_TARGET', value: 9, at: 0 })
-    actor.send({ type: 'SET_TRAINEE_TIMEOUT', ms: 4_000, now: 5_000 })
+    actor.send({ type: 'SET_PLAYER_CLOCK', ms: 4_000, now: 5_000 })
     const target = actor.getSnapshot().context.targets[0]
     expect(target?.duration).toBe(4_000)
     // Half the ring left, of four seconds now.
@@ -680,7 +693,7 @@ describe('trainee timeout set mid-run', () => {
     const actor = start('speed')
     actor.send({ type: 'ADD_TARGET', value: 9, at: 0 })
     const before = actor.getSnapshot().context.targets[0]
-    actor.send({ type: 'SET_TRAINEE_TIMEOUT', ms: 20_000, now: 1_000 })
+    actor.send({ type: 'SET_PLAYER_CLOCK', ms: 20_000, now: 1_000 })
     expect(actor.getSnapshot().context.targets[0]).toEqual(before)
   })
 })
@@ -727,11 +740,7 @@ describe('a pause stops the targets as well as the score', () => {
 
 describe('restoring a run the app was closed on', () => {
   const run = {
-    grid: [
-      [1, 2, 3],
-      [4, 5, 6],
-      [7, 8, 9],
-    ] as Grid,
+    grid: [1, 2, 3, 4, 5, 6, 7, 8, 9] as Grid,
     hits: 6,
     score: 4200,
     mode: 'speed' as const,
@@ -751,11 +760,7 @@ describe('restoring a run the app was closed on', () => {
         spawnedAt: 1_000,
         duration: 5_000,
         refAt: 1_000,
-        refGrid: [
-          [0, 0, 0],
-          [0, 0, 0],
-          [0, 0, 0],
-        ] as Grid,
+        refGrid: [0, 0, 0, 0, 0, 0, 0, 0, 0] as Grid,
         par: 3,
         userSteps: 1,
       },

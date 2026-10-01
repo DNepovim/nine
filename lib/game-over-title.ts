@@ -1,7 +1,7 @@
 import type { Period } from '@/lib/announcements'
 import type { RecordScreen } from '@/lib/champions'
 import { earnedChallenge } from '@/lib/next-challenge'
-import type { Difficulty, ScoredMode } from '@/machines/modes'
+import { type Difficulty, type ScoredMode } from '@/modes'
 
 // The wordmark over the game-over screen, as two four-letter words. Four and four is
 // not a style choice: the title animates as two rows of four letters, and both the

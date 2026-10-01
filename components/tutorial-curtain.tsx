@@ -10,7 +10,7 @@ import Animated, {
 import { scheduleOnRN } from 'react-native-worklets'
 
 import { LAYER } from '@/constants/layers'
-import { MODE_GRADIENT } from '@/machines/game'
+import { gradientOf } from '@/modes'
 
 // How long the words hold before they start to go, and how long going takes.
 //
@@ -94,7 +94,7 @@ export function TutorialCurtain({
         <Text
           selectable={false}
           className="px-8 text-center font-mono text-[15px] font-black tracking-[2px]"
-          style={{ color: MODE_GRADIENT.trainee[0] }}
+          style={{ color: gradientOf('trainee')[0] }}
         >
           <Trans>LET'S LEARN THE GAME</Trans>
         </Text>

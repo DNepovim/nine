@@ -3,7 +3,7 @@ import { isEmptyArray } from 'narrowland'
 
 import { LOCAL_SCORES_KEY } from '@/constants/storage'
 import { qualifiesForTab, type LeaderboardTab } from '@/lib/leaderboard-period'
-import type { Difficulty, Mode } from '@/machines/game'
+import { type Difficulty, type ModeId } from '@/modes'
 
 // Every run the device remembers, whether or not the server has it.
 //
@@ -26,7 +26,7 @@ type ScoreStatus =
   | 'rejected'
 
 export type LocalScore = {
-  mode: Mode
+  mode: ModeId
   difficulty: Difficulty
   day: string // 'YYYY-MM-DD', on the shared Prague clock
   score: number
@@ -103,7 +103,7 @@ export const pendingOf = (store: LocalScore[]): LocalScore[] =>
 
 const bestIn = (
   store: LocalScore[],
-  mode: Mode,
+  mode: ModeId,
   difficulty: Difficulty,
   tab: LeaderboardTab,
   today: string,
@@ -126,7 +126,7 @@ const bestIn = (
 // which is not the same as a zero.
 export const bestFor = (
   store: LocalScore[],
-  mode: Mode,
+  mode: ModeId,
   difficulty: Difficulty,
   tab: LeaderboardTab,
   today: string,
@@ -137,7 +137,7 @@ export const bestFor = (
 // would be a promise the app cannot keep.
 export const bestPending = (
   store: LocalScore[],
-  mode: Mode,
+  mode: ModeId,
   difficulty: Difficulty,
   tab: LeaderboardTab,
   today: string,

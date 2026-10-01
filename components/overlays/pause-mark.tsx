@@ -11,7 +11,7 @@ import {
   glassTones,
   withAlpha,
 } from '@/lib/glass'
-import { MODE_GRADIENT, type Mode } from '@/machines/game'
+import { gradientOf, type ModeId } from '@/modes'
 
 // Two bars, the universal sign for "stopped", where the game-over screen has its title.
 //
@@ -42,8 +42,8 @@ const SHEEN = [`rgba(255, 255, 255, ${GLASS_SHEEN_ALPHA})`, CLEAR] as const
 
 // Arcade as well as the three modes: it has no entry in `MODES`, but it has a pair in
 // `MODE_GRADIENT`, which is all this draws from — and a run of it stops the same way.
-export function PauseMark({ gameMode }: { gameMode: Mode | 'arcade' }) {
-  const [from, to] = MODE_GRADIENT[gameMode]
+export function PauseMark({ gameMode }: { gameMode: ModeId }) {
+  const [from, to] = gradientOf(gameMode)
   const { rim, far } = glassTones(to)
 
   return (

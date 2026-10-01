@@ -1,4 +1,4 @@
-import { DIFFICULTIES, type Difficulty, type ScoredMode } from '@/machines/game'
+import { DIFFICULTIES, type Difficulty, type ScoredMode } from '@/modes'
 
 // What taking a board pays.
 //

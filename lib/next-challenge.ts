@@ -1,4 +1,4 @@
-import { type Difficulty, type Mode } from '@/machines/modes'
+import { isMode, type Difficulty, type Mode, type ModeId } from '@/modes'
 
 // What the game-over screen offers next to "play again": the same run one rung
 // harder. Losing is the moment a player is most willing to be dared, and the dare
@@ -8,7 +8,7 @@ import { type Difficulty, type Mode } from '@/machines/modes'
 // sentence, and which half a sentence puts first is the translation's business, not
 // this module's. The screen builds the line; this decides which line it is.
 export type Challenge = {
-  mode: Mode
+  mode: ModeId
   difficulty: Difficulty
   kind: 'stepUp' | 'stepDown' | 'tryMode'
 }
@@ -42,12 +42,15 @@ const STRIKE_SHARE = 0.1
 export const earnedChallenge = (hits: number, strikes: number): boolean =>
   hits > 0 && strikes >= hits * STRIKE_SHARE
 
-export function nextChallenge(mode: Mode, difficulty: Difficulty): Challenge {
+export function nextChallenge(mode: ModeId, difficulty: Difficulty): Challenge {
   const harder = NEXT_DIFFICULTY[difficulty]
   if (harder !== null) {
     return { mode, difficulty: harder, kind: 'stepUp' }
   }
-  const other = OTHER_MODE[mode]
+  // A mode outside the three has no sideways step to offer — a challenge is on the app
+  // for a day, and daring a player into one that may be gone by tomorrow is a dare the
+  // app cannot keep. Staying on the rung it is on is the honest answer.
+  const other = isMode(mode) ? OTHER_MODE[mode] : mode
   // "STEP UP" would be a lie sideways: Speed is not above Accuracy, just different.
   return { mode: other, difficulty, kind: 'tryMode' }
 }
@@ -71,7 +74,7 @@ const STRUGGLE_HITS = 3
 // Trainee is for.
 export const struggledRun = (hits: number): boolean => hits < STRUGGLE_HITS
 
-export function easierChallenge(mode: Mode, difficulty: Difficulty): Challenge {
+export function easierChallenge(mode: ModeId, difficulty: Difficulty): Challenge {
   const easier = PREV_DIFFICULTY[difficulty]
   if (easier !== null) {
     return {
@@ -96,7 +99,7 @@ export function easierChallenge(mode: Mode, difficulty: Difficulty): Challenge {
 // this order is what keeps the offer and the analytics event that announces it from
 // ever quietly disagreeing.
 export function runChallenge(
-  mode: Mode,
+  mode: ModeId,
   difficulty: Difficulty,
   hits: number,
   strikes: number,

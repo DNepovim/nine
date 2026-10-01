@@ -8,7 +8,7 @@ import { ON_GOLD_LABEL_SHADOW } from '@/constants/theme'
 import type { Period } from '@/lib/announcements'
 import type { BoardMedal } from '@/lib/board-medals'
 import { rankMedal } from '@/lib/rank-emoji'
-import { MODE_GRADIENT, type Mode } from '@/machines/game'
+import { gradientOf, type ModeId } from '@/modes'
 
 // The board's own words for its periods, so a medal and the tab it was won on say the
 // same thing.
@@ -32,7 +32,7 @@ export function BoardMedals({
   shadow = false,
 }: {
   medals: readonly BoardMedal[]
-  gameMode: Mode
+  gameMode: ModeId
   // Set on the gold screen: these labels wear the mode's colour, which is a mid-tone
   // against gold before a pale streak even crosses it.
   shadow?: boolean
@@ -51,7 +51,7 @@ export function BoardMedals({
             selectable={false}
             className="font-mono text-[9px] font-black leading-[15px] tracking-[1px]"
             style={[
-              { color: MODE_GRADIENT[gameMode][0] },
+              { color: gradientOf(gameMode)[0] },
               shadow ? ON_GOLD_LABEL_SHADOW : null,
             ]}
           >

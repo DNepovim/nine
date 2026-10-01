@@ -14,23 +14,23 @@ import Animated, {
 import { CornerBadge } from '@/components/overlays/corner-badge'
 import {
   ARCADE_TEASER,
-  MODE_DESCRIPTIONS,
-  MODE_GRADIENT,
+  descriptionOf,
+  gradientOf,
+  labelOf,
   MODE_ORDER,
-  MODES,
-  type Mode,
-} from '@/machines/game'
+  type ModeId,
+} from '@/modes'
 
-const MODE_ITEMS = [...MODE_ORDER, 'arcade'] as (Mode | 'arcade')[]
+const MODE_ITEMS: ModeId[] = [...MODE_ORDER, 'arcade']
 
 export function ModeSelector({
   focused,
   onSelect,
   gradPhase,
   items = MODE_ITEMS,
-  // Overrides MODE_GRADIENT per key — multiplayer's waiting room and results pass
-  // their own accuracy/speed pair here rather than the singleplayer one, leaving
-  // trainee/arcade (never in a multiplayer item list) on the default.
+  // Overrides a mode's own pair per key — multiplayer's waiting room and results pass
+  // their own accuracy/speed pair here rather than the singleplayer one, leaving every
+  // other mode (never in a multiplayer item list) on its own.
   gradient,
   // Which stop of the (possibly overridden) pair labels an inactive tab. 0 for
   // singleplayer, where each mode's own start stop already tells the tabs apart.
@@ -38,22 +38,23 @@ export function ModeSelector({
   // the dominant stop borrowed from singleplayer — to keep the tabs distinguishable
   // before either is tapped.
   accentIndex = 0,
-  // What ARCADE's corner says. SOON for a player, who cannot press it into anything, and
-  // DEV for whoever holds the flag that makes it playable — see constants/features.ts.
-  arcadeTag = ARCADE_TEASER.tag,
+  // What a pill's corner says, by mode. Arcade is the one that has one today — SOON for
+  // a player, who cannot press it into anything, and DEV for whoever holds the flag that
+  // makes it playable (see constants/features.ts) — and a challenge, which is only on the
+  // app for a day, is the obvious next one.
+  badges = { arcade: ARCADE_TEASER.tag },
 }: {
-  focused: Mode | 'arcade'
-  onSelect: (m: Mode | 'arcade') => void
+  focused: ModeId
+  onSelect: (m: ModeId) => void
   gradPhase: SharedValue<number>
-  items?: (Mode | 'arcade')[]
-  gradient?: Partial<Record<Mode | 'arcade', readonly [string, string]>>
+  items?: ModeId[]
+  gradient?: Partial<Record<string, readonly [string, string]>>
   accentIndex?: 0 | 1
-  arcadeTag?: string
+  badges?: Partial<Record<string, string>>
 }) {
   const { t } = useLingui()
-  const source = { ...MODE_GRADIENT, ...gradient }
-  const pillColors = (f: Mode | 'arcade'): [string, string] =>
-    source[f] as [string, string]
+  const pillColors = (f: ModeId): [string, string] =>
+    (gradient?.[f] ?? gradientOf(f)) as [string, string]
 
   const tabLayouts = useRef<{ x: number; width: number }[]>([])
   const bgLeft = useSharedValue(-999)
@@ -62,7 +63,7 @@ export function ModeSelector({
     pillColors(focused),
   )
   const [toColors, setToColors] = useState<[string, string]>(() => pillColors(focused))
-  const prevFocusedRef = useRef<Mode | 'arcade'>(focused)
+  const prevFocusedRef = useRef<ModeId>(focused)
   const colorFade = useSharedValue(1)
 
   const bgStyle = useAnimatedStyle(() => ({
@@ -157,42 +158,7 @@ export function ModeSelector({
 
         {items.map((m, i) => {
           const isActive = m === focused
-          if (m === 'arcade') {
-            return (
-              <Pressable
-                key="arcade"
-                onPress={() => {
-                  onSelect('arcade')
-                }}
-                onLayout={(e) => {
-                  tabLayouts.current[i] = {
-                    x: e.nativeEvent.layout.x,
-                    width: e.nativeEvent.layout.width,
-                  }
-                  if (isActive) {
-                    bgLeft.value = e.nativeEvent.layout.x
-                    bgRight.value = e.nativeEvent.layout.x + e.nativeEvent.layout.width
-                  }
-                }}
-                // Tighter than the text wants on its own — the pill behind the tabs
-                // takes its height from this padding, and a shorter pill leaves the
-                // intro's stack of rows room to breathe. hitSlop puts back the touch
-                // the padding no longer provides.
-                className="px-2 py-1"
-                hitSlop={{ top: 6, bottom: 6 }}
-                style={!isActive ? { opacity: 0.6 } : undefined}
-              >
-                <Text
-                  selectable={false}
-                  className="font-mono text-[11px] font-black tracking-[1.5px]"
-                  style={{ color: isActive ? '#FFFFFF' : source.arcade[0] }}
-                >
-                  {t(ARCADE_TEASER.label)}
-                </Text>
-                <CornerBadge label={arcadeTag} />
-              </Pressable>
-            )
-          }
+          const badge = badges[m]
           return (
             <Pressable
               key={m}
@@ -209,16 +175,24 @@ export function ModeSelector({
                   bgRight.value = e.nativeEvent.layout.x + e.nativeEvent.layout.width
                 }
               }}
+              // Tighter than the text wants on its own — the pill behind the tabs takes
+              // its height from this padding, and a shorter pill leaves the intro's stack
+              // of rows room to breathe. hitSlop puts back the touch the padding no
+              // longer provides.
               className="px-2 py-1"
               hitSlop={{ top: 6, bottom: 6 }}
+              // A pill wearing a corner badge is dimmed while it is not the focused one,
+              // which is what says it is not quite an ordinary choice yet.
+              style={!isActive && badge !== undefined ? { opacity: 0.6 } : undefined}
             >
               <Text
                 selectable={false}
                 className="font-mono text-[11px] font-black tracking-[1.5px]"
-                style={{ color: isActive ? '#FFFFFF' : source[m][accentIndex] }}
+                style={{ color: isActive ? '#FFFFFF' : pillColors(m)[accentIndex] }}
               >
-                {t(MODES[m].label)}
+                {t(labelOf(m))}
               </Text>
+              {badge !== undefined && <CornerBadge label={badge} />}
             </Pressable>
           )
         })}
@@ -227,7 +201,7 @@ export function ModeSelector({
         selectable={false}
         className="mt-2 px-8 text-center font-mono text-[10px] font-bold text-dim leading-4"
       >
-        {t(MODE_DESCRIPTIONS[focused])}
+        {t(descriptionOf(focused))}
       </Text>
     </View>
   )

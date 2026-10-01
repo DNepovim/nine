@@ -5,12 +5,7 @@ import {
   lifetimeOf,
   type PlayerProfile,
 } from '@/lib/player-profile'
-import {
-  DIFFICULTY_ORDER,
-  SCORED_MODES,
-  type Difficulty,
-  type ScoredMode,
-} from '@/machines/game'
+import { DIFFICULTY_ORDER, SCORED_MODES, type Difficulty, type ScoredMode } from '@/modes'
 
 // Two careers side by side: the player holding the phone against the one whose name they
 // tapped. Every figure here is already on the profile modal — this puts the same numbers

@@ -72,13 +72,8 @@ import {
 } from '@/lib/step-up'
 import type { Award } from '@/lib/winnings'
 import { awardBlocks } from '@/lib/winnings-announcement'
-import {
-  DIFFICULTIES,
-  emptyStats,
-  type Difficulty,
-  type Mode,
-  type ScoredMode,
-} from '@/machines/game'
+import { emptyStats } from '@/machines/game'
+import { DIFFICULTIES, type Difficulty, type Mode, type ScoredMode } from '@/modes'
 
 // NINE_DEV_GALLERY — a marker for the bundle check. `pnpm build:web` must not contain
 // this string: the gallery is reached through a `__DEV__` dynamic import, which
@@ -349,8 +344,8 @@ const paused = (mode: Mode, tutorial = false): Variant => ({
       onToggleStats={() => undefined}
       showRoute={false}
       onToggleRoute={() => undefined}
-      traineeTimeoutMs={64000}
-      onSetTraineeTimeout={() => undefined}
+      playerClockMs={64000}
+      onSetPlayerClock={() => undefined}
       onContinue={close}
       onRestart={close}
       onMenu={close}

@@ -10,12 +10,7 @@ import {
   type Medal,
   type MedalPeriod,
 } from '@/lib/medals'
-import {
-  DIFFICULTY_ORDER,
-  SCORED_MODES,
-  type Difficulty,
-  type ScoredMode,
-} from '@/machines/game'
+import { DIFFICULTY_ORDER, SCORED_MODES, type Difficulty, type ScoredMode } from '@/modes'
 
 // Where the player stood the last time the app looked, and the Prague day it looked on.
 // The day is what makes the standings comparable at all — see SAME_WINDOW.

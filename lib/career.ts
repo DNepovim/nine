@@ -1,9 +1,10 @@
 import {
   DIFFICULTY_ORDER,
   SCORED_MODES,
+  traitsOf,
   type Difficulty,
-  type Mode,
-} from '@/machines/game'
+  type ModeId,
+} from '@/modes'
 
 // Everything the player has done, ever — as opposed to `Stats` (machines/game.ts), which
 // is their best on each board.
@@ -68,7 +69,10 @@ export type Career = {
 
 // One finished run, as far as the career is concerned.
 export type RunSummary = {
-  mode: Mode
+  // Which mode the run was. A name rather than one of three: a run may be of a
+  // challenge, and the career asks the registry what kind of mode it was rather than
+  // asking whether it was Trainee.
+  mode: ModeId
   difficulty: Difficulty
   score: number
   hits: number
@@ -92,7 +96,7 @@ export type RunSummary = {
 }
 
 // One board, as a storage key. Mode first, so every board of a mode sorts together.
-export const boardKey = (mode: Mode, difficulty: Difficulty): string =>
+export const boardKey = (mode: ModeId, difficulty: Difficulty): string =>
   `${mode}:${difficulty}`
 
 // Every board that keeps a leaderboard — the six `ALL SIX BOARDS` counts.
@@ -181,11 +185,13 @@ export function foldRun(career: Career, run: RunSummary): Career {
 
   // Trainee has no board to be played on, and a run that scored nothing has not put
   // anything on the one it was played on.
-  const board =
-    run.score > 0 && run.mode !== 'trainee' ? boardKey(run.mode, run.difficulty) : null
+  // A mode with no board of its own puts nothing on one, and a run that scored nothing
+  // has not put anything on the board it was played on.
+  const traits = traitsOf(run.mode)
+  const board = run.score > 0 && traits.scored ? boardKey(run.mode, run.difficulty) : null
   // Which board's mastery the run counts towards. Scoring nothing is no bar here — the
   // mastery figures are about what happened in the run, not about what reached a board.
-  const stage = run.mode === 'trainee' ? null : run.difficulty
+  const stage = traits.usesDifficulty ? run.difficulty : null
 
   return {
     ...career,
@@ -200,10 +206,7 @@ export function foldRun(career: Career, run: RunSummary): Career {
     longestRunMs: Math.max(career.longestRunMs, run.elapsedMs),
     boardsPlayed: withValue(career.boardsPlayed, board),
     modesPlayed: withValue(career.modesPlayed, run.mode),
-    difficultiesPlayed: withValue(
-      career.difficultiesPlayed,
-      run.mode === 'trainee' ? null : run.difficulty,
-    ),
+    difficultiesPlayed: withValue(career.difficultiesPlayed, stage),
     // Only ever forward. A run stamped with an older day — a clock that moved, a queued
     // run flushed late — must not drag the last day back with it.
     lastDay:
@@ -211,12 +214,11 @@ export function foldRun(career: Career, run: RunSummary): Career {
     dayStreak,
     // Trainee is left out: it keeps no board and no score worth the name, so a quiet
     // practice run is not a run that went badly.
-    poorRunStreak:
-      run.mode === 'trainee'
-        ? career.poorRunStreak
-        : run.score < POOR_RUN_SCORE
-          ? career.poorRunStreak + 1
-          : 0,
+    poorRunStreak: !traits.scored
+      ? career.poorRunStreak
+      : run.score < POOR_RUN_SCORE
+        ? career.poorRunStreak + 1
+        : 0,
     bestDayStreak: Math.max(career.bestDayStreak, dayStreak),
   }
 }

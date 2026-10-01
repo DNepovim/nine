@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
-import type { Grid, Target } from '@/machines/game'
+import type { Target } from '@/machines/game'
+import { type Grid } from '@/modes'
 import type { Position } from '@/types/game'
 
 import {
@@ -19,11 +20,7 @@ const roundTrip = (saved: SavedRun): unknown => {
   return parsed
 }
 
-const GRID: Grid = [
-  [1, 2, 3],
-  [4, 5, 6],
-  [7, 8, 9],
-]
+const GRID: Grid = [1, 2, 3, 4, 5, 6, 7, 8, 9]
 
 const target = (over: Partial<Target> = {}): Target => ({
   id: 3,
@@ -218,6 +215,14 @@ describe('parseSavedRun', () => {
   })
 
   it('refuses a mode no longer in the game', () => {
+    // A challenge whose window closed and whose entry has since been taken out of the
+    // catalog, or a mode a later build removed.
+    expect(parseSavedRun({ ...stored(), mode: 'challenge/long-gone' })).toBeNull()
+  })
+
+  it('refuses a mode the game machine does not run', () => {
+    // Arcade is a registered mode and is not one of these runs: it keeps its own, and
+    // resolving it here would put the player on somebody else's rules.
     expect(parseSavedRun({ ...stored(), mode: 'arcade' })).toBeNull()
   })
 
@@ -225,16 +230,14 @@ describe('parseSavedRun', () => {
     expect(parseSavedRun({ ...stored(), difficulty: 'medium' })).toBeNull()
   })
 
-  it('refuses a grid that is not three rows of digits', () => {
+  it('refuses a position that is not the dial the run was played on', () => {
+    // Nine keys, so a third of a board is not one — whichever shape it is written in.
     expect(parseSavedRun({ ...stored(), grid: [[1, 2, 3]] })).toBeNull()
+    expect(parseSavedRun({ ...stored(), grid: [1, 2, 3] })).toBeNull()
     expect(
       parseSavedRun({
         ...stored(),
-        grid: [
-          [1, 2, 3],
-          [4, 5, 6],
-          [7, 8, 10],
-        ],
+        grid: [1, 2, 3, 4, 5, 6, 7, 8, 10],
       }),
     ).toBeNull()
   })

@@ -6,7 +6,7 @@ import { APP_VIOLET } from '@/constants/colors'
 import { formatShortDay } from '@/lib/format-date'
 import { awardPoints, totalAwards, type Award } from '@/lib/winnings'
 import type { AwardBlock } from '@/lib/winnings-announcement'
-import { DIFFICULTIES, getDifficultyColor, MODES } from '@/machines/game'
+import { DIFFICULTIES, getDifficultyColor, labelOf } from '@/modes'
 
 // What the player won while they were away: the boards they took, what each paid, and
 // what the lot of it added to their fortune.
@@ -27,7 +27,7 @@ function AwardRow({ award }: { award: Award }) {
         className="font-mono text-[10px] font-bold tracking-[1px]"
         style={{ color: getDifficultyColor(award.mode, award.difficulty) }}
       >
-        {t(MODES[award.mode].label)} · {t(DIFFICULTIES[award.difficulty].label)}
+        {t(labelOf(award.mode))} · {t(DIFFICULTIES[award.difficulty].label)}
       </Text>
       <View className="flex-row items-baseline gap-2">
         <Text

@@ -1,7 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage'
 
 import { RUN_TOTALS_KEY } from '@/constants/storage'
-import type { Difficulty, ScoredMode } from '@/machines/modes'
+import { type Difficulty, type ScoredMode } from '@/modes'
 
 // Runs whose lifetime counters have not reached the server yet.
 //

@@ -55,11 +55,10 @@ import {
   splineFor,
   type Spline,
 } from '@/lib/arcade-layout'
-import { DIAL_CELLS } from '@/lib/dial-gesture'
 import { valueProgress } from '@/lib/value-progress'
-import { idSeed, UP } from '@/machines/arcade'
-import { computeSum, DARK_MODE_GRADIENT, lerpColor, MODE_GRADIENT } from '@/machines/game'
+import { ARCADE_DIAL, idSeed, UP } from '@/machines/arcade'
 import type { DialControl } from '@/machines/tutorial-lesson'
+import { cellsOf, darkGradientOf, gradientOf, lerpColor, sumOf } from '@/modes'
 
 // The arcade screen: the way above, the dial below, and nothing between them but the sum.
 //
@@ -81,7 +80,7 @@ import type { DialControl } from '@/machines/tutorial-lesson'
 // now, every arrival would have to shift the map and reset the camera by the same vector in
 // the same frame. In one fixed frame an arrival moves nothing that is already drawn.
 
-const [EMBER, AMBER] = MODE_GRADIENT.arcade
+const [EMBER, AMBER] = gradientOf('arcade')
 const HERO_CORE = lerpColor(AMBER, '#FFFFFF', 0.62)
 
 // The amber at a little under half, which is as much edge as a bud can take before the ring
@@ -96,7 +95,7 @@ const NAME_ROOM = 74
 // strength; what is behind that is there to say where the run came from.
 const FADES = [1, 0.45, 0.2] as const
 
-const ALL_OFF: readonly DialControl[] = DIAL_CELLS.map(() => 'off')
+const ALL_OFF: readonly DialControl[] = cellsOf(ARCADE_DIAL).map(() => 'off')
 
 // How long the canvas takes to drift, per beat — the same number the hero's own travel
 // takes, because they are one movement: the hero walks, and the canvas keeps it anchored.
@@ -472,7 +471,7 @@ export function ArcadeGame({ isDark, onEnd }: { isDark: boolean; onEnd: () => vo
     sight: run.sight,
   })
 
-  const sum = computeSum(run.grid)
+  const sum = sumOf(ARCADE_DIAL, run.grid)
   const direction = useScoreDirection(sum)
   const arcadeInk = ARCADE_INK[colorScheme]
   const ink = MAP_INK[colorScheme]
@@ -699,7 +698,7 @@ export function ArcadeGame({ isDark, onEnd }: { isDark: boolean; onEnd: () => vo
                   digit={digit}
                   direction={direction}
                   isDark={isDark}
-                  progress={valueProgress(sum)}
+                  progress={valueProgress(sum, ARCADE_DIAL.maxSum)}
                 />
               ))}
           </View>
@@ -709,13 +708,14 @@ export function ArcadeGame({ isDark, onEnd }: { isDark: boolean; onEnd: () => vo
         {/* Every key shut while the hero is moving: the answer has been given, and a key
           pressed mid-walk would be answering a crossroad nobody is standing on. */}
         <Dial
+          dial={ARCADE_DIAL}
           values={run.grid.flat()}
           isDark={isDark}
           showSum={false}
           trainee={false}
           controls={run.dialable ? undefined : ALL_OFF}
-          peakFrom={DARK_MODE_GRADIENT.arcade[0]}
-          peakTo={DARK_MODE_GRADIENT.arcade[1]}
+          peakFrom={darkGradientOf('arcade')[0]}
+          peakTo={darkGradientOf('arcade')[1]}
           onDelta={run.press}
           onSet={run.set}
         />

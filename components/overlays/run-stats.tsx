@@ -5,7 +5,7 @@ import { View } from 'react-native'
 import { StatCell } from '@/components/overlays/stat-cell'
 import { ON_GOLD_LABEL_SHADOW } from '@/constants/theme'
 import { formatGameTime } from '@/lib/duration'
-import type { Mode } from '@/machines/modes'
+import { headlineOf, traitsOf, type ModeId } from '@/modes'
 
 // The numbers a run leaves behind, shown on both the pause and game-over screens. One
 // component so the two can never drift apart.
@@ -15,7 +15,8 @@ import type { Mode } from '@/machines/modes'
 // together — which is what used to squeeze `AVG ACC` onto two lines when the row ran out
 // of room. It costs one line of height across the whole row, not four.
 
-// One line, whatever the mode: four numbers on a scored run and three on a trainee one.
+// One line, whatever the mode: four numbers on a run that keeps a board and three on a
+// run that does not.
 //
 // Centred as a group, with one fixed gap between cells, rather than cut into equal
 // shares or spread across the width. Each cell is as wide as its own widest line, so
@@ -32,10 +33,10 @@ export function RunStats({
   avgSpeed,
   halo = false,
 }: {
-  // Which of the two factor stats to show, and whether there is one to show at all.
-  // Decided here rather than at each screen, for the same reason the rest of this
-  // component is: two callers, one answer.
-  gameMode: Mode
+  // Which of the two factor stats to show, and whether there is one to show at all —
+  // both read off the mode's own rules below. Decided here rather than at each screen,
+  // for the same reason the rest of this component is: two callers, one answer.
+  gameMode: ModeId
   hits: number
   // How long the run has been actively played — not counting time in the pause menu,
   // and frozen the instant this screen appears rather than ticking while it is open.
@@ -48,13 +49,17 @@ export function RunStats({
   halo?: boolean
 }) {
   const { t } = useLingui()
+  // A mode with no board is not being measured on a route or a clock, and the one it is
+  // measured on is its own answer — see `headline` on ScoringRules.
+  const scored = traitsOf(gameMode).scored
+  const headline = headlineOf(gameMode)
   const shadow = halo ? ON_GOLD_LABEL_SHADOW : null
 
   // Only the mode's own factor. Accuracy runs are won on the route and Speed runs on the
   // clock, so the other mode's number is a stat about something the player was not being
   // asked for.
   const factor =
-    gameMode === 'speed'
+    headline === 'spd'
       ? { label: msg`AVG SPD`, value: avgSpeed }
       : { label: msg`AVG ACC`, value: avgAccuracy }
 
@@ -65,10 +70,10 @@ export function RunStats({
     { key: 'hits', label: msg`HITS`, value: `${hits}`, overhang: false },
     { key: 'strikes', label: msg`STRIKES`, value: `${strikes}`, overhang: false },
     { key: 'time', label: msg`TIME`, value: formatGameTime(gameTimeMs), overhang: true },
-    // Trainee keeps no factor. A practice mode with no board is not being measured on a
-    // route or a clock, so what is left is the three numbers that still mean something:
-    // how much was hit, how much of it cleared the board, and how long it took.
-    ...(gameMode === 'trainee'
+    // A mode with no board keeps no factor: what is left is the three numbers that still
+    // mean something — how much was hit, how much of it cleared the board, and how long
+    // it took.
+    ...(!scored
       ? []
       : [
           {

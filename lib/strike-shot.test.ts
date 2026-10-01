@@ -6,24 +6,12 @@ import {
   BURST_ROUNDS,
   burstRounds,
   insetLine,
-  MODE_SHOT,
   shareRounds,
   shotLine,
 } from './strike-shot'
 
 const MUZZLE = { x: 100, y: 300 }
 const ABOVE = { x: 100, y: 100 }
-
-describe('MODE_SHOT', () => {
-  it('fires nothing in trainee', () => {
-    expect(MODE_SHOT.trainee).toBeNull()
-  })
-
-  it('gives accuracy the sniper and speed the burst', () => {
-    expect(MODE_SHOT.accuracy).toBe('sniper')
-    expect(MODE_SHOT.speed).toBe('burst')
-  })
-})
 
 describe('shotLine', () => {
   it('measures a target straight above the muzzle as a quarter turn back', () => {

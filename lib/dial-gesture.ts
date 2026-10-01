@@ -2,11 +2,6 @@ import { SWIPE_THRESHOLD } from '@/constants/game'
 import type { DialMetrics } from '@/lib/dial-metrics'
 import type { DialControl } from '@/machines/tutorial-lesson'
 
-// The nine keys, in the order they are drawn and the order the grid is stored in.
-// Anything that has to say something per key counts through this rather than its own
-// literal, so a key's index means the same thing to the pan, the lesson and the machine.
-export const DIAL_CELLS = [0, 1, 2, 3, 4, 5, 6, 7, 8]
-
 // What one key was asked to do. Four of them are the sides a finger can leave a key
 // through; the fifth is the finger lifting where it landed.
 export type DialMove = 'up' | 'down' | 'left' | 'right' | 'tap'
@@ -15,15 +10,15 @@ export type DialMove = 'up' | 'down' | 'left' | 'right' | 'tap'
 // answer lands in the same frame as the finger that asked for it. They are pure, so
 // they are also just functions in a test.
 
-// One axis of a key's position: which of the three a coordinate falls in, with each key
+// One axis of a key's position: which of the `lanes` a coordinate falls in, with each key
 // claiming half of the gap on either side of it.
 //
 // Above its caller, not below it: the worklet transform rewrites every function in here
 // into a `const`, so a forward reference that would have hoisted throws on the way in.
-function track(p: number, metrics: DialMetrics): number {
+function track(p: number, metrics: DialMetrics, lanes: number): number {
   'worklet'
   const pitch = metrics.button + metrics.gap
-  return Math.min(2, Math.max(0, Math.floor((p + metrics.gap / 2) / pitch)))
+  return Math.min(lanes - 1, Math.max(0, Math.floor((p + metrics.gap / 2) / pitch)))
 }
 
 // Which key a point in the dial's square belongs to, or none if it is outside it.
@@ -31,11 +26,16 @@ function track(p: number, metrics: DialMetrics): number {
 // The gap between two keys is split down the middle rather than left as dead space:
 // a finger dragged across the dial is somewhere in a 12pt channel for a frame or two,
 // and a key that only answered for its own pill would drop that frame's crossing.
-export function cellAt(x: number, y: number, metrics: DialMetrics): number | null {
+export function cellAt(
+  x: number,
+  y: number,
+  metrics: DialMetrics,
+  shape: { rows: number; cols: number },
+): number | null {
   'worklet'
-  if (metrics.size <= 0) return null
-  if (x < 0 || y < 0 || x >= metrics.size || y >= metrics.size) return null
-  return track(y, metrics) * 3 + track(x, metrics)
+  if (metrics.width <= 0 || metrics.height <= 0) return null
+  if (x < 0 || y < 0 || x >= metrics.width || y >= metrics.height) return null
+  return track(y, metrics, shape.rows) * shape.cols + track(x, metrics, shape.cols)
 }
 
 // The side a key was left through, read from where the finger now is against the key's
@@ -47,11 +47,12 @@ export function exitMove(
   x: number,
   y: number,
   metrics: DialMetrics,
+  cols: number,
 ): DialMove {
   'worklet'
   const pitch = metrics.button + metrics.gap
-  const dx = x - (pitch * (cell % 3) + metrics.button / 2)
-  const dy = y - (pitch * Math.floor(cell / 3) + metrics.button / 2)
+  const dx = x - (pitch * (cell % cols) + metrics.button / 2)
+  const dy = y - (pitch * Math.floor(cell / cols) + metrics.button / 2)
   if (Math.abs(dx) > Math.abs(dy)) return dx < 0 ? 'left' : 'right'
   return dy < 0 ? 'up' : 'down'
 }
@@ -90,25 +91,33 @@ export function allowedMove(
   return move
 }
 
-// What each move asks the machine for. Exactly one of the two is ever filled: a move
-// either steps the key or sets it outright, and the `null` on the other side is what
-// says which — so a caller reads the effect instead of re-deciding it from the move.
+// What each move asks the machine for. Exactly one of the three is ever filled: a move
+// either steps the key, or sets it to the floor, or sets it to the ceiling — and which
+// one is filled is what says which, so a caller reads the effect instead of re-deciding
+// it from the move.
+//
+// `set` names an end of the key's range rather than a digit, because how high a key goes
+// is the dial's business: a swipe right fills the key, whatever filling it means on the
+// dial being played.
 export const MOVE_EFFECT = {
   up: { step: 1, set: null },
   tap: { step: 1, set: null },
   down: { step: -1, set: null },
-  left: { step: null, set: 0 },
-  right: { step: null, set: 9 },
-} as const satisfies Record<DialMove, { step: 1 | -1 | null; set: number | null }>
+  left: { step: null, set: 'floor' },
+  right: { step: null, set: 'ceiling' },
+} as const satisfies Record<
+  DialMove,
+  { step: 1 | -1 | null; set: 'floor' | 'ceiling' | null }
+>
 
 // Where a move leaves a key. Up and down wrap, exactly as a press does in the machine,
 // so neither of them can ever be a no-op. The sideways pair can: answering with the
 // value it was given is how a move that would change nothing says so.
-export function nextValue(move: DialMove, value: number): number {
+export function nextValue(move: DialMove, value: number, digits: number): number {
   'worklet'
   const { step, set } = MOVE_EFFECT[move]
-  if (step === null) return set
-  return (((value + step) % 10) + 10) % 10
+  if (step === null) return set === 'floor' ? 0 : digits - 1
+  return (((value + step) % digits) + digits) % digits
 }
 
 // One key being told what just happened to it, and the counter that makes a repeat of

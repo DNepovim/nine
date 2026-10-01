@@ -1,6 +1,6 @@
 import { TUTORIAL_OPENING_GRID, TUTORIAL_TARGETS } from '@/constants/tutorial'
-import type { Grid } from '@/machines/game'
 import { computeKeyPlan } from '@/machines/scoring'
+import { NINE_DIAL, type Grid } from '@/modes'
 
 // The board every later step of the lesson is entered on. The first one is
 // TUTORIAL_OPENING_GRID, beside the rest of the tutorial's fixed numbers.
@@ -9,13 +9,11 @@ import { computeKeyPlan } from '@/machines/scoring'
 // it was owed, which is what the route the lesson walks arrives at — the plan is the same
 // one `useTutorialLesson` lights a key at a time.
 const walk = (grid: Grid, target: number): Grid => {
-  const flat = grid.flat()
-  for (const step of computeKeyPlan(grid, target)) flat[step.index] = step.to
-  return [
-    [flat[0] ?? 0, flat[1] ?? 0, flat[2] ?? 0],
-    [flat[3] ?? 0, flat[4] ?? 0, flat[5] ?? 0],
-    [flat[6] ?? 0, flat[7] ?? 0, flat[8] ?? 0],
-  ]
+  const walked = [...grid]
+  for (const step of computeKeyPlan(NINE_DIAL, grid, target)) {
+    walked[step.index] = step.to
+  }
+  return walked
 }
 
 // The board the lesson's nth step stands on, counted from nought — so step `board` is the

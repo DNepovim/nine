@@ -1,9 +1,4 @@
-import {
-  DIFFICULTY_ORDER,
-  SCORED_MODES,
-  type Difficulty,
-  type ScoredMode,
-} from '@/machines/game'
+import { DIFFICULTY_ORDER, SCORED_MODES, type Difficulty, type ScoredMode } from '@/modes'
 
 // Fixtures for the weekly-recap prototype: a week of `daily_scores` invented from a
 // seed, in the shape the real `weekly_recap` RPC would return it.

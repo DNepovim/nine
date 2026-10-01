@@ -8,7 +8,7 @@ import { useTheme } from '@/hooks/use-theme'
 import { STAGE_AXES, STAGE_CODE, type BoardMark, type Stage } from '@/lib/achievements'
 import { cn } from '@/lib/cn'
 import { formatShortDate } from '@/lib/format-date'
-import { DIFFICULTY_ORDER, SCORED_MODES } from '@/machines/game'
+import { DIFFICULTY_ORDER, SCORED_MODES } from '@/modes'
 
 // A secret one keeps its name as well as its rule. Naming it would be telling.
 const SECRET_TITLE = msg`???`

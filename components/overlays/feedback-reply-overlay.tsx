@@ -6,7 +6,7 @@ import { MarkdownText } from '@/components/markdown-text'
 import { ModalCard } from '@/components/overlays/modal-card'
 import { useViewport } from '@/hooks/use-viewport'
 import { sentOnLabel, type FeedbackQuote } from '@/lib/feedback-reply'
-import { MODE_GRADIENT, type Mode } from '@/machines/game'
+import { gradientOf, type ModeId } from '@/modes'
 
 // A message is capped at 800 characters, which is a screen of text on its own. Three
 // lines is enough to recognise what you wrote without the quote outgrowing the answer to
@@ -72,14 +72,14 @@ export function FeedbackReplyOverlay({
   quote,
   onDismiss,
 }: {
-  gameMode: Mode
+  gameMode: ModeId
   answer: string
   quote: FeedbackQuote | null
   onDismiss: () => void
 }) {
   const { height } = useViewport()
   const { i18n } = useLingui()
-  const modeColor = MODE_GRADIENT[gameMode][0]
+  const modeColor = gradientOf(gameMode)[0]
 
   return (
     <ModalCard

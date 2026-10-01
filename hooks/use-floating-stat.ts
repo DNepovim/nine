@@ -1,11 +1,16 @@
 import { useEffect, useRef, useState } from 'react'
 
 import type { HitBatch } from '@/machines/game'
-import type { Mode } from '@/machines/modes'
+import type { Headline } from '@/modes'
 
 type FloatingStatItem = { id: number; value: number; progress: number }
 
-export function useFloatingStat(hitBatch: HitBatch, mode: Mode) {
+// The figure that floats off a hit: whichever of the two factors the mode is about.
+//
+// The factor rather than the mode's name — see `headline` on ScoringRules, which is the
+// half of its blend a mode weighs more. Only drawn where there is a score beside it, so
+// an unscored run never asks.
+export function useFloatingStat(hitBatch: HitBatch, headline: Headline) {
   const [floatStats, setFloatStats] = useState<FloatingStatItem[]>([])
   const floatId = useRef(0)
   const lastHitSeq = useRef(0)
@@ -17,11 +22,11 @@ export function useFloatingStat(hitBatch: HitBatch, mode: Mode) {
       ...prev,
       ...hitBatch.hits.map((hit) => ({
         id: ++floatId.current,
-        value: Math.round(100 * (mode === 'accuracy' ? hit.accFactor : hit.spdFactor)),
+        value: Math.round(100 * (headline === 'acc' ? hit.accFactor : hit.spdFactor)),
         progress: hit.progress,
       })),
     ])
-  }, [hitBatch, mode])
+  }, [hitBatch, headline])
 
   const removeFloatStat = (id: number) => {
     setFloatStats((prev) => prev.filter((f) => f.id !== id))

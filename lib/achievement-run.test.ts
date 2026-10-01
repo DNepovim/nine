@@ -81,11 +81,7 @@ const hit = (steps: number, par: number): HitInfo => ({
   spdFactor: 1,
   steps,
   par,
-  refGrid: [
-    [0, 0, 0],
-    [0, 0, 0],
-    [0, 0, 0],
-  ],
+  refGrid: [0, 0, 0, 0, 0, 0, 0, 0, 0],
   value: 12,
   costLife: false,
 })

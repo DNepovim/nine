@@ -1,53 +1,53 @@
 import { useCallback, useEffect, useRef } from 'react'
 
-import { scriptedTarget, TUTORIAL_TARGET_REACH } from '@/constants/tutorial'
 import {
-  FULL_TARGET_RANGE,
+  fullRange,
   pickTargetValue,
   rangeAround,
   type TargetRange,
 } from '@/lib/target-value'
-import {
-  effectiveSpawnInterval,
-  type Difficulty,
-  type GameSend,
-  type Mode,
-} from '@/machines/game'
+import type { GameSend } from '@/machines/game'
+import { spawnInterval, type RunRules, type Submode } from '@/modes'
 
-// Spawns targets every effectiveSpawnInterval (first immediately) while playing;
-// clearing the board spawns the next one right away and restarts the cadence.
+// Deals targets while a run is playing: the first one at once, then one every
+// `spawnInterval`; clearing the board deals the next right away and restarts the cadence.
 //
-// The tutorial runs no cadence at all: the board holds one target, and the respawn on a
-// cleared board is the only thing that ever deals another — see constants/tutorial.ts.
+// Everything it does differently from one mode to the next is a field on the rules it is
+// handed — the gap between arrivals, whether there is a cadence at all, how far a target
+// may land from the sum standing, and the script a submode deals from. It names no mode,
+// so a mode registered this morning spawns correctly.
 export function useTargetSpawner({
   isPlaying,
   targetCount,
-  mode,
-  difficulty,
+  rules,
+  submode,
   hits,
-  traineeTimeoutMs,
-  tutorial,
+  playerClockMs,
   currentSum,
   takenValues,
   send,
 }: {
   isPlaying: boolean
   targetCount: number
-  mode: Mode
-  difficulty: Difficulty
+  // The rules the run is played under — `spawn` is the half of them this reads, and
+  // `board` is what bounds the values a target may take.
+  rules: RunRules
+  // The submode the run is in, or null. What deals the scripted targets: a lesson's
+  // boards are chosen rather than rolled, each one making a single move the obvious
+  // answer.
+  submode: Submode | null
   // Drives the cadence in ramping modes: more hits, shorter gap between arrivals.
   hits: number
-  // Trainee's player-set clock, from the machine's own context so the gap and the ring
-  // are always read off the same number.
-  traineeTimeoutMs: number
-  // The run is the tutorial. Both halves of its spawning rule are read off this: one
-  // target at a time, and the next one within reach of the last.
-  tutorial: boolean
+  // The run's player-set clock, from the machine's own context so the gap and the ring
+  // are always read off the same number. Ignored by a mode whose clock is not the
+  // player's — see `clock.playerSet`.
+  playerClockMs: number
   currentSum: number
   takenValues: number[]
   send: GameSend
 }) {
   const spawnTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const cadence = rules.spawn.cadence
 
   // Latest exclusions, read at spawn time without re-creating the interval.
   const excludeRef = useRef<{ sum: number; values: number[] }>({
@@ -59,38 +59,38 @@ export function useTargetSpawner({
   // Read at spawn time for the same reason: `spawnTarget` is the callback the cadence
   // and the respawn both hold, and depending on either of these would rebuild both on a
   // change that only matters when a target is actually being dealt.
-  const tutorialRef = useRef({ tutorial, hits })
-  tutorialRef.current = { tutorial, hits }
+  const runRef = useRef({ rules, submode, hits })
+  runRef.current = { rules, submode, hits }
 
   // Latest cadence, likewise read when a spawn fires rather than when the wait is
   // armed. See startCadence for why that matters.
-  const spawnEvery = effectiveSpawnInterval(
-    mode,
-    difficulty,
+  const spawnEvery = spawnInterval(
+    rules,
     hits,
-    mode === 'trainee' ? traineeTimeoutMs : undefined,
+    rules.clock.playerSet ? playerClockMs : undefined,
   )
   const intervalRef = useRef(spawnEvery)
   intervalRef.current = spawnEvery
 
   const spawnTarget = useCallback(() => {
     const { sum, values } = excludeRef.current
-    const { tutorial: onTutorial, hits: landed } = tutorialRef.current
-    // The lesson's own targets, dealt rather than rolled: each one is a board chosen to make
-    // one move the obvious answer, and the lesson has a line ready for it. The first of them
-    // is dealt by the machine at START, so what comes through here is the rest of the script
-    // — and then nothing, once it has run out. See constants/tutorial.ts.
-    const scripted = onTutorial ? scriptedTarget(landed) : null
+    const { rules: live, submode: part, hits: landed } = runRef.current
+    // A submode's own targets, dealt rather than rolled: each one is a board chosen to
+    // make one move the obvious answer, and the lesson has a line ready for it. The
+    // first of them is dealt by the machine at START, so what comes through here is the
+    // rest of the script — and then nothing, once it has run out.
+    const scripted = part?.script?.(landed) ?? null
     if (scripted !== null) {
       send({ type: 'ADD_TARGET', value: scripted, at: Date.now() })
       return
     }
-    // Past the script, the tutorial keeps every target within reach of the one just hit —
-    // which is the sum standing on the dial, because hitting a target is what put it there.
-    // Every other mode draws from the whole range.
-    const range: TargetRange = onTutorial
-      ? rangeAround(sum, TUTORIAL_TARGET_REACH)
-      : FULL_TARGET_RANGE
+    // A mode with a `reach` keeps every target within that much of the sum standing on
+    // the dial — which, just after a hit, is the number just cleared. Every other mode
+    // draws from the whole range the board can be dialled to.
+    const range: TargetRange =
+      live.spawn.reach === null
+        ? fullRange(live.dial)
+        : rangeAround(live.dial, sum, live.spawn.reach)
     // Never spawn a target that's already the dialled sum, or a duplicate of a
     // target already on the board.
     const value = pickTargetValue({
@@ -131,13 +131,13 @@ export function useTargetSpawner({
     // Coming back from a pause the board still holds everything it had, and spawning
     // here would hand the player an extra target for having paused.
     if (targetCountRef.current === 0) spawnTarget()
-    // No cadence in the tutorial: the one target standing is the whole board until it is
-    // hit, and the respawn below is what deals the next.
-    if (!tutorial) startCadence()
+    // No cadence in a mode that runs none: the one target standing is the whole board
+    // until it is hit, and the respawn below is what deals the next.
+    if (cadence) startCadence()
     return () => {
       if (spawnTimer.current) clearTimeout(spawnTimer.current)
     }
-  }, [isPlaying, tutorial, spawnTarget, startCadence])
+  }, [isPlaying, cadence, spawnTarget, startCadence])
 
   // Immediate respawn when a hit clears the board mid-game. Reset the tracker
   // whenever we're not playing so a fresh game's targets→0 reset isn't mistaken
@@ -150,8 +150,8 @@ export function useTargetSpawner({
     }
     if (prevTargetCount.current > 0 && targetCount === 0) {
       spawnTarget()
-      if (!tutorial) startCadence()
+      if (cadence) startCadence()
     }
     prevTargetCount.current = targetCount
-  }, [targetCount, isPlaying, tutorial, spawnTarget, startCadence])
+  }, [targetCount, isPlaying, cadence, spawnTarget, startCadence])
 }

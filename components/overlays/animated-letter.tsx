@@ -24,12 +24,15 @@ import {
   GLASS_SHEEN_UNTIL,
   GLASS_TINT,
 } from '@/lib/glass'
-import { type Mode } from '@/machines/game'
+import { type ModeId } from '@/modes'
 
 // A letter's colour source: a singleplayer mode, the arcade teaser, or the
 // multiplayer identity — the intro title switches between the last two depending on
 // which of ALONE / WITH FRIENDS is open.
-type TitleMode = Mode | 'arcade' | 'multiplayer'
+// A mode id, or the multiplayer tab — which is not a mode but is one of the things the
+// title can be coloured as. Any mode id, so a challenge's pill colours the title too; the
+// flash between two of them simply has no entry below and sweeps through white.
+type TitleMode = ModeId | 'multiplayer'
 
 // Vibrant off-spectrum intermediates — chosen to be as far from the
 // app's blue-purple-red-amber palette as possible so each mode switch

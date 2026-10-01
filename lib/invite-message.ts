@@ -1,4 +1,4 @@
-import type { Mode } from '@/machines/modes'
+import { traitsOf, type ModeId } from '@/modes'
 
 export const SHARE_URL = 'https://nine.expo.app'
 
@@ -10,11 +10,11 @@ export const titleCase = (label: string): string =>
 // Whether the invite has a score worth naming.
 //
 // A best worth naming turns the invite into a dare, which travels further than a link
-// does. Trainee keeps no board, and a board you have never scored on has nothing to
-// boast about — both fall back to describing the game rather than the player, so the
-// message never brags about a zero.
-export const shouldBoast = (mode: Mode, bestScore: number): boolean =>
-  mode !== 'trainee' && bestScore > 0
+// does. A mode that keeps no board has none, and a board you have never scored on has
+// nothing to boast about — both fall back to describing the game rather than the player,
+// so the message never brags about a zero.
+export const shouldBoast = (mode: ModeId, bestScore: number): boolean =>
+  traitsOf(mode).scored && bestScore > 0
 
 // The board an invite names, from labels the caller has already resolved. Taking the
 // words rather than the keys is what keeps this pure: the sentence around it is

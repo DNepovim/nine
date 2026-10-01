@@ -11,7 +11,7 @@ import {
   type PendingRun,
 } from '@/lib/run-totals'
 import { supabase } from '@/lib/supabase'
-import type { Difficulty, ScoredMode } from '@/machines/modes'
+import { type Difficulty, type ScoredMode } from '@/modes'
 
 // How the server answered. `refused` is the one that matters: the run was rejected for a
 // reason that was not the connection, so asking again will be rejected again.

@@ -3,7 +3,7 @@ import { LinearGradient } from 'expo-linear-gradient'
 import { Pressable, Text, View } from 'react-native'
 
 import { Screen } from '@/components/screen'
-import { DARK_MULTIPLAYER_GRADIENT } from '@/machines/game'
+import { DARK_MULTIPLAYER_GRADIENT } from '@/modes'
 import type { MultiMode } from '@/types/multiplayer'
 
 const shadow = {

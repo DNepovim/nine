@@ -13,7 +13,7 @@ import Animated, {
 import { CornerBadge } from '@/components/overlays/corner-badge'
 import { DIM_INK } from '@/constants/colors'
 import { useTheme } from '@/hooks/use-theme'
-import { MODE_GRADIENT, MULTIPLAYER_GRADIENT, type Mode } from '@/machines/game'
+import { gradientOf, MULTIPLAYER_GRADIENT, type ModeId } from '@/modes'
 
 export type PlayMode = 'alone' | 'friends'
 
@@ -45,7 +45,7 @@ export function PlayModeTab({
   onSelect,
 }: {
   playMode: PlayMode
-  gameMode: Mode
+  gameMode: ModeId
   gradPhase: SharedValue<number>
   onSelect: (pm: PlayMode) => void
 }) {
@@ -122,7 +122,7 @@ export function PlayModeTab({
               colors={[
                 ...(playMode === 'friends'
                   ? MULTIPLAYER_GRADIENT.accuracy
-                  : MODE_GRADIENT[gameMode]),
+                  : gradientOf(gameMode)),
               ]}
               start={{ x: 0, y: 0.5 }}
               end={{ x: 1, y: 0.5 }}

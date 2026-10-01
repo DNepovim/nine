@@ -15,11 +15,14 @@ import type { AchievementStore } from '@/lib/achievement-store'
 import type { AchievementFacts, Award } from '@/lib/achievements'
 import { currentBoardMedals } from '@/lib/board-medals'
 import {
-  DARK_MODE_GRADIENT,
-  MODE_GRADIENT,
+  darkGradientOf,
+  gradientOf,
+  runRules,
+  SCORED_MODES,
+  traitsOf,
   type Difficulty,
-  type Mode,
-} from '@/machines/game'
+  type ModeId,
+} from '@/modes'
 
 import { BoardBadges } from './board-badges'
 import { BoardMedals } from './board-medals'
@@ -61,15 +64,15 @@ export function PausedOverlay({
   onToggleStats,
   showRoute,
   onToggleRoute,
-  traineeTimeoutMs,
-  onSetTraineeTimeout,
+  playerClockMs,
+  onSetPlayerClock,
   onContinue,
   onRestart,
   onMenu,
   onOpenAdvanced,
   onAddNickname,
 }: {
-  gameMode: Mode
+  gameMode: ModeId
   // The run is the tutorial. It is Trainee in every other respect, so this screen is the
   // Trainee pause screen with the display options taken off it — there is nothing here
   // to change yet, and a grid of nine switches is not what a first run should open on.
@@ -101,8 +104,8 @@ export function PausedOverlay({
   onToggleStats: () => void
   showRoute: boolean
   onToggleRoute: () => void
-  traineeTimeoutMs: number
-  onSetTraineeTimeout: (ms: number) => void
+  playerClockMs: number
+  onSetPlayerClock: (ms: number) => void
   onContinue: () => void
   onRestart: () => void
   onMenu: () => void
@@ -111,6 +114,10 @@ export function PausedOverlay({
 }) {
   const { colorScheme } = useTheme()
   const dimColor = DIM_INK[colorScheme]
+  // What this run's mode may be shown as — the questions this screen used to ask by
+  // name. `coached` is already false in the tutorial, which is why the display options
+  // below no longer check for it separately.
+  const traits = runRules(gameMode, difficulty, tutorial).capabilities
   // Which corner's dialog is open. Held here rather than inside the grid so the dialog
   // can be rendered beside the Screen: `ModalCard` covers its parent, and a parent of
   // four tiles is four tiles' worth of scrim.
@@ -139,33 +146,32 @@ export function PausedOverlay({
               one that ended. */}
             <PauseMark gameMode={gameMode} />
 
-            {/* No difficulty pill in Trainee: there is nothing to record, and the one
-              the menu happens to be sitting on is not what the run was played at. */}
+            {/* No difficulty pill in a mode that pins its own rung: there is nothing to
+              record, and the one the menu happens to be sitting on is not what the run
+              was played at. */}
             <BoardBadges
               gameMode={gameMode}
               tutorial={tutorial}
-              difficulty={gameMode === 'trainee' ? undefined : difficulty}
+              difficulty={traitsOf(gameMode).usesDifficulty ? difficulty : undefined}
             />
 
-            {/* Trainee has no board, so a score here measures nothing. A tip is
-              worth more to someone practising than a number they cannot place —
-              but the run's own numbers still do, so they come first and the tip
-              reads as advice on what they show. */}
-            {gameMode !== 'trainee' && (
+            {/* A mode with no board has no score worth showing here: it measures
+              nothing. A tip is worth more to someone practising than a number they
+              cannot place — but the run's own numbers still do, so they come first and
+              the tip reads as advice on what they show. */}
+            {traits.scored && (
               <ScoreReadout
                 score={score}
-                color={MODE_GRADIENT[gameMode][0]}
-                glow={`${MODE_GRADIENT[gameMode][0]}99`}
+                color={gradientOf(gameMode)[0]}
+                glow={`${gradientOf(gameMode)[0]}99`}
               />
             )}
 
             {/* Above the run's own numbers, where the game-over screen puts them too:
               a medal is what the run is worth to everyone else, and the stats under it
-              are what it was worth to the player. Trainee reaches no board, so there is
+              are what it was worth to the player. A mode that reaches no board has
               nothing here to stand on. */}
-            {gameMode !== 'trainee' && (
-              <BoardMedals medals={medals} gameMode={gameMode} />
-            )}
+            {traits.scored && <BoardMedals medals={medals} gameMode={gameMode} />}
 
             <RunStats
               gameMode={gameMode}
@@ -194,7 +200,7 @@ export function PausedOverlay({
               more of them on is a choice made before the first one has been understood.
               CONTINUE, END RUN and the display settings behind OPTIONS all stay: those
               are the ways off this screen, not lessons. */}
-            {gameMode === 'trainee' && !tutorial && (
+            {traits.coached && (
               <View className="mb-5 w-full">
                 <TraineeDisplayOptions
                   corners={corners}
@@ -205,13 +211,13 @@ export function PausedOverlay({
                   onToggleStats={onToggleStats}
                   showRoute={showRoute}
                   onToggleRoute={onToggleRoute}
-                  traineeTimeoutMs={traineeTimeoutMs}
-                  onSetTraineeTimeout={onSetTraineeTimeout}
+                  playerClockMs={playerClockMs}
+                  onSetPlayerClock={onSetPlayerClock}
                 />
               </View>
             )}
 
-            {isOneOf(gameMode, ['accuracy', 'speed']) && (
+            {isOneOf(gameMode, SCORED_MODES) && (
               <HighScores
                 gameMode={gameMode}
                 userId={userId}
@@ -230,7 +236,7 @@ export function PausedOverlay({
                 style={shadow}
               >
                 <LinearGradient
-                  colors={[...DARK_MODE_GRADIENT[gameMode]]}
+                  colors={[...darkGradientOf(gameMode)]}
                   start={{ x: 0, y: 0.5 }}
                   end={{ x: 1, y: 0.5 }}
                   className="items-center py-4"
@@ -243,10 +249,11 @@ export function PausedOverlay({
                   </Text>
                 </LinearGradient>
               </Pressable>
-              {/* Nothing to restart for in Trainee. A run there is not a score being
-                chased, so the board as it stands is as good as a fresh one — and the
-                button was offering to throw away the very thing being practised on. */}
-              {gameMode !== 'trainee' && (
+              {/* Nothing to restart for in a mode with no board. A run there is not a
+                score being chased, so the dial as it stands is as good as a fresh one —
+                and the button was offering to throw away the very thing being practised
+                on. */}
+              {traits.scored && (
                 <Pressable
                   onPress={onRestart}
                   className="items-center rounded-2xl bg-card py-4"

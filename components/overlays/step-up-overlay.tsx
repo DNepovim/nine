@@ -7,7 +7,7 @@ import { Screen } from '@/components/screen'
 import { DIM_INK } from '@/constants/colors'
 import { useTheme } from '@/hooks/use-theme'
 import type { TitleWords } from '@/lib/game-over-title'
-import { DARK_MODE_GRADIENT, type Difficulty, type Mode } from '@/machines/game'
+import { darkGradientOf, type Difficulty, type ModeId } from '@/modes'
 
 import { BoardBadges } from './board-badges'
 import { GameOverTitle } from './game-over-title'
@@ -38,7 +38,7 @@ export function StepUpOverlay({
   onStart,
   onOtherMode,
 }: {
-  gameMode: Mode
+  gameMode: ModeId
   difficulty: Difficulty
   onStart: () => void
   // Out to the intro, where every board is on offer rather than this one.
@@ -74,7 +74,7 @@ export function StepUpOverlay({
             style={shadow}
           >
             <LinearGradient
-              colors={[...DARK_MODE_GRADIENT[gameMode]]}
+              colors={[...darkGradientOf(gameMode)]}
               start={{ x: 0, y: 0.5 }}
               end={{ x: 1, y: 0.5 }}
               className="items-center py-4"

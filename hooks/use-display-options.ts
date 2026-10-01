@@ -13,13 +13,16 @@ import {
 } from '@/constants/dial-hints'
 import { OPTIONS_KEY } from '@/constants/storage'
 import { readPersisted } from '@/lib/hydration'
-import { effectiveTimeout } from '@/machines/game'
+import { baseClockMs } from '@/modes'
 
 type StoredOptions = {
   showSum?: boolean
   showPar?: boolean
   showStats?: boolean
   showRoute?: boolean
+  // The run clock the player set, under the key it has been stored against since it was
+  // Trainee's alone. Kept as it is on disk rather than renamed with the code: the rule it
+  // belongs to is any mode's now (`clock.playerSet`), and a migration buys nothing.
   traineeTimeoutMs?: number
   // What each corner shows, stored under the corner's own name. Read field by field
   // below, which is why this needed no new key: a record written by a build that had
@@ -51,9 +54,7 @@ export function useDisplayOptions() {
   const [showRoute, setShowRoute] = useState(false)
   // Where Trainee's clock starts: exactly what the mode table says, so a player who
   // never touches the slider gets the clock the game was tuned with.
-  const [traineeTimeoutMs, setTraineeTimeoutMs] = useState(() =>
-    effectiveTimeout('trainee', 'easy'),
-  )
+  const [playerClockMs, setPlayerClockMs] = useState(() => baseClockMs('trainee', 'easy'))
   const [corners, setCorners] = useState<DialCorners>(DEFAULT_DIAL_CORNERS)
   // Opened only by a read that actually came back. Setting this in a `finally` — which
   // is what it used to do — meant a read that threw opened the gate exactly as a
@@ -76,7 +77,7 @@ export function useDisplayOptions() {
       // a value written by a build with wider ends cannot park the handle off the track.
       const storedMs = value?.traineeTimeoutMs
       if (typeof storedMs === 'number' && Number.isFinite(storedMs)) {
-        setTraineeTimeoutMs(
+        setPlayerClockMs(
           Math.min(TRAINEE_TIMEOUT_MAX_MS, Math.max(TRAINEE_TIMEOUT_MIN_MS, storedMs)),
         )
       }
@@ -106,11 +107,11 @@ export function useDisplayOptions() {
         showPar,
         showStats,
         showRoute,
-        traineeTimeoutMs,
+        traineeTimeoutMs: playerClockMs,
         corners,
       }),
     ).catch(() => {})
-  }, [showSum, showPar, showStats, showRoute, traineeTimeoutMs, corners])
+  }, [showSum, showPar, showStats, showRoute, playerClockMs, corners])
 
   const toggleSum = useCallback(() => {
     setShowSum((value) => !value)
@@ -141,8 +142,8 @@ export function useDisplayOptions() {
     toggleStats,
     showRoute,
     toggleRoute,
-    traineeTimeoutMs,
-    setTraineeTimeoutMs,
+    playerClockMs,
+    setPlayerClockMs,
     corners,
     setCorner,
   }

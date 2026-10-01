@@ -1,11 +1,6 @@
 import { isOneOf } from 'narrowland'
 
-import {
-  DIFFICULTY_ORDER,
-  SCORED_MODES,
-  type Difficulty,
-  type ScoredMode,
-} from '@/machines/game'
+import { DIFFICULTY_ORDER, SCORED_MODES, type Difficulty, type ScoredMode } from '@/modes'
 
 // Which board a score row belongs to — one mode × difficulty pairing, one leaderboard.
 export type BoardRef = { mode: ScoredMode; difficulty: Difficulty }

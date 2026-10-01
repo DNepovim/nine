@@ -1,9 +1,9 @@
 import { isNonEmptyArray } from 'narrowland'
 import { useEffect, useRef, useState } from 'react'
 
-import { MODE_SHOT, shareRounds, type Point, type ShotKind } from '@/lib/strike-shot'
+import { shareRounds, type Point } from '@/lib/strike-shot'
 import type { HitBatch } from '@/machines/game'
-import type { Mode } from '@/machines/modes'
+import { modeById, type ModeId, type ShotKind } from '@/modes'
 
 // Where a shot leaves from and what it is aimed at, both in the effect layer's own
 // coordinates.
@@ -28,7 +28,7 @@ export function useStrikeShots({
   hitBatch,
   aim,
 }: {
-  mode: Mode
+  mode: ModeId
   hitBatch: HitBatch
   // Read when a strike lands rather than depended on: it closes over the board's
   // measurements and the targets standing, so it is a new function on every render, and
@@ -45,7 +45,7 @@ export function useStrikeShots({
   useEffect(() => {
     if (hitBatch.seq === lastSeq.current) return
     lastSeq.current = hitBatch.seq
-    const kind = MODE_SHOT[mode]
+    const kind = modeById(mode)?.shot ?? null
     if (kind === null) return
     // Never the hit that cost a life: Accuracy only multiplies when every hit in the
     // press was optimal, and an optimal hit is not a wasteful one.

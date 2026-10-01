@@ -1,6 +1,6 @@
 import { msg } from '@lingui/core/macro'
 
-import type { Grid } from '@/machines/game'
+import { type Grid } from '@/modes'
 
 // The tutorial: the run a first launch opens on, and the three rules that make it one.
 //
@@ -49,11 +49,7 @@ export const TUTORIAL_LABEL = msg`TUTORIAL`
 // Fixed rather than dealt, and that is the point: the cards name the two numbers on
 // screen, so the lesson has to know what they are. A test pins the route the pair
 // produces, so a change to either number that spoils the lesson fails rather than ships.
-export const TUTORIAL_OPENING_GRID: Grid = [
-  [6, 2, 8],
-  [2, 6, 2],
-  [5, 4, 8],
-]
+export const TUTORIAL_OPENING_GRID: Grid = [6, 2, 8, 2, 6, 2, 5, 4, 8]
 
 // The targets the lesson deals itself, in order, before the spawner starts rolling them.
 //

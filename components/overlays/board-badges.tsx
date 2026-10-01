@@ -4,11 +4,12 @@ import { Text, View } from 'react-native'
 
 import {
   DIFFICULTIES,
-  MODE_GRADIENT,
+  gradientOf,
   runLabel,
+  runSubmode,
   type Difficulty,
-  type Mode,
-} from '@/machines/game'
+  type ModeId,
+} from '@/modes'
 
 // Lifted off the screen the way every other gradient pill here is — the pill itself
 // carries the colour, the shadow says it sits above the copy around it. On the outer
@@ -31,7 +32,7 @@ export function BoardBadges({
   difficulty,
   tutorial = false,
 }: {
-  gameMode: Mode
+  gameMode: ModeId
   // Left out by a run with no difficulty to record. Trainee has no selector and takes
   // the Easy pace whatever the menu last had selected, so a pill naming one there would
   // be reporting a choice the player never made.
@@ -42,7 +43,7 @@ export function BoardBadges({
   tutorial?: boolean
 }) {
   const { t } = useLingui()
-  const mode = t(runLabel(gameMode, tutorial))
+  const mode = t(runLabel(gameMode, runSubmode(tutorial)))
   const labels =
     difficulty === undefined ? [mode] : [mode, t(DIFFICULTIES[difficulty].label)]
 
@@ -55,10 +56,10 @@ export function BoardBadges({
           // The opaque ground iOS draws the shadow from: a transparent view has no
           // shape to cast one, and this is the gradient's own first stop, so nothing
           // of it shows past the pill on top.
-          style={{ ...shadow, backgroundColor: MODE_GRADIENT[gameMode][0] }}
+          style={{ ...shadow, backgroundColor: gradientOf(gameMode)[0] }}
         >
           <LinearGradient
-            colors={[...MODE_GRADIENT[gameMode]]}
+            colors={[...gradientOf(gameMode)]}
             start={{ x: 0, y: 0.5 }}
             end={{ x: 1, y: 0.5 }}
             className="overflow-hidden rounded-lg px-3 py-1"

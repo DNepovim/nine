@@ -11,8 +11,8 @@ import {
   insetLine,
   shotLine,
   SNIPER_MS,
-  type ShotKind,
 } from '@/lib/strike-shot'
+import type { ShotKind } from '@/modes'
 
 // How long each shot owns its slot on the layer. Both are shorter than the gap between
 // two hits at the hardest cadence their mode runs, so a shot is never still on screen

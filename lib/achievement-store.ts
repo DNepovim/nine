@@ -15,7 +15,7 @@ import {
   type Award,
   type Stage,
 } from '@/lib/achievements'
-import { DIFFICULTY_ORDER, SCORED_MODES } from '@/machines/modes'
+import { DIFFICULTY_ORDER, SCORED_MODES } from '@/modes'
 
 // Every stage any axis can name, for reading a stored award back. A device that has run
 // a newer build can hold a stage this one has never heard of; it is dropped rather than

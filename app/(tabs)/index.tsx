@@ -119,7 +119,6 @@ import {
 } from '@/lib/announcements'
 import { currentBoardMedals } from '@/lib/board-medals'
 import { holdsCrown, recordScreen, type RecordScreen } from '@/lib/champions'
-import { DIAL_CELLS } from '@/lib/dial-gesture'
 import { gameSnapshot } from '@/lib/feedback-state'
 import { leaderOf } from '@/lib/leaderboard'
 import { runChallenge } from '@/lib/next-challenge'
@@ -132,21 +131,23 @@ import { multiplierColor } from '@/lib/streak-badge'
 import { tipForTarget } from '@/lib/tutorial-tip'
 import { valueProgress } from '@/lib/value-progress'
 import { WELCOME_BOARD } from '@/lib/welcome'
-import {
-  computeSum,
-  DARK_MODE_GRADIENT,
-  DIFFICULTIES,
-  DIFFICULTY_ORDER,
-  gameMachine,
-  getDifficultyColor,
-  MODE_GRADIENT,
-  MODES,
-  runLabel,
-  SCORED_MODES,
-  streakMultiplier,
-} from '@/machines/game'
+import { bestOn, gameMachine } from '@/machines/game'
 import { computePar } from '@/machines/scoring'
 import { keyControl } from '@/machines/tutorial-lesson'
+import {
+  cellsOf,
+  darkGradientOf,
+  DIFFICULTIES,
+  DIFFICULTY_ORDER,
+  getDifficultyColor,
+  gradientOf,
+  runLabel,
+  runRules,
+  runSubmode,
+  SCORED_MODES,
+  streakMultiplier,
+  sumOf,
+} from '@/modes'
 import type { Position } from '@/types/game'
 import type { MultiMode } from '@/types/multiplayer'
 
@@ -173,7 +174,7 @@ const GalleryStage = __DEV__
 // Trainee's shower wears the mode's own blue rather than the default spectrum. This
 // fires on every clean hit, and the full arc is the personal-best celebration's — a
 // hit-by-hit sprinkle borrowing it made the two read as the same event.
-const TRAINEE_CONFETTI = [MODE_GRADIENT.trainee[0]] as const
+const TRAINEE_CONFETTI = [gradientOf('trainee')[0]] as const
 
 // How long the intro has to stand undisturbed before a waiting new version is allowed
 // to swap itself in. Not zero: a player who has just come back from a run would be
@@ -337,6 +338,15 @@ export default function GameScreen() {
     runId,
     tutorial,
   } = state.context
+  // What this run is governed by: the board under it, the clock, the lives, the streak
+  // rule, and the four capability flags the screen used to ask `mode === 'trainee'` for.
+  // One lookup rather than a branch at each reader, and the only thing on this screen
+  // that knows a mode has rules at all.
+  const rules = runRules(mode, difficulty, tutorial)
+  const submode = runSubmode(tutorial)
+  // The dial this run is played on. `board` on this screen is already the leaderboard.
+  const dial = rules.dial
+
   const isPlaying = state.matches('playing')
   const isMenu = state.matches('menu')
   const isPaused = state.matches('paused')
@@ -410,8 +420,8 @@ export default function GameScreen() {
     toggleStats,
     showRoute,
     toggleRoute,
-    traineeTimeoutMs,
-    setTraineeTimeoutMs,
+    playerClockMs,
+    setPlayerClockMs,
     corners,
     setCorner,
   } = useDisplayOptions()
@@ -421,8 +431,8 @@ export default function GameScreen() {
   // are moved onto the new clock keeping the share of it they had left, which is what
   // makes changing it from a pause show its effect on the target you are looking at.
   useEffect(() => {
-    send({ type: 'SET_TRAINEE_TIMEOUT', ms: traineeTimeoutMs, now: Date.now() })
-  }, [traineeTimeoutMs, send])
+    send({ type: 'SET_PLAYER_CLOCK', ms: playerClockMs, now: Date.now() })
+  }, [playerClockMs, send])
   // Which menu-level overlay is open. Only one shows at a time, and the menu
   // itself is hidden while any of them is open — a single source of truth avoids
   // z-order/gating clashes between separate booleans.
@@ -592,16 +602,16 @@ export default function GameScreen() {
 
   const inRun = isPlaying || isPaused
   const rival = useRivalRecords({ inRun, mode, difficulty, userId, leaders })
-  const celebration = useHitCelebration(inRun, mode, hitBatch)
+  const celebration = useHitCelebration(inRun, rules.capabilities.coached, hitBatch)
 
   // Trainee's invitation to a scored board. Offered only to a player who has never
   // posted one: the point is introducing the boards to someone who has not found them.
   const playedScored = SCORED_MODES.some((scored) =>
-    DIFFICULTY_ORDER.some((level) => stats[scored][level].score > 0),
+    DIFFICULTY_ORDER.some((level) => bestOn(stats, scored, level).score > 0),
   )
   const stepUp = useStepUp({
     inRun,
-    mode,
+    coached: rules.capabilities.coached,
     batch: hitBatch,
     hits,
     playedScored,
@@ -633,7 +643,7 @@ export default function GameScreen() {
   }, [stepUp.message, mode, difficulty])
   const coach = useTraineeCoach({
     inRun,
-    mode,
+    rules,
     grid,
     targets,
     batch: hitBatch,
@@ -680,7 +690,7 @@ export default function GameScreen() {
     // device's memory alone — the boards outlive a reinstall, a second device and a
     // hydrate that threw, and they are on this same screen. Trainee's entry stays at
     // zero on both sides, so this needs no special case to stay quiet there.
-    storedBest: personalBar(stats[mode][difficulty].score, board.forever.myBest),
+    storedBest: personalBar(bestOn(stats, mode, difficulty).score, board.forever.myBest),
     todayBest: barFor(bestToday, board.today.myBest),
     weekBest: barFor(bestWeek, board.week.myBest),
     everBest: barFor(bestEver, board.forever.myBest),
@@ -704,7 +714,7 @@ export default function GameScreen() {
       // `elapsedMs` is short by the stretch being played right now — the machine only
       // banks it on leaving `playing` — which costs nothing, because the server keeps
       // the highest figure a run has ever posted and the last post carries the lot.
-      if (isOneOf(mode, ['accuracy', 'speed'])) {
+      if (isOneOf(mode, SCORED_MODES)) {
         void countRun(userId, {
           runId,
           mode,
@@ -797,7 +807,7 @@ export default function GameScreen() {
         week: bestWeek,
         ever: bestEver,
       })
-      const screen = isOneOf(mode, ['accuracy', 'speed'])
+      const screen = isOneOf(mode, SCORED_MODES)
         ? recordScreen({
             record: taken[0] ?? null,
             mode,
@@ -809,7 +819,7 @@ export default function GameScreen() {
       setRunMedals(taken)
       setRunScreen(screen)
       setRunPodium(
-        isOneOf(mode, ['accuracy', 'speed']) &&
+        isOneOf(mode, SCORED_MODES) &&
           currentBoardMedals(board, state.context.score, userId).length > 0,
       )
       track('run_finished', {
@@ -844,7 +854,7 @@ export default function GameScreen() {
     // no longer depends on this landing: it is recorded on the device as it is
     // submitted, and the board store folds that in without asking the server.
     void refreshBoard()
-    if (isGameOver && isOneOf(mode, ['accuracy', 'speed'])) {
+    if (isGameOver && isOneOf(mode, SCORED_MODES)) {
       submitScore(mode, difficulty, state.context.score, state.context.hits)
       if (isReady && !nickname && state.context.score > 0) setShowNicknameModal(true)
     }
@@ -879,7 +889,7 @@ export default function GameScreen() {
       countedRunRef.current = false
       return
     }
-    if (countedRunRef.current || !isOneOf(mode, ['accuracy', 'speed'])) return
+    if (countedRunRef.current || !isOneOf(mode, SCORED_MODES)) return
     countedRunRef.current = true
     void countRun(userId, {
       runId,
@@ -909,7 +919,7 @@ export default function GameScreen() {
   // for a nickname exactly as running out of lives does. The game-over effect below
   // only fires on the gameOver transition, so without this the run would be lost.
   const endRunEarly = () => {
-    if (!isOneOf(mode, ['accuracy', 'speed'])) return
+    if (!isOneOf(mode, SCORED_MODES)) return
     const { score, hits } = state.context
     // Counted before the score guard below: a run that scored nothing is still a run
     // the player played, and "how many runs" is not "how many went well".
@@ -935,18 +945,17 @@ export default function GameScreen() {
 
   // The dial sum drives the score above the dial; the machine's composite score
   // drives the digital HUD readout.
-  const sum = computeSum(grid)
+  const sum = sumOf(dial, grid)
   const direction = useScoreDirection(sum)
   const displayScore = useDisplayScore(state.context.score)
 
   useTargetSpawner({
     isPlaying,
     targetCount: targets.length,
-    mode,
-    difficulty,
+    rules,
+    submode,
     hits,
-    traineeTimeoutMs: state.context.traineeTimeoutMs,
-    tutorial,
+    playerClockMs: state.context.playerClockMs,
     currentSum: sum,
     takenValues: targets.map((t) => t.value),
     send,
@@ -1063,15 +1072,18 @@ export default function GameScreen() {
   // What each of the nine keys will take. `full` throughout every run but a guided
   // tutorial route, where the lesson lights one key and shuts the other eight.
   const dialControls = useMemo(
-    () => DIAL_CELLS.map((index) => keyControl(lesson.dial, lesson.liveKey, index)),
+    () => cellsOf(dial).map((index) => keyControl(lesson.dial, lesson.liveKey, index)),
     [lesson.dial, lesson.liveKey],
   )
 
   const currentMultiplier = streakMultiplier(streak)
 
-  const { floatStats, removeFloatStat } = useFloatingStat(hitBatch, mode)
+  const { floatStats, removeFloatStat } = useFloatingStat(
+    hitBatch,
+    rules.scoring.headline,
+  )
 
-  const avgStat = mode === 'accuracy' ? avgAccuracy : avgSpeed
+  const avgStat = rules.scoring.headline === 'acc' ? avgAccuracy : avgSpeed
   const prevAvgRef = useRef(avgStat)
   const avgDirection = useRef<1 | -1>(1)
   if (avgStat !== prevAvgRef.current) {
@@ -1325,7 +1337,7 @@ export default function GameScreen() {
                 }}
                 viewerId={userId}
                 score={state.context.score}
-                yourBest={stats[mode][difficulty].score}
+                yourBest={bestOn(stats, mode, difficulty).score}
                 loaded={board.loaded}
                 todayIsMine={board.today.recordIsMine}
                 weekIsMine={board.week.recordIsMine}
@@ -1345,11 +1357,11 @@ export default function GameScreen() {
                     <Text
                       selectable={false}
                       className="font-mono text-[13px] font-black tracking-[2px]"
-                      style={{ color: MODE_GRADIENT[mode][0] }}
+                      style={{ color: gradientOf(mode)[0] }}
                     >
-                      {t(runLabel(mode, tutorial))}
+                      {t(runLabel(mode, submode))}
                     </Text>
-                    {isOneOf(mode, ['accuracy', 'speed']) && (
+                    {isOneOf(mode, SCORED_MODES) && (
                       <Text
                         selectable={false}
                         className="font-mono text-[10px] font-bold tracking-[1px] text-dim"
@@ -1377,7 +1389,7 @@ export default function GameScreen() {
                   <View className="flex-1 flex-row items-center justify-end">
                     {isPlaying && (
                       <PauseButton
-                        color={MODE_GRADIENT[mode][0]}
+                        color={gradientOf(mode)[0]}
                         onPress={() => {
                           send({ type: 'PAUSE', now: Date.now() })
                         }}
@@ -1388,14 +1400,14 @@ export default function GameScreen() {
 
                 {/* Row 2 — hearts · center stat · score cluster */}
                 <View className="mt-1.5 flex-row items-center">
-                  {/* Hearts — Trainee has no lives, so show none. */}
+                  {/* Hearts — a mode that spends no lives shows none. */}
                   <View className="relative flex-1 flex-row gap-1">
-                    {mode !== 'trainee' &&
+                    {rules.lives.count !== Number.POSITIVE_INFINITY &&
                       [0, 1, 2].map((i) => (
                         <HeartIcon
                           key={i}
                           filled={
-                            MODES[mode].lives === Number.POSITIVE_INFINITY || i < lives
+                            rules.lives.count === Number.POSITIVE_INFINITY || i < lives
                           }
                           emptyColor={isDark ? '#1C1D30' : '#FDFCFA'}
                         />
@@ -1417,7 +1429,7 @@ export default function GameScreen() {
                   </View>
 
                   {/* Center: avg accuracy or avg speed depending on mode */}
-                  {isOneOf(mode, ['accuracy', 'speed']) && (
+                  {isOneOf(mode, SCORED_MODES) && (
                     <View style={{ alignItems: 'center' }}>
                       <View style={{ flexDirection: 'row' }}>
                         {`${avgStat}%`.split('').map((digit, i, arr) => (
@@ -1445,9 +1457,9 @@ export default function GameScreen() {
                   )}
 
                   {/* Score cluster: digital readout + streak multiplier badge.
-                  Hidden in Trainee — it's a practice mode, not a scored run. */}
+                  Hidden in a mode that keeps no board — practice is not a scored run. */}
                   <View className="flex-1 relative items-end">
-                    {mode !== 'trainee' && (
+                    {rules.capabilities.scored && (
                       <>
                         <View className="flex-row items-baseline gap-1.5">
                           <Text
@@ -1506,7 +1518,7 @@ export default function GameScreen() {
                   that has barely started, and the line under them coaches a press the
                   player has not been told how to make yet — the teaching there is the
                   tooltips still to come, and this would be talking over them. */}
-                  {mode === 'trainee' && !tutorial && (
+                  {rules.capabilities.coached && (
                     <TraineeStats
                       hits={hits}
                       batch={hitBatch}
@@ -1569,6 +1581,7 @@ export default function GameScreen() {
                   >
                     {displayedTargets.map((target) => (
                       <TargetCard
+                        maxValue={dial.maxSum}
                         key={target.id}
                         target={target}
                         isDark={isDark}
@@ -1576,8 +1589,8 @@ export default function GameScreen() {
                         // mid-flight when Speed's timeout tightens.
                         duration={target.duration}
                         par={
-                          mode === 'trainee' && showPar && !tutorial
-                            ? computePar(grid, target.value)
+                          rules.capabilities.coached && showPar
+                            ? computePar(dial, grid, target.value)
                             : undefined
                         }
                         dying={isGameOver}
@@ -1646,7 +1659,7 @@ export default function GameScreen() {
                             digit={digit}
                             direction={direction}
                             isDark={isDark}
-                            progress={valueProgress(sum)}
+                            progress={valueProgress(sum, dial.maxSum)}
                           />
                         ))}
                     </View>
@@ -1680,10 +1693,11 @@ export default function GameScreen() {
                 height is not a number it can be asked to fit inside. The targets area
                 above takes the slack instead. */}
               <Dial
+                dial={dial}
                 values={grid.flat()}
                 isDark={isDark}
                 showSum={showSum && !tutorial}
-                trainee={mode === 'trainee'}
+                trainee={rules.capabilities.keyHints}
                 // The tutorial prints the weight and nothing else, whatever the player
                 // has since chosen for practice: it is the one number a key cannot be
                 // worked out without, and every other corner is a lesson that has not
@@ -1693,8 +1707,8 @@ export default function GameScreen() {
                 // everywhere in every run but a guided tutorial route.
                 controls={dialControls}
                 liveKey={lesson.liveKey}
-                peakFrom={DARK_MODE_GRADIENT[mode][0]}
-                peakTo={DARK_MODE_GRADIENT[mode][1]}
+                peakFrom={darkGradientOf(mode)[0]}
+                peakTo={darkGradientOf(mode)[1]}
                 onDelta={(index, delta) => {
                   coach.notePress(index, delta)
                   lesson.notePress(delta)
@@ -1853,8 +1867,8 @@ export default function GameScreen() {
                 onToggleStats={toggleStats}
                 showRoute={showRoute}
                 onToggleRoute={toggleRoute}
-                traineeTimeoutMs={traineeTimeoutMs}
-                onSetTraineeTimeout={setTraineeTimeoutMs}
+                playerClockMs={playerClockMs}
+                onSetPlayerClock={setPlayerClockMs}
                 onContinue={() => {
                   setResuming(true)
                 }}
@@ -2008,7 +2022,7 @@ export default function GameScreen() {
                 difficulty={difficulty}
                 userId={userId}
                 nickname={nickname}
-                bestScore={stats[mode][difficulty].score}
+                bestScore={bestOn(stats, mode, difficulty).score}
                 medals={medals}
                 lostMedals={lostMedals.news}
                 onLostMedalsSeen={lostMedals.dismiss}

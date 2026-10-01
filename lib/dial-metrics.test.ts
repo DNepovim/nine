@@ -2,6 +2,7 @@ import { readFileSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
 
 import { dialMetrics } from '@/lib/dial-metrics'
+import { NINE_DIAL } from '@/modes'
 
 // Every file that draws a dial button, and the one hook all of them size from.
 //
@@ -30,15 +31,19 @@ const hook = () => read('hooks/use-dial-metrics.ts')
 describe('the dial button is one size everywhere', () => {
   it('sizes every dial from the shared hook', () => {
     for (const path of DRAWS_A_DIAL) {
-      expect(read(path), path).toContain('useDialMetrics()')
+      expect(read(path), path).toContain('useDialMetrics(dial)')
     }
   })
 
-  it('takes no argument, so nothing can ask for a smaller one', () => {
+  it('takes the dial and nothing else, so nothing can ask for a smaller one', () => {
+    // The board is the one thing a dial may vary with now — a challenge may be played on
+    // a dial of four keys — so the guarantee is no longer "takes nothing". It is that the
+    // only argument is the board: two screens drawing the same dial get the same button,
+    // and no screen can pass a measurement of its own chrome.
+    expect(hook()).toMatch(/export function useDialMetrics\(dial: DialSpec\)/)
     for (const path of DRAWS_A_DIAL) {
-      expect(read(path), path).not.toMatch(/useDialMetrics\(\s*[^)\s]/)
+      expect(read(path), path).toMatch(/useDialMetrics\(dial\)/)
     }
-    expect(hook()).toMatch(/export function useDialMetrics\(\)/)
   })
 
   it('measures no dial of its own', () => {
@@ -75,8 +80,8 @@ describe('the dial button is one size everywhere', () => {
     // true by hand. So the guard is on what the hook is allowed to know, not on a word.
     const sources = [...hook().matchAll(/from '([^']+)'/g)].map((m) => m[1] ?? '')
     const seen = [...new Set(sources)].sort((a, b) => a.localeCompare(b))
-    expect(seen, 'the dial reads the viewport, nothing else') //
-      .toEqual(['@/hooks/use-viewport', '@/lib/dial-metrics'])
+    expect(seen, 'the dial reads the viewport and the dial, nothing else') //
+      .toEqual(['@/hooks/use-viewport', '@/lib/dial-metrics', '@/modes'])
     const arithmetic = readFileSync('lib/dial-metrics.ts', 'utf8')
     expect(
       [...arithmetic.matchAll(/from '([^']+)'/g)],
@@ -88,15 +93,17 @@ describe('the dial button is one size everywhere', () => {
 describe('the dial fits the screen it is drawn on', () => {
   // A quarter of the width, less the 12pt gap the button carries.
   it('gives the button a quarter of the width on a phone held upright', () => {
-    expect(dialMetrics({ width: 375, height: 667 })).toEqual({
+    expect(dialMetrics({ width: 375, height: 667 }, NINE_DIAL)).toEqual({
       button: 81,
       gap: 12,
-      size: 267,
+      width: 267,
+      height: 267,
     })
-    expect(dialMetrics({ width: 390, height: 844 })).toEqual({
+    expect(dialMetrics({ width: 390, height: 844 }, NINE_DIAL)).toEqual({
       button: 85,
       gap: 12,
-      size: 279,
+      width: 279,
+      height: 279,
     })
   })
 
@@ -112,7 +119,9 @@ describe('the dial fits the screen it is drawn on', () => {
     ]
     for (const phone of PHONES) {
       const width = Math.max(0, Math.floor(0.25 * phone.width) - 12)
-      expect(dialMetrics(phone).button, `${phone.width}x${phone.height}`).toBe(width)
+      expect(dialMetrics(phone, NINE_DIAL).button, `${phone.width}x${phone.height}`).toBe(
+        width,
+      )
     }
   })
 
@@ -121,9 +130,9 @@ describe('the dial fits the screen it is drawn on', () => {
     // portrait, the web build is not. The width rule alone asked for 154pt buttons and
     // a 582pt square here: the rows overlapped by 58pt and two thirds of the dial hung
     // below the fold.
-    const sideways = dialMetrics({ width: 667, height: 375 })
+    const sideways = dialMetrics({ width: 667, height: 375 }, NINE_DIAL)
     expect(sideways.button).toBeLessThan(154)
-    expect(sideways.size).toBeLessThanOrEqual(375)
+    expect(sideways.height).toBeLessThanOrEqual(375)
   })
 
   it('keeps the square and the buttons in agreement at every size', () => {
@@ -132,9 +141,15 @@ describe('the dial fits the screen it is drawn on', () => {
     // them, which is the overlap above rather than a fix for it.
     for (let width = 200; width <= 1200; width += 7) {
       for (const height of [375, 500, 667, 844, 1180]) {
-        const { button, gap, size } = dialMetrics({ width, height })
-        expect(size, `${width}x${height}`).toBe(button * 3 + gap * 2)
-        expect(size, `${width}x${height}`).toBeLessThanOrEqual(height)
+        const {
+          button,
+          gap,
+          width: across,
+          height: down,
+        } = dialMetrics({ width, height }, NINE_DIAL)
+        expect(across, `${width}x${height}`).toBe(button * 3 + gap * 2)
+        expect(down, `${width}x${height}`).toBe(button * 3 + gap * 2)
+        expect(down, `${width}x${height}`).toBeLessThanOrEqual(height)
       }
     }
   })
@@ -149,9 +164,10 @@ describe('the dial fits the screen it is drawn on', () => {
       { width: 0, height: 667 },
       { width: 10, height: 10 },
     ]) {
-      const metrics = dialMetrics(blind)
+      const metrics = dialMetrics(blind, NINE_DIAL)
       expect(metrics.button, `${blind.width}x${blind.height}`).toBe(0)
-      expect(metrics.size, `${blind.width}x${blind.height}`).toBe(0)
+      expect(metrics.width, `${blind.width}x${blind.height}`).toBe(0)
+      expect(metrics.height, `${blind.width}x${blind.height}`).toBe(0)
     }
   })
 })

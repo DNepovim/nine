@@ -1,4 +1,4 @@
-import { lerpColor } from '@/machines/modes'
+import { lerpColor } from '@/modes'
 
 // Glass, as the app's three big titles wear it: NINE on the intro screen, the pause mark,
 // and the game-over claim.

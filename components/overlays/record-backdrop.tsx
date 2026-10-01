@@ -13,7 +13,7 @@ import { Hyperspace } from '@/components/game/hyperspace'
 import { GOLD_SCALE, PALE_GOLD } from '@/constants/colors'
 import type { Period } from '@/lib/announcements'
 import type { RecordScreen } from '@/lib/champions'
-import { DARK_MODE_GRADIENT, MODE_GRADIENT, type Mode } from '@/machines/game'
+import { darkGradientOf, gradientOf, type ModeId } from '@/modes'
 
 // Mounted inside Screen, which pads its children — and Yoga lays absolute children out
 // inside that padding, so a plain inset-0 fill would leave a bare frame around the gold.
@@ -78,7 +78,7 @@ export function RecordBackdrop({
 }: {
   record: Period
   screen: RecordScreen
-  gameMode: Mode
+  gameMode: ModeId
 }) {
   const [cycle, setCycle] = useState(0)
   const goldIn = useSharedValue(0)
@@ -100,8 +100,8 @@ export function RecordBackdrop({
 
   // A reign takes the gold the announcement bar wears. A mode's own record takes the
   // mode's colours, at full strength for Extreme and tinted for anything easier.
-  const [from, to] = MODE_GRADIENT[gameMode]
-  const [darkFrom, darkTo] = DARK_MODE_GRADIENT[gameMode]
+  const [from, to] = gradientOf(gameMode)
+  const [darkFrom, darkTo] = darkGradientOf(gameMode)
   const wash =
     screen === 'crown'
       ? ([GOLD_SCALE[1], GOLD_SCALE[0]] as const)

@@ -8,7 +8,7 @@ import Animated, { FadeIn, FadeOut } from 'react-native-reanimated'
 import { GAME_SCALE } from '@/constants/colors'
 import type { ChampionMark } from '@/lib/champions'
 import { cn } from '@/lib/cn'
-import { MODE_GRADIENT } from '@/machines/game'
+import { gradientOf } from '@/modes'
 
 // How big the mark is drawn where nothing says otherwise — the intro's size, over the
 // title. The profile card draws it a little larger, over the name.
@@ -62,13 +62,13 @@ const shadow = {
 // amber, because it is not about one mode.
 const MARK_COPY = {
   '🦉': {
-    tint: MODE_GRADIENT.accuracy[0],
+    tint: gradientOf('accuracy')[0],
     title: msg`THE OWL`,
     mine: msg`An owl can hear a mouse under half a metre of snow. You are the more exact one — Extreme Accuracy's all-time record is yours.`,
     theirs: msg`An owl can hear a mouse under half a metre of snow. This player is the more exact one — Extreme Accuracy's all-time record is theirs.`,
   },
   '🦅': {
-    tint: MODE_GRADIENT.speed[0],
+    tint: gradientOf('speed')[0],
     title: msg`THE EAGLE`,
     mine: msg`An eagle dives at 240 km/h. You are the quicker one — Extreme Speed's all-time record is yours.`,
     theirs: msg`An eagle dives at 240 km/h. This player is the quicker one — Extreme Speed's all-time record is theirs.`,

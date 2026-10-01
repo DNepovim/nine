@@ -1,18 +1,27 @@
-import { MAX_TARGET } from '@/constants/game'
+import type { DialSpec } from '@/modes'
 
-// Which values a spawning target may take. The whole range in every mode but the
-// tutorial, which narrows it to a stretch either side of the number just hit.
+// Which values a spawning target may take. The whole range the dial reaches in most
+// modes; a mode that sets a `reach` narrows it to a stretch either side of the number
+// just hit.
 export type TargetRange = { min: number; max: number }
 
-export const FULL_TARGET_RANGE: TargetRange = { min: 0, max: MAX_TARGET }
+// Everything the dial can be dialled to.
+export const fullRange = (dial: DialSpec): TargetRange => ({
+  min: 0,
+  max: dial.maxSum,
+})
 
 // A range `reach` either side of a value, clipped to the range targets live in. Clipped
 // rather than shifted: a range around 20 is shorter on the low side because there is
 // nothing down there, and sliding it up to keep its length would quietly stop obeying
 // the reach it was asked for.
-export const rangeAround = (value: number, reach: number): TargetRange => ({
+export const rangeAround = (
+  dial: DialSpec,
+  value: number,
+  reach: number,
+): TargetRange => ({
   min: Math.max(0, value - reach),
-  max: Math.min(MAX_TARGET, value + reach),
+  max: Math.min(dial.maxSum, value + reach),
 })
 
 // The value a spawning target gets: the roll's own pick, or the nearest free number to
@@ -26,12 +35,12 @@ export const rangeAround = (value: number, reach: number): TargetRange => ({
 export function pickTargetValue({
   roll,
   taken,
-  range = FULL_TARGET_RANGE,
+  range,
 }: {
   // A fraction in [0, 1) — `Math.random()` at the call site, a fixed number in a test.
   roll: number
   taken: readonly number[]
-  range?: TargetRange
+  range: TargetRange
 }): number {
   const span = range.max - range.min + 1
   // Clamped against a roll of exactly 1, which `Math.random` never returns and a caller

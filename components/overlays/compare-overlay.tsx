@@ -8,7 +8,7 @@ import { usePlayerProfile } from '@/hooks/use-player-profile'
 import { useViewport } from '@/hooks/use-viewport'
 import { compareProfiles } from '@/lib/compare'
 import type { PlayerProfile } from '@/lib/player-profile'
-import { MODE_GRADIENT, MODES } from '@/machines/game'
+import { gradientOf, labelOf } from '@/modes'
 
 // The two careers side by side, opened from the bottom of a profile.
 //
@@ -136,9 +136,9 @@ export function CompareOverlay({
                         <Text
                           selectable={false}
                           className="flex-1 font-mono text-[11px] font-black tracking-[2px]"
-                          style={{ color: MODE_GRADIENT[block.mode][0] }}
+                          style={{ color: gradientOf(block.mode)[0] }}
                         >
-                          {t(MODES[block.mode].label)}
+                          {t(labelOf(block.mode))}
                         </Text>
                       </View>
                       {block.rows.map((row) => (

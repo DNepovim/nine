@@ -47,6 +47,7 @@ const fontSizeForDigits = (value: number, scale: number): number => {
 
 export function PieCountdown({
   value,
+  maxValue,
   isDark,
   active,
   duration,
@@ -58,6 +59,9 @@ export function PieCountdown({
   clocked = true,
 }: {
   value: number
+  // The highest sum the board being played reaches, which is what the band tint is
+  // measured against — see `targetBand`.
+  maxValue: number
   isDark: boolean
   active: boolean
   duration: number
@@ -95,7 +99,8 @@ export function PieCountdown({
   const running = active && clocked
   // The multiplayer hit-flash owns the track while it lasts, so the band yields to it.
   const trackColor =
-    backgroundColor ?? TARGET_BAND_TRACK[isDark ? 'dark' : 'light'][targetBand(value)]
+    backgroundColor ??
+    TARGET_BAND_TRACK[isDark ? 'dark' : 'light'][targetBand(value, maxValue)]
   const numberColor = PIE_INK[isDark ? 'dark' : 'light']
 
   // One effect for starting, stopping and starting again, because they are the same

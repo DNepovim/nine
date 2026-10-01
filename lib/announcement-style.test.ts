@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
 import { GRAYSCALE } from '@/constants/colors'
-import { DARK_MODE_GRADIENT } from '@/machines/modes'
+import { darkGradientOf } from '@/modes'
 
 import { announcementStyle } from './announcement-style'
 import { ANNOUNCEMENT_IDS } from './announcements'
@@ -37,7 +37,7 @@ describe('announcementStyle', () => {
 
   it('dresses a raised record in the CTA gradient', () => {
     for (const id of RAISED) {
-      const [from, to] = DARK_MODE_GRADIENT.speed
+      const [from, to] = darkGradientOf('speed')
       expect(announcementStyle(id, 'speed')).toMatchObject({ from, to })
     }
   })

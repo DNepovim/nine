@@ -8,7 +8,7 @@ import {
   type TakenMedal,
 } from '@/lib/medal-history'
 import type { MedalPeriod } from '@/lib/medals'
-import type { Difficulty, ScoredMode } from '@/machines/game'
+import { type Difficulty, type ScoredMode } from '@/modes'
 
 const TAKER: Taker = { userId: 'u1', nickname: 'RIVAL' }
 

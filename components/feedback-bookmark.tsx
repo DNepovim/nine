@@ -16,7 +16,7 @@ import { scheduleOnRN } from 'react-native-worklets'
 
 import { SWIPE_THRESHOLD } from '@/constants/game'
 import { LAYER } from '@/constants/layers'
-import { MODE_GRADIENT, type Mode } from '@/machines/game'
+import { gradientOf, type ModeId } from '@/modes'
 
 const ICON_ZONE = 44
 const LABEL_ZONE = 90
@@ -67,12 +67,12 @@ export function FeedbackBookmark({
   onCollapse,
   onPress,
 }: {
-  mode: Mode
+  mode: ModeId
   revealed: boolean
   onCollapse: () => void
   onPress: () => void
 }) {
-  const color = MODE_GRADIENT[mode][0]
+  const color = gradientOf(mode)[0]
   const translateX = useSharedValue(OFFSCREEN_X)
   const shake = useSharedValue(0)
   const mounting = useRef(true)

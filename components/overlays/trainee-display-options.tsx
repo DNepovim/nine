@@ -60,8 +60,8 @@ export function TraineeDisplayOptions({
   onToggleStats,
   showRoute,
   onToggleRoute,
-  traineeTimeoutMs,
-  onSetTraineeTimeout,
+  playerClockMs,
+  onSetPlayerClock,
 }: {
   corners: DialCorners
   // Which tile was tapped. The dialog it opens is the pause screen's to render, not
@@ -81,8 +81,8 @@ export function TraineeDisplayOptions({
   onToggleRoute: () => void
   // How long a Trainee target lasts, in ms. Held in ms because that is what the machine
   // spawns with; the slider works in whole seconds and converts at the edge.
-  traineeTimeoutMs: number
-  onSetTraineeTimeout: (ms: number) => void
+  playerClockMs: number
+  onSetPlayerClock: (ms: number) => void
 }) {
   const { t } = useLingui()
   const { colorScheme } = useTheme()
@@ -187,12 +187,12 @@ export function TraineeDisplayOptions({
         {/* Driven in ms, the unit the machine spawns with, and written in seconds —
             rounded, because the ends come off the mode table and land on 7.3 and 63.8. */}
         <ValueSlider
-          value={traineeTimeoutMs}
+          value={playerClockMs}
           min={TRAINEE_TIMEOUT_MIN_MS}
           max={TRAINEE_TIMEOUT_MAX_MS}
           step={TRAINEE_TIMEOUT_STEP_MS}
           format={(ms) => `${Math.round(ms / 1000)}s`}
-          onChange={onSetTraineeTimeout}
+          onChange={onSetPlayerClock}
         />
       </View>
     </View>

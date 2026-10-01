@@ -3,7 +3,7 @@ import { View } from 'react-native'
 import { Easing, useSharedValue, withRepeat, withTiming } from 'react-native-reanimated'
 
 import type { TitleWords } from '@/lib/game-over-title'
-import { lerpColor, MODE_GRADIENT, type Mode } from '@/machines/game'
+import { gradientOf, lerpColor, type ModeId } from '@/modes'
 
 import { AnimatedLetter } from './animated-letter'
 
@@ -24,15 +24,15 @@ export function GameOverTitle({
 }: {
   // Arcade too, which has no entry in `MODES` but does have a pair in `MODE_GRADIENT` —
   // and an end worth naming. See components/game/arcade-over.tsx.
-  gameMode: Mode | 'arcade'
+  gameMode: ModeId
   words: TitleWords
   // The all-time screen puts these letters on gold with a celebration behind them.
   shadow?: boolean
 }) {
   const rows = words.map((word) => Array.from(word))
   const gradPhase = useSharedValue(0)
-  const gradStartSv = useSharedValue<string>(MODE_GRADIENT[gameMode][0])
-  const gradEndSv = useSharedValue<string>(MODE_GRADIENT[gameMode][1])
+  const gradStartSv = useSharedValue<string>(gradientOf(gameMode)[0])
+  const gradEndSv = useSharedValue<string>(gradientOf(gameMode)[1])
 
   useEffect(() => {
     gradPhase.value = withRepeat(
@@ -53,11 +53,7 @@ export function GameOverTitle({
               <AnimatedLetter
                 key={globalIndex}
                 char={char}
-                color={lerpColor(
-                  MODE_GRADIENT[gameMode][0],
-                  MODE_GRADIENT[gameMode][1],
-                  tBase,
-                )}
+                color={lerpColor(gradientOf(gameMode)[0], gradientOf(gameMode)[1], tBase)}
                 tBase={tBase}
                 gradStart={gradStartSv}
                 gradEnd={gradEndSv}

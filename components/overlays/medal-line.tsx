@@ -8,7 +8,7 @@ import { DIM_INK } from '@/constants/colors'
 import { useTheme } from '@/hooks/use-theme'
 import { PERIOD_CODES, type Medal } from '@/lib/medals'
 import { rankMedal } from '@/lib/rank-emoji'
-import { DIFFICULTIES, MODE_GRADIENT } from '@/machines/game'
+import { DIFFICULTIES, gradientOf } from '@/modes'
 
 // The player's best claim in each mode, under the title. The difficulty is spelled; the
 // mode is the colour it is spelled in — the same accent the leaderboard gives that mode,
@@ -49,7 +49,7 @@ export function MedalLine({
             <Text
               selectable={false}
               className="font-mono text-[9px] font-black leading-[13px] tracking-[1px]"
-              style={{ color: MODE_GRADIENT[medal.mode][0] }}
+              style={{ color: gradientOf(medal.mode)[0] }}
             >
               {t(DIFFICULTIES[medal.difficulty].code)}
             </Text>

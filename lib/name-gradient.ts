@@ -1,5 +1,5 @@
 import { NAME_INK } from '@/constants/colors'
-import { lerpColor } from '@/machines/modes'
+import { lerpColor } from '@/modes'
 
 // A nickname, coloured by how the player plays.
 //

@@ -1,4 +1,4 @@
-import type { Difficulty, Mode } from '@/machines/game'
+import { type Difficulty, type ModeId } from '@/modes'
 
 // When Trainee should offer the player a scored board, and what it says when it does.
 //
@@ -36,7 +36,7 @@ export const WELCOME_HITS = 10
 // player clearing Extreme practice has never once been under the pressure of losing, and
 // dropping them on a matching Extreme board would be a worse welcome than a fair one.
 export const STEP_UP_BOARD = { mode: 'accuracy', difficulty: 'easy' } as const satisfies {
-  mode: Mode
+  mode: ModeId
   difficulty: Difficulty
 }
 

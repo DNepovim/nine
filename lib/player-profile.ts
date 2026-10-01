@@ -15,7 +15,7 @@ import {
   SCORED_MODES,
   type Difficulty,
   type ScoredMode,
-} from '@/machines/game'
+} from '@/modes'
 
 // What a tapped name opens: one player, as the `player_profile` RPC answers for them.
 //

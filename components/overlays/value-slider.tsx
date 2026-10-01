@@ -4,7 +4,7 @@ import { Gesture, GestureDetector } from 'react-native-gesture-handler'
 import { useSharedValue } from 'react-native-reanimated'
 import { scheduleOnRN } from 'react-native-worklets'
 
-import { MODE_GRADIENT } from '@/machines/game'
+import { gradientOf } from '@/modes'
 
 const TRACK = 4
 const HANDLE = 22
@@ -44,7 +44,7 @@ export function ValueSlider({
   // every frame it spends there.
   const lastSent = useSharedValue(value)
 
-  const tint = MODE_GRADIENT.trainee[0]
+  const tint = gradientOf('trainee')[0]
   const span = max - min
   const ratio = span <= 0 ? 0 : Math.min(1, Math.max(0, (value - min) / span))
   const handleX = ratio * width

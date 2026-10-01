@@ -2,8 +2,12 @@ import { useLingui } from '@lingui/react/macro'
 import { Text, View } from 'react-native'
 
 import { cn } from '@/lib/cn'
-import { DIFFICULTIES, getDifficultyColor } from '@/machines/game'
-import type { Difficulty, ScoredMode } from '@/machines/modes'
+import {
+  DIFFICULTIES,
+  getDifficultyColor,
+  type Difficulty,
+  type ScoredMode,
+} from '@/modes'
 
 // A number the player has not produced yet. An em dash rather than a zero: a board
 // nobody has played is not a board somebody scored nothing on.

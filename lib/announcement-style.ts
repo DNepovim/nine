@@ -6,7 +6,7 @@ import {
   GRAYSCALE,
 } from '@/constants/colors'
 import type { AnnouncementId } from '@/lib/announcements'
-import { DARK_MODE_GRADIENT, type Mode } from '@/machines/modes'
+import { darkGradientOf, type ModeId } from '@/modes'
 
 // Which of the app's scales an announcement wears. See the design-guide skill.
 type Scale = 'game' | 'gold' | 'achievement' | 'cta' | 'gray'
@@ -64,9 +64,9 @@ const ON_STRONG = '#D8D2F4'
 // Only `cta` varies with the mode being played; the rest are fixed. The bar takes just
 // the two darkest greys rather than the whole ramp — the pale end would drop white text
 // to about 1.9:1 — while the implosion still falls in all four.
-export function announcementStyle(id: AnnouncementId, mode: Mode): AnnouncementStyle {
+export function announcementStyle(id: AnnouncementId, mode: ModeId): AnnouncementStyle {
   const scale = ANNOUNCEMENT_SCALE[id]
-  const [ctaFrom, ctaTo] = DARK_MODE_GRADIENT[mode]
+  const [ctaFrom, ctaTo] = darkGradientOf(mode)
 
   switch (scale) {
     case 'game':

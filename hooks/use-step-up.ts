@@ -6,7 +6,7 @@ import {
   stepUpReducer,
   type StepUpMessage,
 } from '@/lib/step-up'
-import type { HitBatch, Mode } from '@/machines/game'
+import type { HitBatch } from '@/machines/game'
 import { cleanHitReason } from '@/machines/scoring'
 
 // Trainee's invitation to a scored board: whether to make it, and the words for it.
@@ -22,7 +22,7 @@ import { cleanHitReason } from '@/machines/scoring'
 // them, and there is nothing to introduce twice.
 export function useStepUp({
   inRun,
-  mode,
+  coached,
   batch,
   hits,
   playedScored,
@@ -33,7 +33,9 @@ export function useStepUp({
   // which never happens while frozen, and counting a pause as the end of the run would
   // let a dismissed toast come back the moment the player resumed.
   inRun: boolean
-  mode: Mode
+  // Whether the run teaches — `capabilities.coached`. The offer is a teaching mode's to
+  // make, and no other kind of run has anything to introduce.
+  coached: boolean
   batch: HitBatch
   hits: number
   playedScored: boolean
@@ -48,7 +50,7 @@ export function useStepUp({
   // nothing already counted.
   const lastSeqRef = useRef(batch.seq)
 
-  const active = inRun && mode === 'trainee'
+  const active = inRun && coached
 
   // A run's own clock, so the floor is time in this run rather than time since the app
   // opened. It keeps running through a pause, which is the honest reading anyway: a

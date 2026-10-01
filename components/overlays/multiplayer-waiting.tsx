@@ -14,11 +14,7 @@ import { DIM_INK } from '@/constants/colors'
 import { useTheme } from '@/hooks/use-theme'
 import { cn } from '@/lib/cn'
 import { SHARE_URL } from '@/lib/invite-message'
-import {
-  DARK_MULTIPLAYER_GRADIENT,
-  MODE_DESCRIPTIONS,
-  MULTIPLAYER_GRADIENT,
-} from '@/machines/game'
+import { DARK_MULTIPLAYER_GRADIENT, descriptionOf, MULTIPLAYER_GRADIENT } from '@/modes'
 import type { MultiMode, RoomPlayer } from '@/types/multiplayer'
 
 // How long COPY reads as COPIED before reverting — long enough to register,
@@ -156,7 +152,7 @@ export function MultiplayerWaiting({
               selectable={false}
               className="px-6 text-center font-mono text-[10px] font-bold tracking-[0.5px] text-dim"
             >
-              {t(MODE_DESCRIPTIONS[mode])}
+              {t(descriptionOf(mode))}
             </Text>
           </View>
         )}

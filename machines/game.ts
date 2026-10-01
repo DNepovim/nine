@@ -1,54 +1,44 @@
 import { isNonEmptyArray } from 'narrowland'
 import { assign, createMachine } from 'xstate'
 
-import {
-  scriptedTarget,
-  TUTORIAL_MAX_TARGETS,
-  TUTORIAL_OPENING_GRID,
-  TUTORIAL_OPENING_TARGET,
-  TUTORIAL_TARGETS,
-} from '@/constants/tutorial'
+import { TUTORIAL_TARGETS } from '@/constants/tutorial'
 import { tutorialBoardEntry } from '@/lib/tutorial-board'
-
 import {
-  DIFFICULTIES,
-  effectiveTimeout,
+  emptyGrid,
   FAST_HIT_THRESHOLD,
-  MODES,
+  NINE_DIAL,
+  pressGrid,
   rampedTimeout,
+  runRules,
+  runSubmode,
+  setGrid,
+  STREAK_BROKEN,
+  STREAK_TRIGGERED,
   streakMultiplier,
+  sumOf,
+  traitsOf,
+  TUTORIAL,
   type Difficulty,
-  type Mode,
-  type StreakTrigger,
-} from './modes'
+  type Grid,
+  type ModeId,
+  type RunRules,
+  type Submode,
+} from '@/modes'
+
 import { accuracyFactor, computeHitPoints, computePar, speedFactor } from './scoring'
 
-export type { Difficulty, Mode, ScoredMode } from './modes'
-export {
-  ARCADE_TEASER,
-  DARK_MODE_GRADIENT,
-  DARK_MULTIPLAYER_GRADIENT,
-  DIFFICULTIES,
-  DIFFICULTY_ORDER,
-  getDifficultyColor,
-  lerpColor,
-  MODE_DESCRIPTIONS,
-  MODE_GRADIENT,
-  MODE_ORDER,
-  MODES,
-  MULTIPLAYER_GRADIENT,
-  runLabel,
-  SCORED_MODES,
-  effectiveSpawnInterval,
-  effectiveTimeout,
-  streakMultiplier,
-} from './modes'
+// The engine. One state machine for every mode on it, and it names none of them: what a
+// run is governed by arrives as a `RunRules` (see modes/rules.ts), so a mode the machine
+// has never heard of — a challenge registered this morning — runs correctly.
+//
+// The mode a run is in is still on the context, because the score, the board and the
+// career all have to be told which mode they belong to. Nothing in here branches on it.
 
-export type Grid = [
-  [number, number, number],
-  [number, number, number],
-  [number, number, number],
-]
+// What this run is played under. Resolved on each read rather than kept on the context:
+// it is a pure function of the mode, the rung and the submode, all three of which are
+// already there, and a copy on the context would be a second thing to keep in step.
+const rulesOf = (context: Context): RunRules =>
+  runRules(context.mode, context.difficulty, context.tutorial)
 
 export type Target = {
   id: number
@@ -64,22 +54,41 @@ export type Target = {
   userSteps: number // button changes since the reference moment
 }
 
-type DifficultyStats = { score: number; hits: number; accSum?: number; spdSum?: number }
-export type Stats = Record<Mode, Record<Difficulty, DifficultyStats>>
+export type DifficultyStats = {
+  score: number
+  hits: number
+  accSum?: number
+  spdSum?: number
+}
 
-const emptyDifficultyStats = (): Record<Difficulty, DifficultyStats> => ({
-  easy: { score: 0, hits: 0 },
-  hard: { score: 0, hits: 0 },
-  extreme: { score: 0, hits: 0 },
-})
+// The player's best on each board, keyed by mode and then by rung.
+//
+// Keyed by name rather than exhaustive over a union of modes, which is what it was. Two
+// reasons, and the second is the one that forced it: a twentieth mode should not mean
+// editing this shape, and a **challenge**'s id is not in any union written at build time
+// — so a store that insisted on one could not hold a challenge's best at all.
+//
+// Sparse, so a board nobody has played has no entry rather than a row of noughts. Read
+// it through `bestOn`, which answers for an absent board the same way it answers for an
+// unplayed one.
+export type Stats = Readonly<
+  Record<string, Readonly<Partial<Record<Difficulty, DifficultyStats>>>>
+>
 
-// Exported for the dev gallery, which needs a blank one to stand in for a real player's
-// figures — see dev/gallery.tsx.
-export const emptyStats = (): Stats => ({
-  trainee: emptyDifficultyStats(),
-  accuracy: emptyDifficultyStats(),
-  speed: emptyDifficultyStats(),
-})
+const NO_BEST: DifficultyStats = { score: 0, hits: 0 }
+
+// A board's best, or a blank one for a board never played. The one way `Stats` is read:
+// an absent mode, an absent rung and a rung with nothing on it are the same answer, and
+// no caller should have to tell them apart.
+export const bestOn = (
+  stats: Stats,
+  mode: ModeId,
+  difficulty: Difficulty,
+): DifficultyStats => stats[mode]?.[difficulty] ?? NO_BEST
+
+// A player with no history. Exported for the dev gallery, which needs a blank one to
+// stand in for a real player's figures — see dev/gallery.tsx.
+export const emptyStats = (): Stats => ({})
 
 // One hit's worth of feedback for the UI's floating "+points" animation.
 export type HitInfo = {
@@ -107,30 +116,50 @@ export type HitInfo = {
 }
 export type HitBatch = { seq: number; hits: HitInfo[] }
 
-export function computeSum(grid: Grid): number {
-  return grid.reduce(
-    (sum, row, r) => sum + row.reduce((s, val, c) => s + val * (r + 1) * (c + 1), 0),
-    0,
-  )
+// What a run opens its player-set clock on: practice's own resolved clock, which is the
+// figure the slider on the pause screen starts from.
+const PLAYER_CLOCK_DEFAULT_MS = runRules('trainee', 'easy').clock.base
+
+// The stored bests, merged in.
+//
+// A board belonging to a mode that keeps none is dropped rather than merged — which is
+// what used to be spelled out as "trainee's persisted best is deliberately dropped".
+// Trainee no longer records one, but players from before that change still have a value
+// on disk, and loading it would keep firing the personal-best celebration on the first
+// hit of a practice run. Stated as the rule rather than as that mode's name, so a
+// challenge that keeps no board is handled by the same line.
+//
+// A mode nothing is registered under is dropped too: its boards are not addressable and
+// writing them back would keep them on disk forever.
+const hydrateStats = (current: Stats, stored: Partial<Stats>): Stats => {
+  const merged: Record<string, Partial<Record<Difficulty, DifficultyStats>>> = {
+    ...current,
+  }
+  for (const [mode, boards] of Object.entries(stored)) {
+    if (boards === undefined || !traitsOf(mode).scored) continue
+    merged[mode] = { ...merged[mode], ...boards }
+  }
+  return merged
 }
 
-const initialGrid: Grid = [
-  [0, 0, 0],
-  [0, 0, 0],
-  [0, 0, 0],
-]
-
-// The one target a tutorial opens holding. Dealt here rather than by the spawner because
-// the spawner rolls a value, and the lesson's first target is not a roll.
-const openingTargets = (id: number, duration: number, now: number): Target[] => [
+// The target a run opens holding, for a submode that opens on one. Dealt here rather
+// than by the spawner because the spawner rolls a value, and a lesson's first target is
+// not a roll.
+const openingTargets = (
+  rules: RunRules,
+  opening: NonNullable<Submode['opening']>,
+  id: number,
+  duration: number,
+  now: number,
+): Target[] => [
   {
     id,
-    value: TUTORIAL_OPENING_TARGET,
+    value: opening.target,
     spawnedAt: now,
     duration,
     refAt: now,
-    refGrid: TUTORIAL_OPENING_GRID,
-    par: computePar(TUTORIAL_OPENING_GRID, TUTORIAL_OPENING_TARGET),
+    refGrid: opening.grid,
+    par: computePar(rules.dial, opening.grid, opening.target),
     userSteps: 0,
   },
 ]
@@ -140,18 +169,22 @@ type Context = {
   hits: number
   score: number
   stats: Stats // best { score, hits } per mode × difficulty (best by score)
-  mode: Mode
+  // Which mode this run is. A name rather than one of three, because a run may be of a
+  // challenge — a mode registered for a day, whose id nobody wrote down at build time.
+  // Nothing in the machine branches on it; what the run is governed by is `rulesOf`.
+  mode: ModeId
   difficulty: Difficulty
-  // How long a Trainee target lasts, in ms. Trainee alone, and settable from its pause
-  // screen: practice is the one place where the clock is the player's to choose rather
-  // than the thing being tested. Every other mode reads `rampedTimeout`, which is the
-  // run's own difficulty and cannot be negotiated with.
-  traineeTimeoutMs: number
-  // This run is the tutorial — the one a first launch opens on. A property of the run
-  // rather than a mode of its own: everything else about it is Trainee, down to the
-  // colour, so `mode` stays `trainee` and every rule that asks about the mode keeps the
-  // answer it already had. What it changes is in constants/tutorial.ts, and each of the
-  // three places that reads it says which rule it is keeping.
+  // How long a target lasts, in ms, in a mode whose clock the player sets — see
+  // `clock.playerSet`. Trainee is the one today: practice is the one place where the
+  // clock is the player's to choose rather than the thing being tested. Every other mode
+  // reads `rampedTimeout`, which is the run's own difficulty and cannot be negotiated
+  // with.
+  playerClockMs: number
+  // This run is the tutorial — the one a first launch opens on. A **submode**: everything
+  // else about it is Trainee, down to the colour, so `mode` stays `trainee` and every
+  // rule that asks about the mode keeps the answer it already had. What it changes is a
+  // `RulesPatch` in modes/definitions/tutorial.ts, laid over Trainee by `rulesOf`, so
+  // nothing in here reads this flag except to pick the submode.
   tutorial: boolean
   lives: number
   streak: number
@@ -207,7 +240,7 @@ type Context = {
 
 // The slice of a run worth putting back when the app is opened on one it was closed on
 // — everything that says where the run stood, and nothing that is kept under a key of
-// its own (`stats`, `traineeTimeoutMs`) or that describes the last press rather than the
+// its own (`stats`, `playerClockMs`) or that describes the last press rather than the
 // run (`hitBatch`). Written and read by lib/saved-run.ts.
 export type RestoredRun = Pick<
   Context,
@@ -241,9 +274,9 @@ type Event =
   | { type: 'RESUME'; now: number }
   | { type: 'RESTART'; now: number; runId: string }
   | { type: 'MENU' }
-  | { type: 'SET_MODE'; mode: Mode }
+  | { type: 'SET_MODE'; mode: ModeId }
   | { type: 'SET_DIFFICULTY'; difficulty: Difficulty }
-  | { type: 'SET_TRAINEE_TIMEOUT'; ms: number; now: number }
+  | { type: 'SET_PLAYER_CLOCK'; ms: number; now: number }
   | { type: 'HYDRATE_STATS'; stats: Partial<Stats> }
   | { type: 'RESTORE'; run: RestoredRun; now: number }
   | { type: 'PRESS'; index: number; delta: 1 | -1; now: number }
@@ -271,37 +304,50 @@ export type GameSend = (event: Event) => void
 // `tutorial` is handed in rather than carried over, because it is the one thing about a
 // fresh run that the event decides and the last run cannot: START says whether this is
 // the tutorial, and RESTART hands back what the run being restarted was.
-const freshGame = (context: Context, now: number, tutorial: boolean, runId: string) => ({
-  // The tutorial opens on a board and a target of its own; every other run opens on nine
-  // zeros and an empty board for the spawner to fill.
-  grid: tutorial ? TUTORIAL_OPENING_GRID : initialGrid,
-  tutorial,
-  hits: 0,
-  score: 0,
-  lives: MODES[context.mode].lives,
-  streak: 0,
-  maxStreak: 0,
-  strikes: 0,
-  accSum: 0,
-  spdSum: 0,
-  bestAcc: 0,
-  bestSpd: 0,
-  targets: tutorial
-    ? openingTargets(context.nextTargetId, context.traineeTimeoutMs, now)
-    : ([] as Target[]),
-  // Cleared off the board, but the counter keeps climbing for the same reason the hit
-  // batch's seq does: the UI keys a target's animations on its id, and a restart from a
-  // pause leaves the last run's targets still animating off. An id dealt twice would
-  // read to the display list as the departing target, not the arriving one. The tutorial
-  // spends one on the target it opens holding.
-  nextTargetId: context.nextTargetId + (tutorial ? 1 : 0),
-  hitBatch: { seq: context.hitBatch.seq, hits: [] as HitInfo[] },
-  elapsedMs: 0,
-  playingSince: now,
-  pausedAt: null,
-  runSeq: context.runSeq + 1,
-  runId,
-})
+const freshGame = (context: Context, now: number, tutorial: boolean, runId: string) => {
+  const rules = rulesOf({ ...context, tutorial })
+  // A submode may open the run holding a board and a target of its own — the tutorial
+  // does, because a dial of zeros is the one position where every key looks alike and
+  // nothing on it has happened yet. Every other run opens on zeros with an empty board
+  // for the spawner to fill.
+  const opening = runSubmode(tutorial)?.opening ?? null
+  return {
+    grid: opening?.grid ?? emptyGrid(rules.dial),
+    tutorial,
+    hits: 0,
+    score: 0,
+    lives: rules.lives.count,
+    streak: 0,
+    maxStreak: 0,
+    strikes: 0,
+    accSum: 0,
+    spdSum: 0,
+    bestAcc: 0,
+    bestSpd: 0,
+    targets:
+      opening === null
+        ? ([] as Target[])
+        : openingTargets(
+            rules,
+            opening,
+            context.nextTargetId,
+            context.playerClockMs,
+            now,
+          ),
+    // Cleared off the board, but the counter keeps climbing for the same reason the hit
+    // batch's seq does: the UI keys a target's animations on its id, and a restart from a
+    // pause leaves the last run's targets still animating off. An id dealt twice would
+    // read to the display list as the departing target, not the arriving one. A submode
+    // that opens holding a target spends one on it.
+    nextTargetId: context.nextTargetId + (opening === null ? 0 : 1),
+    hitBatch: { seq: context.hitBatch.seq, hits: [] as HitInfo[] },
+    elapsedMs: 0,
+    playingSince: now,
+    pausedAt: null,
+    runSeq: context.runSeq + 1,
+    runId,
+  }
+}
 
 // Folds the run's current active stretch into `elapsedMs` and clears `playingSince`,
 // which is what every exit from `playing` needs to do to the clock. `playingSince` is
@@ -363,84 +409,29 @@ const bestByScore = (
   spdSum: number,
 ): DifficultyStats => (score > prev.score ? { score, hits, accSum, spdSum } : prev)
 
-// Exported because Trainee's coach applies a press itself, to compare the route
-// before against the route after while the machine's snapshot still holds the grid
-// from before. A third copy of the wrap arithmetic was the alternative.
-export function buildPressGrid(grid: Grid, index: number, delta: 1 | -1): Grid {
-  const row = Math.floor(index / 3)
-  const col = index % 3
-  return grid.map((r, ri) =>
-    r.map((v, ci) => {
-      if (ri !== row || ci !== col) return v
-      return (((v + delta) % 10) + 10) % 10
-    }),
-  ) as Grid
-}
-
-export function buildSetGrid(grid: Grid, index: number, value: number): Grid {
-  const row = Math.floor(index / 3)
-  const col = index % 3
-  return grid.map((r, ri) =>
-    r.map((v, ci) => (ri === row && ci === col ? value : v)),
-  ) as Grid
-}
-
-// What a hit batch did, as far as the streak rules care.
-type StreakFacts = {
-  anyHit: boolean
-  allOptimal: boolean
-  allFast: boolean
-  clearedBoard: boolean
-}
-
 // How much of a target's clock is left when a press lands on it, which is what the speed
 // half of its points is measured from. Each target is scored against the clock it was
 // given, not the run's current one.
 //
-// A tutorial target is scored as if none of its clock had run, because none of it did:
-// the countdown is off there, and measuring against the wall clock instead would let the
-// speed half decay to nothing while the player reads the board — the very thing taking
-// the clock away was meant to allow.
-const clockLeft = (target: Target, tutorial: boolean, now: number): number =>
-  tutorial ? target.duration : Math.max(0, target.duration - (now - target.spawnedAt))
-
-// How many targets may share the board. The difficulty's number, except in the tutorial,
-// which holds to one: nothing new arrives there until the target standing is hit, so a
-// learner is never behind before they have understood the first one. The spawner keeps
-// the other half of that rule — it runs no cadence at all in the tutorial.
-const maxTargetsOn = (context: Context): number =>
-  context.tutorial ? TUTORIAL_MAX_TARGETS : DIFFICULTIES[context.difficulty].maxTargets
-
-// Whether a hit batch extends the streak. One predicate per trigger, so adding a
-// mode's rule means adding a row here rather than another branch in a conditional.
-const STREAK_TRIGGERED = {
-  optimal: ({ anyHit, allOptimal }) => anyHit && allOptimal,
-  fast: ({ anyHit, allFast }) => anyHit && allFast,
-  clear: ({ clearedBoard }) => clearedBoard,
-  none: () => false,
-} as const satisfies Record<StreakTrigger, (facts: StreakFacts) => boolean>
-
-// Whether a hit batch breaks it. A streak only feels like a chain when both halves
-// are in play: `optimal` and `fast` are broken by a matching hit that missed the
-// mark, where `clear` is never broken by a hit — only by a target running out.
-const STREAK_BROKEN = {
-  optimal: ({ anyHit }) => anyHit,
-  fast: ({ anyHit }) => anyHit,
-  clear: () => false,
-  none: () => false,
-} as const satisfies Record<StreakTrigger, (facts: StreakFacts) => boolean>
+// A target in a run whose clock does not run down is scored as if none of it had gone,
+// because none of it had: measuring against the wall clock instead would let the speed
+// half decay to nothing while the player reads the board — the very thing taking the
+// clock away was meant to allow.
+const clockLeft = (target: Target, rules: RunRules, now: number): number =>
+  rules.clock.countsDown
+    ? Math.max(0, target.duration - (now - target.spawnedAt))
+    : target.duration
 
 // Applies a new grid: scores any targets whose value equals the new sum, resets
 // the reference for surviving targets when a hit happened, applies streak multiplier,
 // and emits a hit batch for the UI.
 function applyGrid(context: Context, newGrid: Grid, now: number) {
-  const newSum = computeSum(newGrid)
+  const rules = rulesOf(context)
+  const newSum = sumOf(rules.dial, newGrid)
   const matched = context.targets.filter((t) => t.value === newSum)
   const remaining = context.targets.filter((t) => t.value !== newSum)
   const anyHit = isNonEmptyArray(matched)
   const clearedBoard = anyHit && remaining.length === 0
-
-  const mode = MODES[context.mode]
 
   let rawScore = 0
   let allOptimal = isNonEmptyArray(matched)
@@ -460,14 +451,15 @@ function applyGrid(context: Context, newGrid: Grid, now: number) {
 
   for (const t of matched) {
     const userSteps = t.userSteps + 1
-    const timeLeft = clockLeft(t, context.tutorial, now)
+    const timeLeft = clockLeft(t, rules, now)
     const progress = t.duration > 0 ? Math.min(1, Math.max(0, timeLeft / t.duration)) : 0
     const pts = computeHitPoints({
       par: t.par,
       userSteps,
       timeLeft,
       duration: t.duration,
-      weights: mode.weights,
+      weights: rules.scoring.weights,
+      base: rules.scoring.base,
     })
     const acc = accuracyFactor(t.par, userSteps)
     const spd = speedFactor(timeLeft, t.duration)
@@ -489,30 +481,29 @@ function applyGrid(context: Context, newGrid: Grid, now: number) {
   }
 
   const streakFacts = { anyHit, allOptimal, allFast, clearedBoard }
-  const triggered = STREAK_TRIGGERED[mode.streak](streakFacts)
+  const trigger = rules.scoring.streak
+  const triggered = STREAK_TRIGGERED[trigger](streakFacts)
   let streak = context.streak
   let multiplier = 1
-  if (mode.streak === 'none') {
+  if (trigger === 'none') {
     multiplier = clearedBoard ? 2 : 1 // legacy trainee behavior
   } else if (triggered) {
     streak = context.streak + 1
     multiplier = streakMultiplier(streak)
-  } else if (STREAK_BROKEN[mode.streak](streakFacts)) {
+  } else if (STREAK_BROKEN[trigger](streakFacts)) {
     streak = 0
   } // a miss leaves the streak alone; only expiry clears it outright
 
   const addedScore = Math.round(rawScore * multiplier)
 
-  // Accuracy mode: a hit scoring under the difficulty's bar (tightest on Easy,
-  // loosest on Extreme — see DIFFICULTIES) costs a life. Computed once here rather
-  // than re-checked below, so the hit blamed for it and the decrement it causes can
-  // never name a different one. `findIndex` rather than `some` because the UI needs
-  // to know *which* hit to attach the reason to, not just that one did.
-  const wastefulThreshold = DIFFICULTIES[context.difficulty].wastefulThreshold
-  const wastefulIndex =
-    context.mode === 'accuracy'
-      ? perTarget.findIndex((p) => p.accFactor < wastefulThreshold)
-      : -1
+  // In a mode whose lives work that way, a hit scoring under the rung's bar (tightest
+  // on Easy, loosest on Extreme — see DIFFICULTIES) costs a life; `rules.lives.wasteful`
+  // is null in a mode where a hit never costs one. Computed once here rather than
+  // re-checked below, so the hit blamed for it and the decrement it causes can never
+  // name a different one. `findIndex` rather than `some` because the UI needs to know
+  // *which* hit to attach the reason to, not just that one did.
+  const bar = rules.lives.wasteful
+  const wastefulIndex = bar === null ? -1 : perTarget.findIndex((p) => p.accFactor < bar)
   const costsLife = anyHit && wastefulIndex !== -1
 
   const hitInfos: HitInfo[] = perTarget.map((p, i) => ({
@@ -543,7 +534,7 @@ function applyGrid(context: Context, newGrid: Grid, now: number) {
           ...t,
           refAt: now,
           refGrid: newGrid,
-          par: computePar(newGrid, t.value),
+          par: computePar(rules.dial, newGrid, t.value),
           userSteps: 0,
         }
       : { ...t, userSteps: t.userSteps + 1 },
@@ -564,17 +555,17 @@ function applyGrid(context: Context, newGrid: Grid, now: number) {
     context.bestSpd,
   )
 
-  // Trainee keeps no best. It is a practice mode with no board, and tracking one
-  // meant the personal-best celebration fired on the first hit of a later run —
-  // practice runs are short, so the stored best was low enough to clear at once.
+  // A mode with no board keeps no best. Practice is the one today: tracking one meant
+  // the personal-best celebration fired on the first hit of a later run — practice runs
+  // are short, so the stored best was low enough to clear at once.
   const stats =
-    anyHit && context.mode !== 'trainee'
+    anyHit && rules.capabilities.scored
       ? {
           ...context.stats,
           [context.mode]: {
             ...context.stats[context.mode],
-            [context.difficulty]: bestByScore(
-              context.stats[context.mode][context.difficulty],
+            [rules.difficulty]: bestByScore(
+              bestOn(context.stats, context.mode, rules.difficulty),
               score,
               hits,
               newAccSum,
@@ -614,13 +605,13 @@ export const gameMachine = createMachine({
   id: 'game',
   initial: 'menu',
   context: {
-    grid: initialGrid,
+    grid: emptyGrid(NINE_DIAL),
     hits: 0,
     score: 0,
     stats: emptyStats(),
-    mode: 'accuracy' as Mode,
+    mode: 'accuracy' as ModeId,
     difficulty: 'hard' as Difficulty,
-    traineeTimeoutMs: effectiveTimeout('trainee', 'easy'),
+    playerClockMs: PLAYER_CLOCK_DEFAULT_MS,
     tutorial: false,
     lives: 3,
     streak: 0,
@@ -651,25 +642,24 @@ export const gameMachine = createMachine({
     // the speed bonus reads — is the thing being held still, not the elapsed time.
     // Only Trainee's own clock is rewritten; Speed's ramp deals each target a timeout
     // of its own, and a target in flight there keeps the ring it started with.
-    SET_TRAINEE_TIMEOUT: {
+    SET_PLAYER_CLOCK: {
       actions: assign(
         ({
           context,
           event,
         }: {
           context: Context
-          event: Extract<Event, { type: 'SET_TRAINEE_TIMEOUT' }>
+          event: Extract<Event, { type: 'SET_PLAYER_CLOCK' }>
         }) => ({
-          traineeTimeoutMs: event.ms,
-          targets:
-            context.mode === 'trainee'
-              ? // Measured from the moment the board stopped, not from now: the usual
-                // place to move this slider is the pause screen, and a paused target's
-                // clock is the one it was frozen with.
-                context.targets.map((t) =>
-                  rescaleClock(t, event.ms, context.pausedAt ?? event.now),
-                )
-              : context.targets,
+          playerClockMs: event.ms,
+          targets: rulesOf(context).clock.playerSet
+            ? // Measured from the moment the board stopped, not from now: the usual
+              // place to move this slider is the pause screen, and a paused target's
+              // clock is the one it was frozen with.
+              context.targets.map((t) =>
+                rescaleClock(t, event.ms, context.pausedAt ?? event.now),
+              )
+            : context.targets,
         }),
       ),
     },
@@ -682,17 +672,7 @@ export const gameMachine = createMachine({
         }: {
           context: Context
           event: Extract<Event, { type: 'HYDRATE_STATS' }>
-        }) => ({
-          stats: {
-            // Trainee's persisted best is deliberately dropped rather than merged.
-            // It no longer records one, but players from before that change still
-            // have a value on disk, and loading it would keep firing the
-            // personal-best celebration on the first hit of a practice run.
-            trainee: context.stats.trainee,
-            accuracy: { ...context.stats.accuracy, ...event.stats.accuracy },
-            speed: { ...context.stats.speed, ...event.stats.speed },
-          },
-        }),
+        }) => ({ stats: hydrateStats(context.stats, event.stats) }),
       ),
     },
   },
@@ -773,7 +753,7 @@ export const gameMachine = createMachine({
             }) =>
               applyGrid(
                 context,
-                buildPressGrid(context.grid, event.index, event.delta),
+                pressGrid(rulesOf(context).dial, context.grid, event.index, event.delta),
                 event.now,
               ).lives <= 0,
             target: 'gameOver',
@@ -787,7 +767,12 @@ export const gameMachine = createMachine({
               }) => ({
                 ...applyGrid(
                   context,
-                  buildPressGrid(context.grid, event.index, event.delta),
+                  pressGrid(
+                    rulesOf(context).dial,
+                    context.grid,
+                    event.index,
+                    event.delta,
+                  ),
                   event.now,
                 ),
                 ...stopClock(context, event.now),
@@ -805,7 +790,12 @@ export const gameMachine = createMachine({
               }) =>
                 applyGrid(
                   context,
-                  buildPressGrid(context.grid, event.index, event.delta),
+                  pressGrid(
+                    rulesOf(context).dial,
+                    context.grid,
+                    event.index,
+                    event.delta,
+                  ),
                   event.now,
                 ),
             ),
@@ -823,7 +813,7 @@ export const gameMachine = createMachine({
             }) =>
               applyGrid(
                 context,
-                buildSetGrid(context.grid, event.index, event.value),
+                setGrid(context.grid, event.index, event.value),
                 event.now,
               ).lives <= 0,
             target: 'gameOver',
@@ -837,7 +827,7 @@ export const gameMachine = createMachine({
               }) => ({
                 ...applyGrid(
                   context,
-                  buildSetGrid(context.grid, event.index, event.value),
+                  setGrid(context.grid, event.index, event.value),
                   event.now,
                 ),
                 ...stopClock(context, event.now),
@@ -855,7 +845,7 @@ export const gameMachine = createMachine({
               }) =>
                 applyGrid(
                   context,
-                  buildSetGrid(context.grid, event.index, event.value),
+                  setGrid(context.grid, event.index, event.value),
                   event.now,
                 ),
             ),
@@ -863,9 +853,10 @@ export const gameMachine = createMachine({
         ],
         TARGET_EXPIRED: [
           {
-            // No-life-loss modes (trainee): just clear the target, keep playing.
+            // A mode where running out costs nothing (practice): just clear the
+            // target, keep playing.
             guard: ({ context }: { context: Context }) =>
-              MODES[context.mode].lives === Number.POSITIVE_INFINITY,
+              !rulesOf(context).lives.expiryCosts,
             actions: assign(
               ({
                 context,
@@ -915,7 +906,7 @@ export const gameMachine = createMachine({
         ],
         ADD_TARGET: {
           guard: ({ context }: { context: Context }) =>
-            context.targets.length < maxTargetsOn(context),
+            context.targets.length < rulesOf(context).spawn.maxTargets,
           actions: assign(
             ({
               context,
@@ -923,25 +914,27 @@ export const gameMachine = createMachine({
             }: {
               context: Context
               event: Extract<Event, { type: 'ADD_TARGET' }>
-            }) => ({
-              targets: [
-                ...context.targets,
-                {
-                  id: context.nextTargetId,
-                  value: event.value,
-                  spawnedAt: event.at,
-                  duration:
-                    context.mode === 'trainee'
-                      ? context.traineeTimeoutMs
-                      : rampedTimeout(context.mode, context.difficulty, context.hits),
-                  refAt: event.at,
-                  refGrid: context.grid,
-                  par: computePar(context.grid, event.value),
-                  userSteps: 0,
-                },
-              ],
-              nextTargetId: context.nextTargetId + 1,
-            }),
+            }) => {
+              const rules = rulesOf(context)
+              return {
+                targets: [
+                  ...context.targets,
+                  {
+                    id: context.nextTargetId,
+                    value: event.value,
+                    spawnedAt: event.at,
+                    duration: rules.clock.playerSet
+                      ? context.playerClockMs
+                      : rampedTimeout(rules, context.hits),
+                    refAt: event.at,
+                    refGrid: context.grid,
+                    par: computePar(rules.dial, context.grid, event.value),
+                    userSteps: 0,
+                  },
+                ],
+                nextTargetId: context.nextTargetId + 1,
+              }
+            },
           ),
         },
         // The stepper going back, or forward over ground already covered — see
@@ -975,8 +968,10 @@ export const gameMachine = createMachine({
               context: Context
               event: Extract<Event, { type: 'REWIND' }>
             }) => {
+              const rules = rulesOf(context)
+              const submode = TUTORIAL
               const grid = tutorialBoardEntry(event.board)
-              const value = scriptedTarget(event.board) ?? TUTORIAL_OPENING_TARGET
+              const value = submode.script?.(event.board) ?? submode.opening?.target ?? 0
               return {
                 hits: event.board,
                 grid,
@@ -988,10 +983,10 @@ export const gameMachine = createMachine({
                     // Trainee's own clock, which the tutorial never runs down —
                     // `clockLeft` reads a tutorial target as untouched. Carried anyway so
                     // the target is the same shape as every other.
-                    duration: context.traineeTimeoutMs,
+                    duration: context.playerClockMs,
                     refAt: event.now,
                     refGrid: grid,
-                    par: computePar(grid, value),
+                    par: computePar(rules.dial, grid, value),
                     userSteps: 0,
                   },
                 ],

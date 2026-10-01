@@ -16,7 +16,7 @@ import { PageDots } from '@/components/page-dots'
 import { SWIPE_THRESHOLD } from '@/constants/game'
 import { TIPS } from '@/constants/tips'
 import { pickTips } from '@/lib/pick-tips'
-import { MODE_GRADIENT } from '@/machines/game'
+import { gradientOf } from '@/modes'
 
 // Trainee's own colour, worn by the border and the dots alike. This panel shows
 // in Trainee and nowhere else, and the mode scale is what says which mode you are
@@ -25,7 +25,7 @@ import { MODE_GRADIENT } from '@/machines/game'
 // One hue for both is the trick: the dots hang on the border's centreline, so
 // sharing a colour is what makes the row read as the border going dotted rather
 // than as a meter parked on top of it.
-const TINT = MODE_GRADIENT.trainee[0]
+const TINT = gradientOf('trainee')[0]
 
 // The line is held right back — a third — so it frames the tip without competing
 // with the mode selector above it, while the dots stay solid because they are the

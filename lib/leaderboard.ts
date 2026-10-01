@@ -20,7 +20,7 @@ import {
 import type { Winner } from '@/lib/recent-winners'
 import { supabase } from '@/lib/supabase'
 import { WIN_PERIODS, type Award } from '@/lib/winnings'
-import { SCORED_MODES, type Difficulty, type Mode } from '@/machines/game'
+import { SCORED_MODES, type Difficulty, type ModeId } from '@/modes'
 
 export type { LeaderboardTab }
 
@@ -59,7 +59,7 @@ export type MyMedalRow = {
 const tabToSince = (tab: LeaderboardTab): string | null => tabSince(tab, todayISO())
 
 export async function fetchTop5(
-  mode: Mode,
+  mode: ModeId,
   difficulty: Difficulty,
   tab: LeaderboardTab,
 ): Promise<{ rows: LeaderboardRow[]; error: string | null }> {
@@ -238,7 +238,7 @@ export async function saveMotto(
 
 export async function fetchMyRank(
   userId: string,
-  mode: Mode,
+  mode: ModeId,
   difficulty: Difficulty,
   tab: LeaderboardTab,
 ): Promise<{ row: MyRankRow | null; error: string | null }> {
@@ -289,7 +289,7 @@ const winnerIn = (rows: PastWinnerRow[], period: string): Winner | null => {
 // the two sentences of the stripe can never be drawn from two different ideas of when
 // yesterday was. A window nobody played comes back absent, which reads as null.
 export async function fetchPastWinners(
-  mode: Mode,
+  mode: ModeId,
   difficulty: Difficulty,
 ): Promise<{ winners: PastWinners; error: string | null }> {
   const today = todayISO()

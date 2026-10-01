@@ -1,13 +1,13 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 
-import { computeSum, type Grid } from '@/machines/game'
 import { accuracyFactor, computePar } from '@/machines/scoring'
+import { emptyGrid, NINE_DIAL, pressGrid, setGrid, sumOf, type Grid } from '@/modes'
 
-const initialGrid: Grid = [
-  [0, 0, 0],
-  [0, 0, 0],
-  [0, 0, 0],
-]
+// A shared run is one of the two scored modes on the dial everyone knows, so the board
+// is named here rather than resolved from the room's mode.
+const BOARD = NINE_DIAL
+
+const initialGrid: Grid = emptyGrid(BOARD)
 
 export function useMultiplayerDial({
   targetValue,
@@ -16,7 +16,7 @@ export function useMultiplayerDial({
   targetValue: number | null
   onHit: (accuracy: number) => void
 }) {
-  const [grid, setGrid] = useState<Grid>(initialGrid)
+  const [grid, setDial] = useState<Grid>(initialGrid)
   const parRef = useRef(0)
   const stepsRef = useRef(0)
   const gridRef = useRef<Grid>(initialGrid)
@@ -31,18 +31,18 @@ export function useMultiplayerDial({
   useEffect(() => {
     targetRef.current = targetValue
     if (targetValue !== null) {
-      parRef.current = computePar(gridRef.current, targetValue)
+      parRef.current = computePar(BOARD, gridRef.current, targetValue)
       stepsRef.current = 0
     }
   }, [targetValue])
 
   const applyGrid = useCallback((newGrid: Grid) => {
     gridRef.current = newGrid
-    setGrid(newGrid)
+    setDial(newGrid)
     stepsRef.current++
 
     const tv = targetRef.current
-    if (tv !== null && computeSum(newGrid) === tv) {
+    if (tv !== null && sumOf(BOARD, newGrid) === tv) {
       const accuracy = accuracyFactor(parRef.current, stepsRef.current)
       onHitRef.current(accuracy)
       // Reset so repeated accidental matches don't re-fire.
@@ -53,27 +53,14 @@ export function useMultiplayerDial({
 
   const handlePress = useCallback(
     (index: number, delta: 1 | -1) => {
-      const row = Math.floor(index / 3)
-      const col = index % 3
-      const newGrid = gridRef.current.map((r, ri) =>
-        r.map((v, ci) => {
-          if (ri !== row || ci !== col) return v
-          return (((v + delta) % 10) + 10) % 10
-        }),
-      ) as Grid
-      applyGrid(newGrid)
+      applyGrid(pressGrid(BOARD, gridRef.current, index, delta))
     },
     [applyGrid],
   )
 
   const handleSet = useCallback(
     (index: number, value: number) => {
-      const row = Math.floor(index / 3)
-      const col = index % 3
-      const newGrid = gridRef.current.map((r, ri) =>
-        r.map((v, ci) => (ri === row && ci === col ? value : v)),
-      ) as Grid
-      applyGrid(newGrid)
+      applyGrid(setGrid(gridRef.current, index, value))
     },
     [applyGrid],
   )

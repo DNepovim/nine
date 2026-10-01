@@ -9,11 +9,11 @@ import {
   TUTORIAL_STEPS,
   type StepState,
 } from '@/lib/tutorial-stepper'
-import { MODE_GRADIENT } from '@/machines/game'
+import { gradientOf } from '@/modes'
 
 // The tutorial's colour, worn for the reason the lesson's card wears it: this is the
 // lesson talking about itself, not the game reporting anything.
-const TINT = MODE_GRADIENT.trainee[0]
+const TINT = gradientOf('trainee')[0]
 
 // The row's height, held whether anything in it is live or not.
 //

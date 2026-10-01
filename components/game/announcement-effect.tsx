@@ -6,7 +6,7 @@ import { Hyperspace } from '@/components/game/hyperspace'
 import { Implosion } from '@/components/game/implosion'
 import { announcementStyle } from '@/lib/announcement-style'
 import type { AnnouncementId } from '@/lib/announcements'
-import type { Mode } from '@/machines/modes'
+import { type ModeId } from '@/modes'
 
 // One effect per announcement. Your own records escalate — confetti, gold confetti,
 // fireworks, the jump to lightspeed. A rival merely raising a board record gets no
@@ -42,6 +42,6 @@ const EFFECTS = {
   (colors: readonly [string, ...string[]]) => ReactElement | null
 >
 
-export function AnnouncementEffect({ id, mode }: { id: AnnouncementId; mode: Mode }) {
+export function AnnouncementEffect({ id, mode }: { id: AnnouncementId; mode: ModeId }) {
   return EFFECTS[id](announcementStyle(id, mode).colors)
 }

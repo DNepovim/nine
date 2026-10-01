@@ -16,8 +16,7 @@ import {
   type Segment,
   type Sentence,
 } from '@/dev/weekly-recap/lines'
-import { DIFFICULTY_ORDER, SCORED_MODES } from '@/machines/game'
-import { getDifficultyColor } from '@/machines/modes'
+import { DIFFICULTY_ORDER, getDifficultyColor, SCORED_MODES } from '@/modes'
 
 // Facts to shape to prose — the three steps of the design, as pure functions.
 

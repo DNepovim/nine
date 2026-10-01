@@ -1,5 +1,5 @@
 import type { Period } from '@/lib/announcements'
-import type { Difficulty, ScoredMode } from '@/machines/modes'
+import { type Difficulty, type ScoredMode } from '@/modes'
 
 // Who holds the all-time record on each mode's Extreme board — the hardest board a mode
 // has, over the longest window it keeps. One player each, because gold is rank one.

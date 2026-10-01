@@ -67,7 +67,7 @@ export const ACHIEVEMENT_INK = { light: '#217A3D', dark: '#7FE08A' } as const
 // itself.
 //
 // A themed pair for the same reason GOLD_INK and ACHIEVEMENT_INK are pairs: the mode
-// scale is tuned to *be* a colour, not to carry text at 10px. `MODE_GRADIENT.speed[1]`
+// scale is tuned to *be* a colour, not to carry text at 10px. `gradientOf('speed')[1]`
 // on the light card is about 2.9:1, and the grey a new player's name fades to is about
 // 3.6:1 on the dark card — both under the 4.5:1 the app's own `text-dim` holds.
 //
@@ -112,7 +112,7 @@ export const MAP_INK = {
   { line: string; hatch: string; faint: string }
 >
 
-// Arcade's amber as *text*, which `MODE_GRADIENT.arcade` cannot be — same reason and same
+// Arcade's amber as *text*, which `gradientOf('arcade')` cannot be — same reason and same
 // shape as GOLD_INK. #FF8C00 on the parchment surface is about 2:1: a fine stroke, a fine
 // fill, and an invisible label. So the one place arcade's colour has to *be* the text —
 // the ARCADE label on its own screen, and the depth under it — carries its own pair:

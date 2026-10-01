@@ -7,10 +7,10 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated'
 
-import { MODE_GRADIENT } from '@/machines/game'
+import { gradientOf } from '@/modes'
 
 // The tutorial's colour, the one its tips panel, route hint and praise line all wear.
-const TINT = MODE_GRADIENT.trainee[0]
+const TINT = gradientOf('trainee')[0]
 
 // A halo outside the pill rather than a border on it.
 //

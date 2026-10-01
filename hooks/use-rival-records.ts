@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 
 import { rivalChange, type AnnouncementId, type Leaders } from '@/lib/announcements'
-import type { Difficulty, Mode } from '@/machines/game'
+import { type Difficulty, type ModeId } from '@/modes'
 
 // A busy board could otherwise hold the announcement bar for a whole run, five seconds
 // at a time. One rival announcement per this window; the rest pass silently.
@@ -23,7 +23,7 @@ export function useRivalRecords({
   leaders,
 }: {
   inRun: boolean
-  mode: Mode
+  mode: ModeId
   difficulty: Difficulty
   userId: string | null
   leaders: Leaders

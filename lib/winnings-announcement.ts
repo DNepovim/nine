@@ -1,6 +1,6 @@
 import { nextDay, previousDay } from '@/lib/leaderboard-period'
 import { awardValue, type Award, type WinPeriod } from '@/lib/winnings'
-import { DIFFICULTY_ORDER, SCORED_MODES } from '@/machines/game'
+import { DIFFICULTY_ORDER, SCORED_MODES } from '@/modes'
 
 // Which closed windows a launch still has to tell the player about, and how they are
 // grouped once the server has answered.

@@ -2,7 +2,7 @@ import type { MessageDescriptor } from '@lingui/core'
 import { msg } from '@lingui/core/macro'
 
 import type { BadgeCorner } from '@/components/game/dial-badge'
-import { effectiveTimeout } from '@/machines/modes'
+import { baseClockMs } from '@/modes'
 
 // The four numbers Trainee can print around a dial key.
 //
@@ -61,8 +61,8 @@ export const HINT_TILE_HEIGHT = 40
 //
 // The ceiling is twice the most forgiving one — Accuracy on Easy — which is exactly where
 // Trainee's own clock sits, so an untouched slider rests against its top end.
-export const TRAINEE_TIMEOUT_MIN_MS = effectiveTimeout('speed', 'extreme')
-export const TRAINEE_TIMEOUT_MAX_MS = 2 * effectiveTimeout('accuracy', 'easy')
+export const TRAINEE_TIMEOUT_MIN_MS = baseClockMs('speed', 'extreme')
+export const TRAINEE_TIMEOUT_MAX_MS = 2 * baseClockMs('accuracy', 'easy')
 // Whole seconds in the middle; the two ends are reachable exactly, being clamped to.
 export const TRAINEE_TIMEOUT_STEP_MS = 1000
 

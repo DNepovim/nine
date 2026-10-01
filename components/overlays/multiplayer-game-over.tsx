@@ -12,10 +12,10 @@ import { Screen } from '@/components/screen'
 import { cn } from '@/lib/cn'
 import {
   DARK_MULTIPLAYER_GRADIENT,
+  descriptionOf,
   lerpColor,
-  MODE_DESCRIPTIONS,
   MULTIPLAYER_GRADIENT,
-} from '@/machines/game'
+} from '@/modes'
 import type { MultiMode, PlayerState } from '@/types/multiplayer'
 
 const ROWS = [
@@ -135,7 +135,7 @@ export function MultiplayerGameOver({
               selectable={false}
               className="px-6 text-center font-mono text-[10px] font-bold tracking-[0.5px] text-dim"
             >
-              {t(MODE_DESCRIPTIONS[mode])}
+              {t(descriptionOf(mode))}
             </Text>
           </View>
         )}

@@ -11,6 +11,7 @@ import {
   WALK_MS,
 } from '@/constants/arcade'
 import {
+  ARCADE_DIAL,
   crossroadClock,
   isStrike,
   newMap,
@@ -23,7 +24,7 @@ import {
   type ArcadeWay,
   type Crossroad,
 } from '@/machines/arcade'
-import { buildPressGrid, buildSetGrid, computeSum, type Grid } from '@/machines/game'
+import { emptyGrid, pressGrid, setGrid, sumOf, type Grid } from '@/modes'
 
 // One arcade run: where the hero stands, what the crossroad offers, and the clock that
 // drags it back down. The rules it leans on are in machines/arcade.ts; what is here is the
@@ -56,11 +57,7 @@ const BEAT_MS = {
   falling: FALL_MS,
 } as const satisfies Partial<Record<ArcadePhase, number>>
 
-const INITIAL_GRID: Grid = [
-  [0, 0, 0],
-  [0, 0, 0],
-  [0, 0, 0],
-]
+const INITIAL_GRID: Grid = emptyGrid(ARCADE_DIAL)
 
 type Run = {
   // The whole run is this number: the map is grown from it, so the same seed walks the same
@@ -289,7 +286,7 @@ export function useArcadeRun() {
     setRun((r) => {
       if (r.paused || !isOneOf(r.phase, DIALABLE)) return r
       const next = build(r.grid)
-      const sum = computeSum(next)
+      const sum = sumOf(ARCADE_DIAL, next)
       const taken = r.map[r.at]?.ways.find((way) => way.value === sum)
       if (taken === undefined) return { ...r, grid: next }
 
@@ -391,10 +388,10 @@ export function useArcadeRun() {
     // given, and a key pressed mid-walk would be answering a crossroad nobody is on.
     dialable: !run.paused && isOneOf(run.phase, DIALABLE),
     press: (index: number, delta: 1 | -1) => {
-      applyMove((grid) => buildPressGrid(grid, index, delta), Date.now())
+      applyMove((grid) => pressGrid(ARCADE_DIAL, grid, index, delta), Date.now())
     },
     set: (index: number, value: number) => {
-      applyMove((grid) => buildSetGrid(grid, index, value), Date.now())
+      applyMove((grid) => setGrid(grid, index, value), Date.now())
     },
     pause: () => {
       const now = Date.now()

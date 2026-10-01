@@ -1,5 +1,5 @@
 import type { Period } from '@/lib/announcements'
-import type { Difficulty, Mode } from '@/machines/modes'
+import { type Difficulty, type ModeId } from '@/modes'
 
 // Every event the app sends, with the shape it sends. One table, so an event cannot be
 // added in a component with a name that nearly matches one already in the warehouse —
@@ -10,7 +10,7 @@ import type { Difficulty, Mode } from '@/machines/modes'
 // produces — hits, accuracy — rides on `run_finished` instead.
 export type AnalyticsEvents = {
   run_started: {
-    mode: Mode
+    mode: ModeId
     difficulty: Difficulty
     // What put the player into this run, which is the whole question behind the
     // challenge button: did they choose the board or accept the one offered? 'welcome' is
@@ -19,7 +19,7 @@ export type AnalyticsEvents = {
     from: 'menu' | 'play_again' | 'challenge' | 'restart' | 'welcome' | 'guide'
   }
   run_finished: {
-    mode: Mode
+    mode: ModeId
     difficulty: Difficulty
     score: number
     hits: number
@@ -29,11 +29,16 @@ export type AnalyticsEvents = {
     screen: 'crown' | 'bird' | 'wash' | 'plain'
     personal_best: boolean
   }
-  challenge_offered: { mode: Mode; difficulty: Difficulty; to_mode: Mode; to: Difficulty }
-  challenge_accepted: {
-    mode: Mode
+  challenge_offered: {
+    mode: ModeId
     difficulty: Difficulty
-    to_mode: Mode
+    to_mode: ModeId
+    to: Difficulty
+  }
+  challenge_accepted: {
+    mode: ModeId
+    difficulty: Difficulty
+    to_mode: ModeId
     to: Difficulty
   }
   screen_opened: {

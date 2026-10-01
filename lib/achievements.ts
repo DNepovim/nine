@@ -22,15 +22,15 @@ import {
 } from '@/lib/career'
 import { dayInPrague } from '@/lib/leaderboard-period'
 import type { BoardStanding } from '@/lib/medals'
+import { bestOn as bestScoreOn, type Stats } from '@/machines/game'
 import {
   DIFFICULTIES,
   DIFFICULTY_ORDER,
   SCORED_MODES,
   type Difficulty,
-  type Mode,
+  type ModeId,
   type ScoredMode,
-  type Stats,
-} from '@/machines/game'
+} from '@/modes'
 import { MAX_ROOM_PLAYERS } from '@/types/multiplayer'
 
 // What one run has done so far, or did in the end.
@@ -49,7 +49,7 @@ export type RunFacts = {
   // on Easy cleared TERMINAL VELOCITY on Speed Extreme, on a board the player had not
   // touched. So a run that is not happening names no mode, and `NO_RUN` below is the
   // only shape the rest of the app may say that in.
-  mode: Mode | null
+  mode: ModeId | null
   // Never read without the mode beside it — every rule that asks which board a run is
   // on asks whether there is a run first — so no run leaves this at Easy rather than
   // making every one of them narrow a second null.
@@ -131,7 +131,7 @@ const bestOn = (f: AchievementFacts, mode: ScoredMode, difficulty: Stage): numbe
   if (board === null) return 0
   return Math.max(
     f.run.mode === mode && f.run.difficulty === board ? f.run.score : 0,
-    f.stats[mode][board].score,
+    bestScoreOn(f.stats, mode, board).score,
   )
 }
 

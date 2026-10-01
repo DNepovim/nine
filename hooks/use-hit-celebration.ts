@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 
 import { praiseFor } from '@/lib/hit-praise'
-import type { HitBatch, Mode } from '@/machines/game'
+import type { HitBatch } from '@/machines/game'
 import { cleanHitReason } from '@/machines/scoring'
 
 // Long enough for the last piece to finish falling. Confetti spreads its starts
@@ -27,16 +27,17 @@ const NOTHING: HitCelebration = { seq: null, message: null }
 // already at its cognitive-complexity ceiling.
 export function useHitCelebration(
   inRun: boolean,
-  mode: Mode,
+  // Whether the run teaches — `capabilities.coached`. A named rule rather than the
+  // mode's name: the other modes celebrate the run, and a shower per clean hit would
+  // drown the record celebration that actually means something there.
+  coached: boolean,
   batch: HitBatch,
 ): HitCelebration {
   const [current, setCurrent] = useState<HitCelebration>(NOTHING)
   // Seeded from the batch on screen rather than from zero, so a remount mid-run
   // replays nothing that has already been celebrated.
   const lastSeqRef = useRef(batch.seq)
-  // Trainee only. The other modes celebrate the run, and a shower per clean hit
-  // would drown the record celebration that actually means something there.
-  const active = inRun && mode === 'trainee'
+  const active = inRun && coached
 
   useEffect(() => {
     // The baseline advances even while inactive. `seq` climbs across games and

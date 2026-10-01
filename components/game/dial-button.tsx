@@ -85,11 +85,16 @@ const PRESS_OUT = { damping: 16, stiffness: 140 }
 // three sums around it — those are all in the same units as the target, and this one is
 // not. `room` and `giving` always add up to `ceiling`, which is the whole lesson.
 const HINT_LABEL = {
-  weight: (_value: number, weight: number) => `${weight}×`,
-  ceiling: (_value: number, weight: number) => `${9 * weight}`,
-  giving: (value: number, weight: number) => `${value * weight}`,
-  room: (value: number, weight: number) => `${(9 - value) * weight}`,
-} as const satisfies Record<DialHint, (value: number, weight: number) => string>
+  weight: (_value, weight) => `${weight}×`,
+  ceiling: (_value, weight, top) => `${top * weight}`,
+  giving: (value, weight) => `${value * weight}`,
+  room: (value, weight, top) => `${(top - value) * weight}`,
+} as const satisfies Record<
+  DialHint,
+  // `top` is the highest digit the key takes, which is the board's to say — a dial whose
+  // keys only count to five has a different ceiling and a different room left.
+  (value: number, weight: number, top: number) => string
+>
 
 export function DialButton({
   index,
@@ -97,6 +102,7 @@ export function DialButton({
   isDark,
   size,
   weight,
+  digits,
   showSum,
   trainee,
   peakFrom,
@@ -116,6 +122,8 @@ export function DialButton({
   isDark: boolean
   size: number
   weight: number
+  // How many values the key takes, counted from zero: 10 is the digits 0–9.
+  digits: number
   showSum: boolean
   trainee: boolean
   // The mode's dark CTA gradient, worn by the button at its maximum value.
@@ -183,7 +191,9 @@ export function DialButton({
     'worklet'
     inFlight.value -= 1
     const { step, set } = MOVE_EFFECT[move]
-    if (step === null) scheduleOnRN(onSet, set)
+    // `set` names an end of the key's range rather than a digit — how high a key goes is
+    // the board's business — so the end is turned into a value here.
+    if (step === null) scheduleOnRN(onSet, set === 'floor' ? 0 : digits - 1)
     else scheduleOnRN(onDelta, step)
   }
 
@@ -374,7 +384,7 @@ export function DialButton({
         }).map(({ corner, hint }) => (
           <DialBadge
             key={corner}
-            label={HINT_LABEL[hint](value, weight)}
+            label={HINT_LABEL[hint](value, weight, digits - 1)}
             size={badgeSize}
             fontSize={BADGE_FONT_SIZE}
             offset={badgeOffset}

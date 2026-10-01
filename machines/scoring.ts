@@ -1,36 +1,23 @@
-import type { Grid } from './game'
+import { cellCount, weightAt, type DialSpec, type Grid } from '@/modes/dial'
 
-// Points a perfect hit is worth before the accuracy/speed blend. Tunable.
-const SCORE_BASE = 100
-
-// Cell weights, row-major: (row+1) * (col+1). Matches computeSum in game.ts.
-const WEIGHTS: number[] = [1, 2, 3, 2, 4, 6, 3, 6, 9]
-
-// What one dial key multiplies its digit by. The dial needs it to label a button
-// and the coach needs it to tell a fine key from a coarse one, so the formula lives
-// here beside the weights it comes from rather than in three places.
-export const cellWeight = (index: number): number => WEIGHTS[index] ?? 0
-
-const MAX_SUM = 324 // 9 * sum(WEIGHTS)
-
-// Minimum steps to change ONE button from value `a` to `f` using the available
-// operations: +1 / -1 (wrapping 0↔9), jump →0, jump →9.
+// Minimum steps to change ONE key from value `a` to `f` using the available operations:
+// +1 / -1 (wrapping round the key's range), jump to the floor, jump to the ceiling.
 //
 // Kept as plain arithmetic rather than deferring to `movePlan`, which prices the same
 // four routes but allocates to do it: this runs roughly thirty thousand times per
 // `computePar`, and that runs on every spawn and every hit. A test holds the two to the
-// same answer for all hundred pairs.
-export function stepCost(a: number, f: number): number {
+// same answer for all hundred pairs a ten-digit key can make.
+export function stepCost(digits: number, a: number, f: number): number {
   if (a === f) return 0
   const d = Math.abs(f - a)
-  const wrap = Math.min(d, 10 - d) // ±1 either way, with wrap
-  return Math.min(wrap, 1 + f, 1 + (9 - f))
+  const wrap = Math.min(d, digits - d) // ±1 either way, with wrap
+  return Math.min(wrap, 1 + f, 1 + (digits - 1 - f))
 }
 
-// Minimum total steps to move the grid to ANY configuration whose weighted sum equals
-// each reachable sum — the whole table at once. Steps decompose per button (each step
-// touches one button and the final sum depends only on final values), so this is an exact
-// small DP, and the table is what the DP naturally produces.
+// Minimum total steps to move the dial to ANY position whose weighted sum equals each
+// reachable sum — the whole table at once. Steps decompose per key (each step touches
+// one key and the final sum depends only on final values), so this is an exact small DP,
+// and the table is what the DP naturally produces.
 //
 // A sum no arrangement reaches holds `Infinity`. Callers decide what that means:
 // `computePar` answers 0, and arcade passes the sum over.
@@ -39,22 +26,21 @@ export function stepCost(a: number, f: number): number {
 // four targets chosen *by* what they cost, so what it needs is "which sums are three or
 // four steps from here" — one pass, rather than one pass per candidate it might have
 // picked.
-export function parTable(grid: Grid): readonly number[] {
-  const values = grid.flat()
+export function parTable(dial: DialSpec, grid: Grid): readonly number[] {
   const INF = Number.POSITIVE_INFINITY
-  let dp = new Array<number>(MAX_SUM + 1).fill(INF)
+  let dp = new Array<number>(dial.maxSum + 1).fill(INF)
   dp[0] = 0
-  for (let i = 0; i < 9; i++) {
-    const w = WEIGHTS[i] ?? 0
-    const a = values[i] ?? 0
-    const next = new Array<number>(MAX_SUM + 1).fill(INF)
-    for (let s = 0; s <= MAX_SUM; s++) {
+  for (let i = 0; i < cellCount(dial); i++) {
+    const w = weightAt(dial, i)
+    const a = grid[i] ?? 0
+    const next = new Array<number>(dial.maxSum + 1).fill(INF)
+    for (let s = 0; s <= dial.maxSum; s++) {
       const cur = dp[s] ?? INF
       if (cur === INF) continue
-      for (let f = 0; f <= 9; f++) {
+      for (let f = 0; f < dial.digits; f++) {
         const ns = s + w * f
-        if (ns > MAX_SUM) break
-        const cost = cur + stepCost(a, f)
+        if (ns > dial.maxSum) break
+        const cost = cur + stepCost(dial.digits, a, f)
         if (cost < (next[ns] ?? INF)) next[ns] = cost
       }
     }
@@ -63,31 +49,32 @@ export function parTable(grid: Grid): readonly number[] {
   return dp
 }
 
-// Minimum total steps from this grid to `target`, or 0 for a target no arrangement
+// Minimum total steps from this position to `target`, or 0 for a target no arrangement
 // reaches — which is what an out-of-range one answers too.
 //
 // Reads the table above rather than running a DP of its own, which costs nothing: the
-// pass already allocates nine arrays of this length, and one more return value is not a
-// tenth.
-export function computePar(grid: Grid, target: number): number {
-  if (target < 0 || target > MAX_SUM) return 0
-  const par = parTable(grid)[target]
+// pass already allocates one array per key of this length, and one more return value is
+// not another.
+export function computePar(dial: DialSpec, grid: Grid, target: number): number {
+  if (target < 0 || target > dial.maxSum) return 0
+  const par = parTable(dial, grid)[target]
   return par !== undefined && Number.isFinite(par) ? par : 0
 }
 
-// Which way a key is moved. Up is a tap — the dial wraps 9 → 0 — and down is a swipe
-// down; the two are the same cost per step, so the route names whichever is shorter.
+// Which way a key is moved. Up is a tap — the dial wraps round at the top — and down is
+// a swipe down; the two are the same cost per step, so the route names whichever is
+// shorter.
 export type MoveDirection = 'up' | 'down'
 
-// A jump straight to an end of the key's range: swipe left for 0, right for 9. Taken
-// first when present, and worth one step however far it travels — which is why a key
-// far from where it needs to be is often cheaper to reset than to walk.
+// A jump straight to an end of the key's range: swipe left for the floor, right for the
+// ceiling. Taken first when present, and worth one step however far it travels — which
+// is why a key far from where it needs to be is often cheaper to reset than to walk.
 export type MoveJump = 'zero' | 'nine'
 
 // One instruction in an optimal route: the gesture, how many of it, and on which key.
 //
 // `steps` is the cost the score is measured against, so it counts the jump as the one
-// step it is: a `nine` jump plus two downs is three steps, not two.
+// step it is: a ceiling jump plus two downs is three steps, not two.
 export type RouteStep = {
   weight: number
   jump: MoveJump | null
@@ -97,15 +84,21 @@ export type RouteStep = {
 }
 
 // The cheapest way to move one key from `from` to `to`, as gestures rather than a
-// count. Same four routes `stepCost` prices — walk up, walk down, reset to 0 and walk
-// up, jump to 9 and walk down — and a test pins the two to the same total, so the hint
-// can never describe a route that costs more than the par it is shown beside.
+// count. Same four routes `stepCost` prices — walk up, walk down, reset to the floor and
+// walk up, jump to the ceiling and walk down — and a test pins the two to the same
+// total, so a hint can never describe a route that costs more than the par it is shown
+// beside.
 //
 // Ties go to the earliest candidate, which orders them simplest-first: walking beats
 // jumping when both cost the same, because one gesture is easier to follow than two.
-export function movePlan(from: number, to: number): Omit<RouteStep, 'weight'> {
-  const up = (to - from + 10) % 10
-  const down = (from - to + 10) % 10
+export function movePlan(
+  digits: number,
+  from: number,
+  to: number,
+): Omit<RouteStep, 'weight'> {
+  const top = digits - 1
+  const up = (to - from + digits) % digits
+  const down = (from - to + digits) % digits
   // Walking up is the seed rather than one of the candidates, so the reduce has an
   // initial value and the tie order still runs simplest-first: a walk only loses to a
   // jump that is strictly cheaper.
@@ -118,7 +111,7 @@ export function movePlan(from: number, to: number): Omit<RouteStep, 'weight'> {
   const candidates: Omit<RouteStep, 'weight'>[] = [
     { jump: null, moves: down, direction: 'down', steps: down },
     { jump: 'zero', moves: to, direction: 'up', steps: 1 + to },
-    { jump: 'nine', moves: 9 - to, direction: 'down', steps: 1 + (9 - to) },
+    { jump: 'nine', moves: top - to, direction: 'down', steps: 1 + (top - to) },
   ]
   return candidates.reduce(
     (best, next) => (next.steps < best.steps ? next : best),
@@ -126,23 +119,28 @@ export function movePlan(from: number, to: number): Omit<RouteStep, 'weight'> {
   )
 }
 
-// One layer of the DP: the cheapest way to reach each running sum once this button
-// has been decided, and the value it was set to in order to get there. -1 marks a sum
-// this button could not produce.
+// One layer of the DP: the cheapest way to reach each running sum once this key has been
+// decided, and the value it was set to in order to get there. -1 marks a sum this key
+// could not produce.
 type Layer = { costs: number[]; choice: number[] }
 
 const INF = Number.POSITIVE_INFINITY
 
-function extendLayer(costs: number[], weight: number, from: number): Layer {
-  const next = new Array<number>(MAX_SUM + 1).fill(INF)
-  const choice = new Array<number>(MAX_SUM + 1).fill(-1)
-  for (let s = 0; s <= MAX_SUM; s++) {
+function extendLayer(
+  dial: DialSpec,
+  costs: number[],
+  weight: number,
+  from: number,
+): Layer {
+  const next = new Array<number>(dial.maxSum + 1).fill(INF)
+  const choice = new Array<number>(dial.maxSum + 1).fill(-1)
+  for (let s = 0; s <= dial.maxSum; s++) {
     const cur = costs[s] ?? INF
     if (cur === INF) continue
-    for (let f = 0; f <= 9; f++) {
+    for (let f = 0; f < dial.digits; f++) {
       const sum = s + weight * f
-      if (sum > MAX_SUM) break
-      const cost = cur + stepCost(from, f)
+      if (sum > dial.maxSum) break
+      const cost = cur + stepCost(dial.digits, from, f)
       if (cost < (next[sum] ?? INF)) {
         next[sum] = cost
         choice[sum] = f
@@ -152,13 +150,13 @@ function extendLayer(costs: number[], weight: number, from: number): Layer {
   return { costs: next, choice }
 }
 
-// One key's share of an optimal route: which button to move, where it stands and where
-// it has to end up, and the cheapest gesture for getting it there.
+// One key's share of an optimal route: which key to move, where it stands and where it
+// has to end up, and the cheapest gesture for getting it there.
 //
-// Where `RouteStep` is keyed by weight, this is keyed by button. The two are different
-// questions: printing a route as instructions wants the weight, because a step on either
-// key of a pair moves the sum by the same amount — but pointing at a button to press
-// wants the button, and the tutorial has to point.
+// Where `RouteStep` is keyed by weight, this is keyed by key index. The two are
+// different questions: printing a route as instructions wants the weight, because a step
+// on either key of a pair moves the sum by the same amount — but pointing at a button to
+// press wants the button, and the tutorial has to point.
 export type KeyStep = Omit<RouteStep, 'weight'> & {
   index: number
   from: number
@@ -166,24 +164,25 @@ export type KeyStep = Omit<RouteStep, 'weight'> & {
   weight: number
 }
 
-// Walks the layers back from the target, collecting what each button is owed.
+// Walks the layers back from the target, collecting what each key is owed.
 //
-// Buttons already at the right value contribute nothing, and drop out. `null` is a
-// target this board cannot reach at all, which is what the callers turn into an empty
-// route rather than a route to nowhere.
+// Keys already at the right value contribute nothing, and drop out. `null` is a target
+// this position cannot reach at all, which is what the callers turn into an empty route
+// rather than a route to nowhere.
 function readKeyPlan(
-  values: number[],
+  dial: DialSpec,
+  grid: Grid,
   layers: Layer[],
   target: number,
 ): KeyStep[] | null {
   const plan: KeyStep[] = []
   let sum = target
-  for (let i = 8; i >= 0; i--) {
+  for (let i = cellCount(dial) - 1; i >= 0; i--) {
     const value = layers[i]?.choice[sum] ?? -1
     if (value < 0) return null
-    const weight = WEIGHTS[i] ?? 0
-    const from = values[i] ?? 0
-    const move = movePlan(from, value)
+    const weight = weightAt(dial, i)
+    const from = grid[i] ?? 0
+    const move = movePlan(dial.digits, from, value)
     if (move.steps > 0) plan.push({ index: i, from, to: value, weight, ...move })
     sum -= weight * value
   }
@@ -191,8 +190,13 @@ function readKeyPlan(
 }
 
 // The same walk, keyed by weight — see `readKeyPlan` for why there are two.
-function readRoute(values: number[], layers: Layer[], target: number): RouteStep[] {
-  const plan = readKeyPlan(values, layers, target)
+function readRoute(
+  dial: DialSpec,
+  grid: Grid,
+  layers: Layer[],
+  target: number,
+): RouteStep[] {
+  const plan = readKeyPlan(dial, grid, layers, target)
   if (plan === null) return []
   return plan.map(({ index: _index, from: _from, to: _to, ...step }) => step)
 }
@@ -226,21 +230,18 @@ const merged = (route: readonly RouteStep[]): RouteStep[] => {
   return out
 }
 
-// The route behind computePar — not just what the best solution costs but what it is.
+// The DP laid out one key at a time, so a route can be walked back out of it.
 //
-// Same DP, keeping the value chosen for each button at each running sum so the answer
-// can be walked back.
-//
-// Coarsest weight first, matching how the game is taught — get near the target with ×9
-// and ×6, then trim with the fine keys.
-// The DP laid out one button at a time, so a route can be walked back out of it.
-function planLayers(values: number[]): Layer[] {
-  const start = new Array<number>(MAX_SUM + 1).fill(INF)
+// Coarsest weight last, matching the order a position is stored in; the walk back comes
+// out coarsest-first, which is how the game is taught — get near the target with the
+// heavy keys, then trim with the fine ones.
+function planLayers(dial: DialSpec, grid: Grid): Layer[] {
+  const start = new Array<number>(dial.maxSum + 1).fill(INF)
   start[0] = 0
   const layers: Layer[] = []
   let costs = start
-  for (let i = 0; i < 9; i++) {
-    const layer = extendLayer(costs, WEIGHTS[i] ?? 0, values[i] ?? 0)
+  for (let i = 0; i < cellCount(dial); i++) {
+    const layer = extendLayer(dial, costs, weightAt(dial, i), grid[i] ?? 0)
     layers.push(layer)
     costs = layer.costs
   }
@@ -248,31 +249,30 @@ function planLayers(values: number[]): Layer[] {
 }
 
 // Whether the last layer can reach the target at all.
-const reaches = (layers: Layer[], target: number): boolean =>
-  Number.isFinite(layers[8]?.costs[target] ?? INF)
+const reaches = (dial: DialSpec, layers: Layer[], target: number): boolean =>
+  Number.isFinite(layers[cellCount(dial) - 1]?.costs[target] ?? INF)
 
-export function computeRoute(grid: Grid, target: number): RouteStep[] {
-  if (target < 0 || target > MAX_SUM) return []
-  const values = grid.flat()
-  const layers = planLayers(values)
-  if (!reaches(layers, target)) return []
-  return merged(readRoute(values, layers, target)).sort((a, b) => b.weight - a.weight)
+// The route behind computePar — not just what the best solution costs but what it is.
+export function computeRoute(dial: DialSpec, grid: Grid, target: number): RouteStep[] {
+  if (target < 0 || target > dial.maxSum) return []
+  const layers = planLayers(dial, grid)
+  if (!reaches(dial, layers, target)) return []
+  return merged(readRoute(dial, grid, layers, target)).sort((a, b) => b.weight - a.weight)
 }
 
-// The same optimal route as a list of buttons to move, coarsest first — the order the
-// game is taught in, and the order the tutorial walks a player through.
+// The same optimal route as a list of keys to move, coarsest first — the order the game
+// is taught in, and the order the tutorial walks a player through.
 //
-// Unmerged, because merging is what makes a route readable and what makes it unpointable:
-// "2× ③" is one instruction and two buttons. The tutorial lights one button at a time, so
-// it needs them apart.
-export function computeKeyPlan(grid: Grid, target: number): KeyStep[] {
-  if (target < 0 || target > MAX_SUM) return []
-  const values = grid.flat()
-  const layers = planLayers(values)
-  if (!reaches(layers, target)) return []
-  const plan = readKeyPlan(values, layers, target)
-  // Sorted by weight alone, on a walk that already ran coarsest button first: the sort
-  // is stable, so two keys of the same weight keep that order rather than swapping.
+// Unmerged, because merging is what makes a route readable and what makes it
+// unpointable: "2× ③" is one instruction and two keys. The tutorial lights one key at a
+// time, so it needs them apart.
+export function computeKeyPlan(dial: DialSpec, grid: Grid, target: number): KeyStep[] {
+  if (target < 0 || target > dial.maxSum) return []
+  const layers = planLayers(dial, grid)
+  if (!reaches(dial, layers, target)) return []
+  const plan = readKeyPlan(dial, grid, layers, target)
+  // Sorted by weight alone, on a walk that already ran coarsest key first: the sort is
+  // stable, so two keys of the same weight keep that order rather than swapping.
   return plan === null ? [] : [...plan].sort((a, b) => b.weight - a.weight)
 }
 
@@ -337,9 +337,12 @@ export function computeHitPoints(opts: {
   timeLeft: number
   duration: number
   weights: { acc: number; spd: number }
-  base?: number
+  // What a perfect hit is worth before the blend. The mode's own figure — see
+  // `ScoringRules` — rather than a constant in here, because it is a rule a mode is
+  // allowed to change.
+  base: number
 }): number {
-  const { par, userSteps, timeLeft, duration, weights, base = SCORE_BASE } = opts
+  const { par, userSteps, timeLeft, duration, weights, base } = opts
   const acc = accuracyFactor(par, userSteps)
   const spd = speedReward(speedFactor(timeLeft, duration))
   return Math.round(base * (weights.acc * acc + weights.spd * spd))

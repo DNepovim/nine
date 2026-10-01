@@ -3,8 +3,13 @@ import { Text, View } from 'react-native'
 
 import { cn } from '@/lib/cn'
 import { formatShortDate } from '@/lib/format-date'
-import { DIFFICULTIES, MODES } from '@/machines/game'
-import { getDifficultyColor, type Difficulty, type ScoredMode } from '@/machines/modes'
+import {
+  DIFFICULTIES,
+  getDifficultyColor,
+  labelOf,
+  type Difficulty,
+  type ScoredMode,
+} from '@/modes'
 
 // One stretch of holding an all-time board's record.
 //
@@ -40,7 +45,7 @@ export function ProfileReignRow({
         className="flex-1 font-mono text-[10px] font-black tracking-[1px]"
         style={{ color: getDifficultyColor(mode, difficulty) }}
       >
-        {`${t(MODES[mode].label)} ${t(DIFFICULTIES[difficulty].label)}`}
+        {`${t(labelOf(mode))} ${t(DIFFICULTIES[difficulty].label)}`}
       </Text>
       <Text
         selectable={false}

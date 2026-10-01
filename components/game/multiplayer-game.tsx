@@ -13,12 +13,13 @@ import { useMultiplayerDial } from '@/hooks/use-multiplayer-dial'
 import { useScoreDirection } from '@/hooks/use-score-direction'
 import { valueProgress } from '@/lib/value-progress'
 import {
-  computeSum,
   DARK_MULTIPLAYER_GRADIENT,
+  labelOf,
   lerpColor,
-  MODES,
   MULTIPLAYER_GRADIENT,
-} from '@/machines/game'
+  NINE_DIAL,
+  sumOf,
+} from '@/modes'
 import type { MultiMode, MultiTarget, PlayerState } from '@/types/multiplayer'
 
 const SPEED_TIMEOUT = 7000
@@ -70,7 +71,7 @@ export function MultiplayerGame({
     onHit,
   })
 
-  const sum = computeSum(grid)
+  const sum = sumOf(NINE_DIAL, grid)
   const direction = useScoreDirection(sum)
 
   // Display layout: me at TL, others clockwise TR→BR→BL.
@@ -149,7 +150,7 @@ export function MultiplayerGame({
             className="font-mono text-[13px] font-black tracking-[2px]"
             style={{ color: myGradient[0] }}
           >
-            {t(MODES[mode].label)}
+            {t(labelOf(mode))}
           </Text>
           <Text
             selectable={false}
@@ -222,6 +223,7 @@ export function MultiplayerGame({
         <View className="absolute inset-0 items-center justify-center">
           {displayedTarget && (
             <PieCountdown
+              maxValue={NINE_DIAL.maxSum}
               key={displayedTarget.id}
               value={displayedTarget.value}
               isDark={isDark}
@@ -257,7 +259,7 @@ export function MultiplayerGame({
                 digit={digit}
                 direction={direction}
                 isDark={isDark}
-                progress={valueProgress(sum)}
+                progress={valueProgress(sum, NINE_DIAL.maxSum)}
               />
             ))}
         </View>
@@ -268,6 +270,7 @@ export function MultiplayerGame({
           player screen: the dial's size comes from the width, so it cannot be asked to
           fit inside half of whatever height is left. */}
       <Dial
+        dial={NINE_DIAL}
         values={grid.flat()}
         isDark={isDark}
         showSum={false}

@@ -7,7 +7,7 @@ import { useOnline } from '@/hooks/use-online'
 import { pendingOf } from '@/lib/local-scores'
 import { flushRunTotals } from '@/lib/run-submission'
 import { flushPendingScores, submitScore } from '@/lib/score-submission'
-import type { Difficulty, Mode } from '@/machines/game'
+import { type Difficulty, type ModeId } from '@/modes'
 
 // How often a stranded queue tries again while the connection is down. Each attempt is
 // also the probe that notices the connection came back, so it is slow enough to cost
@@ -66,7 +66,7 @@ export function useScoreSubmission(
   }, [isReady, userId, nickname, hasPending, online])
 
   const submit = useCallback(
-    (mode: Mode, difficulty: Difficulty, score: number, hits: number) => {
+    (mode: ModeId, difficulty: Difficulty, score: number, hits: number) => {
       void submitScore(userId, nickname, mode, difficulty, score, hits)
     },
     [userId, nickname],

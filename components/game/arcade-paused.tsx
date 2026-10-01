@@ -9,7 +9,7 @@ import { ScoreReadout } from '@/components/overlays/score-readout'
 import { Screen } from '@/components/screen'
 import { ARCADE_INK, DIM_INK } from '@/constants/colors'
 import { useTheme } from '@/hooks/use-theme'
-import { DARK_MODE_GRADIENT } from '@/machines/game'
+import { darkGradientOf } from '@/modes'
 
 // An arcade run, stopped.
 //
@@ -71,7 +71,7 @@ export function ArcadePaused({
             style={shadow}
           >
             <LinearGradient
-              colors={[...DARK_MODE_GRADIENT.arcade]}
+              colors={[...darkGradientOf('arcade')]}
               start={{ x: 0, y: 0.5 }}
               end={{ x: 1, y: 0.5 }}
               className="items-center py-4"

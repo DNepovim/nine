@@ -3,8 +3,12 @@ import { Text, View } from 'react-native'
 
 import { CompareValue } from '@/components/overlays/compare-value'
 import { toneFor, type CompareSide } from '@/lib/compare'
-import { DIFFICULTIES, getDifficultyColor } from '@/machines/game'
-import type { Difficulty, ScoredMode } from '@/machines/modes'
+import {
+  DIFFICULTIES,
+  getDifficultyColor,
+  type Difficulty,
+  type ScoredMode,
+} from '@/modes'
 
 // A board neither side has posted on. The same em dash `ProfileBoardRow` uses, and it means
 // the same thing here: nobody has played it, which is not the same as scoring nothing.

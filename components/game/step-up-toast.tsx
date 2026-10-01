@@ -3,7 +3,7 @@ import { LinearGradient } from 'expo-linear-gradient'
 import { Pressable, Text, View } from 'react-native'
 import Animated, { Easing, FadeOut, SlideInUp } from 'react-native-reanimated'
 
-import { DARK_MODE_GRADIENT, MODES, type Mode } from '@/machines/game'
+import { darkGradientOf, labelOf, type ModeId } from '@/modes'
 
 // Where it floats. Above the top bar rather than inside the layout: Trainee reclaims the
 // best-scores band it would otherwise sit in, so anything in the flow here would push the
@@ -44,14 +44,14 @@ export function StepUpToast({
   // The mode being offered, so the button can name it. Which difficulty it starts on is
   // the next screen's to say — here it would be a third thing to read in a toast whose
   // whole job is to be glanced at.
-  mode: Mode
+  mode: ModeId
   onPress: () => void
   onDismiss: () => void
 }) {
   const { t } = useLingui()
   // Named rather than inlined, so the translated line can put the mode wherever
   // its own grammar wants it.
-  const modeName = t(MODES[mode].label)
+  const modeName = t(labelOf(mode))
   return (
     <Animated.View
       entering={SlideInUp.duration(320).easing(Easing.out(Easing.cubic))}
@@ -82,7 +82,7 @@ export function StepUpToast({
 
         <Pressable onPress={onPress} className="overflow-hidden rounded-xl">
           <LinearGradient
-            colors={[...DARK_MODE_GRADIENT[mode]]}
+            colors={[...darkGradientOf(mode)]}
             start={{ x: 0, y: 0.5 }}
             end={{ x: 1, y: 0.5 }}
             className="items-center py-3"

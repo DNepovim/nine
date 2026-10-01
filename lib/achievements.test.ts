@@ -14,7 +14,8 @@ import { LOCALES } from '@/lib/i18n/locale'
 import type { BoardStanding } from '@/lib/medals'
 import { messages as cs } from '@/locales/cs/messages'
 import { messages as en } from '@/locales/en/messages'
-import { DIFFICULTY_ORDER, type Stats } from '@/machines/game'
+import { type Stats } from '@/machines/game'
+import { DIFFICULTY_ORDER } from '@/modes'
 
 import {
   achievementAnnouncement,

@@ -7,10 +7,10 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated'
 
-import { MODE_GRADIENT } from '@/machines/game'
+import { gradientOf } from '@/modes'
 
 // Trainee's colour, the same one the tips panel and its border wear.
-const TINT = MODE_GRADIENT.trainee[0]
+const TINT = gradientOf('trainee')[0]
 
 const FADE_MS = 220
 const RISE_PX = 4
