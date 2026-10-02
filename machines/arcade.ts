@@ -44,6 +44,12 @@ const REACH_SPAN = 0.28
 // on would make deep play easier, which is backwards.
 const WAY_COUNTS = [2, 3, 3, 4] as const
 
+// How often a fan offers a walled village, and how many dry fans may pass before one is
+// forced. A crossroad is the round: roughly one round in three has a siege in it, and a
+// branch cannot go more than three without.
+const FORT_CHANCE = 1 / 3
+const FORT_DRY_MAX = 3
+
 // What every way at a crossroad costs from the grid as it stands when the crossroad opens.
 // A band rather than a number so a fan has candidates to choose from, and a narrow one so
 // the choice between two ways is free — the mode is about where you go, not about which
@@ -88,6 +94,13 @@ export type Crossroad = {
   // string surgery to answer it would be a second encoding of the same tree.
   from: string | null
   depth: number
+  // Whether the village standing here is walled, and so has to be taken rather than
+  // walked into. Decided when this crossroad is created — that is, when the fan that
+  // offers it is grown — so a retreat gives back the same walls it left.
+  fortified: boolean
+  // How many fans in a row up this branch offered no walls. Carried rather than counted,
+  // because the map is a tree: there is no sequence to look back along, only a parent.
+  dry: number
   // Where the way in was pointing when it arrived, which is the axis the fan out of here
   // is measured from.
   heading: number
@@ -146,6 +159,8 @@ export function newMap(seed: number): ArcadeMap {
       name: settlementName(rngFor(seed, `name:${START}`)),
       from: null,
       depth: 0,
+      fortified: false,
+      dry: 0,
       heading: UP,
       pos: { x: 0, y: 0 },
       ways: [],
@@ -232,6 +247,13 @@ export function openCrossroad(
   const values = wayValues(grid, count, rng)
   if (values.length === 0) return map
 
+  // Rolled on a stream of its own rather than on the fan's, so adding walls to the map
+  // moved no fan that existed before them: a seed that walked a way yesterday walks the
+  // same way today.
+  const fortRng = rngFor(seed, `fort:${id}`)
+  const offers = !at.fortified && (at.dry >= FORT_DRY_MAX || fortRng() < FORT_CHANCE)
+  const walled = offers ? Math.floor(fortRng() * values.length) : -1
+
   const ways: ArcadeWay[] = values.map((value, i) => {
     const fanned = at.heading + (i / Math.max(1, values.length - 1) - 0.5) * 2 * SPREAD
     const crooked = fanned + (rng() - 0.5) * JITTER
@@ -246,7 +268,7 @@ export function openCrossroad(
   })
 
   const grown: Record<string, Crossroad> = { ...map, [id]: { ...at, ways } }
-  for (const way of ways) {
+  ways.forEach((way, i) => {
     grown[way.to] = {
       id: way.to,
       from: id,
@@ -258,8 +280,10 @@ export function openCrossroad(
       },
       ways: [],
       name: settlementName(rngFor(seed, `name:${way.to}`)),
+      fortified: i === walled,
+      dry: offers ? 0 : at.dry + 1,
     }
-  }
+  })
   return grown
 }
 

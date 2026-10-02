@@ -64,6 +64,8 @@ describe('newMap', () => {
       name: '',
       from: null,
       depth: 0,
+      fortified: false,
+      dry: 0,
       heading: UP,
       pos: { x: 0, y: 0 },
       ways: [],
@@ -190,6 +192,8 @@ describe('rngFor', () => {
       name: 'Elsewhere',
       from: null,
       depth: 0,
+      fortified: false,
+      dry: 0,
       heading: UP,
       pos: { x: 0, y: 0 },
       ways: [],
@@ -259,6 +263,88 @@ describe('crossroadClock', () => {
   })
 })
 
+describe('fortified villages', () => {
+  const grown = (seed: number, id: string, map = newMap(seed)) =>
+    openCrossroad(map, id, zeros, seed)
+
+  it('starts the run on an unwalled village with a dry slate', () => {
+    const map = newMap(3)
+    expect(map[START]?.fortified).toBe(false)
+    expect(map[START]?.dry).toBe(0)
+  })
+
+  it('walls at most one village in a fan', () => {
+    for (let seed = 1; seed <= 60; seed++) {
+      const ways = grown(seed, START)[START]?.ways ?? []
+      const walled = ways.filter((w) => grown(seed, START)[w.to]?.fortified === true)
+      expect(walled.length).toBeLessThanOrEqual(1)
+    }
+  })
+
+  it('gives back the same walls when the crossroad is grown again', () => {
+    const once = grown(17, START)
+    const twice = openCrossroad(once, START, busy, 17)
+    for (const way of once[START]?.ways ?? []) {
+      expect(twice[way.to]?.fortified).toBe(once[way.to]?.fortified)
+      expect(twice[way.to]?.dry).toBe(once[way.to]?.dry)
+    }
+  })
+
+  it('never opens a siege out of the village just taken', () => {
+    // Walk down a branch until a walled village turns up, then grow its own fan.
+    for (let seed = 1; seed <= 80; seed++) {
+      let map = grown(seed, START)
+      let at = START
+      for (let step = 0; step < 8; step++) {
+        const here = map[at]
+        const next = here?.ways[0]
+        if (next === undefined) break
+        map = openCrossroad(map, next.to, zeros, seed)
+        at = next.to
+        if (map[at]?.fortified !== true) continue
+        for (const way of map[at]?.ways ?? []) {
+          expect(map[way.to]?.fortified).toBe(false)
+        }
+      }
+    }
+  })
+
+  it('forces walls after three dry fans', () => {
+    // A branch cannot go four crossroads without one, whatever the seed rolls.
+    for (let seed = 1; seed <= 40; seed++) {
+      let map = grown(seed, START)
+      let at = START
+      let dryRun = 0
+      for (let step = 0; step < 12; step++) {
+        const offered = (map[at]?.ways ?? []).some((w) => map[w.to]?.fortified === true)
+        dryRun = offered ? 0 : dryRun + 1
+        expect(dryRun).toBeLessThanOrEqual(4)
+        const next = map[at]?.ways[0]
+        if (next === undefined) break
+        map = openCrossroad(map, next.to, zeros, seed)
+        at = next.to
+      }
+    }
+  })
+
+  it('walls about a third of the fans it grows', () => {
+    // Consecutive seeds won't do here: `fort:` draws only the first step of a fresh LCG,
+    // and consecutive inputs to that step walk it in near lockstep — the very correlation
+    // a run never notices (every other roll mixes it back in) but a thousand runs in a row
+    // would. Spread the seeds themselves so each draw starts from an unrelated state.
+    let fans = 0
+    let walled = 0
+    for (let i = 1; i <= 400; i++) {
+      const seed = Math.imul(i, 2654435761) >>> 0
+      const map = grown(seed, START)
+      fans += 1
+      if ((map[START]?.ways ?? []).some((w) => map[w.to]?.fortified === true)) walled += 1
+    }
+    expect(walled / fans).toBeGreaterThan(0.2)
+    expect(walled / fans).toBeLessThan(0.5)
+  })
+})
+
 describe('isStrike', () => {
   it('is a crossroad answered with most of its clock still full', () => {
     expect(isStrike(9000, 12000)).toBe(true)
@@ -286,6 +372,8 @@ describe('straightestWay', () => {
       name: 'Testbury',
       from: START,
       depth: 1,
+      fortified: false,
+      dry: 0,
       heading: UP,
       pos: { x: 0, y: -1 },
       ways: [
@@ -305,6 +393,8 @@ describe('straightestWay', () => {
       name: 'Testbury',
       from: START,
       depth: 1,
+      fortified: false,
+      dry: 0,
       heading: Math.PI - 0.05,
       pos: { x: 0, y: 0 },
       ways: [
