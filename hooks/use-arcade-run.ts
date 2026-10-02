@@ -406,13 +406,21 @@ export function useArcadeRun() {
         const now = Date.now()
         setRun((r) => {
           if (r.phase !== 'taken') return r
-          return {
-            ...r,
-            map: openCrossroad(r.map, r.at, r.grid, r.seed),
-            phase: 'bloom',
-            siege: null,
-            ...beat(r, now),
-          }
+          // The fan is grown *before* the walls come off, and that order is the whole of
+          // it: `openCrossroad` reads `fortified` to force a walled village's own fan dry,
+          // which is what stops a siege opening straight out of a siege. Clear the flag
+          // first — the obvious simplification — and the village just taken would offer
+          // another one crossroad on.
+          //
+          // Cleared it must be, though. Taken is taken: a village that kept its walls
+          // would be a heart to be farmed by walking out and back in again.
+          const grown = openCrossroad(r.map, r.at, r.grid, r.seed)
+          const here = grown[r.at]
+          const map =
+            here === undefined
+              ? grown
+              : { ...grown, [r.at]: { ...here, fortified: false } }
+          return { ...r, map, phase: 'bloom', siege: null, ...beat(r, now) }
         })
       })
     }
@@ -477,11 +485,27 @@ export function useArcadeRun() {
       // start a player quick enough to answer before the clock starts has earned.
       const answered = crossroadClock(r.map[r.at]?.depth ?? 0)
       const leftMs = r.phase === 'open' ? answered - (now - r.beatAt) : answered
+      const struck = isStrike(leftMs, answered)
+
       // A strike cannot skip a siege: the rocket's first hop is a crossroad it passes
       // *through* without stopping, and a village with walls on it is not passed through.
-      // It still counted as a strike — it was answered fast — it simply has nowhere to go.
-      const walled = r.map[taken.to]?.fortified === true
-      if (walled || !isStrike(leftMs, answered)) {
+      // It still counts as a strike — it was answered fast — it simply has nowhere to
+      // rocket to, so the walk it degrades to carries the stat with it.
+      //
+      // Two cases, not one. Walking into those same walls slowly was never a strike and
+      // adds nothing, which is why `struck` is asked again here rather than assumed.
+      if (r.map[taken.to]?.fortified === true) {
+        return {
+          ...r,
+          grid: next,
+          phase: 'walk',
+          moving: taken,
+          strikes: struck ? r.strikes + 1 : r.strikes,
+          ...beat(r, now),
+        }
+      }
+
+      if (!struck) {
         return { ...r, grid: next, phase: 'walk', moving: taken, ...beat(r, now) }
       }
 

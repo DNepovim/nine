@@ -108,6 +108,12 @@ const DRIFT_MS = {
   rocket: ROCKET_MS,
   retreat: RETREAT_MS,
   falling: 0,
+  // A siege moves the camera *in* rather than across: the hero is stopped at the gate for
+  // all four of these beats, so there is no ground for the canvas to cover.
+  closing: 0,
+  siege: 0,
+  taken: 0,
+  overrun: 0,
   over: 0,
 } as const satisfies Record<ArcadePhase, number>
 
@@ -124,6 +130,12 @@ const TRAVEL = {
   rocket: null,
   retreat: { from: 1, to: 0, duration: RETREAT_MS, easing: Easing.in(Easing.cubic) },
   falling: { from: 0, to: 1, duration: FALL_MS, easing: Easing.in(Easing.cubic) },
+  // The hero holds at the stand-off for the whole fight, so none of these move it along
+  // the way. `closing` is the tail of the walk that reached the gate, which `walk` drove.
+  closing: null,
+  siege: null,
+  taken: null,
+  overrun: null,
   over: null,
 } as const satisfies Record<
   ArcadePhase,
@@ -143,6 +155,12 @@ const CREEP = {
   rocket: null,
   retreat: 'held',
   falling: 'held',
+  // A siege has no crossroad clock — what is counting down is the gate, not the way in —
+  // so the way behind stays clear for all four.
+  closing: null,
+  siege: null,
+  taken: null,
+  overrun: null,
   over: 'held',
 } as const satisfies Record<ArcadePhase, 'running' | 'held' | null>
 
