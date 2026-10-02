@@ -24,6 +24,7 @@ import { Dial } from '@/components/game/dial'
 import { LandMark } from '@/components/game/land-mark'
 import { RunTopBar } from '@/components/game/run-top-bar'
 import { ScoreDigit } from '@/components/game/score-digit'
+import { SiegeField } from '@/components/game/siege-field'
 import { VillageArrival } from '@/components/game/village-arrival'
 import { WayBud, type BudState } from '@/components/game/way-bud'
 import { WayStem, type StemState } from '@/components/game/way-stem'
@@ -53,6 +54,7 @@ import {
   pitchFor,
   pointsOf,
   splineFor,
+  splinePoint,
   type Spline,
 } from '@/lib/arcade-layout'
 import { valueProgress } from '@/lib/value-progress'
@@ -254,6 +256,20 @@ export function ArcadeGame({ isDark, onEnd }: { isDark: boolean; onEnd: () => vo
   useFrameCallback((frame) => {
     clock.value = frame.timeSinceFirstFrame
   })
+  // What that clock reads as wall-clock zero. It counts from the first frame and a
+  // warrior's `spawnedAt` is a `Date.now()`, so one of the two has to be rebased onto the
+  // other — and it has to be this one, because a siege is replayable from a seed and a
+  // frame count is not.
+  //
+  // Taken at the first render rather than at the first frame, which leaves it short by
+  // however long the mount takes. That is a constant of a frame or two against a walk of
+  // seven seconds — a point or so of ground, which is nothing — and it is a constant, so
+  // it never grows. What would matter is the two clocks drifting, and they do not:
+  // `timeSinceFirstFrame` is a difference of frame timestamps rather than a count of
+  // frames, so it tracks real time across a background, and a pause moves every
+  // `spawnedAt` by the same wall-clock amount the clock has been ticking through — see
+  // `shift` in machines/siege.
+  const epoch = useRef(Date.now()).current
 
   const camX = useSharedValue(0)
   const camY = useSharedValue(0)
@@ -596,6 +612,14 @@ export function ArcadeGame({ isDark, onEnd }: { isDark: boolean; onEnd: () => vo
     return { spline: null, ...standingAt }
   }
   const hero = travelling()
+  // Where the hero is *drawn*. `hero.x/.y` is the crossroad the way it is on leaves, which
+  // is a frame rather than a place — and the warriors have to walk at the hero itself.
+  // Read at the stand-off, which is where it holds for the whole of a fight, and read
+  // without the sway — the way's breath moves this point by a couple of points out of the
+  // hundred and thirty it stands from the crossroad behind, and reading it off the clock
+  // would mean carrying the spline into the warriors' own worklet for that.
+  const stand =
+    hero.spline === null ? { x: 0, y: 0 } : splinePoint(hero.spline, STANDOFF, 0)
 
   // What the land is, where the hero is standing. A pure function of the world and the run's
   // seed — see hooks/use-arcade-land.ts for why the answers are kept.
@@ -743,6 +767,24 @@ export function ArcadeGame({ isDark, onEnd }: { isDark: boolean; onEnd: () => vo
                     y={skipped.fromY}
                     turn={camTurn}
                     ink={arcadeInk}
+                  />
+                )}
+                {/* The fight, over the ground it is fought on. Outside the group above,
+                like the hero and the strike: the country steps back while a siege is on and
+                the besieged village is the one thing left to look at. */}
+                {run.siege !== null && here !== undefined && pitch > 0 && (
+                  <SiegeField
+                    siege={run.siege}
+                    clock={clock}
+                    epoch={epoch}
+                    turn={camTurn}
+                    villageX={pointsOf(here.pos, pitch).x}
+                    villageY={pointsOf(here.pos, pitch).y}
+                    heroX={hero.x + stand.x}
+                    heroY={hero.y + stand.y}
+                    ink={PIE_INK[colorScheme]}
+                    line={ink.line}
+                    face={surface}
                   />
                 )}
                 {/* The name of the place just reached, under the flame. Keyed on the crossroad,
