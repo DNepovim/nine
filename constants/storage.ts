@@ -68,6 +68,10 @@ export const WELCOME_KEY = 'nine.welcome.v1'
 // Absent until the player picks a language in options; while it is absent the app is in
 // English. The device's own language is never consulted — see hooks/use-locale.tsx.
 export const LOCALE_KEY = 'nine.locale.v1'
+// Whether the player has answered the session-recording ask — 'granted' or 'denied'.
+// Absent means unanswered, not declined: recording stays off either way (PostHog's own
+// default), and only an absent key brings the banner back. See hooks/use-replay-consent.ts.
+export const REPLAY_CONSENT_KEY = 'nine.replay-consent.v1'
 
 // Keys no build reads any more, cleared once on boot so the retired data does not sit on
 // the device forever. Anything listed here is gone for good: the pending queue is on the

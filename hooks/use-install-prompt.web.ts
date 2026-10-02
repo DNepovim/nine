@@ -1,5 +1,6 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 
+import { track } from '@/lib/analytics'
 import { isDesktopViewport } from '@/lib/desktop'
 import { resolveInstallTarget } from '@/lib/install-target'
 import type { InstallTarget } from '@/types/install'
@@ -48,6 +49,13 @@ export function useInstallPrompt(): {
   // a player who keeps declining keeps being asked. No persistence key exists.
   const [dismissed, setDismissed] = useState(false)
 
+  // Read by `onInstalled`, which the mount effect below attaches once with an empty
+  // dependency list — a closure over `target` there would freeze on whatever the target
+  // was at that first render rather than whatever it actually was when the browser fired
+  // `appinstalled`.
+  const targetRef = useRef(target)
+  targetRef.current = target
+
   useEffect(() => {
     setTarget(readTarget())
 
@@ -57,6 +65,7 @@ export function useInstallPrompt(): {
       setTarget(readTarget())
     }
     const onInstalled = () => {
+      track('install_prompt', { action: 'installed', target: targetRef.current })
       setTarget('none')
     }
 
@@ -74,8 +83,9 @@ export function useInstallPrompt(): {
   }, [])
 
   const dismiss = useCallback(() => {
+    track('install_prompt', { action: 'dismissed', target })
     setDismissed(true)
-  }, [])
+  }, [target])
 
   // Hand the decision to the browser's own dialog and get out of the way. The
   // event is single-use, and coming back after someone declines the native
@@ -84,12 +94,15 @@ export function useInstallPrompt(): {
     const win: InstallWindow = window
     const event = win.__nineInstallPrompt
     win.__nineInstallPrompt = undefined
+    // 'accepted' names the tap, not the outcome — the native dialog this opens can
+    // still be declined, and 'installed' below is what actually confirms one.
+    track('install_prompt', { action: 'accepted', target })
     setDismissed(true)
     void event?.prompt().catch(() => {
       // The dialog can refuse to open (already installed in another tab, or
       // fired twice). Nothing useful to say about it.
     })
-  }, [])
+  }, [target])
 
   return { target: dismissed ? 'none' : target, install, dismiss }
 }

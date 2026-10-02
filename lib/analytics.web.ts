@@ -51,6 +51,18 @@ const withClient = (fn: (p: PostHog) => void): void => {
 // leaves the gate shut and every event buffered forever, while the flags request
 // (which skips the gate) goes out and makes everything look alive. Evaluating only at
 // 'complete' keeps the gate open no matter which way the bundler resolves the import.
+// Whether this tab is running from the home screen rather than a browser tab —
+// Chromium reports it through `display-mode`, Safari through its own `navigator`
+// flag with no `display-mode` support for home-screen web apps. The same check
+// `useInstallPrompt` makes for the install banner, read again here rather than
+// imported: that hook is React, and this runs once, before anything is mounted.
+const installMode = (): 'standalone' | 'browser' => {
+  const standalone =
+    window.matchMedia('(display-mode: standalone)').matches ||
+    (navigator as Navigator & { standalone?: boolean }).standalone === true
+  return standalone ? 'standalone' : 'browser'
+}
+
 const start = (): void => {
   posthog.init(KEY, {
     api_host: HOST,
@@ -65,13 +77,25 @@ const start = (): void => {
     capture_pageleave: false,
     // Unhandled errors and rejections, which is the error logging half of this.
     capture_exceptions: true,
-    // No session replay. It records the nickname prompt among everything else, and
-    // turning it on is a consent-banner decision rather than a config one.
+    // Off until the player says yes — `setReplayConsent` is the only thing that turns
+    // it on, once `useReplayConsent` has an answer on file. `session_recording` is
+    // still configured here rather than left to its defaults, so the moment it does
+    // start it starts correctly: every input masked, the nickname prompt included,
+    // which is the floor for turning this on at all. How large a share of *consenting*
+    // sessions actually get recorded from there is a PostHog project setting (Settings
+    // → Session replay → sampling), not a client config — it can be dialled down
+    // without a redeploy, which a number baked in here could not be.
     disable_session_recording: true,
+    session_recording: {
+      maskAllInputs: true,
+    },
     persistence: 'localStorage',
   })
 
-  posthog.register({ build: BUILD_ID })
+  // `build` says which release an event came from; `install_mode` says whether the
+  // session is the installed app or a browser tab — see types/install.ts. Both ride on
+  // every event from here on, including the ones already queued in `waiting`.
+  posthog.register({ build: BUILD_ID, install_mode: installMode() })
 
   client = posthog
   for (const fn of waiting) fn(posthog)
@@ -97,6 +121,40 @@ export const initAnalytics = (): void => {
 export const identify = (userId: string, nickname: string | null): void => {
   withClient((p) => {
     p.identify(userId, nickname === null ? undefined : { nickname })
+  })
+}
+
+// Keeps whoever holds the `admin` role out of the data entirely, rather than filtering
+// them out of it afterwards. `opt_out_capturing` is PostHog's own switch for exactly
+// this — it persists in localStorage and turns every later call on this device into a
+// no-op, `identify` included, so an admin playing in production never becomes a person
+// in the project at all. Called ahead of `identify` at the one call site that knows the
+// role, so an admin's own session never gets as far as being identified first.
+//
+// The reverse direction only acts when the device is actually opted out, rather than
+// opting every ordinary player in on every launch: PostHog's own opt-in call captures an
+// event to say so, and firing that for a player who was never opted out in the first
+// place is a notification about nothing.
+export const setAdminOptOut = (isAdmin: boolean): void => {
+  withClient((p) => {
+    if (isAdmin) p.opt_out_capturing()
+    else if (p.has_opted_out_capturing()) p.opt_in_capturing()
+  })
+}
+
+// Starts or stops session replay on the player's own say-so — the GDPR gate the rest of
+// the config was already built to wait for. `useReplayConsent` is the only caller: it
+// holds the stored answer, and this is what carries it to the SDK whenever that answer is
+// 'granted' or changes.
+//
+// `startSessionRecording` / `stopSessionRecording` rather than toggling
+// `disable_session_recording` through `set_config` directly — they are PostHog's own
+// public entry points for exactly this, and `start` already leaves recording configured
+// (masked inputs, EU host) and merely dormant, so there is nothing left to pass here.
+export const setReplayConsent = (granted: boolean): void => {
+  withClient((p) => {
+    if (granted) p.startSessionRecording()
+    else p.stopSessionRecording()
   })
 }
 

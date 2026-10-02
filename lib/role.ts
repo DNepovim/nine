@@ -8,9 +8,10 @@
 // The column this reads is `profiles.role` — see the migration for who may write it, and
 // for why this is about what a player is *shown* rather than what a player may do.
 
-// Not exported: nothing outside needs to enumerate the roles, and `parseRole` is the
-// only thing that should be reading a string against this list.
-const ROLES = ['tester', 'developer', 'admin'] as const
+// Exported for the admin screen's role picker, the one place outside this file that
+// needs to enumerate the ladder rather than just check a rung against it. `parseRole` is
+// still the only thing that should be reading an untrusted string against this list.
+export const ROLES = ['tester', 'developer', 'admin'] as const
 
 export type Role = (typeof ROLES)[number]
 

@@ -1,5 +1,8 @@
+import type { AchievementId } from '@/constants/achievements'
+import type { Stage } from '@/lib/achievements'
 import type { Period } from '@/lib/announcements'
 import { type Difficulty, type ModeId } from '@/modes'
+import type { InstallTarget } from '@/types/install'
 
 // Every event the app sends, with the shape it sends. One table, so an event cannot be
 // added in a component with a name that nearly matches one already in the warehouse —
@@ -16,7 +19,9 @@ export type AnalyticsEvents = {
     // challenge button: did they choose the board or accept the one offered? 'welcome' is
     // the one nobody chose — the tutorial a first launch opens into by itself — and
     // 'guide' is that same tutorial asked for, from TRY IT at the end of How to Play.
-    from: 'menu' | 'play_again' | 'challenge' | 'restart' | 'welcome' | 'guide'
+    // 'dev' is the one other than a player's own choice: a challenge started from the dev
+    // screen rather than offered or picked on the intro.
+    from: 'menu' | 'play_again' | 'challenge' | 'restart' | 'welcome' | 'guide' | 'dev'
   }
   run_finished: {
     mode: ModeId
@@ -50,8 +55,28 @@ export type AnalyticsEvents = {
       | 'join_room'
       | 'achievements'
       | 'medals'
+      | 'dev'
+      | 'admin'
   }
   multiplayer_room: { action: 'created' | 'joined' | 'finished'; players: number }
+  // The way, which runs on its own engine and so has no mode or difficulty to carry —
+  // every other field in `run_started`/`run_finished` describes a board this has none of.
+  arcade_run_started: Record<string, never>
+  arcade_run_finished: {
+    // The deepest crossroad reached — what the end-of-run screen shows as the score.
+    depth: number
+    strikes: number
+    playedMs: number
+  }
+  // `stage` is null for an achievement with none — see `Award` in lib/achievements.ts.
+  achievement_unlocked: { id: AchievementId; stage: Stage | null }
+  // The home-screen install funnel. 'installed' fires on the browser's own confirmation
+  // (the `appinstalled` event), not on the button tap that only opens the native dialog —
+  // that tap is 'accepted', and the dialog can still be dismissed from there.
+  install_prompt: {
+    action: 'shown' | 'accepted' | 'dismissed' | 'installed'
+    target: InstallTarget
+  }
 }
 
 export type AnalyticsEvent = keyof AnalyticsEvents

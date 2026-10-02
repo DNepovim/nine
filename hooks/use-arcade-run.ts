@@ -11,6 +11,7 @@ import {
   WALK_MS,
 } from '@/constants/arcade'
 import { usePauseOnBlur } from '@/hooks/use-pause-on-blur'
+import { track } from '@/lib/analytics'
 import {
   ARCADE_DIAL,
   crossroadClock,
@@ -168,6 +169,36 @@ export function useArcadeRun() {
   // next to nothing to save, and stopping there would freeze a screen that has to be
   // resumed into a Reanimated animation which carried on without it.
   usePauseOnBlur(!run.paused && isOneOf(run.phase, DIALABLE), pauseRun)
+
+  // Both edges of a run, tracked here rather than in the screen: this is the one place
+  // that knows when a run actually begins and ends, and it would otherwise have to leak
+  // its state out through `onEnd` for a screen to say the same thing a beat later.
+  //
+  // `run.seed` is minted fresh exactly at START and at `restart`, and nowhere else — see
+  // `startRun` — so a run of this has one seed for its whole life and the effect fires
+  // once per run, the first included.
+  useEffect(() => {
+    track('arcade_run_started', {})
+  }, [run.seed])
+
+  // Latched on the rising edge into `over`, the same way the step-up toast's own offer
+  // is — `run.phase` holds at `over` once the screen takes it, and firing on every
+  // render it stays there would count one run as many.
+  const endedRef = useRef(false)
+  useEffect(() => {
+    const ended = run.phase === 'over'
+    if (ended && !endedRef.current) {
+      // `best` rather than `depth`: it is the deepest crossroad the run ever reached,
+      // which is what the end-of-run screen shows as the score — `depth` alone would
+      // read as a run worth less than the one the player just watched end.
+      track('arcade_run_finished', {
+        depth: run.best,
+        strikes: run.strikes,
+        playedMs: run.playedMs,
+      })
+    }
+    endedRef.current = ended
+  }, [run.phase, run.best, run.strikes, run.playedMs])
 
   // What ends each beat. One timer rather than one per phase, cleared by the effect that
   // set it — a press can end `open` early, and the clock it was running has to go with it.

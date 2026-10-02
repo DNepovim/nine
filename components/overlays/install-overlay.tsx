@@ -1,10 +1,12 @@
 import { Ionicons } from '@expo/vector-icons'
 import { Trans } from '@lingui/react/macro'
+import { useEffect } from 'react'
 import { Pressable, Text, View } from 'react-native'
 
 import { InstallSteps } from '@/components/overlays/install-steps'
 import { ModalCard } from '@/components/overlays/modal-card'
 import { APP_VIOLET } from '@/constants/colors'
+import { track } from '@/lib/analytics'
 import type { InstallableTarget } from '@/types/install'
 
 type IoniconName = keyof typeof Ionicons.glyphMap
@@ -66,6 +68,15 @@ export function InstallOverlay({
   onDismiss: () => void
 }) {
   const stepOne = STEP_ONE[target]
+
+  // Once per actual appearance, not once per time the target resolves: the two mount
+  // sites (over the splash, and on the intro) each gate on their own popups and a
+  // resolved target, so this is the only place that knows the card genuinely reached the
+  // screen rather than losing to a release note or a winnings card still showing.
+  useEffect(() => {
+    track('install_prompt', { action: 'shown', target })
+    // Empty on purpose: once per mount, not once per target change.
+  }, [])
 
   return (
     <ModalCard title={<Trans>INSTALL</Trans>} onDismiss={onDismiss}>

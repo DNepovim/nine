@@ -9,6 +9,7 @@ import { Screen } from '@/components/screen'
 import { ThemeToggle } from '@/components/theme-toggle'
 import { DIM_INK } from '@/constants/colors'
 import { useLocale } from '@/hooks/use-locale'
+import type { ReplayConsent } from '@/hooks/use-replay-consent'
 import { buildInfo } from '@/lib/build-info'
 
 function AdvancedOption({
@@ -54,6 +55,8 @@ export function AdvancedOptionsOverlay({
   showSum,
   onToggleSum,
   onToggleTheme,
+  replayConsent,
+  onToggleReplayConsent,
   onOpenNews,
   onClose,
 }: {
@@ -61,6 +64,11 @@ export function AdvancedOptionsOverlay({
   showSum: boolean
   onToggleSum: () => void
   onToggleTheme: () => void
+  // Whichever of the three the player answered the recording banner with, or 'unknown'
+  // if it has not come up yet — read as a plain checkbox either way: checked is
+  // 'granted', unchecked is everything else. See hooks/use-replay-consent.ts.
+  replayConsent: ReplayConsent
+  onToggleReplayConsent: () => void
   onOpenNews: () => void
   onClose: () => void
 }) {
@@ -80,6 +88,13 @@ export function AdvancedOptionsOverlay({
         label={<Trans>SHOW SUM IN BUTTONS</Trans>}
         description={<Trans>Display value × row × column</Trans>}
         onToggle={onToggleSum}
+      />
+
+      <AdvancedOption
+        checked={replayConsent === 'granted'}
+        label={<Trans>SESSION RECORDING</Trans>}
+        description={<Trans>Let us watch replays to fix bugs</Trans>}
+        onToggle={onToggleReplayConsent}
       />
 
       {/* Theme */}

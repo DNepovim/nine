@@ -112,6 +112,8 @@ export function MenuOverlay({
   onHowToPlay,
   onCreateRoom,
   onOpenJoinRoom,
+  onOpenDev,
+  onOpenAdmin,
 }: {
   gameMode: ModeId
   difficulty: Difficulty
@@ -170,6 +172,11 @@ export function MenuOverlay({
   onCreateRoom: () => void
   // The code entry itself lives on its own screen now — this just opens it.
   onOpenJoinRoom: () => void
+  // The dev and admin screens, each its own door behind its own flag — see
+  // constants/features.ts. Always passed, since whether either is shown at all is decided
+  // below rather than by the caller.
+  onOpenDev: () => void
+  onOpenAdmin: () => void
 }) {
   const { t } = useLingui()
   const { colorScheme } = useTheme()
@@ -187,6 +194,8 @@ export function MenuOverlay({
   const online = useOnline()
   const showMultiplayer = useFlag('multiplayer')
   const showArcade = useFlag('arcade')
+  const showDev = useFlag('dev')
+  const showAdmin = useFlag('admin')
   // A stored ARCADE focus is only honoured by a reader who can actually see the pill: the
   // flag can be taken away between launches, and a screen opening on a tab that is not
   // there would show the player a difficulty row with no mode above it.
@@ -604,6 +613,40 @@ export function MenuOverlay({
               </View>
             </Pressable>
           </View>
+
+          {/* Its own row rather than folded into the one above: these two are not for the
+              player this screen otherwise addresses, and a row that only a role ever sees
+              stays out of the way of the one everybody does. DEV is shown to anyone
+              holding a role; ADMIN nests inside it for the one role above the rest — see
+              constants/features.ts. */}
+          {showDev && (
+            <View className="flex-row flex-wrap items-center justify-center gap-x-5 gap-y-2">
+              <Pressable onPress={onOpenDev} hitSlop={10}>
+                <View className="flex-row items-center gap-1">
+                  <Ionicons name="code-slash-outline" size={10} color={dimColor} />
+                  <Text
+                    selectable={false}
+                    className="font-mono text-[10px] font-bold tracking-[1.8px] text-dim"
+                  >
+                    <Trans>DEV</Trans>
+                  </Text>
+                </View>
+              </Pressable>
+              {showAdmin && (
+                <Pressable onPress={onOpenAdmin} hitSlop={10}>
+                  <View className="flex-row items-center gap-1">
+                    <Ionicons name="shield-outline" size={10} color={dimColor} />
+                    <Text
+                      selectable={false}
+                      className="font-mono text-[10px] font-bold tracking-[1.8px] text-dim"
+                    >
+                      <Trans>ADMIN</Trans>
+                    </Text>
+                  </View>
+                </Pressable>
+              )}
+            </View>
+          )}
         </View>
       </View>
     </Screen>

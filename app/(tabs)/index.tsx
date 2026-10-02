@@ -37,7 +37,9 @@ import { TutorialCard } from '@/components/game/tutorial-card'
 import { TutorialStepper } from '@/components/game/tutorial-stepper'
 import { AchievementDetail } from '@/components/overlays/achievement-detail'
 import { AchievementsOverlay } from '@/components/overlays/achievements-overlay'
+import { AdminOverlay } from '@/components/overlays/admin-overlay'
 import { AdvancedOptionsOverlay } from '@/components/overlays/advanced-options-overlay'
+import { DevOverlay } from '@/components/overlays/dev-overlay'
 import { FeedbackOverlay } from '@/components/overlays/feedback-overlay'
 import { FeedbackReplyOverlay } from '@/components/overlays/feedback-reply-overlay'
 import { GameOverSequence } from '@/components/overlays/game-over-sequence'
@@ -52,6 +54,7 @@ import { MultiplayerWaiting } from '@/components/overlays/multiplayer-waiting'
 import { NewsArchiveOverlay } from '@/components/overlays/news-archive-overlay'
 import { NicknameModal } from '@/components/overlays/nickname-modal'
 import { PausedOverlay } from '@/components/overlays/paused-overlay'
+import { ReplayConsentOverlay } from '@/components/overlays/replay-consent-overlay'
 import { StepUpOverlay } from '@/components/overlays/step-up-overlay'
 import { WhatsNewOverlay } from '@/components/overlays/whats-new-overlay'
 import { Screen } from '@/components/screen'
@@ -92,6 +95,7 @@ import { usePersistedRun } from '@/hooks/use-persisted-run'
 import { usePersistedStats } from '@/hooks/use-persisted-stats'
 import { usePopupDeck } from '@/hooks/use-popup-deck'
 import { PlayerProfileProvider } from '@/hooks/use-profile-modal'
+import { useReplayConsent } from '@/hooks/use-replay-consent'
 import { useRivalRecords } from '@/hooks/use-rival-records'
 import { useSavedRun } from '@/hooks/use-saved-run'
 import { useScoreDirection } from '@/hooks/use-score-direction'
@@ -108,7 +112,7 @@ import { useTutorialRequests } from '@/hooks/use-tutorial-request'
 import { useWelcome } from '@/hooks/use-welcome'
 import { idsOf, latestAchievement } from '@/lib/achievement-store'
 import { achievementCard } from '@/lib/achievements'
-import { identify, track } from '@/lib/analytics'
+import { identify, setAdminOptOut, track } from '@/lib/analytics'
 import type { AnalyticsEvents } from '@/lib/analytics-events'
 import {
   barFor,
@@ -197,7 +201,8 @@ const RESUME_DELAY_MS = 500
 // The menu-level overlays, one open at a time. 'none' means the screen under them —
 // the intro or the pause screen — is what shows. Feedback is not here: it is a
 // dialog over whatever is showing, not a screen of its own.
-type MenuOverlayName = 'none' | 'advanced' | 'howToPlay' | 'news' | 'joinRoom'
+type MenuOverlayName =
+  'none' | 'advanced' | 'howToPlay' | 'news' | 'joinRoom' | 'dev' | 'admin'
 
 // The two dialogs behind the line under the title: everything the player holds, and
 // everything there is to achieve. Deliberately not `menuOverlay` — that one takes the
@@ -213,6 +218,8 @@ const OVERLAY_SCREENS = {
   howToPlay: 'how_to_play',
   news: 'news',
   joinRoom: 'join_room',
+  dev: 'dev',
+  admin: 'admin',
 } as const satisfies Record<
   Exclude<MenuOverlayName, 'none'>,
   AnalyticsEvents['screen_opened']['screen']
@@ -465,6 +472,10 @@ export default function GameScreen() {
     track('screen_opened', { screen: OVERLAY_SCREENS[menuOverlay] })
   }, [menuOverlay])
   const installPrompt = useInstall()
+  // Whether session replay may run, and the two ways to change it — the banner below on
+  // a first ask, the toggle inside OPTIONS on every ask after. See
+  // hooks/use-replay-consent.ts for why there are not two stores for this.
+  const replayConsent = useReplayConsent()
   const { exiting: splashExiting, done: splashDone } = useSplash()
   const { ready: updateReady, apply: applyUpdate } = useAppUpdate()
 
@@ -561,9 +572,16 @@ export default function GameScreen() {
   // Analytics reuses the identity the boards already rank — the anonymous Supabase user
   // id — so an event can be read next to the score it produced. Re-runs when the
   // nickname lands or changes, which just refreshes the person's properties.
+  //
+  // The opt-out runs first: whoever holds the `admin` role is kept out of the data
+  // entirely rather than filtered out of it afterwards, and ordering this ahead of
+  // `identify` is what keeps an admin's own playing from ever becoming a person in the
+  // project in the first place.
   useEffect(() => {
-    if (userId !== null) identify(userId, nickname)
-  }, [userId, nickname])
+    if (userId === null) return
+    setAdminOptOut(role === 'admin')
+    identify(userId, nickname)
+  }, [userId, nickname, role])
 
   // Below `useSupabaseAuth`, which it reads: the winnings half of the deck is per player,
   // and there is nothing to ask the server for until there is a player to ask about.
@@ -766,7 +784,12 @@ export default function GameScreen() {
     crossed,
     guideRead: howToPlay.read,
     userId,
-    onUnlocked: achievementQueue.push,
+    onUnlocked: (awards) => {
+      for (const award of awards) {
+        track('achievement_unlocked', { id: award.id, stage: award.stage })
+      }
+      achievementQueue.push(awards)
+    },
   })
   const recordMultiplayer = achievements.recordMultiplayer
 
@@ -1891,6 +1914,11 @@ export default function GameScreen() {
                 showSum={showSum}
                 onToggleSum={toggleSum}
                 onToggleTheme={toggleTheme}
+                replayConsent={replayConsent.consent}
+                onToggleReplayConsent={() => {
+                  if (replayConsent.consent === 'granted') replayConsent.decline()
+                  else replayConsent.allow()
+                }}
                 onOpenNews={() => {
                   setMenuOverlay('news')
                 }}
@@ -1943,6 +1971,30 @@ export default function GameScreen() {
               />
             )}
 
+            {/* ── Dev — every challenge ever written, playable on demand ── */}
+            {menuOverlay === 'dev' && (
+              <DevOverlay
+                onRunChallenge={(modeId) => {
+                  send({ type: 'SET_MODE', mode: modeId })
+                  send({ type: 'START', now: Date.now(), runId: newRunId() })
+                  setMenuOverlay('none')
+                  track('run_started', { mode: modeId, difficulty, from: 'dev' })
+                }}
+                onClose={() => {
+                  setMenuOverlay('none')
+                }}
+              />
+            )}
+
+            {/* ── Admin — who holds a role, and a search to hand one out ── */}
+            {menuOverlay === 'admin' && (
+              <AdminOverlay
+                onClose={() => {
+                  setMenuOverlay('none')
+                }}
+              />
+            )}
+
             {/* ── A reply to something the player sent ── */}
             {/* First of the three launch dialogs. Somebody answering what you wrote is the
             one of them addressed to you by name, and it would be a poor thing to meet
@@ -1988,6 +2040,28 @@ export default function GameScreen() {
                   target={installPrompt.target}
                   onInstall={installPrompt.install}
                   onDismiss={installPrompt.dismiss}
+                />
+              )}
+
+            {/* ── Session-recording ask — the one thing analytics does that needs it,
+            and the SDK is held off it until this is answered. Lowest of the launch
+            asks: it waits for the install prompt's own turn to end (dismissed or
+            installed, either reads as target 'none'), same priority tier, one at a
+            time. Every launch until answered, like the install prompt beside it;
+            answering either way — ALLOW or NO THANKS — is what stops it coming back.
+            Revisited later from OPTIONS, which calls the same hook. ── */}
+            {splashDone &&
+              onIntro &&
+              feedbackReplies.ready &&
+              feedbackReplies.reply === null &&
+              whatsNew.ready &&
+              !whatsNew.visible &&
+              installPrompt.target === 'none' &&
+              replayConsent.visible && (
+                <ReplayConsentOverlay
+                  onAllow={replayConsent.allow}
+                  onDecline={replayConsent.decline}
+                  onDismiss={replayConsent.dismiss}
                 />
               )}
 
@@ -2046,6 +2120,12 @@ export default function GameScreen() {
                 onCreateRoom={handleCreateRoom}
                 onOpenJoinRoom={() => {
                   setMenuOverlay('joinRoom')
+                }}
+                onOpenDev={() => {
+                  setMenuOverlay('dev')
+                }}
+                onOpenAdmin={() => {
+                  setMenuOverlay('admin')
                 }}
               />
             )}

@@ -18,6 +18,14 @@ export const identify = (_userId: string, _nickname: string | null): void => {
   // No native analytics yet.
 }
 
+export const setAdminOptOut = (_isAdmin: boolean): void => {
+  // No native analytics yet.
+}
+
+export const setReplayConsent = (_granted: boolean): void => {
+  // No native analytics yet.
+}
+
 export const track = <E extends AnalyticsEvent>(
   _event: E,
   _properties: AnalyticsEvents[E],

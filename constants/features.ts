@@ -34,6 +34,16 @@ export const FLAGS = {
   // is deliberate: the teaser was already a promise to players, and taking it away to
   // build behind it would be answering a promise with an absence.
   arcade: 'developer',
+  // The DEV link on the intro, and the screen behind it: every challenge ever written,
+  // playable on demand with no board kept for it. Floored at the bottom of the ladder —
+  // this is "can this person try a challenge before or after its window", which is a
+  // tester's question as much as an admin's.
+  dev: 'tester',
+  // The ADMIN link on the intro, and the screen behind it: who holds a role, and a search
+  // to hand one to someone else. Floored at the top, unlike everything above it — this is
+  // not a feature being tried out, it is the door that decides who can see the others, and
+  // only an admin may open it.
+  admin: 'admin',
 } as const satisfies Record<string, Floor>
 
 export type Flag = keyof typeof FLAGS
