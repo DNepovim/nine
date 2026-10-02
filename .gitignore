@@ -48,3 +48,7 @@ supabase/.temp/
 
 # Compiled Lingui catalogs (the .po files beside them are the source)
 locales/*/messages.ts
+
+# Agent scratch: isolated worktrees and subagent-driven-development ledgers
+.claude/worktrees/
+.superpowers/
