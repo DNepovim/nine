@@ -97,10 +97,18 @@ const FADES = [1, 0.45, 0.2] as const
 
 const ALL_OFF: readonly DialControl[] = cellsOf(ARCADE_DIAL).map(() => 'off')
 
-// The beats the hero spends stopped short of a walled village's gate — which is every beat
-// of a siege, including the two that end one: the walls come down and the run is overrun
-// from the same place it fought from.
-const AT_THE_GATE: readonly ArcadePhase[] = ['closing', 'siege', 'taken', 'overrun']
+// The beats the hero spends at a walled village's gate — which is every beat of a siege,
+// including the two that end one: the walls come down, or the run is overrun, from the same
+// place it fought from. `over` is in it for that second ending, because a run that died in a
+// siege died there and the card goes up over the ground it died on. A run that ended any
+// other way never matches: there is no way in for it to be drawn on. See `travelling`.
+const AT_THE_GATE: readonly ArcadePhase[] = [
+  'closing',
+  'siege',
+  'taken',
+  'overrun',
+  'over',
+]
 
 // The beats the camera is in close for, which is those four less `taken`: the walls coming
 // down is the camera letting go, and it opens out while the hero is still walking in — so
@@ -558,13 +566,20 @@ export function ArcadeGame({ isDark, onEnd }: { isDark: boolean; onEnd: () => vo
         ...pointsOf(run.parent.pos, pitch),
       }
     }
-    if (isOneOf(run.phase, ['falling', 'over']) && stub !== null) {
-      return { spline: stub, ...standingAt }
-    }
     // Under the walls, the hero is not standing on the crossroad it has arrived at — it is
     // stopped short of its gate, on the last of the way in. So it is drawn on that way,
     // from the crossroad behind, which is the same curve and the same frame the walk that
     // brought it here was riding.
+    //
+    // This comes before the mouth below because the two deaths a run can end on are not the
+    // same picture, and `over` is both of them. A hero overrun at a walled village died
+    // where it fought and stays at the gate under the card. A hero that fell died down the
+    // stub, in the mouth. What tells them apart is the one fact that chose the death in the
+    // first place: `falling` is only ever reached from a crossroad with nothing behind it —
+    // that is *why* there is a mouth under it and not a way to retreat down — so a dead hero
+    // with a way in to stand on was overrun, and one without it fell. The guard below is
+    // already exactly that question, so the mouth needs no second test and keeps every frame
+    // it had.
     if (isOneOf(run.phase, AT_THE_GATE) && run.parent !== undefined) {
       const parent = run.parent
       const wayIn = parent.ways.find((way) => way.to === here.id)
@@ -574,6 +589,9 @@ export function ArcadeGame({ isDark, onEnd }: { isDark: boolean; onEnd: () => vo
           ...pointsOf(parent.pos, pitch),
         }
       }
+    }
+    if (isOneOf(run.phase, ['falling', 'over']) && stub !== null) {
+      return { spline: stub, ...standingAt }
     }
     return { spline: null, ...standingAt }
   }
