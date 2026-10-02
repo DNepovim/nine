@@ -118,3 +118,56 @@ export function newSiege(
     nextAt: now + SPAWN_FIRST_MS,
   }
 }
+
+// What one press resolved. At most one of `tower` and `warrior` is ever set: every live
+// number in a siege is distinct, which is the whole reason they are drawn from one pool.
+export type SiegeHit = {
+  siege: Siege
+  // The tower as it stands *after* the chip, so the screen knows how far down it now is.
+  tower: Tower | null
+  warrior: Warrior | null
+  // True only on the press that flattens the last tower standing.
+  taken: boolean
+}
+
+// A press, resolved against the walls.
+//
+// The sum is what matters, not the keys: a press changes the grid, the grid gives a sum,
+// and arriving at a live number is the hit. Sitting on one is not — the sum carries
+// between hits in both engines, so a tower is chipped by dialling away from its number and
+// coming back to it, which is what makes three hits three journeys rather than three taps.
+//
+// Hence the first guard. `pressGrid` always moves the sum, but `setGrid` can write a digit
+// the value it already held, and without this that would re-hit whatever the sum is
+// standing on.
+export function land(siege: Siege, prevSum: number, nextSum: number): SiegeHit {
+  const miss: SiegeHit = { siege, tower: null, warrior: null, taken: false }
+  if (nextSum === prevSum) return miss
+
+  const struck = siege.towers.find((tower) => tower.left > 0 && tower.value === nextSum)
+  if (struck !== undefined) {
+    const chipped: Tower = { ...struck, left: struck.left - 1 }
+    const towers = siege.towers.map((tower) => (tower.id === struck.id ? chipped : tower))
+    return {
+      siege: { ...siege, towers },
+      tower: chipped,
+      warrior: null,
+      taken: towers.every((tower) => tower.left === 0),
+    }
+  }
+
+  const cut = siege.warriors.find((warrior) => warrior.value === nextSum)
+  if (cut !== undefined) {
+    return {
+      siege: {
+        ...siege,
+        warriors: siege.warriors.filter((warrior) => warrior.id !== cut.id),
+      },
+      tower: null,
+      warrior: cut,
+      taken: false,
+    }
+  }
+
+  return miss
+}

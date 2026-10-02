@@ -11,7 +11,7 @@ import {
 import { parTable } from '@/machines/scoring'
 import { NINE_DIAL, type Grid } from '@/modes'
 
-import { liveValues, newSiege, towerCount, towerHits } from './siege'
+import { land, liveValues, newSiege, towerCount, towerHits } from './siege'
 
 const zeros: Grid = [0, 0, 0, 0, 0, 0, 0, 0, 0]
 const busy: Grid = [3, 7, 1, 9, 2, 4, 0, 6, 8]
@@ -81,5 +81,67 @@ describe('newSiege', () => {
     }
     expect(liveValues(flattened)).toHaveLength(siege.towers.length - 1)
     expect(liveValues(flattened)).not.toContain(siege.towers[0]?.value)
+  })
+})
+
+describe('land', () => {
+  const siege = newSiege('1', 0, 42, zeros, 0)
+  const first = siege.towers[0]
+  if (first === undefined) throw new Error('a siege with no towers')
+
+  it('chips the tower whose number was arrived at', () => {
+    const hit = land(siege, 0, first.value)
+    expect(hit.tower?.id).toBe(first.id)
+    expect(hit.tower?.left).toBe(first.left - 1)
+    expect(hit.siege.towers[0]?.left).toBe(first.left - 1)
+    expect(hit.warrior).toBeNull()
+    expect(hit.taken).toBe(false)
+  })
+
+  it('resolves nothing when the sum did not move', () => {
+    const hit = land(siege, first.value, first.value)
+    expect(hit.tower).toBeNull()
+    expect(hit.warrior).toBeNull()
+    expect(hit.siege).toBe(siege)
+  })
+
+  it('resolves nothing on a number no one answers to', () => {
+    const live = new Set(liveValues(siege))
+    const quiet = [...Array(100).keys()].find((n) => n > 0 && !live.has(n)) ?? 999
+    const hit = land(siege, 0, quiet)
+    expect(hit.tower).toBeNull()
+    expect(hit.warrior).toBeNull()
+  })
+
+  it('leaves rubble alone', () => {
+    const flat = {
+      ...siege,
+      towers: siege.towers.map((t) => (t.id === first.id ? { ...t, left: 0 } : t)),
+    }
+    const hit = land(flat, 0, first.value)
+    expect(hit.tower).toBeNull()
+    expect(hit.siege.towers[0]?.left).toBe(0)
+  })
+
+  it('calls the village taken on the hit that flattens the last tower', () => {
+    const nearly = {
+      ...siege,
+      towers: siege.towers.map((t, i) => ({ ...t, left: i === 0 ? 1 : 0 })),
+    }
+    const hit = land(nearly, 0, first.value)
+    expect(hit.taken).toBe(true)
+  })
+
+  it('kills the warrior whose number was arrived at', () => {
+    const live = new Set(liveValues(siege))
+    const free = [...Array(100).keys()].find((n) => n > 0 && !live.has(n)) ?? 999
+    const withWarrior = {
+      ...siege,
+      warriors: [{ id: 'w0', value: free, spawnedAt: 0, walkMs: 5000, lane: 0 }],
+    }
+    const hit = land(withWarrior, 0, free)
+    expect(hit.warrior?.id).toBe('w0')
+    expect(hit.siege.warriors).toEqual([])
+    expect(hit.tower).toBeNull()
   })
 })
