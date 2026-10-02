@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import { computePar } from '@/machines/scoring'
+import { computePar, parTable } from '@/machines/scoring'
 import { NINE_DIAL, type Grid } from '@/modes'
 
 import {
@@ -9,6 +9,7 @@ import {
   isStrike,
   newMap,
   openCrossroad,
+  parValues,
   seeded,
   START,
   straightestWay,
@@ -97,6 +98,41 @@ describe('wayValues', () => {
     }
     expect(seen.size).toBeGreaterThan(20)
     expect(Math.max(...seen)).toBeGreaterThan(100)
+  })
+})
+
+describe('parValues', () => {
+  it('gives distinct values inside the band it is asked for', () => {
+    const values = parValues(zeros, 4, seeded(1), { min: 2, max: 3 })
+    const table = parTable(NINE_DIAL, zeros)
+    expect(values).toHaveLength(4)
+    expect(new Set(values).size).toBe(4)
+    for (const value of values) {
+      expect(table[value]).toBeGreaterThanOrEqual(2)
+      expect(table[value]).toBeLessThanOrEqual(3)
+    }
+  })
+
+  it('never returns a value it was told to exclude', () => {
+    const first = parValues(busy, 3, seeded(5), { min: 2, max: 3 })
+    const second = parValues(busy, 3, seeded(5), { min: 2, max: 3, exclude: first })
+    expect(second).toHaveLength(3)
+    for (const value of second) expect(first).not.toContain(value)
+  })
+
+  it('stretches the band rather than coming back short', () => {
+    // Nine values in a two-to-three-press band is more than most grids hold, so this
+    // only passes if the band widens. A deep siege asks for exactly this many.
+    const values = parValues(zeros, 9, seeded(9), { min: 2, max: 3 })
+    expect(values).toHaveLength(9)
+    expect(new Set(values).size).toBe(9)
+  })
+
+  it('still answers wayValues the way it always did', () => {
+    const table = parTable(NINE_DIAL, busy)
+    for (const value of wayValues(busy, 3, seeded(11))) {
+      expect(table[value]).toBeGreaterThanOrEqual(3)
+    }
   })
 })
 
