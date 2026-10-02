@@ -1,10 +1,12 @@
 import { msg } from '@lingui/core/macro'
 import { describe, expect, it } from 'vitest'
 
+import { parTable } from '@/machines/scoring'
 import { SPEED } from '@/modes/definitions/speed'
-import { defineDial } from '@/modes/dial'
+import { defineDial, emptyGrid } from '@/modes/dial'
+import { DIFFICULTY_ORDER } from '@/modes/difficulty'
 import { rulesFor } from '@/modes/registry'
-import { resolveRules } from '@/modes/rules'
+import { resolveRules, spawnInterval } from '@/modes/rules'
 
 import { CHALLENGES } from './catalog'
 import { challengeId, defineChallenge, isOpenMode } from './define'
@@ -115,5 +117,80 @@ describe('the catalog', () => {
 
   it('keeps every one on the game machine’s engine', () => {
     for (const mode of CHALLENGES) expect(mode.engine, mode.id).toBe('targets')
+  })
+
+  // The spawner draws from the whole of `0 … maxSum` and never asks whether the dial can
+  // land on what it rolled — see `fullRange` in lib/target-value.ts. So a dial whose
+  // weights share a factor spawns targets nobody can hit: four keys worth 3, 6, 9 and 12
+  // reach only every third number, and two targets in three would be impossible.
+  //
+  // A property over the catalog rather than a figure for one entry, because it is the
+  // rule a new challenge has to be designed against rather than a fact about this one.
+  it('gives every challenge a dial that reaches every target it can spawn', () => {
+    for (const mode of CHALLENGES) {
+      if (mode.engine !== 'targets') throw new Error('a challenge runs on targets')
+      const { dial } = resolveRules(mode.rules, mode.id, 'easy')
+      const table = parTable(dial, emptyGrid(dial))
+      const missed = []
+      for (let target = 1; target <= dial.maxSum; target++) {
+        if (!Number.isFinite(table[target] ?? Infinity)) missed.push(target)
+      }
+      expect(
+        missed,
+        `${mode.id} cannot reach ${missed.length} of its own targets`,
+      ).toEqual([])
+    }
+  })
+
+  // A challenge is one board for one day, so it pins its own rung and the intro shows no
+  // difficulty row for it. The rung has to hold against whatever the screen hands in —
+  // a stored difficulty from the last mode the player was on is exactly what arrives.
+  it('pins every challenge to one rung, whatever difficulty is handed in', () => {
+    for (const mode of CHALLENGES) {
+      if (mode.engine !== 'targets') throw new Error('a challenge runs on targets')
+      expect(mode.rules.fixedDifficulty, mode.id).not.toBeNull()
+      const rungs = DIFFICULTY_ORDER.map((asked) =>
+        resolveRules(mode.rules, mode.id, asked),
+      )
+      for (const rules of rungs) {
+        expect(rules.difficulty, mode.id).toBe(mode.rules.fixedDifficulty)
+        expect(rules.usesDifficulty, mode.id).toBe(false)
+      }
+      // And so the clock is one figure too, not three.
+      expect(new Set(rungs.map((rules) => rules.clock.base)).size, mode.id).toBe(1)
+    }
+  })
+})
+
+describe('FOUR KEYS', () => {
+  const FOUR_KEYS = CHALLENGES.find((mode) => mode.id === challengeId('four-keys'))
+
+  it('gives a target 6750 ms — 9000 before the rung, halved from the 18 000 it opened at', () => {
+    if (FOUR_KEYS?.engine !== 'targets') throw new Error('four keys runs on targets')
+    const rules = resolveRules(FOUR_KEYS.rules, FOUR_KEYS.id, 'easy')
+    // 9000 × Hard's 0.75. The figure in the catalog is the one before the scale, which
+    // is the easy thing to misread when changing it.
+    expect(rules.clock.base).toBe(6750)
+    // Its own cap, not the rung's 3.
+    expect(rules.spawn.maxTargets).toBe(2)
+  })
+
+  it('deals a target every quarter of the clock, tightening with the ramp', () => {
+    if (FOUR_KEYS?.engine !== 'targets') throw new Error('four keys runs on targets')
+    const rules = resolveRules(FOUR_KEYS.rules, FOUR_KEYS.id, 'easy')
+    expect(rules.spawn.share).toBe(1 / 4)
+    // A quarter of the 6750 a target opens on.
+    expect(spawnInterval(rules, 0)).toBe(1688)
+    // Speed ramps its clock, and the gap is a share of the clock a target gets *now* —
+    // so the arrivals close up on their own as the run goes.
+    expect(spawnInterval(rules, 40)).toBeLessThan(spawnInterval(rules, 0))
+  })
+
+  it('is four keys worth 1, 2, 2 and 4, reaching 81', () => {
+    if (FOUR_KEYS?.engine !== 'targets') throw new Error('four keys runs on targets')
+    const { dial } = resolveRules(FOUR_KEYS.rules, FOUR_KEYS.id, 'easy')
+    expect(dial.weights).toEqual([1, 2, 2, 4])
+    expect(dial.maxSum).toBe(9 * (1 + 2 + 2 + 4))
+    expect(dial.maxSum).toBe(81)
   })
 })
