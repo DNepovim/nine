@@ -10,6 +10,7 @@ import {
   TRAIL_DEPTH,
   WALK_MS,
 } from '@/constants/arcade'
+import { CLOSE_MS, HEARTS, OVERRUN_MS, TAKEN_MS } from '@/constants/siege'
 import { usePauseOnBlur } from '@/hooks/use-pause-on-blur'
 import {
   ARCADE_DIAL,
@@ -25,6 +26,7 @@ import {
   type ArcadeWay,
   type Crossroad,
 } from '@/machines/arcade'
+import { advance, land, newSiege, nextEvent, shift, type Siege } from '@/machines/siege'
 import { emptyGrid, pressGrid, setGrid, sumOf, type Grid } from '@/modes'
 
 // One arcade run: where the hero stands, what the crossroad offers, and the clock that
@@ -41,10 +43,26 @@ import { emptyGrid, pressGrid, setGrid, sumOf, type Grid } from '@/modes'
 // answer before it does has earned the head start.
 //
 // `rocket` is a walk that does not stop — see the strike below.
+//
+// The four at the end are a siege. `closing` is the camera coming down on the walls, with
+// the hero stopped short of the gate; `siege` is the fight and is dialable; `taken` is the
+// last tower falling; `overrun` is the last heart going, which is the one end arcade has
+// that is not the mouth.
 export type ArcadePhase =
-  'dawn' | 'bloom' | 'open' | 'walk' | 'rocket' | 'retreat' | 'falling' | 'over'
+  | 'dawn'
+  | 'bloom'
+  | 'open'
+  | 'walk'
+  | 'rocket'
+  | 'retreat'
+  | 'falling'
+  | 'closing'
+  | 'siege'
+  | 'taken'
+  | 'overrun'
+  | 'over'
 
-const DIALABLE: readonly ArcadePhase[] = ['bloom', 'open']
+const DIALABLE: readonly ArcadePhase[] = ['bloom', 'open', 'siege']
 
 // How long each beat lasts, for the beats that end on a clock of their own rather than on
 // the crossroad's. `open` is missing because its length is the crossroad's clock, and the
@@ -56,6 +74,9 @@ const BEAT_MS = {
   rocket: ROCKET_MS,
   retreat: RETREAT_MS,
   falling: FALL_MS,
+  closing: CLOSE_MS,
+  taken: TAKEN_MS,
+  overrun: OVERRUN_MS,
 } as const satisfies Partial<Record<ArcadePhase, number>>
 
 const INITIAL_GRID: Grid = emptyGrid(ARCADE_DIAL)
@@ -79,6 +100,13 @@ type Run = {
   through: ArcadeWay | null
   // How many strikes this run has called. A run stat, like the game's own.
   strikes: number
+  // Hearts. The one thing in arcade a siege can spend and nothing else can: a retreat at
+  // an ordinary crossroad still costs only depth, as it always has.
+  hearts: number
+  // The fight the hero is in, and nothing at every other moment.
+  siege: Siege | null
+  // How many villages this run has taken. A run stat, like the strikes.
+  taken: number
   // When the current beat started, and how much of it had run when the run was paused.
   //
   // Together they are what makes a pause resumable without a second clock: every timer is
@@ -107,6 +135,9 @@ const startRun = (seed: number, now: number): Run => ({
   moving: null,
   through: null,
   strikes: 0,
+  hearts: HEARTS,
+  siege: null,
+  taken: 0,
   beatAt: now,
   heldMs: 0,
   paused: false,
@@ -242,10 +273,24 @@ export function useArcadeRun() {
         setRun((r) => {
           const way = r.moving
           if (r.phase !== 'walk' || way === null) return r
+          const landed = r.map[way.to]?.depth ?? 0
+          // A walled village is not walked into. The hero stops short of the gate, the
+          // camera comes down, and the fan at the far end waits until the walls are down —
+          // which is why `openCrossroad` is not called here for one.
+          if (r.map[way.to]?.fortified === true) {
+            return {
+              ...r,
+              at: way.to,
+              phase: 'closing',
+              moving: null,
+              best: Math.max(r.best, landed),
+              siege: newSiege(way.to, landed, r.seed, r.grid, now),
+              ...beat(r, now),
+            }
+          }
           // The fan at the far end is grown now rather than when the way was offered, so it
           // is measured against the grid the player arrives holding.
           const map = openCrossroad(r.map, way.to, r.grid, r.seed)
-          const landed = map[way.to]?.depth ?? 0
           return {
             ...r,
             map,
@@ -268,8 +313,22 @@ export function useArcadeRun() {
         setRun((r) => {
           const through = r.through
           if (r.phase !== 'rocket' || through === null) return r
+          const landed = r.map[through.to]?.depth ?? 0
+          // A rocket that lands on a walled village stops at the gate like any other
+          // arrival: the walls are what it came to, so there is no fan to grow yet.
+          if (r.map[through.to]?.fortified === true) {
+            return {
+              ...r,
+              at: through.to,
+              phase: 'closing',
+              moving: null,
+              through: null,
+              best: Math.max(r.best, landed),
+              siege: newSiege(through.to, landed, r.seed, r.grid, now),
+              ...beat(r, now),
+            }
+          }
           const map = openCrossroad(r.map, through.to, r.grid, r.seed)
-          const landed = map[through.to]?.depth ?? 0
           return {
             ...r,
             map,
@@ -295,6 +354,75 @@ export function useArcadeRun() {
           // at, which is still a way.
           return { ...r, at: back, phase: 'bloom', moving: null, ...beat(r, now) }
         })
+      })
+    }
+
+    // The camera has come down. The fight starts.
+    if (run.phase === 'closing') {
+      after(BEAT_MS.closing, () => {
+        const now = Date.now()
+        setRun((r) =>
+          r.phase === 'closing' ? { ...r, phase: 'siege', ...beat(r, now) } : r,
+        )
+      })
+    }
+
+    // The fight itself. One timer, armed to whichever happens first — a warrior leaving
+    // the gate or one reaching the hero — and re-armed by the `seq` bump every event
+    // carries, which is the same single-timer shape every other beat here uses.
+    if (run.phase === 'siege' && run.siege !== null) {
+      const due = nextEvent(run.siege)
+      timer.current = setTimeout(
+        () => {
+          const now = Date.now()
+          setRun((r) => {
+            if (r.phase !== 'siege' || r.siege === null) return r
+            const step = advance(r.siege, r.grid, now)
+            if (!step.lost) return { ...r, siege: step.siege, ...beat(r, now) }
+            const hearts = r.hearts - 1
+            if (hearts > 0) {
+              return { ...r, siege: step.siege, hearts, ...beat(r, now) }
+            }
+            return {
+              ...r,
+              siege: step.siege,
+              hearts: 0,
+              phase: 'overrun',
+              // The run is over at this point, so this is where its clock stops.
+              playedMs: r.playedMs + (now - r.playingSince),
+              playingSince: now,
+              ...beat(r, now),
+            }
+          })
+        },
+        Math.max(0, due - Date.now()),
+      )
+    }
+
+    // The walls are down. The hero walks in and the village offers its own fan, measured
+    // against the grid the fight left behind.
+    if (run.phase === 'taken') {
+      after(BEAT_MS.taken, () => {
+        const now = Date.now()
+        setRun((r) => {
+          if (r.phase !== 'taken') return r
+          return {
+            ...r,
+            map: openCrossroad(r.map, r.at, r.grid, r.seed),
+            phase: 'bloom',
+            siege: null,
+            ...beat(r, now),
+          }
+        })
+      })
+    }
+
+    if (run.phase === 'overrun') {
+      after(BEAT_MS.overrun, () => {
+        const now = Date.now()
+        setRun((r) =>
+          r.phase === 'overrun' ? { ...r, phase: 'over', ...beat(r, now) } : r,
+        )
       })
     }
 
@@ -324,6 +452,23 @@ export function useArcadeRun() {
       if (r.paused || !isOneOf(r.phase, DIALABLE)) return r
       const next = build(r.grid)
       const sum = sumOf(ARCADE_DIAL, next)
+
+      // In a siege the sum answers to the walls rather than to a fan.
+      if (r.phase === 'siege' && r.siege !== null) {
+        const hit = land(r.siege, sumOf(ARCADE_DIAL, r.grid), sum)
+        if (!hit.taken) return { ...r, grid: next, siege: hit.siege }
+        return {
+          ...r,
+          grid: next,
+          siege: hit.siege,
+          phase: 'taken',
+          // One heart back for the village, and never a fourth.
+          hearts: Math.min(HEARTS, r.hearts + 1),
+          taken: r.taken + 1,
+          ...beat(r, now),
+        }
+      }
+
       const taken = r.map[r.at]?.ways.find((way) => way.value === sum)
       if (taken === undefined) return { ...r, grid: next }
 
@@ -332,7 +477,11 @@ export function useArcadeRun() {
       // start a player quick enough to answer before the clock starts has earned.
       const answered = crossroadClock(r.map[r.at]?.depth ?? 0)
       const leftMs = r.phase === 'open' ? answered - (now - r.beatAt) : answered
-      if (!isStrike(leftMs, answered)) {
+      // A strike cannot skip a siege: the rocket's first hop is a crossroad it passes
+      // *through* without stopping, and a village with walls on it is not passed through.
+      // It still counted as a strike — it was answered fast — it simply has nowhere to go.
+      const walled = r.map[taken.to]?.fortified === true
+      if (walled || !isStrike(leftMs, answered)) {
         return { ...r, grid: next, phase: 'walk', moving: taken, ...beat(r, now) }
       }
 
@@ -403,6 +552,9 @@ export function useArcadeRun() {
     depth,
     best: run.best,
     strikes: run.strikes,
+    hearts: run.hearts,
+    siege: run.siege,
+    taken: run.taken,
     playedMs: run.playedMs,
     paused: run.paused,
     standing,
@@ -431,15 +583,58 @@ export function useArcadeRun() {
       applyMove((grid) => setGrid(grid, index, value), Date.now())
     },
     pause: pauseRun,
+    // Breaking off a siege. It costs a heart — the only way out of a fight that is not
+    // winning it — and drops the hero back down the way it came.
+    //
+    // A button on the screen rather than a number on the dial: the siege already asks the
+    // player to read towers and warriors as numbers, and a number that means *leave*
+    // among numbers that mean *hit* is a trap rather than an option.
+    flee: () => {
+      const now = Date.now()
+      setRun((r) => {
+        if (r.paused || r.phase !== 'siege') return r
+        const hearts = r.hearts - 1
+        if (hearts <= 0) {
+          return {
+            ...r,
+            hearts: 0,
+            phase: 'overrun',
+            siege: null,
+            playedMs: r.playedMs + (now - r.playingSince),
+            playingSince: now,
+            ...beat(r, now),
+          }
+        }
+        return {
+          ...r,
+          hearts,
+          // No map change. A village that was fled keeps its walls and is built fresh when
+          // the hero comes back — `newSiege` runs again on arrival — so chip-and-flee buys
+          // nothing.
+          phase: 'retreat',
+          moving: wayInto(r.map, r.at),
+          siege: null,
+          ...beat(r, now),
+        }
+      })
+    },
     resume: () => {
       const now = Date.now()
-      setRun((r) =>
-        r.paused
-          ? // The beat starts again as far back as it had got, so what is left of it is what
-            // was left of it when the player stopped.
-            { ...r, paused: false, beatAt: now - r.heldMs, playingSince: now }
-          : r,
-      )
+      setRun((r) => {
+        if (!r.paused) return r
+        // How long the player was away. The beat starts again as far back as it had got,
+        // so what is left of it is what was left of it when they stopped — and every clock
+        // in a siege moves by exactly the same amount, so a warrior three quarters of the
+        // way down still is.
+        const away = now - r.heldMs - r.beatAt
+        return {
+          ...r,
+          paused: false,
+          beatAt: now - r.heldMs,
+          playingSince: now,
+          siege: r.siege === null ? null : shift(r.siege, away),
+        }
+      })
     },
     restart: () => {
       setRun(startRun(freshSeed(), Date.now()))
