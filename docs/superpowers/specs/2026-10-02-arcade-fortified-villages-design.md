@@ -140,12 +140,12 @@ are all single constants in `constants/siege.ts` for exactly that reason.
 Four new entries on `ArcadePhase`, beside `dawn`, `bloom`, `open`, `walk`,
 `rocket`, `retreat`, `falling` and `over`.
 
-| Beat | What it is |
-| --- | --- |
-| `closing` | The walled village's number was dialled and the hero walked, but stops short of the gate. The camera closes on the walls. The dial is dead. |
-| `siege` | The fight. **Dialable**, and the only new beat that is. |
-| `taken` | The last tower falls. A heart comes back, the camera opens out, the hero walks in. Then `bloom` — the village's own fan, like any crossroad. |
-| `overrun` | The last heart goes. A moment for it, then `over`. |
+| Beat      | What it is                                                                                                                                   |
+| --------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| `closing` | The walled village's number was dialled and the hero walked, but stops short of the gate. The camera closes on the walls. The dial is dead.  |
+| `siege`   | The fight. **Dialable**, and the only new beat that is.                                                                                      |
+| `taken`   | The last tower falls. A heart comes back, the camera opens out, the hero walks in. Then `bloom` — the village's own fan, like any crossroad. |
+| `overrun` | The last heart goes. A moment for it, then `over`.                                                                                           |
 
 `overrun` rather than `falling`: the fall is the mouth, which is a picture of
 running out of way. Being overrun at the walls is a different end and deserves
@@ -165,7 +165,7 @@ arrives holding, exactly as a fan is.
 
 A **RETREAT** button on the siege screen, and it costs a heart. Not a fourth kind
 of number — the screen already carries towers, warriors and the sum, and a number
-that means *leave* among numbers that mean *hit* is a trap.
+that means _leave_ among numbers that mean _hit_ is a trap.
 
 It drops the hero back one crossroad down the existing `retreat` beat. If it
 takes the last heart, the run ends. A village that was fled **resets** when it is
@@ -241,16 +241,16 @@ something.
 
 ## Where it lives
 
-| File | Change |
-| --- | --- |
-| `machines/siege.ts` + `siege.test.ts` | **New, pure.** What a siege is made of, generating one, resolving a hit, the warrior schedule and its escalation. No React and no clock — the `machines/arcade.ts` half of the split. |
-| `constants/siege.ts` | **New.** Its timings, counts and sizes, mirroring `constants/arcade.ts` for the same reason: the zoom, the stand-off and the warrior walk have to agree or they read as three things happening at once. |
-| `machines/arcade.ts` | `fortified` and `dry` on `Crossroad`; the roll inside `openCrossroad`; `wayValues` generalised to `parValues`. |
-| `hooks/use-arcade-run.ts` | The four phases, `siege` and `hearts` on `Run`, the flee, and the pause shift. |
-| `components/game/siege-field.tsx`, `siege-tower.tsx`, `siege-warrior.tsx` | **New.** The zoomed fight, kept out of `arcade-game.tsx`, which is already 717 lines. |
-| `components/game/arcade-game.tsx` | The zoom, mounting the field, the hearts row, the retreat button. |
-| `components/game/arcade-over.tsx` | "Villages taken" beside depth and strikes. |
-| `components/overlays/how-to-play-overlay.tsx` | Required by CLAUDE.md. The guide already names arcade in fourteen places and must say what a siege is. |
+| File                                                                      | Change                                                                                                                                                                                                  |
+| ------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `machines/siege.ts` + `siege.test.ts`                                     | **New, pure.** What a siege is made of, generating one, resolving a hit, the warrior schedule and its escalation. No React and no clock — the `machines/arcade.ts` half of the split.                   |
+| `constants/siege.ts`                                                      | **New.** Its timings, counts and sizes, mirroring `constants/arcade.ts` for the same reason: the zoom, the stand-off and the warrior walk have to agree or they read as three things happening at once. |
+| `machines/arcade.ts`                                                      | `fortified` and `dry` on `Crossroad`; the roll inside `openCrossroad`; `wayValues` generalised to `parValues`.                                                                                          |
+| `hooks/use-arcade-run.ts`                                                 | The four phases, `siege` and `hearts` on `Run`, the flee, and the pause shift.                                                                                                                          |
+| `components/game/siege-field.tsx`, `siege-tower.tsx`, `siege-warrior.tsx` | **New.** The zoomed fight, kept out of `arcade-game.tsx`, which is already 717 lines.                                                                                                                   |
+| `components/game/arcade-game.tsx`                                         | The zoom, mounting the field, the hearts row, the retreat button.                                                                                                                                       |
+| `components/game/arcade-over.tsx`                                         | "Villages taken" beside depth and strikes.                                                                                                                                                              |
+| `components/overlays/how-to-play-overlay.tsx`                             | Required by CLAUDE.md. The guide already names arcade in fourteen places and must say what a siege is.                                                                                                  |
 
 Randomness follows the existing `rngFor(seed, key)` pattern: a siege is keyed on
 `siege:${crossroadId}`, its nth warrior on `siege:${crossroadId}:w${n}`. A run is
