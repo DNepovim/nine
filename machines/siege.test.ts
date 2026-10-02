@@ -7,11 +7,24 @@ import {
   TOWER_HITS_SHALLOW,
   TOWERS_DEEP,
   TOWERS_SHALLOW,
+  WARRIORS_LIVE_MAX,
 } from '@/constants/siege'
 import { parTable } from '@/machines/scoring'
 import { NINE_DIAL, type Grid } from '@/modes'
 
-import { land, liveValues, newSiege, towerCount, towerHits } from './siege'
+import {
+  advance,
+  land,
+  liveValues,
+  newSiege,
+  nextEvent,
+  shift,
+  spawnGap,
+  spawnWarrior,
+  towerCount,
+  towerHits,
+  warriorWalk,
+} from './siege'
 
 const zeros: Grid = [0, 0, 0, 0, 0, 0, 0, 0, 0]
 const busy: Grid = [3, 7, 1, 9, 2, 4, 0, 6, 8]
@@ -143,5 +156,85 @@ describe('land', () => {
     expect(hit.warrior?.id).toBe('w0')
     expect(hit.siege.warriors).toEqual([])
     expect(hit.tower).toBeNull()
+  })
+})
+
+describe('the schedule a village sends its warriors on', () => {
+  it('walks faster the deeper the siege', () => {
+    expect(warriorWalk(30)).toBeLessThan(warriorWalk(0))
+    for (let depth = 1; depth <= 40; depth++) {
+      expect(warriorWalk(depth)).toBeLessThanOrEqual(warriorWalk(depth - 1))
+    }
+  })
+
+  it('sends them faster the longer the fight drags on', () => {
+    const siege = newSiege('1', 0, 3, zeros, 0)
+    const later = { ...siege, spawned: 10 }
+    expect(spawnGap(later)).toBeLessThan(spawnGap(siege))
+  })
+
+  it('sends them faster at depth too', () => {
+    const shallow = newSiege('1', 0, 3, zeros, 0)
+    const deep = newSiege('1', 30, 3, zeros, 0)
+    expect(spawnGap(deep)).toBeLessThan(spawnGap(shallow))
+  })
+
+  it('gives a warrior a number nothing else is answering to', () => {
+    let siege = newSiege('1', 100, 11, busy, 0)
+    for (let i = 0; i < 3; i++) {
+      const before = liveValues(siege)
+      siege = spawnWarrior(siege, busy, i * 1000)
+      const fresh = siege.warriors[siege.warriors.length - 1]
+      if (fresh === undefined) continue
+      expect(before).not.toContain(fresh.value)
+    }
+    expect(new Set(liveValues(siege)).size).toBe(liveValues(siege).length)
+  })
+
+  it('holds off once the ground is full', () => {
+    let siege = newSiege('1', 0, 11, busy, 0)
+    for (let i = 0; i < 8; i++) siege = spawnWarrior(siege, busy, i * 1000)
+    expect(siege.warriors.length).toBeLessThanOrEqual(WARRIORS_LIVE_MAX)
+  })
+
+  it('says when the next thing happens', () => {
+    const siege = newSiege('1', 0, 11, zeros, 1000)
+    expect(nextEvent(siege)).toBe(siege.nextAt)
+    const marching = {
+      ...siege,
+      warriors: [{ id: 'w0', value: 5, spawnedAt: 1000, walkMs: 100, lane: 0 }],
+    }
+    expect(nextEvent(marching)).toBe(1100)
+  })
+
+  it('advances one event at a time, and says when a heart went', () => {
+    const siege = newSiege('1', 0, 11, zeros, 0)
+    const arriving = {
+      ...siege,
+      warriors: [{ id: 'w0', value: 99, spawnedAt: 0, walkMs: 100, lane: 0 }],
+    }
+    const first = advance(arriving, zeros, 200)
+    expect(first.lost).toBe(true)
+    expect(first.siege.warriors).toEqual([])
+
+    const second = advance(siege, zeros, siege.nextAt)
+    expect(second.lost).toBe(false)
+    expect(second.siege.warriors).toHaveLength(1)
+  })
+
+  it('does nothing when nothing is due', () => {
+    const siege = newSiege('1', 0, 11, zeros, 0)
+    const quiet = advance(siege, zeros, siege.nextAt - 1)
+    expect(quiet.siege).toBe(siege)
+    expect(quiet.lost).toBe(false)
+  })
+
+  it('keeps every walk where it was across a pause', () => {
+    let siege = newSiege('1', 0, 11, zeros, 0)
+    siege = spawnWarrior(siege, zeros, 1000)
+    const paused = shift(siege, 5000)
+    expect(paused.nextAt).toBe(siege.nextAt + 5000)
+    expect(paused.warriors[0]?.spawnedAt).toBe((siege.warriors[0]?.spawnedAt ?? 0) + 5000)
+    expect(paused.warriors[0]?.walkMs).toBe(siege.warriors[0]?.walkMs)
   })
 })

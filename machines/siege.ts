@@ -1,15 +1,19 @@
 import {
+  LANE_SPREAD,
   SIEGE_DEPTH_FULL,
   SIEGE_PAR_MAX,
   SIEGE_PAR_MIN,
+  SPAWN_EVERY_MS,
   SPAWN_FIRST_MS,
   TOWER_HITS_DEEP,
   TOWER_HITS_SHALLOW,
   TOWERS_DEEP,
   TOWERS_SHALLOW,
+  WARRIOR_WALK_MS,
+  WARRIORS_LIVE_MAX,
 } from '@/constants/siege'
 import { parValues, rngFor, UP } from '@/machines/arcade'
-import { type Grid } from '@/modes'
+import { decayed, type Grid } from '@/modes'
 
 // A siege: the walls at a fortified village, the warriors coming out of its gate, and
 // what a press does to either.
@@ -170,4 +174,116 @@ export function land(siege: Siege, prevSum: number, nextSum: number): SiegeHit {
   }
 
   return miss
+}
+
+// How long a warrior takes to cross the ground, and how long the gate waits between
+// sending them.
+//
+// Both on the one curve everything in the app that tightens already uses, so a siege
+// squeezes at the same felt rate a Speed clock does. The gap counts warriors-already-sent
+// *plus* the depth, which is how one curve does the two escalations the mode asks for: a
+// fight speeds up as it drags on, and a deeper fight starts faster.
+export const warriorWalk = (depth: number): number =>
+  Math.round(decayed(WARRIOR_WALK_MS, depth))
+
+export const spawnGap = (siege: Siege): number =>
+  Math.round(decayed(SPAWN_EVERY_MS, siege.spawned + siege.depth))
+
+// One more out of the gate.
+//
+// Its number is drawn now rather than when the siege was built, against the grid as it
+// stands and excluding everything already live — so a warrior is never something the
+// player cannot reach in the time it takes to walk at them, however far the dial has
+// wandered while the towers were being chipped.
+//
+// With the ground already full the gate still resets its clock. The village is not short
+// of men; it is short of room.
+export function spawnWarrior(siege: Siege, grid: Grid, now: number): Siege {
+  const waited = { ...siege, nextAt: now + spawnGap(siege) }
+  if (siege.warriors.length >= WARRIORS_LIVE_MAX) return waited
+
+  const rng = rngFor(siege.seed, `siege:${siege.at}:w${siege.spawned}`)
+  const [value] = parValues(grid, 1, rng, {
+    min: SIEGE_PAR_MIN,
+    max: SIEGE_PAR_MAX,
+    exclude: liveValues(siege),
+  })
+  if (value === undefined) return waited
+
+  const sent = siege.spawned + 1
+  return {
+    ...siege,
+    warriors: [
+      ...siege.warriors,
+      {
+        id: `w${siege.spawned}`,
+        value,
+        spawnedAt: now,
+        walkMs: warriorWalk(siege.depth),
+        lane: (rng() - 0.5) * LANE_SPREAD,
+      },
+    ],
+    spawned: sent,
+    nextAt: now + spawnGap({ ...siege, spawned: sent }),
+  }
+}
+
+// When the next thing in this siege happens: a warrior leaving the gate, or one reaching
+// the hero, whichever comes first. One timer in the hook is armed to this, and re-armed
+// after every event — the same single-timer shape every other arcade beat has.
+export function nextEvent(siege: Siege): number {
+  let due = siege.nextAt
+  for (const warrior of siege.warriors) {
+    due = Math.min(due, warrior.spawnedAt + warrior.walkMs)
+  }
+  return due
+}
+
+// Resolve exactly one event, and say whether it cost a heart.
+//
+// One at a time rather than catching up in a loop: each one is a beat the screen has to
+// show, and a hook that applied three at once would drop two of them.
+//
+// Arrivals go first. A warrior that reached the hero while the gate was also due has been
+// standing on them for however long the timer was late, and sending a new one ahead of
+// collecting that is the wrong order to read.
+export function advance(
+  siege: Siege,
+  grid: Grid,
+  now: number,
+): { siege: Siege; lost: boolean } {
+  let arrived: Warrior | null = null
+  for (const warrior of siege.warriors) {
+    const at = warrior.spawnedAt + warrior.walkMs
+    if (at > now) continue
+    if (arrived === null || at < arrived.spawnedAt + arrived.walkMs) arrived = warrior
+  }
+  if (arrived !== null) {
+    const gone = arrived
+    return {
+      siege: {
+        ...siege,
+        warriors: siege.warriors.filter((warrior) => warrior.id !== gone.id),
+      },
+      lost: true,
+    }
+  }
+  if (now >= siege.nextAt) return { siege: spawnWarrior(siege, grid, now), lost: false }
+  return { siege, lost: false }
+}
+
+// Every clock in the siege moved forward by however long the player was away.
+//
+// What makes a pause resumable: a warrior three quarters of the way down is three quarters
+// of the way down when the player comes back, because its `spawnedAt` moved with the pause
+// and its `walkMs` did not. The same trick the run's own `beatAt` uses.
+export function shift(siege: Siege, byMs: number): Siege {
+  return {
+    ...siege,
+    nextAt: siege.nextAt + byMs,
+    warriors: siege.warriors.map((warrior) => ({
+      ...warrior,
+      spawnedAt: warrior.spawnedAt + byMs,
+    })),
+  }
 }
