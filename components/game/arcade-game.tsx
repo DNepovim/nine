@@ -41,6 +41,7 @@ import {
   WALK_MS,
 } from '@/constants/arcade'
 import { ARCADE_INK, MAP_INK, PIE_INK, SURFACE } from '@/constants/colors'
+import { CLOSE_MS, OPEN_MS, SIEGE_ZOOM, STANDOFF } from '@/constants/siege'
 import { useArcadeLand } from '@/hooks/use-arcade-land'
 import { useArcadeRun, type ArcadePhase } from '@/hooks/use-arcade-run'
 import { SUM_ROW_HEIGHT } from '@/hooks/use-dial-metrics'
@@ -96,6 +97,21 @@ const FADES = [1, 0.45, 0.2] as const
 
 const ALL_OFF: readonly DialControl[] = cellsOf(ARCADE_DIAL).map(() => 'off')
 
+// The beats the hero spends stopped short of a walled village's gate — which is every beat
+// of a siege, including the two that end one: the walls come down and the run is overrun
+// from the same place it fought from.
+const AT_THE_GATE: readonly ArcadePhase[] = ['closing', 'siege', 'taken', 'overrun']
+
+// The beats the camera is in close for, which is those four less `taken`: the walls coming
+// down is the camera letting go, and it opens out while the hero is still walking in — so
+// the fan the village blooms into arrives on a sheet already back at rest.
+const CAMERA_IN: readonly ArcadePhase[] = ['closing', 'siege', 'overrun']
+
+// What the country and the ways fade to while a siege is on. Not hidden — the run has to
+// stay somewhere on the map, and a player who breaks off has to see where the way back is —
+// but out of the way of a screen that has just become busy.
+const COUNTRY_AWAY = 0.25
+
 // How long the canvas takes to drift, per beat — the same number the hero's own travel
 // takes, because they are one movement: the hero walks, and the canvas keeps it anchored.
 const DRIFT_MS = {
@@ -131,7 +147,9 @@ const TRAVEL = {
   retreat: { from: 1, to: 0, duration: RETREAT_MS, easing: Easing.in(Easing.cubic) },
   falling: { from: 0, to: 1, duration: FALL_MS, easing: Easing.in(Easing.cubic) },
   // The hero holds at the stand-off for the whole fight, so none of these move it along
-  // the way. `closing` is the tail of the walk that reached the gate, which `walk` drove.
+  // the way. `closing` does set it once — not to move the hero but to re-number where it
+  // already is, the way in being drawn from the crossroad behind from that beat on. See
+  // the effect that drives it.
   closing: null,
   siege: null,
   taken: null,
@@ -196,6 +214,10 @@ type BudSpec = {
   seed: number
   state: BudState
   delay: number
+  // Whether this village has walls worth the name. The one thing about a way that is worth
+  // knowing *before* dialling it, which is the whole reason it is drawn rather than
+  // discovered.
+  fortified: boolean
 }
 
 export function ArcadeGame({ isDark, onEnd }: { isDark: boolean; onEnd: () => void }) {
@@ -215,6 +237,12 @@ export function ArcadeGame({ isDark, onEnd }: { isDark: boolean; onEnd: () => vo
 
   const camX = useSharedValue(0)
   const camY = useSharedValue(0)
+  // How far in the camera has come. One for the whole canvas, on the same view the pan is
+  // on, so the country, the ways and the village scale together — a siege is the same sheet
+  // looked at closer, not a second screen.
+  const camScale = useSharedValue(1)
+  // How much of the country is left while that is on. See COUNTRY_AWAY.
+  const away = useSharedValue(1)
   // How far the sheet has been turned. Nought with north pinned to the top of the screen —
   // where it has been until now — and whatever it takes to put the hero's heading up when
   // the player would rather the land turned under them.
@@ -254,6 +282,18 @@ export function ArcadeGame({ isDark, onEnd }: { isDark: boolean; onEnd: () => vo
     camY.value = withTiming(driftY, { duration, easing })
   }, [driftX, driftY, run.phase, run.seq, pitch])
 
+  // In on the walls, and out again when they are down — with the country stepping back under
+  // it. One effect for the two because they are one movement: a zoom that arrived before the
+  // sheet behind it had dimmed would read as two things the screen did rather than as the
+  // camera picking a fight out of the map.
+  useEffect(() => {
+    const closing = isOneOf(run.phase, CAMERA_IN)
+    const duration = closing ? CLOSE_MS : OPEN_MS
+    const easing = Easing.inOut(Easing.cubic)
+    camScale.value = withTiming(closing ? SIEGE_ZOOM : 1, { duration, easing })
+    away.value = withTiming(closing ? COUNTRY_AWAY : 1, { duration, easing })
+  }, [run.phase])
+
   // The sheet turns on the same beat the canvas drifts on, so the two are one movement. A
   // mode switch has no beat of its own, so it takes a turn of its own length.
   useEffect(() => {
@@ -265,6 +305,10 @@ export function ArcadeGame({ isDark, onEnd }: { isDark: boolean; onEnd: () => vo
   }, [northUp, destination?.heading, run.phase, run.seq])
 
   useEffect(() => {
+    // How far along the last way of this movement the hero gets. All of it normally; short
+    // of the gate when what is standing at the end has walls, which is what leaves the
+    // walls above the hero and the ground between them for the warriors to cross.
+    const stop = run.destination?.fortified === true ? STANDOFF : 1
     // A strike is one movement with two halves: out of the crossroad under power, then
     // settling into the landing two crossroads on. One `withTiming` cannot say that, and
     // two of them in sequence is exactly what speeding up means.
@@ -275,11 +319,41 @@ export function ArcadeGame({ isDark, onEnd }: { isDark: boolean; onEnd: () => vo
           duration: ROCKET_MS * ROCKET_SPLIT,
           easing: Easing.in(Easing.cubic),
         }),
-        withTiming(2, {
+        withTiming(1 + stop, {
           duration: ROCKET_MS * (1 - ROCKET_SPLIT),
           easing: Easing.out(Easing.cubic),
         }),
       )
+      return
+    }
+    // The one walk TRAVEL cannot say: the same curve over the same time, stopped short of
+    // the end. Nothing else about it differs from an ordinary walk, which is why it is a
+    // branch here rather than a second entry there.
+    if (run.phase === 'walk' && stop < 1) {
+      progress.value = 0
+      progress.value = withTiming(stop, {
+        duration: WALK_MS,
+        easing: Easing.inOut(Easing.cubic),
+      })
+      return
+    }
+    // The one beat that sets this without moving anything. From here on the hero is drawn
+    // on the way *in*, in the frame of the crossroad behind — one spline where a strike had
+    // two — and the point it is already standing on is `STANDOFF` in that frame. Same point
+    // on the sheet, so the handover costs not a frame.
+    if (run.phase === 'closing') {
+      progress.value = STANDOFF
+      return
+    }
+    // A walk into a walled village stops short of the gate, with the walls above the hero
+    // and the ground between them for the warriors to cross. The way itself is walked in the
+    // same time as any other — it is only the last of it that is not walked at all.
+    if (run.phase === 'walk' && run.destination?.fortified === true) {
+      progress.value = 0
+      progress.value = withTiming(STANDOFF, {
+        duration: WALK_MS,
+        easing: Easing.inOut(Easing.cubic),
+      })
       return
     }
     const travel = TRAVEL[run.phase]
@@ -310,8 +384,19 @@ export function ArcadeGame({ isDark, onEnd }: { isDark: boolean; onEnd: () => vo
     transform: [{ rotate: `${camTurn.value}rad` }],
   }))
   const sheetPan = useAnimatedStyle(() => ({
-    transform: [{ translateX: camX.value }, { translateY: camY.value }],
+    // The scale comes *first* in the list and that is not a style choice. A transform array
+    // composes left to right as matrices, so the last entry is the one applied to a point
+    // first: `[scale, translateX, translateY]` maps a point to `scale * (point + cam)`,
+    // which is the pan happening under the zoom and so the anchor — where the focus always
+    // puts the destination — holding still. The other order zooms about the crossroad the
+    // run began on, and ten crossroads up that throws the whole sheet off the screen.
+    transform: [
+      { scale: camScale.value },
+      { translateX: camX.value },
+      { translateY: camY.value },
+    ],
   }))
+  const country = useAnimatedStyle(() => ({ opacity: away.value }))
 
   const onCanvasLayout = (event: LayoutChangeEvent) => {
     const { width, height } = event.nativeEvent.layout
@@ -415,6 +500,7 @@ export function ArcadeGame({ isDark, onEnd }: { isDark: boolean; onEnd: () => vo
         seed: idSeed(way.to),
         state: chosen ? 'absorbing' : leaving ? 'withering' : 'growing',
         delay: i * STAGGER_MS,
+        fortified: run.walledAt(way.to),
       })
     })
   }
@@ -473,6 +559,20 @@ export function ArcadeGame({ isDark, onEnd }: { isDark: boolean; onEnd: () => vo
     }
     if (isOneOf(run.phase, ['falling', 'over']) && stub !== null) {
       return { spline: stub, ...standingAt }
+    }
+    // Under the walls, the hero is not standing on the crossroad it has arrived at — it is
+    // stopped short of its gate, on the last of the way in. So it is drawn on that way,
+    // from the crossroad behind, which is the same curve and the same frame the walk that
+    // brought it here was riding.
+    if (isOneOf(run.phase, AT_THE_GATE) && run.parent !== undefined) {
+      const parent = run.parent
+      const wayIn = parent.ways.find((way) => way.to === here.id)
+      if (wayIn !== undefined) {
+        return {
+          spline: splineFor(wayIn, parent.heading, pitch),
+          ...pointsOf(parent.pos, pitch),
+        }
+      }
     }
     return { spline: null, ...standingAt }
   }
@@ -545,68 +645,76 @@ export function ArcadeGame({ isDark, onEnd }: { isDark: boolean; onEnd: () => vo
               <Animated.View
                 style={[{ position: 'absolute', left: 0, top: 0 }, sheetPan]}
               >
-                {/* The country, under the ways and over nothing. Each feature is its own small
-                SVG so it can arrive on its own and leave once the hero has walked far
-                enough that nobody is looking at it. */}
-                {land.map((feature) => (
-                  <LandMark
-                    key={feature.key}
-                    feature={feature}
-                    pitch={pitch}
-                    turn={camTurn}
-                    line={ink.line}
-                    hatch={ink.hatch}
-                    knockout={surface}
-                  />
-                ))}
-                {stems.map((stem) => (
-                  <WayStem
-                    key={stem.key}
-                    x={stem.x}
-                    y={stem.y}
-                    box={box}
-                    spline={stem.spline}
-                    lit={stem.lit}
-                    state={stem.state}
-                    delay={stem.delay}
-                    clock={clock}
-                    creepMs={stem.creepMs}
-                    creepFrom={stem.creepFrom}
-                    fade={stem.fade}
-                    gradientId={stem.gradientId}
-                    aheadInk={ink.line}
-                    amber={AMBER}
-                    ember={EMBER}
-                  />
-                ))}
-                {stub !== null && nearMouth && (
-                  <ArcadeMouth
-                    x={stub.toX}
-                    y={stub.toY}
-                    fade={mouthFade}
-                    ring={ink.hatch}
-                    ember={EMBER}
-                  />
-                )}
-                {buds.map((bud) => (
-                  <WayBud
-                    key={bud.key}
-                    x={bud.x}
-                    y={bud.y}
-                    value={bud.value}
-                    name={bud.name}
-                    named={bud.named}
-                    seed={bud.seed}
-                    state={bud.state}
-                    delay={bud.delay}
-                    edge={BUD_EDGE}
-                    ink={PIE_INK[colorScheme]}
-                    turn={camTurn}
-                    line={ink.line}
-                    hatch={ink.hatch}
-                    face={surface}
-                  />
-                ))}
+                {/* The map the run is climbing: the country, the ways out of here, the
+                ways behind and the villages at their ends. All of it one group, because
+                all of it steps back together while a siege is on — what is left at full
+                strength is the hero and the village it is standing under, which is the
+                whole of what there is to look at by then. */}
+                <Animated.View className="absolute left-0 top-0" style={country}>
+                  {/* The country, under the ways and over nothing. Each feature is its
+                  own small SVG so it can arrive on its own and leave once the hero has
+                  walked far enough that nobody is looking at it. */}
+                  {land.map((feature) => (
+                    <LandMark
+                      key={feature.key}
+                      feature={feature}
+                      pitch={pitch}
+                      turn={camTurn}
+                      line={ink.line}
+                      hatch={ink.hatch}
+                      knockout={surface}
+                    />
+                  ))}
+                  {stems.map((stem) => (
+                    <WayStem
+                      key={stem.key}
+                      x={stem.x}
+                      y={stem.y}
+                      box={box}
+                      spline={stem.spline}
+                      lit={stem.lit}
+                      state={stem.state}
+                      delay={stem.delay}
+                      clock={clock}
+                      creepMs={stem.creepMs}
+                      creepFrom={stem.creepFrom}
+                      fade={stem.fade}
+                      gradientId={stem.gradientId}
+                      aheadInk={ink.line}
+                      amber={AMBER}
+                      ember={EMBER}
+                    />
+                  ))}
+                  {stub !== null && nearMouth && (
+                    <ArcadeMouth
+                      x={stub.toX}
+                      y={stub.toY}
+                      fade={mouthFade}
+                      ring={ink.hatch}
+                      ember={EMBER}
+                    />
+                  )}
+                  {buds.map((bud) => (
+                    <WayBud
+                      key={bud.key}
+                      x={bud.x}
+                      y={bud.y}
+                      value={bud.value}
+                      name={bud.name}
+                      named={bud.named}
+                      seed={bud.seed}
+                      state={bud.state}
+                      delay={bud.delay}
+                      fortified={bud.fortified}
+                      edge={BUD_EDGE}
+                      ink={PIE_INK[colorScheme]}
+                      turn={camTurn}
+                      line={ink.line}
+                      hatch={ink.hatch}
+                      face={surface}
+                    />
+                  ))}
+                </Animated.View>
                 {skipped !== null && (
                   <ArcadeStrike
                     // Keyed on the beat, so each strike is its own word rather than one view

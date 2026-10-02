@@ -590,6 +590,11 @@ export function useArcadeRun() {
     // What the place at the end of a way is called. Asked of the run because the names are
     // on the map, and the map is what this hook holds.
     nameOf: (id: string) => run.map[id]?.name ?? '',
+    // Whether the village at the end of a way has walls. Asked of the run for the same
+    // reason the name is — the walls are on the map, and the map is what this hook holds —
+    // and asked at all because a fan has to say which of its ways is a fight *before* one
+    // of them is dialled.
+    walledAt: (id: string) => run.map[id]?.fortified === true,
     moving: run.moving,
     through: run.through,
     // What the clock on the way behind has left to run, and the fraction of it already gone
