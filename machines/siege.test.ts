@@ -194,7 +194,7 @@ describe('the schedule a village sends its warriors on', () => {
   it('holds off once the ground is full', () => {
     let siege = newSiege('1', 0, 11, busy, 0)
     for (let i = 0; i < 8; i++) siege = spawnWarrior(siege, busy, i * 1000)
-    expect(siege.warriors.length).toBeLessThanOrEqual(WARRIORS_LIVE_MAX)
+    expect(siege.warriors).toHaveLength(WARRIORS_LIVE_MAX)
   })
 
   it('says when the next thing happens', () => {
@@ -236,5 +236,41 @@ describe('the schedule a village sends its warriors on', () => {
     expect(paused.nextAt).toBe(siege.nextAt + 5000)
     expect(paused.warriors[0]?.spawnedAt).toBe((siege.warriors[0]?.spawnedAt ?? 0) + 5000)
     expect(paused.warriors[0]?.walkMs).toBe(siege.warriors[0]?.walkMs)
+  })
+
+  // A refactor that checked the gate before the ground would spawn a fresh warrior on the
+  // same call that should have collected an overdue one — the player would lose a heart
+  // and get a new foe out of the same tick. `spawned` staying put is what proves the gate
+  // was never asked.
+  it('takes the arrival first when the gate is also due', () => {
+    const siege = newSiege('1', 0, 11, zeros, 0)
+    const overdue = {
+      ...siege,
+      nextAt: 0,
+      warriors: [{ id: 'w0', value: 99, spawnedAt: 0, walkMs: 100, lane: 0 }],
+    }
+    const result = advance(overdue, zeros, 1000)
+    expect(result.lost).toBe(true)
+    expect(result.siege.warriors).toEqual([])
+    expect(result.siege.spawned).toBe(overdue.spawned)
+  })
+
+  // The full-ground branch still has to move `nextAt`, or a village that fills its ground
+  // never schedules another look — the hook's one timer would re-fire on the same instant
+  // forever instead of waiting out the gap.
+  it('still advances the clock when the ground is full', () => {
+    const siege = newSiege('1', 0, 11, busy, 0)
+    const full = {
+      ...siege,
+      warriors: [
+        { id: 'w0', value: 101, spawnedAt: 0, walkMs: 100000, lane: 0 },
+        { id: 'w1', value: 102, spawnedAt: 0, walkMs: 100000, lane: 0 },
+        { id: 'w2', value: 103, spawnedAt: 0, walkMs: 100000, lane: 0 },
+      ],
+    }
+    const result = advance(full, busy, full.nextAt)
+    expect(result.lost).toBe(false)
+    expect(result.siege.warriors).toHaveLength(WARRIORS_LIVE_MAX)
+    expect(result.siege.nextAt).toBeGreaterThan(full.nextAt)
   })
 })
