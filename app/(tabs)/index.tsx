@@ -27,7 +27,7 @@ import { FloatingPoints } from '@/components/game/floating-points'
 import { FloatingStat } from '@/components/game/floating-stat'
 import { HitSync } from '@/components/game/hit-sync'
 import { MultiplayerGame } from '@/components/game/multiplayer-game'
-import { PauseButton } from '@/components/game/pause-button'
+import { RunTopBar } from '@/components/game/run-top-bar'
 import { ScoreDigit } from '@/components/game/score-digit'
 import { StepUpToast } from '@/components/game/step-up-toast'
 import { StrikeShot } from '@/components/game/strike-shot'
@@ -1350,52 +1350,28 @@ export default function GameScreen() {
                 ever={bestEver}
               />
               <View className="mb-3">
-                {/* Row 1 — mode/difficulty left, NINE centered, spacer right */}
-                <View className="mb-1 flex-row items-center">
-                  {/* left: mode (colored, caps) + difficulty (dim, lowercase) */}
-                  <View className="flex-1">
-                    <Text
-                      selectable={false}
-                      className="font-mono text-[13px] font-black tracking-[2px]"
-                      style={{ color: gradientOf(mode)[0] }}
-                    >
-                      {t(runLabel(mode, submode))}
-                    </Text>
-                    {isOneOf(mode, SCORED_MODES) && (
-                      <Text
-                        selectable={false}
-                        className="font-mono text-[10px] font-bold tracking-[1px] text-dim"
-                      >
-                        {t(DIFFICULTIES[difficulty].label).toLowerCase()}
-                      </Text>
-                    )}
-                  </View>
-                  {/* center: NINE — tinted by difficulty shade of mode color.
-                    The tracking is added after every letter, the E included, so the
-                    word sits in a box 8px wider than itself on the right. Matching
-                    that on the left is what actually centres the letters between the
-                    two flex-1 columns; without it they hang 4px to the left. */}
-                  <Text
-                    selectable={false}
-                    className="font-mono text-[24px] font-black tracking-[8px] pl-[8px]"
-                    style={{ color: getDifficultyColor(mode, difficulty) }}
-                  >
-                    NINE
-                  </Text>
-                  {/* right: MENU, balancing the mode/difficulty block on the left.
-                    Only while a run is actually going — the pause screen it opens is a
-                    full overlay, so it covers this slot rather than needing a button of
-                    its own on top. */}
-                  <View className="flex-1 flex-row items-center justify-end">
-                    {isPlaying && (
-                      <PauseButton
-                        color={gradientOf(mode)[0]}
-                        onPress={() => {
-                          send({ type: 'PAUSE', now: Date.now() })
-                        }}
-                      />
-                    )}
-                  </View>
+                {/* Row 1 — the same bar every run is played under. NINE is tinted by
+                    the rung here; the pause button shows only while a run is actually
+                    going, since the screen it opens is a full overlay that covers this
+                    slot rather than needing a button of its own on top. */}
+                <View className="mb-1">
+                  <RunTopBar
+                    accent={gradientOf(mode)[0]}
+                    title={t(runLabel(mode, submode))}
+                    subtitle={
+                      rules.usesDifficulty
+                        ? t(DIFFICULTIES[difficulty].label).toLowerCase()
+                        : null
+                    }
+                    wordmark={getDifficultyColor(mode, difficulty)}
+                    onPause={
+                      isPlaying
+                        ? () => {
+                            send({ type: 'PAUSE', now: Date.now() })
+                          }
+                        : null
+                    }
+                  />
                 </View>
 
                 {/* Row 2 — hearts · center stat · score cluster */}

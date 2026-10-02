@@ -22,7 +22,7 @@ export function GameOverTitle({
   words,
   shadow = false,
 }: {
-  // Arcade too, which has no entry in `MODES` but does have a pair in `MODE_GRADIENT` —
+  // Arcade too, which the game machine never runs but which has a gradient of its own
   // and an end worth naming. See components/game/arcade-over.tsx.
   gameMode: ModeId
   words: TitleWords

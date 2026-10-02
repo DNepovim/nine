@@ -1,5 +1,5 @@
 import { isOneOf } from 'narrowland'
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 
 import {
   BLOOM_MS,
@@ -10,6 +10,7 @@ import {
   TRAIL_DEPTH,
   WALK_MS,
 } from '@/constants/arcade'
+import { usePauseOnBlur } from '@/hooks/use-pause-on-blur'
 import {
   ARCADE_DIAL,
   crossroadClock,
@@ -131,6 +132,42 @@ export function useArcadeRun() {
   const standing: Crossroad | undefined = run.map[run.at]
   const depth = standing?.depth ?? 0
   const clockMs = crossroadClock(depth)
+
+  // The run stops the moment the app stops being the thing on screen.
+  //
+  // Here rather than on the screen, so a run of this gets it by being a run rather than
+  // by somebody remembering to ask: every clock in here is wall-clock — the beat, the
+  // crossroad's own countdown, the time played — and every one of them keeps running
+  // while the phone is in a pocket. A player who took a call used to come back to a hero
+  // that had already been dragged off the crossroad it was standing on.
+  //
+  // `pauseRun` rather than the returned `pause`, which is a fresh closure every render;
+  // the hook holds whichever it was last handed, but a stable one keeps that moot. The
+  // state updater reads the clock itself, so there is nothing to capture.
+  const pauseRun = useCallback(() => {
+    const now = Date.now()
+    setRun((r) =>
+      r.paused
+        ? r
+        : {
+            ...r,
+            paused: true,
+            heldMs: now - r.beatAt,
+            playedMs: r.playedMs + (now - r.playingSince),
+          },
+    )
+  }, [])
+
+  // Only while the hero is standing on a crossroad, which is the same beat the pause
+  // button appears on — and the only one where going away costs anything. JS timers are
+  // frozen while the app is backgrounded, so the crossroad's own countdown fires the
+  // instant the app comes back and the hero is dragged off a crossroad the player never
+  // got to answer.
+  //
+  // Mid-flight is deliberately left running. A movement is a second at most, so there is
+  // next to nothing to save, and stopping there would freeze a screen that has to be
+  // resumed into a Reanimated animation which carried on without it.
+  usePauseOnBlur(!run.paused && isOneOf(run.phase, DIALABLE), pauseRun)
 
   // What ends each beat. One timer rather than one per phase, cleared by the effect that
   // set it — a press can end `open` early, and the clock it was running has to go with it.
@@ -393,19 +430,7 @@ export function useArcadeRun() {
     set: (index: number, value: number) => {
       applyMove((grid) => setGrid(grid, index, value), Date.now())
     },
-    pause: () => {
-      const now = Date.now()
-      setRun((r) =>
-        r.paused
-          ? r
-          : {
-              ...r,
-              paused: true,
-              heldMs: now - r.beatAt,
-              playedMs: r.playedMs + (now - r.playingSince),
-            },
-      )
-    },
+    pause: pauseRun,
     resume: () => {
       const now = Date.now()
       setRun((r) =>

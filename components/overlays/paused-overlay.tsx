@@ -1,19 +1,15 @@
-import { Ionicons } from '@expo/vector-icons'
 import { Trans } from '@lingui/react/macro'
-import { LinearGradient } from 'expo-linear-gradient'
 import { isOneOf } from 'narrowland'
 import { useState } from 'react'
-import { Pressable, Text, View } from 'react-native'
+import { View } from 'react-native'
 
 import type { BadgeCorner } from '@/components/game/dial-badge'
-import { Screen } from '@/components/screen'
-import { DIM_INK } from '@/constants/colors'
 import type { DialCorners, DialHint } from '@/constants/dial-hints'
 import { useBoardContext } from '@/hooks/use-board'
-import { useTheme } from '@/hooks/use-theme'
 import type { AchievementStore } from '@/lib/achievement-store'
 import type { AchievementFacts, Award } from '@/lib/achievements'
 import { currentBoardMedals } from '@/lib/board-medals'
+import { runStats } from '@/lib/run-stats'
 import {
   darkGradientOf,
   gradientOf,
@@ -30,16 +26,8 @@ import { DialHintModal } from './dial-hint-modal'
 import { EarnedAchievements } from './earned-achievements'
 import { HighScores } from './high-scores'
 import { PauseMark } from './pause-mark'
-import { RunStats } from './run-stats'
-import { ScoreReadout } from './score-readout'
+import { CardButton, RunExit, RunScreen } from './run-screen'
 import { TraineeDisplayOptions } from './trainee-display-options'
-
-const shadow = {
-  shadowColor: '#000',
-  shadowOpacity: 0.3,
-  shadowOffset: { width: 0, height: 6 },
-  shadowRadius: 12,
-}
 
 export function PausedOverlay({
   gameMode,
@@ -112,8 +100,6 @@ export function PausedOverlay({
   onOpenAdvanced: () => void
   onAddNickname: () => void
 }) {
-  const { colorScheme } = useTheme()
-  const dimColor = DIM_INK[colorScheme]
   // What this run's mode may be shown as — the questions this screen used to ask by
   // name. `coached` is already false in the tutorial, which is why the display options
   // below no longer check for it separately.
@@ -137,13 +123,13 @@ export function PausedOverlay({
 
   return (
     <>
-      <Screen overlay>
-        <View className="w-full items-center justify-between" style={{ minHeight: 560 }}>
-          <View className="w-full items-center">
+      <RunScreen
+        head={
+          <>
             {/* The same three pieces the game-over screen opens with, in the same order
               and the same dress: a mark saying what happened, the board it happened on,
-              then the number. Only the mark differs — a run that stopped rather than
-              one that ended. */}
+              then the number. Only the mark differs — a run that stopped rather than one
+              that ended. */}
             <PauseMark gameMode={gameMode} />
 
             {/* No difficulty pill in a mode that pins its own rung: there is nothing to
@@ -154,34 +140,27 @@ export function PausedOverlay({
               tutorial={tutorial}
               difficulty={traitsOf(gameMode).usesDifficulty ? difficulty : undefined}
             />
-
-            {/* A mode with no board has no score worth showing here: it measures
-              nothing. A tip is worth more to someone practising than a number they
-              cannot place — but the run's own numbers still do, so they come first and
-              the tip reads as advice on what they show. */}
-            {traits.scored && (
-              <ScoreReadout
-                score={score}
-                color={gradientOf(gameMode)[0]}
-                glow={`${gradientOf(gameMode)[0]}99`}
-              />
-            )}
-
-            {/* Above the run's own numbers, where the game-over screen puts them too:
-              a medal is what the run is worth to everyone else, and the stats under it
-              are what it was worth to the player. A mode that reaches no board has
-              nothing here to stand on. */}
-            {traits.scored && <BoardMedals medals={medals} gameMode={gameMode} />}
-
-            <RunStats
-              gameMode={gameMode}
-              hits={hits}
-              gameTimeMs={gameTimeMs}
-              strikes={strikes}
-              avgAccuracy={avgAccuracy}
-              avgSpeed={avgSpeed}
-            />
-
+          </>
+        }
+        // A mode with no board has no score worth showing here: it measures nothing. The
+        // run's own numbers still do, so they are what the screen leads with instead.
+        score={traits.scored ? { value: score, color: gradientOf(gameMode)[0] } : null}
+        // Above the run's own numbers, where the game-over screen puts them too: a medal
+        // is what the run is worth to everyone else, and the stats under it are what it
+        // was worth to the player. A mode that reaches no board has nothing to stand on.
+        beforeStats={
+          traits.scored ? <BoardMedals medals={medals} gameMode={gameMode} /> : null
+        }
+        stats={runStats({
+          mode: gameMode,
+          hits,
+          gameTimeMs,
+          strikes,
+          avgAccuracy,
+          avgSpeed,
+        })}
+        afterStats={
+          <>
             {/* Under the run's own numbers, where the game-over screen puts it too: what
               the run *did* describes the run, and what it earned is something kept. */}
             <EarnedAchievements
@@ -190,16 +169,16 @@ export function PausedOverlay({
               facts={achievementFacts}
             />
 
-            {/* Where the rotating tip used to be. A pause in Trainee is the moment the
-              dial is on screen and nothing is running, so it is the one place worth
-              spending on switches that change what the keys say — and four of them do
-              not fit anywhere a tip would also have sat.
+            {/* Where the rotating tip used to be. A pause in a teaching mode is the
+              moment the dial is on screen and nothing is running, so it is the one place
+              worth spending on switches that change what the keys say — and four of them
+              do not fit anywhere a tip would also have sat.
 
-              Not in the tutorial. The dial there prints the one number it cannot be
-              read without, and everything else is off — so a grid offering to turn nine
-              more of them on is a choice made before the first one has been understood.
-              CONTINUE, END RUN and the display settings behind OPTIONS all stay: those
-              are the ways off this screen, not lessons. */}
+              Not in the tutorial, which is not `coached`: the dial there prints the one
+              number it cannot be read without, and everything else is off — so a grid
+              offering to turn nine more of them on is a choice made before the first one
+              has been understood. CONTINUE, END RUN and the display settings behind
+              OPTIONS all stay: those are the ways off this screen, not lessons. */}
             {traits.coached && (
               <View className="mb-5 w-full">
                 <TraineeDisplayOptions
@@ -226,106 +205,57 @@ export function PausedOverlay({
                 compact
               />
             )}
+          </>
+        }
+        gradient={darkGradientOf(gameMode)}
+        cta={{ label: <Trans>CONTINUE</Trans>, onPress: onContinue }}
+        alsoCta={
+          <>
+            {/* Nothing to restart for in a mode with no board. A run there is not a score
+              being chased, so the dial as it stands is as good as a fresh one — and the
+              button was offering to throw away the very thing being practised on. */}
+            {traits.scored && (
+              <CardButton label={<Trans>RESTART RUN</Trans>} onPress={onRestart} />
+            )}
+            {/* The way out of the tutorial, as a button rather than the dim link the
+              other runs get. The player here has never seen the intro screen, so a link
+              labelled after a place they have not been is a door they cannot read — and
+              the one thing a player who wants out of a lesson should not have to do is
+              hunt for the exit. END TUTORIAL says what it stops; where it lands is the
+              intro, which is where they were always going next. */}
+            {tutorial && (
+              <CardButton label={<Trans>END TUTORIAL</Trans>} onPress={onMenu} />
+            )}
+          </>
+        }
+        exits={
+          // The ways off this screen that are not the run itself, in the dim link dress
+          // game over uses for the same jobs — small enough that none of them competes
+          // with CONTINUE, which is what most pauses end with. In the tutorial only
+          // OPTIONS is left here; leaving is the button above. Side by side in the same
+          // row the intro screen ends with, so the links under a screen's buttons sit the
+          // same way wherever you meet them.
+          <View className="flex-row flex-wrap items-center justify-center gap-x-5 gap-y-2">
+            {/* The label says what this does, the icon says where it lands. The run is
+              live behind this screen and this is the one thing here that ends it — its
+              score goes to the board on the way out — so HOME on its own undersold it: a
+              player looking for the way out of a run should not have to learn that going
+              home is what ends one. */}
+            {!tutorial && (
+              <RunExit
+                icon="home-outline"
+                label={<Trans>END RUN</Trans>}
+                onPress={onMenu}
+              />
+            )}
+            <RunExit
+              icon="settings-outline"
+              label={<Trans>OPTIONS</Trans>}
+              onPress={onOpenAdvanced}
+            />
           </View>
-
-          <View className="items-center gap-8">
-            <View className="w-56 gap-3">
-              <Pressable
-                onPress={onContinue}
-                className="overflow-hidden rounded-2xl"
-                style={shadow}
-              >
-                <LinearGradient
-                  colors={[...darkGradientOf(gameMode)]}
-                  start={{ x: 0, y: 0.5 }}
-                  end={{ x: 1, y: 0.5 }}
-                  className="items-center py-4"
-                >
-                  <Text
-                    selectable={false}
-                    className="font-mono text-[13px] font-black tracking-[2px] text-on-strong"
-                  >
-                    <Trans>CONTINUE</Trans>
-                  </Text>
-                </LinearGradient>
-              </Pressable>
-              {/* Nothing to restart for in a mode with no board. A run there is not a
-                score being chased, so the dial as it stands is as good as a fresh one —
-                and the button was offering to throw away the very thing being practised
-                on. */}
-              {traits.scored && (
-                <Pressable
-                  onPress={onRestart}
-                  className="items-center rounded-2xl bg-card py-4"
-                >
-                  <Text
-                    selectable={false}
-                    className="font-mono text-[13px] font-black tracking-[2px] text-primary"
-                  >
-                    <Trans>RESTART RUN</Trans>
-                  </Text>
-                </Pressable>
-              )}
-              {/* The way out of the tutorial, as a button rather than the dim link the
-                other runs get. The player here has never seen the intro screen, so a
-                link labelled after a place they have not been is a door they cannot
-                read — and the one thing a player who wants out of a lesson should not
-                have to do is hunt for the exit. END TUTORIAL says what it stops; where
-                it lands is the intro, which is where they were always going next. */}
-              {tutorial && (
-                <Pressable
-                  onPress={onMenu}
-                  className="items-center rounded-2xl bg-card py-4"
-                >
-                  <Text
-                    selectable={false}
-                    className="font-mono text-[13px] font-black tracking-[2px] text-primary"
-                  >
-                    <Trans>END TUTORIAL</Trans>
-                  </Text>
-                </Pressable>
-              )}
-            </View>
-            {/* The ways off this screen that are not the run itself, in the dim link
-              dress game over uses for the same jobs — small enough that none of them
-              competes with CONTINUE, which is what most pauses end with. In the
-              tutorial only OPTIONS is left here; leaving is the button above.
-              Side by side in the same row the intro screen ends with, so the links
-              under a screen's buttons sit the same way wherever you meet them. */}
-            <View className="flex-row flex-wrap items-center justify-center gap-x-5 gap-y-2">
-              {/* The label says what this does, the icon says where it lands. The run is
-                live behind this screen and this is the one thing here that ends it — its
-                score goes to the board on the way out — so HOME on its own undersold it:
-                a player looking for the way out of a run should not have to learn that
-                going home is what ends one. */}
-              {!tutorial && (
-                <Pressable onPress={onMenu} hitSlop={10}>
-                  <View className="flex-row items-center gap-1">
-                    <Ionicons name="home-outline" size={10} color={dimColor} />
-                    <Text
-                      selectable={false}
-                      className="font-mono text-[10px] font-bold tracking-[1.8px] text-dim"
-                    >
-                      <Trans>END RUN</Trans>
-                    </Text>
-                  </View>
-                </Pressable>
-              )}
-              <Pressable onPress={onOpenAdvanced} hitSlop={10}>
-                <View className="flex-row items-center gap-1">
-                  <Ionicons name="settings-outline" size={10} color={dimColor} />
-                  <Text
-                    selectable={false}
-                    className="font-mono text-[10px] font-bold tracking-[1.8px] text-dim"
-                  >
-                    <Trans>OPTIONS</Trans>
-                  </Text>
-                </View>
-              </Pressable>
-            </View>
-          </View>
-        </View>
-      </Screen>
+        }
+      />
 
       {editingCorner !== null && (
         <DialHintModal

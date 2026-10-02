@@ -1,11 +1,10 @@
 import { Trans } from '@lingui/react/macro'
 import { isOneOf } from 'narrowland'
 import { useEffect, useRef, useState } from 'react'
-import { Text, View, type LayoutChangeEvent } from 'react-native'
+import { View, type LayoutChangeEvent } from 'react-native'
 import Animated, {
   Easing,
   FadeIn,
-  FadeOut,
   useAnimatedStyle,
   useFrameCallback,
   useSharedValue,
@@ -23,7 +22,7 @@ import { ArcadeStrike } from '@/components/game/arcade-strike'
 import { CompassRose } from '@/components/game/compass-rose'
 import { Dial } from '@/components/game/dial'
 import { LandMark } from '@/components/game/land-mark'
-import { PauseButton } from '@/components/game/pause-button'
+import { RunTopBar } from '@/components/game/run-top-bar'
 import { ScoreDigit } from '@/components/game/score-digit'
 import { VillageArrival } from '@/components/game/village-arrival'
 import { WayBud, type BudState } from '@/components/game/way-bud'
@@ -483,54 +482,24 @@ export function ArcadeGame({ isDark, onEnd }: { isDark: boolean; onEnd: () => vo
     <ScreenLayer>
       <View className="flex-1" style={{ paddingTop: insets.top }}>
         {/* ── Top bar ── */}
-        <View className="flex-row items-center px-4 py-2">
-          <View className="flex-1">
-            <Text
-              selectable={false}
-              className="font-mono text-[13px] font-black tracking-[2px]"
-              style={{ color: arcadeInk }}
-            >
-              <Trans>ARCADE</Trans>
-            </Text>
-            {/* Where the hero is standing, by name. The depth is the score and it is on the
-                pause screen and the end of the run; what a player wants to read mid-run is
-                the place they are in — and every crossroad has had a name since the map
-                started drawing itself one. Clipped rather than wrapped: a second line here
-                would push the whole row down. */}
-            <Text
-              selectable={false}
-              numberOfLines={1}
-              className="font-mono text-[10px] font-bold tracking-[1px] text-dim"
-            >
-              {here?.name.toUpperCase() ?? ''}
-            </Text>
-          </View>
-          <View className="items-center">
-            {/* The game's name, the one string that is the same in every language. The left
-              padding answers the tracking the last letter carries. */}
-            <Text
-              selectable={false}
-              className="pl-[8px] font-mono text-[24px] font-black tracking-[8px]"
-              style={{ color: arcadeInk }}
-            >
-              NINE
-            </Text>
-          </View>
-          {/* The way out, the same one every run has — and only while the hero is
-              standing on a crossroad. Mid-flight there is no beat to stop: a movement is
-              a second at most, and a screen that froze halfway along a way would have to
-              be resumed into an animation that had already finished without it. The
-              column keeps its width either way, so nothing else in the row moves. */}
-          <View className="flex-1 items-end">
-            {run.dialable && (
-              <Animated.View
-                entering={FadeIn.duration(160)}
-                exiting={FadeOut.duration(160)}
-              >
-                <PauseButton color={arcadeInk} onPress={run.pause} />
-              </Animated.View>
-            )}
-          </View>
+        {/* The same bar every run is played under. The place the hero is standing in
+            goes where a rung goes in the game's own: the depth is the score and is on the
+            pause screen and the end of the run, and what a player wants to read mid-run
+            is where they are — every crossroad has had a name since the map started
+            drawing itself one.
+
+            The way out shows only while the hero is standing on a crossroad. Mid-flight
+            there is no beat to stop: a movement is a second at most, and a screen that
+            froze halfway along a way would have to be resumed into an animation that had
+            already finished without it. */}
+        <View className="px-4 py-2">
+          <RunTopBar
+            accent={arcadeInk}
+            title={<Trans>ARCADE</Trans>}
+            subtitle={here?.name.toUpperCase() ?? ''}
+            wordmark={arcadeInk}
+            onPause={run.dialable ? run.pause : null}
+          />
         </View>
 
         {/* ── The way ── */}
