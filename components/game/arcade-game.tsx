@@ -41,7 +41,7 @@ import {
   WALK_MS,
 } from '@/constants/arcade'
 import { ARCADE_INK, MAP_INK, PIE_INK, SURFACE } from '@/constants/colors'
-import { CLOSE_MS, OPEN_MS, SIEGE_ZOOM, STANDOFF } from '@/constants/siege'
+import { CLOSE_MS, OPEN_MS, SIEGE_ZOOM, STANDOFF, TAKEN_MS } from '@/constants/siege'
 import { useArcadeLand } from '@/hooks/use-arcade-land'
 import { useArcadeRun, type ArcadePhase } from '@/hooks/use-arcade-run'
 import { SUM_ROW_HEIGHT } from '@/hooks/use-dial-metrics'
@@ -124,8 +124,10 @@ const DRIFT_MS = {
   rocket: ROCKET_MS,
   retreat: RETREAT_MS,
   falling: 0,
-  // A siege moves the camera *in* rather than across: the hero is stopped at the gate for
-  // all four of these beats, so there is no ground for the canvas to cover.
+  // A siege moves the camera *in* rather than across: the hero is at the gate for all four
+  // of these beats — stopped outside it for three, and walking the last of the way in on
+  // `taken`, which the anchor is already sitting on — so there is no ground for the canvas
+  // to cover.
   closing: 0,
   siege: 0,
   taken: 0,
@@ -146,13 +148,23 @@ const TRAVEL = {
   rocket: null,
   retreat: { from: 1, to: 0, duration: RETREAT_MS, easing: Easing.in(Easing.cubic) },
   falling: { from: 0, to: 1, duration: FALL_MS, easing: Easing.in(Easing.cubic) },
-  // The hero holds at the stand-off for the whole fight, so none of these move it along
-  // the way. `closing` does set it once — not to move the hero but to re-number where it
-  // already is, the way in being drawn from the crossroad behind from that beat on. See
+  // The hero holds at the stand-off for the fight itself, so neither of those two moves it
+  // along the way. `closing` does set it once — not to move the hero but to re-number where
+  // it already is, the way in being drawn from the crossroad behind from that beat on. See
   // the effect that drives it.
   closing: null,
   siege: null,
-  taken: null,
+  // The walls are down, and this is the hero walking in through the gate it spent the fight
+  // standing outside of: the last fifth of the way in, on the same spline it has been held
+  // on, ending exactly where the village stands. It is what the beat is this long for — and
+  // it is what makes the handover into `bloom` cost no frame, the fan growing around a hero
+  // that is already standing in the middle of it.
+  taken: {
+    from: STANDOFF,
+    to: 1,
+    duration: TAKEN_MS,
+    easing: Easing.inOut(Easing.cubic),
+  },
   overrun: null,
   over: null,
 } as const satisfies Record<
@@ -343,17 +355,6 @@ export function ArcadeGame({ isDark, onEnd }: { isDark: boolean; onEnd: () => vo
     // on the sheet, so the handover costs not a frame.
     if (run.phase === 'closing') {
       progress.value = STANDOFF
-      return
-    }
-    // A walk into a walled village stops short of the gate, with the walls above the hero
-    // and the ground between them for the warriors to cross. The way itself is walked in the
-    // same time as any other — it is only the last of it that is not walked at all.
-    if (run.phase === 'walk' && run.destination?.fortified === true) {
-      progress.value = 0
-      progress.value = withTiming(STANDOFF, {
-        duration: WALK_MS,
-        easing: Easing.inOut(Easing.cubic),
-      })
       return
     }
     const travel = TRAVEL[run.phase]
