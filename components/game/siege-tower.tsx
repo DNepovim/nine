@@ -75,7 +75,14 @@ const FONT = 7.5
 // height is the receipt.
 const CHIP_MS = 220
 
-const n = (v: number): string => (Math.round(v * 10) / 10).toString()
+// Marked, because `towerPath` is a worklet and calls this eleven times a frame. An
+// unmarked helper is unpacked into a stub that throws the moment the UI thread reaches it —
+// and nothing in the static checks can see that, because to eslint and to tsc it is an
+// ordinary function being called by an ordinary one.
+const n = (v: number): string => {
+  'worklet'
+  return (Math.round(v * 10) / 10).toString()
+}
 
 // The tower at whatever height it has been knocked to, as one path: up the left side,
 // across the crenellated top and down the right. One path rather than a rect with a cap on
@@ -129,7 +136,8 @@ export function SiegeTower({
     // about the tower's own foot rather than about the middle of some box.
     <Animated.View
       pointerEvents="none"
-      style={[{ position: 'absolute', left: x, top: y, width: 0, height: 0 }, upright]}
+      className="absolute"
+      style={[{ left: x, top: y, width: 0, height: 0 }, upright]}
     >
       <Svg
         width={BOX_W}

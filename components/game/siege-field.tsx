@@ -20,12 +20,22 @@ import type { Siege } from '@/machines/siege'
 // size whether you are looking at it or fighting it.
 const WALL = BUD_SIZE / 2 - 1
 
+// How wide the hero actually is where it is opaque.
+//
+// Not half of `HERO_SIZE`, which is what the flame's own size means and what this used to
+// take. The hero is a stack of coats and the one that covers anything is `body`, at 0.78 of
+// that size and 92% opaque — see COATS in arcade-hero.tsx. The coats outside it are a wisp
+// at three tenths and read as glow rather than as cover.
+const HERO_BODY = HERO_SIZE * 0.78
+
 // How much ground the nearest tower's number has to keep between itself and the hero: its
-// own disc, half a hero, and a point of air. The hero is drawn over this whole field — it
-// stands in front of the walls, which is right — so a tower *body* under it costs nothing.
-// A number under it costs the player a number they cannot dial, which is the one thing
-// this layout is not allowed to do.
-const CLEAR = TOWER_DISC + HERO_SIZE / 2 + 1
+// own disc, the hero's body coat, and a point of air. The hero is drawn over this whole
+// field — it stands in front of the walls, which is right — so a tower *body* under it
+// costs nothing. A number under it costs the player a number they cannot dial, which is the
+// one thing this layout is not allowed to do. Measured against the body coat because a
+// digit under 92% amber is a digit nobody will risk dialling, even though it is strictly
+// still there.
+const CLEAR = TOWER_DISC + HERO_BODY + 1
 
 // The smallest wall that still fits the numbers standing on it: enough circumference for
 // every tower's disc and a point between them. Below it the discs start crossing and a

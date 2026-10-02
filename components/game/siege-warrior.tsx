@@ -23,11 +23,17 @@ const STROKE = 1.2
 // How far off the straight line a lane carries a man at the middle of his walk.
 //
 // `lane` is in radians off straight and runs over `LANE_SPREAD`, so this is the one number
-// that turns that into points: at the two ends of the spread two men are exactly one man
-// apart at the moment they pass each other, which is the closest two of them may come. In
-// points rather than as a fraction of the walk, because the walk is short — the hero stands
-// at the gate — and a fraction of it would have put two men inside each other on a small
-// screen.
+// that turns that into points: at the two ends of the spread two men are one man apart at
+// the moment they pass each other. That is the *widest* they are ever drawn, not the
+// closest — the lane is rolled uniformly, so two men can come out of the gate on lines a
+// hair apart and nothing here would hold them off each other. What does hold them apart is
+// the gate's own gap: they leave seconds rather than frames apart, so two on near-identical
+// lines are still at different points along it. The lane is what stops that gap from being
+// the *only* thing keeping them apart as it decays with the depth.
+//
+// In points rather than as a fraction of the walk, because the walk is short — the hero
+// stands at the gate — and a fraction of it would have put two men inside each other on a
+// small screen.
 const LANE = SIZE / LANE_SPREAD
 
 // How long a man takes to be on the ground. Not a fade — he grows out of the gate, which is
