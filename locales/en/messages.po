@@ -107,7 +107,7 @@ msgid "{joinedMonths, plural, one {joined a month ago} other {joined # months ag
 msgstr "{joinedMonths, plural, one {joined a month ago} other {joined # months ago}}"
 
 #. placeholder {0}: fortuneOf(score, difficulty)
-#: components/overlays/game-over-overlay.tsx:251
+#: components/overlays/game-over-overlay.tsx:308
 msgid "+{0} TO YOUR FORTUNE"
 msgstr "+{0} TO YOUR FORTUNE"
 
@@ -193,7 +193,7 @@ msgid "ACC"
 msgstr "ACC"
 
 #: components/game/trainee-stats.tsx:66
-#: machines/modes.ts:56
+#: modes/definitions/accuracy.ts:11
 msgid "ACCURACY"
 msgstr "ACCURACY"
 
@@ -276,9 +276,9 @@ msgstr "Anything at all — what broke, what annoyed you, what you wish it did. 
 msgid "Anything at all — what broke, what annoyed you, what you wish it did. The mode, difficulty and score you are on go with it."
 msgstr "Anything at all — what broke, what annoyed you, what you wish it did. The mode, difficulty and score you are on go with it."
 
-#: components/game/arcade-game.tsx:494
+#: components/game/arcade-game.tsx:662
 #: components/overlays/how-to-play-overlay.tsx:49
-#: machines/modes.ts:237
+#: modes/definitions/arcade.ts:15
 msgid "ARCADE"
 msgstr "ARCADE"
 
@@ -300,13 +300,13 @@ msgstr "AVG"
 
 #: components/overlays/compare-stat-row.tsx:19
 #: components/overlays/player-profile-overlay.tsx:326
-#: components/overlays/run-stats.tsx:59
+#: lib/run-stats.ts:44
 msgid "AVG ACC"
 msgstr "AVG ACC"
 
 #: components/overlays/compare-stat-row.tsx:20
 #: components/overlays/player-profile-overlay.tsx:327
-#: components/overlays/run-stats.tsx:58
+#: lib/run-stats.ts:43
 msgid "AVG SPD"
 msgstr "AVG SPD"
 
@@ -358,7 +358,7 @@ msgstr "Buttons can show their weight, their ceiling, and what each is giving ri
 
 #: components/overlays/join-room-overlay.tsx:91
 #: components/overlays/motto-modal.tsx:130
-#: components/overlays/multiplayer-waiting.tsx:239
+#: components/overlays/multiplayer-waiting.tsx:235
 msgid "CANCEL"
 msgstr "CANCEL"
 
@@ -382,7 +382,7 @@ msgstr "CHOOSE A NICKNAME"
 msgid "Choose Add to Home Screen"
 msgstr "Choose Add to Home Screen"
 
-#: machines/modes.ts:215
+#: modes/definitions/arcade.ts:19
 msgid "Climb the way, or fall back."
 msgstr "Climb the way, or fall back."
 
@@ -403,17 +403,17 @@ msgstr "COMPARE"
 msgid "COMPARE WITH ME"
 msgstr "COMPARE WITH ME"
 
-#: components/overlays/menu-overlay.tsx:466
+#: components/overlays/menu-overlay.tsx:506
 msgid "CONNECT TO THE INTERNET TO PLAY WITH FRIENDS"
 msgstr "CONNECT TO THE INTERNET TO PLAY WITH FRIENDS"
 
-#: components/game/arcade-paused.tsx:83
+#: components/game/arcade-paused.tsx:54
 #: components/overlays/multiplayer-menu.tsx:43
-#: components/overlays/paused-overlay.tsx:242
+#: components/overlays/paused-overlay.tsx:211
 msgid "CONTINUE"
 msgstr "CONTINUE"
 
-#: app/(tabs)/index.tsx:1724
+#: app/(tabs)/index.tsx:1669
 msgid "Continue the tutorial"
 msgstr "Continue the tutorial"
 
@@ -421,12 +421,12 @@ msgstr "Continue the tutorial"
 msgid "CONTROLS"
 msgstr "CONTROLS"
 
-#: components/overlays/menu-overlay.tsx:428
+#: components/overlays/menu-overlay.tsx:468
 msgid "CREATE ROOM"
 msgstr "CREATE ROOM"
 
-#: components/game/arcade-over.tsx:59
-#: components/game/arcade-paused.tsx:61
+#: components/game/arcade-over.tsx:53
+#: components/game/arcade-paused.tsx:50
 msgid "CROSSROADS DEEP"
 msgstr "CROSSROADS DEEP"
 
@@ -476,16 +476,16 @@ msgstr "Each target carries a shrinking ring — its countdown. Land the sum bef
 msgid "EARLY BIRD"
 msgstr "EARLY BIRD"
 
-#: machines/modes.ts:123
+#: modes/difficulty.ts:45
 msgid "EASY"
 msgstr "EASY"
 
-#: components/game/arcade-paused.tsx:99
-#: components/overlays/paused-overlay.tsx:302
+#: components/game/arcade-paused.tsx:66
+#: components/overlays/paused-overlay.tsx:247
 msgid "END RUN"
 msgstr "END RUN"
 
-#: components/overlays/paused-overlay.tsx:277
+#: components/overlays/paused-overlay.tsx:227
 msgid "END TUTORIAL"
 msgstr "END TUTORIAL"
 
@@ -493,7 +493,7 @@ msgstr "END TUTORIAL"
 msgid "ENTER ROOM CODE"
 msgstr "ENTER ROOM CODE"
 
-#: machines/modes.ts:124
+#: modes/difficulty.ts:46
 msgid "ESY"
 msgstr "ESY"
 
@@ -523,7 +523,7 @@ msgstr "Everyone who hits is ranked by how few moves it took."
 msgid "EVERYTHING THAT’S CHANGED"
 msgstr "EVERYTHING THAT’S CHANGED"
 
-#: machines/modes.ts:140
+#: modes/difficulty.ts:62
 msgid "EXT"
 msgstr "EXT"
 
@@ -531,11 +531,11 @@ msgstr "EXT"
 msgid "Extend a streak ten times in a row."
 msgstr "Extend a streak ten times in a row."
 
-#: machines/modes.ts:139
+#: modes/difficulty.ts:61
 msgid "EXTREME"
 msgstr "EXTREME"
 
-#: machines/modes.ts:211
+#: modes/definitions/speed.ts:11
 msgid "Fast hits build big combos."
 msgstr "Fast hits build big combos."
 
@@ -619,11 +619,23 @@ msgstr "FORTUNE"
 msgid "Forward a step"
 msgstr "Forward a step"
 
+#: modes/challenges/catalog.ts:36
+msgid "Four coarse keys. No room to trim."
+msgstr "Four coarse keys. No room to trim."
+
+#: modes/challenges/catalog.ts:35
+msgid "FOUR KEYS"
+msgstr "FOUR KEYS"
+
 #: constants/achievements.ts:485
 msgid "FULL HOUSE"
 msgstr "FULL HOUSE"
 
-#: components/overlays/multiplayer-waiting.tsx:96
+#: modes/registry.ts:116
+msgid "GAME"
+msgstr "GAME"
+
+#: components/overlays/multiplayer-waiting.tsx:92
 msgid "GAME CODE"
 msgstr "GAME CODE"
 
@@ -656,7 +668,7 @@ msgstr "GOT IT"
 msgid "GRADUATE"
 msgstr "GRADUATE"
 
-#: machines/modes.ts:131
+#: modes/difficulty.ts:53
 msgid "HARD"
 msgstr "HARD"
 
@@ -675,7 +687,7 @@ msgstr "Hit while most of the ring is left to build your combo streak."
 #: components/game/trainee-stats.tsx:64
 #: components/overlays/compare-stat-row.tsx:17
 #: components/overlays/player-profile-overlay.tsx:312
-#: components/overlays/run-stats.tsx:65
+#: lib/run-stats.ts:47
 msgid "HITS"
 msgstr "HITS"
 
@@ -707,8 +719,8 @@ msgstr "Hold the all-time record on a mode’s Extreme board and you carry its m
 msgid "HOLDING"
 msgstr "HOLDING"
 
-#: components/game/arcade-over.tsx:91
-#: components/overlays/game-over-overlay.tsx:352
+#: components/game/arcade-over.tsx:64
+#: components/overlays/game-over-overlay.tsx:123
 msgid "HOME"
 msgstr "HOME"
 
@@ -717,11 +729,11 @@ msgid "How far can you go?"
 msgstr "How far can you go?"
 
 #: components/overlays/how-to-play-overlay.tsx:426
-#: components/overlays/menu-overlay.tsx:562
+#: components/overlays/menu-overlay.tsx:602
 msgid "HOW TO PLAY"
 msgstr "HOW TO PLAY"
 
-#: machines/modes.ts:132
+#: modes/difficulty.ts:54
 msgid "HRD"
 msgstr "HRD"
 
@@ -758,7 +770,7 @@ msgid "It went straight to the person who makes this, and it is read. If it gets
 msgstr "It went straight to the person who makes this, and it is read. If it gets an answer, you will find one here next time you open the game."
 
 #: components/overlays/join-room-overlay.tsx:81
-#: components/overlays/menu-overlay.tsx:446
+#: components/overlays/menu-overlay.tsx:486
 msgid "JOIN ROOM"
 msgstr "JOIN ROOM"
 
@@ -879,12 +891,12 @@ msgstr "MODES"
 msgid "More to find"
 msgstr "More to find"
 
-#: components/game/multiplayer-game.tsx:158
+#: components/game/multiplayer-game.tsx:159
 #: components/overlays/how-to-play-overlay.tsx:50
 msgid "MULTIPLAYER"
 msgstr "MULTIPLAYER"
 
-#: components/overlays/menu-overlay.tsx:533
+#: components/overlays/menu-overlay.tsx:573
 msgid "My best at Nine is {bestScore} — {board}. Think you can beat it?"
 msgstr "My best at Nine is {bestScore} — {board}. Think you can beat it?"
 
@@ -900,7 +912,7 @@ msgstr "NICK"
 msgid "NIGHT SHIFT"
 msgstr "NIGHT SHIFT"
 
-#: components/overlays/menu-overlay.tsx:534
+#: components/overlays/menu-overlay.tsx:574
 msgid "Nine buttons, one number to hit. Come take a run at it."
 msgstr "Nine buttons, one number to hit. Come take a run at it."
 
@@ -930,7 +942,7 @@ msgstr "No connection — a nickname can only be claimed online."
 msgid "NO JOKE"
 msgstr "NO JOKE"
 
-#: machines/modes.ts:209
+#: modes/definitions/trainee.ts:12
 msgid "No lives, no rush."
 msgstr "No lives, no rush."
 
@@ -1018,8 +1030,8 @@ msgstr "Open the How to Play guide."
 msgid "OPTIMAL PATH"
 msgstr "OPTIMAL PATH"
 
-#: components/overlays/menu-overlay.tsx:519
-#: components/overlays/paused-overlay.tsx:314
+#: components/overlays/menu-overlay.tsx:559
+#: components/overlays/paused-overlay.tsx:253
 msgid "OPTIONS"
 msgstr "OPTIONS"
 
@@ -1055,8 +1067,8 @@ msgstr "Play a full room — four players, the most one holds."
 msgid "Play a Hard board."
 msgstr "Play a Hard board."
 
-#: components/game/arcade-over.tsx:81
-#: components/overlays/game-over-overlay.tsx:310
+#: components/game/arcade-over.tsx:57
+#: components/overlays/game-over-overlay.tsx:350
 #: components/overlays/multiplayer-game-over.tsx:191
 msgid "PLAY AGAIN"
 msgstr "PLAY AGAIN"
@@ -1065,7 +1077,7 @@ msgstr "PLAY AGAIN"
 msgid "Play five runs with friends and win none of them."
 msgstr "Play five runs with friends and win none of them."
 
-#: components/overlays/menu-overlay.tsx:505
+#: components/overlays/menu-overlay.tsx:545
 msgid "PLAY GAME"
 msgstr "PLAY GAME"
 
@@ -1085,7 +1097,7 @@ msgstr "Play Trainee, Accuracy and Speed."
 msgid "Play with two hands, a thumb to each side of the grid. Reaching across for every button is time the ring is already spending."
 msgstr "Play with two hands, a thumb to each side of the grid. Reaching across for every button is time the ring is already spending."
 
-#: components/overlays/multiplayer-waiting.tsx:171
+#: components/overlays/multiplayer-waiting.tsx:167
 msgid "PLAYERS"
 msgstr "PLAYERS"
 
@@ -1093,7 +1105,7 @@ msgstr "PLAYERS"
 msgid "Post a score on every mode and difficulty."
 msgstr "Post a score on every mode and difficulty."
 
-#: machines/modes.ts:210
+#: modes/definitions/accuracy.ts:12
 msgid "Precision over speed."
 msgstr "Precision over speed."
 
@@ -1125,13 +1137,17 @@ msgstr "Records, celebrated"
 msgid "REMOVE"
 msgstr "REMOVE"
 
-#: components/overlays/paused-overlay.tsx:258
+#: components/overlays/paused-overlay.tsx:218
 msgid "RESTART RUN"
 msgstr "RESTART RUN"
 
 #: components/overlays/multiplayer-game-over.tsx:150
 msgid "RESULTS"
 msgstr "RESULTS"
+
+#: components/game/arcade-game.tsx:889
+msgid "RETREAT · −1"
+msgstr "RETREAT · −1"
 
 #: constants/achievements.ts:473
 msgid "ROOM FOR TWO"
@@ -1244,8 +1260,8 @@ msgstr "SEVEN DAY STREAK"
 msgid "Seven seconds a target — the clock everyone races."
 msgstr "Seven seconds a target — the clock everyone races."
 
-#: components/overlays/menu-overlay.tsx:551
-#: components/overlays/multiplayer-waiting.tsx:127
+#: components/overlays/menu-overlay.tsx:591
+#: components/overlays/multiplayer-waiting.tsx:123
 msgid "SHARE"
 msgstr "SHARE"
 
@@ -1254,7 +1270,7 @@ msgid "SHOW SUM IN BUTTONS"
 msgstr "SHOW SUM IN BUTTONS"
 
 #. placeholder {0}: formatShortDate(tookAt)
-#: components/overlays/profile-reign-row.tsx:33
+#: components/overlays/profile-reign-row.tsx:38
 msgid "SINCE {0}"
 msgstr "SINCE {0}"
 
@@ -1284,7 +1300,7 @@ msgid "SPD"
 msgstr "SPD"
 
 #: components/game/trainee-stats.tsx:70
-#: machines/modes.ts:64
+#: modes/definitions/speed.ts:10
 msgid "SPEED"
 msgstr "SPEED"
 
@@ -1312,7 +1328,7 @@ msgstr "Spend half an hour in Trainee without leaving."
 msgid "Spot your nines"
 msgstr "Spot your nines"
 
-#: components/overlays/multiplayer-waiting.tsx:216
+#: components/overlays/multiplayer-waiting.tsx:212
 #: components/overlays/step-up-overlay.tsx:86
 msgid "START GAME"
 msgstr "START GAME"
@@ -1326,11 +1342,11 @@ msgstr "STEADY HAND"
 msgid "Step {0}"
 msgstr "Step {0}"
 
-#: components/overlays/game-over-overlay.tsx:329
+#: components/overlays/game-over-overlay.tsx:86
 msgid "STEP DOWN TO {rungName}"
 msgstr "STEP DOWN TO {rungName}"
 
-#: components/overlays/game-over-overlay.tsx:327
+#: components/overlays/game-over-overlay.tsx:84
 msgid "STEP UP TO {rungName}"
 msgstr "STEP UP TO {rungName}"
 
@@ -1346,8 +1362,8 @@ msgstr "Streak — consecutive perfect plays multiply your points ×2 → ×4 �
 msgid "STRIKE"
 msgstr "STRIKE"
 
-#: components/game/arcade-stats.tsx:29
-#: components/overlays/run-stats.tsx:66
+#: lib/run-stats.ts:48
+#: lib/run-stats.ts:75
 msgid "STRIKES"
 msgstr "STRIKES"
 
@@ -1574,10 +1590,10 @@ msgstr "THOUSAND HITS"
 msgid "Three lives, and every score reaches the board."
 msgstr "Three lives, and every score reaches the board."
 
-#: components/game/arcade-stats.tsx:32
 #: components/overlays/compare-stat-row.tsx:18
 #: components/overlays/player-profile-overlay.tsx:320
-#: components/overlays/run-stats.tsx:67
+#: lib/run-stats.ts:51
+#: lib/run-stats.ts:85
 msgid "TIME"
 msgstr "TIME"
 
@@ -1619,7 +1635,7 @@ msgstr "TOP RIGHT"
 msgid "TOUCH GRASS"
 msgstr "TOUCH GRASS"
 
-#: machines/modes.ts:39
+#: modes/definitions/trainee.ts:11
 msgid "TRAINEE"
 msgstr "TRAINEE"
 
@@ -1636,7 +1652,7 @@ msgid "Trainee now says when a move went to waste, and what a hit cost."
 msgstr "Trainee now says when a move went to waste, and what a hit cost."
 
 #: components/game/step-up-toast.tsx:95
-#: components/overlays/game-over-overlay.tsx:331
+#: components/overlays/game-over-overlay.tsx:88
 msgid "TRY {modeName}"
 msgstr "TRY {modeName}"
 
@@ -1682,11 +1698,15 @@ msgstr "UNTOUCHABLE"
 msgid "UP A RUNG"
 msgstr "UP A RUNG"
 
+#: lib/run-stats.ts:84
+msgid "VILLAGES"
+msgstr "VILLAGES"
+
 #: components/overlays/player-tile.tsx:123
 msgid "WAITING"
 msgstr "WAITING"
 
-#: components/overlays/multiplayer-waiting.tsx:229
+#: components/overlays/multiplayer-waiting.tsx:225
 msgid "WAITING FOR HOST"
 msgstr "WAITING FOR HOST"
 
@@ -1748,7 +1768,7 @@ msgstr "YOU"
 msgid "YOU WON"
 msgstr "YOU WON"
 
-#: components/overlays/menu-overlay.tsx:460
+#: components/overlays/menu-overlay.tsx:500
 #: components/overlays/offline-notice.tsx:17
 msgid "YOU'RE OFFLINE"
 msgstr "YOU'RE OFFLINE"

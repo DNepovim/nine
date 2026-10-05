@@ -1,10 +1,12 @@
+import { AntDesign } from '@expo/vector-icons'
 import { Trans } from '@lingui/react/macro'
 import { isOneOf } from 'narrowland'
 import { useEffect, useRef, useState } from 'react'
-import { View, type LayoutChangeEvent } from 'react-native'
+import { Pressable, Text, View, type LayoutChangeEvent } from 'react-native'
 import Animated, {
   Easing,
   FadeIn,
+  FadeOut,
   useAnimatedStyle,
   useFrameCallback,
   useSharedValue,
@@ -21,6 +23,7 @@ import { ArcadePaused } from '@/components/game/arcade-paused'
 import { ArcadeStrike } from '@/components/game/arcade-strike'
 import { CompassRose } from '@/components/game/compass-rose'
 import { Dial } from '@/components/game/dial'
+import { HeartIcon } from '@/components/game/heart-icon'
 import { LandMark } from '@/components/game/land-mark'
 import { RunTopBar } from '@/components/game/run-top-bar'
 import { ScoreDigit } from '@/components/game/score-digit'
@@ -661,6 +664,20 @@ export function ArcadeGame({ isDark, onEnd }: { isDark: boolean; onEnd: () => vo
             wordmark={arcadeInk}
             onPause={run.dialable ? run.pause : null}
           />
+          {/* The three hearts, in the row the game screen keeps them in and drawn by the
+              same component. Nothing on the way itself can take one — a strike costs a
+              crossroad, not a life — so for most of a run these sit full and say only
+              that there is something here to lose. The first warrior through makes them
+              the thing being watched. */}
+          <View className="mt-1.5 flex-row gap-1">
+            {[0, 1, 2].map((i) => (
+              <HeartIcon
+                key={i}
+                filled={i < run.hearts}
+                emptyColor={isDark ? '#1C1D30' : '#FDFCFA'}
+              />
+            ))}
+          </View>
         </View>
 
         {/* ── The way ── */}
@@ -842,6 +859,41 @@ export function ArcadeGame({ isDark, onEnd }: { isDark: boolean; onEnd: () => vo
           {dawn && <ArcadeDawn ink={arcadeInk} />}
         </View>
 
+        {/* ── The way out of a fight ── */}
+        {/* A row that is here all run and empty for most of it. The canvas above is the
+            only thing in this column that flexes, and the map is anchored to a fraction
+            of its height — so a button that claimed its own space on appearing would
+            shove the whole country up the screen at the one moment the player is being
+            asked to read a wall. Reserved, nothing moves but the button. */}
+        <View className="h-8 items-center justify-center">
+          {run.phase === 'siege' && (
+            <Animated.View
+              entering={FadeIn.duration(160)}
+              exiting={FadeOut.duration(160)}
+            >
+              {/* Outlined rather than filled: this is the way out of the fight, not the
+                  thing to do in it. In arcade's own ink, which is what every word on this
+                  screen is written in — and carrying a heart in the hearts' own red, so
+                  the −1 is read as the thing on the bar above and not as a crossroad. */}
+              <Pressable
+                onPress={run.flee}
+                hitSlop={10}
+                className="flex-row items-center gap-1 rounded-full border px-4 py-1.5"
+                style={{ borderColor: arcadeInk }}
+              >
+                <Text
+                  selectable={false}
+                  className="font-mono text-[12px] font-black leading-[16px] tracking-[2px]"
+                  style={{ color: arcadeInk }}
+                >
+                  <Trans>RETREAT · −1</Trans>
+                </Text>
+                <AntDesign name="heart" size={10} color={EMBER} />
+              </Pressable>
+            </Animated.View>
+          )}
+        </View>
+
         {/* ── The sum ── */}
         {/* Reserved, so the dial sits at one height whatever the sum reads. */}
         <View className="items-center justify-center" style={{ height: SUM_ROW_HEIGHT }}>
@@ -883,6 +935,7 @@ export function ArcadeGame({ isDark, onEnd }: { isDark: boolean; onEnd: () => vo
           <ArcadePaused
             depth={run.depth}
             strikes={run.strikes}
+            taken={run.taken}
             playedMs={run.playedMs}
             onContinue={run.resume}
             onEnd={onEnd}
@@ -893,6 +946,7 @@ export function ArcadeGame({ isDark, onEnd }: { isDark: boolean; onEnd: () => vo
           <ArcadeOver
             depth={run.best}
             strikes={run.strikes}
+            taken={run.taken}
             playedMs={run.playedMs}
             onAgain={run.restart}
             onHome={onEnd}

@@ -20,6 +20,7 @@ const TITLE = ['FELL', 'BACK'] as const satisfies TitleWords
 export function ArcadeOver({
   depth,
   strikes,
+  taken,
   playedMs,
   onAgain,
   onHome,
@@ -27,6 +28,9 @@ export function ArcadeOver({
   // The deepest crossroad the run reached, which is what it was worth.
   depth: number
   strikes: number
+  // How many walled villages this run took. Beside the strikes because it is the
+  // same kind of claim: not what the run was worth, but what it did.
+  taken: number
   playedMs: number
   onAgain: () => void
   onHome: () => void
@@ -48,7 +52,7 @@ export function ArcadeOver({
         color: ARCADE_INK[colorScheme],
         caption: <Trans>CROSSROADS DEEP</Trans>,
       }}
-      stats={arcadeStats(strikes, playedMs)}
+      stats={arcadeStats(strikes, taken, playedMs)}
       gradient={darkGradientOf('arcade')}
       cta={{ label: <Trans>PLAY AGAIN</Trans>, onPress: onAgain }}
       exits={

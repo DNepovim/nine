@@ -67,7 +67,20 @@ export function runStats(run: {
 
 // An arcade run. Depth is not here: it is the score, so it stands above this in the
 // readout the game puts its score in.
-export const arcadeStats = (strikes: number, playedMs: number): RunStat[] => [
+export const arcadeStats = (
+  strikes: number,
+  taken: number,
+  playedMs: number,
+): RunStat[] => [
   { key: 'strikes', label: msg`STRIKES`, value: `${strikes}`, overhang: false },
+  // What the run took, beside what it did fast. The same kind of claim as the strikes:
+  // not what the run was worth — that is the depth standing above these — but what
+  // happened on the way up.
+  //
+  // Labelled by the thing rather than by what was done to it: TAKEN is already a string
+  // in this app, on a medal a rival took *off* you, and it is translated accordingly —
+  // reusing it here would have had the Czech card congratulate the player on three
+  // villages they lost.
+  { key: 'taken', label: msg`VILLAGES`, value: `${taken}`, overhang: false },
   { key: 'time', label: msg`TIME`, value: formatGameTime(playedMs), overhang: true },
 ]
