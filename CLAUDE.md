@@ -78,6 +78,8 @@ An achievement's colour is the green nothing else uses (`ACHIEVEMENT_SCALE`), an
 
 - **Never use Claude-in-Chrome browser automation without explicit agreement.** Do not launch the `claude-in-chrome` skill or call any `mcp__claude-in-chrome__*` tool unless the user has agreed to it in the current turn. Ask first.
 
+- **Extract every string you write.** New copy is not shipped by writing it — run `pnpm i18n:extract` and translate it into Czech. A production build strips the English out of the descriptor, so a message missing from the catalog does not fall back the way it does in dev: it puts its generated id, `trdBEB`, on the player's screen. `pnpm i18n:verify` is the gate.
+
 - **Keep the How to Play guide current.** At the end of every task, check whether the change touched gameplay — controls, targets/timers, modes, difficulty, scoring, streaks, or lives. If so, update the guide (`components/overlays/how-to-play-overlay.tsx`) so it stays accurate.
 
 ## Commands
@@ -93,6 +95,8 @@ pnpm typecheck      # tsc --noEmit
 pnpm knip           # Dead-code / unused-export check
 pnpm test           # Vitest (run once)
 pnpm test:watch     # Vitest (watch mode)
+pnpm i18n:extract   # Pull new copy into locales/*.po — run it whenever you add a string
+pnpm i18n:verify    # Fail if locales/*.po no longer says what the source says
 pnpm check          # All of the above in sequence (CI gate)
 ```
 
