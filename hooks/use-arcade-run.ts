@@ -26,7 +26,15 @@ import {
   type ArcadeWay,
   type Crossroad,
 } from '@/machines/arcade'
-import { advance, land, newSiege, nextEvent, shift, type Siege } from '@/machines/siege'
+import {
+  advance,
+  land,
+  newSiege,
+  nextEvent,
+  opened,
+  shift,
+  type Siege,
+} from '@/machines/siege'
 import { emptyGrid, pressGrid, setGrid, sumOf, type Grid } from '@/modes'
 
 // One arcade run: where the hero stands, what the crossroad offers, and the clock that
@@ -357,12 +365,21 @@ export function useArcadeRun() {
       })
     }
 
-    // The camera has come down. The fight starts.
+    // The camera has come down. The fight starts — and the gate's first clock starts with
+    // it rather than with the arrival, which is what makes `SPAWN_FIRST_MS` the grace the
+    // player actually gets. See `opened` in machines/siege.
     if (run.phase === 'closing') {
       after(BEAT_MS.closing, () => {
         const now = Date.now()
         setRun((r) =>
-          r.phase === 'closing' ? { ...r, phase: 'siege', ...beat(r, now) } : r,
+          r.phase === 'closing'
+            ? {
+                ...r,
+                phase: 'siege',
+                siege: r.siege === null ? null : opened(r.siege, now),
+                ...beat(r, now),
+              }
+            : r,
         )
       })
     }

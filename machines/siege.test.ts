@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest'
 import {
   SIEGE_PAR_MAX,
   SIEGE_PAR_MIN,
+  SPAWN_FIRST_MS,
   TOWER_HITS_DEEP,
   TOWER_HITS_SHALLOW,
   TOWERS_DEEP,
@@ -18,6 +19,7 @@ import {
   liveValues,
   newSiege,
   nextEvent,
+  opened,
   shift,
   spawnGap,
   spawnWarrior,
@@ -227,6 +229,17 @@ describe('the schedule a village sends its warriors on', () => {
     const quiet = advance(siege, zeros, siege.nextAt - 1)
     expect(quiet.siege).toBe(siege)
     expect(quiet.lost).toBe(false)
+  })
+
+  // The grace the constant names has to be the grace the player gets. A siege is built the
+  // moment the hero reaches the gate and is not fought until the camera has come down on
+  // it, so a `nextAt` left at the arrival would have burned most of a second behind a dial
+  // that answers nothing.
+  it('starts the gate clock when the fight does, not when the hero arrives', () => {
+    const arrived = newSiege('1', 0, 11, zeros, 1000)
+    const fighting = opened(arrived, 1760)
+    expect(fighting.nextAt).toBe(1760 + SPAWN_FIRST_MS)
+    expect(fighting.towers).toBe(arrived.towers)
   })
 
   it('keeps every walk where it was across a pause', () => {

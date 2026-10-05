@@ -112,15 +112,27 @@ export function newSiege(
     // scatter — and so the one the player is looking for is where it was last time.
     angle: UP + (i / values.length) * Math.PI * 2,
   }))
-  return {
-    at,
-    depth,
-    seed,
-    towers,
-    warriors: [],
-    spawned: 0,
-    nextAt: now + SPAWN_FIRST_MS,
-  }
+  // The gate's clock through `opened`, which is also what stamps it again when the fight
+  // actually starts — a siege is built the moment the hero reaches the walls and is not
+  // fought until a camera move later. See below. The `nextAt` handed in is a placeholder
+  // for a field that cannot be left out; `opened` is what sets it.
+  return opened({ at, depth, seed, towers, warriors: [], spawned: 0, nextAt: now }, now)
+}
+
+// The fight starting.
+//
+// The gate's first clock is set here rather than on arrival, and the difference is most of
+// a second. A hero that reaches a walled village stands through the camera coming down on
+// it with a dial that answers nothing, and `SPAWN_FIRST_MS` counted from the arrival would
+// have spent nearly a third of itself before the player could press a key — so the grace
+// the constant names would not be the grace the player gets.
+//
+// It is also the one beat of a siege that nothing pauses — the camera move is not dialable,
+// so `usePauseOnBlur` does not cover it — and a phone put away under it would freeze the JS
+// timer for as long as the player liked and open the fight with a warrior already due.
+// Stamping on the way in rather than on arrival is what makes that stretch cost nothing.
+export function opened(siege: Siege, now: number): Siege {
+  return { ...siege, nextAt: now + SPAWN_FIRST_MS }
 }
 
 // What one press resolved. At most one of `tower` and `warrior` is ever set: every live
