@@ -371,6 +371,9 @@ marching squares, walled towns on islands, voyages and the things drawn in open 
 designed and measured but not built. It is a second system rather than more of this one,
 and it brings the three water regions with it.
 
+Fortified villages and the siege are built — see
+`docs/superpowers/specs/2026-10-02-arcade-fortified-villages-design.md`.
+
 ## Colour
 
 Arcade's own pair, the far end of the spectrum past Speed, with a job each.
