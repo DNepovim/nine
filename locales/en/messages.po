@@ -288,7 +288,7 @@ msgstr "Anything at all — what broke, what annoyed you, what you wish it did. 
 msgid "Anything at all — what broke, what annoyed you, what you wish it did. The mode, difficulty and score you are on go with it."
 msgstr "Anything at all — what broke, what annoyed you, what you wish it did. The mode, difficulty and score you are on go with it."
 
-#: components/game/arcade-game.tsx:662
+#: components/game/arcade-game.tsx:669
 #: components/overlays/how-to-play-overlay.tsx:49
 #: modes/definitions/arcade.ts:15
 msgid "ARCADE"
@@ -1174,7 +1174,7 @@ msgstr "RESTART RUN"
 msgid "RESULTS"
 msgstr "RESULTS"
 
-#: components/game/arcade-game.tsx:888
+#: components/game/arcade-game.tsx:900
 msgid "RETREAT · −1"
 msgstr "RETREAT · −1"
 

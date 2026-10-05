@@ -45,7 +45,14 @@ import {
   WALK_MS,
 } from '@/constants/arcade'
 import { ARCADE_INK, MAP_INK, PIE_INK, SURFACE } from '@/constants/colors'
-import { CLOSE_MS, OPEN_MS, SIEGE_ZOOM, STANDOFF, TAKEN_MS } from '@/constants/siege'
+import {
+  CLOSE_MS,
+  HEARTS,
+  OPEN_MS,
+  SIEGE_ZOOM,
+  STANDOFF,
+  TAKEN_MS,
+} from '@/constants/siege'
 import { useArcadeLand } from '@/hooks/use-arcade-land'
 import { useArcadeRun, type ArcadePhase } from '@/hooks/use-arcade-run'
 import { SUM_ROW_HEIGHT } from '@/hooks/use-dial-metrics'
@@ -664,13 +671,18 @@ export function ArcadeGame({ isDark, onEnd }: { isDark: boolean; onEnd: () => vo
             wordmark={arcadeInk}
             onPause={run.dialable ? run.pause : null}
           />
-          {/* The three hearts, in the row the game screen keeps them in and drawn by the
-              same component. Nothing on the way itself can take one — a strike costs a
+          {/* The hearts, in the row the game screen keeps them in and drawn by the same
+              component. Nothing on the way itself can take one — a strike costs a
               crossroad, not a life — so for most of a run these sit full and say only
               that there is something here to lose. The first warrior through makes them
-              the thing being watched. */}
+              the thing being watched.
+
+              Counted off `HEARTS` rather than written out, which the game screen is free
+              to do because its own count can be infinite and a literal there is a
+              deliberate ceiling. Here there is one tuning constant and a bar that would
+              quietly stop matching the run if it were changed. */}
           <View className="mt-1.5 flex-row gap-1">
-            {[0, 1, 2].map((i) => (
+            {Array.from({ length: HEARTS }, (_, i) => (
               <HeartIcon
                 key={i}
                 filled={i < run.hearts}

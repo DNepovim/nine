@@ -1,7 +1,9 @@
 import { View } from 'react-native'
 
 // The mouth: the ring hanging below the crossroad a run began on, at the foot of the stub.
-// What the hero falls into when the clock wins there, and the only way a run ends.
+// What the hero falls into when the clock wins there — one of the two ways a run ends, the
+// other being overrun at a walled village, which happens where it was fought and never
+// here.
 //
 // Drawn as a ring rather than filled, because it is a hole. The ember at its centre is the
 // one warm thing on the canvas that is not the hero — the run's own colour, waiting.

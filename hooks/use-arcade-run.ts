@@ -197,11 +197,12 @@ export function useArcadeRun() {
     )
   }, [])
 
-  // Only while the hero is standing on a crossroad, which is the same beat the pause
-  // button appears on — and the only one where going away costs anything. JS timers are
-  // frozen while the app is backgrounded, so the crossroad's own countdown fires the
-  // instant the app comes back and the hero is dragged off a crossroad the player never
-  // got to answer.
+  // Only while the dial is listening — standing on a crossroad, or fighting at a walled
+  // village — which is the same beat the pause button appears on and the only kind where
+  // going away costs anything. JS timers are frozen while the app is backgrounded, so the
+  // crossroad's own countdown fires the instant the app comes back and the hero is dragged
+  // off a crossroad the player never got to answer; in a siege it is the gate that fires,
+  // and every man already on the ground arrives at once.
   //
   // Mid-flight is deliberately left running. A movement is a second at most, so there is
   // next to nothing to save, and stopping there would freeze a screen that has to be
@@ -247,7 +248,8 @@ export function useArcadeRun() {
     }
 
     // The clock ran out. One crossroad back — or, with none behind to go back to, down the
-    // stub into the mouth, which is the only way a run ends.
+    // stub into the mouth. One of the two ways a run ends; the other is being overrun at a
+    // walled village, which is what `overrun` below is.
     if (run.phase === 'open') {
       after(clockMs, () => {
         const now = Date.now()

@@ -288,7 +288,7 @@ msgstr "Cokoliv — co se rozbilo, co tě štvalo, co by sis přál. Mód, obtí
 msgid "Anything at all — what broke, what annoyed you, what you wish it did. The mode, difficulty and score you are on go with it."
 msgstr "Cokoliv — co se rozbilo, co tě štvalo, co by sis přál. Mód, obtížnost a skóre se pošlou s tím."
 
-#: components/game/arcade-game.tsx:662
+#: components/game/arcade-game.tsx:669
 #: components/overlays/how-to-play-overlay.tsx:49
 #: modes/definitions/arcade.ts:15
 msgid "ARCADE"
@@ -1174,7 +1174,7 @@ msgstr "ZAČÍT ZNOVU"
 msgid "RESULTS"
 msgstr "VÝSLEDKY"
 
-#: components/game/arcade-game.tsx:888
+#: components/game/arcade-game.tsx:900
 msgid "RETREAT · −1"
 msgstr "USTOUPIT · −1"
 
