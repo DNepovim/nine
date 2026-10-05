@@ -485,7 +485,13 @@ export function useArcadeRun() {
         return {
           ...r,
           grid: next,
-          siege: hit.siege,
+          // The ground cleared with the last tower. The field stays mounted for the whole
+          // of `taken` — the walls coming down is the thing being watched — and the hero
+          // leaves the stand-off the moment the press lands, so every man still crossing
+          // would be walking at a patch of ground nobody is on. They could not reach
+          // anyone either: no timer is armed outside `siege`. A village that has given up
+          // has nobody left in the field.
+          siege: { ...hit.siege, warriors: [] },
           phase: 'taken',
           // One heart back for the village, and never a fourth.
           hearts: Math.min(HEARTS, r.hearts + 1),
