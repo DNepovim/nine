@@ -1,19 +1,10 @@
-import { AntDesign } from '@expo/vector-icons'
 import { useLingui } from '@lingui/react/macro'
 import { useMachine } from '@xstate/react'
 import { useFonts } from 'expo-font'
 import { isNotNull, isOneOf } from 'narrowland'
 import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { AppState, Pressable, Text, View, type LayoutChangeEvent } from 'react-native'
-import Animated, {
-  Easing,
-  useAnimatedStyle,
-  useSharedValue,
-  withDelay,
-  withSequence,
-  withSpring,
-  withTiming,
-} from 'react-native-reanimated'
+import Animated from 'react-native-reanimated'
 
 import DSEG7Font from '@/assets/fonts/DSEG7Classic-Bold.ttf'
 import { FeedbackBookmark } from '@/components/feedback-bookmark'
@@ -25,6 +16,7 @@ import { Dial } from '@/components/game/dial'
 import { FloatingLifeLoss } from '@/components/game/floating-life-loss'
 import { FloatingPoints } from '@/components/game/floating-points'
 import { FloatingStat } from '@/components/game/floating-stat'
+import { HeartIcon } from '@/components/game/heart-icon'
 import { HitSync } from '@/components/game/hit-sync'
 import { MultiplayerGame } from '@/components/game/multiplayer-game'
 import { RunTopBar } from '@/components/game/run-top-bar'
@@ -272,43 +264,6 @@ function showFeedbackBookmark({
     return false
   }
   return !isGameOver || gameOverBookmarkReady
-}
-
-function HeartIcon({ filled, emptyColor }: { filled: boolean; emptyColor: string }) {
-  const scale = useSharedValue(1)
-  const fillOp = useSharedValue(filled ? 1 : 0)
-  const prevFilled = useRef(filled)
-
-  useEffect(() => {
-    if (prevFilled.current && !filled) {
-      scale.value = withSequence(
-        withTiming(1.5, { duration: 120, easing: Easing.out(Easing.quad) }),
-        withSpring(1, { damping: 10, stiffness: 250 }),
-      )
-      fillOp.value = withDelay(80, withTiming(0, { duration: 200 }))
-    } else if (!prevFilled.current && filled) {
-      fillOp.value = 1
-      scale.value = 1
-    }
-    prevFilled.current = filled
-  }, [filled, fillOp, scale])
-
-  const scaleStyle = useAnimatedStyle(() => ({ transform: [{ scale: scale.value }] }))
-  const fillStyle = useAnimatedStyle(() => ({ opacity: fillOp.value }))
-
-  return (
-    <Animated.View style={scaleStyle}>
-      <AntDesign name="heart" size={22} color={emptyColor} />
-      <Animated.View
-        style={[
-          { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 },
-          fillStyle,
-        ]}
-      >
-        <AntDesign name="heart" size={22} color="#E5534B" />
-      </Animated.View>
-    </Animated.View>
-  )
 }
 
 export default function GameScreen() {
