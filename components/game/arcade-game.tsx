@@ -943,6 +943,11 @@ export function ArcadeGame({ isDark, onEnd }: { isDark: boolean; onEnd: () => vo
 
         {run.phase === 'over' && (
           <ArcadeOver
+            // Which of the two ends this was. There is no flag for it and there does not
+            // need to be: `falling` is written at exactly one place, under `from == null`,
+            // so a hero that fell has no crossroad behind it by construction — and a hero
+            // overrun at a village always does, because it walked there.
+            overrun={run.parent !== undefined}
             depth={run.best}
             strikes={run.strikes}
             taken={run.taken}

@@ -322,6 +322,7 @@ msgstr "PRŮM PŘES"
 msgid "AVG SPD"
 msgstr "PRŮM RYCH"
 
+#: components/game/arcade-over.tsx:48
 #: components/overlays/whats-new-overlay.tsx:85
 msgid "BACK"
 msgstr "ZPĚT"
@@ -437,7 +438,7 @@ msgstr "OVLÁDÁNÍ"
 msgid "CREATE ROOM"
 msgstr "VYTVOŘIT HRU"
 
-#: components/game/arcade-over.tsx:53
+#: components/game/arcade-over.tsx:63
 #: components/game/arcade-paused.tsx:50
 msgid "CROSSROADS DEEP"
 msgstr "DOSAŽENÁ HLOUBKA"
@@ -558,6 +559,10 @@ msgstr "RYCHLÝ START"
 #: components/overlays/feedback-overlay.tsx:102
 msgid "FEEDBACK"
 msgstr "ZPĚTNÁ VAZBA"
+
+#: components/game/arcade-over.tsx:48
+msgid "FELL"
+msgstr "PÁD"
 
 #: components/overlays/trainee-display-options.tsx:37
 msgid "FEWEST MOVES"
@@ -688,6 +693,10 @@ msgstr "ABSOLVENT"
 msgid "HARD"
 msgstr "TĚŽKÁ"
 
+#: components/game/arcade-over.tsx:48
+msgid "HELD"
+msgstr "DRŽÍ"
+
 #: constants/achievements.ts:457
 msgid "HELD ACCURACY"
 msgstr "DRŽEL PŘESNOST"
@@ -735,7 +744,7 @@ msgstr "Když držíš rekord všech dob na žebříčku Extreme některého mó
 msgid "HOLDING"
 msgstr "DRŽÍŠ"
 
-#: components/game/arcade-over.tsx:64
+#: components/game/arcade-over.tsx:74
 #: components/overlays/game-over-overlay.tsx:123
 msgid "HOME"
 msgstr "DOMŮ"
@@ -1087,7 +1096,7 @@ msgstr "Zahraj si v plné místnosti — čtyři hráči, víc se jich nevejde."
 msgid "Play a Hard board."
 msgstr "Zahraj si Těžký žebříček."
 
-#: components/game/arcade-over.tsx:57
+#: components/game/arcade-over.tsx:67
 #: components/overlays/game-over-overlay.tsx:350
 #: components/overlays/multiplayer-game-over.tsx:191
 msgid "PLAY AGAIN"
@@ -1165,7 +1174,7 @@ msgstr "ZAČÍT ZNOVU"
 msgid "RESULTS"
 msgstr "VÝSLEDKY"
 
-#: components/game/arcade-game.tsx:889
+#: components/game/arcade-game.tsx:888
 msgid "RETREAT · −1"
 msgstr "USTOUPIT · −1"
 
@@ -1741,6 +1750,10 @@ msgstr "ČEKÁ SE NA ZAKLADATELE"
 #: components/overlays/multiplayer-game-over.tsx:224
 msgid "WAITING FOR OTHERS…"
 msgstr "ČEKÁ SE NA OSTATNÍ…"
+
+#: components/game/arcade-over.tsx:48
+msgid "WALL"
+msgstr "ZEĎ"
 
 #: components/overlays/how-to-play-overlay.tsx:599
 msgid "Warriors leave the gate one after another, and faster the longer the fight drags on. Dial a warrior’s number and he is gone. Let one reach you and it costs a heart."

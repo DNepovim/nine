@@ -322,6 +322,7 @@ msgstr "AVG ACC"
 msgid "AVG SPD"
 msgstr "AVG SPD"
 
+#: components/game/arcade-over.tsx:48
 #: components/overlays/whats-new-overlay.tsx:85
 msgid "BACK"
 msgstr "BACK"
@@ -437,7 +438,7 @@ msgstr "CONTROLS"
 msgid "CREATE ROOM"
 msgstr "CREATE ROOM"
 
-#: components/game/arcade-over.tsx:53
+#: components/game/arcade-over.tsx:63
 #: components/game/arcade-paused.tsx:50
 msgid "CROSSROADS DEEP"
 msgstr "CROSSROADS DEEP"
@@ -558,6 +559,10 @@ msgstr "FAST START"
 #: components/overlays/feedback-overlay.tsx:102
 msgid "FEEDBACK"
 msgstr "FEEDBACK"
+
+#: components/game/arcade-over.tsx:48
+msgid "FELL"
+msgstr "FELL"
 
 #: components/overlays/trainee-display-options.tsx:37
 msgid "FEWEST MOVES"
@@ -688,6 +693,10 @@ msgstr "GRADUATE"
 msgid "HARD"
 msgstr "HARD"
 
+#: components/game/arcade-over.tsx:48
+msgid "HELD"
+msgstr "HELD"
+
 #: constants/achievements.ts:457
 msgid "HELD ACCURACY"
 msgstr "HELD ACCURACY"
@@ -735,7 +744,7 @@ msgstr "Hold the all-time record on a mode’s Extreme board and you carry its m
 msgid "HOLDING"
 msgstr "HOLDING"
 
-#: components/game/arcade-over.tsx:64
+#: components/game/arcade-over.tsx:74
 #: components/overlays/game-over-overlay.tsx:123
 msgid "HOME"
 msgstr "HOME"
@@ -1087,7 +1096,7 @@ msgstr "Play a full room — four players, the most one holds."
 msgid "Play a Hard board."
 msgstr "Play a Hard board."
 
-#: components/game/arcade-over.tsx:57
+#: components/game/arcade-over.tsx:67
 #: components/overlays/game-over-overlay.tsx:350
 #: components/overlays/multiplayer-game-over.tsx:191
 msgid "PLAY AGAIN"
@@ -1165,7 +1174,7 @@ msgstr "RESTART RUN"
 msgid "RESULTS"
 msgstr "RESULTS"
 
-#: components/game/arcade-game.tsx:889
+#: components/game/arcade-game.tsx:888
 msgid "RETREAT · −1"
 msgstr "RETREAT · −1"
 
@@ -1741,6 +1750,10 @@ msgstr "WAITING FOR HOST"
 #: components/overlays/multiplayer-game-over.tsx:224
 msgid "WAITING FOR OTHERS…"
 msgstr "WAITING FOR OTHERS…"
+
+#: components/game/arcade-over.tsx:48
+msgid "WALL"
+msgstr "WALL"
 
 #: components/overlays/how-to-play-overlay.tsx:599
 msgid "Warriors leave the gate one after another, and faster the longer the fight drags on. Dial a warrior’s number and he is gone. Let one reach you and it costs a heart."

@@ -1,4 +1,4 @@
-import { Trans } from '@lingui/react/macro'
+import { Trans, useLingui } from '@lingui/react/macro'
 import { Pressable, Text, View } from 'react-native'
 
 import { GameOverTitle } from '@/components/overlays/game-over-title'
@@ -11,13 +11,18 @@ import { darkGradientOf } from '@/modes'
 
 // The end of an arcade run, on the same screen every run in the app ends on.
 //
-// Both rows fit the wordmark's 4×2 grid, which is what its colour ramp and entrance
-// delays are indexed by — a longer word would run off the end of that ramp. And they say
-// what happened rather than that it happened: the hero was dragged off the first
-// crossroad and fell, which is the one way a run of this ends.
-const TITLE = ['FELL', 'BACK'] as const satisfies TitleWords
+// Two words, and they say what happened rather than that it happened. Which two depends
+// on *how* it happened, because a run of this now ends two ways and they are not the same
+// ending: the hero dragged off the first crossroad goes down the stub into the mouth,
+// which is a picture of running out of way; a hero overrun at a walled village dies on
+// the ground it fought on, and the walls it could not get through are what beat it.
+//
+// Every row fits the wordmark's 4×2 grid, which is what its colour ramp and entrance
+// delays are indexed by — a second row longer than four runs off the end of that ramp,
+// and that holds for the Czech as much as for the English.
 
 export function ArcadeOver({
+  overrun,
   depth,
   strikes,
   taken,
@@ -25,6 +30,9 @@ export function ArcadeOver({
   onAgain,
   onHome,
 }: {
+  // Which of the two ends this was. True when the last heart went at the walls, false
+  // when the hero fell — see where it is handed in, in arcade-game.tsx.
+  overrun: boolean
   // The deepest crossroad the run reached, which is what it was worth.
   depth: number
   strikes: number
@@ -36,6 +44,8 @@ export function ArcadeOver({
   onHome: () => void
 }) {
   const { colorScheme } = useTheme()
+  const { t } = useLingui()
+  const title: TitleWords = overrun ? [t`WALL`, t`HELD`] : [t`FELL`, t`BACK`]
 
   return (
     <RunScreen
@@ -44,7 +54,7 @@ export function ArcadeOver({
         // Wrapped for its gap to the score: on the game machine's screen a badge row
         // supplies one, and there is none here.
         <View className="mb-4">
-          <GameOverTitle gameMode="arcade" words={TITLE} />
+          <GameOverTitle gameMode="arcade" words={title} />
         </View>
       }
       score={{
