@@ -9,7 +9,10 @@ export default defineConfig({
   catalogs: [
     {
       path: '<rootDir>/locales/{locale}/messages',
-      include: ['app', 'components', 'constants', 'hooks', 'lib', 'machines'],
+      // Every directory that writes a `msg` or a `<Trans>`. A directory left out here
+      // is not a soft failure: a production build strips the English out of the
+      // descriptor, so an unextracted message shows the player its generated id.
+      include: ['app', 'components', 'constants', 'hooks', 'lib', 'machines', 'modes'],
       exclude: ['**/node_modules/**', '**/*.test.ts', '**/*.test.tsx'],
     },
   ],
