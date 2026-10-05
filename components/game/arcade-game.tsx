@@ -256,23 +256,23 @@ export function ArcadeGame({ isDark, onEnd }: { isDark: boolean; onEnd: () => vo
   // differ per way, and a looping value would have to wrap somewhere — which every way would
   // show as a kink at the same moment.
   const clock = useSharedValue(0)
+  // The same frame, in wall-clock. Read by the siege, which is the one thing on this sheet
+  // measured against a clock React also holds: a warrior's `spawnedAt` is a `Date.now()`
+  // and a pause moves it by a `Date.now()` difference — see `shift` in machines/siege.
+  //
+  // Sampled here rather than rebasing the frame clock onto wall-clock once, which is what
+  // this used to do. `timeSinceFirstFrame` is a difference of *platform frame* timestamps
+  // — `CACurrentMediaTime()` on iOS, Choreographer's `System.nanoTime()` on Android — and
+  // neither of those advances while the device sleeps, while `Date.now()` does. One screen
+  // lock and a fixed rebase is out by however long the phone was in a pocket, for the rest
+  // of the run: every warrior would draw at `t = 0`, parked invisible on the gate, while
+  // the hook went on collecting them on time. Taking both readings off the same frame
+  // cannot drift, because there is nothing left to drift.
+  const now = useSharedValue(Date.now())
   useFrameCallback((frame) => {
     clock.value = frame.timeSinceFirstFrame
+    now.value = Date.now()
   })
-  // What that clock reads as wall-clock zero. It counts from the first frame and a
-  // warrior's `spawnedAt` is a `Date.now()`, so one of the two has to be rebased onto the
-  // other — and it has to be this one, because a siege is replayable from a seed and a
-  // frame count is not.
-  //
-  // Taken at the first render rather than at the first frame, which leaves it short by
-  // however long the mount takes. That is a constant of a frame or two against a walk of
-  // seven seconds — a point or so of ground, which is nothing — and it is a constant, so
-  // it never grows. What would matter is the two clocks drifting, and they do not:
-  // `timeSinceFirstFrame` is a difference of frame timestamps rather than a count of
-  // frames, so it tracks real time across a background, and a pause moves every
-  // `spawnedAt` by the same wall-clock amount the clock has been ticking through — see
-  // `shift` in machines/siege.
-  const epoch = useRef(Date.now()).current
 
   const camX = useSharedValue(0)
   const camY = useSharedValue(0)
@@ -792,8 +792,7 @@ export function ArcadeGame({ isDark, onEnd }: { isDark: boolean; onEnd: () => vo
                 {run.siege !== null && here !== undefined && pitch > 0 && (
                   <SiegeField
                     siege={run.siege}
-                    clock={clock}
-                    epoch={epoch}
+                    now={now}
                     turn={camTurn}
                     villageX={pointsOf(here.pos, pitch).x}
                     villageY={pointsOf(here.pos, pitch).y}

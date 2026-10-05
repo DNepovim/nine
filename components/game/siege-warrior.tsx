@@ -9,7 +9,7 @@ import type { Warrior } from '@/machines/siege'
 // One warrior crossing the ground between the gate and the hero.
 //
 // Nothing about this is React state. The hook knows only when a warrior left and how long
-// it takes; where it *is* comes off the canvas clock on the UI thread, which is what keeps
+// it takes; where it *is* comes off the wall clock on the UI thread, which is what keeps
 // a fight with three of them on the ground from re-rendering the whole map sixty times a
 // second. The only three things React hears about are the spawn, the kill and the arrival.
 
@@ -42,8 +42,7 @@ const OUT_MS = 220
 
 export function SiegeWarrior({
   warrior,
-  clock,
-  epoch,
+  now,
   fromX,
   fromY,
   toX,
@@ -54,10 +53,11 @@ export function SiegeWarrior({
   face,
 }: {
   warrior: Warrior
-  // The canvas clock, in ms since the first frame.
-  clock: SharedValue<number>
-  // What that clock reads as wall-clock zero, so `spawnedAt` and `clock` can be compared.
-  epoch: number
+  // The wall clock, sampled on every frame. The one clock a warrior can be measured
+  // against: `spawnedAt` is a `Date.now()` and a pause moves it by a `Date.now()`
+  // difference, so anything counting frames would have to be rebased onto this one — and a
+  // rebase taken once goes wrong the first time the phone sleeps. See arcade-game.tsx.
+  now: SharedValue<number>
   fromX: number
   fromY: number
   toX: number
@@ -77,7 +77,7 @@ export function SiegeWarrior({
   const bow = warrior.lane * LANE
 
   const walk = useAnimatedStyle(() => {
-    const elapsed = epoch + clock.value - warrior.spawnedAt
+    const elapsed = now.value - warrior.spawnedAt
     const t = Math.min(1, Math.max(0, elapsed / warrior.walkMs))
     // Nought at both ends and widest in the middle: they leave the one gate and arrive at
     // the one hero, and what differs is the ground they take to get there.

@@ -50,8 +50,7 @@ const least = (towers: number): number =>
 
 export function SiegeField({
   siege,
-  clock,
-  epoch,
+  now,
   turn,
   villageX,
   villageY,
@@ -62,8 +61,9 @@ export function SiegeField({
   face,
 }: {
   siege: Siege
-  clock: SharedValue<number>
-  epoch: number
+  // The wall clock, sampled on every frame — the clock a warrior's `spawnedAt` is stamped
+  // on. See the note where it is taken, in arcade-game.tsx.
+  now: SharedValue<number>
   turn: SharedValue<number>
   villageX: number
   villageY: number
@@ -146,8 +146,7 @@ export function SiegeField({
         <SiegeWarrior
           key={warrior.id}
           warrior={warrior}
-          clock={clock}
-          epoch={epoch}
+          now={now}
           fromX={villageX}
           fromY={villageY}
           toX={heroX}
