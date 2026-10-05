@@ -9,7 +9,7 @@ export default defineConfig({
   catalogs: [
     {
       path: '<rootDir>/locales/{locale}/messages',
-      include: ['app', 'components', 'constants', 'hooks', 'lib', 'machines'],
+      include: ['app', 'components', 'constants', 'hooks', 'lib', 'machines', 'modes'],
       exclude: ['**/node_modules/**', '**/*.test.ts', '**/*.test.tsx'],
     },
   ],
