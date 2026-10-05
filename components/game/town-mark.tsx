@@ -13,6 +13,12 @@ import { BUD_SIZE } from '@/constants/arcade'
 // map fills itself with: a town covers the country behind it and the sheet shows through its
 // walls, which is how a map draws one. The number on that ground is the strongest contrast
 // the theme has.
+//
+// A walled village is this same town built up rather than a mark of its own: the same wall,
+// the same merlons, the same four towers, drawn heavier and with the towers a third larger.
+// That is deliberate twice over. It is how a sheet like this has always said *fortified* —
+// more of the town, not a different symbol — and it is the one thing a player has to be able
+// to read across a fan before dialling, because choosing that way is choosing a fight.
 
 // The box has to hold the merlons and the towers, which stand outside the wall.
 export const TOWN_BOX = BUD_SIZE + 12
@@ -29,6 +35,15 @@ const GATE =
   `Q0 ${WALL - 5.6} 2.6 ${WALL - 3.4} L2.6 ${WALL - 0.4}`
 
 const n = (v: number): string => (Math.round(v * 10) / 10).toString()
+
+// How heavily the town is drawn, and how far its towers stand out of the wall. The walled
+// build is the plain one turned up — every line of it at once, so nothing reads as an
+// addition — and the towers carry most of the difference, being the part of a town that is
+// still legible at the size a bud is drawn at.
+const BUILD = {
+  plain: { wall: 1.2, merlon: 0.7, tower: 0.9, towers: 1 },
+  walled: { wall: 2.2, merlon: 1.3, tower: 1.4, towers: 4 / 3 },
+} as const
 
 // The crenellations, as one path: a block of wall standing proud at every step round it.
 function merlons(count: number): string {
@@ -53,12 +68,16 @@ export function TownMark({
   // are capped. Enough that no two towns in sight are the same wall, and not so much that a
   // town stops reading as a town.
   seed,
+  // Whether this village has walls worth the name — see the note above. The crossroad is
+  // the one that knows; all this does is draw it.
+  fortified,
   face,
   line,
   hatch,
   edge,
 }: {
   seed: number
+  fortified: boolean
   face: string
   line: string
   hatch: string
@@ -68,6 +87,7 @@ export function TownMark({
 }) {
   const count = 12 + (seed % 3) * 2
   const capped = Math.floor(seed / 5) % 2 === 0
+  const build = BUILD[fortified ? 'walled' : 'plain']
   const towers = [1, 3, 5, 7].map((i) => {
     const a = (i / 8) * Math.PI * 2 - Math.PI / 2
     return { x: Math.cos(a) * WALL, y: Math.sin(a) * WALL }
@@ -76,17 +96,17 @@ export function TownMark({
   return (
     <Svg width={TOWN_BOX} height={TOWN_BOX} pointerEvents="none">
       <G transform={`translate(${MID}, ${MID})`}>
-        <Path d={merlons(count)} fill={face} stroke={line} strokeWidth={0.7} />
-        <Circle r={WALL} fill={face} stroke={line} strokeWidth={1.2} />
+        <Path d={merlons(count)} fill={face} stroke={line} strokeWidth={build.merlon} />
+        <Circle r={WALL} fill={face} stroke={line} strokeWidth={build.wall} />
         {towers.map((tower, i) => (
           <Circle
             key={i}
             cx={tower.x}
             cy={tower.y}
-            r={capped ? 2.9 : 2.3}
+            r={(capped ? 2.9 : 2.3) * build.towers}
             fill={face}
             stroke={line}
-            strokeWidth={0.9}
+            strokeWidth={build.tower}
           />
         ))}
         <Path d={GATE} fill="none" stroke={hatch} strokeWidth={0.8} />

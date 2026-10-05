@@ -44,6 +44,12 @@ const REACH_SPAN = 0.28
 // on would make deep play easier, which is backwards.
 const WAY_COUNTS = [2, 3, 3, 4] as const
 
+// How often a fan offers a walled village, and how many dry fans may pass before one is
+// forced. A crossroad is the round: roughly one round in three has a siege in it, and a
+// branch cannot go more than three without.
+const FORT_CHANCE = 1 / 3
+const FORT_DRY_MAX = 3
+
 // What every way at a crossroad costs from the grid as it stands when the crossroad opens.
 // A band rather than a number so a fan has candidates to choose from, and a narrow one so
 // the choice between two ways is free — the mode is about where you go, not about which
@@ -51,10 +57,10 @@ const WAY_COUNTS = [2, 3, 3, 4] as const
 const PAR_MIN = 3
 const PAR_MAX = 4
 
-// How far the band may be stretched when it cannot fill a fan. It has not had to in
-// practice — three or four steps covers most of the range from any grid — but a grid that
-// left it short would otherwise leave a crossroad with nowhere to go.
-const PAR_STRETCH = 6
+// How far the band may be stretched when it cannot fill an ask. A fan has never needed
+// more than a step or two, but a deep siege asks for nine distinct numbers from a band
+// two presses wide, and a grid that left it short would have no walls to knock down.
+const PAR_STRETCH = 12
 
 // The clock at the first crossroad, before depth tightens it.
 //
@@ -88,6 +94,13 @@ export type Crossroad = {
   // string surgery to answer it would be a second encoding of the same tree.
   from: string | null
   depth: number
+  // Whether the village standing here is walled, and so has to be taken rather than
+  // walked into. Decided when this crossroad is created — that is, when the fan that
+  // offers it is grown — so a retreat gives back the same walls it left.
+  fortified: boolean
+  // How many fans in a row up this branch offered no walls. Carried rather than counted,
+  // because the map is a tree: there is no sequence to look back along, only a parent.
+  dry: number
   // Where the way in was pointing when it arrived, which is the axis the fan out of here
   // is measured from.
   heading: number
@@ -131,7 +144,10 @@ export function idSeed(id: string): number {
 
 // The randomness one crossroad of one run is grown from. Pure in both its arguments, so a
 // run is a seed and nothing else: the same seed walks the same map every time.
-const rngFor = (seed: number, id: string): Rng => seeded((seed ^ idSeed(id)) >>> 0)
+//
+// Exported because a siege is grown the same way — see machines/siege.ts, which keys its
+// own streams on `siege:${id}` so that nothing it rolls can shift the fan.
+export const rngFor = (seed: number, id: string): Rng => seeded((seed ^ idSeed(id)) >>> 0)
 
 // A one-crossroad map: where the hero stands when a run begins, with the fan out of it not
 // yet grown. `openCrossroad` is what fills it, once the grid it should be measured against
@@ -143,6 +159,8 @@ export function newMap(seed: number): ArcadeMap {
       name: settlementName(rngFor(seed, `name:${START}`)),
       from: null,
       depth: 0,
+      fortified: false,
+      dry: 0,
       heading: UP,
       pos: { x: 0, y: 0 },
       ways: [],
@@ -153,22 +171,36 @@ export function newMap(seed: number): ArcadeMap {
 const pick = <T>(items: readonly T[], rng: Rng): T | undefined =>
   items[Math.floor(rng() * items.length)]
 
-// Which sums are `count` distinct targets worth reaching from here.
+// What a band of presses is, for the picker below. `exclude` is what is already live and
+// may not be handed out twice — a siege asks for this, a fan never does.
+export type ParBand = { min: number; max: number; exclude?: readonly number[] }
+
+// Which sums are `count` distinct targets the given number of presses from here.
 //
-// The par band first, widened only if it cannot fill the fan. Shuffled rather than taken in
+// The band first, widened only if it cannot fill the ask. Shuffled rather than taken in
 // order, or every crossroad would offer the lowest few sums in the band and a run would
 // climb through the same numbers every time.
-export function wayValues(grid: Grid, count: number, rng: Rng): readonly number[] {
+//
+// One picker for two callers that want the same thing at different prices: a fan wants
+// three or four presses, a siege wants two or three and asks for far more of them.
+export function parValues(
+  grid: Grid,
+  count: number,
+  rng: Rng,
+  band: ParBand,
+): readonly number[] {
   const table = parTable(ARCADE_DIAL, grid)
+  const barred = new Set(band.exclude ?? [])
   for (let stretch = 0; stretch <= PAR_STRETCH; stretch++) {
     const candidates: number[] = []
     for (let value = 1; value <= ARCADE_DIAL.maxSum; value++) {
+      if (barred.has(value)) continue
       const par = table[value]
       if (par === undefined || !Number.isFinite(par)) continue
-      if (par >= PAR_MIN && par <= PAR_MAX + stretch) candidates.push(value)
+      if (par >= band.min && par <= band.max + stretch) candidates.push(value)
     }
     if (candidates.length < count) continue
-    // Fisher–Yates, far enough to fill the fan and no further.
+    // Fisher–Yates, far enough to fill the ask and no further.
     for (let i = 0; i < count; i++) {
       const j = i + Math.floor(rng() * (candidates.length - i))
       const a = candidates[i]
@@ -180,6 +212,11 @@ export function wayValues(grid: Grid, count: number, rng: Rng): readonly number[
     return candidates.slice(0, count)
   }
   return []
+}
+
+// What every way at a crossroad costs from the grid as it stands when the crossroad opens.
+export function wayValues(grid: Grid, count: number, rng: Rng): readonly number[] {
+  return parValues(grid, count, rng, { min: PAR_MIN, max: PAR_MAX })
 }
 
 // The fan out of one crossroad, and the crossroads at the far ends of it.
@@ -210,6 +247,13 @@ export function openCrossroad(
   const values = wayValues(grid, count, rng)
   if (values.length === 0) return map
 
+  // Rolled on a stream of its own rather than on the fan's, so adding walls to the map
+  // moved no fan that existed before them: a seed that walked a way yesterday walks the
+  // same way today.
+  const fortRng = rngFor(seed, `fort:${id}`)
+  const offers = !at.fortified && (at.dry >= FORT_DRY_MAX || fortRng() < FORT_CHANCE)
+  const walled = offers ? Math.floor(fortRng() * values.length) : -1
+
   const ways: ArcadeWay[] = values.map((value, i) => {
     const fanned = at.heading + (i / Math.max(1, values.length - 1) - 0.5) * 2 * SPREAD
     const crooked = fanned + (rng() - 0.5) * JITTER
@@ -224,7 +268,7 @@ export function openCrossroad(
   })
 
   const grown: Record<string, Crossroad> = { ...map, [id]: { ...at, ways } }
-  for (const way of ways) {
+  ways.forEach((way, i) => {
     grown[way.to] = {
       id: way.to,
       from: id,
@@ -236,8 +280,10 @@ export function openCrossroad(
       },
       ways: [],
       name: settlementName(rngFor(seed, `name:${way.to}`)),
+      fortified: i === walled,
+      dry: offers ? 0 : at.dry + 1,
     }
-  }
+  })
   return grown
 }
 

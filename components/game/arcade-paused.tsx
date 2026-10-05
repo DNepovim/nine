@@ -22,12 +22,16 @@ import { darkGradientOf } from '@/modes'
 export function ArcadePaused({
   depth,
   strikes,
+  taken,
   playedMs,
   onContinue,
   onEnd,
 }: {
   depth: number
   strikes: number
+  // How many walled villages this run took. Beside the strikes because it is the
+  // same kind of claim: not what the run was worth, but what it did.
+  taken: number
   playedMs: number
   onContinue: () => void
   onEnd: () => void
@@ -45,7 +49,7 @@ export function ArcadePaused({
         color: ARCADE_INK[colorScheme],
         caption: <Trans>CROSSROADS DEEP</Trans>,
       }}
-      stats={arcadeStats(strikes, playedMs)}
+      stats={arcadeStats(strikes, taken, playedMs)}
       gradient={darkGradientOf('arcade')}
       cta={{ label: <Trans>CONTINUE</Trans>, onPress: onContinue }}
       // The label says what this does, the icon says where it lands — the same pairing

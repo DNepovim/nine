@@ -34,6 +34,7 @@ export function WayBud({
   name,
   seed,
   named,
+  fortified,
   state,
   delay,
   turn,
@@ -54,6 +55,10 @@ export function WayBud({
   // that their names would cross, and a crossed name is worse than no name — the place is
   // named again under the flame the moment the hero arrives there.
   named: boolean
+  // Whether the village at this way's end has walls worth the name. A walled village is a
+  // fight, and the fan has to say so before it is chosen — which is what makes a crossroad
+  // a decision rather than four numbers.
+  fortified: boolean
   state: BudState
   delay: number
   // How far the sheet has been turned. The village turns with it — it is drawn on the map —
@@ -117,7 +122,14 @@ export function WayBud({
           upright,
         ]}
       >
-        <TownMark seed={seed} face={face} line={line} hatch={hatch} edge={edge} />
+        <TownMark
+          seed={seed}
+          fortified={fortified}
+          face={face}
+          line={line}
+          hatch={hatch}
+          edge={edge}
+        />
         {/* The number is the thing being read on this whole sheet, so it gets the room:
             large enough to be answered at a glance from the far side of a fan. */}
         <Text

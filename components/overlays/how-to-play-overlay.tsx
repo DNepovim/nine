@@ -556,8 +556,8 @@ export function HowToPlayOverlay({
                 </Bullet>
                 <Bullet color={GAME_SCALE[4]}>
                   <Trans>
-                    Get dragged back off the first crossroad and you fall into the mouth.
-                    That is the only way a run ends.
+                    Get dragged back off the first crossroad and you fall into the mouth,
+                    and the run is over.
                   </Trans>
                 </Bullet>
                 <Bullet color={GAME_SCALE[4]}>
@@ -574,8 +574,56 @@ export function HowToPlayOverlay({
                   </Trans>
                 </Bullet>
               </Card>
+              {/* The siege. Three things a player cannot safely find out by playing:
+                  that a wall is a fight, that a tower is chipped by arriving at its
+                  number rather than sitting on it, and that hearts are spent here and
+                  nowhere else in the mode. */}
               <Body>
-                {t`\nHow deep you got is the whole score: every way costs about the same number of moves, so what you are choosing is where to go, not what is cheaper. There is no difficulty to pick — the clock tightens the deeper you climb, which is the only one the mode has.`}
+                {t`\nSome villages have walls, and you can see which before you choose — a walled village is drawn heavier, with bigger towers. Dial that way and you do not walk in. You take it. Three hearts sit on the bar under ARCADE, and a siege is the only thing in the mode that spends them.`}
+              </Body>
+              <Card>
+                <Bullet color={GAME_SCALE[4]}>
+                  <Trans>
+                    The hero stops short of the gate and the walls fill the screen. Every
+                    tower carries a number, and so does every warrior who comes out.
+                  </Trans>
+                </Bullet>
+                <Bullet color={GAME_SCALE[4]}>
+                  <Trans>
+                    A tower takes several hits — more of them the deeper you are — and a
+                    hit means arriving at its number. The sum stays where you left it, so
+                    sitting on a tower’s number does nothing: dial away and come back.
+                  </Trans>
+                </Bullet>
+                <Bullet color={GAME_SCALE[4]}>
+                  <Trans>
+                    Warriors leave the gate one after another, and faster the longer the
+                    fight drags on. Dial a warrior’s number and he is gone. Let one reach
+                    you and it costs a heart.
+                  </Trans>
+                </Bullet>
+                <Bullet color={GAME_SCALE[4]}>
+                  <Trans>
+                    Flatten every tower and the village is yours — the walls come down and
+                    a heart comes back, up to three again.
+                  </Trans>
+                </Bullet>
+                <Bullet color={GAME_SCALE[4]}>
+                  <Trans>
+                    RETREAT leaves the fight. It costs a heart and drops you back one
+                    crossroad, and the village has its walls again when you return — so
+                    chipping and running buys nothing.
+                  </Trans>
+                </Bullet>
+                <Bullet color={GAME_SCALE[4]}>
+                  <Trans>
+                    Out of hearts and the run is over. That and the mouth are the only two
+                    ways one ends.
+                  </Trans>
+                </Bullet>
+              </Card>
+              <Body>
+                {t`\nHow deep you got is the whole score: every way costs about the same number of moves, so what you are choosing is where to go, not what is cheaper. Villages taken is counted beside it on the cards, but it is a tally rather than points. There is no difficulty to pick — the clock tightens the deeper you climb, which is the only one the mode has.`}
               </Body>
             </>
           )}
