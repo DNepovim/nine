@@ -170,17 +170,95 @@ export const setReplayConsent = (granted: boolean): void => {
   })
 }
 
+// Which events open a run and which close one. A super property rides on every event
+// from the moment it is registered — `$exception` included, and an unhandled exception is
+// the one case with no call site of ours to pass context at. So the board a player is on
+// is registered when their run starts and dropped when it ends, and a crash says where it
+// happened without anything having had to catch it.
+//
+// Read off the events the app already sends rather than registered at each of the seven
+// places a run can start: a run that begins without telling analytics is not a thing this
+// app can do, so there is nothing here to forget to call.
+const RUN_EDGE: Partial<Record<AnalyticsEvent, 'opens' | 'closes'>> = {
+  run_started: 'opens',
+  run_finished: 'closes',
+  run_ended: 'closes',
+  arcade_run_started: 'opens',
+  arcade_run_finished: 'closes',
+}
+
+const RUN_KEYS = ['in_run', 'run_mode', 'run_difficulty'] as const
+
+// `in_run` on its own for a mode that names no board: arcade runs on its own engine and
+// carries neither a mode nor a difficulty — see analytics-events.ts — and saying so is
+// more honest than inventing one. The board goes on when the event that opened the run
+// has one to give.
+const runContext = (properties: Record<string, unknown>): Record<string, unknown> => ({
+  in_run: true,
+  ...(typeof properties.mode === 'string' && { run_mode: properties.mode }),
+  ...(typeof properties.difficulty === 'string' && {
+    run_difficulty: properties.difficulty,
+  }),
+})
+
+// `register_for_session` rather than `register`, which is the difference between a fact
+// and a lie: super properties persist to localStorage, so a player who closes the tab
+// mid-run would carry `in_run` into every event of their next visit. A run cannot outlive
+// the session it was played in, and neither should the property that describes it.
 export const track = <E extends AnalyticsEvent>(
   event: E,
   properties: AnalyticsEvents[E],
 ): void => {
   withClient((p) => {
+    // The trail into the next exception — PostHog's own breadcrumbs, attached as
+    // `$exception_steps` to whatever is captured next, ours and unhandled alike. Every
+    // event the app already sends becomes a step, so a crash arrives with the screen, the
+    // button and the point in the run that led to it. The buffer is PostHog's own: 32KB,
+    // oldest step dropped first, emptied each time an exception carries it away.
+    p.addExceptionStep(event, properties)
+
+    const edge = RUN_EDGE[event]
+    if (edge === 'opens') p.register_for_session(runContext(properties))
+    if (edge === 'closes') for (const key of RUN_KEYS) p.unregister_for_session(key)
+
     p.capture(event, properties)
   })
 }
 
+// What PostHog can show of an error is only as good as what it is handed. An `Error` it
+// parses into frames; a string, a Supabase row or anything else thrown at it arrives as a
+// message with no stack at all — and a report with no stack says something broke without
+// saying where. So everything is coerced to an `Error` first: one minted here points at
+// the capture site rather than the throw site, which is a poorer stack than the original
+// and a far better one than none.
+const asError = (thrown: unknown): Error => {
+  if (thrown instanceof Error) return thrown
+  if (typeof thrown === 'string') return new Error(thrown)
+  const message = (thrown as { message?: unknown } | null)?.message
+  return new Error(typeof message === 'string' ? message : describe(thrown))
+}
+
+// A thrown value with no message of its own still has to say something: its own JSON
+// beats `[object Object]`, which is a report nobody can tell apart from the next one.
+// The three types `JSON.stringify` answers `undefined` for are named first — its own
+// signature claims a string — and the catch is for the circular ones, which throw on the
+// way to being described.
+const describe = (thrown: unknown): string => {
+  if (thrown === undefined) return 'undefined'
+  if (typeof thrown === 'function' || typeof thrown === 'symbol') return String(thrown)
+  try {
+    return JSON.stringify(thrown)
+  } catch {
+    return 'unserialisable value'
+  }
+}
+
+// The stack rides along as a property as well as inside the exception. PostHog's frames
+// are what the issue is grouped by, but they are parsed — and the deployed bundle is
+// minified, so when that parse comes back thin the raw text is the copy left to read.
 export const captureError = (error: unknown, context?: Record<string, unknown>): void => {
+  const thrown = asError(error)
   withClient((p) => {
-    p.captureException(error, context)
+    p.captureException(thrown, { ...context, stack: thrown.stack ?? 'none' })
   })
 }

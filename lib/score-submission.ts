@@ -1,6 +1,5 @@
 import { isEmptyArray, isOneOf } from 'narrowland'
 
-import { captureError } from '@/lib/analytics'
 import { isNetworkFailure, noteRequest } from '@/lib/connectivity'
 import { todayISO } from '@/lib/leaderboard-period'
 import {
@@ -12,6 +11,7 @@ import {
   writeLocalScores,
   type LocalScore,
 } from '@/lib/local-scores'
+import { reportRefusal } from '@/lib/refusal'
 import { supabase } from '@/lib/supabase'
 import { SCORED_MODES, traitsOf, type Difficulty, type ModeId } from '@/modes'
 
@@ -49,7 +49,7 @@ async function upsertScore(userId: string, entry: LocalScore): Promise<Sent> {
   // A refusal is the server rejecting a score the device believes is a new best —
   // never expected, and invisible to the player, so it is exactly what error logging
   // is for.
-  captureError(new Error(`score refused: ${error.message}`), {
+  reportRefusal('score', error, {
     mode: entry.mode,
     difficulty: entry.difficulty,
     day: entry.day,

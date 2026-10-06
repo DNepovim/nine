@@ -1,4 +1,3 @@
-import { captureError } from '@/lib/analytics'
 import { BUILD_ID } from '@/lib/analytics-events'
 import { noteRequest } from '@/lib/connectivity'
 import {
@@ -7,6 +6,7 @@ import {
   type FeedbackSent,
 } from '@/lib/feedback-outcome'
 import type { Locale } from '@/lib/i18n/locale'
+import { reportRefusal } from '@/lib/refusal'
 import { supabase } from '@/lib/supabase'
 import { type Difficulty, type ModeId } from '@/modes'
 
@@ -62,7 +62,7 @@ export async function submitFeedback({
   // player keeps the only copy: the dialog says it was not sent and leaves what they
   // wrote in the box to try again, which is a better home for it than our error log.
   if (sent === 'refused') {
-    captureError(new Error(`feedback refused: ${error?.message ?? 'unknown'}`), {
+    reportRefusal('feedback', error, {
       mode,
       difficulty,
       score,

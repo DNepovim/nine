@@ -1,7 +1,7 @@
 import { isEmptyArray } from 'narrowland'
 
-import { captureError } from '@/lib/analytics'
 import { isNetworkFailure, noteRequest } from '@/lib/connectivity'
+import { reportRefusal } from '@/lib/refusal'
 import {
   dropRuns,
   queueRun,
@@ -42,7 +42,7 @@ async function sendRun(run: PendingRun): Promise<Sent> {
   if (isNetworkFailure(error.message)) return 'offline'
   // The server rejecting a run it should have counted is invisible to the player and
   // never expected, which is exactly what error logging is for.
-  captureError(new Error(`run refused: ${error.message}`), {
+  reportRefusal('run', error, {
     mode: run.mode,
     difficulty: run.difficulty,
     score: run.score,

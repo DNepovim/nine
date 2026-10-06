@@ -3,8 +3,8 @@ import { isNonEmptyArray, isOneOf } from 'narrowland'
 import { isKnownAchievement } from '@/lib/achievement-store'
 import type { AchievementStore, EarnedAchievement } from '@/lib/achievement-store'
 import type { Stage } from '@/lib/achievements'
-import { captureError } from '@/lib/analytics'
 import { isNetworkFailure, noteRequest } from '@/lib/connectivity'
+import { reportRefusal } from '@/lib/refusal'
 import { supabase } from '@/lib/supabase'
 import { DIFFICULTY_ORDER, SCORED_MODES } from '@/modes'
 
@@ -79,7 +79,7 @@ export async function pushAchievements(
   if (isNetworkFailure(error.message)) return false
   // Not the connection: the server refused a row it should have taken. Invisible to the
   // player, so it is exactly what error logging is for.
-  captureError(new Error(`achievements refused: ${error.message}`), {
+  reportRefusal('achievements', error, {
     ids: entries.map((entry) => entry.id).join(','),
   })
   return false
