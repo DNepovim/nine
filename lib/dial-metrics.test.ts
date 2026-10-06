@@ -91,19 +91,19 @@ describe('the dial button is one size everywhere', () => {
 })
 
 describe('the dial fits the screen it is drawn on', () => {
-  // A quarter of the width, less the 12pt gap the button carries.
+  // A quarter of the width, less the 16pt gap the button carries.
   it('gives the button a quarter of the width on a phone held upright', () => {
     expect(dialMetrics({ width: 375, height: 667 }, NINE_DIAL)).toEqual({
-      button: 81,
-      gap: 12,
-      width: 267,
-      height: 267,
+      button: 77,
+      gap: 16,
+      width: 263,
+      height: 263,
     })
     expect(dialMetrics({ width: 390, height: 844 }, NINE_DIAL)).toEqual({
-      button: 85,
-      gap: 12,
-      width: 279,
-      height: 279,
+      button: 81,
+      gap: 16,
+      width: 275,
+      height: 275,
     })
   })
 
@@ -118,7 +118,7 @@ describe('the dial fits the screen it is drawn on', () => {
       { width: 430, height: 932 },
     ]
     for (const phone of PHONES) {
-      const width = Math.max(0, Math.floor(0.25 * phone.width) - 12)
+      const width = Math.max(0, Math.floor(0.25 * phone.width) - 16)
       expect(dialMetrics(phone, NINE_DIAL).button, `${phone.width}x${phone.height}`).toBe(
         width,
       )
@@ -127,11 +127,11 @@ describe('the dial fits the screen it is drawn on', () => {
 
   it('shrinks the dial rather than running it off a sideways screen', () => {
     // 667x375 is a phone turned sideways in a browser — the native app is locked to
-    // portrait, the web build is not. The width rule alone asked for 154pt buttons and
-    // a 582pt square here: the rows overlapped by 58pt and two thirds of the dial hung
+    // portrait, the web build is not. The width rule alone asked for 150pt buttons and
+    // a 578pt square here: the rows overlapped by 58pt and two thirds of the dial hung
     // below the fold.
     const sideways = dialMetrics({ width: 667, height: 375 }, NINE_DIAL)
-    expect(sideways.button).toBeLessThan(154)
+    expect(sideways.button).toBeLessThan(150)
     expect(sideways.height).toBeLessThanOrEqual(375)
   })
 

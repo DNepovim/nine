@@ -198,7 +198,11 @@ export function Dial({
     })
 
   return (
-    <View className="items-center">
+    // The margin is the dial's own, not the screen's: the keys sit at the bottom of every
+    // screen that draws them, and the room under the last row is part of the dial being
+    // comfortable to swipe on rather than a decision the game, the room and the arcade
+    // each make for themselves.
+    <View className="mb-6 items-center">
       <GestureDetector gesture={gesture}>
         <View
           style={{ width: metrics.width, height: metrics.height, gap: metrics.gap }}

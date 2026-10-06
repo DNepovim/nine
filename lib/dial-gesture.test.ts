@@ -13,7 +13,7 @@ import {
 import { dialMetrics } from '@/lib/dial-metrics'
 import { NINE_DIAL } from '@/modes'
 
-// A phone held upright: an 81pt button, the fixed 12pt gap, a 267pt square. Every
+// A phone held upright: a 77pt button, the fixed 16pt gap, a 263pt square. Every
 // coordinate below is in that square's own space, which is what the pan reports.
 const BOARD = NINE_DIAL
 const PHONE = dialMetrics({ width: 375, height: 667 }, BOARD)
@@ -43,9 +43,9 @@ describe('cellAt', () => {
   })
 
   it('splits the gap between the two keys it separates', () => {
-    // The gap runs 81..93 on the x axis, so its midpoint is 87.
-    expect(cellAt(86, 40, PHONE, BOARD)).toBe(0)
-    expect(cellAt(88, 40, PHONE, BOARD)).toBe(1)
+    // The gap runs 77..93 on the x axis, so its midpoint is 85.
+    expect(cellAt(84, 40, PHONE, BOARD)).toBe(0)
+    expect(cellAt(86, 40, PHONE, BOARD)).toBe(1)
   })
 
   it('gives a point on the pill but off its centre to that pill', () => {

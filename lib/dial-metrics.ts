@@ -1,5 +1,5 @@
 // The space between two buttons, and the only fixed pixel measure in here.
-const GAP = 12
+const GAP = 16
 
 // How much of the width one button gets, as one share per column plus one over: on the
 // three-column dial the game is played on that is a quarter of the width, less the gap
@@ -10,7 +10,7 @@ const buttonShare = (cols: number): number => 1 / (cols + 1)
 //
 // This binds only when the screen is wider than it is tall enough to hold the dial —
 // in practice a browser window turned sideways, since the native app is locked to
-// portrait. There the width-driven square came to 582pt inside a 375pt viewport: the
+// portrait. There the width-driven square came to 578pt inside a 375pt viewport: the
 // rows overlapped, the countdown ring landed on the heading, and two thirds of the
 // dial hung off the bottom.
 //
@@ -50,9 +50,9 @@ export type DialMetrics = {
 // does the button.
 //
 // On the three-column dial the game is played on, the three buttons and two gaps come to
-// `0.75w - 12`, which leaves 12 over the two `0.125w` margins the layout asks for. The
+// `0.75w - 16`, which leaves 16 over the two `0.125w` margins the layout asks for. The
 // caller centres the box, so that spare splits evenly and each margin lands at
-// `0.125w + 6` — the button and the gap hold exactly, and the margin absorbs the
+// `0.125w + 8` — the button and the gap hold exactly, and the margin absorbs the
 // remainder, which is the right way round when the button is the thing that has to be
 // identical everywhere.
 //
