@@ -297,14 +297,22 @@ player is _shown_ is exactly the argument that none of it needs hiding.
 It goes public too, for consistency with `profiles.role` — but it is the piece to
 revisit first if that ever stops being comfortable. See **Out of scope**.
 
-Two aggregate RPCs keep the screen from asking N questions for a list of N:
+A handful of read RPCs keep the screen from asking N questions for a list of N:
 
 ```sql
-role_stats()     → key, label, feature_count, person_count
-feature_stats()  → key, active, note, role_count, person_count
+admin_people()               → id, nickname, role, feature_count, has_overrides
+admin_find_person(nickname)  → the same row, for the search box
+person_features(user)        → key, override, in_role_stack, active
+role_stats()                 → key, label, feature_count, person_count
+role_feature_keys(role)      → setof key
+feature_stats()              → key, active, note, role_count, person_count
 ```
 
-Both admin-guarded, because the counts are the screen's and nobody else's.
+These are **not** admin-guarded, and the inconsistency of guarding them would be the
+mistake. They are `stable` functions over tables every client can already select; a
+guard there would suggest the counts are secret while the rows they count are not.
+Guards belong on the writes, where they are the only thing standing between a player
+and `profiles.role` — which is exactly where `…_profile_role.sql` put them.
 
 ## Reading on the device
 
