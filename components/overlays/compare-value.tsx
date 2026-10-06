@@ -4,6 +4,16 @@ import { GOLD_INK } from '@/constants/colors'
 import { useTheme } from '@/hooks/use-theme'
 import { cn } from '@/lib/cn'
 
+// How wide a column of figures is. Four points wider than it was, bought for the caret
+// below — the two columns still leave a 320pt phone room for ACHIEVEMENTS in the label.
+const VALUE_WIDTH = 'w-[76px]'
+
+// The mark in front of the better of the two. Colour alone decided every verdict on this
+// screen until it arrived, and colour alone is the one thing a reader may not have: the gold
+// and the dim are a hue apart before they are a brightness apart, and in sunlight on a phone
+// they are neither. A caret costs four points of the column and says the same thing twice.
+const LEADS = '▸'
+
 // One cell of the comparison table: a figure, and whether it is the better of the two.
 //
 // Gold for the side that is ahead, and gold for the reason it means everywhere else in the
@@ -29,12 +39,16 @@ export function CompareValue({
       selectable={false}
       numberOfLines={1}
       className={cn(
-        'w-[72px] text-right font-mono text-[11px] font-bold',
+        VALUE_WIDTH,
+        'text-right font-mono text-[11px] font-bold',
         tone === 'trail' ? 'text-dim' : 'text-primary',
       )}
       style={tone === 'lead' ? { color: GOLD_INK[colorScheme] } : undefined}
     >
-      {text}
+      {/* The caret hangs off the left of the figure rather than displacing it: the column
+          is right-aligned, so the digits of the two sides stay under each other whichever
+          of them is wearing it. */}
+      {tone === 'lead' ? `${LEADS} ${text}` : text}
     </Text>
   )
 }

@@ -1,9 +1,11 @@
 import { useLingui } from '@lingui/react/macro'
-import { Text, View } from 'react-native'
+import { Text } from 'react-native'
 
+import { CompareRow } from '@/components/overlays/compare-row'
 import { CompareValue } from '@/components/overlays/compare-value'
 import { toneFor, type CompareSide } from '@/lib/compare'
 import {
+  codeOf,
   DIFFICULTIES,
   getDifficultyColor,
   type Difficulty,
@@ -16,32 +18,43 @@ const NOTHING = '—'
 
 // One board's line in the comparison table: the two best scores on it, side by side.
 //
-// The difficulty is spelled and wears its position along the mode's own gradient, exactly
-// as `ProfileBoardRow` draws it one card behind this one — so a board is the same colour
-// whichever of the two tables the player is reading.
+// Written as a code — `ACC EXT` — exactly as `ProfileReignRow` writes a board one card
+// behind this one. The table used to spell the difficulty under a heading naming the mode,
+// which cost two heading rows out of a card that has thirteen rows to fit; the code says
+// both things in seven characters, so all six boards sit in one block with nothing over
+// them.
+//
+// One colour across the pair rather than a colour each. `getDifficultyColor` is the mode's
+// own gradient read at the difficulty's position along it, so a single hue already carries
+// both halves of what the code says — ACC EXT is the far end of accuracy's pair, SPD ESY the
+// near end of speed's. Two colours on one label would be inventing a distinction the scale
+// already makes.
 export function CompareBoardRow({
   mode,
   difficulty,
+  // Best score on this board, or null for a side that has never posted one.
   mine,
   theirs,
   leader,
+  index,
 }: {
   mode: ScoredMode
   difficulty: Difficulty
-  // Best score on this board, or null for a side that has never posted one.
   mine: number | null
   theirs: number | null
   leader: CompareSide
+  index: number
 }) {
   const { t } = useLingui()
   return (
-    <View className="h-7 flex-row items-center">
+    <CompareRow index={index}>
       <Text
         selectable={false}
+        numberOfLines={1}
         className="flex-1 font-mono text-[10px] font-black tracking-[1px]"
         style={{ color: getDifficultyColor(mode, difficulty) }}
       >
-        {t(DIFFICULTIES[difficulty].label)}
+        {`${t(codeOf(mode))} ${t(DIFFICULTIES[difficulty].code)}`}
       </Text>
       <CompareValue
         text={mine === null ? NOTHING : String(mine)}
@@ -51,6 +64,6 @@ export function CompareBoardRow({
         text={theirs === null ? NOTHING : String(theirs)}
         tone={toneFor(leader, 'theirs')}
       />
-    </View>
+    </CompareRow>
   )
 }

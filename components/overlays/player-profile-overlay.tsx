@@ -131,10 +131,12 @@ export function PlayerProfileOverlay({
   // Who is looking. Null before the anonymous sign-in has landed, which is the only
   // state where a player cannot yet be recognised as themselves.
   viewerId: string | null
-  // Hands this profile up to be set against the viewer's own. Undefined where there is
-  // nobody to set it against — before the sign-in has landed — which is also what takes
+  // Hands this profile up to be set against the viewer's own, with the id of the player it
+  // belongs to: a profile says what someone has done and has never carried who they are,
+  // and the comparison needs the id to ask whether they hold a board. Undefined where there
+  // is nobody to set it against — before the sign-in has landed — which is also what takes
   // the button off the card.
-  onCompare?: (profile: PlayerProfile) => void
+  onCompare?: (userId: string, profile: PlayerProfile) => void
   onClose: () => void
 }) {
   const { t } = useLingui()
@@ -456,7 +458,7 @@ export function PlayerProfileOverlay({
                   // other left the player two cards deep to get back out of. Asked for
                   // before `close`, so the comparison is already fading up as this card
                   // fades out — the cross-fade a screen change makes, in a dialog.
-                  onCompare(profile)
+                  onCompare(userId, profile)
                   close()
                 }}
                 className="items-center rounded-2xl bg-card px-6 py-3"

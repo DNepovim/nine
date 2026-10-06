@@ -1,8 +1,9 @@
 import type { MessageDescriptor } from '@lingui/core'
 import { msg } from '@lingui/core/macro'
 import { useLingui } from '@lingui/react/macro'
-import { Text, View } from 'react-native'
+import { Text } from 'react-native'
 
+import { CompareRow } from '@/components/overlays/compare-row'
 import { CompareValue } from '@/components/overlays/compare-value'
 import { toneFor, type CompareSide, type CompareStat } from '@/lib/compare'
 import { formatGameTime } from '@/lib/duration'
@@ -48,6 +49,7 @@ export function CompareStatRow({
   mine,
   theirs,
   leader,
+  index,
 }: {
   stat: CompareStat
   // Null for a figure this side has not produced — an average over no hits. Never zero
@@ -55,12 +57,14 @@ export function CompareStatRow({
   mine: number | null
   theirs: number | null
   leader: CompareSide
+  // Where this row falls in the table, which is the only thing deciding when it arrives.
+  index: number
 }) {
   const { t } = useLingui()
   const write = (value: number | null): string =>
     value === null ? NOTHING : FORMAT[stat](value)
   return (
-    <View className="h-7 flex-row items-center">
+    <CompareRow index={index}>
       <Text
         selectable={false}
         numberOfLines={1}
@@ -70,6 +74,6 @@ export function CompareStatRow({
       </Text>
       <CompareValue text={write(mine)} tone={toneFor(leader, 'mine')} />
       <CompareValue text={write(theirs)} tone={toneFor(leader, 'theirs')} />
-    </View>
+    </CompareRow>
   )
 }

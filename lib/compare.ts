@@ -168,3 +168,77 @@ export const toneFor = (
   if (leader === null) return 'plain'
   return leader === side ? 'lead' : 'trail'
 }
+
+// ─── The verdict ───────────────────────────────────────────────────────────────────────
+//
+// What the table comes to, as a number and then as a sentence. Both live here rather than
+// on the card for the reason the rest of this file does: who is ahead is a judgement, and a
+// judgement is worth being able to test without mounting anything.
+
+// How many of the judged rows each side takes — the four lifetime stats that pick a winner
+// plus all six boards, so ten between them. Rows nobody wins are counted for neither, which
+// is why the two halves need not add up to ten.
+export type Tally = { mine: number; theirs: number }
+
+export function tallyOf(comparison: Comparison): Tally {
+  const leaders = [
+    ...comparison.lifetime.map((row) => row.leader),
+    ...comparison.boards.flatMap((block) => block.rows.map((row) => row.leader)),
+  ]
+  return {
+    mine: leaders.filter((leader) => leader === 'mine').length,
+    theirs: leaders.filter((leader) => leader === 'theirs').length,
+  }
+}
+
+// Which pool of phrasings the line under the header is drawn from. One key per pool rather
+// than a band and a direction carried separately: the pools are what a person edits, and a
+// key that names one is a key they can find.
+export type VerdictKey =
+  | 'routMine'
+  | 'routTheirs'
+  | 'clearMine'
+  | 'clearTheirs'
+  | 'closeMine'
+  | 'closeTheirs'
+  | 'even'
+  | 'unplayed'
+
+type Band = 'rout' | 'clear' | 'close'
+
+// Where the gaps fall, widest first. A table rather than a chain of comparisons because
+// these three numbers are the whole tuning of the feature — someone changing how loudly the
+// line shouts should be changing a row here, not reading an expression.
+//
+// Ten rows are on offer. Five of them is a margin no run is going to close this evening,
+// which is what makes it a rout; one is a margin the next run closes, which is what makes
+// it close; and the middle is a lead, which is the only one of the three that is about to
+// change.
+const BANDS = [
+  { from: 5, band: 'rout' },
+  { from: 2, band: 'clear' },
+  { from: 1, band: 'close' },
+] as const satisfies readonly { from: number; band: Band }[]
+
+const KEYS = {
+  rout: { mine: 'routMine', theirs: 'routTheirs' },
+  clear: { mine: 'clearMine', theirs: 'clearTheirs' },
+  close: { mine: 'closeMine', theirs: 'closeTheirs' },
+} as const satisfies Record<Band, Record<'mine' | 'theirs', VerdictKey>>
+
+// Two careers with no runs between them. It arrives here as a draw, and a draw is told as
+// "nothing to choose between you" — which is true, and cold, when the honest answer is that
+// neither of you has started yet. Only ever asked once the tally is level, so a player who
+// has never finished a run but holds a fortune from winnings is still told they are ahead.
+const neverPlayed = (comparison: Comparison): boolean => {
+  const runs = comparison.lifetime.find((row) => row.stat === 'runs')
+  return runs?.mine === 0 && runs.theirs === 0
+}
+
+export function verdictOf(comparison: Comparison): VerdictKey {
+  const { mine, theirs } = tallyOf(comparison)
+  const margin = Math.abs(mine - theirs)
+  if (margin === 0) return neverPlayed(comparison) ? 'unplayed' : 'even'
+  const band = BANDS.find((row) => margin >= row.from)?.band ?? 'close'
+  return KEYS[band][mine > theirs ? 'mine' : 'theirs']
+}

@@ -1,22 +1,23 @@
 import { Trans, useLingui } from '@lingui/react/macro'
 import { ScrollView, Text, View } from 'react-native'
 
-import { GradientName } from '@/components/gradient-name'
 import { CompareBoardRow } from '@/components/overlays/compare-board-row'
+import { CompareHead } from '@/components/overlays/compare-head'
+import { CompareSection } from '@/components/overlays/compare-section'
 import { CompareStatRow } from '@/components/overlays/compare-stat-row'
 import { ModalCard } from '@/components/overlays/modal-card'
 import { TrackedPressable } from '@/components/tracked-pressable'
+import { useChampionsContext } from '@/hooks/use-champions'
 import { usePlayerProfile } from '@/hooks/use-player-profile'
 import { useViewport } from '@/hooks/use-viewport'
-import { compareProfiles } from '@/lib/compare'
+import { championMark } from '@/lib/champions'
+import { compareProfiles, tallyOf, verdictOf } from '@/lib/compare'
+import { verdictLine } from '@/lib/compare-lines'
 import { lifetimeOf, nameFactorsOf, type PlayerProfile } from '@/lib/player-profile'
-import { shortName } from '@/lib/short-name'
-import { gradientOf, labelOf } from '@/modes'
 
-// How much of the other player's name the right-hand column holds. The column is 72px
-// wide and the heading is 8px mono on 1px of tracking, which comes to twelve characters
-// — a nickname may be sixteen, so a long one is cut and marked.
-const HEAD_CHARS = 12
+// A player with no nickname cannot be on a board and so cannot be on this table either —
+// the type still allows it, so this is what the header would print if one ever arrived.
+const NO_NAME = '…'
 
 // The two careers side by side, opened from the bottom of a profile.
 //
@@ -27,25 +28,38 @@ const HEAD_CHARS = 12
 // card has finished arriving.
 export function CompareOverlay({
   viewerId,
+  theirId,
   theirProfile,
   onClose,
 }: {
   // Who is looking. The left column, and the one profile this modal has to go and get.
   viewerId: string
+  // Who they are looking at. Carried beside their profile rather than read off it: a
+  // profile is what a player has done, and has never held the id of the player who did it.
+  // The header needs one to ask whether they hold a board.
+  theirId: string
   theirProfile: PlayerProfile
   onClose: () => void
 }) {
   const { t } = useLingui()
   const { height } = useViewport()
   const { profile: myProfile, loading, error, reload } = usePlayerProfile(viewerId)
+  // Read from the context rather than fetched here, the way the profile card reads it: the
+  // two Extreme leaders are already known and kept live off the board connection, so a
+  // mark on this table cannot contradict the one on the card it opened from.
+  const champions = useChampionsContext()
 
   const comparison = myProfile === null ? null : compareProfiles(myProfile, theirProfile)
+  const tally = comparison === null ? null : tallyOf(comparison)
 
-  // The right column's heading is the other player's name, so it is drawn in the
-  // gradient their own averages earn them — the same colour it wore on the card this
-  // table opened from, and on the row that opened that. The two averages behind it are
-  // the AVG ACC and AVG SPD rows of this very table, which is as close as the colour
-  // ever gets to explaining itself outside the profile.
+  // Each name is drawn in the gradient that player's own averages earn them — the same
+  // colour it wore on the card this table opened from, and on the row that opened that. The
+  // two averages behind it are the AVG ACC and AVG SPD rows of this very table, which is as
+  // close as the colour ever gets to explaining itself outside the profile.
+  const myFactors =
+    myProfile === null
+      ? null
+      : nameFactorsOf(lifetimeOf(myProfile.totals, myProfile.winnings))
   const theirFactors = nameFactorsOf(
     lifetimeOf(theirProfile.totals, theirProfile.winnings),
   )
@@ -57,127 +71,127 @@ export function CompareOverlay({
     <ModalCard title={t`COMPARE`} onDismiss={onClose} maxHeight={height * 0.85} replacing>
       {(close) => (
         <View className="shrink gap-3">
-          {/* Who is in which column, stated once at the top rather than left to the
-              player to work out from the numbers. Both sit in the label ink: this is the
-              table's header, and a column heading that competed with the figures under it
-              would be the loudest thing on a screen whose whole point is the figures. */}
-          <View className="h-7 flex-row items-end">
-            <View className="flex-1" />
-            <Text
-              selectable={false}
-              numberOfLines={1}
-              className="w-[72px] text-right font-mono text-[8px] font-bold tracking-[1px] text-dim"
-            >
-              <Trans>YOU</Trans>
-            </Text>
-            {/* Cut by characters rather than ellipsised by the platform: a gradient
-                name is one `Text` per character, and a nested run is not truncated
-                reliably — see `shortName`. Twelve is what 72px of this face holds. */}
-            <GradientName
-              nickname={shortName(theirProfile.nickname ?? '…', HEAD_CHARS)}
-              avgAccuracy={theirFactors.avgAccuracy}
-              avgSpeed={theirFactors.avgSpeed}
-              numberOfLines={1}
-              className="w-[72px] text-right font-mono text-[8px] font-bold tracking-[1px]"
-            />
-          </View>
-
-          {/* The same shape the profile card uses: the scroll gives way inside the card's
-              height cap while a short table stays its own height. */}
-          <ScrollView
-            showsVerticalScrollIndicator={false}
-            style={{ flexGrow: 0, flexShrink: 1 }}
-          >
-            <View className="gap-3">
-              {/* A career that could not be read is never drawn as a career of zeroes —
-                  the same call the profile makes, and for the same reason: a table that
-                  quietly awards every row to the other player because one side failed to
-                  load is worse than a table that says it failed. */}
-              {myProfile === null && error !== null && (
-                <View className="items-center gap-3 py-4">
-                  <Text
-                    selectable={false}
-                    className="text-center font-mono text-[11px] text-dim"
-                  >
-                    <Trans>Your profile could not be loaded.</Trans>
-                  </Text>
-                  <TrackedPressable
-                    id="compare.try_again"
-                    onPress={reload}
-                    className="items-center rounded-2xl bg-card px-6 py-3"
-                  >
-                    <Text
-                      selectable={false}
-                      className="font-mono text-[11px] font-black tracking-[2px] text-primary"
-                    >
-                      <Trans>TRY AGAIN</Trans>
-                    </Text>
-                  </TrackedPressable>
-                </View>
-              )}
-
-              {myProfile === null && error === null && loading && (
+          {/* A career that could not be read is never drawn as a career of zeroes — the
+              same call the profile makes, and for the same reason: a table that quietly
+              awards every row to the other player because one side failed to load is worse
+              than a table that says it failed. The header waits on the same read, so a
+              failed one shows no names rather than one name and a blank. */}
+          {myProfile === null && error !== null && (
+            <View className="items-center gap-3 py-4">
+              <Text
+                selectable={false}
+                className="text-center font-mono text-[11px] text-dim"
+              >
+                <Trans>Your profile could not be loaded.</Trans>
+              </Text>
+              <TrackedPressable
+                id="compare.try_again"
+                onPress={reload}
+                className="items-center rounded-2xl bg-card px-6 py-3"
+              >
                 <Text
                   selectable={false}
-                  className="py-6 text-center font-mono text-[11px] text-dim"
+                  className="font-mono text-[11px] font-black tracking-[2px] text-primary"
                 >
-                  <Trans>LOADING…</Trans>
+                  <Trans>TRY AGAIN</Trans>
                 </Text>
-              )}
+              </TrackedPressable>
+            </View>
+          )}
 
-              {comparison !== null && (
-                <>
-                  <View>
-                    {comparison.lifetime.map((row) => (
-                      <CompareStatRow
-                        key={row.stat}
-                        stat={row.stat}
-                        mine={row.mine}
-                        theirs={row.theirs}
-                        leader={row.leader}
-                      />
-                    ))}
-                  </View>
+          {myProfile === null && error === null && loading && (
+            <Text
+              selectable={false}
+              className="py-6 text-center font-mono text-[11px] text-dim"
+            >
+              <Trans>LOADING…</Trans>
+            </Text>
+          )}
 
-                  {/* What the six rows below are, said once. Without it the block is two
-                      columns of numbers under a mode name, and a player could reasonably
-                      read them as runs. */}
-                  <View className="h-7 flex-row items-end">
-                    <Text
-                      selectable={false}
-                      className="font-mono text-[9px] font-black tracking-[2px] text-dim"
-                    >
-                      <Trans>BEST ON EACH BOARD</Trans>
-                    </Text>
-                  </View>
+          {comparison !== null &&
+            tally !== null &&
+            myProfile !== null &&
+            myFactors !== null && (
+              <>
+                <CompareHead
+                  myNickname={myProfile.nickname ?? NO_NAME}
+                  myAvgAccuracy={myFactors.avgAccuracy}
+                  myAvgSpeed={myFactors.avgSpeed}
+                  myMark={championMark(viewerId, champions)}
+                  theirNickname={theirProfile.nickname ?? NO_NAME}
+                  theirAvgAccuracy={theirFactors.avgAccuracy}
+                  theirAvgSpeed={theirFactors.avgSpeed}
+                  theirMark={championMark(theirId, champions)}
+                  tally={tally}
+                />
 
-                  {comparison.boards.map((block) => (
-                    <View key={block.mode}>
-                      <View className="h-7 flex-row items-end">
-                        <Text
-                          selectable={false}
-                          className="flex-1 font-mono text-[11px] font-black tracking-[2px]"
-                          style={{ color: gradientOf(block.mode)[0] }}
-                        >
-                          {t(labelOf(block.mode))}
-                        </Text>
-                      </View>
-                      {block.rows.map((row) => (
-                        <CompareBoardRow
-                          key={row.difficulty}
-                          mode={block.mode}
-                          difficulty={row.difficulty}
+                {/* What the table came to, in a sentence. Thirteen rows of figures answer
+                    the question in full and answer it slowly; this is the same answer at a
+                    glance, and it is the only line on the card written as prose — sentence
+                    case and narrow tracking, like the motto and the announcement bar, since
+                    the house's wide caps would make a sentence read as a heading.
+
+                    Seeded on the two players and the score between them, so closing the
+                    table and opening it again says the same thing, and only a board
+                    actually changing hands changes the words. */}
+                <Text
+                  selectable={false}
+                  className="px-2 text-center font-mono text-[11px] leading-[15px] tracking-[0.3px] text-dim"
+                >
+                  {verdictLine(
+                    verdictOf(comparison),
+                    `${viewerId}:${theirId}:${tally.mine}-${tally.theirs}`,
+                    t,
+                  )}
+                </Text>
+
+                {/* The same shape the profile card uses: the scroll gives way inside the
+                    card's height cap while a short table stays its own height. The header
+                    and the verdict stay above it — they are what the card is, and a reader
+                    who has scrolled to the boards should still be able to see whose they
+                    are. */}
+                <ScrollView
+                  showsVerticalScrollIndicator={false}
+                  style={{ flexGrow: 0, flexShrink: 1 }}
+                >
+                  <View className="gap-3">
+                    <CompareSection label={t`CAREER`}>
+                      {comparison.lifetime.map((row, index) => (
+                        <CompareStatRow
+                          key={row.stat}
+                          stat={row.stat}
                           mine={row.mine}
                           theirs={row.theirs}
                           leader={row.leader}
+                          index={index}
                         />
                       ))}
-                    </View>
-                  ))}
-                </>
-              )}
-            </View>
-          </ScrollView>
+                    </CompareSection>
+
+                    {/* Six rows under one label, where the boards used to be two blocks of
+                        three under a mode name apiece. The row writes its own board as a
+                        code, so nothing has to be said above it. */}
+                    <CompareSection label={t`BOARDS`}>
+                      {comparison.boards
+                        .flatMap((block) =>
+                          block.rows.map((row) => ({ mode: block.mode, ...row })),
+                        )
+                        .map((row, index) => (
+                          <CompareBoardRow
+                            key={`${row.mode}-${row.difficulty}`}
+                            mode={row.mode}
+                            difficulty={row.difficulty}
+                            mine={row.mine}
+                            theirs={row.theirs}
+                            leader={row.leader}
+                            index={comparison.lifetime.length + index}
+                          />
+                        ))}
+                    </CompareSection>
+                  </View>
+                </ScrollView>
+              </>
+            )}
 
           {/* The way out, at the end of the table as well as in the card's corner. A
               comparison is read top to bottom, and by the last board the 5-dot cross in

@@ -21,7 +21,9 @@ export function ProfileVariant({
   onClose: () => void
 }) {
   const [showingProfile, setShowingProfile] = useState(true)
-  const [rival, setRival] = useState<PlayerProfile | null>(null)
+  const [rival, setRival] = useState<{ userId: string; profile: PlayerProfile } | null>(
+    null,
+  )
 
   return (
     <>
@@ -29,7 +31,9 @@ export function ProfileVariant({
         <PlayerProfileOverlay
           userId={userId}
           viewerId={viewerId}
-          onCompare={setRival}
+          onCompare={(id, profile) => {
+            setRival({ userId: id, profile })
+          }}
           onClose={() => {
             setShowingProfile(false)
             // Closed on its own, with no comparison asked for — so the variant is done.
@@ -40,7 +44,12 @@ export function ProfileVariant({
         />
       )}
       {rival !== null && (
-        <CompareOverlay viewerId={viewerId} theirProfile={rival} onClose={onClose} />
+        <CompareOverlay
+          viewerId={viewerId}
+          theirId={rival.userId}
+          theirProfile={rival.profile}
+          onClose={onClose}
+        />
       )}
     </>
   )

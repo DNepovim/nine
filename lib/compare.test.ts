@@ -1,6 +1,12 @@
 import { describe, expect, it } from 'vitest'
 
-import { COMPARE_STATS, compareProfiles, JUDGED_STATS } from './compare'
+import {
+  COMPARE_STATS,
+  compareProfiles,
+  JUDGED_STATS,
+  tallyOf,
+  verdictOf,
+} from './compare'
 import { EMPTY_PROFILE, type BoardTotals, type PlayerProfile } from './player-profile'
 
 const totals = (over: Partial<BoardTotals> = {}): BoardTotals => ({
@@ -173,5 +179,95 @@ describe('compareProfiles', () => {
     expect(row?.mine).toBeNull()
     expect(row?.theirs).toBeNull()
     expect(row?.leader).toBeNull()
+  })
+})
+
+// Every board there is, in the order `compareProfiles` lays them out — so a career can be
+// built that takes exactly as many of them as a test means it to.
+const BOARDS = [
+  { mode: 'accuracy', difficulty: 'easy' },
+  { mode: 'accuracy', difficulty: 'hard' },
+  { mode: 'accuracy', difficulty: 'extreme' },
+  { mode: 'speed', difficulty: 'easy' },
+  { mode: 'speed', difficulty: 'hard' },
+  { mode: 'speed', difficulty: 'extreme' },
+] as const
+
+// A player who has run three times and posted a best on the first `boards` of them. Every
+// quality stat is left at zero, so the two sides tie on all four lifetime rows and the
+// margin a test sets up is exactly the number of boards it asked for.
+const career = (boards: number): PlayerProfile =>
+  profile({
+    totals: [totals({ runs: 3, hits: 3 })],
+    bests: BOARDS.slice(0, boards).map(({ mode, difficulty }) => ({
+      mode,
+      difficulty,
+      score: 100,
+      hits: 1,
+      achievedAt: '2026-01-01',
+    })),
+  })
+
+describe('tallyOf', () => {
+  it('counts the rows each side takes', () => {
+    expect(tallyOf(compareProfiles(career(4), career(0)))).toEqual({ mine: 4, theirs: 0 })
+  })
+
+  it('counts both sides from the same table', () => {
+    const mine = profile({ achievements: 5, totals: [totals({ hits: 2, spdSum: 200 })] })
+    const theirs = career(3)
+    const tally = tallyOf(compareProfiles(mine, theirs))
+    expect(tally.mine).toBeGreaterThan(0)
+    expect(tally.theirs).toBe(3)
+  })
+
+  it('counts a row nobody wins for neither side', () => {
+    expect(tallyOf(compareProfiles(career(0), career(0)))).toEqual({ mine: 0, theirs: 0 })
+  })
+
+  // Equal averages on both sides, so RUNS, HITS and TIME are the only rows that differ —
+  // and a hundred times as much play still takes nothing.
+  it('leaves the volume rows out however far apart they are', () => {
+    const busy = profile({
+      totals: [totals({ runs: 500, hits: 500, accSum: 400, spdSum: 400, timeMs: 9_000 })],
+    })
+    const quiet = profile({
+      totals: [totals({ runs: 5, hits: 5, accSum: 4, spdSum: 4, timeMs: 90 })],
+    })
+    expect(tallyOf(compareProfiles(busy, quiet))).toEqual({ mine: 0, theirs: 0 })
+  })
+})
+
+describe('verdictOf', () => {
+  it('calls five rows or more a rout, either way round', () => {
+    expect(verdictOf(compareProfiles(career(5), career(0)))).toBe('routMine')
+    expect(verdictOf(compareProfiles(career(0), career(5)))).toBe('routTheirs')
+    expect(verdictOf(compareProfiles(career(6), career(0)))).toBe('routMine')
+  })
+
+  it('calls two to four rows a clear lead', () => {
+    expect(verdictOf(compareProfiles(career(2), career(0)))).toBe('clearMine')
+    expect(verdictOf(compareProfiles(career(4), career(0)))).toBe('clearMine')
+    expect(verdictOf(compareProfiles(career(0), career(3)))).toBe('clearTheirs')
+  })
+
+  it('calls one row close', () => {
+    expect(verdictOf(compareProfiles(career(1), career(0)))).toBe('closeMine')
+    expect(verdictOf(compareProfiles(career(0), career(1)))).toBe('closeTheirs')
+  })
+
+  it('calls a level table even when both have played', () => {
+    expect(verdictOf(compareProfiles(career(0), career(0)))).toBe('even')
+    expect(verdictOf(compareProfiles(career(3), career(3)))).toBe('even')
+  })
+
+  it('tells two careers with no runs apart from a real draw', () => {
+    expect(verdictOf(compareProfiles(profile(), profile()))).toBe('unplayed')
+  })
+
+  it('does not call a table unplayed while somebody is ahead on it', () => {
+    expect(verdictOf(compareProfiles(profile({ achievements: 1 }), profile()))).toBe(
+      'closeMine',
+    )
   })
 })

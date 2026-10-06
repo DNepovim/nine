@@ -33,10 +33,15 @@ export function PlayerProfileProvider({
   // *replaces* that modal: the two are siblings over the game, not one nested in the
   // other, which is what keeps the table the same width as the card it came from.
   //
-  // The profile itself and not an id, so the table is drawn from the very numbers the
+  // The profile itself and not only an id, so the table is drawn from the very numbers the
   // player was reading a moment ago rather than from a second read that could answer
-  // differently.
-  const [rival, setRival] = useState<PlayerProfile | null>(null)
+  // differently. The id rides along because a profile has never held one and the
+  // comparison's header has to ask the champions whether this player holds a board — and it
+  // cannot be read off `userId` below, which is cleared the moment the card behind this
+  // one finishes closing.
+  const [rival, setRival] = useState<{ userId: string; profile: PlayerProfile } | null>(
+    null,
+  )
   // Stable, so every name in the tree does not re-render when a profile opens.
   const open = useCallback((id: string) => {
     setUserId(id)
@@ -59,7 +64,8 @@ export function PlayerProfileProvider({
       {rival !== null && viewerId !== null && (
         <CompareOverlay
           viewerId={viewerId}
-          theirProfile={rival}
+          theirId={rival.userId}
+          theirProfile={rival.profile}
           onClose={() => {
             setRival(null)
           }}
@@ -71,7 +77,13 @@ export function PlayerProfileProvider({
           viewerId={viewerId}
           // Left off while the sign-in has not landed: there is no viewer to compare
           // against yet, and the card reads the absence of this as "no button".
-          onCompare={viewerId === null ? undefined : setRival}
+          onCompare={
+            viewerId === null
+              ? undefined
+              : (id, profile) => {
+                  setRival({ userId: id, profile })
+                }
+          }
           onClose={() => {
             setUserId(null)
           }}
