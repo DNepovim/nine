@@ -1,18 +1,20 @@
 name: Deploy web to EAS Hosting
 
+# Production is never deployed by a push. This workflow is manual only — run it
+# with `eas workflow:run .eas/workflows/deploy.yml --ref main`, or let the
+# `deploy` skill do it. Landing on `main` and shipping to players are two
+# separate decisions, and this is where the second one is made.
 on:
-  push:
-    branches:
-      - main
+  workflow_dispatch: {}
 
-# A second push to main while a deploy is still running makes the first one obsolete —
+# A second run started while a deploy is still going makes the first one obsolete —
 # and worse, whichever finishes last is what production serves, so an older commit can
 # land on top of a newer one. The newer run cancels the older instead. `group` does
 # nothing yet (EAS does not support custom concurrency groups), but the docs ask for it
 # so this keeps working once it does.
 concurrency:
   cancel_in_progress: true
-  group: ${{ workflow.filename }}-${{ github.ref }}
+  group: ${{ workflow.filename }}
 
 # The Lingui CLI is ESM-only and needs Node 22.19+ — it calls `fs.globSync`, which does
 # not exist before Node 22. EAS images default to Node 20, so `pnpm i18n:compile` failed
@@ -22,39 +24,24 @@ defaults:
   tools:
     node: 22
 
+# The static gate — lint, Prettier, types, Knip, tests, i18n — lives in GitHub
+# Actions (.github/workflows/checks.yml), where the minutes are free. EAS runs
+# only what needs EAS: the two steps below that hold the project's env vars.
+# Whoever triggers this is responsible for the checks being green on the ref.
 jobs:
-  check:
-    name: Static checks
-    steps:
-      - uses: eas/checkout
-      - uses: eas/install_node_modules
-      - name: Node version
-        # Printed so a version mismatch is visible in the log rather than inferred
-        # from a SyntaxError three steps later.
-        run: node --version
-      - name: Compile message catalogs
-        # Generated output, not committed — knip and tsc both read them, so this
-        # has to run before any gate that resolves imports.
-        run: pnpm i18n:compile
-      - name: Lint (eslint)
-        run: pnpm lint
-      - name: Format (prettier)
-        run: pnpm exec prettier --check .
-      - name: Types (tsc)
-        run: pnpm typecheck
-      - name: Audit (high & critical only)
-        run: pnpm audit --audit-level high
-      - name: Dead code (knip)
-        run: pnpm knip
-      - name: Env vars
-        run: pnpm check-env
-
   deploy:
     name: Deploy to production
-    needs: [check]
     steps:
       - uses: eas/checkout
       - uses: eas/install_node_modules
+      - name: Env vars
+        # Fails before the expensive build rather than mid-build if the
+        # EXPO_PUBLIC_* values are missing from the EAS environment.
+        run: pnpm check-env
+      - name: Audit (high & critical only)
+        # Kept on the release path only: the advisory database moves on its own,
+        # so gating every PR on it would block work with nothing in the PR to fix.
+        run: pnpm audit --audit-level high
       - name: Build web (export + service worker)
         run: pnpm run build:web
       - name: Deploy to EAS Hosting (production)

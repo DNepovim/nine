@@ -3,12 +3,12 @@ name: Preview deploy
 # Every pull request gets its own preview URL at nine--pr-<number>.expo.app.
 # The alias is re-assigned on each run, so the link stays the same for the life
 # of the PR and always shows the latest push. Never passes --prod, so production
-# is only ever touched by deploy.yml on main.
+# is only ever touched by deploy.yml, which nothing triggers but a person.
 #
-# Deliberately no `pnpm audit` here, unlike deploy.yml: it gates on an advisory
-# database that moves on its own, so a new CVE in a transitive dependency would
-# block every preview overnight with nothing in the PR to fix. Some advisories
-# have no patched version at all. Keep supply-chain gating on the release path.
+# The static gate runs in parallel over in GitHub Actions
+# (.github/workflows/checks.yml) rather than here — EAS compute is metered and
+# those steps are the slow half of CI. So a preview can go up while the checks
+# are still red; the PR shows both, and the checks are what blocks the merge.
 on:
   pull_request:
     branches:
@@ -27,40 +27,15 @@ defaults:
     node: 22
 
 jobs:
-  check:
-    name: Static checks
-    steps:
-      - uses: eas/checkout
-      - uses: eas/install_node_modules
-      - name: Node version
-        # Printed so a version mismatch is visible in the log rather than inferred
-        # from a SyntaxError three steps later.
-        run: node --version
-      - name: Compile message catalogs
-        # Generated output, not committed — knip and tsc both read them, so this
-        # has to run before any gate that resolves imports.
-        run: pnpm i18n:compile
-      - name: Lint (eslint)
-        run: pnpm lint
-      - name: Format (prettier)
-        run: pnpm exec prettier --check .
-      - name: Types (tsc)
-        run: pnpm typecheck
-      - name: Dead code (knip)
-        run: pnpm knip
-      - name: Tests (vitest)
-        run: pnpm test
-      # Fails loudly if the EXPO_PUBLIC_* vars are missing, rather than shipping
-      # a preview that builds fine but points at nothing.
-      - name: Env vars
-        run: pnpm check-env
-
   deploy:
     name: Deploy preview
-    needs: [check]
     steps:
       - uses: eas/checkout
       - uses: eas/install_node_modules
+      - name: Env vars
+        # Fails loudly if the EXPO_PUBLIC_* vars are missing, rather than shipping
+        # a preview that builds fine but points at nothing.
+        run: pnpm check-env
       - name: Build web (export + service worker)
         run: pnpm run build:web
       - name: Deploy to EAS Hosting (preview)

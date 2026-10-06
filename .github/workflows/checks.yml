@@ -1,0 +1,78 @@
+name: Checks
+
+# The static gate. It lives here rather than in an EAS workflow because EAS
+# compute is metered on the free plan and these steps are the slow half of CI —
+# GitHub-hosted minutes are not. What stays on EAS is only what needs EAS: the
+# build and the deploy, which are the steps that hold the project's env vars.
+#
+# Runs on every PR, and on demand. Nothing here touches production, and nothing
+# here deploys.
+on:
+  pull_request:
+    branches:
+      - main
+    types:
+      - opened
+      - reopened
+      - synchronize
+  workflow_dispatch:
+
+# A new push to a PR makes the previous run's answer irrelevant — cancel it
+# rather than paying for both.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    name: Static checks
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          # No `packageManager` field in package.json, so the major is pinned
+          # here instead. Matches the lockfile's format.
+          version: 10
+
+      # The Lingui CLI is ESM-only and needs Node 22.19+ — it calls `fs.globSync`,
+      # which does not exist before Node 22. `22` resolves to the latest 22.x,
+      # which keeps this on an LTS major rather than following whatever ships next.
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Compile message catalogs
+        # Generated output, not committed — knip and tsc both read them, so this
+        # has to run before any gate that resolves imports.
+        run: pnpm i18n:compile
+
+      - name: Translations (i18n)
+        # Fails if locales/*.po no longer says what the source says — a string
+        # added without `pnpm i18n:extract` renders as its generated id in prod.
+        run: pnpm i18n:verify
+
+      - name: Lint (eslint)
+        run: pnpm lint
+
+      - name: Format (prettier)
+        run: pnpm exec prettier --check .
+
+      - name: Types (tsc)
+        run: pnpm typecheck
+
+      - name: Dead code (knip)
+        run: pnpm knip
+
+      - name: Tests (vitest)
+        run: pnpm exec vitest run
+
+      # Deliberately no `pnpm audit` here: it gates on an advisory database that
+      # moves on its own, so a new CVE in a transitive dependency would block
+      # every PR overnight with nothing in the PR to fix. Supply-chain gating
+      # stays on the release path, in .eas/workflows/deploy.yml.
