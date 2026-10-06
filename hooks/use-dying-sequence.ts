@@ -28,6 +28,14 @@ export function useDyingSequence({
   lives: number
 }) {
   const { height: windowHeight } = useViewport()
+  // Read by the sequence rather than depended on by it. The flight path is measured
+  // from the viewport, but the viewport is not what starts the cinematic: a height that
+  // moves while the game-over screen is up — coming back from another app, a rotation,
+  // a browser window resized — would otherwise re-run the effect below, drop the
+  // finished overlay back to `dying` and play the whole two seconds again over a screen
+  // the player had already read.
+  const windowHeightRef = useRef(windowHeight)
+  windowHeightRef.current = windowHeight
 
   const flashOp = useSharedValue(0)
   const flashStyle = useAnimatedStyle(() => ({ opacity: flashOp.value }))
@@ -77,7 +85,10 @@ export function useDyingSequence({
       return
     }
 
-    const screenCenterY = windowHeight / 2
+    // One height for the whole flight: the pop-in, the path and the fallback landing
+    // all measure from the screen as it stood when the run ended.
+    const screenHeight = windowHeightRef.current
+    const screenCenterY = screenHeight / 2
     setPhase('dying')
     overlayOpacity.value = 0
     titleOpacity.value = 0
@@ -96,7 +107,7 @@ export function useDyingSequence({
     // game-over overlay in behind it.
     const blendTimer = setTimeout(() => {
       setPhase('blend')
-      const endY = overlayTitleYRef.current ?? windowHeight * 0.22
+      const endY = overlayTitleYRef.current ?? screenHeight * 0.22
       overlayOpacity.value = withTiming(1, { duration: 450 })
       titleTranslateY.value = withTiming(endY - screenCenterY, {
         duration: 450,
@@ -115,15 +126,7 @@ export function useDyingSequence({
       clearTimeout(blendTimer)
       clearTimeout(doneTimer)
     }
-  }, [
-    isGameOver,
-    windowHeight,
-    flashOp,
-    titleOpacity,
-    titleScale,
-    titleTranslateY,
-    overlayOpacity,
-  ])
+  }, [isGameOver, flashOp, titleOpacity, titleScale, titleTranslateY, overlayOpacity])
 
   const setOverlayTitleY = (centerY: number) => {
     overlayTitleYRef.current = centerY
