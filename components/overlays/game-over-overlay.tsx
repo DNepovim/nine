@@ -14,10 +14,12 @@ import { TrackedPressable } from '@/components/tracked-pressable'
 import {
   DIM_INK,
   GOLD_DIM_INK,
+  GOLD_SCALE,
   GOLD_SCREEN_TOKENS,
   MODE_SCREEN_TOKENS,
 } from '@/constants/colors'
 import { CROWN_CORONA, ON_GOLD_LABEL_SHADOW } from '@/constants/theme'
+import { useBarColor } from '@/hooks/use-bar-color'
 import { useBoardContext } from '@/hooks/use-board'
 import { useTheme } from '@/hooks/use-theme'
 import type { AchievementStore } from '@/lib/achievement-store'
@@ -210,6 +212,19 @@ export function GameOverOverlay({
       ? EMBLEM[gameMode]
       : null
   const board = useBoardContext()
+
+  // The system bar joins a painted screen. The colour is the top-left stop of the wash
+  // RecordBackdrop lays down — the bar is a band across the top of that same gradient, so
+  // taking its first colour is the nearest a flat value gets. A tinted screen is left
+  // alone: `wash` is the mode's colour at low alpha over the ordinary surface, and the
+  // tag has nowhere to put the alpha.
+  //
+  // Claimed off `titleHidden` for the same reason the crown is: the overlay is mounted
+  // invisibly from the first frame of the dying sequence, and a bar that turned gold
+  // there would do it over a run that is still being played.
+  useBarColor(
+    titleHidden || !painted ? null : onGold ? GOLD_SCALE[1] : darkGradientOf(gameMode)[0],
+  )
 
   // The crown lands rather than being there. Keyed off `titleHidden` and not off mount:
   // the overlay is mounted invisibly from the first frame of the dying sequence, so an

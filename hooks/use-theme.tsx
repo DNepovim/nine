@@ -5,6 +5,7 @@ import type { SharedValue } from 'react-native-reanimated'
 import { scheduleOnRN } from 'react-native-worklets'
 
 import { SURFACE } from '@/constants/colors'
+import { setBarBase } from '@/hooks/use-bar-color'
 
 type ColorScheme = 'light' | 'dark'
 
@@ -33,21 +34,16 @@ export function AppThemeProvider({ children }: { children: ReactNode }) {
   // (which activates the class-based dark CSS). On native, set the Appearance
   // scheme (react-native-css resolves `.dark:root` variables from it).
   //
-  // The same moment owns the `theme-color` tag, which is the only say we get over
-  // the chrome the phone draws around us: Safari's top bar, and the status bar over
-  // an installed app. It is written here rather than declared once in +html.tsx
-  // because the scheme is ours to toggle, not the OS's to announce — a media-query
-  // tag would answer to the phone's setting and contradict the screen underneath it.
-  // Landing mid-cross-fade is right: the overlay is at full opacity in the target
-  // colour by then, so the bar changes under cover with everything else.
+  // The same moment hands the system bar its base colour. The bar is not written here —
+  // a painted screen can hold it against the surface, which is use-bar-color.ts's job —
+  // but *when* it turns over is this effect's, and the timing is the point: the scheme
+  // flips at the top of the cross-fade, with the overlay at full opacity in the target
+  // colour, so the bar changes under cover along with everything else.
   useEffect(() => {
+    setBarBase(SURFACE[colorScheme])
     if (Platform.OS === 'web') {
       if (typeof document !== 'undefined') {
         document.documentElement.classList.toggle('dark', colorScheme === 'dark')
-        const themeColor = document.querySelector('meta[name="theme-color"]')
-        if (themeColor instanceof HTMLMetaElement) {
-          themeColor.content = SURFACE[colorScheme]
-        }
       }
     } else {
       Appearance.setColorScheme(colorScheme)

@@ -14,8 +14,10 @@ import Animated, {
 import { scheduleOnRN } from 'react-native-worklets'
 
 import { SPLASH_WORDMARK_GAP, SplashWordmark } from '@/components/splash-wordmark'
+import { SPECTRUM } from '@/constants/colors'
 import { LAYER } from '@/constants/layers'
 import { mono } from '@/constants/theme'
+import { useBarColor } from '@/hooks/use-bar-color'
 import { GLASS_SHADOW } from '@/lib/glass'
 
 // The intro — the logo fades in, then the subtitle under it. INTRO_MS is the moment
@@ -31,6 +33,14 @@ const INTRO_MS = SUB_IN_DELAY + SUB_IN_MS
 // has been held instead — whatever was covering it is gone and the player is waiting.
 const REST_MS = 2200
 const RESUME_MS = 250
+
+// What the system bar wears while the splash is up. The gradient runs corner to corner,
+// so the bar — a band across the very top — spans its first half rather than sitting on
+// one colour; the blue is where that band starts and where the phone puts the clock, and
+// a flat colour is all the tag can hold. Released when the splash unmounts, which is the
+// end of its own background fade: the bar snaps back to the surface on the frame the
+// gradient finishes leaving.
+const SPLASH_BAR = SPECTRUM[0]
 
 // The wordmark's shadow, tightened for small type. GLASS_SHADOW is cut for an 80px
 // glyph: its 3px drop under a 13px line reads as a second, blurrier line under the
@@ -66,6 +76,8 @@ export function SplashScreen({
   // for this rather than for a duration of its own.
   onIntroDone: () => void
 }) {
+  useBarColor(SPLASH_BAR)
+
   // Bridge animated values → React state so LinearGradient sees the updates.
   // expo-linear-gradient doesn't expose locations as an animatable native prop,
   // so useAnimatedProps is a no-op for it; runOnJS is the correct path.
@@ -177,7 +189,7 @@ export function SplashScreen({
   return (
     <Animated.View style={[styles.absolute, { zIndex: LAYER.splash }, bgStyle]}>
       <LinearGradient
-        colors={['#4C7EFF', '#7273D2', '#c36282', '#E5534B']}
+        colors={[...SPECTRUM]}
         locations={locations}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}

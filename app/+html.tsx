@@ -24,8 +24,10 @@ export default function Root({ children }: PropsWithChildren) {
             status bar above an installed app. The app's surface, so that chrome reads
             as part of the screen rather than a band above it — and the light one,
             because the app always boots light whatever the phone is set to. It does
-            not stay light: AppThemeProvider rewrites this tag on every theme toggle,
-            which is why the value is here and not a `prefers-color-scheme` pair. */}
+            not stay light, or even stay the surface: hooks/use-bar-color.ts owns this
+            tag from mount on, taking it to the theme's surface on a toggle and to a
+            painted screen's own colour while one is up. Which is why the value is here
+            and not a `prefers-color-scheme` pair — the tag answers to us, not the OS. */}
         <meta name="theme-color" content={SURFACE.light} />
 
         {/* iOS standalone / add-to-home-screen support. */}
