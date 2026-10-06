@@ -133,8 +133,18 @@ export type ButtonId =
   // ── Dev and admin ──
   | 'dev.run'
   | 'dev.done'
-  | 'admin.row'
-  | 'admin.set_role'
+  | 'admin.tab'
+  | 'admin.find'
+  | 'admin.person'
+  | 'admin.person_role'
+  | 'admin.person_feature'
+  | 'admin.person_reset'
+  | 'admin.role'
+  | 'admin.role_new'
+  | 'admin.role_delete'
+  | 'admin.role_feature'
+  | 'admin.feature_active'
+  | 'admin.back'
   | 'admin.done'
 
   // ── Shared chrome, on whatever screen it is drawn ──

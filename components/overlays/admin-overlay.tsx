@@ -1,180 +1,74 @@
 import { Trans } from '@lingui/react/macro'
-import { useEffect, useState } from 'react'
-import { ActivityIndicator, FlatList, Text, TextInput, View } from 'react-native'
+import { useState } from 'react'
+import { Text, View } from 'react-native'
 
-import { GradientName } from '@/components/gradient-name'
+import { AdminFeatures } from '@/components/overlays/admin-features'
+import { AdminPeople } from '@/components/overlays/admin-people'
+import { AdminPerson } from '@/components/overlays/admin-person'
+import { AdminRole } from '@/components/overlays/admin-role'
+import { AdminRoles } from '@/components/overlays/admin-roles'
 import { ScreenLayer } from '@/components/screen'
 import { TrackedPressable } from '@/components/tracked-pressable'
-import { EMPTY_IDS, usePlayerFactors } from '@/hooks/use-player-factors'
-import {
-  findPersonByNickname,
-  listAdminPeople,
-  setUserRole,
-  type AdminPerson,
-} from '@/lib/admin/people'
+import { type AdminPerson as Person } from '@/lib/admin/people'
+import { type AdminRole as Role } from '@/lib/admin/roles'
 import { cn } from '@/lib/cn'
-import type { NameFactors } from '@/lib/name-gradient'
 
-// A role key is a database row now, not a member of a union, so these are plain
-// strings. Transitional: the three-tab hub reads them from `role_stats()`, and this
-// screen is replaced wholesale one commit from here — until then it keeps working on
-// the three the migration seeds.
-// NONE first — taking a role away is a legal move and the picker reads left to right in
-// rising order otherwise, which would bury the one option that undoes the other three.
-const PICKER_OPTIONS: readonly (string | null)[] = [null, 'tester', 'developer', 'admin']
+// Three objects now — people, roles, features — so three tabs. Pills rather than a new
+// shared control: the role picker on the person screen is already this shape, and a
+// second way of drawing the same affordance is a second thing to keep in step.
+//
+// The detail screens are state here rather than panes of their own, because both are
+// reached from a list and both go back to it: holding the open person or role on the hub
+// is what makes a single BACK work for either.
+type Tab = 'people' | 'roles' | 'features'
 
-function RolePicker({
-  current,
-  busy,
-  onPick,
-}: {
-  current: string | null
-  busy: boolean
-  onPick: (role: string | null) => void
-}) {
-  return (
-    <View className="flex-row flex-wrap gap-1.5">
-      {PICKER_OPTIONS.map((option) => {
-        const active = option === current
-        return (
-          <TrackedPressable
-            id="admin.row"
-            key={option ?? 'none'}
-            disabled={busy || active}
-            onPress={() => {
-              onPick(option)
-            }}
-            className={cn(
-              'rounded-lg border px-2.5 py-1',
-              active ? 'border-strong bg-strong' : 'border-dim/30',
-              busy && !active && 'opacity-40',
-            )}
-          >
-            <Text
-              selectable={false}
-              className={cn(
-                'font-mono text-[9px] font-black tracking-[1px]',
-                active ? 'text-on-strong' : 'text-dim',
-              )}
-            >
-              {option === null ? 'NONE' : option.toUpperCase()}
-            </Text>
-          </TrackedPressable>
-        )
-      })}
-    </View>
-  )
+const TABS: readonly Tab[] = ['people', 'roles', 'features']
+
+// Not translated, and not an oversight. These name the three database objects, and they
+// sit beside role labels that are rows and cannot carry a message id — translating one
+// half of a row of pills would read worse than translating neither.
+const TAB_LABEL: Record<Tab, string> = {
+  people: 'PEOPLE',
+  roles: 'ROLES',
+  features: 'FEATURES',
 }
 
-function ProfileRow({
-  profile,
-  factors,
-  busy,
-  onPick,
-}: {
-  profile: AdminPerson
-  // What this profile's name is coloured by, from the list's one lookup. A player is
-  // the same colour here as on a board row, and the handful of people who open this
-  // screen are the ones most likely to recognise each other by it.
-  factors: NameFactors
-  busy: boolean
-  onPick: (role: string | null) => void
-}) {
-  return (
-    <View className="gap-1.5 border-b border-dim/10 py-3">
-      {/* A profile with no nickname is not a name to draw — it is this screen saying
-          there is nothing there, so it stays in the plain ink the rest of the row is in
-          rather than wearing a gradient belonging to somebody. */}
-      {profile.nickname === null ? (
-        <Text
-          selectable={false}
-          className="font-mono text-[12px] font-black tracking-[0.5px] text-primary"
-        >
-          <Trans>(no nickname)</Trans>
-        </Text>
-      ) : (
-        <GradientName
-          nickname={profile.nickname}
-          avgAccuracy={factors.avgAccuracy}
-          avgSpeed={factors.avgSpeed}
-          numberOfLines={1}
-          className="font-mono text-[12px] font-black tracking-[0.5px]"
-        />
-      )}
-      <RolePicker current={profile.role} busy={busy} onPick={onPick} />
-    </View>
-  )
-}
-
-// Every profile that holds a role, and a search to find one that does not yet and hand it
-// one. The list is read once on open and patched in place on every change here — the
-// screen's own writes are the only thing that can move a row on or off it, so there is
-// nothing to poll for.
 export function AdminOverlay({ onClose }: { onClose: () => void }) {
-  const [rows, setRows] = useState<AdminPerson[]>([])
-  const [loading, setLoading] = useState(true)
-  const [listError, setListError] = useState<string | null>(null)
+  const [tab, setTab] = useState<Tab>('people')
+  const [person, setPerson] = useState<Person | null>(null)
+  const [role, setRole] = useState<Role | null>(null)
 
-  const [query, setQuery] = useState('')
-  const [searching, setSearching] = useState(false)
-  const [searchResult, setSearchResult] = useState<AdminPerson | null>(null)
-  const [searchError, setSearchError] = useState<string | null>(null)
-
-  const [busyId, setBusyId] = useState<string | null>(null)
-
-  // One lookup for every name on screen — the list, and whoever the search box turned
-  // up. Asked for all of them at once rather than per row, which is what keeps a list of
-  // twenty names one request. See `usePlayerFactors`: the answer is not kept live,
-  // because a career average does not move far enough to change a colour.
-  const shownIds =
-    searchResult === null || rows.some((row) => row.id === searchResult.id)
-      ? rows.map((row) => row.id)
-      : [...rows.map((row) => row.id), searchResult.id]
-  const factorsOf = usePlayerFactors(shownIds.length === 0 ? EMPTY_IDS : shownIds)
-
-  useEffect(() => {
-    void (async () => {
-      const res = await listAdminPeople()
-      setRows(res.rows)
-      setListError(res.error)
-      setLoading(false)
-    })()
-  }, [])
-
-  const handleSearch = async () => {
-    const trimmed = query.trim()
-    if (trimmed === '') return
-    setSearching(true)
-    setSearchError(null)
-    setSearchResult(null)
-    const res = await findPersonByNickname(trimmed)
-    setSearching(false)
-    if (res.error !== null) {
-      setSearchError(res.error)
-    } else if (res.row === null) {
-      setSearchError('No profile with that nickname.')
-    } else {
-      setSearchResult(res.row)
-    }
+  // One counter rather than three reload callbacks: every list here is a snapshot, and
+  // an edit on a detail screen has to be able to tell the list behind it to read again.
+  const [epoch, setEpoch] = useState(0)
+  const refresh = () => {
+    setEpoch((n) => n + 1)
   }
 
-  // Shared by the search result and every row in the list below: write the role, then
-  // patch whichever of the two places shows this profile rather than reloading either —
-  // the list is a snapshot, and a role granted from the search box belongs on it too.
-  const handlePick = async (profile: AdminPerson, role: string | null) => {
-    setBusyId(profile.id)
-    const res = await setUserRole(profile.id, role)
-    setBusyId(null)
-    if (res.error !== null) return
-    const updated: AdminPerson = { ...profile, role }
-    setSearchResult((current) => (current?.id === profile.id ? updated : current))
-    setRows((current) => {
-      const withoutRole = role === null
-      const existed = current.some((row) => row.id === profile.id)
-      if (withoutRole) return current.filter((row) => row.id !== profile.id)
-      if (existed) return current.map((row) => (row.id === profile.id ? updated : row))
-      return [...current, updated]
-    })
+  if (person !== null) {
+    return (
+      <AdminPerson
+        person={person}
+        onChanged={refresh}
+        onBack={() => {
+          setPerson(null)
+        }}
+        onClose={onClose}
+      />
+    )
+  }
+
+  if (role !== null) {
+    return (
+      <AdminRole
+        role={role}
+        onChanged={refresh}
+        onBack={() => {
+          setRole(null)
+        }}
+        onClose={onClose}
+      />
+    )
   }
 
   return (
@@ -189,104 +83,43 @@ export function AdminOverlay({ onClose }: { onClose: () => void }) {
         selectable={false}
         className="mb-4 font-mono text-[10px] font-bold tracking-[1px] text-dim"
       >
-        <Trans>WHO HOLDS A ROLE, AND WHO SHOULD</Trans>
+        <Trans>WHO SEES WHAT</Trans>
       </Text>
 
-      <View className="mb-2 flex-row gap-2">
-        <TextInput
-          value={query}
-          onChangeText={(next) => {
-            setQuery(next)
-            setSearchError(null)
-          }}
-          placeholder="nickname"
-          autoCapitalize="none"
-          autoCorrect={false}
-          returnKeyType="search"
-          onSubmitEditing={() => {
-            void handleSearch()
-          }}
-          className="flex-1 rounded-lg border border-dim/30 bg-background px-3 py-2 font-mono font-bold tracking-[1px] text-primary"
-        />
-        <TrackedPressable
-          id="admin.set_role"
-          onPress={() => {
-            void handleSearch()
-          }}
-          disabled={searching || query.trim() === ''}
-          className={cn(
-            'items-center justify-center rounded-lg bg-strong px-4',
-            (searching || query.trim() === '') && 'opacity-40',
-          )}
-        >
-          <Text
-            selectable={false}
-            className="font-mono text-[11px] font-black tracking-[1px] text-on-strong"
-          >
-            <Trans>FIND</Trans>
-          </Text>
-        </TrackedPressable>
+      <View className="mb-4 flex-row gap-1.5">
+        {TABS.map((option) => {
+          const active = option === tab
+          return (
+            <TrackedPressable
+              key={option}
+              id="admin.tab"
+              onPress={() => {
+                setTab(option)
+              }}
+              className={cn(
+                'rounded-lg border px-3 py-1.5',
+                active ? 'border-strong bg-strong' : 'border-dim/30',
+              )}
+            >
+              <Text
+                selectable={false}
+                className={cn(
+                  'font-mono text-[10px] font-black tracking-[1px]',
+                  active ? 'text-on-strong' : 'text-dim',
+                )}
+              >
+                {TAB_LABEL[option]}
+              </Text>
+            </TrackedPressable>
+          )
+        })}
       </View>
 
-      {searching && <ActivityIndicator className="my-2" />}
-      {searchError !== null && (
-        <Text
-          selectable={false}
-          className="mb-2 font-mono text-[10px] font-bold tracking-[0.5px] text-red-500"
-        >
-          {searchError}
-        </Text>
+      {tab === 'people' && <AdminPeople epoch={epoch} onOpenPerson={setPerson} />}
+      {tab === 'roles' && (
+        <AdminRoles epoch={epoch} onOpenRole={setRole} onChanged={refresh} />
       )}
-      {searchResult !== null && (
-        <View className="mb-4 rounded-xl border border-dim/20 px-3">
-          <ProfileRow
-            profile={searchResult}
-            factors={factorsOf(searchResult.id)}
-            busy={busyId === searchResult.id}
-            onPick={(role) => {
-              void handlePick(searchResult, role)
-            }}
-          />
-        </View>
-      )}
-
-      <Text
-        selectable={false}
-        className="mb-1 font-mono text-[10px] font-bold tracking-[1px] text-dim"
-      >
-        <Trans>EVERYONE WITH A ROLE</Trans>
-      </Text>
-      {loading ? (
-        <ActivityIndicator className="my-4" />
-      ) : listError !== null ? (
-        <Text selectable={false} className="font-mono text-[11px] font-bold text-red-500">
-          {listError}
-        </Text>
-      ) : (
-        <FlatList
-          data={rows}
-          keyExtractor={(row) => row.id}
-          renderItem={({ item }) => (
-            <ProfileRow
-              profile={item}
-              factors={factorsOf(item.id)}
-              busy={busyId === item.id}
-              onPick={(role) => {
-                void handlePick(item, role)
-              }}
-            />
-          )}
-          showsVerticalScrollIndicator={false}
-          ListEmptyComponent={
-            <Text
-              selectable={false}
-              className="font-mono text-[12px] font-medium text-dim"
-            >
-              <Trans>Nobody holds a role yet.</Trans>
-            </Text>
-          }
-        />
-      )}
+      {tab === 'features' && <AdminFeatures epoch={epoch} onChanged={refresh} />}
 
       <TrackedPressable
         id="admin.done"

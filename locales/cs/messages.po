@@ -173,7 +173,7 @@ msgstr "— NEDOSTUPNÉ —"
 msgid "???"
 msgstr "???"
 
-#: components/overlays/admin-overlay.tsx:96
+#: components/overlays/admin-people.tsx:42
 msgid "(no nickname)"
 msgstr "(bez přezdívky)"
 
@@ -316,7 +316,7 @@ msgstr "PŘIDEJ PŘEZDÍVKU"
 msgid "ADDED TO YOUR FORTUNE"
 msgstr "PŘIČTENO K JMĚNÍ"
 
-#: components/overlays/admin-overlay.tsx:189
+#: components/overlays/admin-overlay.tsx:80
 #: components/overlays/menu-overlay.tsx:649
 msgid "ADMIN"
 msgstr "ADMIN"
@@ -507,7 +507,7 @@ msgstr "PŘIPOJ SE K INTERNETU A HRAJ S PŘÁTELI"
 msgid "CONTINUE"
 msgstr "POKRAČOVAT"
 
-#: app/(tabs)/index.tsx:1751
+#: app/(tabs)/index.tsx:1773
 msgid "Continue the tutorial"
 msgstr "Pokračovat v tutoriálu"
 
@@ -554,7 +554,7 @@ msgstr "Zobrazit hodnotu × řádek × sloupec"
 msgid "Do something nobody thought to ask for."
 msgstr "Udělej něco, co nikoho nenapadlo chtít."
 
-#: components/overlays/admin-overlay.tsx:304
+#: components/overlays/admin-overlay.tsx:134
 #: components/overlays/advanced-options-overlay.tsx:160
 #: components/overlays/dev-overlay.tsx:132
 #: components/overlays/news-archive-overlay.tsx:52
@@ -624,9 +624,9 @@ msgstr "Každý cíl je vesnice se jménem a krajina mezi nimi se kreslí, jak s
 msgid "Everyone who hits is ranked by how few moves it took."
 msgstr "Každý, kdo trefí, se seřadí podle toho, na kolik tahů to zvládl."
 
-#: components/overlays/admin-overlay.tsx:260
-msgid "EVERYONE WITH A ROLE"
-msgstr "VŠICHNI S ROLÍ"
+#: components/overlays/admin-people.tsx:192
+msgid "EVERYONE WITH A ROLE OR AN OVERRIDE"
+msgstr "VŠICHNI S ROLÍ NEBO VÝJIMKOU"
 
 #: components/overlays/news-archive-overlay.tsx:27
 msgid "EVERYTHING THAT’S CHANGED"
@@ -664,7 +664,7 @@ msgstr "PÁD"
 msgid "FEWEST MOVES"
 msgstr "NEJMÉNĚ TAHŮ"
 
-#: components/overlays/admin-overlay.tsx:229
+#: components/overlays/admin-people.tsx:162
 msgid "FIND"
 msgstr "NAJÍT"
 
@@ -911,6 +911,10 @@ msgstr "PŘIPOJIT SE KÓDEM"
 msgid "joined this month"
 msgstr "členem od tohoto měsíce"
 
+#: components/tutorial-curtain.tsx:119
+msgid "JUST THE TUTORIAL - NOTHING HERE IS SCORED"
+msgstr "JEN VÝUKA - NIC SE TU NEPOČÍTÁ"
+
 #: constants/achievements.ts:543
 msgid "Keep a single run going for a whole hour."
 msgstr "Udrž jednu hru v běhu celou hodinu."
@@ -967,7 +971,7 @@ msgstr "AŤ ZAČNE DOBRODRUŽSTVÍ"
 msgid "Let us watch replays to fix bugs"
 msgstr "Nech nás sledovat záznamy a opravovat chyby"
 
-#: components/tutorial-curtain.tsx:104
+#: components/tutorial-curtain.tsx:109
 msgid "LET'S LEARN THE GAME"
 msgstr "POJĎME SE NAUČIT HRU"
 
@@ -1095,7 +1099,7 @@ msgstr "NE, DÍKY"
 msgid "Nobody has taken anything off you."
 msgstr "Nikdo ti nic nesebral."
 
-#: components/overlays/admin-overlay.tsx:288
+#: components/overlays/admin-people.tsx:219
 msgid "Nobody holds a role yet."
 msgstr "Zatím nikdo nemá roli."
 
@@ -1919,13 +1923,13 @@ msgstr "CO JE NOVÉHO"
 msgid "When the red reaches you it drags you back one crossroad — and the ways you find there are the ones you left."
 msgstr "Až k tobě červená dojde, stáhne tě o jednu křižovatku zpět — a čekají tam tytéž cesty jako předtím."
 
-#: components/overlays/admin-overlay.tsx:195
-msgid "WHO HOLDS A ROLE, AND WHO SHOULD"
-msgstr "KDO MÁ ROLI A KDO BY MĚL"
-
 #: constants/news.ts:30
 msgid "Who is that, anyway"
 msgstr "Kdo to vlastně je"
+
+#: components/overlays/admin-overlay.tsx:86
+msgid "WHO SEES WHAT"
+msgstr "KDO CO VIDÍ"
 
 #: constants/achievements.ts:480
 msgid "Win a run in a room."

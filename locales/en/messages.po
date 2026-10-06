@@ -173,7 +173,7 @@ msgstr "— UNAVAILABLE —"
 msgid "???"
 msgstr "???"
 
-#: components/overlays/admin-overlay.tsx:96
+#: components/overlays/admin-people.tsx:42
 msgid "(no nickname)"
 msgstr "(no nickname)"
 
@@ -316,7 +316,7 @@ msgstr "ADD YOUR NICKNAME"
 msgid "ADDED TO YOUR FORTUNE"
 msgstr "ADDED TO YOUR FORTUNE"
 
-#: components/overlays/admin-overlay.tsx:189
+#: components/overlays/admin-overlay.tsx:80
 #: components/overlays/menu-overlay.tsx:649
 msgid "ADMIN"
 msgstr "ADMIN"
@@ -507,7 +507,7 @@ msgstr "CONNECT TO THE INTERNET TO PLAY WITH FRIENDS"
 msgid "CONTINUE"
 msgstr "CONTINUE"
 
-#: app/(tabs)/index.tsx:1751
+#: app/(tabs)/index.tsx:1773
 msgid "Continue the tutorial"
 msgstr "Continue the tutorial"
 
@@ -554,7 +554,7 @@ msgstr "Display value × row × column"
 msgid "Do something nobody thought to ask for."
 msgstr "Do something nobody thought to ask for."
 
-#: components/overlays/admin-overlay.tsx:304
+#: components/overlays/admin-overlay.tsx:134
 #: components/overlays/advanced-options-overlay.tsx:160
 #: components/overlays/dev-overlay.tsx:132
 #: components/overlays/news-archive-overlay.tsx:52
@@ -624,9 +624,9 @@ msgstr "Every target is a village with a name, and the country between them is d
 msgid "Everyone who hits is ranked by how few moves it took."
 msgstr "Everyone who hits is ranked by how few moves it took."
 
-#: components/overlays/admin-overlay.tsx:260
-msgid "EVERYONE WITH A ROLE"
-msgstr "EVERYONE WITH A ROLE"
+#: components/overlays/admin-people.tsx:192
+msgid "EVERYONE WITH A ROLE OR AN OVERRIDE"
+msgstr "EVERYONE WITH A ROLE OR AN OVERRIDE"
 
 #: components/overlays/news-archive-overlay.tsx:27
 msgid "EVERYTHING THAT’S CHANGED"
@@ -664,7 +664,7 @@ msgstr "FELL"
 msgid "FEWEST MOVES"
 msgstr "FEWEST MOVES"
 
-#: components/overlays/admin-overlay.tsx:229
+#: components/overlays/admin-people.tsx:162
 msgid "FIND"
 msgstr "FIND"
 
@@ -911,6 +911,10 @@ msgstr "JOIN WITH CODE"
 msgid "joined this month"
 msgstr "joined this month"
 
+#: components/tutorial-curtain.tsx:119
+msgid "JUST THE TUTORIAL - NOTHING HERE IS SCORED"
+msgstr "JUST THE TUTORIAL - NOTHING HERE IS SCORED"
+
 #: constants/achievements.ts:543
 msgid "Keep a single run going for a whole hour."
 msgstr "Keep a single run going for a whole hour."
@@ -967,7 +971,7 @@ msgstr "LET THE ADVENTURE BEGIN"
 msgid "Let us watch replays to fix bugs"
 msgstr "Let us watch replays to fix bugs"
 
-#: components/tutorial-curtain.tsx:104
+#: components/tutorial-curtain.tsx:109
 msgid "LET'S LEARN THE GAME"
 msgstr "LET'S LEARN THE GAME"
 
@@ -1095,7 +1099,7 @@ msgstr "NO THANKS"
 msgid "Nobody has taken anything off you."
 msgstr "Nobody has taken anything off you."
 
-#: components/overlays/admin-overlay.tsx:288
+#: components/overlays/admin-people.tsx:219
 msgid "Nobody holds a role yet."
 msgstr "Nobody holds a role yet."
 
@@ -1919,13 +1923,13 @@ msgstr "WHAT’S NEW"
 msgid "When the red reaches you it drags you back one crossroad — and the ways you find there are the ones you left."
 msgstr "When the red reaches you it drags you back one crossroad — and the ways you find there are the ones you left."
 
-#: components/overlays/admin-overlay.tsx:195
-msgid "WHO HOLDS A ROLE, AND WHO SHOULD"
-msgstr "WHO HOLDS A ROLE, AND WHO SHOULD"
-
 #: constants/news.ts:30
 msgid "Who is that, anyway"
 msgstr "Who is that, anyway"
+
+#: components/overlays/admin-overlay.tsx:86
+msgid "WHO SEES WHAT"
+msgstr "WHO SEES WHAT"
 
 #: constants/achievements.ts:480
 msgid "Win a run in a room."
