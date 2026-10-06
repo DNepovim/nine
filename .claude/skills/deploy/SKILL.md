@@ -1,6 +1,6 @@
 ---
 name: deploy
-description: Deploy the app to production — runs the local check suite, then triggers the manual EAS workflow (.eas/workflows/deploy.yml) which builds the web bundle and publishes it to EAS Hosting. Use only when the user explicitly asks to deploy, release, or ship to production.
+description: Deploy the app to production — runs the local check suite, asks whether to push pending database migrations, then triggers the manual EAS workflow (.eas/workflows/deploy.yml) which builds the web bundle and publishes it to EAS Hosting. Use only when the user explicitly asks to deploy, release, or ship to production.
 ---
 
 # Deploy
@@ -49,25 +49,65 @@ deploy on a red suite.
 If what you just checked is the working tree and the working tree differs from
 `origin/main`, say so — you verified a different thing than the one shipping.
 
-## Step 3 — Migrations
-
-```bash
-git status --short supabase/migrations/
-git diff --stat origin/main -- supabase/migrations/
-```
+## Step 3 — Migrations (ask every time)
 
 Code that reads a column the production database doesn't have is a broken app,
-not a slow rollout. If any migration is new or unpushed, ask with
-**`AskUserQuestion`** whether to `pnpm db:push` first, and wait for it to
-succeed before deploying. If it fails, report and stop.
+not a slow rollout. **Never deploy past this step without putting the question
+to the user.**
 
-If nothing touched `supabase/migrations/`, skip this silently.
+Ask the database what it actually has — not git. A migration can be committed
+and already applied, or uncommitted and never applied, and the working tree
+can't tell you which:
+
+```bash
+pnpm exec supabase migration list --linked
+```
+
+The `Local` / `Remote` columns are the answer: any row with a local version and
+no remote one is **not yet in production**. The linked project _is_ production
+(`supabase/.temp/project-ref`), so `pnpm db:push` writes to the live database —
+there is no staging rung below it, and no undo.
+
+### If anything is unapplied
+
+List the pending migrations by filename, then ask with **`AskUserQuestion`**:
+
+- **"Push them, then deploy"** — run `pnpm db:push` and wait for it to succeed.
+  Migrations go **before** the deploy: new code reading an old schema breaks,
+  old code ignoring a new column does not. (Recommended)
+- **"Deploy without pushing"** — only sane when the deploy doesn't depend on
+  them. Say which pending migrations you're leaving behind before continuing.
+- **"Cancel"** — stop entirely.
+
+Show what will run before pushing if the user wants to see it:
+
+```bash
+pnpm exec supabase db push --dry-run
+```
+
+If `db:push` fails, **report the error and stop** — do not deploy code that
+expects a schema the push didn't deliver.
+
+### If everything is applied
+
+Say so in one line — "no pending migrations, production schema is current" —
+and move on. Don't skip it silently; the user wants to see that this was
+checked.
+
+### If the check itself fails
+
+A CLI that isn't linked, isn't authenticated, or can't reach the project tells
+you **nothing** about the schema. Do not read that as "clean". Report what
+failed and ask whether to deploy blind or stop.
 
 ## Step 4 — Confirm
 
-Ask with **`AskUserQuestion`**, naming the commit from Step 1:
+Ask with **`AskUserQuestion`**, naming the commit from Step 1 and what Step 3
+settled:
 
-- **"Deploy `<sha> <subject>` to production"**
+- **"Deploy `<sha> <subject>` to production"** — and in the description, say
+  where the schema stands: migrations pushed, nothing pending, or pending and
+  deliberately skipped.
 - **"Cancel"**
 
 No confirmation, no deploy.
