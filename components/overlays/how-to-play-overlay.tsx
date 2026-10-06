@@ -214,6 +214,56 @@ function Bullet({ color, children }: { color: string; children: ReactNode }) {
   )
 }
 
+// The offer to stop reading and play, straight under the contents list. It wears
+// Trainee's CTA gradient because that is the board it lands on, and it says what the
+// tutorial takes off that board instead of repeating what the label already says.
+//
+// A row rather than the centred block it used to be: at the top of a page it has to
+// hold its own against the title above it, so it takes the full width, puts the mark
+// of a run on the left and the arrow out of the page on the right, and carries its own
+// caption inside rather than hanging one underneath.
+function TryItButton({ onPress }: { onPress: () => void }) {
+  return (
+    <TrackedPressable
+      id="how_to_play.try_it"
+      onPress={onPress}
+      className="mt-5 overflow-hidden rounded-2xl"
+    >
+      <LinearGradient
+        colors={[...darkGradientOf('trainee')]}
+        start={{ x: 0, y: 0.5 }}
+        end={{ x: 1, y: 0.5 }}
+        className="flex-row items-center gap-3 px-4 py-3.5"
+      >
+        <View
+          className="h-9 w-9 items-center justify-center rounded-full"
+          style={{ backgroundColor: 'rgba(255,255,255,0.14)' }}
+        >
+          <Ionicons name="play" size={15} color="#FFFFFF" />
+        </View>
+        <View className="flex-1">
+          <Text
+            selectable={false}
+            className="font-mono text-[13px] font-black tracking-[2px] text-on-strong"
+          >
+            <Trans>TRY IT</Trans>
+          </Text>
+          {/* The one caption that cannot be text-dim: it sits on the gradient, not on
+              the page, so it takes a thinned white instead of the page's grey. */}
+          <Text
+            selectable={false}
+            className="mt-1 font-mono text-[9px] font-bold tracking-[1.5px]"
+            style={{ color: 'rgba(255,255,255,0.6)' }}
+          >
+            <Trans>ONE TARGET · NO CLOCK · NO LIVES</Trans>
+          </Text>
+        </View>
+        <Ionicons name="chevron-forward" size={16} color="rgba(255,255,255,0.5)" />
+      </LinearGradient>
+    </TrackedPressable>
+  )
+}
+
 // ── Graphics ────────────────────────────────────────────────────────────────
 
 // The 3×3 grid of cell weights with row / column order headers, so it reads as
@@ -435,6 +485,8 @@ export function HowToPlayOverlay({
           </Text>
 
           <Contents sections={sections} onJump={jump} />
+
+          <TryItButton onPress={onTryTutorial} />
 
           {/* Goal */}
           <SectionHeader section="goal" onMeasure={measure} />
@@ -735,42 +787,15 @@ export function HowToPlayOverlay({
             </Bullet>
           ))}
 
-          {/* Done — and, above it, the other way out.
-            
-              A guide can be read, but the dial is what teaches it, so the offer to go and
-              play comes first. It wears Trainee's CTA gradient because that is the board
-              it lands on, and the line under it says what the tutorial takes off that
-              board rather than repeating what the button already says. */}
+          {/* Done. The other way out — the offer to go and play — is at the top of the
+              page now rather than under the last tip: a guide can be read, but the dial
+              is what teaches it, and an offer nobody scrolls far enough to find is no
+              offer at all. See TryItButton. */}
           <View className="mt-10 self-center" style={{ width: 224 }}>
-            <TrackedPressable
-              id="how_to_play.try_it"
-              onPress={onTryTutorial}
-              className="overflow-hidden rounded-2xl"
-            >
-              <LinearGradient
-                colors={[...darkGradientOf('trainee')]}
-                start={{ x: 0, y: 0.5 }}
-                end={{ x: 1, y: 0.5 }}
-                className="items-center py-4"
-              >
-                <Text
-                  selectable={false}
-                  className="font-mono text-[13px] font-black tracking-[2px] text-on-strong"
-                >
-                  <Trans>TRY IT</Trans>
-                </Text>
-              </LinearGradient>
-            </TrackedPressable>
-            <Text
-              selectable={false}
-              className="mt-2 text-center font-mono text-[9px] font-bold tracking-[1.5px] text-dim"
-            >
-              <Trans>ONE TARGET · NO CLOCK · NO LIVES</Trans>
-            </Text>
             <TrackedPressable
               id="how_to_play.got_it"
               onPress={onClose}
-              className="mt-4 items-center rounded-2xl bg-strong py-4"
+              className="items-center rounded-2xl bg-strong py-4"
             >
               <Text
                 selectable={false}
