@@ -31,10 +31,11 @@ import { compactText } from '@/lib/compact-number'
 import { formatGameTime } from '@/lib/duration'
 import { monthsSince } from '@/lib/format-date'
 import { saveMotto } from '@/lib/leaderboard'
+import { NO_FACTORS } from '@/lib/name-gradient'
 import {
-  averagePercent,
   boardRows,
   lifetimeOf,
+  nameFactorsOf,
   type PlayerProfile,
 } from '@/lib/player-profile'
 import { gradientOf, labelOf, SCORED_MODES, type ScoredMode } from '@/modes'
@@ -149,11 +150,9 @@ export function PlayerProfileOverlay({
   const lifetime = profile === null ? null : lifetimeOf(profile.totals, profile.winnings)
   const rows = profile === null ? [] : boardRows(profile)
   // Both factors over every hit the player has landed, in either mode — the same pair
-  // the game over screen shows for a single run.
-  const avgAccuracy =
-    lifetime === null ? null : averagePercent(lifetime.accSum, lifetime.hits)
-  const avgSpeed =
-    lifetime === null ? null : averagePercent(lifetime.spdSum, lifetime.hits)
+  // the game over screen shows for a single run, and the pair the name above is drawn in.
+  const { avgAccuracy, avgSpeed } =
+    lifetime === null ? NO_FACTORS : nameFactorsOf(lifetime)
   const percent = (value: number | null): string => (value === null ? '—' : `${value}%`)
   // A device running ahead of this build can hold an achievement this one has never heard
   // of, and the server counts what it was sent. Held to the catalogue so the pair always

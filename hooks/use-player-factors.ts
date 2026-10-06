@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 
 import { fetchPlayerFactors, type PlayerFactorsRow } from '@/lib/leaderboard'
-import type { NameFactors } from '@/lib/name-gradient'
+import { NO_FACTORS, type NameFactors } from '@/lib/name-gradient'
 
 // Nothing known about anybody, which every consumer reads as an uncoloured name. Kept as
 // one frozen instance so a component holding it in state does not re-render on each pass.
@@ -10,10 +10,6 @@ const NONE: ReadonlyMap<string, PlayerFactorsRow> = new Map()
 // No ids to ask about, module-level so it is the same array every render and the effect
 // below does not treat an empty request as a new one each time.
 export const EMPTY_IDS: readonly string[] = []
-
-// The empty answer, for an id nobody has asked about yet. Also module-level so the object
-// identity is stable — this is handed straight to `GradientName` as props.
-const UNKNOWN: NameFactors = { avgAccuracy: null, avgSpeed: null }
 
 // What a set of players' names should be coloured by, for the surfaces that draw a name
 // without a board row behind it: the player's own row below the board's cut, the intro
@@ -58,7 +54,7 @@ export function usePlayerFactors(
   // no user, a room tile with nobody in it — without each of them writing the guard.
   return (id: string | null): NameFactors => {
     const row = id === null ? undefined : factors.get(id)
-    if (row === undefined) return UNKNOWN
+    if (row === undefined) return NO_FACTORS
     return { avgAccuracy: row.avg_acc, avgSpeed: row.avg_spd }
   }
 }

@@ -2,8 +2,10 @@ import { Trans } from '@lingui/react/macro'
 import { useEffect, useState } from 'react'
 import { ActivityIndicator, FlatList, Text, TextInput, View } from 'react-native'
 
+import { GradientName } from '@/components/gradient-name'
 import { ScreenLayer } from '@/components/screen'
 import { TrackedPressable } from '@/components/tracked-pressable'
+import { EMPTY_IDS, usePlayerFactors } from '@/hooks/use-player-factors'
 import {
   findProfileByNickname,
   listRoledProfiles,
@@ -11,6 +13,7 @@ import {
   type RoledProfile,
 } from '@/lib/admin-roles'
 import { cn } from '@/lib/cn'
+import type { NameFactors } from '@/lib/name-gradient'
 import { ROLES, type Role } from '@/lib/role'
 
 const ROLE_LABEL: Record<Role, string> = {
@@ -68,21 +71,39 @@ function RolePicker({
 
 function ProfileRow({
   profile,
+  factors,
   busy,
   onPick,
 }: {
   profile: RoledProfile
+  // What this profile's name is coloured by, from the list's one lookup. A player is
+  // the same colour here as on a board row, and the handful of people who open this
+  // screen are the ones most likely to recognise each other by it.
+  factors: NameFactors
   busy: boolean
   onPick: (role: Role | null) => void
 }) {
   return (
     <View className="gap-1.5 border-b border-dim/10 py-3">
-      <Text
-        selectable={false}
-        className="font-mono text-[12px] font-black tracking-[0.5px] text-primary"
-      >
-        {profile.nickname ?? <Trans>(no nickname)</Trans>}
-      </Text>
+      {/* A profile with no nickname is not a name to draw — it is this screen saying
+          there is nothing there, so it stays in the plain ink the rest of the row is in
+          rather than wearing a gradient belonging to somebody. */}
+      {profile.nickname === null ? (
+        <Text
+          selectable={false}
+          className="font-mono text-[12px] font-black tracking-[0.5px] text-primary"
+        >
+          <Trans>(no nickname)</Trans>
+        </Text>
+      ) : (
+        <GradientName
+          nickname={profile.nickname}
+          avgAccuracy={factors.avgAccuracy}
+          avgSpeed={factors.avgSpeed}
+          numberOfLines={1}
+          className="font-mono text-[12px] font-black tracking-[0.5px]"
+        />
+      )}
       <RolePicker current={profile.role} busy={busy} onPick={onPick} />
     </View>
   )
@@ -103,6 +124,16 @@ export function AdminOverlay({ onClose }: { onClose: () => void }) {
   const [searchError, setSearchError] = useState<string | null>(null)
 
   const [busyId, setBusyId] = useState<string | null>(null)
+
+  // One lookup for every name on screen — the list, and whoever the search box turned
+  // up. Asked for all of them at once rather than per row, which is what keeps a list of
+  // twenty names one request. See `usePlayerFactors`: the answer is not kept live,
+  // because a career average does not move far enough to change a colour.
+  const shownIds =
+    searchResult === null || rows.some((row) => row.id === searchResult.id)
+      ? rows.map((row) => row.id)
+      : [...rows.map((row) => row.id), searchResult.id]
+  const factorsOf = usePlayerFactors(shownIds.length === 0 ? EMPTY_IDS : shownIds)
 
   useEffect(() => {
     void (async () => {
@@ -213,6 +244,7 @@ export function AdminOverlay({ onClose }: { onClose: () => void }) {
         <View className="mb-4 rounded-xl border border-dim/20 px-3">
           <ProfileRow
             profile={searchResult}
+            factors={factorsOf(searchResult.id)}
             busy={busyId === searchResult.id}
             onPick={(role) => {
               void handlePick(searchResult, role)
@@ -240,6 +272,7 @@ export function AdminOverlay({ onClose }: { onClose: () => void }) {
           renderItem={({ item }) => (
             <ProfileRow
               profile={item}
+              factors={factorsOf(item.id)}
               busy={busyId === item.id}
               onPick={(role) => {
                 void handlePick(item, role)

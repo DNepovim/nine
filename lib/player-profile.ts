@@ -8,6 +8,7 @@ import {
   type Medal,
   type MedalPeriod,
 } from '@/lib/medals'
+import type { NameFactors } from '@/lib/name-gradient'
 import { winningsValue, type BoardWinnings } from '@/lib/winnings'
 import {
   DIFFICULTIES,
@@ -193,6 +194,17 @@ export function lifetimeOf(
   )
   return { ...sum, fortune: Math.round(sum.fortune + winningsValue(winnings)) }
 }
+
+// What a career's name is coloured by: the same two lifetime averages the profile prints
+// as AVG ACC and AVG SPD, handed to `GradientName` as they are.
+//
+// Derived here rather than at each surface that writes the name, so the colour and the
+// numbers that explain it are one calculation — a screen that recomputed them from its
+// own sums would eventually disagree with the profile the player can go and read.
+export const nameFactorsOf = (lifetime: Lifetime): NameFactors => ({
+  avgAccuracy: averagePercent(lifetime.accSum, lifetime.hits),
+  avgSpeed: averagePercent(lifetime.spdSum, lifetime.hits),
+})
 
 // The six boards in the app's own order — mode, then difficulty — whether or not the
 // player has ever touched them. A board never played is a row of dashes, which says

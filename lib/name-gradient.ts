@@ -42,6 +42,12 @@ export type NameFactors = {
   avgSpeed: number | null
 }
 
+// Nothing known about a player, which draws their name in plain grey. One frozen value
+// rather than a fresh object per caller, so a component holding it does not re-render on
+// every pass and a surface that cannot answer for a player says so the same way as the
+// next one.
+export const NO_FACTORS: NameFactors = { avgAccuracy: null, avgSpeed: null }
+
 // The average that earns a hue at full strength. Averages can exceed this — the speed
 // factor pays a bonus above the fast band and `averagePercent` deliberately does not
 // clamp — but there is no colour past the hue itself, so the scale tops out here.

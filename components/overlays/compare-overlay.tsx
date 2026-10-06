@@ -1,6 +1,7 @@
 import { Trans, useLingui } from '@lingui/react/macro'
 import { ScrollView, Text, View } from 'react-native'
 
+import { GradientName } from '@/components/gradient-name'
 import { CompareBoardRow } from '@/components/overlays/compare-board-row'
 import { CompareStatRow } from '@/components/overlays/compare-stat-row'
 import { ModalCard } from '@/components/overlays/modal-card'
@@ -8,8 +9,14 @@ import { TrackedPressable } from '@/components/tracked-pressable'
 import { usePlayerProfile } from '@/hooks/use-player-profile'
 import { useViewport } from '@/hooks/use-viewport'
 import { compareProfiles } from '@/lib/compare'
-import type { PlayerProfile } from '@/lib/player-profile'
+import { lifetimeOf, nameFactorsOf, type PlayerProfile } from '@/lib/player-profile'
+import { shortName } from '@/lib/short-name'
 import { gradientOf, labelOf } from '@/modes'
+
+// How much of the other player's name the right-hand column holds. The column is 72px
+// wide and the heading is 8px mono on 1px of tracking, which comes to twelve characters
+// — a nickname may be sixteen, so a long one is cut and marked.
+const HEAD_CHARS = 12
 
 // The two careers side by side, opened from the bottom of a profile.
 //
@@ -34,6 +41,15 @@ export function CompareOverlay({
 
   const comparison = myProfile === null ? null : compareProfiles(myProfile, theirProfile)
 
+  // The right column's heading is the other player's name, so it is drawn in the
+  // gradient their own averages earn them — the same colour it wore on the card this
+  // table opened from, and on the row that opened that. The two averages behind it are
+  // the AVG ACC and AVG SPD rows of this very table, which is as close as the colour
+  // ever gets to explaining itself outside the profile.
+  const theirFactors = nameFactorsOf(
+    lifetimeOf(theirProfile.totals, theirProfile.winnings),
+  )
+
   // `replacing`: this table only ever opens from the bottom of a profile card, and it
   // opens under that card. It is covered for the length of the profile's exit, so it is
   // there in full the moment that card clears rather than fading up through it.
@@ -54,13 +70,16 @@ export function CompareOverlay({
             >
               <Trans>YOU</Trans>
             </Text>
-            <Text
-              selectable={false}
+            {/* Cut by characters rather than ellipsised by the platform: a gradient
+                name is one `Text` per character, and a nested run is not truncated
+                reliably — see `shortName`. Twelve is what 72px of this face holds. */}
+            <GradientName
+              nickname={shortName(theirProfile.nickname ?? '…', HEAD_CHARS)}
+              avgAccuracy={theirFactors.avgAccuracy}
+              avgSpeed={theirFactors.avgSpeed}
               numberOfLines={1}
-              className="w-[72px] text-right font-mono text-[8px] font-bold tracking-[1px] text-dim"
-            >
-              {theirProfile.nickname ?? '…'}
-            </Text>
+              className="w-[72px] text-right font-mono text-[8px] font-bold tracking-[1px]"
+            />
           </View>
 
           {/* The same shape the profile card uses: the scroll gives way inside the card's
