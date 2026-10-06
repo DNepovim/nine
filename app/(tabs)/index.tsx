@@ -204,6 +204,12 @@ type MenuOverlayName =
 // behind it rather than the screen they were opened from.
 type TitleDialog = 'none' | 'medals' | 'achievements'
 
+// The three ways into the tutorial: the first launch opening on it by itself, TRY IT at
+// the end of the guide, and the dev sidebar. All three go through the same curtain and
+// deal the same run; what the door decides is what the funnel is told — and 'dev' is told
+// nothing. The two a player can reach are the `from` values `run_started` already names.
+type TutorialDoor = 'welcome' | 'guide' | 'dev'
+
 // Overlay names → the screen names the warehouse knows, so the event table stays the
 // only place that spells them. 'none' has no row: it is a closing, not an opening.
 const OVERLAY_SCREENS = {
@@ -490,13 +496,13 @@ export default function GameScreen() {
   // are the two events START reads, and a persisted mode landing in between — the hydration
   // hooks send the same events — would otherwise deal the run somewhere else.
   const startTutorial = useCallback(
-    // What to report the run as, or `null` for one nobody chose: a run dealt from the dev
+    // Which door it came through. 'dev' is reported nowhere: a run dealt from the dev
     // sidebar would otherwise show up in the funnel as a player taking the tutorial.
-    (from: 'welcome' | 'guide' | null) => {
+    (from: TutorialDoor) => {
       send({ type: 'SET_MODE', mode: WELCOME_BOARD.mode })
       send({ type: 'SET_DIFFICULTY', difficulty: WELCOME_BOARD.difficulty })
       send({ type: 'START', now: Date.now(), runId: newRunId(), tutorial: true })
-      if (from !== null) track('run_started', { ...WELCOME_BOARD, from })
+      if (from !== 'dev') track('run_started', { ...WELCOME_BOARD, from })
     },
     [send],
   )
@@ -518,8 +524,8 @@ export default function GameScreen() {
     pauseRun('dev')
     send({ type: 'MENU' })
     setMenuOverlay('none')
-    startTutorial(null)
-  }, [tutorialsAsked, send, startTutorial])
+    setCurtain('dev')
+  }, [tutorialsAsked, send])
 
   // A device nobody has played on opens into a run rather than into the intro: the
   // fastest thing the app can say about itself is the game itself. What it opens is the
@@ -541,12 +547,17 @@ export default function GameScreen() {
     send({ type: 'SET_DIFFICULTY', difficulty: WELCOME_BOARD.difficulty })
   }, [welcome.pending, isMenu, send])
 
-  // A first launch does not go straight from the logo into the lesson. It pauses on a
-  // curtain that says what is about to happen, and the lesson fades up through it.
+  // No lesson goes straight onto a board. Whichever door it came through, it pauses on a
+  // curtain that says what is about to happen and that none of it is scored, and the
+  // lesson fades up through that. Which door is what `curtain` holds — the state is the
+  // door, not a boolean, because the run it deals is reported by the door it came through.
   //
-  // The curtain is raised as the splash *begins* its exit, so the logo scales away onto a
-  // screen that is already there rather than onto an empty one — the same hand-off the
-  // splash was written for. The run itself is dealt when the curtain starts to lift,
+  // This effect is only the first launch's. The other two doors raise the curtain where
+  // they are pressed: the guide's TRY IT, and the dev sidebar's request.
+  //
+  // For the welcome, the curtain is raised as the splash *begins* its exit, so the logo
+  // scales away onto a screen that is already there rather than onto an empty one — the
+  // same hand-off the splash was written for. The run is dealt when the curtain lifts,
   // which is what puts a board with a target already springing in under the last of the
   // words. See components/tutorial-curtain.tsx.
   //
@@ -556,27 +567,28 @@ export default function GameScreen() {
   // killed under them would otherwise come back to an install marked as having had a
   // tutorial it never got — so `pending` is still true for the whole hold, and only
   // `curtain` can say that one is already there.
-  const [curtain, setCurtain] = useState<'down' | 'up'>('down')
+  const [curtain, setCurtain] = useState<TutorialDoor | 'none'>('none')
   useEffect(() => {
-    if (curtain !== 'down' || !welcome.pending || !splashExiting || !isMenu) return
-    setCurtain('up')
+    if (curtain !== 'none' || !welcome.pending || !splashExiting || !isMenu) return
+    setCurtain('welcome')
   }, [curtain, welcome.pending, splashExiting, isMenu])
 
-  const { userId, nickname, role, isReady, updateNickname } = useSupabaseAuth()
+  const { userId, nickname, features, isReady, updateNickname } = useSupabaseAuth()
 
   // Analytics reuses the identity the boards already rank — the anonymous Supabase user
   // id — so an event can be read next to the score it produced. Re-runs when the
   // nickname lands or changes, which just refreshes the person's properties.
   //
-  // The opt-out runs first: whoever holds the `admin` role is kept out of the data
+  // The opt-out runs first: whoever reaches the `admin` feature is kept out of the data
   // entirely rather than filtered out of it afterwards, and ordering this ahead of
   // `identify` is what keeps an admin's own playing from ever becoming a person in the
-  // project in the first place.
+  // project in the first place. The question is the feature rather than the role,
+  // because a custom role granting `admin` opens the same screen.
   useEffect(() => {
     if (userId === null) return
-    setAdminOptOut(role === 'admin')
+    setAdminOptOut(features.has('admin'))
     identify(userId, nickname)
-  }, [userId, nickname, role])
+  }, [userId, nickname, features])
 
   // Below `useSupabaseAuth`, which it reads: the winnings half of the deck is per player,
   // and there is nothing to ask the server for until there is a player to ask about.
@@ -1253,7 +1265,7 @@ export default function GameScreen() {
     !arcadeOpen &&
     welcome.decided &&
     !welcome.pending &&
-    curtain === 'down' &&
+    curtain === 'none' &&
     // A run the app was closed on is still being asked about, or is on its way into the
     // machine. Either way the player is about to be looking at a pause screen, and the
     // start screen has no business flashing up in front of it.
@@ -1305,9 +1317,9 @@ export default function GameScreen() {
 
   return (
     // Outermost, because what a player may be shown decides whether a door is drawn at
-    // all — a question that comes before anything behind the door. Null until auth has
+    // all — a question that comes before anything behind the door. Empty until auth has
     // answered, which for all but a handful of players is the answer; see use-flags.
-    <FlagsProvider role={role}>
+    <FlagsProvider features={features}>
       {/* Every board on screen reads this one store, so the intro, the pause screen and
           the game over screen cannot show three different answers to the same question. */}
       <ChampionsProvider value={champions}>
@@ -1958,15 +1970,14 @@ export default function GameScreen() {
                   setMenuOverlay('none')
                   howToPlay.markRead()
                 }}
-                // The same run a first launch opens on, asked for this time. Reaching the
-                // bottom of the guide is reading it, whichever button is pressed there, so
-                // this marks it read exactly as GOT IT does. The board is set here for the
-                // reason the welcome sets it: these are the two events START reads, and a
-                // persisted mode landing in between would deal the run somewhere else.
+                // The same run a first launch opens on, asked for this time — and dealt
+                // the same way, from behind the curtain rather than straight onto a board.
+                // Reaching the bottom of the guide is reading it, whichever button is
+                // pressed there, so this marks it read exactly as GOT IT does.
                 onTryTutorial={() => {
                   setMenuOverlay('none')
                   howToPlay.markRead()
-                  startTutorial('guide')
+                  setCurtain('guide')
                 }}
               />
             )}
@@ -2305,20 +2316,21 @@ export default function GameScreen() {
               />
             )}
 
-            {/* ── The curtain a first launch pauses on, between the logo leaving and the
-                lesson arriving. Last among the full-viewport overlays so nothing the screen
+            {/* ── The curtain every lesson is dealt behind, whichever door it came
+                through. Last among the full-viewport overlays so nothing the screen
                 already stacks can land on top of it — see the welcome effect above. ── */}
-            {curtain === 'up' && (
+            {curtain !== 'none' && (
               <TutorialCurtain
                 onLift={() => {
-                  startTutorial('welcome')
+                  startTutorial(curtain)
                   // Written down beside the run it records, not when the curtain went up:
                   // this is the flag that says this install has had its tutorial, and a
-                  // launch killed under the words has had nothing.
-                  welcome.taken()
+                  // launch killed under the words has had nothing. Only the first launch
+                  // owes it — the other two doors are a tutorial asked for a second time.
+                  if (curtain === 'welcome') welcome.taken()
                 }}
                 onGone={() => {
-                  setCurtain('down')
+                  setCurtain('none')
                 }}
               />
             )}

@@ -1,49 +1,33 @@
-import type { Floor } from '@/lib/role'
-
 // One entry per part of the app that is not for everyone yet, kept here rather than in
 // the screen that happens to own the button — a feature reaches the player through more
 // than one door, and a flag that lives behind one of them gets flipped while the others
 // stay open.
 //
-// Each entry names the lowest role that may see it, and every role above inherits it: a
-// flag floored at `tester` is shown to a developer and an admin too. A player with no
-// role — which is all but a handful of rows — sees none of them. The ladder itself is
-// lib/role.ts; the reading of it is hooks/use-flags.tsx.
+// This list is the whole of what the code knows. *Who* reaches each one — which roles
+// exist, what each role's stack holds, what one person has had added or taken away, and
+// whether the feature is switched on at all — is rows in the database, edited from the
+// admin screen. See the …_feature_flags.sql migration, and `effective_features`, which
+// is the one place the rules are written.
 //
-// There is deliberately no floor meaning "everyone". A feature ready for every player
-// loses its flag and its guards rather than dropping to rank zero — a flag nobody is
-// kept out by is a guard that goes on reading as load-bearing long after it stopped
-// being so.
-//
-// There is a floor meaning nobody, though — `nobody`, the other end of the same argument.
-// A feature taken off the app for a while still needs its doors shut, and shutting them
-// by deleting the guards would mean writing them again to put it back.
-export const FLAGS = {
+// A key here with no row in `features` resolves to off; a row there with no key here is
+// shown on the admin screen as not in this build. Both are worth seeing and neither is
+// an error — a device can be older than the server, and a migration can outlive a guard.
+export const FLAGS = [
   // Playing with friends: the ALONE / WITH FRIENDS tabs on the intro, and the chapter of
-  // How to Play that explains them. Off for everyone, testers and admins included, while
-  // the intro is being fitted into a short phone — the waiting room, the shared run and
-  // the results are untouched, so what is hidden is the way in and the page about it, not
-  // the feature. Floored back at `tester` when there is something to report on again.
-  multiplayer: 'nobody',
+  // How to Play that explains them.
+  'multiplayer',
   // Arcade: the pill on the intro, the screen behind it, and the chapter of How to Play
-  // that explains it. A proof of concept — one way in, one way back, and a depth instead
-  // of a score — so it is floored at `developer` rather than `tester`: what it needs now
-  // is the people who can change it, not the people who can report on it.
-  //
-  // Without the flag the pill is still there, still wearing SOON, still unpressable. That
-  // is deliberate: the teaser was already a promise to players, and taking it away to
-  // build behind it would be answering a promise with an absence.
-  arcade: 'developer',
+  // that explains it. Without the feature the pill is still there, still wearing SOON,
+  // still unpressable — the teaser was already a promise to players, and taking it away
+  // to build behind it would be answering a promise with an absence.
+  'arcade',
   // The DEV link on the intro, and the screen behind it: every challenge ever written,
-  // playable on demand with no board kept for it. Floored at the bottom of the ladder —
-  // this is "can this person try a challenge before or after its window", which is a
-  // tester's question as much as an admin's.
-  dev: 'tester',
-  // The ADMIN link on the intro, and the screen behind it: who holds a role, and a search
-  // to hand one to someone else. Floored at the top, unlike everything above it — this is
-  // not a feature being tried out, it is the door that decides who can see the others, and
-  // only an admin may open it.
-  admin: 'admin',
-} as const satisfies Record<string, Floor>
+  // playable on demand with no board kept for it.
+  'dev',
+  // The ADMIN link on the intro, and the screen behind it. Protected in the database:
+  // it cannot be switched off, and nobody can take it from themselves — this is not a
+  // feature being tried out, it is the door that decides who sees the others.
+  'admin',
+] as const
 
-export type Flag = keyof typeof FLAGS
+export type Flag = (typeof FLAGS)[number]

@@ -1,7 +1,6 @@
 import { createContext, use, useMemo, type ReactNode } from 'react'
 
-import { FLAGS, type Flag } from '@/constants/features'
-import { holds, type Role } from '@/lib/role'
+import { type Flag } from '@/constants/features'
 
 type FlagsState = {
   can: (flag: Flag) => boolean
@@ -13,23 +12,22 @@ type FlagsState = {
 // gallery hands those entries a provider of its own so nothing is hidden from it.
 const FlagsContext = createContext<FlagsState>({ can: () => false })
 
-// What the player holding the phone may be shown. Fed the role read off their profile —
-// see hooks/use-supabase-auth.ts, which asks for it once per launch alongside the
-// nickname.
+// What the player holding the phone may be shown. Fed the set the server resolved — see
+// `my_features()`, asked once per launch in hooks/use-supabase-auth.ts.
 //
-// `can` answers false while the role is still unknown, which it is until auth settles.
-// A tester therefore watches the intro paint without their extra tabs and gain them a
+// `can` answers false while the set is still unknown, which it is until auth settles. A
+// tester therefore watches the intro paint without their extra doors and gain them a
 // moment later. That is the right way round: holding the intro on a server answer would
-// cost every player a wait so that a handful avoid a flicker, and a player with no role
-// never sees anything change at all.
+// cost every player a wait so that a handful avoid a flicker, and a player who reaches
+// nothing — which is all but a handful — never sees anything change at all.
 export function FlagsProvider({
-  role,
+  features,
   children,
 }: {
-  role: Role | null
+  features: ReadonlySet<Flag>
   children: ReactNode
 }) {
-  const value = useMemo(() => ({ can: (flag: Flag) => holds(role, FLAGS[flag]) }), [role])
+  const value = useMemo(() => ({ can: (flag: Flag) => features.has(flag) }), [features])
   return <FlagsContext value={value}>{children}</FlagsContext>
 }
 

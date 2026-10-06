@@ -1,18 +1,25 @@
 import { useEffect, useState } from 'react'
 
-import { parseRole, type Role } from '@/lib/role'
+import { type Flag } from '@/constants/features'
+import { knownFeatures, sameFeatures } from '@/lib/features'
 import { supabase } from '@/lib/supabase'
+
+const EMPTY_FEATURES: ReadonlySet<Flag> = new Set()
 
 type AuthState = {
   userId: string | null
   nickname: string | null
-  // What this player may be shown — null for all but a handful. Read here rather than
-  // asked for separately because the select below already runs once per launch, so a
-  // role costs nothing extra; handed on to FlagsProvider, which is what reads it.
+  // What this player may be shown — the empty set for all but a handful. Resolved on
+  // the server by `effective_features`, which is the only place the rules are written;
+  // handed on to FlagsProvider, which is what reads it.
   //
-  // Once per launch is also the whole story of when a role takes effect: it is set by
-  // hand in SQL, and the device picks it up on its next start.
-  role: Role | null
+  // Once per launch is the whole story of when a change takes effect: an admin editing
+  // a stack moves everybody, and each device picks it up on its next start.
+  //
+  // Referentially stable while the keys do not change — see `sameFeatures`. The
+  // analytics opt-out in app/(tabs)/index.tsx keys an effect on this value, and a set
+  // rebuilt per render would leave that effect never settling.
+  features: ReadonlySet<Flag>
   isReady: boolean
   updateNickname: (name: string) => Promise<{ error: string | null }>
 }
@@ -20,7 +27,7 @@ type AuthState = {
 export function useSupabaseAuth(): AuthState {
   const [userId, setUserId] = useState<string | null>(null)
   const [nickname, setNickname] = useState<string | null>(null)
-  const [role, setRole] = useState<Role | null>(null)
+  const [features, setFeatures] = useState<ReadonlySet<Flag>>(EMPTY_FEATURES)
   const [isReady, setIsReady] = useState(false)
 
   useEffect(() => {
@@ -31,7 +38,7 @@ export function useSupabaseAuth(): AuthState {
       } = await supabase.auth.getSession()
       let uid = session?.user.id ?? null
       let nick: string | null = null
-      let held: Role | null = null
+      let held: ReadonlySet<Flag> = EMPTY_FEATURES
 
       if (uid !== null) {
         // Reading the nickname doubles as checking the session is real. A stored session
@@ -40,14 +47,14 @@ export function useSupabaseAuth(): AuthState {
         // and nothing in the app ever signs out, so a device left holding one is a device
         // where every write fails the `profiles` foreign key from then on. Scores,
         // achievements, feedback: all of it filed under an `auth.uid()` that is not there.
-        // The role rides along with the nickname rather than in a request of its own:
-        // this one already has to happen, and two asks about one row are two answers
-        // that can disagree about whether the row is there.
-        const { data, error } = await supabase
-          .from('profiles')
-          .select('nickname, role')
-          .eq('id', uid)
-          .maybeSingle()
+        // The profile read and the feature read are one round trip's worth of waiting
+        // rather than two, and they are about different things: one asks whether this
+        // session still names a real row, the other asks what that person may be shown.
+        const [profile, featureRows] = await Promise.all([
+          supabase.from('profiles').select('nickname').eq('id', uid).maybeSingle(),
+          supabase.rpc('my_features'),
+        ])
+        const { data, error } = profile
 
         // No row, from a server that answered. `maybeSingle` is what draws that line: an
         // absent profile comes back as null with no error, while a request that never
@@ -59,8 +66,12 @@ export function useSupabaseAuth(): AuthState {
           uid = null
         } else {
           nick = typeof data?.nickname === 'string' ? data.nickname : null
-          // A role this build has never heard of is an ordinary player — see parseRole.
-          held = parseRole(data?.role)
+          // A failed feature read is an ordinary player, not an error worth a screen:
+          // the doors it would have opened are all unfinished work, and showing none of
+          // them is the right answer to not knowing.
+          held = knownFeatures(
+            Array.isArray(featureRows.data) ? (featureRows.data as string[]) : [],
+          )
         }
       }
 
@@ -74,7 +85,9 @@ export function useSupabaseAuth(): AuthState {
       if (uid !== null) {
         setUserId(uid)
         setNickname(nick)
-        setRole(held)
+        // Keep the previous set when the keys have not changed, so consumers keying an
+        // effect on this value are not re-run by a new object that says the same thing.
+        setFeatures((current) => (sameFeatures(current, held) ? current : held))
       }
 
       setIsReady(true)
@@ -95,5 +108,5 @@ export function useSupabaseAuth(): AuthState {
     return { error: null }
   }
 
-  return { userId, nickname, role, isReady, updateNickname }
+  return { userId, nickname, features, isReady, updateNickname }
 }

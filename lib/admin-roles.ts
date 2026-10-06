@@ -1,6 +1,10 @@
 import { noteRequest } from '@/lib/connectivity'
-import { parseRole, type Role } from '@/lib/role'
 import { supabase } from '@/lib/supabase'
+
+// Temporary: lib/admin/ replaces this file in the next commit. A role key is a row in
+// `roles` now, so it is a plain string rather than a member of a union.
+const parseRole = (value: unknown): string | null =>
+  typeof value === 'string' ? value : null
 
 // One profile as the admin screen needs it: who they are and what they hold. Nothing a
 // leaderboard row already carries — no score, no averages — this is the one screen that
@@ -8,7 +12,7 @@ import { supabase } from '@/lib/supabase'
 export type RoledProfile = {
   id: string
   nickname: string | null
-  role: Role | null
+  role: string | null
 }
 
 type ProfileRow = { id: string; nickname: string | null; role: string | null }
@@ -63,7 +67,7 @@ export async function findProfileByNickname(
 // before writing it, which a client-side role check never could.
 export async function setUserRole(
   userId: string,
-  role: Role | null,
+  role: string | null,
 ): Promise<{ error: string | null }> {
   const res = await supabase.rpc('set_user_role', { p_user_id: userId, p_role: role })
   noteRequest(res.error)

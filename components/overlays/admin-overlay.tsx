@@ -14,26 +14,23 @@ import {
 } from '@/lib/admin-roles'
 import { cn } from '@/lib/cn'
 import type { NameFactors } from '@/lib/name-gradient'
-import { ROLES, type Role } from '@/lib/role'
 
-const ROLE_LABEL: Record<Role, string> = {
-  tester: 'TESTER',
-  developer: 'DEVELOPER',
-  admin: 'ADMIN',
-}
-
+// A role key is a database row now, not a member of a union, so these are plain
+// strings. Transitional: the three-tab hub reads them from `role_stats()`, and this
+// screen is replaced wholesale one commit from here — until then it keeps working on
+// the three the migration seeds.
 // NONE first — taking a role away is a legal move and the picker reads left to right in
 // rising order otherwise, which would bury the one option that undoes the other three.
-const PICKER_OPTIONS: readonly (Role | null)[] = [null, ...ROLES]
+const PICKER_OPTIONS: readonly (string | null)[] = [null, 'tester', 'developer', 'admin']
 
 function RolePicker({
   current,
   busy,
   onPick,
 }: {
-  current: Role | null
+  current: string | null
   busy: boolean
-  onPick: (role: Role | null) => void
+  onPick: (role: string | null) => void
 }) {
   return (
     <View className="flex-row flex-wrap gap-1.5">
@@ -60,7 +57,7 @@ function RolePicker({
                 active ? 'text-on-strong' : 'text-dim',
               )}
             >
-              {option === null ? 'NONE' : ROLE_LABEL[option]}
+              {option === null ? 'NONE' : option.toUpperCase()}
             </Text>
           </TrackedPressable>
         )
@@ -81,7 +78,7 @@ function ProfileRow({
   // screen are the ones most likely to recognise each other by it.
   factors: NameFactors
   busy: boolean
-  onPick: (role: Role | null) => void
+  onPick: (role: string | null) => void
 }) {
   return (
     <View className="gap-1.5 border-b border-dim/10 py-3">
@@ -164,7 +161,7 @@ export function AdminOverlay({ onClose }: { onClose: () => void }) {
   // Shared by the search result and every row in the list below: write the role, then
   // patch whichever of the two places shows this profile rather than reloading either —
   // the list is a snapshot, and a role granted from the search box belongs on it too.
-  const handlePick = async (profile: RoledProfile, role: Role | null) => {
+  const handlePick = async (profile: RoledProfile, role: string | null) => {
     setBusyId(profile.id)
     const res = await setUserRole(profile.id, role)
     setBusyId(null)

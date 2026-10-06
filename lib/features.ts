@@ -5,7 +5,7 @@ import { FLAGS, type Flag } from '@/constants/features'
 // decides *which* features a person reaches lives in SQL — see the migration — because
 // a second copy of those rules is how a screen and an app come to disagree.
 
-const KNOWN: ReadonlySet<string> = new Set(Object.keys(FLAGS))
+const KNOWN: ReadonlySet<string> = new Set(FLAGS)
 
 // What `my_features()` hands back, filtered to what this build can act on.
 //
@@ -15,6 +15,19 @@ const KNOWN: ReadonlySet<string> = new Set(Object.keys(FLAGS))
 // asks about it. This is `parseRole`'s instinct, which the ladder took with it.
 export function knownFeatures(keys: readonly string[]): Set<Flag> {
   return new Set(keys.filter((key): key is Flag => KNOWN.has(key)))
+}
+
+// Returns true when the two sets spell the same thing, so a caller can keep the set it
+// already has rather than swap in a new object saying the same thing. React effects key
+// on identity, not contents, and the analytics opt-out in app/(tabs)/index.tsx runs in
+// one of them — a set rebuilt on every render would leave that effect never settling.
+export function sameFeatures(
+  previous: ReadonlySet<Flag>,
+  next: ReadonlySet<Flag>,
+): boolean {
+  if (previous.size !== next.size) return false
+  for (const key of next) if (!previous.has(key)) return false
+  return true
 }
 
 // One person's override of one feature. Null is the third state and the usual one —

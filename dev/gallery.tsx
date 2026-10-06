@@ -17,6 +17,7 @@ import {
   type AchievementId,
 } from '@/constants/achievements'
 import { DEFAULT_DIAL_CORNERS } from '@/constants/dial-hints'
+import { FLAGS } from '@/constants/features'
 import { GalleryButton } from '@/dev/gallery-button'
 import {
   isVariant,
@@ -87,6 +88,13 @@ import { DIFFICULTIES, type Difficulty, type Mode, type ScoredMode } from '@/mod
 // the real champions, the real fonts and the real theme. A workshop outside the app
 // would have to fake all four, and a faked board store is a second implementation of
 // the thing being looked at.
+
+// Every door open. The gallery exists to put a screen in front of you; one that hid the
+// With friends tabs because the desk it runs on reaches nothing would be a gallery with
+// a hole in it. This used to say `role="admin"`, which stopped being the same thing the
+// moment a feature could be switched off for everybody — `multiplayer` is, and an admin
+// does not reach it.
+const EVERY_FEATURE = new Set(FLAGS)
 
 const RUN = {
   score: 4820,
@@ -225,10 +233,8 @@ const intro = (
   key: `intro-${label}`,
   label,
   render: (close) => (
-    // Admin, so the gallery is shown every screen there is. A gallery exists to put a
-    // screen in front of you; one that hid the With friends tabs because the desk it
-    // runs on has no role would be a gallery with a hole in it.
-    <FlagsProvider role="admin">
+    // Every door open — see EVERY_FEATURE.
+    <FlagsProvider features={EVERY_FEATURE}>
       <ChampionsProvider value={champions}>
         <MenuOverlay
           gameMode="speed"
@@ -719,10 +725,10 @@ const SCREENS: Section[] = [
       {
         key: 'how-to-play',
         label: 'HOW TO PLAY',
-        // Admin for the same reason the intro entry is: the multiplayer chapter is a
-        // page of this guide and the gallery is where it gets looked at.
+        // Every door open for the same reason the intro entry is: the multiplayer
+        // chapter is a page of this guide and the gallery is where it gets looked at.
         render: (close) => (
-          <FlagsProvider role="admin">
+          <FlagsProvider features={EVERY_FEATURE}>
             <HowToPlayOverlay onClose={close} onTryTutorial={close} />
           </FlagsProvider>
         ),

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import { cycleOverride, knownFeatures, sourceOf } from './features'
+import { cycleOverride, knownFeatures, sameFeatures, sourceOf } from './features'
 
 describe('knownFeatures', () => {
   it('keeps the keys this build has guards for', () => {
@@ -56,5 +56,27 @@ describe('sourceOf', () => {
     expect(sourceOf({ override: true, inRoleStack: true, active: true })).toBe(
       'override-on',
     )
+  })
+})
+
+describe('sameFeatures', () => {
+  it('sees two spellings of the same set as the same', () => {
+    expect(sameFeatures(new Set(['dev', 'arcade']), new Set(['arcade', 'dev']))).toBe(
+      true,
+    )
+  })
+
+  it('sees a different size as different', () => {
+    expect(sameFeatures(new Set(['dev']), new Set(['dev', 'arcade']))).toBe(false)
+  })
+
+  it('sees the same size with a different member as different', () => {
+    expect(sameFeatures(new Set(['dev']), new Set(['arcade']))).toBe(false)
+  })
+
+  it('sees two empty sets as the same, which is the common case', () => {
+    // All but a handful of players resolve to nothing, so this is the comparison that
+    // runs on nearly every launch.
+    expect(sameFeatures(new Set(), new Set())).toBe(true)
   })
 })
