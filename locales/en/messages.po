@@ -301,6 +301,10 @@ msgstr "Achievements are the other kind. Nothing can take one back: they are ach
 "\n"
 "There are dozens, and they ask for all sorts of things."
 
+#: components/overlays/admin-roles.tsx:83
+msgid "ADD"
+msgstr "ADD"
+
 #: components/overlays/profile-motto.tsx:52
 msgid "ADD MOTTO"
 msgstr "ADD MOTTO"
@@ -534,6 +538,10 @@ msgstr "DAY · {0}"
 msgid "DEAD EYE"
 msgstr "DEAD EYE"
 
+#: components/overlays/admin-role.tsx:172
+msgid "DELETE ROLE"
+msgstr "DELETE ROLE"
+
 #: components/overlays/dev-overlay.tsx:99
 #: components/overlays/menu-overlay.tsx:637
 msgid "DEV"
@@ -557,6 +565,7 @@ msgstr "Do something nobody thought to ask for."
 
 #: components/overlays/admin-overlay.tsx:134
 #: components/overlays/admin-person.tsx:271
+#: components/overlays/admin-role.tsx:188
 #: components/overlays/advanced-options-overlay.tsx:160
 #: components/overlays/dev-overlay.tsx:132
 #: components/overlays/news-archive-overlay.tsx:52
@@ -657,6 +666,10 @@ msgstr "FAST START"
 #: components/overlays/admin-person.tsx:225
 msgid "FEATURES"
 msgstr "FEATURES"
+
+#: components/overlays/admin-role.tsx:112
+msgid "FEATURES IN THIS STACK"
+msgstr "FEATURES IN THIS STACK"
 
 #: components/overlays/feedback-overlay.tsx:103
 msgid "FEEDBACK"
@@ -853,6 +866,10 @@ msgstr "Hold the all-time record on a mode’s Extreme board and you carry its m
 #: components/overlays/medals-overlay.tsx:176
 msgid "HOLDING"
 msgstr "HOLDING"
+
+#: components/overlays/admin-role.tsx:92
+msgid "holding this role"
+msgstr "holding this role"
 
 #: components/game/arcade-over.tsx:75
 #: components/overlays/game-over-overlay.tsx:124
@@ -1140,6 +1157,10 @@ msgstr "Nothing yet — a top three on any board puts a medal here."
 #: components/overlays/trainee-display-options.tsx:103
 msgid "NUMBERS ON THE KEYS"
 msgstr "NUMBERS ON THE KEYS"
+
+#: components/overlays/admin-role.tsx:146
+msgid "off for everyone"
+msgstr "off for everyone"
 
 #: constants/achievements.ts:402
 msgid "ON THE BOARD"

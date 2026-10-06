@@ -301,6 +301,10 @@ msgstr "Úspěchy jsou ten druhý druh. Nikdo ti je nevezme: dosáhneš jich jed
 "\n"
 "Jsou jich desítky a chtějí po tobě kdeco."
 
+#: components/overlays/admin-roles.tsx:83
+msgid "ADD"
+msgstr "PŘIDAT"
+
 #: components/overlays/profile-motto.tsx:52
 msgid "ADD MOTTO"
 msgstr "PŘIDAT MOTTO"
@@ -534,6 +538,10 @@ msgstr "DEN · {0}"
 msgid "DEAD EYE"
 msgstr "OSTROSTŘELEC"
 
+#: components/overlays/admin-role.tsx:172
+msgid "DELETE ROLE"
+msgstr "SMAZAT ROLI"
+
 #: components/overlays/dev-overlay.tsx:99
 #: components/overlays/menu-overlay.tsx:637
 msgid "DEV"
@@ -557,6 +565,7 @@ msgstr "Udělej něco, co nikoho nenapadlo chtít."
 
 #: components/overlays/admin-overlay.tsx:134
 #: components/overlays/admin-person.tsx:271
+#: components/overlays/admin-role.tsx:188
 #: components/overlays/advanced-options-overlay.tsx:160
 #: components/overlays/dev-overlay.tsx:132
 #: components/overlays/news-archive-overlay.tsx:52
@@ -657,6 +666,10 @@ msgstr "RYCHLÝ START"
 #: components/overlays/admin-person.tsx:225
 msgid "FEATURES"
 msgstr "FUNKCE"
+
+#: components/overlays/admin-role.tsx:112
+msgid "FEATURES IN THIS STACK"
+msgstr "FUNKCE V TÉTO SADĚ"
 
 #: components/overlays/feedback-overlay.tsx:103
 msgid "FEEDBACK"
@@ -853,6 +866,10 @@ msgstr "Když držíš rekord všech dob na žebříčku Extreme některého mó
 #: components/overlays/medals-overlay.tsx:176
 msgid "HOLDING"
 msgstr "DRŽÍŠ"
+
+#: components/overlays/admin-role.tsx:92
+msgid "holding this role"
+msgstr "má tuto roli"
 
 #: components/game/arcade-over.tsx:75
 #: components/overlays/game-over-overlay.tsx:124
@@ -1140,6 +1157,10 @@ msgstr "Zatím nic — stačí se dostat do první trojky na kterémkoli žebř�
 #: components/overlays/trainee-display-options.tsx:103
 msgid "NUMBERS ON THE KEYS"
 msgstr "ČÍSLA NA TLAČÍTKÁCH"
+
+#: components/overlays/admin-role.tsx:146
+msgid "off for everyone"
+msgstr "vypnuto pro všechny"
 
 #: constants/achievements.ts:402
 msgid "ON THE BOARD"
