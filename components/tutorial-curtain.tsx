@@ -23,7 +23,12 @@ import { gradientOf } from '@/modes'
 const HOLD_MS = 1400
 const FADE_MS = 500
 
-// The beat between the splash and the lesson.
+// The beat before a lesson.
+//
+// Every door into the tutorial comes through here — the first launch, TRY IT at the end of
+// the guide, and the dev sidebar — so the lesson is never the first thing a player sees of
+// itself. The words say what is about to happen and that none of it is scored; the board
+// is dealt as they start to go.
 //
 // It is the app's own surface rather than white, and that is the whole trick: the ground
 // under the words is the ground the game is about to be drawn on, so the hand-off is the
@@ -102,6 +107,16 @@ export function TutorialCurtain({
           style={{ color: gradientOf('trainee')[0] }}
         >
           <Trans>LET'S LEARN THE GAME</Trans>
+        </Text>
+        {/* The second line is the whole reason this screen is worth a beat: a lesson that
+          opens straight onto a board looks exactly like a run, and a player who thinks
+          they are being scored plays it like one. Dim and under the tint, because it is
+          the smaller of the two things being said. */}
+        <Text
+          selectable={false}
+          className="mt-3 px-8 text-center font-mono text-[11px] font-bold leading-[18px] tracking-[1px] text-dim"
+        >
+          <Trans>JUST THE TUTORIAL - NOTHING HERE IS SCORED</Trans>
         </Text>
       </TrackedPressable>
     </Animated.View>
