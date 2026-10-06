@@ -128,3 +128,47 @@ grant select on public.features      to anon, authenticated;
 grant select on public.roles         to anon, authenticated;
 grant select on public.role_features to anon, authenticated;
 grant select on public.user_features to anon, authenticated;
+
+-- ─── The resolve ─────────────────────────────────────────────────────────────
+-- One function, read by the player path and by the admin screen alike. Written twice is
+-- how a screen and an app come to disagree about why somebody can see something.
+--
+-- The `coalesce` *is* the tri-state: an override row wins outright in either direction,
+-- and its absence falls through to the role's stack. `f.active` sits outside the whole
+-- expression rather than inside either branch, so the master switch beats both.
+--
+-- A null `p_user_id` — which is what `my_features()` passes on a first launch, before
+-- the anonymous sign-in — resolves to the empty set. The intro paints against this
+-- answer and must not be handed an exception for asking early.
+create or replace function effective_features(p_user_id uuid)
+returns setof text language sql stable set search_path = public as $$
+  select f.key
+  from features f
+  where f.active
+    and coalesce(
+      (select uf.granted
+         from user_features uf
+        where uf.user_id = p_user_id and uf.feature_key = f.key),
+      exists (select 1
+                from role_features rf
+                join profiles p on p.role = rf.role_key
+               where p.id = p_user_id and rf.feature_key = f.key)
+    );
+$$;
+
+-- What the device asks once per launch.
+create or replace function my_features()
+returns setof text language sql stable set search_path = public as $$
+  select * from effective_features(auth.uid());
+$$;
+
+-- What every write guard below asks. Note it reads `active`, which is why the `admin`
+-- key is protected by a check constraint rather than by convention.
+create or replace function has_feature(p_user_id uuid, p_key text)
+returns boolean language sql stable set search_path = public as $$
+  select exists (select 1 from effective_features(p_user_id) k where k = p_key);
+$$;
+
+grant execute on function public.effective_features(uuid) to anon, authenticated;
+grant execute on function public.my_features()            to anon, authenticated;
+grant execute on function public.has_feature(uuid, text)  to anon, authenticated;
