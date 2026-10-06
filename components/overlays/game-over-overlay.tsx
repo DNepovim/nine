@@ -2,7 +2,7 @@ import { Ionicons } from '@expo/vector-icons'
 import { Trans, useLingui } from '@lingui/react/macro'
 import { isOneOf } from 'narrowland'
 import { useEffect, useRef } from 'react'
-import { Pressable, Text, View } from 'react-native'
+import { Text, View } from 'react-native'
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
@@ -10,6 +10,7 @@ import Animated, {
   withSpring,
 } from 'react-native-reanimated'
 
+import { TrackedPressable } from '@/components/tracked-pressable'
 import {
   DIM_INK,
   GOLD_DIM_INK,
@@ -108,7 +109,7 @@ function HomeExit({
   onPress: () => void
 }) {
   return (
-    <Pressable onPress={onPress} hitSlop={10}>
+    <TrackedPressable id="game_over.home" onPress={onPress} hitSlop={10}>
       <View className="flex-row items-center gap-1">
         <Ionicons
           name="home-outline"
@@ -123,7 +124,7 @@ function HomeExit({
           <Trans>HOME</Trans>
         </Text>
       </View>
-    </Pressable>
+    </TrackedPressable>
   )
 }
 

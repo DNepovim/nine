@@ -1,6 +1,6 @@
 import { LinearGradient } from 'expo-linear-gradient'
 import { useEffect, useRef, useState } from 'react'
-import { Modal, Pressable, ScrollView, View } from 'react-native'
+import { Modal, ScrollView, View } from 'react-native'
 import Animated, {
   Easing,
   useAnimatedStyle,
@@ -11,6 +11,7 @@ import { scheduleOnRN } from 'react-native-worklets'
 
 import { AchievementRow } from '@/components/overlays/achievement-row'
 import { PageDots } from '@/components/page-dots'
+import { TrackedPressable } from '@/components/tracked-pressable'
 import type { AchievementId } from '@/constants/achievements'
 import { ACHIEVEMENT_SCALE } from '@/constants/colors'
 import { firstEarnedAt, stagesOf, type AchievementStore } from '@/lib/achievement-store'
@@ -128,7 +129,11 @@ export function AchievementDetail({
     // `transparent` so the game over screen stays visible under the scrim, and
     // `onRequestClose` so Android's back button closes this rather than the run.
     <Modal visible transparent animationType="none" onRequestClose={close}>
-      <Pressable className="flex-1" onPress={close}>
+      <TrackedPressable
+        id="achievement_detail.close_backdrop"
+        className="flex-1"
+        onPress={close}
+      >
         <Animated.View
           className="flex-1 items-center justify-center"
           style={[{ backgroundColor: 'rgba(10,10,18,0.55)' }, fadeStyle]}
@@ -157,7 +162,8 @@ export function AchievementDetail({
               }}
             >
               {ids.map((id) => (
-                <Pressable
+                <TrackedPressable
+                  id="achievement_detail.close"
                   key={id}
                   onPress={close}
                   style={{ width }}
@@ -184,7 +190,7 @@ export function AchievementDetail({
                       </View>
                     </LinearGradient>
                   </Animated.View>
-                </Pressable>
+                </TrackedPressable>
               ))}
             </ScrollView>
           )}
@@ -202,7 +208,7 @@ export function AchievementDetail({
             </View>
           )}
         </Animated.View>
-      </Pressable>
+      </TrackedPressable>
     </Modal>
   )
 }

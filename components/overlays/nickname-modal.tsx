@@ -4,12 +4,12 @@ import {
   KeyboardAvoidingView,
   Modal,
   Platform,
-  Pressable,
   Text,
   TextInput,
   View,
 } from 'react-native'
 
+import { TrackedPressable } from '@/components/tracked-pressable'
 import { useOnline } from '@/hooks/use-online'
 import { NICK_MAX, NICK_MIN, nicknameProblem } from '@/lib/nickname'
 
@@ -133,7 +133,8 @@ export function NicknameModal({
           )}
 
           <View className="mt-2 flex-row gap-3">
-            <Pressable
+            <TrackedPressable
+              id="nickname.skip"
               onPress={handleSkip}
               className="flex-1 items-center rounded-xl bg-card py-3"
             >
@@ -143,9 +144,10 @@ export function NicknameModal({
               >
                 <Trans>SKIP</Trans>
               </Text>
-            </Pressable>
+            </TrackedPressable>
 
-            <Pressable
+            <TrackedPressable
+              id="nickname.save"
               onPress={() => {
                 void handleSave()
               }}
@@ -159,7 +161,7 @@ export function NicknameModal({
               >
                 {saving ? 'SAVING…' : 'SAVE'}
               </Text>
-            </Pressable>
+            </TrackedPressable>
           </View>
         </View>
       </KeyboardAvoidingView>

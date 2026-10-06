@@ -1,5 +1,5 @@
 import { useEffect } from 'react'
-import { Pressable, Text, View } from 'react-native'
+import { Text, View } from 'react-native'
 import Animated, {
   Easing,
   useAnimatedStyle,
@@ -7,6 +7,7 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated'
 
+import { TrackedPressable } from '@/components/tracked-pressable'
 import { LOCALES, type Locale } from '@/lib/i18n/locale'
 
 const TOGGLE_H = 30
@@ -93,7 +94,8 @@ export function LocaleToggle({
       {LOCALES.map((option) => {
         const active = option === locale
         return (
-          <Pressable
+          <TrackedPressable
+            id="options.locale_toggle"
             key={option}
             onPress={() => {
               onSelect(option)
@@ -115,7 +117,7 @@ export function LocaleToggle({
             >
               {LABEL[option]}
             </Text>
-          </Pressable>
+          </TrackedPressable>
         )
       })}
     </View>

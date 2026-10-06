@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons'
 import { useEffect } from 'react'
-import { Pressable, View } from 'react-native'
+import { View } from 'react-native'
 import Animated, {
   Easing,
   useAnimatedStyle,
@@ -8,6 +8,7 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated'
 
+import { TrackedPressable } from '@/components/tracked-pressable'
 import { DIM_INK } from '@/constants/colors'
 
 const TOGGLE_W = 72
@@ -49,7 +50,7 @@ export function ThemeToggle({
   const iconActive = isDark ? '#D8D2F4' : '#1C1928'
 
   return (
-    <Pressable onPress={onToggle}>
+    <TrackedPressable id="options.theme_toggle" onPress={onToggle}>
       <View
         className="flex-row items-center self-center bg-card"
         style={{
@@ -98,6 +99,6 @@ export function ThemeToggle({
           ]}
         />
       </View>
-    </Pressable>
+    </TrackedPressable>
   )
 }

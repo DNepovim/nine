@@ -1,6 +1,7 @@
-import { Pressable, View } from 'react-native'
+import { View } from 'react-native'
 
 import { PageDot } from '@/components/page-dot'
+import { TrackedPressable } from '@/components/tracked-pressable'
 
 // Position within a short sequence of pages. The current dot stretches rather
 // than growing, so the row's height never shifts. Pass onSelect to make the
@@ -39,7 +40,8 @@ export function PageDots({
           )
         }
         return (
-          <Pressable
+          <TrackedPressable
+            id="shared.page_dot"
             key={index}
             className="px-1 py-2"
             hitSlop={6}
@@ -48,7 +50,7 @@ export function PageDots({
             }}
           >
             {dot}
-          </Pressable>
+          </TrackedPressable>
         )
       })}
     </View>

@@ -1,10 +1,11 @@
 import { Ionicons } from '@expo/vector-icons'
 import { Trans } from '@lingui/react/macro'
 import { useEffect } from 'react'
-import { Pressable, Text, View } from 'react-native'
+import { Text, View } from 'react-native'
 
 import { InstallSteps } from '@/components/overlays/install-steps'
 import { ModalCard } from '@/components/overlays/modal-card'
+import { TrackedPressable } from '@/components/tracked-pressable'
 import { APP_VIOLET } from '@/constants/colors'
 import { track } from '@/lib/analytics'
 import type { InstallableTarget } from '@/types/install'
@@ -109,7 +110,8 @@ export function InstallOverlay({
           {stepOne !== null && <InstallSteps stepOne={stepOne} />}
 
           <View className="mt-4 flex-row items-center justify-center">
-            <Pressable
+            <TrackedPressable
+              id="install.action"
               onPress={() => {
                 // No exit animation on the install path: prompt() has to stay
                 // in the press to keep its user activation, and the browser's
@@ -126,7 +128,7 @@ export function InstallOverlay({
                 {CTA_LABEL[target]}
               </Text>
               <Ionicons name={CTA_ICON[target]} size={14} color="#d8d2f4" />
-            </Pressable>
+            </TrackedPressable>
           </View>
         </>
       )}

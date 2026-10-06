@@ -2,13 +2,14 @@ import { Trans, useLingui } from '@lingui/react/macro'
 import { LinearGradient } from 'expo-linear-gradient'
 import { isNonEmptyArray, isOneOf } from 'narrowland'
 import { useEffect } from 'react'
-import { Pressable, Text, View } from 'react-native'
+import { Text, View } from 'react-native'
 import { Easing, useSharedValue, withRepeat, withTiming } from 'react-native-reanimated'
 
 import { AnimatedLetter } from '@/components/overlays/animated-letter'
 import { ModeSelector } from '@/components/overlays/mode-selector'
 import { PLAYER_GRADIENTS, PlayerTile } from '@/components/overlays/player-tile'
 import { Screen } from '@/components/screen'
+import { TrackedPressable } from '@/components/tracked-pressable'
 import { cn } from '@/lib/cn'
 import {
   DARK_MULTIPLAYER_GRADIENT,
@@ -169,7 +170,8 @@ export function MultiplayerGameOver({
         {/* Actions */}
         <View className="w-full items-center gap-4">
           {isAdmin && (
-            <Pressable
+            <TrackedPressable
+              id="multiplayer_results.start_next"
               onPress={onStartNext}
               disabled={!allReady}
               className={cn(
@@ -191,11 +193,12 @@ export function MultiplayerGameOver({
                   <Trans>PLAY AGAIN</Trans>
                 </Text>
               </LinearGradient>
-            </Pressable>
+            </TrackedPressable>
           )}
 
           {!isAdmin && !iAmReady && (
-            <Pressable
+            <TrackedPressable
+              id="multiplayer_results.ready"
               onPress={onReady}
               className="w-56 overflow-hidden rounded-2xl"
               style={shadow}
@@ -213,7 +216,7 @@ export function MultiplayerGameOver({
                   <Trans>READY</Trans>
                 </Text>
               </LinearGradient>
-            </Pressable>
+            </TrackedPressable>
           )}
 
           {!isAdmin && iAmReady && (
@@ -225,14 +228,14 @@ export function MultiplayerGameOver({
             </Text>
           )}
 
-          <Pressable onPress={onLeave} hitSlop={10}>
+          <TrackedPressable id="multiplayer_results.leave" onPress={onLeave} hitSlop={10}>
             <Text
               selectable={false}
               className="font-mono text-[10px] font-bold tracking-[1.8px] text-dim underline"
             >
               {isAdmin ? 'CANCEL GAME' : 'LEAVE GAME'}
             </Text>
-          </Pressable>
+          </TrackedPressable>
         </View>
       </View>
     </Screen>

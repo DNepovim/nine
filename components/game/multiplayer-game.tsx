@@ -1,12 +1,13 @@
 import { Trans, useLingui } from '@lingui/react/macro'
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { Pressable, Text, View } from 'react-native'
+import { Text, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 import { Dial } from '@/components/game/dial'
 import { MultiplayerCorner } from '@/components/game/multiplayer-corner'
 import { PieCountdown } from '@/components/game/pie-countdown'
 import { ScoreDigit } from '@/components/game/score-digit'
+import { TrackedPressable } from '@/components/tracked-pressable'
 import { PIE_SIZE } from '@/constants/game'
 import { SUM_ROW_HEIGHT } from '@/hooks/use-dial-metrics'
 import { useMultiplayerDial } from '@/hooks/use-multiplayer-dial'
@@ -178,7 +179,7 @@ export function MultiplayerGame({
           </Text>
         </View>
         <View className="flex-1 items-end">
-          <Pressable onPress={onMenu} hitSlop={12}>
+          <TrackedPressable id="multiplayer_game.menu" onPress={onMenu} hitSlop={12}>
             <View className="gap-1">
               {[0, 1, 2].map((i) => (
                 <View
@@ -188,7 +189,7 @@ export function MultiplayerGame({
                 />
               ))}
             </View>
-          </Pressable>
+          </TrackedPressable>
         </View>
       </View>
 

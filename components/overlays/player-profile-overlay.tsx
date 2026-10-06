@@ -4,7 +4,7 @@ import { Plural, Trans, useLingui } from '@lingui/react/macro'
 import { useFonts } from 'expo-font'
 import { isEmptyArray, isNonEmptyArray, isNonEmptyString } from 'narrowland'
 import { useState } from 'react'
-import { Pressable, ScrollView, Text, View } from 'react-native'
+import { ScrollView, Text, View } from 'react-native'
 
 import DSEG7Font from '@/assets/fonts/DSEG7Classic-Bold.ttf'
 import { MedalLine } from '@/components/overlays/medal-line'
@@ -17,6 +17,7 @@ import { ProfileReignRow } from '@/components/overlays/profile-reign-row'
 import { ProfileScore } from '@/components/overlays/profile-score'
 import { StatCell } from '@/components/overlays/stat-cell'
 import { TitleMark } from '@/components/overlays/title-mark'
+import { TrackedPressable } from '@/components/tracked-pressable'
 import { ACHIEVEMENT_COUNT } from '@/constants/achievements'
 import { ACHIEVEMENT_INK } from '@/constants/colors'
 import { mono } from '@/constants/theme'
@@ -265,7 +266,8 @@ export function PlayerProfileOverlay({
                     >
                       <Trans>This profile could not be loaded.</Trans>
                     </Text>
-                    <Pressable
+                    <TrackedPressable
+                      id="profile.try_again"
                       onPress={reload}
                       className="items-center rounded-2xl bg-card px-6 py-3"
                     >
@@ -275,7 +277,7 @@ export function PlayerProfileOverlay({
                       >
                         <Trans>TRY AGAIN</Trans>
                       </Text>
-                    </Pressable>
+                    </TrackedPressable>
                   </View>
                 )}
 
@@ -441,7 +443,8 @@ export function PlayerProfileOverlay({
                 Only on someone else's, and only once the viewer is known — a table of a
                 player against themselves has a winner on no row and nothing to say. */}
             {profile !== null && !isMine && onCompare !== undefined && (
-              <Pressable
+              <TrackedPressable
+                id="profile.action"
                 onPress={() => {
                   // The table takes this profile's place rather than opening over it: the
                   // two say the same things about the same player, and stacking one on the
@@ -459,7 +462,7 @@ export function PlayerProfileOverlay({
                 >
                   <Trans>COMPARE WITH ME</Trans>
                 </Text>
-              </Pressable>
+              </TrackedPressable>
             )}
 
             {/* The way out, at the end of the card as well as in its corner. The 5-dot
@@ -467,7 +470,8 @@ export function PlayerProfileOverlay({
                 it is also the one control that has scrolled a thumb's length away by the
                 time you are done reading. The stronger fill under COMPARE WITH ME rather
                 than beside it: closing is what you do here, comparing is what you might. */}
-            <Pressable
+            <TrackedPressable
+              id="profile.close"
               onPress={close}
               className="items-center rounded-2xl bg-strong py-3.5"
             >
@@ -477,7 +481,7 @@ export function PlayerProfileOverlay({
               >
                 <Trans>CLOSE</Trans>
               </Text>
-            </Pressable>
+            </TrackedPressable>
           </View>
 
           {editingMotto && profile !== null && (

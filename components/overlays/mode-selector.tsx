@@ -1,7 +1,7 @@
 import { useLingui } from '@lingui/react/macro'
 import { LinearGradient } from 'expo-linear-gradient'
 import { useEffect, useRef, useState } from 'react'
-import { Pressable, Text, View } from 'react-native'
+import { Text, View } from 'react-native'
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
@@ -12,6 +12,7 @@ import Animated, {
 } from 'react-native-reanimated'
 
 import { CornerBadge } from '@/components/overlays/corner-badge'
+import { TrackedPressable } from '@/components/tracked-pressable'
 import {
   ARCADE_TEASER,
   descriptionOf,
@@ -160,7 +161,8 @@ export function ModeSelector({
           const isActive = m === focused
           const badge = badges[m]
           return (
-            <Pressable
+            <TrackedPressable
+              id="menu.mode"
               key={m}
               onPress={() => {
                 onSelect(m)
@@ -193,7 +195,7 @@ export function ModeSelector({
                 {t(labelOf(m))}
               </Text>
               {badge !== undefined && <CornerBadge label={badge} />}
-            </Pressable>
+            </TrackedPressable>
           )
         })}
       </View>

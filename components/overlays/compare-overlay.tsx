@@ -1,9 +1,10 @@
 import { Trans, useLingui } from '@lingui/react/macro'
-import { Pressable, ScrollView, Text, View } from 'react-native'
+import { ScrollView, Text, View } from 'react-native'
 
 import { CompareBoardRow } from '@/components/overlays/compare-board-row'
 import { CompareStatRow } from '@/components/overlays/compare-stat-row'
 import { ModalCard } from '@/components/overlays/modal-card'
+import { TrackedPressable } from '@/components/tracked-pressable'
 import { usePlayerProfile } from '@/hooks/use-player-profile'
 import { useViewport } from '@/hooks/use-viewport'
 import { compareProfiles } from '@/lib/compare'
@@ -81,7 +82,8 @@ export function CompareOverlay({
                   >
                     <Trans>Your profile could not be loaded.</Trans>
                   </Text>
-                  <Pressable
+                  <TrackedPressable
+                    id="compare.try_again"
                     onPress={reload}
                     className="items-center rounded-2xl bg-card px-6 py-3"
                   >
@@ -91,7 +93,7 @@ export function CompareOverlay({
                     >
                       <Trans>TRY AGAIN</Trans>
                     </Text>
-                  </Pressable>
+                  </TrackedPressable>
                 </View>
               )}
 
@@ -161,7 +163,8 @@ export function CompareOverlay({
           {/* The way out, at the end of the table as well as in the card's corner. A
               comparison is read top to bottom, and by the last board the 5-dot cross in
               the header has scrolled a thumb's length out of reach. */}
-          <Pressable
+          <TrackedPressable
+            id="compare.close"
             onPress={close}
             className="items-center rounded-2xl bg-strong py-3.5"
           >
@@ -171,7 +174,7 @@ export function CompareOverlay({
             >
               <Trans>CLOSE</Trans>
             </Text>
-          </Pressable>
+          </TrackedPressable>
         </View>
       )}
     </ModalCard>

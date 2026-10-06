@@ -1,6 +1,7 @@
 import { useLingui } from '@lingui/react/macro'
-import { Pressable, Text, View } from 'react-native'
+import { Text, View } from 'react-native'
 
+import { TrackedPressable } from '@/components/tracked-pressable'
 import {
   canGoBack,
   canGoForward,
@@ -52,7 +53,8 @@ function Arrow({
   onPress: () => void
 }) {
   return (
-    <Pressable
+    <TrackedPressable
+      id="tutorial.step"
       disabled={!live}
       onPress={onPress}
       accessibilityRole="button"
@@ -71,7 +73,7 @@ function Arrow({
       >
         {glyph}
       </Text>
-    </Pressable>
+    </TrackedPressable>
   )
 }
 
@@ -117,7 +119,8 @@ export function TutorialStepper({
           const state = stepState(board, current, furthest)
           const ink = DOT_STYLE[state]
           return (
-            <Pressable
+            <TrackedPressable
+              id="tutorial.step_dot"
               key={board}
               disabled={!live || state !== 'visited'}
               onPress={() => {
@@ -148,7 +151,7 @@ export function TutorialStepper({
               >
                 {board + 1}
               </Text>
-            </Pressable>
+            </TrackedPressable>
           )
         })}
       </View>

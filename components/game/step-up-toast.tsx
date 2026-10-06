@@ -1,8 +1,9 @@
 import { Trans, useLingui } from '@lingui/react/macro'
 import { LinearGradient } from 'expo-linear-gradient'
-import { Pressable, Text, View } from 'react-native'
+import { Text, View } from 'react-native'
 import Animated, { Easing, FadeOut, SlideInUp } from 'react-native-reanimated'
 
+import { TrackedPressable } from '@/components/tracked-pressable'
 import { darkGradientOf, labelOf, type ModeId } from '@/modes'
 
 // Where it floats. Above the top bar rather than inside the layout: Trainee reclaims the
@@ -80,7 +81,11 @@ export function StepUpToast({
           {invite}
         </Text>
 
-        <Pressable onPress={onPress} className="overflow-hidden rounded-xl">
+        <TrackedPressable
+          id="step_up_toast.accept"
+          onPress={onPress}
+          className="overflow-hidden rounded-xl"
+        >
           <LinearGradient
             colors={[...darkGradientOf(mode)]}
             start={{ x: 0, y: 0.5 }}
@@ -95,18 +100,22 @@ export function StepUpToast({
               <Trans>TRY {modeName}</Trans>
             </Text>
           </LinearGradient>
-        </Pressable>
+        </TrackedPressable>
 
         {/* The small-label voice, a size below the invitation it turns down, so the
             offer is still the thing being read. */}
-        <Pressable onPress={onDismiss} className="mt-1 items-center py-2">
+        <TrackedPressable
+          id="step_up_toast.dismiss"
+          onPress={onDismiss}
+          className="mt-1 items-center py-2"
+        >
           <Text
             selectable={false}
             className="font-mono text-[10px] font-bold tracking-[1px] text-dim underline"
           >
             <Trans>NOT NOW</Trans>
           </Text>
-        </Pressable>
+        </TrackedPressable>
       </View>
     </Animated.View>
   )

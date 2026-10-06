@@ -2,9 +2,10 @@ import { Ionicons } from '@expo/vector-icons'
 import { Trans, useLingui } from '@lingui/react/macro'
 import { isNonEmptyString, isOneOf } from 'narrowland'
 import { useState } from 'react'
-import { Platform, Pressable, Text, TextInput } from 'react-native'
+import { Platform, Text, TextInput } from 'react-native'
 
 import { ModalCard } from '@/components/overlays/modal-card'
+import { TrackedPressable } from '@/components/tracked-pressable'
 import { DIM_INK } from '@/constants/colors'
 import { useLocale } from '@/hooks/use-locale'
 import { useTheme } from '@/hooks/use-theme'
@@ -123,7 +124,8 @@ export function FeedbackOverlay({
                   gets an answer, you will find one here next time you open the game.
                 </Trans>
               </Text>
-              <Pressable
+              <TrackedPressable
+                id="feedback.close"
                 onPress={close}
                 className="items-center rounded-2xl bg-strong py-3.5"
               >
@@ -133,7 +135,7 @@ export function FeedbackOverlay({
                 >
                   {BUTTON_LABEL.sent}
                 </Text>
-              </Pressable>
+              </TrackedPressable>
             </>
           ) : (
             <>
@@ -187,7 +189,8 @@ export function FeedbackOverlay({
                 </Text>
               )}
 
-              <Pressable
+              <TrackedPressable
+                id="feedback.send"
                 onPress={() => {
                   void send()
                 }}
@@ -203,7 +206,7 @@ export function FeedbackOverlay({
                 >
                   {BUTTON_LABEL[status]}
                 </Text>
-              </Pressable>
+              </TrackedPressable>
             </>
           )}
         </>

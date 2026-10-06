@@ -1,9 +1,10 @@
 import { Ionicons } from '@expo/vector-icons'
 import { Trans, useLingui } from '@lingui/react/macro'
-import { Pressable, ScrollView, Text, View } from 'react-native'
+import { ScrollView, Text, View } from 'react-native'
 
 import { MarkdownText } from '@/components/markdown-text'
 import { ModalCard } from '@/components/overlays/modal-card'
+import { TrackedPressable } from '@/components/tracked-pressable'
 import { useViewport } from '@/hooks/use-viewport'
 import { sentOnLabel, type FeedbackQuote } from '@/lib/feedback-reply'
 import { gradientOf, type ModeId } from '@/modes'
@@ -102,7 +103,8 @@ export function FeedbackReplyOverlay({
             <MarkdownText source={answer} accent={modeColor} />
           </ScrollView>
 
-          <Pressable
+          <TrackedPressable
+            id="feedback_reply.got_it"
             onPress={close}
             className="mt-5 items-center rounded-2xl bg-strong py-3.5"
           >
@@ -112,7 +114,7 @@ export function FeedbackReplyOverlay({
             >
               <Trans>GOT IT</Trans>
             </Text>
-          </Pressable>
+          </TrackedPressable>
         </>
       )}
     </ModalCard>

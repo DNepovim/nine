@@ -1,6 +1,8 @@
-import { Pressable, Text, View } from 'react-native'
+import { Text, View } from 'react-native'
 import Animated, { useAnimatedStyle, type SharedValue } from 'react-native-reanimated'
 import Svg, { Circle, G, Path } from 'react-native-svg'
+
+import { TrackedPressable } from '@/components/tracked-pressable'
 
 // The rose in the corner, and the one control on this screen that is not the dial.
 //
@@ -65,7 +67,8 @@ export function CompassRose({
   }))
 
   return (
-    <Pressable
+    <TrackedPressable
+      id="game.compass_toggle"
       onPress={onToggle}
       hitSlop={14}
       accessibilityRole="button"
@@ -112,6 +115,6 @@ export function CompassRose({
           {northUp ? 'NORTH' : 'AHEAD'}
         </Text>
       </View>
-    </Pressable>
+    </TrackedPressable>
   )
 }

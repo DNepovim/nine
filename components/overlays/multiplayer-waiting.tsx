@@ -4,12 +4,13 @@ import * as Clipboard from 'expo-clipboard'
 import { LinearGradient } from 'expo-linear-gradient'
 import { isOneOf } from 'narrowland'
 import { useEffect, useState } from 'react'
-import { Platform, Pressable, Share, Text, View } from 'react-native'
+import { Platform, Share, Text, View } from 'react-native'
 import { Easing, useSharedValue, withRepeat, withTiming } from 'react-native-reanimated'
 
 import { ModeSelector } from '@/components/overlays/mode-selector'
 import { PLAYER_GRADIENTS, PlayerTile } from '@/components/overlays/player-tile'
 import { Screen } from '@/components/screen'
+import { TrackedPressable } from '@/components/tracked-pressable'
 import { DIM_INK } from '@/constants/colors'
 import { useTheme } from '@/hooks/use-theme'
 import { cn } from '@/lib/cn'
@@ -98,7 +99,11 @@ export function MultiplayerWaiting({
             {code}
           </Text>
           <View className="flex-row items-center gap-5">
-            <Pressable onPress={handleCopy} hitSlop={10}>
+            <TrackedPressable
+              id="waiting_room.copy_code"
+              onPress={handleCopy}
+              hitSlop={10}
+            >
               <View className="flex-row items-center gap-1">
                 <Ionicons
                   name={copied ? 'checkmark' : 'copy-outline'}
@@ -112,8 +117,8 @@ export function MultiplayerWaiting({
                   {copied ? 'COPIED' : 'COPY'}
                 </Text>
               </View>
-            </Pressable>
-            <Pressable onPress={handleShare} hitSlop={10}>
+            </TrackedPressable>
+            <TrackedPressable id="waiting_room.share" onPress={handleShare} hitSlop={10}>
               <View className="flex-row items-center gap-1">
                 <Ionicons name="share-outline" size={10} color={dimColor} />
                 <Text
@@ -123,7 +128,7 @@ export function MultiplayerWaiting({
                   <Trans>SHARE</Trans>
                 </Text>
               </View>
-            </Pressable>
+            </TrackedPressable>
           </View>
         </View>
 
@@ -190,7 +195,8 @@ export function MultiplayerWaiting({
         {/* Actions */}
         <View className="w-full items-center gap-4">
           {isAdmin && (
-            <Pressable
+            <TrackedPressable
+              id="waiting_room.start"
               onPress={onStart}
               disabled={!canStart}
               className={cn(
@@ -212,7 +218,7 @@ export function MultiplayerWaiting({
                   <Trans>START GAME</Trans>
                 </Text>
               </LinearGradient>
-            </Pressable>
+            </TrackedPressable>
           )}
 
           {!isAdmin && (
@@ -227,14 +233,14 @@ export function MultiplayerWaiting({
             </View>
           )}
 
-          <Pressable onPress={onLeave} hitSlop={10}>
+          <TrackedPressable id="waiting_room.cancel" onPress={onLeave} hitSlop={10}>
             <Text
               selectable={false}
               className="font-mono text-[10px] font-bold tracking-[1.8px] text-dim underline"
             >
               <Trans>CANCEL</Trans>
             </Text>
-          </Pressable>
+          </TrackedPressable>
         </View>
       </View>
     </Screen>

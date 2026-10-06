@@ -2,11 +2,12 @@ import { Ionicons } from '@expo/vector-icons'
 import type { MessageDescriptor } from '@lingui/core'
 import { msg } from '@lingui/core/macro'
 import { useLingui } from '@lingui/react/macro'
-import { Pressable, Text, View } from 'react-native'
+import { Text, View } from 'react-native'
 
 import type { BadgeCorner } from '@/components/game/dial-badge'
 import { OptionCheckbox } from '@/components/overlays/option-checkbox'
 import { ValueSlider } from '@/components/overlays/value-slider'
+import { TrackedPressable } from '@/components/tracked-pressable'
 import { DIM_INK } from '@/constants/colors'
 import {
   DIAL_CORNERS,
@@ -109,7 +110,8 @@ export function TraineeDisplayOptions({
             {row.map((corner) => {
               const hint = corners[corner]
               return (
-                <Pressable
+                <TrackedPressable
+                  id="trainee_options.corner"
                   key={corner}
                   onPress={() => {
                     onEdit(corner)
@@ -129,7 +131,7 @@ export function TraineeDisplayOptions({
                   </Text>
                   {/* The mark that says this is a choice and not a label. */}
                   <Ionicons name="chevron-down" size={12} color={DIM_INK[colorScheme]} />
-                </Pressable>
+                </TrackedPressable>
               )
             })}
           </View>
@@ -150,7 +152,8 @@ export function TraineeDisplayOptions({
         {[SWITCHES.slice(0, 2), SWITCHES.slice(2)].map((row) => (
           <View key={row[0]} className="w-full flex-row justify-center gap-2">
             {row.map((key) => (
-              <Pressable
+              <TrackedPressable
+                id="trainee_options.switch"
                 key={key}
                 onPress={onToggle[key]}
                 hitSlop={6}
@@ -164,7 +167,7 @@ export function TraineeDisplayOptions({
                 >
                   {t(SWITCH_LABEL[key])}
                 </Text>
-              </Pressable>
+              </TrackedPressable>
             ))}
             {/* The empty half of the last row, so the tile beside it keeps its column. */}
             {row.length === 1 && (

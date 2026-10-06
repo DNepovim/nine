@@ -1,8 +1,9 @@
 import { Trans, useLingui } from '@lingui/react/macro'
 import { useState } from 'react'
-import { FlatList, Pressable, Text, View } from 'react-native'
+import { FlatList, Text, View } from 'react-native'
 
 import { ScreenLayer } from '@/components/screen'
+import { TrackedPressable } from '@/components/tracked-pressable'
 import { CHALLENGES } from '@/modes/challenges/catalog'
 import type { ModeDefinition } from '@/modes/types'
 
@@ -57,7 +58,8 @@ function ChallengeRow({
           {STATUS_LABEL[status]} · {mode.id}
         </Text>
       </View>
-      <Pressable
+      <TrackedPressable
+        id="dev.run"
         onPress={() => {
           onRun(mode.id)
         }}
@@ -70,7 +72,7 @@ function ChallengeRow({
         >
           <Trans>RUN</Trans>
         </Text>
-      </Pressable>
+      </TrackedPressable>
     </View>
   )
 }
@@ -117,7 +119,8 @@ export function DevOverlay({
         }
       />
 
-      <Pressable
+      <TrackedPressable
+        id="dev.done"
         onPress={onClose}
         className="mt-4 items-center self-center rounded-2xl bg-strong py-4"
         style={{ width: 224 }}
@@ -128,7 +131,7 @@ export function DevOverlay({
         >
           <Trans>DONE</Trans>
         </Text>
-      </Pressable>
+      </TrackedPressable>
     </ScreenLayer>
   )
 }

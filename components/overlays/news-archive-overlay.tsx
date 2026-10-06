@@ -1,8 +1,9 @@
 import { Trans } from '@lingui/react/macro'
-import { FlatList, Pressable, Text } from 'react-native'
+import { FlatList, Text } from 'react-native'
 
 import { NewsRelease } from '@/components/overlays/news-release'
 import { ScreenLayer } from '@/components/screen'
+import { TrackedPressable } from '@/components/tracked-pressable'
 import { RELEASES } from '@/constants/news'
 import type { Release } from '@/types/news'
 
@@ -38,7 +39,8 @@ export function NewsArchiveOverlay({ onClose }: { onClose: () => void }) {
         }
       />
 
-      <Pressable
+      <TrackedPressable
+        id="news.done"
         onPress={onClose}
         className="mt-4 items-center self-center rounded-2xl bg-strong py-4"
         style={{ width: 224 }}
@@ -49,7 +51,7 @@ export function NewsArchiveOverlay({ onClose }: { onClose: () => void }) {
         >
           <Trans>DONE</Trans>
         </Text>
-      </Pressable>
+      </TrackedPressable>
     </ScreenLayer>
   )
 }

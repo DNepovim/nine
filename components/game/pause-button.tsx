@@ -1,6 +1,8 @@
 import { Ionicons } from '@expo/vector-icons'
 import { Trans } from '@lingui/react/macro'
-import { Pressable, Text } from 'react-native'
+import { Text } from 'react-native'
+
+import { TrackedPressable } from '@/components/tracked-pressable'
 
 // The way out of a run, sitting in the top row beside NINE.
 //
@@ -41,7 +43,8 @@ const GLYPH_INSET = -3 + (ICON * (GLYPH_WIDEN - 1)) / 2
 
 export function PauseButton({ color, onPress }: { color: string; onPress: () => void }) {
   return (
-    <Pressable
+    <TrackedPressable
+      id="game.pause"
       onPress={onPress}
       hitSlop={14}
       className="flex-row items-center gap-1"
@@ -62,6 +65,6 @@ export function PauseButton({ color, onPress }: { color: string; onPress: () => 
           transform: [{ scaleX: GLYPH_WIDEN }],
         }}
       />
-    </Pressable>
+    </TrackedPressable>
   )
 }

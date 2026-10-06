@@ -1,6 +1,6 @@
 import { LinearGradient } from 'expo-linear-gradient'
 import { useEffect, useState } from 'react'
-import { Pressable, View } from 'react-native'
+import { View } from 'react-native'
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
@@ -11,6 +11,7 @@ import Animated, {
 } from 'react-native-reanimated'
 
 import { CornerBadge } from '@/components/overlays/corner-badge'
+import { TrackedPressable } from '@/components/tracked-pressable'
 import { DIM_INK } from '@/constants/colors'
 import { useTheme } from '@/hooks/use-theme'
 import { gradientOf, MULTIPLAYER_GRADIENT, type ModeId } from '@/modes'
@@ -132,7 +133,8 @@ export function PlayModeTab({
         </Animated.View>
 
         {PLAY_MODES.map(({ key, label, badge }, i) => (
-          <Pressable
+          <TrackedPressable
+            id="menu.play_mode"
             key={key}
             onPress={() => {
               onSelect(key)
@@ -155,7 +157,7 @@ export function PlayModeTab({
               {label}
             </Animated.Text>
             {badge !== null && <CornerBadge label={badge} />}
-          </Pressable>
+          </TrackedPressable>
         ))}
       </View>
     </View>

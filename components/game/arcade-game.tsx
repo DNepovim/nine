@@ -2,7 +2,7 @@ import { AntDesign } from '@expo/vector-icons'
 import { Trans } from '@lingui/react/macro'
 import { isOneOf } from 'narrowland'
 import { useEffect, useRef, useState } from 'react'
-import { Pressable, Text, View, type LayoutChangeEvent } from 'react-native'
+import { Text, View, type LayoutChangeEvent } from 'react-native'
 import Animated, {
   Easing,
   FadeIn,
@@ -32,6 +32,7 @@ import { VillageArrival } from '@/components/game/village-arrival'
 import { WayBud, type BudState } from '@/components/game/way-bud'
 import { WayStem, type StemState } from '@/components/game/way-stem'
 import { ScreenLayer } from '@/components/screen'
+import { TrackedPressable } from '@/components/tracked-pressable'
 import {
   ANCHOR,
   DAWN_OUT_MS,
@@ -886,7 +887,8 @@ export function ArcadeGame({ isDark, onEnd }: { isDark: boolean; onEnd: () => vo
                   thing to do in it. In arcade's own ink, which is what every word on this
                   screen is written in — and carrying a heart in the hearts' own red, so
                   the −1 is read as the thing on the bar above and not as a crossroad. */}
-              <Pressable
+              <TrackedPressable
+                id="arcade.retreat"
                 onPress={run.flee}
                 hitSlop={10}
                 className="flex-row items-center gap-1 rounded-full border px-4 py-1.5"
@@ -900,7 +902,7 @@ export function ArcadeGame({ isDark, onEnd }: { isDark: boolean; onEnd: () => vo
                   <Trans>RETREAT · −1</Trans>
                 </Text>
                 <AntDesign name="heart" size={10} color={EMBER} />
-              </Pressable>
+              </TrackedPressable>
             </Animated.View>
           )}
         </View>

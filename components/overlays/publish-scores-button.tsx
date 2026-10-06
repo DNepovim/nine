@@ -1,7 +1,8 @@
 import { Trans } from '@lingui/react/macro'
 import { LinearGradient } from 'expo-linear-gradient'
-import { Pressable, Text, View } from 'react-native'
+import { Text, View } from 'react-native'
 
+import { TrackedPressable } from '@/components/tracked-pressable'
 import { cn } from '@/lib/cn'
 
 // Shown under the board for as long as the player has no nickname — the one thing
@@ -29,7 +30,8 @@ export function PublishScoresButton({
 }) {
   return (
     <View className="mt-3 items-center">
-      <Pressable
+      <TrackedPressable
+        id="profile.publish_scores"
         onPress={onPress}
         disabled={disabled}
         hitSlop={8}
@@ -48,7 +50,7 @@ export function PublishScoresButton({
             <Trans>ADD YOUR NICKNAME</Trans>
           </Text>
         </LinearGradient>
-      </Pressable>
+      </TrackedPressable>
       <Text
         selectable={false}
         className="mt-1.5 font-mono text-[8px] font-bold tracking-[1px] text-dim"

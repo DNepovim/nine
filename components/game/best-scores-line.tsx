@@ -3,7 +3,7 @@ import { msg } from '@lingui/core/macro'
 import { Trans, useLingui } from '@lingui/react/macro'
 import { useFonts } from 'expo-font'
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { Pressable, Text, View } from 'react-native'
+import { Text, View } from 'react-native'
 import Animated, {
   Easing,
   useAnimatedStyle,
@@ -14,6 +14,7 @@ import Animated, {
 import DSEG7Font from '@/assets/fonts/DSEG7Classic-Bold.ttf'
 import { AnnouncementBar } from '@/components/game/announcement-bar'
 import { BEST_CELL_HEIGHT, BestScoreCell } from '@/components/game/best-score-cell'
+import { TrackedPressable } from '@/components/tracked-pressable'
 import type { AchievementId } from '@/constants/achievements'
 import { GOLD_INK, SPECTRUM } from '@/constants/colors'
 import { mono } from '@/constants/theme'
@@ -381,7 +382,8 @@ export function BestScoresLine({
             unhittable for the first frames of a line. The hit area is generous because
             the strip is a hairline — 14px is nothing to aim at with a thumb. */}
         {openable !== undefined && (
-          <Pressable
+          <TrackedPressable
+            id="best_scores.line"
             className="absolute inset-0"
             hitSlop={8}
             onPress={() => {

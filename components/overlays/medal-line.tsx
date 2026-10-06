@@ -2,8 +2,9 @@ import { Ionicons } from '@expo/vector-icons'
 import { useLingui } from '@lingui/react/macro'
 import { isEmptyArray } from 'narrowland'
 import { Fragment } from 'react'
-import { Pressable, Text, View } from 'react-native'
+import { Text, View } from 'react-native'
 
+import { TrackedPressable } from '@/components/tracked-pressable'
 import { DIM_INK } from '@/constants/colors'
 import { useTheme } from '@/hooks/use-theme'
 import { PERIOD_CODES, type Medal } from '@/lib/medals'
@@ -75,13 +76,14 @@ export function MedalLine({
   // the other one arriving. Dim rather than a medal's gold — there are three hues in the
   // line already, and the arrow is not one of the things being reported.
   return (
-    <Pressable
+    <TrackedPressable
+      id="medals.line"
       onPress={onPress}
       hitSlop={8}
       className="flex-row items-center justify-center gap-1.5"
     >
       {entries}
       <Ionicons name="chevron-forward" size={10} color={DIM_INK[colorScheme]} />
-    </Pressable>
+    </TrackedPressable>
   )
 }

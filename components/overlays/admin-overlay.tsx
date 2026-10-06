@@ -1,15 +1,9 @@
 import { Trans } from '@lingui/react/macro'
 import { useEffect, useState } from 'react'
-import {
-  ActivityIndicator,
-  FlatList,
-  Pressable,
-  Text,
-  TextInput,
-  View,
-} from 'react-native'
+import { ActivityIndicator, FlatList, Text, TextInput, View } from 'react-native'
 
 import { ScreenLayer } from '@/components/screen'
+import { TrackedPressable } from '@/components/tracked-pressable'
 import {
   findProfileByNickname,
   listRoledProfiles,
@@ -43,7 +37,8 @@ function RolePicker({
       {PICKER_OPTIONS.map((option) => {
         const active = option === current
         return (
-          <Pressable
+          <TrackedPressable
+            id="admin.row"
             key={option ?? 'none'}
             disabled={busy || active}
             onPress={() => {
@@ -64,7 +59,7 @@ function RolePicker({
             >
               {option === null ? 'NONE' : ROLE_LABEL[option]}
             </Text>
-          </Pressable>
+          </TrackedPressable>
         )
       })}
     </View>
@@ -185,7 +180,8 @@ export function AdminOverlay({ onClose }: { onClose: () => void }) {
           }}
           className="flex-1 rounded-lg border border-dim/30 bg-background px-3 py-2 font-mono font-bold tracking-[1px] text-primary"
         />
-        <Pressable
+        <TrackedPressable
+          id="admin.set_role"
           onPress={() => {
             void handleSearch()
           }}
@@ -201,7 +197,7 @@ export function AdminOverlay({ onClose }: { onClose: () => void }) {
           >
             <Trans>FIND</Trans>
           </Text>
-        </Pressable>
+        </TrackedPressable>
       </View>
 
       {searching && <ActivityIndicator className="my-2" />}
@@ -262,7 +258,8 @@ export function AdminOverlay({ onClose }: { onClose: () => void }) {
         />
       )}
 
-      <Pressable
+      <TrackedPressable
+        id="admin.done"
         onPress={onClose}
         className="mt-4 items-center self-center rounded-2xl bg-strong py-4"
         style={{ width: 224 }}
@@ -273,7 +270,7 @@ export function AdminOverlay({ onClose }: { onClose: () => void }) {
         >
           <Trans>DONE</Trans>
         </Text>
-      </Pressable>
+      </TrackedPressable>
     </ScreenLayer>
   )
 }

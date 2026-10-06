@@ -1,6 +1,6 @@
 import { Trans } from '@lingui/react/macro'
 import { useEffect, useRef } from 'react'
-import { Pressable, Text } from 'react-native'
+import { Text } from 'react-native'
 import Animated, {
   Easing,
   useAnimatedStyle,
@@ -9,6 +9,7 @@ import Animated, {
 } from 'react-native-reanimated'
 import { scheduleOnRN } from 'react-native-worklets'
 
+import { TrackedPressable } from '@/components/tracked-pressable'
 import { LAYER } from '@/constants/layers'
 import { gradientOf } from '@/modes'
 
@@ -90,7 +91,11 @@ export function TutorialCurtain({
     >
       {/* The whole screen takes the tap: a player who has read it should not have to find
         anything to press. */}
-      <Pressable onPress={lift} className="flex-1 items-center justify-center">
+      <TrackedPressable
+        id="tutorial.curtain_lift"
+        onPress={lift}
+        className="flex-1 items-center justify-center"
+      >
         <Text
           selectable={false}
           className="px-8 text-center font-mono text-[15px] font-black tracking-[2px]"
@@ -98,7 +103,7 @@ export function TutorialCurtain({
         >
           <Trans>LET'S LEARN THE GAME</Trans>
         </Text>
-      </Pressable>
+      </TrackedPressable>
     </Animated.View>
   )
 }

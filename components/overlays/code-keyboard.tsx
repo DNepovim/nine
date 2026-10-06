@@ -1,5 +1,7 @@
 import { LinearGradient } from 'expo-linear-gradient'
-import { Pressable, Text, View } from 'react-native'
+import { Text, View } from 'react-native'
+
+import { TrackedPressable } from '@/components/tracked-pressable'
 
 const KEY_ROWS = [
   [1, 2, 3],
@@ -22,7 +24,8 @@ export function CodeKeyboard({
       {KEY_ROWS.map((row, ri) => (
         <View key={ri} className="flex-row gap-2">
           {row.map((n) => (
-            <Pressable
+            <TrackedPressable
+              id="join_room.key"
               key={n}
               onPress={() => {
                 if (value.length < 4) onChange(value + String(n))
@@ -44,7 +47,7 @@ export function CodeKeyboard({
                   </Text>
                 </LinearGradient>
               )}
-            </Pressable>
+            </TrackedPressable>
           ))}
         </View>
       ))}

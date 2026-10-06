@@ -1,9 +1,10 @@
 import { Ionicons } from '@expo/vector-icons'
 import { Trans } from '@lingui/react/macro'
 import { LinearGradient } from 'expo-linear-gradient'
-import { Pressable, Text, View } from 'react-native'
+import { Text, View } from 'react-native'
 
 import { Screen } from '@/components/screen'
+import { TrackedPressable } from '@/components/tracked-pressable'
 import { DIM_INK } from '@/constants/colors'
 import { useTheme } from '@/hooks/use-theme'
 import type { TitleWords } from '@/lib/game-over-title'
@@ -68,7 +69,8 @@ export function StepUpOverlay({
         <BoardBadges gameMode={gameMode} difficulty={difficulty} />
 
         <View className="w-56 items-center gap-6">
-          <Pressable
+          <TrackedPressable
+            id="step_up.start"
             onPress={onStart}
             className="w-full overflow-hidden rounded-2xl"
             style={shadow}
@@ -86,12 +88,12 @@ export function StepUpOverlay({
                 <Trans>START GAME</Trans>
               </Text>
             </LinearGradient>
-          </Pressable>
+          </TrackedPressable>
 
           {/* The game-over screen's HOME link, in the same dress: same icon, same size,
               same dim ink, and the same destination. Two ways out of a screen that both
               land on the intro should not look like two different doors. */}
-          <Pressable onPress={onOtherMode} hitSlop={10}>
+          <TrackedPressable id="step_up.other_mode" onPress={onOtherMode} hitSlop={10}>
             <View className="flex-row items-center gap-1">
               <Ionicons name="home-outline" size={10} color={dimColor} />
               <Text
@@ -101,7 +103,7 @@ export function StepUpOverlay({
                 <Trans>TRY ANOTHER MODE</Trans>
               </Text>
             </View>
-          </Pressable>
+          </TrackedPressable>
         </View>
       </View>
     </Screen>

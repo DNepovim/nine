@@ -1,12 +1,13 @@
 import { AntDesign } from '@expo/vector-icons'
 import { Trans } from '@lingui/react/macro'
 import type { ReactNode } from 'react'
-import { Pressable, Text, View } from 'react-native'
+import { Text, View } from 'react-native'
 
 import { LocaleToggle } from '@/components/locale-toggle'
 import { OptionCheckbox } from '@/components/overlays/option-checkbox'
 import { Screen } from '@/components/screen'
 import { ThemeToggle } from '@/components/theme-toggle'
+import { TrackedPressable } from '@/components/tracked-pressable'
 import { DIM_INK } from '@/constants/colors'
 import { useLocale } from '@/hooks/use-locale'
 import type { ReplayConsent } from '@/hooks/use-replay-consent'
@@ -26,7 +27,8 @@ function AdvancedOption({
   onToggle: () => void
 }) {
   return (
-    <Pressable
+    <TrackedPressable
+      id="options.toggle"
       onPress={onToggle}
       className="flex-row items-center gap-3 py-3"
       style={{ width: 300 }}
@@ -46,7 +48,7 @@ function AdvancedOption({
           {description}
         </Text>
       </View>
-    </Pressable>
+    </TrackedPressable>
   )
 }
 
@@ -120,7 +122,8 @@ export function AdvancedOptionsOverlay({
       </View>
 
       {/* What's new */}
-      <Pressable
+      <TrackedPressable
+        id="options.whats_new"
         onPress={onOpenNews}
         className="flex-row items-center justify-between py-3"
         style={{ width: 300 }}
@@ -132,7 +135,7 @@ export function AdvancedOptionsOverlay({
           <Trans>WHAT’S NEW</Trans>
         </Text>
         <AntDesign name="right" size={14} color={DIM_INK[isDark ? 'dark' : 'light']} />
-      </Pressable>
+      </TrackedPressable>
 
       {/* Build stamp — the line to quote in a bug report. */}
       <View className="flex-row items-center justify-between pt-3" style={{ width: 300 }}>
@@ -144,7 +147,8 @@ export function AdvancedOptionsOverlay({
         </Text>
       </View>
 
-      <Pressable
+      <TrackedPressable
+        id="options.done"
         onPress={onClose}
         className="mt-8 items-center rounded-2xl bg-strong py-4"
         style={{ width: 224 }}
@@ -155,7 +159,7 @@ export function AdvancedOptionsOverlay({
         >
           <Trans>DONE</Trans>
         </Text>
-      </Pressable>
+      </TrackedPressable>
     </Screen>
   )
 }

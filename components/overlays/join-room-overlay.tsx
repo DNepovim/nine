@@ -1,9 +1,10 @@
 import { Trans } from '@lingui/react/macro'
 import { LinearGradient } from 'expo-linear-gradient'
 import { useState } from 'react'
-import { Pressable, Text } from 'react-native'
+import { Text } from 'react-native'
 
 import { Screen } from '@/components/screen'
+import { TrackedPressable } from '@/components/tracked-pressable'
 import { cn } from '@/lib/cn'
 import { DARK_MULTIPLAYER_GRADIENT, MULTIPLAYER_GRADIENT } from '@/modes'
 
@@ -60,7 +61,8 @@ export function JoinRoomOverlay({
         joinError={joinError}
       />
 
-      <Pressable
+      <TrackedPressable
+        id="join_room.join"
         onPress={() => {
           onJoinRoom(code)
         }}
@@ -81,16 +83,21 @@ export function JoinRoomOverlay({
             <Trans>JOIN ROOM</Trans>
           </Text>
         </LinearGradient>
-      </Pressable>
+      </TrackedPressable>
 
-      <Pressable onPress={onClose} hitSlop={10} className="mt-4">
+      <TrackedPressable
+        id="join_room.cancel"
+        onPress={onClose}
+        hitSlop={10}
+        className="mt-4"
+      >
         <Text
           selectable={false}
           className="font-mono text-[10px] font-bold tracking-[1.8px] text-dim underline"
         >
           <Trans>CANCEL</Trans>
         </Text>
-      </Pressable>
+      </TrackedPressable>
     </Screen>
   )
 }

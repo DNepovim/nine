@@ -1,11 +1,12 @@
 import { Ionicons } from '@expo/vector-icons'
 import { Trans } from '@lingui/react/macro'
 import { useState } from 'react'
-import { Pressable, ScrollView, Text, View } from 'react-native'
+import { ScrollView, Text, View } from 'react-native'
 
 import { ModalCard } from '@/components/overlays/modal-card'
 import { popupAccent, PopupCardView } from '@/components/overlays/popup-card-view'
 import { PageDots } from '@/components/page-dots'
+import { TrackedPressable } from '@/components/tracked-pressable'
 import { DIM_INK } from '@/constants/colors'
 import { useTheme } from '@/hooks/use-theme'
 import { useViewport } from '@/hooks/use-viewport'
@@ -67,7 +68,8 @@ export function WhatsNewOverlay({
 
           <View className="mt-3 flex-row items-center justify-center gap-3">
             {cards.length > 1 && (
-              <Pressable
+              <TrackedPressable
+                id="news.action"
                 onPress={() => {
                   setIndex((current) => current - 1)
                 }}
@@ -84,10 +86,11 @@ export function WhatsNewOverlay({
                 >
                   <Trans>BACK</Trans>
                 </Text>
-              </Pressable>
+              </TrackedPressable>
             )}
 
-            <Pressable
+            <TrackedPressable
+              id="news.dismiss"
               onPress={() => {
                 if (isLast) close()
                 else setIndex((current) => current + 1)
@@ -105,7 +108,7 @@ export function WhatsNewOverlay({
                 size={14}
                 color="#d8d2f4"
               />
-            </Pressable>
+            </TrackedPressable>
           </View>
         </>
       )}

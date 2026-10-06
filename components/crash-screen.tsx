@@ -1,5 +1,7 @@
 import { Trans } from '@lingui/react/macro'
-import { Pressable, Text, View } from 'react-native'
+import { Text, View } from 'react-native'
+
+import { TrackedPressable } from '@/components/tracked-pressable'
 
 // What a render crash leaves on screen instead of a blank page. Deliberately built from
 // nothing but tokens and primitives: the boundary that mounts this may be standing in
@@ -22,7 +24,8 @@ export function CrashScreen({ onRetry }: { onRetry: () => void }) {
           happening, reload the page.
         </Trans>
       </Text>
-      <Pressable
+      <TrackedPressable
+        id="crash.try_again"
         onPress={onRetry}
         className="items-center rounded-2xl bg-strong px-12 py-4"
       >
@@ -32,7 +35,7 @@ export function CrashScreen({ onRetry }: { onRetry: () => void }) {
         >
           <Trans>TRY AGAIN</Trans>
         </Text>
-      </Pressable>
+      </TrackedPressable>
     </View>
   )
 }

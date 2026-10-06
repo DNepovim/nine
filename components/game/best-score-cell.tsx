@@ -1,5 +1,5 @@
 import { useEffect } from 'react'
-import { Pressable, Text, View } from 'react-native'
+import { Text, View } from 'react-native'
 import Animated, {
   Easing,
   useAnimatedStyle,
@@ -9,6 +9,7 @@ import Animated, {
 } from 'react-native-reanimated'
 
 import { GradientName } from '@/components/gradient-name'
+import { TrackedPressable } from '@/components/tracked-pressable'
 import type { RecordHolder } from '@/hooks/use-board'
 import { cn } from '@/lib/cn'
 import { shortName } from '@/lib/short-name'
@@ -118,7 +119,8 @@ export function BestScoreCell({
     // hairline with the top bar under it, so there is room to reach vertically, while
     // four cells sit shoulder to shoulder across it and a horizontal overreach would
     // start answering for the cell next door.
-    <Pressable
+    <TrackedPressable
+      id="best_scores.cell"
       className="flex-row items-center gap-1"
       disabled={onPress === undefined}
       hitSlop={{ top: 10, bottom: 10, left: 3, right: 3 }}
@@ -172,6 +174,6 @@ export function BestScoreCell({
       >
         {value}
       </Animated.Text>
-    </Pressable>
+    </TrackedPressable>
   )
 }

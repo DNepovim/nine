@@ -1,8 +1,9 @@
 import { Trans } from '@lingui/react/macro'
 import { LinearGradient } from 'expo-linear-gradient'
-import { Pressable, Text, View } from 'react-native'
+import { Text, View } from 'react-native'
 
 import { Screen } from '@/components/screen'
+import { TrackedPressable } from '@/components/tracked-pressable'
 import { DARK_MULTIPLAYER_GRADIENT } from '@/modes'
 import type { MultiMode } from '@/types/multiplayer'
 
@@ -25,7 +26,8 @@ export function MultiplayerMenu({
   return (
     <Screen overlay>
       <View className="w-full items-center" style={{ gap: 20 }}>
-        <Pressable
+        <TrackedPressable
+          id="multiplayer_menu.continue"
           onPress={onContinue}
           className="w-56 overflow-hidden rounded-2xl"
           style={shadow}
@@ -43,16 +45,16 @@ export function MultiplayerMenu({
               <Trans>CONTINUE</Trans>
             </Text>
           </LinearGradient>
-        </Pressable>
+        </TrackedPressable>
 
-        <Pressable onPress={onLeave} hitSlop={10}>
+        <TrackedPressable id="multiplayer_menu.leave" onPress={onLeave} hitSlop={10}>
           <Text
             selectable={false}
             className="font-mono text-[10px] font-bold tracking-[1.8px] text-dim underline"
           >
             <Trans>LEAVE GAME</Trans>
           </Text>
-        </Pressable>
+        </TrackedPressable>
       </View>
     </Screen>
   )

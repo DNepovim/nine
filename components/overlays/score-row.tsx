@@ -1,7 +1,8 @@
 import { isNonEmptyString } from 'narrowland'
-import { Pressable, Text, View } from 'react-native'
+import { Text, View } from 'react-native'
 
 import { GradientName } from '@/components/gradient-name'
+import { TrackedPressable } from '@/components/tracked-pressable'
 import { ON_GOLD_LABEL_SHADOW } from '@/constants/theme'
 import { useOpenProfile } from '@/hooks/use-profile-modal'
 import { cn } from '@/lib/cn'
@@ -70,7 +71,8 @@ export function ScoreRow({
     entry.achievedAt === undefined ? null : timeAgo(entry.achievedAt, Date.now())
   const note = entry.note ?? age
   return (
-    <Pressable
+    <TrackedPressable
+      id="high_scores.score_row"
       // A name is the way into its player's profile, everywhere a name is drawn. The
       // whole row is the target rather than the text: a 10px nickname is not a tap
       // target, and the rank and score beside it belong to the same player.
@@ -152,6 +154,6 @@ export function ScoreRow({
       >
         {entry.score}
       </Text>
-    </Pressable>
+    </TrackedPressable>
   )
 }

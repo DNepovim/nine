@@ -4,7 +4,7 @@ import { Trans, useLingui } from '@lingui/react/macro'
 import { useFonts } from 'expo-font'
 import { LinearGradient } from 'expo-linear-gradient'
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { Pressable, ScrollView, Text, View } from 'react-native'
+import { ScrollView, Text, View } from 'react-native'
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
@@ -13,6 +13,7 @@ import Animated, {
 } from 'react-native-reanimated'
 
 import DSEG7Font from '@/assets/fonts/DSEG7Classic-Bold.ttf'
+import { TrackedPressable } from '@/components/tracked-pressable'
 import { mono, ON_GOLD_LABEL_SHADOW } from '@/constants/theme'
 import { useBoardContext, type PeriodBoard } from '@/hooks/use-board'
 import { useOnline } from '@/hooks/use-online'
@@ -208,7 +209,8 @@ export function HighScores({
       <View className="mb-3">
         <View className="flex-row justify-center">
           {TABS.map(({ key, label }, i) => (
-            <Pressable
+            <TrackedPressable
+              id="high_scores.row"
               key={key}
               onPress={() => {
                 goToTab(key)
@@ -237,7 +239,7 @@ export function HighScores({
                   open it — the tabs rotate, so a medal on a tab they are not looking at
                   would otherwise go unseen. */}
               <TabMedal myRank={dataByTab[key].myRank} />
-            </Pressable>
+            </TrackedPressable>
           ))}
         </View>
 

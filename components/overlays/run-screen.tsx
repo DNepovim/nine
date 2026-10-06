@@ -2,11 +2,12 @@ import { Ionicons } from '@expo/vector-icons'
 import { LinearGradient } from 'expo-linear-gradient'
 import { VariableContextProvider } from 'nativewind'
 import type { ReactNode } from 'react'
-import { Pressable, Text, View } from 'react-native'
+import { Text, View } from 'react-native'
 
 import { ScoreReadout } from '@/components/overlays/score-readout'
 import { StatRow } from '@/components/overlays/stat-row'
 import { Screen } from '@/components/screen'
+import { TrackedPressable } from '@/components/tracked-pressable'
 import { DIM_INK } from '@/constants/colors'
 import { useTheme } from '@/hooks/use-theme'
 import type { RunStat } from '@/lib/run-stats'
@@ -148,7 +149,8 @@ export function RunScreen({
               is for. */}
           <View className="items-center gap-6">
             <View className="w-56 gap-3">
-              <Pressable
+              <TrackedPressable
+                id="run_screen.cta"
                 onPress={cta.onPress}
                 className="overflow-hidden rounded-2xl"
                 style={shadow}
@@ -166,7 +168,7 @@ export function RunScreen({
                     {cta.label}
                   </Text>
                 </LinearGradient>
-              </Pressable>
+              </TrackedPressable>
               {alsoCta}
             </View>
             {exits}
@@ -188,14 +190,18 @@ export function CardButton({
   onPress: () => void
 }) {
   return (
-    <Pressable onPress={onPress} className="items-center rounded-2xl bg-card py-4">
+    <TrackedPressable
+      id="run_screen.secondary"
+      onPress={onPress}
+      className="items-center rounded-2xl bg-card py-4"
+    >
       <Text
         selectable={false}
         className="font-mono text-[13px] font-black tracking-[2px] text-primary"
       >
         {label}
       </Text>
-    </Pressable>
+    </TrackedPressable>
   )
 }
 
@@ -214,7 +220,7 @@ export function RunExit({
 }) {
   const { colorScheme } = useTheme()
   return (
-    <Pressable onPress={onPress} hitSlop={10}>
+    <TrackedPressable id="run_screen.tertiary" onPress={onPress} hitSlop={10}>
       <View className="flex-row items-center gap-1">
         <Ionicons name={icon} size={10} color={DIM_INK[colorScheme]} />
         <Text
@@ -224,6 +230,6 @@ export function RunExit({
           {label}
         </Text>
       </View>
-    </Pressable>
+    </TrackedPressable>
   )
 }

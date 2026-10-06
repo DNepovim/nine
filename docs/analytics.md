@@ -14,6 +14,8 @@ below. This documents what shipped, how to configure it, and what was decided ag
 | Web client    | `lib/analytics.web.ts`                                                                                                             | `posthog-js`, EU host, autocapture **off**, pageviews off, `capture_exceptions` on, replay off                   |
 | Native client | `lib/analytics.ts`                                                                                                                 | No-ops. CI builds no native app, so native carries no SDK — the day it ships, this is the only file that changes |
 | Identity      | `identify()` in `app/(tabs)/index.tsx`                                                                                             | The anonymous Supabase user id the boards already rank, so events join to real scores                            |
+| Nickname      | `identify()` in `lib/analytics.web.ts`                                                                                             | Both a person property (the current name) and a registered super property (the name at the time), on every event |
+| Buttons       | `components/tracked-pressable.tsx`, ids in `constants/buttons.ts`                                                                  | `button_pressed` from every button in the app — the hand-rolled alternative to autocapture, which stays off      |
 | Feedback      | `components/overlays/feedback-overlay.tsx`, `lib/feedback-submission.ts`                                                           | A message from the player, written to the `feedback` table with mode, difficulty, score and build attached       |
 | Errors        | `capture_exceptions`, `ErrorBoundary` in `app/_layout.tsx`, refusals in `lib/score-submission.ts` and `lib/feedback-submission.ts` | Unhandled errors and rejections, render crashes, and server-refused score and feedback writes                    |
 
@@ -63,16 +65,58 @@ shapes live in `lib/analytics-events.ts`; the wiring is in `app/(tabs)/index.tsx
 - `run_started` — mode, difficulty, and what put the player in: menu, play again, or an
   accepted challenge
 - `run_finished` — score, hits, strikes, records taken, celebration screen, personal best
+- `run_paused` — mode, difficulty, the run's figures so far, and **`source`**: which of
+  the five taps stopped it (`button`, `best_scores`, `achievement`, `step_up`, `dev`) or
+  `focus_lost` for the one nobody asked for. `usePauseOnBlur` fires that last one for a
+  tab switch, the app switcher, an incoming call and the screen locking alike, so a pause
+  the app imposed never reads as a pause the player wanted
+- `run_resumed` — mode, difficulty, and `away_ms`, how long the run stood still. Sent when
+  the beat after CONTINUE has actually elapsed, not on the tap: going away cancels that
+  beat and leaves the run paused, and an event on the tap would have claimed otherwise
+- `run_ended` — a run the player ended rather than lost, by END RUN or RESTART (`reason`),
+  with the stats the pause screen was showing: score, hits, strikes, elapsed, accuracy,
+  speed, max streak
 - `challenge_offered` / `challenge_accepted` — both rungs of the ladder: the game-over
   dare and Trainee's step-up toast
 - `screen_opened` — options, how to play, news, feedback
 - `multiplayer_room` — created / joined / finished, with player count
 
+`run_finished` and `run_ended` between them close every run exactly once — the first for a
+run that reached its own end, the second for one walked out of — which is what makes
+"how many runs are abandoned" answerable at all. `run_ended` is reported ahead of the
+scored-mode guard in `endRunEarly`, so a Trainee run counts too: whether a run finished is
+not a question about leaderboards.
+
 Feedback sends no event at all — see above. `screen_opened` covers the dialog being
 opened; the messages themselves are rows in `feedback`.
 
+### Buttons
+
+`button_pressed` covers **every button in the app** — all 93 of them — carrying `id`
+(`<screen>.<what it does>`) and `screen`, which is read back off the id's own prefix so a
+breakdown needs no string splitting in HogQL.
+
+It is sent by `components/tracked-pressable.tsx`, not by the call sites. `TrackedPressable`
+wraps `Pressable`, forwards every prop untouched, and fires one `track` on press; the ids
+it accepts are the union in `constants/buttons.ts`, so a typo is a type error rather than a
+second funnel that looks broken. A button that is still a plain `Pressable` sends nothing,
+which makes the list exhaustive by construction.
+
+Two deliberate holes in it. A `Pressable` whose `onPress` is null or undefined reports
+nothing — the pause button between runs is exactly that, and a press of it is not a thing
+the player made anything of. And `disabled` buttons never fire `onPress` at all, so they
+never arrive either.
+
+**This is the hand-rolled alternative to autocapture, and that is the point.** Autocapture
+would have covered the same ground from one config line, but it patches click and input
+handling across the whole app — see the comment in `lib/analytics.web.ts`. One `track` on a
+button that was actually pressed costs nothing by comparison, and nothing at all on the
+dial's hot path.
+
 Deliberately **not** captured: dial presses. Highest-volume event in the app, and the
-aggregate it produces (hits, accuracy) already rides on `run_finished`.
+aggregate it produces (hits, accuracy) already rides on `run_finished` and `run_ended`.
+They are also not `Pressable`s — the dial is a single `GestureDetector` running a pan — so
+the sweep above could not have reached them even by accident.
 
 ## Configuration
 

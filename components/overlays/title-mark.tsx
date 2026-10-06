@@ -2,9 +2,10 @@ import type { MessageDescriptor } from '@lingui/core'
 import { msg } from '@lingui/core/macro'
 import { useLingui } from '@lingui/react/macro'
 import { useEffect, useState } from 'react'
-import { Pressable, Text, View } from 'react-native'
+import { Text, View } from 'react-native'
 import Animated, { FadeIn, FadeOut } from 'react-native-reanimated'
 
+import { TrackedPressable } from '@/components/tracked-pressable'
 import { GAME_SCALE } from '@/constants/colors'
 import type { ChampionMark } from '@/lib/champions'
 import { cn } from '@/lib/cn'
@@ -148,7 +149,8 @@ export function TitleMark({
       className={cn('z-50 w-full items-center', className)}
       style={{ height: size + LEADING }}
     >
-      <Pressable
+      <TrackedPressable
+        id="title.press"
         onPress={() => {
           setOpen((wasOpen) => !wasOpen)
         }}
@@ -163,7 +165,7 @@ export function TitleMark({
         >
           {mark}
         </Text>
-      </Pressable>
+      </TrackedPressable>
 
       {open && (
         <Animated.View
@@ -184,7 +186,8 @@ export function TitleMark({
         >
           {/* Any tap closes it. There is nothing in here to act on, so an X to aim at
               would be a control standing between the player and the screen. */}
-          <Pressable
+          <TrackedPressable
+            id="title.secondary"
             onPress={() => {
               setOpen(false)
             }}
@@ -224,7 +227,7 @@ export function TitleMark({
                 borderColor: `${tint}55`,
               }}
             />
-          </Pressable>
+          </TrackedPressable>
         </Animated.View>
       )}
     </View>

@@ -118,9 +118,21 @@ export const initAnalytics = (): void => {
 // The player is already identified for the boards — the anonymous Supabase user id is
 // what ranks them — so analytics reuses it rather than minting a second identity. That
 // is what lets an event be read next to the score it produced.
+// The nickname goes on twice, deliberately. As a person property it is the current
+// answer — one value per player, overwritten when they rename themselves. As a
+// registered super property it rides every event from here on, which is what makes a
+// run readable on its own without joining to the person: the name the player had *at
+// the time*, next to the score it produced. A rename then shows up as the boundary it
+// is, rather than rewriting history back to the first run.
+//
+// `unregister` rather than registering null for a player who has no nickname yet: an
+// absent property and a property whose value is empty are the same fact, and only one of
+// them clutters every event in the project.
 export const identify = (userId: string, nickname: string | null): void => {
   withClient((p) => {
     p.identify(userId, nickname === null ? undefined : { nickname })
+    if (nickname === null) p.unregister('nickname')
+    else p.register({ nickname })
   })
 }
 

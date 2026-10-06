@@ -1,4 +1,5 @@
 import type { AchievementId } from '@/constants/achievements'
+import type { ButtonId, ButtonScreen } from '@/constants/buttons'
 import type { Stage } from '@/lib/achievements'
 import type { Period } from '@/lib/announcements'
 import { type Difficulty, type ModeId } from '@/modes'
@@ -22,6 +23,46 @@ export type AnalyticsEvents = {
     // 'dev' is the one other than a player's own choice: a challenge started from the dev
     // screen rather than offered or picked on the intro.
     from: 'menu' | 'play_again' | 'challenge' | 'restart' | 'welcome' | 'guide' | 'dev'
+  }
+  // A run stopped mid-flight. `source` is the whole point of the event: a pause the
+  // player asked for and a pause the app imposed are different facts, and lumping them
+  // together makes "players pause a lot" out of "phones ring a lot". 'focus_lost' is the
+  // imposed one — usePauseOnBlur, which fires for a tab switch, the app switcher, an
+  // incoming call and the screen locking alike. Everything else is a deliberate tap, named
+  // by what was tapped: the top bar's button, the best-scores strip, an announced
+  // achievement, the Trainee step-up toast, or the dev screen abandoning a run.
+  run_paused: {
+    mode: ModeId
+    difficulty: Difficulty
+    source: 'button' | 'focus_lost' | 'best_scores' | 'achievement' | 'step_up' | 'dev'
+    score: number
+    hits: number
+    strikes: number
+    elapsed_ms: number
+  }
+  // CONTINUE, once the beat between the tap and the run picking up has actually elapsed —
+  // not the tap itself, which can still be cancelled by going away. `away_ms` is how long
+  // the run stood still, which is what separates a glance at the stats from a phone call.
+  run_resumed: {
+    mode: ModeId
+    difficulty: Difficulty
+    away_ms: number
+  }
+  // A run the player ended rather than lost — END RUN or RESTART from the pause screen.
+  // Distinct from `run_finished`, which is the run reaching its own end: between them
+  // they close every run exactly once, so "runs abandoned" is answerable at all.
+  run_ended: {
+    mode: ModeId
+    difficulty: Difficulty
+    reason: 'end_run' | 'restart'
+    score: number
+    hits: number
+    strikes: number
+    elapsed_ms: number
+    // The same two figures the pause screen shows, already averaged per hit.
+    accuracy: number
+    speed: number
+    max_streak: number
   }
   run_finished: {
     mode: ModeId
@@ -68,6 +109,13 @@ export type AnalyticsEvents = {
     strikes: number
     playedMs: number
   }
+  // Any button in the app, pressed. `id` names it and `screen` is read back off the id's
+  // own prefix, so a breakdown by screen needs no string splitting at the other end.
+  // Sent by `TrackedPressable` rather than by the call sites, which is what keeps this
+  // honest: a button that is not a `TrackedPressable` sends nothing, and the list in
+  // `constants/buttons.ts` is the whole of what can arrive. The nine dial keys are not
+  // in it — see that file, and `run_finished` for the aggregate they would have fed.
+  button_pressed: { id: ButtonId; screen: ButtonScreen }
   // `stage` is null for an achievement with none — see `Award` in lib/achievements.ts.
   achievement_unlocked: { id: AchievementId; stage: Stage | null }
   // The home-screen install funnel. 'installed' fires on the browser's own confirmation

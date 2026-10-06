@@ -1,9 +1,10 @@
 import { Ionicons } from '@expo/vector-icons'
 import { Trans } from '@lingui/react/macro'
-import { Pressable, Text, View } from 'react-native'
+import { Text, View } from 'react-native'
 
 import { PauseMark } from '@/components/overlays/pause-mark'
 import { RunScreen } from '@/components/overlays/run-screen'
+import { TrackedPressable } from '@/components/tracked-pressable'
 import { ARCADE_INK, DIM_INK } from '@/constants/colors'
 import { useTheme } from '@/hooks/use-theme'
 import { arcadeStats } from '@/lib/run-stats'
@@ -56,7 +57,7 @@ export function ArcadePaused({
       // the game's own pause screen ends a run with, because a player looking for the way
       // out of a run should meet it in the same clothes wherever they are.
       exits={
-        <Pressable onPress={onEnd} hitSlop={10}>
+        <TrackedPressable id="arcade_paused.end_run" onPress={onEnd} hitSlop={10}>
           <View className="flex-row items-center gap-1">
             <Ionicons name="home-outline" size={10} color={DIM_INK[colorScheme]} />
             <Text
@@ -66,7 +67,7 @@ export function ArcadePaused({
               <Trans>END RUN</Trans>
             </Text>
           </View>
-        </Pressable>
+        </TrackedPressable>
       }
     />
   )

@@ -5,12 +5,13 @@ import { Trans, useLingui } from '@lingui/react/macro'
 import { LinearGradient } from 'expo-linear-gradient'
 import type { ReactNode } from 'react'
 import { useMemo, useRef } from 'react'
-import { Pressable, ScrollView, Text, View } from 'react-native'
+import { ScrollView, Text, View } from 'react-native'
 import { Gesture, GestureDetector } from 'react-native-gesture-handler'
 import { scheduleOnRN } from 'react-native-worklets'
 
 import { MenuButton } from '@/components/game/menu-button'
 import { ScreenLayer } from '@/components/screen'
+import { TrackedPressable } from '@/components/tracked-pressable'
 import { ACHIEVEMENT_SCALE, GAME_SCALE } from '@/constants/colors'
 import { TIPS } from '@/constants/tips'
 import { useFlag } from '@/hooks/use-flags'
@@ -155,7 +156,8 @@ function Contents({
   return (
     <View className="mt-4 flex-row flex-wrap items-center gap-x-3.5 gap-y-2">
       {sections.map((key) => (
-        <Pressable
+        <TrackedPressable
+          id="how_to_play.page"
           key={key}
           onPress={() => {
             onJump(key)
@@ -171,7 +173,7 @@ function Contents({
           >
             {t(SECTIONS[key].title)}
           </Text>
-        </Pressable>
+        </TrackedPressable>
       ))}
     </View>
   )
@@ -740,7 +742,11 @@ export function HowToPlayOverlay({
               it lands on, and the line under it says what the tutorial takes off that
               board rather than repeating what the button already says. */}
           <View className="mt-10 self-center" style={{ width: 224 }}>
-            <Pressable onPress={onTryTutorial} className="overflow-hidden rounded-2xl">
+            <TrackedPressable
+              id="how_to_play.try_it"
+              onPress={onTryTutorial}
+              className="overflow-hidden rounded-2xl"
+            >
               <LinearGradient
                 colors={[...darkGradientOf('trainee')]}
                 start={{ x: 0, y: 0.5 }}
@@ -754,14 +760,15 @@ export function HowToPlayOverlay({
                   <Trans>TRY IT</Trans>
                 </Text>
               </LinearGradient>
-            </Pressable>
+            </TrackedPressable>
             <Text
               selectable={false}
               className="mt-2 text-center font-mono text-[9px] font-bold tracking-[1.5px] text-dim"
             >
               <Trans>ONE TARGET · NO CLOCK · NO LIVES</Trans>
             </Text>
-            <Pressable
+            <TrackedPressable
+              id="how_to_play.got_it"
               onPress={onClose}
               className="mt-4 items-center rounded-2xl bg-strong py-4"
             >
@@ -771,7 +778,7 @@ export function HowToPlayOverlay({
               >
                 <Trans>GOT IT</Trans>
               </Text>
-            </Pressable>
+            </TrackedPressable>
           </View>
         </ScrollView>
 

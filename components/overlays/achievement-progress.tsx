@@ -1,8 +1,9 @@
 import { Ionicons } from '@expo/vector-icons'
 import { msg } from '@lingui/core/macro'
 import { useLingui } from '@lingui/react/macro'
-import { Pressable, Text } from 'react-native'
+import { Text } from 'react-native'
 
+import { TrackedPressable } from '@/components/tracked-pressable'
 import { achievement, ACHIEVEMENT_COUNT } from '@/constants/achievements'
 import type { AchievementId } from '@/constants/achievements'
 import { ACHIEVEMENT_INK } from '@/constants/colors'
@@ -45,7 +46,12 @@ export function AchievementProgress({
   const def = latest === null ? null : achievement(latest)
 
   return (
-    <Pressable onPress={onPress} hitSlop={8} className="flex-row items-center gap-2">
+    <TrackedPressable
+      id="achievements.progress_row"
+      onPress={onPress}
+      hitSlop={8}
+      className="flex-row items-center gap-2"
+    >
       <Text selectable={false} className="text-[13px] leading-[16px]">
         {def?.emblem ?? EMPTY_EMBLEM}
       </Text>
@@ -64,6 +70,6 @@ export function AchievementProgress({
         {earned}/{ACHIEVEMENT_COUNT}
       </Text>
       <Ionicons name="chevron-forward" size={10} color={ink} />
-    </Pressable>
+    </TrackedPressable>
   )
 }

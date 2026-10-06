@@ -1,9 +1,10 @@
 import { useLingui } from '@lingui/react/macro'
 import { isNonEmptyArray } from 'narrowland'
 import { useState } from 'react'
-import { Pressable, Text, View } from 'react-native'
+import { Text, View } from 'react-native'
 
 import { AchievementDetail } from '@/components/overlays/achievement-detail'
+import { TrackedPressable } from '@/components/tracked-pressable'
 import { ACHIEVEMENTS, type AchievementId } from '@/constants/achievements'
 import { ACHIEVEMENT_INK } from '@/constants/colors'
 import { useTheme } from '@/hooks/use-theme'
@@ -64,7 +65,8 @@ export function EarnedAchievements({
         // A chip has looked pressable since the day it was drawn — pill-shaped, on its
         // own surface — and did nothing. It answers now: what the achievement asked of
         // you, which the name alone rarely says.
-        <Pressable
+        <TrackedPressable
+          id="achievements.earned"
           key={awardKey(award)}
           onPress={() => {
             setAsked(award.id)
@@ -93,7 +95,7 @@ export function EarnedAchievements({
               </Text>
             </View>
           )}
-        </Pressable>
+        </TrackedPressable>
       ))}
       {card !== null && (
         <AchievementDetail

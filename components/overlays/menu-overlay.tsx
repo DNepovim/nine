@@ -3,7 +3,7 @@ import { Trans, useLingui } from '@lingui/react/macro'
 import { LinearGradient } from 'expo-linear-gradient'
 import { isNonEmptyString, isOneOf } from 'narrowland'
 import { useEffect, useMemo, useState } from 'react'
-import { Platform, Pressable, Share, Text, View } from 'react-native'
+import { Platform, Share, Text, View } from 'react-native'
 import Animated, {
   Easing,
   useAnimatedStyle,
@@ -14,6 +14,7 @@ import Animated, {
 
 import { GradientName } from '@/components/gradient-name'
 import { Screen } from '@/components/screen'
+import { TrackedPressable } from '@/components/tracked-pressable'
 import type { AchievementId } from '@/constants/achievements'
 import { DIM_INK } from '@/constants/colors'
 import { useChampionsContext } from '@/hooks/use-champions'
@@ -455,7 +456,8 @@ export function MenuOverlay({
                   {/* Fixed to accuracy's pair rather than `focused`: onCreateRoom
                       always creates an accuracy room (`app/(tabs)/index.tsx`),
                       regardless of which singleplayer mode this tab inherited. */}
-                  <Pressable
+                  <TrackedPressable
+                    id="menu.create_room"
                     onPress={onCreateRoom}
                     disabled={!online}
                     className={cn(
@@ -477,8 +479,9 @@ export function MenuOverlay({
                         <Trans>CREATE ROOM</Trans>
                       </Text>
                     </LinearGradient>
-                  </Pressable>
-                  <Pressable
+                  </TrackedPressable>
+                  <TrackedPressable
+                    id="menu.join_room"
                     onPress={onOpenJoinRoom}
                     disabled={!online}
                     className={cn(
@@ -494,7 +497,7 @@ export function MenuOverlay({
                     >
                       <Trans>JOIN ROOM</Trans>
                     </Text>
-                  </Pressable>
+                  </TrackedPressable>
                 </View>
                 {/* Covers both buttons rather than disabling them piece by piece —
                     creating or joining a room is a Supabase round trip either way, so
@@ -529,7 +532,8 @@ export function MenuOverlay({
             since there are two doors in rather than one PLAY. */}
         <View className="mt-4 items-center gap-8">
           {playMode === 'alone' && (
-            <Pressable
+            <TrackedPressable
+              id="menu.play"
               onPress={focused === 'arcade' ? onPlayArcade : onPlay}
               // Arcade is pressable now for whoever can see it, and still dead for
               // everyone else — the badge on the pill above says SOON, and the button
@@ -554,11 +558,11 @@ export function MenuOverlay({
                   <Trans>PLAY GAME</Trans>
                 </Text>
               </LinearGradient>
-            </Pressable>
+            </TrackedPressable>
           )}
 
           <View className="flex-row flex-wrap items-center justify-center gap-x-5 gap-y-2">
-            <Pressable onPress={onOpenAdvanced} hitSlop={10}>
+            <TrackedPressable id="menu.options" onPress={onOpenAdvanced} hitSlop={10}>
               <View className="flex-row items-center gap-1">
                 <Ionicons name="settings-outline" size={10} color={dimColor} />
                 <Text
@@ -568,8 +572,9 @@ export function MenuOverlay({
                   <Trans>OPTIONS</Trans>
                 </Text>
               </View>
-            </Pressable>
-            <Pressable
+            </TrackedPressable>
+            <TrackedPressable
+              id="menu.board"
               onPress={() => {
                 // The sentence lives here rather than in lib/ because it is the
                 // one place that knows the active language; lib/ keeps the
@@ -600,8 +605,8 @@ export function MenuOverlay({
                   <Trans>SHARE</Trans>
                 </Text>
               </View>
-            </Pressable>
-            <Pressable onPress={onHowToPlay} hitSlop={10}>
+            </TrackedPressable>
+            <TrackedPressable id="menu.how_to_play" onPress={onHowToPlay} hitSlop={10}>
               <View className="flex-row items-center gap-1">
                 <Ionicons name="help-circle-outline" size={11} color={dimColor} />
                 <Text
@@ -611,7 +616,7 @@ export function MenuOverlay({
                   <Trans>HOW TO PLAY</Trans>
                 </Text>
               </View>
-            </Pressable>
+            </TrackedPressable>
           </View>
 
           {/* Its own row rather than folded into the one above: these two are not for the
@@ -621,7 +626,7 @@ export function MenuOverlay({
               constants/features.ts. */}
           {showDev && (
             <View className="flex-row flex-wrap items-center justify-center gap-x-5 gap-y-2">
-              <Pressable onPress={onOpenDev} hitSlop={10}>
+              <TrackedPressable id="menu.dev" onPress={onOpenDev} hitSlop={10}>
                 <View className="flex-row items-center gap-1">
                   <Ionicons name="code-slash-outline" size={10} color={dimColor} />
                   <Text
@@ -631,9 +636,9 @@ export function MenuOverlay({
                     <Trans>DEV</Trans>
                   </Text>
                 </View>
-              </Pressable>
+              </TrackedPressable>
               {showAdmin && (
-                <Pressable onPress={onOpenAdmin} hitSlop={10}>
+                <TrackedPressable id="menu.admin" onPress={onOpenAdmin} hitSlop={10}>
                   <View className="flex-row items-center gap-1">
                     <Ionicons name="shield-outline" size={10} color={dimColor} />
                     <Text
@@ -643,7 +648,7 @@ export function MenuOverlay({
                       <Trans>ADMIN</Trans>
                     </Text>
                   </View>
-                </Pressable>
+                </TrackedPressable>
               )}
             </View>
           )}

@@ -1,8 +1,9 @@
 import { Trans, useLingui } from '@lingui/react/macro'
-import { Pressable, Text, View } from 'react-native'
+import { Text, View } from 'react-native'
 
 import { GameOverTitle } from '@/components/overlays/game-over-title'
 import { RunScreen } from '@/components/overlays/run-screen'
+import { TrackedPressable } from '@/components/tracked-pressable'
 import { ARCADE_INK } from '@/constants/colors'
 import { useTheme } from '@/hooks/use-theme'
 import type { TitleWords } from '@/lib/game-over-title'
@@ -66,14 +67,14 @@ export function ArcadeOver({
       gradient={darkGradientOf('arcade')}
       cta={{ label: <Trans>PLAY AGAIN</Trans>, onPress: onAgain }}
       exits={
-        <Pressable onPress={onHome} hitSlop={10}>
+        <TrackedPressable id="arcade_over.home" onPress={onHome} hitSlop={10}>
           <Text
             selectable={false}
             className="font-mono text-[10px] font-bold tracking-[1.8px] text-dim underline"
           >
             <Trans>HOME</Trans>
           </Text>
-        </Pressable>
+        </TrackedPressable>
       }
     />
   )

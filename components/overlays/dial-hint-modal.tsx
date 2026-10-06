@@ -1,10 +1,11 @@
 import { Ionicons } from '@expo/vector-icons'
 import { useLingui } from '@lingui/react/macro'
-import { Pressable, Text, View } from 'react-native'
+import { Text, View } from 'react-native'
 
 import type { BadgeCorner } from '@/components/game/dial-badge'
 import { CornerMark } from '@/components/overlays/corner-mark'
 import { ModalCard } from '@/components/overlays/modal-card'
+import { TrackedPressable } from '@/components/tracked-pressable'
 import {
   DIAL_CORNER_LABEL,
   DIAL_HINT_LABEL,
@@ -63,7 +64,8 @@ export function DialHintModal({
           {CHOICES.map((choice) => {
             const picked = choice === current
             return (
-              <Pressable
+              <TrackedPressable
+                id="options.dial_hint"
                 key={choice ?? 'none'}
                 onPress={() => {
                   onSelect(choice)
@@ -98,7 +100,7 @@ export function DialHintModal({
                   ).toLowerCase()}
                 </Text>
                 {picked && <Ionicons name="checkmark" size={16} color={tint} />}
-              </Pressable>
+              </TrackedPressable>
             )
           })}
         </View>

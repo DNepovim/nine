@@ -3,7 +3,7 @@ import { useMachine } from '@xstate/react'
 import { useFonts } from 'expo-font'
 import { isNotNull, isOneOf } from 'narrowland'
 import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { AppState, Pressable, Text, View, type LayoutChangeEvent } from 'react-native'
+import { AppState, Text, View, type LayoutChangeEvent } from 'react-native'
 import Animated from 'react-native-reanimated'
 
 import DSEG7Font from '@/assets/fonts/DSEG7Classic-Bold.ttf'
@@ -50,6 +50,7 @@ import { ReplayConsentOverlay } from '@/components/overlays/replay-consent-overl
 import { StepUpOverlay } from '@/components/overlays/step-up-overlay'
 import { WhatsNewOverlay } from '@/components/overlays/whats-new-overlay'
 import { Screen } from '@/components/screen'
+import { TrackedPressable } from '@/components/tracked-pressable'
 import { TutorialCurtain } from '@/components/tutorial-curtain'
 import type { AchievementId } from '@/constants/achievements'
 import { DEFAULT_DIAL_CORNERS } from '@/constants/dial-hints'
@@ -314,20 +315,59 @@ export default function GameScreen() {
   const isPaused = state.matches('paused')
   const isGameOver = state.matches('gameOver')
 
+  // The one way a pause is asked for, so that every caller has to say what stopped the
+  // run and the event below can tell a tap from a phone call. The reporting half is here
+  // rather than in an effect on `isPaused` because the figure worth sending is only
+  // correct before PAUSE lands: `elapsedMs` is banked on the way out of `playing`, so the
+  // stretch still being played has to be added by hand either way, and doing it here
+  // keeps the reason and the numbers in one place.
+  //
+  // Nothing is reported for a pause that finds no live run — the dev screen sends PAUSE
+  // blind, to put down whatever is standing before it deals a tutorial.
+  const pauseRun = (source: AnalyticsEvents['run_paused']['source']) => {
+    const now = Date.now()
+    if (isPlaying) {
+      const { score, hits, strikes, elapsedMs, playingSince } = state.context
+      track('run_paused', {
+        mode,
+        difficulty,
+        source,
+        score,
+        hits,
+        strikes,
+        elapsed_ms: elapsedMs + (playingSince === null ? 0 : now - playingSince),
+      })
+    }
+    send({ type: 'PAUSE', now })
+  }
+
   // A run left behind — the app switched away from, the phone locked — comes back
   // paused rather than still running.
   usePauseOnBlur(isPlaying, () => {
-    send({ type: 'PAUSE', now: Date.now() })
+    pauseRun('focus_lost')
   })
 
   // The beat between CONTINUE and the run picking up again — see RESUME_DELAY_MS. The
   // pause screen is gone for it, the machine is still paused through it.
   const [resuming, setResuming] = useState(false)
+  // Read out here rather than inside the effect: it is set once on the way into the pause
+  // and does not move again, so it can sit in the dependency list without the whole
+  // machine context dragging the timer along with it.
+  const pausedAt = state.context.pausedAt
   useEffect(() => {
     if (!resuming) return
     const timer = setTimeout(() => {
       setResuming(false)
-      send({ type: 'RESUME', now: Date.now() })
+      const now = Date.now()
+      // Reported here and not at the tap, because the tap is not yet a resume — going
+      // away cancels the beat and leaves the run paused, and an event sent on the tap
+      // would have claimed otherwise.
+      track('run_resumed', {
+        mode,
+        difficulty,
+        away_ms: pausedAt === null ? 0 : now - pausedAt,
+      })
+      send({ type: 'RESUME', now })
     }, RESUME_DELAY_MS)
     // The beat only runs while the app is on screen. A resume landing in a hidden tab
     // would put the run back on a wall clock with nobody watching it — the very thing
@@ -340,7 +380,7 @@ export default function GameScreen() {
       clearTimeout(timer)
       subscription.remove()
     }
-  }, [resuming, send])
+  }, [resuming, send, pausedAt, mode, difficulty])
   // Any other way out of the pause — HOME, END RUN, a restored run landing — drops the
   // pending resume instead of firing it into whatever took its place.
   useEffect(() => {
@@ -475,7 +515,7 @@ export default function GameScreen() {
     // The run being replaced is abandoned rather than ended: no score is submitted on the way
     // out, where END RUN would have. That is the right trade for a dev button and the wrong
     // one for anything a player can press.
-    send({ type: 'PAUSE', now: Date.now() })
+    pauseRun('dev')
     send({ type: 'MENU' })
     setMenuOverlay('none')
     startTutorial(null)
@@ -896,7 +936,25 @@ export default function GameScreen() {
   // Ending a run yourself from the pause menu still counts: submit the score and ask
   // for a nickname exactly as running out of lives does. The game-over effect below
   // only fires on the gameOver transition, so without this the run would be lost.
-  const endRunEarly = () => {
+  const endRunEarly = (reason: AnalyticsEvents['run_ended']['reason']) => {
+    // Ahead of the scored-mode guard below, and on purpose: a Trainee run the player
+    // walked out of is still a run that ended, and the question this answers — how many
+    // runs are abandoned rather than played out — is not a question about leaderboards.
+    //
+    // `elapsedMs` needs no correction here the way it does in `pauseRun`: both callers
+    // reach this from the pause screen, so the machine has already banked the stretch.
+    track('run_ended', {
+      mode,
+      difficulty,
+      reason,
+      score: state.context.score,
+      hits: state.context.hits,
+      strikes,
+      elapsed_ms: elapsedMs,
+      accuracy: avgAccuracy,
+      speed: avgSpeed,
+      max_streak: maxStreak,
+    })
     if (!isOneOf(mode, SCORED_MODES)) return
     const { score, hits } = state.context
     // Counted before the score guard below: a run that scored nothing is still a run
@@ -1289,7 +1347,7 @@ export default function GameScreen() {
                 onPress={() => {
                   // Frozen rather than ended: backing out of the screen this opens leaves
                   // the practice run exactly where it stood.
-                  send({ type: 'PAUSE', now: Date.now() })
+                  pauseRun('step_up')
                   stepUp.dismiss()
                   setStepUpOpen(true)
                 }}
@@ -1307,11 +1365,11 @@ export default function GameScreen() {
                 mode={mode}
                 announcement={announcement}
                 onOpenAchievement={(id) => {
-                  send({ type: 'PAUSE', now: Date.now() })
+                  pauseRun('achievement')
                   setAskedAchievement(id)
                 }}
                 onPause={() => {
-                  send({ type: 'PAUSE', now: Date.now() })
+                  pauseRun('best_scores')
                 }}
                 viewerId={userId}
                 score={state.context.score}
@@ -1345,7 +1403,7 @@ export default function GameScreen() {
                     onPause={
                       isPlaying
                         ? () => {
-                            send({ type: 'PAUSE', now: Date.now() })
+                            pauseRun('button')
                           }
                         : null
                     }
@@ -1686,7 +1744,8 @@ export default function GameScreen() {
               — the dial is `off` at these steps — so this exists to hear the tap, not to
               block one, and the whole viewport is where a tap may land. */}
             {lesson.onTapThrough !== null && (
-              <Pressable
+              <TrackedPressable
+                id="tutorial.tap_through"
                 onPress={lesson.onTapThrough}
                 className="absolute bottom-0 left-0 right-0 top-0"
                 accessibilityLabel={t`Continue the tutorial`}
@@ -1829,12 +1888,12 @@ export default function GameScreen() {
                 onRestart={() => {
                   // The run being abandoned is still live, so its score goes to the board
                   // before the fresh one replaces it — same as leaving for the intro.
-                  endRunEarly()
+                  endRunEarly('restart')
                   send({ type: 'RESTART', now: Date.now(), runId: newRunId() })
                   track('run_started', { mode, difficulty, from: 'restart' })
                 }}
                 onMenu={() => {
-                  endRunEarly()
+                  endRunEarly('end_run')
                   send({ type: 'MENU' })
                 }}
                 onOpenAdvanced={() => {

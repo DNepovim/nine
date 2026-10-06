@@ -1,4 +1,4 @@
-import { Pressable, Text, View } from 'react-native'
+import { Text, View } from 'react-native'
 import Animated, {
   Easing,
   useAnimatedStyle,
@@ -7,6 +7,8 @@ import Animated, {
   withTiming,
   type SharedValue,
 } from 'react-native-reanimated'
+
+import { TrackedPressable } from '@/components/tracked-pressable'
 
 // The 5-dot cross every dialog closes with: four corners and a centre. Pressing it
 // converges the dots on the centre and springs them back out.
@@ -93,7 +95,8 @@ export function MenuButton({
   }
 
   return (
-    <Pressable
+    <TrackedPressable
+      id="game.menu"
       onPress={trigger}
       hitSlop={14}
       style={[style, { flexDirection: 'row', alignItems: 'center', gap: 8 }]}
@@ -122,6 +125,6 @@ export function MenuButton({
           />
         ))}
       </View>
-    </Pressable>
+    </TrackedPressable>
   )
 }

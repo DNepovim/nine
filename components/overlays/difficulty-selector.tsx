@@ -1,7 +1,7 @@
 import { useLingui } from '@lingui/react/macro'
 import { LinearGradient } from 'expo-linear-gradient'
 import { useEffect, useRef, useState } from 'react'
-import { Pressable, View } from 'react-native'
+import { View } from 'react-native'
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
@@ -11,6 +11,7 @@ import Animated, {
   type SharedValue,
 } from 'react-native-reanimated'
 
+import { TrackedPressable } from '@/components/tracked-pressable'
 import {
   DIFFICULTIES,
   DIFFICULTY_ORDER,
@@ -196,7 +197,8 @@ export function DifficultySelector({
         </Animated.View>
 
         {DIFFICULTY_ORDER.map((d, i) => (
-          <Pressable
+          <TrackedPressable
+            id="menu.difficulty"
             key={d}
             onPress={() => {
               onSetDifficulty(d)
@@ -221,7 +223,7 @@ export function DifficultySelector({
             >
               {t(DIFFICULTIES[d].label)}
             </Animated.Text>
-          </Pressable>
+          </TrackedPressable>
         ))}
       </View>
     </View>

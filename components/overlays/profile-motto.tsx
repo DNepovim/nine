@@ -1,7 +1,8 @@
 import { Ionicons } from '@expo/vector-icons'
 import { Trans } from '@lingui/react/macro'
-import { Pressable, Text, View } from 'react-native'
+import { Text, View } from 'react-native'
 
+import { TrackedPressable } from '@/components/tracked-pressable'
 import { DIM_INK } from '@/constants/colors'
 import { useTheme } from '@/hooks/use-theme'
 
@@ -37,7 +38,8 @@ export function ProfileMotto({
 
   if (motto === null) {
     return (
-      <Pressable
+      <TrackedPressable
+        id="profile.add_motto"
         onPress={onEdit}
         hitSlop={8}
         className="flex-row items-center gap-1 self-center rounded-full bg-card px-3 py-1"
@@ -49,7 +51,7 @@ export function ProfileMotto({
         >
           <Trans>ADD MOTTO</Trans>
         </Text>
-      </Pressable>
+      </TrackedPressable>
     )
   }
 
@@ -65,9 +67,9 @@ export function ProfileMotto({
         {motto}
       </Text>
       {editable && (
-        <Pressable onPress={onEdit} hitSlop={10}>
+        <TrackedPressable id="profile.edit_motto" onPress={onEdit} hitSlop={10}>
           <Ionicons name="pencil" size={ICON} color={DIM_INK[colorScheme]} />
-        </Pressable>
+        </TrackedPressable>
       )}
     </View>
   )

@@ -1,8 +1,9 @@
 import { Ionicons } from '@expo/vector-icons'
 import { Trans } from '@lingui/react/macro'
-import { Pressable, Text, View } from 'react-native'
+import { Text, View } from 'react-native'
 
 import { ModalCard } from '@/components/overlays/modal-card'
+import { TrackedPressable } from '@/components/tracked-pressable'
 import { APP_VIOLET } from '@/constants/colors'
 
 // The one ask GDPR actually requires before anything non-essential starts: whether this
@@ -62,7 +63,8 @@ export function ReplayConsentOverlay({
           </View>
 
           <View className="mt-5 flex-row gap-3">
-            <Pressable
+            <TrackedPressable
+              id="replay_consent.decline"
               onPress={() => {
                 onDecline()
                 close()
@@ -75,9 +77,10 @@ export function ReplayConsentOverlay({
               >
                 <Trans>NO THANKS</Trans>
               </Text>
-            </Pressable>
+            </TrackedPressable>
 
-            <Pressable
+            <TrackedPressable
+              id="replay_consent.allow"
               onPress={() => {
                 onAllow()
                 close()
@@ -90,7 +93,7 @@ export function ReplayConsentOverlay({
               >
                 <Trans>ALLOW</Trans>
               </Text>
-            </Pressable>
+            </TrackedPressable>
           </View>
         </>
       )}

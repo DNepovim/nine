@@ -4,12 +4,12 @@ import {
   KeyboardAvoidingView,
   Modal,
   Platform,
-  Pressable,
   Text,
   TextInput,
   View,
 } from 'react-native'
 
+import { TrackedPressable } from '@/components/tracked-pressable'
 import { cn } from '@/lib/cn'
 import { MOTTO_MAX, mottoLength, normalizeMotto } from '@/lib/motto'
 
@@ -119,7 +119,8 @@ export function MottoModal({
           )}
 
           <View className="mt-2 flex-row gap-3">
-            <Pressable
+            <TrackedPressable
+              id="motto.cancel"
               onPress={onCancel}
               className="flex-1 items-center rounded-xl bg-card py-3"
             >
@@ -129,9 +130,10 @@ export function MottoModal({
               >
                 <Trans>CANCEL</Trans>
               </Text>
-            </Pressable>
+            </TrackedPressable>
 
-            <Pressable
+            <TrackedPressable
+              id="motto.save"
               onPress={() => {
                 void handleSave()
               }}
@@ -149,7 +151,7 @@ export function MottoModal({
                 {!saving && removing && <Trans>REMOVE</Trans>}
                 {!saving && !removing && <Trans>SAVE</Trans>}
               </Text>
-            </Pressable>
+            </TrackedPressable>
           </View>
         </View>
       </KeyboardAvoidingView>

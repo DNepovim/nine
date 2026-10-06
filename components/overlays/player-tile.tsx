@@ -3,8 +3,9 @@ import { msg } from '@lingui/core/macro'
 import { Trans, useLingui } from '@lingui/react/macro'
 import { LinearGradient } from 'expo-linear-gradient'
 import { isNonEmptyString } from 'narrowland'
-import { Pressable, Text, View } from 'react-native'
+import { Text, View } from 'react-native'
 
+import { TrackedPressable } from '@/components/tracked-pressable'
 import { DIM_INK } from '@/constants/colors'
 import { useChampionsContext } from '@/hooks/use-champions'
 import { useOpenProfile } from '@/hooks/use-profile-modal'
@@ -138,7 +139,8 @@ export function PlayerTile({
   const cornerLabel = medal !== null ? null : chipLabel({ rank, isHost, isMe, you })
 
   return (
-    <Pressable
+    <TrackedPressable
+      id="waiting_room.player_tile"
       style={{ width: '48%' }}
       onPress={
         profileId === null
@@ -212,6 +214,6 @@ export function PlayerTile({
           )}
         </View>
       </LinearGradient>
-    </Pressable>
+    </TrackedPressable>
   )
 }
