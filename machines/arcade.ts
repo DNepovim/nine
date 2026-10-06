@@ -358,3 +358,44 @@ export function straightestWay(at: Crossroad | undefined): ArcadeWay | null {
 export function crossroadClock(depth: number): number {
   return Math.round(decayed(BASE_CLOCK, depth))
 }
+
+// Walk the hero forward `steps` crossroads, growing each fan on the way.
+//
+// Only the dev tools call this — see the ARCADE section of components/overlays/dev-overlay.tsx.
+// Reaching a six-tower siege means climbing a couple of dozen crossroads, and climbing them
+// by hand to look at one thing is how a check stops being made.
+//
+// It walks rather than fakes: there is no depth to set on a run, because depth is where the
+// hero *is*. So this grows the same fans an honest climb would, through the same
+// `openCrossroad` every arrival goes through, and takes the first way out of each. What it
+// leaves behind is a map a retreat can walk back down, which a teleport would not be.
+//
+// It stops early rather than loops forever if a fan comes up empty — `openCrossroad` hands
+// back the map untouched when the grid cannot fill one, and a crossroad with no ways has
+// nowhere to go.
+export function deepen(
+  map: ArcadeMap,
+  at: string,
+  grid: Grid,
+  seed: number,
+  steps: number,
+): { map: ArcadeMap; at: string } {
+  let walked = map
+  let here = at
+  for (let step = 0; step < steps; step++) {
+    walked = openCrossroad(walked, here, grid, seed)
+    const ways = walked[here]?.ways ?? []
+    // The first way that does not end at a walled village, and only then the first way at
+    // all. A climb that stopped on a fortified village would leave the hero somewhere a
+    // real run never puts it — standing inside walls with no siege running, because the
+    // game opens one on *arrival* and this is not an arrival. One way in a fan is walled at
+    // most, so there is always another to take.
+    const next = ways.find((way) => walked[way.to]?.fortified !== true) ?? ways[0]
+    if (next === undefined) break
+    here = next.to
+  }
+  // The crossroad it stops on is grown too, so the hero arrives somewhere with a fan rather
+  // than somewhere that only becomes a place on the next render.
+  walked = openCrossroad(walked, here, grid, seed)
+  return { map: walked, at: here }
+}

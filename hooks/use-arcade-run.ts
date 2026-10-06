@@ -11,11 +11,13 @@ import {
   WALK_MS,
 } from '@/constants/arcade'
 import { CLOSE_MS, HEARTS, OVERRUN_MS, TAKEN_MS } from '@/constants/siege'
+import { publishArcadeDev, type ArcadeDevActions } from '@/dev/arcade-dev-state'
 import { usePauseOnBlur } from '@/hooks/use-pause-on-blur'
 import { track } from '@/lib/analytics'
 import {
   ARCADE_DIAL,
   crossroadClock,
+  deepen,
   isStrike,
   newMap,
   openCrossroad,
@@ -622,6 +624,122 @@ export function useArcadeRun() {
     if (run.phase === 'retreat' && parentId !== null) return run.map[parentId]
     return standing
   }
+
+  // The dev tools, and nothing a player can reach: they are published to a module-level
+  // store that only the `__DEV__` sidebar reads, and folded out of a shipped build with it.
+  //
+  // They go through the same `setRun` and stamp the same `beat` as every other transition,
+  // so a forced siege is dealt by the machinery a dialled one is — which is the whole point
+  // of having them. A tool that took a shortcut past the beats would be testing itself
+  // rather than the mode.
+  const dev: ArcadeDevActions = {
+    // A siege at the village the hero is standing on, whatever that village is.
+    //
+    // Marks it walled first, because everything downstream reads that flag rather than the
+    // phase: `taken` clears it when the walls come down, the bud is drawn heavier, and
+    // `openCrossroad` keeps the fan out of it dry.
+    //
+    // Refused at the start, and the sidebar says why. The hero is drawn on the way it came
+    // in for the whole fight, and the first crossroad has no way in — there it would be
+    // drawn falling down the stub into the mouth instead, which is the other death.
+    siegeNow: () => {
+      const now = Date.now()
+      setRun((r) => {
+        const here = r.map[r.at]
+        // Two guards rather than one: the second needs `here` narrowed, and an optional
+        // chain over both would hand back a crossroad that might not be there.
+        if (here === undefined) return r
+        if (here.from === null) return r
+        if (!isOneOf(r.phase, DIALABLE)) return r
+        return {
+          ...r,
+          map: { ...r.map, [r.at]: { ...here, fortified: true } },
+          phase: 'closing',
+          moving: null,
+          through: null,
+          siege: newSiege(r.at, here.depth, r.seed, r.grid, now),
+          ...beat(r, now),
+        }
+      })
+    },
+
+    // Climb `steps` crossroads without dialling them. Reaching a six-tower siege by hand is
+    // about two dozen, and climbing them to look at one thing is how a check stops getting
+    // made.
+    deepenBy: (steps: number) => {
+      const now = Date.now()
+      setRun((r) => {
+        if (!isOneOf(r.phase, DIALABLE)) return r
+        const walked = deepen(r.map, r.at, r.grid, r.seed, steps)
+        const landed = walked.map[walked.at]?.depth ?? 0
+        return {
+          ...r,
+          map: walked.map,
+          at: walked.at,
+          phase: 'bloom',
+          moving: null,
+          through: null,
+          siege: null,
+          best: Math.max(r.best, landed),
+          ...beat(r, now),
+        }
+      })
+    },
+
+    // Hearts, set rather than spent. Floored at one: a run that ends has a beat to play and
+    // a card to choose between, and letting this reach zero would be a second way to die
+    // that went through neither.
+    setHearts: (hearts: number) => {
+      setRun((r) => ({ ...r, hearts: Math.max(1, Math.min(HEARTS, hearts)) }))
+    },
+
+    // Every standing tower flattened, down the same road the last dialled hit takes:
+    // `taken`, a heart back, the walls down, the hero walking in through the gate.
+    raze: () => {
+      const now = Date.now()
+      setRun((r) => {
+        if (r.phase !== 'siege' || r.siege === null) return r
+        return {
+          ...r,
+          siege: {
+            ...r.siege,
+            towers: r.siege.towers.map((tower) => ({ ...tower, left: 0 })),
+            warriors: [],
+          },
+          phase: 'taken',
+          hearts: Math.min(HEARTS, r.hearts + 1),
+          taken: r.taken + 1,
+          ...beat(r, now),
+        }
+      })
+    },
+  }
+
+  // What the sidebar is looking at. `__DEV__` is a constant the bundler folds, so a shipped
+  // build drops both the effect and the import.
+  //
+  // No dependency array: every beat should republish, and the store does its own comparison
+  // rather than making this one guess at which figures matter — see publishArcadeDev.
+  useEffect(() => {
+    if (!__DEV__) return
+    publishArcadeDev({
+      phase: run.phase,
+      depth,
+      hearts: run.hearts,
+      canSiege: standing?.from != null && !run.paused && isOneOf(run.phase, DIALABLE),
+      inSiege: run.phase === 'siege',
+      actions: dev,
+    })
+  })
+
+  // Cleared when the screen goes, so a sidebar left open after a run is closed says there
+  // is nothing to drive rather than driving a run that has gone.
+  useEffect(
+    () => () => {
+      if (__DEV__) publishArcadeDev(null)
+    },
+    [],
+  )
 
   return {
     // The whole world is this number: the map is grown from it and so is the land. Read by

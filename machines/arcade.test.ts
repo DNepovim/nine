@@ -5,6 +5,7 @@ import { NINE_DIAL, type Grid } from '@/modes'
 
 import {
   crossroadClock,
+  deepen,
   idSeed,
   isStrike,
   newMap,
@@ -408,5 +409,51 @@ describe('straightestWay', () => {
   it('has nothing to answer for a crossroad with no ways, or none at all', () => {
     expect(straightestWay(newMap(1)[START])).toBeNull()
     expect(straightestWay(undefined)).toBeNull()
+  })
+})
+
+describe('deepen', () => {
+  it('walks the hero the number of crossroads it was asked for', () => {
+    const { map, at } = deepen(newMap(5), START, zeros, 5, 7)
+    expect(map[at]?.depth).toBe(7)
+  })
+
+  it('leaves the map where it started when asked for nothing', () => {
+    const map = openCrossroad(newMap(5), START, zeros, 5)
+    const walked = deepen(map, START, zeros, 5, 0)
+    expect(walked.at).toBe(START)
+    expect(walked.map).toBe(map)
+  })
+
+  it('grows every crossroad it passes through, so the way back is whole', () => {
+    const { map, at } = deepen(newMap(9), START, zeros, 9, 4)
+    // Walk back down the parent chain: every crossroad on it must have a fan, or the
+    // hero is standing somewhere a retreat could not return from.
+    let here = map[at]
+    for (let step = 0; step < 4; step++) {
+      const from = here?.from
+      expect(from).not.toBeNull()
+      const parent = map[from ?? '']
+      expect(parent?.ways.length).toBeGreaterThan(0)
+      here = parent
+    }
+    expect(here?.id).toBe(START)
+  })
+
+  it('is the same walk for the same seed', () => {
+    const a = deepen(newMap(11), START, zeros, 11, 6)
+    const b = deepen(newMap(11), START, zeros, 11, 6)
+    expect(a.at).toBe(b.at)
+    expect(a.map[a.at]).toEqual(b.map[b.at])
+  })
+
+  it('lands somewhere a siege can be opened — never on a walled village', () => {
+    // SIEGE NOW marks wherever the hero stands as fortified, and `openCrossroad` forces a
+    // fan dry out of a walled crossroad. Landing on one would mean the dev walk had
+    // already spent the siege the button is about to open.
+    for (let seed = 1; seed <= 600; seed++) {
+      const { map, at } = deepen(newMap(seed), START, zeros, seed, 9)
+      expect(map[at]?.fortified).toBe(false)
+    }
   })
 })

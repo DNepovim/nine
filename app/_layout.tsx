@@ -39,6 +39,16 @@ const GallerySwitcher = __DEV__
     })
   : null
 
+// The arcade tools, on the same terms and in the same column: a run has a siege in it that
+// is a couple of dozen crossroads away by hand, and reaching it that way is how a thing
+// stops getting looked at. Folded away in a production export exactly as the picker is.
+const ArcadeSidebar = __DEV__
+  ? lazy(async () => {
+      const mod = await import('@/dev/arcade-sidebar')
+      return { default: mod.ArcadeSidebar }
+    })
+  : null
+
 export const unstable_settings = {
   anchor: '(tabs)',
 }
@@ -189,6 +199,11 @@ export default function RootLayout() {
             {GallerySwitcher !== null && desktop && (
               <Suspense fallback={null}>
                 <GallerySwitcher />
+              </Suspense>
+            )}
+            {ArcadeSidebar !== null && desktop && (
+              <Suspense fallback={null}>
+                <ArcadeSidebar />
               </Suspense>
             )}
             {/* Inside the theme provider, so the frame is drawn in the app's own colours
