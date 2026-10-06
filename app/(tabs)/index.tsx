@@ -1748,6 +1748,7 @@ export default function GameScreen() {
                   lesson.noteSet(cellValue)
                   send({ type: 'SET_CELL', index, value: cellValue, now: Date.now() })
                 }}
+                onSweep={lesson.noteSweep}
               />
 
               {/* ── Tap-through for the lesson's two pointing cards ── */}

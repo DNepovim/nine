@@ -19,8 +19,9 @@ import { type Grid } from '@/modes'
 //     weight on each key, and the pause screen offers nothing to change.
 //
 // Over that board runs the lesson: a fixed opening, two tooltips naming the two numbers,
-// a route walked one lit key at a time, and two lines of coaching after it. The script
-// itself is machines/tutorial-lesson.ts; the numbers it runs on are below.
+// a route walked one lit key at a time, and then a board apiece for every gesture the
+// route did not need. The script itself is machines/tutorial-lesson.ts; the numbers it
+// runs on are below.
 
 // What the run is called on screen, in place of the mode's own name.
 //
@@ -67,16 +68,21 @@ export const TUTORIAL_OPENING_GRID: Grid = [6, 2, 8, 2, 6, 2, 5, 4, 8]
 //        is the only sane way down, and a dozen swipe-downs is what makes that plain.
 //   216  far above. The same argument the other way: keys have to be filled to nine, and
 //        a swipe right is what does it.
+//   54   what the board before it leaves, less its whole bottom row. Those three keys
+//        stand at nine and are worth 162 between them, which is exactly the drop — and no
+//        two keys on the dial can shed that much, so the route is those three and only
+//        those three. Adjacent, in a line, each asked for the same move: the first board
+//        three separate gestures answer worse than one drag that never lifts.
 //
 // Fixed rather than rolled because a rolled target cannot be taught against: it may land
 // anywhere, including exactly where the lesson was about to say nothing is. The sum after
 // each hit is known exactly — it is the target just cleared — so each of these sits a
 // known distance from the board the player is standing on, whatever route they took to it.
 //
-// From the sixth target on the run is an ordinary tutorial run: rolled, within
+// From the seventh target on the run is an ordinary tutorial run: rolled, within
 // TUTORIAL_TARGET_REACH of the one just hit. `machines/tutorial-lesson.ts` walks its own
 // steps off this same list, and a test holds the two to the same length.
-export const TUTORIAL_TARGETS = [204, 211, 202, 24, 216] as const
+export const TUTORIAL_TARGETS = [204, 211, 202, 24, 216, 54] as const
 
 // The first of them. Dealt by the machine at START rather than by the spawner, because a
 // tutorial has to open with a target already standing on the board.

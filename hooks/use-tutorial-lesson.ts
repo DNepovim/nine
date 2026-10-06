@@ -106,6 +106,13 @@ export function useTutorialLesson({
     [noteSwipe],
   )
 
+  // One gesture having moved a second key, as the dial reports one. The last lesson is the
+  // only step that answers it; every other leaves the step where it was, exactly as a swipe
+  // nobody asked for does.
+  const noteSweep = useCallback(() => {
+    setStep((current) => lessonStep(current, { type: 'SWEPT' }))
+  }, [])
+
   // A key set outright, which is the two side swipes: left empties it, right fills it. Any
   // other value is not a gesture the dial can produce.
   const noteSet = useCallback(
@@ -169,5 +176,7 @@ export function useTutorialLesson({
     // three swipes that end the three lessons no clock does.
     notePress,
     noteSet,
+    // Told when one gesture moved a second key, which is what ends the last lesson of all.
+    noteSweep,
   }
 }

@@ -174,7 +174,7 @@ msgid "???"
 msgstr "???"
 
 #: components/overlays/admin-people.tsx:42
-#: components/overlays/admin-person.tsx:154
+#: components/overlays/admin-person.tsx:156
 msgid "(no nickname)"
 msgstr "(bez přezdívky)"
 
@@ -512,7 +512,7 @@ msgstr "PŘIPOJ SE K INTERNETU A HRAJ S PŘÁTELI"
 msgid "CONTINUE"
 msgstr "POKRAČOVAT"
 
-#: app/(tabs)/index.tsx:1773
+#: app/(tabs)/index.tsx:1774
 msgid "Continue the tutorial"
 msgstr "Pokračovat v tutoriálu"
 
@@ -564,7 +564,7 @@ msgid "Do something nobody thought to ask for."
 msgstr "Udělej něco, co nikoho nenapadlo chtít."
 
 #: components/overlays/admin-overlay.tsx:134
-#: components/overlays/admin-person.tsx:271
+#: components/overlays/admin-person.tsx:277
 #: components/overlays/admin-role.tsx:188
 #: components/overlays/advanced-options-overlay.tsx:160
 #: components/overlays/dev-overlay.tsx:132
@@ -591,6 +591,10 @@ msgstr "RANNÍ PTÁČE"
 #: modes/difficulty.ts:45
 msgid "EASY"
 msgstr "LEHKÁ"
+
+#: machines/tutorial-lesson.ts:233
+msgid "EMPTY THE ROW — ONE DRAG, DON’T LIFT"
+msgstr "VYNULUJ ŘADU JEDNÍM TAHEM — NEZVEDEJ PRST"
 
 #: components/game/arcade-paused.tsx:67
 #: components/overlays/paused-overlay.tsx:248
@@ -663,7 +667,7 @@ msgstr "Rychlé zásahy staví velká comba."
 msgid "FAST START"
 msgstr "RYCHLÝ START"
 
-#: components/overlays/admin-person.tsx:225
+#: components/overlays/admin-person.tsx:231
 msgid "FEATURES"
 msgstr "FUNKCE"
 
@@ -1019,7 +1023,7 @@ msgstr "DLOUHÁ TRAŤ"
 msgid "Lose every life in under ten seconds."
 msgstr "Ztrať všechny životy do deseti sekund."
 
-#: machines/tutorial-lesson.ts:208
+#: machines/tutorial-lesson.ts:224
 msgid "LOWER NOW — SWIPE A KEY DOWN"
 msgstr "TEĎ NÍŽ — ŠVIHNI TLAČÍTKEM DOLŮ"
 
@@ -1321,7 +1325,7 @@ msgstr "Rekordy se slaví"
 msgid "REMOVE"
 msgstr "SMAZAT"
 
-#: components/overlays/admin-person.tsx:255
+#: components/overlays/admin-person.tsx:261
 msgid "RESET TO ROLE DEFAULTS"
 msgstr "ZPĚT NA VÝCHOZÍ ROLI"
 
@@ -1341,7 +1345,7 @@ msgstr "USTOUPIT · −1"
 msgid "RETREAT leaves the fight. It costs a heart and drops you back one crossroad, and the village has its walls again when you return — so chipping and running buys nothing."
 msgstr "USTOUPIT boj opustí. Stojí to život a stáhne tě o jednu křižovatku zpět, a než se vrátíš, má vesnice hradby zase celé — oťukat je a utéct ti tedy nic nevynese."
 
-#: components/overlays/admin-person.tsx:184
+#: components/overlays/admin-person.tsx:186
 msgid "ROLE"
 msgstr "ROLE"
 
@@ -1572,7 +1576,7 @@ msgstr "SÉRIE"
 msgid "STRIKES"
 msgstr "V SÉRII"
 
-#: machines/tutorial-lesson.ts:206
+#: machines/tutorial-lesson.ts:222
 msgid "STRUCK — THE NEXT IS YOURS"
 msgstr "ZÁSAH — DALŠÍ JE NA TOBĚ"
 
@@ -1580,11 +1584,11 @@ msgstr "ZÁSAH — DALŠÍ JE NA TOBĚ"
 msgid "SURGEON"
 msgstr "CHIRURG"
 
-#: machines/tutorial-lesson.ts:212
+#: machines/tutorial-lesson.ts:228
 msgid "SWIPE LEFT TO EMPTY A KEY"
 msgstr "ŠVIHNUTÍM VLEVO TLAČÍTKO VYNULUJEŠ"
 
-#: machines/tutorial-lesson.ts:213
+#: machines/tutorial-lesson.ts:229
 msgid "SWIPE RIGHT TO FILL A KEY"
 msgstr "ŠVIHNUTÍM VPRAVO HO VYTOČÍŠ NA DEVÍTKU"
 
@@ -1630,7 +1634,7 @@ msgstr "SEBRÁNO ZA POSLEDNÍCH {HISTORY_DAYS} DNÍ"
 msgid "Tap any name — on a board, in a room, on the winners line — and their profile opens: the mark they carry, what they have played, the medals they hold and the records they once held. A name on a leaderboard is a player now, not a row."
 msgstr "Ťukni na kterékoliv jméno — na žebříčku, v místnosti, na řádku vítězů — a otevře se jeho profil: odznak, který nosí, co všechno odehrál, medaile, které právě drží, i rekordy, které kdy držel. Jméno na žebříčku už není řádek, ale hráč."
 
-#: machines/tutorial-lesson.ts:205
+#: machines/tutorial-lesson.ts:221
 msgid "TAP THE KEY THAT GLOWS"
 msgstr "ŤUKNI NA SVÍTÍCÍ TLAČÍTKO"
 
@@ -1674,7 +1678,7 @@ msgstr "MEZNÍ RYCHLOST"
 msgid "THANK YOU"
 msgstr "DÍKY"
 
-#: machines/tutorial-lesson.ts:217
+#: machines/tutorial-lesson.ts:238
 msgid "THAT IS EVERY MOVE — LET’S TRAIN"
 msgstr "TO JSOU VŠECHNY TAHY — TRÉNUJ"
 
@@ -1733,7 +1737,7 @@ msgstr "OKLIKOU"
 msgid "The map turns as you walk, to keep you pointed forward. Tap the compass in the corner if you would rather north stayed at the top of the screen — it remembers whichever you chose."
 msgstr "Mapa se za chůze otáčí, aby tvůj směr mířil vždy nahoru. Když chceš radši sever nahoře, klepni na růžici v rohu — co si vybereš, to si pamatuje."
 
-#: machines/tutorial-lesson.ts:201
+#: machines/tutorial-lesson.ts:217
 msgid "THE MARK TO MEET"
 msgstr "CÍL, KTERÝ MÁŠ TREFIT"
 
@@ -2030,6 +2034,6 @@ msgstr "Combo v Rychlosti teď roste s každým rychlým zásahem a nečeká na 
 "\n"
 "Když trefíš cíl s kruhem z větší části plným, vyplatí se to navíc."
 
-#: machines/tutorial-lesson.ts:202
+#: machines/tutorial-lesson.ts:218
 msgid "YOUR TOTAL — BRING IT LEVEL"
 msgstr "TVŮJ SOUČET — SROVNEJ HO"

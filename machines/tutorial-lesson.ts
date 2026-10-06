@@ -40,6 +40,10 @@ export type LessonStep =
   | 'swipeLeft'
   // A target far above. The same argument the other way — a key filled to nine.
   | 'swipeRight'
+  // A row standing at nine, and a target exactly that row below. Three keys in a line,
+  // each asked for the same move — so this is the first board where lifting between them
+  // is the slow way round, and the one gesture the dial has that is not a move.
+  | 'sweep'
   // The script's last word: every move has been shown, and what is left is practice. The
   // board behind it is already a rolled one, so the run has handed itself over before the
   // line saying so has finished being read.
@@ -49,8 +53,9 @@ export type LessonStep =
 
 export const FIRST_STEP: LessonStep = 'waiting'
 
-// The three gestures the lesson ever asks for outright. A tap it never has to: the guided
-// route makes that point by being the only thing the dial will take.
+// The three gestures the lesson ever asks for by name. A tap it never has to: the guided
+// route makes that point by being the only thing the dial will take. The drag the last
+// lesson asks for is not one of these — it is any of them, held — and arrives as SWEPT.
 export type Swipe = 'down' | 'left' | 'right'
 
 export type LessonEvent =
@@ -61,10 +66,14 @@ export type LessonEvent =
   | { type: 'HIT'; hits: number }
   // A key was swiped. Reported for every swipe; only the step asking for that one answers.
   | { type: 'SWIPED'; swipe: Swipe }
+  // One gesture moved a second key without the finger lifting. Not a swipe of its own —
+  // the keys it moved each reported their own — so it is a separate event rather than a
+  // fourth `Swipe`, and only the step teaching the drag listens for it.
+  | { type: 'SWEPT' }
 
 // What a tap anywhere, or a hold running out, moves each step on to. A step that answers with
 // itself is one no clock can end: the route waits for the hit, the three gesture lessons wait
-// for their gesture, `free` for the next target, `done` for nothing.
+// for their gesture, the last for a drag, `free` for the next target, `done` for nothing.
 const ON_ADVANCE = {
   waiting: 'target',
   target: 'sum',
@@ -75,6 +84,7 @@ const ON_ADVANCE = {
   swipeDown: 'swipeDown',
   swipeLeft: 'swipeLeft',
   swipeRight: 'swipeRight',
+  sweep: 'sweep',
   practice: 'done',
   done: 'done',
 } as const satisfies Record<LessonStep, LessonStep>
@@ -93,6 +103,7 @@ export const LESSON_AFTER_HIT: readonly LessonStep[] = [
   'swipeDown',
   'swipeLeft',
   'swipeRight',
+  'sweep',
   'practice',
 ]
 
@@ -108,6 +119,8 @@ const ENDED_BY = {
   swipeDown: 'down',
   swipeLeft: 'left',
   swipeRight: 'right',
+  // Not ended by a swipe at all, however many of them it takes — SWEPT is what ends it.
+  sweep: null,
   practice: null,
   done: null,
 } as const satisfies Record<LessonStep, Swipe | null>
@@ -121,6 +134,7 @@ export function lessonStep(step: LessonStep, event: LessonEvent): LessonStep {
   if (step === 'done') return 'done'
   if (event.type === 'ADVANCE') return ON_ADVANCE[step]
   if (event.type === 'HIT') return LESSON_AFTER_HIT[event.hits] ?? 'done'
+  if (event.type === 'SWEPT') return step === 'sweep' ? 'free' : step
   return ENDED_BY[step] === event.swipe ? 'free' : step
 }
 
@@ -138,6 +152,7 @@ export const LESSON_VOICE = {
   swipeDown: 'banner',
   swipeLeft: 'banner',
   swipeRight: 'banner',
+  sweep: 'banner',
   practice: 'banner',
   done: 'silent',
 } as const satisfies Record<LessonStep, LessonVoice>
@@ -161,6 +176,7 @@ export const LESSON_DIAL = {
   swipeDown: 'all',
   swipeLeft: 'all',
   swipeRight: 'all',
+  sweep: 'all',
   practice: 'all',
   done: 'all',
 } as const satisfies Record<LessonStep, LessonDial>
@@ -211,8 +227,13 @@ export const LESSON_LINE = {
   // down" leaves them guessing how far.
   swipeLeft: msg`SWIPE LEFT TO EMPTY A KEY`,
   swipeRight: msg`SWIPE RIGHT TO FILL A KEY`,
-  // Every gesture the dial has has now been asked for — a tap, and all three swipes — so
-  // this names the set rather than one more move, and hands the run over. What follows is
+  // Named as the board's own move first and the drag second, because the move is the part
+  // the player can already do: three keys they know how to empty, and the only new thing
+  // being that the finger need not come up between them.
+  sweep: msg`EMPTY THE ROW — ONE DRAG, DON’T LIFT`,
+  // Every gesture the dial has has now been asked for — a tap, all three swipes, and the
+  // drag that strings them together — so this names the set rather than one more move, and
+  // hands the run over. What follows is
   // a tutorial run with nothing left to say: rolled targets, no clock, one at a time.
   practice: msg`THAT IS EVERY MOVE — LET’S TRAIN`,
   done: null,
@@ -224,8 +245,8 @@ export const LESSON_LINE = {
 // Most of them wait. The two pointing cards go on a tap and on nothing else — a clock would
 // be the lesson deciding they had been read, and the player who had not read one would be
 // handed a live board with no idea what had just been asked of them. The three gesture
-// lessons hold until the gesture: each is the one move the dial has not needed yet, and
-// timed away it would be advice nobody had to take.
+// lessons hold until the gesture, and the drag until the drag: each is the one thing the
+// dial has not needed yet, and timed away it would be advice nobody had to take.
 //
 // The holds left are the beat before the first word, which nobody is waiting on, and the two
 // banners that ask for nothing — the congratulation and the sign-off — both read while the
@@ -240,6 +261,7 @@ export const LESSON_HOLD_MS = {
   swipeDown: null,
   swipeLeft: null,
   swipeRight: null,
+  sweep: null,
   practice: TUTORIAL_BANNER_MS,
   done: null,
 } as const satisfies Record<LessonStep, number | null>

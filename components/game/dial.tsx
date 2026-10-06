@@ -2,6 +2,7 @@ import { useEffect } from 'react'
 import { View } from 'react-native'
 import { Gesture, GestureDetector } from 'react-native-gesture-handler'
 import { useSharedValue } from 'react-native-reanimated'
+import { scheduleOnRN } from 'react-native-worklets'
 
 import { DialButton } from '@/components/game/dial-button'
 import { DEFAULT_DIAL_CORNERS, type DialCorners } from '@/constants/dial-hints'
@@ -63,6 +64,7 @@ export function Dial({
   liveKey = null,
   onDelta,
   onSet,
+  onSweep,
 }: {
   // The dial being drawn: how many keys, how they are arranged, what each is worth and
   // how far a digit goes. Everything in here that used to be a nine or a three.
@@ -82,6 +84,11 @@ export function Dial({
   liveKey?: number | null
   onDelta: (index: number, delta: 1 | -1) => void
   onSet: (index: number, value: number) => void
+  // Said once, the moment one gesture moves a second key — the one thing a run of separate
+  // swipes cannot do, and so the only way to know a drag was a drag. Every key it moves
+  // still reports itself through `onDelta` / `onSet`; this says they came together. The
+  // tutorial's last lesson is the only thing listening.
+  onSweep?: () => void
 }) {
   const metrics = useDialMetrics(dial)
   const live = controls ?? allLive(dial)
@@ -114,6 +121,14 @@ export function Dial({
   // gesture began on, so a key the finger merely crossed and stopped over is left alone.
   const crossed = useSharedValue(false)
 
+  // The last key this gesture actually changed, and whether it has already been called a
+  // drag. Together they are the whole of what `onSweep` needs: a second *different* key
+  // moved without the finger lifting. Different, because a finger that wanders off a key
+  // and comes back changes it twice having swept nothing — and already-called, because the
+  // third key of a sweep is the same news as the second.
+  const lastCommit = useSharedValue(NONE)
+  const swept = useSharedValue(false)
+
   // Where the copy is put right again — the only thing that ever changes the grid from
   // outside the dial is a new run starting, and this is how the pan hears about it.
   //
@@ -134,6 +149,14 @@ export function Dial({
     // Nothing to do, and so nothing to say: sliding off the right of a key already on 9
     // is not a press, and animating one would promise a change that never arrives.
     if (now === was) return
+    // A second key moved on the same gesture, which is a drag and nothing else can be.
+    // Said before the change rather than after, so the lesson it ends is already out of
+    // the way by the time the keys it swept finish animating.
+    if (lastCommit.value !== NONE && lastCommit.value !== cell && !swept.value) {
+      swept.value = true
+      if (onSweep !== undefined) scheduleOnRN(onSweep)
+    }
+    lastCommit.value = cell
     inFlight.value += 1
     held.value = held.value.map((v, i) => (i === cell ? now : v))
     commands.value = commands.value.map((c, i) =>
@@ -157,6 +180,8 @@ export function Dial({
     .onBegin((e) => {
       'worklet'
       crossed.value = false
+      lastCommit.value = NONE
+      swept.value = false
       landed.value = cellAt(e.x, e.y, metrics, dial)
       enter(landed.value, e.x, e.y)
     })

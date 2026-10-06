@@ -6,6 +6,7 @@ import {
   TUTORIAL_OPENING_TARGET,
   TUTORIAL_TARGETS,
 } from '@/constants/tutorial'
+import { tutorialBoardEntry } from '@/lib/tutorial-board'
 import { gameMachine } from '@/machines/game'
 import { computeKeyPlan, computePar } from '@/machines/scoring'
 import {
@@ -34,6 +35,7 @@ const STEPS: readonly LessonStep[] = [
   'swipeDown',
   'swipeLeft',
   'swipeRight',
+  'sweep',
   'practice',
   'done',
 ]
@@ -78,7 +80,8 @@ describe('the lesson script', () => {
     expect(lessonStep('free', { type: 'HIT', hits: 2 })).toBe('swipeDown')
     expect(lessonStep('free', { type: 'HIT', hits: 3 })).toBe('swipeLeft')
     expect(lessonStep('free', { type: 'HIT', hits: 4 })).toBe('swipeRight')
-    expect(lessonStep('free', { type: 'HIT', hits: 5 })).toBe('practice')
+    expect(lessonStep('free', { type: 'HIT', hits: 5 })).toBe('sweep')
+    expect(lessonStep('free', { type: 'HIT', hits: 6 })).toBe('practice')
   })
 
   it('signs off after the last scripted board, then says nothing more', () => {
@@ -100,6 +103,34 @@ describe('the lesson script', () => {
       expect(tapThrough(from, 5)).toBe(from)
       expect(lessonStep(from, { type: 'SWIPED', swipe })).toBe('free')
     }
+  })
+
+  it('holds the last lesson until one gesture moves a second key', () => {
+    // No clock and no swipe ends it: a drag is the one thing it is asking for, and the
+    // three swipes it is made of each arrive on their own as well.
+    expect(tapThrough('sweep', 5)).toBe('sweep')
+    for (const swipe of ['down', 'left', 'right'] as const) {
+      expect(lessonStep('sweep', { type: 'SWIPED', swipe })).toBe('sweep')
+    }
+    expect(lessonStep('sweep', { type: 'SWEPT' })).toBe('free')
+  })
+
+  it('takes no notice of a drag before the lesson that asks for one', () => {
+    // A player who happens to sweep early has swept; the lesson for it has not been
+    // reached, and nothing else in the script is waiting on one.
+    for (const step of [
+      'guided',
+      'free',
+      'swipeDown',
+      'swipeLeft',
+      'practice',
+    ] as const) {
+      expect(lessonStep(step, { type: 'SWEPT' })).toBe(step)
+    }
+  })
+
+  it('moves the drag lesson on when the target goes down another way', () => {
+    expect(lessonStep('sweep', { type: 'HIT', hits: 6 })).toBe('practice')
   })
 
   it('takes no notice of the wrong swipe', () => {
@@ -126,6 +157,7 @@ describe('the lesson script', () => {
     expect(tapThrough('done', 3)).toBe('done')
     expect(lessonStep('done', { type: 'HIT', hits: 2 })).toBe('done')
     expect(lessonStep('done', { type: 'SWIPED', swipe: 'down' })).toBe('done')
+    expect(lessonStep('done', { type: 'SWEPT' })).toBe('done')
   })
 
   it('has one lesson for every board it deals, and one last word after them', () => {
@@ -220,6 +252,7 @@ describe('what each step shows', () => {
       'swipeDown',
       'swipeLeft',
       'swipeRight',
+      'sweep',
       'done',
     ])
   })
@@ -243,6 +276,7 @@ describe('what each step shows', () => {
       'off',
       'off',
       'one',
+      'all',
       'all',
       'all',
       'all',
@@ -316,7 +350,7 @@ describe('the second target the lesson deals', () => {
 })
 
 describe('the boards the script deals', () => {
-  const [first, second, third, fourth, fifth] = TUTORIAL_TARGETS
+  const [first, second, third, fourth, fifth, sixth] = TUTORIAL_TARGETS
 
   it('opens on the one the machine deals, and deals the rest itself', () => {
     expect(first).toBe(TUTORIAL_OPENING_TARGET)
@@ -325,6 +359,7 @@ describe('the boards the script deals', () => {
     expect(scriptedTarget(2)).toBe(third)
     expect(scriptedTarget(3)).toBe(fourth)
     expect(scriptedTarget(4)).toBe(fifth)
+    expect(scriptedTarget(5)).toBe(sixth)
   })
 
   it('hands the run back to the spawner once it has run out', () => {
@@ -347,6 +382,24 @@ describe('the boards the script deals', () => {
 
   it('puts the swipe-right board far above, where stepping up is hopeless', () => {
     expect(fifth - fourth).toBeGreaterThan(3 * 36)
+  })
+
+  it('puts the drag board exactly one filled row below, and nothing else', () => {
+    // The lesson's last board is the one place the script asks for three of the same move
+    // in a line, which is what a drag is for. Pinned on the route rather than on the
+    // number: three keys, all on one row of the dial, all sent to the same end of their
+    // range — change the target and this is what stops being true.
+    const grid = tutorialBoardEntry(TUTORIAL_TARGETS.length - 1)
+    expect(computePar(NINE_DIAL, grid, sixth)).toBe(3)
+
+    const plan = computeKeyPlan(NINE_DIAL, grid, sixth)
+    expect(plan).toHaveLength(3)
+    const rows = plan.map((step) => Math.floor(step.index / NINE_DIAL.cols))
+    expect(new Set(rows).size).toBe(1)
+    expect(new Set(plan.map((step) => step.to))).toEqual(new Set([0]))
+    // Adjacent, so one unbroken drag covers them.
+    const columns = plan.map((step) => step.index % NINE_DIAL.cols).sort((a, b) => a - b)
+    expect(columns).toEqual([0, 1, 2])
   })
 
   it('keeps every board inside the range a target can hold', () => {
