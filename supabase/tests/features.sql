@@ -89,3 +89,110 @@ begin
   raise notice 'features.sql: resolve OK';
 end;
 $$;
+
+do $$
+declare
+  v_admin uuid;
+  v_other uuid;
+begin
+  select id into v_admin from profiles order by id limit 1;
+  select id into v_other from profiles order by id offset 1 limit 1;
+  update profiles set role = 'admin' where id = v_admin;
+
+  -- The RPCs read auth.uid(). Impersonate by setting the request claim the way
+  -- PostgREST does, so `security definer` functions see a caller.
+  perform set_config('request.jwt.claims', json_build_object('sub', v_admin)::text, true);
+
+  -- ── An ordinary write works ─────────────────────────────────────────────────
+  perform set_user_role(v_other, 'tester');
+  assert (select role from profiles where id = v_other) = 'tester',
+    'an admin should be able to set a role';
+
+  perform set_user_feature(v_other, 'arcade', true);
+  assert has_feature(v_other, 'arcade'), 'an admin should be able to grant a feature';
+
+  perform reset_user_features(v_other);
+  assert not has_feature(v_other, 'arcade'), 'reset should drop every override';
+
+  -- ── Review Focus 4: the override route out of admin ─────────────────────────
+  -- A guard watching only set_user_role would let both of these through.
+  begin
+    perform set_user_feature(v_admin, 'admin', false);
+    assert false, 'overriding your own admin off should have been refused';
+  exception when others then
+    assert sqlerrm like '%take admin away from you%', 'wrong error: ' || sqlerrm;
+  end;
+
+  -- Resetting is fine while admin comes from the role: the overrides go, the role
+  -- still answers.
+  perform set_user_feature(v_admin, 'arcade', true);
+  perform reset_user_features(v_admin);
+  assert has_feature(v_admin, 'admin'), 'reset should not have touched a role-given admin';
+
+  -- Now make admin come from an override instead, and reset must refuse. The override
+  -- is granted BEFORE the role is taken away — the other order would leave the caller
+  -- without admin between the two statements, and `require_admin` would refuse the
+  -- grant itself rather than the thing under test.
+  perform set_user_feature(v_admin, 'admin', true);
+  update profiles set role = 'tester' where id = v_admin;
+  begin
+    perform reset_user_features(v_admin);
+    assert false, 'resetting away your only source of admin should have been refused';
+  exception when others then
+    assert sqlerrm like '%take admin away from you%', 'wrong error: ' || sqlerrm;
+  end;
+  update profiles set role = 'admin' where id = v_admin;
+  delete from user_features where user_id = v_admin;
+
+  -- ── Editing your own role's stack ───────────────────────────────────────────
+  begin
+    perform set_role_feature('admin', 'admin', false);
+    assert false, 'taking admin out of your own stack should have been refused';
+  exception when others then
+    assert sqlerrm like '%take admin away from you%', 'wrong error: ' || sqlerrm;
+  end;
+
+  -- ── A role somebody holds cannot be deleted ─────────────────────────────────
+  begin
+    perform delete_role('tester');
+    assert false, 'deleting a held role should have been refused';
+  exception when others then
+    assert sqlerrm like '%still held by 1 person%', 'wrong error: ' || sqlerrm;
+  end;
+
+  -- ── Roles can be made, renamed and dropped ──────────────────────────────────
+  perform create_role('streamer', 'STREAMER');
+  perform rename_role('streamer', 'STREAMERS');
+  assert (select label from roles where key = 'streamer') = 'STREAMERS', 'rename failed';
+  perform set_role_feature('streamer', 'arcade', true);
+  perform delete_role('streamer');
+  assert not exists (select 1 from roles where key = 'streamer'), 'delete failed';
+  assert not exists (select 1 from role_features where role_key = 'streamer'),
+    'deleting a role should cascade its stack';
+
+  -- ── A non-admin is refused ──────────────────────────────────────────────────
+  perform set_config('request.jwt.claims', json_build_object('sub', v_other)::text, true);
+  begin
+    perform set_user_role(v_admin, null);
+    assert false, 'a non-admin should not be able to write a role';
+  exception when others then
+    assert sqlerrm like '%not an admin%', 'wrong error: ' || sqlerrm;
+  end;
+  perform set_config('request.jwt.claims', json_build_object('sub', v_admin)::text, true);
+
+  -- ── Review Focus 3: overrides without a role still appear ───────────────────
+  perform set_user_role(v_other, null);
+  perform set_user_feature(v_other, 'arcade', true);
+  assert exists (select 1 from admin_people() p where p.id = v_other),
+    'a person with overrides but no role must still be listed';
+  assert (select p.has_overrides from admin_people() p where p.id = v_other),
+    'that person should be marked as carrying overrides';
+  assert (select p.feature_count from admin_people() p where p.id = v_other) = 1,
+    'feature_count should be what they actually reach';
+
+  perform reset_user_features(v_other);
+  update profiles set role = null where id = v_admin;
+
+  raise notice 'features.sql: writes and guards OK';
+end;
+$$;

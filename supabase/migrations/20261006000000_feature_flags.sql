@@ -172,3 +172,267 @@ $$;
 grant execute on function public.effective_features(uuid) to anon, authenticated;
 grant execute on function public.my_features()            to anon, authenticated;
 grant execute on function public.has_feature(uuid, text)  to anon, authenticated;
+
+-- ─── The lockout guard ───────────────────────────────────────────────────────
+-- This system edits its own access, through four doors: a role change, an override, an
+-- edit to the stack of the role you hold, and deactivating the `admin` feature. The
+-- fourth is shut by the check constraint on `features`; this closes the other three at
+-- once, called at the end of every write below.
+--
+-- Deliberately not `stable`. It is called after the write it is judging and has to see
+-- it. A `stable` guard reading the pre-write world would pass every change it exists to
+-- refuse, and would do it silently.
+create or replace function guard_admin_floor(p_actor uuid)
+returns void language plpgsql set search_path = public as $$
+begin
+  if not has_feature(p_actor, 'admin') then
+    raise exception 'that change would take admin away from you';
+  end if;
+
+  -- Scoped to the roled population — the handful of rows that could possibly answer.
+  if not exists (
+    select 1 from profiles p
+     where (p.role is not null
+            or exists (select 1 from user_features uf where uf.user_id = p.id))
+       and has_feature(p.id, 'admin')
+  ) then
+    raise exception 'that change would leave nobody holding admin';
+  end if;
+end;
+$$;
+
+-- The opening line of every write. A function rather than six copies of four lines, and
+-- it asks `has_feature(…, 'admin')` rather than `role = 'admin'` — which is what the
+-- version of set_user_role this replaces asked. A custom role granting `admin` has to
+-- open the buttons as well as the door, or roles-as-data stops halfway.
+create or replace function require_admin()
+returns uuid language plpgsql stable set search_path = public as $$
+declare
+  v_caller uuid := auth.uid();
+begin
+  if v_caller is null then
+    raise exception 'not authenticated';
+  end if;
+  if not has_feature(v_caller, 'admin') then
+    raise exception 'caller is not an admin';
+  end if;
+  return v_caller;
+end;
+$$;
+
+-- ─── People ──────────────────────────────────────────────────────────────────
+-- Replaces the version in …_set_user_role.sql: any role key the `roles` table holds,
+-- rather than three names written into the function body.
+create or replace function set_user_role(p_user_id uuid, p_role text)
+returns void language plpgsql security definer set search_path = public as $$
+declare
+  v_caller uuid := require_admin();
+begin
+  if p_role is not null and not exists (select 1 from roles where key = p_role) then
+    raise exception 'set_user_role: unknown role %', p_role;
+  end if;
+  update profiles set role = p_role where id = p_user_id;
+  perform guard_admin_floor(v_caller);
+end;
+$$;
+
+-- `p_granted` null deletes the override row, which is how a feature goes back to
+-- inheriting — the third state, and the usual one.
+create or replace function set_user_feature(p_user_id uuid, p_key text, p_granted boolean)
+returns void language plpgsql security definer set search_path = public as $$
+declare
+  v_caller uuid := require_admin();
+begin
+  if p_granted is null then
+    delete from user_features where user_id = p_user_id and feature_key = p_key;
+  else
+    insert into user_features (user_id, feature_key, granted)
+    values (p_user_id, p_key, p_granted)
+    on conflict (user_id, feature_key) do update set granted = excluded.granted;
+  end if;
+  perform guard_admin_floor(v_caller);
+end;
+$$;
+
+create or replace function reset_user_features(p_user_id uuid)
+returns void language plpgsql security definer set search_path = public as $$
+declare
+  v_caller uuid := require_admin();
+begin
+  delete from user_features where user_id = p_user_id;
+  perform guard_admin_floor(v_caller);
+end;
+$$;
+
+-- ─── Roles ───────────────────────────────────────────────────────────────────
+create or replace function create_role(p_key text, p_label text)
+returns void language plpgsql security definer set search_path = public as $$
+begin
+  perform require_admin();
+  insert into roles (key, label) values (p_key, p_label);
+end;
+$$;
+
+create or replace function rename_role(p_key text, p_label text)
+returns void language plpgsql security definer set search_path = public as $$
+begin
+  perform require_admin();
+  update roles set label = p_label where key = p_key;
+end;
+$$;
+
+-- The foreign key on profiles.role is `restrict`, so the database would refuse this
+-- anyway. The count is here so the screen can say *why* rather than show a constraint
+-- name to somebody holding a phone.
+create or replace function delete_role(p_key text)
+returns void language plpgsql security definer set search_path = public as $$
+declare
+  v_caller uuid := require_admin();
+  v_held   int;
+begin
+  select count(*) into v_held from profiles where role = p_key;
+  if v_held > 0 then
+    raise exception 'delete_role: still held by % %',
+      v_held, case when v_held = 1 then 'person' else 'people' end;
+  end if;
+  delete from roles where key = p_key;
+  perform guard_admin_floor(v_caller);
+end;
+$$;
+
+create or replace function set_role_feature(p_role text, p_key text, p_on boolean)
+returns void language plpgsql security definer set search_path = public as $$
+declare
+  v_caller uuid := require_admin();
+begin
+  if p_on then
+    insert into role_features (role_key, feature_key) values (p_role, p_key)
+    on conflict do nothing;
+  else
+    delete from role_features where role_key = p_role and feature_key = p_key;
+  end if;
+  perform guard_admin_floor(v_caller);
+end;
+$$;
+
+-- ─── Features ────────────────────────────────────────────────────────────────
+-- The master switch and the note; nothing else. Rows are not created or deleted here —
+-- a key without a guard in the client means nothing, so keys arrive by migration.
+create or replace function set_feature(p_key text, p_active boolean, p_note text)
+returns void language plpgsql security definer set search_path = public as $$
+declare
+  v_caller uuid := require_admin();
+begin
+  update features set active = p_active, note = p_note where key = p_key;
+  perform guard_admin_floor(v_caller);
+end;
+$$;
+
+grant execute on function public.set_user_role(uuid, text)             to authenticated;
+grant execute on function public.set_user_feature(uuid, text, boolean) to authenticated;
+grant execute on function public.reset_user_features(uuid)             to authenticated;
+grant execute on function public.create_role(text, text)               to authenticated;
+grant execute on function public.rename_role(text, text)               to authenticated;
+grant execute on function public.delete_role(text)                     to authenticated;
+grant execute on function public.set_role_feature(text, text, boolean) to authenticated;
+grant execute on function public.set_feature(text, boolean, text)      to authenticated;
+
+-- ─── What the admin screen reads ─────────────────────────────────────────────
+-- Not guarded, and guarding them would be the mistake: these are `stable` functions over
+-- tables every client can already select, and a guard would suggest the counts are
+-- secret while the rows they count are not. The guards belong on the writes, which is
+-- where …_profile_role.sql put them.
+
+-- Everybody the screen has anything to say about. `role is not null` was the whole list
+-- before overrides existed; a person carrying overrides and no role is exactly the
+-- person somebody went looking for, so they belong here too.
+create or replace function admin_people()
+returns table (id uuid, nickname text, role text, feature_count int, has_overrides boolean)
+language sql stable set search_path = public as $$
+  select p.id,
+         p.nickname::text,
+         p.role,
+         (select count(*)::int from effective_features(p.id)),
+         exists (select 1 from user_features uf where uf.user_id = p.id)
+  from profiles p
+  where p.role is not null
+     or exists (select 1 from user_features uf where uf.user_id = p.id)
+  order by p.role nulls last, p.nickname;
+$$;
+
+-- `nickname` is `citext unique`, so at most one row can ever answer.
+create or replace function admin_find_person(p_nickname text)
+returns table (id uuid, nickname text, role text, feature_count int, has_overrides boolean)
+language sql stable set search_path = public as $$
+  select p.id,
+         p.nickname::text,
+         p.role,
+         (select count(*)::int from effective_features(p.id)),
+         exists (select 1 from user_features uf where uf.user_id = p.id)
+  from profiles p
+  where p.nickname = p_nickname;
+$$;
+
+-- One row per feature, with everything the person screen needs to say where the answer
+-- came from: the override if there is one, what the role says, and whether the feature
+-- is switched on at all.
+create or replace function person_features(p_user_id uuid)
+returns table (key text, override boolean, in_role_stack boolean, active boolean)
+language sql stable set search_path = public as $$
+  select f.key,
+         (select uf.granted from user_features uf
+           where uf.user_id = p_user_id and uf.feature_key = f.key),
+         exists (select 1 from role_features rf
+                   join profiles p on p.role = rf.role_key
+                  where p.id = p_user_id and rf.feature_key = f.key),
+         f.active
+  from features f
+  order by f.key;
+$$;
+
+create or replace function role_stats()
+returns table (key text, label text, feature_count int, person_count int)
+language sql stable set search_path = public as $$
+  select r.key,
+         r.label,
+         (select count(*)::int from role_features rf where rf.role_key = r.key),
+         (select count(*)::int from profiles p where p.role = r.key)
+  from roles r
+  order by r.label;
+$$;
+
+create or replace function role_feature_keys(p_role text)
+returns setof text language sql stable set search_path = public as $$
+  select feature_key from role_features where role_key = p_role order by feature_key;
+$$;
+
+-- `person_count` is after resolution — people who actually end up with the feature,
+-- overrides included. That is the number somebody about to flip a master switch wants,
+-- and it is not the same as the number of people whose role grants it.
+--
+-- Scoped to the roled population, the same way guard_admin_floor is. A profile with no
+-- role and no overrides resolves to nothing, so excluding it changes no answer — and
+-- including it would mean a `has_feature` call per profile per feature, over a table
+-- that grows with every player who ever opened the app.
+create or replace function feature_stats()
+returns table (key text, active boolean, note text, role_count int, person_count int)
+language sql stable set search_path = public as $$
+  select f.key,
+         f.active,
+         f.note,
+         (select count(*)::int from role_features rf where rf.feature_key = f.key),
+         (select count(*)::int
+            from profiles p
+           where (p.role is not null
+                  or exists (select 1 from user_features uf where uf.user_id = p.id))
+             and has_feature(p.id, f.key))
+  from features f
+  order by f.key;
+$$;
+
+grant execute on function public.admin_people()          to authenticated;
+grant execute on function public.admin_find_person(text) to authenticated;
+grant execute on function public.person_features(uuid)   to authenticated;
+grant execute on function public.role_stats()            to authenticated;
+grant execute on function public.role_feature_keys(text) to authenticated;
+grant execute on function public.feature_stats()         to authenticated;
