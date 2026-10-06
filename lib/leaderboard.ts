@@ -17,6 +17,7 @@ import {
   type PlayerProfile,
   type PlayerProfileResponse,
 } from '@/lib/player-profile'
+import type { RecapRow } from '@/lib/recap'
 import type { Winner } from '@/lib/recent-winners'
 import { supabase } from '@/lib/supabase'
 import { WIN_PERIODS, type Award } from '@/lib/winnings'
@@ -311,4 +312,28 @@ export async function fetchPastWinners(
     },
     error: null,
   }
+}
+
+// Last week on the boards, as facts: who topped each of the six on each of its seven days,
+// and which all-time boards changed hands while it ran.
+//
+// Bounds are passed in rather than computed here, unlike `fetchPastWinners` above: the hook
+// holds the window already — it is what it compares against its marker to decide whether
+// there is anything to tell at all — and deriving it twice is how the two would come to
+// disagree about which week was being reported.
+//
+// Rows come back raw. `factsFromRows` is what checks them and lays them out, which keeps
+// this function to the request and puts the one definition of a week's shape beside the
+// code that reads it.
+export async function fetchWeeklyRecap(range: {
+  from: string
+  to: string
+}): Promise<{ rows: RecapRow[]; error: string | null }> {
+  const res = await supabase.rpc('weekly_recap', {
+    p_from: range.from,
+    p_to: range.to,
+  })
+  noteRequest(res.error)
+  if (res.error) return { rows: [], error: res.error.message }
+  return { rows: (res.data as RecapRow[] | null) ?? [], error: null }
 }

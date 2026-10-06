@@ -2,17 +2,21 @@ import { useMemo, useState } from 'react'
 import { Pressable, Text, View } from 'react-native'
 
 import { ModalCard } from '@/components/overlays/modal-card'
-import { composeRecap, weekForShape, type ShapeKind } from '@/dev/weekly-recap/recap'
-import { RecapCard } from '@/dev/weekly-recap/recap-card'
+import { RecapCard } from '@/components/overlays/recap-card'
+import { weekForShape } from '@/dev/weekly-recap/facts'
+import { minusDays, nextDay } from '@/lib/leaderboard-period'
+import type { ShapeKind } from '@/lib/recap'
 
-// The weekly recap as it would arrive: one card in the What's New popup, on the first
-// open of a new week.
+// The weekly recap as it arrives: one card in the launch popup, on the first open of a new
+// week.
 //
-// Dev-only. The two controls under the card are not part of the design — a shipped recap
-// is seeded on the week's Monday and never changes under the player. They are here
+// Dev-only, and the two controls under the card are not part of the design — a shipped
+// recap is seeded on the week's Monday and never changes under the player. They are here
 // because the question this prototype exists to answer is whether the phrasings hold up
 // across many weeks, and that cannot be read one fixed week at a time.
-const PERIOD = '22 – 28 SEPTEMBER'
+//
+// A real Monday, so the window label under the title is a real window.
+const BASE_MONDAY = '2026-09-21'
 
 export function WeeklyRecapOverlay({
   kind,
@@ -21,23 +25,26 @@ export function WeeklyRecapOverlay({
   kind: ShapeKind
   onDismiss: () => void
 }) {
-  // Two dials, because they answer different questions: a new week changes what happened,
-  // a new phrasing changes only how the same week is told.
+  // Two dials, because they answer different questions: a new week changes what happened, a
+  // new phrasing changes only how the same week is told. REPHRASE walks the window back a
+  // week at a time rather than poking the seed directly — the seed *is* the Monday, and a
+  // dev control that could set the two apart would be showing something production cannot.
   const [week, setWeek] = useState(0)
   const [phrasing, setPhrasing] = useState(0)
 
-  const recap = useMemo(() => {
-    const facts = weekForShape(kind, `${kind}-${week}`)
-    if (facts === null) return null
-    return composeRecap(facts, `${kind}-${week}-${phrasing}`)
-  }, [kind, week, phrasing])
+  const facts = useMemo(() => weekForShape(kind, `${kind}-${week}`), [kind, week])
+
+  const from = minusDays(BASE_MONDAY, phrasing * 7)
+  // The Sunday that closes it — six days on, the way every real window is drawn.
+  let to = from
+  for (let i = 0; i < 6; i++) to = nextDay(to)
 
   return (
     <ModalCard title="WHAT’S NEW" onDismiss={onDismiss}>
       {(close) => (
         <>
           <View className="py-2">
-            {recap === null ? (
+            {facts === null ? (
               <Text
                 selectable={false}
                 className="py-6 text-center font-mono text-[11px] font-bold tracking-[1px] text-dim"
@@ -45,7 +52,7 @@ export function WeeklyRecapOverlay({
                 NO {kind.toUpperCase()} WEEK FOUND
               </Text>
             ) : (
-              <RecapCard sentences={recap.sentences} period={PERIOD} />
+              <RecapCard facts={facts} from={from} to={to} />
             )}
           </View>
 
@@ -54,7 +61,7 @@ export function WeeklyRecapOverlay({
               selectable={false}
               className="mr-auto font-mono text-[9px] font-bold tracking-[1px] text-dim"
             >
-              {recap === null ? kind.toUpperCase() : recap.shape.kind.toUpperCase()}
+              {kind.toUpperCase()}
             </Text>
             <Pressable
               onPress={() => {

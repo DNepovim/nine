@@ -50,6 +50,13 @@ export const SEEN_NEWS_KEY = 'nine.seen-news.v1'
 // rather than server-side, like SEEN_NEWS_KEY — a reinstall loses the telling, never the
 // winnings themselves, which are derived from the boards.
 export const SEEN_WINNINGS_KEY = 'nine.seen-winnings.v1'
+// The Monday of the last week whose recap has already been told. A Monday, not a list and
+// not a date the telling happened on: a recap only ever speaks for the week that has just
+// closed, so one week behind the current one is owed and anything older has expired
+// unheard. Absent means a first-ever launch, which is marked and stays quiet — a new player
+// should meet the game, not a report on a week they were not here for. Local, like the two
+// markers above: a reinstall loses the telling, and there is nothing else to lose.
+export const SEEN_RECAP_KEY = 'nine.seen-recap.v1'
 // The run the app was last closed on, live or paused — see lib/saved-run.ts. Written
 // when a run is put down and cleared the moment there is no longer one to come back to,
 // so a key that exists always means a run in progress. Versioned on the shape of what is

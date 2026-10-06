@@ -57,6 +57,15 @@ const modeWeight = (mode: ScoredMode): number => SCORED_MODES.indexOf(mode)
 // the more a place on it says.
 const periodWeight = (period: MedalPeriod): number => MEDAL_PERIODS.indexOf(period)
 
+// How big a claim a board is, lowest first — difficulty decides and the mode settles what
+// is left, which is the ordering `byBestClaim` applies one rung further down.
+//
+// Exported because the recap breaks its ties on it: a day two players drew is given to
+// whoever held the harder board. That used to be a copy of this arithmetic living beside
+// the recap, with a comment promising to call this function once the feature shipped.
+export const boardClaim = (mode: ScoredMode, difficulty: Difficulty): number =>
+  difficultyWeight(difficulty) * 10 + modeWeight(mode)
+
 // Medals ordered by the claim they make, best first.
 //
 // The period is decided first and the metal second, which is the whole ordering: a

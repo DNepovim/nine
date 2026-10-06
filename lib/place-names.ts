@@ -1,3 +1,5 @@
+import type { Rng } from '@/lib/rng'
+
 // What the places on an arcade map are called.
 //
 // Curated morphemes, never generated phonotactics. A proper onset-nucleus-coda grammar was
@@ -208,10 +210,6 @@ function joins(head: string, tail: string): boolean {
   if (endConsonants(head) + startConsonants(tail) > 3) return false
   return head.slice(-1).toLowerCase() !== tail[0]
 }
-
-// The run's own randomness, so the same seed names the same place. Same generator the map
-// itself is grown from — see machines/arcade.ts.
-type Rng = () => number
 
 const pick = <T>(items: readonly T[], rng: Rng): T =>
   items[Math.floor(rng() * items.length)] as T

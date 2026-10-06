@@ -40,7 +40,6 @@ import {
   type ScoreLength,
 } from '@/dev/score-strip-variant'
 import { StrikeVariant } from '@/dev/strike-variant'
-import type { ShapeKind } from '@/dev/weekly-recap/recap'
 import { WeeklyRecapOverlay } from '@/dev/weekly-recap/recap-overlay'
 import { requestAnnouncements } from '@/hooks/use-announcement-request'
 import { ChampionsProvider } from '@/hooks/use-champions'
@@ -65,6 +64,7 @@ import {
 import type { FeedbackQuote } from '@/lib/feedback-reply'
 import { gameOverTitle } from '@/lib/game-over-title'
 import type { Medal, MedalPeriod } from '@/lib/medals'
+import type { ShapeKind } from '@/lib/recap'
 import {
   invitePool,
   openerPool,

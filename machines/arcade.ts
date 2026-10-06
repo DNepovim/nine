@@ -1,4 +1,5 @@
 import { settlementName } from '@/lib/place-names'
+import { idSeed, seeded, type Rng } from '@/lib/rng'
 import { parTable, speedFactor } from '@/machines/scoring'
 import { decayed, FAST_HIT_THRESHOLD, NINE_DIAL, type Grid } from '@/modes'
 
@@ -117,30 +118,12 @@ export type ArcadeMap = Readonly<Record<string, Crossroad>>
 
 // A run's own source of randomness, so a map can be replayed — a seed is all a bug report
 // needs — and so a test gets the same crossroad twice.
-export type Rng = () => number
-
-export function seeded(seed: number): Rng {
-  let state = seed >>> 0
-  return () => {
-    state = (state * 1664525 + 1013904223) >>> 0
-    return state / 4294967296
-  }
-}
-
-// A crossroad id as a number — FNV-1a over its characters.
 //
-// Two things need one. The map needs a crossroad's randomness to depend on *which*
-// crossroad it is rather than on how many were grown before it, so that growing one twice
-// gives the same answer and React may call an updater as often as it likes. And the drawing
-// needs each way to sway on its own phase, which has to be the same phase on every render
-// or a fan would jitter instead of breathe.
-export function idSeed(id: string): number {
-  let hash = 2166136261
-  for (let i = 0; i < id.length; i++) {
-    hash = ((hash ^ id.charCodeAt(i)) * 16777619) >>> 0
-  }
-  return hash
-}
+// The generator itself now lives in lib/rng.ts, because the recap is seeded the same way
+// and a second one would be a second answer to the same question. Re-exported rather than
+// left for every caller to find: a crossroad's randomness is arcade's business, and the
+// screens and the layout that ask for it should keep asking arcade.
+export { idSeed, seeded, type Rng }
 
 // The randomness one crossroad of one run is grown from. Pure in both its arguments, so a
 // run is a seed and nothing else: the same seed walks the same map every time.

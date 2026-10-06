@@ -24,6 +24,10 @@ export const FLAGS = [
   // The DEV link on the intro, and the screen behind it: every challenge ever written,
   // playable on demand with no board kept for it.
   'dev',
+  // The weekly recap: the page in the launch popup, on the first open of a new week, that
+  // says what last week on the boards came to. Gates the read as well as the card — a
+  // player who cannot be shown it has no business asking the server about it.
+  'recap',
   // The ADMIN link on the intro, and the screen behind it. Protected in the database:
   // it cannot be switched off, and nobody can take it from themselves — this is not a
   // feature being tried out, it is the door that decides who sees the others.
