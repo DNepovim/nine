@@ -1126,6 +1126,10 @@ msgstr "Nobody has taken anything off you."
 msgid "Nobody holds a role yet."
 msgstr "Nobody holds a role yet."
 
+#: components/overlays/admin-features.tsx:120
+msgid "not in this build"
+msgstr "not in this build"
+
 #: components/game/step-up-toast.tsx:116
 msgid "NOT NOW"
 msgstr "NOT NOW"

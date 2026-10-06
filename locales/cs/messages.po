@@ -1126,6 +1126,10 @@ msgstr "Nikdo ti nic nesebral."
 msgid "Nobody holds a role yet."
 msgstr "Zatím nikdo nemá roli."
 
+#: components/overlays/admin-features.tsx:120
+msgid "not in this build"
+msgstr "není v tomto buildu"
+
 #: components/game/step-up-toast.tsx:116
 msgid "NOT NOW"
 msgstr "TEĎ NE"
