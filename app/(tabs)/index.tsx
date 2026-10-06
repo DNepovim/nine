@@ -1397,7 +1397,12 @@ export default function GameScreen() {
                 week={bestWeek}
                 ever={bestEver}
               />
-              <View className="mb-3">
+              {/* A step up in the stack, which only ever matters during the tutorial: the
+                  card's tap-through is the last child of this screen and covers everything
+                  under this band, so without the lift MENU would be unreachable for as
+                  long as a card was up. Harmless everywhere else — nothing else here
+                  overlaps the bar. */}
+              <View className="mb-3" style={{ zIndex: 1 }}>
                 {/* Row 1 — the same bar every run is played under. NINE is tinted by
                     the rung here; the pause button shows only while a run is actually
                     going, since the screen it opens is a full overlay that covers this
@@ -1744,25 +1749,31 @@ export default function GameScreen() {
                   send({ type: 'SET_CELL', index, value: cellValue, now: Date.now() })
                 }}
               />
+
+              {/* ── Tap-through for the lesson's two pointing cards ── */}
+              {/* A card asking to be read holds the dial shut, and this is the other half
+                of that: a tap anywhere is how the player says they have read it, rather
+                than waiting out a clock they cannot see. Mounted only while a card is up,
+                so nothing catches a press that belongs to the game. Every key is already
+                inert underneath — the dial is `off` at these steps — so this exists to
+                hear the tap, not to block one.
+
+                A child of the screen rather than a layer over the whole app, and that is
+                what leaves the top bar above it: the bar is lifted a step in the stack
+                below, so MENU stays pressable while a card is up. A lesson is still a run,
+                and a run the player cannot put down because it is explaining itself is the
+                one thing this card must not become. The negative insets cancel the
+                screen's own padding, so what is left under the bar is covered to the
+                edges. */}
+              {lesson.onTapThrough !== null && (
+                <TrackedPressable
+                  id="tutorial.tap_through"
+                  onPress={lesson.onTapThrough}
+                  className="absolute -bottom-2 -left-4 -right-4 top-0"
+                  accessibilityLabel={t`Continue the tutorial`}
+                />
+              )}
             </Screen>
-
-            {/* ── Tap-through for the lesson's two pointing cards ── */}
-            {/* A card asking to be read holds the dial shut, and this is the other half of
-              that: a tap anywhere is how the player says they have read it, rather than
-              waiting out a clock they cannot see. Mounted only while a card is up, so
-              nothing catches a press that belongs to the game.
-
-              Over the screen rather than inside it: every key is already inert underneath
-              — the dial is `off` at these steps — so this exists to hear the tap, not to
-              block one, and the whole viewport is where a tap may land. */}
-            {lesson.onTapThrough !== null && (
-              <TrackedPressable
-                id="tutorial.tap_through"
-                onPress={lesson.onTapThrough}
-                className="absolute bottom-0 left-0 right-0 top-0"
-                accessibilityLabel={t`Continue the tutorial`}
-              />
-            )}
 
             {/* ── Life-loss flash — red tint over the game screen ── */}
             <Animated.View
