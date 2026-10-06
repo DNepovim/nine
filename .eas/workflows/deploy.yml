@@ -1,9 +1,13 @@
 name: Deploy web to EAS Hosting
 
-# Production is never deployed by a push. This workflow is manual only — run it
-# with `eas workflow:run .eas/workflows/deploy.yml --ref main`, or let the
-# `deploy` skill do it. Landing on `main` and shipping to players are two
-# separate decisions, and this is where the second one is made.
+# Production is never deployed by a push. This workflow is manual only, and the
+# way it is normally reached is .github/workflows/deploy.yml — a dispatch there
+# runs the static suite and the audit first and only creates this run once both
+# are green. Running it straight from the CLI
+# (`eas workflow:run .eas/workflows/deploy.yml --ref main`) bypasses that gate;
+# that is the emergency path, and the `deploy` skill checks by hand before taking
+# it. Either way it takes a person: landing on `main` and shipping to players are
+# two separate decisions, and this is where the second one is made.
 on:
   workflow_dispatch: {}
 
@@ -24,10 +28,11 @@ defaults:
   tools:
     node: 22
 
-# The static gate — lint, Prettier, types, Knip, tests, i18n — lives in GitHub
-# Actions (.github/workflows/checks.yml), where the minutes are free. EAS runs
-# only what needs EAS: the two steps below that hold the project's env vars.
-# Whoever triggers this is responsible for the checks being green on the ref.
+# The static gate — lint, Prettier, types, Knip, tests, i18n — and the dependency
+# audit both live in GitHub Actions, where the minutes are free: checks.yml holds
+# the suite, deploy.yml runs it and the audit as the gate in front of this. EAS
+# runs only what needs EAS: the two steps below that hold the project's env vars.
+# Nothing here re-checks the ref, so a run created by any other means is trusted.
 jobs:
   deploy:
     name: Deploy to production
@@ -38,10 +43,6 @@ jobs:
         # Fails before the expensive build rather than mid-build if the
         # EXPO_PUBLIC_* values are missing from the EAS environment.
         run: pnpm check-env
-      - name: Audit (high & critical only)
-        # Kept on the release path only: the advisory database moves on its own,
-        # so gating every PR on it would block work with nothing in the PR to fix.
-        run: pnpm audit --audit-level high
       - name: Build web (export + service worker)
         run: pnpm run build:web
       - name: Deploy to EAS Hosting (production)

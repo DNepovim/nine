@@ -5,8 +5,15 @@ name: Checks
 # GitHub-hosted minutes are not. What stays on EAS is only what needs EAS: the
 # build and the deploy, which are the steps that hold the project's env vars.
 #
-# Runs on every PR, and on demand. Nothing here touches production, and nothing
-# here deploys.
+# Runs on every PR, on every commit that lands on `main`, on demand, and as the
+# first half of a deploy. Nothing here touches production, and nothing here
+# deploys.
+#
+# `push: main` is what makes a deploy gateable: without it a commit on `main`
+# carries no check status, because the PR run answered for a merge ref that no
+# longer exists. `workflow_call` is how .github/workflows/deploy.yml reuses this
+# whole job rather than restating the steps — one definition, so the gate can
+# never drift from what a PR is held to.
 on:
   pull_request:
     branches:
@@ -15,10 +22,16 @@ on:
       - opened
       - reopened
       - synchronize
+  push:
+    branches:
+      - main
   workflow_dispatch:
+  workflow_call:
 
 # A new push to a PR makes the previous run's answer irrelevant — cancel it
-# rather than paying for both.
+# rather than paying for both. When this runs as part of a deploy, `github.workflow`
+# is the *caller's* name, so a deploy's checks sit in their own group and never
+# cancel the push-to-main run (or the reverse).
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
@@ -75,4 +88,4 @@ jobs:
       # Deliberately no `pnpm audit` here: it gates on an advisory database that
       # moves on its own, so a new CVE in a transitive dependency would block
       # every PR overnight with nothing in the PR to fix. Supply-chain gating
-      # stays on the release path, in .eas/workflows/deploy.yml.
+      # stays on the release path, as the `audit` job in deploy.yml.

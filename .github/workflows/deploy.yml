@@ -1,0 +1,99 @@
+name: Deploy to production
+
+# The one button that ships to players. Manual only: pick a branch in the
+# Actions tab and run it, or `gh workflow run deploy.yml --ref main`. A push to
+# `main` runs the checks (checks.yml) and stops there — landing on `main` and
+# shipping to players stay two separate decisions.
+#
+# What this adds over triggering EAS by hand is the gate. The static suite and
+# the audit run here first, and the EAS run is only created once both are green,
+# so a red lint spends no EAS compute at all. Deploying straight from the EAS
+# CLI still works and still skips this — that path is for emergencies, and the
+# `deploy` skill carries its own preflight for it.
+on:
+  workflow_dispatch:
+
+# Queue rather than cancel: `cancel-in-progress: true` would kill a run that has
+# already handed off to EAS, leaving a deploy finishing with nothing watching it.
+# The default waits for the one in flight instead.
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  # The full static suite, as one definition shared with what every PR is held
+  # to. Runs against the ref this workflow was dispatched on.
+  checks:
+    name: Static checks
+    uses: ./.github/workflows/checks.yml
+
+  # Supply-chain gating lives on the release path only, never on a PR: the
+  # advisory database moves on its own, so a new CVE in a transitive dependency
+  # would block every open PR overnight with nothing in the PR to fix. As a
+  # deploy gate it is a decision someone is already present to make.
+  audit:
+    name: Audit (high & critical)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          # No `packageManager` field in package.json, so the major is pinned
+          # here instead. Matches the lockfile's format.
+          version: 10
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      # Reads pnpm-lock.yaml, so no install is needed to answer the question.
+      - name: Audit
+        run: pnpm audit --audit-level high
+
+  deploy:
+    name: Deploy to EAS Hosting
+    needs:
+      - checks
+      - audit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      # `--ref` ships the remote branch tip, not this checkout — so if someone
+      # pushed while the gate was running, EAS would build a commit nothing here
+      # verified. Refuse instead of shipping the unchecked one.
+      - name: Ref has not moved
+        run: |
+          git fetch origin "${{ github.ref_name }}"
+          remote=$(git rev-parse FETCH_HEAD)
+          if [ "$remote" != "${{ github.sha }}" ]; then
+            echo "::error::${{ github.ref_name }} moved to $remote since the checks" \
+                 "ran on ${{ github.sha }}. Re-run this workflow on the new commit."
+            exit 1
+          fi
+          echo "${{ github.ref_name }} is still ${{ github.sha }}."
+
+      # `--ref` also matters for a second reason: without it the CLI packages and
+      # uploads the local project directory. `--wait` makes this job's result the
+      # deploy's real outcome rather than "the run was created" — exit 11 is a
+      # failed run, 12 a canceled one.
+      - name: Run the EAS deploy workflow
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+        run: |
+          pnpm dlx eas-cli@latest workflow:run .eas/workflows/deploy.yml \
+            --ref "${{ github.ref_name }}" \
+            --wait \
+            --non-interactive

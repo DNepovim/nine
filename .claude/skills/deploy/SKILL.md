@@ -1,18 +1,24 @@
 ---
 name: deploy
-description: Deploy the app to production — runs the local check suite, asks whether to push pending database migrations, then triggers the manual EAS workflow (.eas/workflows/deploy.yml) which builds the web bundle and publishes it to EAS Hosting. Use only when the user explicitly asks to deploy, release, or ship to production.
+description: Deploy the app to production — establishes what will ship, asks whether to push pending database migrations, then dispatches the manual GitHub workflow (.github/workflows/deploy.yml) which gates on the static suite and the dependency audit before letting EAS build and publish the web bundle. Use only when the user explicitly asks to deploy, release, or ship to production.
 ---
 
 # Deploy
 
-Nothing reaches players on its own. `.eas/workflows/deploy.yml` is
-`workflow_dispatch` only — a push to `main` builds nothing and ships nothing —
-so this skill is the one path by which production changes.
+Nothing reaches players on its own. Both deploy workflows are
+`workflow_dispatch` only — a push to `main` runs the checks and stops — so a
+person asking is the only way production changes.
 
-CI is split: the static gate (lint, Prettier, types, Knip, tests, i18n) runs in
-GitHub Actions, where minutes are free. EAS runs only the build and the deploy,
-and trusts whoever triggers it to have checked. **That trust is this skill's
-job** — Step 2 is not optional.
+CI is split across two providers. GitHub Actions holds everything cheap:
+`checks.yml` is the static suite (lint, Prettier, types, Knip, tests, i18n), and
+`.github/workflows/deploy.yml` runs that suite **plus** `pnpm audit` as a gate,
+then creates the EAS run only if both pass. EAS runs only what needs EAS — the
+env vars, the build, the deploy.
+
+So the gate is in the pipeline, not in this skill: a red lint means the EAS run
+is never created. **Dispatch the GitHub workflow** (Step 5) and let it enforce
+that. Steps 1–4 are still yours, because the pipeline cannot tell you whether a
+migration is pending or whether `main` is the commit the user meant.
 
 ## The gate
 
@@ -42,12 +48,25 @@ Report the commit that will go out: short sha and subject. Then:
 
 ## Step 2 — Check the ref
 
-EAS will not check for you. Run the **`check`** skill (`pnpm check` — i18n, lint,
-Prettier, types, Knip, tests). If anything can't be made green, **stop**. Do not
-deploy on a red suite.
+The deploy workflow re-runs the whole suite against the ref itself, so this step
+is about finding out **now** rather than after a dispatch. Two cheap ways, and
+the first is better because it answers for the commit that ships:
 
-If what you just checked is the working tree and the working tree differs from
-`origin/main`, say so — you verified a different thing than the one shipping.
+```bash
+gh run list --workflow checks.yml --branch main --limit 3 \
+  --json headSha,conclusion,createdAt
+```
+
+A `success` on the sha from Step 1 means the gate will pass. A failure, or no run
+for that sha, means fix it first.
+
+`gh` is **not installed on this machine** — if the command isn't found, don't
+retry it. Either run the **`check`** skill (`pnpm check`) instead, or read the run
+off the Actions tab. If what you checked is the working tree while `origin/main`
+differs, say so, because you verified a different thing than the one shipping.
+
+Either way: if it can't be made green, **stop**. The pipeline would refuse the
+deploy anyway; refusing here costs the user less time.
 
 ## Step 3 — Migrations (ask every time)
 
@@ -114,29 +133,58 @@ No confirmation, no deploy.
 
 ## Step 5 — Run it
 
+Dispatch the **GitHub** workflow, not the EAS one. It is the gated path.
+
+`gh` is not installed on this machine, so by default this step is the user's to
+press — hand them the link and say what to click:
+
+> <https://github.com/DNepovim/nine/actions/workflows/deploy.yml> → **Run
+> workflow** → branch `main` → **Run workflow**.
+
+If `gh` is available (they installed it, or asked you to run it), dispatch it
+yourself instead:
+
 ```bash
-pnpm dlx eas-cli@latest workflow:run .eas/workflows/deploy.yml --ref main --non-interactive
+gh workflow run deploy.yml --ref main
+gh run watch "$(gh run list --workflow deploy.yml --limit 1 --json databaseId --jq '.[0].databaseId')"
 ```
 
-`--ref main` matters: **without it the CLI packages and uploads the local
-project directory**, so uncommitted and unpushed work would ship. Always pass
-it, and pass a branch the user named rather than `main` only if they said so.
+`main` is the ref the gate and the deploy both run on; name a different branch
+only if the user said so. Report the run URL.
 
-The workflow checks the env vars, runs `pnpm audit --audit-level high`, builds
-the web bundle and deploys with `--prod`. Report the run URL the CLI prints.
+Three jobs, in this order: the static suite and the audit in parallel, then the
+deploy — which re-checks that the branch tip has not moved since the gate ran,
+and calls `eas workflow:run … --wait` so the GitHub job's result **is** the
+deploy's result. On the EAS side: env vars, build, `eas deploy --prod`.
 
-It takes a few minutes. Offer to watch rather than assuming it passed:
+It takes a few minutes. Offer to watch rather than assuming it passed. For the
+EAS half specifically:
 
 ```bash
 pnpm dlx eas-cli@latest workflow:view     # pick the run, see its jobs
 pnpm dlx eas-cli@latest workflow:logs     # drill into a failing step
 ```
 
+### The bypass
+
+`pnpm dlx eas-cli@latest workflow:run .eas/workflows/deploy.yml --ref main --non-interactive`
+still works and still skips the whole gate — no lint, no audit. Use it only when
+GitHub Actions itself is down or the user explicitly asks for it, say out loud
+that the gate was skipped, and never take it to get around a red suite.
+
 ## When it fails
 
+- **Static checks failed** — the suite is red on the ref. Nothing was deployed and
+  no EAS compute was spent. Fix it and dispatch again; don't reach for the bypass.
 - **Audit failed** — a dependency advisory, not the user's code. Report the
   package and ask whether to bump it or deploy anyway (the gate exists to be a
-  decision, not a wall).
+  decision, not a wall). "Anyway" here means the bypass, so say that it skips the
+  static suite too.
+- **"Ref has not moved" failed** — someone pushed to the branch while the gate was
+  running. Re-read Step 1 for the new commit and dispatch again.
+- **`EXPO_TOKEN` missing or rejected** — the GitHub secret, not a local login. The
+  fix is an Expo robot token in the repo's Actions secrets; `eas login` locally
+  does nothing for this.
 - **Env vars failed** — the `EXPO_PUBLIC_*` values are missing from the EAS
   environment, not from `.env`. Say that; the fix is in the EAS dashboard.
 - **Build failed** — the static gate passed but the export didn't. Reproduce
