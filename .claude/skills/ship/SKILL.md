@@ -1,6 +1,6 @@
 ---
 name: ship
-description: Ship the current work — first run the `check` suite, then (default) commit on a new branch and open a GitHub PR, or (`ship prod`) commit and push straight to main. Use when finishing a piece of work and you want it committed / PR'd / shipped. Argument, `prod`, controls the mode.
+description: Ship the current work — first run the `check` suite, then (default) commit on a new branch and open a GitHub PR, or (`ship prod`) commit and push straight to main, and finally offer to deploy to production. Use when finishing a piece of work and you want it committed / PR'd / shipped. Argument, `prod`, controls the mode.
 ---
 
 # Ship
@@ -14,6 +14,10 @@ The commit itself belongs to the **`commit`** skill — this skill gates, decide
 where the work lands, and pushes. **Never push or open a PR without the user's
 explicit confirmation**, which the `commit` skill collects for the message and
 Step 0c collects for the branch name.
+
+Shipping is not deploying. Nothing that happens here reaches a player: pushing
+`main` builds nothing and publishes nothing. Production moves only when someone
+runs the **`deploy`** skill, which Step 3 offers at the end.
 
 ## Step 0 — Gate on checks (both modes)
 
@@ -129,9 +133,28 @@ If the user cancels at the commit skill's gate, stop here — nothing to push.
 ### `ship prod`: push to main
 
 1. `git push origin main`
-2. **Note to the user:** pushing `main` triggers the EAS Workflow
-   (`.eas/workflows/deploy.yml`) → checks + **production deploy**. So `ship prod`
-   effectively ships to production via CI.
+2. **Note to the user:** a push to `main` runs nothing — no checks, no build, no
+   deploy. The work is on `main`, and players still have the previous build.
+   Production is Step 3's question.
+
+## Step 3 — Offer to deploy (both modes)
+
+Ask with **`AskUserQuestion`**:
+
+- **"Deploy to production"** — invoke the **`deploy`** skill, which re-states
+  what will ship and confirms again before triggering anything.
+- **"Not now"** — stop here. Say plainly that the work is pushed but not live,
+  and that `deploy` is how it goes out later.
+
+Two rules on this question:
+
+- **Only offer it when the work is on `main`.** In branch mode the PR hasn't
+  merged, so `main` doesn't have the change and deploying would ship the _old_
+  code under a message implying otherwise. Skip the question, and say the deploy
+  comes after the merge.
+- **Treat choosing it as the explicit instruction** the `deploy` skill's gate
+  requires — but nothing else does. If the user answers anything other than
+  picking that option, do not deploy.
 
 ## Notes
 

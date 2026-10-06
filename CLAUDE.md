@@ -74,7 +74,7 @@ An achievement's colour is the green nothing else uses (`ACHIEVEMENT_SCALE`), an
 
 ## Rules
 
-- **Never deploy to production.** Do not run `eas deploy --prod` (or otherwise promote to prod) unless the user explicitly issues that exact command in the current turn. "Continue", "ship it", or prior approvals do NOT authorize a prod deploy — wait for the explicit instruction every time.
+- **Never deploy to production.** Nothing deploys on its own — a push to `main` runs no CI at all, and `.eas/workflows/deploy.yml` is manual-only. Do not run `eas workflow:run .eas/workflows/deploy.yml`, `eas deploy --prod`, or otherwise promote to prod unless the user explicitly asks for a deploy in the current turn. "Continue", "ship it", or prior approvals do NOT authorize a prod deploy — wait for the explicit instruction every time. The **`deploy`** skill owns the procedure.
 
 - **Never use Claude-in-Chrome browser automation without explicit agreement.** Do not launch the `claude-in-chrome` skill or call any `mcp__claude-in-chrome__*` tool unless the user has agreed to it in the current turn. Ask first.
 
