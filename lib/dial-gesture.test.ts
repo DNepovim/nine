@@ -3,9 +3,11 @@ import { describe, expect, it } from 'vitest'
 import {
   allowedMove,
   cellAt,
+  crossReach,
   exitMove,
   liftMove,
   nextValue,
+  travelled,
   type DialMove,
 } from '@/lib/dial-gesture'
 import { dialMetrics } from '@/lib/dial-metrics'
@@ -16,11 +18,21 @@ import { NINE_DIAL } from '@/modes'
 const BOARD = NINE_DIAL
 const PHONE = dialMetrics({ width: 375, height: 667 }, BOARD)
 
+// The distance between two key centres, and how far a finger arriving from another key
+// has to get onto a key before the key answers: 32.55pt of the 93 on this phone.
+const PITCH = PHONE.button + PHONE.gap
+const REACH = crossReach(PHONE)
+
 // The centre of a key, which is what a point has to be read back to.
 const centre = (cell: number) => ({
-  x: (PHONE.button + PHONE.gap) * (cell % 3) + PHONE.button / 2,
-  y: (PHONE.button + PHONE.gap) * Math.floor(cell / 3) + PHONE.button / 2,
+  x: PITCH * (cell % 3) + PHONE.button / 2,
+  y: PITCH * Math.floor(cell / 3) + PHONE.button / 2,
 })
+
+// The near and far edges of the band a key claims, on one axis: the key's own pill plus
+// half the gap on either side of it, which is where a finger crosses in and out.
+const bandStart = (lane: number) => PITCH * lane - PHONE.gap / 2
+const bandEnd = (lane: number) => bandStart(lane + 1)
 
 describe('cellAt', () => {
   it('reads every key back from its own centre', () => {
@@ -82,25 +94,96 @@ describe('exitMove', () => {
 
 describe('liftMove', () => {
   it('takes the longer axis past the threshold', () => {
-    expect(liftMove(30, 5, false)).toBe('right')
-    expect(liftMove(-30, 5, false)).toBe('left')
-    expect(liftMove(5, -30, false)).toBe('up')
-    expect(liftMove(5, 30, false)).toBe('down')
+    expect(liftMove(30, 5, false, REACH)).toBe('right')
+    expect(liftMove(-30, 5, false, REACH)).toBe('left')
+    expect(liftMove(5, -30, false, REACH)).toBe('up')
+    expect(liftMove(5, 30, false, REACH)).toBe('down')
   })
 
   it('reads a lift that went nowhere as a tap, when the gesture began there', () => {
-    expect(liftMove(0, 0, false)).toBe('tap')
-    expect(liftMove(15, 10, false)).toBe('tap')
+    expect(liftMove(0, 0, false, REACH)).toBe('tap')
+    expect(liftMove(15, 10, false, REACH)).toBe('tap')
   })
 
   it('leaves a key the finger only passed through alone', () => {
     // No stray +1 on the key you happened to stop over on the way somewhere.
-    expect(liftMove(0, 0, true)).toBeNull()
-    expect(liftMove(15, 10, true)).toBeNull()
+    expect(liftMove(0, 0, true, REACH)).toBeNull()
+    expect(liftMove(15, 10, true, REACH)).toBeNull()
   })
 
   it('still takes a real swipe on a key the finger passed through', () => {
-    expect(liftMove(0, -40, true)).toBe('up')
+    expect(liftMove(0, -40, true, REACH)).toBe('up')
+  })
+
+  it('swallows the overshoot of a swipe that carried onto the next key', () => {
+    // 25pt past the boundary is the tail of the gesture aimed at the key before this
+    // one, not a second swipe — even though the same 25pt on the key the finger landed
+    // on is a swipe outright.
+    expect(liftMove(25, 0, true, REACH)).toBeNull()
+    expect(liftMove(25, 0, false, REACH)).toBe('right')
+  })
+})
+
+describe('crossReach', () => {
+  it('reads the bar off the dial being played', () => {
+    expect(crossReach(PHONE)).toBeCloseTo(32.55)
+  })
+
+  it('scales with the keys, so it is the same share of a wider dial', () => {
+    const wide = dialMetrics({ width: 750, height: 1334 }, BOARD)
+    expect(crossReach(wide) / (wide.button + wide.gap)).toBeCloseTo(
+      REACH / (PHONE.button + PHONE.gap),
+    )
+  })
+})
+
+describe('travelled', () => {
+  it('gives the whole key to a finger that crossed it end to end', () => {
+    expect(travelled('right', PITCH, 0)).toBe(PITCH)
+    expect(travelled('down', 0, PITCH)).toBe(PITCH)
+    expect(travelled('left', -PITCH, 0)).toBe(PITCH)
+    expect(travelled('up', 0, -PITCH)).toBe(PITCH)
+  })
+
+  it('ignores the axis the key was not left by', () => {
+    // Sliding along a row says nothing about leaving the key upwards.
+    expect(travelled('up', 60, 0)).toBe(0)
+  })
+
+  it('gives nothing to a finger that came back out of the side it went in by', () => {
+    expect(travelled('up', 40, 3)).toBe(-3)
+  })
+
+  it('counts a tap as travel in no direction at all', () => {
+    expect(travelled('tap', 40, 40)).toBe(0)
+  })
+})
+
+describe('a finger that clips the key beside the one it is swiping', () => {
+  // Sweeping right along the middle row, 3pt of the thumb dips into the bottom row's
+  // band over the 7 and comes straight back up out of it.
+  const entry = { x: 100, y: bandStart(2) }
+  const exit = { x: 140, y: bandStart(2) + 3 }
+
+  it('leaves the clipped key alone, however far along the row the thumb went', () => {
+    const move = exitMove(7, exit.x, exit.y, PHONE, BOARD.cols)
+    expect(move).toBe('up')
+    expect(travelled(move, exit.x - entry.x, exit.y - entry.y)).toBeLessThan(REACH)
+  })
+
+  it('still takes the key the finger crossed properly on its way', () => {
+    // The 4, left rightward through the whole of its band on the same sweep.
+    const move = exitMove(4, bandEnd(1), centre(4).y, PHONE, BOARD.cols)
+    expect(move).toBe('right')
+    expect(travelled(move, bandEnd(1) - bandStart(1), 0)).toBeGreaterThanOrEqual(REACH)
+  })
+
+  it('still takes a key entered from one side and left through the next', () => {
+    // Right into the middle of the 4 from the 3, then down out of it into the 7: not a
+    // crossing end to end, but half a key of travel downwards is a decision.
+    const move = exitMove(4, centre(4).x, bandEnd(1), PHONE, BOARD.cols)
+    expect(move).toBe('down')
+    expect(travelled(move, 0, bandEnd(1) - centre(4).y)).toBeGreaterThanOrEqual(REACH)
   })
 })
 
@@ -161,7 +244,7 @@ describe('a swipe across the bottom row', () => {
 
     walk(6, exitMove(6, centre(7).x, centre(6).y, PHONE, BOARD.cols)) // left the 6 rightward
     walk(7, exitMove(7, centre(8).x, centre(7).y, PHONE, BOARD.cols)) // left the 7 rightward
-    const lift = liftMove(0, -40, true) // flicked up on the 8 and lifted
+    const lift = liftMove(0, -40, true, REACH) // flicked up on the 8 and lifted
     if (lift === null) throw new Error('the flick up should have been taken')
     expect(lift).toBe('up')
     walk(8, lift)

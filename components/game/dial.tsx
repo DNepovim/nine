@@ -9,10 +9,12 @@ import { useDialMetrics } from '@/hooks/use-dial-metrics'
 import {
   allowedMove,
   cellAt,
+  crossReach,
   exitMove,
   liftMove,
   nextValue,
   NO_COMMAND,
+  travelled,
   type DialCommand,
   type DialMove,
 } from '@/lib/dial-gesture'
@@ -38,6 +40,13 @@ const NONE = -1
 // the finger *leaves* it — by the side it left through, not by where the gesture ends.
 // Wander over a key, change your mind, come back: only the way out counts. The gesture
 // never has to end, so one drag can reset a row.
+//
+// A key the finger arrived at also has to have been properly crossed: a swipe aimed at
+// one key clips the pill of the next often enough that every neighbour answering to a
+// graze cost the player digits they never asked for. So such a key answers only once the
+// finger has spent `crossReach` of it going the way it leaves by — see `travelled`. The
+// key the finger *landed* on is exempt: the player put it there, so however they take it
+// off is what they meant.
 //
 // Every key it changes is one press to the machine, exactly as if it had been swiped on
 // its own, so a run scored the long way is scored the same way here.
@@ -96,6 +105,8 @@ export function Dial({
   const inFlight = useSharedValue(0)
 
   const active = useSharedValue<number | null>(null)
+  // The key the finger came down on, which is the one key a graze cannot happen on.
+  const landed = useSharedValue<number | null>(null)
   // Where the finger entered the key it is in now, which is what a lift is measured from.
   const entryX = useSharedValue(0)
   const entryY = useSharedValue(0)
@@ -146,7 +157,8 @@ export function Dial({
     .onBegin((e) => {
       'worklet'
       crossed.value = false
-      enter(cellAt(e.x, e.y, metrics, dial), e.x, e.y)
+      landed.value = cellAt(e.x, e.y, metrics, dial)
+      enter(landed.value, e.x, e.y)
     })
     .onUpdate((e) => {
       'worklet'
@@ -154,8 +166,15 @@ export function Dial({
       if (cell === active.value) return
       const left = active.value
       if (left !== null) {
+        const move = exitMove(left, e.x, e.y, metrics, dial.cols)
+        // Still on the key the finger came down on, which takes every exit — and not
+        // merely `left === landed.value`, since a finger that wanders off the dial and
+        // back onto that key arrived at it like any other.
+        const own = left === landed.value && !crossed.value
+        const far =
+          travelled(move, e.x - entryX.value, e.y - entryY.value) >= crossReach(metrics)
         crossed.value = true
-        commit(left, exitMove(left, e.x, e.y, metrics, dial.cols), false)
+        if (own || far) commit(left, move, false)
       }
       enter(cell, e.x, e.y)
     })
@@ -163,7 +182,12 @@ export function Dial({
       'worklet'
       const cell = active.value
       if (cell === null) return
-      const move = liftMove(e.x - entryX.value, e.y - entryY.value, crossed.value)
+      const move = liftMove(
+        e.x - entryX.value,
+        e.y - entryY.value,
+        crossed.value,
+        crossReach(metrics),
+      )
       if (move === null) return
       commit(cell, move, true)
     })

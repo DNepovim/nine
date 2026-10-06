@@ -1,4 +1,4 @@
-import { SWIPE_THRESHOLD } from '@/constants/game'
+import { CROSSING_SHARE, SWIPE_THRESHOLD } from '@/constants/game'
 import type { DialMetrics } from '@/lib/dial-metrics'
 import type { DialControl } from '@/machines/tutorial-lesson'
 
@@ -42,6 +42,9 @@ export function cellAt(
 // own centre. Not from how far the finger has travelled since it touched down: the
 // player may have wandered over the key, changed their mind twice and come back, and
 // none of that is the statement they made — leaving it on the right side is.
+//
+// Which side it was is all this answers. Whether the key took the move is a separate
+// question, and `travelled` against `crossReach` is where it is asked.
 export function exitMove(
   cell: number,
   x: number,
@@ -57,19 +60,61 @@ export function exitMove(
   return dy < 0 ? 'up' : 'down'
 }
 
-// What lifting off a key means, measured from where the finger entered it. The dominant
-// axis past the threshold is a swipe; anything shorter is a tap — but only on the key
-// the whole gesture began on. A key the finger merely crossed and happened to stop over
-// is left alone, so ending a long drag never costs a stray +1 on a neighbour.
-export function liftMove(dx: number, dy: number, crossed: boolean): DialMove | null {
+// Where each move points, as a unit vector in the dial's own space. `tap` points
+// nowhere: it is the finger staying put, not a side a key can be left by.
+const MOVE_DIRECTION = {
+  up: { x: 0, y: -1 },
+  down: { x: 0, y: 1 },
+  left: { x: -1, y: 0 },
+  right: { x: 1, y: 0 },
+  tap: { x: 0, y: 0 },
+} as const satisfies Record<DialMove, { x: number; y: number }>
+
+// How far the finger has to get onto a key it arrived at before the key answers at all.
+//
+// Taken from the dial it is playing rather than fixed in points, so the bar is the same
+// share of a key whatever size the keys are — a challenge's five-column dial included.
+export function crossReach(metrics: DialMetrics): number {
   'worklet'
+  return (metrics.button + metrics.gap) * CROSSING_SHARE
+}
+
+// How much of a key's width the finger actually spent on it, in the direction it is
+// leaving by, measured from where it entered. This is the part of the path that speaks
+// for the move, and the one number that separates a crossing from a graze: a drag that
+// means the key travels the whole way across it, while a finger that clips the neighbour
+// of the key it is swiping goes in and comes straight back out the same side and so
+// travels nothing — however deep the clip itself went.
+export function travelled(move: DialMove, dx: number, dy: number): number {
+  'worklet'
+  const direction = MOVE_DIRECTION[move]
+  return dx * direction.x + dy * direction.y
+}
+
+// What lifting off a key means, measured from where the finger entered it. The dominant
+// axis past the bar is a swipe; anything shorter is a tap — but only on the key the
+// whole gesture began on. A key the finger merely crossed and happened to stop over is
+// left alone, so ending a long drag never costs a stray +1 on a neighbour.
+//
+// The bar itself is higher on a key the finger arrived at than on the key it landed on:
+// a swipe that carries a little way past the key it was aimed at is the overshoot of one
+// gesture, not the start of another, and `reach` is how much overshoot a neighbour
+// swallows before it counts as having been swiped too.
+export function liftMove(
+  dx: number,
+  dy: number,
+  crossed: boolean,
+  reach: number,
+): DialMove | null {
+  'worklet'
+  const bar = crossed ? reach : SWIPE_THRESHOLD
   if (Math.abs(dx) > Math.abs(dy)) {
-    if (dx < -SWIPE_THRESHOLD) return 'left'
-    if (dx > SWIPE_THRESHOLD) return 'right'
+    if (dx < -bar) return 'left'
+    if (dx > bar) return 'right'
     return crossed ? null : 'tap'
   }
-  if (dy < -SWIPE_THRESHOLD) return 'up'
-  if (dy > SWIPE_THRESHOLD) return 'down'
+  if (dy < -bar) return 'up'
+  if (dy > bar) return 'down'
   return crossed ? null : 'tap'
 }
 
