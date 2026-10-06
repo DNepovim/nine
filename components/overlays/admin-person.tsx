@@ -90,6 +90,11 @@ export function AdminPerson({
   onClose: () => void
 }) {
   const [roles, setRoles] = useState<AdminRole[]>([])
+  // The role is held here rather than read off `person`, which is the row the list
+  // handed over and never hears about a write. Set only after the server accepts one:
+  // the lockout guards can refuse a role change, and a picker that moved on the tap
+  // would be claiming a change the server rejected.
+  const [role, setRole] = useState<string | null>(person.role)
   const [rows, setRows] = useState<PersonFeature[]>([])
   const [loading, setLoading] = useState(true)
   const [busy, setBusy] = useState(false)
@@ -134,9 +139,6 @@ export function AdminPerson({
   }
 
   const hasOverrides = rows.some((row) => row.override !== null)
-  // Read off the reload rather than kept in state: a refused role change must leave the
-  // picker showing the role the server still holds, not the one that was tapped.
-  const currentRole = roles.find((r) => r.key === person.role)?.key ?? person.role
 
   return (
     <ScreenLayer className="px-6 pb-6 pt-16">
@@ -187,14 +189,18 @@ export function AdminPerson({
               three, and any order that put it last would bury it. */}
           <View className="mb-5 flex-row flex-wrap gap-1.5">
             {[null, ...roles.map((r) => r.key)].map((option) => {
-              const active = option === currentRole
+              const active = option === role
               return (
                 <TrackedPressable
                   key={option ?? 'none'}
                   id="admin.person_role"
                   disabled={busy || active}
                   onPress={() => {
-                    void write(() => setUserRole(person.id, option))
+                    void write(async () => {
+                      const res = await setUserRole(person.id, option)
+                      if (res.error === null) setRole(option)
+                      return res
+                    })
                   }}
                   className={cn(
                     'rounded-lg border px-2.5 py-1',

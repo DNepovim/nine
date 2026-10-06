@@ -73,6 +73,14 @@ component tests. The `2026-10-02-arcade-siege-verification.md` precedent applies
 22. Open the admin screen and move between its three tabs. `admin.tab` fires; no
     event fires twice for one press.
 
+## Found in review, fix it caught
+
+24. **Change somebody's role and watch the picker.** Give a tester DEVELOPER. The
+    highlighted pill must move to DEVELOPER immediately, and the FEATURES rows below
+    must agree with it. The bug this replaces left the pill on TESTER while the rows
+    beneath it updated — the screen contradicting itself — because the picker read a
+    row the list had handed over and never heard about the write.
+
 ## The thing most likely to be wrong
 
 23. **Watch the intro settle on a slow connection.** The feature set arrives after
