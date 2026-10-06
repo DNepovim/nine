@@ -9,7 +9,12 @@ import {
   type MedalPeriod,
 } from '@/lib/medals'
 import type { NameFactors } from '@/lib/name-gradient'
-import { winningsValue, type BoardWinnings } from '@/lib/winnings'
+import {
+  WIN_PERIODS,
+  winningsValue,
+  type BoardWinnings,
+  type WinPeriod,
+} from '@/lib/winnings'
 import {
   DIFFICULTIES,
   DIFFICULTY_ORDER,
@@ -53,14 +58,33 @@ type BoardBest = {
   achievedAt: string
 }
 
-// One unbroken stretch of holding an all-time board. `lostAt` is null while it is still
-// theirs — the distinction the whole list is about.
+// Which length of board a stretch was held on: the two winnable windows, plus the
+// all-time board — which is never *won*, only held until somebody outscores it.
+//
+// Not `MedalPeriod`, which spells the same three `today | week | ever`. That vocabulary
+// is about boards as they stand right now, and labelling a stretch that ended in August
+// `'today'` would be false. This one is about how long the board was, which is what a
+// finished stretch has to say.
+export type BoardPeriod = WinPeriod | 'ever'
+
+// One unbroken stretch of holding a board, on any of the three lengths.
+//
+// All-time stretches are rows in `board_reigns`; the day and week ones are derived on
+// read from `daily_scores`, collapsed so that consecutive wins on a board are the one
+// stretch they actually were. The profile draws them as one list because they are one
+// kind of fact — the board, and when it was theirs.
 export type Reign = {
   mode: ScoredMode
   difficulty: Difficulty
-  score: number
-  tookAt: string
-  lostAt: string | null
+  period: BoardPeriod
+  // When it began. An instant on an all-time board, which changes hands the moment a
+  // score lands; a bare ISO day on the other two, which are won by the calendar and have
+  // no instant to report. The row picks its formatter by the period for that reason.
+  from: string
+  // The last day it was theirs, or null while it still is. Only an all-time board can be
+  // open — a day and a week both end on a clock, so a stretch of one is always closed by
+  // the time anybody can read about it.
+  to: string | null
 }
 
 export type PlayerProfile = {
@@ -252,10 +276,37 @@ export function boardRows(profile: PlayerProfile): BoardRow[] {
 export const fortuneOf = (score: number, difficulty: Difficulty): number =>
   Math.round(score * DIFFICULTIES[difficulty].scoreWeight)
 
-// Newest first. A player's most recent reign is the one they are most likely to still
-// be holding, and an open reign is the headline of the list.
-export const sortReigns = (reigns: readonly Reign[]): Reign[] =>
-  [...reigns].sort((a, b) => Date.parse(b.tookAt) - Date.parse(a.tookAt))
+// The most rows this list ever draws.
+//
+// The collapse is what makes day boards showable at all, but it only helps a player who
+// wins in streaks. Take a board every *other* day for a year and nothing collapses —
+// that is a hundred and eighty single-day stretches, on a card meant to be glanced at.
+const HELD_LIMIT = 20
+
+// Newest first. A player's most recent stretch is the one they are most likely to still
+// be holding, and an open stretch is the headline of the list.
+//
+// Compared as strings rather than through `Date`. The two periods carry two
+// granularities — an instant for all-time, a bare day for the rest — and ISO 8601 sorts
+// chronologically either way, so this needs no opinion about which it is looking at.
+// Where a bare day ties with an instant on the same day the order is arbitrary, which is
+// the honest answer: nothing records which came first.
+const byNewest = (a: Reign, b: Reign): number =>
+  a.from < b.from ? 1 : a.from > b.from ? -1 : 0
+
+// Every stretch the profile draws, newest first and capped.
+//
+// All-time stretches are kept whatever the cap: there are at most a handful of them —
+// six boards, and a player holds or has held only some — and they are the rarest thing
+// on the list. The day and week ones fill whatever room is left, so a prolific winner
+// loses their oldest days rather than the board they once held outright.
+export function heldBoards(reigns: readonly Reign[]): Reign[] {
+  const sorted = [...reigns].sort(byNewest)
+  const allTime = sorted.filter((held) => held.period === 'ever')
+  const windows = sorted.filter((held) => held.period !== 'ever')
+  const room = Math.max(0, HELD_LIMIT - allTime.length)
+  return [...allTime, ...windows.slice(0, room)].sort(byNewest)
+}
 
 // ─── Reading it ──────────────────────────────────────────────────────────────
 
@@ -289,7 +340,14 @@ export type PlayerProfileResponse = {
   })[]
   bests: (RawBoard & { bestScore: number; hits: number; achievedAt: string })[]
   medals: (RawBoard & { period: string; rank: number; bestScore: number })[]
+  // `score` is still sent and no longer read: the row that draws these shows the board
+  // and the stretch, not what it was held with. Left on the wire rather than taken off
+  // it, since removing a key nothing reads would be a server change for no gain.
   reigns: (RawBoard & { score: number; tookAt: string; lostAt: string | null })[]
+  // Absent, not empty, from a server that predates held day and week boards — read the
+  // same way `achievements` and `winnings` are, so a build that ships ahead of the
+  // migration draws the all-time stretches alone rather than failing to draw a profile.
+  wins?: (RawBoard & { period: string; fromDay: string; toDay: string })[]
   // Absent, not empty, from a server that predates winnings — read the same way
   // `achievements` and `timeMs` above are, so an older server draws a fortune without
   // them rather than failing to draw a profile at all.
@@ -330,14 +388,23 @@ export function shapeProfile(raw: PlayerProfileResponse): PlayerProfile {
           : [{ ...on, period: row.period, rank: row.rank, score: row.bestScore }]
       }),
     ),
-    reigns: sortReigns(
-      raw.reigns.flatMap((row) => {
+    // Both halves of one list: the all-time stretches the server stores, and the day and
+    // week ones it derives. Sorted and capped together by `heldBoards`, because the cap
+    // is about how long the list is rather than about where a row came from.
+    reigns: heldBoards([
+      ...raw.reigns.flatMap((row) => {
         const on = board(row)
         return on === null
           ? []
-          : [{ ...on, score: row.score, tookAt: row.tookAt, lostAt: row.lostAt }]
+          : [{ ...on, period: 'ever' as const, from: row.tookAt, to: row.lostAt }]
       }),
-    ),
+      ...(raw.wins ?? []).flatMap((row) => {
+        const on = board(row)
+        return on === null || !isOneOf(row.period, WIN_PERIODS)
+          ? []
+          : [{ ...on, period: row.period, from: row.fromDay, to: row.toDay }]
+      }),
+    ]),
     winnings: (raw.winnings ?? []).flatMap((row) => {
       const on = board(row)
       return on === null ? [] : [{ ...on, daySum: row.daySum, weekSum: row.weekSum }]

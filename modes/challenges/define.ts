@@ -27,6 +27,12 @@ export type ChallengeSpec = {
   // a permanent mode's id and a stored run's mode reads as what it is.
   slug: string
   label: MessageDescriptor
+  // Three letters for the rows too tight to spell the label out. Optional, and inherited
+  // from the base mode like the colours below it — a challenge is a variation of
+  // something, so SPD is a truthful enough short name for one built on Speed, and
+  // inventing a code is work every challenge would otherwise have to do before it could
+  // be written. Name one where the variation is the point.
+  code?: MessageDescriptor
   description: MessageDescriptor
   // The mode this one is a variation of — its rules are the starting point, and its
   // colours are borrowed unless the spec names its own.
@@ -53,6 +59,7 @@ export function defineChallenge(spec: ChallengeSpec): ModeDefinition {
   return defineMode({
     id: challengeId(spec.slug),
     label: spec.label,
+    code: spec.code ?? spec.base.code,
     description: spec.description,
     gradient: spec.gradient ?? spec.base.gradient,
     darkGradient: spec.darkGradient ?? spec.base.darkGradient,

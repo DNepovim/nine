@@ -38,7 +38,7 @@ import {
   nameFactorsOf,
   type PlayerProfile,
 } from '@/lib/player-profile'
-import { gradientOf, labelOf, SCORED_MODES, type ScoredMode } from '@/modes'
+import { gradientOf, headlineOf, labelOf, SCORED_MODES, type Headline } from '@/modes'
 
 // The day the player joined. No profile carries a real join date yet, so every one of
 // them reads the same day — the day profiles shipped — until the RPC can answer for it.
@@ -57,10 +57,16 @@ const MONTHS_IN_YEAR = 12
 
 // What each mode is judged on — the second line of both of its factor columns, the
 // average and the best alike.
-const FACTOR_LABEL = {
-  accuracy: msg`ACC`,
-  speed: msg`SPD`,
-} as const satisfies Record<ScoredMode, MessageDescriptor>
+//
+// Keyed by the factor and read through `headlineOf`, rather than keyed by the mode. The
+// two coincide today only because both scored modes are named after the thing they
+// measure; a mode scored on the route but called something else would still want ACC in
+// this column. Which is also why it is not `codeOf` — a board code names the board, and
+// this names the question the column is asking.
+const FACTOR_CODE = {
+  acc: msg`ACC`,
+  spd: msg`SPD`,
+} as const satisfies Record<Headline, MessageDescriptor>
 
 // One column heading over the per-board table, stacked rather than spelled across.
 //
@@ -373,12 +379,12 @@ export function PlayerProfileOverlay({
                           <ColumnHead
                             width={BOARD_COLUMNS.average}
                             top={t`AVG`}
-                            bottom={t(FACTOR_LABEL[mode])}
+                            bottom={t(FACTOR_CODE[headlineOf(mode)])}
                           />
                           <ColumnHead
                             width={BOARD_COLUMNS.bestFactor}
                             top={t`BEST`}
-                            bottom={t(FACTOR_LABEL[mode])}
+                            bottom={t(FACTOR_CODE[headlineOf(mode)])}
                           />
                         </View>
                         {rows
@@ -406,17 +412,17 @@ export function PlayerProfileOverlay({
                             selectable={false}
                             className="font-mono text-[9px] font-black tracking-[2px] text-dim"
                           >
-                            <Trans>RECORDS HELD, EVER</Trans>
+                            <Trans>MEDALS HELD, EVER</Trans>
                           </Text>
                         </View>
-                        {profile.reigns.map((reign) => (
+                        {profile.reigns.map((held) => (
                           <ProfileReignRow
-                            key={`${reign.mode}:${reign.difficulty}:${reign.tookAt}`}
-                            mode={reign.mode}
-                            difficulty={reign.difficulty}
-                            score={reign.score}
-                            tookAt={reign.tookAt}
-                            lostAt={reign.lostAt}
+                            key={`${held.period}:${held.mode}:${held.difficulty}:${held.from}`}
+                            mode={held.mode}
+                            difficulty={held.difficulty}
+                            period={held.period}
+                            from={held.from}
+                            to={held.to}
                           />
                         ))}
                       </View>

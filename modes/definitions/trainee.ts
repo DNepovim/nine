@@ -9,6 +9,7 @@ import { defineMode } from '@/modes/types'
 export const TRAINEE = defineMode({
   id: 'trainee',
   label: msg`TRAINEE`,
+  code: msg`TRN`,
   description: msg`No lives, no rush.`,
   gradient: ['#4C7EFF', '#7273D2'],
   darkGradient: ['#102972', '#27255a'],

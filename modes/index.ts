@@ -40,6 +40,7 @@ export { decayed } from './ramp'
 export {
   allModes,
   baseClockMs,
+  codeOf,
   descriptionOf,
   headlineOf,
   isMode,

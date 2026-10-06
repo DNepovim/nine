@@ -5,9 +5,9 @@ import {
   boardRows,
   EMPTY_PROFILE,
   fortuneOf,
+  heldBoards,
   lifetimeOf,
   shapeProfile,
-  sortReigns,
   type BoardTotals,
   type PlayerProfile,
   type Reign,
@@ -36,9 +36,9 @@ const profile = (over: Partial<PlayerProfile> = {}): PlayerProfile => ({
 const reign = (over: Partial<Reign> = {}): Reign => ({
   mode: 'speed',
   difficulty: 'extreme',
-  score: 20478,
-  tookAt: '2026-08-12T10:00:00.000Z',
-  lostAt: null,
+  period: 'ever',
+  from: '2026-08-12T10:00:00.000Z',
+  to: null,
   ...over,
 })
 
@@ -229,11 +229,68 @@ describe('boardRows', () => {
   })
 })
 
-describe('sortReigns', () => {
-  it('puts the most recent reign first', () => {
-    const older = reign({ tookAt: '2026-06-01T00:00:00.000Z' })
-    const newer = reign({ tookAt: '2026-08-12T00:00:00.000Z' })
-    expect(sortReigns([older, newer])).toEqual([newer, older])
+describe('heldBoards', () => {
+  it('puts the most recent stretch first', () => {
+    const older = reign({ from: '2026-06-01T00:00:00.000Z' })
+    const newer = reign({ from: '2026-08-12T00:00:00.000Z' })
+    expect(heldBoards([older, newer])).toEqual([newer, older])
+  })
+
+  it('orders an all-time instant against a bare day without a Date in sight', () => {
+    // The two periods carry two granularities. A string compare has to get this right
+    // on its own, because nothing converts them to a common one first.
+    const august = reign({ from: '2026-08-12T10:00:00.000Z' })
+    const july = reign({ period: 'day', from: '2026-07-04', to: '2026-07-04' })
+    expect(heldBoards([july, august])).toEqual([august, july])
+  })
+
+  it('caps the list at twenty rows', () => {
+    const days = Array.from({ length: 40 }, (_, i) =>
+      reign({
+        period: 'day',
+        from: `2026-03-${String(i + 1).padStart(2, '0')}`,
+        to: '2026-03-01',
+      }),
+    )
+    expect(heldBoards(days)).toHaveLength(20)
+  })
+
+  it('keeps the newest windows when it has to drop some', () => {
+    const days = Array.from({ length: 25 }, (_, i) =>
+      reign({
+        period: 'day',
+        from: `2026-03-${String(i + 1).padStart(2, '0')}`,
+        to: '2026-03-01',
+      }),
+    )
+    const kept = heldBoards(days)
+    expect(kept[0]?.from).toBe('2026-03-25')
+    expect(kept.at(-1)?.from).toBe('2026-03-06')
+  })
+
+  it('keeps every all-time stretch past the cap, dropping windows instead', () => {
+    // An all-time board is the rarest thing on the list and the one a player would most
+    // notice missing. There are only ever a handful, so exempting them cannot run away.
+    const allTime = Array.from({ length: 6 }, (_, i) =>
+      reign({ from: `2026-01-0${i + 1}T00:00:00.000Z` }),
+    )
+    const days = Array.from({ length: 40 }, (_, i) =>
+      reign({
+        period: 'day',
+        from: `2026-05-${String((i % 28) + 1).padStart(2, '0')}`,
+        to: '2026-05-01',
+      }),
+    )
+    const kept = heldBoards([...allTime, ...days])
+    expect(kept).toHaveLength(20)
+    expect(kept.filter((held) => held.period === 'ever')).toHaveLength(6)
+  })
+
+  it('never drops an all-time stretch even when they alone exceed the cap', () => {
+    const many = Array.from({ length: 24 }, (_, i) =>
+      reign({ from: `2026-01-${String(i + 1).padStart(2, '0')}T00:00:00.000Z` }),
+    )
+    expect(heldBoards(many)).toHaveLength(24)
   })
 })
 
@@ -303,7 +360,76 @@ describe('shapeProfile', () => {
     })
     expect(shaped.medals).toHaveLength(1)
     expect(shaped.medals[0]?.period).toBe('ever')
-    expect(shaped.reigns[0]?.tookAt).toBe('2026-08-12T10:00:00.000Z')
+    expect(shaped.reigns[0]?.from).toBe('2026-08-12T10:00:00.000Z')
+  })
+
+  it('merges the derived day and week stretches in with the stored ones', () => {
+    const shaped = shapeProfile({
+      ...raw,
+      wins: [
+        {
+          mode: 'accuracy',
+          difficulty: 'easy',
+          period: 'day',
+          fromDay: '2026-08-01',
+          toDay: '2026-08-03',
+        },
+        {
+          mode: 'speed',
+          difficulty: 'hard',
+          period: 'week',
+          fromDay: '2026-09-07',
+          toDay: '2026-09-13',
+        },
+      ],
+    })
+    expect(shaped.reigns).toHaveLength(3)
+    // Newest first, across all three periods rather than within each.
+    expect(shaped.reigns.map((held) => held.period)).toEqual(['week', 'ever', 'day'])
+  })
+
+  it('keeps a one-day stretch as a day at both ends', () => {
+    // What the row reads as a single date rather than as a range of one day to itself.
+    const shaped = shapeProfile({
+      ...raw,
+      reigns: [],
+      wins: [
+        {
+          mode: 'accuracy',
+          difficulty: 'easy',
+          period: 'day',
+          fromDay: '2026-08-07',
+          toDay: '2026-08-07',
+        },
+      ],
+    })
+    expect(shaped.reigns[0]?.from).toBe('2026-08-07')
+    expect(shaped.reigns[0]?.to).toBe('2026-08-07')
+  })
+
+  it('drops a win on a period this client does not know', () => {
+    const shaped = shapeProfile({
+      ...raw,
+      reigns: [],
+      wins: [
+        {
+          mode: 'accuracy',
+          difficulty: 'easy',
+          period: 'fortnight',
+          fromDay: '2026-08-01',
+          toDay: '2026-08-14',
+        },
+      ],
+    })
+    expect(shaped.reigns).toEqual([])
+  })
+
+  it('reads a server that does not derive held windows yet as none', () => {
+    // The migration ships separately from the build, so a client can reach a server that
+    // has not run it. Absent means the all-time stretches alone, not a broken profile.
+    const shaped = shapeProfile(raw)
+    expect(shaped.reigns).toHaveLength(1)
+    expect(shaped.reigns[0]?.period).toBe('ever')
   })
 
   it('drops a row on a board this client does not know', () => {

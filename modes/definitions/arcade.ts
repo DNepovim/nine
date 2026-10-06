@@ -13,6 +13,7 @@ import { defineMode } from '@/modes/types'
 export const ARCADE = defineMode({
   id: 'arcade',
   label: msg`ARCADE`,
+  code: msg`ARC`,
   // Not the teaser's "levels, bonuses, sidequests" any more. The pill is playable behind
   // a flag now, and what is behind it is the way — so the line says what a run of it
   // actually asks, and the promises wait until they are built.

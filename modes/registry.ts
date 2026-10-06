@@ -118,6 +118,15 @@ const GONE_LABEL = msg`GAME`
 export const labelOf = (id: ModeId): MessageDescriptor =>
   modeById(id)?.label ?? GONE_LABEL
 
+// The same name clipped to three letters, for the columns too narrow to spell it: the
+// board code on a profile's medal list, an achievement stage beside its bar.
+//
+// Falls back to `GONE_LABEL` rather than to a code of its own. A mode nothing is
+// registered under is already being called GAME wherever it is spelled out, and GAME is
+// short enough to sit in the column — a second fallback would be a second word for the
+// same absence.
+export const codeOf = (id: ModeId): MessageDescriptor => modeById(id)?.code ?? GONE_LABEL
+
 // What kind of mode this is, for the screens and stores that have to ask.
 //
 // Every `mode === 'trainee'` outside the engine is one of these fields: the best-scores

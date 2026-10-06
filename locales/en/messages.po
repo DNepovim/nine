@@ -178,12 +178,100 @@ msgstr "???"
 msgid "(no nickname)"
 msgstr "(no nickname)"
 
+#: lib/recap-lines.ts:129
+msgid "[A] and [B] split the week, [N] days to [M], and nobody else got near it."
+msgstr "[A] and [B] split the week, [N] days to [M], and nobody else got near it."
+
+#: lib/recap-lines.ts:131
+msgid "[A] edged it [N]–[M]. [B] was never more than a day behind."
+msgstr "[A] edged it [N]–[M]. [B] was never more than a day behind."
+
+#: lib/recap-lines.ts:125
+msgid "[A] held the rest of it. The other two days — [D] and [E] — went elsewhere."
+msgstr "[A] held the rest of it. The other two days — [D] and [E] — went elsewhere."
+
+#: lib/recap-lines.ts:121
+msgid "[A] lost a single day all week. [B] took [D], and nothing else."
+msgstr "[A] lost a single day all week. [B] took [D], and nothing else."
+
+#: lib/recap-lines.ts:118
+msgid "[A] took every day but [D], when [B] turned up and took that one instead."
+msgstr "[A] took every day but [D], when [B] turned up and took that one instead."
+
+#: lib/recap-lines.ts:112
+msgid "[A] took every day of it, and never once looked like giving one back."
+msgstr "[A] took every day of it, and never once looked like giving one back."
+
+#: lib/recap-lines.ts:124
+msgid "[A] took the week bar [D] and [E], which got away."
+msgstr "[A] took the week bar [D] and [E], which got away."
+
+#: lib/recap-lines.ts:115
+msgid "[A] won Monday, then won everything that came after it."
+msgstr "[A] won Monday, then won everything that came after it."
+
+#: lib/recap-lines.ts:161
+msgid "[BOARD] changed hands more than it usually does: [C] players took a day of it."
+msgstr "[BOARD] changed hands more than it usually does: [C] players took a day of it."
+
+#: lib/recap-lines.ts:151
+msgid "[BOARD] never left [W]’s hands."
+msgstr "[BOARD] never left [W]’s hands."
+
+#: lib/recap-lines.ts:156
+msgid "[BOARD] was [W]’s all week, [D] aside. [O] had that one."
+msgstr "[BOARD] was [W]’s all week, [D] aside. [O] had that one."
+
+#: lib/recap-lines.ts:166
+msgid "[BOARD] was the exception — [W] had that one from start to finish."
+msgstr "[BOARD] was the exception — [W] had that one from start to finish."
+
+#: lib/recap-lines.ts:160
+msgid "[BOARD] was the week’s real argument — [C] different names on it."
+msgstr "[BOARD] was the week’s real argument — [C] different names on it."
+
+#: lib/recap-lines.ts:189
+msgid "[C] all-time records changed hands. That does not usually happen in one week."
+msgstr "[C] all-time records changed hands. That does not usually happen in one week."
+
+#: lib/recap-lines.ts:187
+msgid "[C] all-time records went down, which is more than most months manage."
+msgstr "[C] all-time records went down, which is more than most months manage."
+
+#: lib/recap-lines.ts:137
+msgid "[C] names across [P] days, and no pattern to speak of. [A] came closest with [N]."
+msgstr "[C] names across [P] days, and no pattern to speak of. [A] came closest with [N]."
+
+#: lib/recap-lines.ts:157
+msgid "[W] held [BOARD] until [D], when [O] got in the way of it."
+msgstr "[W] held [BOARD] until [D], when [O] got in the way of it."
+
+#: lib/recap-lines.ts:155
+msgid "[W] owned [BOARD] — every day but [D], when [O] appeared from nowhere and took it."
+msgstr "[W] owned [BOARD] — every day but [D], when [O] appeared from nowhere and took it."
+
+#: lib/recap-lines.ts:150
+msgid "[W] owned [MODE] — every day of it, on every difficulty that got played."
+msgstr "[W] owned [MODE] — every day of it, on every difficulty that got played."
+
+#: lib/recap-lines.ts:183
+msgid "[W] took the all-time [BOARD] record on [D], and still has it."
+msgstr "[W] took the all-time [BOARD] record on [D], and still has it."
+
 #. placeholder {0}: Math.floor(joinedMonths / MONTHS_IN_YEAR)
-#: components/overlays/player-profile-overlay.tsx:235
+#: components/overlays/player-profile-overlay.tsx:247
 msgid "{0, plural, one {joined a year ago} other {joined # years ago}}"
 msgstr "{0, plural, one {joined a year ago} other {joined # years ago}}"
 
-#: components/overlays/player-profile-overlay.tsx:229
+#: lib/recap.ts:516
+msgid "{fromDay} – {toDay} {toMonth}"
+msgstr "{fromDay} – {toDay} {toMonth}"
+
+#: lib/recap.ts:518
+msgid "{fromDay} {fromMonth} – {toDay} {toMonth}"
+msgstr "{fromDay} {fromMonth} – {toDay} {toMonth}"
+
+#: components/overlays/player-profile-overlay.tsx:241
 msgid "{joinedMonths, plural, one {joined a month ago} other {joined # months ago}}"
 msgstr "{joinedMonths, plural, one {joined a month ago} other {joined # months ago}}"
 
@@ -204,7 +292,7 @@ msgstr "<0/> won yesterday"
 msgid "<0/> won yesterday and last week"
 msgstr "<0/> won yesterday and last week"
 
-#: components/overlays/player-profile-overlay.tsx:342
+#: components/overlays/player-profile-overlay.tsx:354
 msgid "<0>{shownAchievements}</0> OF {ACHIEVEMENT_COUNT} ACHIEVEMENTS"
 msgstr "<0>{shownAchievements}</0> OF {ACHIEVEMENT_COUNT} ACHIEVEMENTS"
 
@@ -219,6 +307,10 @@ msgstr "🦅 The eagle is Speed at its hardest, for the dive rather than the sea
 #: components/overlays/how-to-play-overlay.tsx:693
 msgid "🦉 The owl is Accuracy at its hardest. That board rewards the exact route, and the owl is the eye that finds it."
 msgstr "🦉 The owl is Accuracy at its hardest. That board rewards the exact route, and the owl is the eye that finds it."
+
+#: lib/recap-lines.ts:188
+msgid "A bad week for the record boards: [C] of them fell."
+msgstr "A bad week for the record boards: [C] of them fell."
 
 #: constants/tips.ts:16
 msgid "A button on 9 goes to 0 in a single tap — quicker than swiping there."
@@ -239,6 +331,14 @@ msgid "A glowing target number floats onto the board. Turn the nine dial buttons
 msgstr "A glowing target number floats onto the board. Turn the nine dial buttons so the whole grid adds up to exactly that number, and the target pops — a hit.\n"
 "\n"
 "Every button holds a digit 0–9, but where it sits decides how much it counts. Each button’s weight is its row order × its column order — rows numbered 1–3 top to bottom, columns 1–3 left to right — so it adds row × column × value to the total."
+
+#: lib/recap-lines.ts:107
+msgid "A quiet week, and [A] had all [P] days of it to themselves."
+msgstr "A quiet week, and [A] had all [P] days of it to themselves."
+
+#: lib/recap-lines.ts:100
+msgid "A quiet week. Only [P] days saw a board taken at all, and [A] took [N] of them."
+msgstr "A quiet week. Only [P] days saw a board taken at all, and [A] took [N] of them."
 
 #: constants/news.ts:54
 msgid "A record is only ever lent — someone takes it back eventually. Achievements are the other kind: achieved once and yours for good, measured against nobody but yourself. Some are waiting where you would not think to look."
@@ -272,8 +372,16 @@ msgstr "A thin line above the game now shows your best on this board next to tod
 msgid "A tower takes several hits — more of them the deeper you are — and a hit means arriving at its number. The sum stays where you left it, so sitting on a tower’s number does nothing: dial away and come back."
 msgstr "A tower takes several hits — more of them the deeper you are — and a hit means arriving at its number. The sum stays where you left it, so sitting on a tower’s number does nothing: dial away and come back."
 
-#: components/overlays/player-profile-overlay.tsx:61
-#: lib/achievements.ts:202
+#: lib/recap-lines.ts:132
+msgid "A week of two. [A] [N], [B] [M], and not much between them."
+msgstr "A week of two. [A] [N], [B] [M], and not much between them."
+
+#: lib/recap-lines.ts:97
+msgid "A week with nothing in it. Not one board was taken."
+msgstr "A week with nothing in it. Not one board was taken."
+
+#: components/overlays/player-profile-overlay.tsx:73
+#: modes/definitions/accuracy.ts:12
 msgid "ACC"
 msgstr "ACC"
 
@@ -374,6 +482,14 @@ msgstr "Anything at all — what broke, what annoyed you, what you wish it did. 
 msgid "Anything at all — what broke, what annoyed you, what you wish it did. The mode, difficulty and score you are on go with it."
 msgstr "Anything at all — what broke, what annoyed you, what you wish it did. The mode, difficulty and score you are on go with it."
 
+#: lib/recap-lines.ts:245
+msgid "APRIL"
+msgstr "APRIL"
+
+#: modes/definitions/arcade.ts:16
+msgid "ARC"
+msgstr "ARC"
+
 #: components/game/arcade-game.tsx:670
 #: components/overlays/how-to-play-overlay.tsx:50
 #: modes/definitions/arcade.ts:15
@@ -384,6 +500,10 @@ msgstr "ARCADE"
 msgid "Ask whoever created the room for their 4-digit code."
 msgstr "Ask whoever created the room for their 4-digit code."
 
+#: lib/recap-lines.ts:249
+msgid "AUGUST"
+msgstr "AUGUST"
+
 #: constants/achievements.ts:326
 msgid "Average 90% speed over a run of 20 hits or more."
 msgstr "Average 90% speed over a run of 20 hits or more."
@@ -392,18 +512,18 @@ msgstr "Average 90% speed over a run of 20 hits or more."
 msgid "Average 95% accuracy over a run of 20 hits or more."
 msgstr "Average 95% accuracy over a run of 20 hits or more."
 
-#: components/overlays/player-profile-overlay.tsx:375
+#: components/overlays/player-profile-overlay.tsx:387
 msgid "AVG"
 msgstr "AVG"
 
 #: components/overlays/compare-stat-row.tsx:19
-#: components/overlays/player-profile-overlay.tsx:327
+#: components/overlays/player-profile-overlay.tsx:339
 #: lib/run-stats.ts:44
 msgid "AVG ACC"
 msgstr "AVG ACC"
 
 #: components/overlays/compare-stat-row.tsx:20
-#: components/overlays/player-profile-overlay.tsx:328
+#: components/overlays/player-profile-overlay.tsx:340
 #: lib/run-stats.ts:43
 msgid "AVG SPD"
 msgstr "AVG SPD"
@@ -417,6 +537,14 @@ msgstr "BACK"
 msgid "Back a step"
 msgstr "Back a step"
 
+#: lib/recap-lines.ts:101
+msgid "Barely a week — [P] days played. [A] had [N] of those to themselves."
+msgstr "Barely a week — [P] days played. [A] had [N] of those to themselves."
+
+#: lib/recap-lines.ts:109
+msgid "Barely a week — [P] days, and all of them [A]’s."
+msgstr "Barely a week — [P] days, and all of them [A]’s."
+
 #: constants/news.ts:114
 msgid "Beat a record and the game makes a fuss about it."
 msgstr "Beat a record and the game makes a fuss about it."
@@ -426,8 +554,8 @@ msgid "Beat your own best ten times."
 msgstr "Beat your own best ten times."
 
 #: components/game/best-scores-line.tsx:56
-#: components/overlays/player-profile-overlay.tsx:366
-#: components/overlays/player-profile-overlay.tsx:380
+#: components/overlays/player-profile-overlay.tsx:378
+#: components/overlays/player-profile-overlay.tsx:392
 msgid "BEST"
 msgstr "BEST"
 
@@ -481,12 +609,12 @@ msgstr "CHOOSE A NICKNAME"
 msgid "Choose Add to Home Screen"
 msgstr "Choose Add to Home Screen"
 
-#: modes/definitions/arcade.ts:19
+#: modes/definitions/arcade.ts:20
 msgid "Climb the way, or fall back."
 msgstr "Climb the way, or fall back."
 
 #: components/overlays/compare-overlay.tsx:194
-#: components/overlays/player-profile-overlay.tsx:481
+#: components/overlays/player-profile-overlay.tsx:493
 msgid "CLOSE"
 msgstr "CLOSE"
 
@@ -498,7 +626,7 @@ msgstr "Come back to Trainee once you have been scoring a while. It is the only 
 msgid "COMPARE"
 msgstr "COMPARE"
 
-#: components/overlays/player-profile-overlay.tsx:462
+#: components/overlays/player-profile-overlay.tsx:474
 msgid "COMPARE WITH ME"
 msgstr "COMPARE WITH ME"
 
@@ -537,6 +665,10 @@ msgstr "DAY · {0}"
 #: constants/achievements.ts:318
 msgid "DEAD EYE"
 msgstr "DEAD EYE"
+
+#: lib/recap-lines.ts:253
+msgid "DECEMBER"
+msgstr "DECEMBER"
 
 #: components/overlays/admin-role.tsx:172
 msgid "DELETE ROLE"
@@ -631,6 +763,10 @@ msgstr "Every button tops out at nine times its weight: 81 on the 9×, 9 on a 1�
 msgid "EVERY CHALLENGE, ANY WINDOW — NO BOARD KEPT"
 msgstr "EVERY CHALLENGE, ANY WINDOW — NO BOARD KEPT"
 
+#: lib/recap-lines.ts:120
+msgid "Every day was [A]’s except [D]. [B] got exactly one, and made it count."
+msgstr "Every day was [A]’s except [D]. [B] got exactly one, and made it count."
+
 #: components/overlays/how-to-play-overlay.tsx:618
 msgid "Every target is a village with a name, and the country between them is drawn as you climb: farmland, then forest, then hills, then mountains."
 msgstr "Every target is a village with a name, and the country between them is drawn as you climb: farmland, then forest, then hills, then mountains."
@@ -659,7 +795,7 @@ msgstr "Extend a streak ten times in a row."
 msgid "EXTREME"
 msgstr "EXTREME"
 
-#: modes/definitions/speed.ts:11
+#: modes/definitions/speed.ts:12
 msgid "Fast hits build big combos."
 msgstr "Fast hits build big combos."
 
@@ -674,6 +810,10 @@ msgstr "FEATURES"
 #: components/overlays/admin-role.tsx:112
 msgid "FEATURES IN THIS STACK"
 msgstr "FEATURES IN THIS STACK"
+
+#: lib/recap-lines.ts:243
+msgid "FEBRUARY"
+msgstr "FEBRUARY"
 
 #: components/overlays/feedback-overlay.tsx:103
 msgid "FEEDBACK"
@@ -771,6 +911,10 @@ msgstr "FOUR KEYS"
 msgid "Four keys, two of them twins."
 msgstr "Four keys, two of them twins."
 
+#: lib/recap-lines.ts:230
+msgid "Friday"
+msgstr "Friday"
+
 #: constants/achievements.ts:485
 msgid "FULL HOUSE"
 msgstr "FULL HOUSE"
@@ -838,7 +982,7 @@ msgstr "Hit while most of the ring is left to build your combo streak."
 
 #: components/game/trainee-stats.tsx:64
 #: components/overlays/compare-stat-row.tsx:17
-#: components/overlays/player-profile-overlay.tsx:313
+#: components/overlays/player-profile-overlay.tsx:325
 #: lib/run-stats.ts:47
 msgid "HITS"
 msgstr "HITS"
@@ -925,6 +1069,10 @@ msgstr "INTO THE DEEP"
 msgid "It went straight to the person who makes this, and it is read. If it gets an answer, you will find one here next time you open the game."
 msgstr "It went straight to the person who makes this, and it is read. If it gets an answer, you will find one here next time you open the game."
 
+#: lib/recap-lines.ts:242
+msgid "JANUARY"
+msgstr "JANUARY"
+
 #: components/overlays/join-room-overlay.tsx:83
 #: components/overlays/menu-overlay.tsx:499
 msgid "JOIN ROOM"
@@ -934,9 +1082,17 @@ msgstr "JOIN ROOM"
 msgid "JOIN WITH CODE"
 msgstr "JOIN WITH CODE"
 
-#: components/overlays/player-profile-overlay.tsx:227
+#: components/overlays/player-profile-overlay.tsx:239
 msgid "joined this month"
 msgstr "joined this month"
+
+#: lib/recap-lines.ts:248
+msgid "JULY"
+msgstr "JULY"
+
+#: lib/recap-lines.ts:247
+msgid "JUNE"
+msgstr "JUNE"
 
 #: components/tutorial-curtain.tsx:119
 msgid "JUST THE TUTORIAL - NOTHING HERE IS SCORED"
@@ -978,6 +1134,10 @@ msgstr "Land your first target."
 msgid "LANGUAGE"
 msgstr "LANGUAGE"
 
+#: components/overlays/recap-card.tsx:53
+msgid "LAST WEEK IN NINE"
+msgstr "LAST WEEK IN NINE"
+
 #: constants/tips.ts:23
 msgid "Learn the nine times table cold. The 9× button steps 9, 18, 27 and on up to 81, and it is the one that closes the big gaps — knowing that 63 is seven taps from zero saves counting on the spot."
 msgstr "Learn the nine times table cold. The 9× button steps 9, 18, 27 and on up to 81, and it is the one that closes the big gaps — knowing that 63 is seven taps from zero saves counting on the spot."
@@ -1011,7 +1171,7 @@ msgid "LIGHTNING"
 msgstr "LIGHTNING"
 
 #: components/overlays/compare-overlay.tsx:124
-#: components/overlays/player-profile-overlay.tsx:288
+#: components/overlays/player-profile-overlay.tsx:300
 msgid "LOADING…"
 msgstr "LOADING…"
 
@@ -1027,6 +1187,10 @@ msgstr "Lose every life in under ten seconds."
 msgid "LOWER NOW — SWIPE A KEY DOWN"
 msgstr "LOWER NOW — SWIPE A KEY DOWN"
 
+#: lib/recap-lines.ts:244
+msgid "MARCH"
+msgstr "MARCH"
+
 #: constants/news.ts:77
 msgid "Marks for the hardest boards"
 msgstr "Marks for the hardest boards"
@@ -1039,9 +1203,17 @@ msgstr "Matching every target in its optimal move count builds your streak."
 msgid "MAX MULTIPLIER"
 msgstr "MAX MULTIPLIER"
 
+#: lib/recap-lines.ts:246
+msgid "MAY"
+msgstr "MAY"
+
 #: components/overlays/medals-overlay.tsx:162
 msgid "MEDALS"
 msgstr "MEDALS"
+
+#: components/overlays/player-profile-overlay.tsx:421
+msgid "MEDALS HELD, EVER"
+msgstr "MEDALS HELD, EVER"
 
 #: components/game/pause-button.tsx:57
 msgid "MENU"
@@ -1050,6 +1222,10 @@ msgstr "MENU"
 #: components/overlays/how-to-play-overlay.tsx:43
 msgid "MODES"
 msgstr "MODES"
+
+#: lib/recap-lines.ts:226
+msgid "Monday"
+msgstr "Monday"
 
 #: constants/news.ts:39
 msgid "More to find"
@@ -1110,17 +1286,29 @@ msgstr "No connection — a nickname can only be claimed online."
 msgid "NO JOKE"
 msgstr "NO JOKE"
 
-#: modes/definitions/trainee.ts:12
+#: modes/definitions/trainee.ts:13
 msgid "No lives, no rush."
 msgstr "No lives, no rush."
 
-#: components/overlays/player-profile-overlay.tsx:430
+#: lib/recap-lines.ts:178
+msgid "No records fell. They rarely do."
+msgstr "No records fell. They rarely do."
+
+#: components/overlays/player-profile-overlay.tsx:442
 msgid "No runs counted yet."
 msgstr "No runs counted yet."
 
 #: components/overlays/replay-consent-overlay.tsx:78
 msgid "NO THANKS"
 msgstr "NO THANKS"
+
+#: lib/recap-lines.ts:152
+msgid "Nobody could take [BOARD] off [W] once."
+msgstr "Nobody could take [BOARD] off [W] once."
+
+#: lib/recap-lines.ts:135
+msgid "Nobody got a grip on it — [C] different players took a day of it."
+msgstr "Nobody got a grip on it — [C] different players took a day of it."
 
 #: components/overlays/medals-overlay.tsx:206
 msgid "Nobody has taken anything off you."
@@ -1130,9 +1318,25 @@ msgstr "Nobody has taken anything off you."
 msgid "Nobody holds a role yet."
 msgstr "Nobody holds a role yet."
 
+#: lib/recap-lines.ts:138
+msgid "Nobody owned this one. [A] led on [N] days, and [N] was enough to lead."
+msgstr "Nobody owned this one. [A] led on [N] days, and [N] was enough to lead."
+
+#: lib/recap-lines.ts:96
+msgid "Nobody played last week. The boards are exactly where you left them."
+msgstr "Nobody played last week. The boards are exactly where you left them."
+
+#: lib/recap-lines.ts:165
+msgid "Not everywhere, though. [W] held [BOARD] every day of the week."
+msgstr "Not everywhere, though. [W] held [BOARD] every day of the week."
+
 #: components/overlays/admin-features.tsx:120
 msgid "not in this build"
 msgstr "not in this build"
+
+#: lib/recap-lines.ts:102
+msgid "Not much happened. [A] took [N] of the [P] days anyone turned up for."
+msgstr "Not much happened. [A] took [N] of the [P] days anyone turned up for."
 
 #: components/game/step-up-toast.tsx:116
 msgid "NOT NOW"
@@ -1154,6 +1358,10 @@ msgstr "Not your fault. The error has been reported — try again, and if it kee
 msgid "NOTHING"
 msgstr "NOTHING"
 
+#: lib/recap-lines.ts:177
+msgid "Nothing all-time moved. Every record standing on Monday was still standing on Sunday."
+msgstr "Nothing all-time moved. Every record standing on Monday was still standing on Sunday."
+
 #: components/overlays/news-archive-overlay.tsx:37
 msgid "Nothing announced yet."
 msgstr "Nothing announced yet."
@@ -1162,9 +1370,17 @@ msgstr "Nothing announced yet."
 msgid "Nothing yet — a top three on any board puts a medal here."
 msgstr "Nothing yet — a top three on any board puts a medal here."
 
+#: lib/recap-lines.ts:252
+msgid "NOVEMBER"
+msgstr "NOVEMBER"
+
 #: components/overlays/trainee-display-options.tsx:103
 msgid "NUMBERS ON THE KEYS"
 msgstr "NUMBERS ON THE KEYS"
+
+#: lib/recap-lines.ts:251
+msgid "OCTOBER"
+msgstr "OCTOBER"
 
 #: components/overlays/admin-role.tsx:146
 msgid "off for everyone"
@@ -1173,6 +1389,14 @@ msgstr "off for everyone"
 #: constants/achievements.ts:402
 msgid "ON THE BOARD"
 msgstr "ON THE BOARD"
+
+#: lib/recap-lines.ts:182
+msgid "One all-time record fell: [BOARD], on [D]. It is [W]’s now."
+msgstr "One all-time record fell: [BOARD], on [D]. It is [W]’s now."
+
+#: lib/recap-lines.ts:164
+msgid "One board did not go along with it: [BOARD] stayed [W]’s throughout."
+msgstr "One board did not go along with it: [BOARD] stayed [W]’s throughout."
 
 #: components/overlays/how-to-play-overlay.tsx:593
 msgid "One clock for the whole crossroad, drawn on the way behind you: it turns red from the far end inward."
@@ -1186,6 +1410,10 @@ msgstr "One line under your name, for anyone who opens your profile."
 msgid "One point, winner takes all — everyone else gets nothing."
 msgstr "One point, winner takes all — everyone else gets nothing."
 
+#: lib/recap-lines.ts:184
+msgid "One record went down — [BOARD], [D], to [W]."
+msgstr "One record went down — [BOARD], [D], to [W]."
+
 #: constants/news.ts:18
 msgid "One sweep, three keys"
 msgstr "One sweep, three keys"
@@ -1193,6 +1421,10 @@ msgstr "One sweep, three keys"
 #: components/overlays/how-to-play-overlay.tsx:258
 msgid "ONE TARGET · NO CLOCK · NO LIVES"
 msgstr "ONE TARGET · NO CLOCK · NO LIVES"
+
+#: lib/recap-lines.ts:108
+msgid "Only [P] days were played at all, and [A] took every one."
+msgstr "Only [P] days were played at all, and [A] took every one."
 
 #: components/overlays/how-to-play-overlay.tsx:770
 msgid "Only the first player to land it scores."
@@ -1293,7 +1525,7 @@ msgstr "PLAYERS"
 msgid "Post a score on every mode and difficulty."
 msgstr "Post a score on every mode and difficulty."
 
-#: modes/definitions/accuracy.ts:12
+#: modes/definitions/accuracy.ts:13
 msgid "Precision over speed."
 msgstr "Precision over speed."
 
@@ -1312,10 +1544,6 @@ msgstr "Reach the ×8 multiplier."
 #: components/overlays/multiplayer-game-over.tsx:216
 msgid "READY"
 msgstr "READY"
-
-#: components/overlays/player-profile-overlay.tsx:409
-msgid "RECORDS HELD, EVER"
-msgstr "RECORDS HELD, EVER"
 
 #: constants/news.ts:113
 msgid "Records, celebrated"
@@ -1370,8 +1598,8 @@ msgid "RUN"
 msgstr "RUN"
 
 #: components/overlays/compare-stat-row.tsx:16
-#: components/overlays/player-profile-overlay.tsx:312
-#: components/overlays/player-profile-overlay.tsx:363
+#: components/overlays/player-profile-overlay.tsx:324
+#: components/overlays/player-profile-overlay.tsx:375
 msgid "RUNS"
 msgstr "RUNS"
 
@@ -1382,6 +1610,10 @@ msgid "Same grid, different pressure. Difficulty (Easy / Hard / Extreme) tighten
 msgstr "Same grid, different pressure. Difficulty (Easy / Hard / Extreme) tightens the clock and adds targets.\n"
 "\n"
 "A hit is worth up to 100 points, blended from two factors and weighted by the mode:"
+
+#: lib/recap-lines.ts:231
+msgid "Saturday"
+msgstr "Saturday"
 
 #: components/overlays/motto-modal.tsx:152
 msgid "SAVE"
@@ -1396,7 +1628,7 @@ msgid "SCENIC ROUTE"
 msgstr "SCENIC ROUTE"
 
 #: components/overlays/high-scores.tsx:286
-#: components/overlays/player-profile-overlay.tsx:367
+#: components/overlays/player-profile-overlay.tsx:379
 msgid "SCORE"
 msgstr "SCORE"
 
@@ -1452,6 +1684,10 @@ msgstr "Scores, one ladder per mode — Accuracy and Speed ask for opposite thin
 msgid "See the better way"
 msgstr "See the better way"
 
+#: lib/recap-lines.ts:250
+msgid "SEPTEMBER"
+msgstr "SEPTEMBER"
+
 #: components/overlays/advanced-options-overlay.tsx:97
 #: components/overlays/replay-consent-overlay.tsx:33
 msgid "SESSION RECORDING"
@@ -1464,6 +1700,10 @@ msgstr "Set the coarse 9× / 6× buttons first to get near the target, then fine
 #: constants/achievements.ts:377
 msgid "SEVEN DAY STREAK"
 msgstr "SEVEN DAY STREAK"
+
+#: lib/recap-lines.ts:113
+msgid "Seven days, one name. [A] had the week from Monday and never let go."
+msgstr "Seven days, one name. [A] had the week from Monday and never let go."
 
 #: components/overlays/how-to-play-overlay.tsx:769
 msgid "Seven seconds a target — the clock everyone races."
@@ -1478,8 +1718,8 @@ msgstr "SHARE"
 msgid "SHOW SUM IN BUTTONS"
 msgstr "SHOW SUM IN BUTTONS"
 
-#. placeholder {0}: formatShortDate(tookAt)
-#: components/overlays/profile-reign-row.tsx:38
+#. placeholder {0}: date(from)
+#: components/overlays/profile-reign-row.tsx:84
 msgid "SINCE {0}"
 msgstr "SINCE {0}"
 
@@ -1503,8 +1743,8 @@ msgstr "SOMETHING BROKE"
 msgid "Something went wrong, try again"
 msgstr "Something went wrong, try again"
 
-#: components/overlays/player-profile-overlay.tsx:62
-#: lib/achievements.ts:203
+#: components/overlays/player-profile-overlay.tsx:74
+#: modes/definitions/speed.ts:11
 msgid "SPD"
 msgstr "SPD"
 
@@ -1579,6 +1819,10 @@ msgstr "STRIKES"
 #: machines/tutorial-lesson.ts:222
 msgid "STRUCK — THE NEXT IS YOURS"
 msgstr "STRUCK — THE NEXT IS YOURS"
+
+#: lib/recap-lines.ts:232
+msgid "Sunday"
+msgstr "Sunday"
 
 #: constants/achievements.ts:221
 msgid "SURGEON"
@@ -1686,6 +1930,10 @@ msgstr "THAT IS EVERY MOVE — LET’S TRAIN"
 msgid "That is longer than {MOTTO_MAX} characters."
 msgstr "That is longer than {MOTTO_MAX} characters."
 
+#: lib/recap-lines.ts:179
+msgid "The all-time boards were left exactly as they were found."
+msgstr "The all-time boards were left exactly as they were found."
+
 #: components/overlays/how-to-play-overlay.tsx:763
 msgid "The best takes the most points; the last to land it takes none."
 msgstr "The best takes the most points; the last to land it takes none."
@@ -1754,6 +2002,18 @@ msgstr "The owl's ear and the eagle's dive, and this player out-does both: the a
 msgid "The owl's ear and the eagle's dive, and you out-do both: the all-time record on Extreme Accuracy and Extreme Speed at once."
 msgstr "The owl's ear and the eagle's dive, and you out-do both: the all-time record on Extreme Accuracy and Extreme Speed at once."
 
+#: lib/recap-lines.ts:119
+msgid "The week belonged to [A], [D] excepted — [B] saw to that."
+msgstr "The week belonged to [A], [D] excepted — [B] saw to that."
+
+#: lib/recap-lines.ts:114
+msgid "The week was [A]’s outright — every day of it, and not one of them close."
+msgstr "The week was [A]’s outright — every day of it, and not one of them close."
+
+#: lib/recap-lines.ts:136
+msgid "The week went everywhere. [A] took the most of it with [N] days, which was not many."
+msgstr "The week went everywhere. [A] took the most of it with [N] days, which was not many."
+
 #: components/overlays/advanced-options-overlay.tsx:108
 msgid "THEME"
 msgstr "THEME"
@@ -1786,7 +2046,7 @@ msgstr "This is how Nine will tell you what changed.\n"
 "- Been away a while? You'll see **everything you missed**, oldest first\n"
 "- Past updates live in Options → What’s new"
 
-#: components/overlays/player-profile-overlay.tsx:266
+#: components/overlays/player-profile-overlay.tsx:278
 msgid "This profile could not be loaded."
 msgstr "This profile could not be loaded."
 
@@ -1803,8 +2063,12 @@ msgstr "THOUSAND HITS"
 msgid "Three lives, and every score reaches the board."
 msgstr "Three lives, and every score reaches the board."
 
+#: lib/recap-lines.ts:229
+msgid "Thursday"
+msgstr "Thursday"
+
 #: components/overlays/compare-stat-row.tsx:18
-#: components/overlays/player-profile-overlay.tsx:321
+#: components/overlays/player-profile-overlay.tsx:333
 #: lib/run-stats.ts:51
 #: lib/run-stats.ts:85
 msgid "TIME"
@@ -1864,6 +2128,10 @@ msgstr "Trainee has the longest clock in the game and no lives to lose — use i
 msgid "Trainee now says when a move went to waste, and what a hit cost."
 msgstr "Trainee now says when a move went to waste, and what a hit cost."
 
+#: modes/definitions/trainee.ts:12
+msgid "TRN"
+msgstr "TRN"
+
 #: components/game/step-up-toast.tsx:100
 #: components/overlays/game-over-overlay.tsx:89
 msgid "TRY {modeName}"
@@ -1871,7 +2139,7 @@ msgstr "TRY {modeName}"
 
 #: components/crash-screen.tsx:36
 #: components/overlays/compare-overlay.tsx:113
-#: components/overlays/player-profile-overlay.tsx:277
+#: components/overlays/player-profile-overlay.tsx:289
 msgid "TRY AGAIN"
 msgstr "TRY AGAIN"
 
@@ -1883,17 +2151,29 @@ msgstr "TRY ANOTHER MODE"
 msgid "TRY IT"
 msgstr "TRY IT"
 
+#: lib/recap-lines.ts:227
+msgid "Tuesday"
+msgstr "Tuesday"
+
 #: constants/tips.ts:24
 msgid "Turn on SHOW SUM IN BUTTONS under Options. Each button then reads out what it is contributing, so the arithmetic sits on the grid instead of in your head."
 msgstr "Turn on SHOW SUM IN BUTTONS under Options. Each button then reads out what it is contributing, so the arithmetic sits on the grid instead of in your head."
 
-#: constants/tutorial.ts:31
+#: constants/tutorial.ts:32
 msgid "TUTORIAL"
 msgstr "TUTORIAL"
+
+#: lib/recap-lines.ts:126
+msgid "Two days escaped [A] all week: [D], and then [E]."
+msgstr "Two days escaped [A] all week: [D], and then [E]."
 
 #: constants/achievements.ts:370
 msgid "TWO IN A ROW"
 msgstr "TWO IN A ROW"
+
+#: lib/recap-lines.ts:130
+msgid "Two names all week: [A] took [N] days, [B] the other [M]."
+msgstr "Two names all week: [A] took [N] days, [B] the other [M]."
 
 #: components/overlays/feedback-overlay.tsx:170
 msgid "Type here"
@@ -1938,6 +2218,10 @@ msgstr "Warriors leave the gate one after another, and faster the longer the fig
 #: components/overlays/how-to-play-overlay.tsx:557
 msgid "Waste too many moves on a hit and you lose a life — the bar is 25% accuracy on Easy, 20% on Hard, 15% on Extreme."
 msgstr "Waste too many moves on a hit and you lose a life — the bar is 25% accuracy on Easy, 20% on Hard, 15% on Extreme."
+
+#: lib/recap-lines.ts:228
+msgid "Wednesday"
+msgstr "Wednesday"
 
 #: components/game/best-scores-line.tsx:48
 msgid "WEEK"

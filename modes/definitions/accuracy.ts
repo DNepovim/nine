@@ -9,6 +9,7 @@ import { defineMode } from '@/modes/types'
 export const ACCURACY = defineMode({
   id: 'accuracy',
   label: msg`ACCURACY`,
+  code: msg`ACC`,
   description: msg`Precision over speed.`,
   gradient: ['#7273D2', '#c36282'],
   darkGradient: ['#27255a', '#501b2e'],

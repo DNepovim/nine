@@ -8,6 +8,7 @@ import { defineMode } from '@/modes/types'
 export const SPEED = defineMode({
   id: 'speed',
   label: msg`SPEED`,
+  code: msg`SPD`,
   description: msg`Fast hits build big combos.`,
   gradient: ['#c36282', '#E5534B'],
   darkGradient: ['#501b2e', '#620b0c'],

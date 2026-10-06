@@ -1,5 +1,4 @@
 import { i18n, type MessageDescriptor } from '@lingui/core'
-import { msg } from '@lingui/core/macro'
 import { isOneOf } from 'narrowland'
 
 import {
@@ -24,6 +23,7 @@ import { dayInPrague } from '@/lib/leaderboard-period'
 import type { BoardStanding } from '@/lib/medals'
 import { bestOn as bestScoreOn, type Stats } from '@/machines/game'
 import {
+  codeOf,
   DIFFICULTIES,
   DIFFICULTY_ORDER,
   SCORED_MODES,
@@ -191,16 +191,17 @@ export const STAGE_AXES = {
   mode: SCORED_MODES,
 } as const satisfies Record<StageAxis, readonly Stage[]>
 
-// The short label a stage wears beside its bar and after an achievement's name. The
-// difficulty codes are the board's own, so a stage reads the same here as on the
-// difficulty selector; the modes get three letters for the same reason — a 7px label
-// beside a 3px bar has no room for ACCURACY.
+// The short label a stage wears beside its bar and after an achievement's name. Every
+// code here is the thing's own — the difficulties' from `DIFFICULTIES`, the modes' from
+// `codeOf` — so a stage reads the same here as on the difficulty selector and the same as
+// the board code on a profile. A 7px label beside a 3px bar has no room for ACCURACY, and
+// a third hand-written copy of ACC is a third one to keep in step.
 export const STAGE_CODE = {
   easy: DIFFICULTIES.easy.code,
   hard: DIFFICULTIES.hard.code,
   extreme: DIFFICULTIES.extreme.code,
-  accuracy: msg`ACC`,
-  speed: msg`SPD`,
+  accuracy: codeOf('accuracy'),
+  speed: codeOf('speed'),
 } as const satisfies Record<Stage, MessageDescriptor>
 
 // A stage narrowed to a difficulty, or null where it is a mode.

@@ -167,6 +167,14 @@ export type ShotKind = 'sniper' | 'burst'
 type ModeIdentity = {
   id: string
   label: MessageDescriptor
+  // The label at a glance, for rows too tight to spell it out — a board code on a
+  // profile, an achievement stage beside its bar. Beside the label for the same reason
+  // `DifficultyConfig` keeps its own `code` there: the two are one fact about the mode,
+  // and a short name kept anywhere else is a short name that drifts from the long one.
+  //
+  // Three letters in every locale that has one, since what it buys is a column narrow
+  // enough to sit beside two others on a 320pt phone.
+  code: MessageDescriptor
   // One line, under the pills on the intro. The pill above already names the mode, so
   // this says what a run of it asks rather than naming it again.
   description: MessageDescriptor
