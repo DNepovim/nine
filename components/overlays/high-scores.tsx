@@ -20,7 +20,7 @@ import { useOnline } from '@/hooks/use-online'
 import { useViewport } from '@/hooks/use-viewport'
 import { type LeaderboardTab } from '@/lib/leaderboard'
 import { longestMedalTab, type TabRank } from '@/lib/medals'
-import { gradientOf, type ModeId } from '@/modes'
+import { gradientOf, headlineOf, type Difficulty, type ModeId } from '@/modes'
 
 import { OfflineNotice } from './offline-notice'
 import { PublishScoresButton } from './publish-scores-button'
@@ -51,6 +51,7 @@ const rankOf = (period: PeriodBoard, runScore: number | undefined): TabRank => {
 
 export function HighScores({
   gameMode,
+  difficulty,
   userId,
   nickname,
   onAddNickname,
@@ -60,6 +61,10 @@ export function HighScores({
   runScore,
 }: {
   gameMode: ModeId
+  // The rung this board is, which the board store is already keyed by. Here only so the
+  // panel can say the right thing when a period is empty — nothing else on this screen
+  // is per-difficulty.
+  difficulty: Difficulty
   userId: string | null
   nickname: string | null
   // Opens the nickname prompt, which is what puts a player's scores on the board at
@@ -314,6 +319,9 @@ export function HighScores({
             <TabPanel
               key={key}
               data={dataByTab[key]}
+              tab={key}
+              headline={headlineOf(gameMode)}
+              difficulty={difficulty}
               accentColor={accentColor}
               userId={userId}
               nickname={nickname}

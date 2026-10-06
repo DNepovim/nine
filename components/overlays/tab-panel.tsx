@@ -8,7 +8,10 @@ import { useChampionsContext } from '@/hooks/use-champions'
 import { EMPTY_IDS, usePlayerFactors } from '@/hooks/use-player-factors'
 import { championMark } from '@/lib/champions'
 import { cn } from '@/lib/cn'
+import { emptyBoardLine } from '@/lib/empty-board'
+import type { LeaderboardTab } from '@/lib/leaderboard-period'
 import { displayRows } from '@/lib/leaderboard-rows'
+import type { Difficulty, Headline } from '@/modes'
 
 import { ScoreRow } from './score-row'
 import { SkeletonRow } from './skeleton-row'
@@ -45,6 +48,9 @@ const COMPACT_BODY_HEIGHT = 'h-[54px]'
 
 export function TabPanel({
   data,
+  tab,
+  headline,
+  difficulty,
   accentColor,
   userId,
   nickname,
@@ -54,6 +60,11 @@ export function TabPanel({
   compact = false,
 }: {
   data: PeriodBoard
+  // Which period this panel is, and which board it belongs to — between them they pick
+  // the line the panel shows when there is nothing on it. See lib/empty-board.ts.
+  tab: LeaderboardTab
+  headline: Headline
+  difficulty: Difficulty
   accentColor: string
   userId: string | null
   nickname: string | null
@@ -129,8 +140,12 @@ export function TabPanel({
   if (isEmptyArray(rows)) {
     return (
       <View style={{ width }} className={cn('items-center justify-center', bodyHeight)}>
-        <Text selectable={false} className="font-mono text-[9px] font-bold text-dim">
-          <Trans>— NO SCORES YET —</Trans>
+        <Text
+          selectable={false}
+          numberOfLines={1}
+          className="font-mono text-[9px] font-bold text-dim"
+        >
+          {t(emptyBoardLine(headline, difficulty, tab))}
         </Text>
       </View>
     )

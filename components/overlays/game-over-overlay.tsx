@@ -337,6 +337,7 @@ export function GameOverOverlay({
           {isOneOf(gameMode, SCORED_MODES) && (
             <HighScores
               gameMode={gameMode}
+              difficulty={difficulty}
               userId={userId}
               nickname={nickname}
               halo={painted}

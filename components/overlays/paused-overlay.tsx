@@ -199,6 +199,7 @@ export function PausedOverlay({
             {isOneOf(gameMode, SCORED_MODES) && (
               <HighScores
                 gameMode={gameMode}
+                difficulty={difficulty}
                 userId={userId}
                 nickname={nickname}
                 onAddNickname={onAddNickname}

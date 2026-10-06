@@ -435,6 +435,7 @@ export function MenuOverlay({
                     <RecentWinners gameMode={gameMode} difficulty={difficulty} />
                     <HighScores
                       gameMode={gameMode}
+                      difficulty={difficulty}
                       userId={userId}
                       nickname={nickname}
                       onAddNickname={onAddNickname}
