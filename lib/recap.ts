@@ -5,17 +5,8 @@ import { GAME_SCALE } from '@/constants/colors'
 import { isDifficulty } from '@/lib/is-difficulty'
 import { nextDay } from '@/lib/leaderboard-period'
 import { boardClaim } from '@/lib/medals'
-import {
-  boardLine,
-  headline,
-  MONTHS,
-  name,
-  takeoverLine,
-  WEEKDAYS,
-  type Segment,
-  type Sentence,
-  type Translate,
-} from '@/lib/recap-lines'
+import { MONTHS, type Segment, type Sentence, type Translate } from '@/lib/prose'
+import { boardLine, headline, name, takeoverLine, WEEKDAYS } from '@/lib/recap-lines'
 import { idSeed, seeded, type Rng } from '@/lib/rng'
 import {
   DIFFICULTIES,

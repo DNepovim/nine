@@ -1,59 +1,19 @@
 import type { MessageDescriptor } from '@lingui/core'
 import { msg } from '@lingui/core/macro'
 
+import { fill, type Segment, type Sentence, type Translate } from '@/lib/prose'
 import { pickFrom, type Rng } from '@/lib/rng'
 
 // The phrasings a recap is told in, and the only part of this feature a person is meant to
 // edit.
 //
-// A sentence is built from segments rather than from a string, because three things in a
-// recap are coloured and the rest is not: a nickname, a board, and a takeover. React Native
-// has no innerHTML to lean on, so the composer hands the card a structure and the card
-// decides what each kind looks like.
-//
-// **Tokens are `[A]`, not `{A}`.** Every phrasing below is a Lingui message, and `{A}` is
-// ICU's own placeholder syntax — a message carrying one is at the mercy of whichever
-// formatter resolves it. Square brackets mean nothing to ICU, so the template survives
-// translation intact and `fill` is the only thing that ever reads it.
-
-// What a resolved descriptor looks like to this file — `t` from `useLingui`, or an English
-// resolver in a test. Passed in rather than imported so that composing a recap stays a pure
-// function of the week, the seed and the locale.
-export type Translate = (descriptor: MessageDescriptor) => string
-
-export type SegmentKind = 'plain' | 'name' | 'board' | 'takeover'
-
-// `color` is carried rather than looked up by the card: a board's colour is its mode's
-// gradient at its difficulty, which the composer knows and a sentence renderer would have
-// to be handed the board to work out. A takeover's gold is the other way round — it depends
-// on the theme, so the card resolves that one itself.
-export type Segment = { text: string; kind: SegmentKind; color?: string }
-export type Sentence = readonly Segment[]
-
-const plain = (text: string): Segment => ({ text, kind: 'plain' })
+// A sentence is built from segments rather than from a string — see lib/prose.ts for why,
+// and for the kinds of word a sentence is made of.
 
 // Left uncoloured here. Colour is handed out per recap once every name is known — see
 // `colourNames` — because what a reader needs is to tell the two or three names in front of
 // them apart, which a per-player colour cannot promise.
 export const name = (text: string): Segment => ({ text, kind: 'name' })
-
-// Splitting on a capturing group interleaves literals and keys: even indices are text, odd
-// are placeholder names. Cheaper to read than a matchAll loop, and it cannot run off the end
-// of the template.
-const TOKEN = /\[(\w+)\]/
-
-function fill(
-  template: string,
-  vars: Readonly<Record<string, Segment | string>>,
-): Sentence {
-  return template.split(TOKEN).flatMap((part, index) => {
-    if (part === '') return []
-    if (index % 2 === 0) return [plain(part)]
-    const value = vars[part]
-    if (value === undefined) return []
-    return [typeof value === 'string' ? plain(value) : value]
-  })
-}
 
 // ─── What a translator has to hold ──────────────────────────────────────────────────────
 //
@@ -230,27 +190,6 @@ export const WEEKDAYS = [
   msg`Friday`,
   msg`Saturday`,
   msg`Sunday`,
-] as const
-
-// January first, so the index into this is `Date.getUTCMonth()`.
-//
-// Written in capitals because that is the register the window label is set in, and because
-// nothing down the line upper-cases the result: Czech declines the month after a day number
-// — "22. – 28. září" — and shouting it would be the wrong word before it was the wrong case.
-// Used by `periodLabel` and nothing else, which is what makes a shouting form safe here.
-export const MONTHS = [
-  msg`JANUARY`,
-  msg`FEBRUARY`,
-  msg`MARCH`,
-  msg`APRIL`,
-  msg`MAY`,
-  msg`JUNE`,
-  msg`JULY`,
-  msg`AUGUST`,
-  msg`SEPTEMBER`,
-  msg`OCTOBER`,
-  msg`NOVEMBER`,
-  msg`DECEMBER`,
 ] as const
 
 // Every phrasing, flat. Exported for one thing only: the catalog test, which checks that a

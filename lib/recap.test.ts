@@ -3,6 +3,7 @@ import type { MessageDescriptor } from '@lingui/core'
 import { describe, expect, it } from 'vitest'
 
 import { POOLS, simulateWeek, weekForShape, type PoolKey } from '@/dev/weekly-recap/facts'
+import type { Translate } from '@/lib/prose'
 import {
   BOARDS,
   composeRecap,
@@ -16,7 +17,7 @@ import {
   type ShapeKind,
   type WeekFacts,
 } from '@/lib/recap'
-import { ALL_PHRASINGS, type Translate } from '@/lib/recap-lines'
+import { ALL_PHRASINGS } from '@/lib/recap-lines'
 import { messages as cs } from '@/locales/cs/messages'
 import { messages as en } from '@/locales/en/messages'
 

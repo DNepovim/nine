@@ -1,98 +1,55 @@
-import { Ionicons } from '@expo/vector-icons'
 import { Trans, useLingui } from '@lingui/react/macro'
 import { Text, View } from 'react-native'
 
+import { ProseSentence } from '@/components/overlays/prose-sentence'
 import { APP_VIOLET } from '@/constants/colors'
-import { formatShortDay } from '@/lib/format-date'
-import { awardPoints, totalAwards, type Award } from '@/lib/winnings'
+import { totalAwards } from '@/lib/winnings'
 import type { AwardBlock } from '@/lib/winnings-announcement'
-import { DIFFICULTIES, getDifficultyColor, labelOf } from '@/modes'
+import { winningsSentences } from '@/lib/winnings-lines'
 
-// What the player won while they were away: the boards they took, what each paid, and
-// what the lot of it added to their fortune.
+// What the player won while they were away: the boards they took, what each was taken with,
+// and what the lot of it added to their fortune.
+//
+// Prose rather than the table this used to be. Taking a board is the only thing in the app
+// that pays for beating other people rather than for playing, and three columns of figures
+// made the one moment that is about rivalry read like a bank statement. The per-board payout
+// went with the table — it was the column nobody could add up, and the number that matters
+// is the one at the foot.
 //
 // The accent is APP_VIOLET rather than gold or the achievement green, and deliberately so.
 // Gold means a record you *currently hold* and green means an achievement you *keep*;
-// winnings are a fourth thing — paid once for a window that has shut, and never taken
-// back — so borrowing either would say something untrue. Violet is the app's own hue, for
-// the element that belongs to no scale.
+// winnings are a fourth thing — paid once for a window that has shut, and never taken back —
+// so borrowing either would say something untrue. Violet is the app's own hue, for the
+// element that belongs to no scale.
+//
+// No icon square, for the reason RecapCard gives: the two prose pages are not a list to be
+// told apart, and a 64pt decoration above two sentences pushes the sentences down for
+// nothing.
 const ACCENT = APP_VIOLET
 
-function AwardRow({ award }: { award: Award }) {
-  const { t } = useLingui()
-  return (
-    <View className="flex-row items-baseline justify-between gap-3">
-      <Text
-        selectable={false}
-        className="font-mono text-[10px] font-bold tracking-[1px]"
-        style={{ color: getDifficultyColor(award.mode, award.difficulty) }}
-      >
-        {t(labelOf(award.mode))} · {t(DIFFICULTIES[award.difficulty].label)}
-      </Text>
-      <View className="flex-row items-baseline gap-2">
-        <Text
-          selectable={false}
-          className="font-mono text-[10px] font-bold tracking-[0.5px] text-dim"
-        >
-          {award.score.toLocaleString()}
-        </Text>
-        <Text
-          selectable={false}
-          className="font-mono text-[11px] font-black tracking-[0.5px]"
-          style={{ color: ACCENT }}
-        >
-          +{awardPoints(award).toLocaleString()}
-        </Text>
-      </View>
-    </View>
-  )
-}
-
-function Block({ block }: { block: AwardBlock }) {
-  return (
-    <View className="gap-1.5">
-      <Text
-        selectable={false}
-        className="font-mono text-[8px] font-bold tracking-[1.5px] text-dim"
-      >
-        {block.period === 'day' ? (
-          <Trans>DAY · {formatShortDay(block.wonOn)}</Trans>
-        ) : (
-          <Trans>WEEK · {formatShortDay(block.wonOn)}</Trans>
-        )}
-      </Text>
-      {block.awards.map((award) => (
-        <AwardRow key={`${award.mode}-${award.difficulty}`} award={award} />
-      ))}
-    </View>
-  )
-}
-
 export function WinningsCard({ blocks }: { blocks: readonly AwardBlock[] }) {
+  // `t` subscribes the card to the active locale, so a language switch re-tells the
+  // winnings rather than leaving whichever language they were built in.
+  const { t } = useLingui()
+
+  const sentences = winningsSentences(blocks, t)
   const total = totalAwards(blocks.flatMap((block) => block.awards))
 
   return (
     <View>
       <View className="items-center">
-        <View
-          className="h-16 w-16 items-center justify-center rounded-2xl"
-          style={{ backgroundColor: `${ACCENT}26` }}
-        >
-          <Ionicons name="trending-up" size={30} color={ACCENT} />
-        </View>
-
         <Text
           selectable={false}
-          className="mt-4 text-center font-mono text-[17px] font-black tracking-[2px]"
+          className="text-center font-mono text-[17px] font-black tracking-[2px]"
           style={{ color: ACCENT }}
         >
           <Trans>YOU WON</Trans>
         </Text>
       </View>
 
-      <View className="mt-4 gap-3.5">
-        {blocks.map((block) => (
-          <Block key={`${block.period}-${block.wonOn}`} block={block} />
+      <View className="mt-4 gap-2.5">
+        {sentences.map((sentence, index) => (
+          <ProseSentence key={index} sentence={sentence} />
         ))}
       </View>
 

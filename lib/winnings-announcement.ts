@@ -54,9 +54,16 @@ const PERIOD_ORDER = {
 
 // Newest first, and biggest first inside a block.
 //
-// A ledger, not a narrative — unlike the release catch-up, which runs oldest first so a
-// returning player finishes on the latest news. Here the most recent win is the one the
-// player is likeliest to remember earning, and the largest is the one they care about.
+// This ordering was once justified as "a ledger, not a narrative", against the table the
+// card used to be. The card is prose now — one sentence per window — and the ordering
+// outlived the argument, because both halves of it were really about *attention* rather
+// than about tables: the most recent win is the one the player is likeliest to remember
+// earning, and the largest is the one they came to see. A sentence wants its best clause
+// first for the same reason a row wanted its best figure at the top.
+//
+// Still the opposite of the release catch-up, which runs oldest first so a returning player
+// finishes on the latest news. Winnings are not a story being caught up on; each window
+// stands by itself.
 export function awardBlocks(awards: readonly Award[]): AwardBlock[] {
   const blocks = new Map<string, AwardBlock>()
   for (const award of awards) {

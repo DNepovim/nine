@@ -2,12 +2,12 @@ import { Text } from 'react-native'
 
 import { GOLD_INK } from '@/constants/colors'
 import { useTheme } from '@/hooks/use-theme'
-import type { Segment, SegmentKind, Sentence } from '@/lib/recap-lines'
+import type { Segment, SegmentKind, Sentence } from '@/lib/prose'
 
-// One sentence of a recap. Three things in it are coloured — a nickname, a board, a
-// takeover — and everything between them is ordinary text, so the segments are drawn as
-// nested Text inside one paragraph rather than as a row of views. Nesting is what keeps the
-// line wrapping as prose.
+// One sentence of prose. A few words in it are coloured — a nickname, a board, a takeover —
+// and everything between them is ordinary text, so the segments are drawn as nested Text
+// inside one paragraph rather than as a row of views. Nesting is what keeps the line
+// wrapping as prose.
 //
 // Sentence case with tight tracking, following the announcement bar rather than the app's
 // label style: wide tracking is a caps device and reads as airy on prose. A board and a
@@ -19,9 +19,12 @@ const SEGMENT_CLASS = {
   name: 'font-bold',
   board: 'font-mono text-[11px] font-bold',
   takeover: 'font-mono text-[11px] font-bold',
+  // Set like a board and left the prose's own colour. Violet on the winnings card means
+  // what you were *paid*, and the only violet figure on it should be the one at the foot.
+  score: 'font-mono text-[11px] font-bold',
 } as const satisfies Record<SegmentKind, string>
 
-export function RecapSentence({ sentence }: { sentence: Sentence }) {
+export function ProseSentence({ sentence }: { sentence: Sentence }) {
   const { colorScheme } = useTheme()
 
   const colorFor = (segment: Segment): string | undefined => {
