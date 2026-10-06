@@ -4,7 +4,6 @@ import { Text, View } from 'react-native'
 
 import { achievement, type AchievementId } from '@/constants/achievements'
 import { ACHIEVEMENT_INK } from '@/constants/colors'
-import { useTheme } from '@/hooks/use-theme'
 import { STAGE_AXES, STAGE_CODE, type BoardMark, type Stage } from '@/lib/achievements'
 import { cn } from '@/lib/cn'
 import { formatShortDate } from '@/lib/format-date'
@@ -43,7 +42,6 @@ export function AchievementRow({
   boards: readonly BoardMark[] | null
 }) {
   const { t } = useLingui()
-  const { colorScheme } = useTheme()
   const def = achievement(id)
   // The axis this one is staged along, or undefined if it is cleared once. Every stage
   // drawn below comes from it, so a mode-staged achievement shows its two modes where a
@@ -74,7 +72,7 @@ export function AchievementRow({
               'flex-1 font-mono text-[11px] font-black tracking-[1.5px]',
               !earned && 'text-dim',
             )}
-            style={earned ? { color: ACHIEVEMENT_INK[colorScheme] } : null}
+            style={earned ? { color: ACHIEVEMENT_INK } : null}
           >
             {hidden ? t(SECRET_TITLE) : t(def.title)}
           </Text>
@@ -127,7 +125,7 @@ export function AchievementRow({
                         : target === undefined
                           ? '0%'
                           : `${Math.round((100 * progress[stage]) / target)}%`,
-                      backgroundColor: ACHIEVEMENT_INK[colorScheme],
+                      backgroundColor: ACHIEVEMENT_INK,
                     }}
                   />
                 </View>
@@ -172,7 +170,7 @@ export function AchievementRow({
                           )
                             ? '100%'
                             : '0%',
-                          backgroundColor: ACHIEVEMENT_INK[colorScheme],
+                          backgroundColor: ACHIEVEMENT_INK,
                         }}
                       />
                     </View>
@@ -191,7 +189,7 @@ export function AchievementRow({
               className="h-full rounded-full"
               style={{
                 width: `${Math.round((100 * progress.easy) / target)}%`,
-                backgroundColor: ACHIEVEMENT_INK[colorScheme],
+                backgroundColor: ACHIEVEMENT_INK,
               }}
             />
           </View>

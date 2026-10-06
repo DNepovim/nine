@@ -1,7 +1,6 @@
 import type { StyleProp, TextStyle } from 'react-native'
 import { Text } from 'react-native'
 
-import { useTheme } from '@/hooks/use-theme'
 import { nameColors } from '@/lib/name-gradient'
 
 // One player's nickname, drawn in the gradient their own averages earn them. Every place
@@ -37,10 +36,9 @@ export function GradientName({
   style?: StyleProp<TextStyle>
   numberOfLines?: number
 }) {
-  // The two stops are themed — the mode hues are tuned to be a colour, not to carry text
-  // at 10px, so each theme has its own pair. See NAME_INK.
-  const { colorScheme } = useTheme()
-  const letters = nameColors(nickname, { avgAccuracy, avgSpeed }, colorScheme)
+  // The two stops are their own ink — the mode hues are tuned to be a colour, not to
+  // carry text at 10px. See NAME_INK.
+  const letters = nameColors(nickname, { avgAccuracy, avgSpeed })
   return (
     <Text
       selectable={false}

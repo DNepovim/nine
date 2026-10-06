@@ -5,7 +5,6 @@ import { GameOverTitle } from '@/components/overlays/game-over-title'
 import { RunScreen } from '@/components/overlays/run-screen'
 import { TrackedPressable } from '@/components/tracked-pressable'
 import { ARCADE_INK } from '@/constants/colors'
-import { useTheme } from '@/hooks/use-theme'
 import type { TitleWords } from '@/lib/game-over-title'
 import { arcadeStats } from '@/lib/run-stats'
 import { darkGradientOf } from '@/modes'
@@ -44,7 +43,6 @@ export function ArcadeOver({
   onAgain: () => void
   onHome: () => void
 }) {
-  const { colorScheme } = useTheme()
   const { t } = useLingui()
   const title: TitleWords = overrun ? [t`WALL`, t`HELD`] : [t`FELL`, t`BACK`]
 
@@ -60,7 +58,7 @@ export function ArcadeOver({
       }
       score={{
         value: depth,
-        color: ARCADE_INK[colorScheme],
+        color: ARCADE_INK,
         caption: <Trans>CROSSROADS DEEP</Trans>,
       }}
       stats={arcadeStats(strikes, taken, playedMs)}

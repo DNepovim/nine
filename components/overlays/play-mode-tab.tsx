@@ -13,7 +13,6 @@ import Animated, {
 import { CornerBadge } from '@/components/overlays/corner-badge'
 import { TrackedPressable } from '@/components/tracked-pressable'
 import { DIM_INK } from '@/constants/colors'
-import { useTheme } from '@/hooks/use-theme'
 import { gradientOf, MULTIPLAYER_GRADIENT, type ModeId } from '@/modes'
 
 export type PlayMode = 'alone' | 'friends'
@@ -53,8 +52,6 @@ export function PlayModeTab({
   // The unselected label's ink. One fixed grey sat here before, chosen to survive both
   // themes and readable on neither; the tab strip has a card under it, so it takes the
   // secondary ink of the theme it is actually in.
-  const { colorScheme } = useTheme()
-  const idle = DIM_INK[colorScheme]
   const [layouts, setLayouts] = useState<({ x: number; width: number } | null)[]>(() =>
     PLAY_MODES.map(() => null),
   )
@@ -71,10 +68,10 @@ export function PlayModeTab({
     transform: [{ translateX: Math.sin(gradPhase.value * Math.PI * 2) * 12 }],
   }))
   const textStyle0 = useAnimatedStyle(() => ({
-    color: lerpHex(idle, '#FFFFFF', sel0.value),
+    color: lerpHex(DIM_INK, '#FFFFFF', sel0.value),
   }))
   const textStyle1 = useAnimatedStyle(() => ({
-    color: lerpHex(idle, '#FFFFFF', sel1.value),
+    color: lerpHex(DIM_INK, '#FFFFFF', sel1.value),
   }))
 
   useEffect(() => {

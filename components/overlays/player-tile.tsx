@@ -9,7 +9,6 @@ import { TrackedPressable } from '@/components/tracked-pressable'
 import { DIM_INK } from '@/constants/colors'
 import { useChampionsContext } from '@/hooks/use-champions'
 import { useOpenProfile } from '@/hooks/use-profile-modal'
-import { useTheme } from '@/hooks/use-theme'
 import { championMark } from '@/lib/champions'
 import { rankMedal } from '@/lib/rank-emoji'
 
@@ -104,7 +103,6 @@ export function PlayerTile({
   // Before the empty-slot return: hooks cannot sit behind a condition.
   const champions = useChampionsContext()
   const openProfile = useOpenProfile()
-  const { colorScheme } = useTheme()
   // A tile is a name like any other, so it opens the same profile. An empty slot and a
   // room joined before ids were carried have nobody to open.
   const profileId = isNonEmptyString(userId) ? userId : null
@@ -114,7 +112,7 @@ export function PlayerTile({
       <View style={{ width: '48%' }}>
         <View
           className="h-24 items-center justify-center rounded-2xl border-2 border-dashed"
-          style={{ borderColor: DIM_INK[colorScheme] + '33' }}
+          style={{ borderColor: DIM_INK + '33' }}
         >
           <View className="h-2 w-2 animate-pulse rounded-full bg-dim" />
           <Text

@@ -99,7 +99,6 @@ const HINT_LABEL = {
 export function DialButton({
   index,
   value,
-  isDark,
   size,
   weight,
   digits,
@@ -119,7 +118,6 @@ export function DialButton({
   // Where this key sits in the dial, which is the only name the pan above knows it by.
   index: number
   value: number
-  isDark: boolean
   size: number
   weight: number
   // How many values the key takes, counted from zero: 10 is the digits 0–9.
@@ -267,13 +265,12 @@ export function DialButton({
     },
   )
 
-  const palette = isDark ? DIAL_COLORS.dark : DIAL_COLORS.light
   const btnStyle = useAnimatedStyle(() => ({
     transform: [{ scale: scale.value }, { translateY: translateY.value }],
     backgroundColor: interpolateColor(
       rampProgress.value,
       [0, 1],
-      [palette.low, palette.high],
+      [DIAL_COLORS.low, DIAL_COLORS.high],
     ),
   }))
 
@@ -290,7 +287,11 @@ export function DialButton({
 
   // The digit warms to pale red over the dark 9 gradient.
   const digitStyle = useAnimatedStyle(() => ({
-    color: interpolateColor(peakProgress.value, [0, 1], [palette.text, palette.peakText]),
+    color: interpolateColor(
+      peakProgress.value,
+      [0, 1],
+      [DIAL_COLORS.text, DIAL_COLORS.peakText],
+    ),
   }))
 
   // The pill fills its box, so its radius is simply half of it. There used to be 10pt
@@ -332,8 +333,8 @@ export function DialButton({
             borderRadius: 999,
             justifyContent: 'center' as const,
             alignItems: 'center' as const,
-            shadowColor: isDark ? '#04040C' : '#1C1928',
-            shadowOpacity: isDark ? 0.9 : 0.13,
+            shadowColor: '#1C1928',
+            shadowOpacity: 0.13,
             shadowOffset: { width: 0, height: 6 },
             shadowRadius: 10,
           },
@@ -389,10 +390,10 @@ export function DialButton({
             fontSize={BADGE_FONT_SIZE}
             offset={badgeOffset}
             corner={corner}
-            low={palette.low}
-            high={palette.high}
-            text={palette.text}
-            peakText={palette.peakText}
+            low={DIAL_COLORS.low}
+            high={DIAL_COLORS.high}
+            text={DIAL_COLORS.text}
+            peakText={DIAL_COLORS.peakText}
             peakFrom={peakFrom}
             peakTo={peakTo}
             borderColor={BADGE_BORDER_COLOR}

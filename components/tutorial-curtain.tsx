@@ -32,9 +32,8 @@ const FADE_MS = 500
 //
 // It is the app's own surface rather than white, and that is the whole trick: the ground
 // under the words is the ground the game is about to be drawn on, so the hand-off is the
-// words fading off a board rather than one screen being replaced by another. In light that
-// surface is a warm off-white and in dark it is near-black — a literal white would flash on
-// a dark launch and then have to fade back down to a dark board.
+// words fading off a board rather than one screen being replaced by another. That surface
+// is a warm off-white, and a literal white would flash before fading back down to it.
 export function TutorialCurtain({
   // The fade has started. Whatever should be underneath when it finishes has this long to
   // get ready — the same contract the splash's own exit offers, and for the same reason:

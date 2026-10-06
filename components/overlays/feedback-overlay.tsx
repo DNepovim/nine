@@ -8,7 +8,6 @@ import { ModalCard } from '@/components/overlays/modal-card'
 import { TrackedPressable } from '@/components/tracked-pressable'
 import { DIM_INK } from '@/constants/colors'
 import { useLocale } from '@/hooks/use-locale'
-import { useTheme } from '@/hooks/use-theme'
 import { cn } from '@/lib/cn'
 import { MAX_FEEDBACK_LENGTH } from '@/lib/feedback-outcome'
 import { submitFeedback } from '@/lib/feedback-submission'
@@ -70,7 +69,6 @@ export function FeedbackOverlay({
   // `t` rather than <Trans>: a TextInput placeholder takes a string, not a node.
   const { t } = useLingui()
   const { locale } = useLocale()
-  const { colorScheme } = useTheme()
   const modeColor = gradientOf(gameMode)[0]
   const [message, setMessage] = useState('')
   const [status, setStatus] = useState<Status>('idle')
@@ -168,7 +166,7 @@ export function FeedbackOverlay({
                 editable={status !== 'sending'}
                 maxLength={MAX_FEEDBACK_LENGTH}
                 placeholder={t`Type here`}
-                placeholderTextColor={DIM_INK[colorScheme]}
+                placeholderTextColor={DIM_INK}
                 className="mb-4 h-32 w-full rounded-2xl border border-muted bg-card p-3 font-mono leading-[18px] text-primary"
                 // Mobile Safari zooms the whole page in on focus for any input under
                 // 16px — the one web quirk with no CSS opt-out, only a bigger font.

@@ -98,7 +98,6 @@ import { useStepUp } from '@/hooks/use-step-up'
 import { useStrikeShots, type ShotAim } from '@/hooks/use-strike-shots'
 import { useSupabaseAuth } from '@/hooks/use-supabase-auth'
 import { useTargetSpawner } from '@/hooks/use-target-spawner'
-import { useTheme } from '@/hooks/use-theme'
 import { useTraineeCoach } from '@/hooks/use-trainee-coach'
 import { useTutorialLesson } from '@/hooks/use-tutorial-lesson'
 import { useTutorialRequests } from '@/hooks/use-tutorial-request'
@@ -282,8 +281,6 @@ function showFeedbackBookmark({
 
 export default function GameScreen() {
   const { t } = useLingui()
-  const { colorScheme, toggleTheme } = useTheme()
-  const isDark = colorScheme === 'dark'
   const [state, send] = useMachine(gameMachine)
 
   // Seven-segment font for the digital score readout.
@@ -1438,7 +1435,7 @@ export default function GameScreen() {
                           filled={
                             rules.lives.count === Number.POSITIVE_INFINITY || i < lives
                           }
-                          emptyColor={isDark ? '#1C1D30' : '#FDFCFA'}
+                          emptyColor={'#FDFCFA'}
                         />
                       ))}
                     {/* Says why, the moment a hit rather than an expiry is what took the
@@ -1466,7 +1463,6 @@ export default function GameScreen() {
                             key={arr.length - 1 - i}
                             digit={digit}
                             direction={avgDirection.current}
-                            isDark={isDark}
                             progress={0}
                             size={16}
                           />
@@ -1613,7 +1609,6 @@ export default function GameScreen() {
                         maxValue={dial.maxSum}
                         key={target.id}
                         target={target}
-                        isDark={isDark}
                         // The clock this target spawned with, so a ring never retargets
                         // mid-flight when Speed's timeout tightens.
                         duration={target.duration}
@@ -1687,7 +1682,6 @@ export default function GameScreen() {
                             key={arr.length - 1 - i}
                             digit={digit}
                             direction={direction}
-                            isDark={isDark}
                             progress={valueProgress(sum, dial.maxSum)}
                           />
                         ))}
@@ -1724,7 +1718,6 @@ export default function GameScreen() {
               <Dial
                 dial={dial}
                 values={grid.flat()}
-                isDark={isDark}
                 showSum={showSum && !tutorial}
                 trainee={rules.capabilities.keyHints}
                 // The tutorial prints the weight and nothing else, whatever the player
@@ -1948,10 +1941,8 @@ export default function GameScreen() {
             {/* ── Advanced options — shared between menu and pause ── */}
             {menuOverlay === 'advanced' && (
               <AdvancedOptionsOverlay
-                isDark={isDark}
                 showSum={showSum}
                 onToggleSum={toggleSum}
-                onToggleTheme={toggleTheme}
                 replayConsent={replayConsent.consent}
                 onToggleReplayConsent={() => {
                   if (replayConsent.consent === 'granted') replayConsent.decline()
@@ -2273,7 +2264,6 @@ export default function GameScreen() {
                 players={multiGame.players}
                 currentTarget={multiGame.currentTarget}
                 targetCount={multiGame.targetCount}
-                isDark={isDark}
                 onHit={multiGame.sendHit}
                 onTargetExpire={() => {
                   // Only admin resolves; non-admin's timer is purely visual.
@@ -2321,7 +2311,6 @@ export default function GameScreen() {
                 ends the run. ── */}
             {arcadeOpen && (
               <ArcadeGame
-                isDark={isDark}
                 onEnd={() => {
                   setArcadeOpen(false)
                 }}

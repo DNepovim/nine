@@ -4,7 +4,6 @@ import { Text, View } from 'react-native'
 
 import { TrackedPressable } from '@/components/tracked-pressable'
 import { DIM_INK } from '@/constants/colors'
-import { useTheme } from '@/hooks/use-theme'
 
 const ICON = 11
 
@@ -30,8 +29,6 @@ export function ProfileMotto({
   editable: boolean
   onEdit: () => void
 }) {
-  const { colorScheme } = useTheme()
-
   // Somebody else's profile with nothing written on it. An empty line under a stranger's
   // name reads as something missing rather than as something they never wrote.
   if (motto === null && !editable) return null
@@ -44,7 +41,7 @@ export function ProfileMotto({
         hitSlop={8}
         className="flex-row items-center gap-1 self-center rounded-full bg-card px-3 py-1"
       >
-        <Ionicons name="add" size={ICON} color={DIM_INK[colorScheme]} />
+        <Ionicons name="add" size={ICON} color={DIM_INK} />
         <Text
           selectable={false}
           className="font-mono text-[9px] font-black tracking-[1.5px] text-dim"
@@ -68,7 +65,7 @@ export function ProfileMotto({
       </Text>
       {editable && (
         <TrackedPressable id="profile.edit_motto" onPress={onEdit} hitSlop={10}>
-          <Ionicons name="pencil" size={ICON} color={DIM_INK[colorScheme]} />
+          <Ionicons name="pencil" size={ICON} color={DIM_INK} />
         </TrackedPressable>
       )}
     </View>

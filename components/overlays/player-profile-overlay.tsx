@@ -23,7 +23,6 @@ import { ACHIEVEMENT_INK } from '@/constants/colors'
 import { mono } from '@/constants/theme'
 import { useChampionsContext } from '@/hooks/use-champions'
 import { usePlayerProfile } from '@/hooks/use-player-profile'
-import { useTheme } from '@/hooks/use-theme'
 import { useViewport } from '@/hooks/use-viewport'
 import { championMark } from '@/lib/champions'
 import { cn } from '@/lib/cn'
@@ -140,7 +139,6 @@ export function PlayerProfileOverlay({
   onClose: () => void
 }) {
   const { t } = useLingui()
-  const { colorScheme } = useTheme()
   const { height } = useViewport()
   const [dsegLoaded] = useFonts({ DSEG7: DSEG7Font })
   const digitFont = dsegLoaded ? 'DSEG7' : mono
@@ -348,7 +346,7 @@ export function PlayerProfileOverlay({
                       className="text-center font-mono text-[8px] font-bold tracking-[1px] text-dim"
                     >
                       <Trans>
-                        <Text style={{ color: ACHIEVEMENT_INK[colorScheme] }}>
+                        <Text style={{ color: ACHIEVEMENT_INK }}>
                           {shownAchievements}
                         </Text>{' '}
                         OF {ACHIEVEMENT_COUNT} ACHIEVEMENTS

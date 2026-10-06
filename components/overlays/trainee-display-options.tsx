@@ -19,7 +19,6 @@ import {
   TRAINEE_TIMEOUT_STEP_MS,
   type DialCorners,
 } from '@/constants/dial-hints'
-import { useTheme } from '@/hooks/use-theme'
 import { cn } from '@/lib/cn'
 
 // The three things Trainee prints that are not on a key, in the order a player meets
@@ -86,7 +85,6 @@ export function TraineeDisplayOptions({
   onSetPlayerClock: (ms: number) => void
 }) {
   const { t } = useLingui()
-  const { colorScheme } = useTheme()
 
   // Read off the props rather than assembled into rows of objects: the layout below
   // already says which tile goes where, and a switch is nothing but a label, a state
@@ -130,7 +128,7 @@ export function TraineeDisplayOptions({
                     {hint === null ? t(NO_HINT_LABEL) : t(DIAL_HINT_LABEL[hint])}
                   </Text>
                   {/* The mark that says this is a choice and not a label. */}
-                  <Ionicons name="chevron-down" size={12} color={DIM_INK[colorScheme]} />
+                  <Ionicons name="chevron-down" size={12} color={DIM_INK} />
                 </TrackedPressable>
               )
             })}

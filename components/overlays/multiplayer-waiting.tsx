@@ -12,7 +12,6 @@ import { PLAYER_GRADIENTS, PlayerTile } from '@/components/overlays/player-tile'
 import { Screen } from '@/components/screen'
 import { TrackedPressable } from '@/components/tracked-pressable'
 import { DIM_INK } from '@/constants/colors'
-import { useTheme } from '@/hooks/use-theme'
 import { cn } from '@/lib/cn'
 import { SHARE_URL } from '@/lib/invite-message'
 import { DARK_MULTIPLAYER_GRADIENT, descriptionOf, MULTIPLAYER_GRADIENT } from '@/modes'
@@ -50,8 +49,6 @@ export function MultiplayerWaiting({
 }) {
   const { t } = useLingui()
   const canStart = isAdmin && players.length >= 2
-  const { colorScheme } = useTheme()
-  const dimColor = DIM_INK[colorScheme]
   const gradPhase = useSharedValue(0)
   const [copied, setCopied] = useState(false)
   useEffect(() => {
@@ -108,7 +105,7 @@ export function MultiplayerWaiting({
                 <Ionicons
                   name={copied ? 'checkmark' : 'copy-outline'}
                   size={10}
-                  color={dimColor}
+                  color={DIM_INK}
                 />
                 <Text
                   selectable={false}
@@ -120,7 +117,7 @@ export function MultiplayerWaiting({
             </TrackedPressable>
             <TrackedPressable id="waiting_room.share" onPress={handleShare} hitSlop={10}>
               <View className="flex-row items-center gap-1">
-                <Ionicons name="share-outline" size={10} color={dimColor} />
+                <Ionicons name="share-outline" size={10} color={DIM_INK} />
                 <Text
                   selectable={false}
                   className="font-mono text-[10px] font-bold tracking-[1.8px] text-dim"

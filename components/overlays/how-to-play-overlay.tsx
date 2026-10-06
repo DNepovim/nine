@@ -12,10 +12,9 @@ import { scheduleOnRN } from 'react-native-worklets'
 import { MenuButton } from '@/components/game/menu-button'
 import { ScreenLayer } from '@/components/screen'
 import { TrackedPressable } from '@/components/tracked-pressable'
-import { ACHIEVEMENT_SCALE, GAME_SCALE } from '@/constants/colors'
+import { ACHIEVEMENT_SCALE, GAME_SCALE, MUTED_INK } from '@/constants/colors'
 import { TIPS } from '@/constants/tips'
 import { useFlag } from '@/hooks/use-flags'
-import { useTheme } from '@/hooks/use-theme'
 import {
   darkGradientOf,
   descriptionOf,
@@ -417,8 +416,6 @@ export function HowToPlayOverlay({
   onTryTutorial: () => void
 }) {
   const { t } = useLingui()
-  const { colorScheme } = useTheme()
-  const dotColor = colorScheme === 'dark' ? '#2A2B44' : '#D4D0C8'
 
   // Read once and used twice — by the contents list and by the chapter itself — so the
   // list cannot offer a jump to a section that is not on the page.
@@ -810,7 +807,7 @@ export function HowToPlayOverlay({
         {/* Close — the same 5-dot cross + CLOSE label every dialog carries. */}
         <MenuButton
           onToggle={onClose}
-          color={dotColor}
+          color={MUTED_INK}
           style={{ position: 'absolute', top: 12, right: 18, zIndex: 20 }}
         />
       </ScreenLayer>

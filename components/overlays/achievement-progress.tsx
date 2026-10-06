@@ -7,7 +7,6 @@ import { TrackedPressable } from '@/components/tracked-pressable'
 import { achievement, ACHIEVEMENT_COUNT } from '@/constants/achievements'
 import type { AchievementId } from '@/constants/achievements'
 import { ACHIEVEMENT_INK } from '@/constants/colors'
-import { useTheme } from '@/hooks/use-theme'
 
 // What the line wears before there is anything to show. The trophy and the feature's
 // own name, so the front door is still labelled for the player who has not found it —
@@ -40,9 +39,7 @@ export function AchievementProgress({
   latest: AchievementId | null
   onPress: () => void
 }) {
-  const { colorScheme } = useTheme()
   const { t } = useLingui()
-  const ink = ACHIEVEMENT_INK[colorScheme]
   const def = latest === null ? null : achievement(latest)
 
   return (
@@ -59,7 +56,7 @@ export function AchievementProgress({
         selectable={false}
         numberOfLines={1}
         className="font-mono text-[9px] font-black tracking-[1px]"
-        style={{ color: def === null ? undefined : ink }}
+        style={{ color: def === null ? undefined : ACHIEVEMENT_INK }}
       >
         {def === null ? t(EMPTY_TITLE) : t(def.title)}
       </Text>
@@ -69,7 +66,7 @@ export function AchievementProgress({
       >
         {earned}/{ACHIEVEMENT_COUNT}
       </Text>
-      <Ionicons name="chevron-forward" size={10} color={ink} />
+      <Ionicons name="chevron-forward" size={10} color={ACHIEVEMENT_INK} />
     </TrackedPressable>
   )
 }

@@ -6,7 +6,6 @@ import { Text, View } from 'react-native'
 import { Screen } from '@/components/screen'
 import { TrackedPressable } from '@/components/tracked-pressable'
 import { DIM_INK } from '@/constants/colors'
-import { useTheme } from '@/hooks/use-theme'
 import type { TitleWords } from '@/lib/game-over-title'
 import { darkGradientOf, type Difficulty, type ModeId } from '@/modes'
 
@@ -45,9 +44,6 @@ export function StepUpOverlay({
   // Out to the intro, where every board is on offer rather than this one.
   onOtherMode: () => void
 }) {
-  const { colorScheme } = useTheme()
-  const dimColor = DIM_INK[colorScheme]
-
   return (
     <Screen overlay>
       <View className="w-full items-center">
@@ -95,7 +91,7 @@ export function StepUpOverlay({
               land on the intro should not look like two different doors. */}
           <TrackedPressable id="step_up.other_mode" onPress={onOtherMode} hitSlop={10}>
             <View className="flex-row items-center gap-1">
-              <Ionicons name="home-outline" size={10} color={dimColor} />
+              <Ionicons name="home-outline" size={10} color={DIM_INK} />
               <Text
                 selectable={false}
                 className="font-mono text-[10px] font-bold tracking-[1.8px] text-dim"

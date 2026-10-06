@@ -16,7 +16,6 @@ import type { DisplayTarget } from '@/types/game'
 export function TargetCard({
   target,
   maxValue,
-  isDark,
   duration,
   par,
   dying = false,
@@ -28,7 +27,6 @@ export function TargetCard({
   target: DisplayTarget
   // The board's ceiling, for the band tint under the number — see PieCountdown.
   maxValue: number
-  isDark: boolean
   duration: number
   par?: number
   dying?: boolean
@@ -88,7 +86,6 @@ export function TargetCard({
       <PieCountdown
         maxValue={maxValue}
         value={target.value}
-        isDark={isDark}
         active={target.exit === null && !dying && !frozen}
         clocked={clocked}
         duration={duration}

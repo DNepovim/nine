@@ -48,7 +48,6 @@ const fontSizeForDigits = (value: number, scale: number): number => {
 export function PieCountdown({
   value,
   maxValue,
-  isDark,
   active,
   duration,
   onComplete,
@@ -62,7 +61,6 @@ export function PieCountdown({
   // The highest sum the board being played reaches, which is what the band tint is
   // measured against — see `targetBand`.
   maxValue: number
-  isDark: boolean
   active: boolean
   duration: number
   onComplete: () => void
@@ -98,10 +96,7 @@ export function PieCountdown({
   // A clock has to be both running and there in the first place.
   const running = active && clocked
   // The multiplayer hit-flash owns the track while it lasts, so the band yields to it.
-  const trackColor =
-    backgroundColor ??
-    TARGET_BAND_TRACK[isDark ? 'dark' : 'light'][targetBand(value, maxValue)]
-  const numberColor = PIE_INK[isDark ? 'dark' : 'light']
+  const trackColor = backgroundColor ?? TARGET_BAND_TRACK[targetBand(value, maxValue)]
 
   // One effect for starting, stopping and starting again, because they are the same
   // thing: the clock always runs from wherever the arc currently stands.
@@ -178,7 +173,7 @@ export function PieCountdown({
   // Only taken over once the target is lost — until then the `pie` token paints the
   // numeral, so a screen that retints the token still gets its way.
   const numberColorStyle = useAnimatedStyle(() => ({
-    color: interpolateColor(failColor.value, [0, 1], [numberColor, '#FFFFFF']),
+    color: interpolateColor(failColor.value, [0, 1], [PIE_INK, '#FFFFFF']),
   }))
 
   const ringStyle = useAnimatedStyle(() => ({

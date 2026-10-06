@@ -131,7 +131,7 @@ pnpm check          # All of the above in sequence (CI gate)
 
 **Expo Router (file-based routing)** — the `app/` directory defines all routes. `app/_layout.tsx` is the root layout wrapping everything in a `ThemeProvider`. `app/(tabs)/` defines the tab group; its `_layout.tsx` configures the bottom tab navigator.
 
-**Theme system** — `AppThemeProvider` in `hooks/use-theme.tsx` owns the active scheme and the cross-fade when it changes; `useTheme()` reads it. Semantic tokens live in `global.css` (a `@theme` block for light, `.dark:root` overriding it for dark), toggled via the `.dark` class on web and `Appearance.setColorScheme` on native.
+**Theme system** — one colour scheme, and no switch. Semantic tokens live in `global.css` as a single `@theme` block; `userInterfaceStyle: "light"` in `app.json` pins the platform to it so nothing underneath renders against a scheme the tokens do not describe. A colour a class cannot reach — an icon's `color` prop, a worklet interpolating two inks — comes from `constants/colors.ts`, where `DIM_INK` and `MUTED_INK` mirror their tokens.
 
 **Styling** — NativeWind v5 (Tailwind for React Native). Use `className` for static styles; the `style` prop only for values computed at runtime (dynamic colors, pixel sizes).
 

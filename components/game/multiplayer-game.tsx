@@ -29,6 +29,10 @@ const MULTI_PIE_SIZE = Math.round(PIE_SIZE * 1.5)
 const FLASH_REVERT_MS = 700
 const NEXT_TARGET_DELAY_MS = 600
 
+// The three bars of the menu button, drawn straight on the surface rather than in a
+// token: a wash of the primary ink, so it sits a shade quieter than the labels beside it.
+const MENU_BAR_COLOR = 'rgba(0,0,0,0.18)'
+
 // Each player gets a gradient "slice" along the mode color spectrum.
 // Ordered by player index from GAME_START — consistent across all clients.
 function playerGradients(
@@ -49,7 +53,6 @@ export function MultiplayerGame({
   players,
   currentTarget,
   targetCount,
-  isDark,
   onHit,
   onTargetExpire,
   onMenu,
@@ -59,7 +62,6 @@ export function MultiplayerGame({
   players: PlayerState[]
   currentTarget: MultiTarget | null
   targetCount: number
-  isDark: boolean
   onHit: (accuracy: number) => void
   onTargetExpire: () => void
   onMenu: () => void
@@ -139,7 +141,6 @@ export function MultiplayerGame({
   )
 
   const duration = mode === 'speed' ? SPEED_TIMEOUT : ACCURACY_TIMEOUT
-  const barColor = isDark ? 'rgba(255,255,255,0.22)' : 'rgba(0,0,0,0.18)'
 
   return (
     <View className="absolute inset-0 bg-surface" style={{ paddingTop: insets.top }}>
@@ -185,7 +186,7 @@ export function MultiplayerGame({
                 <View
                   key={i}
                   className="w-[18px] h-0.5 rounded-[1px]"
-                  style={{ backgroundColor: barColor }}
+                  style={{ backgroundColor: MENU_BAR_COLOR }}
                 />
               ))}
             </View>
@@ -227,7 +228,6 @@ export function MultiplayerGame({
               maxValue={NINE_DIAL.maxSum}
               key={displayedTarget.id}
               value={displayedTarget.value}
-              isDark={isDark}
               active={currentTarget !== null}
               duration={duration}
               onComplete={onTargetExpire}
@@ -241,7 +241,7 @@ export function MultiplayerGame({
               style={{
                 width: MULTI_PIE_SIZE,
                 height: MULTI_PIE_SIZE,
-                backgroundColor: isDark ? '#1C1D30' : '#E8E4DC',
+                backgroundColor: '#E8E4DC',
               }}
             />
           )}
@@ -259,7 +259,6 @@ export function MultiplayerGame({
                 key={arr.length - 1 - i}
                 digit={digit}
                 direction={direction}
-                isDark={isDark}
                 progress={valueProgress(sum, NINE_DIAL.maxSum)}
               />
             ))}
@@ -273,7 +272,6 @@ export function MultiplayerGame({
       <Dial
         dial={NINE_DIAL}
         values={grid.flat()}
-        isDark={isDark}
         showSum={false}
         trainee={false}
         peakFrom={DARK_MULTIPLAYER_GRADIENT[mode][0]}

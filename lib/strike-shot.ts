@@ -8,7 +8,7 @@ export type Point = { x: number; y: number }
 // The beam runs hot at the muzzle and cools along its length: the brightest stop of the
 // gold the app already marks records in, through to the app's own red. Both are existing
 // game colours rather than a generic laser's, and both are mid-tone, so the beam reads
-// on the light surface and the dark one without a variant.
+// against the surface it is fired over.
 export const BEAM_GRADIENT = [GOLD_SCALE[0], APP_RED] as const
 
 // Speed's rounds are the end of that same ramp — the mode's own hue, which is this red.

@@ -1,17 +1,11 @@
 import 'react-native-url-polyfill/auto'
 
-import {
-  DarkTheme,
-  DefaultTheme,
-  ThemeProvider,
-  type Theme,
-} from '@react-navigation/native'
+import { DefaultTheme, ThemeProvider, type Theme } from '@react-navigation/native'
 import { Stack, type ErrorBoundaryProps } from 'expo-router'
 import { StatusBar } from 'expo-status-bar'
 import { lazy, Suspense, useEffect, useState } from 'react'
 import { useWindowDimensions, View } from 'react-native'
 import { GestureHandlerRootView } from 'react-native-gesture-handler'
-import Animated, { useAnimatedStyle } from 'react-native-reanimated'
 
 import '@/global.css'
 
@@ -25,7 +19,6 @@ import { InstallProvider, useInstall } from '@/hooks/use-install'
 import { LocaleProvider } from '@/hooks/use-locale'
 import { SavedRunProvider, useSavedRun } from '@/hooks/use-saved-run'
 import { SplashProvider, useSplash } from '@/hooks/use-splash'
-import { AppThemeProvider, useTheme } from '@/hooks/use-theme'
 import { captureError, initAnalytics } from '@/lib/analytics'
 import { isDesktopViewport } from '@/lib/desktop'
 import { purgeRetiredStorage } from '@/lib/retired-storage'
@@ -61,22 +54,16 @@ export function ErrorBoundary({ error, retry }: ErrorBoundaryProps) {
   )
 }
 
-// Match navigation background to the app's surface tokens so the iOS status
+// Match navigation background to the app's surface token so the iOS status
 // bar area blends with the screen background instead of showing the default
-// white / near-black navigation theme color. From SURFACE rather than two hexes
-// of their own: a copy here would go stale the day the surface moves.
-const LightTheme: Theme = {
+// white navigation theme color. From SURFACE rather than a hex of its own: a
+// copy here would go stale the day the surface moves.
+const AppTheme: Theme = {
   ...DefaultTheme,
-  colors: { ...DefaultTheme.colors, background: SURFACE.light },
+  colors: { ...DefaultTheme.colors, background: SURFACE },
 }
 
-const AppDarkTheme: Theme = {
-  ...DarkTheme,
-  colors: { ...DarkTheme.colors, background: SURFACE.dark },
-}
-
-function ThemedApp() {
-  const { colorScheme, transitionOpacity, transitionColor } = useTheme()
+function App() {
   const {
     done: splashDone,
     beginExit: beginSplashExit,
@@ -100,30 +87,12 @@ function ThemedApp() {
   // Null rather than 'none', so the popup can only be rendered with something to say.
   const askInstall = install.target === 'none' ? null : install.target
 
-  const overlayStyle = useAnimatedStyle(() => ({
-    opacity: transitionOpacity.value,
-  }))
-
   return (
-    <ThemeProvider value={colorScheme === 'dark' ? AppDarkTheme : LightTheme}>
+    <ThemeProvider value={AppTheme}>
       <Stack>
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
       </Stack>
-      <StatusBar style="auto" />
-      <Animated.View
-        pointerEvents="none"
-        style={[
-          {
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            backgroundColor: transitionColor,
-          },
-          overlayStyle,
-        ]}
-      />
+      <StatusBar style="dark" />
       {!splashDone && (
         <SplashScreen
           hold={askInstall !== null}
@@ -176,41 +145,34 @@ export default function RootLayout() {
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
-      {/* Outside the theme provider: the language decides what every string in the tree
-          below says, including the splash and the dev gallery's own chrome, and nothing
-          about it depends on the colour scheme. */}
+      {/* The language decides what every string in the tree below says, including the
+          splash and the dev gallery's own chrome. */}
       <LocaleProvider>
-        <AppThemeProvider>
-          {/* A row, so the dev column sits beside the frame rather than floating over it —
-            the frame then centres in what is left. One column and not two: every dev tool
-            there is lives in the picker now. With no picker the row has one child at
-            flex-1, which is the layout as it was. Desktop only: below that width the
-            window *is* the phone and there is no beside. */}
-          <View style={{ flex: 1, flexDirection: 'row' }}>
-            {GallerySwitcher !== null && desktop && (
-              <Suspense fallback={null}>
-                <GallerySwitcher />
-              </Suspense>
-            )}
-            {/* Inside the theme provider, so the frame is drawn in the app's own colours
-              and the splash screen is framed along with everything after it. Inside the
-              frame for the same reason the splash is: what the provider gates is drawn
-              in there with the rest of the app, not over the top of it. */}
-            <View style={{ flex: 1 }}>
-              <PhoneFrame>
-                {/* Outside the splash provider, which reads it: a launch opening onto
-                    a run the app was closed on has no logo to play. */}
-                <SavedRunProvider>
-                  <SplashProvider>
-                    <InstallProvider>
-                      <ThemedApp />
-                    </InstallProvider>
-                  </SplashProvider>
-                </SavedRunProvider>
-              </PhoneFrame>
-            </View>
+        {/* A row, so the dev column sits beside the frame rather than floating over it —
+          the frame then centres in what is left. One column and not two: every dev tool
+          there is lives in the picker now. With no picker the row has one child at
+          flex-1, which is the layout as it was. Desktop only: below that width the
+          window *is* the phone and there is no beside. */}
+        <View style={{ flex: 1, flexDirection: 'row' }}>
+          {GallerySwitcher !== null && desktop && (
+            <Suspense fallback={null}>
+              <GallerySwitcher />
+            </Suspense>
+          )}
+          <View style={{ flex: 1 }}>
+            <PhoneFrame>
+              {/* Outside the splash provider, which reads it: a launch opening onto
+                  a run the app was closed on has no logo to play. */}
+              <SavedRunProvider>
+                <SplashProvider>
+                  <InstallProvider>
+                    <App />
+                  </InstallProvider>
+                </SplashProvider>
+              </SavedRunProvider>
+            </PhoneFrame>
           </View>
-        </AppThemeProvider>
+        </View>
       </LocaleProvider>
     </GestureHandlerRootView>
   )

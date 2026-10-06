@@ -61,9 +61,9 @@ carry light text.
 **Use it** for primary buttons (CONTINUE, PLAY) and for the dial's 9 key — anything
 that should read as pressable and sit _under_ text. Pair with `text-on-strong`.
 
-> **Naming trap:** `DARK_MODE_GRADIENT` has nothing to do with the dark _theme_. It
-> is the darkened CTA scale and applies in both themes. Don't reach for it because a
-> screen is in dark mode, and don't reach for `MODE_GRADIENT` for a button.
+> **Naming trap:** `DARK_MODE_GRADIENT` is not a dark _theme_ — the app has one colour
+> scheme and no switch. It is the darkened CTA scale, the answer to "this mode's colour,
+> carrying text". Don't reach for `MODE_GRADIENT` for a button.
 
 ## Supporting palettes
 
@@ -73,14 +73,14 @@ These are not scales — they are single-purpose and live in `constants/colors.t
 | ------------------- | ------------------------------------------------------------------------------------------------------------------ |
 | `GOLD_SCALE`        | The three board records you hold. Needs dark ink — white on it is about 1.5:1.                                     |
 | `ACHIEVEMENT_SCALE` | An achievement earned. Green, and green only: gold is a record you _hold_, this is one you _keep_. Needs dark ink. |
-| `GRAYSCALE`         | A record taken off you: the colour drained out. Mid-tones only, so it reads on both surfaces.                      |
+| `GRAYSCALE`         | A record taken off you: the colour drained out. Mid-tones only, so it reads on surface and card alike.             |
 | `DIAL_COLORS`       | Dial key tint by value: `low` → `high` for 0–8, plus the ink for the 9 key.                                        |
 | `SCORE_COLORS`      | The score above the dial, tinting from `APP_BLUE` to the text colour.                                              |
 
 Two of these are background palettes and cannot carry text on the app's own surfaces, so
-each has a separate themed ink pair for the case where the colour _is_ the text:
-`GOLD_INK` beside `GOLD_SCALE`, `ACHIEVEMENT_INK` beside `ACHIEVEMENT_SCALE`. Reaching into
-the scale for a text colour is the mistake both pairs exist to stop.
+each has a separate ink beside it for the case where the colour _is_ the text: `GOLD_INK`
+beside `GOLD_SCALE`, `ACHIEVEMENT_INK` beside `ACHIEVEMENT_SCALE`. Reaching into the scale
+for a text colour is the mistake both exist to stop.
 
 An announcement never picks these itself. `announcementStyle(id, mode)` in
 `lib/announcement-style.ts` maps each announcement to a scale and resolves its bar
@@ -99,9 +99,10 @@ white text to about 1.9:1 — while the implosion falls in all four.
 
 ## Theme tokens
 
-Semantic tokens are defined in `global.css` — a `@theme` block for light, a
-`.dark:root` block overriding it for dark. **Prefer a token over a hex** in
-`className`: `bg-card`, `text-dim`, `border-muted`, `text-on-strong`.
+Semantic tokens are defined in `global.css` as a single `@theme` block — the app has one
+colour scheme, and `userInterfaceStyle: "light"` in `app.json` pins the platform to it.
+**Prefer a token over a hex** in `className`: `bg-card`, `text-dim`, `border-muted`,
+`text-on-strong`.
 
 | Token                     | Role                                                  |
 | ------------------------- | ----------------------------------------------------- |
@@ -117,11 +118,10 @@ Semantic tokens are defined in `global.css` — a `@theme` block for light, a
 
 Reach for a raw hex only when the value is computed at runtime (an interpolated
 colour, a gradient stop, a particle) — those go in the `style` prop, since
-`className` cannot express them.
-
-The active scheme comes from `useTheme()` (`hooks/use-theme.tsx`), which starts in
-light deliberately — reading the OS preference caused an inconsistent first paint
-between static render and hydration.
+`className` cannot express them. Two tokens are mirrored in `constants/colors.ts` for
+exactly that case and must move with their definitions: `DIM_INK` is `--color-dim`,
+`MUTED_INK` is `--color-muted`. Copying either hex into a component is the mistake they
+exist to stop.
 
 ## Contrast
 

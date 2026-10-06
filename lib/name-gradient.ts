@@ -18,7 +18,7 @@ import { lerpColor } from '@/modes'
 // so the pair describes how somebody plays rather than what they picked off a menu.
 
 // The two hues the name travels between: Accuracy's opening stop and Speed's closing
-// one, in the theme's own ink.
+// one, in the app's own ink.
 //
 // Not each mode's own first stop, which is what the mode headings lower down the profile
 // use. Accuracy opens on violet and Speed opens on the pink that Accuracy *ends* on, so
@@ -29,11 +29,6 @@ import { lerpColor } from '@/modes'
 //
 // Read from `NAME_INK` rather than from `MODE_GRADIENT` directly, because at 10px these
 // hues *are* the text: see that constant for the contrast this costs and buys.
-export const nameInk = (scheme: NameScheme): readonly [string, string] => NAME_INK[scheme]
-
-// Which theme the name is being drawn in. Read off `NAME_INK`'s own keys rather than
-// imported from the theme hook, so nothing in lib/ reaches into React.
-export type NameScheme = keyof typeof NAME_INK
 
 // What a player's lifetime averages are, as percentages. Null where no hit has been
 // counted — which `saturationFor` reads as zero rather than as a state of its own.
@@ -116,12 +111,9 @@ export function desaturate(hex: string, saturation: number): string {
 
 const LUMINANCE_WEIGHTS = [0.2126, 0.7152, 0.0722] as const
 
-// The two ends of one player's name, in the theme it is being drawn in.
-export function nameStops(
-  { avgAccuracy, avgSpeed }: NameFactors,
-  scheme: NameScheme,
-): [string, string] {
-  const [accuracy, speed] = nameInk(scheme)
+// The two ends of one player's name.
+export function nameStops({ avgAccuracy, avgSpeed }: NameFactors): [string, string] {
+  const [accuracy, speed] = NAME_INK
   return [
     desaturate(accuracy, saturationFor(avgAccuracy)),
     desaturate(speed, saturationFor(avgSpeed)),
@@ -140,9 +132,8 @@ export function nameStops(
 export function nameColors(
   nickname: string,
   factors: NameFactors,
-  scheme: NameScheme,
 ): { char: string; color: string }[] {
-  const [from, to] = nameStops(factors, scheme)
+  const [from, to] = nameStops(factors)
   const letters = Array.from(nickname)
   // A one-character name has no distance to travel, so it wears the opening stop whole
   // rather than dividing by zero and rendering as NaN.

@@ -11,9 +11,8 @@ import Animated, {
 import { scheduleOnRN } from 'react-native-worklets'
 
 import { MenuButton } from '@/components/game/menu-button'
-import { SPECTRUM } from '@/constants/colors'
+import { MUTED_INK, SPECTRUM } from '@/constants/colors'
 import { LAYER } from '@/constants/layers'
-import { useTheme } from '@/hooks/use-theme'
 import { cn } from '@/lib/cn'
 
 // The gradient is a padded backdrop with the card on top, which is how you get a
@@ -71,8 +70,6 @@ export function ModalCard({
   maxHeight?: number
   children: (close: () => void) => ReactNode
 }) {
-  const { colorScheme } = useTheme()
-  const dotColor = colorScheme === 'dark' ? '#2A2B44' : '#D4D0C8'
   const fade = useSharedValue(replacing ? 1 : 0)
   const scale = useSharedValue(1)
   const lift = useSharedValue(replacing ? 0 : ENTER_OFFSET)
@@ -138,7 +135,7 @@ export function ModalCard({
               </View>
               {/* The same 5-dot cross the pause screen closes with, unlabelled — a
                   dialog header already reads as one. */}
-              <MenuButton showLabel={false} onToggle={close} color={dotColor} />
+              <MenuButton showLabel={false} onToggle={close} color={MUTED_INK} />
             </View>
             {children(close)}
           </View>

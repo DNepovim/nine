@@ -28,7 +28,7 @@ export default function Root({ children }: PropsWithChildren) {
             tag from mount on, taking it to the theme's surface on a toggle and to a
             painted screen's own colour while one is up. Which is why the value is here
             and not a `prefers-color-scheme` pair — the tag answers to us, not the OS. */}
-        <meta name="theme-color" content={SURFACE.light} />
+        <meta name="theme-color" content={SURFACE} />
 
         {/* iOS standalone / add-to-home-screen support. */}
         <meta name="apple-mobile-web-app-capable" content="yes" />

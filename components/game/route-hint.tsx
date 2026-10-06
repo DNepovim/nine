@@ -4,7 +4,6 @@ import { Fragment } from 'react'
 import { Text, View } from 'react-native'
 
 import { DIAL_COLORS } from '@/constants/colors'
-import { useTheme } from '@/hooks/use-theme'
 import type { MoveDirection, MoveJump, RouteStep } from '@/machines/scoring'
 import { gradientOf, lerpColor } from '@/modes'
 
@@ -52,26 +51,22 @@ const JUMP_ICON = {
 } as const satisfies Record<MoveJump, IoniconName>
 
 // The miniatures wear the dial's own ramp, so a key in the hint is coloured the way the
-// dial colours keys — pale lavender to periwinkle in light, deep navy to app blue in
-// dark, and the numeral in the dial's ink.
+// dial colours keys — pale lavender to periwinkle, and the numeral in the dial's ink.
 //
 // One difference the dial cannot avoid: it runs the ramp over a button's *value*, where
 // this runs it over the weight. Weight is what a miniature identifies and what the
 // route is about, and it also means a key's colour here does not shift as the run goes
 // on — the hint would be unreadable if ×9 changed shade every time the dial moved.
-const keyColors = (isDark: boolean, weight: number) => {
-  const palette = isDark ? DIAL_COLORS.dark : DIAL_COLORS.light
-  return {
-    background: lerpColor(palette.low, palette.high, (weight - 1) / WEIGHT_SPAN),
-    ink: palette.text,
-  }
-}
+const keyColors = (weight: number) => ({
+  background: lerpColor(DIAL_COLORS.low, DIAL_COLORS.high, (weight - 1) / WEIGHT_SPAN),
+  ink: DIAL_COLORS.text,
+})
 
 // One instruction: the gesture to make, how many times, and on which key. A jump is
 // drawn on its own — it happens once whatever follows it — and the walk after it takes
 // the count.
-function Step({ step, isDark }: { step: RouteStep; isDark: boolean }) {
-  const { background, ink } = keyColors(isDark, step.weight)
+function Step({ step }: { step: RouteStep }) {
+  const { background, ink } = keyColors(step.weight)
   return (
     <View className="flex-row items-center gap-1">
       {step.jump !== null && (
@@ -131,9 +126,6 @@ export function RouteHint({
   // instructions with nothing to attach them to.
   target: number | null
 }) {
-  const { colorScheme } = useTheme()
-  const isDark = colorScheme === 'dark'
-
   // The outer view holds the space open whether or not there is a route; the bordered
   // pill lives inside it and is drawn only when there is. Bordering the outer view
   // instead would leave an empty box on screen for the whole run.
@@ -176,7 +168,7 @@ export function RouteHint({
                 ›
               </Text>
             )}
-            <Step step={step} isDark={isDark} />
+            <Step step={step} />
           </Fragment>
         ))}
         {/* The sum the route reaches, read last because the move ends on it. The

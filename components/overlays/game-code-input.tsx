@@ -10,7 +10,6 @@ import Animated, {
 } from 'react-native-reanimated'
 
 import { DIM_INK } from '@/constants/colors'
-import { useTheme } from '@/hooks/use-theme'
 
 import { CodeKeyboard } from './code-keyboard'
 
@@ -75,12 +74,10 @@ export function GameCodeInput({
   accentColors: [string, string]
   joinError: string | null
 }) {
-  const { colorScheme } = useTheme()
   const accentColor = accentColors[0]
-  // An empty slot: the secondary ink at a quarter strength, themed rather than one fixed
-  // grey — the same colour sat on the light surface and the dark one before this, and
-  // could only be seen on one of them.
-  const empty = DIM_INK[colorScheme] + '40'
+  // An empty slot: the secondary ink at a quarter strength, so it is the same grey as
+  // every other quiet mark on the screen rather than a hex of its own.
+  const empty = DIM_INK + '40'
   const [wrong, setWrong] = useState(false)
   const prevJoinError = useRef(joinError)
 

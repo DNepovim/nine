@@ -8,7 +8,6 @@ import { StrikeShot } from '@/components/game/strike-shot'
 import { PIE_SIZE } from '@/constants/game'
 import { SUM_ROW_HEIGHT } from '@/hooks/use-dial-metrics'
 import { useStrikeShots, type ShotAim } from '@/hooks/use-strike-shots'
-import { useTheme } from '@/hooks/use-theme'
 import { valueProgress } from '@/lib/value-progress'
 import type { HitBatch, HitInfo } from '@/machines/game'
 import { NINE_DIAL, type Grid, type Mode } from '@/modes'
@@ -62,8 +61,6 @@ export function StrikeVariant({
   targets: 1 | 2
   onClose: () => void
 }) {
-  const { colorScheme } = useTheme()
-  const isDark = colorScheme === 'dark'
   const shown = SHOWN.slice(0, targets)
   // The press, replayed on every tap. A fresh seq is what both halves read as a hit.
   const [batch, setBatch] = useState<HitBatch>({ seq: 0, hits: [] })
@@ -122,7 +119,6 @@ export function StrikeVariant({
               <PieCountdown
                 maxValue={NINE_DIAL.maxSum}
                 value={target.value}
-                isDark={isDark}
                 active={false}
                 clocked
                 duration={10_000}
@@ -142,7 +138,6 @@ export function StrikeVariant({
                     key={arr.length - 1 - i}
                     digit={digit}
                     direction={1}
-                    isDark={isDark}
                     progress={valueProgress(sum, NINE_DIAL.maxSum)}
                   />
                 ))}

@@ -6,7 +6,6 @@ import { Text, View } from 'react-native'
 
 import { TrackedPressable } from '@/components/tracked-pressable'
 import { DIM_INK } from '@/constants/colors'
-import { useTheme } from '@/hooks/use-theme'
 import { PERIOD_CODES, type Medal } from '@/lib/medals'
 import { rankMedal } from '@/lib/rank-emoji'
 import { DIFFICULTIES, gradientOf } from '@/modes'
@@ -28,7 +27,6 @@ export function MedalLine({
   onPress?: () => void
 }) {
   const { t } = useLingui()
-  const { colorScheme } = useTheme()
   if (isEmptyArray(medals)) return null
 
   const entries = (
@@ -83,7 +81,7 @@ export function MedalLine({
       className="flex-row items-center justify-center gap-1.5"
     >
       {entries}
-      <Ionicons name="chevron-forward" size={10} color={DIM_INK[colorScheme]} />
+      <Ionicons name="chevron-forward" size={10} color={DIM_INK} />
     </TrackedPressable>
   )
 }

@@ -8,7 +8,6 @@ import { popupAccent, PopupCardView } from '@/components/overlays/popup-card-vie
 import { PageDots } from '@/components/page-dots'
 import { TrackedPressable } from '@/components/tracked-pressable'
 import { DIM_INK } from '@/constants/colors'
-import { useTheme } from '@/hooks/use-theme'
 import { useViewport } from '@/hooks/use-viewport'
 import { cn } from '@/lib/cn'
 import type { PopupCard } from '@/types/popup'
@@ -28,7 +27,6 @@ export function WhatsNewOverlay({
 }) {
   const [index, setIndex] = useState(0)
   const { height } = useViewport()
-  const { colorScheme } = useTheme()
 
   const card = cards[index]
   if (card === undefined) return null
@@ -79,7 +77,7 @@ export function WhatsNewOverlay({
                   isFirst && 'opacity-[0.3]',
                 )}
               >
-                <Ionicons name="arrow-back" size={14} color={DIM_INK[colorScheme]} />
+                <Ionicons name="arrow-back" size={14} color={DIM_INK} />
                 <Text
                   selectable={false}
                   className="font-mono text-[12px] font-black tracking-[1.5px] text-dim"

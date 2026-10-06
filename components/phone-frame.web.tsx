@@ -51,12 +51,11 @@ export function PhoneFrame({ children }: { children: ReactNode }) {
 
   return (
     <View className="flex-1 items-center justify-center bg-card">
-      {/* Faint enough that it reads as a texture rather than a picture, and fainter
-          again in the dark theme, where a lit photograph carries further. */}
+      {/* Faint enough that it reads as a texture rather than a picture. */}
       <Image
         source={{ uri: BACKDROP(seed) }}
         resizeMode="cover"
-        className="absolute inset-0 opacity-10 dark:opacity-5"
+        className="absolute inset-0 opacity-10"
       />
       <View
         className="overflow-hidden rounded-[46px] bg-strong"

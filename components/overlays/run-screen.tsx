@@ -9,7 +9,6 @@ import { StatRow } from '@/components/overlays/stat-row'
 import { Screen } from '@/components/screen'
 import { TrackedPressable } from '@/components/tracked-pressable'
 import { DIM_INK } from '@/constants/colors'
-import { useTheme } from '@/hooks/use-theme'
 import type { RunStat } from '@/lib/run-stats'
 
 // The screen a run stops on, whichever engine was running it and whichever way it
@@ -218,11 +217,10 @@ export function RunExit({
   label: ReactNode
   onPress: () => void
 }) {
-  const { colorScheme } = useTheme()
   return (
     <TrackedPressable id="run_screen.tertiary" onPress={onPress} hitSlop={10}>
       <View className="flex-row items-center gap-1">
-        <Ionicons name={icon} size={10} color={DIM_INK[colorScheme]} />
+        <Ionicons name={icon} size={10} color={DIM_INK} />
         <Text
           selectable={false}
           className="font-mono text-[10px] font-bold tracking-[1.8px] text-dim"

@@ -83,7 +83,7 @@ export function BestScoreCell({
   // Whether this board's record is the player's own. All it decides is the ink of the
   // word below, which is the only thing gold is spent on here.
   mine?: boolean
-  // Gold that reads as text on the active theme — see GOLD_INK.
+  // Gold that reads as text rather than as a background — see GOLD_INK.
   mineColor?: string
   // Whether the live score is close enough to this bar to nudge the player toward it —
   // see lib/near-record.ts. Never true on more than one cell at once, since only the

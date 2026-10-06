@@ -1,7 +1,6 @@
 import { Text } from 'react-native'
 
 import { GOLD_INK } from '@/constants/colors'
-import { useTheme } from '@/hooks/use-theme'
 import { cn } from '@/lib/cn'
 
 // How wide a column of figures is. Four points wider than it was, bought for the caret
@@ -33,7 +32,6 @@ export function CompareValue({
   // unjudged one, and both halves of a tie.
   tone: 'lead' | 'trail' | 'plain'
 }) {
-  const { colorScheme } = useTheme()
   return (
     <Text
       selectable={false}
@@ -43,7 +41,7 @@ export function CompareValue({
         'text-right font-mono text-[11px] font-bold',
         tone === 'trail' ? 'text-dim' : 'text-primary',
       )}
-      style={tone === 'lead' ? { color: GOLD_INK[colorScheme] } : undefined}
+      style={tone === 'lead' ? { color: GOLD_INK } : undefined}
     >
       {/* The caret hangs off the left of the figure rather than displacing it: the column
           is right-aligned, so the digits of the two sides stay under each other whichever

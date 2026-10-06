@@ -34,16 +34,12 @@ const LABEL: Record<Locale, string> = {
   cs: 'CS',
 }
 
-// Two named choices rather than the theme's on-or-off, but the same mechanism: a knob
-// that slides under fixed labels. Language and theme sit in adjacent rows of the
-// options screen and are the same kind of decision, so they should not look like two
-// different species of control.
+// Two named choices, picked with a knob that slides under fixed labels.
 //
-// The knob is `elevated` and the label on it `primary`, which is the one pairing that
-// inverts with the theme — near-white under near-black ink in light, near-black under
-// near-light ink in dark. The obvious-looking `strong` is a trap here: it is the
-// primary *button* background, and in the light theme it is the same hex as `primary`,
-// so an active label drawn that way is invisible rather than merely low-contrast.
+// The knob is `elevated` and the label on it `primary`: near-white under near-black ink.
+// The obvious-looking `strong` is a trap here — it is the primary *button* background and
+// the same hex as `primary`, so an active label drawn that way is invisible rather than
+// merely low-contrast.
 export function LocaleToggle({
   locale,
   onSelect,

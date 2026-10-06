@@ -2,16 +2,7 @@ import { describe, expect, it } from 'vitest'
 
 import { NAME_INK } from '@/constants/colors'
 
-import {
-  desaturate,
-  nameColors,
-  nameInk,
-  nameStops,
-  saturationFor,
-  type NameScheme,
-} from './name-gradient'
-
-const SCHEMES = ['light', 'dark'] as const satisfies readonly NameScheme[]
+import { desaturate, nameColors, nameStops, saturationFor } from './name-gradient'
 
 const channels = (hex: string): [number, number, number] => [
   parseInt(hex.slice(1, 3), 16),
@@ -83,11 +74,11 @@ describe('saturationFor', () => {
 
 describe('desaturate', () => {
   it('returns the hue untouched at full saturation', () => {
-    expect(desaturate(NAME_INK.light[0], 1)).toBe(NAME_INK.light[0])
+    expect(desaturate(NAME_INK[0], 1)).toBe(NAME_INK[0])
   })
 
   it('collapses to a grey with no hue left at zero', () => {
-    const [r, g, b] = channels(desaturate(NAME_INK.dark[1], 0))
+    const [r, g, b] = channels(desaturate(NAME_INK[1], 0))
     expect(r).toBe(g)
     expect(g).toBe(b)
   })
@@ -96,12 +87,10 @@ describe('desaturate', () => {
     // The reason this fades toward a luminance-matched grey rather than toward white or
     // black: a name has to stay readable at every saturation, and only a fade that
     // leaves lightness alone keeps the contrast it was designed with.
-    for (const scheme of SCHEMES) {
-      for (const hue of NAME_INK[scheme]) {
-        const full = relativeLuminance(hue)
-        for (const stop of [0, 0.25, 0.5, 0.75, 1]) {
-          expect(relativeLuminance(desaturate(hue, stop))).toBeCloseTo(full, 1)
-        }
+    for (const hue of NAME_INK) {
+      const full = relativeLuminance(hue)
+      for (const stop of [0, 0.25, 0.5, 0.75, 1]) {
+        expect(relativeLuminance(desaturate(hue, stop))).toBeCloseTo(full, 1)
       }
     }
   })
@@ -113,32 +102,28 @@ describe('desaturate', () => {
     // Case-insensitive because `lerpColor` hands back its endpoint untouched at the ends
     // of the range, and a stop may be written in either case.
     for (const stop of [0, 0.1, 0.37, 0.9, 1]) {
-      expect(desaturate(NAME_INK.dark[1], stop)).toMatch(/^#[0-9a-fA-F]{6}$/)
+      expect(desaturate(NAME_INK[1], stop)).toMatch(/^#[0-9a-fA-F]{6}$/)
     }
   })
 })
 
 describe('nameStops', () => {
-  it('gives a player at the top of both factors the theme ink outright', () => {
-    for (const scheme of SCHEMES) {
-      expect(nameStops({ avgAccuracy: 100, avgSpeed: 100 }, scheme)).toEqual([
-        ...nameInk(scheme),
-      ])
-    }
+  it('gives a player at the top of both factors the name ink outright', () => {
+    expect(nameStops({ avgAccuracy: 100, avgSpeed: 100 })).toEqual([...NAME_INK])
   })
 
   it('grades each end by its own factor', () => {
     // The point of the whole feature: an exact but slow player is violet at the front
     // and grey at the back, and the two ends move independently.
-    const [from, to] = nameStops({ avgAccuracy: 100, avgSpeed: 0 }, 'light')
-    expect(from).toBe(NAME_INK.light[0])
+    const [from, to] = nameStops({ avgAccuracy: 100, avgSpeed: 0 })
+    expect(from).toBe(NAME_INK[0])
     const [r, g, b] = channels(to)
     expect(r).toBe(g)
     expect(g).toBe(b)
   })
 
   it('draws a player with nothing counted in two greys', () => {
-    const stops = nameStops({ avgAccuracy: null, avgSpeed: null }, 'dark')
+    const stops = nameStops({ avgAccuracy: null, avgSpeed: null })
     for (const stop of stops) {
       const [r, g, b] = channels(stop)
       expect(r).toBe(g)
@@ -146,59 +131,41 @@ describe('nameStops', () => {
     }
   })
 
-  it('gives each theme its own pair', () => {
-    const factors = { avgAccuracy: 90, avgSpeed: 90 }
-    expect(nameStops(factors, 'light')).not.toEqual(nameStops(factors, 'dark'))
-  })
-
   // The guard on NAME_INK. A name is text at 10px, and the mode scale it is derived from
   // is tuned to be a colour rather than to carry one — the raw stops fall to about 2.9:1
-  // on the light card, which is why the pairs are shifted at all. Any future adjustment
-  // has to keep clearing this on every surface at every saturation, including the grey
-  // a blank career fades to.
-  it.each([
-    ['light', ['#f3efe9', '#e8e4dc']],
-    ['dark', ['#0b0c14', '#16172a']],
-  ] as const)(
-    'clears 4.5:1 on both %s surfaces at every saturation',
-    (scheme, grounds) => {
-      for (const average of [null, 0, 25, 50, 75, 100, 140]) {
-        for (const stop of nameStops(
-          { avgAccuracy: average, avgSpeed: average },
-          scheme,
-        )) {
-          for (const ground of grounds) {
-            expect(contrast(stop, ground)).toBeGreaterThanOrEqual(4.5)
-          }
+  // on the card, which is why the pair is shifted at all. Any future adjustment has to
+  // keep clearing this on both surfaces at every saturation, including the grey a blank
+  // career fades to.
+  it('clears 4.5:1 on both surfaces at every saturation', () => {
+    for (const average of [null, 0, 25, 50, 75, 100, 140]) {
+      for (const stop of nameStops({ avgAccuracy: average, avgSpeed: average })) {
+        for (const ground of ['#f3efe9', '#e8e4dc']) {
+          expect(contrast(stop, ground)).toBeGreaterThanOrEqual(4.5)
         }
       }
-    },
-  )
+    }
+  })
 })
 
 describe('nameColors', () => {
   const full = { avgAccuracy: 100, avgSpeed: 100 }
 
   it('anchors the first and last characters to the two stops', () => {
-    const letters = nameColors('DOMINO', full, 'light')
+    const letters = nameColors('DOMINO', full)
     expect(letters).toHaveLength(6)
-    expect(letters[0]?.color).toBe(NAME_INK.light[0])
-    expect(letters[5]?.color).toBe(NAME_INK.light[1])
+    expect(letters[0]?.color).toBe(NAME_INK[0])
+    expect(letters[5]?.color).toBe(NAME_INK[1])
   })
 
   it('keeps the characters in order and unchanged', () => {
-    expect(nameColors('ACE', full, 'light').map((letter) => letter.char)).toEqual([
-      'A',
-      'C',
-      'E',
-    ])
+    expect(nameColors('ACE', full).map((letter) => letter.char)).toEqual(['A', 'C', 'E'])
   })
 
   it('walks code points, not UTF-16 units', () => {
     // A nickname with an emoji or a combining mark in it keeps its characters whole —
     // splitting on `.length` would tear a surrogate pair in half and colour the halves
     // differently, which renders as two replacement glyphs.
-    expect(nameColors('A🎯B', full, 'light').map((letter) => letter.char)).toEqual([
+    expect(nameColors('A🎯B', full).map((letter) => letter.char)).toEqual([
       'A',
       '🎯',
       'B',
@@ -206,12 +173,12 @@ describe('nameColors', () => {
   })
 
   it('gives a one-character name the opening stop rather than dividing by zero', () => {
-    const letters = nameColors('J', full, 'dark')
+    const letters = nameColors('J', full)
     expect(letters).toHaveLength(1)
-    expect(letters[0]?.color).toBe(NAME_INK.dark[0])
+    expect(letters[0]?.color).toBe(NAME_INK[0])
   })
 
   it('answers an empty nickname with nothing to draw', () => {
-    expect(nameColors('', full, 'light')).toEqual([])
+    expect(nameColors('', full)).toEqual([])
   })
 })

@@ -6,7 +6,6 @@ import { Text, View } from 'react-native'
 import { LocaleToggle } from '@/components/locale-toggle'
 import { OptionCheckbox } from '@/components/overlays/option-checkbox'
 import { Screen } from '@/components/screen'
-import { ThemeToggle } from '@/components/theme-toggle'
 import { TrackedPressable } from '@/components/tracked-pressable'
 import { DIM_INK } from '@/constants/colors'
 import { useLocale } from '@/hooks/use-locale'
@@ -53,19 +52,15 @@ function AdvancedOption({
 }
 
 export function AdvancedOptionsOverlay({
-  isDark,
   showSum,
   onToggleSum,
-  onToggleTheme,
   replayConsent,
   onToggleReplayConsent,
   onOpenNews,
   onClose,
 }: {
-  isDark: boolean
   showSum: boolean
   onToggleSum: () => void
-  onToggleTheme: () => void
   // Whichever of the three the player answered the recording banner with, or 'unknown'
   // if it has not come up yet — read as a plain checkbox either way: checked is
   // 'granted', unchecked is everything else. See hooks/use-replay-consent.ts.
@@ -99,17 +94,6 @@ export function AdvancedOptionsOverlay({
         onToggle={onToggleReplayConsent}
       />
 
-      {/* Theme */}
-      <View className="flex-row items-center justify-between py-3" style={{ width: 300 }}>
-        <Text
-          selectable={false}
-          className="font-mono text-[13px] font-black tracking-[1px] text-primary"
-        >
-          <Trans>THEME</Trans>
-        </Text>
-        <ThemeToggle isDark={isDark} onToggle={onToggleTheme} />
-      </View>
-
       {/* Language */}
       <View className="flex-row items-center justify-between py-3" style={{ width: 300 }}>
         <Text
@@ -134,7 +118,7 @@ export function AdvancedOptionsOverlay({
         >
           <Trans>WHAT’S NEW</Trans>
         </Text>
-        <AntDesign name="right" size={14} color={DIM_INK[isDark ? 'dark' : 'light']} />
+        <AntDesign name="right" size={14} color={DIM_INK} />
       </TrackedPressable>
 
       {/* Build stamp — the line to quote in a bug report. */}

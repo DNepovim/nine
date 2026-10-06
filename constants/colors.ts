@@ -2,9 +2,9 @@ import type { TargetBand } from '@/types/game'
 
 // Brand + value-tint palettes shared across the game UI.
 
-// The screen background per theme. Anything that needs to hide what is behind it —
-// the announcement sweep, the theme cross-fade — paints in these.
-export const SURFACE = { light: '#F3EFE9', dark: '#0B0C14' } as const
+// The screen background. Anything that needs to hide what is behind it — the
+// announcement sweep, a curtain — paints in this.
+export const SURFACE = '#F3EFE9'
 
 export const APP_BLUE = '#4C7EFF'
 export const APP_RED = '#E5534B'
@@ -22,26 +22,29 @@ export const SPECTRUM = ['#4C7EFF', '#7273D2', '#c36282', '#E5534B'] as const
 export const GOLD_SCALE = ['#FFD166', '#FF8C00', '#FFE8A3', '#F4A261'] as const
 
 // Gold as *text*, which GOLD_SCALE cannot be: the scale is a background palette, and
-// #FFD166 on the light surface is about 1.26:1 — invisible. So the mark that says a
-// record is yours carries its own pair.
+// #FFD166 on the surface is about 1.26:1 — invisible. So the mark that says a record is
+// yours carries its own ink.
 //
-// The light stop is as yellow as the parchment surface allows. Yellow is a light hue by
-// nature, so on #F3EFE9 it runs out of contrast long before it runs out of brightness:
-// this goldenrod is about 2.9:1, and anything more vivid stops being a mark and starts
-// being a smudge. Dark has no such problem and takes the vivid one.
-export const GOLD_INK = { light: '#B8860B', dark: '#FFD24A' } as const
+// As yellow as the parchment surface allows. Yellow is a light hue by nature, so on
+// #F3EFE9 it runs out of contrast long before it runs out of brightness: this goldenrod
+// is about 2.9:1, and anything more vivid stops being a mark and starts being a smudge.
+export const GOLD_INK = '#B8860B'
 
 // The `--color-dim` token as JavaScript, for the places a colour is computed instead of
 // classed: an icon's `color` prop, a text input's placeholder, a worklet interpolating
-// between two inks. Both values are the ones in global.css and must move with them —
-// before this existed the same two hexes were copied into a dozen components, and half
-// of those copies were a single fixed grey that only held up in one theme.
+// between two inks. The value is the one in global.css and must move with it — before
+// this existed the same hex was copied into a dozen components.
 //
-// Both stops clear 4.5:1 on their own surface *and* on the card above it: about 5.1:1 and
-// 4.6:1 in light, 5.0:1 and 4.5:1 in dark. That is as light as this ink goes — the card is
-// the tighter of the two backgrounds, and a step further drops it under the bar. Secondary
-// text is still the app's quietest voice; it is no longer the one nobody can read.
-export const DIM_INK = { light: '#6A655C', dark: '#7F7DA3' } as const
+// It clears 4.5:1 on the surface *and* on the card above it: about 5.1:1 and 4.6:1. That
+// is as light as this ink goes — the card is the tighter of the two backgrounds, and a
+// step further drops it under the bar. Secondary text is still the app's quietest voice;
+// it is no longer the one nobody can read.
+export const DIM_INK = '#6A655C'
+
+// The `--color-muted` token as JavaScript, for the same reason DIM_INK is: the dot menu
+// takes its colour as a prop rather than as a class. Never text — this is the hairline
+// weight, well under the contrast a word needs.
+export const MUTED_INK = '#D4D0C8'
 
 // Earning an achievement: the one hue the app had left. Modes own blue through amber,
 // gold marks a board record you *currently hold*, teal means multiplayer and grey means a
@@ -58,96 +61,84 @@ export const ACHIEVEMENT_BAR_INK = '#12210F'
 // The achievement green as *text*, which ACHIEVEMENT_SCALE cannot be — same reason and
 // same shape as GOLD_INK. The scale is tuned to carry ink, not to be it: #3FBF5F on the
 // parchment surface is about 2.3:1. So the mark that says an achievement is earned
-// carries its own pair: about 5.4:1 on #F3EFE9, about 10:1 on #0B0C14.
-export const ACHIEVEMENT_INK = { light: '#217A3D', dark: '#7FE08A' } as const
+// carries its own ink: about 5.4:1 on #F3EFE9.
+export const ACHIEVEMENT_INK = '#217A3D'
 
 // A player's nickname, which is drawn in a gradient from Accuracy's hue to Speed's with
 // each end faded by that player's lifetime average in the factor — see
 // lib/name-gradient.ts for the colour, and the profile modal for where it explains
 // itself.
 //
-// A themed pair for the same reason GOLD_INK and ACHIEVEMENT_INK are pairs: the mode
-// scale is tuned to *be* a colour, not to carry text at 10px. `gradientOf('speed')[1]`
-// on the light card is about 2.9:1, and the grey a new player's name fades to is about
-// 3.6:1 on the dark card — both under the 4.5:1 the app's own `text-dim` holds.
+// Its own pair for the same reason GOLD_INK and ACHIEVEMENT_INK are their own inks: the
+// mode scale is tuned to *be* a colour, not to carry text at 10px. `gradientOf('speed')[1]`
+// on the card is about 2.9:1, under the 4.5:1 the app's own `text-dim` holds.
 //
-// So the light pair is the two mode stops taken 23% toward black and the dark pair is
-// them taken 4% toward white. Both hues move by the same amount in each theme, which is
-// what keeps the gradient between them even — shifting one stop alone would put a bend
-// in the middle of every name.
+// So these are the two mode stops taken 23% toward black. Both hues move by the same
+// amount, which is what keeps the gradient between them even — shifting one stop alone
+// would put a bend in the middle of every name.
 //
 // Only the hues themselves are tuned, because `desaturate` fades toward a grey of equal
 // relative luminance and contrast is a function of luminance alone: a name at a blank
 // career has the same contrast as one at a perfect career. The worst case across both
-// surfaces of a theme is about 4.53:1 in light and 4.54:1 in dark, and
-// `name-gradient.test.ts` holds every saturation to it.
+// surfaces is about 4.53:1, and `name-gradient.test.ts` holds every saturation to it.
 //
 // The ordering matches `nameStops`: accuracy first, speed second.
-export const NAME_INK = {
-  light: ['#5859a2', '#b0403a'],
-  dark: ['#7879d4', '#e65a52'],
-} as const satisfies Record<'light' | 'dark', readonly [string, string]>
+export const NAME_INK = ['#5859a2', '#b0403a'] as const satisfies readonly [
+  string,
+  string,
+]
 
 // Losing a record you held: the colour drained out. Kept to mid-tones with the app's
-// faint violet cast — a true black-to-white ramp would put half its steps on the wrong
-// side of one surface or the other, where these read on both.
+// faint violet cast.
 export const GRAYSCALE = ['#5F5C6E', '#7A7688', '#95919F', '#B0ACB8'] as const
 
-// The map an arcade run is drawn on: three weights of one ink, themed.
+// The map an arcade run is drawn on: three weights of one ink.
 //
 // Its own named palette and deliberately *not* `GRAYSCALE` — those four greys mean a record
 // that was taken off you, and a map drawn in the colour of loss would be saying something it
 // does not mean.
 //
-// Most-present to least-present in both themes, which means the ramp runs dark to light on
-// the parchment surface and light to dark on the night one. `line` carries outlines and
-// buildings, `hatch` the hachures and shading, `faint` the graticule. The knockout a mark
-// fills itself with before it is inked is the `surface` token itself, so it is invisible by
-// construction in both themes.
-export const MAP_INK = {
-  light: { line: '#6A655C', hatch: '#8E8A80', faint: '#BDB8AC' },
-  dark: { line: '#7F7DA3', hatch: '#5E5C7C', faint: '#3B3A52' },
-} as const satisfies Record<
-  'light' | 'dark',
-  { line: string; hatch: string; faint: string }
->
+// Most-present to least-present, so the ramp runs dark to light on the parchment surface.
+// `line` carries outlines and buildings, `hatch` the hachures and shading, `faint` the
+// graticule. The knockout a mark fills itself with before it is inked is the `surface`
+// token itself, so it is invisible by construction.
+export const MAP_INK = { line: '#6A655C', hatch: '#8E8A80', faint: '#BDB8AC' } as const
 
 // Arcade's amber as *text*, which `gradientOf('arcade')` cannot be — same reason and same
 // shape as GOLD_INK. #FF8C00 on the parchment surface is about 2:1: a fine stroke, a fine
 // fill, and an invisible label. So the one place arcade's colour has to *be* the text —
-// the ARCADE label on its own screen, and the depth under it — carries its own pair:
-// about 5.3:1 on #F3EFE9, about 8.3:1 on #0B0C14.
-//
-// Light is the amber taken down toward brown, which is as yellow as that surface allows
-// before a label stops being a colour and starts being a smudge. Dark takes the vivid one.
-export const ARCADE_INK = { light: '#9A4F06', dark: '#FF8C00' } as const
+// the ARCADE label on its own screen, and the depth under it — carries its own ink, the
+// amber taken down toward brown: about 5.3:1 on #F3EFE9. That is as yellow as this
+// surface allows before a label stops being a colour and starts being a smudge.
+export const ARCADE_INK = '#9A4F06'
 
 // The game's whole scale, blue through to the arcade amber — every mode's colour at
-// once. All five are mid-tone, so unlike white they read on both themes.
+// once.
 export const GAME_SCALE = ['#4C7EFF', '#7273D2', '#c36282', '#E5534B', '#FF8C00'] as const
 
 // The countdown pie's track — the part revealed as the arc drains — tints by the
 // target's hundreds band, so the band reads as area rather than as a digit you have
 // to parse. The numeral sits directly on this, so these stay near the plain track's
-// lightness: light theme carries the near-black `pie` ink, dark theme white. Band 0
-// keeps the untinted track, which makes "no colour" the sub-100 signal.
+// lightness. Band 0 keeps the untinted track, which makes "no colour" the sub-100 signal.
 // The countdown numeral's ink as a value, for the one place that has to animate away
 // from it: a lost target's number crossfades to white. Mirrors `--color-pie` in
 // global.css — the token still paints it everywhere else, and the two are one colour.
-export const PIE_INK = { light: '#171421', dark: '#FFFFFF' } as const
+export const PIE_INK = '#171421'
 
 export const TARGET_BAND_TRACK = {
-  light: { 0: '#D4D0C8', 1: '#CFCBEE', 2: '#EBC7D2', 3: '#F2DCB4' },
-  dark: { 0: '#2A2B44', 1: '#2E2A55', 2: '#4A2434', 3: '#4A3213' },
-} as const satisfies Record<'light' | 'dark', Record<TargetBand, string>>
+  0: MUTED_INK,
+  1: '#CFCBEE',
+  2: '#EBC7D2',
+  3: '#F2DCB4',
+} as const satisfies Record<TargetBand, string>
 
 type Palette = { low: string; high: string }
 
 // Dial buttons tint by value across an on-brand cool gradient: 0 → 8 rides the
-// low → high ramp (light: pale lavender → periwinkle; dark: deep navy → app
-// blue), then 9 wears the mode's dark CTA gradient (DARK_MODE_GRADIENT) with
-// the digit in `peakText` — so the maximum reads as its own state, not one more
-// step. The peak background lives with the modes; only its ink is here.
+// low → high ramp (pale lavender → periwinkle), then 9 wears the mode's dark CTA
+// gradient (DARK_MODE_GRADIENT) with the digit in `peakText` — so the maximum reads
+// as its own state, not one more step. The peak background lives with the modes; only
+// its ink is here.
 //
 // Trainee's weight and max badges reuse `low` + `text` as a fixed chip rather
 // than inking text straight onto the ramp: that was tried first and measured as
@@ -165,38 +156,26 @@ type DialPalette = Palette & {
 const PEAK_RED = '#FFC0B8'
 
 export const DIAL_COLORS = {
-  light: {
-    low: '#ECEAF7',
-    high: '#8296FF',
-    text: '#1C1928',
-    peakText: PEAK_RED,
-  },
-  dark: {
-    low: '#1E2036',
-    high: '#4C7EFF',
-    text: '#C8C2E8',
-    peakText: PEAK_RED,
-  },
-} as const satisfies Record<'light' | 'dark', DialPalette>
+  low: '#ECEAF7',
+  high: '#8296FF',
+  text: '#1C1928',
+  peakText: PEAK_RED,
+} as const satisfies DialPalette
 
 // The score above the dial transitions from the target numbers' background
 // color (APP_BLUE, the pie fill) up to the standard text color.
-export const SCORE_COLORS = {
-  light: { low: APP_BLUE, high: '#1C1928' },
-  dark: { low: APP_BLUE, high: '#D8D2F4' },
-} as const satisfies Record<'light' | 'dark', Palette>
+export const SCORE_COLORS = { low: APP_BLUE, high: '#1C1928' } as const satisfies Palette
 
 // The all-time record turns the whole game-over screen gold, which means every semantic
-// token has to be re-bound for that subtree: GOLD_SCALE is a background palette, and in
-// dark mode the app's inks are light-on-dark — laid straight onto gold they would be
-// unreadable. Applied with `vars()` so the screen's existing classes re-ink themselves
-// rather than every component growing a prop for one case.
+// token has to be re-bound for that subtree: GOLD_SCALE is a background palette, and the
+// app's own tokens are tuned for the parchment surface — laid straight onto gold the
+// quieter ones stop separating. Applied with `vars()` so the screen's existing classes
+// re-ink themselves rather than every component growing a prop for one case.
 //
 // The scale supplies the surfaces; the inks are chosen against #FFD166: near-black for
 // primary (about 12:1), a dark goldenrod for secondary (about 4.6:1 — still clearly
 // softer than primary, and no longer the 3.4:1 it was, which is a line you could see was
-// there and not quite read), and the light theme's darker green for the score, because
-// the dark theme's brighter one falls to about 2:1 on gold.
+// there and not quite read).
 // The gold screen's secondary ink, for the few places a colour is computed in JS
 // instead of coming from a class — those cannot see the re-bound tokens.
 export const GOLD_DIM_INK = '#715919'
@@ -221,8 +200,7 @@ export const GOLD_SCREEN_TOKENS = {
 // the title letters and the score are drawn in, so at full strength it would swallow
 // them; the darkened pair is the app's existing answer to "this colour, carrying text".
 //
-// Its inks are light, and fixed rather than themed: the background is the same darkness
-// whichever way the player has the app set.
+// Its inks are light, against a background that is dark whatever else is on screen.
 export const MODE_SCREEN_TOKENS = {
   '--color-surface': 'transparent',
   '--color-card': 'rgba(255, 255, 255, 0.12)',

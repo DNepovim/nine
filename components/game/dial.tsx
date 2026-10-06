@@ -54,7 +54,6 @@ const NONE = -1
 export function Dial({
   dial,
   values,
-  isDark,
   showSum,
   trainee,
   peakFrom,
@@ -71,7 +70,6 @@ export function Dial({
   dial: DialSpec
   // The digits, row-major.
   values: readonly number[]
-  isDark: boolean
   showSum: boolean
   trainee: boolean
   peakFrom: string
@@ -238,7 +236,6 @@ export function Dial({
               key={index}
               index={index}
               value={values[index] ?? 0}
-              isDark={isDark}
               size={metrics.button}
               weight={weightAt(dial, index)}
               digits={dial.digits}

@@ -13,10 +13,10 @@ import { SURFACE } from '@/constants/colors'
 // the app to write it. `components/screen.tsx` keeps its own live-screen count the same
 // way and for the same reason.
 //
-// The arrangement is a base and a stack of claims over it. The base is the app's surface,
-// pushed by AppThemeProvider on every scheme change — see `setBarBase`. A screen painted
-// in something else claims that colour for as long as it is mounted, and the newest claim
-// wins; releasing is automatic, so a screen cannot leave the bar behind it.
+// The arrangement is a base and a stack of claims over it. The base is the app's surface
+// and never moves. A screen painted in something else claims that colour for as long as it
+// is mounted, and the newest claim wins; releasing is automatic, so a screen cannot leave
+// the bar behind it.
 //
 // The change is a snap, not a fade. Safari cross-fades its own bar and an installed app
 // does not, and there is no way to drive it from a worklet without a DOM write per frame
@@ -25,10 +25,9 @@ import { SURFACE } from '@/constants/colors'
 
 type Claim = { readonly id: string; readonly color: string }
 
-// Seeded with the value app/+html.tsx declares on the tag, so the registry and the
-// document agree from the first frame — before AppThemeProvider's effect has run and
-// said so, and whatever a claim does in the meantime.
-let base: string = SURFACE.light
+// The same value app/+html.tsx declares on the tag, so the registry and the document
+// agree from the first frame, whatever a claim does in the meantime.
+const base = SURFACE
 let claims: readonly Claim[] = []
 
 function paint() {
@@ -38,15 +37,6 @@ function paint() {
   if (Platform.OS !== 'web' || typeof document === 'undefined') return
   const tag = document.querySelector('meta[name="theme-color"]')
   if (tag instanceof HTMLMetaElement) tag.content = claims.at(-1)?.color ?? base
-}
-
-// The colour the bar falls back to with nothing claiming it: the app's surface. Called
-// from AppThemeProvider, which owns *when* — the scheme flips at the top of the theme
-// cross-fade, with the overlay at full opacity, so the bar turns over under cover along
-// with everything else.
-export function setBarBase(color: string) {
-  base = color
-  paint()
 }
 
 // Claim the bar for as long as this component is mounted. `null` claims nothing, so a

@@ -10,7 +10,6 @@ import {
   type AchievementId,
 } from '@/constants/achievements'
 import { ACHIEVEMENT_INK } from '@/constants/colors'
-import { useTheme } from '@/hooks/use-theme'
 import { useViewport } from '@/hooks/use-viewport'
 import { firstEarnedAt, idsOf, stagesOf } from '@/lib/achievement-store'
 import type { AchievementStore } from '@/lib/achievement-store'
@@ -46,7 +45,6 @@ export function AchievementsOverlay({
   facts: AchievementFacts
   onClose: () => void
 }) {
-  const { colorScheme } = useTheme()
   const { height } = useViewport()
   // One date per achievement, the earliest — a staged one shows when it first landed
   // and its pips say the rest.
@@ -69,7 +67,7 @@ export function AchievementsOverlay({
             selectable={false}
             className="mb-2 font-mono text-[10px] font-bold tracking-[1px] text-dim"
           >
-            <Text style={{ color: ACHIEVEMENT_INK[colorScheme] }}>{earnedAt.size}</Text>
+            <Text style={{ color: ACHIEVEMENT_INK }}>{earnedAt.size}</Text>
             {` OF ${ACHIEVEMENT_COUNT} EARNED`}
           </Text>
 

@@ -21,7 +21,6 @@ import {
 import { CROWN_CORONA, ON_GOLD_LABEL_SHADOW } from '@/constants/theme'
 import { useBarColor } from '@/hooks/use-bar-color'
 import { useBoardContext } from '@/hooks/use-board'
-import { useTheme } from '@/hooks/use-theme'
 import type { AchievementStore } from '@/lib/achievement-store'
 import type { AchievementFacts, Award } from '@/lib/achievements'
 import type { Period } from '@/lib/announcements'
@@ -102,12 +101,10 @@ function ChallengeCta({
 function HomeExit({
   onGold,
   painted,
-  dimColor,
   onPress,
 }: {
   onGold: boolean
   painted: boolean
-  dimColor: string
   onPress: () => void
 }) {
   return (
@@ -116,7 +113,7 @@ function HomeExit({
         <Ionicons
           name="home-outline"
           size={10}
-          color={onGold ? GOLD_DIM_INK : painted ? '#FFFFFF' : dimColor}
+          color={onGold ? GOLD_DIM_INK : painted ? '#FFFFFF' : DIM_INK}
         />
         <Text
           selectable={false}
@@ -191,8 +188,6 @@ export function GameOverOverlay({
 }) {
   const { t } = useLingui()
   const titleRef = useRef<View>(null)
-  const { colorScheme } = useTheme()
-  const dimColor = DIM_INK[colorScheme]
   const challenge = runChallenge(gameMode, difficulty, hits, strikes)
   // Named so the catalog carries one `TRY {modeName}` shared with the step-up toast,
   // and so a translation can put the rung wherever its own grammar wants it.
@@ -375,14 +370,7 @@ export function GameOverOverlay({
           />
         )
       }
-      exits={
-        <HomeExit
-          onGold={onGold}
-          painted={painted}
-          dimColor={dimColor}
-          onPress={onMenu}
-        />
-      }
+      exits={<HomeExit onGold={onGold} painted={painted} onPress={onMenu} />}
     />
   )
 }

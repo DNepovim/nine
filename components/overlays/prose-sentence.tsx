@@ -1,7 +1,6 @@
 import { Text } from 'react-native'
 
 import { GOLD_INK } from '@/constants/colors'
-import { useTheme } from '@/hooks/use-theme'
 import type { Segment, SegmentKind, Sentence } from '@/lib/prose'
 
 // One sentence of prose. A few words in it are coloured — a nickname, a board, a takeover —
@@ -25,10 +24,8 @@ const SEGMENT_CLASS = {
 } as const satisfies Record<SegmentKind, string>
 
 export function ProseSentence({ sentence }: { sentence: Sentence }) {
-  const { colorScheme } = useTheme()
-
   const colorFor = (segment: Segment): string | undefined => {
-    if (segment.kind === 'takeover') return GOLD_INK[colorScheme]
+    if (segment.kind === 'takeover') return GOLD_INK
     return segment.color
   }
 

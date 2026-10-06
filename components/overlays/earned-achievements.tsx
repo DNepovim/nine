@@ -7,7 +7,6 @@ import { AchievementDetail } from '@/components/overlays/achievement-detail'
 import { TrackedPressable } from '@/components/tracked-pressable'
 import { ACHIEVEMENTS, type AchievementId } from '@/constants/achievements'
 import { ACHIEVEMENT_INK } from '@/constants/colors'
-import { useTheme } from '@/hooks/use-theme'
 import type { AchievementStore } from '@/lib/achievement-store'
 import {
   achievementCard,
@@ -45,7 +44,6 @@ export function EarnedAchievements({
   halo?: boolean
 }) {
   const { t } = useLingui()
-  const { colorScheme } = useTheme()
   // Which chip's card is open, or null. Held here rather than by the game over screen:
   // the row is the only thing that knows a chip was tapped, and nothing else on that
   // screen has to care that this opened.
@@ -88,7 +86,7 @@ export function EarnedAchievements({
                 className="font-mono text-[9px] font-black leading-[13px] tracking-[1px]"
                 // The chip sits on its own surface, so the halo is only for the label
                 // outside it — inside, the ink just has to suit the card.
-                style={halo ? null : { color: ACHIEVEMENT_INK[colorScheme] }}
+                style={halo ? null : { color: ACHIEVEMENT_INK }}
               >
                 {t(ACHIEVEMENTS[award.id].title)}
                 {award.stage === null ? '' : ` · ${t(STAGE_CODE[award.stage])}`}

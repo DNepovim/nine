@@ -22,7 +22,6 @@ import { useFlag } from '@/hooks/use-flags'
 import type { LostMedalNews } from '@/hooks/use-lost-medals'
 import { useOnline } from '@/hooks/use-online'
 import { EMPTY_IDS, usePlayerFactors } from '@/hooks/use-player-factors'
-import { useTheme } from '@/hooks/use-theme'
 import { useViewport } from '@/hooks/use-viewport'
 import { championMark } from '@/lib/champions'
 import { cn } from '@/lib/cn'
@@ -180,8 +179,6 @@ export function MenuOverlay({
   onOpenAdmin: () => void
 }) {
   const { t } = useLingui()
-  const { colorScheme } = useTheme()
-  const dimColor = DIM_INK[colorScheme]
   // Same mark the leaderboard, the pause screen and a room wear beside this
   // player's name — worn here over the title itself, since the title is this
   // player's too.
@@ -505,7 +502,7 @@ export function MenuOverlay({
                     nothing under here can do anything useful without a connection. */}
                 {!online && (
                   <View className="absolute inset-0 items-center justify-center gap-3 bg-surface px-6">
-                    <Ionicons name="cloud-offline-outline" size={32} color={dimColor} />
+                    <Ionicons name="cloud-offline-outline" size={32} color={DIM_INK} />
                     <Text
                       selectable={false}
                       className="font-mono text-[11px] font-black tracking-[2px] text-dim"
@@ -565,7 +562,7 @@ export function MenuOverlay({
           <View className="flex-row flex-wrap items-center justify-center gap-x-5 gap-y-2">
             <TrackedPressable id="menu.options" onPress={onOpenAdvanced} hitSlop={10}>
               <View className="flex-row items-center gap-1">
-                <Ionicons name="settings-outline" size={10} color={dimColor} />
+                <Ionicons name="settings-outline" size={10} color={DIM_INK} />
                 <Text
                   selectable={false}
                   className="font-mono text-[10px] font-bold tracking-[1.8px] text-dim"
@@ -598,7 +595,7 @@ export function MenuOverlay({
               hitSlop={10}
             >
               <View className="flex-row items-center gap-1">
-                <Ionicons name="share-outline" size={10} color={dimColor} />
+                <Ionicons name="share-outline" size={10} color={DIM_INK} />
                 <Text
                   selectable={false}
                   className="font-mono text-[10px] font-bold tracking-[1.8px] text-dim"
@@ -609,7 +606,7 @@ export function MenuOverlay({
             </TrackedPressable>
             <TrackedPressable id="menu.how_to_play" onPress={onHowToPlay} hitSlop={10}>
               <View className="flex-row items-center gap-1">
-                <Ionicons name="help-circle-outline" size={11} color={dimColor} />
+                <Ionicons name="help-circle-outline" size={11} color={DIM_INK} />
                 <Text
                   selectable={false}
                   className="font-mono text-[10px] font-bold tracking-[1.8px] text-dim"
@@ -629,7 +626,7 @@ export function MenuOverlay({
             <View className="flex-row flex-wrap items-center justify-center gap-x-5 gap-y-2">
               <TrackedPressable id="menu.dev" onPress={onOpenDev} hitSlop={10}>
                 <View className="flex-row items-center gap-1">
-                  <Ionicons name="code-slash-outline" size={10} color={dimColor} />
+                  <Ionicons name="code-slash-outline" size={10} color={DIM_INK} />
                   <Text
                     selectable={false}
                     className="font-mono text-[10px] font-bold tracking-[1.8px] text-dim"
@@ -641,7 +638,7 @@ export function MenuOverlay({
               {showAdmin && (
                 <TrackedPressable id="menu.admin" onPress={onOpenAdmin} hitSlop={10}>
                   <View className="flex-row items-center gap-1">
-                    <Ionicons name="shield-outline" size={10} color={dimColor} />
+                    <Ionicons name="shield-outline" size={10} color={DIM_INK} />
                     <Text
                       selectable={false}
                       className="font-mono text-[10px] font-bold tracking-[1.8px] text-dim"

@@ -2,7 +2,6 @@ import { Text, View } from 'react-native'
 
 import { GradientName } from '@/components/gradient-name'
 import { GOLD_INK } from '@/constants/colors'
-import { useTheme } from '@/hooks/use-theme'
 import type { ChampionMark } from '@/lib/champions'
 import { cn } from '@/lib/cn'
 import { shortName } from '@/lib/short-name'
@@ -54,7 +53,6 @@ export function CompareHeadSide({
   wins: number
   tone: 'lead' | 'trail' | 'plain'
 }) {
-  const { colorScheme } = useTheme()
   return (
     <View className="flex-1 items-center gap-0.5">
       <View className="justify-center" style={{ height: MARK_BOX }}>
@@ -83,7 +81,7 @@ export function CompareHeadSide({
           'font-mono text-[15px] font-black tracking-[1px]',
           tone === 'trail' ? 'text-dim' : 'text-primary',
         )}
-        style={tone === 'lead' ? { color: GOLD_INK[colorScheme] } : undefined}
+        style={tone === 'lead' ? { color: GOLD_INK } : undefined}
       >
         {wins}
       </Text>

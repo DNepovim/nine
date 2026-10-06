@@ -21,7 +21,6 @@ import { mono } from '@/constants/theme'
 import type { RecordHolder } from '@/hooks/use-board'
 import { useOnline } from '@/hooks/use-online'
 import { useOpenProfile } from '@/hooks/use-profile-modal'
-import { useTheme } from '@/hooks/use-theme'
 import { announcementStyle } from '@/lib/announcement-style'
 import { RUN_SETTLE_MS, type Announcement } from '@/lib/announcements'
 import { nearestRecord } from '@/lib/near-record'
@@ -167,7 +166,6 @@ export function BestScoresLine({
   everHolder: RecordHolder | null
 }) {
   const { t } = useLingui()
-  const { colorScheme } = useTheme()
   const openProfile = useOpenProfile()
   const online = useOnline()
   const [dsegLoaded] = useFonts({ DSEG7: DSEG7Font })
@@ -287,7 +285,6 @@ export function BestScoresLine({
   }
 
   const digitFont = dsegLoaded ? 'DSEG7' : mono
-  const mineColor = GOLD_INK[colorScheme === 'dark' ? 'dark' : 'light']
   // An untouched board reads as 0 rather than vanishing and leaving a ragged row.
   // Offline, the three server-backed keys are dropped instead — see the note that
   // fills their place below — since a 0 there would misreport an empty board rather
@@ -343,7 +340,7 @@ export function BestScoresLine({
               holder={holder}
               sub={sub}
               mine={mine}
-              mineColor={mineColor}
+              mineColor={GOLD_INK}
               pulsing={key === nearKey}
               // The run stops first. A profile is a card to read, and reading it while
               // the targets keep coming is losing a run to a tap.

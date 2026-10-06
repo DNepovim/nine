@@ -59,7 +59,6 @@ import { useArcadeRun, type ArcadePhase } from '@/hooks/use-arcade-run'
 import { SUM_ROW_HEIGHT } from '@/hooks/use-dial-metrics'
 import { usePersistedRose } from '@/hooks/use-persisted-rose'
 import { useScoreDirection } from '@/hooks/use-score-direction'
-import { useTheme } from '@/hooks/use-theme'
 import {
   mouthStub,
   pitchFor,
@@ -253,9 +252,8 @@ type BudSpec = {
   fortified: boolean
 }
 
-export function ArcadeGame({ isDark, onEnd }: { isDark: boolean; onEnd: () => void }) {
+export function ArcadeGame({ onEnd }: { onEnd: () => void }) {
   const insets = useSafeAreaInsets()
-  const { colorScheme } = useTheme()
   const run = useArcadeRun()
   const [canvas, setCanvas] = useState({ width: 0, height: 0 })
 
@@ -644,11 +642,8 @@ export function ArcadeGame({ isDark, onEnd }: { isDark: boolean; onEnd: () => vo
 
   const sum = sumOf(ARCADE_DIAL, run.grid)
   const direction = useScoreDirection(sum)
-  const arcadeInk = ARCADE_INK[colorScheme]
-  const ink = MAP_INK[colorScheme]
   // What every mark on the map fills itself with before it is inked: the theme's own ground,
   // so the knockout is invisible except where it covers something.
-  const surface = SURFACE[colorScheme]
 
   return (
     <ScreenLayer>
@@ -666,10 +661,10 @@ export function ArcadeGame({ isDark, onEnd }: { isDark: boolean; onEnd: () => vo
             already finished without it. */}
         <View className="px-4 py-2">
           <RunTopBar
-            accent={arcadeInk}
+            accent={ARCADE_INK}
             title={<Trans>ARCADE</Trans>}
             subtitle={here?.name.toUpperCase() ?? ''}
-            wordmark={arcadeInk}
+            wordmark={ARCADE_INK}
             onPause={run.dialable ? run.pause : null}
           />
           {/* The hearts, in the row the game screen keeps them in and drawn by the same
@@ -684,11 +679,7 @@ export function ArcadeGame({ isDark, onEnd }: { isDark: boolean; onEnd: () => vo
               quietly stop matching the run if it were changed. */}
           <View className="mt-1.5 flex-row gap-1">
             {Array.from({ length: HEARTS }, (_, i) => (
-              <HeartIcon
-                key={i}
-                filled={i < run.hearts}
-                emptyColor={isDark ? '#1C1D30' : '#FDFCFA'}
-              />
+              <HeartIcon key={i} filled={i < run.hearts} emptyColor={'#FDFCFA'} />
             ))}
           </View>
         </View>
@@ -733,9 +724,9 @@ export function ArcadeGame({ isDark, onEnd }: { isDark: boolean; onEnd: () => vo
                       feature={feature}
                       pitch={pitch}
                       turn={camTurn}
-                      line={ink.line}
-                      hatch={ink.hatch}
-                      knockout={surface}
+                      line={MAP_INK.line}
+                      hatch={MAP_INK.hatch}
+                      knockout={SURFACE}
                     />
                   ))}
                   {stems.map((stem) => (
@@ -753,7 +744,7 @@ export function ArcadeGame({ isDark, onEnd }: { isDark: boolean; onEnd: () => vo
                       creepFrom={stem.creepFrom}
                       fade={stem.fade}
                       gradientId={stem.gradientId}
-                      aheadInk={ink.line}
+                      aheadInk={MAP_INK.line}
                       amber={AMBER}
                       ember={EMBER}
                     />
@@ -763,7 +754,7 @@ export function ArcadeGame({ isDark, onEnd }: { isDark: boolean; onEnd: () => vo
                       x={stub.toX}
                       y={stub.toY}
                       fade={mouthFade}
-                      ring={ink.hatch}
+                      ring={MAP_INK.hatch}
                       ember={EMBER}
                     />
                   )}
@@ -780,11 +771,11 @@ export function ArcadeGame({ isDark, onEnd }: { isDark: boolean; onEnd: () => vo
                       delay={bud.delay}
                       fortified={bud.fortified}
                       edge={BUD_EDGE}
-                      ink={PIE_INK[colorScheme]}
+                      ink={PIE_INK}
                       turn={camTurn}
-                      line={ink.line}
-                      hatch={ink.hatch}
-                      face={surface}
+                      line={MAP_INK.line}
+                      hatch={MAP_INK.hatch}
+                      face={SURFACE}
                     />
                   ))}
                 </Animated.View>
@@ -796,7 +787,7 @@ export function ArcadeGame({ isDark, onEnd }: { isDark: boolean; onEnd: () => vo
                     x={skipped.fromX}
                     y={skipped.fromY}
                     turn={camTurn}
-                    ink={arcadeInk}
+                    ink={ARCADE_INK}
                   />
                 )}
                 {/* The fight, over the ground it is fought on. Outside the group above,
@@ -811,9 +802,9 @@ export function ArcadeGame({ isDark, onEnd }: { isDark: boolean; onEnd: () => vo
                     villageY={pointsOf(here.pos, pitch).y}
                     heroX={hero.x + stand.x}
                     heroY={hero.y + stand.y}
-                    ink={PIE_INK[colorScheme]}
-                    line={ink.line}
-                    face={surface}
+                    ink={PIE_INK}
+                    line={MAP_INK.line}
+                    face={SURFACE}
                   />
                 )}
                 {/* The name of the place just reached, under the flame. Keyed on the crossroad,
@@ -826,7 +817,7 @@ export function ArcadeGame({ isDark, onEnd }: { isDark: boolean; onEnd: () => vo
                     y={pointsOf(here.pos, pitch).y}
                     name={here.name}
                     turn={camTurn}
-                    ink={arcadeInk}
+                    ink={ARCADE_INK}
                   />
                 )}
                 <ArcadeHero
@@ -844,7 +835,7 @@ export function ArcadeGame({ isDark, onEnd }: { isDark: boolean; onEnd: () => vo
                   amber={AMBER}
                   ember={EMBER}
                   core={HERO_CORE}
-                  smoke={ink.hatch}
+                  smoke={MAP_INK.hatch}
                 />
               </Animated.View>
             </Animated.View>
@@ -857,9 +848,9 @@ export function ArcadeGame({ isDark, onEnd }: { isDark: boolean; onEnd: () => vo
           <CompassRose
             turn={camTurn}
             northUp={northUp}
-            line={ink.line}
-            hatch={ink.hatch}
-            knockout={surface}
+            line={MAP_INK.line}
+            hatch={MAP_INK.hatch}
+            knockout={SURFACE}
             onToggle={() => {
               setNorthUp((was) => !was)
             }}
@@ -868,7 +859,7 @@ export function ArcadeGame({ isDark, onEnd }: { isDark: boolean; onEnd: () => vo
           {/* The words the run opens on, over the canvas and nothing else: the dial stays
               where it is, dimmed, so the first thing a player sees of arcade is the place
               being set out rather than a board already dealt. */}
-          {dawn && <ArcadeDawn ink={arcadeInk} />}
+          {dawn && <ArcadeDawn ink={ARCADE_INK} />}
         </View>
 
         {/* ── The way out of a fight ── */}
@@ -892,12 +883,12 @@ export function ArcadeGame({ isDark, onEnd }: { isDark: boolean; onEnd: () => vo
                 onPress={run.flee}
                 hitSlop={10}
                 className="flex-row items-center gap-1 rounded-full border px-4 py-1.5"
-                style={{ borderColor: arcadeInk }}
+                style={{ borderColor: ARCADE_INK }}
               >
                 <Text
                   selectable={false}
                   className="font-mono text-[12px] font-black leading-[16px] tracking-[2px]"
-                  style={{ color: arcadeInk }}
+                  style={{ color: ARCADE_INK }}
                 >
                   <Trans>RETREAT · −1</Trans>
                 </Text>
@@ -918,7 +909,6 @@ export function ArcadeGame({ isDark, onEnd }: { isDark: boolean; onEnd: () => vo
                   key={all.length - 1 - i}
                   digit={digit}
                   direction={direction}
-                  isDark={isDark}
                   progress={valueProgress(sum, ARCADE_DIAL.maxSum)}
                 />
               ))}
@@ -931,7 +921,6 @@ export function ArcadeGame({ isDark, onEnd }: { isDark: boolean; onEnd: () => vo
         <Dial
           dial={ARCADE_DIAL}
           values={run.grid.flat()}
-          isDark={isDark}
           showSum={false}
           trainee={false}
           controls={run.dialable ? undefined : ALL_OFF}

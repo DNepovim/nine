@@ -79,8 +79,8 @@ describe('glassTones', () => {
   })
 
   it('survives a colour with nowhere left to go', () => {
-    // The letters run through white at the peak of a mode switch, and black is what a
-    // dark theme's ink would hand this. Neither may produce a channel off the end.
+    // The letters run through white at the peak of a mode switch, and the app's own
+    // primary ink is near enough to black. Neither may produce a channel off the end.
     for (const base of ['#ffffff', '#000000']) {
       for (const tone of tones(base)) {
         expect(tone).toMatch(RGBA)

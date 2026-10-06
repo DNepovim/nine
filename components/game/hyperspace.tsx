@@ -21,8 +21,8 @@ const MAX_OPACITY = 0.85
 // streak lies on its own ray out of the centre, which is what sells the direction.
 //
 // The palette comes from the announcement rather than being fixed here, and every
-// colour it is given is mid-tone, so this needs no theme variant: they read on both
-// the light and dark surfaces where white would vanish on one.
+// colour it is given is mid-tone, so a streak reads against the surface where white
+// would wash out on it.
 export function Hyperspace({ colors }: { colors: readonly [string, ...string[]] }) {
   const { width, height } = useViewport()
 

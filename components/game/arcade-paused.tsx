@@ -6,7 +6,6 @@ import { PauseMark } from '@/components/overlays/pause-mark'
 import { RunScreen } from '@/components/overlays/run-screen'
 import { TrackedPressable } from '@/components/tracked-pressable'
 import { ARCADE_INK, DIM_INK } from '@/constants/colors'
-import { useTheme } from '@/hooks/use-theme'
 import { arcadeStats } from '@/lib/run-stats'
 import { darkGradientOf } from '@/modes'
 
@@ -37,8 +36,6 @@ export function ArcadePaused({
   onContinue: () => void
   onEnd: () => void
 }) {
-  const { colorScheme } = useTheme()
-
   return (
     <RunScreen
       overRun
@@ -47,7 +44,7 @@ export function ArcadePaused({
       // captioned, because unlike a score it is not obvious what the number counts.
       score={{
         value: depth,
-        color: ARCADE_INK[colorScheme],
+        color: ARCADE_INK,
         caption: <Trans>CROSSROADS DEEP</Trans>,
       }}
       stats={arcadeStats(strikes, taken, playedMs)}
@@ -59,7 +56,7 @@ export function ArcadePaused({
       exits={
         <TrackedPressable id="arcade_paused.end_run" onPress={onEnd} hitSlop={10}>
           <View className="flex-row items-center gap-1">
-            <Ionicons name="home-outline" size={10} color={DIM_INK[colorScheme]} />
+            <Ionicons name="home-outline" size={10} color={DIM_INK} />
             <Text
               selectable={false}
               className="font-mono text-[10px] font-bold tracking-[1.8px] text-dim"

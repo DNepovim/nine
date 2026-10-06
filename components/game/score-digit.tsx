@@ -15,13 +15,11 @@ import { mono } from '@/constants/theme'
 export function ScoreDigit({
   digit,
   direction,
-  isDark,
   progress,
   size = 42,
 }: {
   digit: string
   direction: 1 | -1
-  isDark: boolean
   progress: number
   size?: number
 }) {
@@ -55,11 +53,14 @@ export function ScoreDigit({
     )
   }, [digit])
 
-  const palette = isDark ? SCORE_COLORS.dark : SCORE_COLORS.light
   const animStyle = useAnimatedStyle(() => ({
     transform: [{ translateY: translateY.value }],
     opacity: opacity.value,
-    color: interpolateColor(colorProgress.value, [0, 1], [palette.high, palette.low]),
+    color: interpolateColor(
+      colorProgress.value,
+      [0, 1],
+      [SCORE_COLORS.high, SCORE_COLORS.low],
+    ),
   }))
 
   return (
