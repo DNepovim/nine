@@ -7,11 +7,11 @@ import { ScreenLayer } from '@/components/screen'
 import { TrackedPressable } from '@/components/tracked-pressable'
 import { EMPTY_IDS, usePlayerFactors } from '@/hooks/use-player-factors'
 import {
-  findProfileByNickname,
-  listRoledProfiles,
+  findPersonByNickname,
+  listAdminPeople,
   setUserRole,
-  type RoledProfile,
-} from '@/lib/admin-roles'
+  type AdminPerson,
+} from '@/lib/admin/people'
 import { cn } from '@/lib/cn'
 import type { NameFactors } from '@/lib/name-gradient'
 
@@ -72,7 +72,7 @@ function ProfileRow({
   busy,
   onPick,
 }: {
-  profile: RoledProfile
+  profile: AdminPerson
   // What this profile's name is coloured by, from the list's one lookup. A player is
   // the same colour here as on a board row, and the handful of people who open this
   // screen are the ones most likely to recognise each other by it.
@@ -111,13 +111,13 @@ function ProfileRow({
 // screen's own writes are the only thing that can move a row on or off it, so there is
 // nothing to poll for.
 export function AdminOverlay({ onClose }: { onClose: () => void }) {
-  const [rows, setRows] = useState<RoledProfile[]>([])
+  const [rows, setRows] = useState<AdminPerson[]>([])
   const [loading, setLoading] = useState(true)
   const [listError, setListError] = useState<string | null>(null)
 
   const [query, setQuery] = useState('')
   const [searching, setSearching] = useState(false)
-  const [searchResult, setSearchResult] = useState<RoledProfile | null>(null)
+  const [searchResult, setSearchResult] = useState<AdminPerson | null>(null)
   const [searchError, setSearchError] = useState<string | null>(null)
 
   const [busyId, setBusyId] = useState<string | null>(null)
@@ -134,7 +134,7 @@ export function AdminOverlay({ onClose }: { onClose: () => void }) {
 
   useEffect(() => {
     void (async () => {
-      const res = await listRoledProfiles()
+      const res = await listAdminPeople()
       setRows(res.rows)
       setListError(res.error)
       setLoading(false)
@@ -147,7 +147,7 @@ export function AdminOverlay({ onClose }: { onClose: () => void }) {
     setSearching(true)
     setSearchError(null)
     setSearchResult(null)
-    const res = await findProfileByNickname(trimmed)
+    const res = await findPersonByNickname(trimmed)
     setSearching(false)
     if (res.error !== null) {
       setSearchError(res.error)
@@ -161,12 +161,12 @@ export function AdminOverlay({ onClose }: { onClose: () => void }) {
   // Shared by the search result and every row in the list below: write the role, then
   // patch whichever of the two places shows this profile rather than reloading either —
   // the list is a snapshot, and a role granted from the search box belongs on it too.
-  const handlePick = async (profile: RoledProfile, role: string | null) => {
+  const handlePick = async (profile: AdminPerson, role: string | null) => {
     setBusyId(profile.id)
     const res = await setUserRole(profile.id, role)
     setBusyId(null)
     if (res.error !== null) return
-    const updated: RoledProfile = { ...profile, role }
+    const updated: AdminPerson = { ...profile, role }
     setSearchResult((current) => (current?.id === profile.id ? updated : current))
     setRows((current) => {
       const withoutRole = role === null
