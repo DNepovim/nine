@@ -1,12 +1,12 @@
 import { useSyncExternalStore } from 'react'
 
-// What the arcade sidebar is looking at, and what it can do to it.
+// What the arcade section of the dev sidebar is looking at, and what it can do to it.
 //
 // Kept in the module rather than in a component, for the reason dev/gallery-state.ts
-// already spells out: on desktop the app runs inside a phone frame and the dev tools sit on
-// the desk outside it, so the two mount points share no parent. Here the gap is wider still
+// already spells out: on desktop the app runs inside a phone frame and the dev column sits
+// on the desk outside it, so the two mount points share no parent. Here the gap is wider still
 // — the run lives in `useArcadeRun`, which is called inside the arcade screen, several
-// layers below the frame. A module-level store is what lets the sidebar reach it without
+// layers below the frame. A module-level store is what lets the section reach it without
 // threading a provider across the frame and down through the app.
 //
 // Not written through to storage, unlike the gallery's. That one remembers which screen you
@@ -53,8 +53,8 @@ export const useArcadeDev = () => useSyncExternalStore(subscribe, snapshot, snap
 //
 // The comparison is what keeps that cheap: a siege bumps the run's `seq` on every warrior
 // that leaves the gate, and announcing an identical snapshot each time would re-render the
-// sidebar at the pace of the fight for nothing. The actions are rebuilt by the hook on each
-// render, so they are deliberately left out of it — what the sidebar needs to re-read them
+// section at the pace of the fight for nothing. The actions are rebuilt by the hook on each
+// render, so they are deliberately left out of it — what the section needs to re-read them
 // is a change to one of the four figures, which is the only thing it draws.
 export const publishArcadeDev = (next: ArcadeDevState | null) => {
   const same =

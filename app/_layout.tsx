@@ -30,22 +30,13 @@ import { captureError, initAnalytics } from '@/lib/analytics'
 import { isDesktopViewport } from '@/lib/desktop'
 import { purgeRetiredStorage } from '@/lib/retired-storage'
 
-// The screen gallery's picker, in development only. Folded away in a production export
-// exactly as the stage is — see the note in app/(tabs)/index.tsx.
+// The dev column — the screen gallery's picker, the arcade tools one section of its list —
+// in development only. Folded away in a production export exactly as the stage is: see the
+// note in app/(tabs)/index.tsx.
 const GallerySwitcher = __DEV__
   ? lazy(async () => {
       const mod = await import('@/dev/gallery')
       return { default: mod.GallerySwitcher }
-    })
-  : null
-
-// The arcade tools, on the same terms and in the same column: a run has a siege in it that
-// is a couple of dozen crossroads away by hand, and reaching it that way is how a thing
-// stops getting looked at. Folded away in a production export exactly as the picker is.
-const ArcadeSidebar = __DEV__
-  ? lazy(async () => {
-      const mod = await import('@/dev/arcade-sidebar')
-      return { default: mod.ArcadeSidebar }
     })
   : null
 
@@ -190,20 +181,15 @@ export default function RootLayout() {
           about it depends on the colour scheme. */}
       <LocaleProvider>
         <AppThemeProvider>
-          {/* A row, so the gallery's picker takes its own column beside the frame rather
-            than floating over it — the frame then centres in what is left. With no
-            picker the row has one child at flex-1, which is the layout as it was.
-            Desktop only: below that width the window *is* the phone and there is no
-            beside. */}
+          {/* A row, so the dev column sits beside the frame rather than floating over it —
+            the frame then centres in what is left. One column and not two: every dev tool
+            there is lives in the picker now. With no picker the row has one child at
+            flex-1, which is the layout as it was. Desktop only: below that width the
+            window *is* the phone and there is no beside. */}
           <View style={{ flex: 1, flexDirection: 'row' }}>
             {GallerySwitcher !== null && desktop && (
               <Suspense fallback={null}>
                 <GallerySwitcher />
-              </Suspense>
-            )}
-            {ArcadeSidebar !== null && desktop && (
-              <Suspense fallback={null}>
-                <ArcadeSidebar />
               </Suspense>
             )}
             {/* Inside the theme provider, so the frame is drawn in the app's own colours

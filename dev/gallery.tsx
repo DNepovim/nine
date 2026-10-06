@@ -18,6 +18,7 @@ import {
 } from '@/constants/achievements'
 import { DEFAULT_DIAL_CORNERS } from '@/constants/dial-hints'
 import { FLAGS } from '@/constants/features'
+import { ArcadeSection } from '@/dev/arcade-section'
 import { GalleryButton } from '@/dev/gallery-button'
 import {
   isVariant,
@@ -1115,6 +1116,9 @@ export function GalleryStage() {
 // Renders outside the frame, on the desk, on desktop only. Never over the app: the
 // point is to look at a screen unobstructed while choosing the next one.
 //
+// The one column every dev tool lives in. The arcade tools had a second one of their own
+// beside it until they moved in as a section of this list — see dev/arcade-section.tsx.
+//
 // Scrolls vertically, and keeps its scrollbar: an earlier version scrolled sideways with
 // the indicator hidden, which on a desktop reads as a dead strip — there is nothing to
 // grab and a wheel does not move it.
@@ -1211,6 +1215,11 @@ export function GallerySwitcher() {
                 ))}
               </View>
             ))}
+
+          {/* Last in the list and under the same gate as the tiers: it is the only section
+              that is about the run rather than about what to put on screen, and a query
+              takes the grouping off entirely — there is nothing in here for it to match. */}
+          {!searching && <ArcadeSection />}
         </ScrollView>
 
         {/* Outside the scroller, so the way back to the app is always reachable however
