@@ -1,6 +1,6 @@
 ---
 name: ship
-description: Ship the current work — first run the `check` suite, then (default) commit on a new branch and open a GitHub PR, or (`ship prod`) commit and push straight to main, and finally offer to deploy to production. Use when finishing a piece of work and you want it committed / PR'd / shipped. Argument, `prod`, controls the mode.
+description: Ship the current work — first run the `check` suite, then (default) commit on a new branch and open a GitHub PR, or (`ship prod`) commit and push straight to main, and finally offer to deploy to production. Use when finishing a piece of work and you want it committed / PR'd / shipped. Argument, `prod`, controls the mode. Last stage of the development cycle: it reads the work item's spec for the why behind the commit, and marks the item shipped.
 ---
 
 # Ship
@@ -18,6 +18,26 @@ Step 0c collects for the branch name.
 Shipping is not deploying. Nothing that happens here reaches a player: pushing
 `main` builds nothing and publishes nothing. Production moves only when someone
 runs the **`deploy`** skill, which Step 3 offers at the end.
+
+## First — the work item (when there is one)
+
+Work that came through the cycle has a folder, and that folder holds the _why_ this
+skill would otherwise have to reconstruct from a diff:
+
+```bash
+grep -H '^Stage:\|^Next:' docs/work/*/spec.md 2>/dev/null
+```
+
+An item whose `Next:` is `/ship <slug>` — or the slug the user named — is this one.
+Read its `spec.md` (the problem, the shape) and its `plan.md` (what was built, what
+`verify` found, what `review` left). Say in one line which item you are shipping.
+
+If its `Stage:` is not `review`, the work skipped a stage. `AskUserQuestion`: run the
+missing stage first (recommended), or ship anyway. Unverified work can be shipped —
+it just must not be shipped _silently_.
+
+No folder, no problem: work that never entered the cycle ships from the diff, exactly
+as before. Read `.claude/skills/sdlc/PROTOCOL.md` only if you need the format.
 
 ## Step 0 — Gate on checks (both modes)
 
@@ -53,6 +73,9 @@ If no migration files changed, skip this step silently.
 Players see announcements in the app's what's-new popup, sourced from
 `constants/news.ts`. Adding one here means it lands in the **same commit** as the
 feature it describes.
+
+The work item's **## Problem** is the best source there is for this: it is already
+written as what was wrong for the player, which is what an announcement answers.
 
 Read the diff and judge whether anything in it is worth telling a player about —
 a new feature, a visible change, something that alters how the game feels. Pure
@@ -128,6 +151,11 @@ If the user cancels at the commit skill's gate, stop here — nothing to push.
 1. `git push -u origin <branch>`
 2. Open the PR:
    `gh pr create --base main --head <branch> --title "<conventional title>" --body "<short summary of what & why>"`
+
+   The body writes itself from the work item: the spec's problem statement, what the
+   acceptance criteria were, and a line on what `verify` and `review` found. Link the
+   spec by path so the reasoning is one click from the diff.
+
 3. Report the PR URL.
 
 ### `ship prod`: push to main
@@ -155,6 +183,18 @@ Two rules on this question:
 - **Treat choosing it as the explicit instruction** the `deploy` skill's gate
   requires — but nothing else does. If the user answers anything other than
   picking that option, do not deploy.
+
+## Step 4 — Close the work item
+
+Only for work that had a folder, and only once Step 2 actually pushed.
+
+Set `Stage: shipped` in `spec.md`, and `Next:` to what is genuinely left — `—` when it
+is on `main` and deployed, `merge the PR` in branch mode, `/deploy` when it is on
+`main` and still waiting. Then add one line under the plan's review section: the
+commit sha, and the PR URL if there is one.
+
+The folder stays. It is the record of why the code looks like this, and `/sdlc` reads
+its header to keep it off the open board.
 
 ## Notes
 

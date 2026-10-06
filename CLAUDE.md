@@ -80,7 +80,29 @@ An achievement's colour is the green nothing else uses (`ACHIEVEMENT_SCALE`), an
 
 - **Extract every string you write.** New copy is not shipped by writing it — run `pnpm i18n:extract` and translate it into Czech. A production build strips the English out of the descriptor, so a message missing from the catalog does not fall back the way it does in dev: it puts its generated id, `trdBEB`, on the player's screen. `pnpm i18n:verify` is the gate.
 
-- **Keep the How to Play guide current.** At the end of every task, check whether the change touched gameplay — controls, targets/timers, modes, difficulty, scoring, streaks, or lives. If so, update the guide (`components/overlays/how-to-play-overlay.tsx`) so it stays accurate.
+- **Keep the How to Play guide current.** At the end of every task, check whether the change touched gameplay — controls, targets/timers, modes, difficulty, scoring, streaks, or lives. If so, update the guide (`components/overlays/how-to-play-overlay.tsx`) so it stays accurate. The **`review`** stage of the cycle is where this check lands for work that came through it.
+
+## Development cycle
+
+Work worth a document goes through seven stages, one skill each, and none of them moves on its own — each stops at its own edge and names the command that follows:
+
+```
+brainstorm → shape → spec → build → verify → review → ship
+```
+
+| Stage           | Skill        | Produces                                                              |
+| --------------- | ------------ | --------------------------------------------------------------------- |
+| **brainstorm**  | `brainstorm` | Costed directions for an itch. Decides nothing. Optional.             |
+| **shape**       | `shape`      | The appetite, the boundary, the rabbit holes, and the **track**.      |
+| **spec**        | `spec`       | The contract: domain words, files, data, gates, acceptance criteria.  |
+| **build**       | `build`      | The code, task by task, against those criteria.                       |
+| **verify**      | `verify`     | A pass or fail per criterion. Hands **backwards** on a failure.       |
+| **code review** | `review`     | `/code-review`, `simplify`, and the house pass. Also hands backwards. |
+| **ship**        | `ship`       | Commit, branch + PR or `main`, and the offer to **`deploy`**.         |
+
+The state lives on disk — `docs/work/<date>-<slug>/spec.md` and `plan.md` — so any stage can be run in a session that knows nothing about the ones before it. `.claude/skills/sdlc/PROTOCOL.md` owns that format; **`sdlc`** is the status board (`/sdlc`) and the dispatcher for work whose stage isn't obvious.
+
+Two escape hatches, both deliberate. `shape` can put an evening's work on the **small** track — shape → build → verify → ship, no spec and no plan file. And a one-line fix skips the cycle entirely: fix it, **`check`**, **`commit`**. Seven stages over a typo is how a process stops being used.
 
 ## Commands
 
