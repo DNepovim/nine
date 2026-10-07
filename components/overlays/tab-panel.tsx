@@ -14,6 +14,7 @@ import { displayRows } from '@/lib/leaderboard-rows'
 import type { Difficulty, Headline } from '@/modes'
 
 import { ScoreRow } from './score-row'
+import { SkeletonPulse } from './skeleton'
 import { SkeletonRow } from './skeleton-row'
 
 // What the local row is called before it has a name on the server.
@@ -87,11 +88,15 @@ export function TabPanel({
 
   if (data.loading) {
     return (
-      <View style={{ width }} className={bodyHeight}>
-        {Array.from({ length: compact ? COMPACT_ROWS : FULL_ROWS }, (_, i) => (
-          <SkeletonRow key={i} />
-        ))}
-      </View>
+      // The same breath the loading profile and comparison cards take, so waiting looks
+      // like one thing wherever in the app you are doing it.
+      <SkeletonPulse className={bodyHeight}>
+        <View style={{ width }}>
+          {Array.from({ length: compact ? COMPACT_ROWS : FULL_ROWS }, (_, i) => (
+            <SkeletonRow key={i} />
+          ))}
+        </View>
+      </SkeletonPulse>
     )
   }
 

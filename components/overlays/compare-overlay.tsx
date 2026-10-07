@@ -4,6 +4,7 @@ import { ScrollView, Text, View } from 'react-native'
 import { CardSection } from '@/components/overlays/card-section'
 import { CompareBoardRow } from '@/components/overlays/compare-board-row'
 import { CompareHead } from '@/components/overlays/compare-head'
+import { CompareSkeleton } from '@/components/overlays/compare-skeleton'
 import { CompareStatRow } from '@/components/overlays/compare-stat-row'
 import { CompareWonRow } from '@/components/overlays/compare-won-row'
 import { ModalCard } from '@/components/overlays/modal-card'
@@ -117,14 +118,9 @@ export function CompareOverlay({
             </View>
           )}
 
-          {myProfile === null && error === null && loading && (
-            <Text
-              selectable={false}
-              className="py-6 text-center font-mono text-[11px] text-dim"
-            >
-              <Trans>LOADING…</Trans>
-            </Text>
-          )}
+          {/* The table's own shape while the viewer's career is being read, rather than a
+              word on a card a fraction of the height the table comes to. */}
+          {myProfile === null && error === null && loading && <CompareSkeleton />}
 
           {comparison !== null &&
             tally !== null &&

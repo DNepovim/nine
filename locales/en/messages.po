@@ -169,7 +169,7 @@ msgstr "— TODAY TOOK NO NAMES —"
 msgid "— TODAY, NOBODY WAS FAST ENOUGH —"
 msgstr "— TODAY, NOBODY WAS FAST ENOUGH —"
 
-#: components/overlays/tab-panel.tsx:119
+#: components/overlays/tab-panel.tsx:124
 msgid "— UNAVAILABLE —"
 msgstr "— UNAVAILABLE —"
 
@@ -267,7 +267,7 @@ msgid "[W] took the all-time [BOARD] record on [D], and still has it."
 msgstr "[W] took the all-time [BOARD] record on [D], and still has it."
 
 #. placeholder {0}: Math.floor(joinedMonths / MONTHS_IN_YEAR)
-#: components/overlays/player-profile-overlay.tsx:242
+#: components/overlays/player-profile-overlay.tsx:243
 msgid "{0, plural, one {joined a year ago} other {joined # years ago}}"
 msgstr "{0, plural, one {joined a year ago} other {joined # years ago}}"
 
@@ -287,7 +287,7 @@ msgstr "{fromDay} {fromMonth} – {toDay} {toMonth}"
 msgid "{hiddenTaken, plural, one {SHOW # MORE} other {SHOW # MORE}}"
 msgstr "{hiddenTaken, plural, one {SHOW # MORE} other {SHOW # MORE}}"
 
-#: components/overlays/player-profile-overlay.tsx:236
+#: components/overlays/player-profile-overlay.tsx:237
 msgid "{joinedMonths, plural, one {joined a month ago} other {joined # months ago}}"
 msgstr "{joinedMonths, plural, one {joined a month ago} other {joined # months ago}}"
 
@@ -308,7 +308,7 @@ msgstr "<0/> won yesterday"
 msgid "<0/> won yesterday and last week"
 msgstr "<0/> won yesterday and last week"
 
-#: components/overlays/player-profile-overlay.tsx:349
+#: components/overlays/player-profile-overlay.tsx:346
 msgid "<0>{shownAchievements}</0> OF {ACHIEVEMENT_COUNT} ACHIEVEMENTS"
 msgstr "<0>{shownAchievements}</0> OF {ACHIEVEMENT_COUNT} ACHIEVEMENTS"
 
@@ -416,7 +416,7 @@ msgstr "A whisker in it, and the whisker is theirs."
 msgid "A whisker in it, and the whisker is yours."
 msgstr "A whisker in it, and the whisker is yours."
 
-#: components/overlays/player-profile-overlay.tsx:67
+#: components/overlays/player-profile-overlay.tsx:68
 #: modes/definitions/accuracy.ts:12
 msgid "ACC"
 msgstr "ACC"
@@ -560,18 +560,18 @@ msgstr "Average 90% speed over a run of 20 hits or more."
 msgid "Average 95% accuracy over a run of 20 hits or more."
 msgstr "Average 95% accuracy over a run of 20 hits or more."
 
-#: components/overlays/player-profile-overlay.tsx:404
+#: components/overlays/player-profile-overlay.tsx:408
 msgid "AVG"
 msgstr "AVG"
 
 #: components/overlays/compare-stat-row.tsx:21
-#: components/overlays/player-profile-overlay.tsx:334
+#: components/overlays/player-profile-overlay.tsx:331
 #: lib/run-stats.ts:44
 msgid "AVG ACC"
 msgstr "AVG ACC"
 
 #: components/overlays/compare-stat-row.tsx:22
-#: components/overlays/player-profile-overlay.tsx:335
+#: components/overlays/player-profile-overlay.tsx:332
 #: lib/run-stats.ts:43
 msgid "AVG SPD"
 msgstr "AVG SPD"
@@ -610,8 +610,8 @@ msgid "Behind, and within reach — two boards would do it."
 msgstr "Behind, and within reach — two boards would do it."
 
 #: components/game/best-scores-line.tsx:55
-#: components/overlays/player-profile-overlay.tsx:395
-#: components/overlays/player-profile-overlay.tsx:409
+#: components/overlays/player-profile-overlay.tsx:399
+#: components/overlays/player-profile-overlay.tsx:413
 msgid "BEST"
 msgstr "BEST"
 
@@ -623,8 +623,8 @@ msgstr "Best scores, up top"
 msgid "BLUR"
 msgstr "BLUR"
 
-#: components/overlays/compare-overlay.tsx:189
-#: components/overlays/player-profile-overlay.tsx:364
+#: components/overlays/compare-overlay.tsx:197
+#: components/overlays/player-profile-overlay.tsx:361
 msgid "BOARDS"
 msgstr "BOARDS"
 
@@ -646,7 +646,7 @@ msgstr "Buttons can show their weight, their ceiling, and what each is giving ri
 msgid "CANCEL"
 msgstr "CANCEL"
 
-#: components/overlays/compare-overlay.tsx:173
+#: components/overlays/compare-overlay.tsx:181
 msgid "CAREER"
 msgstr "CAREER"
 
@@ -674,8 +674,8 @@ msgstr "Choose Add to Home Screen"
 msgid "Climb the way, or fall back."
 msgstr "Climb the way, or fall back."
 
-#: components/overlays/compare-overlay.tsx:234
-#: components/overlays/player-profile-overlay.tsx:504
+#: components/overlays/compare-overlay.tsx:236
+#: components/overlays/player-profile-overlay.tsx:508
 msgid "CLOSE"
 msgstr "CLOSE"
 
@@ -687,11 +687,11 @@ msgstr "Come back to Trainee once you have been scoring a while. It is the only 
 msgid "Comfortable. Comfort is how boards change hands."
 msgstr "Comfortable. Comfort is how boards change hands."
 
-#: components/overlays/compare-overlay.tsx:81
+#: components/overlays/compare-overlay.tsx:90
 msgid "COMPARE"
 msgstr "COMPARE"
 
-#: components/overlays/player-profile-overlay.tsx:485
+#: components/overlays/player-profile-overlay.tsx:489
 msgid "COMPARE WITH ME"
 msgstr "COMPARE WITH ME"
 
@@ -1062,7 +1062,7 @@ msgstr "Hit while most of the ring is left to build your combo streak."
 
 #: components/game/trainee-stats.tsx:64
 #: components/overlays/compare-stat-row.tsx:19
-#: components/overlays/player-profile-overlay.tsx:320
+#: components/overlays/player-profile-overlay.tsx:317
 #: lib/run-stats.ts:47
 msgid "HITS"
 msgstr "HITS"
@@ -1166,7 +1166,7 @@ msgstr "JOIN ROOM"
 msgid "JOIN WITH CODE"
 msgstr "JOIN WITH CODE"
 
-#: components/overlays/player-profile-overlay.tsx:234
+#: components/overlays/player-profile-overlay.tsx:235
 msgid "joined this month"
 msgstr "joined this month"
 
@@ -1254,11 +1254,6 @@ msgstr "Let's multiply"
 msgid "LIGHTNING"
 msgstr "LIGHTNING"
 
-#: components/overlays/compare-overlay.tsx:117
-#: components/overlays/player-profile-overlay.tsx:295
-msgid "LOADING…"
-msgstr "LOADING…"
-
 #: constants/achievements.ts:385
 msgid "LONG HAUL"
 msgstr "LONG HAUL"
@@ -1295,7 +1290,7 @@ msgstr "MAY"
 msgid "MEDALS"
 msgstr "MEDALS"
 
-#: components/overlays/player-profile-overlay.tsx:434
+#: components/overlays/player-profile-overlay.tsx:438
 msgid "MEDALS HELD, EVER"
 msgstr "MEDALS HELD, EVER"
 
@@ -1386,7 +1381,7 @@ msgstr "No lives, no rush."
 msgid "No records fell. They rarely do."
 msgstr "No records fell. They rarely do."
 
-#: components/overlays/player-profile-overlay.tsx:453
+#: components/overlays/player-profile-overlay.tsx:457
 msgid "No runs counted yet."
 msgstr "No runs counted yet."
 
@@ -1442,11 +1437,11 @@ msgstr "Not much happened. [A] took [N] of the [P] days anyone turned up for."
 msgid "NOT NOW"
 msgstr "NOT NOW"
 
-#: components/overlays/tab-panel.tsx:24
+#: components/overlays/tab-panel.tsx:25
 msgid "NOT PUBLISHED"
 msgstr "NOT PUBLISHED"
 
-#: components/overlays/tab-panel.tsx:25
+#: components/overlays/tab-panel.tsx:26
 msgid "NOT SYNCED"
 msgstr "NOT SYNCED"
 
@@ -1726,8 +1721,8 @@ msgid "RUN"
 msgstr "RUN"
 
 #: components/overlays/compare-stat-row.tsx:18
-#: components/overlays/player-profile-overlay.tsx:319
-#: components/overlays/player-profile-overlay.tsx:392
+#: components/overlays/player-profile-overlay.tsx:316
+#: components/overlays/player-profile-overlay.tsx:396
 msgid "RUNS"
 msgstr "RUNS"
 
@@ -1756,7 +1751,7 @@ msgid "SCENIC ROUTE"
 msgstr "SCENIC ROUTE"
 
 #: components/overlays/high-scores.tsx:286
-#: components/overlays/player-profile-overlay.tsx:396
+#: components/overlays/player-profile-overlay.tsx:400
 msgid "SCORE"
 msgstr "SCORE"
 
@@ -1883,7 +1878,7 @@ msgstr "SOMETHING BROKE"
 msgid "Something went wrong, try again"
 msgstr "Something went wrong, try again"
 
-#: components/overlays/player-profile-overlay.tsx:68
+#: components/overlays/player-profile-overlay.tsx:69
 #: modes/definitions/speed.ts:11
 msgid "SPD"
 msgstr "SPD"
@@ -2238,7 +2233,7 @@ msgstr "This is not a contest, it is a demonstration."
 msgid "This one is over. The dial has been kinder to them."
 msgstr "This one is over. The dial has been kinder to them."
 
-#: components/overlays/player-profile-overlay.tsx:273
+#: components/overlays/player-profile-overlay.tsx:274
 msgid "This profile could not be loaded."
 msgstr "This profile could not be loaded."
 
@@ -2260,7 +2255,7 @@ msgid "Thursday"
 msgstr "Thursday"
 
 #: components/overlays/compare-stat-row.tsx:20
-#: components/overlays/player-profile-overlay.tsx:328
+#: components/overlays/player-profile-overlay.tsx:325
 #: lib/run-stats.ts:51
 #: lib/run-stats.ts:85
 msgid "TIME"
@@ -2330,8 +2325,8 @@ msgid "TRY {modeName}"
 msgstr "TRY {modeName}"
 
 #: components/crash-screen.tsx:36
-#: components/overlays/compare-overlay.tsx:106
-#: components/overlays/player-profile-overlay.tsx:284
+#: components/overlays/compare-overlay.tsx:115
+#: components/overlays/player-profile-overlay.tsx:285
 msgid "TRY AGAIN"
 msgstr "TRY AGAIN"
 
@@ -2391,7 +2386,7 @@ msgstr "UP A RUNG"
 msgid "VILLAGES"
 msgstr "VILLAGES"
 
-#: components/overlays/compare-head.tsx:61
+#: components/overlays/compare-head.tsx:81
 msgid "VS"
 msgstr "VS"
 
@@ -2465,13 +2460,13 @@ msgstr "WINNER"
 msgid "With your OK, we'll record a replay of how you play — taps, swipes, what's on screen — so we can see bugs the numbers alone don't show. Every text field, nickname included, is blanked out before it ever leaves your device. Change your mind any time from OPTIONS."
 msgstr "With your OK, we'll record a replay of how you play — taps, swipes, what's on screen — so we can see bugs the numbers alone don't show. Every text field, nickname included, is blanked out before it ever leaves your device. Change your mind any time from OPTIONS."
 
-#: components/overlays/compare-won-row.tsx:42
+#: components/overlays/compare-won-row.tsx:41
 msgid "WON"
 msgstr "WON"
 
 #: components/game/best-scores-line.tsx:59
 #: components/overlays/player-tile.tsx:129
-#: components/overlays/tab-panel.tsx:20
+#: components/overlays/tab-panel.tsx:21
 msgid "YOU"
 msgstr "YOU"
 
@@ -2540,7 +2535,7 @@ msgstr "YOUR MOTTO"
 msgid "Your name appears on the leaderboard."
 msgstr "Your name appears on the leaderboard."
 
-#: components/overlays/compare-overlay.tsx:95
+#: components/overlays/compare-overlay.tsx:104
 msgid "Your profile could not be loaded."
 msgstr "Your profile could not be loaded."
 

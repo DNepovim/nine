@@ -16,6 +16,7 @@ import { ProfileMotto } from '@/components/overlays/profile-motto'
 import { ProfileName } from '@/components/overlays/profile-name'
 import { ProfileReignRow } from '@/components/overlays/profile-reign-row'
 import { ProfileScore } from '@/components/overlays/profile-score'
+import { ProfileSkeleton } from '@/components/overlays/profile-skeleton'
 import { StatCell } from '@/components/overlays/stat-cell'
 import { TitleMark } from '@/components/overlays/title-mark'
 import { TrackedPressable } from '@/components/tracked-pressable'
@@ -287,14 +288,10 @@ export function PlayerProfileOverlay({
                   </View>
                 )}
 
-                {profile === null && error === null && loading && (
-                  <Text
-                    selectable={false}
-                    className="py-6 text-center font-mono text-[11px] text-dim"
-                  >
-                    <Trans>LOADING…</Trans>
-                  </Text>
-                )}
+                {/* The card's own shape while it is being read, rather than a word in
+                  the middle of a card an eighth of its height — which then grew by the
+                  other seven eighths the moment the profile landed. */}
+                {profile === null && error === null && loading && <ProfileSkeleton />}
 
                 {profile !== null && lifetime !== null && (
                   <>
