@@ -5,6 +5,7 @@ import { useFonts } from 'expo-font'
 import { isEmptyArray, isNonEmptyArray, isNonEmptyString } from 'narrowland'
 import { useState } from 'react'
 import { ScrollView, Text, View } from 'react-native'
+import Animated, { FadeInDown } from 'react-native-reanimated'
 
 import DSEG7Font from '@/assets/fonts/DSEG7Classic-Bold.ttf'
 import { CardSection } from '@/components/overlays/card-section'
@@ -17,6 +18,7 @@ import { ProfileName } from '@/components/overlays/profile-name'
 import { ProfileReignRow } from '@/components/overlays/profile-reign-row'
 import { ProfileScore } from '@/components/overlays/profile-score'
 import { ProfileSkeleton } from '@/components/overlays/profile-skeleton'
+import { ShowMore } from '@/components/overlays/show-more'
 import { StatCell } from '@/components/overlays/stat-cell'
 import { TitleMark } from '@/components/overlays/title-mark'
 import { TrackedPressable } from '@/components/tracked-pressable'
@@ -46,6 +48,18 @@ import { codeOf, gradientOf, headlineOf, SCORED_MODES, type Headline } from '@/m
 // The line is here for the same reason the counters' start date was: a player who has
 // been at this a while should not read as someone who turned up this morning.
 const JOINED_ON = '2026-09-22'
+
+// How many stretches the MEDALS HELD, EVER list opens on. A prolific winner carries up to
+// twenty of them — day boards mostly, one per day — and a table that long buries the
+// BOARDS table above it under a scroll the reader has to climb back out of. Seven is the
+// last week of them, which is what a glance at this list is asking about; the rest is a
+// tap away.
+const SHOWN_REIGNS = 7
+
+// How the revealed tail arrives — the comparison table's own step and fade, so a list
+// unfolding here beats at the rate a table assembling there does.
+const STEP_MS = 18
+const FADE_MS = 200
 
 // The mark over the name, a little larger than the intro draws it over the title. The
 // intro's has four glass letters under it to be read against; here it is the first thing
@@ -152,6 +166,7 @@ export function PlayerProfileOverlay({
   const digitFont = dsegLoaded ? 'DSEG7' : mono
   const { profile, loading, error, reload, applyMotto } = usePlayerProfile(userId)
   const [editingMotto, setEditingMotto] = useState(false)
+  const [showAllReigns, setShowAllReigns] = useState(false)
   // The one thing this modal does differently for the player holding the phone. Every
   // number on it still reads the same either way — a profile is public data, and that it
   // is yours changes nothing about what it says, only about what you may rewrite.
@@ -163,6 +178,12 @@ export function PlayerProfileOverlay({
 
   const lifetime = profile === null ? null : lifetimeOf(profile.totals, profile.winnings)
   const rows = profile === null ? [] : boardRows(profile)
+  // Newest first already, so the opening slice is the most recent stretches — the ones a
+  // player is most likely to still be holding, and the open one is the headline of the
+  // list.
+  const reigns = profile === null ? [] : profile.reigns
+  const shownReigns = showAllReigns ? reigns : reigns.slice(0, SHOWN_REIGNS)
+  const hiddenReigns = reigns.length - shownReigns.length
   // Both factors over every hit the player has landed, in either mode — the same pair
   // the game over screen shows for a single run, and the pair the name above is drawn in.
   const { avgAccuracy, avgSpeed } =
@@ -448,16 +469,44 @@ export function PlayerProfileOverlay({
                     something the player lost, which is exactly what it is not. */}
                     {isNonEmptyArray(profile.reigns) && (
                       <CardSection label={t`MEDALS HELD, EVER`}>
-                        {profile.reigns.map((held) => (
-                          <ProfileReignRow
+                        {shownReigns.map((held, index) => (
+                          <Animated.View
                             key={`${held.period}:${held.mode}:${held.difficulty}:${held.from}`}
-                            mode={held.mode}
-                            difficulty={held.difficulty}
-                            period={held.period}
-                            from={held.from}
-                            to={held.to}
-                          />
+                            // Only what the toggle reveals arrives on an animation: the
+                            // rows the card opens on come up with the card, and playing
+                            // them in a second time underneath it would read as the list
+                            // rebuilding itself. The delay counts from the first revealed
+                            // row so the tail drops in one after another rather than as a
+                            // block.
+                            entering={
+                              index < SHOWN_REIGNS
+                                ? undefined
+                                : FadeInDown.delay(
+                                    (index - SHOWN_REIGNS) * STEP_MS,
+                                  ).duration(FADE_MS)
+                            }
+                          >
+                            <ProfileReignRow
+                              mode={held.mode}
+                              difficulty={held.difficulty}
+                              period={held.period}
+                              from={held.from}
+                              to={held.to}
+                            />
+                          </Animated.View>
                         ))}
+
+                        {/* The way into the rest of the career, and back out of it. */}
+                        {(hiddenReigns > 0 || showAllReigns) && (
+                          <ShowMore
+                            id="profile.show_more"
+                            hidden={hiddenReigns}
+                            expanded={showAllReigns}
+                            onToggle={() => {
+                              setShowAllReigns(!showAllReigns)
+                            }}
+                          />
+                        )}
                       </CardSection>
                     )}
 

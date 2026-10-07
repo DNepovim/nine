@@ -1,4 +1,4 @@
-import { Plural, Trans, useLingui } from '@lingui/react/macro'
+import { Trans, useLingui } from '@lingui/react/macro'
 import { isEmptyArray } from 'narrowland'
 import { useState, type ReactNode } from 'react'
 import { ScrollView, Text, View } from 'react-native'
@@ -6,8 +6,8 @@ import Animated, { FadeInDown } from 'react-native-reanimated'
 
 import { CardSection } from '@/components/overlays/card-section'
 import { ModalCard } from '@/components/overlays/modal-card'
+import { ShowMore } from '@/components/overlays/show-more'
 import { TakerName } from '@/components/overlays/taker-name'
-import { TrackedPressable } from '@/components/tracked-pressable'
 import { GRAYSCALE } from '@/constants/colors'
 import { useChampionsContext } from '@/hooks/use-champions'
 import { useViewport } from '@/hooks/use-viewport'
@@ -238,29 +238,16 @@ export function MedalsOverlay({
                 ))
               )}
 
-              {/* The way into the rest of the week, and back out of it. Inside the card
-                  rather than under it, because it belongs to this list and not to the
-                  dialog — and in dim caps rather than as a button, since nothing happens
-                  here but more of what is already on screen. */}
+              {/* The way into the rest of the week, and back out of it. */}
               {(hiddenTaken > 0 || showAllTaken) && (
-                <TrackedPressable
+                <ShowMore
                   id="medals.show_more"
-                  onPress={() => {
+                  hidden={hiddenTaken}
+                  expanded={showAllTaken}
+                  onToggle={() => {
                     setShowAllTaken(!showAllTaken)
                   }}
-                  className="items-center py-2"
-                >
-                  <Text
-                    selectable={false}
-                    className="font-mono text-[9px] font-black tracking-[1.5px] text-dim"
-                  >
-                    {showAllTaken ? (
-                      <Trans>SHOW LESS</Trans>
-                    ) : (
-                      <Plural value={hiddenTaken} one="SHOW # MORE" other="SHOW # MORE" />
-                    )}
-                  </Text>
-                </TrackedPressable>
+                />
               )}
             </CardSection>
           </View>
