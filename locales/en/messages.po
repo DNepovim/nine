@@ -97,7 +97,7 @@ msgstr ""
 "\n"
 "The hero eats. The bar beside the hearts is how fed they are, and every way you walk takes a bite out of it — a smaller bite the fewer moves you took to dial the target, so the tidy route is the one that keeps you fed. Getting dragged back costs the largest bite there is."
 
-#: lib/winnings-lines.ts:40
+#: lib/winnings-lines.ts:66
 msgid " and [B] with [S]"
 msgstr " and [B] with [S]"
 
@@ -181,7 +181,7 @@ msgstr "— TODAY, NOBODY WAS FAST ENOUGH —"
 msgid "— UNAVAILABLE —"
 msgstr "— UNAVAILABLE —"
 
-#: lib/winnings-lines.ts:39
+#: lib/winnings-lines.ts:65
 msgid ", [B] with [S]"
 msgstr ", [B] with [S]"
 
@@ -258,6 +258,14 @@ msgstr "[C] all-time records went down, which is more than most months manage."
 msgid "[C] names across [P] days, and no pattern to speak of. [A] came closest with [N]."
 msgstr "[C] names across [P] days, and no pattern to speak of. [A] came closest with [N]."
 
+#: lib/winnings-lines.ts:45
+msgid "[DATE] was yours — [B] with [S]"
+msgstr "[DATE] was yours — [B] with [S]"
+
+#: lib/winnings-lines.ts:48
+msgid "[DATE] went your way: [B] with [S]"
+msgstr "[DATE] went your way: [B] with [S]"
+
 #: lib/recap-lines.ts:117
 msgid "[W] held [BOARD] until [D], when [O] got in the way of it."
 msgstr "[W] held [BOARD] until [D], when [O] got in the way of it."
@@ -279,7 +287,7 @@ msgstr "[W] took the all-time [BOARD] record on [D], and still has it."
 msgid "{0, plural, one {joined a year ago} other {joined # years ago}}"
 msgstr "{0, plural, one {joined a year ago} other {joined # years ago}}"
 
-#: lib/prose.ts:102
+#: lib/prose.ts:131
 msgid "{day} {month}"
 msgstr "{day} {month}"
 
@@ -493,7 +501,7 @@ msgstr "Add your email and a lost phone stops meaning a lost career. New device,
 msgid "ADD YOUR NICKNAME"
 msgstr "ADD YOUR NICKNAME"
 
-#: components/overlays/winnings-card.tsx:61
+#: components/overlays/winnings-card.tsx:72
 msgid "ADDED TO YOUR FORTUNE"
 msgstr "ADDED TO YOUR FORTUNE"
 
@@ -562,6 +570,10 @@ msgstr "Anything at all — what broke, what annoyed you, what you wish it did. 
 msgid "Anything at all — what broke, what annoyed you, what you wish it did. The mode, difficulty and score you are on go with it."
 msgstr "Anything at all — what broke, what annoyed you, what you wish it did. The mode, difficulty and score you are on go with it."
 
+#: lib/prose.ts:109
+msgid "Apr"
+msgstr "Apr"
+
 #: lib/prose.ts:84
 msgid "APRIL"
 msgstr "APRIL"
@@ -583,6 +595,10 @@ msgstr "ARE YOU WINNING?"
 #: components/overlays/join-room-overlay.tsx:54
 msgid "Ask whoever created the room for their 4-digit code."
 msgstr "Ask whoever created the room for their 4-digit code."
+
+#: lib/prose.ts:113
+msgid "Aug"
+msgstr "Aug"
 
 #: lib/prose.ts:88
 msgid "AUGUST"
@@ -755,7 +771,7 @@ msgstr "CONNECT TO THE INTERNET TO PLAY WITH FRIENDS"
 msgid "CONTINUE"
 msgstr "CONTINUE"
 
-#: app/(tabs)/index.tsx:1868
+#: app/(tabs)/index.tsx:1918
 msgid "Continue the tutorial"
 msgstr "Continue the tutorial"
 
@@ -779,6 +795,10 @@ msgstr "DEAD EYE"
 #: lib/compare-lines.ts:89
 msgid "Dead level. Somebody will have to go and play."
 msgstr "Dead level. Somebody will have to go and play."
+
+#: lib/prose.ts:117
+msgid "Dec"
+msgstr "Dec"
 
 #: lib/prose.ts:92
 msgid "DECEMBER"
@@ -850,7 +870,7 @@ msgstr "EMAIL"
 msgid "Empty the bar and it turns red and starts to pulse: you are starving, and a heart goes every five seconds until you eat."
 msgstr "Empty the bar and it turns red and starts to pulse: you are starving, and a heart goes every five seconds until you eat."
 
-#: machines/tutorial-lesson.ts:233
+#: machines/tutorial-lesson.ts:268
 msgid "EMPTY THE ROW — ONE DRAG, DON’T LIFT"
 msgstr "EMPTY THE ROW — ONE DRAG, DON’T LIFT"
 
@@ -952,6 +972,10 @@ msgstr "FEATURES"
 #: components/overlays/admin-role.tsx:153
 msgid "FEATURES IN THIS STACK"
 msgstr "FEATURES IN THIS STACK"
+
+#: lib/prose.ts:107
+msgid "Feb"
+msgstr "Feb"
 
 #: lib/prose.ts:82
 msgid "FEBRUARY"
@@ -1204,7 +1228,7 @@ msgstr "IN AND OUT"
 msgid "In Speed, go for whichever target sits closest to the current sum — fewer moves means more of the ring left, and the ring is what feeds your combo."
 msgstr "In Speed, go for whichever target sits closest to the current sum — fewer moves means more of the ring left, and the ring is what feeds your combo."
 
-#: lib/winnings-lines.ts:31
+#: lib/winnings-lines.ts:51
 msgid "In the week of [DATE] you took [B] with [S]"
 msgstr "In the week of [DATE] you took [B] with [S]"
 
@@ -1224,6 +1248,10 @@ msgstr "IS THAT YOU?"
 msgid "It went straight to the person who makes this, and it is read. If it gets an answer, you will find one here next time you open the game."
 msgstr "It went straight to the person who makes this, and it is read. If it gets an answer, you will find one here next time you open the game."
 
+#: lib/prose.ts:106
+msgid "Jan"
+msgstr "Jan"
+
 #: lib/prose.ts:81
 msgid "JANUARY"
 msgstr "JANUARY"
@@ -1241,9 +1269,17 @@ msgstr "JOIN WITH CODE"
 msgid "joined this month"
 msgstr "joined this month"
 
+#: lib/prose.ts:112
+msgid "Jul"
+msgstr "Jul"
+
 #: lib/prose.ts:87
 msgid "JULY"
 msgstr "JULY"
+
+#: lib/prose.ts:111
+msgid "Jun"
+msgstr "Jun"
 
 #: lib/prose.ts:86
 msgid "JUNE"
@@ -1337,9 +1373,13 @@ msgstr "LONG HAUL"
 msgid "Lose every life in under ten seconds."
 msgstr "Lose every life in under ten seconds."
 
-#: machines/tutorial-lesson.ts:224
+#: machines/tutorial-lesson.ts:259
 msgid "LOWER NOW — SWIPE A KEY DOWN"
 msgstr "LOWER NOW — SWIPE A KEY DOWN"
+
+#: lib/prose.ts:108
+msgid "Mar"
+msgstr "Mar"
 
 #: lib/prose.ts:83
 msgid "MARCH"
@@ -1356,6 +1396,10 @@ msgstr "Matching every target in its optimal move count builds your streak."
 #: constants/achievements.ts:294
 msgid "MAX MULTIPLIER"
 msgstr "MAX MULTIPLIER"
+
+#: lib/prose.ts:110
+msgid "May"
+msgstr "May"
 
 #: lib/prose.ts:85
 msgid "MAY"
@@ -1476,6 +1520,14 @@ msgstr "No runs, no records, no argument. Yet."
 msgid "NO THANKS"
 msgstr "NO THANKS"
 
+#: lib/winnings-lines.ts:46
+msgid "Nobody beat you on [DATE]: [B] with [S]"
+msgstr "Nobody beat you on [DATE]: [B] with [S]"
+
+#: lib/winnings-lines.ts:54
+msgid "Nobody caught you in the week of [DATE]: [B] with [S]"
+msgstr "Nobody caught you in the week of [DATE]: [B] with [S]"
+
 #: lib/recap-lines.ts:112
 msgid "Nobody could take [BOARD] off [W] once."
 msgstr "Nobody could take [BOARD] off [W] once."
@@ -1517,6 +1569,7 @@ msgid "Not much happened. [A] took [N] of the [P] days anyone turned up for."
 msgstr "Not much happened. [A] took [N] of the [P] days anyone turned up for."
 
 #: components/game/step-up-toast.tsx:116
+#: components/overlays/tutorial-done-modal.tsx:114
 msgid "NOT NOW"
 msgstr "NOT NOW"
 
@@ -1560,6 +1613,10 @@ msgstr "Nothing to choose between you."
 msgid "Nothing yet — a top three on any board puts a medal here."
 msgstr "Nothing yet — a top three on any board puts a medal here."
 
+#: lib/prose.ts:116
+msgid "Nov"
+msgstr "Nov"
+
 #: lib/prose.ts:91
 msgid "NOVEMBER"
 msgstr "NOVEMBER"
@@ -1567,6 +1624,10 @@ msgstr "NOVEMBER"
 #: components/overlays/trainee-display-options.tsx:101
 msgid "NUMBERS ON THE KEYS"
 msgstr "NUMBERS ON THE KEYS"
+
+#: lib/prose.ts:115
+msgid "Oct"
+msgstr "Oct"
 
 #: lib/prose.ts:90
 msgid "OCTOBER"
@@ -1576,7 +1637,7 @@ msgstr "OCTOBER"
 msgid "off for everyone"
 msgstr "off for everyone"
 
-#: lib/winnings-lines.ts:30
+#: lib/winnings-lines.ts:44
 msgid "On [DATE] you took [B] with [S]"
 msgstr "On [DATE] you took [B] with [S]"
 
@@ -1746,6 +1807,10 @@ msgstr "Reach the ×8 multiplier."
 #: components/overlays/multiplayer-game-over.tsx:216
 msgid "READY"
 msgstr "READY"
+
+#: components/overlays/tutorial-done-modal.tsx:76
+msgid "Ready to play for real?"
+msgstr "Ready to play for real?"
 
 #: constants/news.ts:125
 msgid "Records, celebrated"
@@ -1922,6 +1987,10 @@ msgstr "Send feedback, and get an answer back."
 msgid "SENDING…"
 msgstr "SENDING…"
 
+#: lib/prose.ts:114
+msgid "Sep"
+msgstr "Sep"
+
 #: lib/prose.ts:89
 msgid "SEPTEMBER"
 msgstr "SEPTEMBER"
@@ -2069,7 +2138,7 @@ msgstr "STRIKE"
 msgid "STRIKES"
 msgstr "STRIKES"
 
-#: machines/tutorial-lesson.ts:222
+#: machines/tutorial-lesson.ts:257
 msgid "STRUCK — THE NEXT IS YOURS"
 msgstr "STRUCK — THE NEXT IS YOURS"
 
@@ -2081,11 +2150,11 @@ msgstr "Sunday"
 msgid "SURGEON"
 msgstr "SURGEON"
 
-#: machines/tutorial-lesson.ts:228
+#: machines/tutorial-lesson.ts:263
 msgid "SWIPE LEFT TO EMPTY A KEY"
 msgstr "SWIPE LEFT TO EMPTY A KEY"
 
-#: machines/tutorial-lesson.ts:229
+#: machines/tutorial-lesson.ts:264
 msgid "SWIPE RIGHT TO FILL A KEY"
 msgstr "SWIPE RIGHT TO FILL A KEY"
 
@@ -2131,7 +2200,7 @@ msgstr "TAKEN IN THE LAST {HISTORY_DAYS} DAYS"
 msgid "Tap any name — on a board, in a room, on the winners line — and their profile opens: the mark they carry, what they have played, the medals they hold and the records they once held. A name on a leaderboard is a player now, not a row."
 msgstr "Tap any name — on a board, in a room, on the winners line — and their profile opens: the mark they carry, what they have played, the medals they hold and the records they once held. A name on a leaderboard is a player now, not a row."
 
-#: machines/tutorial-lesson.ts:221
+#: machines/tutorial-lesson.ts:256
 msgid "TAP THE KEY THAT GLOWS"
 msgstr "TAP THE KEY THAT GLOWS"
 
@@ -2195,9 +2264,13 @@ msgstr "That code is wrong or has expired — ask for a new one."
 msgid "That does not look like an email address."
 msgstr "That does not look like an email address."
 
-#: machines/tutorial-lesson.ts:238
+#: machines/tutorial-lesson.ts:273
 msgid "THAT IS EVERY MOVE — LET’S TRAIN"
 msgstr "THAT IS EVERY MOVE — LET’S TRAIN"
+
+#: components/overlays/tutorial-done-modal.tsx:70
+msgid "That is every move learned."
+msgstr "That is every move learned."
 
 #: components/overlays/motto-modal.tsx:49
 msgid "That is longer than {MOTTO_MAX} characters."
@@ -2266,7 +2339,7 @@ msgstr "THE LONG WAY"
 msgid "The map turns as you walk, to keep you pointed forward. Tap the compass in the corner if you would rather north stayed at the top of the screen — it remembers whichever you chose."
 msgstr "The map turns as you walk, to keep you pointed forward. Tap the compass in the corner if you would rather north stayed at the top of the screen — it remembers whichever you chose."
 
-#: machines/tutorial-lesson.ts:217
+#: machines/tutorial-lesson.ts:252
 msgid "THE MARK TO MEET"
 msgstr "THE MARK TO MEET"
 
@@ -2294,6 +2367,14 @@ msgstr "The table leans your way, but it is not nailed down."
 #: lib/recap-lines.ts:79
 msgid "The week belonged to [A], [D] excepted — [B] saw to that."
 msgstr "The week belonged to [A], [D] excepted — [B] saw to that."
+
+#: lib/winnings-lines.ts:53
+msgid "The week of [DATE] ended in your hands: [B] with [S]"
+msgstr "The week of [DATE] ended in your hands: [B] with [S]"
+
+#: lib/winnings-lines.ts:52
+msgid "The week of [DATE] was yours — [B] with [S]"
+msgstr "The week of [DATE] was yours — [B] with [S]"
 
 #: lib/recap-lines.ts:74
 msgid "The week was [A]’s outright — every day of it, and not one of them close."
@@ -2475,6 +2556,7 @@ msgstr "TRN"
 
 #: components/game/step-up-toast.tsx:100
 #: components/overlays/game-over-overlay.tsx:90
+#: components/overlays/tutorial-done-modal.tsx:98
 msgid "TRY {modeName}"
 msgstr "TRY {modeName}"
 
@@ -2676,6 +2758,10 @@ msgstr "You are up, with just enough left over for them to want."
 msgid "You are winning, which is not the same as having won."
 msgstr "You are winning, which is not the same as having won."
 
+#: lib/winnings-lines.ts:47
+msgid "You finished [DATE] on top of [B] with [S]"
+msgstr "You finished [DATE] on top of [B] with [S]"
+
 #: lib/compare-lines.ts:69
 msgid "You have ground to make up and the runs to make it in."
 msgstr "You have ground to make up and the runs to make it in."
@@ -2733,6 +2819,6 @@ msgstr "Your Speed combo now grows on every quick hit instead of waiting for a c
 "\n"
 "Land a target with most of its ring still full and it pays extra."
 
-#: machines/tutorial-lesson.ts:218
+#: machines/tutorial-lesson.ts:253
 msgid "YOUR TOTAL — BRING IT LEVEL"
 msgstr "YOUR TOTAL — BRING IT LEVEL"

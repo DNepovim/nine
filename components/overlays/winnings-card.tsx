@@ -53,19 +53,23 @@ export function WinningsCard({ blocks }: { blocks: readonly AwardBlock[] }) {
         ))}
       </View>
 
-      <View className="mt-4 flex-row items-baseline justify-between gap-3 border-t border-muted pt-3">
+      {/* The figure over its label rather than beside it. Read as a row, the two competed:
+          a caption as wide as the card put the number it describes out at the far edge,
+          where it read as the last item of the list above rather than as its sum. Centred
+          and stacked, the number is the thing and the words under it say what it is. */}
+      <View className="mt-4 items-center border-t border-muted pt-3">
         <Text
           selectable={false}
-          className="font-mono text-[9px] font-bold tracking-[1px] text-dim"
-        >
-          <Trans>ADDED TO YOUR FORTUNE</Trans>
-        </Text>
-        <Text
-          selectable={false}
-          className="font-mono text-[15px] font-black tracking-[1px]"
+          className="font-mono text-[22px] font-black tracking-[1px]"
           style={{ color: ACCENT }}
         >
           +{total.toLocaleString()}
+        </Text>
+        <Text
+          selectable={false}
+          className="mt-1 font-mono text-[9px] font-bold tracking-[1px] text-dim"
+        >
+          <Trans>ADDED TO YOUR FORTUNE</Trans>
         </Text>
       </View>
     </View>

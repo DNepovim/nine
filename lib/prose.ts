@@ -92,12 +92,41 @@ export const MONTHS = [
   msg`DECEMBER`,
 ] as const
 
-// One day, as it is named inside a sentence: "5 OCTOBER", and in Czech "5. října". The dot
-// belongs to the template rather than to the number, because it is Czech ordinal
+// The same twelve clipped, for a sentence that names a date rather than being titled with
+// one. Indexed the same way.
+//
+// Sentence case, not capitals: these sit inside prose — "On 5 Oct you took" — where a
+// shouted month would read as a heading that had fallen into the paragraph. The long names
+// above keep their capitals because the only thing that uses them is a title.
+//
+// Czech is given the number instead of a clipped name. An abbreviated Czech month takes a
+// terminal full stop ("5. říj.") which collides with the dot the day already carries, and
+// the numeric form is what a Czech reader is shown a short date in anyway.
+const SHORT_MONTHS = [
+  msg`Jan`,
+  msg`Feb`,
+  msg`Mar`,
+  msg`Apr`,
+  msg`May`,
+  msg`Jun`,
+  msg`Jul`,
+  msg`Aug`,
+  msg`Sep`,
+  msg`Oct`,
+  msg`Nov`,
+  msg`Dec`,
+] as const
+
+// One day, as it is named inside a sentence: "5 Oct", and in Czech "5. 10.". The dot after
+// the day belongs to the template rather than to the number, because it is Czech ordinal
 // punctuation and not part of the day.
+//
+// Short rather than spelled out because of where it is read: the winnings card is a stack of
+// four or five sentences that differ only in a date, a board and a figure, and a month
+// spelled out in full was the longest word in every one of them.
 export function dayLabel(iso: string, t: Translate): string {
   const at = new Date(`${iso}T00:00:00Z`)
   const day = String(at.getUTCDate())
-  const month = t(MONTHS[at.getUTCMonth()] ?? MONTHS[0])
+  const month = t(SHORT_MONTHS[at.getUTCMonth()] ?? SHORT_MONTHS[0])
   return t(msg`${day} ${month}`)
 }

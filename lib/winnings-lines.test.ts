@@ -5,7 +5,7 @@ import { describe, expect, it } from 'vitest'
 import type { Translate } from '@/lib/prose'
 import type { Award } from '@/lib/winnings'
 import { awardBlocks } from '@/lib/winnings-announcement'
-import { blockSentence, winningsSentences } from '@/lib/winnings-lines'
+import { ALL_PHRASINGS, blockSentence, winningsSentences } from '@/lib/winnings-lines'
 import { messages as cs } from '@/locales/cs/messages'
 import { messages as en } from '@/locales/en/messages'
 
@@ -36,7 +36,7 @@ describe('blockSentence', () => {
     expect(block).toBeDefined()
     if (block === undefined) return
     expect(textOf(blockSentence(block, t) ?? [])).toBe(
-      'On 5 OCTOBER you took SPEED · EXTREME with 31,219.',
+      'On 5 Oct you took SPD EXT with 31,219.',
     )
   })
 
@@ -48,7 +48,7 @@ describe('blockSentence', () => {
     expect(block).toBeDefined()
     if (block === undefined) return
     expect(textOf(blockSentence(block, t) ?? [])).toBe(
-      'On 5 OCTOBER you took SPEED · EXTREME with 31,219 and ACCURACY · HARD with 9,404.',
+      'On 5 Oct you took SPD EXT with 31,219 and ACC HRD with 9,404.',
     )
   })
 
@@ -61,7 +61,7 @@ describe('blockSentence', () => {
     expect(block).toBeDefined()
     if (block === undefined) return
     expect(textOf(blockSentence(block, t) ?? [])).toBe(
-      'On 5 OCTOBER you took SPEED · EXTREME with 31,219, ACCURACY · HARD with 9,404 and SPEED · EASY with 6,100.',
+      'On 5 Oct you took SPD EXT with 31,219, ACC HRD with 9,404 and SPD ESY with 6,100.',
     )
   })
 
@@ -70,7 +70,7 @@ describe('blockSentence', () => {
     expect(block).toBeDefined()
     if (block === undefined) return
     expect(textOf(blockSentence(block, t) ?? [])).toBe(
-      'In the week of 14 SEPTEMBER you took SPEED · EXTREME with 29,050.',
+      'In the week of 14 Sep you took SPD EXT with 29,050.',
     )
   })
 
@@ -101,9 +101,9 @@ describe('winningsSentences', () => {
     ])
     const sentences = winningsSentences(blocks, t)
     expect(sentences).toHaveLength(3)
-    expect(textOf(sentences[0] ?? [])).toContain('5 OCTOBER')
-    expect(textOf(sentences[1] ?? [])).toContain('4 OCTOBER')
-    expect(textOf(sentences[2] ?? [])).toContain('week of 28 SEPTEMBER')
+    expect(textOf(sentences[0] ?? [])).toContain('5 Oct')
+    expect(textOf(sentences[1] ?? [])).toContain('4 Oct')
+    expect(textOf(sentences[2] ?? [])).toContain('week of 28 Sep')
   })
 
   it('keeps each window its own sentence rather than spilling them together', () => {
@@ -122,13 +122,13 @@ describe('winningsSentences', () => {
 describe('the Czech winnings', () => {
   const czech = resolverFor('cs')
 
-  it('names the date in Czech, not in English', () => {
+  it('names the date the way Czech writes a short one', () => {
     const [block] = awardBlocks([won('speed', 'extreme', 31219, '2026-10-05')])
     expect(block).toBeDefined()
     if (block === undefined) return
     const text = textOf(blockSentence(block, czech) ?? [])
-    expect(text).toContain('října')
-    expect(text).not.toContain('OCTOBER')
+    expect(text).toContain('5. 10.')
+    expect(text).not.toContain('Oct')
   })
 
   it('still joins three boards into one sentence', () => {
@@ -143,5 +143,68 @@ describe('the Czech winnings', () => {
     // Three boards, two joins, one full stop — whatever words Czech puts around them.
     expect(text.endsWith('.')).toBe(true)
     expect(text).not.toMatch(/\[\w+\]/)
+  })
+})
+
+describe('the openings', () => {
+  it('never opens two sentences of a card the same way', () => {
+    const days = ['2026-10-05', '2026-10-04', '2026-10-03', '2026-10-02', '2026-10-01']
+    const blocks = awardBlocks(
+      days.map((day, index) => won('speed', 'extreme', 10000 + index, day)),
+    )
+    // Every figure out — the day of the month and the score are what these sentences are
+    // meant to differ by. What is left is the phrasing, and no two of those may match.
+    const openings = winningsSentences(blocks, t).map((sentence) =>
+      textOf(sentence).replace(/[\d,]+/g, ''),
+    )
+    expect(new Set(openings).size).toBe(openings.length)
+  })
+
+  it('tells a day and a week apart however it opens them', () => {
+    // Every rotation of the week pool, so no variant can quietly read as a day.
+    for (let turn = 0; turn < 8; turn++) {
+      const [block] = awardBlocks([won('speed', 'extreme', 29050, '2026-09-14', 'week')])
+      expect(block).toBeDefined()
+      if (block === undefined) return
+      expect(textOf(blockSentence(block, t, turn) ?? [])).toContain('week of 14 Sep')
+    }
+  })
+
+  it('says the same thing to a player who dismisses the popup and opens it again', () => {
+    const blocks = awardBlocks([
+      won('speed', 'extreme', 31219, '2026-10-05'),
+      won('accuracy', 'hard', 9404, '2026-10-04'),
+      won('speed', 'extreme', 29050, '2026-09-28', 'week'),
+    ])
+    const once = winningsSentences(blocks, t).map(textOf)
+    const again = winningsSentences(blocks, t).map(textOf)
+    expect(again).toEqual(once)
+  })
+})
+
+describe('the Czech catalog', () => {
+  // Sorted so the comparison is about which tokens a variant carries, not the order it
+  // uses them in — a Czech sentence puts them where Czech puts them.
+  const tokensIn = (text: string): string[] =>
+    [...text.matchAll(/\[(\w+)\]/g)]
+      .map((match) => match[1] ?? '')
+      .sort((a, b) => a.localeCompare(b))
+
+  it('carries every token its English source does', () => {
+    const czech = resolverFor('cs')
+    for (const phrasing of ALL_PHRASINGS) {
+      const source = t(phrasing)
+      expect(tokensIn(czech(phrasing)), `translation of: ${source}`).toEqual(
+        tokensIn(source),
+      )
+    }
+  })
+
+  it('ends every phrasing with the board it lists, so the clauses after it fit', () => {
+    const czech = resolverFor('cs')
+    for (const phrasing of ALL_PHRASINGS) {
+      expect(czech(phrasing).endsWith('[S]'), czech(phrasing)).toBe(true)
+      expect(t(phrasing).endsWith('[S]'), t(phrasing)).toBe(true)
+    }
   })
 })
