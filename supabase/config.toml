@@ -196,7 +196,10 @@ password_requirements = ""
 
 [auth.rate_limit]
 # Number of emails that can be sent per hour. Requires auth.email.smtp to be enabled.
-email_sent = 2
+# Two is the built-in sender's cap and the reason that number is there. A player who
+# mistypes an address twice has to be able to try a third time, and the resend button on
+# the code card would otherwise be a button that cannot work.
+email_sent = 30
 # Number of SMS messages that can be sent per hour. Requires auth.sms to be enabled.
 sms_sent = 30
 # Number of anonymous sign-ins that can be made per hour per IP address. Requires enable_anonymous_sign_ins = true.
@@ -223,7 +226,11 @@ enable_signup = true
 # addresses. If disabled, only the new email is required to confirm.
 double_confirm_changes = true
 # If enabled, users need to confirm their email address before signing in.
-enable_confirmations = false
+#
+# True, and it is load-bearing rather than a precaution: with it off, `updateUser({ email })`
+# on an anonymous account sets the address on the spot, with no code sent and nothing to
+# type. The whole of the confirmation step is this switch. See hooks/use-supabase-auth.ts.
+enable_confirmations = true
 # If enabled, users will need to reauthenticate or have logged in recently to change their password.
 secure_password_change = false
 # Controls the minimum amount of time that must pass before sending another signup confirmation or password reset email.
@@ -231,22 +238,53 @@ max_frequency = "1s"
 # Number of characters used in the email OTP.
 otp_length = 6
 # Number of seconds before the email OTP expires (defaults to 1 hour).
-otp_expiry = 3600
+#
+# Ten minutes rather than an hour. The code is typed within a minute of asking for it or
+# not at all, and an hour is a long time for a code that restores a profile to sit
+# readable in somebody's inbox.
+otp_expiry = 600
 
-# Use a production-ready SMTP server
+# The production sender is Resend, and it is configured in the Supabase dashboard rather
+# than here — on purpose, twice over. Nothing in this repo runs `supabase config push`, so
+# a block here would be documentation that never reaches the server; and the local stack
+# is better off without it, because `[local_smtp]` above catches every message at
+# http://127.0.0.1:54324, where the code is readable without a verified sending domain, a
+# real inbox, or a single email actually leaving the machine.
+#
+# The dashboard's Auth → SMTP settings, for whoever sets it up next:
+#
+#   host         smtp.resend.com
+#   port         465
+#   user         resend
+#   pass         the Resend API key
+#   sender       the verified address on the sending domain
+#
 # [auth.email.smtp]
 # enabled = true
-# host = "smtp.sendgrid.net"
-# port = 587
-# user = "apikey"
-# pass = "env(SENDGRID_API_KEY)"
-# admin_email = "admin@email.com"
-# sender_name = "Admin"
+# host = "smtp.resend.com"
+# port = 465
+# user = "resend"
+# pass = "env(RESEND_API_KEY)"
 
-# Uncomment to customize email template
-# [auth.email.template.invite]
-# subject = "You have been invited"
-# content_path = "./supabase/templates/invite.html"
+# The two bodies the player actually gets, both carrying `{{ .Token }}` — the six digits
+# they type — rather than a link. A link would have to deep-link back into a native app on
+# three platforms; a code does not, and it can be pasted or filled in by the phone.
+#
+# `confirmation` and `email_change` are the same body on purpose: both are an address
+# being put on a profile, and which of the two Supabase reaches for when an anonymous
+# account calls `updateUser({ email })` is a detail of theirs, not a difference the player
+# should be able to read.
+[auth.email.template.confirmation]
+subject = "Your Nine code"
+content_path = "./supabase/templates/confirm-email.html"
+
+[auth.email.template.email_change]
+subject = "Your Nine code"
+content_path = "./supabase/templates/confirm-email.html"
+
+[auth.email.template.magic_link]
+subject = "Your Nine code"
+content_path = "./supabase/templates/magic-link.html"
 
 # Uncomment to customize notification email template
 # [auth.email.notification.password_changed]

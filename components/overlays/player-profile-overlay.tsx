@@ -126,6 +126,8 @@ export function PlayerProfileOverlay({
   userId,
   viewerId,
   onCompare,
+  email,
+  onOpenEmail,
   onClose,
 }: {
   userId: string
@@ -138,6 +140,10 @@ export function PlayerProfileOverlay({
   // is nobody to set it against — before the sign-in has landed — which is also what takes
   // the button off the card.
   onCompare?: (userId: string, profile: PlayerProfile) => void
+  // The player's own confirmed address, or null. Only ever drawn on their own card — an
+  // address is the one thing about a player that is not public data about them.
+  email: string | null
+  onOpenEmail: () => void
   onClose: () => void
 }) {
   const { t } = useLingui()
@@ -173,10 +179,16 @@ export function PlayerProfileOverlay({
   // the compiler is free to take at a different moment than you meant.
   const [joinedMonths] = useState(() => monthsSince(JOINED_ON, new Date()))
 
-  // No title on the card: its first line is the player's own name, and a PLAYER label
-  // over it was the header saying what the line below it already said.
+  // The header asks the question the card answers, rather than labelling it: a PLAYER
+  // label over the nickname only said what the line below it already said. Two
+  // questions, because opening your own profile is a different act from opening a
+  // stranger's — one is checking on yourself, the other is finding out who you lost to.
   return (
-    <ModalCard onDismiss={onClose} maxHeight={height * 0.85}>
+    <ModalCard
+      title={isMine ? t`IS THAT YOU?` : t`WHO IS IT?`}
+      onDismiss={onClose}
+      maxHeight={height * 0.85}
+    >
       {(close) => (
         <>
           {/* One rhythm for the whole modal: every item in this column is separated by
@@ -487,6 +499,52 @@ export function PlayerProfileOverlay({
                   className="font-mono text-[11px] font-black tracking-[2px] text-primary"
                 >
                   <Trans>COMPARE WITH ME</Trans>
+                </Text>
+              </TrackedPressable>
+            )}
+
+            {/* The one row that is only ever on your own card. Above CLOSE and below the
+                scroll, in the slot COMPARE WITH ME occupies on everybody else's — the one
+                place on this card for the things you can do rather than the things you
+                have done.
+
+                One row rather than the two this started as. Adding an address and fetching
+                a profile back turned out to be the same act from the player's side — *this
+                is me* — and which of them actually happens is the server's answer to the
+                address, asked on the card behind this one.
+
+                An address is not part of a profile and is not drawn like one: a profile
+                says what somebody has achieved and every line of it reads the same to
+                whoever is looking. This is the one piece of the card that is private, and
+                it is here rather than up with the name for that reason. */}
+            {isMine && (
+              <TrackedPressable
+                id="profile.email"
+                onPress={() => {
+                  onOpenEmail()
+                  close()
+                }}
+                className="items-center rounded-2xl bg-card px-6 py-3"
+              >
+                <Text
+                  selectable={false}
+                  className="font-mono text-[11px] font-black tracking-[2px] text-primary"
+                >
+                  {email === null ? <Trans>ADD AN EMAIL</Trans> : <Trans>EMAIL</Trans>}
+                </Text>
+                {/* The address itself under the label, where a player checks it rather than
+                    reads it — which is why it is the only line on this card set in lower
+                    case and narrow tracking. Wide caps would make an address into a
+                    heading, and nobody can check a heading against their inbox.
+
+                    Without one, the line has to carry both halves of what the row does, or
+                    a player with a profile waiting on another phone has no way of knowing
+                    this is the door to it. */}
+                <Text
+                  selectable={false}
+                  className="mt-1 font-mono text-[9px] tracking-[0.3px] text-dim"
+                >
+                  {email ?? t`Keep this profile, or bring back one from another phone`}
                 </Text>
               </TrackedPressable>
             )}

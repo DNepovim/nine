@@ -247,6 +247,8 @@ const intro = (
           medals={medals}
           lostMedals={lostMedals}
           onLostMedalsSeen={noop}
+          accountNotice={null}
+          onAccountNotice={noop}
           achievementsEarned={12}
           achievementsLatest="flawlessTen"
           achievementsLoaded

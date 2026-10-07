@@ -23,9 +23,19 @@ export function PlayerProfileProvider({
   // Who is looking, so a profile can tell when it is the player's own and offer them
   // their motto to write. Null until the anonymous sign-in has landed.
   viewerId,
+  // What the player's own card needs in order to offer them an address and a way back
+  // onto another phone. Threaded through here rather than read in the card because the
+  // card is drawn under this provider and the answers live above it — and because a
+  // profile is public data about a player, which an address is not.
+  account,
 }: {
   children: ReactNode
   viewerId: string | null
+  account: {
+    // The confirmed address, or null for a player who has not given one.
+    email: string | null
+    onOpenEmail: () => void
+  }
 }) {
   const [userId, setUserId] = useState<string | null>(null)
   // The player being compared against, as their profile read on the card the viewer was
@@ -75,6 +85,8 @@ export function PlayerProfileProvider({
         <PlayerProfileOverlay
           userId={userId}
           viewerId={viewerId}
+          email={account.email}
+          onOpenEmail={account.onOpenEmail}
           // Left off while the sign-in has not landed: there is no viewer to compare
           // against yet, and the card reads the absence of this as "no button".
           onCompare={

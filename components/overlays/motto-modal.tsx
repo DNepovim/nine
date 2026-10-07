@@ -65,7 +65,7 @@ export function MottoModal({
             selectable={false}
             className="mb-1 font-mono text-[11px] font-black tracking-[2px] text-primary"
           >
-            <Trans>YOUR MOTTO</Trans>
+            <Trans>WHAT’S ON YOUR MIND?</Trans>
           </Text>
           <Text
             selectable={false}

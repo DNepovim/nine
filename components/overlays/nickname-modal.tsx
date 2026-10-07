@@ -1,24 +1,17 @@
 import { Trans, useLingui } from '@lingui/react/macro'
 import { useState } from 'react'
-import {
-  KeyboardAvoidingView,
-  Modal,
-  Platform,
-  Text,
-  TextInput,
-  View,
-} from 'react-native'
+import { Platform, Text, TextInput, View } from 'react-native'
 
 import { TrackedPressable } from '@/components/tracked-pressable'
 import { useOnline } from '@/hooks/use-online'
 import { NICK_MAX, NICK_MIN, nicknameProblem } from '@/lib/nickname'
 
+// The card itself, with no window of its own — `CardModal` is the host, and it is shared
+// with the address card this one hands over to. See there for why.
 export function NicknameModal({
-  visible,
   onSave,
   onSkip,
 }: {
-  visible: boolean
   onSave: (name: string) => Promise<{ error: string | null }>
   onSkip: () => void
 }) {
@@ -73,98 +66,91 @@ export function NicknameModal({
   }
 
   return (
-    <Modal visible={visible} transparent animationType="fade" onRequestClose={handleSkip}>
-      <KeyboardAvoidingView
-        className="flex-1 items-center justify-center bg-black/60 px-8"
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+    <>
+      <Text
+        selectable={false}
+        className="mb-1 font-mono text-[11px] font-black tracking-[2px] text-primary"
       >
-        <View className="w-full max-w-xs rounded-2xl bg-card p-6">
+        <Trans>WHO DO YOU WANT TO BE?</Trans>
+      </Text>
+      <Text
+        selectable={false}
+        className="mb-4 font-mono text-[9px] font-bold tracking-[0.5px] text-dim"
+      >
+        <Trans>Your name appears on the leaderboard.</Trans>
+      </Text>
+
+      <TextInput
+        value={value}
+        onChangeText={(t) => {
+          setValue(t)
+          setError(null)
+        }}
+        placeholder={t`e.g. ACE_9`}
+        autoCapitalize="none"
+        autoCorrect={false}
+        maxLength={NICK_MAX}
+        returnKeyType="done"
+        onSubmitEditing={() => {
+          void handleSave()
+        }}
+        className="mb-2 rounded-lg border border-dim/30 bg-background px-3 py-2 font-mono font-bold tracking-[1px] text-primary"
+        // Mobile Safari zooms the whole page in on focus for any input under 16px —
+        // the one web quirk with no CSS opt-out, only a bigger font. Native has no
+        // such behaviour, so it keeps the smaller size the rest of the card uses.
+        // Same trade the feedback sheet's input makes.
+        style={{ fontSize: Platform.OS === 'web' ? 16 : 13 }}
+      />
+
+      {error !== null && (
+        <Text
+          selectable={false}
+          className="mb-3 font-mono text-[9px] font-bold tracking-[0.5px] text-red-500"
+        >
+          {error}
+        </Text>
+      )}
+
+      {error === null && !online && (
+        <Text
+          selectable={false}
+          className="mb-3 font-mono text-[9px] font-bold tracking-[0.5px] text-dim"
+        >
+          <Trans>No connection — a nickname can only be claimed online.</Trans>
+        </Text>
+      )}
+
+      <View className="mt-2 flex-row gap-3">
+        <TrackedPressable
+          id="nickname.skip"
+          onPress={handleSkip}
+          className="flex-1 items-center rounded-xl bg-card py-3"
+        >
           <Text
             selectable={false}
-            className="mb-1 font-mono text-[11px] font-black tracking-[2px] text-primary"
+            className="font-mono text-[11px] font-black tracking-[1.5px] text-dim"
           >
-            <Trans>CHOOSE A NICKNAME</Trans>
+            <Trans>SKIP</Trans>
           </Text>
+        </TrackedPressable>
+
+        <TrackedPressable
+          id="nickname.save"
+          onPress={() => {
+            void handleSave()
+          }}
+          disabled={!canSave}
+          className="flex-1 items-center rounded-xl bg-primary py-3"
+          style={{ opacity: canSave ? 1 : 0.5 }}
+        >
           <Text
             selectable={false}
-            className="mb-4 font-mono text-[9px] font-bold tracking-[0.5px] text-dim"
+            className="font-mono text-[11px] font-black tracking-[1.5px] text-on-strong"
           >
-            <Trans>Your name appears on the leaderboard.</Trans>
+            {saving ? 'SAVING…' : 'SAVE'}
           </Text>
-
-          <TextInput
-            value={value}
-            onChangeText={(t) => {
-              setValue(t)
-              setError(null)
-            }}
-            placeholder={t`e.g. ACE_9`}
-            autoCapitalize="none"
-            autoCorrect={false}
-            maxLength={NICK_MAX}
-            returnKeyType="done"
-            onSubmitEditing={() => {
-              void handleSave()
-            }}
-            className="mb-2 rounded-lg border border-dim/30 bg-background px-3 py-2 font-mono font-bold tracking-[1px] text-primary"
-            // Mobile Safari zooms the whole page in on focus for any input under 16px —
-            // the one web quirk with no CSS opt-out, only a bigger font. Native has no
-            // such behaviour, so it keeps the smaller size the rest of the card uses.
-            // Same trade the feedback sheet's input makes.
-            style={{ fontSize: Platform.OS === 'web' ? 16 : 13 }}
-          />
-
-          {error !== null && (
-            <Text
-              selectable={false}
-              className="mb-3 font-mono text-[9px] font-bold tracking-[0.5px] text-red-500"
-            >
-              {error}
-            </Text>
-          )}
-
-          {error === null && !online && (
-            <Text
-              selectable={false}
-              className="mb-3 font-mono text-[9px] font-bold tracking-[0.5px] text-dim"
-            >
-              <Trans>No connection — a nickname can only be claimed online.</Trans>
-            </Text>
-          )}
-
-          <View className="mt-2 flex-row gap-3">
-            <TrackedPressable
-              id="nickname.skip"
-              onPress={handleSkip}
-              className="flex-1 items-center rounded-xl bg-card py-3"
-            >
-              <Text
-                selectable={false}
-                className="font-mono text-[11px] font-black tracking-[1.5px] text-dim"
-              >
-                <Trans>SKIP</Trans>
-              </Text>
-            </TrackedPressable>
-
-            <TrackedPressable
-              id="nickname.save"
-              onPress={() => {
-                void handleSave()
-              }}
-              disabled={!canSave}
-              className="flex-1 items-center rounded-xl bg-primary py-3"
-              style={{ opacity: canSave ? 1 : 0.5 }}
-            >
-              <Text
-                selectable={false}
-                className="font-mono text-[11px] font-black tracking-[1.5px] text-on-strong"
-              >
-                {saving ? 'SAVING…' : 'SAVE'}
-              </Text>
-            </TrackedPressable>
-          </View>
-        </View>
-      </KeyboardAvoidingView>
-    </Modal>
+        </TrackedPressable>
+      </View>
+    </>
   )
 }

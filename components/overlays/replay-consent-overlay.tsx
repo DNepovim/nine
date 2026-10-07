@@ -30,7 +30,10 @@ export function ReplayConsentOverlay({
   onDismiss: () => void
 }) {
   return (
-    <ModalCard title={<Trans>SESSION RECORDING</Trans>} onDismiss={onDismiss}>
+    <ModalCard
+      title={<Trans>CAN WE LOOK UNDER YOUR THUMBS?</Trans>}
+      onDismiss={onDismiss}
+    >
       {(close) => (
         <>
           <View className="items-center pt-2">

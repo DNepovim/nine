@@ -13,9 +13,32 @@ import {
 import { cn } from '@/lib/cn'
 import type { NameFactors } from '@/lib/name-gradient'
 
+// The row that is the person reading it.
+//
+// This screen is the one place in the app where somebody can take a feature off a player,
+// and the player they are most able to lock out of it is themselves. So the list says which
+// row is theirs before they open it rather than after.
+//
+// A tag beside the name rather than a column of its own: the name cell shrinks to make room
+// on the one row that needs it, so the role and the count stay in line down the whole list
+// and nobody else's row pays for the mark.
+function You() {
+  return (
+    <View className="rounded border border-dim/30 px-1 py-px">
+      <Text
+        selectable={false}
+        className="font-mono text-[8px] font-black tracking-[1px] text-dim"
+      >
+        <Trans>YOU</Trans>
+      </Text>
+    </View>
+  )
+}
+
 function PersonRow({
   person,
   factors,
+  me,
   onPress,
 }: {
   person: AdminPerson
@@ -23,33 +46,44 @@ function PersonRow({
   // same colour here as on a board row, and the handful of people who open this screen
   // are the ones most likely to recognise each other by it.
   factors: NameFactors
+  // Whether this row is the person reading it.
+  me: boolean
   onPress: () => void
 }) {
   return (
     <TrackedPressable
       id="admin.person"
       onPress={onPress}
-      className="flex-row items-center gap-2 border-b border-dim/10 py-2.5"
-    >
-      {/* A profile with no nickname is not a name to draw — it is this screen saying
-          there is nothing there, so it stays in the plain ink the rest of the row is in
-          rather than wearing a gradient belonging to somebody. */}
-      {person.nickname === null ? (
-        <Text
-          selectable={false}
-          className="flex-1 font-mono text-[12px] font-black tracking-[0.5px] text-primary"
-        >
-          <Trans>(no nickname)</Trans>
-        </Text>
-      ) : (
-        <GradientName
-          nickname={person.nickname}
-          avgAccuracy={factors.avgAccuracy}
-          avgSpeed={factors.avgSpeed}
-          numberOfLines={1}
-          className="flex-1 font-mono text-[12px] font-black tracking-[0.5px]"
-        />
+      className={cn(
+        'flex-row items-center gap-2 py-2.5',
+        // Lifted out of the list as a card rather than tinted in place: a card is how the
+        // rest of the app raises a thing worth noticing, and it carries its own separation,
+        // so the row gives up the hairline the others are divided by.
+        me ? '-mx-2 rounded-lg bg-card px-2' : 'border-b border-dim/10',
       )}
+    >
+      <View className="flex-1 flex-row items-center gap-1.5">
+        {/* A profile with no nickname is not a name to draw — it is this screen saying
+            there is nothing there, so it stays in the plain ink the rest of the row is in
+            rather than wearing a gradient belonging to somebody. */}
+        {person.nickname === null ? (
+          <Text
+            selectable={false}
+            className="shrink font-mono text-[12px] font-black tracking-[0.5px] text-primary"
+          >
+            <Trans>(no nickname)</Trans>
+          </Text>
+        ) : (
+          <GradientName
+            nickname={person.nickname}
+            avgAccuracy={factors.avgAccuracy}
+            avgSpeed={factors.avgSpeed}
+            numberOfLines={1}
+            className="shrink font-mono text-[12px] font-black tracking-[0.5px]"
+          />
+        )}
+        {me && <You />}
+      </View>
       <Text
         selectable={false}
         className="w-20 font-mono text-[10px] font-bold tracking-[1px] text-dim"
@@ -75,9 +109,13 @@ function PersonRow({
 // says it changed something — `epoch` is that signal.
 export function AdminPeople({
   epoch,
+  viewerId,
   onOpenPerson,
 }: {
   epoch: number
+  // Who is reading. Null before the profile has opened, which is the same thing as nobody
+  // on this list being them.
+  viewerId: string | null
   onOpenPerson: (person: AdminPerson) => void
 }) {
   const [rows, setRows] = useState<AdminPerson[]>([])
@@ -180,6 +218,7 @@ export function AdminPeople({
           <PersonRow
             person={searchResult}
             factors={factorsOf(searchResult.id)}
+            me={searchResult.id === viewerId}
             onPress={() => {
               onOpenPerson(searchResult)
             }}
@@ -207,6 +246,7 @@ export function AdminPeople({
             <PersonRow
               person={item}
               factors={factorsOf(item.id)}
+              me={item.id === viewerId}
               onPress={() => {
                 onOpenPerson(item)
               }}

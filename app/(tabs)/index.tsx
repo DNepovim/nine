@@ -27,11 +27,15 @@ import { TargetCard } from '@/components/game/target-card'
 import { TraineeStats } from '@/components/game/trainee-stats'
 import { TutorialCard } from '@/components/game/tutorial-card'
 import { TutorialStepper } from '@/components/game/tutorial-stepper'
+import type { AccountNoticeKind } from '@/components/overlays/account-notice'
 import { AchievementDetail } from '@/components/overlays/achievement-detail'
 import { AchievementsOverlay } from '@/components/overlays/achievements-overlay'
 import { AdminOverlay } from '@/components/overlays/admin-overlay'
 import { AdvancedOptionsOverlay } from '@/components/overlays/advanced-options-overlay'
+import { CardModal } from '@/components/overlays/card-modal'
 import { DevOverlay } from '@/components/overlays/dev-overlay'
+import { EmailCodeModal } from '@/components/overlays/email-code-modal'
+import { EmailModal } from '@/components/overlays/email-modal'
 import { FeedbackOverlay } from '@/components/overlays/feedback-overlay'
 import { FeedbackReplyOverlay } from '@/components/overlays/feedback-reply-overlay'
 import { GameOverSequence } from '@/components/overlays/game-over-sequence'
@@ -57,6 +61,7 @@ import { DEFAULT_DIAL_CORNERS } from '@/constants/dial-hints'
 import { PIE_SIZE } from '@/constants/game'
 import { mono } from '@/constants/theme'
 import { TUTORIAL_BANNER_HEIGHT } from '@/constants/tutorial'
+import { useAccountEmail } from '@/hooks/use-account-email'
 import { useAchievementQueue, useAchievements } from '@/hooks/use-achievements'
 import { useAnnouncements } from '@/hooks/use-announcements'
 import { useAppUpdate } from '@/hooks/use-app-update'
@@ -278,6 +283,58 @@ function showFeedbackBookmark({
     return false
   }
   return !isGameOver || gameOverBookmarkReady
+}
+
+// What the intro has to say about this player's address, if anything.
+//
+// The two can never both be true — a device told its profile moved was signed out and
+// handed a fresh anonymous account, which has no address pending on it — so the order
+// below is a statement about which matters, not a tie-break.
+function accountNoticeFor({
+  moved,
+  pendingEmail,
+}: {
+  moved: boolean
+  pendingEmail: string | null
+}): AccountNoticeKind | null {
+  if (moved) return 'moved'
+  if (pendingEmail !== null) return 'confirm'
+  return null
+}
+
+// Whether the intro may be interrupted to ask, once, for an address.
+//
+// Last in the queue of launch asks: a reply written to this player, the news, the install
+// prompt and the recording ask all come first, and none of them is ever up at the same
+// time as this. The nickname card is on the list too — it is the card this one *follows*,
+// and the two stacked would be two dialogs deep before the player has agreed to either.
+function mayAskForEmail({
+  splashDone,
+  onIntro,
+  titleDialogOpen,
+  nicknameOpen,
+  repliesReady,
+  hasReply,
+  newsReady,
+  newsVisible,
+  installing,
+  consentVisible,
+}: {
+  splashDone: boolean
+  onIntro: boolean
+  titleDialogOpen: boolean
+  nicknameOpen: boolean
+  repliesReady: boolean
+  hasReply: boolean
+  newsReady: boolean
+  newsVisible: boolean
+  installing: boolean
+  consentVisible: boolean
+}): boolean {
+  if (!splashDone || !onIntro || titleDialogOpen || nicknameOpen) return false
+  if (!repliesReady || hasReply) return false
+  if (!newsReady || newsVisible) return false
+  return !installing && !consentVisible
 }
 
 export default function GameScreen() {
@@ -572,7 +629,20 @@ export default function GameScreen() {
     setCurtain('welcome')
   }, [curtain, welcome.pending, splashExiting, isMenu])
 
-  const { userId, nickname, features, isReady, updateNickname } = useSupabaseAuth()
+  const {
+    userId,
+    nickname,
+    features,
+    isReady,
+    updateNickname,
+    email,
+    pendingEmail,
+    moved,
+    dismissMoved,
+    sendCode,
+    confirmEmail,
+    restoreProfile,
+  } = useSupabaseAuth()
 
   // Analytics reuses the identity the boards already rank — the anonymous Supabase user
   // id — so an event can be read next to the score it produced. Re-runs when the
@@ -1271,6 +1341,28 @@ export default function GameScreen() {
     // start screen has no business flashing up in front of it.
     savedRun.settled
 
+  // Putting an address on this profile, and fetching a profile back from one. Below
+  // `onIntro`, which it reads: the one-time ask is a launch ask like the three above it
+  // and waits its turn behind every one of them.
+  const accountEmail = useAccountEmail({
+    account: { email, pendingEmail, sendCode, confirmEmail, restoreProfile },
+    nickname,
+    canPrompt: mayAskForEmail({
+      splashDone,
+      onIntro,
+      titleDialogOpen: titleDialog !== 'none',
+      nicknameOpen: showNicknameModal,
+      repliesReady: feedbackReplies.ready,
+      hasReply: feedbackReplies.reply !== null,
+      newsReady: whatsNew.ready,
+      newsVisible: whatsNew.visible,
+      installing: installPrompt.target !== 'none',
+      consentVisible: replayConsent.visible,
+    }),
+  })
+
+  const accountNotice = accountNoticeFor({ moved, pendingEmail })
+
   // A shared run reaching its results screen is the run finishing, and the roster at
   // that moment is who was in it. Edge-latched: the screen stays up while everyone
   // reads it, and one run is one event.
@@ -1325,7 +1417,13 @@ export default function GameScreen() {
       <ChampionsProvider value={champions}>
         {/* Inside the champions provider: a profile wears the same crown or bird the row
           that opened it does, read from the one store rather than fetched again. */}
-        <PlayerProfileProvider viewerId={userId}>
+        <PlayerProfileProvider
+          viewerId={userId}
+          account={{
+            email,
+            onOpenEmail: accountEmail.open,
+          }}
+        >
           <BoardProvider value={board}>
             {/* The celebration sits before the Screen so it paints behind the game's own UI.
             Keyed on the announcement so each one plays from the start, and so escalating
@@ -2020,6 +2118,7 @@ export default function GameScreen() {
             {/* ── Admin — who holds a role, and a search to hand one out ── */}
             {menuOverlay === 'admin' && (
               <AdminOverlay
+                viewerId={userId}
                 onClose={() => {
                   setMenuOverlay('none')
                 }}
@@ -2112,6 +2211,18 @@ export default function GameScreen() {
                 medals={medals}
                 lostMedals={lostMedals.news}
                 onLostMedalsSeen={lostMedals.dismiss}
+                accountNotice={accountNotice}
+                onAccountNotice={() => {
+                  if (accountNotice === 'moved') {
+                    // Clearing it here, on the tap, is the whole of how this line is
+                    // dismissed — it survives launches precisely so that it cannot be
+                    // missed, and the press is the player having read it.
+                    dismissMoved()
+                    accountEmail.open()
+                    return
+                  }
+                  accountEmail.openPendingConfirm()
+                }}
                 achievementsEarned={idsOf(achievements.store).length}
                 achievementsLatest={latestAchievement(achievements.store)}
                 achievementsLoaded={achievements.loaded}
@@ -2226,24 +2337,61 @@ export default function GameScreen() {
               />
             )}
 
-            <NicknameModal
-              visible={showNicknameModal}
-              onSave={async (name) => {
-                const res = await updateNickname(name)
-                if (!res.error) {
-                  setShowNicknameModal(false)
-                  if (pendingMultiAction) {
-                    executeMultiAction(pendingMultiAction)
-                    setPendingMultiAction(null)
-                  }
+            {/* ── The nickname, the address, and the profile it brings back ──
+              One platform modal for all three. The cards hand over to each other in place:
+              a saved nickname turns the card over to the address field, and the field turns
+              over to the six digits. Each of these used to bring a `<Modal>` of its own,
+              and swapping two in one commit is how iOS came to drop the second — see
+              `CardModal`. Precedence is simply the order a player meets them in. */}
+            <CardModal
+              visible={showNicknameModal || accountEmail.card !== null}
+              onRequestClose={() => {
+                if (accountEmail.card !== null) {
+                  accountEmail.dismiss()
+                  return
                 }
-                return res
-              }}
-              onSkip={() => {
                 setShowNicknameModal(false)
                 setPendingMultiAction(null)
               }}
-            />
+            >
+              {accountEmail.card === null && (
+                <NicknameModal
+                  onSave={async (name) => {
+                    const res = await updateNickname(name)
+                    if (res.error) return res
+                    setShowNicknameModal(false)
+                    if (pendingMultiAction) {
+                      executeMultiAction(pendingMultiAction)
+                      setPendingMultiAction(null)
+                    }
+                    // The second step of claiming a name, and it is immediate: the same
+                    // card turns over to ask for an address. Nothing gates it but already
+                    // having one — a player on their way into a multiplayer room gets the
+                    // room *and* the card, because the ask is worth more than the half
+                    // second of tidiness that skipping it would buy.
+                    if (email === null) accountEmail.open()
+                    return res
+                  }}
+                  onSkip={() => {
+                    setShowNicknameModal(false)
+                    setPendingMultiAction(null)
+                  }}
+                />
+              )}
+              {accountEmail.card?.kind === 'address' && (
+                <EmailModal onSend={accountEmail.send} onDismiss={accountEmail.dismiss} />
+              )}
+              {accountEmail.card?.kind === 'code' && (
+                <EmailCodeModal
+                  branch={accountEmail.card.branch}
+                  address={accountEmail.card.address}
+                  sentAt={accountEmail.card.sentAt}
+                  onConfirm={accountEmail.confirm}
+                  onResend={accountEmail.resend}
+                  onDismiss={accountEmail.dismiss}
+                />
+              )}
+            </CardModal>
 
             {/* ── Multiplayer screens (above everything) ── */}
 

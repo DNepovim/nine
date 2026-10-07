@@ -31,6 +31,8 @@ export function ProfileVariant({
         <PlayerProfileOverlay
           userId={userId}
           viewerId={viewerId}
+          email="you@example.com"
+          onOpenEmail={() => {}}
           onCompare={(id, profile) => {
             setRival({ userId: id, profile })
           }}

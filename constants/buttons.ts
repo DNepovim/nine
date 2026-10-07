@@ -101,13 +101,11 @@ export type ButtonId =
 
   // ── The address, and the profile it brings back ──
   | 'email.send'
-  | 'email.skip'
   | 'email.cancel'
   | 'email_code.confirm'
   | 'email_code.resend'
   | 'email_code.cancel'
   | 'profile.email'
-  | 'profile.restore'
   | 'menu.confirm_email'
   | 'menu.profile_moved'
 

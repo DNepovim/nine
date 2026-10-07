@@ -174,7 +174,7 @@ export function MedalsOverlay({
 
   return (
     <ModalCard
-      title={<Trans>MEDALS</Trans>}
+      title={<Trans>ARE YOU WINNING?</Trans>}
       onDismiss={onClose}
       maxHeight={height * 0.85}
     >

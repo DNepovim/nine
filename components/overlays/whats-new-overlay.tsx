@@ -37,7 +37,7 @@ export function WhatsNewOverlay({
 
   return (
     <ModalCard
-      title={<Trans>WHAT’S NEW</Trans>}
+      title={<Trans>WHAT’S NEW IN THE GAME?</Trans>}
       onDismiss={onDismiss}
       maxHeight={height * 0.85}
     >

@@ -87,7 +87,12 @@ export function CompareOverlay({
   // opens under that card. It is covered for the length of the profile's exit, so it is
   // there in full the moment that card clears rather than fading up through it.
   return (
-    <ModalCard title={t`COMPARE`} onDismiss={onClose} maxHeight={height * 0.85} replacing>
+    <ModalCard
+      title={t`WHO IS BETTER?`}
+      onDismiss={onClose}
+      maxHeight={height * 0.85}
+      replacing
+    >
       {(close) => (
         <View className="shrink gap-3">
           {/* A career that could not be read is never drawn as a career of zeroes — the

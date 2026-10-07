@@ -117,8 +117,13 @@ export function ModalCard({
           >
             <View className="mb-1 flex-row items-center justify-between">
               {/* Kept even when empty: it is what holds the close button over on the
-                  right, and `justify-between` with one child would put it on the left. */}
-              <View className="flex-row items-center gap-1.5">
+                  right, and `justify-between` with one child would put it on the left.
+
+                  `shrink` because flexShrink is 0 by default in React Native, and the
+                  titles are questions now — long enough that on a narrow display an
+                  unshrinkable one would push the close button off the card rather than
+                  wrap inside its own column. */}
+              <View className="shrink flex-row items-center gap-1.5">
                 {icon}
                 {title !== undefined && (
                   <Text

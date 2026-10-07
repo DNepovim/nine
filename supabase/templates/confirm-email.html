@@ -1,0 +1,69 @@
+<!--
+  The code that puts an address on a profile.
+
+  Bilingual, English above Czech, with no templating between the two. Supabase sends one
+  body per template and knows nothing of the locale the player set in the app — there is
+  no variable here that says which language they read. Two paragraphs is the whole of the
+  way around it, and it is a better trade than a sender of our own.
+
+  Everything inline: an email client strips <style> blocks as often as it honours them,
+  and this has to be legible in the three or four that most people read mail in.
+-->
+<div
+  style="
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    max-width: 420px;
+    margin: 0 auto;
+    padding: 32px 24px;
+    color: #1c1917;
+  "
+>
+  <div style="font-size: 22px; font-weight: 900; letter-spacing: 3px; color: #7273d2">
+    NINE
+  </div>
+
+  <p style="font-size: 13px; line-height: 20px; margin: 24px 0 8px">
+    Here is the code that confirms your email address. Type it into the app.
+  </p>
+
+  <div
+    style="
+      font-size: 32px;
+      font-weight: 900;
+      letter-spacing: 10px;
+      padding: 16px 0;
+      color: #7273d2;
+    "
+  >
+    {{ .Token }}
+  </div>
+
+  <p style="font-size: 12px; line-height: 18px; color: #57534e; margin: 8px 0 0">
+    It is good for ten minutes. Once it is confirmed, this address is how you get your
+    profile back on another phone &mdash; your scores, your medals, your name.
+  </p>
+
+  <p style="font-size: 12px; line-height: 18px; color: #57534e; margin: 16px 0 0">
+    <strong>Your address is only ever used for that.</strong> We send nothing else, ever.
+    If you did not ask for this code, nothing has happened and you can ignore this.
+  </p>
+
+  <hr style="border: none; border-top: 1px solid #e7e5e4; margin: 28px 0" />
+
+  <p style="font-size: 13px; line-height: 20px; margin: 0 0 8px">
+    Tady je k&oacute;d, kter&yacute;m potvrd&iacute;&#353; svou e-mailovou adresu. Zadej
+    ho v aplikaci.
+  </p>
+
+  <p style="font-size: 12px; line-height: 18px; color: #57534e; margin: 8px 0 0">
+    Plat&iacute; deset minut. Jakmile adresu potvrd&iacute;&#353;, dostane&#353; s
+    n&iacute; sv&#367;j profil i do jin&eacute;ho telefonu &mdash; sk&oacute;re, medaile i
+    jm&eacute;no.
+  </p>
+
+  <p style="font-size: 12px; line-height: 18px; color: #57534e; margin: 16px 0 0">
+    <strong>Adresu pou&#382;ijeme jen k tomuhle.</strong> Nic jin&eacute;ho ti
+    nepo&#353;leme. Pokud jsi o k&oacute;d ne&#382;&aacute;dal/a, nic se nestalo a
+    m&#367;&#382;e&#353; tenhle e-mail ignorovat.
+  </p>
+</div>

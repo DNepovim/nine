@@ -87,6 +87,21 @@ export const LOCALE_KEY = 'nine.locale.v1'
 // default), and only an absent key brings the banner back. See hooks/use-replay-consent.ts.
 export const REPLAY_CONSENT_KEY = 'nine.replay-consent.v1'
 
+// Whether this player has been asked, once, to put an address on their profile. Set when
+// the one-time card is answered *or* dismissed, because the question has been put either
+// way and a card that comes back every launch is a card that gets dismissed faster.
+//
+// It gates the asking and nothing else. Whether an address is waiting to be confirmed is
+// a fact about the account, read off the session — a player who skipped this card and
+// added an address months later still gets told to confirm it.
+export const EMAIL_PROMPT_KEY = 'nine.email-prompt.v1'
+// Left behind when this device's session is refused rather than merely unreachable: the
+// one thing that happens is somebody restoring this profile onto another phone, which
+// takes it off this one. Read once by the intro and cleared as it is read, the way
+// `consumeUpdateReload` handles its own note — a line explaining where the profile went
+// is worth saying once and is a puzzle on the third launch.
+export const PROFILE_MOVED_KEY = 'nine.moved.v1'
+
 // Keys no build reads any more, cleared once on boot so the retired data does not sit on
 // the device forever. Anything listed here is gone for good: the pending queue is on the
 // list because an unpublished score from the old mechanics would otherwise publish itself

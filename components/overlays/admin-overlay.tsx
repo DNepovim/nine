@@ -33,7 +33,16 @@ const TAB_LABEL: Record<Tab, string> = {
   features: 'FEATURES',
 }
 
-export function AdminOverlay({ onClose }: { onClose: () => void }) {
+export function AdminOverlay({
+  viewerId,
+  onClose,
+}: {
+  // Who is reading, so the people list can say which row is theirs. This screen is the one
+  // place a person can take a feature off themselves, and knowing which row that is before
+  // opening it is worth a tag.
+  viewerId: string | null
+  onClose: () => void
+}) {
   const [tab, setTab] = useState<Tab>('people')
   const [person, setPerson] = useState<Person | null>(null)
   const [role, setRole] = useState<Role | null>(null)
@@ -113,7 +122,9 @@ export function AdminOverlay({ onClose }: { onClose: () => void }) {
         })}
       </View>
 
-      {tab === 'people' && <AdminPeople epoch={epoch} onOpenPerson={setPerson} />}
+      {tab === 'people' && (
+        <AdminPeople epoch={epoch} viewerId={viewerId} onOpenPerson={setPerson} />
+      )}
       {tab === 'roles' && (
         <AdminRoles epoch={epoch} onOpenRole={setRole} onChanged={refresh} />
       )}
