@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { type LayoutChangeEvent } from 'react-native'
 
-import { findPosition, fitsContainer } from '@/lib/find-position'
+import { clampToContainer, findPosition, fitsContainer } from '@/lib/find-position'
 import { remainingFraction } from '@/lib/target-clock'
 import { type HitBatch, type HitInfo, type Target } from '@/machines/game'
 import type { DisplayTarget, Position, TargetExit } from '@/types/game'
@@ -133,13 +133,23 @@ export function useDisplayedTargets({
   }
 
   const onContainerLayout = (event: LayoutChangeEvent) => {
-    containerSize.current = {
-      width: event.nativeEvent.layout.width,
-      height: event.nativeEvent.layout.height,
-    }
-    setCanvas({
-      width: event.nativeEvent.layout.width,
-      height: event.nativeEvent.layout.height,
+    const { width, height } = event.nativeEvent.layout
+    containerSize.current = { width, height }
+    setCanvas({ width, height })
+    // A canvas that shrank under cards already standing on it brings them back inside.
+    // The measurement a target was placed against is not always the canvas it lives in —
+    // see clampToContainer for the three ways the two come apart — and a card left where
+    // it was would hang over the sum row below.
+    setDisplayedTargets((prev) => {
+      const pulled = prev.map((target) => {
+        const position = clampToContainer(target.position, width, height)
+        return position.x === target.position.x && position.y === target.position.y
+          ? target
+          : { ...target, position }
+      })
+      // The same list back when nothing moved: a layout event that only confirms the
+      // size the board already had is most of them, and none should re-render.
+      return pulled.every((target, i) => target === prev[i]) ? prev : pulled
     })
   }
 

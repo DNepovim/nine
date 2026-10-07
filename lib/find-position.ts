@@ -59,3 +59,30 @@ export function findPosition(
   }
   return best
 }
+
+// Where a target has to move to once the canvas under it has shrunk.
+//
+// A position is picked against the canvas as it was measured at that moment, and the
+// canvas is not always the one the target ends up living in: the tutorial's stepper and
+// talking band arrive with the run and take 90 points off it, a run put back from storage
+// is placed before the board has been measured at all, and a browser window can be pulled
+// shorter mid-run. Any of the three leaves a card hanging past the bottom edge — over the
+// sum row, which is the one thing on the screen whose place never moves.
+//
+// Pulled in rather than re-rolled: the player is looking at this target, and a card that
+// jumped across the board would read as the game dealing a new one. The clamp is also
+// allowed to put two cards on top of each other on a board with no room left, which is
+// the same bargain findPosition already makes.
+export function clampToContainer(
+  position: Position,
+  containerW: number,
+  containerH: number,
+): Position {
+  if (containerW <= 0 || containerH <= 0) return position
+  const maxX = Math.max(0, containerW - PIE_SIZE - CARD_GAP)
+  const maxY = Math.max(0, containerH - PIE_SIZE - CARD_GAP)
+  return {
+    x: Math.max(0, Math.min(position.x, maxX)),
+    y: Math.max(0, Math.min(position.y, maxY)),
+  }
+}
