@@ -2,8 +2,10 @@ import { describe, expect, it } from 'vitest'
 
 import type { LeaderboardTab } from './leaderboard'
 import {
+  heldMedals,
   longestMedalTab,
   medalRank,
+  medalsOnBoard,
   toMedals,
   type BoardStanding,
   type TabRank,
@@ -110,6 +112,55 @@ describe('toMedals', () => {
       standing({ mode: 'accuracy', rank: 3 }),
     ])
     expect(medals.map((m) => m.mode)).toEqual(['accuracy', 'speed'])
+  })
+})
+
+describe('medalsOnBoard', () => {
+  // Always fed what the profile feeds it: every medal the player holds, longest board
+  // first, which is the order the implication rule is written against.
+  const onBoard = (standings: BoardStanding[]) =>
+    medalsOnBoard(heldMedals(standings), 'accuracy', 'easy')
+
+  it('keeps only the board asked for', () => {
+    const medals = onBoard([
+      standing({ mode: 'accuracy', difficulty: 'easy' }),
+      standing({ mode: 'accuracy', difficulty: 'hard' }),
+      standing({ mode: 'speed', difficulty: 'easy' }),
+    ])
+    expect(medals).toHaveLength(1)
+    expect(medals[0]).toMatchObject({ mode: 'accuracy', difficulty: 'easy' })
+  })
+
+  it('drops the windows a longer board already implies', () => {
+    // Gold all time, gold this week, gold today is one fact told three times.
+    const medals = onBoard([
+      standing({ period: 'ever', rank: 1 }),
+      standing({ period: 'week', rank: 1 }),
+      standing({ period: 'today', rank: 1 }),
+    ])
+    expect(medals.map((m) => m.period)).toEqual(['ever'])
+  })
+
+  it('keeps a different metal, which is a different fact', () => {
+    const medals = onBoard([
+      standing({ period: 'ever', rank: 3 }),
+      standing({ period: 'week', rank: 3 }),
+      standing({ period: 'today', rank: 1 }),
+    ])
+    expect(medals.map((m) => [m.period, m.rank])).toEqual([
+      ['ever', 3],
+      ['today', 1],
+    ])
+  })
+
+  it('is empty on a board off the podium', () => {
+    expect(onBoard([standing({ rank: 9 })])).toEqual([])
+  })
+
+  it('is empty on a rank one with no score behind it', () => {
+    // An empty board answers rank 1 for a player who has never posted — the same guard
+    // `medalRank` keeps, read through here so a fresh profile wears no medals.
+    expect(onBoard([standing({ rank: 1, score: 0 })])).toEqual([])
   })
 })
 

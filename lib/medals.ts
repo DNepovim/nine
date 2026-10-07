@@ -133,6 +133,31 @@ export function toMedals(standings: readonly BoardStanding[]): Medal[] {
   )
 }
 
+// What one board is worth to the player, with the windows that say nothing new dropped.
+//
+// The same rule `boardMedals` applies to a single run's standing, asked here of a career:
+// a place on a longer board implies the same place on every shorter one, because the
+// score doing the leading sits on those boards too. Gold all time, gold this week and
+// gold today is one fact told three times, and only ALL is worth the room.
+//
+// Different metals are different facts and all survive — third all time and first today
+// says both that the game is not yours and that the day is, which is two things worth
+// knowing. Fed from `heldMedals`, which is already longest board first, so each medal is
+// only ever compared with the longer one that would imply it.
+export function medalsOnBoard(
+  held: readonly Medal[],
+  mode: ScoredMode,
+  difficulty: Difficulty,
+): Medal[] {
+  const kept: Medal[] = []
+  for (const medal of held) {
+    if (medal.mode !== mode || medal.difficulty !== difficulty) continue
+    if (kept.at(-1)?.rank === medal.rank) continue
+    kept.push(medal)
+  }
+  return kept
+}
+
 // Longest board first: forever says more than a week, which says more than a day —
 // the same ordering `bestPerMode` uses when one board holds several medals at once.
 const TAB_ORDER: readonly LeaderboardTab[] = ['forever', 'week', 'today']

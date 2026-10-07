@@ -7,6 +7,7 @@ import { useState } from 'react'
 import { ScrollView, Text, View } from 'react-native'
 
 import DSEG7Font from '@/assets/fonts/DSEG7Classic-Bold.ttf'
+import { CardSection } from '@/components/overlays/card-section'
 import { MedalLine } from '@/components/overlays/medal-line'
 import { ModalCard } from '@/components/overlays/modal-card'
 import { MottoModal } from '@/components/overlays/motto-modal'
@@ -37,7 +38,7 @@ import {
   nameFactorsOf,
   type PlayerProfile,
 } from '@/lib/player-profile'
-import { gradientOf, headlineOf, labelOf, SCORED_MODES, type Headline } from '@/modes'
+import { codeOf, gradientOf, headlineOf, SCORED_MODES, type Headline } from '@/modes'
 
 // The day the player joined. No profile carries a real join date yet, so every one of
 // them reads the same day — the day profiles shipped — until the RPC can answer for it.
@@ -353,68 +354,91 @@ export function PlayerProfileOverlay({
                       </Trans>
                     </Text>
 
-                    {SCORED_MODES.map((mode) => (
-                      <View key={mode}>
-                        {/* Taller than the rows under it, because these headings are two
-                        lines where a row is one. */}
-                        <View className="h-9 flex-row items-end">
-                          <Text
-                            selectable={false}
-                            numberOfLines={1}
-                            className="flex-1 font-mono text-[11px] font-black tracking-[2px]"
-                            style={{ color: gradientOf(mode)[0] }}
-                          >
-                            {t(labelOf(mode))}
-                          </Text>
-                          <ColumnHead width={BOARD_COLUMNS.runs} bottom={t`RUNS`} />
-                          <ColumnHead
-                            width={BOARD_COLUMNS.best}
-                            top={t`BEST`}
-                            bottom={t`SCORE`}
-                          />
-                          {/* The mode's own factor twice: how it usually goes, then the
-                          once it all landed. Both second lines come from the same
-                          message, so the pair can never end up asking about two
-                          different things. */}
-                          <ColumnHead
-                            width={BOARD_COLUMNS.average}
-                            top={t`AVG`}
-                            bottom={t(FACTOR_CODE[headlineOf(mode)])}
-                          />
-                          <ColumnHead
-                            width={BOARD_COLUMNS.bestFactor}
-                            top={t`BEST`}
-                            bottom={t(FACTOR_CODE[headlineOf(mode)])}
-                          />
-                        </View>
-                        {rows
-                          .filter((row) => row.mode === mode)
-                          .map((row) => (
-                            <ProfileBoardRow
-                              key={row.difficulty}
-                              mode={row.mode}
-                              difficulty={row.difficulty}
-                              runs={row.runs}
-                              best={row.best}
-                              average={row.average}
-                              bestFactor={row.bestFactor}
+                    {/* Both boards on one card, the way the comparison draws its own two
+                    blocks: a mode heading and three difficulties under it is a table, and
+                    two tables with nothing behind them read as six loose rows with a
+                    coloured word every fourth. The tile is what says where one table ends.
+
+                    One tile rather than two, because the heading inside each already names
+                    its mode — a card apiece would be drawing the same boundary twice. */}
+                    <CardSection label={t`BOARDS`}>
+                      {SCORED_MODES.map((mode) => (
+                        <View key={mode}>
+                          {/* Taller than the rows under it, because these headings are two
+                          lines where a row is one. */}
+                          <View className="h-9 flex-row items-end">
+                            {/* The board code rather than the mode spelled out. The
+                            rows under it are the thing being read, and the four columns
+                            of figures they need are what a narrow phone has room for —
+                            ACC over them says as much as ACCURACY did, in the register
+                            the medal line and the reign rows already name a board in.
+
+                            Three points over the difficulty codes under it, which is
+                            what makes it read as the head of them rather than as a
+                            fourth row of the same list. Two codes a point apart in the
+                            same weight is two rows; three points apart is a heading and
+                            its rows. The colour was already saying mode where they say
+                            difficulty — this says which of the two is being announced.
+
+                            Its own width, with the slack pushed into the spacer beside
+                            it, rather than a `flex-1` cell. Stretched across the gap the
+                            code was the one thing in this row that could be asked to
+                            give way, and a clipped board code is three letters short of
+                            unreadable — it has no second half to guess the rest from the
+                            way a spelled word does. Everything right of it is a fixed
+                            width, so the slack has to live somewhere, and a spacer is
+                            the one place it cannot cost anything. */}
+                            <Text
+                              selectable={false}
+                              className="font-mono text-[13px] font-black tracking-[2px]"
+                              style={{ color: gradientOf(mode)[0] }}
+                            >
+                              {t(codeOf(mode))}
+                            </Text>
+                            <View className="flex-1" />
+                            <ColumnHead width={BOARD_COLUMNS.runs} bottom={t`RUNS`} />
+                            <ColumnHead
+                              width={BOARD_COLUMNS.best}
+                              top={t`BEST`}
+                              bottom={t`SCORE`}
                             />
-                          ))}
-                      </View>
-                    ))}
+                            {/* The mode's own factor twice: how it usually goes, then
+                            the once it all landed. Both second lines come from the same
+                            message, so the pair can never end up asking about two
+                            different things. */}
+                            <ColumnHead
+                              width={BOARD_COLUMNS.average}
+                              top={t`AVG`}
+                              bottom={t(FACTOR_CODE[headlineOf(mode)])}
+                            />
+                            <ColumnHead
+                              width={BOARD_COLUMNS.bestFactor}
+                              top={t`BEST`}
+                              bottom={t(FACTOR_CODE[headlineOf(mode)])}
+                            />
+                          </View>
+                          {rows
+                            .filter((row) => row.mode === mode)
+                            .map((row) => (
+                              <ProfileBoardRow
+                                key={row.difficulty}
+                                mode={row.mode}
+                                difficulty={row.difficulty}
+                                runs={row.runs}
+                                best={row.best}
+                                average={row.average}
+                                bestFactor={row.bestFactor}
+                                medals={row.medals}
+                              />
+                            ))}
+                        </View>
+                      ))}
+                    </CardSection>
 
                     {/* Omitted rather than shown empty: a heading over nothing reads as
-                      something the player lost, which is exactly what it is not. */}
+                    something the player lost, which is exactly what it is not. */}
                     {isNonEmptyArray(profile.reigns) && (
-                      <View>
-                        <View className="h-7 flex-row items-end">
-                          <Text
-                            selectable={false}
-                            className="font-mono text-[9px] font-black tracking-[2px] text-dim"
-                          >
-                            <Trans>MEDALS HELD, EVER</Trans>
-                          </Text>
-                        </View>
+                      <CardSection label={t`MEDALS HELD, EVER`}>
                         {profile.reigns.map((held) => (
                           <ProfileReignRow
                             key={`${held.period}:${held.mode}:${held.difficulty}:${held.from}`}
@@ -425,7 +449,7 @@ export function PlayerProfileOverlay({
                             to={held.to}
                           />
                         ))}
-                      </View>
+                      </CardSection>
                     )}
 
                     {lifetime.runs === 0 && isEmptyArray(profile.bests) && (

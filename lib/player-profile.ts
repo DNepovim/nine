@@ -2,7 +2,9 @@ import { isOneOf } from 'narrowland'
 
 import { isDifficulty } from '@/lib/is-difficulty'
 import {
+  heldMedals,
   MEDAL_PERIODS,
+  medalsOnBoard,
   toMedals,
   type BoardStanding,
   type Medal,
@@ -103,6 +105,11 @@ export type PlayerProfile = {
   // The same one-per-mode reduction the intro screen's line under the title uses, from
   // the same function — a player's best claim in each mode, not all eighteen standings.
   medals: Medal[]
+  // The same standings with nothing reduced away, which is what the per-board table
+  // needs: the line above it speaks for a mode, and a row speaks for one board. Kept
+  // beside `medals` rather than instead of it — the line's reduction is the line's, and
+  // a screen deriving it a second time is how the two start disagreeing.
+  held: Medal[]
   reigns: Reign[]
   // The winning scores this player has taken on each board, summed over all history and
   // split by window so each half can be weighted. Empty for a player who has never taken
@@ -125,6 +132,10 @@ export type BoardRow = {
   // landed. Null for a board whose runs all predate the server keeping one, so a career
   // started before this shipped reads a dash there until it is played again.
   bestFactor: number | null
+  // What the player holds on this board right now, best claim first and the windows a
+  // longer one implies already dropped. Empty on a board off the podium, which is most
+  // of them.
+  medals: Medal[]
 }
 
 // The factor sums travel with the totals so the modal can show one lifetime average per
@@ -261,6 +272,7 @@ export function boardRows(profile: PlayerProfile): BoardRow[] {
           totals === undefined || BEST_FACTOR[mode](totals) <= 0
             ? null
             : Math.round(BEST_FACTOR[mode](totals)),
+        medals: medalsOnBoard(profile.held, mode, difficulty),
       }
     }),
   )
@@ -363,6 +375,16 @@ const isMedalPeriod = (value: string): value is MedalPeriod =>
   MEDAL_PERIODS.some((period) => period === value)
 
 export function shapeProfile(raw: PlayerProfileResponse): PlayerProfile {
+  // Read off the wire once and reduced twice below. Two passes over the same rows is
+  // two chances for the line under the name and the table under it to disagree about
+  // which boards the player is on.
+  const standings = raw.medals.flatMap<BoardStanding>((row) => {
+    const on = board(row)
+    return on === null || !isMedalPeriod(row.period)
+      ? []
+      : [{ ...on, period: row.period, rank: row.rank, score: row.bestScore }]
+  })
+
   return {
     nickname: raw.nickname,
     motto: raw.motto ?? null,
@@ -380,14 +402,10 @@ export function shapeProfile(raw: PlayerProfileResponse): PlayerProfile {
     // Straight through `toMedals`, which drops anything off the podium, drops a rank one
     // with no score behind it, and keeps each mode's best claim. Reusing it is what makes
     // a profile's line and the intro's line the same line.
-    medals: toMedals(
-      raw.medals.flatMap<BoardStanding>((row) => {
-        const on = board(row)
-        return on === null || !isMedalPeriod(row.period)
-          ? []
-          : [{ ...on, period: row.period, rank: row.rank, score: row.bestScore }]
-      }),
-    ),
+    medals: toMedals(standings),
+    // The same podium rule without the per-mode reduction — every board the player
+    // stands on, for the table that has a row apiece.
+    held: heldMedals(standings),
     // Both halves of one list: the all-time stretches the server stores, and the day and
     // week ones it derives. Sorted and capped together by `heldBoards`, because the cap
     // is about how long the list is rather than about where a row came from.
@@ -432,6 +450,7 @@ export const EMPTY_PROFILE: PlayerProfile = {
   totals: [],
   bests: [],
   medals: [],
+  held: [],
   reigns: [],
   winnings: [],
 }

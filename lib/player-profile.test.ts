@@ -179,6 +179,21 @@ describe('boardRows', () => {
     expect(speed?.average).toBe(85)
   })
 
+  it('gives each row the medals held on that board and no others', () => {
+    const rows = boardRows(
+      profile({
+        held: [
+          { mode: 'accuracy', difficulty: 'extreme', period: 'ever', rank: 1 },
+          { mode: 'speed', difficulty: 'easy', period: 'week', rank: 2 },
+        ],
+      }),
+    )
+    const held = rows.flatMap((row) =>
+      row.medals.map((medal) => `${row.mode}:${row.difficulty}:${medal.period}`),
+    )
+    expect(held).toEqual(['accuracy:extreme:ever', 'speed:easy:week'])
+  })
+
   it('leaves a board with no counted runs empty rather than zeroed', () => {
     const row = boardRows(profile())[0]
     expect(row?.runs).toBe(0)
