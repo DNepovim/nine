@@ -1,10 +1,13 @@
-import { Trans, useLingui } from '@lingui/react/macro'
+import { Plural, Trans, useLingui } from '@lingui/react/macro'
 import { isEmptyArray } from 'narrowland'
-import type { ReactNode } from 'react'
+import { useState, type ReactNode } from 'react'
 import { ScrollView, Text, View } from 'react-native'
+import Animated, { FadeInDown } from 'react-native-reanimated'
 
+import { CardSection } from '@/components/overlays/card-section'
 import { ModalCard } from '@/components/overlays/modal-card'
 import { TakerName } from '@/components/overlays/taker-name'
+import { TrackedPressable } from '@/components/tracked-pressable'
 import { GRAYSCALE } from '@/constants/colors'
 import { useChampionsContext } from '@/hooks/use-champions'
 import { useViewport } from '@/hooks/use-viewport'
@@ -15,6 +18,17 @@ import { HISTORY_DAYS, type TakenMedal } from '@/lib/medal-history'
 import { heldMedals, PERIOD_CODES, type BoardStanding, type Medal } from '@/lib/medals'
 import { rankMedal } from '@/lib/rank-emoji'
 import { DIFFICULTIES, gradientOf, labelOf } from '@/modes'
+
+// How many losses the list opens on. A bad week on six boards across three windows can
+// run to a couple of dozen entries, and a card that opens on all of them buries HOLDING —
+// the half the player came here to read — above a scroll they have to climb back out of.
+// Seven is a loss a day over the window the list covers, which is already a bad week.
+const SHOWN_TAKEN = 7
+
+// How the revealed tail arrives — the comparison table's own step and fade, so a list
+// unfolding here beats at the rate a table assembling there does.
+const STEP_MS = 18
+const FADE_MS = 200
 
 // Which board a medal stands on, spelled out. The line under the title leaves the mode to
 // its accent, because its entries sit side by side and a hue is enough to tell them apart;
@@ -53,20 +67,12 @@ function BoardLabel({
   )
 }
 
-function Heading({ children }: { children: ReactNode }) {
+function Empty({ children }: { children: ReactNode }) {
   return (
     <Text
       selectable={false}
-      className="font-mono text-[9px] font-black tracking-[2px] text-dim"
+      className="py-1 font-mono text-[10px] leading-[16px] text-dim"
     >
-      {children}
-    </Text>
-  )
-}
-
-function Empty({ children }: { children: ReactNode }) {
-  return (
-    <Text selectable={false} className="font-mono text-[10px] leading-[16px] text-dim">
       {children}
     </Text>
   )
@@ -80,7 +86,7 @@ function Empty({ children }: { children: ReactNode }) {
 function TakenRow({ taken }: { taken: TakenMedal }) {
   const champions = useChampionsContext()
   return (
-    <View className="gap-0.5">
+    <View className="gap-0.5 py-1">
       <View className="flex-row items-center gap-1.5">
         <Text selectable={false} className="text-[13px] leading-[16px] opacity-40">
           {rankMedal(taken.had)}
@@ -143,6 +149,10 @@ function TakenRow({ taken }: { taken: TakenMedal }) {
 // not what a player wants once they go looking. This is the rest of it — all six boards
 // across all three windows — and under it the half that line can never show, because a
 // medal that is gone has no entry left to stand in: who took it, and when.
+//
+// Both halves are drawn the way the profile draws its boards: a small-caps label and a
+// card under it, from the same `CardSection`. The two dialogs say the same kind of thing
+// about the same boards, and before this they said it in two different shapes.
 export function MedalsOverlay({
   standings,
   history,
@@ -156,6 +166,11 @@ export function MedalsOverlay({
 }) {
   const { height } = useViewport()
   const held = heldMedals(standings)
+  const [showAllTaken, setShowAllTaken] = useState(false)
+  // Newest first already, so the opening slice is the most recent losses — the ones a
+  // player can still answer before the week board empties.
+  const shownTaken = showAllTaken ? history : history.slice(0, SHOWN_TAKEN)
+  const hiddenTaken = history.length - shownTaken.length
 
   return (
     <ModalCard
@@ -171,49 +186,83 @@ export function MedalsOverlay({
           showsVerticalScrollIndicator={false}
           style={{ flexGrow: 0, flexShrink: 1 }}
         >
-          <View className="gap-2 pt-2">
-            <Heading>
-              <Trans>HOLDING</Trans>
-            </Heading>
-            {isEmptyArray(held) ? (
-              <Empty>
-                <Trans>Nothing yet — a top three on any board puts a medal here.</Trans>
-              </Empty>
-            ) : (
-              held.map((medal) => (
-                <View
-                  key={`${medal.mode}:${medal.difficulty}:${medal.period}`}
-                  className="flex-row items-center gap-1.5"
-                >
-                  <Text selectable={false} className="text-[13px] leading-[16px]">
-                    {rankMedal(medal.rank)}
-                  </Text>
-                  <BoardLabel
-                    mode={medal.mode}
-                    difficulty={medal.difficulty}
-                    period={medal.period}
-                  />
-                </View>
-              ))
-            )}
+          <View className="gap-3 pt-2">
+            <CardSection label={<Trans>HOLDING</Trans>}>
+              {isEmptyArray(held) ? (
+                <Empty>
+                  <Trans>Nothing yet — a top three on any board puts a medal here.</Trans>
+                </Empty>
+              ) : (
+                held.map((medal) => (
+                  <View
+                    key={`${medal.mode}:${medal.difficulty}:${medal.period}`}
+                    className="h-7 flex-row items-center gap-1.5"
+                  >
+                    <Text selectable={false} className="text-[13px] leading-[16px]">
+                      {rankMedal(medal.rank)}
+                    </Text>
+                    <BoardLabel
+                      mode={medal.mode}
+                      difficulty={medal.difficulty}
+                      period={medal.period}
+                    />
+                  </View>
+                ))
+              )}
+            </CardSection>
 
-            <View className="mt-4 gap-2">
-              <Heading>
-                <Trans>TAKEN IN THE LAST {HISTORY_DAYS} DAYS</Trans>
-              </Heading>
+            <CardSection label={<Trans>TAKEN IN THE LAST {HISTORY_DAYS} DAYS</Trans>}>
               {isEmptyArray(history) ? (
                 <Empty>
                   <Trans>Nobody has taken anything off you.</Trans>
                 </Empty>
               ) : (
-                history.map((taken) => (
-                  <TakenRow
+                shownTaken.map((taken, index) => (
+                  <Animated.View
                     key={`${taken.day}:${taken.mode}:${taken.difficulty}:${taken.period}:${taken.had}`}
-                    taken={taken}
-                  />
+                    // Only what the toggle reveals arrives on an animation: the rows the
+                    // card opens on come up with the card, and playing them in a second
+                    // time underneath it would read as the list rebuilding itself. The
+                    // delay counts from the first revealed row so the tail drops in one
+                    // after another rather than as a block.
+                    entering={
+                      index < SHOWN_TAKEN
+                        ? undefined
+                        : FadeInDown.delay((index - SHOWN_TAKEN) * STEP_MS).duration(
+                            FADE_MS,
+                          )
+                    }
+                  >
+                    <TakenRow taken={taken} />
+                  </Animated.View>
                 ))
               )}
-            </View>
+
+              {/* The way into the rest of the week, and back out of it. Inside the card
+                  rather than under it, because it belongs to this list and not to the
+                  dialog — and in dim caps rather than as a button, since nothing happens
+                  here but more of what is already on screen. */}
+              {(hiddenTaken > 0 || showAllTaken) && (
+                <TrackedPressable
+                  id="medals.show_more"
+                  onPress={() => {
+                    setShowAllTaken(!showAllTaken)
+                  }}
+                  className="items-center py-2"
+                >
+                  <Text
+                    selectable={false}
+                    className="font-mono text-[9px] font-black tracking-[1.5px] text-dim"
+                  >
+                    {showAllTaken ? (
+                      <Trans>SHOW LESS</Trans>
+                    ) : (
+                      <Plural value={hiddenTaken} one="SHOW # MORE" other="SHOW # MORE" />
+                    )}
+                  </Text>
+                </TrackedPressable>
+              )}
+            </CardSection>
           </View>
         </ScrollView>
       )}

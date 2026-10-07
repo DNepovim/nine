@@ -80,6 +80,7 @@ export type ButtonId =
   | 'achievement_detail.close'
   | 'achievement_detail.close_backdrop'
   | 'medals.line'
+  | 'medals.show_more'
   | 'high_scores.row'
   | 'high_scores.score_row'
 
