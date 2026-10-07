@@ -2,6 +2,8 @@ import { Text, View } from 'react-native'
 
 import { GradientName } from '@/components/gradient-name'
 import { MedalLine } from '@/components/overlays/medal-line'
+import { TrackedPressable } from '@/components/tracked-pressable'
+import { useOpenProfile } from '@/hooks/use-profile-modal'
 import type { ChampionMark } from '@/lib/champions'
 import type { Medal } from '@/lib/medals'
 import { shortName } from '@/lib/short-name'
@@ -53,6 +55,10 @@ export const HEAD_NAME_LINE = { top: MARK_BOX + STACK_GAP, height: NAME_LEADING 
 // centred in their half of the card and the left-to-right order is what ties each one to its
 // column, exactly as the YOU / THEM heading it replaces did.
 export function CompareHeadSide({
+  // Whose column this is. Carried beside the name rather than read off it, the same way
+  // the table itself carries one: a nickname is what a player is called and has never
+  // said which player it belongs to.
+  userId,
   nickname,
   // The player's lifetime averages, which is what decides the colour the name is drawn in —
   // the same gradient they wore on the card this table opened from, and on the row that
@@ -77,6 +83,7 @@ export function CompareHeadSide({
   // below can say, because every row below is a number and a medal is a standing.
   medals,
 }: {
+  userId: string
   nickname: string
   avgAccuracy: number | null
   avgSpeed: number | null
@@ -84,6 +91,7 @@ export function CompareHeadSide({
   raceMark: string | null
   medals: readonly Medal[]
 }) {
+  const openProfile = useOpenProfile()
   // The standing wins the box whenever there is one: a crown says something true about this
   // player wherever their name appears, and the animal only says something about today's
   // table.
@@ -98,13 +106,33 @@ export function CompareHeadSide({
           </Text>
         )}
       </View>
-      <GradientName
-        nickname={shortName(nickname, HEAD_CHARS)}
-        avgAccuracy={avgAccuracy}
-        avgSpeed={avgSpeed}
-        numberOfLines={1}
-        className="text-center font-mono text-[17px] font-black tracking-[1px] leading-[22px]"
-      />
+      {/* A name opens the player behind it here as it does everywhere else in the app —
+          and here it is the one name the reader most often wants to open, because the
+          table says what the two of them have done and nothing about who they are.
+
+          The profile arrives *over* this table rather than in its place: the comparison
+          is where the player came from and is what they go back to, and a card that
+          replaced it would leave them having to rebuild the table to carry on reading it.
+
+          Full width so the tap lands anywhere across this half of the header rather than
+          only on the letters, which at ten characters is a thin target centred in a
+          column twice as wide. */}
+      <TrackedPressable
+        id="compare.name"
+        onPress={() => {
+          openProfile(userId)
+        }}
+        hitSlop={6}
+        className="w-full"
+      >
+        <GradientName
+          nickname={shortName(nickname, HEAD_CHARS)}
+          avgAccuracy={avgAccuracy}
+          avgSpeed={avgSpeed}
+          numberOfLines={1}
+          className="text-center font-mono text-[17px] font-black tracking-[1px] leading-[22px]"
+        />
+      </TrackedPressable>
       {/* Wrapped, unlike the two places this line already appears: those have a whole card
           to run across and this has half of one, so a player holding a medal in both modes
           would otherwise run their second entry out under the column beside them. A player

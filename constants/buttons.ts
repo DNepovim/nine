@@ -95,6 +95,7 @@ export type ButtonId =
   | 'nickname.skip'
   | 'motto.save'
   | 'motto.cancel'
+  | 'compare.name'
   | 'compare.try_again'
   | 'compare.close'
 

@@ -19,11 +19,13 @@ import { raceMarks } from '@/lib/race-marks'
 // is who these two are, what each of them holds, and — over a player with no board of their
 // own to wear a mark for — how the race between them is going.
 export function CompareHead({
+  myId,
   myNickname,
   myAvgAccuracy,
   myAvgSpeed,
   myMark,
   myMedals,
+  theirId,
   theirNickname,
   theirAvgAccuracy,
   theirAvgSpeed,
@@ -31,11 +33,15 @@ export function CompareHead({
   theirMedals,
   verdict,
 }: {
+  // Both ids, so either name can open the player behind it. The table already holds them
+  // to ask the champions who wears a mark; this is the second thing they are for.
+  myId: string
   myNickname: string
   myAvgAccuracy: number | null
   myAvgSpeed: number | null
   myMark: ChampionMark | null
   myMedals: readonly Medal[]
+  theirId: string
   theirNickname: string
   theirAvgAccuracy: number | null
   theirAvgSpeed: number | null
@@ -52,6 +58,7 @@ export function CompareHead({
     // neighbour's for no reason the reader could see.
     <View className="flex-row items-start">
       <CompareHeadSide
+        userId={myId}
         nickname={myNickname}
         avgAccuracy={myAvgAccuracy}
         avgSpeed={myAvgSpeed}
@@ -75,6 +82,7 @@ export function CompareHead({
         </Text>
       </View>
       <CompareHeadSide
+        userId={theirId}
         nickname={theirNickname}
         avgAccuracy={theirAvgAccuracy}
         avgSpeed={theirAvgSpeed}

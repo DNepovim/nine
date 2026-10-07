@@ -137,11 +137,13 @@ export function CompareOverlay({
                     it — the same reduction the intro puts under the title and the profile
                     card under the nickname, never derived a second time here. */}
                 <CompareHead
+                  myId={viewerId}
                   myNickname={myProfile.nickname ?? NO_NAME}
                   myAvgAccuracy={myFactors.avgAccuracy}
                   myAvgSpeed={myFactors.avgSpeed}
                   myMark={championMark(viewerId, champions)}
                   myMedals={myProfile.medals}
+                  theirId={theirId}
                   theirNickname={theirProfile.nickname ?? NO_NAME}
                   theirAvgAccuracy={theirFactors.avgAccuracy}
                   theirAvgSpeed={theirFactors.avgSpeed}
