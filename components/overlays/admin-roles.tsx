@@ -30,9 +30,10 @@ export function AdminRoles({
   const [draft, setDraft] = useState('')
   const [busy, setBusy] = useState(false)
 
+  // Only the first read blanks the list — see the note on the same effect in
+  // admin-people.tsx. A reload keeps the rows that are already on screen.
   useEffect(() => {
     void (async () => {
-      setLoading(true)
       const res = await listRoles()
       setRows(res.rows)
       setError(res.error)
@@ -125,6 +126,7 @@ export function AdminRoles({
             </TrackedPressable>
           )}
           showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
         />
       )}
     </View>

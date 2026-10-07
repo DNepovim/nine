@@ -99,9 +99,11 @@ export function AdminPeople({
       : [...rows.map((row) => row.id), searchResult.id]
   const factorsOf = usePlayerFactors(shownIds.length === 0 ? EMPTY_IDS : shownIds)
 
+  // Only the first read blanks the list. `epoch` bumps every time a detail screen
+  // changes something, and swapping the rows for a spinner on the way back from one was
+  // the screen flashing for a change it already knew about.
   useEffect(() => {
     void (async () => {
-      setLoading(true)
       const res = await listAdminPeople()
       setRows(res.rows)
       setListError(res.error)
@@ -211,6 +213,7 @@ export function AdminPeople({
             />
           )}
           showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
           ListEmptyComponent={
             <Text
               selectable={false}

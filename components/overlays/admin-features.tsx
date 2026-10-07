@@ -1,5 +1,5 @@
 import { Trans } from '@lingui/react/macro'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { ActivityIndicator, ScrollView, Text, TextInput, View } from 'react-native'
 
 import { TrackedPressable } from '@/components/tracked-pressable'
@@ -11,6 +11,22 @@ import { cn } from '@/lib/cn'
 // — and this is only so the switch does not look tappable.
 const PROTECTED = 'admin'
 
+// What the note fields hold after a read. A draft beats what the server just said: a
+// note being typed in one row has to survive a switch being flipped in another, and
+// every write on this screen reads the whole list back.
+const mergeNotes = (
+  rows: readonly AdminFeature[],
+  current: Record<string, string>,
+): Record<string, string> =>
+  Object.fromEntries(rows.map((row) => [row.key, current[row.key] ?? row.note ?? '']))
+
+// One row with its switch already moved, for the optimistic half of a toggle.
+const withActive = (
+  rows: readonly AdminFeature[],
+  key: string,
+  active: boolean,
+): AdminFeature[] => rows.map((row) => (row.key === key ? { ...row, active } : row))
+
 export function AdminFeatures({
   epoch,
   onChanged,
@@ -20,31 +36,48 @@ export function AdminFeatures({
 }) {
   const [rows, setRows] = useState<AdminFeature[]>([])
   const [loading, setLoading] = useState(true)
-  const [busy, setBusy] = useState(false)
+  // Which keys have a write in flight, rather than one flag for the screen. A single
+  // `busy` dimmed every row at once and disabled all of them — which is what a tap on
+  // one switch read as: the whole list flashing, and the next tap landing on nothing.
+  const [pending, setPending] = useState<ReadonlySet<string>>(new Set())
+  // The same answer as `pending`, readable the moment it changes rather than on the next
+  // render. A tap on a row's switch blurs that row's note field in the same breath, and
+  // the blur handler has to be able to see the write the tap already sent.
+  const inFlight = useRef<Set<string>>(new Set())
   const [error, setError] = useState<string | null>(null)
   // The note is edited in place, so the field needs somewhere to live between keystrokes
   // that is not the row it came from.
   const [notes, setNotes] = useState<Record<string, string>>({})
 
+  // Only the first read has nothing to draw, so only the first read is allowed to blank
+  // the list. `epoch` bumps after this screen's own writes as well, and swapping the
+  // rows for a spinner on each of those was the screen flashing on every tap.
   useEffect(() => {
     void (async () => {
-      setLoading(true)
       const res = await listFeatures()
       setRows(res.rows)
-      setNotes(Object.fromEntries(res.rows.map((row) => [row.key, row.note ?? ''])))
+      setNotes((current) => mergeNotes(res.rows, current))
       setError(res.error)
       setLoading(false)
     })()
   }, [epoch])
 
-  const write = async (call: () => Promise<{ error: string | null }>) => {
-    setBusy(true)
+  // Every write is the same three moves — mark that key busy, call, read the whole list
+  // back — because a refused write has to put its row back to what the server holds.
+  const write = async (key: string, call: () => Promise<{ error: string | null }>) => {
+    inFlight.current.add(key)
+    setPending((current) => new Set(current).add(key))
     const res = await call()
     setError(res.error)
     const reloaded = await listFeatures()
     setRows(reloaded.rows)
-    setNotes(Object.fromEntries(reloaded.rows.map((row) => [row.key, row.note ?? ''])))
-    setBusy(false)
+    setNotes((current) => mergeNotes(reloaded.rows, current))
+    inFlight.current.delete(key)
+    setPending((current) => {
+      const left = new Set(current)
+      left.delete(key)
+      return left
+    })
     if (res.error === null) onChanged()
   }
 
@@ -60,7 +93,12 @@ export function AdminFeatures({
           {error}
         </Text>
       )}
-      <ScrollView showsVerticalScrollIndicator={false}>
+      {/* The notes are text fields in this very list, and a tap that only puts the
+          keyboard away is the tap somebody counts as the first of two. */}
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+      >
         {rows.map((row) => {
           const locked = row.key === PROTECTED
           const note = notes[row.key] ?? ''
@@ -69,16 +107,21 @@ export function AdminFeatures({
               <View className="flex-row items-center">
                 <TrackedPressable
                   id="admin.feature_active"
-                  disabled={busy || locked}
+                  disabled={pending.has(row.key) || locked}
                   onPress={() => {
-                    void write(() =>
-                      setFeature(row.key, !row.active, note === '' ? null : note),
+                    const next = !row.active
+                    // The switch moves on the tap. A write and a read stand between the
+                    // press and the truth, and a control that shows nothing until both
+                    // land is a control you press again.
+                    setRows((current) => withActive(current, row.key, next))
+                    void write(row.key, () =>
+                      setFeature(row.key, next, note === '' ? null : note),
                     )
                   }}
                   className={cn(
                     'mr-2 rounded-lg border px-2.5 py-1',
                     row.active ? 'border-strong bg-strong' : 'border-dim/30',
-                    (busy || locked) && 'opacity-40',
+                    locked && 'opacity-40',
                   )}
                 >
                   <Text
@@ -127,8 +170,12 @@ export function AdminFeatures({
                   setNotes((current) => ({ ...current, [row.key]: next }))
                 }}
                 onBlur={() => {
+                  // A tap on this row's switch blurs this field, and that write carried
+                  // the draft below with it. Writing again from here would only send the
+                  // switch back to where it stood before the tap.
+                  if (inFlight.current.has(row.key)) return
                   if (note !== (row.note ?? '')) {
-                    void write(() =>
+                    void write(row.key, () =>
                       setFeature(row.key, row.active, note === '' ? null : note),
                     )
                   }

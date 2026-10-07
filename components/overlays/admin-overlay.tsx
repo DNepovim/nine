@@ -53,7 +53,6 @@ export function AdminOverlay({ onClose }: { onClose: () => void }) {
         onBack={() => {
           setPerson(null)
         }}
-        onClose={onClose}
       />
     )
   }
@@ -66,7 +65,6 @@ export function AdminOverlay({ onClose }: { onClose: () => void }) {
         onBack={() => {
           setRole(null)
         }}
-        onClose={onClose}
       />
     )
   }

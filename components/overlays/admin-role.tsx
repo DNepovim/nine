@@ -21,18 +21,22 @@ export function AdminRole({
   role,
   onChanged,
   onBack,
-  onClose,
 }: {
   role: Role
   onChanged: () => void
+  // Where DONE goes too. A role is opened from the hub and finished with on the hub —
+  // closing the whole admin screen from here was taking away the list the edit was
+  // about to be read against.
   onBack: () => void
-  onClose: () => void
 }) {
   const [features, setFeatures] = useState<AdminFeature[]>([])
   const [stack, setStack] = useState<ReadonlySet<string>>(new Set())
   const [label, setLabel] = useState(role.label)
   const [loading, setLoading] = useState(true)
+  // A write about the whole role — the rename, the delete. The stack rows carry their
+  // own, below, so that flipping one feature does not grey out the other twenty.
   const [busy, setBusy] = useState(false)
+  const [pending, setPending] = useState<ReadonlySet<string>>(new Set())
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
@@ -46,15 +50,47 @@ export function AdminRole({
     // Read once on open, keyed on the role. Every write below reloads deliberately.
   }, [role.key])
 
-  const write = async (call: () => Promise<{ error: string | null }>) => {
-    setBusy(true)
-    const res = await call()
+  // The dot moves on the tap, and the server is read back after. Waiting on the round
+  // trip before showing anything is what had this list wanting a second press.
+  const toggle = async (key: string, on: boolean) => {
+    setPending((current) => new Set(current).add(key))
+    setStack((current) => {
+      const next = new Set(current)
+      if (on) next.delete(key)
+      else next.add(key)
+      return next
+    })
+    const res = await setRoleFeature(role.key, key, !on)
     setError(res.error)
-    const [all, mine] = await Promise.all([listFeatures(), loadRoleFeatures(role.key)])
-    setFeatures(all.rows)
+    // Read back whether or not it was taken: a refused write has to put the dot back to
+    // what the stack actually holds.
+    const mine = await loadRoleFeatures(role.key)
     setStack(new Set(mine.keys))
+    setPending((current) => {
+      const left = new Set(current)
+      left.delete(key)
+      return left
+    })
+    if (res.error === null) onChanged()
+  }
+
+  const rename = async (next: string) => {
+    setBusy(true)
+    const res = await renameRole(role.key, next)
+    setError(res.error)
     setBusy(false)
     if (res.error === null) onChanged()
+  }
+
+  const remove = async () => {
+    setBusy(true)
+    const res = await deleteRole(role.key)
+    setError(res.error)
+    setBusy(false)
+    if (res.error === null) {
+      onChanged()
+      onBack()
+    }
   }
 
   const held = role.personCount
@@ -75,7 +111,7 @@ export function AdminRole({
           onBlur={() => {
             const next = label.trim()
             if (next !== '' && next !== role.label) {
-              void write(() => renameRole(role.key, next))
+              void rename(next)
             }
           }}
           autoCapitalize="characters"
@@ -104,7 +140,12 @@ export function AdminRole({
       {loading ? (
         <ActivityIndicator className="my-4" />
       ) : (
-        <ScrollView showsVerticalScrollIndicator={false}>
+        // The name above is a text field, and a tap that only puts the keyboard away is
+        // the tap somebody counts as the first of two.
+        <ScrollView
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+        >
           <Text
             selectable={false}
             className="mb-1 font-mono text-[10px] font-bold tracking-[1px] text-dim"
@@ -117,11 +158,11 @@ export function AdminRole({
               <TrackedPressable
                 key={feature.key}
                 id="admin.role_feature"
-                disabled={busy}
+                disabled={pending.has(feature.key)}
                 onPress={() => {
-                  void write(() => setRoleFeature(role.key, feature.key, !on))
+                  void toggle(feature.key, on)
                 }}
-                className={cn('flex-row items-center py-2', busy && 'opacity-40')}
+                className="flex-row items-center py-2"
               >
                 <Text
                   selectable={false}
@@ -154,11 +195,7 @@ export function AdminRole({
             id="admin.role_delete"
             disabled={busy || held > 0}
             onPress={() => {
-              void write(async () => {
-                const res = await deleteRole(role.key)
-                if (res.error === null) onBack()
-                return res
-              })
+              void remove()
             }}
             className={cn(
               'mt-5 items-center rounded-xl border border-red-500/40 py-3',
@@ -177,7 +214,7 @@ export function AdminRole({
 
       <TrackedPressable
         id="admin.done"
-        onPress={onClose}
+        onPress={onBack}
         className="mt-4 items-center self-center rounded-2xl bg-strong py-4"
         style={{ width: 224 }}
       >

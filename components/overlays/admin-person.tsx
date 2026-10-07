@@ -33,11 +33,13 @@ const isOn = (source: FeatureSource) => source === 'role-on' || source === 'over
 
 function FeatureRow({
   row,
-  busy,
+  pending,
   onCycle,
 }: {
   row: PersonFeature
-  busy: boolean
+  // This row's own write is in flight. Per row rather than one flag for the screen: a
+  // single `busy` dimmed every row at once, which is what a tap on one of them read as.
+  pending: boolean
   onCycle: () => void
 }) {
   const source = sourceOf(row)
@@ -48,8 +50,8 @@ function FeatureRow({
     <TrackedPressable
       id="admin.person_feature"
       onPress={onCycle}
-      disabled={busy || locked}
-      className={cn('flex-row items-center py-2', (busy || locked) && 'opacity-40')}
+      disabled={pending || locked}
+      className={cn('flex-row items-center py-2', locked && 'opacity-40')}
     >
       <Text
         selectable={false}
@@ -82,12 +84,13 @@ export function AdminPerson({
   person,
   onChanged,
   onBack,
-  onClose,
 }: {
   person: Person
   onChanged: () => void
+  // Where DONE goes too. A person is opened from the hub and finished with on the hub —
+  // closing the whole admin screen from here was taking away the list the edit was
+  // about to be read against.
   onBack: () => void
-  onClose: () => void
 }) {
   const [roles, setRoles] = useState<AdminRole[]>([])
   // The role is held here rather than read off `person`, which is the row the list
@@ -97,7 +100,10 @@ export function AdminPerson({
   const [role, setRole] = useState<string | null>(person.role)
   const [rows, setRows] = useState<PersonFeature[]>([])
   const [loading, setLoading] = useState(true)
+  // A write about the whole person — the role picker. The feature rows carry their own,
+  // keyed below, so that cycling one override does not grey out the other twenty.
   const [busy, setBusy] = useState(false)
+  const [pending, setPending] = useState<ReadonlySet<string>>(new Set())
   const [error, setError] = useState<string | null>(null)
 
   // The same gradient the list drew this name in, so opening somebody does not change
@@ -135,6 +141,28 @@ export function AdminPerson({
     setRoles(roleList.rows)
     setRows(featureList.rows)
     setBusy(false)
+    if (res.error === null) onChanged()
+  }
+
+  // The dot moves on the tap, and the person is read back after. Waiting on the round
+  // trip before showing anything is what had these rows wanting a second press.
+  const cycle = async (row: PersonFeature) => {
+    const next = cycleOverride(row.override)
+    setPending((current) => new Set(current).add(row.key))
+    setRows((current) =>
+      current.map((r) => (r.key === row.key ? { ...r, override: next } : r)),
+    )
+    const res = await setUserFeature(person.id, row.key, next)
+    setError(res.error)
+    // Read back whether or not it was taken: a refused write has to put the row back to
+    // what the server actually holds.
+    const featureList = await loadPersonFeatures(person.id)
+    setRows(featureList.rows)
+    setPending((current) => {
+      const left = new Set(current)
+      left.delete(row.key)
+      return left
+    })
     if (res.error === null) onChanged()
   }
 
@@ -234,11 +262,9 @@ export function AdminPerson({
             <FeatureRow
               key={row.key}
               row={row}
-              busy={busy}
+              pending={pending.has(row.key)}
               onCycle={() => {
-                void write(() =>
-                  setUserFeature(person.id, row.key, cycleOverride(row.override)),
-                )
+                void cycle(row)
               }}
             />
           ))}
@@ -266,7 +292,7 @@ export function AdminPerson({
 
       <TrackedPressable
         id="admin.done"
-        onPress={onClose}
+        onPress={onBack}
         className="mt-4 items-center self-center rounded-2xl bg-strong py-4"
         style={{ width: 224 }}
       >
