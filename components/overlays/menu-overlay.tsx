@@ -619,22 +619,29 @@ export function MenuOverlay({
 
           {/* Its own row rather than folded into the one above: these two are not for the
               player this screen otherwise addresses, and a row that only a role ever sees
-              stays out of the way of the one everybody does. DEV is shown to anyone
-              holding a role; ADMIN nests inside it for the one role above the rest — see
-              constants/features.ts. */}
-          {showDev && (
+              stays out of the way of the one everybody does. Each link asks for its own
+              feature — see constants/features.ts.
+
+              ADMIN used to be drawn inside DEV, which quietly undid the protection the
+              database puts on the `admin` key: `dev` revoked for one person took the
+              admin screen away with it, and the way back in was the screen that had just
+              gone. A door that cannot be switched off cannot be nested inside one that
+              can. */}
+          {(showDev || showAdmin) && (
             <View className="flex-row flex-wrap items-center justify-center gap-x-5 gap-y-2">
-              <TrackedPressable id="menu.dev" onPress={onOpenDev} hitSlop={10}>
-                <View className="flex-row items-center gap-1">
-                  <Ionicons name="code-slash-outline" size={10} color={DIM_INK} />
-                  <Text
-                    selectable={false}
-                    className="font-mono text-[10px] font-bold tracking-[1.8px] text-dim"
-                  >
-                    <Trans>DEV</Trans>
-                  </Text>
-                </View>
-              </TrackedPressable>
+              {showDev && (
+                <TrackedPressable id="menu.dev" onPress={onOpenDev} hitSlop={10}>
+                  <View className="flex-row items-center gap-1">
+                    <Ionicons name="code-slash-outline" size={10} color={DIM_INK} />
+                    <Text
+                      selectable={false}
+                      className="font-mono text-[10px] font-bold tracking-[1.8px] text-dim"
+                    >
+                      <Trans>DEV</Trans>
+                    </Text>
+                  </View>
+                </TrackedPressable>
+              )}
               {showAdmin && (
                 <TrackedPressable id="menu.admin" onPress={onOpenAdmin} hitSlop={10}>
                   <View className="flex-row items-center gap-1">
