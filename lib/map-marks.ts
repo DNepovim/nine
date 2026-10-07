@@ -41,7 +41,10 @@ const quad = (cx: number, cy: number, x: number, y: number): string =>
 // A small deterministic wobble, so no two marks of a kind are the same line twice. Seeded
 // from the element, so it is the same wobble every frame — a line that jittered per render
 // would shimmer.
-function wobble(seed: number): () => number {
+//
+// Exported because the siege is drawn by the same hand — see lib/siege-marks.ts. One
+// generator for the whole sheet, so a besieged wall wavers the way a mountain range does.
+export function wobble(seed: number): () => number {
   let state = seed >>> 0 || 1
   return () => {
     state = (state * 1664525 + 1013904223) >>> 0

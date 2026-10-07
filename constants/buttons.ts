@@ -99,6 +99,18 @@ export type ButtonId =
   | 'compare.try_again'
   | 'compare.close'
 
+  // ── The address, and the profile it brings back ──
+  | 'email.send'
+  | 'email.skip'
+  | 'email.cancel'
+  | 'email_code.confirm'
+  | 'email_code.resend'
+  | 'email_code.cancel'
+  | 'profile.email'
+  | 'profile.restore'
+  | 'menu.confirm_email'
+  | 'menu.profile_moved'
+
   // ── Multiplayer ──
   | 'join_room.join'
   | 'join_room.cancel'
@@ -116,7 +128,6 @@ export type ButtonId =
   | 'multiplayer_results.leave'
 
   // ── Arcade ──
-  | 'arcade.retreat'
   | 'arcade_paused.end_run'
   | 'arcade_over.home'
 

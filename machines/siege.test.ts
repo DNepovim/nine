@@ -88,6 +88,29 @@ describe('newSiege', () => {
     expect(a.towers.map((t) => t.value)).not.toEqual(b.towers.map((t) => t.value))
   })
 
+  it('leaves the middle of the wall clear, whatever the depth', () => {
+    // The bay the gate is in. No tower may stand there — the men would come out from under
+    // one, and the arch would be drawn behind a tower that covers it.
+    for (let depth = 0; depth <= 60; depth++) {
+      const siege = newSiege('1', depth, 42, zeros, 0)
+      // Half a bay is the closest a tower on an even wall comes, and floating point lands
+      // it a hair under that rather than on it.
+      const clear = 1 / siege.towers.length / 2 - 1e-9
+      for (const tower of siege.towers) {
+        expect(Math.abs(tower.at - 0.5)).toBeGreaterThan(clear)
+      }
+    }
+  })
+
+  it('spreads the towers evenly along it', () => {
+    const siege = newSiege('1', 12, 9, zeros, 0)
+    const places = siege.towers.map((tower) => tower.at).sort((a, b) => a - b)
+    const bay = 1 / places.length
+    places.forEach((at, i) => {
+      expect(at).toBeCloseTo((i + 0.5) * bay)
+    })
+  })
+
   it('counts only standing towers as live', () => {
     const siege = newSiege('1', 0, 5, zeros, 0)
     const flattened = {
@@ -105,7 +128,7 @@ describe('land', () => {
   if (first === undefined) throw new Error('a siege with no towers')
 
   it('chips the tower whose number was arrived at', () => {
-    const hit = land(siege, 0, first.value)
+    const hit = land(siege, 0, first.value, zeros, 0)
     expect(hit.tower?.id).toBe(first.id)
     expect(hit.tower?.left).toBe(first.left - 1)
     expect(hit.siege.towers[0]?.left).toBe(first.left - 1)
@@ -114,7 +137,7 @@ describe('land', () => {
   })
 
   it('resolves nothing when the sum did not move', () => {
-    const hit = land(siege, first.value, first.value)
+    const hit = land(siege, first.value, first.value, zeros, 0)
     expect(hit.tower).toBeNull()
     expect(hit.warrior).toBeNull()
     expect(hit.siege).toBe(siege)
@@ -123,7 +146,7 @@ describe('land', () => {
   it('resolves nothing on a number no one answers to', () => {
     const live = new Set(liveValues(siege))
     const quiet = [...Array(100).keys()].find((n) => n > 0 && !live.has(n)) ?? 999
-    const hit = land(siege, 0, quiet)
+    const hit = land(siege, 0, quiet, zeros, 0)
     expect(hit.tower).toBeNull()
     expect(hit.warrior).toBeNull()
   })
@@ -133,7 +156,7 @@ describe('land', () => {
       ...siege,
       towers: siege.towers.map((t) => (t.id === first.id ? { ...t, left: 0 } : t)),
     }
-    const hit = land(flat, 0, first.value)
+    const hit = land(flat, 0, first.value, zeros, 0)
     expect(hit.tower).toBeNull()
     expect(hit.siege.towers[0]?.left).toBe(0)
   })
@@ -143,8 +166,88 @@ describe('land', () => {
       ...siege,
       towers: siege.towers.map((t, i) => ({ ...t, left: i === 0 ? 1 : 0 })),
     }
-    const hit = land(nearly, 0, first.value)
+    const hit = land(nearly, 0, first.value, zeros, 0)
     expect(hit.taken).toBe(true)
+  })
+
+  it('asks a new number of a tower left standing', () => {
+    const hit = land(siege, 0, first.value, zeros, 0)
+    expect(hit.tower?.left).toBeGreaterThan(0)
+    expect(hit.tower?.value).not.toBe(first.value)
+  })
+
+  it('never asks a number already live, nor the one the dial is holding', () => {
+    // Every hit of a whole wall, one tower at a time, against a grid that has been dialled.
+    let walls = newSiege('1', 20, 77, busy, 0)
+    for (let i = 0; i < 40; i++) {
+      const standing = walls.towers.find((tower) => tower.left > 0)
+      if (standing === undefined) break
+      const before = liveValues(walls).filter((value) => value !== standing.value)
+      const hit = land(walls, 0, standing.value, busy, 0)
+      const now = hit.siege.towers.find((tower) => tower.id === standing.id)
+      if (now === undefined || now.left === 0) {
+        walls = hit.siege
+        continue
+      }
+      expect(now.value).not.toBe(standing.value)
+      expect(before).not.toContain(now.value)
+      // And still a number this grid can actually be dialled to.
+      expect(parTable(NINE_DIAL, busy)[now.value]).toBeGreaterThanOrEqual(SIEGE_PAR_MIN)
+      walls = hit.siege
+    }
+  })
+
+  it('leaves the number on a tower it flattens', () => {
+    const nearly = {
+      ...siege,
+      towers: siege.towers.map((t) => (t.id === first.id ? { ...t, left: 1 } : t)),
+    }
+    const hit = land(nearly, 0, first.value, zeros, 0)
+    expect(hit.tower?.left).toBe(0)
+    expect(hit.tower?.value).toBe(first.value)
+  })
+
+  it('records the blow a tower took, and says when it was the last', () => {
+    const hit = land(siege, 0, first.value, zeros, 0)
+    expect(hit.siege.blow?.tower).toEqual({ id: first.id, felled: false })
+    expect(hit.siege.blow?.warrior).toBeNull()
+    const nearly = {
+      ...siege,
+      towers: siege.towers.map((t) => (t.id === first.id ? { ...t, left: 1 } : t)),
+    }
+    expect(land(nearly, 0, first.value, zeros, 0).siege.blow?.tower?.felled).toBe(true)
+  })
+
+  it('counts the blows up, so no two are the same effect', () => {
+    const one = land(siege, 0, first.value, zeros, 0).siege
+    const standing = one.towers.find((t) => t.left > 0)
+    if (standing === undefined) throw new Error('a wall with nothing standing')
+    const two = land(one, 0, standing.value, zeros, 0).siege
+    expect(two.blow?.id).toBe((one.blow?.id ?? 0) + 1)
+  })
+
+  it('records where on the ground a man was cut down', () => {
+    const live = new Set(liveValues(siege))
+    const free = [...Array(100).keys()].find((n) => n > 0 && !live.has(n)) ?? 999
+    const withWarrior = {
+      ...siege,
+      warriors: [{ id: 'w0', value: free, spawnedAt: 1000, walkMs: 4000, lane: 0.3 }],
+    }
+    const hit = land(withWarrior, 0, free, zeros, 3000)
+    expect(hit.siege.blow?.warrior).toEqual({ lane: 0.3, at: 0.5, value: free })
+    expect(hit.siege.blow?.tower).toBeNull()
+  })
+
+  it('holds a man at the ends of his walk however late the press lands', () => {
+    const live = new Set(liveValues(siege))
+    const free = [...Array(100).keys()].find((n) => n > 0 && !live.has(n)) ?? 999
+    const warriors = [{ id: 'w0', value: free, spawnedAt: 1000, walkMs: 4000, lane: 0 }]
+    expect(land({ ...siege, warriors }, 0, free, zeros, 0).siege.blow?.warrior?.at).toBe(
+      0,
+    )
+    expect(
+      land({ ...siege, warriors }, 0, free, zeros, 90000).siege.blow?.warrior?.at,
+    ).toBe(1)
   })
 
   it('kills the warrior whose number was arrived at', () => {
@@ -154,7 +257,7 @@ describe('land', () => {
       ...siege,
       warriors: [{ id: 'w0', value: free, spawnedAt: 0, walkMs: 5000, lane: 0 }],
     }
-    const hit = land(withWarrior, 0, free)
+    const hit = land(withWarrior, 0, free, zeros, 0)
     expect(hit.warrior?.id).toBe('w0')
     expect(hit.siege.warriors).toEqual([])
     expect(hit.tower).toBeNull()

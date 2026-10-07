@@ -20,6 +20,8 @@ export type ArcadeDevActions = {
   siegeNow: () => void
   deepenBy: (steps: number) => void
   setHearts: (hearts: number) => void
+  setSatiety: (satiety: number) => void
+  setInvincible: (invincible: boolean) => void
   raze: () => void
 }
 
@@ -27,6 +29,10 @@ export type ArcadeDevState = {
   phase: string
   depth: number
   hearts: number
+  // How fed the hero is, nought to one.
+  satiety: number
+  // Whether the warriors have been made harmless for testing.
+  invincible: boolean
   // Whether a siege can be opened from where the hero stands. False at the first crossroad,
   // which has no way in for a besieged hero to be drawn on, and false mid-movement.
   canSiege: boolean
@@ -64,6 +70,8 @@ export const publishArcadeDev = (next: ArcadeDevState | null) => {
       state.phase === next.phase &&
       state.depth === next.depth &&
       state.hearts === next.hearts &&
+      state.satiety === next.satiety &&
+      state.invincible === next.invincible &&
       state.canSiege === next.canSiege &&
       state.inSiege === next.inSiege)
   // The actions still have to be the current ones even when nothing drawn has moved, or a

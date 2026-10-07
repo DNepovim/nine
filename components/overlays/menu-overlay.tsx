@@ -44,8 +44,10 @@ import {
   type ModeId,
 } from '@/modes'
 
+import { AccountNotice, type AccountNoticeKind } from './account-notice'
 import { AchievementProgress } from './achievement-progress'
 import { AnimatedLetter } from './animated-letter'
+import { ArcadeTeaser } from './arcade-teaser'
 import { DifficultySelector } from './difficulty-selector'
 import { HighScores } from './high-scores'
 import { ModeSelector } from './mode-selector'
@@ -69,20 +71,22 @@ const CHALLENGE_TAG = '24H'
 // The mode pills this screen shows, in order: the player's three, then whichever
 // challenges are open right now, then ARCADE.
 //
-// ARCADE is left out of the player's three: it is a teaser for something they cannot
-// press into anything, and a tab that does nothing is the first row to cut when the
-// screen is short. Whoever holds the `arcade` flag gets it back, because for them it *is*
-// a door — see constants/features.ts.
+// ARCADE is last and is everyone's. For whoever holds the `arcade` flag it is a door; for
+// everyone else it is a teaser wearing SOON, with PLAY GAME dead under it and a card in
+// the slot below saying what is coming — see ArcadeTeaser. It was hidden from everyone
+// else for a while, on the grounds that a tab which does nothing is the first row to cut.
+// A tab that *says* something is not that tab: the promise was already made the first time
+// a player saw the badge, and answering it is cheaper than withdrawing it.
 //
 // The challenges are read off the registry rather than listed here, which is the whole
 // point of their having a window: one opens and closes without this screen being touched.
 // There are none open today, so this adds nothing to the row — see modes/challenges.
-const introModes = (now: number, withArcade: boolean): ModeId[] => [
+const introModes = (now: number): ModeId[] => [
   ...MODE_ORDER,
   ...openModes(now)
     .filter((mode) => mode.window !== null && mode.engine === 'targets')
     .map((mode) => mode.id),
-  ...(withArcade ? ['arcade'] : []),
+  'arcade',
 ]
 
 export function MenuOverlay({
@@ -94,6 +98,8 @@ export function MenuOverlay({
   medals,
   lostMedals,
   onLostMedalsSeen,
+  accountNotice,
+  onAccountNotice,
   achievementsEarned,
   achievementsLatest,
   achievementsLoaded,
@@ -133,6 +139,11 @@ export function MenuOverlay({
   // one request that is already going.
   lostMedals: readonly LostMedalNews[]
   onLostMedalsSeen: () => void
+  // The one thing the intro says about this player's address, or null for the ordinary
+  // case where there is nothing to say. Decided by the caller, which is the only place
+  // that knows both halves — see app/(tabs)/index.tsx.
+  accountNotice: AccountNoticeKind | null
+  onAccountNotice: () => void
   // How many of the catalogue the player holds.
   achievementsEarned: number
   // The most recently achieved one, or null before there is one.
@@ -194,19 +205,18 @@ export function MenuOverlay({
   const showArcade = useFlag('arcade')
   const showDev = useFlag('dev')
   const showAdmin = useFlag('admin')
-  // A stored ARCADE focus is only honoured by a reader who can actually see the pill: the
-  // flag can be taken away between launches, and a screen opening on a tab that is not
-  // there would show the player a difficulty row with no mode above it.
+  // A stored ARCADE focus is only honoured by a reader who can actually *open* it. The
+  // pill is everyone's now, so this is no longer about a tab that is not there — it is
+  // about where a launch lands: opening every time on a pill whose PLAY GAME is dead
+  // would make the teaser the screen rather than a thing on it. A player without the flag
+  // can still press ARCADE and read it; they just do not start there.
   const [focused, setFocused] = useState<ModeId>(
     initialFocus === 'arcade' && !showArcade ? gameMode : initialFocus,
   )
   // Read once per open rather than per render: a window closing while the player is
   // looking at the intro would otherwise take the pill out from under their thumb.
   const [openedAt] = useState(() => Date.now())
-  const modeItems = useMemo(
-    () => introModes(openedAt, showArcade),
-    [openedAt, showArcade],
-  )
+  const modeItems = useMemo(() => introModes(openedAt), [openedAt])
   const badges: Partial<Record<string, string>> = useMemo(() => {
     const marks: Record<string, string> = {
       arcade: showArcade ? ARCADE_TEASER.devTag : ARCADE_TEASER.tag,
@@ -349,6 +359,14 @@ export function MenuOverlay({
             }
           />
 
+          {/* Under the medals rather than over them. What the title slot says is about
+              what this player has won, which is why they are here; this is a chore or a
+              piece of bad news, and either way it is not the first thing the start screen
+              should put in front of them. */}
+          {accountNotice !== null && (
+            <AccountNotice kind={accountNotice} onPress={onAccountNotice} />
+          )}
+
           {/* ALONE / WITH FRIENDS tabs. Hidden from everyone while the intro screen is
               being fitted into a short phone: the tab is what is gone, not the feature —
               the panel below still carries both doors in, and every multiplayer screen
@@ -423,8 +441,11 @@ export function MenuOverlay({
                   />
                 )}
                 {/* Trainee's half of this slot: no board to show, so it teaches
-                    instead. Arcade stays empty — a crossroad explains itself. */}
+                    instead. Arcade fills the same slot, but only for a player who cannot
+                    open it yet — for whoever holds the flag it stays empty, because a
+                    crossroad explains itself and they are two taps from one. */}
                 {traitsOf(focused).coached && <ModeTips />}
+                {focused === 'arcade' && !showArcade && <ArcadeTeaser />}
                 {/* Who has been taking this board lately, then where it stands now —
                     both about the board the pills above just picked. */}
                 {isOneOf(focused, SCORED_MODES) && (

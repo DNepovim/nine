@@ -31,6 +31,11 @@ import { GalleryButton } from '@/dev/gallery-button'
 const DEPTH_STEPS = [1, 10, 24]
 const HEARTS = [1, 2, 3]
 
+// How fed, as the three readings worth looking at: empty and starving, half a bar, and a
+// full belly. Reaching the first of them honestly means walking ten crossroads past every
+// village on the way.
+const SATIETY = [0, 0.5, 1]
+
 // A section heading under the tier, minus the caret and the count — there is no fold to
 // turn and nothing worth counting in a row of three.
 function Group({ title, children }: { title: string; children: ReactNode }) {
@@ -67,7 +72,7 @@ export function ArcadeSection() {
           selectable={false}
           className="font-mono text-[9px] font-bold tracking-[1px] text-dim"
         >
-          {`${dev.phase.toUpperCase()} · DEPTH ${dev.depth} · ${dev.hearts}♥`}
+          {`${dev.phase.toUpperCase()} · DEPTH ${dev.depth} · ${dev.hearts}♥ · ${Math.round(dev.satiety * 100)}%`}
         </Text>
       </View>
 
@@ -99,6 +104,29 @@ export function ArcadeSection() {
             label={`${hearts}♥`}
             onPress={() => {
               dev.actions.setHearts(hearts)
+            }}
+          />
+        ))}
+      </Group>
+
+      {/* A switch rather than a pair of buttons: it is a state the run is in, and the
+          label has to say which way it is currently set. */}
+      <Group title="WARRIORS">
+        <GalleryButton
+          label={dev.invincible ? 'HARMLESS ✓' : 'HARMLESS'}
+          onPress={() => {
+            dev.actions.setInvincible(!dev.invincible)
+          }}
+        />
+      </Group>
+
+      <Group title="SATIETY">
+        {SATIETY.map((satiety) => (
+          <GalleryButton
+            key={satiety}
+            label={`${Math.round(satiety * 100)}%`}
+            onPress={() => {
+              dev.actions.setSatiety(satiety)
             }}
           />
         ))}

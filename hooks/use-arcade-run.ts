@@ -30,6 +30,15 @@ import {
   type Crossroad,
 } from '@/machines/arcade'
 import {
+  biteFor,
+  FULL,
+  RETREAT_BITE,
+  spent,
+  STARVE_MS,
+  starving,
+} from '@/machines/satiety'
+import { computePar } from '@/machines/scoring'
+import {
   advance,
   land,
   newSiege,
@@ -118,6 +127,34 @@ type Run = {
   siege: Siege | null
   // How many villages this run has taken. A run stat, like the strikes.
   taken: number
+  // How fed the hero is, nought to one. Full at dawn, spent by walking, filled by taking
+  // a village — see machines/satiety.ts for what each of those costs and gives.
+  satiety: number
+  // The grid the fan the hero is standing at was opened against, which is what a leg's par
+  // is measured from.
+  //
+  // A snapshot rather than a number on the way, and for the reason the game machine keeps
+  // `refGrid` on a target: par has to be measured from where the player started dialling.
+  // It cannot be precomputed when the fan is grown either — a retreat comes back to a
+  // crossroad whose ways were chosen against an older grid, and the player's own presses
+  // have moved it since.
+  legGrid: Grid
+  // Presses made since the hero arrived here, the landing one included. Reset on every
+  // arrival, so a siege's dozens never reach the leg out of the village it took.
+  legPresses: number
+  // Whether a warrior reaching the hero costs a heart. Always true in a shipped build —
+  // the dev sidebar is the only thing that can turn it off, and it is folded out with
+  // `__DEV__`. A long siege is the one thing in the mode that cannot be watched to the end
+  // without surviving it, and three hearts is about forty seconds.
+  //
+  // It guards the warriors only. Hunger still bites and RETREAT is gone, so a run with this
+  // off is still a run that can end — this makes the walls survivable, not the mode.
+  invincible: boolean
+  // Wall clock of the next heart to go to hunger, and null while there is food left.
+  //
+  // A stamp rather than a countdown, so a pause can be resumed by shifting it the way
+  // `shift` already shifts every clock in a siege.
+  starvingAt: number | null
   // When the current beat started, and how much of it had run when the run was paused.
   //
   // Together they are what makes a pause resumable without a second clock: every timer is
@@ -149,6 +186,11 @@ const startRun = (seed: number, now: number): Run => ({
   hearts: HEARTS,
   siege: null,
   taken: 0,
+  satiety: FULL,
+  legGrid: INITIAL_GRID,
+  legPresses: 0,
+  invincible: false,
+  starvingAt: null,
   beatAt: now,
   heldMs: 0,
   paused: false,
@@ -165,11 +207,49 @@ const beat = (run: Run, now: number): Pick<Run, 'beatAt' | 'heldMs' | 'seq'> => 
   seq: run.seq + 1,
 })
 
+// The beats a run is finishing on. Hunger stops biting here: the hearts are spent, the
+// card is on its way, and a heart taken off a run that has already ended would be a fourth
+// way to die arriving after the other three.
+const ENDING: readonly ArcadePhase[] = ['overrun', 'falling', 'over']
+
+// Everything a fresh leg is measured from. Stamped wherever the hero arrives somewhere
+// with a fan to answer — after a walk, a rocket, a retreat, and a village taken — so no
+// arrival can forget to clear the presses the one before it made. One place, for the same
+// reason `beat` is one place.
+const arrival = (grid: Grid): Pick<Run, 'legGrid' | 'legPresses'> => ({
+  legGrid: grid,
+  legPresses: 0,
+})
+
+// What eating or going without leaves behind: how fed the hero is, and the clock the
+// hearts go on once there is nothing left.
+//
+// One place, so nothing that spends can forget to start the starving and nothing that
+// feeds can forget to stop it. The clock is armed on the falling edge only — a bite taken
+// by a hero who is already starving leaves the one that is running alone, or every step
+// on an empty belly would buy another five seconds.
+const eat = (
+  run: Run,
+  satiety: number,
+  now: number,
+): Pick<Run, 'satiety' | 'starvingAt'> => ({
+  satiety,
+  starvingAt: starving(satiety) ? (run.starvingAt ?? now + STARVE_MS) : null,
+})
+
 const freshSeed = (): number => Math.floor(Math.random() * 0x7fffffff)
 
 export function useArcadeRun() {
   const [run, setRun] = useState<Run>(() => startRun(freshSeed(), Date.now()))
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  // Hunger's own clock, and the one thing here that does not run on the beat.
+  //
+  // Every other timer in this hook is the beat's: one at a time, cleared and re-armed by
+  // the effect below as the run moves from one to the next. Starving is not a beat — it
+  // ticks *across* them, through the bloom and the open and the walk and the fight alike
+  // — so it cannot share that ref without one of the two clearing the other. Its own ref
+  // and its own effect, and the two never touch.
+  const hunger = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const standing: Crossroad | undefined = run.map[run.at]
   const depth = standing?.depth ?? 0
@@ -304,6 +384,10 @@ export function useArcadeRun() {
             ...r,
             phase: 'retreat',
             moving: wayInto(r.map, r.at),
+            // The largest bite there is, and no accuracy relief: there was no answer to be
+            // accurate about. Charged as the retreat begins rather than when it lands, so
+            // the bar empties with the hero being dragged rather than after it.
+            ...eat(r, spent(r.satiety, RETREAT_BITE), now),
             ...beat(r, now),
           }
         })
@@ -328,6 +412,9 @@ export function useArcadeRun() {
               moving: null,
               best: Math.max(r.best, landed),
               siege: newSiege(way.to, landed, r.seed, r.grid, now),
+              // Nothing to answer behind the walls, but the presses the fight is about to
+              // make are not the next leg's and must not be billed to it.
+              ...arrival(r.grid),
               ...beat(r, now),
             }
           }
@@ -341,6 +428,9 @@ export function useArcadeRun() {
             phase: 'bloom',
             moving: null,
             best: Math.max(r.best, landed),
+            // The fan here was grown against this grid, so this is what the next leg's par
+            // is measured from.
+            ...arrival(r.grid),
             ...beat(r, now),
           }
         })
@@ -368,6 +458,7 @@ export function useArcadeRun() {
               through: null,
               best: Math.max(r.best, landed),
               siege: newSiege(through.to, landed, r.seed, r.grid, now),
+              ...arrival(r.grid),
               ...beat(r, now),
             }
           }
@@ -380,6 +471,7 @@ export function useArcadeRun() {
             moving: null,
             through: null,
             best: Math.max(r.best, landed),
+            ...arrival(r.grid),
             ...beat(r, now),
           }
         })
@@ -395,7 +487,17 @@ export function useArcadeRun() {
           // No map change: the crossroad behind keeps the fan it was grown with, so the ways
           // the hero comes back to are the ones it left — including the one it just failed
           // at, which is still a way.
-          return { ...r, at: back, phase: 'bloom', moving: null, ...beat(r, now) }
+          return {
+            ...r,
+            at: back,
+            phase: 'bloom',
+            moving: null,
+            // The fan behind was grown long ago, against a grid the hero's own presses have
+            // moved since. Par for the ways it offers is measured from the grid the hero
+            // comes back holding, which is this one.
+            ...arrival(r.grid),
+            ...beat(r, now),
+          }
         })
       })
     }
@@ -431,6 +533,10 @@ export function useArcadeRun() {
             if (r.phase !== 'siege' || r.siege === null) return r
             const step = advance(r.siege, r.grid, now)
             if (!step.lost) return { ...r, siege: step.siege, ...beat(r, now) }
+            // He still arrives and is still cleared off the ground — only the heart is
+            // spared. A guard that skipped the whole step would leave him standing on the
+            // hero forever, which is not the fight being tested.
+            if (r.invincible) return { ...r, siege: step.siege, ...beat(r, now) }
             const hearts = r.hearts - 1
             if (hearts > 0) {
               return { ...r, siege: step.siege, hearts, ...beat(r, now) }
@@ -472,7 +578,16 @@ export function useArcadeRun() {
             here === undefined
               ? grown
               : { ...grown, [r.at]: { ...here, fortified: false } }
-          return { ...r, map, phase: 'bloom', siege: null, ...beat(r, now) }
+          return {
+            ...r,
+            map,
+            phase: 'bloom',
+            siege: null,
+            // The fight's presses end here. Without this the first leg out of every village
+            // would be billed for the dozens of them a siege takes.
+            ...arrival(r.grid),
+            ...beat(r, now),
+          }
         })
       })
     }
@@ -501,6 +616,60 @@ export function useArcadeRun() {
     }
   }, [run.phase, run.seq, run.paused, run.beatAt, clockMs])
 
+  // Starving: a heart every STARVE_MS while there is nothing left to eat.
+  //
+  // Armed off `starvingAt`, which is a wall-clock stamp rather than a countdown, so what
+  // is left of the five seconds survives a pause without a second figure to carry — the
+  // same trick the beat uses with `beatAt`, and the same one `shift` uses on a siege.
+  //
+  // It does not stop the run. The crossroad's clock keeps running, the dial keeps
+  // listening and the map keeps offering ways — a hero on its last heart with an empty
+  // bar has fifteen seconds and a choice about where to spend them, which is the whole
+  // point of the mechanic.
+  useEffect(() => {
+    if (run.paused) return
+    if (run.starvingAt === null) return
+    if (isOneOf(run.phase, ENDING)) return
+
+    hunger.current = setTimeout(
+      () => {
+        const now = Date.now()
+        setRun((r) => {
+          if (r.paused || r.starvingAt === null) return r
+          if (isOneOf(r.phase, ENDING)) return r
+          const hearts = r.hearts - 1
+          if (hearts > 0) {
+            // No `beat` here, and that is not an omission. Every beat timer in this hook
+            // is measured from `beatAt`, so stamping a fresh one would hand the player
+            // the crossroad's clock all over again — a heart lost would buy time rather
+            // than cost it. A heart going is not a beat; it is something that happens
+            // during whichever beat is already running.
+            return { ...r, hearts, starvingAt: now + STARVE_MS }
+          }
+          // The last heart, and the end arcade already has. The siege field, if there is
+          // one, is left where it stands: `overrun` is a beat the player watches, and
+          // clearing it would empty the screen the run ends on.
+          return {
+            ...r,
+            hearts: 0,
+            starvingAt: null,
+            phase: 'overrun',
+            // The run is over at this point, so this is where its clock stops.
+            playedMs: r.playedMs + (now - r.playingSince),
+            playingSince: now,
+            ...beat(r, now),
+          }
+        })
+      },
+      Math.max(0, run.starvingAt - Date.now()),
+    )
+
+    return () => {
+      if (hunger.current !== null) clearTimeout(hunger.current)
+      hunger.current = null
+    }
+  }, [run.paused, run.starvingAt, run.phase])
+
   // A press, by way of the same two builders the game machine presses through — so a key
   // behaves here exactly as it does in a run of Accuracy.
   //
@@ -515,7 +684,7 @@ export function useArcadeRun() {
 
       // In a siege the sum answers to the walls rather than to a fan.
       if (r.phase === 'siege' && r.siege !== null) {
-        const hit = land(r.siege, sumOf(ARCADE_DIAL, r.grid), sum)
+        const hit = land(r.siege, sumOf(ARCADE_DIAL, r.grid), sum, next, now)
         if (!hit.taken) return { ...r, grid: next, siege: hit.siege }
         return {
           ...r,
@@ -531,12 +700,31 @@ export function useArcadeRun() {
           // One heart back for the village, and never a fourth.
           hearts: Math.min(HEARTS, r.hearts + 1),
           taken: r.taken + 1,
+          // And the village's food, which is the only food on the map. Both, not one or
+          // the other: a siege is the one thing in the mode worth walking toward.
+          ...eat(r, FULL, now),
           ...beat(r, now),
         }
       }
 
+      // The press counts toward this leg from here down. Below the siege branch on
+      // purpose: a press at the walls answers to the towers, and billing the fight to the
+      // leg out of the village would make the first crossroad past every siege the
+      // dearest one on the map.
+      const presses = r.legPresses + 1
+
       const taken = r.map[r.at]?.ways.find((way) => way.value === sum)
-      if (taken === undefined) return { ...r, grid: next }
+      if (taken === undefined) return { ...r, grid: next, legPresses: presses }
+
+      // What the leg costs, from the grid the fan here was opened against and the presses
+      // it actually took. Worked out once and spent down all three roads out of this
+      // branch — a walk, a walk into walls, and a rocket — because they are one answer
+      // given three ways, not three answers.
+      //
+      // A strike is charged this once and no more. The crossroad a rocket passes through
+      // was never answered, and the free leg is part of what being fast already buys.
+      const bite = biteFor(computePar(ARCADE_DIAL, r.legGrid, taken.value), presses)
+      const fed = eat(r, spent(r.satiety, bite), now)
 
       // Fast enough to be a strike? The clock this crossroad was given, less what has run
       // off it — and all of it still full while the fan was blooming, which is the head
@@ -559,12 +747,22 @@ export function useArcadeRun() {
           phase: 'walk',
           moving: taken,
           strikes: struck ? r.strikes + 1 : r.strikes,
+          legPresses: presses,
+          ...fed,
           ...beat(r, now),
         }
       }
 
       if (!struck) {
-        return { ...r, grid: next, phase: 'walk', moving: taken, ...beat(r, now) }
+        return {
+          ...r,
+          grid: next,
+          phase: 'walk',
+          moving: taken,
+          legPresses: presses,
+          ...fed,
+          ...beat(r, now),
+        }
       }
 
       // A strike. The crossroad the hero is about to pass through is opened here rather
@@ -575,7 +773,15 @@ export function useArcadeRun() {
       const map = openCrossroad(r.map, taken.to, next, r.seed)
       const through = straightestWay(map[taken.to])
       if (through === null) {
-        return { ...r, grid: next, phase: 'walk', moving: taken, ...beat(r, now) }
+        return {
+          ...r,
+          grid: next,
+          phase: 'walk',
+          moving: taken,
+          legPresses: presses,
+          ...fed,
+          ...beat(r, now),
+        }
       }
       return {
         ...r,
@@ -585,6 +791,8 @@ export function useArcadeRun() {
         moving: taken,
         through,
         strikes: r.strikes + 1,
+        legPresses: presses,
+        ...fed,
         ...beat(r, now),
       }
     })
@@ -693,6 +901,26 @@ export function useArcadeRun() {
       setRun((r) => ({ ...r, hearts: Math.max(1, Math.min(HEARTS, hearts)) }))
     },
 
+    // Warriors made harmless, so a siege can be watched to the end rather than survived.
+    // See `invincible` on the run for why this guards the warriors and nothing else.
+    setInvincible: (invincible: boolean) => {
+      setRun((r) => ({ ...r, invincible }))
+    },
+
+    // Satiety, set rather than spent — because reaching an empty bar honestly means
+    // walking ten crossroads past every village on the way, and a check nobody can make
+    // in under a minute is a check that stops being made.
+    //
+    // Not floored the way the hearts are, and that is the difference between the two: an
+    // empty bar is not an ending. It arms the same clock a tenth crossroad would arm, and
+    // the hearts go one at a time through the beats they already go through. Set by the
+    // same `eat` every bite goes through, so the tool cannot reach a state the mode
+    // cannot.
+    setSatiety: (satiety: number) => {
+      const now = Date.now()
+      setRun((r) => ({ ...r, ...eat(r, Math.min(FULL, Math.max(0, satiety)), now) }))
+    },
+
     // Every standing tower flattened, down the same road the last dialled hit takes:
     // `taken`, a heart back, the walls down, the hero walking in through the gate.
     raze: () => {
@@ -726,6 +954,8 @@ export function useArcadeRun() {
       phase: run.phase,
       depth,
       hearts: run.hearts,
+      satiety: run.satiety,
+      invincible: run.invincible,
       canSiege: standing?.from != null && !run.paused && isOneOf(run.phase, DIALABLE),
       inSiege: run.phase === 'siege',
       actions: dev,
@@ -753,6 +983,11 @@ export function useArcadeRun() {
     hearts: run.hearts,
     siege: run.siege,
     taken: run.taken,
+    // How fed the hero is, and whether the hearts are going. Two readings rather than one
+    // because the bar draws them differently: a fraction is a width, and starving is a
+    // colour and a pulse.
+    satiety: run.satiety,
+    starving: starving(run.satiety),
     playedMs: run.playedMs,
     paused: run.paused,
     standing,
@@ -786,41 +1021,6 @@ export function useArcadeRun() {
       applyMove((grid) => setGrid(grid, index, value), Date.now())
     },
     pause: pauseRun,
-    // Breaking off a siege. It costs a heart — the only way out of a fight that is not
-    // winning it — and drops the hero back down the way it came.
-    //
-    // A button on the screen rather than a number on the dial: the siege already asks the
-    // player to read towers and warriors as numbers, and a number that means *leave*
-    // among numbers that mean *hit* is a trap rather than an option.
-    flee: () => {
-      const now = Date.now()
-      setRun((r) => {
-        if (r.paused || r.phase !== 'siege') return r
-        const hearts = r.hearts - 1
-        if (hearts <= 0) {
-          return {
-            ...r,
-            hearts: 0,
-            phase: 'overrun',
-            siege: null,
-            playedMs: r.playedMs + (now - r.playingSince),
-            playingSince: now,
-            ...beat(r, now),
-          }
-        }
-        return {
-          ...r,
-          hearts,
-          // No map change. A village that was fled keeps its walls and is built fresh when
-          // the hero comes back — `newSiege` runs again on arrival — so chip-and-flee buys
-          // nothing.
-          phase: 'retreat',
-          moving: wayInto(r.map, r.at),
-          siege: null,
-          ...beat(r, now),
-        }
-      })
-    },
     resume: () => {
       const now = Date.now()
       setRun((r) => {
@@ -836,6 +1036,9 @@ export function useArcadeRun() {
           beatAt: now - r.heldMs,
           playingSince: now,
           siege: r.siege === null ? null : shift(r.siege, away),
+          // Hunger moves by exactly the same amount, so a hero four seconds from losing a
+          // heart still is.
+          starvingAt: r.starvingAt === null ? null : r.starvingAt + away,
         }
       })
     },

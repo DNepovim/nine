@@ -12,6 +12,7 @@ import Animated, {
 } from 'react-native-reanimated'
 
 import { DAWN_MS, DAWN_OUT_MS } from '@/constants/arcade'
+import { mapLabel } from '@/constants/theme'
 
 // The words an arcade run opens on, over the part of the screen the map will fill.
 //
@@ -45,6 +46,18 @@ const DRIFT = 4
 // movement after the map has arrived.
 const SETTLED_MS = LEAD_MS + IN_MS + 120
 const DRIFT_MS = Math.max(0, DAWN_MS - SETTLED_MS)
+
+// The card is set in the map's own lettering rather than in the app's mono.
+//
+// Everywhere else a player looks they are reading a readout, and mono is that voice. This
+// card is the one screen in arcade that is neither a readout nor a map — it is the title
+// page of the sheet about to be drawn. Setting it in the same serif the villages and the
+// hills are labelled in makes it read as the first mark on that sheet, so the map does not
+// arrive as a change of medium.
+//
+// `mapLabel` rather than a bundled face: the platform's own serif, which is New York on
+// iOS, Noto Serif on Android and Georgia on the web, and which costs nothing to load.
+const CARD_FONT = { fontFamily: mapLabel } as const
 
 export function ArcadeDawn({ ink }: { ink: string }) {
   const words = useSharedValue(0)
@@ -87,10 +100,14 @@ export function ArcadeDawn({ ink }: { ink: string }) {
       className="absolute inset-0 items-center justify-center bg-surface px-10"
     >
       <View className="items-center gap-3">
+        {/* The tracking comes down with the face. Wide letter-spacing is a caps device
+            for mono — a serif carries its own rhythm, and spacing it out that far pulls
+            the word apart instead of making it airy. The weight comes down for the same
+            reason: a serif at black is a slab. */}
         <Animated.Text
           selectable={false}
-          style={[{ color: ink }, wordsStyle]}
-          className="text-center font-mono text-[20px] font-black tracking-[3px]"
+          style={[{ color: ink }, CARD_FONT, wordsStyle]}
+          className="text-center text-[22px] font-bold tracking-[1.5px]"
         >
           <Trans>LET THE ADVENTURE BEGIN</Trans>
         </Animated.Text>
@@ -102,8 +119,10 @@ export function ArcadeDawn({ ink }: { ink: string }) {
             selectable={false}
             // Sentence case, so the tracking goes with it: wide letter-spacing is a caps
             // device in here, and the one line on this card that is a question rather than a
-            // statement reads as prose.
-            className="text-center font-mono text-[12px] tracking-[0.3px] text-dim"
+            // statement reads as prose. In the map's hand too, and a size up — a serif sets
+            // smaller than a mono at the same point size.
+            style={CARD_FONT}
+            className="text-center text-[13px] tracking-[0.2px] text-dim"
           >
             <Trans>How far can you go?</Trans>
           </Text>

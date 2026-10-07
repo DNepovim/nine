@@ -1,3 +1,5 @@
+import { ANCHOR } from '@/constants/arcade'
+import { FIELD_MIN, HERO_AT, SIEGE_ZOOM, SKY, WALL_AT } from '@/constants/siege'
 import { idSeed, type ArcadeWay } from '@/machines/arcade'
 
 // Arcade's geometry: a crossroad and its ways turned into points and curves, and the two
@@ -62,6 +64,47 @@ export type Spline = {
 }
 
 export const pitchFor = (canvasHeight: number): number => canvasHeight * PITCH
+
+// How a siege is framed, worked out from the canvas and the way the hero came in on.
+//
+// Two answers, because the picture takes two things to make and neither is any use without
+// the other: the camera has to lift the wall to the top of the canvas, and the hero has to
+// stop far enough short of the gate that what lies between them is the whole of the ground
+// below it. A lift on its own carries the hero off the bottom of the screen; a stand-off on
+// its own leaves the fight in the middle of the sheet with empty country over it.
+//
+// The wall is the thing pinned, not the hero. A tower is drawn at a fixed size whatever the
+// canvas is, so on a short screen `SKY` is what decides where the wall may stand and the
+// ground is what gives — which is the right way round, a fight on a cramped screen being
+// worth more than a tower with its merlons cut off.
+export type SiegeFrame = {
+  // What the camera adds to the sheet's own place, in screen points. Negative: the wall
+  // stands above where the anchor alone would have put the village.
+  lift: number
+  // Where along the way in the hero stops, nought at the crossroad behind and one at the
+  // gate. Worked out rather than named, because what has to come to a fixed figure is the
+  // ground it leaves on the *screen*, and the ways are not all one length.
+  standoff: number
+}
+
+// How close to either end of the way in the hero may be held. A short way on a tall screen
+// would otherwise ask for a stand-off behind the crossroad it came from.
+const HELD = 0.1
+
+export function siegeFrame(canvasHeight: number, reach: number): SiegeFrame {
+  const wallY = Math.max(canvasHeight * WALL_AT, SKY * SIEGE_ZOOM)
+  const field = Math.max(FIELD_MIN, canvasHeight * HERO_AT - wallY)
+  const chord = reach * pitchFor(canvasHeight)
+  // The ground the field comes to in the frame the way is measured in: screen points back
+  // through the siege camera, then as a share of the way's own length. Of the chord rather
+  // than of the curve, which the hero's own stand-off reading is also taken on — a way
+  // bends by a couple of points in the hundred and thirty it runs.
+  const back = chord === 0 ? 0 : field / SIEGE_ZOOM / chord
+  return {
+    lift: wallY - canvasHeight * ANCHOR,
+    standoff: Math.min(1 - HELD, Math.max(HELD, 1 - back)),
+  }
+}
 
 // Above its callers rather than below them: the worklet transform rewrites every function in
 // here into a `const`, so a forward reference that would have hoisted throws on the way in.

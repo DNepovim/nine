@@ -1,12 +1,10 @@
-import { AntDesign } from '@expo/vector-icons'
 import { Trans } from '@lingui/react/macro'
 import { isOneOf } from 'narrowland'
 import { useEffect, useRef, useState } from 'react'
-import { Text, View, type LayoutChangeEvent } from 'react-native'
+import { View, type LayoutChangeEvent } from 'react-native'
 import Animated, {
   Easing,
   FadeIn,
-  FadeOut,
   useAnimatedStyle,
   useFrameCallback,
   useSharedValue,
@@ -26,13 +24,13 @@ import { Dial } from '@/components/game/dial'
 import { HeartIcon } from '@/components/game/heart-icon'
 import { LandMark } from '@/components/game/land-mark'
 import { RunTopBar } from '@/components/game/run-top-bar'
+import { SatietyBar } from '@/components/game/satiety-bar'
 import { ScoreDigit } from '@/components/game/score-digit'
 import { SiegeField } from '@/components/game/siege-field'
 import { VillageArrival } from '@/components/game/village-arrival'
 import { WayBud, type BudState } from '@/components/game/way-bud'
 import { WayStem, type StemState } from '@/components/game/way-stem'
 import { ScreenLayer } from '@/components/screen'
-import { TrackedPressable } from '@/components/tracked-pressable'
 import {
   ANCHOR,
   DAWN_OUT_MS,
@@ -46,14 +44,7 @@ import {
   WALK_MS,
 } from '@/constants/arcade'
 import { ARCADE_INK, MAP_INK, PIE_INK, SURFACE } from '@/constants/colors'
-import {
-  CLOSE_MS,
-  HEARTS,
-  OPEN_MS,
-  SIEGE_ZOOM,
-  STANDOFF,
-  TAKEN_MS,
-} from '@/constants/siege'
+import { CLOSE_MS, HEARTS, OPEN_MS, SIEGE_ZOOM, TAKEN_MS } from '@/constants/siege'
 import { useArcadeLand } from '@/hooks/use-arcade-land'
 import { useArcadeRun, type ArcadePhase } from '@/hooks/use-arcade-run'
 import { SUM_ROW_HEIGHT } from '@/hooks/use-dial-metrics'
@@ -63,6 +54,7 @@ import {
   mouthStub,
   pitchFor,
   pointsOf,
+  siegeFrame,
   splineFor,
   splinePoint,
   type Spline,
@@ -174,22 +166,26 @@ const TRAVEL = {
   // the effect that drives it.
   closing: null,
   siege: null,
-  // The walls are down, and this is the hero walking in through the gate it spent the fight
-  // standing outside of: the last fifth of the way in, on the same spline it has been held
-  // on, ending exactly where the village stands. It is what the beat is this long for — and
-  // it is what makes the handover into `bloom` cost no frame, the fan growing around a hero
-  // that is already standing in the middle of it.
-  taken: {
-    from: STANDOFF,
-    to: 1,
-    duration: TAKEN_MS,
-    easing: Easing.inOut(Easing.cubic),
-  },
+  // The walls are down, and this is the hero crossing the ground it spent the fight standing
+  // on and walking in through the gate, on the same spline it has been held on, ending
+  // exactly where the village stands. It is what the beat is this long for — and it is what
+  // makes the handover into `bloom` cost no frame, the fan growing around a hero that is
+  // already standing in the middle of it.
+  //
+  // The one beat with no `from`. Where it starts is the stand-off, which is not a constant
+  // any more but whatever the fight was framed at — so it walks on from wherever it was
+  // standing rather than from a figure written down here. See `siegeFrame`.
+  taken: { from: null, to: 1, duration: TAKEN_MS, easing: Easing.inOut(Easing.cubic) },
   overrun: null,
   over: null,
 } as const satisfies Record<
   ArcadePhase,
-  { from: number; to: number; duration: number; easing: (t: number) => number } | null
+  {
+    from: number | null
+    to: number
+    duration: number
+    easing: (t: number) => number
+  } | null
 >
 
 // What the clock on the way behind the hero is doing, per beat. It runs while the crossroad
@@ -286,6 +282,12 @@ export function ArcadeGame({ onEnd }: { onEnd: () => void }) {
   // on, so the country, the ways and the village scale together — a siege is the same sheet
   // looked at closer, not a second screen.
   const camScale = useSharedValue(1)
+  // How far up the whole sheet has been carried, in screen points. Nought everywhere but a
+  // siege, where it is what lifts the walls to the top of the canvas and leaves the rest of
+  // it to the fight. On the sheet's own view rather than folded into the focus, because it
+  // is a measure of the *screen* and the focus is a measure of the map — a lift under the
+  // zoom would come out two and a half times what it was asked for.
+  const camLift = useSharedValue(0)
   // How much of the country is left while that is on. See COUNTRY_AWAY.
   const away = useSharedValue(1)
   // How far the sheet has been turned. Nought with north pinned to the top of the screen —
@@ -309,6 +311,19 @@ export function ArcadeGame({ onEnd }: { onEnd: () => void }) {
   const driftY = destination === undefined ? 0 : -destination.pos.y * pitch
   const anchorX = canvas.width / 2
   const anchorY = canvas.height * ANCHOR
+
+  // How this fight is framed, if what the hero is walking to or standing under has walls.
+  //
+  // Measured along the way in, which is a different way each time: a long way and a short
+  // one have to leave the same ground in front of the wall, so the stand-off is worked out
+  // of the canvas rather than written down. The reach is read off whichever way the hero is
+  // on — the one it is walking, the far one of a strike, or the one behind it while it
+  // stands at the gate.
+  const wayIn =
+    run.phase === 'rocket'
+      ? run.through
+      : (run.moving ?? run.parent?.ways.find((way) => way.to === here?.id) ?? null)
+  const frame = siegeFrame(canvas.height, wayIn?.reach ?? 1)
 
   // The canvas follows whatever the hero is about to be standing on. Driven off the
   // destination rather than off the arrival, so the drift and the walk are one movement —
@@ -336,24 +351,35 @@ export function ArcadeGame({ onEnd }: { onEnd: () => void }) {
     const duration = closing ? CLOSE_MS : OPEN_MS
     const easing = Easing.inOut(Easing.cubic)
     camScale.value = withTiming(closing ? SIEGE_ZOOM : 1, { duration, easing })
+    camLift.value = withTiming(closing ? frame.lift : 0, { duration, easing })
     away.value = withTiming(closing ? COUNTRY_AWAY : 1, { duration, easing })
-  }, [run.phase])
+  }, [run.phase, frame.lift])
 
   // The sheet turns on the same beat the canvas drifts on, so the two are one movement. A
   // mode switch has no beat of its own, so it takes a turn of its own length.
+  //
+  // A walled village is the one place the player's rose does not get the last word. A siege
+  // is a wall across the top of the canvas with the ground in front of it below — that is
+  // the whole picture — and a sheet pinned to north would hang that wall off at whatever
+  // angle the way in happened to leave on, with the field running into a corner and the
+  // towers standing at odds with the wall they are built into. So the camera squares up to
+  // the walls as it closes on them, from the walk in, and the sheet goes back to the reading
+  // the player asked for once the village is taken.
   useEffect(() => {
-    const turn = northUp ? 0 : UP - (destination?.heading ?? UP)
+    const squared = destination?.fortified === true
+    const turn = northUp && !squared ? 0 : UP - (destination?.heading ?? UP)
     camTurn.value = withTiming(turn, {
-      duration: DRIFT_MS[run.phase] || TURN_MS,
+      duration: DRIFT_MS[run.phase] || (squared ? CLOSE_MS : TURN_MS),
       easing: Easing.inOut(Easing.cubic),
     })
-  }, [northUp, destination?.heading, run.phase, run.seq])
+  }, [northUp, destination?.heading, destination?.fortified, run.phase, run.seq])
 
   useEffect(() => {
-    // How far along the last way of this movement the hero gets. All of it normally; short
-    // of the gate when what is standing at the end has walls, which is what leaves the
-    // walls above the hero and the ground between them for the warriors to cross.
-    const stop = run.destination?.fortified === true ? STANDOFF : 1
+    // How far along the last way of this movement the hero gets. All of it normally; well
+    // short of the gate when what is standing at the end has walls, which is what leaves the
+    // walls at the top of the canvas and the whole of the ground under them for the warriors
+    // to cross.
+    const stop = run.destination?.fortified === true ? frame.standoff : 1
     // A strike is one movement with two halves: out of the crossroad under power, then
     // settling into the landing two crossroads on. One `withTiming` cannot say that, and
     // two of them in sequence is exactly what speeding up means.
@@ -384,10 +410,10 @@ export function ArcadeGame({ onEnd }: { onEnd: () => void }) {
     }
     // The one beat that sets this without moving anything. From here on the hero is drawn
     // on the way *in*, in the frame of the crossroad behind — one spline where a strike had
-    // two — and the point it is already standing on is `STANDOFF` in that frame. Same point
-    // on the sheet, so the handover costs not a frame.
+    // two — and the point it is already standing on is the stand-off in that frame. Same
+    // point on the sheet, so the handover costs not a frame.
     if (run.phase === 'closing') {
-      progress.value = STANDOFF
+      progress.value = frame.standoff
       return
     }
     const travel = TRAVEL[run.phase]
@@ -396,12 +422,14 @@ export function ArcadeGame({ onEnd }: { onEnd: () => void }) {
     // resetting it would snap the fallen hero back up out of the mouth behind the card
     // that has just covered the screen.
     if (travel === null) return
-    progress.value = travel.from
+    // And left where it is on a beat that names no `from`, which is the walk in through a
+    // gate: it starts from wherever the fight was fought from.
+    if (travel.from !== null) progress.value = travel.from
     progress.value = withTiming(travel.to, {
       duration: travel.duration,
       easing: travel.easing,
     })
-  }, [run.phase, run.seq])
+  }, [run.phase, run.seq, frame.standoff])
 
   // The sheet is two views, and it has to be.
   //
@@ -414,8 +442,11 @@ export function ArcadeGame({ onEnd }: { onEnd: () => void }) {
   // *is* the anchor, so that is what it turns about. The pan goes on the view inside it,
   // which carries the world. Anchor, then turn, then focus — and with no turn it is the
   // same translation it always was.
+  // The lift sits *before* the turn in the list, so it is the last thing applied to a point
+  // and so lands in screen points: the sheet is raised straight up the canvas whatever angle
+  // it happens to be lying at. Behind the turn it would have been carried round with it.
   const sheetTurn = useAnimatedStyle(() => ({
-    transform: [{ rotate: `${camTurn.value}rad` }],
+    transform: [{ translateY: camLift.value }, { rotate: `${camTurn.value}rad` }],
   }))
   const sheetPan = useAnimatedStyle(() => ({
     // The scale comes *first* in the list and that is not a style choice. A transform array
@@ -628,7 +659,7 @@ export function ArcadeGame({ onEnd }: { onEnd: () => void }) {
   // hundred and thirty it stands from the crossroad behind, and reading it off the clock
   // would mean carrying the spline into the warriors' own worklet for that.
   const stand =
-    hero.spline === null ? { x: 0, y: 0 } : splinePoint(hero.spline, STANDOFF, 0)
+    hero.spline === null ? { x: 0, y: 0 } : splinePoint(hero.spline, frame.standoff, 0)
 
   // What the land is, where the hero is standing. A pure function of the world and the run's
   // seed — see hooks/use-arcade-land.ts for why the answers are kept.
@@ -677,10 +708,24 @@ export function ArcadeGame({ onEnd }: { onEnd: () => void }) {
               to do because its own count can be infinite and a literal there is a
               deliberate ceiling. Here there is one tuning constant and a bar that would
               quietly stop matching the run if it were changed. */}
-          <View className="mt-1.5 flex-row gap-1">
-            {Array.from({ length: HEARTS }, (_, i) => (
-              <HeartIcon key={i} filled={i < run.hearts} emptyColor={'#FDFCFA'} />
-            ))}
+          {/* And the bar, in the same row at the other end of it: the hearts on the left
+              under ARCADE, how fed the hero is on the right under the way out. The two
+              belong in one row because they are one reading — the hearts are what is left
+              to lose, and the bar is how long before losing them starts — but the bar is
+              short and tucked under the pause button rather than stretched between them.
+              A rule running the width of the screen reads as a loading bar, and this one
+              is a gauge. */}
+          <View className="mt-1.5 flex-row items-center justify-between">
+            <View className="flex-row gap-1">
+              {Array.from({ length: HEARTS }, (_, i) => (
+                <HeartIcon key={i} filled={i < run.hearts} emptyColor={'#FDFCFA'} />
+              ))}
+            </View>
+            {/* About as wide as the MENU button above it, so the two read as one column
+                down the right-hand edge. */}
+            <View className="w-16">
+              <SatietyBar satiety={run.satiety} starving={run.starving} />
+            </View>
           </View>
         </View>
 
@@ -802,8 +847,13 @@ export function ArcadeGame({ onEnd }: { onEnd: () => void }) {
                     villageY={pointsOf(here.pos, pitch).y}
                     heroX={hero.x + stand.x}
                     heroY={hero.y + stand.y}
+                    width={canvas.width}
                     ink={PIE_INK}
                     line={MAP_INK.line}
+                    hatch={MAP_INK.hatch}
+                    // The one red on this screen, which is arcade's own first stop. A
+                    // siege does not get a second — see the design guide.
+                    blood={EMBER}
                     face={SURFACE}
                   />
                 )}
@@ -860,42 +910,6 @@ export function ArcadeGame({ onEnd }: { onEnd: () => void }) {
               where it is, dimmed, so the first thing a player sees of arcade is the place
               being set out rather than a board already dealt. */}
           {dawn && <ArcadeDawn ink={ARCADE_INK} />}
-        </View>
-
-        {/* ── The way out of a fight ── */}
-        {/* A row that is here all run and empty for most of it. The canvas above is the
-            only thing in this column that flexes, and the map is anchored to a fraction
-            of its height — so a button that claimed its own space on appearing would
-            shove the whole country up the screen at the one moment the player is being
-            asked to read a wall. Reserved, nothing moves but the button. */}
-        <View className="h-8 items-center justify-center">
-          {run.phase === 'siege' && (
-            <Animated.View
-              entering={FadeIn.duration(160)}
-              exiting={FadeOut.duration(160)}
-            >
-              {/* Outlined rather than filled: this is the way out of the fight, not the
-                  thing to do in it. In arcade's own ink, which is what every word on this
-                  screen is written in — and carrying a heart in the hearts' own red, so
-                  the −1 is read as the thing on the bar above and not as a crossroad. */}
-              <TrackedPressable
-                id="arcade.retreat"
-                onPress={run.flee}
-                hitSlop={10}
-                className="flex-row items-center gap-1 rounded-full border px-4 py-1.5"
-                style={{ borderColor: ARCADE_INK }}
-              >
-                <Text
-                  selectable={false}
-                  className="font-mono text-[12px] font-black leading-[16px] tracking-[2px]"
-                  style={{ color: ARCADE_INK }}
-                >
-                  <Trans>RETREAT · −1</Trans>
-                </Text>
-                <AntDesign name="heart" size={10} color={EMBER} />
-              </TrackedPressable>
-            </Animated.View>
-          )}
         </View>
 
         {/* ── The sum ── */}

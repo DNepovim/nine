@@ -1,11 +1,14 @@
 import { describe, expect, it } from 'vitest'
 
+import { ANCHOR } from '@/constants/arcade'
+import { HERO_AT, SIEGE_ZOOM, SKY, WALL_AT } from '@/constants/siege'
 import { UP } from '@/machines/arcade'
 
 import {
   mouthStub,
   pitchFor,
   pointsOf,
+  siegeFrame,
   splineFor,
   splinePath,
   splinePoint,
@@ -22,6 +25,50 @@ const unswayed = (s: Spline): number => (-s.phase / (Math.PI * 2)) * s.period
 describe('pitchFor', () => {
   it('takes a share of the canvas', () => {
     expect(pitchFor(330)).toBeCloseTo(132)
+  })
+})
+
+describe('siegeFrame', () => {
+  // Where the wall's foot line actually lands on the canvas: the anchor the camera would
+  // have put the village on, plus whatever the lift carried the sheet by.
+  const wallAt = (height: number, reach: number): number =>
+    height * ANCHOR + siegeFrame(height, reach).lift
+
+  // And where the hero ends up, which is the wall plus the ground the stand-off left in
+  // front of it, read back through the camera the fight is fought under.
+  const heroAt = (height: number, reach: number): number => {
+    const { standoff } = siegeFrame(height, reach)
+    return wallAt(height, reach) + (1 - standoff) * reach * pitchFor(height) * SIEGE_ZOOM
+  }
+
+  it('lifts the wall to the top of the canvas', () => {
+    expect(wallAt(700, 1)).toBeCloseTo(700 * WALL_AT)
+    expect(siegeFrame(700, 1).lift).toBeLessThan(0)
+  })
+
+  it('stands the hero at the foot of it, whatever the way in is worth', () => {
+    for (const reach of [0.86, 1, 1.14]) {
+      expect(heroAt(700, reach)).toBeCloseTo(700 * HERO_AT)
+    }
+  })
+
+  it('keeps the sky the towers need on a canvas too short to spare it', () => {
+    expect(wallAt(300, 1)).toBeCloseTo(SKY * SIEGE_ZOOM)
+    expect(wallAt(300, 1)).toBeGreaterThan(300 * WALL_AT)
+  })
+
+  it('holds the hero on the way in rather than behind it', () => {
+    for (const height of [300, 500, 700, 1200]) {
+      for (const reach of [0.86, 1, 1.14]) {
+        const { standoff } = siegeFrame(height, reach)
+        expect(standoff).toBeGreaterThan(0)
+        expect(standoff).toBeLessThan(1)
+      }
+    }
+  })
+
+  it('leaves the ground alone on a canvas with no height at all', () => {
+    expect(Number.isFinite(siegeFrame(0, 1).standoff)).toBe(true)
   })
 })
 

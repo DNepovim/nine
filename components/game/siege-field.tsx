@@ -1,52 +1,109 @@
-import { View } from 'react-native'
-import type { SharedValue } from 'react-native-reanimated'
+import { useEffect, useState } from 'react'
+import Animated, { useAnimatedStyle, type SharedValue } from 'react-native-reanimated'
 
+import { SiegeBlow } from '@/components/game/siege-blow'
+import { SiegeRampart } from '@/components/game/siege-rampart'
 import { SiegeTower, TOWER_DISC, TowerNumber } from '@/components/game/siege-tower'
 import { SiegeWarrior } from '@/components/game/siege-warrior'
-import { BUD_SIZE, HERO_SIZE } from '@/constants/arcade'
-import { TOWERS_DEEP } from '@/constants/siege'
-import type { Siege } from '@/machines/siege'
+import {
+  BLOW_MS,
+  GATE_DROP,
+  GATE_WIDE,
+  LANE_REACH,
+  SIEGE_ZOOM,
+  WALL_BOW,
+  WALL_OVER,
+} from '@/constants/siege'
+import { idSeed } from '@/machines/arcade'
+import type { Blow, Siege, Tower } from '@/machines/siege'
 
-// Everything a siege puts on the sheet: the towers on the wall above, and whatever is
-// crossing the ground between them and the hero.
+// Everything a siege puts on the sheet: the wall above, the towers standing on it, the gate
+// in the middle of it, and whatever is crossing the ground between that and the hero.
 //
-// A component of its own because arcade-game.tsx is already the longest file in the app,
-// and because this is the one part of the screen that is a *place* rather than the map.
-
-// The ring the towers stand on, at its widest: the town's own wall, which is the circle
-// town-mark.tsx puts its four quarter-towers on. The bud is gone by the time a siege
-// starts — a crossroad under siege has no ways out yet, so nothing draws it — and this is
-// the mark that stands in its place, built out of the same radius so a village is the same
-// size whether you are looking at it or fighting it.
-const WALL = BUD_SIZE / 2 - 1
-
-// How wide the hero actually is where it is opaque.
+// A component of its own because arcade-game.tsx is already the longest file in the app, and
+// because this is the one part of the screen that is a *place* rather than the map.
 //
-// Not half of `HERO_SIZE`, which is what the flame's own size means and what this used to
-// take. The hero is a stack of coats and the one that covers anything is `body`, at 0.78 of
-// that size and 92% opaque — see COATS in arcade-hero.tsx. The coats outside it are a wisp
-// at three tenths and read as glow rather than as cover.
-const HERO_BODY = HERO_SIZE * 0.78
-
-// How much ground the nearest tower's number has to keep between itself and the hero: its
-// own disc, the hero's body coat, and a point of air. The hero is drawn over this whole
-// field — it stands in front of the walls, which is right — so a tower *body* under it
-// costs nothing. A number under it costs the player a number they cannot dial, which is the
-// one thing this layout is not allowed to do. Measured against the body coat because a
-// digit under 92% amber is a digit nobody will risk dialling, even though it is strictly
-// still there.
-const CLEAR = TOWER_DISC + HERO_BODY + 1
-
-// The smallest wall that still fits the numbers standing on it: enough circumference for
-// every tower's disc and a point between them. Below it the discs start crossing and a
-// three-digit number loses its last digit to its neighbour, which is a fight nobody can
-// read — and the cure costs nothing, because what gives instead is the wall standing a
-// little further up the way, where there is room to spare.
+// The place is a field in front of a wall, and the whole of this file is that one decision.
+// The village is not drawn from above and the wall is not a ring around it: what the camera
+// holds is a stretch of its near side, lifted to the top of the canvas, with everything
+// under it left empty for the men coming out. See `siegeFrame` in lib/arcade-layout.ts for
+// the camera's half of it — the lift that puts the wall up there and the stand-off that
+// keeps the hero at the bottom.
 //
-// Across the chord between two neighbours rather than round the arc: the arc is the longer
-// of the two and would have let a six-tower wall close by most of a point.
-const least = (towers: number): number =>
-  (TOWER_DISC * 2 + 1) / (2 * Math.sin(Math.PI / towers))
+// One turned-back view holds all of it, and that is what makes the layout inside simple
+// enough to read. The sheet is turned under a siege so that the way in points up the screen,
+// so inside this view "down" is the ground the hero is standing on and "across" is the wall:
+// a tower is at a plain x, a man walks down a plain y, and nothing in here has to carry a
+// pair of basis vectors about. The view is placed on the village itself, which is the middle
+// of the wall and the gate.
+
+// How near the middle of the wall a tower may stand: the gate's own half, the disc the
+// tower's number sits in, and a point of air. The gate is the one stretch of the wall
+// nothing may be built on — a tower there would cover the arch and the men would come out
+// from under it.
+const GATE_ROOM = GATE_WIDE / 2 + TOWER_DISC + 1
+
+// And how near each other two of them may stand. Between their numbers rather than between
+// their blocks, the discs being the wider of the two: a digit lost to a neighbour's disc is
+// a tower nobody will risk dialling, which is the one thing this layout may not do.
+const BAY_MIN = TOWER_DISC * 2 + 1
+
+// A point or two of air at the edge of the sheet. The wall runs off it; a number does not.
+const EDGE = 2
+
+// How far up a tower a stone is aimed. Its middle rather than its crown, so the dust comes
+// off the block itself — a stone passing over the merlons of a tower already knocked down to
+// a stump would be a shot that missed.
+const STRUCK_AT = 14
+
+// Every blow the fight has struck that is still being drawn.
+//
+// A list rather than the one the siege is carrying, because a blow is a moment and the
+// state only ever holds the last of them: two hits a fifth of a second apart are two stones
+// in the air at once, and keying a single effect on the latest would cut the first one's
+// dust off mid-roll. Each is dropped on its own timer, `BLOW_MS` after it landed.
+const without = (id: number) => (list: readonly Blow[]) =>
+  list.filter((each) => each.id !== id)
+
+function useBlows(blow: Blow | null): readonly Blow[] {
+  const [struck, setStruck] = useState<readonly Blow[]>([])
+  const id = blow?.id ?? null
+
+  useEffect(() => {
+    if (blow === null || id === null) return
+    setStruck((list) => [...list, blow])
+    const over = setTimeout(() => {
+      setStruck(without(id))
+    }, BLOW_MS)
+    return () => {
+      clearTimeout(over)
+    }
+  }, [id])
+
+  return struck
+}
+
+// Where the towers stand along the wall, measured out from the gate.
+//
+// Evenly, wherever the wall is wide enough to be even — a wall is of one build, and a
+// player looking for a number should find it about where it was in the last fight. Where it
+// is not wide enough, which is six towers on a narrow phone, the bays pack out from the gate
+// at the width a number needs and the wall gives up its evenness rather than its numbers.
+//
+// Out from the gate rather than in from the ends, because that is the end of the wall that
+// has to hold: the gate's room is the one measure here with nothing to spare in it.
+const placedFrom = (
+  gateward: readonly Tower[],
+  reach: number,
+): { tower: Tower; x: number }[] => {
+  let nearest = GATE_ROOM
+  return gateward.map((tower) => {
+    const even = Math.abs(tower.at - 0.5) * 2 * reach
+    const out = Math.min(reach, Math.max(even, nearest))
+    nearest = out + BAY_MIN
+    return { tower, x: tower.at < 0.5 ? -out : out }
+  })
+}
 
 export function SiegeField({
   siege,
@@ -56,87 +113,105 @@ export function SiegeField({
   villageY,
   heroX,
   heroY,
+  width,
   ink,
   line,
+  hatch,
+  blood,
   face,
 }: {
   siege: Siege
   // The wall clock, sampled on every frame — the clock a warrior's `spawnedAt` is stamped
   // on. See the note where it is taken, in arcade-game.tsx.
   now: SharedValue<number>
+  // The sheet's own turn, taken back out: a wall is drawn standing up, so the whole fight is
+  // turned back for the same reason town-mark is on a bud. One rotation for the lot of it —
+  // the wall and its towers are one rigid thing and would read as a collision if each of
+  // them came back about its own foot.
   turn: SharedValue<number>
   villageX: number
   villageY: number
   // Where the hero is *drawn*, not where the way it is standing on begins.
   heroX: number
   heroY: number
+  // How wide the canvas is, in screen points. What sets the wall's span: it has to leave the
+  // sheet at both edges rather than end on it.
+  width: number
   ink: string
   line: string
+  // The hand the sheet draws its detail in: the courses on the wall, the shade on a tower,
+  // and the dust a stone brings off one.
+  hatch: string
+  // Arcade's own red, which is the only red on this screen. What a man bleeds.
+  blood: string
   face: string
 }) {
-  const awayX = heroX - villageX
-  const awayY = heroY - villageY
-  const ground = Math.hypot(awayX, awayY) || 1
-
-  // A deeper siege has more towers and a wider wall to hang them on, up to the town's own.
-  // Six of them round a ring of `WALL` is about twenty-one points apiece, which is a tower
-  // and a little air; the same spacing is what a four-tower wall gets by being smaller.
-  const ring = Math.max(
-    least(siege.towers.length),
-    Math.min((WALL * siege.towers.length) / TOWERS_DEEP, ground - CLEAR),
-  )
-
-  // How far back from the crossroad the wall has to stand to keep that clearance.
+  // How far the hero is standing from the gate, which is the depth of the field. Taken as a
+  // distance rather than as a pair of offsets: the sheet is squared up under a siege, so the
+  // hero is straight down the screen from the wall and the distance is the whole of it.
+  const ground = Math.hypot(heroX - villageX, heroY - villageY) || 1
+  // Both measures back through the camera, the canvas being a measure of the screen and
+  // everything in here being drawn on the map.
   //
-  // Nought almost always: on a phone of any size the stand-off leaves twenty-five points
-  // or more between the hero and the village, and a wall of thirteen to twenty sits inside
-  // that with room to spare. It is a short way on a small screen that bites — the ground
-  // is measured in pitches and the wall is not — and there the ring slides up the way the
-  // hero came until its near side clears. Nothing says where the middle of a village is
-  // while a siege is on, because the bud that would have said it was absorbed on the walk
-  // in, so the only thing this moves is the picture.
-  //
-  // The men still leave from the crossroad itself, which is now the near side of the wall:
-  // the gate, which is exactly where a man should come out of.
-  const back = Math.max(0, ring + CLEAR - ground)
-  const wallX = villageX - (awayX / ground) * back
-  const wallY = villageY - (awayY / ground) * back
+  // Two spans rather than one, and the wall's is the wider. The wall leaves the sheet at
+  // both edges, which is what says the village goes on past it; a tower standing that far
+  // out would take its number off the sheet with it, so the furthest one stands a disc and
+  // a little air inside the edge.
+  const half = width / SIEGE_ZOOM / 2 + WALL_OVER
+  const reach = Math.max(GATE_ROOM, width / SIEGE_ZOOM / 2 - TOWER_DISC - EDGE)
 
-  // Back to front. The wall is drawn standing up on a sheet that is a plan, so the near
-  // side of the ring stands in front of the far side — and because every tower knocks the
-  // ground out behind it, drawing them in that order is all it takes for the overlap to
-  // read as depth rather than as a collision. Sorted on the map's own y rather than the
-  // screen's: the sheet's turn is a fraction of a radian at a crossroad and would not
-  // reorder a pair, and ordering that changed as the sheet came round would be a flicker.
-  const wall = siege.towers
-    .map((tower) => ({
-      tower,
-      x: wallX + Math.cos(tower.angle) * ring,
-      y: wallY + Math.sin(tower.angle) * ring,
-    }))
-    .sort((a, b) => a.y - b.y)
+  const upright = useAnimatedStyle(() => ({
+    transform: [{ rotate: `${-turn.value}rad` }],
+  }))
+  const struck = useBlows(siege.blow)
+
+  // The two halves of the wall, each laid out from the gate outward, and each tower set back
+  // along the bow by as much as its own place on it asks for.
+  const wall = [
+    ...placedFrom(
+      siege.towers.filter((tower) => tower.at < 0.5).sort((a, b) => b.at - a.at),
+      reach,
+    ),
+    ...placedFrom(
+      siege.towers.filter((tower) => tower.at >= 0.5).sort((a, b) => a.at - b.at),
+      reach,
+    ),
+  ].map(({ tower, x }) => ({ tower, x, y: (-WALL_BOW * x * x) / (half * half) }))
 
   return (
-    <View className="absolute inset-0" pointerEvents="none">
+    <Animated.View
+      pointerEvents="none"
+      className="absolute"
+      style={[{ left: villageX, top: villageY, width: 0, height: 0 }, upright]}
+    >
+      <SiegeRampart
+        half={half}
+        bow={WALL_BOW}
+        gate={GATE_WIDE}
+        seed={idSeed(siege.at)}
+        line={line}
+        hatch={hatch}
+        face={face}
+      />
       {wall.map(({ tower, x, y }) => (
         <SiegeTower
           key={tower.id}
           tower={tower}
           x={x}
           y={y}
-          turn={turn}
+          seed={siege.seed + idSeed(`${siege.at}:${tower.id}`)}
           line={line}
+          hatch={hatch}
           face={face}
         />
       ))}
-      {/* Every number over every wall — see the note at the top of siege-tower.tsx. */}
+      {/* Every number over every tower — see the note at the top of siege-tower.tsx. */}
       {wall.map(({ tower, x, y }) => (
         <TowerNumber
           key={tower.id}
           tower={tower}
           x={x}
           y={y}
-          turn={turn}
           ink={ink}
           line={line}
           face={face}
@@ -147,16 +222,44 @@ export function SiegeField({
           key={warrior.id}
           warrior={warrior}
           now={now}
-          fromX={villageX}
-          fromY={villageY}
-          toX={heroX}
-          toY={heroY}
-          turn={turn}
+          from={GATE_DROP}
+          to={ground}
           ink={ink}
           line={line}
           face={face}
         />
       ))}
-    </View>
+      {/* The blows, over everything they were struck at. Each one is placed here rather
+          than placing itself: where a tower stands is this file's own answer, and where a
+          man had got to is the walk siege-warrior.tsx reads off the clock, taken at the
+          moment of the press and carried on the blow because by now he is gone. */}
+      {struck.map((blow) => {
+        const cut = blow.warrior
+        const stood = wall.find(({ tower }) => tower.id === blow.tower?.id)
+        if (cut === null && stood === undefined) return null
+        return (
+          <SiegeBlow
+            key={blow.id}
+            blow={blow}
+            x={
+              cut !== null
+                ? Math.sin(cut.at * Math.PI) * cut.lane * LANE_REACH
+                : (stood?.x ?? 0)
+            }
+            y={
+              cut !== null
+                ? GATE_DROP + (ground - GATE_DROP) * cut.at
+                : (stood?.y ?? 0) - STRUCK_AT
+            }
+            fromY={ground}
+            ink={ink}
+            line={line}
+            dust={hatch}
+            blood={blood}
+            face={face}
+          />
+        )
+      })}
+    </Animated.View>
   )
 }

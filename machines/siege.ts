@@ -12,7 +12,7 @@ import {
   WARRIOR_WALK_MS,
   WARRIORS_LIVE_MAX,
 } from '@/constants/siege'
-import { parValues, rngFor, UP } from '@/machines/arcade'
+import { parValues, rngFor } from '@/machines/arcade'
 import { decayed, type Grid } from '@/modes'
 
 // A siege: the walls at a fortified village, the warriors coming out of its gate, and
@@ -33,8 +33,10 @@ export type Tower = {
   // drawing needs both: how far down a tower is, is the ratio.
   left: number
   hits: number
-  // Where on the wall it stands, in radians, measured the way the screen measures them.
-  angle: number
+  // Where along the wall it stands: nought at the end of it on the hero's left, one at the
+  // end on their right. A place on a line rather than an angle round a ring, because the
+  // wall is one stretch of a village much wider than the screen — see siege-field.tsx.
+  at: number
 }
 
 export type Warrior = {
@@ -49,6 +51,25 @@ export type Warrior = {
   lane: number
 }
 
+// What a press did to the walls, kept for as long as it takes to draw it.
+//
+// The siege itself has no pixels in it and this is no exception: it says *what* was struck
+// and where along the wall or the ground, and the screen works out where that is. It is
+// here at all because a blow is gone from the state the instant it lands — a man is cut
+// from the list, a tower is simply shorter — and a stone in the air and the dust it raises
+// have to be drawn from something.
+export type Blow = {
+  // Counts up over the fight. The screen keys one effect on it, so every blow plays once
+  // and two landing a moment apart are two effects rather than one restarting.
+  id: number
+  // The tower struck, and whether this was the blow that brought it down.
+  tower: { id: string; felled: boolean } | null
+  // The man cut down. Everything it takes to draw him, because by the time the screen hears
+  // about it he is no longer in the list: the lane he was coming down, how far along it he
+  // had got, and the number he was answering to.
+  warrior: { lane: number; at: number; value: number } | null
+}
+
 export type Siege = {
   // The crossroad this is the siege of, which is also what its randomness is keyed on.
   at: string
@@ -60,6 +81,8 @@ export type Siege = {
   spawned: number
   // When the next one leaves.
   nextAt: number
+  // The last blow struck, or nothing yet. See `Blow`.
+  blow: Blow | null
 }
 
 // How far into the ramp a depth sits, nought at the start and one at the deepest a siege
@@ -71,8 +94,12 @@ const ramp = (depth: number): number => Math.min(1, Math.max(0, depth) / SIEGE_D
 // One figure for the whole siege rather than a roll per tower: a wall is of one build, and
 // four towers each needing a different unsaid number of hits reads as noise rather than as
 // difficulty.
+//
+// The count steps in twos, so it is as even as the two ends of its range are — an odd one
+// would stand a tower over the gate, which is the one place on the wall nothing may stand.
+// See TOWERS_SHALLOW. The ramp is carried by the hits, which climb one at a time.
 export const towerCount = (depth: number): number =>
-  Math.round(TOWERS_SHALLOW + (TOWERS_DEEP - TOWERS_SHALLOW) * ramp(depth))
+  TOWERS_SHALLOW + 2 * Math.round(((TOWERS_DEEP - TOWERS_SHALLOW) / 2) * ramp(depth))
 
 export const towerHits = (depth: number): number =>
   Math.round(TOWER_HITS_SHALLOW + (TOWER_HITS_DEEP - TOWER_HITS_SHALLOW) * ramp(depth))
@@ -108,15 +135,20 @@ export function newSiege(
     value,
     left: hits,
     hits,
-    // Evenly round the wall from the top, so the walls read as a ring rather than as a
-    // scatter — and so the one the player is looking for is where it was last time.
-    angle: UP + (i / values.length) * Math.PI * 2,
+    // One to a bay, in the middle of its own: evenly spread, so the wall reads as one
+    // build rather than as a scatter, and the tower the player is looking for is where it
+    // was in the last fight. The count is even, so no tower ever stands in the middle of
+    // the wall — which is the bay the gate is in. See TOWERS_SHALLOW.
+    at: (i + 0.5) / values.length,
   }))
   // The gate's clock through `opened`, which is also what stamps it again when the fight
   // actually starts — a siege is built the moment the hero reaches the walls and is not
   // fought until a camera move later. See below. The `nextAt` handed in is a placeholder
   // for a field that cannot be left out; `opened` is what sets it.
-  return opened({ at, depth, seed, towers, warriors: [], spawned: 0, nextAt: now }, now)
+  return opened(
+    { at, depth, seed, towers, warriors: [], spawned: 0, nextAt: now, blow: null },
+    now,
+  )
 }
 
 // The fight starting.
@@ -146,26 +178,53 @@ export type SiegeHit = {
   taken: boolean
 }
 
+// How far along his walk a man had got at a given moment, nought at the gate and one at the
+// hero. The one thing the screen cannot work out for itself once he is gone.
+const walked = (warrior: Warrior, now: number): number =>
+  Math.min(1, Math.max(0, (now - warrior.spawnedAt) / warrior.walkMs))
+
 // A press, resolved against the walls.
 //
 // The sum is what matters, not the keys: a press changes the grid, the grid gives a sum,
-// and arriving at a live number is the hit. Sitting on one is not — the sum carries
-// between hits in both engines, so a tower is chipped by dialling away from its number and
-// coming back to it, which is what makes three hits three journeys rather than three taps.
+// and arriving at a live number is the hit.
 //
 // Hence the first guard. `pressGrid` always moves the sum, but `setGrid` can write a digit
 // the value it already held, and without this that would re-hit whatever the sum is
 // standing on.
-export function land(siege: Siege, prevSum: number, nextSum: number): SiegeHit {
+//
+// A tower that is still standing takes a *new* number from the hit, drawn against the grid
+// as the press left it. That is what makes several hits several journeys rather than a key
+// tapped over and over: the wall never asks the same question twice, and what the player is
+// reading between hits is the wall rather than their own last move. The old number goes
+// back into the pool the moment it is gone from the tower, so a man can be sent out under
+// it later.
+export function land(
+  siege: Siege,
+  prevSum: number,
+  nextSum: number,
+  grid: Grid,
+  now: number,
+): SiegeHit {
   const miss: SiegeHit = { siege, tower: null, warrior: null, taken: false }
   if (nextSum === prevSum) return miss
+  const id = (siege.blow?.id ?? 0) + 1
 
   const struck = siege.towers.find((tower) => tower.left > 0 && tower.value === nextSum)
   if (struck !== undefined) {
-    const chipped: Tower = { ...struck, left: struck.left - 1 }
+    const left = struck.left - 1
+    const chipped: Tower = {
+      ...struck,
+      left,
+      value: asked(siege, struck, left, grid, nextSum),
+    }
     const towers = siege.towers.map((tower) => (tower.id === struck.id ? chipped : tower))
+    const felled = left === 0
     return {
-      siege: { ...siege, towers },
+      siege: {
+        ...siege,
+        towers,
+        blow: { id, tower: { id: struck.id, felled }, warrior: null },
+      },
       tower: chipped,
       warrior: null,
       taken: towers.every((tower) => tower.left === 0),
@@ -178,6 +237,11 @@ export function land(siege: Siege, prevSum: number, nextSum: number): SiegeHit {
       siege: {
         ...siege,
         warriors: siege.warriors.filter((warrior) => warrior.id !== cut.id),
+        blow: {
+          id,
+          tower: null,
+          warrior: { lane: cut.lane, at: walked(cut, now), value: cut.value },
+        },
       },
       tower: null,
       warrior: cut,
@@ -186,6 +250,35 @@ export function land(siege: Siege, prevSum: number, nextSum: number): SiegeHit {
   }
 
   return miss
+}
+
+// The number a chipped tower answers to next.
+//
+// Drawn the way every other number in a siege is: against the grid as it stands, inside the
+// siege's own press band, and clear of everything already live — its own old number among
+// them, so a hit always moves the question on. The sum the press landed on is excluded too,
+// or the tower would be standing on the very number the dial is holding.
+//
+// A tower knocked flat keeps the number it died under. Rubble answers to nothing, and a
+// stump quietly re-lettering itself would read as a tower that was still in the fight.
+function asked(
+  siege: Siege,
+  struck: Tower,
+  left: number,
+  grid: Grid,
+  sum: number,
+): number {
+  if (left <= 0) return struck.value
+  const rng = rngFor(siege.seed, `siege:${siege.at}:${struck.id}:${left}`)
+  const [value] = parValues(grid, 1, rng, {
+    min: SIEGE_PAR_MIN,
+    max: SIEGE_PAR_MAX,
+    exclude: [...liveValues(siege), sum],
+  })
+  // A grid with nothing left to give keeps the tower on the number it had. It cannot happen
+  // on this dial — the band stretches until it finds something — but a wall whose numbers
+  // quietly became `undefined` would be a wall nobody could finish.
+  return value ?? struck.value
 }
 
 // How long a warrior takes to cross the ground, and how long the gate waits between

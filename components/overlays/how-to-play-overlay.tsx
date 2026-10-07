@@ -627,49 +627,82 @@ export function HowToPlayOverlay({
               </Card>
               {/* The siege. Three things a player cannot safely find out by playing:
                   that a wall is a fight, that a tower is chipped by arriving at its
-                  number rather than sitting on it, and that hearts are spent here and
-                  nowhere else in the mode. */}
+                  number rather than sitting on it, and that a walled village is the only
+                  food on the map — which is what turns the fight from a risk worth
+                  avoiding into the thing a hungry run has to walk toward. */}
               <Body>
-                {t`\nSome villages have walls, and you can see which before you choose — a walled village is drawn heavier, with bigger towers. Dial that way and you do not walk in. You take it. Three hearts sit on the bar under ARCADE, and a siege is the only thing in the mode that spends them.`}
+                {t`\nSome villages have walls, and you can see which before you choose — a walled village is drawn heavier, with bigger towers. Dial that way and you do not walk in. You take it. Three hearts sit on the bar under ARCADE, and a siege is the fastest way to spend them — and the only way to get one back.`}
               </Body>
               <Card>
                 <Bullet color={GAME_SCALE[4]}>
                   <Trans>
-                    The hero stops short of the gate and the walls fill the screen. Every
-                    tower carries a number, and so does every warrior who comes out.
+                    The hero halts well short of the gate, with the walls across the top
+                    of the screen and open ground between. Every tower on them carries a
+                    number, and so does every warrior who comes out of the gate.
                   </Trans>
                 </Bullet>
                 <Bullet color={GAME_SCALE[4]}>
                   <Trans>
                     A tower takes several hits — more of them the deeper you are — and a
-                    hit means arriving at its number. The sum stays where you left it, so
-                    sitting on a tower’s number does nothing: dial away and come back.
+                    hit means arriving at its number. Every hit it survives it takes a new
+                    number, so a tower is several journeys across the dial rather than one
+                    answer found and then repeated.
                   </Trans>
                 </Bullet>
                 <Bullet color={GAME_SCALE[4]}>
                   <Trans>
                     Warriors leave the gate one after another, and faster the longer the
                     fight drags on. Dial a warrior’s number and he is gone. Let one reach
-                    you and it costs a heart.
+                    you and it costs a heart. There is no way out of a siege but winning
+                    it, so look at the walls before you dial that way.
                   </Trans>
                 </Bullet>
                 <Bullet color={GAME_SCALE[4]}>
                   <Trans>
-                    Flatten every tower and the village is yours — the walls come down and
-                    a heart comes back, up to three again.
-                  </Trans>
-                </Bullet>
-                <Bullet color={GAME_SCALE[4]}>
-                  <Trans>
-                    RETREAT leaves the fight. It costs a heart and drops you back one
-                    crossroad, and the village has its walls again when you return — so
-                    chipping and running buys nothing.
+                    Flatten every tower and the village is yours — the walls come down, a
+                    heart comes back, up to three again, and you eat your fill.
                   </Trans>
                 </Bullet>
                 <Bullet color={GAME_SCALE[4]}>
                   <Trans>
                     Out of hearts and the run is over. That and the mouth are the only two
                     ways one ends.
+                  </Trans>
+                </Bullet>
+              </Card>
+              {/* Satiety. The one rule a player cannot read off the screen: that the bar
+                  is spent by *walking* rather than by time, and that how well a crossroad
+                  was answered is what decides the size of the bite. Everything else about
+                  it — that it is low, that it is red, that a heart just went — the bar
+                  says for itself. */}
+              <Body>
+                {t`\nThe hero eats. The bar beside the hearts is how fed they are, and every way you walk takes a bite out of it — a smaller bite the fewer moves you took to dial the target, so the tidy route is the one that keeps you fed. Getting dragged back costs the largest bite there is.`}
+              </Body>
+              <Card>
+                <Bullet color={GAME_SCALE[4]}>
+                  <Trans>
+                    A walled village is the only food on the map. Take one and the bar
+                    goes back to full — which is why a hungry run has to go looking for a
+                    fight rather than away from one.
+                  </Trans>
+                </Bullet>
+                <Bullet color={GAME_SCALE[4]}>
+                  <Trans>
+                    The fight itself costs nothing to stand in. Dialling at towers and
+                    warriors leaves the bar exactly where it was when the walls closed.
+                  </Trans>
+                </Bullet>
+                <Bullet color={GAME_SCALE[4]}>
+                  <Trans>
+                    Empty the bar and it turns red and starts to pulse: you are starving,
+                    and a heart goes every five seconds until you eat.
+                  </Trans>
+                </Bullet>
+                <Bullet color={GAME_SCALE[4]}>
+                  <Trans>
+                    Starving stops nothing else. The clock still runs, the dial still
+                    listens and the ways are still there — so an empty bar is a reason to
+                    hurry toward walls, not a reason the run is over.
                   </Trans>
                 </Bullet>
               </Card>
