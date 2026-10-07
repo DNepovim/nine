@@ -298,7 +298,7 @@ function boardStory(facts: WeekFacts): BoardStory | null {
 // difficulty's own, which every other screen already draws them by — the raw ids are
 // identifiers and were never words.
 const boardText = (board: Board, t: Translate): string =>
-  `${t(labelOf(board.mode))} · ${t(DIFFICULTIES[board.difficulty].label)}`
+  `${t(labelOf(board.mode))} ${t(DIFFICULTIES[board.difficulty].label)}`
 
 // A board wears its own colour in the prose — the mode's gradient read at its difficulty,
 // which is the app's existing rule for what a board looks like.
