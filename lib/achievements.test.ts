@@ -70,6 +70,7 @@ const facts = (over: Partial<AchievementFacts> = {}): AchievementFacts => ({
   crown: false,
   crossed: [],
   guideRead: false,
+  feedbackAnswered: false,
   now: new Date('2026-09-17T12:00:00.000Z'),
   ...over,
 })
@@ -517,6 +518,20 @@ describe('secret', () => {
     expect(
       isEarnedBy('nightShift', facts({ run: { ...facts().run, endedAt: at(3) } })),
     ).toBe(false)
+  })
+
+  it('earns HEARD BACK once an answer has reached the player', () => {
+    expect(isEarnedBy('heardBack', facts({ feedbackAnswered: true }))).toBe(true)
+    expect(isEarnedBy('heardBack', facts())).toBe(false)
+  })
+
+  it('earns HEARD BACK off a run, which is the only place a reply is shown', () => {
+    // The dialog is an intro-screen one, so the rule has to answer with no run in the
+    // facts at all. Nothing about it reads the run — this is the guard on that staying
+    // true, since a rule that quietly needed a finished run would never fire.
+    expect(isEarnedBy('heardBack', facts({ feedbackAnswered: true, run: NO_RUN }))).toBe(
+      true,
+    )
   })
 })
 

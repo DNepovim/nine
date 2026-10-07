@@ -35,6 +35,7 @@ const factsFor = (
   crown: false,
   crossed: [],
   guideRead: true,
+  feedbackAnswered: false,
   now: new Date('2026-09-22T12:00:00Z'),
 })
 

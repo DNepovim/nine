@@ -137,6 +137,7 @@ const FACTS: AchievementFacts = {
   crown: false,
   crossed: [],
   guideRead: true,
+  feedbackAnswered: true,
   now: new Date(),
 }
 

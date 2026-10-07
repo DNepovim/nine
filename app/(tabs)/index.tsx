@@ -67,6 +67,7 @@ import { useDisplayOptions } from '@/hooks/use-display-options'
 import { useDisplayScore } from '@/hooks/use-display-score'
 import { useDisplayedTargets } from '@/hooks/use-displayed-targets'
 import { useDyingSequence } from '@/hooks/use-dying-sequence'
+import { useFeedbackAnswered } from '@/hooks/use-feedback-answered'
 import { useFeedbackReplies } from '@/hooks/use-feedback-replies'
 import { FlagsProvider } from '@/hooks/use-flags'
 import { useFloatingPoints } from '@/hooks/use-floating-points'
@@ -485,6 +486,7 @@ export default function GameScreen() {
 
   // Whether the guide has been read, for the one achievement that asks.
   const howToPlay = useHowToPlay()
+  const feedbackAnswered = useFeedbackAnswered()
 
   // Deals the tutorial on its own board. Shared by the three doors into it — the welcome, the
   // guide's TRY IT, and the dev sidebar — so all three agree on the board it is played on.
@@ -787,6 +789,7 @@ export default function GameScreen() {
     crown: holdsCrown(userId, champions),
     crossed,
     guideRead: howToPlay.read,
+    feedbackAnswered: feedbackAnswered.answered,
     userId,
     onUnlocked: (awards) => {
       for (const award of awards) {
@@ -2033,7 +2036,12 @@ export default function GameScreen() {
                 gameMode={mode}
                 answer={feedbackReplies.reply.answer}
                 quote={feedbackReplies.reply.quote}
-                onDismiss={feedbackReplies.dismiss}
+                onDismiss={() => {
+                  feedbackReplies.dismiss()
+                  // The same moment the answer is marked seen on the server, so HEARD
+                  // BACK is kept by exactly the replies the player has been shown.
+                  feedbackAnswered.markAnswered()
+                }}
               />
             )}
 

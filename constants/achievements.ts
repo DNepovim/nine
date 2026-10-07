@@ -104,6 +104,7 @@ export const ACHIEVEMENT_IDS = [
   'nineNineNine',
   'goodSport',
   'noJoke',
+  'heardBack',
 ] as const
 
 export type AchievementId = (typeof ACHIEVEMENT_IDS)[number]
@@ -579,6 +580,18 @@ export const ACHIEVEMENTS = {
     emblem: '🃏',
     title: msg`NO JOKE`,
     hint: msg`Finish a run on the first of April.`,
+    secret: true,
+  },
+  // Secret, and it has to be: the other half of this one is a person writing the answer
+  // by hand. An achievement the player could see would be a promise of a reply made on
+  // behalf of whoever has to write it, and a hint saying "get an answer" with nobody at
+  // the other end is worse than no hint at all. Unlisted, it is only ever a surprise
+  // that arrives *with* the answer — which is the moment it is actually true.
+  heardBack: {
+    group: 'secret',
+    emblem: '📬',
+    title: msg`HEARD BACK`,
+    hint: msg`Send feedback, and get an answer back.`,
     secret: true,
   },
 } as const satisfies Record<AchievementId, AchievementDef>

@@ -81,6 +81,9 @@ export type AchievementsInput = {
   crown: boolean
   crossed: readonly AnnouncementId[]
   guideRead: boolean
+  // Whether an answer to this player's feedback has ever reached them, for HEARD BACK.
+  // Arrives already stored — see hooks/use-feedback-answered.ts.
+  feedbackAnswered: boolean
   userId: string | null
   // Called with everything a step just unlocked, oldest first. The queue itself lives
   // outside this hook — see `useAchievementQueue` — because the announcement bar has to
@@ -246,6 +249,7 @@ export function useAchievements(input: AchievementsInput): Achievements {
     input.crown,
     input.crossed,
     input.guideRead,
+    input.feedbackAnswered,
   ])
 
   // The finished pass, then the fold — in that order. The rules read the career as it
@@ -325,6 +329,7 @@ export function useAchievements(input: AchievementsInput): Achievements {
     input.standings,
     input.crown,
     input.guideRead,
+    input.feedbackAnswered,
     persist,
   ])
 
@@ -433,5 +438,6 @@ const worldFacts = (
   crown: input.crown,
   crossed: input.crossed,
   guideRead: input.guideRead,
+  feedbackAnswered: input.feedbackAnswered,
   now: new Date(),
 })

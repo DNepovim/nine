@@ -118,6 +118,10 @@ export type AchievementFacts = {
   // What this run has taken, from the announcement bar's own reckoning.
   crossed: readonly AnnouncementId[]
   guideRead: boolean
+  // Whether an answer to this player's feedback has ever reached them. Read off the
+  // device rather than the server, which cannot answer it twice — see
+  // lib/feedback-answered.ts.
+  feedbackAnswered: boolean
   now: Date
 }
 
@@ -386,6 +390,10 @@ const RULES = {
     f.run.finished &&
     f.run.endedAt.getMonth() === APRIL &&
     f.run.endedAt.getDate() === FOOLS_DAY,
+  // No run in the question, and no career either: one bit, set the first time an answer
+  // is dismissed. Both halves are already behind it — nothing is answered that was not
+  // sent — so asking about the reply asks about the message too.
+  heardBack: (f) => f.feedbackAnswered,
 } as const satisfies Record<
   AchievementId,
   // `stage` is the board being asked about. Unstaged rules ignore it and are asked once
@@ -509,6 +517,7 @@ const PROGRESS = {
   nineNineNine: () => 0,
   goodSport: () => 0,
   noJoke: () => 0,
+  heardBack: () => 0,
 } as const satisfies Record<
   AchievementId,
   (facts: AchievementFacts, stage: Stage) => number

@@ -52,6 +52,7 @@ const worldFacts = (
   crown: false,
   crossed: [],
   guideRead: false,
+  feedbackAnswered: false,
   now: new Date('2026-09-17T12:00:00.000Z'),
   ...over,
 })

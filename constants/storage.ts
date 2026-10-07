@@ -68,6 +68,13 @@ export const RUN_KEY = 'nine.run.v1'
 // used to ask the same question of a hands-on walkthrough that opened from the same
 // screen. See lib/how-to-play.ts.
 export const HOW_TO_PLAY_KEY = 'nine.how-to-play.v1'
+// Whether an answer to this player's feedback has ever reached them — set when they
+// dismiss the reply dialog. The one thing that reads it is the HEARD BACK achievement,
+// and it has to be stored because the question cannot be asked again: a reply is marked
+// seen as it is dismissed and `my_feedback_replies` only ever returns unseen ones, so
+// the server's answer to "did you get one" is no from the second launch onwards. See
+// lib/feedback-answered.ts.
+export const FEEDBACK_ANSWERED_KEY = 'nine.feedback-answered.v1'
 // Whether this device has had its opening tutorial run — the welcome that a first launch
 // drops straight into. The stored flag outlives that one run: it is also what keeps
 // Trainee's invitation to a scored board coming back. See lib/welcome.ts.
