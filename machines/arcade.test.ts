@@ -206,6 +206,58 @@ describe('rngFor', () => {
   })
 })
 
+describe('village clocks', () => {
+  const fan = (seed: number) => {
+    const grown = openCrossroad(newMap(seed), START, busy, seed)
+    return grown[START]?.ways ?? []
+  }
+
+  it('gives exactly one village the crossroad\u2019s whole clock', () => {
+    for (let seed = 1; seed < 40; seed++) {
+      const ways = fan(seed)
+      if (ways.length === 0) continue
+      const full = crossroadClock(0)
+      expect(ways.filter((way) => way.clockMs === full).length).toBeGreaterThanOrEqual(1)
+    }
+  })
+
+  it('never lets a village outlast the crossroad, nor fall below the floor', () => {
+    const full = crossroadClock(0)
+    for (let seed = 1; seed < 40; seed++) {
+      for (const way of fan(seed)) {
+        expect(way.clockMs).toBeLessThanOrEqual(full)
+        // VILLAGE_SHORTEST is 0.62; the rounding can only go a whole millisecond under.
+        expect(way.clockMs).toBeGreaterThanOrEqual(Math.floor(full * 0.62))
+      }
+    }
+  })
+
+  it('gives a fan more than one deadline, which is the whole point', () => {
+    // Over a spread of seeds at least some fans must differ within themselves \u2014 a mode
+    // where every village always went at once is the one this replaced.
+    const varied = Array.from({ length: 40 }, (_, i) => fan(i + 1)).filter(
+      (ways) => new Set(ways.map((way) => way.clockMs)).size > 1,
+    )
+    expect(varied.length).toBeGreaterThan(20)
+  })
+
+  it('hands back the same deadlines for the same seed', () => {
+    expect(fan(7).map((way) => way.clockMs)).toEqual(fan(7).map((way) => way.clockMs))
+  })
+
+  it('tightens with depth, because the crossroad clock does', () => {
+    const deepSeed = 11
+    const grown = deepen(newMap(deepSeed), START, busy, deepSeed, 20)
+    const deep = grown.map[grown.at]?.ways ?? []
+    const shallow = fan(deepSeed)
+    const longest = (ways: readonly { clockMs: number }[]) =>
+      Math.max(...ways.map((way) => way.clockMs))
+    if (deep.length > 0 && shallow.length > 0) {
+      expect(longest(deep)).toBeLessThan(longest(shallow))
+    }
+  })
+})
+
 describe('wayInto', () => {
   it('has nothing to answer at the start', () => {
     expect(wayInto(openCrossroad(newMap(1), START, zeros, 5), START)).toBeNull()
@@ -378,9 +430,9 @@ describe('straightestWay', () => {
       heading: UP,
       pos: { x: 0, y: -1 },
       ways: [
-        { to: '0.0', angle: UP - 0.5, reach: 1, value: 10 },
-        { to: '0.1', angle: UP + 0.08, reach: 1, value: 20 },
-        { to: '0.2', angle: UP + 0.4, reach: 1, value: 30 },
+        { to: '0.0', angle: UP - 0.5, reach: 1, value: 10, clockMs: 11000 },
+        { to: '0.1', angle: UP + 0.08, reach: 1, value: 20, clockMs: 11000 },
+        { to: '0.2', angle: UP + 0.4, reach: 1, value: 30, clockMs: 11000 },
       ],
     }
     expect(straightestWay(at)?.to).toBe('0.1')
@@ -399,8 +451,8 @@ describe('straightestWay', () => {
       heading: Math.PI - 0.05,
       pos: { x: 0, y: 0 },
       ways: [
-        { to: '0.0', angle: -Math.PI + 0.05, reach: 1, value: 10 },
-        { to: '0.1', angle: Math.PI - 0.9, reach: 1, value: 20 },
+        { to: '0.0', angle: -Math.PI + 0.05, reach: 1, value: 10, clockMs: 11000 },
+        { to: '0.1', angle: Math.PI - 0.9, reach: 1, value: 20, clockMs: 11000 },
       ],
     }
     expect(straightestWay(at)?.to).toBe('0.0')

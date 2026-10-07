@@ -1,5 +1,6 @@
 import { ANCHOR } from '@/constants/arcade'
 import { FIELD_MIN, HERO_AT, SIEGE_ZOOM, SKY, WALL_AT } from '@/constants/siege'
+import { tiltedAt, type Sheet } from '@/lib/arcade-tilt'
 import { idSeed, type ArcadeWay } from '@/machines/arcade'
 
 // Arcade's geometry: a crossroad and its ways turned into points and curves, and the two
@@ -137,20 +138,49 @@ function swayAt(s: Spline, clockMs: number): number {
   return Math.sin((clockMs / s.period) * TAU + s.phase) * s.amp
 }
 
-// The way as an SVG path, swayed to wherever its breath has got to. Built on the UI thread
-// from `animatedProps`, so a way goes on breathing whatever React is doing.
+// The way as an SVG path, swayed to wherever its breath has got to and drawn where the tilt
+// puts it. Built on the UI thread from `animatedProps`, so a way goes on breathing whatever
+// React is doing.
 //
 // `cx`/`cy` say where the crossroad sits inside the box the path is drawn in — the curve is
 // measured from the crossroad, and the box has to put that origin somewhere all of its ways
-// fit around.
-export function splinePath(s: Spline, clockMs: number, cx: number, cy: number): string {
+// fit around. `x`/`y` say where that crossroad is on the sheet, which is what the tilt needs
+// to know: the box itself is carried to the crossroad's own drawn place by the view it is in,
+// and what is measured in here is the curve off that place.
+//
+// The four points of the cubic are projected one at a time, and that makes a way the one mark
+// on this sheet allowed to come out distorted. It has to be: a way is a line between two
+// towns, both of its ends are placed by the tilt, so a way running up the map must be drawn
+// short enough that its tip is still the point its town was drawn to. What it costs is a
+// curve that is no longer exactly the curve the spline describes — over the pitch a way runs,
+// less than its own breath already bends it.
+export function splinePath(
+  s: Spline,
+  clockMs: number,
+  cx: number,
+  cy: number,
+  sheet: Sheet,
+  x: number,
+  y: number,
+): string {
   'worklet'
   const k = swayAt(s, clockMs)
-  const c1x = cx + s.c1x + s.nx * k
-  const c1y = cy + s.c1y + s.ny * k
-  const c2x = cx + s.c2x + s.nx * k * FAR_SWAY
-  const c2y = cy + s.c2y + s.ny * k * FAR_SWAY
-  return `M${cx} ${cy} C${c1x} ${c1y} ${c2x} ${c2y} ${cx + s.toX} ${cy + s.toY}`
+  const root = tiltedAt(sheet, x, y)
+  const c1 = tiltedAt(sheet, x + s.c1x + s.nx * k, y + s.c1y + s.ny * k)
+  const c2 = tiltedAt(
+    sheet,
+    x + s.c2x + s.nx * k * FAR_SWAY,
+    y + s.c2y + s.ny * k * FAR_SWAY,
+  )
+  const end = tiltedAt(sheet, x + s.toX, y + s.toY)
+  // Off the crossroad's drawn place rather than off where it was laid out, the box having
+  // been carried there already.
+  const ox = cx - root.x
+  const oy = cy - root.y
+  return (
+    `M${cx} ${cy} C${ox + c1.x} ${oy + c1.y} ` +
+    `${ox + c2.x} ${oy + c2.y} ${ox + end.x} ${oy + end.y}`
+  )
 }
 
 // Where on the way the hero is, read at the same moment the way is drawn — so it rides the
@@ -208,7 +238,11 @@ export function splineFor(way: ArcadeWay, heading: number, pitch: number): Splin
 // into the one place the clock says exactly what it costs.
 export function mouthStub(pitch: number): Spline {
   const down = Math.PI / 2
-  return splineFor({ to: 'mouth', angle: down, reach: STUB_REACH, value: 0 }, down, pitch)
+  return splineFor(
+    { to: 'mouth', angle: down, reach: STUB_REACH, value: 0, clockMs: 11000 },
+    down,
+    pitch,
+  )
 }
 
 // A crossroad's place on the canvas, in points.

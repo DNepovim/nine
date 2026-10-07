@@ -1,11 +1,12 @@
 import { Trans } from '@lingui/react/macro'
 import { isOneOf } from 'narrowland'
 import { useEffect, useRef, useState } from 'react'
-import { View, type LayoutChangeEvent } from 'react-native'
+import { Text, View, type LayoutChangeEvent } from 'react-native'
 import Animated, {
   Easing,
   FadeIn,
   useAnimatedStyle,
+  useDerivedValue,
   useFrameCallback,
   useSharedValue,
   withSequence,
@@ -59,6 +60,7 @@ import {
   splinePoint,
   type Spline,
 } from '@/lib/arcade-layout'
+import { horizonOf, type Sheet } from '@/lib/arcade-tilt'
 import { valueProgress } from '@/lib/value-progress'
 import { ARCADE_DIAL, idSeed, UP } from '@/machines/arcade'
 import type { DialControl } from '@/machines/tutorial-lesson'
@@ -246,6 +248,11 @@ type BudSpec = {
   // knowing *before* dialling it, which is the whole reason it is drawn rather than
   // discovered.
   fortified: boolean
+  // When this village gives up, and how long it had. Null on every bud that is not a live
+  // way out of where the hero stands — the trail behind, and the crossroad a strike is
+  // about to pass through, are places rather than offers and have no clock to run.
+  endsAt: number | null
+  clockMs: number
 }
 
 export function ArcadeGame({ onEnd }: { onEnd: () => void }) {
@@ -294,6 +301,9 @@ export function ArcadeGame({ onEnd }: { onEnd: () => void }) {
   // where it has been until now — and whatever it takes to put the hero's heading up when
   // the player would rather the land turned under them.
   const camTurn = useSharedValue(0)
+  // How much of the tilt is on: the sheet lying away from the reader at one, flat on at
+  // nought. One everywhere but a siege, which is a view of its own — see lib/arcade-tilt.ts.
+  const camTilt = useSharedValue(1)
   // Which way up the player reads this map, as they last left it: ahead at the top until they
   // say otherwise. Persisted rather than held here, because the screen goes with the run.
   const { northUp, setNorthUp } = usePersistedRose()
@@ -353,6 +363,11 @@ export function ArcadeGame({ onEnd }: { onEnd: () => void }) {
     camScale.value = withTiming(closing ? SIEGE_ZOOM : 1, { duration, easing })
     camLift.value = withTiming(closing ? frame.lift : 0, { duration, easing })
     away.value = withTiming(closing ? COUNTRY_AWAY : 1, { duration, easing })
+    // And the sheet comes down to level with it. A fight is the one thing on this screen
+    // already drawn in a perspective of its own — a wall across the top of the canvas and
+    // the ground in front of it — so the map's own tilt steps out of its way, on the same
+    // beat as the zoom, rather than leaving the field lying at two angles at once.
+    camTilt.value = withTiming(closing ? 0 : 1, { duration, easing })
   }, [run.phase, frame.lift])
 
   // The sheet turns on the same beat the canvas drifts on, so the two are one movement. A
@@ -463,6 +478,18 @@ export function ArcadeGame({ onEnd }: { onEnd: () => void }) {
   }))
   const country = useAnimatedStyle(() => ({ opacity: away.value }))
 
+  // The camera as one value, which is what every mark on the sheet reads to know where it is
+  // drawn and at what size. Derived rather than five props: the pan, the zoom, the turn and
+  // the tilt are animated apart from each other, and the projection needs all four at once.
+  const sheet = useDerivedValue<Sheet>(() => ({
+    x: camX.value,
+    y: camY.value,
+    turn: camTurn.value,
+    scale: camScale.value,
+    tilt: camTilt.value,
+    horizon: horizonOf(canvas.height),
+  }))
+
   const onCanvasLayout = (event: LayoutChangeEvent) => {
     const { width, height } = event.nativeEvent.layout
     setCanvas({ width, height })
@@ -563,9 +590,18 @@ export function ArcadeGame({ onEnd }: { onEnd: () => void }) {
           (other) => Math.abs(other.x - (herePt.x + spline.toX)) > NAME_ROOM,
         ),
         seed: idSeed(way.to),
-        state: chosen ? 'absorbing' : leaving ? 'withering' : 'growing',
+        // A village that has run out of patience withers exactly as a refused one does —
+        // it is the same thing happening for a different reason, and the fan should not
+        // grow a second way of saying a town is gone.
+        state: chosen
+          ? 'absorbing'
+          : leaving || run.expired.includes(way.to)
+            ? 'withering'
+            : 'growing',
         delay: i * STAGGER_MS,
         fortified: run.walledAt(way.to),
+        endsAt: run.expiresAt[way.to] ?? null,
+        clockMs: way.clockMs,
       })
     })
   }
@@ -715,15 +751,26 @@ export function ArcadeGame({ onEnd }: { onEnd: () => void }) {
               short and tucked under the pause button rather than stretched between them.
               A rule running the width of the screen reads as a loading bar, and this one
               is a gauge. */}
-          <View className="mt-1.5 flex-row items-center justify-between">
+          <View className="mt-1.5 flex-row items-end justify-between">
             <View className="flex-row gap-1">
               {Array.from({ length: HEARTS }, (_, i) => (
                 <HeartIcon key={i} filled={i < run.hearts} emptyColor={'#FDFCFA'} />
               ))}
             </View>
             {/* About as wide as the MENU button above it, so the two read as one column
-                down the right-hand edge. */}
-            <View className="w-16">
+                down the right-hand edge, with the bar named over it.
+
+                The hearts opposite carry no label and want none — three hearts are three
+                hearts in every game ever made. A draining bar is not that: it could be a
+                clock, a charge or a score until something says otherwise, and the one
+                place a player looks to find out is directly above it. */}
+            <View className="w-16 items-end gap-1">
+              <Text
+                selectable={false}
+                className="font-mono text-[8px] font-bold tracking-[1px] text-dim"
+              >
+                <Trans>SATIETY</Trans>
+              </Text>
               <SatietyBar satiety={run.satiety} starving={run.starving} />
             </View>
           </View>
@@ -768,7 +815,7 @@ export function ArcadeGame({ onEnd }: { onEnd: () => void }) {
                       key={feature.key}
                       feature={feature}
                       pitch={pitch}
-                      turn={camTurn}
+                      sheet={sheet}
                       line={MAP_INK.line}
                       hatch={MAP_INK.hatch}
                       knockout={SURFACE}
@@ -781,6 +828,7 @@ export function ArcadeGame({ onEnd }: { onEnd: () => void }) {
                       y={stem.y}
                       box={box}
                       spline={stem.spline}
+                      sheet={sheet}
                       lit={stem.lit}
                       state={stem.state}
                       delay={stem.delay}
@@ -798,6 +846,7 @@ export function ArcadeGame({ onEnd }: { onEnd: () => void }) {
                     <ArcadeMouth
                       x={stub.toX}
                       y={stub.toY}
+                      sheet={sheet}
                       fade={mouthFade}
                       ring={MAP_INK.hatch}
                       ember={EMBER}
@@ -815,9 +864,12 @@ export function ArcadeGame({ onEnd }: { onEnd: () => void }) {
                       state={bud.state}
                       delay={bud.delay}
                       fortified={bud.fortified}
+                      endsAt={bud.endsAt}
+                      clockMs={bud.clockMs}
+                      now={now}
                       edge={BUD_EDGE}
                       ink={PIE_INK}
-                      turn={camTurn}
+                      sheet={sheet}
                       line={MAP_INK.line}
                       hatch={MAP_INK.hatch}
                       face={SURFACE}
@@ -831,7 +883,7 @@ export function ArcadeGame({ onEnd }: { onEnd: () => void }) {
                     key={run.seq}
                     x={skipped.fromX}
                     y={skipped.fromY}
-                    turn={camTurn}
+                    sheet={sheet}
                     ink={ARCADE_INK}
                   />
                 )}
@@ -866,7 +918,7 @@ export function ArcadeGame({ onEnd }: { onEnd: () => void }) {
                     x={pointsOf(here.pos, pitch).x}
                     y={pointsOf(here.pos, pitch).y}
                     name={here.name}
-                    turn={camTurn}
+                    sheet={sheet}
                     ink={ARCADE_INK}
                   />
                 )}
@@ -879,6 +931,7 @@ export function ArcadeGame({ onEnd }: { onEnd: () => void }) {
                   throughY={skipped?.y ?? 0}
                   progress={progress}
                   clock={clock}
+                  sheet={sheet}
                   pitch={pitch}
                   standing={!leaving}
                   rocketing={run.phase === 'rocket'}

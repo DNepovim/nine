@@ -10,6 +10,7 @@ import Animated, {
 } from 'react-native-reanimated'
 import Svg, { G, Path } from 'react-native-svg'
 
+import { tiltedAt, type Sheet } from '@/lib/arcade-tilt'
 import { drawFeature } from '@/lib/map-marks'
 import type { LandFeature } from '@/machines/arcade-land'
 
@@ -33,6 +34,12 @@ import type { LandFeature } from '@/machines/arcade-land'
 // Taken out about the feature's foot, which is the ground its elements stand on: the whole
 // patch of country holds the place it was put, and turns rigidly about it, so a range still
 // runs where the generator ran it and still clears the ways it was told to clear.
+//
+// The foot is also what carries the tilt. The sheet lies away from the reader, so a range up
+// the map is drawn smaller and nearer its neighbours than one underfoot — and the point that
+// decides how much is the ground it stands on rather than anywhere in its box. A mountain is
+// scaled, never squashed: what the tilt does to the country is place it and size it, and a
+// peak leaning back with the sheet would be a peak nobody drew.
 
 const IN_MS = 420
 const SETTLE = 0.95
@@ -55,16 +62,17 @@ function scatter(key: string): number {
 export function LandMark({
   feature,
   pitch,
-  turn,
+  sheet,
   line,
   hatch,
   knockout,
 }: {
   feature: LandFeature
   pitch: number
-  // How far the sheet has been turned, as it is turning. Taken back out of this feature, so
-  // what it moves is where the country *is* and never which way up it is drawn.
-  turn: SharedValue<number>
+  // The camera: where the sheet is panned, zoomed, turned and tilted to. The turn is taken
+  // back out of this feature, so what it moves is where the country *is* and never which way
+  // up it is drawn; the tilt is what says how far off it is.
+  sheet: SharedValue<Sheet>
   line: string
   hatch: string
   // The ground's own colour. What every mark fills itself with before it is inked.
@@ -90,19 +98,28 @@ export function LandMark({
   const offX = drawn.foot.x - drawn.width / 2
   const offY = drawn.foot.y - drawn.height / 2
 
-  // One style for the arrival and the turn together, rather than a view each: the scale is
-  // innermost, so it is still about the box's own centre, and the turn is wrapped round it.
-  const style = useAnimatedStyle(() => ({
-    opacity: opacity.value,
-    transform: [
-      { translateX: offX },
-      { translateY: offY },
-      { rotate: `${-turn.value}rad` },
-      { translateX: -offX },
-      { translateY: -offY },
-      { scale: scale.value },
-    ],
-  }))
+  // One style for the arrival, the turn and the tilt together, rather than a view each.
+  // Read right to left, which is the order a point is carried through: the arrival's own
+  // settle about the box's centre, then the depth and the turn about the foot, and the move
+  // to where the tilt has put that foot last of all — in the sheet's own frame, which is
+  // what `tiltedAt` hands back, so it rides under the camera's pan like everything else.
+  const style = useAnimatedStyle(() => {
+    const lie = tiltedAt(sheet.value, drawn.foot.x + drawn.left, drawn.foot.y + drawn.top)
+    return {
+      opacity: opacity.value,
+      transform: [
+        { translateX: lie.x - (drawn.foot.x + drawn.left) },
+        { translateY: lie.y - (drawn.foot.y + drawn.top) },
+        { translateX: offX },
+        { translateY: offY },
+        { rotate: `${-sheet.value.turn}rad` },
+        { scale: lie.scale },
+        { translateX: -offX },
+        { translateY: -offY },
+        { scale: scale.value },
+      ],
+    }
+  })
 
   return (
     <Animated.View

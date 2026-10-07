@@ -1,5 +1,6 @@
 import { useRef } from 'react'
 
+import { tiltedWindow } from '@/lib/arcade-tilt'
 import {
   featureIn,
   featuresIn,
@@ -80,15 +81,19 @@ export function useArcadeLand({
     return false
   }
 
-  const halfWide = canvas.width / 2 / pitch + MARGIN
-  const halfTall = canvas.height / 2 / pitch + MARGIN
+  // What the canvas sees, which is not what it measures: the sheet lies away from the
+  // reader, so the top edge of it is country well past where a flat sheet would have put
+  // it, and the bottom edge is country nearer than that. Asked of the tilt rather than
+  // worked out here — see lib/arcade-tilt.ts.
+  const seen = tiltedWindow(canvas)
+  const halfWide = seen.wide / pitch + MARGIN
 
   return featuresIn(
     {
       left: origin.x - halfWide,
       right: origin.x + halfWide,
-      top: origin.y - halfTall,
-      bottom: origin.y + halfTall,
+      top: origin.y - seen.up / pitch - MARGIN,
+      bottom: origin.y + seen.down / pitch + MARGIN,
     },
     (region: RegionKey, gx: number, gy: number) => {
       const key = `${region}:${gx}:${gy}`

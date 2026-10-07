@@ -11,6 +11,7 @@ import Animated, {
 } from 'react-native-reanimated'
 
 import { mapLabel } from '@/constants/theme'
+import { tiltedAt, type Sheet } from '@/lib/arcade-tilt'
 
 // The name of the place the hero has just reached, under the flame.
 //
@@ -35,14 +36,16 @@ export function VillageArrival({
   x,
   y,
   name,
-  turn,
+  sheet,
   ink,
 }: {
   x: number
   y: number
   name: string
-  // The sheet's own turn, taken back out: a name is read, not drawn.
-  turn: SharedValue<number>
+  // The camera. Its turn is taken back out and its tilt is not taken at all: a name is read
+  // rather than drawn, so it is set at one size wherever on the sheet it is called out —
+  // what the tilt moves is where it is called out, which is the ground the hero stands on.
+  sheet: SharedValue<Sheet>
   ink: string
 }) {
   const opacity = useSharedValue(0)
@@ -59,10 +62,17 @@ export function VillageArrival({
     })
   }, [])
 
-  const style = useAnimatedStyle(() => ({
-    opacity: opacity.value,
-    transform: [{ translateY: lift.value }, { rotate: `${-turn.value}rad` }],
-  }))
+  const style = useAnimatedStyle(() => {
+    const lie = tiltedAt(sheet.value, x, y)
+    return {
+      opacity: opacity.value,
+      transform: [
+        { translateX: lie.x - x },
+        { translateY: lie.y - y + lift.value },
+        { rotate: `${-sheet.value.turn}rad` },
+      ],
+    }
+  })
 
   return (
     <Animated.View

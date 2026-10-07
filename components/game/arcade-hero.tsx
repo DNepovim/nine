@@ -14,6 +14,7 @@ import { FlameCoat } from '@/components/game/flame-coat'
 import { HeroSmoke } from '@/components/game/hero-smoke'
 import { HERO_SIZE, WALK_MS } from '@/constants/arcade'
 import { splinePoint, type Spline } from '@/lib/arcade-layout'
+import { tiltedAt, type Sheet } from '@/lib/arcade-tilt'
 import { createTrail, driftTrail, LAY_MS, layTrail } from '@/lib/smoke'
 
 // The hero: a torch, looked down on.
@@ -32,7 +33,18 @@ import { createTrail, driftTrail, LAY_MS, layTrail } from '@/lib/smoke'
 // taken back out of it so that fire would keep pointing up the screen.
 //
 // Its position is read off the same spline the way is drawn from, at the same moment and on
-// the same thread, so it rides the line rather than crossing it as the way breathes.
+// the same thread, so it rides the line rather than crossing it as the way breathes. And then
+// projected onto the tilted sheet, like every other mark — the way is drawn short when it runs
+// up the map, and a flame on the flat line would walk clean off it.
+//
+// The whole box is carried and scaled rather than the flame alone, so the smoke goes with it:
+// a plume is a trail of the ground the hero covered, and the two have to be as far off as
+// each other. What it gives up is that the far end of a plume is as deep as its near end,
+// which is a pitch of sheet at most and already fading as it is drawn.
+//
+// Its own pace is measured on the flat position, not the drawn one. The flame leans and the
+// smoke lays off how fast the hero is going over the ground, and a hero that appeared to slow
+// down simply for being further off would be the tilt telling a lie about the run.
 
 // How much the whole flame swells while it waits. Small — the flicker is doing the work.
 const PULSE = 1.06
@@ -136,6 +148,7 @@ export function ArcadeHero({
   throughY,
   progress,
   clock,
+  sheet,
   pitch,
   standing,
   rocketing,
@@ -157,6 +170,8 @@ export function ArcadeHero({
   // 0 → 2 for a strike, so one value covers them all.
   progress: SharedValue<number>
   clock: SharedValue<number>
+  // The camera, which is what says where on the drawn sheet the point it has reached lands.
+  sheet: SharedValue<Sheet>
   // How far apart two crossroads stand. The flame measures its own pace against it — one
   // pitch in one walk is what "going" means — and the smoke's reach is a share of it.
   pitch: number
@@ -242,9 +257,16 @@ export function ArcadeHero({
   const reach = pitch * REACH
   const box = reach * 2
 
-  const style = useAnimatedStyle(() => ({
-    transform: [{ translateX: atX.value - box / 2 }, { translateY: atY.value - box / 2 }],
-  }))
+  const style = useAnimatedStyle(() => {
+    const lie = tiltedAt(sheet.value, atX.value, atY.value)
+    return {
+      transform: [
+        { translateX: lie.x - box / 2 },
+        { translateY: lie.y - box / 2 },
+        { scale: lie.scale },
+      ],
+    }
+  })
 
   if (pitch <= 0) return null
 

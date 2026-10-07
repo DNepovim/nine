@@ -2,6 +2,8 @@ import { useEffect } from 'react'
 import Animated, {
   Easing,
   useAnimatedProps,
+  useAnimatedStyle,
+  useDerivedValue,
   useSharedValue,
   withDelay,
   withTiming,
@@ -11,6 +13,7 @@ import Svg, { Defs, LinearGradient, Path, Stop } from 'react-native-svg'
 
 import { GROW_MS, WITHER_MS } from '@/constants/arcade'
 import { splinePath, type Spline } from '@/lib/arcade-layout'
+import { tiltedAt, type Sheet } from '@/lib/arcade-tilt'
 
 const AnimatedPath = Animated.createAnimatedComponent(Path)
 
@@ -24,6 +27,13 @@ const AnimatedPath = Animated.createAnimatedComponent(Path)
 //
 // `d` comes from `animatedProps` rather than from a prop, so the sway is computed on the UI
 // thread. A way goes on breathing while React is busy, which it is on every press.
+//
+// The tilt is why the box is carried by a transform rather than simply laid out at its
+// crossroad: the sheet lies away from the reader, so a crossroad up the map is drawn some way
+// down from where it sits, and the curve inside the box is measured off that drawn place. The
+// dash the way is revealed by is still measured on the flat length, which is a little more
+// than the drawn one — so a way running up the sheet has finished drawing itself on a breath
+// before its own animation ends, which is nothing a player can see.
 
 // How much of the way is showing, as an offset into that dash.
 const dashOffset = (open: number, length: number): number => {
@@ -47,6 +57,7 @@ export function WayStem({
   y,
   box,
   spline,
+  sheet,
   lit,
   state,
   delay,
@@ -65,6 +76,8 @@ export function WayStem({
   // The square the curve is drawn in, with that crossroad at its centre.
   box: number
   spline: Spline
+  // The camera, which is what says where the crossroad and the way's own end are drawn.
+  sheet: SharedValue<Sheet>
   // Walked, or still only offered.
   lit: boolean
   state: StemState
@@ -123,71 +136,88 @@ export function WayStem({
 
   const dash = [spline.length, spline.length]
 
+  // Where the tilt has put the crossroad this way leaves. The box goes there, and the curve
+  // is drawn off it.
+  const carried = useAnimatedStyle(() => {
+    const lie = tiltedAt(sheet.value, x, y)
+    return { transform: [{ translateX: lie.x - x }, { translateY: lie.y - y }] }
+  })
+
+  // The curve itself, once a frame. Shared by the way's three layers rather than worked out
+  // per layer: they are the one line drawn three times, and projecting four points apiece is
+  // four times the sum the flat path was.
+  const path = useDerivedValue(() =>
+    splinePath(spline, clock.value, half, half, sheet.value, x, y),
+  )
+
   const baseProps = useAnimatedProps(() => ({
-    d: splinePath(spline, clock.value, half, half),
+    d: path.value,
     strokeDashoffset: dashOffset(open.value, spline.length),
   }))
 
   const creepProps = useAnimatedProps(() => ({
-    d: splinePath(spline, clock.value, half, half),
+    d: path.value,
     strokeDashoffset: dashOffset(creep.value, spline.length),
   }))
 
   return (
-    <Svg
-      width={box}
-      height={box}
+    <Animated.View
       pointerEvents="none"
-      style={{ position: 'absolute', left: x - half, top: y - half }}
+      style={[
+        { position: 'absolute', left: x - half, top: y - half, width: box, height: box },
+        carried,
+      ]}
     >
-      {lit && (
-        <Defs>
-          {/* Along the way rather than across its box, so the cool end is the far one
+      <Svg width={box} height={box} pointerEvents="none">
+        {lit && (
+          <Defs>
+            {/* Along the way rather than across its box, so the cool end is the far one
               however the way is turned: amber where the hero stands, red behind it. */}
-          <LinearGradient
-            id={gradientId}
-            x1={half}
-            y1={half}
-            x2={half + spline.toX}
-            y2={half + spline.toY}
-            gradientUnits="userSpaceOnUse"
-          >
-            <Stop offset="0" stopColor={ember} />
-            <Stop offset="1" stopColor={amber} />
-          </LinearGradient>
-        </Defs>
-      )}
-      {lit && (
+            <LinearGradient
+              id={gradientId}
+              x1={half}
+              y1={half}
+              x2={half + spline.toX}
+              y2={half + spline.toY}
+              gradientUnits="userSpaceOnUse"
+            >
+              <Stop offset="0" stopColor={ember} />
+              <Stop offset="1" stopColor={amber} />
+            </LinearGradient>
+          </Defs>
+        )}
+        {lit && (
+          <AnimatedPath
+            animatedProps={baseProps}
+            stroke={`${amber}${GLOW_ALPHA}`}
+            strokeWidth={GLOW_WIDTH}
+            strokeLinecap="round"
+            strokeDasharray={dash}
+            opacity={fade}
+            fill="none"
+          />
+        )}
         <AnimatedPath
           animatedProps={baseProps}
-          stroke={`${amber}${GLOW_ALPHA}`}
-          strokeWidth={GLOW_WIDTH}
+          stroke={lit ? `url(#${gradientId})` : aheadInk}
+          strokeWidth={lit ? LIT_WIDTH : AHEAD_WIDTH}
           strokeLinecap="round"
           strokeDasharray={dash}
           opacity={fade}
           fill="none"
         />
-      )}
-      <AnimatedPath
-        animatedProps={baseProps}
-        stroke={lit ? `url(#${gradientId})` : aheadInk}
-        strokeWidth={lit ? LIT_WIDTH : AHEAD_WIDTH}
-        strokeLinecap="round"
-        strokeDasharray={dash}
-        opacity={fade}
-        fill="none"
-      />
-      {lit && (
-        <AnimatedPath
-          animatedProps={creepProps}
-          stroke={ember}
-          strokeWidth={LIT_WIDTH}
-          strokeLinecap="round"
-          strokeDasharray={dash}
-          opacity={fade}
-          fill="none"
-        />
-      )}
-    </Svg>
+        {lit && (
+          <AnimatedPath
+            animatedProps={creepProps}
+            stroke={ember}
+            strokeWidth={LIT_WIDTH}
+            strokeLinecap="round"
+            strokeDasharray={dash}
+            opacity={fade}
+            fill="none"
+          />
+        )}
+      </Svg>
+    </Animated.View>
   )
 }

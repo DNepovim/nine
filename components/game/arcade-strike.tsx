@@ -11,6 +11,7 @@ import Animated, {
 } from 'react-native-reanimated'
 
 import { STRIKE_MS } from '@/constants/arcade'
+import { tiltedAt, type Sheet } from '@/lib/arcade-tilt'
 
 // The word, over the crossroad that earned it. Rises and fades as the hero leaves.
 //
@@ -24,13 +25,15 @@ const RISE = 26
 export function ArcadeStrike({
   x,
   y,
-  turn,
+  sheet,
   ink,
 }: {
   x: number
   y: number
-  // The sheet's turn, taken back out — a word is read, not drawn on the map.
-  turn: SharedValue<number>
+  // The camera. Its turn is taken back out and its tilt is not taken at all — a word is read,
+  // not drawn on the map — but the crossroad it is said over sinks towards the reader as the
+  // hero leaves it, and the word goes with it.
+  sheet: SharedValue<Sheet>
   ink: string
 }) {
   const lift = useSharedValue(0)
@@ -49,10 +52,17 @@ export function ArcadeStrike({
     )
   }, [])
 
-  const style = useAnimatedStyle(() => ({
-    opacity: opacity.value,
-    transform: [{ translateY: lift.value }, { rotate: `${-turn.value}rad` }],
-  }))
+  const style = useAnimatedStyle(() => {
+    const lie = tiltedAt(sheet.value, x, y)
+    return {
+      opacity: opacity.value,
+      transform: [
+        { translateX: lie.x - x },
+        { translateY: lie.y - y + lift.value },
+        { rotate: `${-sheet.value.turn}rad` },
+      ],
+    }
+  })
 
   return (
     <Animated.View

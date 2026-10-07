@@ -63,6 +63,18 @@ const PAR_MAX = 4
 // two presses wide, and a grid that left it short would have no walls to knock down.
 const PAR_STRETCH = 12
 
+// How short a village's own clock may be, as a fraction of the crossroad's.
+//
+// Every village at a crossroad now holds out for its own length of time rather than all of
+// them falling together: one of them keeps the full clock the crossroad was given, and the
+// rest roll somewhere between this and that. So a fan is a set of deadlines rather than one
+// deadline, and the way you want may be the one about to go.
+//
+// Measured *down* from the crossroad's clock rather than either side of it, so the mode's
+// pacing is unchanged: the last village standing still goes at exactly the moment the
+// crossroad used to end. Nothing got longer; some things got shorter.
+const VILLAGE_SHORTEST = 0.62
+
 // The clock at the first crossroad, before depth tightens it.
 //
 // One pace, and no difficulty on top of it. Arcade already tightens as a run climbs, which
@@ -83,6 +95,13 @@ export type ArcadeWay = {
   reach: number
   // The target hung at this way's end.
   value: number
+  // How long the village at this way's end holds out, in milliseconds. Its own, and
+  // shorter than the crossroad's for all but one of them — see VILLAGE_SHORTEST.
+  //
+  // Rolled when the fan is grown and kept with it, so a crossroad walked back to offers the
+  // same deadlines it offered the first time. What is *not* kept is how much of each has
+  // run: that is a visit, not a place, and it starts again every arrival.
+  clockMs: number
 }
 
 export type Crossroad = {
@@ -237,6 +256,14 @@ export function openCrossroad(
   const offers = !at.fortified && (at.dry >= FORT_DRY_MAX || fortRng() < FORT_CHANCE)
   const walled = offers ? Math.floor(fortRng() * values.length) : -1
 
+  // The clocks, on a stream of their own — the same arrangement the walls have, and for
+  // the same reason: a seed that walked a fan before villages had clocks walks the same fan
+  // now. One way keeps the crossroad's whole clock so that a fan is never uniformly
+  // hurried; the rest hold out for less.
+  const clockRng = rngFor(seed, `clock:${id}`)
+  const full = crossroadClock(at.depth)
+  const longest = Math.floor(clockRng() * values.length)
+
   const ways: ArcadeWay[] = values.map((value, i) => {
     const fanned = at.heading + (i / Math.max(1, values.length - 1) - 0.5) * 2 * SPREAD
     const crooked = fanned + (rng() - 0.5) * JITTER
@@ -247,6 +274,10 @@ export function openCrossroad(
       angle: crooked + (UP - crooked) * PULL,
       reach: REACH_MIN + rng() * REACH_SPAN,
       value,
+      clockMs:
+        i === longest
+          ? full
+          : Math.round(full * (VILLAGE_SHORTEST + clockRng() * (1 - VILLAGE_SHORTEST))),
     }
   })
 

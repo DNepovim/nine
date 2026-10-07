@@ -142,6 +142,18 @@ type Run = {
   // Presses made since the hero arrived here, the landing one included. Reset on every
   // arrival, so a siege's dozens never reach the leg out of the village it took.
   legPresses: number
+  // When each village at the crossroad the hero is standing at gives up, keyed by the way
+  // that leads to it. Empty until the fan is drawn and the clocks start.
+  //
+  // Wall-clock stamps rather than countdowns, so a pause is resumed by shifting them — the
+  // same arrangement `starvingAt` uses and that `shift` uses on a siege. On the run rather
+  // than on the map because this is a *visit*: the deadlines belong to the fan, but how
+  // much of each has run belongs to the time the hero is standing there, and a crossroad
+  // walked back to starts them again.
+  expiresAt: Readonly<Record<string, number>>
+  // The ways whose villages have already given up. They wither off the fan, stop answering
+  // the dial, and the hero is pulled back only when the last of them goes.
+  expired: readonly string[]
   // Whether a warrior reaching the hero costs a heart. Always true in a shipped build —
   // the dev sidebar is the only thing that can turn it off, and it is folded out with
   // `__DEV__`. A long siege is the one thing in the mode that cannot be watched to the end
@@ -189,6 +201,8 @@ const startRun = (seed: number, now: number): Run => ({
   satiety: FULL,
   legGrid: INITIAL_GRID,
   legPresses: 0,
+  expiresAt: {},
+  expired: [],
   invincible: false,
   starvingAt: null,
   beatAt: now,
@@ -216,9 +230,15 @@ const ENDING: readonly ArcadePhase[] = ['overrun', 'falling', 'over']
 // with a fan to answer — after a walk, a rocket, a retreat, and a village taken — so no
 // arrival can forget to clear the presses the one before it made. One place, for the same
 // reason `beat` is one place.
-const arrival = (grid: Grid): Pick<Run, 'legGrid' | 'legPresses'> => ({
+const arrival = (
+  grid: Grid,
+): Pick<Run, 'legGrid' | 'legPresses' | 'expiresAt' | 'expired'> => ({
   legGrid: grid,
   legPresses: 0,
+  // The clocks are a visit rather than a place: a crossroad walked back to offers the same
+  // deadlines over again, including on the way the hero just watched go.
+  expiresAt: {},
+  expired: [],
 })
 
 // What eating or going without leaves behind: how fed the hero is, and the clock the
@@ -236,6 +256,29 @@ const eat = (
   satiety,
   starvingAt: starving(satiety) ? (run.starvingAt ?? now + STARVE_MS) : null,
 })
+
+// Which village at the crossroad gives up next, and when. Null where there is nothing left
+// counting — the fan has not been stamped yet, or every village has already gone.
+//
+// Read off the stamps rather than kept as a sorted list: a fan is four things at most, and
+// a list would be a second copy of the same answer to keep in step with `expired`.
+const nextWay = (run: Run): string | null => {
+  let soonest: string | null = null
+  let at = Infinity
+  for (const way of run.map[run.at]?.ways ?? []) {
+    if (run.expired.includes(way.to)) continue
+    const due = run.expiresAt[way.to]
+    if (due === undefined || due >= at) continue
+    soonest = way.to
+    at = due
+  }
+  return soonest
+}
+
+const nextToGo = (run: Run): number | null => {
+  const way = nextWay(run)
+  return way === null ? null : (run.expiresAt[way] ?? null)
+}
 
 const freshSeed = (): number => Math.floor(Math.random() * 0x7fffffff)
 
@@ -354,44 +397,76 @@ export function useArcadeRun() {
     if (run.phase === 'bloom') {
       after(BEAT_MS.bloom, () => {
         const now = Date.now()
-        setRun((r) =>
-          r.phase === 'bloom' ? { ...r, phase: 'open', ...beat(r, now) } : r,
-        )
+        setRun((r) => {
+          if (r.phase !== 'bloom') return r
+          // Every village starts holding out here rather than on arrival, which is the
+          // head start a player quick enough to answer while the fan was still growing
+          // has always had — now spelled out as a stamp per village instead of one clock
+          // for the crossroad.
+          const expiresAt: Record<string, number> = {}
+          for (const way of r.map[r.at]?.ways ?? []) expiresAt[way.to] = now + way.clockMs
+          return { ...r, phase: 'open', expiresAt, ...beat(r, now) }
+        })
       })
     }
 
     // The clock ran out. One crossroad back — or, with none behind to go back to, down the
     // stub into the mouth. One of the two ways a run ends; the other is being overrun at a
     // walled village, which is what `overrun` below is.
+    // The crossroad, which no longer ends all at once. Each village holds out for its own
+    // length of time; this is armed to whichever is next to give up, and re-armed by the
+    // `expired` list growing — the same single-timer-to-the-next-event shape the siege's
+    // gate already uses.
     if (run.phase === 'open') {
-      after(clockMs, () => {
-        const now = Date.now()
-        setRun((r) => {
-          if (r.phase !== 'open') return r
-          const here = r.map[r.at]
-          if (here?.from == null) {
-            return {
-              ...r,
-              phase: 'falling',
-              moving: null,
-              // The run is over at this point, so this is where its clock stops.
-              playedMs: r.playedMs + (now - r.playingSince),
-              playingSince: now,
-              ...beat(r, now),
-            }
-          }
-          return {
-            ...r,
-            phase: 'retreat',
-            moving: wayInto(r.map, r.at),
-            // The largest bite there is, and no accuracy relief: there was no answer to be
-            // accurate about. Charged as the retreat begins rather than when it lands, so
-            // the bar empties with the hero being dragged rather than after it.
-            ...eat(r, spent(r.satiety, RETREAT_BITE), now),
-            ...beat(r, now),
-          }
-        })
-      })
+      const due = nextToGo(run)
+      if (due !== null) {
+        timer.current = setTimeout(
+          () => {
+            const now = Date.now()
+            setRun((r) => {
+              if (r.phase !== 'open') return r
+              const going = nextWay(r)
+              if (going === null) return r
+              const expired = [...r.expired, going]
+              // Still somewhere to go: the fan is one village smaller and the hero is
+              // still standing in it. No `beat` — the other villages are counting down
+              // against stamps of their own, and a fresh beat would restart the creep on
+              // the way behind as though the crossroad had begun again.
+              if (expired.length < (r.map[r.at]?.ways.length ?? 0)) {
+                return { ...r, expired }
+              }
+              // The last of them. This is where the crossroad ends, and it ends the way it
+              // always did.
+              const here = r.map[r.at]
+              if (here?.from == null) {
+                return {
+                  ...r,
+                  expired,
+                  phase: 'falling',
+                  moving: null,
+                  // The run is over at this point, so this is where its clock stops.
+                  playedMs: r.playedMs + (now - r.playingSince),
+                  playingSince: now,
+                  ...beat(r, now),
+                }
+              }
+              return {
+                ...r,
+                expired,
+                phase: 'retreat',
+                moving: wayInto(r.map, r.at),
+                // The largest bite there is, and no accuracy relief: there was no answer to
+                // be accurate about. Charged as the retreat begins rather than when it
+                // lands, so the bar empties with the hero being dragged rather than after
+                // it.
+                ...eat(r, spent(r.satiety, RETREAT_BITE), now),
+                ...beat(r, now),
+              }
+            })
+          },
+          Math.max(0, due - Date.now()),
+        )
+      }
     }
 
     if (run.phase === 'walk') {
@@ -614,7 +689,7 @@ export function useArcadeRun() {
       if (timer.current !== null) clearTimeout(timer.current)
       timer.current = null
     }
-  }, [run.phase, run.seq, run.paused, run.beatAt, clockMs])
+  }, [run.phase, run.seq, run.paused, run.beatAt, clockMs, run.expired, run.expiresAt])
 
   // Starving: a heart every STARVE_MS while there is nothing left to eat.
   //
@@ -713,7 +788,12 @@ export function useArcadeRun() {
       // dearest one on the map.
       const presses = r.legPresses + 1
 
-      const taken = r.map[r.at]?.ways.find((way) => way.value === sum)
+      // A village that has already given up is not a way any more, however its number
+      // reads. Without this the dial would still answer to a town the player has just
+      // watched wither off the fan.
+      const taken = r.map[r.at]?.ways.find(
+        (way) => way.value === sum && !r.expired.includes(way.to),
+      )
       if (taken === undefined) return { ...r, grid: next, legPresses: presses }
 
       // What the leg costs, from the grid the fan here was opened against and the presses
@@ -1011,6 +1091,10 @@ export function useArcadeRun() {
     clockMs: Math.max(0, clockMs - run.heldMs),
     clockFrom: clockMs > 0 ? Math.min(1, run.heldMs / clockMs) : 0,
     seq: run.seq,
+    // When the village at the end of each way gives up, and which have already gone. The
+    // bud draws its own ring off the first and withers on the second — see WayBud.
+    expiresAt: run.expiresAt,
+    expired: run.expired,
     // Whether the dial is listening. Off while the hero is moving: the answer has been
     // given, and a key pressed mid-walk would be answering a crossroad nobody is on.
     dialable: !run.paused && isOneOf(run.phase, DIALABLE),
@@ -1039,6 +1123,11 @@ export function useArcadeRun() {
           // Hunger moves by exactly the same amount, so a hero four seconds from losing a
           // heart still is.
           starvingAt: r.starvingAt === null ? null : r.starvingAt + away,
+          // And so does every village still holding out, which keeps the order they were
+          // going to go in.
+          expiresAt: Object.fromEntries(
+            Object.entries(r.expiresAt).map(([way, due]) => [way, due + away]),
+          ),
         }
       })
     },

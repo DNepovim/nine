@@ -11,8 +11,10 @@ import Animated, {
 } from 'react-native-reanimated'
 
 import { TOWN_BOX, TownMark } from '@/components/game/town-mark'
+import { VillageClock } from '@/components/game/village-clock'
 import { WALK_MS, WITHER_MS } from '@/constants/arcade'
 import { mapLabel } from '@/constants/theme'
+import { tiltedAt, type Sheet } from '@/lib/arcade-tilt'
 
 // The target at a way's end.
 //
@@ -22,8 +24,16 @@ import { mapLabel } from '@/constants/theme'
 // the game is read off, which is the point — the dial answers this the way it answers any
 // other target.
 //
-// No clock on it. The crossroad has one clock for all of its ways, drawn on the way behind
-// the hero, so a bud is only ever a number.
+// And a clock on it. Every village at a crossroad holds out for its own length of time, so
+// the ring inside its wall is this one's — see VillageClock. The red creeping up the way
+// behind is still the crossroad's own deadline, which is the last of these to run out.
+//
+// The town takes the sheet's tilt and the name does not, which is the same line the turn is
+// drawn along: a town is drawn on the map and so is as far off as the ground it stands on,
+// while a name is read off the sheet and is set at one size wherever it is. A fan is never
+// more than a pitch out, so its furthest town loses under a fifth and the number inside it
+// is answered as easily as the nearest — what the tilt is for here is the way, which has to
+// meet the town at its tip however short it is drawn.
 
 export type BudState = 'growing' | 'withering' | 'absorbing'
 
@@ -34,10 +44,13 @@ export function WayBud({
   name,
   seed,
   named,
+  endsAt,
+  clockMs,
+  now,
   fortified,
   state,
   delay,
-  turn,
+  sheet,
   edge,
   ink,
   line,
@@ -55,15 +68,22 @@ export function WayBud({
   // that their names would cross, and a crossed name is worse than no name — the place is
   // named again under the flame the moment the hero arrives there.
   named: boolean
+  // The wall-clock moment this village gives up, and how long it had. Null while nothing is
+  // counting — before the fan has finished drawing itself, and on a bud that is leaving.
+  endsAt: number | null
+  clockMs: number
+  // The sheet's frame clock, which the ring is worked out against on the UI thread.
+  now: SharedValue<number>
   // Whether the village at this way's end has walls worth the name. A walled village is a
   // fight, and the fan has to say so before it is chosen — which is what makes a crossroad
   // a decision rather than four numbers.
   fortified: boolean
   state: BudState
   delay: number
-  // How far the sheet has been turned. The village turns with it — it is drawn on the map —
-  // but the number and the name are read rather than drawn, so they are turned back.
-  turn: SharedValue<number>
+  // The camera. The village turns with the sheet — it is drawn on the map — but the number
+  // and the name are read rather than drawn, so they are turned back; and the tilt is how
+  // far off the ground it stands on is.
+  sheet: SharedValue<Sheet>
   edge: string
   ink: string
   line: string
@@ -93,16 +113,42 @@ export function WayBud({
     opacity.value = withDelay(WALK_MS * 0.55, withTiming(0, { duration: WALK_MS * 0.45 }))
   }, [state, delay])
 
-  const style = useAnimatedStyle(() => ({
-    opacity: opacity.value,
-    transform: [{ scale: scale.value }],
-  }))
+  // The anchor: where on the sheet this settlement stands, which is the tilt's answer
+  // rather than the way's own end — a way running up the map is drawn short, and this is the
+  // point its tip was drawn to.
+  const style = useAnimatedStyle(() => {
+    const lie = tiltedAt(sheet.value, x, y)
+    return {
+      opacity: opacity.value,
+      transform: [
+        { translateX: lie.x - x },
+        { translateY: lie.y - y },
+        { scale: scale.value },
+      ],
+    }
+  })
 
   // Rotated about its own centre, which for a zero-size anchor is the point it stands on —
-  // so a disc turned back stays exactly where it was.
-  const upright = useAnimatedStyle(() => ({
-    transform: [{ rotate: `${-turn.value}rad` }],
+  // so a disc turned back stays exactly where it was. The town's depth goes on here too,
+  // about that same point, which is the ground it is standing on.
+  const town = useAnimatedStyle(() => ({
+    transform: [
+      { rotate: `${-sheet.value.turn}rad` },
+      { scale: tiltedAt(sheet.value, x, y).scale },
+    ],
   }))
+
+  // The name only turns. Hung off the town's own edge though, so it stays tucked under a
+  // wall that has been drawn smaller rather than floating clear of it.
+  const label = useAnimatedStyle(() => {
+    const lie = tiltedAt(sheet.value, x, y)
+    return {
+      transform: [
+        { translateY: -(1 - lie.scale) * (TOWN_BOX / 2 + 2) },
+        { rotate: `${-sheet.value.turn}rad` },
+      ],
+    }
+  })
 
   return (
     // A zero-size anchor at the end of the way, with the three parts of a settlement hung
@@ -119,7 +165,7 @@ export function WayBud({
         className="absolute items-center justify-center"
         style={[
           { left: -TOWN_BOX / 2, top: -TOWN_BOX / 2, width: TOWN_BOX, height: TOWN_BOX },
-          upright,
+          town,
         ]}
       >
         <TownMark
@@ -128,8 +174,9 @@ export function WayBud({
           face={face}
           line={line}
           hatch={hatch}
-          edge={edge}
         />
+        {/* The game's own ring, over the map's own town. */}
+        <VillageClock now={now} endsAt={endsAt} clockMs={clockMs} edge={edge} />
         {/* The number is the thing being read on this whole sheet, so it gets the room:
             large enough to be answered at a glance from the far side of a fan. */}
         <Text
@@ -143,7 +190,7 @@ export function WayBud({
       {named && (
         <Animated.View
           className="absolute"
-          style={[{ left: -54, top: TOWN_BOX / 2 + 2, width: 108 }, upright]}
+          style={[{ left: -54, top: TOWN_BOX / 2 + 2, width: 108 }, label]}
         >
           <Text
             selectable={false}

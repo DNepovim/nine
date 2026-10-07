@@ -63,5 +63,7 @@ export const BUD_SIZE = 42
 export const HERO_SIZE = 15
 
 // The box one crossroad's ways are drawn in, as a multiple of the pitch. A way reaches at
-// most 1.14 pitches and sways a little past that, so this clears the longest of them.
-export const STEM_BOX = 2.6
+// most 1.14 pitches and sways a little past that, so this clears the longest of them — and
+// then some, because the sheet is tilted and a way below the reader is drawn longer than it
+// is: a box that only cleared the flat length would crop the last of one.
+export const STEM_BOX = 3.2

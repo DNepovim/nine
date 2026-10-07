@@ -588,8 +588,17 @@ export function HowToPlayOverlay({
                 </Bullet>
                 <Bullet color={GAME_SCALE[4]}>
                   <Trans>
-                    One clock for the whole crossroad, drawn on the way behind you: it
-                    turns red from the far end inward.
+                    Every village holds out for its own length of time, and the ring
+                    inside its wall is what is left of it. They are not the same: the one
+                    you want may be the one about to go.
+                  </Trans>
+                </Bullet>
+                <Bullet color={GAME_SCALE[4]}>
+                  <Trans>
+                    A village whose ring runs out withers off the fan and stops answering
+                    the dial. The others stay — you are only dragged back when the last of
+                    them gives up, which is what the red creeping along the way behind you
+                    is counting down to.
                   </Trans>
                 </Bullet>
                 <Bullet color={GAME_SCALE[4]}>
@@ -631,7 +640,7 @@ export function HowToPlayOverlay({
                   food on the map — which is what turns the fight from a risk worth
                   avoiding into the thing a hungry run has to walk toward. */}
               <Body>
-                {t`\nSome villages have walls, and you can see which before you choose — a walled village is drawn heavier, with bigger towers. Dial that way and you do not walk in. You take it. Three hearts sit on the bar under ARCADE, and a siege is the fastest way to spend them — and the only way to get one back.`}
+                {t`\nSome villages have walls, and you can see which before you choose — a walled village is drawn heavier, with bigger towers and a pennant flying from its wall. Dial that way and you do not walk in. You take it. Three hearts sit on the bar under ARCADE, and a siege is the fastest way to spend them — and the only way to get one back.`}
               </Body>
               <Card>
                 <Bullet color={GAME_SCALE[4]}>

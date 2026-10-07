@@ -34,6 +34,17 @@ const GATE =
   `M-2.6 ${WALL - 0.4} L-2.6 ${WALL - 3.4} ` +
   `Q0 ${WALL - 5.6} 2.6 ${WALL - 3.4} L2.6 ${WALL - 0.4}`
 
+// The pennant a walled village flies, off the top of its north tower: a staff standing
+// clear of the wall and a swallow-tailed flag on the windward side of it.
+//
+// Sized to finish inside TOWN_BOX, which the merlons and towers already reach most of the
+// way across — SVG clips what leaves the box, and a flag with its top cut off reads as a
+// drawing error rather than as a flag.
+const STAFF = WALL + 6
+const PENNANT =
+  `M0 ${-WALL - 1} L0 ${-STAFF} ` +
+  `L7 ${-STAFF + 2} L5 ${-STAFF + 3.1} L7 ${-STAFF + 4.2} L0 ${-STAFF + 5} Z`
+
 const n = (v: number): string => (Math.round(v * 10) / 10).toString()
 
 // How heavily the town is drawn, and how far its towers stand out of the wall. The walled
@@ -74,16 +85,12 @@ export function TownMark({
   face,
   line,
   hatch,
-  edge,
 }: {
   seed: number
   fortified: boolean
   face: string
   line: string
   hatch: string
-  // The amber the target ring is drawn in — the one part of this that is the game speaking
-  // rather than the map.
-  edge: string
 }) {
   const count = 12 + (seed % 3) * 2
   const capped = Math.floor(seed / 5) % 2 === 0
@@ -110,10 +117,23 @@ export function TownMark({
           />
         ))}
         <Path d={GATE} fill="none" stroke={hatch} strokeWidth={0.8} />
-        {/* The ring the number sits in: the game's own amber, inside the map's own wall.
-            One ring rather than two — the merlons and the towers have already said wall,
-            and a second line of it was only taking room off the number. */}
-        <Circle r={WALL - 3.5} fill="none" stroke={edge} strokeWidth={1.6} />
+        {/* The pennant, on a walled village and nowhere else: a staff off the north tower
+            with a flag flying from it.
+
+            The heavier build says *fortified* to anyone comparing two towns side by side,
+            which across a fan is exactly what a player cannot do — they are reading three
+            at once, at a glance, under a clock. A flag needs no comparison. It is also how
+            a sheet like this has always marked a place that is held, so it costs the map
+            nothing to say it. */}
+        {fortified && (
+          <Path
+            d={PENNANT}
+            fill={line}
+            stroke={line}
+            strokeWidth={0.6}
+            strokeLinejoin="round"
+          />
+        )}
       </G>
     </Svg>
   )

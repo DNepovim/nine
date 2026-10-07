@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 
 import { ANCHOR } from '@/constants/arcade'
 import { HERO_AT, SIEGE_ZOOM, SKY, WALL_AT } from '@/constants/siege'
+import { horizonOf, type Sheet } from '@/lib/arcade-tilt'
 import { UP } from '@/machines/arcade'
 
 import {
@@ -15,7 +16,7 @@ import {
   type Spline,
 } from './arcade-layout'
 
-const way = { to: '1.2', angle: UP + 0.3, reach: 1, value: 120 }
+const way = { to: '1.2', angle: UP + 0.3, reach: 1, value: 120, clockMs: 11000 }
 const pitch = 132
 
 // A clock at zero leaves the sine at the way's own phase rather than at nothing, so the one
@@ -93,8 +94,16 @@ describe('splineFor', () => {
   })
 
   it('gives neighbouring ways their own breath', () => {
-    const a = splineFor({ to: '0', angle: UP, reach: 1, value: 10 }, UP, pitch)
-    const b = splineFor({ to: '1', angle: UP, reach: 1, value: 20 }, UP, pitch)
+    const a = splineFor(
+      { to: '0', angle: UP, reach: 1, value: 10, clockMs: 11000 },
+      UP,
+      pitch,
+    )
+    const b = splineFor(
+      { to: '1', angle: UP, reach: 1, value: 20, clockMs: 11000 },
+      UP,
+      pitch,
+    )
     expect([a.period, a.phase]).not.toEqual([b.period, b.phase])
   })
 })
@@ -130,12 +139,46 @@ describe('splinePoint', () => {
   })
 })
 
+// The sheet read flat on, which is every sum in here but the last two.
+const level: Sheet = {
+  x: 0,
+  y: 0,
+  turn: 0,
+  scale: 1,
+  tilt: 0,
+  horizon: horizonOf(330),
+}
+
 describe('splinePath', () => {
   it('draws from the crossroad in the box to the way’s end', () => {
     const s = splineFor(way, UP, pitch)
-    const d = splinePath(s, unswayed(s), 200, 200)
+    const d = splinePath(s, unswayed(s), 200, 200, level, 0, 0)
     expect(d.startsWith('M200 200 C')).toBe(true)
     expect(d.endsWith(`${200 + s.toX} ${200 + s.toY}`)).toBe(true)
+  })
+
+  it('draws a way running up the tilted sheet short of its own length', () => {
+    const s = splineFor(way, UP, pitch)
+    const tilted: Sheet = { ...level, tilt: 1 }
+    const flat = splinePath(s, unswayed(s), 200, 200, level, 0, 0)
+    const lean = splinePath(s, unswayed(s), 200, 200, tilted, 0, 0)
+    expect(lean).not.toEqual(flat)
+    // The tip, which is the last pair of numbers in the path.
+    const tip = (d: string): number => Number(d.split(' ').slice(-1)[0])
+    // Drawn nearer the crossroad than the flat sheet put it: both are above the box's own
+    // middle, and the tilted one is the less far above it.
+    expect(tip(flat)).toBeLessThan(200)
+    expect(tip(lean)).toBeGreaterThan(tip(flat))
+    expect(tip(lean)).toBeLessThan(200)
+  })
+
+  it('still leaves the crossroad from the middle of its own box', () => {
+    // The box is carried to the crossroad's drawn place by the view it is in, so the curve
+    // in it always starts where it always did, however far off the crossroad is.
+    const s = splineFor(way, UP, pitch)
+    const tilted: Sheet = { ...level, tilt: 1 }
+    const d = splinePath(s, unswayed(s), 200, 200, tilted, 0, -900)
+    expect(d.startsWith('M200 200 C')).toBe(true)
   })
 })
 
