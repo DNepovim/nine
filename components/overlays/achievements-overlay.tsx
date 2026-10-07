@@ -10,6 +10,7 @@ import {
   type AchievementId,
 } from '@/constants/achievements'
 import { ACHIEVEMENT_INK } from '@/constants/colors'
+import { useFlag } from '@/hooks/use-flags'
 import { useViewport } from '@/hooks/use-viewport'
 import { firstEarnedAt, idsOf, stagesOf } from '@/lib/achievement-store'
 import type { AchievementStore } from '@/lib/achievement-store'
@@ -50,6 +51,23 @@ export function AchievementsOverlay({
   // and its pips say the rest.
   const earnedAt = new Map(idsOf(store).map((id) => [id, firstEarnedAt(store, id)]))
 
+  // WITH FRIENDS is listed only for a player who can reach it: all three ask for a room,
+  // and the tabs that open one are behind the same feature. Listing them anyway is three
+  // rows that can never be achieved, in a section named after a screen the player has no
+  // door to.
+  //
+  // Unless they already hold one. An achievement is permanent — achieved once, never
+  // lost — so a feature switched off after the fact must not take a row off the list of
+  // what this player has actually done. The flag decides what is *offered*, never what is
+  // kept, which is the same line `role` draws everywhere else.
+  const multiplayer = useFlag('multiplayer')
+  const sections = SECTIONS.filter(
+    (section) =>
+      section.title !== 'friends' ||
+      multiplayer ||
+      section.data.some((id) => earnedAt.has(id)),
+  )
+
   return (
     <ModalCard
       title={<Trans>ACHIEVEMENTS</Trans>}
@@ -68,6 +86,13 @@ export function AchievementsOverlay({
             className="mb-2 font-mono text-[10px] font-bold tracking-[1px] text-dim"
           >
             <Text style={{ color: ACHIEVEMENT_INK }}>{earnedAt.size}</Text>
+            {/* The whole catalogue, not the sections above it — so a player without the
+                multiplayer feature reads a ceiling they cannot quite reach.
+                Deliberately: the same number stands on the intro line, on a profile card
+                and in the comparison table, and those last two count a player who is not
+                the viewer and may well hold the three rows this list is hiding. A
+                denominator that shrank per viewer would make one player's total mean
+                something different on two screens showing it. */}
             {` OF ${ACHIEVEMENT_COUNT} EARNED`}
           </Text>
 
@@ -76,7 +101,7 @@ export function AchievementsOverlay({
               headers stick to the card's surface, so they need its background under
               them rather than the scrim's. */}
           <SectionList
-            sections={SECTIONS}
+            sections={sections}
             keyExtractor={(id) => id}
             stickySectionHeadersEnabled
             showsVerticalScrollIndicator={false}
