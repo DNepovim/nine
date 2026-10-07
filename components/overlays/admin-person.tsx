@@ -16,7 +16,7 @@ import {
 } from '@/lib/admin/people'
 import { listRoles, type AdminRole } from '@/lib/admin/roles'
 import { cn } from '@/lib/cn'
-import { cycleOverride, sourceOf, type FeatureSource } from '@/lib/features'
+import { sourceOf, toggleOverride, type FeatureSource } from '@/lib/features'
 
 // What each of the five answers says on the row. The point of printing the *source*
 // rather than only the state is that "why can this person see this" is answerable here
@@ -34,13 +34,13 @@ const isOn = (source: FeatureSource) => source === 'role-on' || source === 'over
 function FeatureRow({
   row,
   pending,
-  onCycle,
+  onToggle,
 }: {
   row: PersonFeature
   // This row's own write is in flight. Per row rather than one flag for the screen: a
   // single `busy` dimmed every row at once, which is what a tap on one of them read as.
   pending: boolean
-  onCycle: () => void
+  onToggle: () => void
 }) {
   const source = sourceOf(row)
   // An inactive feature is nobody's to change from here — the switch for it is on the
@@ -49,7 +49,7 @@ function FeatureRow({
   return (
     <TrackedPressable
       id="admin.person_feature"
-      onPress={onCycle}
+      onPress={onToggle}
       disabled={pending || locked}
       className={cn('flex-row items-center py-2', locked && 'opacity-40')}
     >
@@ -101,7 +101,7 @@ export function AdminPerson({
   const [rows, setRows] = useState<PersonFeature[]>([])
   const [loading, setLoading] = useState(true)
   // A write about the whole person — the role picker. The feature rows carry their own,
-  // keyed below, so that cycling one override does not grey out the other twenty.
+  // keyed below, so that toggling one override does not grey out the other twenty.
   const [busy, setBusy] = useState(false)
   const [pending, setPending] = useState<ReadonlySet<string>>(new Set())
   const [error, setError] = useState<string | null>(null)
@@ -146,8 +146,8 @@ export function AdminPerson({
 
   // The dot moves on the tap, and the person is read back after. Waiting on the round
   // trip before showing anything is what had these rows wanting a second press.
-  const cycle = async (row: PersonFeature) => {
-    const next = cycleOverride(row.override)
+  const toggle = async (row: PersonFeature) => {
+    const next = toggleOverride(row.override, row.inRoleStack)
     setPending((current) => new Set(current).add(row.key))
     setRows((current) =>
       current.map((r) => (r.key === row.key ? { ...r, override: next } : r)),
@@ -263,8 +263,8 @@ export function AdminPerson({
               key={row.key}
               row={row}
               pending={pending.has(row.key)}
-              onCycle={() => {
-                void cycle(row)
+              onToggle={() => {
+                void toggle(row)
               }}
             />
           ))}

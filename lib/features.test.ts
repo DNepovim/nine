@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import { cycleOverride, knownFeatures, sameFeatures, sourceOf } from './features'
+import { knownFeatures, sameFeatures, sourceOf, toggleOverride } from './features'
 
 describe('knownFeatures', () => {
   it('keeps the keys this build has guards for', () => {
@@ -18,11 +18,22 @@ describe('knownFeatures', () => {
   })
 })
 
-describe('cycleOverride', () => {
-  it('goes inherit, on, off, and back', () => {
-    expect(cycleOverride(null)).toBe(true)
-    expect(cycleOverride(true)).toBe(false)
-    expect(cycleOverride(false)).toBeNull()
+describe('toggleOverride', () => {
+  it('takes a feature the role gives away, then gives it back by inheriting', () => {
+    expect(toggleOverride(null, true)).toBe(false)
+    expect(toggleOverride(false, true)).toBeNull()
+  })
+
+  it('grants a feature the role withholds, then drops back to inheriting', () => {
+    expect(toggleOverride(null, false)).toBe(true)
+    expect(toggleOverride(true, false)).toBeNull()
+  })
+
+  it('clears an override that only repeated the role', () => {
+    // The state the three-way cycle used to stop on: on, and on anyway. One tap now
+    // turns it off rather than merely relabelling it.
+    expect(toggleOverride(true, true)).toBe(false)
+    expect(toggleOverride(false, false)).toBe(true)
   })
 })
 

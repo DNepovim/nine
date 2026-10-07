@@ -34,12 +34,16 @@ export function sameFeatures(
 // no row, so whatever the role says.
 export type Override = boolean | null
 
-// What a tap on a feature row does. Three states, so the cycle has to pass through all
-// of them: inherit, force on, force off, back to inherit.
-export function cycleOverride(current: Override): Override {
-  if (current === null) return true
-  if (current) return false
-  return null
+// What a tap on a feature row does. Two answers, not three: on or off. The third state
+// is where the answer *comes from*, not an answer of its own — so a tap asks for the
+// opposite of what the person reaches today, and keeps the override only when the role
+// does not already say that. Cycling through all three instead made the stop that agrees
+// with the role indistinguishable from inheriting it: same dot, same reach, one extra
+// press.
+export function toggleOverride(current: Override, inRoleStack: boolean): Override {
+  const reaches = current ?? inRoleStack
+  const wanted = !reaches
+  return wanted === inRoleStack ? null : wanted
 }
 
 // Where a row's answer came from, which is the thing that makes the person screen
