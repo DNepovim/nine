@@ -1,8 +1,9 @@
 # Taking your profile to another phone
 
 Slug: account-restore
-Stage: build
-Next: /verify account-restore
+Stage: shipped
+Skipped: verify, review
+Next: /deploy — on `main`, not live; the Supabase sender must be configured first
 Track: full
 Branch: feat/account-restore
 Started: 2026-10-07

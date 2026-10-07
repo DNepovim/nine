@@ -88,6 +88,18 @@ Spec: docs/work/2026-10-07-account-restore/spec.md
   `vitest` and `i18n:verify` in isolation. `verify` should run the suite on a tree that has
   only this work in it.
 
+## Shipped
+
+- `4992295` — the work itself, on `main`.
+- `2d670ce` — the what's-new entry, on `main`.
+- Pushed to `origin/main` on 2026-10-07. No PR; `ship prod`.
+- **Skipped `verify` and `review`**, deliberately and on the record. Nothing here has
+  been driven in a running app, and the three open questions are listed in the build
+  notes above — chief among them which template Supabase fires for an anonymous attach.
+- **Not deployed, and must not be** until Supabase has an SMTP sender. There is no flag
+  in front of this feature, so the first build that carries it asks every player with a
+  nickname for an address, and with no sender every one of them gets an error.
+
 ## Verification log
 
 _(verify fills this in)_
