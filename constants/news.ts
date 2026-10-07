@@ -9,6 +9,18 @@ import type { Release } from '@/types/news'
 // different announcement or players who already saw the old one will miss it.
 export const RELEASES: Release[] = [
   {
+    date: '2026-10-07',
+    items: [
+      {
+        id: 'account-email',
+        icon: 'mail-outline',
+        accent: '#7273D2',
+        title: msg`Never lose your scores`,
+        body: msg`Add your email and a lost phone stops meaning a lost career. New device, fresh install, cleared browser — type that address and your name, your scores and your medals come back to you. We only ever use it for that, and we send nothing else.`,
+      },
+    ],
+  },
+  {
     date: '2026-09-30',
     items: [
       {

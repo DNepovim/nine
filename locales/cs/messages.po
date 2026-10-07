@@ -348,7 +348,7 @@ msgstr "Řádek trenéra ti řekne, kdy přišel tah nazmar a co tě zásah stá
 msgid "A code is six digits."
 msgstr "Kód má šest číslic."
 
-#: constants/news.ts:125
+#: constants/news.ts:137
 msgid "A fresh face"
 msgstr "Nová tvář"
 
@@ -376,7 +376,7 @@ msgstr "Klidný týden, a [A] si z něj vzal všech [P]."
 msgid "A quiet week. Only [P] days saw a board taken at all, and [A] took [N] of them."
 msgstr "Klidný týden. Nějaká tabulka padla jen [P]× a [A] z toho vzal [N]."
 
-#: constants/news.ts:54
+#: constants/news.ts:66
 msgid "A record is only ever lent — someone takes it back eventually. Achievements are the other kind: achieved once and yours for good, measured against nobody but yourself. Some are waiting where you would not think to look."
 msgstr "Rekord je vždycky jen zapůjčený — dřív nebo později ti ho někdo sebere. Úspěchy jsou ten druhý druh: dosáhneš jich jednou a máš je napořád, a poměřuješ se u nich sám se sebou. Některé čekají tam, kde bys je nehledal."
 
@@ -400,7 +400,7 @@ msgstr "Pomalý zásah sérii přeruší, a když cíli vyprší čas, přijdeš
 msgid "A stack of them nobody is told about until they happen."
 msgstr "A celá řada takových, o kterých se nikdo nedozví, dokud se nestanou."
 
-#: constants/news.ts:161
+#: constants/news.ts:173
 msgid "A thin line above the game now shows your best on this board next to today's, this week's and the all-time high.\n"
 "\n"
 "It stays out of the way for the first few seconds of a run."
@@ -484,6 +484,10 @@ msgstr "PŘIDAT MOTTO"
 #: components/overlays/install-overlay.tsx:99
 msgid "ADD TO HOME SCREEN"
 msgstr "PŘIDAT NA PLOCHU"
+
+#: constants/news.ts:19
+msgid "Add your email and a lost phone stops meaning a lost career. New device, fresh install, cleared browser — type that address and your name, your scores and your medals come back to you. We only ever use it for that, and we send nothing else."
+msgstr "Přidej si e-mail a ztracený telefon přestane znamenat ztracenou kariéru. Nové zařízení, čistá instalace, vymazaný prohlížeč — zadáš adresu a tvoje jméno, skóre i medaile se ti vrátí. Použijeme ji jen k tomuhle a nic jiného ti neposíláme."
 
 #: components/overlays/publish-scores-button.tsx:50
 msgid "ADD YOUR NICKNAME"
@@ -625,7 +629,7 @@ msgstr "Sotva týden — hrálo se [P]×. [A] z toho měl [N] jen pro sebe."
 msgid "Barely a week — [P] days, and all of them [A]’s."
 msgstr "Sotva týden — hrálo se [P]×, a všechno patřilo hráči [A]."
 
-#: constants/news.ts:114
+#: constants/news.ts:126
 msgid "Beat a record and the game makes a fuss about it."
 msgstr "Když překonáš rekord, hra z toho udělá událost."
 
@@ -647,7 +651,7 @@ msgstr "Ztrácíš, ale na dosah — stačily by dvě tabulky."
 msgid "BEST"
 msgstr "NEJLEPŠÍ"
 
-#: constants/news.ts:160
+#: constants/news.ts:172
 msgid "Best scores, up top"
 msgstr "Nejlepší skóre nahoře"
 
@@ -1341,7 +1345,7 @@ msgstr "TEĎ NÍŽ — ŠVIHNI TLAČÍTKEM DOLŮ"
 msgid "MARCH"
 msgstr "března"
 
-#: constants/news.ts:77
+#: constants/news.ts:89
 msgid "Marks for the hardest boards"
 msgstr "Odznaky za nejtěžší žebříčky"
 
@@ -1381,7 +1385,7 @@ msgstr "Víc z toho patří soupeři. Ne o moc víc."
 msgid "More of this is yours than theirs. Not all of it."
 msgstr "Víc z toho patří tobě než soupeři. Ne všechno."
 
-#: constants/news.ts:39
+#: constants/news.ts:51
 msgid "More to find"
 msgstr "Je toho víc k nalezení"
 
@@ -1394,7 +1398,11 @@ msgstr "VÍCE HRÁČŮ"
 msgid "My best at Nine is {bestScore} — {board}. Think you can beat it?"
 msgstr "Moje maximum v Nine je {bestScore} — {board}. Myslíš, že to překonáš?"
 
-#: constants/news.ts:137
+#: constants/news.ts:18
+msgid "Never lose your scores"
+msgstr "O skóre už nepřijdeš"
+
+#: constants/news.ts:149
 msgid "Never miss an update"
 msgstr "Neuteče ti žádná novinka"
 
@@ -1410,7 +1418,7 @@ msgstr "NOČNÍ SMĚNA"
 msgid "Nine buttons, one number to hit. Come take a run at it."
 msgstr "Devět tlačítek, jedno číslo k trefení. Pojď si to zkusit."
 
-#: constants/news.ts:126
+#: constants/news.ts:138
 msgid "Nine has a new look, and it goes all the way down.\n"
 "\n"
 "- The icon now carries the same **blue-to-red spectrum** as the splash\n"
@@ -1604,7 +1612,7 @@ msgstr "Dělí vás jeden řádek a je na něm tvoje jméno."
 msgid "One row between you. One run would take it."
 msgstr "Dělí vás jeden řádek. Stačil by jeden běh."
 
-#: constants/news.ts:18
+#: constants/news.ts:30
 msgid "One sweep, three keys"
 msgstr "Jeden tah, tři tlačítka"
 
@@ -1739,7 +1747,7 @@ msgstr "Dosáhni násobitele ×8."
 msgid "READY"
 msgstr "PŘIPRAVEN"
 
-#: constants/news.ts:113
+#: constants/news.ts:125
 msgid "Records, celebrated"
 msgstr "Rekordy se slaví"
 
@@ -1890,7 +1898,7 @@ msgstr "Skóre, pro každý mód vlastní žebřík — Přesnost a Rychlost cht
 msgid "Second, for now."
 msgstr "Zatím na druhém místě."
 
-#: constants/news.ts:89
+#: constants/news.ts:101
 msgid "See the better way"
 msgstr "Podívej se na lepší cestu"
 
@@ -1998,15 +2006,15 @@ msgstr "RYCHLOST"
 msgid "Speed — how much time was left on the ring. Land it with most of the ring intact and it pays a bonus on top."
 msgstr "Rychlost — kolik času zbylo na kruhu. Když trefíš s kruhem z větší části plným, přidá se bonus navrch."
 
-#: constants/news.ts:176
+#: constants/news.ts:188
 msgid "Speed combos, rebuilt"
 msgstr "Combo v Rychlosti přestavěné"
 
-#: constants/news.ts:169
+#: constants/news.ts:181
 msgid "Speed eases off"
 msgstr "Rychlost povolila"
 
-#: constants/news.ts:170
+#: constants/news.ts:182
 msgid "Speed mode was brutal. Now it is merely fast — about half again as long on every target."
 msgstr "Mód Rychlost byl brutální. Teď je jenom rychlý — na každý cíl máš zhruba o polovinu času víc."
 
@@ -2014,7 +2022,7 @@ msgstr "Mód Rychlost byl brutální. Teď je jenom rychlý — na každý cíl 
 msgid "Spend half an hour in Trainee without leaving."
 msgstr "Zůstaň v Nováčkovi půl hodiny v kuse."
 
-#: constants/news.ts:148
+#: constants/news.ts:160
 msgid "Spot your nines"
 msgstr "Devítky na první pohled"
 
@@ -2089,11 +2097,11 @@ msgstr "Švihnutím na 0 nebo 9 vynuluješ tlačítko jediným gestem místo pro
 msgid "Take first place on a board."
 msgstr "Obsaď na žebříčku první místo."
 
-#: constants/news.ts:78
+#: constants/news.ts:90
 msgid "Take the all-time record on a mode’s Extreme board and you carry its mark beside your name everywhere — an owl for Accuracy, an eagle for Speed, a crown for both. Take one and the game over screen celebrates it properly."
 msgstr "Když získáš rekord všech dob na žebříčku Extreme některého módu, nosíš pak jeho odznak u svého jména všude — sovu za Přesnost, orla za Rychlost, korunu za obojí. A když nějaký padne, obrazovka konce hry to pořádně oslaví."
 
-#: constants/news.ts:90
+#: constants/news.ts:102
 msgid "Take the long road to a target and Trainee now shows you the short one — the keys that would have done it, in the order to press them."
 msgstr "Když dojdeš k cíli oklikou, Nováček ti teď ukáže tu zkratku — která tlačítka by to zvládla a v jakém pořadí je zmáčknout."
 
@@ -2119,7 +2127,7 @@ msgstr "SEBRÁNO: <0/>"
 msgid "TAKEN IN THE LAST {HISTORY_DAYS} DAYS"
 msgstr "SEBRÁNO ZA POSLEDNÍCH {HISTORY_DAYS} DNÍ"
 
-#: constants/news.ts:31
+#: constants/news.ts:43
 msgid "Tap any name — on a board, in a room, on the winners line — and their profile opens: the mark they carry, what they have played, the medals they hold and the records they once held. A name on a leaderboard is a player now, not a row."
 msgstr "Ťukni na kterékoliv jméno — na žebříčku, v místnosti, na řádku vítězů — a otevře se jeho profil: odznak, který nosí, co všechno odehrál, medaile, které právě drží, i rekordy, které kdy držel. Jméno na žebříčku už není řádek, ale hráč."
 
@@ -2143,7 +2151,7 @@ msgstr "CÍLE A ČAS"
 msgid "Targets arrive faster the longer you last, but each still gets its full ring."
 msgstr "Čím dýl vydržíš, tím rychleji cíle přilétají, ale každý pořád dostane celý odpočet."
 
-#: constants/news.ts:65
+#: constants/news.ts:77
 msgid "Tell me what you think"
 msgstr "Řekni mi, co si myslíš"
 
@@ -2215,7 +2223,7 @@ msgstr "KORUNA"
 msgid "The dial maxes out at 324, every button on 9. Worth remembering — it places a target in the range the moment you read it."
 msgstr "Číselník končí na 324, každé tlačítko na devítce. Vyplatí se to pamatovat — zařadí ti to cíl do rozsahu hned, jak ho přečteš."
 
-#: constants/news.ts:149
+#: constants/news.ts:161
 msgid "The dial tells you more at a glance.\n"
 "\n"
 "- Buttons still brighten as you dial higher\n"
@@ -2295,11 +2303,11 @@ msgstr "Týden patřil hráči [A] bez debat — každý jeho den, a ani jeden z
 msgid "The week went everywhere. [A] took the most of it with [N] days, which was not many."
 msgstr "Týden se rozutekl. Nejvíc z něj vzal [A], [N]× — a to není moc."
 
-#: constants/news.ts:40
+#: constants/news.ts:52
 msgid "There are a dozen more achievements to stumble into now — a couple for the very best runs, and rather more for the runs that went nowhere at all. Profiles count them too, so you can see how many someone else has found."
 msgstr "Přibyl tucet dalších úspěchů, na které se dá narazit — pár za ty nejlepší hry a o dost víc za ty, ze kterých nebylo nic. Profily je taky počítají, takže uvidíš, kolik jich našel někdo jiný."
 
-#: constants/news.ts:66
+#: constants/news.ts:78
 msgid "There is a little FEEDBACK tab tucked into the bottom-right corner, on every screen except a live run. Anything goes — what broke, what annoyed you, what you wish the game did. It lands straight with the person who makes Nine, and it is read."
 msgstr "V pravém dolním rohu je schovaná záložka ZPĚTNÁ VAZBA, na každé obrazovce kromě rozehrané hry. Napiš cokoliv — co se rozbilo, co tě štvalo, co by sis přál. Jde to rovnou člověku, který Nine dělá, a čte se to."
 
@@ -2339,7 +2347,7 @@ msgstr "Soupeř vede. Nic na tom není trvalé."
 msgid "They own this table. You are a guest on it."
 msgstr "Tahle tabulka patří soupeři. Ty jsi na ní host."
 
-#: constants/news.ts:53
+#: constants/news.ts:65
 msgid "Things you keep"
 msgstr "Co ti zůstane"
 
@@ -2351,7 +2359,7 @@ msgstr "Než začneš ťukat, zkus myslet ve vodorovných švihnutích. Doleva p
 msgid "This address already has a profile — almost certainly yours. The code brings it here."
 msgstr "Na téhle adrese už profil je — skoro určitě tvůj. Kód ho přenese sem."
 
-#: constants/news.ts:138
+#: constants/news.ts:150
 msgid "This is how Nine will tell you what changed.\n"
 "\n"
 "- New things show up here next time you open the app\n"
@@ -2449,7 +2457,7 @@ msgstr "JDI SE PROJÍT"
 msgid "TRAINEE"
 msgstr "NOVÁČEK"
 
-#: constants/news.ts:101
+#: constants/news.ts:113
 msgid "Trainee coaches you"
 msgstr "Nováček tě vede"
 
@@ -2457,7 +2465,7 @@ msgstr "Nováček tě vede"
 msgid "Trainee has the longest clock in the game and no lives to lose — use it to learn how the weights behave before chasing scores."
 msgstr "Nováček má nejdelší čas ze všech režimů a nemůžeš v něm přijít o život — nauč se na něm, jak se váhy chovají, než se pustíš za skóre."
 
-#: constants/news.ts:102
+#: constants/news.ts:114
 msgid "Trainee now says when a move went to waste, and what a hit cost."
 msgstr "Nováček teď řekne, kdy přišel tah nazmar a co tě zásah stál."
 
@@ -2613,7 +2621,7 @@ msgstr "KDO JE LEPŠÍ?"
 msgid "WHO IS IT?"
 msgstr "KDO TO JE?"
 
-#: constants/news.ts:30
+#: constants/news.ts:42
 msgid "Who is that, anyway"
 msgstr "Kdo to vlastně je"
 
@@ -2697,7 +2705,7 @@ msgstr "ty@priklad.cz"
 msgid "YOUR"
 msgstr "TVŮJ"
 
-#: constants/news.ts:19
+#: constants/news.ts:31
 msgid "Your finger no longer has to come off the glass. Drag across the dial and every button you pass through takes the direction you left it by — one sweep along a row is three keys set."
 msgstr "Prst už nemusíš zvedat z displeje. Taž přes číselník a každé tlačítko, kterým projdeš, si vezme směr, kterým z něj odejdeš — jedním tahem po řádku tak nastavíš všechna tři."
 
@@ -2713,7 +2721,7 @@ msgstr "Tvoje jméno se objeví na žebříčku."
 msgid "Your profile could not be loaded."
 msgstr "Tvůj profil se nepodařilo načíst."
 
-#: constants/news.ts:177
+#: constants/news.ts:189
 msgid "Your Speed combo now grows on every quick hit instead of waiting for a clear board — but a slow one breaks it.\n"
 "\n"
 "Land a target with most of its ring still full and it pays extra."
