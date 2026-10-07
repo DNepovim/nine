@@ -8,8 +8,7 @@ import type { NewsItem } from '@/types/news'
 
 export function useWhatsNew() {
   const [unseen, setUnseen] = useState<readonly NewsItem[]>([])
-  const [visible, setVisible] = useState(false)
-  // The storage read is async, so `visible: false` means "not yet known" until
+  // The storage read is async, so an empty `unseen` means "not yet known" until
   // this flips. Anything queueing behind the news — the install popup — waits
   // for it, otherwise it paints first and gets covered a moment later.
   const [ready, setReady] = useState(false)
@@ -33,7 +32,6 @@ export function useWhatsNew() {
         const pending = catchUpItems(RELEASES, seen)
         if (pending.length === 0) return
         setUnseen(pending)
-        setVisible(true)
       } catch {
         // Storage unavailable — showing news we can't record as seen would
         // repeat it on every launch, so stay quiet.
@@ -43,11 +41,15 @@ export function useWhatsNew() {
     })()
   }, [])
 
+  // Emptying `unseen` is what closes the dialog: the popup deck is a list built from
+  // this, so a dismissal that only recorded the ids would leave the card mounted — and
+  // mounted after its exit animation means an invisible full-screen scrim swallowing
+  // every tap on the intro.
   const dismiss = useCallback(() => {
-    setVisible(false)
+    setUnseen([])
     const ids = allItems(RELEASES).map((item) => item.id)
     AsyncStorage.setItem(SEEN_NEWS_KEY, serializeSeenIds(ids)).catch(() => {})
   }, [])
 
-  return { visible, unseen, dismiss, ready }
+  return { visible: unseen.length > 0, unseen, dismiss, ready }
 }
