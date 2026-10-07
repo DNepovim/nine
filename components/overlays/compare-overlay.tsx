@@ -1,17 +1,18 @@
 import { Trans, useLingui } from '@lingui/react/macro'
 import { ScrollView, Text, View } from 'react-native'
 
+import { CardSection } from '@/components/overlays/card-section'
 import { CompareBoardRow } from '@/components/overlays/compare-board-row'
 import { CompareHead } from '@/components/overlays/compare-head'
-import { CompareSection } from '@/components/overlays/compare-section'
 import { CompareStatRow } from '@/components/overlays/compare-stat-row'
+import { CompareWonRow } from '@/components/overlays/compare-won-row'
 import { ModalCard } from '@/components/overlays/modal-card'
 import { TrackedPressable } from '@/components/tracked-pressable'
 import { useChampionsContext } from '@/hooks/use-champions'
 import { usePlayerProfile } from '@/hooks/use-player-profile'
 import { useViewport } from '@/hooks/use-viewport'
 import { championMark } from '@/lib/champions'
-import { compareProfiles, tallyOf, verdictOf } from '@/lib/compare'
+import { boardTallyOf, compareProfiles, tallyOf, verdictOf } from '@/lib/compare'
 import { verdictLine } from '@/lib/compare-lines'
 import { lifetimeOf, nameFactorsOf, type PlayerProfile } from '@/lib/player-profile'
 
@@ -50,7 +51,24 @@ export function CompareOverlay({
   const champions = useChampionsContext()
 
   const comparison = myProfile === null ? null : compareProfiles(myProfile, theirProfile)
+  // Two counts, and they are not the same figure. `tally` is the whole table and seeds the
+  // sentence under the header; `boardTally` is the six boards alone and is the row drawn at
+  // the foot of them.
   const tally = comparison === null ? null : tallyOf(comparison)
+  const boardTally = comparison === null ? null : boardTallyOf(comparison)
+  // The six boards as one list, where the comparison keeps them in a block per mode. The
+  // table draws them under a single label — the row writes its own board as a code — and
+  // the WON row under them needs to know how many came before it to take its turn arriving.
+  const boards =
+    comparison === null
+      ? []
+      : comparison.boards.flatMap((block) =>
+          block.rows.map((row) => ({ mode: block.mode, ...row })),
+        )
+  // What the table came to, as one word, decided once. The header draws its pair of animals
+  // from it and the sentence below picks its phrasing from it — two readings of one table
+  // rather than two tables read twice.
+  const verdict = comparison === null ? null : verdictOf(comparison)
 
   // Each name is drawn in the gradient that player's own averages earn them — the same
   // colour it wore on the card this table opened from, and on the row that opened that. The
@@ -110,19 +128,26 @@ export function CompareOverlay({
 
           {comparison !== null &&
             tally !== null &&
+            boardTally !== null &&
+            verdict !== null &&
             myProfile !== null &&
             myFactors !== null && (
               <>
+                {/* Each side's best claim in each mode, from the profile that was read for
+                    it — the same reduction the intro puts under the title and the profile
+                    card under the nickname, never derived a second time here. */}
                 <CompareHead
                   myNickname={myProfile.nickname ?? NO_NAME}
                   myAvgAccuracy={myFactors.avgAccuracy}
                   myAvgSpeed={myFactors.avgSpeed}
                   myMark={championMark(viewerId, champions)}
+                  myMedals={myProfile.medals}
                   theirNickname={theirProfile.nickname ?? NO_NAME}
                   theirAvgAccuracy={theirFactors.avgAccuracy}
                   theirAvgSpeed={theirFactors.avgSpeed}
                   theirMark={championMark(theirId, champions)}
-                  tally={tally}
+                  theirMedals={theirProfile.medals}
+                  verdict={verdict}
                 />
 
                 {/* What the table came to, in a sentence. Thirteen rows of figures answer
@@ -139,7 +164,7 @@ export function CompareOverlay({
                   className="px-2 text-center font-mono text-[11px] leading-[15px] tracking-[0.3px] text-dim"
                 >
                   {verdictLine(
-                    verdictOf(comparison),
+                    verdict,
                     `${viewerId}:${theirId}:${tally.mine}-${tally.theirs}`,
                     t,
                   )}
@@ -155,7 +180,7 @@ export function CompareOverlay({
                   style={{ flexGrow: 0, flexShrink: 1 }}
                 >
                   <View className="gap-3">
-                    <CompareSection label={t`CAREER`}>
+                    <CardSection label={t`CAREER`}>
                       {comparison.lifetime.map((row, index) => (
                         <CompareStatRow
                           key={row.stat}
@@ -166,28 +191,33 @@ export function CompareOverlay({
                           index={index}
                         />
                       ))}
-                    </CompareSection>
+                    </CardSection>
 
                     {/* Six rows under one label, where the boards used to be two blocks of
                         three under a mode name apiece. The row writes its own board as a
                         code, so nothing has to be said above it. */}
-                    <CompareSection label={t`BOARDS`}>
-                      {comparison.boards
-                        .flatMap((block) =>
-                          block.rows.map((row) => ({ mode: block.mode, ...row })),
-                        )
-                        .map((row, index) => (
-                          <CompareBoardRow
-                            key={`${row.mode}-${row.difficulty}`}
-                            mode={row.mode}
-                            difficulty={row.difficulty}
-                            mine={row.mine}
-                            theirs={row.theirs}
-                            leader={row.leader}
-                            index={comparison.lifetime.length + index}
-                          />
-                        ))}
-                    </CompareSection>
+                    <CardSection label={t`BOARDS`}>
+                      {boards.map((row, index) => (
+                        <CompareBoardRow
+                          key={`${row.mode}-${row.difficulty}`}
+                          mode={row.mode}
+                          difficulty={row.difficulty}
+                          mine={row.mine}
+                          theirs={row.theirs}
+                          leader={row.leader}
+                          index={comparison.lifetime.length + index}
+                        />
+                      ))}
+
+                      {/* What the six above came to. It arrives last, which is the order it
+                          is read in — the row counts the carets over it, so it has nothing
+                          to say until they are all there. */}
+                      <CompareWonRow
+                        mine={boardTally.mine}
+                        theirs={boardTally.theirs}
+                        index={comparison.lifetime.length + boards.length}
+                      />
+                    </CardSection>
                   </View>
                 </ScrollView>
               </>

@@ -7,6 +7,7 @@ import { CompareRow } from '@/components/overlays/compare-row'
 import { CompareValue } from '@/components/overlays/compare-value'
 import { toneFor, type CompareSide, type CompareStat } from '@/lib/compare'
 import { formatGameTime } from '@/lib/duration'
+import { groupDigits } from '@/lib/group-digits'
 
 // A figure neither player has produced. The em dash the profile's board rows already use,
 // for the same reason: an average over no hits is not an average of zero.
@@ -22,17 +23,23 @@ const STAT_LABEL = {
   achievements: msg`ACHIEVEMENTS`,
 } as const satisfies Record<CompareStat, MessageDescriptor>
 
-// How each figure is written. The counters are bare, the averages carry their sign, and the
-// duration is formatted the way the run stats and the profile format one — the same
-// `formatGameTime` rather than a second opinion about what a length of play looks like.
+// How each figure is written. The counters have their thousands marked off, the averages
+// carry their sign, and the duration is formatted the way the run stats and the profile
+// format one — the same `formatGameTime` rather than a second opinion about what a length of
+// play looks like.
+//
+// A fortune runs to seven figures and a career's hits to five, and an unbroken run of that
+// many digits in an 11px column is a number the reader counts rather than reads. `groupDigits`
+// is only ever asked of the three that get that long; a percentage and a count of
+// achievements never reach a thousand, and asking it of them would say they might.
 //
 // A career with nothing timed says 0 rather than 0″: on a run's stats a duration of zero
 // seconds is a real answer about a real run, and here it means no run has been timed yet.
 // The profile's TIME cell draws the same distinction.
 const FORMAT = {
-  fortune: (value) => String(value),
-  runs: (value) => String(value),
-  hits: (value) => String(value),
+  fortune: groupDigits,
+  runs: groupDigits,
+  hits: groupDigits,
   time: (value) => (value > 0 ? formatGameTime(value) : '0'),
   accuracy: (value) => `${value}%`,
   speed: (value) => `${value}%`,

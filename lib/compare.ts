@@ -180,15 +180,31 @@ export const toneFor = (
 // is why the two halves need not add up to ten.
 export type Tally = { mine: number; theirs: number }
 
+const countLeaders = (leaders: readonly CompareSide[]): Tally => ({
+  mine: leaders.filter((leader) => leader === 'mine').length,
+  theirs: leaders.filter((leader) => leader === 'theirs').length,
+})
+
+const boardLeaders = (comparison: Comparison): CompareSide[] =>
+  comparison.boards.flatMap((block) => block.rows.map((row) => row.leader))
+
 export function tallyOf(comparison: Comparison): Tally {
-  const leaders = [
+  return countLeaders([
     ...comparison.lifetime.map((row) => row.leader),
-    ...comparison.boards.flatMap((block) => block.rows.map((row) => row.leader)),
-  ]
-  return {
-    mine: leaders.filter((leader) => leader === 'mine').length,
-    theirs: leaders.filter((leader) => leader === 'theirs').length,
-  }
+    ...boardLeaders(comparison),
+  ])
+}
+
+// The same count over the six boards alone, which is what the WON row at the foot of the
+// boards block reports.
+//
+// Separate from `tallyOf` rather than a slice of it: this one is drawn as a row of the
+// table, and a row of the table that counted the rows above it *and* the career block
+// would be a figure the reader cannot check against what is in front of them. The verdict
+// under the header still speaks for the whole table — that is the figure that covers
+// everything, and it is a sentence rather than a number for exactly that reason.
+export function boardTallyOf(comparison: Comparison): Tally {
+  return countLeaders(boardLeaders(comparison))
 }
 
 // Which pool of phrasings the line under the header is drawn from. One key per pool rather

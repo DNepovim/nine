@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
 import {
+  boardTallyOf,
   COMPARE_STATS,
   compareProfiles,
   JUDGED_STATS,
@@ -207,6 +208,31 @@ const career = (boards: number): PlayerProfile =>
       achievedAt: '2026-01-01',
     })),
   })
+
+describe('boardTallyOf', () => {
+  it('counts the boards each side takes', () => {
+    expect(boardTallyOf(compareProfiles(career(4), career(1)))).toEqual({
+      mine: 3,
+      theirs: 0,
+    })
+  })
+
+  it('counts a board neither has played for neither side', () => {
+    expect(boardTallyOf(compareProfiles(career(0), career(0)))).toEqual({
+      mine: 0,
+      theirs: 0,
+    })
+  })
+
+  // The whole point of the row being its own count: it answers for the six rows directly
+  // above it, so a lifetime stat one side takes must not land in it.
+  it('leaves the career rows out of it', () => {
+    const mine = profile({ achievements: 9, totals: [totals({ runs: 3, hits: 3 })] })
+    const theirs = career(0)
+    expect(tallyOf(compareProfiles(mine, theirs)).mine).toBe(1)
+    expect(boardTallyOf(compareProfiles(mine, theirs))).toEqual({ mine: 0, theirs: 0 })
+  })
+})
 
 describe('tallyOf', () => {
   it('counts the rows each side takes', () => {

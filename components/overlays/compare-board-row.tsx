@@ -4,6 +4,7 @@ import { Text } from 'react-native'
 import { CompareRow } from '@/components/overlays/compare-row'
 import { CompareValue } from '@/components/overlays/compare-value'
 import { toneFor, type CompareSide } from '@/lib/compare'
+import { groupDigits } from '@/lib/group-digits'
 import {
   codeOf,
   DIFFICULTIES,
@@ -56,12 +57,15 @@ export function CompareBoardRow({
       >
         {`${t(codeOf(mode))} ${t(DIFFICULTIES[difficulty].code)}`}
       </Text>
+      {/* Thousands marked off, as the career figures above them are: a best on Extreme runs
+          to five digits, and two of those side by side are easier to tell apart in groups
+          than digit by digit. */}
       <CompareValue
-        text={mine === null ? NOTHING : String(mine)}
+        text={mine === null ? NOTHING : groupDigits(mine)}
         tone={toneFor(leader, 'mine')}
       />
       <CompareValue
-        text={theirs === null ? NOTHING : String(theirs)}
+        text={theirs === null ? NOTHING : groupDigits(theirs)}
         tone={toneFor(leader, 'theirs')}
       />
     </CompareRow>
