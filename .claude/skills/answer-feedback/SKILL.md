@@ -89,12 +89,24 @@ conversation that led here. Not a guess at what might happen one day.
 
 - Write it in the row's language. A Czech player getting an English reply is a
   worse reply than none.
-- Under 800 characters — the column rejects more. Aim far shorter; this is a
-  message from a person, not a release note.
-- Markdown renders (`MarkdownText`), so a couple of bullets beat a wall of text.
+- **Short.** Two to four sentences, 400 characters or so, before the invitation
+  below — which is boilerplate and does not buy more room for the answer proper.
+  800 is where the column rejects it, not what to aim at: a reply near the ceiling
+  is a release note, and nobody asked for one. Say the thing and stop — what
+  changed, or that it is not changing. Cut the restatement, the background, the
+  reasoning that only matters to whoever wrote the code.
+- **Thank them, in a clause.** They typed a message into a game instead of
+  closing it, and the reply should read like that landed. One short clause, naming
+  what they actually gave you — "good catch", "thanks, this was the nudge that
+  fixed it", "fair, and nobody else had said it". Not an opening line of its own,
+  and never the canned kind: no "we value your feedback", no "thanks for reaching
+  out". A thanks that would fit any message at all is worse than none, so if
+  nothing specific can be said, drop it and answer.
+- Markdown renders (`MarkdownText`). At this length prose usually beats bullets —
+  reach for them only when the answer really has two or three separate points.
   Bold sparingly.
-- First person, the person who makes Nine. No support-desk voice: no "we value
-  your feedback", no ticket numbers, no "our team".
+- First person, the person who makes Nine. No support-desk voice: no ticket
+  numbers, no "our team", no "we are looking into it".
 - The quote above it shows the opening of what they wrote, so the answer need not
   repeat it back. It must still make sense to someone reading a message they sent
   weeks ago: answer the thing, do not merely agree with it.
@@ -105,6 +117,39 @@ conversation that led here. Not a guess at what might happen one day.
   answer; a vague maybe is not.
 - Promise nothing that is not already deployed. Anything you could only write in
   the future tense wants a gate instead — see Step 3.
+
+### The invitation
+
+The one piece of boilerplate this skill allows: a closing line that asks for the
+next message. Attach it to the end of the answer, after a blank line.
+
+| Locale | Line                                                                                                                |
+| ------ | ------------------------------------------------------------------------------------------------------------------- |
+| `en`   | Found something else? Write again — what happened and what you expected instead is the part I cannot see from here. |
+| `cs`   | Narazíš na něco dalšího? Napiš zas — co se stalo a co se stát mělo, to odsud nevidím.                               |
+
+It asks for **what happened and what they expected**, and nothing else, because
+everything else already comes with the message: the feedback form says so on
+screen, and `mode`, `difficulty`, `score`, `build` and the paused run are on the
+row before a word is read. An invitation asking for the board would be asking for
+something the app already sent, which reads as not having looked.
+
+These are written straight into a database column, not rendered from the
+catalogs — no `t` tag, no `pnpm i18n:extract`. The locale on the row picks the
+line; it is the same choice as the rest of the answer.
+
+**When to leave it off:**
+
+- The answer is a no. "Not planned" followed by "write again!" is a brush-off
+  wearing a smile.
+- They asked a question and got an answer. The exchange is closed; inviting more
+  implies it is not.
+- The message was already specific — steps, expected result, the lot. Telling
+  someone who wrote a good report what a good report looks like is a small
+  insult. Thank them for the report instead.
+
+So: on a fix or a change, where the invitation costs little and the player has
+just been shown that writing in works. Not as a signature on everything.
 
 ## Step 3 — Decide the build gate
 
@@ -143,10 +188,15 @@ update. That is the right direction to be wrong in.
 
 ## Step 4 — Confirm
 
-`AskUserQuestion`, showing the drafted answer in full and the gate you chose.
-Offer the real alternatives — send it, change the gate, redraft, cancel. Anything
-the user rewrites goes back through Step 3: a redraft can turn a "not planned"
-into a "fixed", and that needs a build.
+`AskUserQuestion`, showing the drafted answer in full — invitation included, or
+visibly absent — and the gate you chose. Offer the real alternatives: send it,
+change the gate, redraft, cancel. A **briefer still** option is worth offering
+whenever the draft runs past two sentences; shorter is the usual correction, and
+it is cheaper to pick from a preview than to ask for.
+
+Anything the user rewrites goes back through Step 3: a redraft can turn a "not
+planned" into a "fixed", and that needs a build. It can also turn a fix into a
+no — which takes the invitation back off.
 
 ## Step 5 — Write it
 
@@ -156,7 +206,9 @@ apostrophe cannot end it early:
 ```bash
 cat > <scratchpad>/answer.sql <<'SQL'
 update feedback
-set    answer = $answer$Fixed — the dial no longer eats the first press of a run.$answer$,
+set    answer = $answer$Good catch — fixed. The dial no longer eats the first press of a run.
+
+Found something else? Write again — what happened and what you expected instead is the part I cannot see from here.$answer$,
        answer_needs_build = '260923.2241'   -- null when the answer claims nothing
 where  id = '<row id>';
 SQL
