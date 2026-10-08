@@ -153,6 +153,41 @@ describe('the lesson script', () => {
     expect(lessonStep('swipeDown', { type: 'HIT', hits: 3 })).toBe('swipeLeft')
   })
 
+  it('brings the swipe-down lesson forward when the dial goes over the target', () => {
+    // The second board is the first the player takes alone, and taps only climb: above
+    // the target there, nothing the lesson has taught gets them back. The lesson for it
+    // arrives on the board they are standing on rather than on the hit after it.
+    expect(lessonStep('free', { type: 'OVERSHOT', hits: 1 })).toBe('swipeDown')
+    // Mid-congratulation too, which hands the dial over before its banner is done.
+    expect(lessonStep('congrats', { type: 'OVERSHOT', hits: 1 })).toBe('swipeDown')
+  })
+
+  it('ends a brought-forward lesson on the same swipe its own board would', () => {
+    const brought = lessonStep('free', { type: 'OVERSHOT', hits: 1 })
+    expect(lessonStep(brought, { type: 'SWIPED', swipe: 'down' })).toBe('free')
+  })
+
+  it('lets a lesson that is asking for something finish asking', () => {
+    for (const step of [
+      'guided',
+      'swipeDown',
+      'swipeLeft',
+      'swipeRight',
+      'sweep',
+      'practice',
+    ] as const) {
+      expect(lessonStep(step, { type: 'OVERSHOT', hits: 1 })).toBe(step)
+    }
+  })
+
+  it('stops answering overshoots once the lesson has had its own board', () => {
+    // From the third board on, going over the target is a player playing: they have been
+    // shown the way down, and every board after it opens above its own target anyway.
+    expect(lessonStep('free', { type: 'OVERSHOT', hits: 2 })).toBe('free')
+    expect(lessonStep('free', { type: 'OVERSHOT', hits: 5 })).toBe('free')
+    expect(lessonStep('done', { type: 'OVERSHOT', hits: 9 })).toBe('done')
+  })
+
   it('stays ended, whatever happens next', () => {
     expect(tapThrough('done', 3)).toBe('done')
     expect(lessonStep('done', { type: 'HIT', hits: 2 })).toBe('done')
@@ -346,6 +381,16 @@ describe('the second target the lesson deals', () => {
   it('asks for a coarse key and then the finest one', () => {
     const plan = computeKeyPlan(NINE_DIAL, afterTheFirstHit(), second())
     expect(plan.map((step) => step.weight)).toEqual([6, 1])
+  })
+
+  it('can be overshot by one tap, which is why the overshoot is answered here', () => {
+    // The board is a short way below its target, and the dial has keys worth more than
+    // that gap. One tap on the wrong one puts the player somewhere taps cannot leave —
+    // the position `brought` exists for.
+    const grid = afterTheFirstHit()
+    const gap = second() - sumOf(NINE_DIAL, grid)
+    const heaviest = Math.max(...NINE_DIAL.weights)
+    expect(heaviest).toBeGreaterThan(gap)
   })
 })
 

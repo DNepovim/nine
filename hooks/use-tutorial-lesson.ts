@@ -17,11 +17,11 @@ import {
   type LessonVoice,
   type Swipe,
 } from '@/machines/tutorial-lesson'
-import { NINE_DIAL, type Grid } from '@/modes'
+import { NINE_DIAL, sumOf, type Grid } from '@/modes'
 
 // The tutorial's lesson, driven. The order of it is machines/tutorial-lesson.ts; what is
 // here is the three things only React can do — run the holds, notice the hit, and notice
-// the dial going past the target.
+// the dial going past the target it is chasing.
 export function useTutorialLesson({
   tutorial,
   isPlaying,
@@ -149,6 +149,23 @@ export function useTutorialLesson({
 
   const chasing = targets[0]?.value
 
+  // The dial going above the target, which is the one place a player who has only been
+  // taught taps cannot get themselves out of — and so the one thing in the run that
+  // brings a lesson forward rather than waiting for the hit that would have dealt it.
+  //
+  // The crossing rather than the condition: the board the swipe-down lesson is scripted
+  // for opens above its own target, as does the one after it, so a watcher reading "is
+  // above" would be firing for most of the script. `lessonStep` ignores the ones that
+  // arrive too late anyway; this keeps them from arriving at all.
+  const over = chasing !== undefined && sumOf(NINE_DIAL, grid) > chasing
+  const wasOver = useRef(over)
+  useEffect(() => {
+    const crossed = over && !wasOver.current
+    wasOver.current = over
+    if (!active || !crossed) return
+    setStep((current) => lessonStep(current, { type: 'OVERSHOT', hits }))
+  }, [over, active, hits])
+
   // The key the route is owed next, while the route is what is being taught. Recomputed
   // from the board rather than planned once and followed, so a press that went somewhere
   // unexpected — the lit key swiped rather than tapped — is answered by the next key
@@ -163,6 +180,11 @@ export function useTutorialLesson({
   const voice: LessonVoice = active ? LESSON_VOICE[step] : 'silent'
 
   return {
+    // Whether the lesson has nothing left to say — every step given and the sign-off
+    // read. True of every run that is not a tutorial as well, which is the honest
+    // answer: those were never being taught. Anything acting on it asks about the run
+    // first.
+    taught: step === 'done',
     // What is being said, and where it is drawn. `silent` draws nothing.
     voice,
     line,

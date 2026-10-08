@@ -12,8 +12,13 @@ import { TUTORIAL_BANNER_MS, TUTORIAL_FIRST_WORD_MS } from '@/constants/tutorial
 // The spine of it is the hit count. `TUTORIAL_TARGETS` deals one fixed board per hit, each
 // chosen so that a single move is the obvious answer, and this walks the same list from the
 // other end: the hit that clears the nth target opens the lesson for the one dealt in its
-// place. Nothing here is triggered by watching the player play, which is what an earlier
-// version did and what let two lessons want the screen at once.
+// place. An earlier version triggered its lessons by watching the player play instead,
+// which is what let two of them want the screen at once.
+//
+// One lesson is brought forward by what the player does, and it is the exception the rest
+// of the script is written to avoid: a dial above the target, before anything has said how
+// to come back down, is the one position a player can get into that the next hit cannot
+// get them out of. See `brought` below.
 //
 // What each step shows, and what the dial will accept while it does, is in LESSON_VOICE and
 // LESSON_DIAL below, so the screen never works either out from the step's name.
@@ -66,6 +71,10 @@ export type LessonEvent =
   | { type: 'HIT'; hits: number }
   // A key was swiped. Reported for every swipe; only the step asking for that one answers.
   | { type: 'SWIPED'; swipe: Swipe }
+  // The dial has gone above the target it is chasing. Reported on the crossing rather
+  // than for every press above it, and `hits` says how far into the script the player is
+  // — a board past the swipe-down lesson has nothing to learn from one.
+  | { type: 'OVERSHOT'; hits: number }
   // One gesture moved a second key without the finger lifting. Not a swipe of its own —
   // the keys it moved each reported their own — so it is a separate event rather than a
   // fourth `Swipe`, and only the step teaching the drag listens for it.
@@ -107,6 +116,31 @@ export const LESSON_AFTER_HIT: readonly LessonStep[] = [
   'practice',
 ]
 
+// Which board the swipe-down lesson is scripted for. Read off the table rather than
+// written again, so bringing the lesson forward cannot end up pointing at a different one
+// than the board itself opens.
+const SWIPE_DOWN_BOARD = LESSON_AFTER_HIT.indexOf('swipeDown')
+
+// An overshoot, answered. Taps only climb, so a player who dials above the target before
+// the swipe-down lesson has been reached is stuck with no gesture that gets them back and
+// nothing having told them one exists — the second board is where that happens, since it
+// is the first the player takes alone. So the lesson is brought to the board they are
+// standing on instead of waiting for the hit that would have dealt its own.
+//
+// Only from the two steps that have handed the dial over and are saying nothing binding:
+// the congratulation, which the player can already play through, and the free board after
+// it. Every lesson asking for something of its own is left alone — including the
+// swipe-down one, which is already up — and once the script has reached it the overshoot
+// is a player playing.
+//
+// The scripted board still gives the lesson again when it is dealt, which is right: that
+// board is nine below its own sum, so the gesture is needed there whether or not it has
+// been needed once already.
+const brought = (step: LessonStep, hits: number): LessonStep => {
+  if (hits >= SWIPE_DOWN_BOARD) return step
+  return step === 'congrats' || step === 'free' ? 'swipeDown' : step
+}
+
 // Which gesture ends which lesson, and `null` for every step not asking for one. A gesture
 // the lesson did not ask for is a player playing, and leaves the step where it was.
 const ENDED_BY = {
@@ -134,6 +168,7 @@ export function lessonStep(step: LessonStep, event: LessonEvent): LessonStep {
   if (step === 'done') return 'done'
   if (event.type === 'ADVANCE') return ON_ADVANCE[step]
   if (event.type === 'HIT') return LESSON_AFTER_HIT[event.hits] ?? 'done'
+  if (event.type === 'OVERSHOT') return brought(step, event.hits)
   if (event.type === 'SWEPT') return step === 'sweep' ? 'free' : step
   return ENDED_BY[step] === event.swipe ? 'free' : step
 }
