@@ -24,9 +24,11 @@ const STAT_LABEL = {
 } as const satisfies Record<CompareStat, MessageDescriptor>
 
 // How each figure is written. The counters have their thousands marked off, the averages
-// carry their sign, and the duration is formatted the way the run stats and the profile
-// format one — the same `formatGameTime` rather than a second opinion about what a length of
-// play looks like.
+// carry their sign, and the duration is formatted the way the run stats format one — the
+// same `formatGameTime` rather than a second opinion about what a length of play looks
+// like. Not the profile's `formatCareerTime`: that cell is one figure read at a glance and
+// says only its largest unit, where these two sit side by side to be told apart, and two
+// careers a few hours apart would read as the same number.
 //
 // A fortune runs to seven figures and a career's hits to five, and an unbroken run of that
 // many digits in an 11px column is a number the reader counts rather than reads. `groupDigits`

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import { formatGameTime } from './duration'
+import { formatCareerTime, formatGameTime } from './duration'
 
 describe('formatGameTime', () => {
   it('formats zero', () => {
@@ -37,5 +37,33 @@ describe('formatGameTime', () => {
 
   it('treats a negative duration as zero', () => {
     expect(formatGameTime(-500)).toBe('0″')
+  })
+})
+
+describe('formatCareerTime', () => {
+  it('says only the largest unit there is', () => {
+    expect(formatCareerTime(40 * 60_000)).toBe('40′')
+    expect(formatCareerTime(7 * 3_600_000)).toBe('7ʰ')
+    expect(formatCareerTime(12 * 86_400_000)).toBe('12ᵈ')
+  })
+
+  it('drops everything under that unit rather than rounding it up', () => {
+    expect(formatCareerTime(247 * 3_600_000 + 38 * 60_000 + 12_000)).toBe('10ᵈ')
+    expect(formatCareerTime(86_400_000 - 1)).toBe('23ʰ')
+    expect(formatCareerTime(3_600_000 - 1)).toBe('59′')
+    expect(formatCareerTime(60_000 - 1)).toBe('59″')
+  })
+
+  it('falls back to seconds below a minute, as a first run is', () => {
+    expect(formatCareerTime(12_000)).toBe('12″')
+    expect(formatCareerTime(0)).toBe('0″')
+  })
+
+  it('treats a negative duration as zero', () => {
+    expect(formatCareerTime(-500)).toBe('0″')
+  })
+
+  it('does not cap the leading figure', () => {
+    expect(formatCareerTime(400 * 86_400_000)).toBe('400ᵈ')
   })
 })

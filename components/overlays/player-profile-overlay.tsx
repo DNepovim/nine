@@ -31,7 +31,7 @@ import { useViewport } from '@/hooks/use-viewport'
 import { championMark } from '@/lib/champions'
 import { cn } from '@/lib/cn'
 import { compactText } from '@/lib/compact-number'
-import { formatGameTime } from '@/lib/duration'
+import { formatCareerTime } from '@/lib/duration'
 import { monthsSince } from '@/lib/format-date'
 import { saveMotto } from '@/lib/leaderboard'
 import { NO_FACTORS } from '@/lib/name-gradient'
@@ -353,11 +353,15 @@ export function PlayerProfileOverlay({
                       a real run; here it means no run has been timed yet, and a unit mark
                       on it dresses an absence as a measurement. The overhang goes with
                       the mark — a bare 0 has nothing hanging out, and pulling it left
-                      anyway would sit it off centre over its own label. */}
+                      anyway would sit it off centre over its own label.
+
+                      Coarse, not the run stats' format: the largest unit a career has
+                      reached and nothing under it, because nobody reads the minutes of
+                      247ʰ38′12″ and this is the narrowest cell in the row. */}
                       <StatCell
                         label={t`TIME`}
                         value={
-                          lifetime.timeMs > 0 ? formatGameTime(lifetime.timeMs) : '0'
+                          lifetime.timeMs > 0 ? formatCareerTime(lifetime.timeMs) : '0'
                         }
                         overhang={lifetime.timeMs > 0}
                       />

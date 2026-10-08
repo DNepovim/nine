@@ -41,3 +41,34 @@ export function formatGameTime(ms: number): string {
   if (minutes > 0) return `${minutes}${PRIME}${tail}`
   return `${seconds}${DOUBLE_PRIME}`
 }
+
+// U+1D48, the modifier letter the hour's ʰ already comes from, so a day joins the row
+// without a second convention. A day has no prime of its own — the primes are a division
+// of the hour, not a multiplication of it.
+const DAY_MARK = 'ᵈ'
+
+// A career's length, for the TIME cell on a player's profile: its largest whole unit and
+// nothing after it — 12ᵈ, 7ʰ, 40′, 12″.
+//
+// The run stats want every figure, because a run is a thing a player watched happen and
+// the seconds of it are what they were counting. A career is not: nobody reads the 38
+// minutes of 247ʰ38′12″, and printing them hands a glance-wide cell two figures it has to
+// skip past to reach the one it came for. The cell is the narrowest in its row and the one
+// figure that climbs without limit, so it is also the one that was deciding the row's
+// width for the sake of a precision nothing asked of it.
+//
+// Days arrive here and not in `formatGameTime` for the same reason: a day column would
+// push a run's own stats into a unit no run ever reaches, while a career crosses one.
+//
+// Floors, as everything in this file does. A career just short of a day says 23ʰ rather
+// than claiming a day of play that had not finished.
+export function formatCareerTime(ms: number): string {
+  const totalSeconds = Math.floor(Math.max(0, ms) / 1000)
+  const days = Math.floor(totalSeconds / 86_400)
+  if (days > 0) return `${days}${DAY_MARK}`
+  const hours = Math.floor(totalSeconds / 3600)
+  if (hours > 0) return `${hours}${HOUR_MARK}`
+  const minutes = Math.floor(totalSeconds / 60)
+  if (minutes > 0) return `${minutes}${PRIME}`
+  return `${totalSeconds}${DOUBLE_PRIME}`
+}
