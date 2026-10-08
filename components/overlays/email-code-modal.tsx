@@ -5,6 +5,7 @@ import { useEffect, useState } from 'react'
 import { Text, TextInput, View } from 'react-native'
 
 import { TrackedPressable } from '@/components/tracked-pressable'
+import { DIM_INK } from '@/constants/colors'
 import {
   CODE_LENGTH,
   codeProblem,
@@ -45,6 +46,9 @@ export function EmailCodeModal({
   sentAt: initialSentAt,
   onConfirm,
   onResend,
+  // Back to the field, with this address in it. Not the same as dismissing: a player who
+  // mistyped their address is not finished, they are one character from being finished.
+  onEditAddress,
   onDismiss,
 }: {
   branch: EmailBranch
@@ -52,6 +56,7 @@ export function EmailCodeModal({
   sentAt: number | null
   onConfirm: (code: string) => Promise<{ error: EmailProblem | null }>
   onResend: () => Promise<{ error: EmailProblem | null }>
+  onEditAddress: () => void
   onDismiss: () => void
 }) {
   const { t } = useLingui()
@@ -124,6 +129,7 @@ export function EmailCodeModal({
           setProblem(null)
         }}
         placeholder="000000"
+        placeholderTextColor={DIM_INK}
         keyboardType="number-pad"
         autoCapitalize="none"
         autoCorrect={false}
@@ -153,29 +159,55 @@ export function EmailCodeModal({
         </Text>
       )}
 
-      <TrackedPressable
-        id="email_code.resend"
-        onPress={() => {
-          void handleResend()
-        }}
-        disabled={waiting > 0 || busy}
-        hitSlop={8}
-        className="mb-3 self-start"
-      >
-        <Text
-          selectable={false}
-          className={cn(
-            'font-mono text-[9px] font-bold tracking-[1.5px] text-dim',
-            waiting === 0 && !busy && 'underline',
-          )}
+      {/* The two things to do about a code that has not come: ask for it again, or admit
+          it went to the wrong address. Wrapping rather than fixed, because the longer of
+          each pair — the counting label, and whatever a translation makes of the second —
+          will not sit beside the other on the narrowest phone. */}
+      <View className="mb-3 flex-row flex-wrap items-center gap-x-4 gap-y-1">
+        <TrackedPressable
+          id="email_code.resend"
+          onPress={() => {
+            void handleResend()
+          }}
+          disabled={waiting > 0 || busy}
+          hitSlop={8}
         >
-          {waiting > 0 ? (
-            <Trans>SEND ANOTHER IN {waiting}S</Trans>
-          ) : (
-            <Trans>SEND ANOTHER</Trans>
-          )}
-        </Text>
-      </TrackedPressable>
+          <Text
+            selectable={false}
+            className={cn(
+              'font-mono text-[9px] font-bold tracking-[1.5px] text-dim',
+              waiting === 0 && !busy && 'underline',
+            )}
+          >
+            {waiting > 0 ? (
+              <Trans>SEND ANOTHER IN {waiting}S</Trans>
+            ) : (
+              <Trans>SEND ANOTHER</Trans>
+            )}
+          </Text>
+        </TrackedPressable>
+
+        {/* Live through the cooldown, unlike its neighbour: nothing is sent by going back,
+            so a player who can see they typed the wrong address does not have to sit out
+            thirty seconds before they may say so. Dim only while something is in flight,
+            which a swapped card would leave to land on nothing. */}
+        <TrackedPressable
+          id="email_code.edit_address"
+          onPress={onEditAddress}
+          disabled={busy}
+          hitSlop={8}
+        >
+          <Text
+            selectable={false}
+            className={cn(
+              'font-mono text-[9px] font-bold tracking-[1.5px] text-dim',
+              !busy && 'underline',
+            )}
+          >
+            <Trans>WRONG ADDRESS?</Trans>
+          </Text>
+        </TrackedPressable>
+      </View>
 
       {/* Why this card is suddenly about a restore when the player only typed their
               address. It has to come before the warning, not after: the warning is alarming

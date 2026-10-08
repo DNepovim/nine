@@ -3,6 +3,7 @@ import { useState } from 'react'
 import { Platform, Text, TextInput, View } from 'react-native'
 
 import { TrackedPressable } from '@/components/tracked-pressable'
+import { DIM_INK } from '@/constants/colors'
 import { useOnline } from '@/hooks/use-online'
 import {
   addressProblem,
@@ -18,11 +19,15 @@ import {
 // turns out to be is the server's answer, not a question, and it is answered on the card
 // after this one.
 export function EmailModal({
+  // What the field starts with: empty, or the address the player is coming back to fix.
+  // Read once, as the initial value — this card owns what is typed in it from then on.
+  typed,
   // Resolves once the request has landed. The parent is what moves on to the code card —
   // this one only ever reports what happened.
   onSend,
   onDismiss,
 }: {
+  typed: string
   onSend: (address: string) => Promise<{ error: EmailProblem | null }>
   onDismiss: () => void
 }) {
@@ -30,7 +35,7 @@ export function EmailModal({
   // read out of a value map.
   const { t } = useLingui()
   const online = useOnline()
-  const [value, setValue] = useState('')
+  const [value, setValue] = useState(typed)
   const [problem, setProblem] = useState<EmailProblem | null>(null)
   const [sending, setSending] = useState(false)
 
@@ -78,6 +83,7 @@ export function EmailModal({
           setProblem(null)
         }}
         placeholder={t`you@example.com`}
+        placeholderTextColor={DIM_INK}
         keyboardType="email-address"
         autoCapitalize="none"
         autoCorrect={false}

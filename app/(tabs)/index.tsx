@@ -2379,7 +2379,11 @@ export default function GameScreen() {
                 />
               )}
               {accountEmail.card?.kind === 'address' && (
-                <EmailModal onSend={accountEmail.send} onDismiss={accountEmail.dismiss} />
+                <EmailModal
+                  typed={accountEmail.card.typed}
+                  onSend={accountEmail.send}
+                  onDismiss={accountEmail.dismiss}
+                />
               )}
               {accountEmail.card?.kind === 'code' && (
                 <EmailCodeModal
@@ -2388,6 +2392,7 @@ export default function GameScreen() {
                   sentAt={accountEmail.card.sentAt}
                   onConfirm={accountEmail.confirm}
                   onResend={accountEmail.resend}
+                  onEditAddress={accountEmail.editAddress}
                   onDismiss={accountEmail.dismiss}
                 />
               )}

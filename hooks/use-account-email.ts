@@ -15,7 +15,11 @@ type SendResult = { error: EmailProblem | null; branch: EmailBranch | null }
 // of the two things it opens onto is not known until the server has answered — so the
 // branch appears on the second card and nowhere earlier.
 type EmailCard =
-  | { kind: 'address' }
+  // `typed` seeds the field: empty when the card is opened fresh, and the address already
+  // sent when the player has come back from the code card to correct it. A typo is one
+  // character wrong out of twenty-five, and retyping the other twenty-four is how a player
+  // makes a second one.
+  | { kind: 'address'; typed: string }
   // `sentAt` is null when no code went out to bring this card up — a player reopening it
   // off the intro's confirm line, days after the one they were sent.
   | { kind: 'code'; branch: EmailBranch; address: string; sentAt: number | null }
@@ -43,6 +47,10 @@ export type AccountEmailFlow = {
   openPendingConfirm: () => void
   send: (address: string) => Promise<Answer>
   resend: () => Promise<Answer>
+  // Back to the field from the code card, carrying the address that is on it. The way out
+  // of the one thing the code card cannot fix: a code sent somewhere the player cannot
+  // read. `dismiss` is the other way out, and it is a different act — that one gives up.
+  editAddress: () => void
   confirm: (code: string) => Promise<Answer>
   dismiss: () => void
 }
@@ -84,12 +92,21 @@ export function useAccountEmail({
       // killing the app has still been asked, and an ask that only counts when it is
       // answered is an ask that comes back every launch until it is.
       await markEmailAsked()
-      setCard({ kind: 'address' })
+      setCard({ kind: 'address', typed: '' })
     })()
   }, [canPrompt, asked, hasAddress, nickname])
 
   const open = (): void => {
-    setCard({ kind: 'address' })
+    setCard({ kind: 'address', typed: '' })
+  }
+
+  // Nothing is undone on the way back, because there is nothing that would want undoing: an
+  // address the server has parked in `new_email` is replaced by the next `sendCode`, and
+  // until one lands it is the honest answer to what this profile is waiting on — which is
+  // what the intro's confirm line goes on saying.
+  const editAddress = (): void => {
+    if (card?.kind !== 'code') return
+    setCard({ kind: 'address', typed: card.address })
   }
 
   const openPendingConfirm = (): void => {
@@ -142,5 +159,5 @@ export function useAccountEmail({
     return res
   }
 
-  return { card, open, openPendingConfirm, send, resend, confirm, dismiss }
+  return { card, open, openPendingConfirm, send, resend, confirm, editAddress, dismiss }
 }
