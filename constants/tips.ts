@@ -20,7 +20,7 @@ export const TIPS = [
   msg`Open a session on an easier difficulty. The first run is a warm-up, and the weights come back slower than you remember them.`,
   msg`Chain your hits — a streak multiplies your points ×2 → ×4 → ×8. Accuracy counts optimal routes, Speed counts hits with most of the ring left.`,
   msg`Play with two hands, a thumb to each side of the grid. Reaching across for every button is time the ring is already spending.`,
-  msg`Learn the nine times table cold. The 9× button steps 9, 18, 27 and on up to 81, and it is the one that closes the big gaps — knowing that 63 is seven taps from zero saves counting on the spot.`,
+  msg`Learn the nine times table cold. The 9× button steps 9, 18, 27 up to 81, and it closes the big gaps — knowing 63 is seven taps from zero saves counting on the spot.`,
   msg`Turn on SHOW SUM IN BUTTONS under Options. Each button then reads out what it is contributing, so the arithmetic sits on the grid instead of in your head.`,
-  msg`Think in horizontal swipes before you tap. Left sends a button to 0 and right to 9, and each is one move however far it travels — a big gap is often two swipes and a tap rather than a dozen taps.`,
+  msg`Think in horizontal swipes before you tap. Left sends a button to 0, right to 9, and each is one move however far it travels — a big gap is often two swipes and a tap.`,
 ] as const satisfies readonly [MessageDescriptor, ...MessageDescriptor[]]

@@ -1,13 +1,15 @@
 import { Text, View } from 'react-native'
 
 import type { ON_GOLD_LABEL_SHADOW } from '@/constants/theme'
+import { TYPE } from '@/constants/typography'
+import { cn } from '@/lib/cn'
 
 // One number over its own label — the app's format for a row of stats, used by the run
 // stats on the pause and game over screens and by the lifetime row on a player profile.
 //
 // The label sits underneath rather than beside the number so a cell is as wide as its
 // widest line instead of as wide as both put together, which is what keeps `AVG ACC` on
-// one line when a row runs out of room.
+// one line when a row runs out of room. A cell may carry a third line — see `kicker`.
 
 // How far a hanging mark is pulled out of the cell: one character of the value's own
 // face. Every glyph in a monospace face has the same advance — near enough 0.6 em across
@@ -20,11 +22,25 @@ const MARK_OVERHANG = 12 * 0.6 + 0.5
 export function StatCell({
   label,
   value,
+  kicker,
   shadow = null,
   overhang = false,
 }: {
   label: string
   value: string
+  // What kind of figure this is, on its own line between the number and the label:
+  // total over RUNS, avg over ACC. Read top to bottom the three lines make the sentence
+  // the cell is saying — "6.2k total runs" — which is what lets the label underneath
+  // shed the word it used to carry, so `AVG ACC` becomes `ACC` and the cell narrows to
+  // the width of its own code.
+  //
+  // Passed in upper case like every other label in the app; `TYPE.kicker` is what lowers
+  // it, sizes it under the label and takes the caps tracking off. Why a qualifier is
+  // allowed under the house's smallest caps is that role's note, not this one's.
+  //
+  // Undefined on a row where every figure is the same kind — a run's stats, where
+  // repeating "total" five times says nothing about any of them.
+  kicker?: string
   // The halo the gold game over screen needs, where these sit straight on the
   // celebration. Passed in rather than decided here: the profile modal has its own
   // surface and wants none.
@@ -51,15 +67,25 @@ export function StatCell({
           `AVG ACC` does have a space and would break in two. */}
       <Text
         selectable={false}
-        className="font-mono text-[12px] font-bold tracking-[0.5px] text-primary"
+        className={cn(TYPE.prose, 'text-primary')}
         style={[shadow, overhang ? { marginRight: -MARK_OVERHANG } : null]}
       >
         {value}
       </Text>
+      {kicker !== undefined && (
+        <Text
+          selectable={false}
+          numberOfLines={1}
+          className={cn(TYPE.kicker, 'mt-0.5 text-dim')}
+          style={shadow}
+        >
+          {kicker}
+        </Text>
+      )}
       <Text
         selectable={false}
         numberOfLines={1}
-        className="mt-0.5 font-mono text-[8px] font-bold tracking-[1px] text-dim"
+        className={cn(TYPE.caption, 'mt-0.5 text-dim')}
         style={shadow}
       >
         {label}

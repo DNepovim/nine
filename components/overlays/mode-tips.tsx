@@ -14,7 +14,10 @@ import { scheduleOnRN } from 'react-native-worklets'
 import { TipSizer } from '@/components/overlays/tip-sizer'
 import { PageDots } from '@/components/page-dots'
 import { SWIPE_THRESHOLD } from '@/constants/game'
+import { SLOT_CARD } from '@/constants/intro-slot'
 import { TIPS } from '@/constants/tips'
+import { TYPE } from '@/constants/typography'
+import { cn } from '@/lib/cn'
 import { pickTips } from '@/lib/pick-tips'
 import { gradientOf } from '@/modes'
 
@@ -58,17 +61,26 @@ const BACK = -1
 // dialog's padded-gradient sandwich: one flat colour needs no gradient, and React
 // Native draws borders inside the box, so the line still ends exactly at the card's
 // bounds and the dots' offset below is unaffected.
-const BORDER = 1
-const RADIUS = 20
-
-// Tips vary in length, and this sits directly above PLAY. A box that fitted each tip
-// on its own would hop the button every six seconds, so all five share one height —
-// the tallest, measured by TipSizer. Sizing to the content rather than to a constant
-// is what keeps a newly-written long tip from being cropped.
 //
-// This is only the floor, holding the box open for the frame before the measurements
-// land. Tips shorter than it stay centred in it.
-const BODY_MIN_HEIGHT = 96
+// Shared with the teaser ARCADE puts in this same slot, which is the only other card that
+// stands here — see `constants/intro-slot.ts`.
+const { border: BORDER, radius: RADIUS } = SLOT_CARD
+
+// Everything the card carries above and below the tip itself: `pt-3` and `pb-5`, the two
+// border lines, and the TIP label with its `mb-1`. Named because it is what turns the one
+// height the slot is allowed into the height this box may give a tip.
+const CARD_CHROME = 12 + 20 + BORDER * 2 + 15
+
+// Tips vary in length, and this sits directly above PLAY. A box that fitted each tip on
+// its own would hop the button every six seconds, so all of them share one height — and
+// that height is not the tallest tip's but the slot's, so the card comes out exactly as
+// tall as the board ACCURACY and SPEED put here and the button stays where it was when the
+// player pressed the pill.
+//
+// Still a floor rather than a cap, and TipSizer still measures: a tip written longer than
+// this fits grows the box instead of being cropped. That growth is the signal — a tip that
+// moves PLAY GAME is a tip to shorten, not a slot to re-measure.
+const BODY_MIN_HEIGHT = SLOT_CARD.height - CARD_CHROME
 
 // A 6px dot inside px-1 py-2 pressables. Hard-coded rather than measured because
 // it decides where the row hangs, and onLayout would land a frame late — the
@@ -190,7 +202,7 @@ export function ModeTips() {
         >
           <Text
             selectable={false}
-            className="mb-1 text-center font-mono text-[9px] font-bold tracking-[2px] text-dim"
+            className={cn(TYPE.labelSm, 'mb-1 text-center text-dim')}
           >
             <Trans>TIP</Trans>
           </Text>
@@ -203,7 +215,7 @@ export function ModeTips() {
             >
               <Text
                 selectable={false}
-                className="text-center font-mono text-[12px] font-medium leading-[19px] text-primary"
+                className={cn(TYPE.prose, 'text-center text-primary')}
               >
                 {t(tip)}
               </Text>

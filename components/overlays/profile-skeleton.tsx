@@ -29,8 +29,10 @@ export function ProfileSkeleton() {
         <SkeletonBar className="h-[10px] w-[110px]" />
       </View>
 
-      {/* FORTUNE, which is the one figure on the card set large. */}
-      <SkeletonBar className="h-[30px] w-[140px] self-center rounded-md" />
+      {/* FORTUNE, which is the one figure on the card set large — and the one that pads
+          past the column's gap, which the stand-in pads too or the card shifts under the
+          reader the moment the real figure lands. */}
+      <SkeletonBar className="my-2 h-[30px] w-[140px] self-center rounded-md" />
 
       <View className="flex-row justify-center gap-4">
         {Array.from({ length: STAT_CELLS }, (_, cell) => (

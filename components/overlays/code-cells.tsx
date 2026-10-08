@@ -2,7 +2,8 @@ import { useState } from 'react'
 import { TextInput, View } from 'react-native'
 
 import { CodeDigit } from '@/components/overlays/code-digit'
-import { APP_RED, DIM_INK, MUTED_INK, PRIMARY_INK } from '@/constants/colors'
+import { APP_RED, MUTED_INK, PRIMARY_INK, SPECTRUM } from '@/constants/colors'
+import { lerpColor } from '@/modes'
 
 // One frame per digit, the way every app that asks for a code off an email draws it: the
 // player can see at a glance how many are wanted and how many they have typed, which a
@@ -26,8 +27,27 @@ const CELL_ASPECT = 0.74
 const CELL_MAX_WIDTH = 52
 
 // Big enough to read back against an email, small enough to sit inside a frame that has
-// shrunk to a sixth of a dialog.
+// shrunk to a sixth of a dialog. Also what lets the digit be a game colour at all: the
+// spectrum's stops clear 3:1 on the surface and nothing below, so they can only be ink at
+// a size that counts as large text — which this, bold at 20px, is.
 const DIGIT_SIZE = 20
+
+// What a digit that has landed is drawn in: the game's own arc, blue through red, spread
+// across however many frames there are. A code is the app speaking for itself rather than
+// for a mode, which is the game scale's case — and the card this sits in is already edged
+// in the same four stops, so a filling row reads as that border coming inside rather than
+// as a colour from nowhere. Nothing here is per-digit meaning; the position in the row is
+// the only thing choosing, so a code typed twice looks the same both times.
+function stopAt(index: number, count: number): string {
+  if (count < 2) return SPECTRUM[0]
+  const at = (index / (count - 1)) * (SPECTRUM.length - 1)
+  const low = Math.floor(at)
+  return lerpColor(
+    SPECTRUM[low] ?? SPECTRUM[0],
+    SPECTRUM[Math.min(low + 1, SPECTRUM.length - 1)] ?? SPECTRUM[0],
+    at - low,
+  )
+}
 
 export function CodeCells({
   value,
@@ -65,6 +85,10 @@ export function CodeCells({
           // the caret: the field itself is invisible, so without it a player typing has
           // nothing telling them the row is live.
           const active = focused && i === Math.min(value.length, length - 1)
+          // A filled frame wears its colour, and the caret's dark border gives way to it:
+          // the two only ever coincide on the last frame of a full code, where there is
+          // nothing left to type and so nothing left for a caret to say.
+          const stop = digit ? stopAt(i, length) : null
           return (
             <View
               key={i}
@@ -74,21 +98,23 @@ export function CodeCells({
                 maxWidth: CELL_MAX_WIDTH,
                 borderColor: wrong
                   ? APP_RED
-                  : active
-                    ? PRIMARY_INK
-                    : digit
-                      ? DIM_INK + '80'
+                  : stop !== null
+                    ? stop + 'CC'
+                    : active
+                      ? PRIMARY_INK
                       : MUTED_INK,
                 backgroundColor: wrong
                   ? APP_RED + '14'
-                  : active
-                    ? PRIMARY_INK + '0D'
-                    : undefined,
+                  : stop !== null
+                    ? stop + '12'
+                    : active
+                      ? PRIMARY_INK + '0D'
+                      : undefined,
               }}
             >
               <CodeDigit
                 digit={digit}
-                color={wrong ? APP_RED : PRIMARY_INK}
+                color={wrong ? APP_RED : (stop ?? PRIMARY_INK)}
                 size={DIGIT_SIZE}
               />
             </View>

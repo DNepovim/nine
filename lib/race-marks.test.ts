@@ -22,12 +22,25 @@ describe('raceMarks', () => {
     expect(raceMarks('routMine').theirs).not.toBe(raceMarks('clearMine').theirs)
   })
 
-  // At a row apart neither player is the slow one, so neither is drawn as one.
-  it('gives both sides the same animal when the table is close', () => {
+  // At a row apart neither player is the slow one, so neither is drawn as one — but they
+  // are still two players, and one glyph over both names says nothing about either.
+  it('gives the two sides different animals when the table is close', () => {
     const close = raceMarks('closeMine')
-    expect(close.mine).toBe(close.theirs)
+    expect(close.mine).not.toBe(close.theirs)
     expect(raceMarks('closeTheirs')).toEqual(close)
     expect(raceMarks('even')).toEqual(close)
+  })
+
+  // The pair has to be two animals of the one standing, which is checkable as this: neither
+  // of them is an animal the card uses to mean a lead, in either direction.
+  it('draws neither side of a close table as a leader or a laggard', () => {
+    const close = raceMarks('closeMine')
+    const decided = [raceMarks('routMine'), raceMarks('clearMine')].flatMap((pair) => [
+      pair.mine,
+      pair.theirs,
+    ])
+    expect(decided).not.toContain(close.mine)
+    expect(decided).not.toContain(close.theirs)
   })
 
   it('draws nothing at all when neither player has started', () => {
