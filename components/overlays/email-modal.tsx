@@ -60,20 +60,12 @@ export function EmailModal({
 
   return (
     <>
+      {/* The question this answers is the dialog's own title — see `EmailDialog`. */}
       <Text
         selectable={false}
-        className="mb-1 font-mono text-[11px] font-black tracking-[2px] text-primary"
+        className="mb-4 mt-2 font-mono text-[9px] font-bold leading-[15px] tracking-[0.5px] text-dim"
       >
-        <Trans>WHERE CAN WE REACH YOU?</Trans>
-      </Text>
-      <Text
-        selectable={false}
-        className="mb-4 font-mono text-[9px] font-bold tracking-[0.5px] text-dim"
-      >
-        <Trans>
-          So you can get your profile back on another phone. If a profile is already on
-          this address, we will bring that one here instead.
-        </Trans>
+        <Trans>So you can get your profile back on another phone.</Trans>
       </Text>
 
       <TextInput
@@ -93,7 +85,7 @@ export function EmailModal({
         onSubmitEditing={() => {
           void handleSend()
         }}
-        className="mb-2 rounded-lg border border-dim/30 bg-background px-3 py-2 font-mono font-bold tracking-[1px] text-primary"
+        className="mb-2 rounded-lg border border-dim/30 bg-card px-3 py-2 font-mono font-bold tracking-[1px] text-primary"
         // Mobile Safari zooms the whole page in on focus for any input under 16px —
         // the one web quirk with no CSS opt-out, only a bigger font. Native has no
         // such behaviour, so it keeps the smaller size the rest of the card uses.

@@ -1,9 +1,11 @@
+import { Ionicons } from '@expo/vector-icons'
 import type { MessageDescriptor } from '@lingui/core'
 import { msg } from '@lingui/core/macro'
 import { Trans, useLingui } from '@lingui/react/macro'
 import { useEffect, useState } from 'react'
-import { Text, TextInput, View } from 'react-native'
+import { Text, View } from 'react-native'
 
+import { CodeCells } from '@/components/overlays/code-cells'
 import { TrackedPressable } from '@/components/tracked-pressable'
 import { DIM_INK } from '@/constants/colors'
 import {
@@ -14,7 +16,6 @@ import {
   type EmailBranch,
   type EmailProblem,
 } from '@/lib/account-email'
-import { cn } from '@/lib/cn'
 
 // The one place the branch shows. Everything before this card is identical for both, which
 // is the point of the merge; from here on they are different acts and the button has to say
@@ -33,12 +34,22 @@ const BUSY_LABELS = {
 // in seconds — a faster tick would redraw the same number.
 const TICK_MS = 1000
 
+// Which problems are the code's own, and so the ones the frames go red for. The others are
+// about the request rather than about what was typed: nothing is wrong with six digits that
+// never left the phone, and reddening them would tell the player to go and find a new code
+// when what they need is a connection.
+const CODE_FAULTS: readonly EmailProblem[] = ['bad_code', 'expired']
+
+// How far a link fades once it cannot be pressed. The same weight the card's own buttons
+// dim by, so a dead link and a dead button read as the same state.
+const DISABLED_OPACITY = 0.5
+
 export function EmailCodeModal({
   // What the address turned out to mean — decided by the server when the code was asked
   // for, never by the player. See `sendCode`.
   branch,
-  // Echoed back under the title. A player who mistyped their own address finds out here
-  // rather than by waiting for a code that is never coming.
+  // Echoed back under the title, and in bold: it is the one thing on this card the player
+  // has to check, because a mistyped address is the likeliest reason nothing arrived.
   address,
   // When the code that brought this card up was sent, or null when none was — which is
   // the case for a player reopening this days later off the intro's confirm line. Null
@@ -109,104 +120,54 @@ export function EmailCodeModal({
 
   return (
     <>
+      {/* The question this answers is the dialog's own title — see `EmailDialog`.
+
+          A line per sentence, because the two are about different things: the first is the
+          address to check, the second is a clock. Run together they read as one fact and
+          the player's eye goes past the address, which is the one thing here they have to
+          look at. */}
       <Text
         selectable={false}
-        className="mb-1 font-mono text-[11px] font-black tracking-[2px] text-primary"
+        className="mt-2 font-mono text-[9px] font-bold leading-[15px] tracking-[0.5px] text-dim"
       >
-        <Trans>DID IT REACH YOU?</Trans>
+        <Trans>
+          We sent six digits to <Text className="font-black text-primary">{address}</Text>
+          .
+        </Trans>
       </Text>
       <Text
         selectable={false}
-        className="mb-4 font-mono text-[9px] font-bold tracking-[0.5px] text-dim"
+        className="mb-4 font-mono text-[9px] font-bold leading-[15px] tracking-[0.5px] text-dim"
       >
-        <Trans>We sent six digits to {address}. They are good for ten minutes.</Trans>
+        <Trans>They are good for ten minutes.</Trans>
       </Text>
 
-      <TextInput
-        value={value}
-        onChangeText={(next) => {
-          setValue(next.replace(/\D/gu, '').slice(0, CODE_LENGTH))
-          setProblem(null)
-        }}
-        placeholder="000000"
-        placeholderTextColor={DIM_INK}
-        keyboardType="number-pad"
-        autoCapitalize="none"
-        autoCorrect={false}
-        // What makes this a field rather than a keypad: the phone offers the code from
-        // the notification itself, and a code that has been pasted out of the email is
-        // a code nobody had to copy down. A keypad of our own forbids both.
-        autoComplete="one-time-code"
-        textContentType="oneTimeCode"
-        maxLength={CODE_LENGTH}
-        returnKeyType="done"
-        onSubmitEditing={() => {
-          void handleConfirm()
-        }}
-        className="mb-2 rounded-lg border border-dim/30 bg-background px-3 py-2 text-center font-mono font-black tracking-[8px] text-primary"
-        // Bigger than the address field and bigger than the web's 16px floor: six
-        // digits is the whole of what this card is for, and they are read back against
-        // an email to check them.
-        style={{ fontSize: 22 }}
-      />
-
-      {problem !== null && (
-        <Text
-          selectable={false}
-          className="mb-2 font-mono text-[9px] font-bold tracking-[0.5px] text-red-500"
-        >
-          {t(EMAIL_PROBLEM_LINES[problem])}
-        </Text>
-      )}
-
-      {/* The two things to do about a code that has not come: ask for it again, or admit
-          it went to the wrong address. Wrapping rather than fixed, because the longer of
-          each pair — the counting label, and whatever a translation makes of the second —
-          will not sit beside the other on the narrowest phone. */}
-      <View className="mb-3 flex-row flex-wrap items-center gap-x-4 gap-y-1">
-        <TrackedPressable
-          id="email_code.resend"
-          onPress={() => {
-            void handleResend()
+      {/* The frames and the line they were refused for are one block, and the air is under
+          the pair of them: a gap between the code and the reason it was rejected would read
+          as the reason belonging to whatever comes next. */}
+      <View className="mb-5">
+        <CodeCells
+          value={value}
+          length={CODE_LENGTH}
+          onChange={(next) => {
+            setValue(next)
+            setProblem(null)
           }}
-          disabled={waiting > 0 || busy}
-          hitSlop={8}
-        >
-          <Text
-            selectable={false}
-            className={cn(
-              'font-mono text-[9px] font-bold tracking-[1.5px] text-dim',
-              waiting === 0 && !busy && 'underline',
-            )}
-          >
-            {waiting > 0 ? (
-              <Trans>SEND ANOTHER IN {waiting}S</Trans>
-            ) : (
-              <Trans>SEND ANOTHER</Trans>
-            )}
-          </Text>
-        </TrackedPressable>
+          onSubmit={() => {
+            void handleConfirm()
+          }}
+          editable={!busy}
+          wrong={problem !== null && CODE_FAULTS.includes(problem)}
+        />
 
-        {/* Live through the cooldown, unlike its neighbour: nothing is sent by going back,
-            so a player who can see they typed the wrong address does not have to sit out
-            thirty seconds before they may say so. Dim only while something is in flight,
-            which a swapped card would leave to land on nothing. */}
-        <TrackedPressable
-          id="email_code.edit_address"
-          onPress={onEditAddress}
-          disabled={busy}
-          hitSlop={8}
-        >
+        {problem !== null && (
           <Text
             selectable={false}
-            className={cn(
-              'font-mono text-[9px] font-bold tracking-[1.5px] text-dim',
-              !busy && 'underline',
-            )}
+            className="mt-2 text-center font-mono text-[9px] font-bold tracking-[0.5px] text-red-500"
           >
-            <Trans>WRONG ADDRESS?</Trans>
+            {t(EMAIL_PROBLEM_LINES[problem])}
           </Text>
-        </TrackedPressable>
+        )}
       </View>
 
       {/* Why this card is suddenly about a restore when the player only typed their
@@ -246,7 +207,7 @@ export function EmailCodeModal({
         </View>
       )}
 
-      <View className="mt-1 flex-row gap-3">
+      <View className="flex-row gap-3">
         <TrackedPressable
           id="email_code.cancel"
           onPress={onDismiss}
@@ -256,7 +217,7 @@ export function EmailCodeModal({
             selectable={false}
             className="font-mono text-[11px] font-black tracking-[1.5px] text-dim"
           >
-            <Trans>CANCEL</Trans>
+            <Trans>CLOSE</Trans>
           </Text>
         </TrackedPressable>
 
@@ -275,6 +236,65 @@ export function EmailCodeModal({
           >
             {busy ? t(BUSY_LABELS[branch]) : t(ACTIONS[branch])}
           </Text>
+        </TrackedPressable>
+      </View>
+
+      {/* The two things to do about a code that has not come: ask for it again, or admit it
+          went to the wrong address. Under the buttons, in the voice the intro's own footer
+          links use — an icon, a 10px label, no underline — because that is what a quiet way
+          out of a screen looks like in this app, and neither of these is the thing the card
+          is asking for.
+
+          One row, wrapping — the same `gap-x-5` the intro's footer uses. The wrap is what
+          the counting label needs: it grows by four characters while it counts down, and on
+          a narrow display the pair drops to two lines rather than running off the card. */}
+      <View className="mt-5 flex-row flex-wrap items-center justify-center gap-x-5 gap-y-2">
+        <TrackedPressable
+          id="email_code.resend"
+          onPress={() => {
+            void handleResend()
+          }}
+          disabled={waiting > 0 || busy}
+          hitSlop={10}
+          // Dim rather than underlined-or-not: without an underline to drop, opacity is
+          // what is left to say a link cannot be pressed yet.
+          style={{ opacity: waiting > 0 || busy ? DISABLED_OPACITY : 1 }}
+        >
+          <View className="flex-row items-center gap-1">
+            <Ionicons name="refresh-outline" size={10} color={DIM_INK} />
+            <Text
+              selectable={false}
+              className="font-mono text-[10px] font-bold tracking-[1.8px] text-dim"
+            >
+              {waiting > 0 ? (
+                <Trans>SEND NEW CODE IN {waiting}S</Trans>
+              ) : (
+                <Trans>SEND NEW CODE</Trans>
+              )}
+            </Text>
+          </View>
+        </TrackedPressable>
+
+        {/* Live through the cooldown, unlike its neighbour: nothing is sent by going
+            back, so a player who can see they typed the wrong address does not have to sit
+            out thirty seconds before they may say so. Dim only while something is in
+            flight, which a swapped card would leave to land on nothing. */}
+        <TrackedPressable
+          id="email_code.edit_address"
+          onPress={onEditAddress}
+          disabled={busy}
+          hitSlop={10}
+          style={{ opacity: busy ? DISABLED_OPACITY : 1 }}
+        >
+          <View className="flex-row items-center gap-1">
+            <Ionicons name="create-outline" size={10} color={DIM_INK} />
+            <Text
+              selectable={false}
+              className="font-mono text-[10px] font-bold tracking-[1.8px] text-dim"
+            >
+              <Trans>CHANGE ADDRESS</Trans>
+            </Text>
+          </View>
         </TrackedPressable>
       </View>
     </>

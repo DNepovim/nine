@@ -1,7 +1,7 @@
 import { LinearGradient } from 'expo-linear-gradient'
 import type { ReactNode } from 'react'
 import { useEffect } from 'react'
-import { Text, View } from 'react-native'
+import { KeyboardAvoidingView, Platform, Text, View } from 'react-native'
 import Animated, {
   Easing,
   useAnimatedStyle,
@@ -45,6 +45,7 @@ export function ModalCard({
   onDismiss,
   maxHeight,
   replacing = false,
+  avoidKeyboard = false,
   children,
 }: {
   // Left off by a dialog whose subject names itself — the profile card, whose first
@@ -68,6 +69,11 @@ export function ModalCard({
   // A cap for a dialog whose content can run long, so it scrolls inside the card rather
   // than off the display. Left undefined by a dialog that is always short.
   maxHeight?: number
+  // Set by a dialog with a field in it. This one is not a platform modal — it is an
+  // overlay inside the app — so on iOS the keyboard comes up over it and takes the card's
+  // buttons with it. Android resizes the window underneath and needs nothing. Off by
+  // default: a dialog with nothing to type in has no keyboard to lift away from.
+  avoidKeyboard?: boolean
   children: (close: () => void) => ReactNode
 }) {
   const fade = useSharedValue(replacing ? 1 : 0)
@@ -104,48 +110,54 @@ export function ModalCard({
         fadeStyle,
       ]}
     >
-      <Animated.View style={[{ width: '90%', maxWidth: 460 }, cardStyle]}>
-        <LinearGradient
-          colors={[...SPECTRUM]}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={{ borderRadius: RADIUS, padding: BORDER, maxHeight }}
-        >
-          <View
-            className="bg-surface px-5 pb-5 pt-4"
-            style={{ borderRadius: RADIUS - BORDER, flexShrink: 1 }}
+      <KeyboardAvoidingView
+        className="w-full flex-1 items-center justify-center"
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        enabled={avoidKeyboard}
+      >
+        <Animated.View style={[{ width: '90%', maxWidth: 460 }, cardStyle]}>
+          <LinearGradient
+            colors={[...SPECTRUM]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={{ borderRadius: RADIUS, padding: BORDER, maxHeight }}
           >
-            <View className="mb-1 flex-row items-center justify-between">
-              {/* Kept even when empty: it is what holds the close button over on the
-                  right, and `justify-between` with one child would put it on the left.
+            <View
+              className="bg-surface px-5 pb-5 pt-4"
+              style={{ borderRadius: RADIUS - BORDER, flexShrink: 1 }}
+            >
+              <View className="mb-1 flex-row items-center justify-between">
+                {/* Kept even when empty: it is what holds the close button over on the
+                    right, and `justify-between` with one child would put it on the left.
 
-                  `shrink` because flexShrink is 0 by default in React Native, and the
-                  titles are questions now — long enough that on a narrow display an
-                  unshrinkable one would push the close button off the card rather than
-                  wrap inside its own column. */}
-              <View className="shrink flex-row items-center gap-1.5">
-                {icon}
-                {title !== undefined && (
-                  <Text
-                    selectable={false}
-                    className={cn(
-                      'font-mono text-[11px] font-bold tracking-[2px]',
-                      titleColor === undefined && 'text-dim',
-                    )}
-                    style={titleColor === undefined ? undefined : { color: titleColor }}
-                  >
-                    {title}
-                  </Text>
-                )}
+                    `shrink` because flexShrink is 0 by default in React Native, and the
+                    titles are questions now — long enough that on a narrow display an
+                    unshrinkable one would push the close button off the card rather than
+                    wrap inside its own column. */}
+                <View className="shrink flex-row items-center gap-1.5">
+                  {icon}
+                  {title !== undefined && (
+                    <Text
+                      selectable={false}
+                      className={cn(
+                        'font-mono text-[11px] font-bold tracking-[2px]',
+                        titleColor === undefined && 'text-dim',
+                      )}
+                      style={titleColor === undefined ? undefined : { color: titleColor }}
+                    >
+                      {title}
+                    </Text>
+                  )}
+                </View>
+                {/* The same 5-dot cross the pause screen closes with, unlabelled — a
+                    dialog header already reads as one. */}
+                <MenuButton showLabel={false} onToggle={close} color={MUTED_INK} />
               </View>
-              {/* The same 5-dot cross the pause screen closes with, unlabelled — a
-                  dialog header already reads as one. */}
-              <MenuButton showLabel={false} onToggle={close} color={MUTED_INK} />
+              {children(close)}
             </View>
-            {children(close)}
-          </View>
-        </LinearGradient>
-      </Animated.View>
+          </LinearGradient>
+        </Animated.View>
+      </KeyboardAvoidingView>
     </Animated.View>
   )
 }

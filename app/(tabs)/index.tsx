@@ -34,8 +34,7 @@ import { AdminOverlay } from '@/components/overlays/admin-overlay'
 import { AdvancedOptionsOverlay } from '@/components/overlays/advanced-options-overlay'
 import { CardModal } from '@/components/overlays/card-modal'
 import { DevOverlay } from '@/components/overlays/dev-overlay'
-import { EmailCodeModal } from '@/components/overlays/email-code-modal'
-import { EmailModal } from '@/components/overlays/email-modal'
+import { EmailDialog } from '@/components/overlays/email-dialog'
 import { FeedbackOverlay } from '@/components/overlays/feedback-overlay'
 import { FeedbackReplyOverlay } from '@/components/overlays/feedback-reply-overlay'
 import { GameOverSequence } from '@/components/overlays/game-over-sequence'
@@ -2390,66 +2389,46 @@ export default function GameScreen() {
               />
             )}
 
-            {/* ── The nickname, the address, and the profile it brings back ──
-              One platform modal for all three. The cards hand over to each other in place:
-              a saved nickname turns the card over to the address field, and the field turns
-              over to the six digits. Each of these used to bring a `<Modal>` of its own,
-              and swapping two in one commit is how iOS came to drop the second — see
-              `CardModal`. Precedence is simply the order a player meets them in. */}
+            {/* ── The nickname ──
+              Its own platform modal, because it has a keyboard under it and a real modal
+              is what gets `KeyboardAvoidingView` a window of its own to lift inside — see
+              `CardModal`. A saved nickname hands over to the address dialog below, which is
+              an ordinary one: nothing is dismissed while something else is presented, so
+              the swap iOS used to drop cannot happen between them. */}
             <CardModal
-              visible={showNicknameModal || accountEmail.card !== null}
+              visible={showNicknameModal}
               onRequestClose={() => {
-                if (accountEmail.card !== null) {
-                  accountEmail.dismiss()
-                  return
-                }
                 setShowNicknameModal(false)
                 setPendingMultiAction(null)
               }}
             >
-              {accountEmail.card === null && (
-                <NicknameModal
-                  onSave={async (name) => {
-                    const res = await updateNickname(name)
-                    if (res.error) return res
-                    setShowNicknameModal(false)
-                    if (pendingMultiAction) {
-                      executeMultiAction(pendingMultiAction)
-                      setPendingMultiAction(null)
-                    }
-                    // The second step of claiming a name, and it is immediate: the same
-                    // card turns over to ask for an address. Nothing gates it but already
-                    // having one — a player on their way into a multiplayer room gets the
-                    // room *and* the card, because the ask is worth more than the half
-                    // second of tidiness that skipping it would buy.
-                    if (email === null) accountEmail.open()
-                    return res
-                  }}
-                  onSkip={() => {
-                    setShowNicknameModal(false)
+              <NicknameModal
+                onSave={async (name) => {
+                  const res = await updateNickname(name)
+                  if (res.error) return res
+                  setShowNicknameModal(false)
+                  if (pendingMultiAction) {
+                    executeMultiAction(pendingMultiAction)
                     setPendingMultiAction(null)
-                  }}
-                />
-              )}
-              {accountEmail.card?.kind === 'address' && (
-                <EmailModal
-                  typed={accountEmail.card.typed}
-                  onSend={accountEmail.send}
-                  onDismiss={accountEmail.dismiss}
-                />
-              )}
-              {accountEmail.card?.kind === 'code' && (
-                <EmailCodeModal
-                  branch={accountEmail.card.branch}
-                  address={accountEmail.card.address}
-                  sentAt={accountEmail.card.sentAt}
-                  onConfirm={accountEmail.confirm}
-                  onResend={accountEmail.resend}
-                  onEditAddress={accountEmail.editAddress}
-                  onDismiss={accountEmail.dismiss}
-                />
-              )}
+                  }
+                  // The second step of claiming a name, and it is immediate: the card turns
+                  // over to ask for an address. Nothing gates it but already having one —
+                  // a player on their way into a multiplayer room gets the room *and* the
+                  // card, because the ask is worth more than the half second of tidiness
+                  // that skipping it would buy.
+                  if (email === null) accountEmail.open()
+                  return res
+                }}
+                onSkip={() => {
+                  setShowNicknameModal(false)
+                  setPendingMultiAction(null)
+                }}
+              />
             </CardModal>
+
+            {/* ── The address, and the profile its code brings back ──
+              Both cards in one dialog, which draws its own or nothing. */}
+            <EmailDialog flow={accountEmail} />
 
             {/* ── Multiplayer screens (above everything) ── */}
 

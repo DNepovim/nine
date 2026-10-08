@@ -46,6 +46,12 @@ export const DIM_INK = '#6A655C'
 // weight, well under the contrast a word needs.
 export const MUTED_INK = '#D4D0C8'
 
+// The `--color-primary` token as JavaScript, and the same bargain as the two above: a
+// framed digit takes its colour as a prop, because the box around it is already computing
+// one. Primary text, so it is the darkest ink the app owns — identical to `--color-strong`,
+// which is the same near-black doing the other job.
+export const PRIMARY_INK = '#1C1928'
+
 // Earning an achievement: the one hue the app had left. Modes own blue through amber,
 // gold marks a board record you *currently hold*, teal means multiplayer and grey means a
 // record just left you. An achievement is permanent and belongs to nobody else, so it

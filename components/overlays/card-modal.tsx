@@ -1,22 +1,22 @@
 import type { ReactNode } from 'react'
 import { KeyboardAvoidingView, Modal, Platform, View } from 'react-native'
 
-// One platform modal, however many cards pass through it.
-//
-// The nickname card hands over to the address card, which hands over to the six digits,
-// and each of those used to carry a `<Modal>` of its own. Swapping two of them meant
-// unmounting one and mounting the other in a single commit, which iOS answers by dropping
-// the second: a presentation cannot begin while a dismissal is still running. The card
-// that was supposed to appear immediately simply never appeared.
-//
-// So the host stays put and only its contents change. That also makes the hand-over
-// instant — there is no exit animation to sit through and no gap where the player is
-// looking at the screen behind — which is what "the card turns over" was always meant to
-// describe.
+// A platform modal with one of the app's cards inside it, and the nickname card is what it
+// holds.
 //
 // A plain `Modal` rather than the app's `ModalCard`, and the one place that is the right
-// call: these cards have a keyboard under them, and a real platform modal is what gets
+// call: this card has a keyboard under it, and a real platform modal is what gets
 // `KeyboardAvoidingView` a window of its own to lift inside.
+//
+// It used to carry the address and the six digits too, in a single host whose contents
+// swapped — because swapping two platform modals in one commit is how iOS came to drop the
+// second: a presentation cannot begin while a dismissal is still running. Those two have
+// gone to `EmailDialog`, which is the app's ordinary dialog rather than a window, so
+// nothing is presented as this one dismisses and the hand-over is safe again. What is left
+// here is the host and the reason it is a window at all.
+//
+// `visible` rather than mounting and unmounting: a platform modal animates itself out, and
+// unmounting it is what cuts that in half.
 export function CardModal({
   visible,
   // The Android back button. Routed by the caller to whichever card is up, since only the

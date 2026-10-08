@@ -1,61 +1,11 @@
 import { Trans } from '@lingui/react/macro'
 import { useEffect, useRef, useState } from 'react'
 import { Text, View } from 'react-native'
-import Animated, {
-  useAnimatedStyle,
-  useSharedValue,
-  withSequence,
-  withSpring,
-  withTiming,
-} from 'react-native-reanimated'
 
+import { CodeDigit } from '@/components/overlays/code-digit'
 import { DIM_INK } from '@/constants/colors'
 
 import { CodeKeyboard } from './code-keyboard'
-
-// A box's digit landing — the same pop-and-settle a dial key's tap gets
-// (`dial-button.tsx`'s `animateTap`), so a typed code reads as a run of presses
-// rather than text appearing. Module-level so remounting the input never remounts
-// this, per the app's Reanimated convention.
-function CodeDigit({ digit, color }: { digit: string; color: string }) {
-  const prevDigit = useRef(digit)
-  const scale = useSharedValue(digit ? 1 : 0.5)
-  const opacity = useSharedValue(digit ? 1 : 0)
-
-  useEffect(() => {
-    // Only a fill pops in — clearing a box (backspace) snaps quiet, since the
-    // keyboard's own key press already carries that action's feedback.
-    if (digit === prevDigit.current || !digit) {
-      prevDigit.current = digit
-      if (!digit) {
-        scale.value = 0.5
-        opacity.value = 0
-      }
-      return
-    }
-    prevDigit.current = digit
-    opacity.value = withTiming(1, { duration: 90 })
-    scale.value = withSequence(
-      withTiming(1.2, { duration: 90 }),
-      withSpring(1, { damping: 14, stiffness: 260 }),
-    )
-  }, [digit])
-
-  const animStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: scale.value }],
-    opacity: opacity.value,
-  }))
-
-  return (
-    <Animated.Text
-      selectable={false}
-      className="font-mono text-[28px] font-black"
-      style={[{ color }, animStyle]}
-    >
-      {digit}
-    </Animated.Text>
-  )
-}
 
 // How long the boxes hold the red flash before the wrong code clears itself —
 // long enough to register as "that was rejected", short enough that the keyboard
@@ -127,7 +77,7 @@ export function GameCodeInput({
                     : undefined,
               }}
             >
-              <CodeDigit digit={digit} color={color} />
+              <CodeDigit digit={digit} color={color} size={28} />
             </View>
           )
         })}

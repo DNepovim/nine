@@ -7,8 +7,8 @@ import { DIM_INK } from '@/constants/colors'
 import { useOnline } from '@/hooks/use-online'
 import { NICK_MAX, NICK_MIN, nicknameProblem } from '@/lib/nickname'
 
-// The card itself, with no window of its own — `CardModal` is the host, and it is shared
-// with the address card this one hands over to. See there for why.
+// The card itself, with no window of its own — `CardModal` is the host, for the keyboard's
+// sake. See there. Saving hands over to `EmailDialog`, which brings its own.
 export function NicknameModal({
   onSave,
   onSkip,
