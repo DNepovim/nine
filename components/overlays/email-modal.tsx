@@ -4,12 +4,14 @@ import { Platform, Text, TextInput, View } from 'react-native'
 
 import { TrackedPressable } from '@/components/tracked-pressable'
 import { DIM_INK } from '@/constants/colors'
+import { TYPE } from '@/constants/typography'
 import { useOnline } from '@/hooks/use-online'
 import {
   addressProblem,
   EMAIL_PROBLEM_LINES,
   type EmailProblem,
 } from '@/lib/account-email'
+import { cn } from '@/lib/cn'
 
 // One field, and it does not ask the player what they mean by it.
 //
@@ -63,7 +65,7 @@ export function EmailModal({
       {/* The question this answers is the dialog's own title — see `EmailDialog`. */}
       <Text
         selectable={false}
-        className="mb-4 mt-2 font-mono text-[9px] font-bold leading-[15px] tracking-[0.5px] text-dim"
+        className={cn(TYPE.hint, 'mb-4 mt-2 leading-[15px] text-dim')}
       >
         <Trans>So you can get your profile back on another phone.</Trans>
       </Text>
@@ -94,19 +96,13 @@ export function EmailModal({
       />
 
       {problem !== null && (
-        <Text
-          selectable={false}
-          className="mb-3 font-mono text-[9px] font-bold tracking-[0.5px] text-red-500"
-        >
+        <Text selectable={false} className={cn(TYPE.hint, 'mb-3 text-red-500')}>
           {t(EMAIL_PROBLEM_LINES[problem])}
         </Text>
       )}
 
       {problem === null && !online && (
-        <Text
-          selectable={false}
-          className="mb-3 font-mono text-[9px] font-bold tracking-[0.5px] text-dim"
-        >
+        <Text selectable={false} className={cn(TYPE.hint, 'mb-3 text-dim')}>
           <Trans>No connection — a code can only be sent online.</Trans>
         </Text>
       )}
@@ -117,7 +113,7 @@ export function EmailModal({
               promise that had quietly stopped applying. */}
       <Text
         selectable={false}
-        className="mb-1 font-mono text-[8px] font-bold leading-[12px] tracking-[0.5px] text-dim"
+        className={cn(TYPE.caption, 'mb-1 leading-[12px] text-dim')}
       >
         <Trans>
           Only ever used to get your profile back. No newsletters, no offers, nothing else
@@ -131,10 +127,7 @@ export function EmailModal({
           onPress={onDismiss}
           className="flex-1 items-center rounded-xl bg-card py-3"
         >
-          <Text
-            selectable={false}
-            className="font-mono text-[11px] font-black tracking-[1.5px] text-dim"
-          >
+          <Text selectable={false} className={cn(TYPE.buttonSm, 'text-dim')}>
             <Trans>CANCEL</Trans>
           </Text>
         </TrackedPressable>
@@ -148,10 +141,7 @@ export function EmailModal({
           className="flex-1 items-center rounded-xl bg-primary py-3"
           style={{ opacity: canSend ? 1 : 0.5 }}
         >
-          <Text
-            selectable={false}
-            className="font-mono text-[11px] font-black tracking-[1.5px] text-on-strong"
-          >
+          <Text selectable={false} className={cn(TYPE.buttonSm, 'text-on-strong')}>
             {sending ? <Trans>SENDING…</Trans> : <Trans>SEND CODE</Trans>}
           </Text>
         </TrackedPressable>

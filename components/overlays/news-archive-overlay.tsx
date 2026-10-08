@@ -2,9 +2,11 @@ import { Trans } from '@lingui/react/macro'
 import { FlatList, Text } from 'react-native'
 
 import { NewsRelease } from '@/components/overlays/news-release'
+import { PrimaryButton } from '@/components/primary-button'
 import { ScreenLayer } from '@/components/screen'
-import { TrackedPressable } from '@/components/tracked-pressable'
 import { RELEASES } from '@/constants/news'
+import { TYPE } from '@/constants/typography'
+import { cn } from '@/lib/cn'
 import type { Release } from '@/types/news'
 
 const keyOf = (release: Release) => release.date
@@ -14,16 +16,10 @@ const keyOf = (release: Release) => release.date
 export function NewsArchiveOverlay({ onClose }: { onClose: () => void }) {
   return (
     <ScreenLayer className="px-6 pb-6 pt-16">
-      <Text
-        selectable={false}
-        className="mb-1 font-mono text-[20px] font-black tracking-[3px] text-primary"
-      >
+      <Text selectable={false} className={cn(TYPE.screenTitle, 'mb-1 text-primary')}>
         <Trans>WHAT’S NEW</Trans>
       </Text>
-      <Text
-        selectable={false}
-        className="mb-6 font-mono text-[10px] font-bold tracking-[1px] text-dim"
-      >
+      <Text selectable={false} className={cn(TYPE.label, 'mb-6 text-dim')}>
         <Trans>EVERYTHING THAT’S CHANGED</Trans>
       </Text>
 
@@ -33,25 +29,19 @@ export function NewsArchiveOverlay({ onClose }: { onClose: () => void }) {
         renderItem={({ item }) => <NewsRelease release={item} />}
         showsVerticalScrollIndicator={false}
         ListEmptyComponent={
-          <Text selectable={false} className="font-mono text-[12px] font-medium text-dim">
+          <Text selectable={false} className={cn(TYPE.prose, 'text-dim')}>
             <Trans>Nothing announced yet.</Trans>
           </Text>
         }
       />
 
-      <TrackedPressable
+      <PrimaryButton
         id="news.done"
         onPress={onClose}
-        className="mt-4 items-center self-center rounded-2xl bg-strong py-4"
+        className="mt-4 self-center"
         style={{ width: 224 }}
-      >
-        <Text
-          selectable={false}
-          className="font-mono text-[13px] font-black tracking-[2px] text-on-strong"
-        >
-          <Trans>DONE</Trans>
-        </Text>
-      </TrackedPressable>
+        label={<Trans>DONE</Trans>}
+      />
     </ScreenLayer>
   )
 }

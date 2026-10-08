@@ -3,6 +3,8 @@ import { Text } from 'react-native'
 
 import { CompareRow } from '@/components/overlays/compare-row'
 import { CompareValue } from '@/components/overlays/compare-value'
+import { TYPE } from '@/constants/typography'
+import { cn } from '@/lib/cn'
 import { toneFor, type CompareSide } from '@/lib/compare'
 
 // What the six boards above it came to: how many of them each side takes.
@@ -36,7 +38,7 @@ export function CompareWonRow({
       <Text
         selectable={false}
         numberOfLines={1}
-        className="flex-1 font-mono text-[9px] font-black tracking-[1px] text-primary"
+        className={cn(TYPE.rowLabel, 'flex-1 text-primary')}
       >
         <Trans>WON</Trans>
       </Text>

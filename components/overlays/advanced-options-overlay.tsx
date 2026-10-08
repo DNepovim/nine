@@ -5,12 +5,15 @@ import { Text, View } from 'react-native'
 
 import { LocaleToggle } from '@/components/locale-toggle'
 import { OptionCheckbox } from '@/components/overlays/option-checkbox'
+import { PrimaryButton } from '@/components/primary-button'
 import { Screen } from '@/components/screen'
 import { TrackedPressable } from '@/components/tracked-pressable'
 import { DIM_INK } from '@/constants/colors'
+import { TYPE } from '@/constants/typography'
 import { useLocale } from '@/hooks/use-locale'
 import type { ReplayConsent } from '@/hooks/use-replay-consent'
 import { buildInfo } from '@/lib/build-info'
+import { cn } from '@/lib/cn'
 
 function AdvancedOption({
   checked,
@@ -34,16 +37,10 @@ function AdvancedOption({
     >
       <OptionCheckbox checked={checked} />
       <View className="flex-1">
-        <Text
-          selectable={false}
-          className="font-mono text-[13px] font-black tracking-[1px] text-primary"
-        >
+        <Text selectable={false} className={cn(TYPE.button, 'text-primary')}>
           {label}
         </Text>
-        <Text
-          selectable={false}
-          className="mt-0.5 font-mono text-[10px] font-bold tracking-[0.5px] text-dim"
-        >
+        <Text selectable={false} className={cn(TYPE.value, 'mt-0.5 text-dim')}>
           {description}
         </Text>
       </View>
@@ -73,10 +70,7 @@ export function AdvancedOptionsOverlay({
   const build = buildInfo()
   return (
     <Screen overlay>
-      <Text
-        selectable={false}
-        className="mb-8 font-mono text-[20px] font-black tracking-[3px] text-primary"
-      >
+      <Text selectable={false} className={cn(TYPE.screenTitle, 'mb-8 text-primary')}>
         <Trans>ADVANCED</Trans>
       </Text>
 
@@ -96,10 +90,7 @@ export function AdvancedOptionsOverlay({
 
       {/* Language */}
       <View className="flex-row items-center justify-between py-3" style={{ width: 300 }}>
-        <Text
-          selectable={false}
-          className="font-mono text-[13px] font-black tracking-[1px] text-primary"
-        >
+        <Text selectable={false} className={cn(TYPE.button, 'text-primary')}>
           <Trans>LANGUAGE</Trans>
         </Text>
         <LocaleToggle locale={locale} onSelect={setLocale} />
@@ -112,10 +103,7 @@ export function AdvancedOptionsOverlay({
         className="flex-row items-center justify-between py-3"
         style={{ width: 300 }}
       >
-        <Text
-          selectable={false}
-          className="font-mono text-[13px] font-black tracking-[1px] text-primary"
-        >
+        <Text selectable={false} className={cn(TYPE.button, 'text-primary')}>
           <Trans>WHAT’S NEW</Trans>
         </Text>
         <AntDesign name="right" size={14} color={DIM_INK} />
@@ -125,25 +113,19 @@ export function AdvancedOptionsOverlay({
       <View className="flex-row items-center justify-between pt-3" style={{ width: 300 }}>
         <Text
           selectable={false}
-          className="text-center w-full font-mono text-[10px] font-bold tracking-[0.5px] text-dim"
+          className={cn(TYPE.value, 'text-center w-full text-dim')}
         >
           {build.label}
         </Text>
       </View>
 
-      <TrackedPressable
+      <PrimaryButton
         id="options.done"
         onPress={onClose}
-        className="mt-8 items-center rounded-2xl bg-strong py-4"
+        className="mt-8"
         style={{ width: 224 }}
-      >
-        <Text
-          selectable={false}
-          className="font-mono text-[13px] font-black tracking-[2px] text-on-strong"
-        >
-          <Trans>DONE</Trans>
-        </Text>
-      </TrackedPressable>
+        label={<Trans>DONE</Trans>}
+      />
     </Screen>
   )
 }

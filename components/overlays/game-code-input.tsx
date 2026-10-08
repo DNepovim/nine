@@ -4,6 +4,8 @@ import { Text, View } from 'react-native'
 
 import { CodeDigit } from '@/components/overlays/code-digit'
 import { DIM_INK } from '@/constants/colors'
+import { TYPE } from '@/constants/typography'
+import { cn } from '@/lib/cn'
 
 import { CodeKeyboard } from './code-keyboard'
 
@@ -85,7 +87,7 @@ export function GameCodeInput({
       {joinError !== null ? (
         <Text
           selectable={false}
-          className="mt-3 font-mono text-[10px] font-bold tracking-[1px]"
+          className={cn(TYPE.label, 'mt-3')}
           style={{ color: '#E5534B' }}
         >
           {joinError}

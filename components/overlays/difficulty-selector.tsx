@@ -12,6 +12,7 @@ import Animated, {
 } from 'react-native-reanimated'
 
 import { TrackedPressable } from '@/components/tracked-pressable'
+import { TYPE } from '@/constants/typography'
 import {
   DIFFICULTIES,
   DIFFICULTY_ORDER,
@@ -218,7 +219,7 @@ export function DifficultySelector({
           >
             <Animated.Text
               selectable={false}
-              className="font-mono text-[11px] font-black tracking-[1.5px]"
+              className={TYPE.buttonSm}
               style={textStyles[i]}
             >
               {t(DIFFICULTIES[d].label)}

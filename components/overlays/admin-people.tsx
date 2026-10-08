@@ -3,8 +3,10 @@ import { useEffect, useState } from 'react'
 import { ActivityIndicator, FlatList, Text, TextInput, View } from 'react-native'
 
 import { GradientName } from '@/components/gradient-name'
+import { PrimaryButton } from '@/components/primary-button'
 import { TrackedPressable } from '@/components/tracked-pressable'
 import { DIM_INK } from '@/constants/colors'
+import { TYPE } from '@/constants/typography'
 import { EMPTY_IDS, usePlayerFactors } from '@/hooks/use-player-factors'
 import {
   findPersonByNickname,
@@ -26,10 +28,7 @@ import type { NameFactors } from '@/lib/name-gradient'
 function You() {
   return (
     <View className="rounded border border-dim/30 px-1 py-px">
-      <Text
-        selectable={false}
-        className="font-mono text-[8px] font-black tracking-[1px] text-dim"
-      >
+      <Text selectable={false} className={cn(TYPE.caption, 'text-dim')}>
         <Trans>YOU</Trans>
       </Text>
     </View>
@@ -68,10 +67,7 @@ function PersonRow({
             there is nothing there, so it stays in the plain ink the rest of the row is in
             rather than wearing a gradient belonging to somebody. */}
         {person.nickname === null ? (
-          <Text
-            selectable={false}
-            className="shrink font-mono text-[12px] font-black tracking-[0.5px] text-primary"
-          >
+          <Text selectable={false} className={cn(TYPE.prose, 'shrink text-primary')}>
             <Trans>(no nickname)</Trans>
           </Text>
         ) : (
@@ -80,24 +76,18 @@ function PersonRow({
             avgAccuracy={factors.avgAccuracy}
             avgSpeed={factors.avgSpeed}
             numberOfLines={1}
-            className="shrink font-mono text-[12px] font-black tracking-[0.5px]"
+            className={cn(TYPE.prose, 'shrink')}
           />
         )}
         {me && <You />}
       </View>
-      <Text
-        selectable={false}
-        className="w-20 font-mono text-[10px] font-bold tracking-[1px] text-dim"
-      >
+      <Text selectable={false} className={cn(TYPE.label, 'w-20 text-dim')}>
         {person.role ?? ''}
       </Text>
       {/* The count is features in effect, and the star marks somebody whose count is not
           their role's — the one thing a list of people can usefully say about an
           override without opening anybody. */}
-      <Text
-        selectable={false}
-        className="w-8 text-right font-mono text-[10px] font-bold tracking-[1px] text-dim"
-      >
+      <Text selectable={false} className={cn(TYPE.label, 'w-8 text-right text-dim')}>
         {person.featureCount}
         {person.hasOverrides ? ' ✦' : ''}
       </Text>
@@ -186,32 +176,20 @@ export function AdminPeople({
           }}
           className="flex-1 rounded-lg border border-dim/30 bg-background px-3 py-2 font-mono font-bold tracking-[1px] text-primary"
         />
-        <TrackedPressable
+        <PrimaryButton
           id="admin.find"
+          variant="compact"
           onPress={() => {
             void handleSearch()
           }}
           disabled={searching || query.trim() === ''}
-          className={cn(
-            'items-center justify-center rounded-lg bg-strong px-4',
-            (searching || query.trim() === '') && 'opacity-40',
-          )}
-        >
-          <Text
-            selectable={false}
-            className="font-mono text-[11px] font-black tracking-[1px] text-on-strong"
-          >
-            <Trans>FIND</Trans>
-          </Text>
-        </TrackedPressable>
+          label={<Trans>FIND</Trans>}
+        />
       </View>
 
       {searching && <ActivityIndicator className="my-2" />}
       {searchError !== null && (
-        <Text
-          selectable={false}
-          className="mb-2 font-mono text-[10px] font-bold tracking-[0.5px] text-red-500"
-        >
+        <Text selectable={false} className={cn(TYPE.value, 'mb-2 text-red-500')}>
           {searchError}
         </Text>
       )}
@@ -228,16 +206,13 @@ export function AdminPeople({
         </View>
       )}
 
-      <Text
-        selectable={false}
-        className="mb-1 font-mono text-[10px] font-bold tracking-[1px] text-dim"
-      >
+      <Text selectable={false} className={cn(TYPE.label, 'mb-1 text-dim')}>
         <Trans>EVERYONE WITH A ROLE OR AN OVERRIDE</Trans>
       </Text>
       {loading ? (
         <ActivityIndicator className="my-4" />
       ) : listError !== null ? (
-        <Text selectable={false} className="font-mono text-[11px] font-bold text-red-500">
+        <Text selectable={false} className={cn(TYPE.figure, 'text-red-500')}>
           {listError}
         </Text>
       ) : (
@@ -257,10 +232,7 @@ export function AdminPeople({
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
           ListEmptyComponent={
-            <Text
-              selectable={false}
-              className="font-mono text-[12px] font-medium text-dim"
-            >
+            <Text selectable={false} className={cn(TYPE.prose, 'text-dim')}>
               <Trans>Nobody holds a role yet.</Trans>
             </Text>
           }

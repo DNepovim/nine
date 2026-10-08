@@ -1,6 +1,7 @@
 import { Text } from 'react-native'
 
 import { GOLD_INK } from '@/constants/colors'
+import { TYPE } from '@/constants/typography'
 import { cn } from '@/lib/cn'
 
 // How wide a column of figures is. Four points wider than it was, bought for the caret
@@ -38,7 +39,8 @@ export function CompareValue({
       numberOfLines={1}
       className={cn(
         VALUE_WIDTH,
-        'text-right font-mono text-[11px] font-bold',
+        TYPE.figure,
+        'text-right',
         tone === 'trail' ? 'text-dim' : 'text-primary',
       )}
       style={tone === 'lead' ? { color: GOLD_INK } : undefined}

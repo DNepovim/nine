@@ -6,6 +6,8 @@ import { Text, View } from 'react-native'
 
 import { TrackedPressable } from '@/components/tracked-pressable'
 import { DIM_INK } from '@/constants/colors'
+import { GLYPH, TYPE } from '@/constants/typography'
+import { cn } from '@/lib/cn'
 import { PERIOD_CODES, type Medal } from '@/lib/medals'
 import { rankMedal } from '@/lib/rank-emoji'
 import { DIFFICULTIES, gradientOf } from '@/modes'
@@ -43,12 +45,12 @@ export function MedalLine({
       {medals.map((medal, i) => (
         <Fragment key={medal.mode}>
           {i > 0 && !wrap && (
-            <Text selectable={false} className="font-mono text-[9px] text-dim">
+            <Text selectable={false} className={cn(TYPE.hint, 'text-dim')}>
               ·
             </Text>
           )}
           <View className="flex-row items-center gap-1">
-            <Text selectable={false} className="text-[11px] leading-[13px]">
+            <Text selectable={false} className={cn(GLYPH.sm, 'leading-[13px]')}>
               {rankMedal(medal.rank)}
             </Text>
             {/* Board then period, one shade apart: the board is what was won and
@@ -56,14 +58,14 @@ export function MedalLine({
                 in dim, so a glance reads the medals before it reads the windows. */}
             <Text
               selectable={false}
-              className="font-mono text-[9px] font-black leading-[13px] tracking-[1px]"
+              className={cn(TYPE.rowLabel, 'leading-[13px]')}
               style={{ color: gradientOf(medal.mode)[0] }}
             >
               {t(DIFFICULTIES[medal.difficulty].code)}
             </Text>
             <Text
               selectable={false}
-              className="font-mono text-[8px] font-bold leading-[13px] tracking-[0.5px] text-dim"
+              className={cn(TYPE.caption, 'leading-[13px] text-dim')}
             >
               {PERIOD_CODES[medal.period]}
             </Text>

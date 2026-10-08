@@ -10,11 +10,13 @@ import {
   type AchievementId,
 } from '@/constants/achievements'
 import { ACHIEVEMENT_INK } from '@/constants/colors'
+import { GLYPH, TYPE } from '@/constants/typography'
 import { useFlag } from '@/hooks/use-flags'
 import { useViewport } from '@/hooks/use-viewport'
 import { firstEarnedAt, idsOf, stagesOf } from '@/lib/achievement-store'
 import type { AchievementStore } from '@/lib/achievement-store'
 import { boardMarks, stageProgress, type AchievementFacts } from '@/lib/achievements'
+import { cn } from '@/lib/cn'
 
 import { AchievementRow } from './achievement-row'
 import { ModalCard } from './modal-card'
@@ -72,7 +74,7 @@ export function AchievementsOverlay({
     <ModalCard
       title={<Trans>ACHIEVEMENTS</Trans>}
       icon={
-        <Text selectable={false} className="text-[11px]">
+        <Text selectable={false} className={GLYPH.sm}>
           🏆
         </Text>
       }
@@ -81,10 +83,7 @@ export function AchievementsOverlay({
     >
       {() => (
         <>
-          <Text
-            selectable={false}
-            className="mb-2 font-mono text-[10px] font-bold tracking-[1px] text-dim"
-          >
+          <Text selectable={false} className={cn(TYPE.label, 'mb-2 text-dim')}>
             <Text style={{ color: ACHIEVEMENT_INK }}>{earnedAt.size}</Text>
             {/* The whole catalogue, not the sections above it — so a player without the
                 multiplayer feature reads a ceiling they cannot quite reach.
@@ -109,7 +108,7 @@ export function AchievementsOverlay({
             renderSectionHeader={({ section }) => (
               <Text
                 selectable={false}
-                className="bg-surface pb-1 pt-4 font-mono text-[9px] font-black tracking-[2px] text-dim"
+                className={cn(TYPE.sectionLabel, 'bg-surface pb-1 pt-4 text-dim')}
               >
                 {GROUP_LABELS[section.title]}
               </Text>

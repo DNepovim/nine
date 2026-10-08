@@ -2,6 +2,9 @@ import type { MessageDescriptor } from '@lingui/core'
 import { useLingui } from '@lingui/react/macro'
 import { Text, View } from 'react-native'
 
+import { TYPE } from '@/constants/typography'
+import { cn } from '@/lib/cn'
+
 // Lays out the tips the panel will actually show, at the panel's own width, and reports
 // each height — so the body can be sized to the tallest of them rather than to a
 // hand-tuned constant that has to be re-guessed whenever a tip is edited.
@@ -33,7 +36,7 @@ export function TipSizer({
         <Text
           key={i}
           selectable={false}
-          className="text-center font-mono text-[12px] font-medium leading-[19px] text-primary"
+          className={cn(TYPE.prose, 'text-center text-primary')}
           onLayout={(e) => {
             onMeasure(e.nativeEvent.layout.height)
           }}

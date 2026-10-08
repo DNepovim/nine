@@ -9,9 +9,11 @@ import { PieCountdown } from '@/components/game/pie-countdown'
 import { ScoreDigit } from '@/components/game/score-digit'
 import { TrackedPressable } from '@/components/tracked-pressable'
 import { PIE_SIZE } from '@/constants/game'
+import { TYPE } from '@/constants/typography'
 import { SUM_ROW_HEIGHT } from '@/hooks/use-dial-metrics'
 import { useMultiplayerDial } from '@/hooks/use-multiplayer-dial'
 import { useScoreDirection } from '@/hooks/use-score-direction'
+import { cn } from '@/lib/cn'
 import { valueProgress } from '@/lib/value-progress'
 import {
   DARK_MULTIPLAYER_GRADIENT,
@@ -149,15 +151,12 @@ export function MultiplayerGame({
         <View className="flex-1">
           <Text
             selectable={false}
-            className="font-mono text-[13px] font-black tracking-[2px]"
+            className={TYPE.button}
             style={{ color: myGradient[0] }}
           >
             {t(labelOf(mode))}
           </Text>
-          <Text
-            selectable={false}
-            className="font-mono text-[10px] font-bold tracking-[1px] text-dim"
-          >
+          <Text selectable={false} className={cn(TYPE.label, 'text-dim')}>
             <Trans>MULTIPLAYER</Trans>
           </Text>
         </View>
@@ -172,10 +171,7 @@ export function MultiplayerGame({
                 would otherwise leave the word 4px left of the bar's centre. */}
             NINE
           </Text>
-          <Text
-            selectable={false}
-            className="font-mono text-[10px] font-bold tracking-[2px] text-dim"
-          >
+          <Text selectable={false} className={cn(TYPE.quietAction, 'text-dim')}>
             {Math.min(targetCount + 1, 10)} / 10
           </Text>
         </View>

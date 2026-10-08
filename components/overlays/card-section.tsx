@@ -1,6 +1,9 @@
 import type { ReactNode } from 'react'
 import { Text, View } from 'react-native'
 
+import { TYPE } from '@/constants/typography'
+import { cn } from '@/lib/cn'
+
 // One named block of a dialog: a label in the house's small caps, and the figures it
 // names on a card under it.
 //
@@ -20,10 +23,7 @@ export function CardSection({
 }) {
   return (
     <View className="gap-1">
-      <Text
-        selectable={false}
-        className="font-mono text-[9px] font-black tracking-[2px] text-dim"
-      >
+      <Text selectable={false} className={cn(TYPE.sectionLabel, 'text-dim')}>
         {label}
       </Text>
       <View className="rounded-2xl bg-card px-3 py-1.5">{children}</View>

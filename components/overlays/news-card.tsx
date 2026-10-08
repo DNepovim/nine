@@ -3,6 +3,8 @@ import { useLingui } from '@lingui/react/macro'
 import { Text, View } from 'react-native'
 
 import { MarkdownText } from '@/components/markdown-text'
+import { TYPE } from '@/constants/typography'
+import { cn } from '@/lib/cn'
 import type { NewsItem } from '@/types/news'
 
 // One announcement. Sized by its content — the dialog around it decides how
@@ -23,7 +25,7 @@ export function NewsCard({ item }: { item: NewsItem }) {
 
         <Text
           selectable={false}
-          className="mt-4 text-center font-mono text-[17px] font-black tracking-[2px]"
+          className={cn(TYPE.cardTitle, 'mt-4 text-center')}
           style={{ color: item.accent }}
         >
           {t(item.title).toUpperCase()}

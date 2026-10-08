@@ -2,8 +2,10 @@ import { Trans } from '@lingui/react/macro'
 import { useEffect, useState } from 'react'
 import { ActivityIndicator, FlatList, Text, TextInput, View } from 'react-native'
 
+import { PrimaryButton } from '@/components/primary-button'
 import { TrackedPressable } from '@/components/tracked-pressable'
 import { DIM_INK } from '@/constants/colors'
+import { TYPE } from '@/constants/typography'
 import { createRole, listRoles, type AdminRole } from '@/lib/admin/roles'
 import { cn } from '@/lib/cn'
 
@@ -68,31 +70,19 @@ export function AdminRoles({
           autoCorrect={false}
           className="flex-1 rounded-lg border border-dim/30 bg-background px-3 py-2 font-mono font-bold tracking-[1px] text-primary"
         />
-        <TrackedPressable
+        <PrimaryButton
           id="admin.role_new"
+          variant="compact"
           onPress={() => {
             void handleCreate()
           }}
           disabled={busy || draft.trim() === ''}
-          className={cn(
-            'items-center justify-center rounded-lg bg-strong px-4',
-            (busy || draft.trim() === '') && 'opacity-40',
-          )}
-        >
-          <Text
-            selectable={false}
-            className="font-mono text-[11px] font-black tracking-[1px] text-on-strong"
-          >
-            <Trans>ADD</Trans>
-          </Text>
-        </TrackedPressable>
+          label={<Trans>ADD</Trans>}
+        />
       </View>
 
       {error !== null && (
-        <Text
-          selectable={false}
-          className="mb-2 font-mono text-[10px] font-bold tracking-[0.5px] text-red-500"
-        >
+        <Text selectable={false} className={cn(TYPE.value, 'mb-2 text-red-500')}>
           {error}
         </Text>
       )}
@@ -111,18 +101,12 @@ export function AdminRoles({
               }}
               className="flex-row items-center justify-between border-b border-dim/10 py-2.5"
             >
-              <Text
-                selectable={false}
-                className="flex-1 font-mono text-[12px] font-black tracking-[1px] text-primary"
-              >
+              <Text selectable={false} className={cn(TYPE.prose, 'flex-1 text-primary')}>
                 {item.label}
               </Text>
               {/* Features in the stack, then people holding the role. The second is the
                   warning the detail screen repeats: editing a stack moves all of them. */}
-              <Text
-                selectable={false}
-                className="font-mono text-[10px] font-medium tracking-[0.5px] text-dim"
-              >
+              <Text selectable={false} className={cn(TYPE.value, 'text-dim')}>
                 {item.featureCount} · {item.personCount}
               </Text>
             </TrackedPressable>

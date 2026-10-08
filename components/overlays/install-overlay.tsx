@@ -5,9 +5,11 @@ import { Text, View } from 'react-native'
 
 import { InstallSteps } from '@/components/overlays/install-steps'
 import { ModalCard } from '@/components/overlays/modal-card'
-import { TrackedPressable } from '@/components/tracked-pressable'
+import { PrimaryButton } from '@/components/primary-button'
 import { APP_VIOLET } from '@/constants/colors'
+import { TYPE } from '@/constants/typography'
 import { track } from '@/lib/analytics'
+import { cn } from '@/lib/cn'
 import type { InstallableTarget } from '@/types/install'
 
 type IoniconName = keyof typeof Ionicons.glyphMap
@@ -93,7 +95,7 @@ export function InstallOverlay({
 
             <Text
               selectable={false}
-              className="mt-4 text-center font-mono text-[17px] font-black tracking-[2px]"
+              className={cn(TYPE.cardTitle, 'mt-4 text-center')}
               style={{ color: APP_VIOLET }}
             >
               <Trans>ADD TO HOME SCREEN</Trans>
@@ -101,7 +103,7 @@ export function InstallOverlay({
 
             <Text
               selectable={false}
-              className="mt-2 text-center font-mono text-[12px] leading-[18px] text-dim"
+              className={cn(TYPE.prose, 'mt-2 text-center text-dim')}
             >
               {BODY[target]}
             </Text>
@@ -110,7 +112,7 @@ export function InstallOverlay({
           {stepOne !== null && <InstallSteps stepOne={stepOne} />}
 
           <View className="mt-4 flex-row items-center justify-center">
-            <TrackedPressable
+            <PrimaryButton
               id="install.action"
               onPress={() => {
                 // No exit animation on the install path: prompt() has to stay
@@ -119,16 +121,9 @@ export function InstallOverlay({
                 if (target === 'prompt') onInstall()
                 else close()
               }}
-              className="flex-row items-center justify-center gap-2 rounded-2xl bg-strong px-6 py-3.5"
-            >
-              <Text
-                selectable={false}
-                className="font-mono text-[12px] font-black tracking-[1.5px] text-on-strong"
-              >
-                {CTA_LABEL[target]}
-              </Text>
-              <Ionicons name={CTA_ICON[target]} size={14} color="#d8d2f4" />
-            </TrackedPressable>
+              label={CTA_LABEL[target]}
+              icon={<Ionicons name={CTA_ICON[target]} size={14} color="#d8d2f4" />}
+            />
           </View>
         </>
       )}

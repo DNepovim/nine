@@ -19,6 +19,7 @@ import {
   MODE_SCREEN_TOKENS,
 } from '@/constants/colors'
 import { CROWN_CORONA, ON_GOLD_LABEL_SHADOW } from '@/constants/theme'
+import { GLYPH, TYPE } from '@/constants/typography'
 import { useBarColor } from '@/hooks/use-bar-color'
 import { useBoardContext } from '@/hooks/use-board'
 import type { AchievementStore } from '@/lib/achievement-store'
@@ -26,6 +27,7 @@ import type { AchievementFacts, Award } from '@/lib/achievements'
 import type { Period } from '@/lib/announcements'
 import { currentBoardMedals } from '@/lib/board-medals'
 import type { RecordScreen } from '@/lib/champions'
+import { cn } from '@/lib/cn'
 import type { TitleWords } from '@/lib/game-over-title'
 import { runChallenge, type Challenge } from '@/lib/next-challenge'
 import { fortuneOf } from '@/lib/player-profile'
@@ -117,7 +119,7 @@ function HomeExit({
         />
         <Text
           selectable={false}
-          className="font-mono text-[10px] font-bold tracking-[1.8px] text-dim"
+          className={cn(TYPE.quietAction, 'text-dim')}
           style={painted ? ON_GOLD_LABEL_SHADOW : null}
         >
           <Trans>HOME</Trans>
@@ -266,7 +268,7 @@ export function GameOverOverlay({
                   and the spring would overwrite each other. */}
               <Text
                 selectable={false}
-                className="letter-float-1 text-[44px] leading-[52px]"
+                className={cn(GLYPH['4xl'], 'letter-float-1 leading-[52px]')}
                 style={CROWN_CORONA}
               >
                 {emblem}
@@ -313,7 +315,7 @@ export function GameOverOverlay({
           {isOneOf(gameMode, SCORED_MODES) && score > 0 && (
             <Text
               selectable={false}
-              className="mb-2 font-mono text-[9px] font-bold tracking-[1px] text-dim"
+              className={cn(TYPE.labelSm, 'mb-2 text-dim')}
               style={painted ? ON_GOLD_LABEL_SHADOW : null}
             >
               <Trans>+{fortuneOf(score, difficulty)} TO YOUR FORTUNE</Trans>

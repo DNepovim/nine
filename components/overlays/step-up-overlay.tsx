@@ -6,6 +6,8 @@ import { Text, View } from 'react-native'
 import { Screen } from '@/components/screen'
 import { TrackedPressable } from '@/components/tracked-pressable'
 import { DIM_INK } from '@/constants/colors'
+import { TYPE } from '@/constants/typography'
+import { cn } from '@/lib/cn'
 import type { TitleWords } from '@/lib/game-over-title'
 import { darkGradientOf, type Difficulty, type ModeId } from '@/modes'
 
@@ -57,7 +59,7 @@ export function StepUpOverlay({
             score goes somewhere, and the lives run out. */}
         <Text
           selectable={false}
-          className="mb-6 max-w-3xs text-center font-mono text-[12px] leading-[18px] text-dim"
+          className={cn(TYPE.prose, 'mb-6 max-w-3xs text-center text-dim')}
         >
           <Trans>Three lives, and every score reaches the board.</Trans>
         </Text>
@@ -77,10 +79,7 @@ export function StepUpOverlay({
               end={{ x: 1, y: 0.5 }}
               className="items-center py-4"
             >
-              <Text
-                selectable={false}
-                className="font-mono text-[13px] font-black tracking-[2px] text-on-strong"
-              >
+              <Text selectable={false} className={cn(TYPE.button, 'text-on-strong')}>
                 <Trans>START GAME</Trans>
               </Text>
             </LinearGradient>
@@ -92,10 +91,7 @@ export function StepUpOverlay({
           <TrackedPressable id="step_up.other_mode" onPress={onOtherMode} hitSlop={10}>
             <View className="flex-row items-center gap-1">
               <Ionicons name="home-outline" size={10} color={DIM_INK} />
-              <Text
-                selectable={false}
-                className="font-mono text-[10px] font-bold tracking-[1.8px] text-dim"
-              >
+              <Text selectable={false} className={cn(TYPE.quietAction, 'text-dim')}>
                 <Trans>TRY ANOTHER MODE</Trans>
               </Text>
             </View>

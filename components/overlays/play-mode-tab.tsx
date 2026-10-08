@@ -13,6 +13,7 @@ import Animated, {
 import { CornerBadge } from '@/components/overlays/corner-badge'
 import { TrackedPressable } from '@/components/tracked-pressable'
 import { DIM_INK } from '@/constants/colors'
+import { TYPE } from '@/constants/typography'
 import { gradientOf, MULTIPLAYER_GRADIENT, type ModeId } from '@/modes'
 
 export type PlayMode = 'alone' | 'friends'
@@ -148,7 +149,7 @@ export function PlayModeTab({
           >
             <Animated.Text
               selectable={false}
-              className="font-mono text-[11px] font-black tracking-[1.5px]"
+              className={TYPE.buttonSm}
               style={i === 0 ? textStyle0 : textStyle1}
             >
               {label}

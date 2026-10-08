@@ -2,8 +2,10 @@ import { Trans } from '@lingui/react/macro'
 import { useEffect, useState } from 'react'
 import { ActivityIndicator, ScrollView, Text, TextInput, View } from 'react-native'
 
+import { PrimaryButton } from '@/components/primary-button'
 import { ScreenLayer } from '@/components/screen'
 import { TrackedPressable } from '@/components/tracked-pressable'
+import { TYPE } from '@/constants/typography'
 import { listFeatures, type AdminFeature } from '@/lib/admin/features'
 import {
   deleteRole,
@@ -121,18 +123,12 @@ export function AdminRole({
       </View>
       {/* The count is the warning: editing the stack below moves every one of them who
           has not overridden the feature being changed. */}
-      <Text
-        selectable={false}
-        className="mb-4 ml-6 font-mono text-[10px] font-bold tracking-[1px] text-dim"
-      >
+      <Text selectable={false} className={cn(TYPE.label, 'mb-4 ml-6 text-dim')}>
         {held} <Trans>holding this role</Trans>
       </Text>
 
       {error !== null && (
-        <Text
-          selectable={false}
-          className="mb-2 font-mono text-[10px] font-bold tracking-[0.5px] text-red-500"
-        >
+        <Text selectable={false} className={cn(TYPE.value, 'mb-2 text-red-500')}>
           {error}
         </Text>
       )}
@@ -146,10 +142,7 @@ export function AdminRole({
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
         >
-          <Text
-            selectable={false}
-            className="mb-1 font-mono text-[10px] font-bold tracking-[1px] text-dim"
-          >
+          <Text selectable={false} className={cn(TYPE.label, 'mb-1 text-dim')}>
             <Trans>FEATURES IN THIS STACK</Trans>
           </Text>
           {features.map((feature) => {
@@ -164,26 +157,20 @@ export function AdminRole({
                 }}
                 className="flex-row items-center py-2"
               >
-                <Text
-                  selectable={false}
-                  className="w-5 font-mono text-[12px] font-black text-primary"
-                >
+                <Text selectable={false} className={cn(TYPE.prose, 'w-5 text-primary')}>
                   {on ? '●' : '○'}
                 </Text>
                 <Text
                   selectable={false}
                   className={cn(
-                    'flex-1 font-mono text-[12px] font-bold tracking-[0.5px] text-primary',
+                    cn(TYPE.prose, 'flex-1 text-primary'),
                     !feature.active && 'line-through',
                   )}
                 >
                   {feature.key}
                 </Text>
                 {!feature.active && (
-                  <Text
-                    selectable={false}
-                    className="font-mono text-[10px] font-medium text-dim"
-                  >
+                  <Text selectable={false} className={cn(TYPE.value, 'text-dim')}>
                     <Trans>off for everyone</Trans>
                   </Text>
                 )}
@@ -202,29 +189,20 @@ export function AdminRole({
               (busy || held > 0) && 'opacity-40',
             )}
           >
-            <Text
-              selectable={false}
-              className="font-mono text-[11px] font-black tracking-[1.5px] text-red-500"
-            >
+            <Text selectable={false} className={cn(TYPE.buttonSm, 'text-red-500')}>
               <Trans>DELETE ROLE</Trans>
             </Text>
           </TrackedPressable>
         </ScrollView>
       )}
 
-      <TrackedPressable
+      <PrimaryButton
         id="admin.done"
         onPress={onBack}
-        className="mt-4 items-center self-center rounded-2xl bg-strong py-4"
+        className="mt-4 self-center"
         style={{ width: 224 }}
-      >
-        <Text
-          selectable={false}
-          className="font-mono text-[13px] font-black tracking-[2px] text-on-strong"
-        >
-          <Trans>DONE</Trans>
-        </Text>
-      </TrackedPressable>
+        label={<Trans>DONE</Trans>}
+      />
     </ScreenLayer>
   )
 }

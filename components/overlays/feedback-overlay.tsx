@@ -5,8 +5,9 @@ import { useState } from 'react'
 import { Platform, Text, TextInput } from 'react-native'
 
 import { ModalCard } from '@/components/overlays/modal-card'
-import { TrackedPressable } from '@/components/tracked-pressable'
+import { PrimaryButton } from '@/components/primary-button'
 import { DIM_INK } from '@/constants/colors'
+import { TYPE } from '@/constants/typography'
 import { useLocale } from '@/hooks/use-locale'
 import { cn } from '@/lib/cn'
 import { MAX_FEEDBACK_LENGTH } from '@/lib/feedback-outcome'
@@ -113,27 +114,17 @@ export function FeedbackOverlay({
               >
                 <Trans>THANK YOU</Trans>
               </Text>
-              <Text
-                selectable={false}
-                className="mb-6 font-mono text-[12px] leading-[19px] text-dim"
-              >
+              <Text selectable={false} className={cn(TYPE.prose, 'mb-6 text-dim')}>
                 <Trans>
                   It went straight to the person who makes this, and it is read. If it
                   gets an answer, you will find one here next time you open the game.
                 </Trans>
               </Text>
-              <TrackedPressable
+              <PrimaryButton
                 id="feedback.close"
                 onPress={close}
-                className="items-center rounded-2xl bg-strong py-3.5"
-              >
-                <Text
-                  selectable={false}
-                  className="font-mono text-[12px] font-black tracking-[1.5px] text-on-strong"
-                >
-                  {BUTTON_LABEL.sent}
-                </Text>
-              </TrackedPressable>
+                label={BUTTON_LABEL.sent}
+              />
             </>
           ) : (
             <>
@@ -141,10 +132,7 @@ export function FeedbackOverlay({
                     the dialog was opened from, because from the pause screen the run
                     itself goes too. A line that named only the three would be describing
                     a smaller thing than is actually sent. */}
-              <Text
-                selectable={false}
-                className="mb-4 font-mono text-[11px] leading-[18px] text-dim"
-              >
+              <Text selectable={false} className={cn(TYPE.proseSm, 'mb-4 text-dim')}>
                 {gameState === null ? (
                   <Trans>
                     Anything at all — what broke, what annoyed you, what you wish it did.
@@ -181,30 +169,20 @@ export function FeedbackOverlay({
               {failureLine !== null && (
                 <Text
                   selectable={false}
-                  className="mb-3 font-mono text-[10px] font-bold leading-[16px] text-red-500"
+                  className={cn(TYPE.value, 'mb-3 leading-[16px] text-red-500')}
                 >
                   {failureLine}
                 </Text>
               )}
 
-              <TrackedPressable
+              <PrimaryButton
                 id="feedback.send"
                 onPress={() => {
                   void send()
                 }}
                 disabled={!canSend}
-                className={cn(
-                  'items-center rounded-2xl bg-strong py-3.5',
-                  !canSend && 'opacity-[0.35]',
-                )}
-              >
-                <Text
-                  selectable={false}
-                  className="font-mono text-[12px] font-black tracking-[1.5px] text-on-strong"
-                >
-                  {BUTTON_LABEL[status]}
-                </Text>
-              </TrackedPressable>
+                label={BUTTON_LABEL[status]}
+              />
             </>
           )}
         </>

@@ -13,6 +13,7 @@ import { scheduleOnRN } from 'react-native-worklets'
 import { MenuButton } from '@/components/game/menu-button'
 import { MUTED_INK, SPECTRUM } from '@/constants/colors'
 import { LAYER } from '@/constants/layers'
+import { TYPE } from '@/constants/typography'
 import { cn } from '@/lib/cn'
 
 // The gradient is a padded backdrop with the card on top, which is how you get a
@@ -139,10 +140,7 @@ export function ModalCard({
                   {title !== undefined && (
                     <Text
                       selectable={false}
-                      className={cn(
-                        'font-mono text-[11px] font-bold tracking-[2px]',
-                        titleColor === undefined && 'text-dim',
-                      )}
+                      className={cn(TYPE.heading, titleColor === undefined && 'text-dim')}
                       style={titleColor === undefined ? undefined : { color: titleColor }}
                     >
                       {title}

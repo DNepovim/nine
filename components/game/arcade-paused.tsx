@@ -6,6 +6,8 @@ import { PauseMark } from '@/components/overlays/pause-mark'
 import { RunScreen } from '@/components/overlays/run-screen'
 import { TrackedPressable } from '@/components/tracked-pressable'
 import { ARCADE_INK, DIM_INK } from '@/constants/colors'
+import { TYPE } from '@/constants/typography'
+import { cn } from '@/lib/cn'
 import { arcadeStats } from '@/lib/run-stats'
 import { darkGradientOf } from '@/modes'
 
@@ -57,10 +59,7 @@ export function ArcadePaused({
         <TrackedPressable id="arcade_paused.end_run" onPress={onEnd} hitSlop={10}>
           <View className="flex-row items-center gap-1">
             <Ionicons name="home-outline" size={10} color={DIM_INK} />
-            <Text
-              selectable={false}
-              className="font-mono text-[10px] font-bold tracking-[1.8px] text-dim"
-            >
+            <Text selectable={false} className={cn(TYPE.quietAction, 'text-dim')}>
               <Trans>END RUN</Trans>
             </Text>
           </View>

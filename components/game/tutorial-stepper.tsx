@@ -2,6 +2,7 @@ import { useLingui } from '@lingui/react/macro'
 import { Text, View } from 'react-native'
 
 import { TrackedPressable } from '@/components/tracked-pressable'
+import { TYPE } from '@/constants/typography'
 import {
   canGoBack,
   canGoForward,
@@ -37,7 +38,7 @@ const DOT_STYLE: Record<StepState, { border: string; fill: string }> = {
 
 // The number itself. White out of the filled dot the player is standing on, the tint on
 // an open one, and dim on a board they have not reached.
-const NUMBER_CLASS = 'font-mono text-[10px] font-black'
+const NUMBER_CLASS = TYPE.value
 const numberColor = (state: StepState): string | undefined =>
   state === 'current' ? '#fff' : state === 'visited' ? TINT : undefined
 

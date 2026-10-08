@@ -14,6 +14,7 @@ import {
   NO_HINT_LABEL,
   type DialHint,
 } from '@/constants/dial-hints'
+import { TYPE } from '@/constants/typography'
 import { cn } from '@/lib/cn'
 import { gradientOf } from '@/modes'
 
@@ -88,10 +89,7 @@ export function DialHintModal({
                     the top bar's difficulty line uses. */}
                 <Text
                   selectable={false}
-                  className={cn(
-                    'font-mono text-[12px] font-black tracking-[1px]',
-                    picked ? '' : 'text-primary',
-                  )}
+                  className={cn(TYPE.prose, picked ? '' : 'text-primary')}
                   style={picked ? { color: tint } : undefined}
                 >
                   {(choice === null

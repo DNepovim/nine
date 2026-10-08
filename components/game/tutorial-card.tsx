@@ -8,6 +8,8 @@ import {
 } from 'react-native'
 import Animated, { Easing, FadeInDown, FadeOut } from 'react-native-reanimated'
 
+import { TYPE } from '@/constants/typography'
+import { cn } from '@/lib/cn'
 import { gradientOf } from '@/modes'
 
 // The tutorial's colour, worn by its card the way the tips panel and the route hint wear
@@ -112,7 +114,7 @@ export function TutorialCard({
       >
         <Text
           selectable={false}
-          className="text-center font-mono text-[11px] font-black tracking-[1.5px] text-primary"
+          className={cn(TYPE.buttonSm, 'text-center text-primary')}
         >
           {text}
         </Text>

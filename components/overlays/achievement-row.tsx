@@ -4,6 +4,7 @@ import { Text, View } from 'react-native'
 
 import { achievement, type AchievementId } from '@/constants/achievements'
 import { ACHIEVEMENT_INK } from '@/constants/colors'
+import { GLYPH, TYPE } from '@/constants/typography'
 import { STAGE_AXES, STAGE_CODE, type BoardMark, type Stage } from '@/lib/achievements'
 import { cn } from '@/lib/cn'
 import { formatShortDate } from '@/lib/format-date'
@@ -58,7 +59,7 @@ export function AchievementRow({
     <View className="w-full flex-row items-start gap-3 py-2">
       <Text
         selectable={false}
-        className={cn('text-[18px] leading-[22px]', !earned && 'opacity-30')}
+        className={cn(GLYPH.xl, 'leading-[22px]', !earned && 'opacity-30')}
       >
         {hidden ? SECRET_EMBLEM : def.emblem}
       </Text>
@@ -68,18 +69,12 @@ export function AchievementRow({
           <Text
             selectable={false}
             numberOfLines={1}
-            className={cn(
-              'flex-1 font-mono text-[11px] font-black tracking-[1.5px]',
-              !earned && 'text-dim',
-            )}
+            className={cn(TYPE.buttonSm, 'flex-1', !earned && 'text-dim')}
             style={earned ? { color: ACHIEVEMENT_INK } : null}
           >
             {hidden ? t(SECRET_TITLE) : t(def.title)}
           </Text>
-          <Text
-            selectable={false}
-            className="font-mono text-[8px] font-bold tracking-[1px] text-dim"
-          >
+          <Text selectable={false} className={cn(TYPE.caption, 'text-dim')}>
             {staged
               ? `${stages.length}/${stageList.length}`
               : earnedAt !== null
@@ -93,7 +88,7 @@ export function AchievementRow({
         <Text
           selectable={false}
           className={cn(
-            'font-mono text-[9px] leading-[14px] tracking-[0.3px] text-dim',
+            cn(TYPE.hint, 'leading-[14px] text-dim'),
             !earned && 'opacity-70',
           )}
         >

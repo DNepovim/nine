@@ -3,6 +3,7 @@ import { LinearGradient } from 'expo-linear-gradient'
 import { Text, View } from 'react-native'
 
 import { TrackedPressable } from '@/components/tracked-pressable'
+import { TYPE } from '@/constants/typography'
 import { cn } from '@/lib/cn'
 
 // Shown under the board for as long as the player has no nickname — the one thing
@@ -43,18 +44,12 @@ export function PublishScoresButton({
           end={{ x: 1, y: 0.5 }}
           className="items-center px-5 py-2.5"
         >
-          <Text
-            selectable={false}
-            className="font-mono text-[11px] font-black tracking-[2px] text-white"
-          >
+          <Text selectable={false} className={cn(TYPE.heading, 'text-white')}>
             <Trans>ADD YOUR NICKNAME</Trans>
           </Text>
         </LinearGradient>
       </TrackedPressable>
-      <Text
-        selectable={false}
-        className="mt-1.5 font-mono text-[8px] font-bold tracking-[1px] text-dim"
-      >
+      <Text selectable={false} className={cn(TYPE.caption, 'mt-1.5 text-dim')}>
         <Trans>TO PUBLISH YOUR BESTS</Trans>
       </Text>
     </View>

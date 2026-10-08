@@ -2,8 +2,10 @@ import { Trans, useLingui } from '@lingui/react/macro'
 import { useState } from 'react'
 import { FlatList, Text, View } from 'react-native'
 
+import { PrimaryButton } from '@/components/primary-button'
 import { ScreenLayer } from '@/components/screen'
-import { TrackedPressable } from '@/components/tracked-pressable'
+import { TYPE } from '@/constants/typography'
+import { cn } from '@/lib/cn'
 import { CHALLENGES } from '@/modes/challenges/catalog'
 import type { ModeDefinition } from '@/modes/types'
 
@@ -39,40 +41,25 @@ function ChallengeRow({
   return (
     <View className="flex-row items-center justify-between gap-3 border-b border-dim/10 py-3">
       <View className="flex-1">
-        <Text
-          selectable={false}
-          className="font-mono text-[12px] font-black tracking-[1px] text-primary"
-        >
+        <Text selectable={false} className={cn(TYPE.prose, 'text-primary')}>
           {t(mode.label)}
         </Text>
-        <Text
-          selectable={false}
-          className="mt-0.5 font-mono text-[10px] font-bold tracking-[0.5px] text-dim"
-        >
+        <Text selectable={false} className={cn(TYPE.value, 'mt-0.5 text-dim')}>
           {t(mode.description)}
         </Text>
-        <Text
-          selectable={false}
-          className="mt-1 font-mono text-[9px] font-bold tracking-[1px] text-dim"
-        >
+        <Text selectable={false} className={cn(TYPE.labelSm, 'mt-1 text-dim')}>
           {STATUS_LABEL[status]} · {mode.id}
         </Text>
       </View>
-      <TrackedPressable
+      <PrimaryButton
         id="dev.run"
         onPress={() => {
           onRun(mode.id)
         }}
         hitSlop={8}
-        className="rounded-xl bg-strong px-4 py-2"
-      >
-        <Text
-          selectable={false}
-          className="font-mono text-[11px] font-black tracking-[1.5px] text-on-strong"
-        >
-          <Trans>RUN</Trans>
-        </Text>
-      </TrackedPressable>
+        variant="compact"
+        label={<Trans>RUN</Trans>}
+      />
     </View>
   )
 }
@@ -92,16 +79,10 @@ export function DevOverlay({
   const [openedAt] = useState(() => Date.now())
   return (
     <ScreenLayer className="px-6 pb-6 pt-16">
-      <Text
-        selectable={false}
-        className="mb-1 font-mono text-[20px] font-black tracking-[3px] text-primary"
-      >
+      <Text selectable={false} className={cn(TYPE.screenTitle, 'mb-1 text-primary')}>
         <Trans>DEV</Trans>
       </Text>
-      <Text
-        selectable={false}
-        className="mb-6 font-mono text-[10px] font-bold tracking-[1px] text-dim"
-      >
+      <Text selectable={false} className={cn(TYPE.label, 'mb-6 text-dim')}>
         <Trans>EVERY CHALLENGE, ANY WINDOW — NO BOARD KEPT</Trans>
       </Text>
 
@@ -113,25 +94,19 @@ export function DevOverlay({
         )}
         showsVerticalScrollIndicator={false}
         ListEmptyComponent={
-          <Text selectable={false} className="font-mono text-[12px] font-medium text-dim">
+          <Text selectable={false} className={cn(TYPE.prose, 'text-dim')}>
             <Trans>No challenges have been written yet.</Trans>
           </Text>
         }
       />
 
-      <TrackedPressable
+      <PrimaryButton
         id="dev.done"
         onPress={onClose}
-        className="mt-4 items-center self-center rounded-2xl bg-strong py-4"
+        className="mt-4 self-center"
         style={{ width: 224 }}
-      >
-        <Text
-          selectable={false}
-          className="font-mono text-[13px] font-black tracking-[2px] text-on-strong"
-        >
-          <Trans>DONE</Trans>
-        </Text>
-      </TrackedPressable>
+        label={<Trans>DONE</Trans>}
+      />
     </ScreenLayer>
   )
 }

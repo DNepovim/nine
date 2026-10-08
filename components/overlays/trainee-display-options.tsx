@@ -19,6 +19,7 @@ import {
   TRAINEE_TIMEOUT_STEP_MS,
   type DialCorners,
 } from '@/constants/dial-hints'
+import { TYPE } from '@/constants/typography'
 import { cn } from '@/lib/cn'
 
 // The three things Trainee prints that are not on a key, in the order a player meets
@@ -94,10 +95,7 @@ export function TraineeDisplayOptions({
 
   return (
     <View className="w-full items-center gap-3">
-      <Text
-        selectable={false}
-        className="font-mono text-[9px] font-bold tracking-[1.5px] text-dim"
-      >
+      <Text selectable={false} className={cn(TYPE.labelSm, 'text-dim')}>
         {t`NUMBERS ON THE KEYS`}
       </Text>
 
@@ -121,7 +119,7 @@ export function TraineeDisplayOptions({
                   <Text
                     selectable={false}
                     className={cn(
-                      'shrink font-mono text-[10px] tracking-[1px]',
+                      cn(TYPE.label, 'shrink'),
                       hint === null ? 'text-dim' : 'font-black text-primary',
                     )}
                   >
@@ -161,7 +159,7 @@ export function TraineeDisplayOptions({
                 <OptionCheckbox checked={checked[key]} onCard />
                 <Text
                   selectable={false}
-                  className="shrink font-mono text-[10px] font-black tracking-[1px] text-primary"
+                  className={cn(TYPE.label, 'shrink text-primary')}
                 >
                   {t(SWITCH_LABEL[key])}
                 </Text>
@@ -179,10 +177,7 @@ export function TraineeDisplayOptions({
           part of the test, so it is the one a player may set — and the pause screen is
           where they can set it and go straight back to feel the difference. */}
       <View className="w-full" style={{ maxWidth: 2 * TILE_WIDTH + GRID_GAP }}>
-        <Text
-          selectable={false}
-          className="mb-1 font-mono text-[9px] font-bold tracking-[1.5px] text-dim"
-        >
+        <Text selectable={false} className={cn(TYPE.labelSm, 'mb-1 text-dim')}>
           {t`TIME PER TARGET`}
         </Text>
         {/* Driven in ms, the unit the machine spawns with, and written in seconds —

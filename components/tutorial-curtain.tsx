@@ -12,6 +12,8 @@ import { scheduleOnRN } from 'react-native-worklets'
 
 import { TrackedPressable } from '@/components/tracked-pressable'
 import { LAYER } from '@/constants/layers'
+import { TYPE } from '@/constants/typography'
+import { cn } from '@/lib/cn'
 import { gradientOf } from '@/modes'
 
 // How long the words hold before they start to go, and how long going takes.
@@ -135,7 +137,7 @@ export function TutorialCurtain({
           the smaller of the two things being said. */}
         <Text
           selectable={false}
-          className="mt-3 px-8 text-center font-mono text-[11px] font-bold leading-[18px] tracking-[1px] text-dim"
+          className={cn(TYPE.figure, 'mt-3 px-8 text-center leading-[18px] text-dim')}
         >
           <Trans>JUST THE TUTORIAL - NOTHING HERE IS SCORED</Trans>
         </Text>

@@ -1,6 +1,7 @@
 import { useLingui } from '@lingui/react/macro'
 import { Text, View } from 'react-native'
 
+import { GLYPH, TYPE } from '@/constants/typography'
 import { cn } from '@/lib/cn'
 import { PERIOD_CODES, type Medal } from '@/lib/medals'
 import { rankMedal } from '@/lib/rank-emoji'
@@ -96,7 +97,7 @@ export function ProfileBoardRow({
           <Text
             selectable={false}
             numberOfLines={1}
-            className="font-mono text-[10px] font-black leading-[16px] tracking-[1px]"
+            className={cn(TYPE.label, 'leading-[16px]')}
             style={{ color: getDifficultyColor(mode, difficulty) }}
           >
             {t(DIFFICULTIES[difficulty].code)}
@@ -115,7 +116,7 @@ export function ProfileBoardRow({
           >
             {medals.map((medal) => (
               <View key={medal.period} className="flex-row items-center gap-0.5">
-                <Text selectable={false} className="text-[7px] leading-[9px]">
+                <Text selectable={false} className={cn(GLYPH['3xs'], 'leading-[9px]')}>
                   {rankMedal(medal.rank)}
                 </Text>
                 {/* Which window it stands on, in the same clipped code and the same dim
@@ -123,7 +124,7 @@ export function ProfileBoardRow({
                     qualifier, and a medal without one reads as all-time. */}
                 <Text
                   selectable={false}
-                  className="font-mono text-[6px] font-bold leading-[9px] tracking-[0.5px] text-dim"
+                  className={cn(TYPE.kicker, 'leading-[9px] text-dim')}
                 >
                   {PERIOD_CODES[medal.period]}
                 </Text>
@@ -134,10 +135,7 @@ export function ProfileBoardRow({
       </View>
       <Text
         selectable={false}
-        className={cn(
-          BOARD_COLUMNS.runs,
-          'text-right font-mono text-[11px] font-bold text-dim',
-        )}
+        className={cn(BOARD_COLUMNS.runs, TYPE.figure, 'text-right text-dim')}
       >
         {runs > 0 ? runs : NOTHING}
       </Text>
@@ -145,28 +143,19 @@ export function ProfileBoardRow({
           about; the three beside it describe how it was reached. */}
       <Text
         selectable={false}
-        className={cn(
-          BOARD_COLUMNS.best,
-          'text-right font-mono text-[11px] font-bold text-primary',
-        )}
+        className={cn(BOARD_COLUMNS.best, TYPE.figure, 'text-right text-primary')}
       >
         {best ?? NOTHING}
       </Text>
       <Text
         selectable={false}
-        className={cn(
-          BOARD_COLUMNS.average,
-          'text-right font-mono text-[11px] font-bold text-dim',
-        )}
+        className={cn(BOARD_COLUMNS.average, TYPE.figure, 'text-right text-dim')}
       >
         {percent(average)}
       </Text>
       <Text
         selectable={false}
-        className={cn(
-          BOARD_COLUMNS.bestFactor,
-          'text-right font-mono text-[11px] font-bold text-dim',
-        )}
+        className={cn(BOARD_COLUMNS.bestFactor, TYPE.figure, 'text-right text-dim')}
       >
         {percent(bestFactor)}
       </Text>

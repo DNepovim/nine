@@ -1,6 +1,7 @@
 import { Text } from 'react-native'
 
 import { GOLD_INK } from '@/constants/colors'
+import { TYPE } from '@/constants/typography'
 import type { Segment, SegmentKind, Sentence } from '@/lib/prose'
 
 // One sentence of prose. A few words in it are coloured — a nickname, a board, a takeover —
@@ -16,11 +17,11 @@ import type { Segment, SegmentKind, Sentence } from '@/lib/prose'
 const SEGMENT_CLASS = {
   plain: '',
   name: 'font-bold',
-  board: 'font-mono text-[11px] font-bold',
-  takeover: 'font-mono text-[11px] font-bold',
+  board: TYPE.figure,
+  takeover: TYPE.figure,
   // Set like a board and left the prose's own colour. Violet on the winnings card means
   // what you were *paid*, and the only violet figure on it should be the one at the foot.
-  score: 'font-mono text-[11px] font-bold',
+  score: TYPE.figure,
 } as const satisfies Record<SegmentKind, string>
 
 export function ProseSentence({ sentence }: { sentence: Sentence }) {

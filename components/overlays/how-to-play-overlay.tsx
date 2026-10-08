@@ -10,11 +10,14 @@ import { Gesture, GestureDetector } from 'react-native-gesture-handler'
 import { scheduleOnRN } from 'react-native-worklets'
 
 import { MenuButton } from '@/components/game/menu-button'
+import { PrimaryButton } from '@/components/primary-button'
 import { ScreenLayer } from '@/components/screen'
 import { TrackedPressable } from '@/components/tracked-pressable'
 import { ACHIEVEMENT_SCALE, GAME_SCALE, MUTED_INK } from '@/constants/colors'
 import { TIPS } from '@/constants/tips'
+import { TYPE } from '@/constants/typography'
 import { useFlag } from '@/hooks/use-flags'
+import { cn } from '@/lib/cn'
 import {
   darkGradientOf,
   descriptionOf,
@@ -167,7 +170,7 @@ function Contents({
           <Ionicons name={SECTIONS[key].icon} size={11} color={SECTIONS[key].color} />
           <Text
             selectable={false}
-            className="font-mono text-[10px] font-bold tracking-[1.5px]"
+            className={TYPE.quietAction}
             style={{ color: SECTIONS[key].color }}
           >
             {t(SECTIONS[key].title)}
@@ -183,10 +186,7 @@ function Contents({
 // captions around the graphics, where it separates aside from prose.
 function Body({ children }: { children: ReactNode }) {
   return (
-    <Text
-      selectable={false}
-      className="font-mono text-[12px] font-medium leading-[19px] text-primary"
-    >
+    <Text selectable={false} className={cn(TYPE.prose, 'text-primary')}>
       {children}
     </Text>
   )
@@ -203,10 +203,7 @@ function Bullet({ color, children }: { color: string; children: ReactNode }) {
         className="mt-[6px] h-1.5 w-1.5 rounded-full"
         style={{ backgroundColor: color }}
       />
-      <Text
-        selectable={false}
-        className="flex-1 font-mono text-[12px] font-medium leading-[19px] text-primary"
-      >
+      <Text selectable={false} className={cn(TYPE.prose, 'flex-1 text-primary')}>
         {children}
       </Text>
     </View>
@@ -241,17 +238,14 @@ function TryItButton({ onPress }: { onPress: () => void }) {
           <Ionicons name="play" size={15} color="#FFFFFF" />
         </View>
         <View className="flex-1">
-          <Text
-            selectable={false}
-            className="font-mono text-[13px] font-black tracking-[2px] text-on-strong"
-          >
+          <Text selectable={false} className={cn(TYPE.button, 'text-on-strong')}>
             <Trans>TRY IT</Trans>
           </Text>
           {/* The one caption that cannot be text-dim: it sits on the gradient, not on
               the page, so it takes a thinned white instead of the page's grey. */}
           <Text
             selectable={false}
-            className="mt-1 font-mono text-[9px] font-bold tracking-[1.5px]"
+            className={cn(TYPE.labelSm, 'mt-1')}
             style={{ color: 'rgba(255,255,255,0.6)' }}
           >
             <Trans>ONE TARGET · NO CLOCK · NO LIVES</Trans>
@@ -270,10 +264,7 @@ function TryItButton({ onPress }: { onPress: () => void }) {
 function WeightGrid() {
   const ORDER = ['1', '2', '3']
   const header = (label: string) => (
-    <Text
-      selectable={false}
-      className="font-mono text-[11px] font-black tracking-[0.5px] text-dim"
-    >
+    <Text selectable={false} className={cn(TYPE.buttonSm, 'text-dim')}>
       {label}
     </Text>
   )
@@ -312,10 +303,7 @@ function WeightGrid() {
           })}
         </View>
       ))}
-      <Text
-        selectable={false}
-        className="mt-1 font-mono text-[10px] font-bold tracking-[1px] text-dim"
-      >
+      <Text selectable={false} className={cn(TYPE.label, 'mt-1 text-dim')}>
         <Trans>WEIGHT = ROW ORDER × COLUMN ORDER</Trans>
       </Text>
     </View>
@@ -325,10 +313,7 @@ function WeightGrid() {
 // A single dial button surrounded by its gesture hints.
 function ControlsDiagram() {
   const hint = (label: string) => (
-    <Text
-      selectable={false}
-      className="font-mono text-[10px] font-bold tracking-[0.5px] text-dim"
-    >
+    <Text selectable={false} className={cn(TYPE.value, 'text-dim')}>
       {label}
     </Text>
   )
@@ -366,19 +351,13 @@ function ModeCard({ mode, facts }: { mode: Mode; facts: string[] }) {
         end={{ x: 1, y: 0.5 }}
         className="flex-row items-center justify-between px-4 py-2.5"
       >
-        <Text
-          selectable={false}
-          className="font-mono text-[13px] font-black tracking-[2px] text-on-strong"
-        >
+        <Text selectable={false} className={cn(TYPE.button, 'text-on-strong')}>
           {t(labelOf(mode))}
         </Text>
         <Ionicons name={MODE_ICONS[mode]} size={15} color="#FFFFFF" />
       </LinearGradient>
       <View className="px-4 pb-3 pt-2.5">
-        <Text
-          selectable={false}
-          className="mb-1 font-mono text-[11px] font-bold italic tracking-[0.5px] text-dim"
-        >
+        <Text selectable={false} className={cn(TYPE.figure, 'mb-1 italic text-dim')}>
           {line1?.trim()} {line2?.trim()}
         </Text>
         {facts.map((f) => (
@@ -474,10 +453,7 @@ export function HowToPlayOverlay({
           >
             <Trans>HOW TO PLAY</Trans>
           </Text>
-          <Text
-            selectable={false}
-            className="mt-1 font-mono text-[11px] font-bold tracking-[1px] text-dim"
-          >
+          <Text selectable={false} className={cn(TYPE.figure, 'mt-1 text-dim')}>
             <Trans>DIAL THE GRID · MATCH THE NUMBER</Trans>
           </Text>
 
@@ -831,18 +807,11 @@ export function HowToPlayOverlay({
               is what teaches it, and an offer nobody scrolls far enough to find is no
               offer at all. See TryItButton. */}
           <View className="mt-10 self-center" style={{ width: 224 }}>
-            <TrackedPressable
+            <PrimaryButton
               id="how_to_play.got_it"
               onPress={onClose}
-              className="items-center rounded-2xl bg-strong py-4"
-            >
-              <Text
-                selectable={false}
-                className="font-mono text-[13px] font-black tracking-[2px] text-on-strong"
-              >
-                <Trans>GOT IT</Trans>
-              </Text>
-            </TrackedPressable>
+              label={<Trans>GOT IT</Trans>}
+            />
           </View>
         </ScrollView>
 

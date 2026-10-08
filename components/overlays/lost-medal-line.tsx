@@ -3,9 +3,11 @@ import { Text, View } from 'react-native'
 
 import { TakerName } from '@/components/overlays/taker-name'
 import { GRAYSCALE } from '@/constants/colors'
+import { GLYPH, TYPE } from '@/constants/typography'
 import { useChampionsContext } from '@/hooks/use-champions'
 import { displayName } from '@/lib/announcements'
 import { championMark } from '@/lib/champions'
+import { cn } from '@/lib/cn'
 import type { Taker } from '@/lib/lost-medals'
 import { PERIOD_CODES, type MedalPeriod } from '@/lib/medals'
 import { rankMedal } from '@/lib/rank-emoji'
@@ -42,29 +44,26 @@ export function LostMedalLine({
 
   return (
     <View className="flex-row items-center justify-center gap-1">
-      <Text selectable={false} className="text-[11px] leading-[13px] opacity-40">
+      <Text selectable={false} className={cn(GLYPH.sm, 'leading-[13px] opacity-40')}>
         {rankMedal(rank)}
       </Text>
       <Text
         selectable={false}
-        className="font-mono text-[9px] font-black leading-[13px] tracking-[1px]"
+        className={cn(TYPE.rowLabel, 'leading-[13px]')}
         style={{ color: GRAYSCALE[1] }}
       >
         {t(labelOf(mode))} {t(DIFFICULTIES[difficulty].code)}
       </Text>
-      <Text
-        selectable={false}
-        className="font-mono text-[8px] font-bold leading-[13px] tracking-[0.5px] text-dim"
-      >
+      <Text selectable={false} className={cn(TYPE.caption, 'leading-[13px] text-dim')}>
         {PERIOD_CODES[period]}
       </Text>
-      <Text selectable={false} className="font-mono text-[9px] leading-[13px] text-dim">
+      <Text selectable={false} className={cn(TYPE.hint, 'leading-[13px] text-dim')}>
         ·
       </Text>
       {taker === null ? (
         <Text
           selectable={false}
-          className="font-mono text-[9px] font-black leading-[13px] tracking-[1px]"
+          className={cn(TYPE.rowLabel, 'leading-[13px]')}
           style={{ color: GRAYSCALE[1] }}
         >
           <Trans>TAKEN</Trans>
@@ -79,10 +78,7 @@ export function LostMedalLine({
         //
         // `TakerName` and not the gradient `WinnerName` the winners stripe uses — see
         // that file for why this one line keeps a name flat and grey.
-        <Text
-          selectable={false}
-          className="font-mono text-[9px] font-bold leading-[13px] tracking-[1px] text-dim"
-        >
+        <Text selectable={false} className={cn(TYPE.labelSm, 'leading-[13px] text-dim')}>
           <Trans>
             TAKEN BY{' '}
             <TakerName

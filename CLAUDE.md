@@ -92,6 +92,12 @@ An achievement's colour is the green nothing else uses (`ACHIEVEMENT_SCALE`), an
 
 - **Keep the How to Play guide current.** At the end of every task, check whether the change touched gameplay — controls, targets/timers, modes, difficulty, scoring, streaks, or lives. If so, update the guide (`components/overlays/how-to-play-overlay.tsx`) so it stays accurate. The **`review`** stage of the cycle is where this check lands for work that came through it.
 
+- **Sweep a shared style before changing it.** A size, colour, radius or spacing in this app is almost never in one place, so changing it where you found it is how the app came to have three sizes of the same primary button. Resolve the style to its owner (`constants/typography.ts`, `constants/colors.ts`, `global.css`), grep every occurrence of the owner _and_ the raw value, **list them for the user and ask before applying**, then change it in the owner once — never across the call sites. A sweep that touches eleven screens is the user's decision, not yours. The **`design-guide`** skill owns the procedure.
+
+- **Never pick a text size by hand.** Type is a set of named roles in `constants/typography.ts` — `TYPE.button`, `TYPE.label`, `TYPE.prose`, plus `READOUT` for DSEG7 digits and `GLYPH` for emoji. A screen asks for a role; it does not choose a size, a weight or a tracking, and it does not override one field of a role. If no role fits, add one there and agree it first. ESLint reports raw `text-[Npx]` and `tracking-[Npx]` under `app/` and `components/`.
+
+- **Extend a component, don't fork one.** Never add a second dialog, button, card or row when one already does the job — a copy does not read as a copy, it reads as a drifted original. A dialog is `ModalCard` (`CardModal` only when a keyboard sits under it); a screen is `Screen`/`ScreenLayer`; a run's last screen is `RunScreen`. If something is close, give it a prop and comment which caller asked for it. `design-guide`'s `references/components.md` is the inventory.
+
 ## Development cycle
 
 Work worth a document goes through seven stages, one skill each, and none of them moves on its own — each stops at its own edge and names the command that follows:

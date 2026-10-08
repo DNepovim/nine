@@ -6,6 +6,7 @@ import Animated, { FadeIn, FadeOut } from 'react-native-reanimated'
 
 import { TrackedPressable } from '@/components/tracked-pressable'
 import type { ButtonId } from '@/constants/buttons'
+import { TYPE } from '@/constants/typography'
 import { cn } from '@/lib/cn'
 
 // The two things the intro has to say about an address, and it only ever says one of
@@ -55,15 +56,12 @@ export function AccountNotice({
         hitSlop={10}
         className="mb-2 items-center"
       >
-        <Text
-          selectable={false}
-          className={cn('font-mono text-[9px] font-black tracking-[2px]', INKS[kind])}
-        >
+        <Text selectable={false} className={cn(TYPE.sectionLabel, INKS[kind])}>
           {t(LINES[kind])}
         </Text>
         <Text
           selectable={false}
-          className="mt-0.5 font-mono text-[8px] font-bold tracking-[1px] text-dim underline"
+          className={cn(TYPE.caption, 'mt-0.5 text-dim underline')}
         >
           {t(HINTS[kind])}
         </Text>

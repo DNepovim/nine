@@ -61,6 +61,7 @@ import { DEFAULT_DIAL_CORNERS } from '@/constants/dial-hints'
 import { PIE_SIZE } from '@/constants/game'
 import { mono } from '@/constants/theme'
 import { TUTORIAL_BANNER_HEIGHT } from '@/constants/tutorial'
+import { READOUT, TYPE } from '@/constants/typography'
 import { useAccountEmail } from '@/hooks/use-account-email'
 import { useAchievementQueue, useAchievements } from '@/hooks/use-achievements'
 import { useAnnouncements } from '@/hooks/use-announcements'
@@ -122,6 +123,7 @@ import {
 } from '@/lib/announcements'
 import { currentBoardMedals } from '@/lib/board-medals'
 import { holdsCrown, recordScreen, type RecordScreen } from '@/lib/champions'
+import { cn } from '@/lib/cn'
 import { gameSnapshot } from '@/lib/feedback-state'
 import { leaderOf } from '@/lib/leaderboard'
 import { runChallenge } from '@/lib/next-challenge'
@@ -1642,7 +1644,7 @@ export default function GameScreen() {
                         <View className="flex-row items-baseline gap-1.5">
                           <Text
                             selectable={false}
-                            className="text-[17px] tracking-[1px] text-score"
+                            className={cn(READOUT.best, 'text-score')}
                             style={{ fontFamily: dsegLoaded ? 'DSEG7' : mono }}
                           >
                             {displayScore}
@@ -1650,7 +1652,7 @@ export default function GameScreen() {
                           {streak > 0 && (
                             <Text
                               selectable={false}
-                              className="font-mono text-[11px] font-black tracking-[1px]"
+                              className={TYPE.buttonSm}
                               style={{ color: multiplierColor(currentMultiplier) }}
                             >
                               {`×${currentMultiplier}`}

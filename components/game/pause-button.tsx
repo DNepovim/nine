@@ -3,6 +3,8 @@ import { Trans } from '@lingui/react/macro'
 import { Text } from 'react-native'
 
 import { TrackedPressable } from '@/components/tracked-pressable'
+import { TYPE } from '@/constants/typography'
+import { cn } from '@/lib/cn'
 
 // The way out of a run, sitting in the top row beside NINE.
 //
@@ -50,10 +52,7 @@ export function PauseButton({ color, onPress }: { color: string; onPress: () => 
       className="flex-row items-center gap-1"
       accessibilityRole="button"
     >
-      <Text
-        selectable={false}
-        className="font-mono text-[10px] font-bold tracking-[1px] text-dim"
-      >
+      <Text selectable={false} className={cn(TYPE.label, 'text-dim')}>
         <Trans>MENU</Trans>
       </Text>
       <Ionicons

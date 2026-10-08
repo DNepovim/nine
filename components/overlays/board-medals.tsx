@@ -5,8 +5,10 @@ import { isEmptyArray } from 'narrowland'
 import { Text, View } from 'react-native'
 
 import { ON_GOLD_LABEL_SHADOW } from '@/constants/theme'
+import { GLYPH, TYPE } from '@/constants/typography'
 import type { Period } from '@/lib/announcements'
 import type { BoardMedal } from '@/lib/board-medals'
+import { cn } from '@/lib/cn'
 import { rankMedal } from '@/lib/rank-emoji'
 import { gradientOf, type ModeId } from '@/modes'
 
@@ -44,12 +46,12 @@ export function BoardMedals({
     <View className="mb-5 flex-row items-center justify-center gap-3">
       {medals.map(({ period, rank }) => (
         <View key={period} className="flex-row items-center gap-1">
-          <Text selectable={false} className="text-[13px] leading-[15px]">
+          <Text selectable={false} className={cn(GLYPH.lg, 'leading-[15px]')}>
             {rankMedal(rank)}
           </Text>
           <Text
             selectable={false}
-            className="font-mono text-[9px] font-black leading-[15px] tracking-[1px]"
+            className={cn(TYPE.rowLabel, 'leading-[15px]')}
             style={[
               { color: gradientOf(gameMode)[0] },
               shadow ? ON_GOLD_LABEL_SHADOW : null,

@@ -4,6 +4,8 @@ import { Text, View } from 'react-native'
 
 import { Screen } from '@/components/screen'
 import { TrackedPressable } from '@/components/tracked-pressable'
+import { TYPE } from '@/constants/typography'
+import { cn } from '@/lib/cn'
 import { DARK_MULTIPLAYER_GRADIENT } from '@/modes'
 import type { MultiMode } from '@/types/multiplayer'
 
@@ -38,20 +40,14 @@ export function MultiplayerMenu({
             end={{ x: 1, y: 0.5 }}
             className="items-center py-4"
           >
-            <Text
-              selectable={false}
-              className="font-mono text-[13px] font-black tracking-[2px] text-on-strong"
-            >
+            <Text selectable={false} className={cn(TYPE.button, 'text-on-strong')}>
               <Trans>CONTINUE</Trans>
             </Text>
           </LinearGradient>
         </TrackedPressable>
 
         <TrackedPressable id="multiplayer_menu.leave" onPress={onLeave} hitSlop={10}>
-          <Text
-            selectable={false}
-            className="font-mono text-[10px] font-bold tracking-[1.8px] text-dim underline"
-          >
+          <Text selectable={false} className={cn(TYPE.quietAction, 'text-dim underline')}>
             <Trans>LEAVE GAME</Trans>
           </Text>
         </TrackedPressable>

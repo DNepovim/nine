@@ -1,5 +1,7 @@
 import { Text, View } from 'react-native'
 
+import { GLYPH } from '@/constants/typography'
+import { cn } from '@/lib/cn'
 import type { MyRankRow } from '@/lib/leaderboard'
 import { medalRank } from '@/lib/medals'
 import { rankMedal } from '@/lib/rank-emoji'
@@ -25,7 +27,7 @@ export function TabMedal({ myRank }: { myRank: MyRankRow | null }) {
       className="absolute"
       style={{ top: OFFSET, right: OFFSET }}
     >
-      <Text selectable={false} className="text-[9px] leading-[11px]">
+      <Text selectable={false} className={cn(GLYPH['2xs'], 'leading-[11px]')}>
         {rankMedal(rank)}
       </Text>
     </View>

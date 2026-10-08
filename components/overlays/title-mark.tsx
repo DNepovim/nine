@@ -7,6 +7,7 @@ import Animated, { FadeIn, FadeOut } from 'react-native-reanimated'
 
 import { TrackedPressable } from '@/components/tracked-pressable'
 import { GAME_SCALE } from '@/constants/colors'
+import { TYPE } from '@/constants/typography'
 import type { ChampionMark } from '@/lib/champions'
 import { cn } from '@/lib/cn'
 import { gradientOf } from '@/modes'
@@ -198,15 +199,12 @@ export function TitleMark({
             >
               <Text
                 selectable={false}
-                className="mb-1 font-mono text-[10px] font-black tracking-[2px]"
+                className={cn(TYPE.quietAction, 'mb-1')}
                 style={{ color: tint }}
               >
                 {t(title)}
               </Text>
-              <Text
-                selectable={false}
-                className="font-mono text-[11px] leading-[16px] text-dim"
-              >
+              <Text selectable={false} className={cn(TYPE.proseSm, 'text-dim')}>
                 {t(body)}
               </Text>
             </View>

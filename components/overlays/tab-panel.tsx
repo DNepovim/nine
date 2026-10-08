@@ -3,6 +3,7 @@ import { Trans, useLingui } from '@lingui/react/macro'
 import { isEmptyArray } from 'narrowland'
 import { Text, View } from 'react-native'
 
+import { TYPE } from '@/constants/typography'
 import type { PeriodBoard } from '@/hooks/use-board'
 import { useChampionsContext } from '@/hooks/use-champions'
 import { EMPTY_IDS, usePlayerFactors } from '@/hooks/use-player-factors'
@@ -120,7 +121,7 @@ export function TabPanel({
   if (data.error !== null && isEmptyArray(leaders)) {
     return (
       <View style={{ width }} className={cn('items-center justify-center', bodyHeight)}>
-        <Text selectable={false} className="font-mono text-[9px] font-bold text-dim">
+        <Text selectable={false} className={cn(TYPE.hint, 'text-dim')}>
           <Trans>— UNAVAILABLE —</Trans>
         </Text>
       </View>
@@ -145,11 +146,7 @@ export function TabPanel({
   if (isEmptyArray(rows)) {
     return (
       <View style={{ width }} className={cn('items-center justify-center', bodyHeight)}>
-        <Text
-          selectable={false}
-          numberOfLines={1}
-          className="font-mono text-[9px] font-bold text-dim"
-        >
+        <Text selectable={false} numberOfLines={1} className={cn(TYPE.hint, 'text-dim')}>
           {t(emptyBoardLine(headline, difficulty, tab))}
         </Text>
       </View>

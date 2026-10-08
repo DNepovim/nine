@@ -8,11 +8,14 @@ import { CompareSkeleton } from '@/components/overlays/compare-skeleton'
 import { CompareStatRow } from '@/components/overlays/compare-stat-row'
 import { CompareWonRow } from '@/components/overlays/compare-won-row'
 import { ModalCard } from '@/components/overlays/modal-card'
+import { PrimaryButton } from '@/components/primary-button'
 import { TrackedPressable } from '@/components/tracked-pressable'
+import { TYPE } from '@/constants/typography'
 import { useChampionsContext } from '@/hooks/use-champions'
 import { usePlayerProfile } from '@/hooks/use-player-profile'
 import { useViewport } from '@/hooks/use-viewport'
 import { championMark } from '@/lib/champions'
+import { cn } from '@/lib/cn'
 import { boardTallyOf, compareProfiles, tallyOf, verdictOf } from '@/lib/compare'
 import { verdictLine } from '@/lib/compare-lines'
 import { lifetimeOf, nameFactorsOf, type PlayerProfile } from '@/lib/player-profile'
@@ -104,7 +107,7 @@ export function CompareOverlay({
             <View className="items-center gap-3 py-4">
               <Text
                 selectable={false}
-                className="text-center font-mono text-[11px] text-dim"
+                className={cn(TYPE.proseSm, 'text-center text-dim')}
               >
                 <Trans>Your profile could not be loaded.</Trans>
               </Text>
@@ -113,10 +116,7 @@ export function CompareOverlay({
                 onPress={reload}
                 className="items-center rounded-2xl bg-card px-6 py-3"
               >
-                <Text
-                  selectable={false}
-                  className="font-mono text-[11px] font-black tracking-[2px] text-primary"
-                >
+                <Text selectable={false} className={cn(TYPE.heading, 'text-primary')}>
                   <Trans>TRY AGAIN</Trans>
                 </Text>
               </TrackedPressable>
@@ -164,7 +164,7 @@ export function CompareOverlay({
                     actually changing hands changes the words. */}
                 <Text
                   selectable={false}
-                  className="px-2 text-center font-mono text-[11px] leading-[15px] tracking-[0.3px] text-dim"
+                  className={cn(TYPE.proseSm, 'px-2 text-center text-dim')}
                 >
                   {verdictLine(
                     verdict,
@@ -229,18 +229,11 @@ export function CompareOverlay({
           {/* The way out, at the end of the table as well as in the card's corner. A
               comparison is read top to bottom, and by the last board the 5-dot cross in
               the header has scrolled a thumb's length out of reach. */}
-          <TrackedPressable
+          <PrimaryButton
             id="compare.close"
             onPress={close}
-            className="items-center rounded-2xl bg-strong py-3.5"
-          >
-            <Text
-              selectable={false}
-              className="font-mono text-[12px] font-black tracking-[1.5px] text-on-strong"
-            >
-              <Trans>CLOSE</Trans>
-            </Text>
-          </TrackedPressable>
+            label={<Trans>CLOSE</Trans>}
+          />
         </View>
       )}
     </ModalCard>

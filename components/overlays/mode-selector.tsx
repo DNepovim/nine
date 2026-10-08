@@ -13,6 +13,8 @@ import Animated, {
 
 import { CornerBadge } from '@/components/overlays/corner-badge'
 import { TrackedPressable } from '@/components/tracked-pressable'
+import { TYPE } from '@/constants/typography'
+import { cn } from '@/lib/cn'
 import {
   ARCADE_TEASER,
   descriptionOf,
@@ -189,7 +191,7 @@ export function ModeSelector({
             >
               <Text
                 selectable={false}
-                className="font-mono text-[11px] font-black tracking-[1.5px]"
+                className={TYPE.buttonSm}
                 style={{ color: isActive ? '#FFFFFF' : pillColors(m)[accentIndex] }}
               >
                 {t(labelOf(m))}
@@ -201,7 +203,7 @@ export function ModeSelector({
       </View>
       <Text
         selectable={false}
-        className="mt-2 px-8 text-center font-mono text-[10px] font-bold text-dim leading-4"
+        className={cn(TYPE.value, 'mt-2 px-8 text-center text-dim leading-4')}
       >
         {t(descriptionOf(focused))}
       </Text>

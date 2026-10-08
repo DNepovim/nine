@@ -7,6 +7,7 @@ import { AchievementDetail } from '@/components/overlays/achievement-detail'
 import { TrackedPressable } from '@/components/tracked-pressable'
 import { ACHIEVEMENTS, type AchievementId } from '@/constants/achievements'
 import { ACHIEVEMENT_INK } from '@/constants/colors'
+import { GLYPH, TYPE } from '@/constants/typography'
 import type { AchievementStore } from '@/lib/achievement-store'
 import {
   achievementCard,
@@ -77,13 +78,13 @@ export function EarnedAchievements({
                 pressed && 'opacity-60',
               )}
             >
-              <Text selectable={false} className="text-[10px] leading-[13px]">
+              <Text selectable={false} className={cn(GLYPH.xs, 'leading-[13px]')}>
                 {ACHIEVEMENTS[award.id].emblem}
               </Text>
               <Text
                 selectable={false}
                 numberOfLines={1}
-                className="font-mono text-[9px] font-black leading-[13px] tracking-[1px]"
+                className={cn(TYPE.rowLabel, 'leading-[13px]')}
                 // The chip sits on its own surface, so the halo is only for the label
                 // outside it — inside, the ink just has to suit the card.
                 style={halo ? null : { color: ACHIEVEMENT_INK }}

@@ -81,4 +81,38 @@ export default defineConfig(
       react: { version: '19.0' },
     },
   },
+
+  // The type scale is the only place a size, a weight or a tracking is chosen.
+  //
+  // `constants/typography.ts` holds the roles; everything the player reads asks for one
+  // by name. A raw `text-[13px] tracking-[2px]` typed into a screen is how the app came
+  // to have three sizes of the same primary button, so it is reported here rather than
+  // found later by a reader wondering which of the three was meant.
+  //
+  // **A warning rather than an error, for now.** 215 of these are still in the tree,
+  // waiting on the snap pass that decides which role each belongs to — see the
+  // `design-guide` skill. Erroring today would only mean 215 disable comments. Once that
+  // pass lands this becomes `error`, and the handful of genuine exceptions — the
+  // announcement bar's 0.3px, the room code's 8px, arcade's map labels — carry a disable
+  // comment saying which one they are and why.
+  {
+    files: ['app/**/*.{ts,tsx}', 'components/**/*.{ts,tsx}'],
+    rules: {
+      'no-restricted-syntax': [
+        'warn',
+        {
+          selector:
+            'Literal[value=/(^|\\s)text-\\[\\d+(\\.\\d+)?px\\]/], TemplateElement[value.raw=/(^|\\s)text-\\[\\d+(\\.\\d+)?px\\]/]',
+          message:
+            'Pick a role from TYPE/READOUT/GLYPH in @/constants/typography instead of a raw text size. If no role fits, add one there — agree it first (see the design-guide skill).',
+        },
+        {
+          selector:
+            'Literal[value=/(^|\\s)tracking-\\[/], TemplateElement[value.raw=/(^|\\s)tracking-\\[/]',
+          message:
+            'Letter-spacing belongs to a role in @/constants/typography, not to a screen. Pick the role whose tracking you want, or add one.',
+        },
+      ],
+    },
+  },
 )

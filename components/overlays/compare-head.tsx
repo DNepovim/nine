@@ -2,7 +2,9 @@ import { Trans } from '@lingui/react/macro'
 import { Text, View } from 'react-native'
 
 import { CompareHeadSide, HEAD_NAME_LINE } from '@/components/overlays/compare-head-side'
+import { TYPE } from '@/constants/typography'
 import type { ChampionMark } from '@/lib/champions'
+import { cn } from '@/lib/cn'
 import type { VerdictKey } from '@/lib/compare'
 import type { Medal } from '@/lib/medals'
 import { raceMarks } from '@/lib/race-marks'
@@ -76,7 +78,7 @@ export function CompareHead({
       >
         <Text
           selectable={false}
-          className="text-center font-mono text-[9px] font-black tracking-[2px] text-dim"
+          className={cn(TYPE.sectionLabel, 'text-center text-dim')}
         >
           <Trans>VS</Trans>
         </Text>

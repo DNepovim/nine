@@ -3,8 +3,10 @@ import { Text, View } from 'react-native'
 import { GradientName } from '@/components/gradient-name'
 import { MedalLine } from '@/components/overlays/medal-line'
 import { TrackedPressable } from '@/components/tracked-pressable'
+import { TYPE } from '@/constants/typography'
 import { useOpenProfile } from '@/hooks/use-profile-modal'
 import type { ChampionMark } from '@/lib/champions'
+import { cn } from '@/lib/cn'
 import type { Medal } from '@/lib/medals'
 import { shortName } from '@/lib/short-name'
 
@@ -130,7 +132,7 @@ export function CompareHeadSide({
           avgAccuracy={avgAccuracy}
           avgSpeed={avgSpeed}
           numberOfLines={1}
-          className="text-center font-mono text-[17px] font-black tracking-[1px] leading-[22px]"
+          className={cn(TYPE.cardTitle, 'text-center leading-[22px]')}
         />
       </TrackedPressable>
       {/* Wrapped, unlike the two places this line already appears: those have a whole card

@@ -3,6 +3,8 @@ import { useLingui } from '@lingui/react/macro'
 import { Text, View } from 'react-native'
 
 import { MarkdownText } from '@/components/markdown-text'
+import { TYPE } from '@/constants/typography'
+import { cn } from '@/lib/cn'
 import { formatReleaseDate } from '@/lib/format-date'
 import type { Release } from '@/types/news'
 
@@ -13,10 +15,7 @@ export function NewsRelease({ release }: { release: Release }) {
   const { t } = useLingui()
   return (
     <View className="mb-8">
-      <Text
-        selectable={false}
-        className="mb-3 font-mono text-[10px] font-black tracking-[2px] text-dim"
-      >
+      <Text selectable={false} className={cn(TYPE.quietAction, 'mb-3 text-dim')}>
         {formatReleaseDate(release.date).toUpperCase()}
       </Text>
 
@@ -31,7 +30,7 @@ export function NewsRelease({ release }: { release: Release }) {
             </View>
             <Text
               selectable={false}
-              className="flex-1 font-mono text-[13px] font-black tracking-[1.5px]"
+              className={cn(TYPE.button, 'flex-1')}
               style={{ color: item.accent }}
             >
               {t(item.title).toUpperCase()}

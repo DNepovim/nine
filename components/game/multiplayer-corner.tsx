@@ -6,6 +6,7 @@ import { Text, View } from 'react-native'
 import DSEG7Font from '@/assets/fonts/DSEG7Classic-Bold.ttf'
 import { FloatingPoints } from '@/components/game/floating-points'
 import { mono } from '@/constants/theme'
+import { GLYPH, TYPE } from '@/constants/typography'
 import { cn } from '@/lib/cn'
 import type { PlayerState } from '@/types/multiplayer'
 
@@ -60,10 +61,7 @@ export function MultiplayerCorner({
         <Text
           selectable={false}
           numberOfLines={1}
-          className={cn(
-            'font-mono text-[11px] font-bold tracking-[1px] text-white',
-            !isMe && 'opacity-75',
-          )}
+          className={cn(cn(TYPE.figure, 'text-white'), !isMe && 'opacity-75')}
         >
           {nick}
         </Text>
@@ -80,7 +78,7 @@ export function MultiplayerCorner({
             {player.score}
           </Text>
           {player.hitCurrentTarget && (
-            <Text selectable={false} className="text-[12px]" style={{ color: '#4ADE80' }}>
+            <Text selectable={false} className={GLYPH.md} style={{ color: '#4ADE80' }}>
               ✓
             </Text>
           )}

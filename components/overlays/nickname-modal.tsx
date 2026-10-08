@@ -4,7 +4,9 @@ import { Platform, Text, TextInput, View } from 'react-native'
 
 import { TrackedPressable } from '@/components/tracked-pressable'
 import { DIM_INK } from '@/constants/colors'
+import { TYPE } from '@/constants/typography'
 import { useOnline } from '@/hooks/use-online'
+import { cn } from '@/lib/cn'
 import { NICK_MAX, NICK_MIN, nicknameProblem } from '@/lib/nickname'
 
 // The card itself, with no window of its own — `CardModal` is the host, for the keyboard's
@@ -68,16 +70,10 @@ export function NicknameModal({
 
   return (
     <>
-      <Text
-        selectable={false}
-        className="mb-1 font-mono text-[11px] font-black tracking-[2px] text-primary"
-      >
+      <Text selectable={false} className={cn(TYPE.heading, 'mb-1 text-primary')}>
         <Trans>WHO DO YOU WANT TO BE?</Trans>
       </Text>
-      <Text
-        selectable={false}
-        className="mb-4 font-mono text-[9px] font-bold tracking-[0.5px] text-dim"
-      >
+      <Text selectable={false} className={cn(TYPE.hint, 'mb-4 text-dim')}>
         <Trans>Your name appears on the leaderboard.</Trans>
       </Text>
 
@@ -105,19 +101,13 @@ export function NicknameModal({
       />
 
       {error !== null && (
-        <Text
-          selectable={false}
-          className="mb-3 font-mono text-[9px] font-bold tracking-[0.5px] text-red-500"
-        >
+        <Text selectable={false} className={cn(TYPE.hint, 'mb-3 text-red-500')}>
           {error}
         </Text>
       )}
 
       {error === null && !online && (
-        <Text
-          selectable={false}
-          className="mb-3 font-mono text-[9px] font-bold tracking-[0.5px] text-dim"
-        >
+        <Text selectable={false} className={cn(TYPE.hint, 'mb-3 text-dim')}>
           <Trans>No connection — a nickname can only be claimed online.</Trans>
         </Text>
       )}
@@ -128,10 +118,7 @@ export function NicknameModal({
           onPress={handleSkip}
           className="flex-1 items-center rounded-xl bg-card py-3"
         >
-          <Text
-            selectable={false}
-            className="font-mono text-[11px] font-black tracking-[1.5px] text-dim"
-          >
+          <Text selectable={false} className={cn(TYPE.buttonSm, 'text-dim')}>
             <Trans>SKIP</Trans>
           </Text>
         </TrackedPressable>
@@ -145,10 +132,7 @@ export function NicknameModal({
           className="flex-1 items-center rounded-xl bg-primary py-3"
           style={{ opacity: canSave ? 1 : 0.5 }}
         >
-          <Text
-            selectable={false}
-            className="font-mono text-[11px] font-black tracking-[1.5px] text-on-strong"
-          >
+          <Text selectable={false} className={cn(TYPE.buttonSm, 'text-on-strong')}>
             {saving ? 'SAVING…' : 'SAVE'}
           </Text>
         </TrackedPressable>

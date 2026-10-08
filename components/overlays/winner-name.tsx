@@ -1,6 +1,7 @@
 import { Text } from 'react-native'
 
 import { GradientName } from '@/components/gradient-name'
+import { TYPE } from '@/constants/typography'
 import { useOpenProfile } from '@/hooks/use-profile-modal'
 
 export type WinnerNameProps = {
@@ -41,7 +42,7 @@ export function WinnerName({
       onPress={() => {
         openProfile(userId)
       }}
-      className="font-mono text-[10px] font-bold tracking-[0.5px]"
+      className={TYPE.value}
     >
       {mark === null ? '' : `${mark} `}
       <GradientName nickname={nickname} avgAccuracy={avgAccuracy} avgSpeed={avgSpeed} />

@@ -4,6 +4,8 @@ import { Text, View } from 'react-native'
 
 import { ProseSentence } from '@/components/overlays/prose-sentence'
 import { APP_VIOLET } from '@/constants/colors'
+import { TYPE } from '@/constants/typography'
+import { cn } from '@/lib/cn'
 import { composeRecap, periodLabel, type WeekFacts } from '@/lib/recap'
 
 // Last week on the boards, as one card in the launch popup: a title in the accent, the
@@ -45,16 +47,13 @@ export function RecapCard({
       <View className="items-center">
         <Text
           selectable={false}
-          className="text-center font-mono text-[17px] font-black tracking-[2px]"
+          className={cn(TYPE.cardTitle, 'text-center')}
           style={{ color: APP_VIOLET }}
         >
           <Trans>LAST WEEK IN NINE</Trans>
         </Text>
 
-        <Text
-          selectable={false}
-          className="mt-1.5 font-mono text-[9px] font-bold tracking-[1.5px] text-dim"
-        >
+        <Text selectable={false} className={cn(TYPE.labelSm, 'mt-1.5 text-dim')}>
           {period}
         </Text>
       </View>

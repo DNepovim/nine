@@ -1,6 +1,8 @@
 import { Text, View } from 'react-native'
 
 import { MarkdownSpan } from '@/components/markdown-span'
+import { TYPE } from '@/constants/typography'
+import { cn } from '@/lib/cn'
 import type { Block } from '@/lib/markdown'
 
 // marked reports depths 1–6; anything past three renders at the smallest size.
@@ -44,10 +46,7 @@ export function MarkdownBlock({ block, accent }: { block: Block; accent: string 
             >
               {block.ordered ? `${index + 1}.` : '•'}
             </Text>
-            <Text
-              selectable={false}
-              className="flex-1 font-mono text-[12px] font-medium leading-[19px] text-primary"
-            >
+            <Text selectable={false} className={cn(TYPE.prose, 'flex-1 text-primary')}>
               {spans.map((span, i) => (
                 <MarkdownSpan key={i} span={span} accent={accent} />
               ))}
@@ -59,10 +58,7 @@ export function MarkdownBlock({ block, accent }: { block: Block; accent: string 
   }
 
   return (
-    <Text
-      selectable={false}
-      className="mt-2 font-mono text-[12px] font-medium leading-[19px] text-dim"
-    >
+    <Text selectable={false} className={cn(TYPE.prose, 'mt-2 text-dim')}>
       {block.spans.map((span, i) => (
         <MarkdownSpan key={i} span={span} accent={accent} />
       ))}

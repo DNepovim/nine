@@ -4,6 +4,8 @@ import { Fragment } from 'react'
 import { Text, View } from 'react-native'
 
 import { DIAL_COLORS } from '@/constants/colors'
+import { TYPE } from '@/constants/typography'
+import { cn } from '@/lib/cn'
 import type { MoveDirection, MoveJump, RouteStep } from '@/machines/scoring'
 import { gradientOf, lerpColor } from '@/modes'
 
@@ -79,11 +81,7 @@ function Step({ step }: { step: RouteStep }) {
             size={step.direction === 'up' ? ICON_SIZE - 5 : ICON_SIZE}
             color={TINT}
           />
-          <Text
-            selectable={false}
-            className="font-mono text-[11px] font-bold"
-            style={{ color: TINT }}
-          >
+          <Text selectable={false} className={TYPE.figure} style={{ color: TINT }}>
             ×{step.moves}
           </Text>
         </View>
@@ -92,11 +90,7 @@ function Step({ step }: { step: RouteStep }) {
         className="items-center justify-center rounded-full"
         style={{ width: KEY_SIZE, height: KEY_SIZE, backgroundColor: background }}
       >
-        <Text
-          selectable={false}
-          className="font-mono text-[11px] font-black"
-          style={{ color: ink }}
-        >
+        <Text selectable={false} className={TYPE.buttonSm} style={{ color: ink }}>
           {step.weight}
         </Text>
       </View>
@@ -149,14 +143,10 @@ export function RouteHint({
         {/* The sum before the hit, read first because the move starts from it. */}
         {start !== null && (
           <>
-            <Text
-              selectable={false}
-              className="font-mono text-[12px] font-black tracking-[0.5px]"
-              style={{ color: TINT }}
-            >
+            <Text selectable={false} className={TYPE.prose} style={{ color: TINT }}>
               {start}
             </Text>
-            <Text selectable={false} className="font-mono text-[11px] text-dim">
+            <Text selectable={false} className={cn(TYPE.proseSm, 'text-dim')}>
               ›
             </Text>
           </>
@@ -164,7 +154,7 @@ export function RouteHint({
         {route.slice(0, MAX_KEYS).map((step, i) => (
           <Fragment key={`${step.weight}-${step.jump ?? 'walk'}-${step.direction}`}>
             {i > 0 && (
-              <Text selectable={false} className="font-mono text-[11px] text-dim">
+              <Text selectable={false} className={cn(TYPE.proseSm, 'text-dim')}>
                 ›
               </Text>
             )}
@@ -177,14 +167,10 @@ export function RouteHint({
             attach them to. */}
         {target !== null && (
           <>
-            <Text selectable={false} className="font-mono text-[11px] text-dim">
+            <Text selectable={false} className={cn(TYPE.proseSm, 'text-dim')}>
               ›
             </Text>
-            <Text
-              selectable={false}
-              className="font-mono text-[12px] font-black tracking-[0.5px]"
-              style={{ color: TINT }}
-            >
+            <Text selectable={false} className={TYPE.prose} style={{ color: TINT }}>
               {target}
             </Text>
           </>

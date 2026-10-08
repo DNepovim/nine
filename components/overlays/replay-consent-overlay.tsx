@@ -5,6 +5,8 @@ import { Text, View } from 'react-native'
 import { ModalCard } from '@/components/overlays/modal-card'
 import { TrackedPressable } from '@/components/tracked-pressable'
 import { APP_VIOLET } from '@/constants/colors'
+import { TYPE } from '@/constants/typography'
+import { cn } from '@/lib/cn'
 
 // The one ask GDPR actually requires before anything non-essential starts: whether this
 // player is fine with their screen being recorded. Everything else analytics does —
@@ -46,7 +48,7 @@ export function ReplayConsentOverlay({
 
             <Text
               selectable={false}
-              className="mt-4 text-center font-mono text-[17px] font-black tracking-[2px]"
+              className={cn(TYPE.cardTitle, 'mt-4 text-center')}
               style={{ color: APP_VIOLET }}
             >
               <Trans>HELP US SEE THE ROUGH EDGES</Trans>
@@ -54,7 +56,7 @@ export function ReplayConsentOverlay({
 
             <Text
               selectable={false}
-              className="mt-2 text-center font-mono text-[12px] leading-[18px] text-dim"
+              className={cn(TYPE.prose, 'mt-2 text-center text-dim')}
             >
               <Trans>
                 With your OK, we'll record a replay of how you play — taps, swipes, what's
@@ -74,10 +76,7 @@ export function ReplayConsentOverlay({
               }}
               className="flex-1 items-center rounded-xl bg-card py-3"
             >
-              <Text
-                selectable={false}
-                className="font-mono text-[11px] font-black tracking-[1.5px] text-dim"
-              >
+              <Text selectable={false} className={cn(TYPE.buttonSm, 'text-dim')}>
                 <Trans>NO THANKS</Trans>
               </Text>
             </TrackedPressable>
@@ -90,10 +89,7 @@ export function ReplayConsentOverlay({
               }}
               className="flex-1 items-center rounded-xl bg-primary py-3"
             >
-              <Text
-                selectable={false}
-                className="font-mono text-[11px] font-black tracking-[1.5px] text-on-strong"
-              >
+              <Text selectable={false} className={cn(TYPE.buttonSm, 'text-on-strong')}>
                 <Trans>ALLOW</Trans>
               </Text>
             </TrackedPressable>

@@ -8,6 +8,7 @@ import { Text, View } from 'react-native'
 import { CodeCells } from '@/components/overlays/code-cells'
 import { TrackedPressable } from '@/components/tracked-pressable'
 import { DIM_INK } from '@/constants/colors'
+import { TYPE } from '@/constants/typography'
 import {
   CODE_LENGTH,
   codeProblem,
@@ -16,6 +17,7 @@ import {
   type EmailBranch,
   type EmailProblem,
 } from '@/lib/account-email'
+import { cn } from '@/lib/cn'
 
 // The one place the branch shows. Everything before this card is identical for both, which
 // is the point of the merge; from here on they are different acts and the button has to say
@@ -126,19 +128,13 @@ export function EmailCodeModal({
           address to check, the second is a clock. Run together they read as one fact and
           the player's eye goes past the address, which is the one thing here they have to
           look at. */}
-      <Text
-        selectable={false}
-        className="mt-2 font-mono text-[9px] font-bold leading-[15px] tracking-[0.5px] text-dim"
-      >
+      <Text selectable={false} className={cn(TYPE.hint, 'mt-2 leading-[15px] text-dim')}>
         <Trans>
           We sent six digits to <Text className="font-black text-primary">{address}</Text>
           .
         </Trans>
       </Text>
-      <Text
-        selectable={false}
-        className="mb-4 font-mono text-[9px] font-bold leading-[15px] tracking-[0.5px] text-dim"
-      >
+      <Text selectable={false} className={cn(TYPE.hint, 'mb-4 leading-[15px] text-dim')}>
         <Trans>They are good for ten minutes.</Trans>
       </Text>
 
@@ -163,7 +159,7 @@ export function EmailCodeModal({
         {problem !== null && (
           <Text
             selectable={false}
-            className="mt-2 text-center font-mono text-[9px] font-bold tracking-[0.5px] text-red-500"
+            className={cn(TYPE.hint, 'mt-2 text-center text-red-500')}
           >
             {t(EMAIL_PROBLEM_LINES[problem])}
           </Text>
@@ -176,7 +172,7 @@ export function EmailCodeModal({
       {branch === 'restore' && (
         <Text
           selectable={false}
-          className="mb-2 font-mono text-[9px] font-bold leading-[14px] tracking-[0.5px] text-dim"
+          className={cn(TYPE.hint, 'mb-2 leading-[14px] text-dim')}
         >
           <Trans>
             This address already has a profile — almost certainly yours. The code brings
@@ -196,7 +192,7 @@ export function EmailCodeModal({
         <View className="mb-3 rounded-lg border border-dim/30 px-3 py-2">
           <Text
             selectable={false}
-            className="font-mono text-[9px] font-bold leading-[14px] tracking-[0.5px] text-primary"
+            className={cn(TYPE.hint, 'leading-[14px] text-primary')}
           >
             <Trans>
               A profile lives on one device. Restoring it here takes it off the phone it
@@ -213,10 +209,7 @@ export function EmailCodeModal({
           onPress={onDismiss}
           className="flex-1 items-center rounded-xl bg-card py-3"
         >
-          <Text
-            selectable={false}
-            className="font-mono text-[11px] font-black tracking-[1.5px] text-dim"
-          >
+          <Text selectable={false} className={cn(TYPE.buttonSm, 'text-dim')}>
             <Trans>CLOSE</Trans>
           </Text>
         </TrackedPressable>
@@ -230,10 +223,7 @@ export function EmailCodeModal({
           className="flex-1 items-center rounded-xl bg-primary py-3"
           style={{ opacity: ready ? 1 : 0.5 }}
         >
-          <Text
-            selectable={false}
-            className="font-mono text-[11px] font-black tracking-[1.5px] text-on-strong"
-          >
+          <Text selectable={false} className={cn(TYPE.buttonSm, 'text-on-strong')}>
             {busy ? t(BUSY_LABELS[branch]) : t(ACTIONS[branch])}
           </Text>
         </TrackedPressable>
@@ -245,10 +235,10 @@ export function EmailCodeModal({
           out of a screen looks like in this app, and neither of these is the thing the card
           is asking for.
 
-          One row, wrapping — the same `gap-x-5` the intro's footer uses. The wrap is what
-          the counting label needs: it grows by four characters while it counts down, and on
-          a narrow display the pair drops to two lines rather than running off the card. */}
-      <View className="mt-5 flex-row flex-wrap items-center justify-center gap-x-5 gap-y-2">
+          One row and no wrap, the same `gap-x-5` the intro's footer uses. That is what the
+          counting label is short for — it drops the word CODE while it counts rather than
+          growing, so the pair still fits across a narrow phone. */}
+      <View className="mt-5 flex-row items-center justify-center gap-x-5">
         <TrackedPressable
           id="email_code.resend"
           onPress={() => {
@@ -262,14 +252,11 @@ export function EmailCodeModal({
         >
           <View className="flex-row items-center gap-1">
             <Ionicons name="refresh-outline" size={10} color={DIM_INK} />
-            <Text
-              selectable={false}
-              className="font-mono text-[10px] font-bold tracking-[1.8px] text-dim"
-            >
+            <Text selectable={false} className={cn(TYPE.quietAction, 'text-dim')}>
               {waiting > 0 ? (
-                <Trans>SEND NEW CODE IN {waiting}S</Trans>
+                <Trans>RESEND IN {waiting}S</Trans>
               ) : (
-                <Trans>SEND NEW CODE</Trans>
+                <Trans>RESEND CODE</Trans>
               )}
             </Text>
           </View>
@@ -287,12 +274,9 @@ export function EmailCodeModal({
           style={{ opacity: busy ? DISABLED_OPACITY : 1 }}
         >
           <View className="flex-row items-center gap-1">
-            <Ionicons name="create-outline" size={10} color={DIM_INK} />
-            <Text
-              selectable={false}
-              className="font-mono text-[10px] font-bold tracking-[1.8px] text-dim"
-            >
-              <Trans>CHANGE ADDRESS</Trans>
+            <Ionicons name="mail-outline" size={10} color={DIM_INK} />
+            <Text selectable={false} className={cn(TYPE.quietAction, 'text-dim')}>
+              <Trans>CHANGE EMAIL</Trans>
             </Text>
           </View>
         </TrackedPressable>

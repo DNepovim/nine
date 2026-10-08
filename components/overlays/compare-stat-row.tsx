@@ -5,6 +5,8 @@ import { Text } from 'react-native'
 
 import { CompareRow } from '@/components/overlays/compare-row'
 import { CompareValue } from '@/components/overlays/compare-value'
+import { TYPE } from '@/constants/typography'
+import { cn } from '@/lib/cn'
 import { toneFor, type CompareSide, type CompareStat } from '@/lib/compare'
 import { formatGameTime } from '@/lib/duration'
 import { groupDigits } from '@/lib/group-digits'
@@ -77,7 +79,7 @@ export function CompareStatRow({
       <Text
         selectable={false}
         numberOfLines={1}
-        className="flex-1 font-mono text-[9px] font-bold tracking-[1px] text-dim"
+        className={cn(TYPE.labelSm, 'flex-1 text-dim')}
       >
         {t(STAT_LABEL[stat])}
       </Text>

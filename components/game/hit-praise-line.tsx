@@ -7,6 +7,8 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated'
 
+import { TYPE } from '@/constants/typography'
+import { cn } from '@/lib/cn'
 import { gradientOf } from '@/modes'
 
 // Trainee's colour, the same one the tips panel and its border wear.
@@ -54,7 +56,7 @@ export function HitPraiseLine({ message }: { message: string | null }) {
     <Animated.View style={[{ height: HEIGHT, justifyContent: 'center' }, style]}>
       <Text
         selectable={false}
-        className="text-center font-mono text-[10px] font-bold tracking-[0.3px]"
+        className={cn(TYPE.value, 'text-center')}
         style={{ color: TINT }}
       >
         {shown}

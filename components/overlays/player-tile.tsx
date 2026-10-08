@@ -7,9 +7,11 @@ import { Text, View } from 'react-native'
 
 import { TrackedPressable } from '@/components/tracked-pressable'
 import { DIM_INK } from '@/constants/colors'
+import { TYPE } from '@/constants/typography'
 import { useChampionsContext } from '@/hooks/use-champions'
 import { useOpenProfile } from '@/hooks/use-profile-modal'
 import { championMark } from '@/lib/champions'
+import { cn } from '@/lib/cn'
 import { rankMedal } from '@/lib/rank-emoji'
 
 // A distinct, lively gradient per attendee slot (drawn from the app palette).
@@ -43,11 +45,7 @@ function Chip({ label }: { label: string }) {
       className="rounded-full px-2 py-0.5"
       style={{ backgroundColor: 'rgba(255,255,255,0.25)' }}
     >
-      <Text
-        selectable={false}
-        className="font-mono text-[8px] font-black tracking-[1px]"
-        style={{ color: WHITE }}
-      >
+      <Text selectable={false} className={TYPE.caption} style={{ color: WHITE }}>
         {label}
       </Text>
     </View>
@@ -115,10 +113,7 @@ export function PlayerTile({
           style={{ borderColor: DIM_INK + '33' }}
         >
           <View className="h-2 w-2 animate-pulse rounded-full bg-dim" />
-          <Text
-            selectable={false}
-            className="mt-2 font-mono text-[9px] font-bold tracking-[2px] text-dim"
-          >
+          <Text selectable={false} className={cn(TYPE.labelSm, 'mt-2 text-dim')}>
             <Trans>WAITING</Trans>
           </Text>
         </View>
@@ -193,7 +188,7 @@ export function PlayerTile({
           <Text
             selectable={false}
             numberOfLines={1}
-            className="flex-1 font-mono text-[13px] font-black tracking-[0.5px]"
+            className={cn(TYPE.button, 'flex-1')}
             style={{ color: WHITE }}
           >
             {mark === null ? nickname : `${mark} ${nickname}`}

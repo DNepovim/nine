@@ -46,6 +46,7 @@ import {
 } from '@/constants/arcade'
 import { ARCADE_INK, MAP_INK, PIE_INK, SURFACE } from '@/constants/colors'
 import { CLOSE_MS, HEARTS, OPEN_MS, SIEGE_ZOOM, TAKEN_MS } from '@/constants/siege'
+import { TYPE } from '@/constants/typography'
 import { useArcadeLand } from '@/hooks/use-arcade-land'
 import { useArcadeRun, type ArcadePhase } from '@/hooks/use-arcade-run'
 import { SUM_ROW_HEIGHT } from '@/hooks/use-dial-metrics'
@@ -61,6 +62,7 @@ import {
   type Spline,
 } from '@/lib/arcade-layout'
 import { horizonOf, type Sheet } from '@/lib/arcade-tilt'
+import { cn } from '@/lib/cn'
 import { valueProgress } from '@/lib/value-progress'
 import { ARCADE_DIAL, idSeed, UP } from '@/machines/arcade'
 import type { DialControl } from '@/machines/tutorial-lesson'
@@ -765,10 +767,7 @@ export function ArcadeGame({ onEnd }: { onEnd: () => void }) {
                 clock, a charge or a score until something says otherwise, and the one
                 place a player looks to find out is directly above it. */}
             <View className="w-16 items-end gap-1">
-              <Text
-                selectable={false}
-                className="font-mono text-[8px] font-bold tracking-[1px] text-dim"
-              >
+              <Text selectable={false} className={cn(TYPE.caption, 'text-dim')}>
                 <Trans>SATIETY</Trans>
               </Text>
               <SatietyBar satiety={run.satiety} starving={run.starving} />

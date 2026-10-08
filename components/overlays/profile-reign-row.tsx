@@ -1,6 +1,7 @@
 import { useLingui } from '@lingui/react/macro'
 import { Text, View } from 'react-native'
 
+import { GLYPH, TYPE } from '@/constants/typography'
 import { cn } from '@/lib/cn'
 import { formatShortDate, formatShortDay } from '@/lib/format-date'
 import { PERIOD_CODES } from '@/lib/medals'
@@ -88,7 +89,7 @@ export function ProfileReignRow({
 
   return (
     <View className="h-7 flex-row items-center gap-2">
-      <Text selectable={false} className="text-[11px] leading-[13px]">
+      <Text selectable={false} className={cn(GLYPH.sm, 'leading-[13px]')}>
         {GOLD}
       </Text>
       {/* Board then period, one shade apart — the same pairing the medal line draws, for
@@ -99,15 +100,12 @@ export function ProfileReignRow({
         <Text
           selectable={false}
           numberOfLines={1}
-          className="font-mono text-[10px] font-black tracking-[1px]"
+          className={TYPE.label}
           style={{ color: getDifficultyColor(mode, difficulty) }}
         >
           {`${t(codeOf(mode))} ${t(DIFFICULTIES[difficulty].code)}`}
         </Text>
-        <Text
-          selectable={false}
-          className="font-mono text-[8px] font-bold tracking-[0.5px] text-dim"
-        >
+        <Text selectable={false} className={cn(TYPE.caption, 'text-dim')}>
           {PERIOD_CODE[period]}
         </Text>
       </View>
@@ -115,7 +113,8 @@ export function ProfileReignRow({
         selectable={false}
         numberOfLines={1}
         className={cn(
-          'w-28 text-right font-mono text-[9px] font-bold tracking-[0.5px]',
+          TYPE.hint,
+          'w-28 text-right',
           to === null ? 'text-primary' : 'text-dim',
         )}
       >

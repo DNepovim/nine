@@ -10,9 +10,11 @@ import Animated, {
 import { scheduleOnRN } from 'react-native-worklets'
 
 import { WinnerName, type WinnerNameProps } from '@/components/overlays/winner-name'
+import { TYPE } from '@/constants/typography'
 import { useChampionsContext } from '@/hooks/use-champions'
 import { useRecentWinners } from '@/hooks/use-recent-winners'
 import { championMark } from '@/lib/champions'
+import { cn } from '@/lib/cn'
 import type { WinnerWindow } from '@/lib/recent-winners'
 import { type Difficulty, type ModeId } from '@/modes'
 
@@ -140,7 +142,7 @@ export function RecentWinners({
           <Text
             selectable={false}
             numberOfLines={1}
-            className="text-center font-mono text-[10px] leading-[15px] text-dim"
+            className={cn(TYPE.value, 'text-center leading-[15px] text-dim')}
           >
             {SENTENCES[line.window]({
               userId: line.winner.userId,

@@ -4,6 +4,8 @@ import { Text, View } from 'react-native'
 
 import { TrackedPressable } from '@/components/tracked-pressable'
 import { DIM_INK } from '@/constants/colors'
+import { TYPE } from '@/constants/typography'
+import { cn } from '@/lib/cn'
 
 const ICON = 11
 
@@ -42,10 +44,7 @@ export function ProfileMotto({
         className="flex-row items-center gap-1 self-center rounded-full bg-card px-3 py-1"
       >
         <Ionicons name="add" size={ICON} color={DIM_INK} />
-        <Text
-          selectable={false}
-          className="font-mono text-[9px] font-black tracking-[1.5px] text-dim"
-        >
+        <Text selectable={false} className={cn(TYPE.sectionLabel, 'text-dim')}>
           <Trans>ADD MOTTO</Trans>
         </Text>
       </TrackedPressable>
@@ -59,7 +58,7 @@ export function ProfileMotto({
           phone. */}
       <Text
         selectable={false}
-        className="shrink text-center font-mono text-[11px] tracking-[0.3px] text-dim"
+        className={cn(TYPE.proseSm, 'shrink text-center text-dim')}
       >
         {motto}
       </Text>

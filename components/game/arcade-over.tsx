@@ -5,6 +5,8 @@ import { GameOverTitle } from '@/components/overlays/game-over-title'
 import { RunScreen } from '@/components/overlays/run-screen'
 import { TrackedPressable } from '@/components/tracked-pressable'
 import { ARCADE_INK } from '@/constants/colors'
+import { TYPE } from '@/constants/typography'
+import { cn } from '@/lib/cn'
 import type { TitleWords } from '@/lib/game-over-title'
 import { arcadeStats } from '@/lib/run-stats'
 import { darkGradientOf } from '@/modes'
@@ -66,10 +68,7 @@ export function ArcadeOver({
       cta={{ label: <Trans>PLAY AGAIN</Trans>, onPress: onAgain }}
       exits={
         <TrackedPressable id="arcade_over.home" onPress={onHome} hitSlop={10}>
-          <Text
-            selectable={false}
-            className="font-mono text-[10px] font-bold tracking-[1.8px] text-dim underline"
-          >
+          <Text selectable={false} className={cn(TYPE.quietAction, 'text-dim underline')}>
             <Trans>HOME</Trans>
           </Text>
         </TrackedPressable>

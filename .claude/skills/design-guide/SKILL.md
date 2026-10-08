@@ -1,12 +1,107 @@
 ---
 name: design-guide
-description: Use when choosing a colour, gradient, font or size for anything the player sees in the Nine app — new UI, a celebration, a badge, a button — or when reviewing whether a visual change fits. Owns the three colour scales, the theme tokens, typography and the contrast rules.
+description: Use when choosing or changing a colour, gradient, font, size, spacing or component for anything the player sees in the Nine app — new UI, a celebration, a badge, a button, a dialog, a screen — or when reviewing whether a visual change fits. Owns the three colour scales, the type scale, the screen and dialog layouts, the component inventory, and the consistency sweep that runs before any shared style changes.
 ---
 
 # Design guide (nine)
 
-Every colour in the app comes from one of **three scales**. Before picking a hex,
-decide which scale the element belongs to — that decision is the design.
+Nine has one visual system, and it is held in four files rather than in the screens that
+use it:
+
+| What                | Where                                              | Reference                  |
+| ------------------- | -------------------------------------------------- | -------------------------- |
+| Colour              | `constants/colors.ts`, `global.css`                | this file, below           |
+| Type                | `constants/typography.ts`                          | `references/typography.md` |
+| Screens and dialogs | `components/screen.tsx`, `overlays/modal-card.tsx` | `references/layout.md`     |
+| What already exists | `components/`                                      | `references/components.md` |
+
+**Read the relevant reference before picking a value.** The scales below are the colour
+half; type, layout and reuse each have a file of their own.
+
+---
+
+# The consistency sweep — do this first
+
+A style in this app is almost never in one place. Changing one where you found it is how
+the app came to have three sizes of the same primary button and two paddings for the same
+CTA — each typed next to whatever was already on screen.
+
+So: **a shared style is changed by sweeping it, not by editing the site in front of you.**
+
+### When this applies
+
+Any time you are about to change an existing visual value rather than add a new screen:
+
+- a size, weight, tracking or leading
+- a colour, gradient stop or ink
+- a radius, padding or gap on a shape that repeats — a card, a pill, a button
+- the shape or motion of a dialog, a screen or a row
+
+It does **not** apply to a value that is genuinely local and used once — a one-off
+illustration, a particle, an arcade mark. If you are unsure which it is, the sweep tells
+you: a value used once comes back with one occurrence.
+
+### The four steps
+
+1. **Resolve the style to its owner.** Is it a role in `constants/typography.ts`, a scale
+   in `constants/colors.ts`, a token in `global.css`, or a raw value typed into a screen?
+   If it has an owner, the change belongs there, and the sweep is over everything that
+   asks for it by name.
+
+2. **Find every occurrence.** Grep the value _and_ the role that holds it:
+
+   ```bash
+   # a role and everything that asks for it
+   grep -rn "TYPE.label" app components
+   # the raw value, in case somewhere still spells it out
+   grep -rn "text-\[10px\] font-bold tracking-\[1px\]" app components
+   # a colour, both as token and as hex
+   grep -rn "text-dim\|#6a655c" app components
+   ```
+
+3. **Report them to the user before changing anything.** List every file and line, say
+   what each one is (a button label, a stat caption, a dialog heading), and say plainly
+   which of them the change would alter. Then **ask whether to apply it.** A sweep that
+   touches eleven screens is a decision the user makes, not one you make for them.
+
+4. **Apply it in the owner, once.** Never by editing eleven call sites. If the eleven do
+   not all want the change, that is the finding — report it, because it means the role is
+   carrying two jobs and the answer is a second role, agreed first.
+
+### What not to do
+
+- **Don't change the value where you found it.** That is the drift, in one move.
+- **Don't override one field of a role** — `cn(TYPE.label, 'text-[9px]')`. It reads as a
+  role and renders as a one-off, which is worse than either.
+- **Don't add a near-duplicate** because the existing one is 1px off what you want. Either
+  the existing role is right, or it is wrong for everyone using it.
+- **Don't skip the report because the sweep came back small.** Two occurrences is still
+  two screens the user may not expect to move.
+
+---
+
+# Reuse before creation
+
+**Don't create a new dialog, button, card or row if one already exists. Abstract and
+extend the one that does.** `references/components.md` is the inventory, and it names the
+three times this repo has already paid for the lesson.
+
+The short form:
+
+- A dialog is `ModalCard`. A platform `Modal` is for one problem — a keyboard under the
+  card — and `CardModal` is already it.
+- A screen is `Screen` / `ScreenLayer`. A screen a run stops on is `RunScreen`.
+- A button's label is `TYPE.button` on `bg-strong`; a quiet one is `TYPE.quietAction`.
+- If something is close, give it a prop, and comment which caller asked for it.
+- If two things genuinely differ, name the difference in a comment on both — that comment
+  is what stops a third appearing between them.
+
+---
+
+# Colour
+
+Every colour comes from one of **three scales**. Before picking a hex, decide which scale
+the element belongs to — that decision is the design.
 
 ## The three scales
 
@@ -139,26 +234,23 @@ white works:
 
 That last rule is why celebrations use the game scale rather than white sparks.
 
-## Typography
+# Typography
 
-Everything numeric or label-like is monospace. `mono` from `constants/theme.ts`
-resolves per platform; in `className` it is `font-mono`.
+The scale is `constants/typography.ts` and the guide is **`references/typography.md`**.
+In short: a text style is a role — `TYPE.button`, `TYPE.label`, `TYPE.prose` — and no
+screen picks a size, a weight or a tracking of its own. ESLint reports raw `text-[Npx]`
+and `tracking-[Npx]` under `app/` and `components/`.
 
-| Use                                   | Pattern                                                                                                               |
-| ------------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
-| Digital readouts (score, best scores) | `DSEG7` from `assets/fonts/DSEG7Classic-Bold.ttf`, loaded with `useFonts`, with `mono` as the fallback while it loads |
-| Section headers, buttons              | `font-mono font-black` with wide `tracking-[2px]`–`tracking-[3px]`                                                    |
-| Small labels                          | 8–10px, `font-bold`, `tracking-[1px]`, `text-dim`                                                                     |
-| Body copy                             | 11–13px, normal weight                                                                                                |
+Wide letter-spacing on upper-case labels is the app's voice; on prose it reads as airy,
+which is why `prose` has no tracking and the announcement bar drops to 0.3px.
 
-Wide letter-spacing on upper-case labels is the app's voice — an unspaced
-upper-case label looks wrong here even when the size is right.
+# Layout
 
-The announcement bar is the deliberate exception: its messages are sentence case so
-that the rival's upper-cased nickname is the only thing shouting, and its tracking
-drops to `0.3px` to suit. Wide tracking is a caps device; it reads as airy on prose.
+Screens and dialogs are **`references/layout.md`**. In short: a screen is `Screen` /
+`ScreenLayer`, a dialog is `ModalCard`, a run's last screen is `RunScreen`, and none of
+them lays out its own padding, stacking or entrance.
 
-## Motion
+# Motion
 
 Covered by the `code-guide` skill for the mechanics (Reanimated, module-level
 components). Design-wise:

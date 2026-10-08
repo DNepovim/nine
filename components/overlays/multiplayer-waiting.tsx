@@ -12,6 +12,7 @@ import { PLAYER_GRADIENTS, PlayerTile } from '@/components/overlays/player-tile'
 import { Screen } from '@/components/screen'
 import { TrackedPressable } from '@/components/tracked-pressable'
 import { DIM_INK } from '@/constants/colors'
+import { TYPE } from '@/constants/typography'
 import { cn } from '@/lib/cn'
 import { SHARE_URL } from '@/lib/invite-message'
 import { DARK_MULTIPLAYER_GRADIENT, descriptionOf, MULTIPLAYER_GRADIENT } from '@/modes'
@@ -107,10 +108,7 @@ export function MultiplayerWaiting({
                   size={10}
                   color={DIM_INK}
                 />
-                <Text
-                  selectable={false}
-                  className="font-mono text-[10px] font-bold tracking-[1.8px] text-dim"
-                >
+                <Text selectable={false} className={cn(TYPE.quietAction, 'text-dim')}>
                   {copied ? 'COPIED' : 'COPY'}
                 </Text>
               </View>
@@ -118,10 +116,7 @@ export function MultiplayerWaiting({
             <TrackedPressable id="waiting_room.share" onPress={handleShare} hitSlop={10}>
               <View className="flex-row items-center gap-1">
                 <Ionicons name="share-outline" size={10} color={DIM_INK} />
-                <Text
-                  selectable={false}
-                  className="font-mono text-[10px] font-bold tracking-[1.8px] text-dim"
-                >
+                <Text selectable={false} className={cn(TYPE.quietAction, 'text-dim')}>
                   <Trans>SHARE</Trans>
                 </Text>
               </View>
@@ -145,14 +140,14 @@ export function MultiplayerWaiting({
           <View className="items-center gap-1">
             <Text
               selectable={false}
-              className="font-mono text-[10px] font-bold tracking-[2px]"
+              className={TYPE.quietAction}
               style={{ color: MULTIPLAYER_GRADIENT[mode][1] }}
             >
               {mode.toUpperCase()} MODE
             </Text>
             <Text
               selectable={false}
-              className="px-6 text-center font-mono text-[10px] font-bold tracking-[0.5px] text-dim"
+              className={cn(TYPE.value, 'px-6 text-center text-dim')}
             >
               {t(descriptionOf(mode))}
             </Text>
@@ -162,16 +157,10 @@ export function MultiplayerWaiting({
         {/* Player grid — two tiles per row */}
         <View className="w-full gap-2.5">
           <View className="flex-row items-center justify-between px-1">
-            <Text
-              selectable={false}
-              className="font-mono text-[9px] font-bold tracking-[2px] text-dim"
-            >
+            <Text selectable={false} className={cn(TYPE.labelSm, 'text-dim')}>
               <Trans>PLAYERS</Trans>
             </Text>
-            <Text
-              selectable={false}
-              className="font-mono text-[9px] font-bold tracking-[2px] text-dim"
-            >
+            <Text selectable={false} className={cn(TYPE.labelSm, 'text-dim')}>
               {players.length}/4
             </Text>
           </View>
@@ -208,10 +197,7 @@ export function MultiplayerWaiting({
                 end={{ x: 1, y: 0.5 }}
                 className="items-center py-4"
               >
-                <Text
-                  selectable={false}
-                  className="font-mono text-[13px] font-black tracking-[2px] text-on-strong"
-                >
+                <Text selectable={false} className={cn(TYPE.button, 'text-on-strong')}>
                   <Trans>START GAME</Trans>
                 </Text>
               </LinearGradient>
@@ -221,10 +207,7 @@ export function MultiplayerWaiting({
           {!isAdmin && (
             <View className="items-center gap-2">
               <View className="h-1.5 w-1.5 animate-pulse rounded-full bg-dim" />
-              <Text
-                selectable={false}
-                className="font-mono text-[9px] font-bold tracking-[2px] text-dim"
-              >
+              <Text selectable={false} className={cn(TYPE.labelSm, 'text-dim')}>
                 <Trans>WAITING FOR HOST</Trans>
               </Text>
             </View>
@@ -233,7 +216,7 @@ export function MultiplayerWaiting({
           <TrackedPressable id="waiting_room.cancel" onPress={onLeave} hitSlop={10}>
             <Text
               selectable={false}
-              className="font-mono text-[10px] font-bold tracking-[1.8px] text-dim underline"
+              className={cn(TYPE.quietAction, 'text-dim underline')}
             >
               <Trans>CANCEL</Trans>
             </Text>

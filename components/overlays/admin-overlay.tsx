@@ -7,8 +7,10 @@ import { AdminPeople } from '@/components/overlays/admin-people'
 import { AdminPerson } from '@/components/overlays/admin-person'
 import { AdminRole } from '@/components/overlays/admin-role'
 import { AdminRoles } from '@/components/overlays/admin-roles'
+import { PrimaryButton } from '@/components/primary-button'
 import { ScreenLayer } from '@/components/screen'
 import { TrackedPressable } from '@/components/tracked-pressable'
+import { TYPE } from '@/constants/typography'
 import { type AdminPerson as Person } from '@/lib/admin/people'
 import { type AdminRole as Role } from '@/lib/admin/roles'
 import { cn } from '@/lib/cn'
@@ -80,16 +82,10 @@ export function AdminOverlay({
 
   return (
     <ScreenLayer className="px-6 pb-6 pt-16">
-      <Text
-        selectable={false}
-        className="mb-1 font-mono text-[20px] font-black tracking-[3px] text-primary"
-      >
+      <Text selectable={false} className={cn(TYPE.screenTitle, 'mb-1 text-primary')}>
         <Trans>ADMIN</Trans>
       </Text>
-      <Text
-        selectable={false}
-        className="mb-4 font-mono text-[10px] font-bold tracking-[1px] text-dim"
-      >
+      <Text selectable={false} className={cn(TYPE.label, 'mb-4 text-dim')}>
         <Trans>WHO SEES WHAT</Trans>
       </Text>
 
@@ -110,10 +106,7 @@ export function AdminOverlay({
             >
               <Text
                 selectable={false}
-                className={cn(
-                  'font-mono text-[10px] font-black tracking-[1px]',
-                  active ? 'text-on-strong' : 'text-dim',
-                )}
+                className={cn(TYPE.label, active ? 'text-on-strong' : 'text-dim')}
               >
                 {TAB_LABEL[option]}
               </Text>
@@ -130,19 +123,13 @@ export function AdminOverlay({
       )}
       {tab === 'features' && <AdminFeatures epoch={epoch} onChanged={refresh} />}
 
-      <TrackedPressable
+      <PrimaryButton
         id="admin.done"
         onPress={onClose}
-        className="mt-4 items-center self-center rounded-2xl bg-strong py-4"
+        className="mt-4 self-center"
         style={{ width: 224 }}
-      >
-        <Text
-          selectable={false}
-          className="font-mono text-[13px] font-black tracking-[2px] text-on-strong"
-        >
-          <Trans>DONE</Trans>
-        </Text>
-      </TrackedPressable>
+        label={<Trans>DONE</Trans>}
+      />
     </ScreenLayer>
   )
 }

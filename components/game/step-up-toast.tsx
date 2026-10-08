@@ -4,6 +4,8 @@ import { Text, View } from 'react-native'
 import Animated, { Easing, FadeOut, SlideInUp } from 'react-native-reanimated'
 
 import { TrackedPressable } from '@/components/tracked-pressable'
+import { GLYPH, TYPE } from '@/constants/typography'
+import { cn } from '@/lib/cn'
 import { darkGradientOf, labelOf, type ModeId } from '@/modes'
 
 // Where it floats. Above the top bar rather than inside the layout: Trainee reclaims the
@@ -63,21 +65,21 @@ export function StepUpToast({
       <View className="w-full max-w-3xs rounded-2xl bg-card p-4" style={shadow}>
         {/* Sentence case, the announcement bar's voice: the caps in this app are for
             labels and buttons, and two shouting lines would read as an alarm. */}
-        <Text selectable={false} className="mb-1 text-center text-[20px] leading-[24px]">
+        <Text
+          selectable={false}
+          className={cn(GLYPH['2xl'], 'mb-1 text-center leading-[24px]')}
+        >
           {MARK}
         </Text>
         {/* Set apart from the invitation below rather than run against it: they are two
             thoughts, not a wrapped sentence, and touching lines read as one. */}
         <Text
           selectable={false}
-          className="mb-1.5 text-center font-mono text-[12px] font-bold text-primary"
+          className={cn(TYPE.prose, 'mb-1.5 text-center text-primary')}
         >
           {opener}
         </Text>
-        <Text
-          selectable={false}
-          className="mb-3 text-center font-mono text-[12px] text-dim"
-        >
+        <Text selectable={false} className={cn(TYPE.prose, 'mb-3 text-center text-dim')}>
           {invite}
         </Text>
 
@@ -109,10 +111,7 @@ export function StepUpToast({
           onPress={onDismiss}
           className="mt-1 items-center py-2"
         >
-          <Text
-            selectable={false}
-            className="font-mono text-[10px] font-bold tracking-[1px] text-dim underline"
-          >
+          <Text selectable={false} className={cn(TYPE.label, 'text-dim underline')}>
             <Trans>NOT NOW</Trans>
           </Text>
         </TrackedPressable>

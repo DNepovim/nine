@@ -9,10 +9,12 @@ import { ModalCard } from '@/components/overlays/modal-card'
 import { ShowMore } from '@/components/overlays/show-more'
 import { TakerName } from '@/components/overlays/taker-name'
 import { GRAYSCALE } from '@/constants/colors'
+import { GLYPH, TYPE } from '@/constants/typography'
 import { useChampionsContext } from '@/hooks/use-champions'
 import { useViewport } from '@/hooks/use-viewport'
 import { displayName } from '@/lib/announcements'
 import { championMark } from '@/lib/champions'
+import { cn } from '@/lib/cn'
 import { formatShortDay } from '@/lib/format-date'
 import { HISTORY_DAYS, type TakenMedal } from '@/lib/medal-history'
 import { heldMedals, PERIOD_CODES, type BoardStanding, type Medal } from '@/lib/medals'
@@ -52,15 +54,12 @@ function BoardLabel({
     <>
       <Text
         selectable={false}
-        className="font-mono text-[10px] font-black leading-[16px] tracking-[1px]"
+        className={cn(TYPE.label, 'leading-[16px]')}
         style={{ color: drained ? GRAYSCALE[1] : gradientOf(mode)[0] }}
       >
         {t(labelOf(mode))} {t(DIFFICULTIES[difficulty].code)}
       </Text>
-      <Text
-        selectable={false}
-        className="font-mono text-[8px] font-bold leading-[16px] tracking-[0.5px] text-dim"
-      >
+      <Text selectable={false} className={cn(TYPE.caption, 'leading-[16px] text-dim')}>
         {PERIOD_CODES[period]}
       </Text>
     </>
@@ -69,10 +68,7 @@ function BoardLabel({
 
 function Empty({ children }: { children: ReactNode }) {
   return (
-    <Text
-      selectable={false}
-      className="py-1 font-mono text-[10px] leading-[16px] text-dim"
-    >
+    <Text selectable={false} className={cn(TYPE.value, 'py-1 leading-[16px] text-dim')}>
       {children}
     </Text>
   )
@@ -88,7 +84,7 @@ function TakenRow({ taken }: { taken: TakenMedal }) {
   return (
     <View className="gap-0.5 py-1">
       <View className="flex-row items-center gap-1.5">
-        <Text selectable={false} className="text-[13px] leading-[16px] opacity-40">
+        <Text selectable={false} className={cn(GLYPH.lg, 'leading-[16px] opacity-40')}>
           {rankMedal(taken.had)}
         </Text>
         <BoardLabel
@@ -101,7 +97,7 @@ function TakenRow({ taken }: { taken: TakenMedal }) {
             TakenMedal. Pushed to the end so the dates line up down the column. */}
         <Text
           selectable={false}
-          className="ml-auto font-mono text-[8px] font-bold leading-[16px] tracking-[0.5px] text-dim"
+          className={cn(TYPE.caption, 'ml-auto leading-[16px] text-dim')}
         >
           {formatShortDay(taken.day)}
         </Text>
@@ -112,7 +108,7 @@ function TakenRow({ taken }: { taken: TakenMedal }) {
         {taken.taker === null ? (
           <Text
             selectable={false}
-            className="font-mono text-[9px] font-black leading-[13px] tracking-[1px]"
+            className={cn(TYPE.rowLabel, 'leading-[13px]')}
             style={{ color: GRAYSCALE[1] }}
           >
             <Trans>TAKEN</Trans>
@@ -124,7 +120,7 @@ function TakenRow({ taken }: { taken: TakenMedal }) {
           // it opens their profile, as a name does everywhere it appears.
           <Text
             selectable={false}
-            className="font-mono text-[9px] font-bold leading-[13px] tracking-[1px] text-dim"
+            className={cn(TYPE.labelSm, 'leading-[13px] text-dim')}
           >
             <Trans>
               TAKEN BY{' '}
@@ -198,7 +194,7 @@ export function MedalsOverlay({
                     key={`${medal.mode}:${medal.difficulty}:${medal.period}`}
                     className="h-7 flex-row items-center gap-1.5"
                   >
-                    <Text selectable={false} className="text-[13px] leading-[16px]">
+                    <Text selectable={false} className={cn(GLYPH.lg, 'leading-[16px]')}>
                       {rankMedal(medal.rank)}
                     </Text>
                     <BoardLabel

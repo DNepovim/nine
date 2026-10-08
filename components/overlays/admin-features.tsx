@@ -4,6 +4,7 @@ import { ActivityIndicator, ScrollView, Text, TextInput, View } from 'react-nati
 
 import { TrackedPressable } from '@/components/tracked-pressable'
 import { DIM_INK } from '@/constants/colors'
+import { TYPE } from '@/constants/typography'
 import { listFeatures, setFeature, type AdminFeature } from '@/lib/admin/features'
 import { cn } from '@/lib/cn'
 
@@ -87,10 +88,7 @@ export function AdminFeatures({
   return (
     <View className="flex-1">
       {error !== null && (
-        <Text
-          selectable={false}
-          className="mb-2 font-mono text-[10px] font-bold tracking-[0.5px] text-red-500"
-        >
+        <Text selectable={false} className={cn(TYPE.value, 'mb-2 text-red-500')}>
           {error}
         </Text>
       )}
@@ -128,7 +126,7 @@ export function AdminFeatures({
                   <Text
                     selectable={false}
                     className={cn(
-                      'font-mono text-[9px] font-black tracking-[1px]',
+                      TYPE.rowLabel,
                       row.active ? 'text-on-strong' : 'text-dim',
                     )}
                   >
@@ -137,7 +135,7 @@ export function AdminFeatures({
                 </TrackedPressable>
                 <Text
                   selectable={false}
-                  className="flex-1 font-mono text-[12px] font-black tracking-[0.5px] text-primary"
+                  className={cn(TYPE.prose, 'flex-1 text-primary')}
                 >
                   {row.key}
                   {locked ? ' 🔒' : ''}
@@ -145,10 +143,7 @@ export function AdminFeatures({
                 {/* Roles granting it, then people who actually reach it — the second
                     counts overrides in, which is the number somebody about to flip the
                     switch wants. */}
-                <Text
-                  selectable={false}
-                  className="font-mono text-[10px] font-medium tracking-[0.5px] text-dim"
-                >
+                <Text selectable={false} className={cn(TYPE.value, 'text-dim')}>
                   {row.roleCount} · {row.personCount}
                 </Text>
               </View>
@@ -156,7 +151,7 @@ export function AdminFeatures({
               {!row.inBuild && (
                 <Text
                   selectable={false}
-                  className="ml-1 mt-1 font-mono text-[10px] font-bold tracking-[0.5px] text-red-500"
+                  className={cn(TYPE.value, 'ml-1 mt-1 text-red-500')}
                 >
                   {/* A row the database holds and this build does not: a key left behind
                       by a migration, or a device older than the server. Shown rather than
@@ -184,7 +179,7 @@ export function AdminFeatures({
                 placeholder="why"
                 placeholderTextColor={DIM_INK}
                 multiline
-                className="ml-1 mt-1 font-mono text-[10px] font-medium leading-[15px] text-dim"
+                className={cn(TYPE.value, 'ml-1 mt-1 leading-[15px] text-dim')}
               />
             </View>
           )

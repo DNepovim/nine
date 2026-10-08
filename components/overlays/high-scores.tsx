@@ -15,9 +15,11 @@ import Animated, {
 import DSEG7Font from '@/assets/fonts/DSEG7Classic-Bold.ttf'
 import { TrackedPressable } from '@/components/tracked-pressable'
 import { mono, ON_GOLD_LABEL_SHADOW } from '@/constants/theme'
+import { TYPE } from '@/constants/typography'
 import { useBoardContext, type PeriodBoard } from '@/hooks/use-board'
 import { useOnline } from '@/hooks/use-online'
 import { useViewport } from '@/hooks/use-viewport'
+import { cn } from '@/lib/cn'
 import { type LeaderboardTab } from '@/lib/leaderboard'
 import { longestMedalTab, type TabRank } from '@/lib/medals'
 import { gradientOf, headlineOf, type Difficulty, type ModeId } from '@/modes'
@@ -235,7 +237,7 @@ export function HighScores({
             >
               <Text
                 selectable={false}
-                className="font-mono text-[9px] font-bold tracking-[1px] text-primary"
+                className={cn(TYPE.labelSm, 'text-primary')}
                 style={glow}
               >
                 {t(label)}
@@ -266,23 +268,19 @@ export function HighScores({
       <View className="mb-1 flex-row px-2">
         <Text
           selectable={false}
-          className="w-7 font-mono text-[8px] font-bold tracking-[1px] text-dim"
+          className={cn(TYPE.caption, 'w-7 text-dim')}
           style={glow}
         >
           #
         </Text>
         <Text
           selectable={false}
-          className="flex-1 font-mono text-[8px] font-bold tracking-[1px] text-dim"
+          className={cn(TYPE.caption, 'flex-1 text-dim')}
           style={glow}
         >
           <Trans>NICK</Trans>
         </Text>
-        <Text
-          selectable={false}
-          className="font-mono text-[8px] font-bold tracking-[1px] text-dim"
-          style={glow}
-        >
+        <Text selectable={false} className={cn(TYPE.caption, 'text-dim')} style={glow}>
           <Trans>SCORE</Trans>
         </Text>
       </View>

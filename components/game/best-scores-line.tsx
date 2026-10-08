@@ -18,11 +18,13 @@ import { TrackedPressable } from '@/components/tracked-pressable'
 import type { AchievementId } from '@/constants/achievements'
 import { GOLD_INK, SPECTRUM } from '@/constants/colors'
 import { mono } from '@/constants/theme'
+import { TYPE } from '@/constants/typography'
 import type { RecordHolder } from '@/hooks/use-board'
 import { useOnline } from '@/hooks/use-online'
 import { useOpenProfile } from '@/hooks/use-profile-modal'
 import { announcementStyle } from '@/lib/announcement-style'
 import { RUN_SETTLE_MS, type Announcement } from '@/lib/announcements'
+import { cn } from '@/lib/cn'
 import { nearestRecord } from '@/lib/near-record'
 import { traitsOf, type ModeId } from '@/modes'
 
@@ -355,10 +357,7 @@ export function BestScoresLine({
             />
           ))}
           {revealed && !online && (
-            <Text
-              selectable={false}
-              className="font-mono text-[8px] font-bold tracking-[1px] text-dim"
-            >
+            <Text selectable={false} className={cn(TYPE.caption, 'text-dim')}>
               <Trans>— OFFLINE —</Trans>
             </Text>
           )}

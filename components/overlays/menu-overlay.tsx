@@ -17,6 +17,7 @@ import { Screen } from '@/components/screen'
 import { TrackedPressable } from '@/components/tracked-pressable'
 import type { AchievementId } from '@/constants/achievements'
 import { DIM_INK } from '@/constants/colors'
+import { TYPE } from '@/constants/typography'
 import { useChampionsContext } from '@/hooks/use-champions'
 import { useFlag } from '@/hooks/use-flags'
 import type { LostMedalNews } from '@/hooks/use-lost-medals'
@@ -265,8 +266,23 @@ export function MenuOverlay({
   // arrives. ARCADE wins while it is the stored answer: the mode underneath it is the pill
   // the player drops back onto when they leave arcade, not a change of focus, and reading
   // it as one is what used to take them off ARCADE on every launch and on every END.
+  //
+  // The first line of it is what stops this fighting the player's own thumb. A press is
+  // reported up (`onFocusChange`) and comes straight back down as `initialFocus`, so every
+  // tap on a pill arrives here a second time looking exactly like a stored answer — and a
+  // player without the arcade flag who pressed ARCADE was put back on their last mode by
+  // the branch below before they saw the teaser. One tap did nothing and the second one
+  // worked, because by then there was no change left for this to react to.
+  //
+  // What tells the two apart is that the echo already agrees with what is focused, and a
+  // stored answer arriving does not. Read through the updater rather than off `focused`,
+  // which would have to be a dependency and would run this on the very press it exists to
+  // leave alone.
   useEffect(() => {
-    setFocused(initialFocus === 'arcade' && showArcade ? 'arcade' : gameMode)
+    setFocused((current) => {
+      if (initialFocus === current) return current
+      return initialFocus === 'arcade' && showArcade ? 'arcade' : gameMode
+    })
   }, [gameMode, initialFocus, showArcade])
 
   const panelStyle = useAnimatedStyle(() => ({
@@ -305,10 +321,7 @@ export function MenuOverlay({
               drawn the way their name is drawn everywhere else, in the gradient their
               averages earn; the words around it stay dim, so the one coloured thing on
               the line is the one word that is theirs. */}
-          <Text
-            selectable={false}
-            className="mb-2 font-mono text-[11px] font-bold tracking-[0.5px] text-dim"
-          >
+          <Text selectable={false} className={cn(TYPE.figure, 'mb-2 text-dim')}>
             {isNonEmptyString(nickname) ? (
               <>
                 {`Hi `}
@@ -493,7 +506,7 @@ export function MenuOverlay({
                     >
                       <Text
                         selectable={false}
-                        className="font-mono text-[13px] font-black tracking-[2px] text-on-strong"
+                        className={cn(TYPE.button, 'text-on-strong')}
                       >
                         <Trans>CREATE ROOM</Trans>
                       </Text>
@@ -511,7 +524,7 @@ export function MenuOverlay({
                   >
                     <Text
                       selectable={false}
-                      className="font-mono text-[13px] font-black tracking-[2px]"
+                      className={TYPE.button}
                       style={{ color: MULTIPLAYER_GRADIENT.accuracy[0] }}
                     >
                       <Trans>JOIN ROOM</Trans>
@@ -524,15 +537,12 @@ export function MenuOverlay({
                 {!online && (
                   <View className="absolute inset-0 items-center justify-center gap-3 bg-surface px-6">
                     <Ionicons name="cloud-offline-outline" size={32} color={DIM_INK} />
-                    <Text
-                      selectable={false}
-                      className="font-mono text-[11px] font-black tracking-[2px] text-dim"
-                    >
+                    <Text selectable={false} className={cn(TYPE.heading, 'text-dim')}>
                       <Trans>YOU'RE OFFLINE</Trans>
                     </Text>
                     <Text
                       selectable={false}
-                      className="text-center font-mono text-[10px] font-bold leading-[16px] tracking-[0.5px] text-dim"
+                      className={cn(TYPE.value, 'text-center leading-[16px] text-dim')}
                     >
                       <Trans>CONNECT TO THE INTERNET TO PLAY WITH FRIENDS</Trans>
                     </Text>
@@ -570,10 +580,7 @@ export function MenuOverlay({
                 end={{ x: 1, y: 0.5 }}
                 className="items-center py-4"
               >
-                <Text
-                  selectable={false}
-                  className="font-mono text-[13px] font-black tracking-[2px] text-on-strong"
-                >
+                <Text selectable={false} className={cn(TYPE.button, 'text-on-strong')}>
                   <Trans>PLAY GAME</Trans>
                 </Text>
               </LinearGradient>
@@ -584,10 +591,7 @@ export function MenuOverlay({
             <TrackedPressable id="menu.options" onPress={onOpenAdvanced} hitSlop={10}>
               <View className="flex-row items-center gap-1">
                 <Ionicons name="settings-outline" size={10} color={DIM_INK} />
-                <Text
-                  selectable={false}
-                  className="font-mono text-[10px] font-bold tracking-[1.8px] text-dim"
-                >
+                <Text selectable={false} className={cn(TYPE.quietAction, 'text-dim')}>
                   <Trans>OPTIONS</Trans>
                 </Text>
               </View>
@@ -617,10 +621,7 @@ export function MenuOverlay({
             >
               <View className="flex-row items-center gap-1">
                 <Ionicons name="share-outline" size={10} color={DIM_INK} />
-                <Text
-                  selectable={false}
-                  className="font-mono text-[10px] font-bold tracking-[1.8px] text-dim"
-                >
+                <Text selectable={false} className={cn(TYPE.quietAction, 'text-dim')}>
                   <Trans>SHARE</Trans>
                 </Text>
               </View>
@@ -628,10 +629,7 @@ export function MenuOverlay({
             <TrackedPressable id="menu.how_to_play" onPress={onHowToPlay} hitSlop={10}>
               <View className="flex-row items-center gap-1">
                 <Ionicons name="help-circle-outline" size={11} color={DIM_INK} />
-                <Text
-                  selectable={false}
-                  className="font-mono text-[10px] font-bold tracking-[1.8px] text-dim"
-                >
+                <Text selectable={false} className={cn(TYPE.quietAction, 'text-dim')}>
                   <Trans>HOW TO PLAY</Trans>
                 </Text>
               </View>
@@ -654,10 +652,7 @@ export function MenuOverlay({
                 <TrackedPressable id="menu.dev" onPress={onOpenDev} hitSlop={10}>
                   <View className="flex-row items-center gap-1">
                     <Ionicons name="code-slash-outline" size={10} color={DIM_INK} />
-                    <Text
-                      selectable={false}
-                      className="font-mono text-[10px] font-bold tracking-[1.8px] text-dim"
-                    >
+                    <Text selectable={false} className={cn(TYPE.quietAction, 'text-dim')}>
                       <Trans>DEV</Trans>
                     </Text>
                   </View>
@@ -667,10 +662,7 @@ export function MenuOverlay({
                 <TrackedPressable id="menu.admin" onPress={onOpenAdmin} hitSlop={10}>
                   <View className="flex-row items-center gap-1">
                     <Ionicons name="shield-outline" size={10} color={DIM_INK} />
-                    <Text
-                      selectable={false}
-                      className="font-mono text-[10px] font-bold tracking-[1.8px] text-dim"
-                    >
+                    <Text selectable={false} className={cn(TYPE.quietAction, 'text-dim')}>
                       <Trans>ADMIN</Trans>
                     </Text>
                   </View>

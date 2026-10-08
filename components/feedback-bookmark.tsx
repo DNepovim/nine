@@ -16,6 +16,7 @@ import { scheduleOnRN } from 'react-native-worklets'
 
 import { SWIPE_THRESHOLD } from '@/constants/game'
 import { LAYER } from '@/constants/layers'
+import { TYPE } from '@/constants/typography'
 import { gradientOf, type ModeId } from '@/modes'
 
 const ICON_ZONE = 44
@@ -148,7 +149,7 @@ export function FeedbackBookmark({
           <Text
             selectable={false}
             numberOfLines={1}
-            className="font-mono text-[10px] font-bold tracking-[1.5px]"
+            className={TYPE.quietAction}
             style={{ color }}
           >
             <Trans>TELL US</Trans>

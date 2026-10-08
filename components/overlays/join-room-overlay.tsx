@@ -5,6 +5,7 @@ import { Text } from 'react-native'
 
 import { Screen } from '@/components/screen'
 import { TrackedPressable } from '@/components/tracked-pressable'
+import { TYPE } from '@/constants/typography'
 import { cn } from '@/lib/cn'
 import { DARK_MULTIPLAYER_GRADIENT, MULTIPLAYER_GRADIENT } from '@/modes'
 
@@ -41,16 +42,10 @@ export function JoinRoomOverlay({
 
   return (
     <Screen overlay>
-      <Text
-        selectable={false}
-        className="mb-1 font-mono text-[20px] font-black tracking-[3px] text-primary"
-      >
+      <Text selectable={false} className={cn(TYPE.screenTitle, 'mb-1 text-primary')}>
         <Trans>ENTER ROOM CODE</Trans>
       </Text>
-      <Text
-        selectable={false}
-        className="mb-6 text-center font-mono text-[11px] font-bold tracking-[0.5px] text-dim"
-      >
+      <Text selectable={false} className={cn(TYPE.figure, 'mb-6 text-center text-dim')}>
         <Trans>Ask whoever created the room for their 4-digit code.</Trans>
       </Text>
 
@@ -76,10 +71,7 @@ export function JoinRoomOverlay({
           end={{ x: 1, y: 0.5 }}
           className="items-center py-4"
         >
-          <Text
-            selectable={false}
-            className="font-mono text-[13px] font-black tracking-[2px] text-on-strong"
-          >
+          <Text selectable={false} className={cn(TYPE.button, 'text-on-strong')}>
             <Trans>JOIN ROOM</Trans>
           </Text>
         </LinearGradient>
@@ -91,10 +83,7 @@ export function JoinRoomOverlay({
         hitSlop={10}
         className="mt-4"
       >
-        <Text
-          selectable={false}
-          className="font-mono text-[10px] font-bold tracking-[1.8px] text-dim underline"
-        >
+        <Text selectable={false} className={cn(TYPE.quietAction, 'text-dim underline')}>
           <Trans>CANCEL</Trans>
         </Text>
       </TrackedPressable>

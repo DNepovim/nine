@@ -3,6 +3,8 @@ import { Text } from 'react-native'
 
 import { CompareRow } from '@/components/overlays/compare-row'
 import { CompareValue } from '@/components/overlays/compare-value'
+import { TYPE } from '@/constants/typography'
+import { cn } from '@/lib/cn'
 import { toneFor, type CompareSide } from '@/lib/compare'
 import { groupDigits } from '@/lib/group-digits'
 import {
@@ -52,7 +54,7 @@ export function CompareBoardRow({
       <Text
         selectable={false}
         numberOfLines={1}
-        className="flex-1 font-mono text-[10px] font-black tracking-[1px]"
+        className={cn(TYPE.label, 'flex-1')}
         style={{ color: getDifficultyColor(mode, difficulty) }}
       >
         {`${t(codeOf(mode))} ${t(DIFFICULTIES[difficulty].code)}`}

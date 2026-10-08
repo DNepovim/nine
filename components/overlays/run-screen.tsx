@@ -9,6 +9,8 @@ import { StatRow } from '@/components/overlays/stat-row'
 import { Screen } from '@/components/screen'
 import { TrackedPressable } from '@/components/tracked-pressable'
 import { DIM_INK } from '@/constants/colors'
+import { TYPE } from '@/constants/typography'
+import { cn } from '@/lib/cn'
 import type { RunStat } from '@/lib/run-stats'
 
 // The screen a run stops on, whichever engine was running it and whichever way it
@@ -128,7 +130,7 @@ export function RunScreen({
                   // caption belongs to the number rather than to the row below it.
                   <Text
                     selectable={false}
-                    className="-mt-3.5 mb-5 font-mono text-[9px] font-bold tracking-[1.5px] text-dim"
+                    className={cn(TYPE.labelSm, '-mt-3.5 mb-5 text-dim')}
                   >
                     {score.caption}
                   </Text>
@@ -160,10 +162,7 @@ export function RunScreen({
                   end={{ x: 1, y: 0.5 }}
                   className="items-center py-4"
                 >
-                  <Text
-                    selectable={false}
-                    className="font-mono text-[13px] font-black tracking-[2px] text-on-strong"
-                  >
+                  <Text selectable={false} className={cn(TYPE.button, 'text-on-strong')}>
                     {cta.label}
                   </Text>
                 </LinearGradient>
@@ -194,10 +193,7 @@ export function CardButton({
       onPress={onPress}
       className="items-center rounded-2xl bg-card py-4"
     >
-      <Text
-        selectable={false}
-        className="font-mono text-[13px] font-black tracking-[2px] text-primary"
-      >
+      <Text selectable={false} className={cn(TYPE.button, 'text-primary')}>
         {label}
       </Text>
     </TrackedPressable>
@@ -221,10 +217,7 @@ export function RunExit({
     <TrackedPressable id="run_screen.tertiary" onPress={onPress} hitSlop={10}>
       <View className="flex-row items-center gap-1">
         <Ionicons name={icon} size={10} color={DIM_INK} />
-        <Text
-          selectable={false}
-          className="font-mono text-[10px] font-bold tracking-[1.8px] text-dim"
-        >
+        <Text selectable={false} className={cn(TYPE.quietAction, 'text-dim')}>
           {label}
         </Text>
       </View>

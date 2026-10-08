@@ -5,6 +5,8 @@ import { Text, View } from 'react-native'
 
 import { ModalCard } from '@/components/overlays/modal-card'
 import { TrackedPressable } from '@/components/tracked-pressable'
+import { GLYPH, TYPE } from '@/constants/typography'
+import { cn } from '@/lib/cn'
 import { darkGradientOf, labelOf, type ModeId } from '@/modes'
 
 // The mark over the words. A cap rather than the toast's flame: that one speaks for a
@@ -57,7 +59,7 @@ export function TutorialDoneModal({
         <View className="items-center pb-1 pt-2">
           <Text
             selectable={false}
-            className="mb-2 text-center text-[28px] leading-[32px]"
+            className={cn(GLYPH['3xl'], 'mb-2 text-center leading-[32px]')}
           >
             {MARK}
           </Text>
@@ -65,13 +67,13 @@ export function TutorialDoneModal({
               buttons, and the offer is meant to be read rather than obeyed. */}
           <Text
             selectable={false}
-            className="mb-1.5 text-center font-mono text-[13px] font-bold text-primary"
+            className={cn(TYPE.button, 'mb-1.5 text-center text-primary')}
           >
             <Trans>That is every move learned.</Trans>
           </Text>
           <Text
             selectable={false}
-            className="mb-5 text-center font-mono text-[12px] leading-[18px] text-dim"
+            className={cn(TYPE.prose, 'mb-5 text-center text-dim')}
           >
             <Trans>Ready to play for real?</Trans>
           </Text>
@@ -107,10 +109,7 @@ export function TutorialDoneModal({
             onPress={close}
             className="mt-1 items-center py-2"
           >
-            <Text
-              selectable={false}
-              className="font-mono text-[10px] font-bold tracking-[1px] text-dim underline"
-            >
+            <Text selectable={false} className={cn(TYPE.label, 'text-dim underline')}>
               <Trans>NOT NOW</Trans>
             </Text>
           </TrackedPressable>

@@ -1,5 +1,6 @@
 import { Text } from 'react-native'
 
+import { TYPE } from '@/constants/typography'
 import { useOpenProfile } from '@/hooks/use-profile-modal'
 
 // The name of whoever took a medal off you, on the lost-medal line. Flat, in whatever
@@ -39,7 +40,7 @@ export function TakerName({
       onPress={() => {
         openProfile(userId)
       }}
-      className="font-mono text-[10px] font-bold tracking-[0.5px]"
+      className={TYPE.value}
       style={{ color }}
     >
       {mark === null ? nickname : `${mark} ${nickname}`}

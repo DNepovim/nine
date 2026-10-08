@@ -2,6 +2,8 @@ import { useLingui } from '@lingui/react/macro'
 import { LinearGradient } from 'expo-linear-gradient'
 import { Text, View } from 'react-native'
 
+import { TYPE } from '@/constants/typography'
+import { cn } from '@/lib/cn'
 import {
   DIFFICULTIES,
   gradientOf,
@@ -64,10 +66,7 @@ export function BoardBadges({
             end={{ x: 1, y: 0.5 }}
             className="overflow-hidden rounded-lg px-3 py-1"
           >
-            <Text
-              selectable={false}
-              className="font-mono text-[10px] font-black tracking-[1.5px] text-white"
-            >
+            <Text selectable={false} className={cn(TYPE.quietAction, 'text-white')}>
               {label}
             </Text>
           </LinearGradient>

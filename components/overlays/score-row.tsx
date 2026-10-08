@@ -4,6 +4,7 @@ import { Text, View } from 'react-native'
 import { GradientName } from '@/components/gradient-name'
 import { TrackedPressable } from '@/components/tracked-pressable'
 import { ON_GOLD_LABEL_SHADOW } from '@/constants/theme'
+import { GLYPH, READOUT, TYPE } from '@/constants/typography'
 import { useOpenProfile } from '@/hooks/use-profile-modal'
 import { cn } from '@/lib/cn'
 import { rankEmoji, rankMark } from '@/lib/rank-emoji'
@@ -16,9 +17,9 @@ import { timeAgo } from '@/lib/time-ago'
 // needs more room than the numeral it replaces, and the potato and the pig fill their
 // box where a medal leaves a margin, so they take a notch less to weigh the same.
 const RANK_MARK_SIZES = {
-  medal: 'text-[13px]',
-  creature: 'text-[11px]',
-  number: 'text-[10px]',
+  medal: GLYPH.lg,
+  creature: GLYPH.sm,
+  number: GLYPH.xs,
 } as const satisfies Record<RankMark, string>
 
 export type ScoreEntry = {
@@ -107,7 +108,7 @@ export function ScoreRow({
             who holds the hardest boards without a legend explaining it. Rendered only
             when there is one — an empty Text would still take the row's gap. */}
         {entry.mark !== null && (
-          <Text selectable={false} className="text-[9px] leading-[13px]">
+          <Text selectable={false} className={cn(GLYPH['2xs'], 'leading-[13px]')}>
             {entry.mark}
           </Text>
         )}
@@ -120,7 +121,7 @@ export function ScoreRow({
           nickname={entry.nickname}
           avgAccuracy={entry.avgAccuracy}
           avgSpeed={entry.avgSpeed}
-          className="font-mono text-[10px] font-bold tracking-[0.5px]"
+          className={TYPE.value}
           style={glow}
         />
         {/* One slot, two things that are never both true: a published row says how
@@ -149,7 +150,7 @@ export function ScoreRow({
           colour on one line stops reading as a column. */}
       <Text
         selectable={false}
-        className="text-[10px] tracking-[1px] text-score"
+        className={cn(READOUT.row, 'text-score')}
         style={[{ fontFamily: digitFont }, glow]}
       >
         {entry.score}

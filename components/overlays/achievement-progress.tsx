@@ -7,6 +7,8 @@ import { TrackedPressable } from '@/components/tracked-pressable'
 import { achievement, ACHIEVEMENT_COUNT } from '@/constants/achievements'
 import type { AchievementId } from '@/constants/achievements'
 import { ACHIEVEMENT_INK } from '@/constants/colors'
+import { GLYPH, TYPE } from '@/constants/typography'
+import { cn } from '@/lib/cn'
 
 // What the line wears before there is anything to show. The trophy and the feature's
 // own name, so the front door is still labelled for the player who has not found it —
@@ -49,21 +51,18 @@ export function AchievementProgress({
       hitSlop={8}
       className="flex-row items-center gap-2"
     >
-      <Text selectable={false} className="text-[13px] leading-[16px]">
+      <Text selectable={false} className={cn(GLYPH.lg, 'leading-[16px]')}>
         {def?.emblem ?? EMPTY_EMBLEM}
       </Text>
       <Text
         selectable={false}
         numberOfLines={1}
-        className="font-mono text-[9px] font-black tracking-[1px]"
+        className={TYPE.rowLabel}
         style={{ color: def === null ? undefined : ACHIEVEMENT_INK }}
       >
         {def === null ? t(EMPTY_TITLE) : t(def.title)}
       </Text>
-      <Text
-        selectable={false}
-        className="font-mono text-[9px] font-black tracking-[1px] text-dim"
-      >
+      <Text selectable={false} className={cn(TYPE.rowLabel, 'text-dim')}>
         {earned}/{ACHIEVEMENT_COUNT}
       </Text>
       <Ionicons name="chevron-forward" size={10} color={ACHIEVEMENT_INK} />

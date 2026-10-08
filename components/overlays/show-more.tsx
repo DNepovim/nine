@@ -3,6 +3,8 @@ import { Text } from 'react-native'
 
 import { TrackedPressable } from '@/components/tracked-pressable'
 import type { ButtonId } from '@/constants/buttons'
+import { TYPE } from '@/constants/typography'
+import { cn } from '@/lib/cn'
 
 // The way into the rest of a list that opened on a slice of itself, and back out of it.
 // Drawn inside the card the rows are on rather than under it, because it belongs to that
@@ -29,10 +31,7 @@ export function ShowMore({
 }) {
   return (
     <TrackedPressable id={id} onPress={onToggle} className="items-center py-2">
-      <Text
-        selectable={false}
-        className="font-mono text-[9px] font-black tracking-[1.5px] text-dim"
-      >
+      <Text selectable={false} className={cn(TYPE.sectionLabel, 'text-dim')}>
         {expanded ? (
           <Trans>SHOW LESS</Trans>
         ) : (

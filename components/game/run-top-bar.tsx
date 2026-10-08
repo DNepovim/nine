@@ -3,6 +3,8 @@ import { Text, View } from 'react-native'
 import Animated, { FadeIn, FadeOut } from 'react-native-reanimated'
 
 import { PauseButton } from '@/components/game/pause-button'
+import { TYPE } from '@/constants/typography'
+import { cn } from '@/lib/cn'
 
 // The row every live run is played under: what the run is on the left, the game's name in
 // the middle, and the way to stop on the right.
@@ -34,11 +36,7 @@ export function RunTopBar({
   return (
     <View className="flex-row items-center">
       <View className="flex-1">
-        <Text
-          selectable={false}
-          className="font-mono text-[13px] font-black tracking-[2px]"
-          style={{ color: accent }}
-        >
+        <Text selectable={false} className={TYPE.button} style={{ color: accent }}>
           {title}
         </Text>
         {/* Clipped rather than wrapped: a second line here would push the whole row
@@ -47,7 +45,7 @@ export function RunTopBar({
           <Text
             selectable={false}
             numberOfLines={1}
-            className="font-mono text-[10px] font-bold tracking-[1px] text-dim"
+            className={cn(TYPE.label, 'text-dim')}
           >
             {subtitle}
           </Text>

@@ -1,6 +1,9 @@
 import type { ReactNode } from 'react'
 import { Text, View } from 'react-native'
 
+import { TYPE } from '@/constants/typography'
+import { cn } from '@/lib/cn'
+
 // One labelled figure in the Trainee stat row. Its own file per the code guide —
 // no named component lives inside another's.
 // `label` is a node so the caller can hand it a <Trans>; it renders inside the
@@ -8,16 +11,10 @@ import { Text, View } from 'react-native'
 export function TraineeStat({ label, value }: { label: ReactNode; value: string }) {
   return (
     <View className="items-center">
-      <Text
-        selectable={false}
-        className="font-mono text-[8px] font-bold tracking-[1px] text-dim"
-      >
+      <Text selectable={false} className={cn(TYPE.caption, 'text-dim')}>
         {label}
       </Text>
-      <Text
-        selectable={false}
-        className="font-mono text-[12px] font-bold tracking-[1px] text-primary"
-      >
+      <Text selectable={false} className={cn(TYPE.prose, 'text-primary')}>
         {value}
       </Text>
     </View>

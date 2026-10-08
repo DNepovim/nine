@@ -3,6 +3,8 @@ import { Text, View } from 'react-native'
 
 import { ProseSentence } from '@/components/overlays/prose-sentence'
 import { APP_VIOLET } from '@/constants/colors'
+import { TYPE } from '@/constants/typography'
+import { cn } from '@/lib/cn'
 import { totalAwards } from '@/lib/winnings'
 import type { AwardBlock } from '@/lib/winnings-announcement'
 import { winningsSentences } from '@/lib/winnings-lines'
@@ -40,7 +42,7 @@ export function WinningsCard({ blocks }: { blocks: readonly AwardBlock[] }) {
       <View className="items-center">
         <Text
           selectable={false}
-          className="text-center font-mono text-[17px] font-black tracking-[2px]"
+          className={cn(TYPE.cardTitle, 'text-center')}
           style={{ color: ACCENT }}
         >
           <Trans>YOU WON</Trans>
@@ -65,10 +67,7 @@ export function WinningsCard({ blocks }: { blocks: readonly AwardBlock[] }) {
         >
           +{total.toLocaleString()}
         </Text>
-        <Text
-          selectable={false}
-          className="mt-1 font-mono text-[9px] font-bold tracking-[1px] text-dim"
-        >
+        <Text selectable={false} className={cn(TYPE.labelSm, 'mt-1 text-dim')}>
           <Trans>ADDED TO YOUR FORTUNE</Trans>
         </Text>
       </View>

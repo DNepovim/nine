@@ -4,6 +4,8 @@ import { Gesture, GestureDetector } from 'react-native-gesture-handler'
 import { useSharedValue } from 'react-native-reanimated'
 import { scheduleOnRN } from 'react-native-worklets'
 
+import { TYPE } from '@/constants/typography'
+import { cn } from '@/lib/cn'
 import { gradientOf } from '@/modes'
 
 const TRACK = 4
@@ -84,7 +86,7 @@ export function ValueSlider({
         {width > 0 && (
           <Text
             selectable={false}
-            className="absolute font-mono text-[11px] font-black tracking-[1px]"
+            className={cn(TYPE.buttonSm, 'absolute')}
             style={{
               color: tint,
               left: Math.min(width - 24, Math.max(-6, handleX - 18)),
@@ -127,16 +129,10 @@ export function ValueSlider({
       </GestureDetector>
 
       <View className="flex-row justify-between" style={{ height: LABEL_ROW }}>
-        <Text
-          selectable={false}
-          className="font-mono text-[9px] font-bold tracking-[1px] text-dim"
-        >
+        <Text selectable={false} className={cn(TYPE.labelSm, 'text-dim')}>
           {format(min)}
         </Text>
-        <Text
-          selectable={false}
-          className="font-mono text-[9px] font-bold tracking-[1px] text-dim"
-        >
+        <Text selectable={false} className={cn(TYPE.labelSm, 'text-dim')}>
           {format(max)}
         </Text>
       </View>

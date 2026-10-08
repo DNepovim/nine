@@ -1,6 +1,8 @@
 import { Text, View } from 'react-native'
 
 import { corona, SCORE_CORONA_RADIUS } from '@/constants/theme'
+import { READOUT } from '@/constants/typography'
+import { cn } from '@/lib/cn'
 
 // The run's score. Same seven-segment digits at the same size wherever it appears —
 // only what holds them changes.
@@ -28,11 +30,7 @@ export function ScoreReadout({
   const digits = (
     <Text
       selectable={false}
-      className={
-        color === undefined
-          ? 'text-[28px] tracking-[2px] text-score'
-          : 'text-[28px] tracking-[2px]'
-      }
+      className={color === undefined ? cn(READOUT.score, 'text-score') : READOUT.score}
       style={[
         { fontFamily: 'DSEG7' },
         color === undefined ? null : { color },

@@ -11,6 +11,7 @@ import {
 
 import { TrackedPressable } from '@/components/tracked-pressable'
 import { DIM_INK } from '@/constants/colors'
+import { TYPE } from '@/constants/typography'
 import { cn } from '@/lib/cn'
 import { MOTTO_MAX, mottoLength, normalizeMotto } from '@/lib/motto'
 
@@ -62,16 +63,10 @@ export function MottoModal({
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       >
         <View className="w-full max-w-xs rounded-2xl bg-card p-6">
-          <Text
-            selectable={false}
-            className="mb-1 font-mono text-[11px] font-black tracking-[2px] text-primary"
-          >
+          <Text selectable={false} className={cn(TYPE.heading, 'mb-1 text-primary')}>
             <Trans>WHAT’S ON YOUR MIND?</Trans>
           </Text>
-          <Text
-            selectable={false}
-            className="mb-4 font-mono text-[9px] font-bold tracking-[0.5px] text-dim"
-          >
+          <Text selectable={false} className={cn(TYPE.hint, 'mb-4 text-dim')}>
             <Trans>One line under your name, for anyone who opens your profile.</Trans>
           </Text>
 
@@ -104,7 +99,8 @@ export function MottoModal({
           <Text
             selectable={false}
             className={cn(
-              'mb-3 text-right font-mono text-[9px] font-bold tracking-[0.5px]',
+              TYPE.hint,
+              'mb-3 text-right',
               tooLong ? 'text-red-500' : 'text-dim',
             )}
           >
@@ -112,10 +108,7 @@ export function MottoModal({
           </Text>
 
           {error !== null && (
-            <Text
-              selectable={false}
-              className="mb-3 font-mono text-[9px] font-bold tracking-[0.5px] text-red-500"
-            >
+            <Text selectable={false} className={cn(TYPE.hint, 'mb-3 text-red-500')}>
               {error}
             </Text>
           )}
@@ -126,10 +119,7 @@ export function MottoModal({
               onPress={onCancel}
               className="flex-1 items-center rounded-xl bg-card py-3"
             >
-              <Text
-                selectable={false}
-                className="font-mono text-[11px] font-black tracking-[1.5px] text-dim"
-              >
+              <Text selectable={false} className={cn(TYPE.buttonSm, 'text-dim')}>
                 <Trans>CANCEL</Trans>
               </Text>
             </TrackedPressable>
@@ -145,10 +135,7 @@ export function MottoModal({
                 (saving || tooLong) && 'opacity-50',
               )}
             >
-              <Text
-                selectable={false}
-                className="font-mono text-[11px] font-black tracking-[1.5px] text-on-strong"
-              >
+              <Text selectable={false} className={cn(TYPE.buttonSm, 'text-on-strong')}>
                 {saving && <Trans>SAVING…</Trans>}
                 {!saving && removing && <Trans>REMOVE</Trans>}
                 {!saving && !removing && <Trans>SAVE</Trans>}

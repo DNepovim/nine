@@ -6,8 +6,10 @@ import { ScrollView, Text, View } from 'react-native'
 import { ModalCard } from '@/components/overlays/modal-card'
 import { popupAccent, PopupCardView } from '@/components/overlays/popup-card-view'
 import { PageDots } from '@/components/page-dots'
+import { PrimaryButton } from '@/components/primary-button'
 import { TrackedPressable } from '@/components/tracked-pressable'
 import { DIM_INK } from '@/constants/colors'
+import { TYPE } from '@/constants/typography'
 import { useViewport } from '@/hooks/use-viewport'
 import { cn } from '@/lib/cn'
 import type { PopupCard } from '@/types/popup'
@@ -78,35 +80,27 @@ export function WhatsNewOverlay({
                 )}
               >
                 <Ionicons name="arrow-back" size={14} color={DIM_INK} />
-                <Text
-                  selectable={false}
-                  className="font-mono text-[12px] font-black tracking-[1.5px] text-dim"
-                >
+                <Text selectable={false} className={cn(TYPE.prose, 'text-dim')}>
                   <Trans>BACK</Trans>
                 </Text>
               </TrackedPressable>
             )}
 
-            <TrackedPressable
+            <PrimaryButton
               id="news.dismiss"
               onPress={() => {
                 if (isLast) close()
                 else setIndex((current) => current + 1)
               }}
-              className="flex-row items-center justify-center gap-2 rounded-2xl bg-strong px-6 py-3.5"
-            >
-              <Text
-                selectable={false}
-                className="font-mono text-[12px] font-black tracking-[1.5px] text-on-strong"
-              >
-                {isLast ? 'LET’S GO' : 'NEXT'}
-              </Text>
-              <Ionicons
-                name={isLast ? 'play' : 'arrow-forward'}
-                size={14}
-                color="#d8d2f4"
-              />
-            </TrackedPressable>
+              label={isLast ? 'LET’S GO' : 'NEXT'}
+              icon={
+                <Ionicons
+                  name={isLast ? 'play' : 'arrow-forward'}
+                  size={14}
+                  color="#d8d2f4"
+                />
+              }
+            />
           </View>
         </>
       )}

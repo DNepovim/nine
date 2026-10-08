@@ -3,8 +3,10 @@ import { useEffect, useState } from 'react'
 import { ActivityIndicator, ScrollView, Text, View } from 'react-native'
 
 import { GradientName } from '@/components/gradient-name'
+import { PrimaryButton } from '@/components/primary-button'
 import { ScreenLayer } from '@/components/screen'
 import { TrackedPressable } from '@/components/tracked-pressable'
+import { TYPE } from '@/constants/typography'
 import { EMPTY_IDS, usePlayerFactors } from '@/hooks/use-player-factors'
 import {
   loadPersonFeatures,
@@ -53,25 +55,16 @@ function FeatureRow({
       disabled={pending || locked}
       className={cn('flex-row items-center py-2', locked && 'opacity-40')}
     >
-      <Text
-        selectable={false}
-        className="w-5 font-mono text-[12px] font-black text-primary"
-      >
+      <Text selectable={false} className={cn(TYPE.prose, 'w-5 text-primary')}>
         {isOn(source) ? '●' : '○'}
       </Text>
       <Text
         selectable={false}
-        className={cn(
-          'flex-1 font-mono text-[12px] font-bold tracking-[0.5px] text-primary',
-          locked && 'line-through',
-        )}
+        className={cn(cn(TYPE.prose, 'flex-1 text-primary'), locked && 'line-through')}
       >
         {row.key}
       </Text>
-      <Text
-        selectable={false}
-        className="font-mono text-[10px] font-medium tracking-[0.5px] text-dim"
-      >
+      <Text selectable={false} className={cn(TYPE.value, 'text-dim')}>
         {SOURCE_LABEL[source]}
       </Text>
     </TrackedPressable>
@@ -195,10 +188,7 @@ export function AdminPerson({
       </View>
 
       {error !== null && (
-        <Text
-          selectable={false}
-          className="mb-2 font-mono text-[10px] font-bold tracking-[0.5px] text-red-500"
-        >
+        <Text selectable={false} className={cn(TYPE.value, 'mb-2 text-red-500')}>
           {error}
         </Text>
       )}
@@ -207,10 +197,7 @@ export function AdminPerson({
         <ActivityIndicator className="my-4" />
       ) : (
         <ScrollView showsVerticalScrollIndicator={false}>
-          <Text
-            selectable={false}
-            className="mb-1 font-mono text-[10px] font-bold tracking-[1px] text-dim"
-          >
+          <Text selectable={false} className={cn(TYPE.label, 'mb-1 text-dim')}>
             <Trans>ROLE</Trans>
           </Text>
           {/* NONE leftmost, as it has been: it is the one option that undoes the other
@@ -238,10 +225,7 @@ export function AdminPerson({
                 >
                   <Text
                     selectable={false}
-                    className={cn(
-                      'font-mono text-[9px] font-black tracking-[1px]',
-                      active ? 'text-on-strong' : 'text-dim',
-                    )}
+                    className={cn(TYPE.rowLabel, active ? 'text-on-strong' : 'text-dim')}
                   >
                     {option === null
                       ? 'NONE'
@@ -252,10 +236,7 @@ export function AdminPerson({
             })}
           </View>
 
-          <Text
-            selectable={false}
-            className="mb-1 font-mono text-[10px] font-bold tracking-[1px] text-dim"
-          >
+          <Text selectable={false} className={cn(TYPE.label, 'mb-1 text-dim')}>
             <Trans>FEATURES</Trans>
           </Text>
           {rows.map((row) => (
@@ -280,29 +261,20 @@ export function AdminPerson({
               (busy || !hasOverrides) && 'opacity-40',
             )}
           >
-            <Text
-              selectable={false}
-              className="font-mono text-[11px] font-black tracking-[1.5px] text-dim"
-            >
+            <Text selectable={false} className={cn(TYPE.buttonSm, 'text-dim')}>
               <Trans>RESET TO ROLE DEFAULTS</Trans>
             </Text>
           </TrackedPressable>
         </ScrollView>
       )}
 
-      <TrackedPressable
+      <PrimaryButton
         id="admin.done"
         onPress={onBack}
-        className="mt-4 items-center self-center rounded-2xl bg-strong py-4"
+        className="mt-4 self-center"
         style={{ width: 224 }}
-      >
-        <Text
-          selectable={false}
-          className="font-mono text-[13px] font-black tracking-[2px] text-on-strong"
-        >
-          <Trans>DONE</Trans>
-        </Text>
-      </TrackedPressable>
+        label={<Trans>DONE</Trans>}
+      />
     </ScreenLayer>
   )
 }

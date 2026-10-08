@@ -4,8 +4,10 @@ import { ScrollView, Text, View } from 'react-native'
 
 import { MarkdownText } from '@/components/markdown-text'
 import { ModalCard } from '@/components/overlays/modal-card'
-import { TrackedPressable } from '@/components/tracked-pressable'
+import { PrimaryButton } from '@/components/primary-button'
+import { TYPE } from '@/constants/typography'
 import { useViewport } from '@/hooks/use-viewport'
+import { cn } from '@/lib/cn'
 import { sentOnLabel, type FeedbackQuote } from '@/lib/feedback-reply'
 import { gradientOf, type ModeId } from '@/modes'
 
@@ -30,16 +32,13 @@ const QUOTE_LINES = 3
 function QuotedMessage({ quote, locale }: { quote: FeedbackQuote; locale: string }) {
   return (
     <View className="mb-4 border-l-2 border-muted pl-3">
-      <Text
-        selectable={false}
-        className="mb-1 font-mono text-[10px] font-bold tracking-[1px] text-dim"
-      >
+      <Text selectable={false} className={cn(TYPE.label, 'mb-1 text-dim')}>
         {sentOnLabel(quote.sentAt, locale)}
       </Text>
       <Text
         selectable={false}
         numberOfLines={QUOTE_LINES}
-        className="font-mono text-[11px] italic leading-4 text-dim"
+        className={cn(TYPE.proseSm, 'italic text-dim')}
       >
         {quote.message}
       </Text>
@@ -103,18 +102,12 @@ export function FeedbackReplyOverlay({
             <MarkdownText source={answer} accent={modeColor} />
           </ScrollView>
 
-          <TrackedPressable
+          <PrimaryButton
             id="feedback_reply.got_it"
             onPress={close}
-            className="mt-5 items-center rounded-2xl bg-strong py-3.5"
-          >
-            <Text
-              selectable={false}
-              className="font-mono text-[12px] font-black tracking-[1.5px] text-on-strong"
-            >
-              <Trans>GOT IT</Trans>
-            </Text>
-          </TrackedPressable>
+            className="mt-5"
+            label={<Trans>GOT IT</Trans>}
+          />
         </>
       )}
     </ModalCard>
