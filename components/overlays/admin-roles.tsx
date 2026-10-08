@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react'
 import { ActivityIndicator, FlatList, Text, TextInput, View } from 'react-native'
 
 import { TrackedPressable } from '@/components/tracked-pressable'
+import { DIM_INK } from '@/constants/colors'
 import { createRole, listRoles, type AdminRole } from '@/lib/admin/roles'
 import { cn } from '@/lib/cn'
 
@@ -62,6 +63,7 @@ export function AdminRoles({
           value={draft}
           onChangeText={setDraft}
           placeholder="new role"
+          placeholderTextColor={DIM_INK}
           autoCapitalize="characters"
           autoCorrect={false}
           className="flex-1 rounded-lg border border-dim/30 bg-background px-3 py-2 font-mono font-bold tracking-[1px] text-primary"

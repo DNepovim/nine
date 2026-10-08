@@ -4,6 +4,7 @@ import { ActivityIndicator, FlatList, Text, TextInput, View } from 'react-native
 
 import { GradientName } from '@/components/gradient-name'
 import { TrackedPressable } from '@/components/tracked-pressable'
+import { DIM_INK } from '@/constants/colors'
 import { EMPTY_IDS, usePlayerFactors } from '@/hooks/use-player-factors'
 import {
   findPersonByNickname,
@@ -176,6 +177,7 @@ export function AdminPeople({
             setSearchError(null)
           }}
           placeholder="nickname"
+          placeholderTextColor={DIM_INK}
           autoCapitalize="none"
           autoCorrect={false}
           returnKeyType="search"

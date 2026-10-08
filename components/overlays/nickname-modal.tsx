@@ -3,6 +3,7 @@ import { useState } from 'react'
 import { Platform, Text, TextInput, View } from 'react-native'
 
 import { TrackedPressable } from '@/components/tracked-pressable'
+import { DIM_INK } from '@/constants/colors'
 import { useOnline } from '@/hooks/use-online'
 import { NICK_MAX, NICK_MIN, nicknameProblem } from '@/lib/nickname'
 
@@ -87,6 +88,7 @@ export function NicknameModal({
           setError(null)
         }}
         placeholder={t`e.g. ACE_9`}
+        placeholderTextColor={DIM_INK}
         autoCapitalize="none"
         autoCorrect={false}
         maxLength={NICK_MAX}

@@ -10,6 +10,7 @@ import {
 } from 'react-native'
 
 import { TrackedPressable } from '@/components/tracked-pressable'
+import { DIM_INK } from '@/constants/colors'
 import { cn } from '@/lib/cn'
 import { MOTTO_MAX, mottoLength, normalizeMotto } from '@/lib/motto'
 
@@ -81,6 +82,7 @@ export function MottoModal({
               setError(null)
             }}
             placeholder={t`e.g. I dial faster than I think`}
+            placeholderTextColor={DIM_INK}
             autoCapitalize="sentences"
             autoCorrect
             returnKeyType="done"

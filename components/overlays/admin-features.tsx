@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from 'react'
 import { ActivityIndicator, ScrollView, Text, TextInput, View } from 'react-native'
 
 import { TrackedPressable } from '@/components/tracked-pressable'
+import { DIM_INK } from '@/constants/colors'
 import { listFeatures, setFeature, type AdminFeature } from '@/lib/admin/features'
 import { cn } from '@/lib/cn'
 
@@ -181,6 +182,7 @@ export function AdminFeatures({
                   }
                 }}
                 placeholder="why"
+                placeholderTextColor={DIM_INK}
                 multiline
                 className="ml-1 mt-1 font-mono text-[10px] font-medium leading-[15px] text-dim"
               />

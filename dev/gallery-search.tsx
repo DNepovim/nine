@@ -1,5 +1,7 @@
 import { Pressable, Text, TextInput, View } from 'react-native'
 
+import { DIM_INK } from '@/constants/colors'
+
 // The way into a list too long to read down.
 //
 // Ninety-odd entries across seventeen sections is more than a desk-height column holds,
@@ -24,6 +26,7 @@ export function GallerySearch({
         value={query}
         onChangeText={onChange}
         placeholder="SEARCH"
+        placeholderTextColor={DIM_INK}
         autoCapitalize="none"
         autoCorrect={false}
         className="flex-1 rounded-lg bg-card px-2.5 py-2 font-mono text-[12px] font-bold tracking-[0.5px] text-primary"
