@@ -1,14 +1,19 @@
 import { describe, expect, it } from 'vitest'
 
+import { TUTORIAL_TARGETS } from '@/constants/tutorial'
+
 import {
   CLEAN_RUN,
   initialStepUp,
   invitePool,
   MIN_HITS,
   MIN_RUN_MS,
+  offerAfterTutorial,
   openerPool,
   stepUpMessage,
   stepUpReducer,
+  TAUGHT_HITS,
+  TAUGHT_PRACTICE,
   WELCOME_HITS,
   type StepUpFacts,
   type StepUpState,
@@ -198,5 +203,46 @@ describe('stepUpMessage', () => {
 
   it('draws welcome openers from their own pool', () => {
     expect(openerPool('welcome')).toContain(stepUpMessage('welcome', 0, 0).opener)
+  })
+})
+
+describe('the offer the tutorial makes itself', () => {
+  const taught = (over: Partial<Parameters<typeof offerAfterTutorial>[0]> = {}) => ({
+    tutorial: true,
+    taught: true,
+    hits: TAUGHT_HITS,
+    playedScored: false,
+    ...over,
+  })
+
+  it('leaves the taught player a stretch of practice first', () => {
+    // Every board in the script, and then seven the player took with the lesson silent.
+    expect(TAUGHT_HITS).toBe(TUTORIAL_TARGETS.length + TAUGHT_PRACTICE)
+    expect(TAUGHT_PRACTICE).toBe(7)
+  })
+
+  it('says nothing until that practice is behind them', () => {
+    // Including the hit that clears the last scripted board, which is the lesson ending
+    // rather than the practice beginning.
+    expect(offerAfterTutorial(taught({ hits: TUTORIAL_TARGETS.length }))).toBe(false)
+    expect(offerAfterTutorial(taught({ hits: TAUGHT_HITS - 1 }))).toBe(false)
+    expect(offerAfterTutorial(taught())).toBe(true)
+    expect(offerAfterTutorial(taught({ hits: TAUGHT_HITS + 4 }))).toBe(true)
+  })
+
+  it('says nothing while the lesson still has a word left', () => {
+    // A player sent back through the script by the stepper is being taught again, whatever
+    // their hit count has reached.
+    expect(offerAfterTutorial(taught({ taught: false }))).toBe(false)
+  })
+
+  it('belongs to the tutorial and to no other run', () => {
+    expect(offerAfterTutorial(taught({ tutorial: false }))).toBe(false)
+  })
+
+  it('leaves a player who already knows the boards alone', () => {
+    // Retaking the tutorial from HOW TO PLAY, with scores already posted: there is
+    // nothing left to introduce.
+    expect(offerAfterTutorial(taught({ playedScored: true }))).toBe(false)
   })
 })

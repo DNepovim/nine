@@ -49,8 +49,12 @@ export type ButtonId =
   | 'tutorial.curtain_lift'
 
   // ── The step-up ladder ──
+  // Two doors onto it and one screen behind them: the toast a practice run floats, and
+  // the dialog the tutorial ends on.
   | 'step_up_toast.accept'
   | 'step_up_toast.dismiss'
+  | 'tutorial_done.accept'
+  | 'tutorial_done.dismiss'
   | 'step_up.start'
   | 'step_up.other_mode'
 

@@ -1,3 +1,4 @@
+import { Ionicons } from '@expo/vector-icons'
 import { Trans } from '@lingui/react/macro'
 import { useEffect, useRef } from 'react'
 import { Text } from 'react-native'
@@ -23,6 +24,10 @@ import { gradientOf } from '@/modes'
 const HOLD_MS = 1400
 const FADE_MS = 500
 
+// Trainee's own colour, which is what the run coming up is wearing. The mark and the
+// headline share it: they are one thing said twice, a picture and then a line.
+const TINT = gradientOf('trainee')[0]
+
 // The beat before a lesson.
 //
 // Every door into the tutorial comes through here — the first launch, TRY IT at the end of
@@ -35,6 +40,16 @@ const FADE_MS = 500
 // words fading off a board rather than one screen being replaced by another. That surface
 // is a warm off-white, and a literal white would flash before fading back down to it.
 export function TutorialCurtain({
+  // Something is still over the words. On the first launch that is the splash, which goes
+  // up as this one does — the curtain is raised underneath it deliberately, so the logo
+  // scales away onto a screen that is already there — and takes a few seconds to clear.
+  //
+  // The hold is what that blocks. It is a reading time, and a line cannot be read through
+  // an opaque logo screen: armed at the moment the curtain appears, the whole of it ran
+  // out behind the splash and the lesson was dealt before the player had seen a word. So
+  // the beat starts when there is nothing on top of it, and a blind tap at the logo
+  // cannot cut short a screen nobody has been shown yet either.
+  hold,
   // The fade has started. Whatever should be underneath when it finishes has this long to
   // get ready — the same contract the splash's own exit offers, and for the same reason:
   // a run dealt at the end of a fade is a run the player watches arrive into an empty
@@ -43,6 +58,7 @@ export function TutorialCurtain({
   // The curtain has gone and can be unmounted.
   onGone,
 }: {
+  hold: boolean
   onLift: () => void
   onGone: () => void
 }) {
@@ -56,7 +72,7 @@ export function TutorialCurtain({
   // is set in the same tick it is tested.
   const lifted = useRef(false)
   const lift = () => {
-    if (lifted.current) return
+    if (hold || lifted.current) return
     lifted.current = true
     onLift()
     opacity.value = withTiming(
@@ -70,11 +86,12 @@ export function TutorialCurtain({
   }
 
   useEffect(() => {
+    if (hold) return
     const timer = setTimeout(lift, HOLD_MS)
     return () => {
       clearTimeout(timer)
     }
-  }, [])
+  }, [hold])
 
   const style = useAnimatedStyle(() => ({ opacity: opacity.value }))
 
@@ -100,10 +117,15 @@ export function TutorialCurtain({
         onPress={lift}
         className="flex-1 items-center justify-center"
       >
+        {/* The thing about to be taught, drawn rather than named: nine keys in a square
+          is the whole of what the next screen is, and a mark of it is read before the
+          line under it has been. In the headline's own ink and nothing behind it — a
+          tinted tile would be a card on a screen that deliberately has none. */}
+        <Ionicons name="keypad-outline" size={44} color={TINT} />
         <Text
           selectable={false}
-          className="px-8 text-center font-mono text-[15px] font-black tracking-[2px]"
-          style={{ color: gradientOf('trainee')[0] }}
+          className="mt-6 px-8 text-center font-mono text-[15px] font-black tracking-[2px]"
+          style={{ color: TINT }}
         >
           <Trans>LET'S LEARN THE GAME</Trans>
         </Text>

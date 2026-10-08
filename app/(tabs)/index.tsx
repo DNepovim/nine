@@ -52,6 +52,7 @@ import { NicknameModal } from '@/components/overlays/nickname-modal'
 import { PausedOverlay } from '@/components/overlays/paused-overlay'
 import { ReplayConsentOverlay } from '@/components/overlays/replay-consent-overlay'
 import { StepUpOverlay } from '@/components/overlays/step-up-overlay'
+import { TutorialDoneModal } from '@/components/overlays/tutorial-done-modal'
 import { WhatsNewOverlay } from '@/components/overlays/whats-new-overlay'
 import { Screen } from '@/components/screen'
 import { TrackedPressable } from '@/components/tracked-pressable'
@@ -104,6 +105,7 @@ import { useStepUp } from '@/hooks/use-step-up'
 import { useStrikeShots, type ShotAim } from '@/hooks/use-strike-shots'
 import { useSupabaseAuth } from '@/hooks/use-supabase-auth'
 import { useTargetSpawner } from '@/hooks/use-target-spawner'
+import { useTaughtOffer } from '@/hooks/use-taught-offer'
 import { useTraineeCoach } from '@/hooks/use-trainee-coach'
 import { useTutorialLesson } from '@/hooks/use-tutorial-lesson'
 import { useTutorialRequests } from '@/hooks/use-tutorial-request'
@@ -613,9 +615,12 @@ export default function GameScreen() {
   //
   // For the welcome, the curtain is raised as the splash *begins* its exit, so the logo
   // scales away onto a screen that is already there rather than onto an empty one — the
-  // same hand-off the splash was written for. The run is dealt when the curtain lifts,
-  // which is what puts a board with a target already springing in under the last of the
-  // words. See components/tutorial-curtain.tsx.
+  // same hand-off the splash was written for. Its own beat does not start until the logo
+  // has finished going, which is `hold` at the render below: the exit takes seconds, and
+  // a curtain that counted its reading time from the moment it went up spent all of it
+  // behind an opaque screen and dealt the lesson before a word of it had been seen. The
+  // run is dealt when the curtain lifts, which is what puts a board with a target already
+  // springing in under the last of the words. See components/tutorial-curtain.tsx.
   //
   // `menu` because START is only accepted there. What keeps a second curtain from going
   // up over the first is the curtain's own state rather than `pending`: the launch is
@@ -705,7 +710,11 @@ export default function GameScreen() {
   )
   const stepUp = useStepUp({
     inRun,
-    coached: rules.capabilities.coached,
+    // Not during the tutorial, which makes the same offer itself the moment the lesson
+    // runs out — see `useTaughtOffer` below. Two invitations to the one board, one of
+    // them arriving while a script is still talking, is the nagging the offer is
+    // rationed to once a run to avoid.
+    coached: rules.capabilities.coached && !tutorial,
     batch: hitBatch,
     hits,
     playedScored,
@@ -1133,6 +1142,28 @@ export default function GameScreen() {
     targets,
   })
 
+  // The tutorial's own end: the lesson is over and a stretch of rolled targets has gone
+  // down after it, so the run asks whether they would rather play a real one.
+  const taught = useTaughtOffer({
+    tutorial,
+    isPlaying,
+    taught: lesson.taught,
+    hits,
+    playedScored,
+    runSeq: state.context.runSeq,
+  })
+  // Opened once per run and never reopened by a dismissal, so the rising edge is the
+  // offer being made — the same thing the toast's own latch above counts.
+  useEffect(() => {
+    if (!taught.open) return
+    track('challenge_offered', {
+      mode,
+      difficulty,
+      to_mode: STEP_UP_BOARD.mode,
+      to: STEP_UP_BOARD.difficulty,
+    })
+  }, [taught.open, mode, difficulty])
+
   // Where the lesson's card goes while it is pointing at the target, and which way its beak
   // turns — beside the target, on whichever side of it the canvas has room for. The
   // tutorial holds one target, so there is never a question of which.
@@ -1462,6 +1493,28 @@ export default function GameScreen() {
                   setStepUpOpen(true)
                 }}
                 onDismiss={stepUp.dismiss}
+              />
+            )}
+
+            {/* The same offer the toast makes, at the one moment the tutorial has it to
+            make: the lesson over and a target taken without it. A dialog rather than a
+            toast because nothing is running underneath — the tutorial has no clock — and
+            because the end of the lesson is worth stopping for.
+
+            Drawn through the pause it opens as well as the run it was made on: accepting
+            freezes the run behind it, and the card has an exit to play before the screen
+            it leads to takes over. */}
+            {taught.open && (
+              <TutorialDoneModal
+                mode={STEP_UP_BOARD.mode}
+                onAccept={() => {
+                  // Frozen rather than ended, exactly as the toast does it: backing out
+                  // of the screen this opens leaves the tutorial where it stood.
+                  pauseRun('step_up')
+                  taught.dismiss()
+                  setStepUpOpen(true)
+                }}
+                onDismiss={taught.dismiss}
               />
             )}
 
@@ -2483,6 +2536,9 @@ export default function GameScreen() {
                 already stacks can land on top of it — see the welcome effect above. ── */}
             {curtain !== 'none' && (
               <TutorialCurtain
+                // The splash is over it on the first launch, and over nothing on the
+                // other two doors, which are pressed on a screen the logo left long ago.
+                hold={!splashDone}
                 onLift={() => {
                   startTutorial(curtain)
                   // Written down beside the run it records, not when the curtain went up:

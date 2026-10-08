@@ -9,6 +9,7 @@ import { HowToPlayOverlay } from '@/components/overlays/how-to-play-overlay'
 import { MenuOverlay } from '@/components/overlays/menu-overlay'
 import { PausedOverlay } from '@/components/overlays/paused-overlay'
 import { StepUpOverlay } from '@/components/overlays/step-up-overlay'
+import { TutorialDoneModal } from '@/components/overlays/tutorial-done-modal'
 import { WhatsNewOverlay } from '@/components/overlays/whats-new-overlay'
 import { SplashScreen } from '@/components/splash-screen'
 import {
@@ -799,9 +800,9 @@ const SCREENS: Section[] = [
     ],
   },
   {
-    // The offer itself, which is a screen and waits to be answered. Its toast is the
-    // other half of the same feature and lives under EFFECTS — it slides in, sits for a
-    // few seconds and takes itself away, which is a different thing to look at and a
+    // The offer itself, which is a screen and waits to be answered, and the dialog the
+    // tutorial asks it through. Its toast is the third way in and lives under EFFECTS —
+    // it slides in over a live run, which is a different thing to look at and a
     // different thing to look for.
     title: 'STEP UP',
     items: [
@@ -814,6 +815,17 @@ const SCREENS: Section[] = [
             difficulty={STEP_UP_BOARD.difficulty}
             onStart={close}
             onOtherMode={close}
+          />
+        ),
+      },
+      {
+        key: 'tutorial-done',
+        label: 'TUTORIAL DONE',
+        render: (close) => (
+          <TutorialDoneModal
+            mode={STEP_UP_BOARD.mode}
+            onAccept={close}
+            onDismiss={close}
           />
         ),
       },

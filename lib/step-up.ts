@@ -1,3 +1,4 @@
+import { TUTORIAL_TARGETS } from '@/constants/tutorial'
 import { type Difficulty, type ModeId } from '@/modes'
 
 // When Trainee should offer the player a scored board, and what it says when it does.
@@ -31,6 +32,41 @@ export const MIN_RUN_MS = 60_000
 // stays low in every practice run until the player has actually posted a scored score —
 // which is the same thing that switches the offer off for good, below.
 export const WELCOME_HITS = 10
+
+// How long the taught player is left alone before the offer: seven targets past the last
+// scripted board, dealt and answered with the lesson silent.
+//
+// The lesson ending is the wrong moment to ask. It hands the run over with "that is every
+// move" and a rolled board behind it, and a dialog arriving on top of that would take the
+// practice away at the exact moment the player was given it. Seven is long enough to be a
+// stretch of play in its own right — rolled targets, their own routes, nobody pointing at
+// anything — so the question lands on a player who has actually been playing rather than
+// on one who has just finished being taught.
+export const TAUGHT_PRACTICE = 7
+
+// The hit count that offer is due at: the whole script, and then that practice.
+export const TAUGHT_HITS = TUTORIAL_TARGETS.length + TAUGHT_PRACTICE
+
+// Whether the tutorial has anything left to teach, and so whether its offer is due.
+//
+// Separate from the reducer above because nothing about it is a matter of how well the
+// run is going: the lesson either finished or it did not. The bars the reducer keeps —
+// a clean streak, a minute on the clock — are for a practice run nobody scripted, and
+// applied here they would hold a taught player on a board with no lesson left on it.
+export const offerAfterTutorial = (facts: {
+  // Whether this run is the tutorial at all. Every other run answers the reducer.
+  tutorial: boolean
+  // Whether the lesson has run out — `done`, the step past the sign-off. Implied by the
+  // hit count on an uninterrupted run, and asked for anyway: the stepper can send a
+  // player back through the script, and one halfway through it is being taught again
+  // however many targets they have put down.
+  taught: boolean
+  hits: number
+  // The same door the reducer's own offer is shut by: a player who has posted a scored
+  // score is retaking the tutorial, not finding the boards for the first time.
+  playedScored: boolean
+}): boolean =>
+  facts.tutorial && facts.taught && facts.hits >= TAUGHT_HITS && !facts.playedScored
 
 // Where the offer points. Easy on purpose: Trainee hands out infinite lives, so even a
 // player clearing Extreme practice has never once been under the pressure of losing, and
