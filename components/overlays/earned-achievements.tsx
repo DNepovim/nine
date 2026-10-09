@@ -1,7 +1,7 @@
 import { useLingui } from '@lingui/react/macro'
 import { isNonEmptyArray } from 'narrowland'
 import { useState } from 'react'
-import { Text, View } from 'react-native'
+import { ScrollView, Text, View } from 'react-native'
 
 import { AchievementDetail } from '@/components/overlays/achievement-detail'
 import { TrackedPressable } from '@/components/tracked-pressable'
@@ -25,6 +25,12 @@ import { cn } from '@/lib/cn'
 //
 // Silent on an ordinary run, which is most of them — a row that appeared on every game
 // over would stop meaning anything by the third one.
+//
+// Always one row, scrolling sideways when the chips outrun the width. They used to wrap,
+// which on a good run pushed the buttons below off the bottom of the screen — and the
+// number of lines the row took was then a surprise the rest of the screen had to absorb.
+// One line of a fixed height is a shape the screen can be laid out around, whether the
+// run earned one achievement or six.
 //
 // The green gives way on the painted screens. `GOLD_SCREEN_TOKENS` and
 // `MODE_SCREEN_TOKENS` re-bind every token for that subtree and a colour computed in JS
@@ -59,43 +65,59 @@ export function EarnedAchievements({
   const card = asked === null ? null : achievementCard(awards, asked)
 
   return (
-    <View className="mb-6 w-full flex-row flex-wrap items-center justify-center gap-1.5">
-      {awards.map((award) => (
-        // A chip has looked pressable since the day it was drawn — pill-shaped, on its
-        // own surface — and did nothing. It answers now: what the achievement asked of
-        // you, which the name alone rarely says.
-        <TrackedPressable
-          id="achievements.earned"
-          key={awardKey(award)}
-          onPress={() => {
-            setAsked(award.id)
-          }}
-        >
-          {({ pressed }) => (
-            <View
-              className={cn(
-                'flex-row items-center gap-1 rounded-full bg-card px-2 py-1',
-                pressed && 'opacity-60',
-              )}
-            >
-              <Text selectable={false} className={cn(GLYPH.xs, 'leading-[13px]')}>
-                {ACHIEVEMENTS[award.id].emblem}
-              </Text>
-              <Text
-                selectable={false}
-                numberOfLines={1}
-                className={cn(TYPE.rowLabel, 'leading-[13px]')}
-                // The chip sits on its own surface, so the halo is only for the label
-                // outside it — inside, the ink just has to suit the card.
-                style={halo ? null : { color: ACHIEVEMENT_INK }}
+    <View className="mb-6 w-full">
+      {/* `flexGrow` on the content is what makes one chip sit in the middle and six
+          start at the left edge: the row is centred while it fits and becomes a scroll
+          the moment it does not. The side padding is the scroll's own, so the first and
+          last chip clear the edge they come to rest against. */}
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={{
+          flexGrow: 1,
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: 6,
+          paddingHorizontal: 2,
+        }}
+      >
+        {awards.map((award) => (
+          // A chip has looked pressable since the day it was drawn — pill-shaped, on its
+          // own surface — and did nothing. It answers now: what the achievement asked of
+          // you, which the name alone rarely says.
+          <TrackedPressable
+            id="achievements.earned"
+            key={awardKey(award)}
+            onPress={() => {
+              setAsked(award.id)
+            }}
+          >
+            {({ pressed }) => (
+              <View
+                className={cn(
+                  'flex-row items-center gap-1 rounded-full bg-card px-2 py-1',
+                  pressed && 'opacity-60',
+                )}
               >
-                {t(ACHIEVEMENTS[award.id].title)}
-                {award.stage === null ? '' : ` · ${t(STAGE_CODE[award.stage])}`}
-              </Text>
-            </View>
-          )}
-        </TrackedPressable>
-      ))}
+                <Text selectable={false} className={cn(GLYPH.xs, 'leading-[13px]')}>
+                  {ACHIEVEMENTS[award.id].emblem}
+                </Text>
+                <Text
+                  selectable={false}
+                  numberOfLines={1}
+                  className={cn(TYPE.rowLabel, 'leading-[13px]')}
+                  // The chip sits on its own surface, so the halo is only for the label
+                  // outside it — inside, the ink just has to suit the card.
+                  style={halo ? null : { color: ACHIEVEMENT_INK }}
+                >
+                  {t(ACHIEVEMENTS[award.id].title)}
+                  {award.stage === null ? '' : ` · ${t(STAGE_CODE[award.stage])}`}
+                </Text>
+              </View>
+            )}
+          </TrackedPressable>
+        ))}
+      </ScrollView>
       {card !== null && (
         <AchievementDetail
           ids={card.ids}

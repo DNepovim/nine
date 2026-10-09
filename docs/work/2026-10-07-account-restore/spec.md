@@ -376,9 +376,14 @@ a template without `{{ .Token }}` sends a link the player cannot use.
 10. A `verifyOtp` that fails — wrong code, expired code, no connection — leaves the device
     exactly as it was: the old session, every key intact, no reload, and a line on the card
     naming which of the three happened.
-11. The device the profile was taken from loses it: its next session refresh is **refused**
-    rather than unreachable, so it signs in anonymously and the intro says the profile moved
-    to another device. A device that is merely offline keeps its session and says nothing.
+11. The device the profile was taken from loses it **the next time it is looked at** — on
+    its next launch, or on the next time it is brought to the foreground — because it asks
+    the auth server whether its session still exists rather than waiting to be told. A
+    refused refresh is only the third way the news can arrive, and the slowest: it waits on
+    the access token running down, and until then PostgREST answers that device's reads and
+    writes perfectly normally. Whichever way it arrives, it signs in anonymously and the
+    intro says the profile moved to another device. A device that is merely offline keeps
+    its session and says nothing.
 12. `pnpm check` is green, `pnpm i18n:verify` included, and every new string has Czech.
 
 ## Tests

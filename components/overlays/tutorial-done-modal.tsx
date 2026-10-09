@@ -50,6 +50,7 @@ export function TutorialDoneModal({
 
   return (
     <ModalCard
+      closeButton={false}
       onDismiss={() => {
         if (accepted.current) onAccept()
         else onDismiss()

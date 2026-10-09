@@ -42,10 +42,20 @@ export type EmailProblem =
   // Something else. Nothing is lost; try again.
   | 'unknown'
 
-// How long the resend button stays dim after a code goes out. Matched to nothing on the
-// server — Supabase has its own floor — but a button that can be pressed twice a second
-// invites a player to press it twice a second and then meet `rate_limited`, which reads
-// as the app being broken rather than as them being quick.
+// How long the resend button stays dim after a code goes out.
+//
+// This number has a hard constraint on it, learned the hard way: it must be **at or above
+// the server's own floor**, which is `max_frequency` in supabase/config.toml for the local
+// stack and `smtp_max_frequency` in the dashboard for production. Below it, the button
+// lights up while the server is still refusing — `over_email_send_rate_limit`, a 429, and
+// no mail handed to the sender at all — so the one press a player is invited to make is
+// the one press that cannot work. Production sat on Supabase's 60s default against this
+// 30s for exactly that reason.
+//
+// Thirty seconds, and the floor set under it rather than this raised to meet a default: a
+// button that can be pressed twice a second invites a player to press it twice a second
+// and then meet `rate_limited`, which reads as the app being broken rather than as them
+// being quick.
 export const RESEND_COOLDOWN_MS = 30_000
 
 // Six digits, and exactly six, because the server is told to send six: `otp_length` in

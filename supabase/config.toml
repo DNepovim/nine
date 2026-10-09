@@ -234,7 +234,17 @@ enable_confirmations = true
 # If enabled, users will need to reauthenticate or have logged in recently to change their password.
 secure_password_change = false
 # Controls the minimum amount of time that must pass before sending another signup confirmation or password reset email.
-max_frequency = "1s"
+#
+# Under `RESEND_COOLDOWN_MS` in lib/account-email.ts, and that is the whole point of the
+# number: the server floor has to sit below the moment the resend button lights up, or the
+# first press a player is invited to make is refused with `over_email_send_rate_limit` and
+# no mail is handed to the sender at all. Twenty seconds leaves ten of margin under the
+# thirty-second button, and the hourly `email_sent` cap above is what actually stops an
+# address being bombed.
+#
+# Local only, like the rest of this file. Production reads `smtp_max_frequency` from the
+# dashboard, where it must be this same 20 — it defaults to 60, which is above the button.
+max_frequency = "20s"
 # Number of characters used in the email OTP.
 #
 # Local only, like everything else in this file: nothing here runs `supabase config push`,

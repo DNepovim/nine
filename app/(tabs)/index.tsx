@@ -34,7 +34,6 @@ import { AdminOverlay } from '@/components/overlays/admin-overlay'
 import { AdvancedOptionsOverlay } from '@/components/overlays/advanced-options-overlay'
 import { CardModal } from '@/components/overlays/card-modal'
 import { DevOverlay } from '@/components/overlays/dev-overlay'
-import { EmailDialog } from '@/components/overlays/email-dialog'
 import { FeedbackOverlay } from '@/components/overlays/feedback-overlay'
 import { FeedbackReplyOverlay } from '@/components/overlays/feedback-reply-overlay'
 import { GameOverSequence } from '@/components/overlays/game-over-sequence'
@@ -205,11 +204,41 @@ const RESUME_DELAY_MS = 500
 type MenuOverlayName =
   'none' | 'advanced' | 'howToPlay' | 'news' | 'joinRoom' | 'dev' | 'admin'
 
+// Which of them are dialogs rather than screens. Options and the guide are cards over
+// whatever asked for them, so the screen underneath has to stay drawn: a scrim over
+// nothing is just a darker game grid, and a player who opened Options from the intro was
+// being shown the board instead of the screen they had come from. The rest replace what
+// opened them and take it down.
+const MENU_DIALOGS = [
+  'advanced',
+  'howToPlay',
+] as const satisfies readonly MenuOverlayName[]
+
+// Whether this overlay replaces the screen it was opened from rather than covering it,
+// and so whether that screen comes down for it.
+function isMenuScreen(overlay: MenuOverlayName): boolean {
+  return overlay !== 'none' && !isOneOf(overlay, MENU_DIALOGS)
+}
+
+// Where the player stands on the start screen: whether it is drawn, and whether it is the
+// only thing between them and the game.
+//
+// Two answers because a dialog leaves the intro drawn but not alone, and that is exactly
+// the difference between painting it and interrupting it — the start screen is painted on
+// `drawn`, and everything that would interrupt it waits on `alone`.
+function introStanding(
+  // Everything about being at the intro except what is stacked over it.
+  atIntro: boolean,
+  menuOverlay: MenuOverlayName,
+): { drawn: boolean; alone: boolean } {
+  const drawn = atIntro && !isMenuScreen(menuOverlay)
+  return { drawn, alone: drawn && menuOverlay === 'none' }
+}
+
 // The two dialogs behind the line under the title: everything the player holds, and
-// everything there is to achieve. Deliberately not `menuOverlay` — that one takes the
-// intro down to put a screen of its own in its place, and these are dialogs *over* the
-// intro, the way feedback is. Routed through it, their scrim would have the game grid
-// behind it rather than the screen they were opened from.
+// everything there is to achieve. Not `menuOverlay`, even though two of those are dialogs
+// as well: these belong to the intro and nothing else opens them, whereas every name on
+// that list is reachable from the pause screen too.
 type TitleDialog = 'none' | 'medals' | 'achievements'
 
 // The three ways into the tutorial: the first launch opening on it by itself, TRY IT at
@@ -1356,13 +1385,13 @@ export default function GameScreen() {
   const showMultiResults = isNotNull(multiRoom.room) && multiGame.phase === 'results'
   const isMultiActive = showMultiWaiting || showMultiGame || showMultiResults
 
-  // The intro proper: the machine is idle, nothing is stacked over it, and the opening
-  // Trainee run — if this launch owes one — is neither still being decided nor still on
-  // its way in. Everything the start screen paints hangs off this one answer, so no two of
-  // them can disagree about whether the player is actually looking at the intro.
-  const onIntro =
+  // The intro, but for whatever is stacked over it: the machine is idle, the player is not
+  // in a room or on the map, and the opening Trainee run — if this launch owes one — is
+  // neither still being decided nor still on its way in. Read through the two answers
+  // below rather than directly, so nothing in the tree can decide for itself what counts
+  // as being at the start screen.
+  const atIntro =
     isMenu &&
-    menuOverlay === 'none' &&
     !isMultiActive &&
     !arcadeOpen &&
     welcome.decided &&
@@ -1372,6 +1401,11 @@ export default function GameScreen() {
     // machine. Either way the player is about to be looking at a pause screen, and the
     // start screen has no business flashing up in front of it.
     savedRun.settled
+
+  // `introDrawn` paints the start screen; `onIntro` is the stricter answer — a question
+  // put over a card the player opened themselves is an interruption, not a launch ask.
+  const { drawn: introDrawn, alone: onIntro } = introStanding(atIntro, menuOverlay)
+  const menuScreenOpen = isMenuScreen(menuOverlay)
 
   // Putting an address on this profile, and fetching a profile back from one. Below
   // `onIntro`, which it reads: the one-time ask is a launch ask like the three above it
@@ -1453,7 +1487,8 @@ export default function GameScreen() {
           viewerId={userId}
           account={{
             email,
-            onOpenEmail: accountEmail.open,
+            emailFlow: accountEmail,
+            onRename: updateNickname,
           }}
         >
           <BoardProvider value={board}>
@@ -2028,7 +2063,7 @@ export default function GameScreen() {
               />
             )}
 
-            {isPaused && menuOverlay === 'none' && !stepUpOpen && !resuming && (
+            {isPaused && !menuScreenOpen && !stepUpOpen && !resuming && (
               <PausedOverlay
                 gameMode={mode}
                 difficulty={difficulty}
@@ -2255,7 +2290,7 @@ export default function GameScreen() {
               )}
 
             {/* ── Menu overlay ── */}
-            {onIntro && (
+            {introDrawn && (
               <MenuOverlay
                 gameMode={mode}
                 difficulty={difficulty}
@@ -2421,16 +2456,12 @@ export default function GameScreen() {
                   if (email === null) accountEmail.open()
                   return res
                 }}
-                onSkip={() => {
+                onDismiss={() => {
                   setShowNicknameModal(false)
                   setPendingMultiAction(null)
                 }}
               />
             </CardModal>
-
-            {/* ── The address, and the profile its code brings back ──
-              Both cards in one dialog, which draws its own or nothing. */}
-            <EmailDialog flow={accountEmail} />
 
             {/* ── Multiplayer screens (above everything) ── */}
 

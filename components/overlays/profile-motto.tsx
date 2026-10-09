@@ -64,7 +64,7 @@ export function ProfileMotto({
       </Text>
       {editable && (
         <TrackedPressable id="profile.edit_motto" onPress={onEdit} hitSlop={10}>
-          <Ionicons name="pencil" size={ICON} color={DIM_INK} />
+          <Ionicons name="create-outline" size={ICON} color={DIM_INK} />
         </TrackedPressable>
       )}
     </View>

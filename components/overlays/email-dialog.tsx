@@ -36,6 +36,7 @@ export function EmailDialog({ flow }: { flow: AccountEmailFlow }) {
 
   return (
     <ModalCard
+      closeButton={false}
       title={t(TITLES[card.kind])}
       titleColor={PRIMARY_INK}
       avoidKeyboard

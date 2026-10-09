@@ -14,6 +14,12 @@ import { useViewport } from '@/hooks/use-viewport'
 
 export type DyingPhase = 'idle' | 'dying' | 'blend' | 'done'
 
+// How long the floating title sits over the frozen targets before it flies, and how long
+// the flight itself takes. The hand-off happens the moment it lands, so these two also
+// say when the game-over screen becomes the player's.
+const HOLD_MS = 1500
+const FLIGHT_MS = 450
+
 // Drives the last-life death sequence and the per-life-loss red flash.
 //
 // On life loss the screen flashes red. On the final life it holds red and runs:
@@ -108,19 +114,23 @@ export function useDyingSequence({
     const blendTimer = setTimeout(() => {
       setPhase('blend')
       const endY = overlayTitleYRef.current ?? screenHeight * 0.22
-      overlayOpacity.value = withTiming(1, { duration: 450 })
+      overlayOpacity.value = withTiming(1, { duration: FLIGHT_MS })
       titleTranslateY.value = withTiming(endY - screenCenterY, {
-        duration: 450,
+        duration: FLIGHT_MS,
         easing: Easing.inOut(Easing.quad),
       })
-      titleOpacity.value = withDelay(250, withTiming(0, { duration: 220 }))
-      flashOp.value = withTiming(0, { duration: 450 })
-    }, 1500)
+      // The flying copy stays at full opacity all the way up: it is handed off by being
+      // swapped for the overlay's own copy of the same letters, not by being faded out.
+      // Fading it mid-flight left a gap with nothing in the slot, and the overlay's title
+      // — which only unhides at `done` — then arrived as a flash.
+      flashOp.value = withTiming(0, { duration: FLIGHT_MS })
+    }, HOLD_MS)
 
-    // Hand off to the overlay's own (now-revealed) title.
+    // Hand off the instant the flight lands, so the swap is one commit: the flying copy
+    // unmounts and the overlay's identical title unhides in the same frame.
     const doneTimer = setTimeout(() => {
       setPhase('done')
-    }, 2000)
+    }, HOLD_MS + FLIGHT_MS)
 
     return () => {
       clearTimeout(blendTimer)

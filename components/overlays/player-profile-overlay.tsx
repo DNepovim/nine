@@ -9,11 +9,14 @@ import { ScrollView, Text, View } from 'react-native'
 import Animated, { FadeInDown } from 'react-native-reanimated'
 
 import DSEG7Font from '@/assets/fonts/DSEG7Classic-Bold.ttf'
+import { CardModal } from '@/components/overlays/card-modal'
 import { CardSection } from '@/components/overlays/card-section'
 import { MedalLine } from '@/components/overlays/medal-line'
 import { ModalCard } from '@/components/overlays/modal-card'
 import { MottoModal } from '@/components/overlays/motto-modal'
+import { NicknameModal } from '@/components/overlays/nickname-modal'
 import { BOARD_COLUMNS, ProfileBoardRow } from '@/components/overlays/profile-board-row'
+import { ProfileEmail } from '@/components/overlays/profile-email'
 import { ProfileMotto } from '@/components/overlays/profile-motto'
 import { ProfileName } from '@/components/overlays/profile-name'
 import { ProfileReignRow } from '@/components/overlays/profile-reign-row'
@@ -22,7 +25,6 @@ import { ProfileSkeleton } from '@/components/overlays/profile-skeleton'
 import { ShowMore } from '@/components/overlays/show-more'
 import { StatCell } from '@/components/overlays/stat-cell'
 import { TitleMark } from '@/components/overlays/title-mark'
-import { PrimaryButton } from '@/components/primary-button'
 import { TrackedPressable } from '@/components/tracked-pressable'
 import { ACHIEVEMENT_COUNT } from '@/constants/achievements'
 import { ACHIEVEMENT_INK, DIM_INK } from '@/constants/colors'
@@ -141,6 +143,7 @@ export function PlayerProfileOverlay({
   onCompare,
   email,
   onOpenEmail,
+  onRename,
   onClose,
 }: {
   userId: string
@@ -157,14 +160,20 @@ export function PlayerProfileOverlay({
   // address is the one thing about a player that is not public data about them.
   email: string | null
   onOpenEmail: () => void
+  // Writing the nickname. Only ever called from the player's own card, and the one write
+  // on this modal that is not about the profile being *read* — which is why it comes from
+  // above rather than from the profile hook: the name lives on the session as well as on
+  // the row, and auth owns that.
+  onRename: (name: string) => Promise<{ error: string | null }>
   onClose: () => void
 }) {
   const { t } = useLingui()
   const { height } = useViewport()
   const [dsegLoaded] = useFonts({ DSEG7: DSEG7Font })
   const digitFont = dsegLoaded ? 'DSEG7' : mono
-  const { profile, loading, error, reload, applyMotto } = usePlayerProfile(userId)
+  const { profile, loading, error, reload, patch } = usePlayerProfile(userId)
   const [editingMotto, setEditingMotto] = useState(false)
+  const [editingName, setEditingName] = useState(false)
   const [showAllReigns, setShowAllReigns] = useState(false)
   // The one thing this modal does differently for the player holding the phone. Every
   // number on it still reads the same either way — a profile is public data, and that it
@@ -211,16 +220,16 @@ export function PlayerProfileOverlay({
     >
       {(close) => (
         <>
-          {/* The card's whole body, in one scroll under a header that does not move.
-              The header is `ModalCard`'s own row — the question and the 5-dot close —
-              and it is the only thing here outside the scroll.
+          {/* Everything the player came to read, in one scroll between two bands that do
+              not move: `ModalCard`'s own header above — the question and the 5-dot
+              close — and the footer below.
 
-              It used to be three bands: the name pinned above a scrolling middle, the
-              buttons pinned below it. That left the tallest part of the card, the part
-              the player came to read, with the least room of the three on a short
-              display, while the name and the buttons kept their full height. One scroll
-              gives the figures the whole card and costs nothing — the way out is the
-              cross in the fixed header, which is reachable at any scroll position.
+              The name used to be pinned up here too, which left the tallest part of the
+              card, the part the player came to read, with the least room on a short
+              display while a band that could not scroll kept its full height. The name
+              scrolls with the career it belongs to; the two controls do not, because
+              they are what you do when you have finished reading and a button you have
+              to scroll back down to is a button you go looking for.
 
               One rhythm for all of it: every item in this column is separated by the
               same gap, and nothing in it carries a margin of its own. The pieces that
@@ -251,6 +260,17 @@ export function PlayerProfileOverlay({
                   nickname={profile.nickname ?? '…'}
                   avgAccuracy={avgAccuracy}
                   avgSpeed={avgSpeed}
+                  // Yours to rewrite, and the pencil is the only way to — a nickname used
+                  // to be claimed once, at the end of the first run that scored, and
+                  // never again. Left off a stranger's card, which is the whole of what
+                  // `isMine` decides here.
+                  onEdit={
+                    isMine
+                      ? () => {
+                          setEditingName(true)
+                        }
+                      : undefined
+                  }
                 />
               )}
               {/* Between the name and the medals: the one line here the player wrote rather
@@ -266,6 +286,15 @@ export function PlayerProfileOverlay({
                   }}
                 />
               )}
+              {/* The address, with the two lines the player wrote about themselves rather
+                than down among the figures — it is a thing about *them*, and the figures
+                are things they have done. Its own card row at the foot of this one for a
+                while, which put the door back onto a profile from another phone below
+                every board the player has ever played.
+
+                Only on your own card. An address is the one piece of a player that is
+                not public data about them. */}
+              {isMine && <ProfileEmail email={email} onPress={onOpenEmail} />}
               {/* How long they have been at this, under the name where the rest of who
                 they are is. In months rather than on a date: a date is a fact to be
                 looked up, and the only thing anyone reads it for is the answer this
@@ -553,95 +582,52 @@ export function PlayerProfileOverlay({
                   )}
                 </>
               )}
-              {/* The one row that is only ever on your own card, at the end of the figures
-                and directly above CLOSE — the one place on this card for the things you
-                can do rather than the things you have done.
-
-                One row rather than the two this started as. Adding an address and fetching
-                a profile back turned out to be the same act from the player's side — *this
-                is me* — and which of them actually happens is the server's answer to the
-                address, asked on the card behind this one.
-
-                An address is not part of a profile and is not drawn like one: a profile
-                says what somebody has achieved and every line of it reads the same to
-                whoever is looking. This is the one piece of the card that is private, and
-                it is here rather than up with the name for that reason. */}
-              {isMine && (
-                <TrackedPressable
-                  id="profile.email"
-                  onPress={() => {
-                    onOpenEmail()
-                    close()
-                  }}
-                  className="items-center rounded-2xl bg-card px-6 py-3"
-                >
-                  <Text selectable={false} className={cn(TYPE.heading, 'text-primary')}>
-                    {email === null ? <Trans>ADD AN EMAIL</Trans> : <Trans>EMAIL</Trans>}
-                  </Text>
-                  {/* The address itself under the label, where a player checks it rather than
-                    reads it — which is why it is the only line on this card set in lower
-                    case and narrow tracking. Wide caps would make an address into a
-                    heading, and nobody can check a heading against their inbox.
-
-                    Without one, the line has to carry both halves of what the row does, or
-                    a player with a profile waiting on another phone has no way of knowing
-                    this is the door to it. */}
-                  <Text selectable={false} className={cn(TYPE.hint, 'mt-1 text-dim')}>
-                    {email ?? t`Keep this profile, or bring back one from another phone`}
-                  </Text>
-                </TrackedPressable>
-              )}
-
-              {/* The way out, at the end of the card as well as in its corner. The 5-dot
-                cross in the header is where a dialog is closed from; on a card this long
-                it is also the one control that has scrolled a thumb's length away by the
-                time you are done reading. The stronger fill under COMPARE WITH ME rather
-                than beside it: closing is what you do here, comparing is what you might. */}
-              <PrimaryButton
-                id="profile.close"
-                onPress={close}
-                label={<Trans>CLOSE</Trans>}
-              />
-
-              {/* Under CLOSE rather than above it, and a link rather than a card row: the
-                intro's own arrangement, where the one thing the screen asks for is a
-                filled button and everything else is a dim word with an icon beside it in
-                the row beneath. Comparing is what you might do here; closing is what you
-                do, and the spelling says which is which.
-
-                Only on someone else's card, and only once the viewer is known — a table
-                of a player against themselves has a winner on no row and nothing to
-                say. */}
-              {profile !== null && !isMine && onCompare !== undefined && (
-                <View className="flex-row items-center justify-center">
-                  <TrackedPressable
-                    id="profile.action"
-                    hitSlop={10}
-                    onPress={() => {
-                      // The table takes this profile's place rather than opening over it:
-                      // the two say the same things about the same player, and stacking one
-                      // on the other left the player two cards deep to get back out of.
-                      // Asked for before `close`, so the comparison is already fading up as
-                      // this card fades out — the cross-fade a screen change makes, in a
-                      // dialog.
-                      onCompare(userId, profile)
-                      close()
-                    }}
-                  >
-                    <View className="flex-row items-center gap-1">
-                      <Ionicons name="git-compare-outline" size={11} color={DIM_INK} />
-                      <Text
-                        selectable={false}
-                        className={cn(TYPE.quietAction, 'text-dim')}
-                      >
-                        <Trans>COMPARE WITH ME</Trans>
-                      </Text>
-                    </View>
-                  </TrackedPressable>
-                </View>
-              )}
             </View>
           </ScrollView>
+
+          {/* Over the card's own CLOSE, outside the scroll and so pinned to the foot of
+              the card with it. Everything above is the career, which is as long as the
+              player has made it; this is what you might do when you have finished
+              reading, and a control that has to be scrolled back down to is a control the
+              player goes looking for.
+
+              A link rather than a card row, and above the filled button rather than
+              below: the intro's own arrangement, where the one thing the screen asks for
+              is a button and everything else is a dim word with an icon beside it. Closing
+              is what you do here, comparing is what you might, and the spelling says which
+              is which.
+
+              Only on someone else's card, and only once the viewer is known — a table of
+              a player against themselves has a winner on no row and nothing to say.
+
+              `mt-3` picks up the scroll's own rhythm, since the column inside it carries no
+              bottom margin of its own — and it is on the link rather than on a wrapper
+              around it, so your own card, which has nothing to compare against, does not
+              hold the air where the link would have been. */}
+          {profile !== null && !isMine && onCompare !== undefined && (
+            <View className="mt-3 flex-row items-center justify-center">
+              <TrackedPressable
+                id="profile.action"
+                hitSlop={10}
+                onPress={() => {
+                  // The table takes this profile's place rather than opening over it: the
+                  // two say the same things about the same player, and stacking one on the
+                  // other left the player two cards deep to get back out of. Asked for
+                  // before `close`, so the comparison is already fading up as this card
+                  // fades out — the cross-fade a screen change makes, in a dialog.
+                  onCompare(userId, profile)
+                  close()
+                }}
+              >
+                <View className="flex-row items-center gap-1">
+                  <Ionicons name="git-compare-outline" size={11} color={DIM_INK} />
+                  <Text selectable={false} className={cn(TYPE.quietAction, 'text-dim')}>
+                    <Trans>COMPARE WITH ME</Trans>
+                  </Text>
+                </View>
+              </TrackedPressable>
+            </View>
+          )}
 
           {editingMotto && profile !== null && (
             <MottoModal
@@ -652,7 +638,7 @@ export function PlayerProfileOverlay({
                   // Applied to what is already on screen rather than refetched: the write
                   // has landed, and the profile behind this modal differs from the one
                   // already drawn by exactly this line.
-                  applyMotto(next)
+                  patch({ motto: next })
                   setEditingMotto(false)
                 }
                 return res
@@ -661,6 +647,36 @@ export function PlayerProfileOverlay({
                 setEditingMotto(false)
               }}
             />
+          )}
+
+          {/* The name, in the same card that claims one after a first run — not a second
+              dialog that happens to ask for a nickname. It arrives seeded with the name
+              already held, which is the whole of what tells it it is a rename, and its own
+              platform window is what gets the keyboard somewhere to lift from. */}
+          {editingName && profile !== null && (
+            <CardModal
+              visible
+              onRequestClose={() => {
+                setEditingName(false)
+              }}
+            >
+              <NicknameModal
+                current={profile.nickname ?? ''}
+                onSave={async (name) => {
+                  const res = await onRename(name)
+                  if (res.error === null) {
+                    // The row behind this card differs from the one already drawn by
+                    // exactly this name, so it is written rather than read again.
+                    patch({ nickname: name })
+                    setEditingName(false)
+                  }
+                  return res
+                }}
+                onDismiss={() => {
+                  setEditingName(false)
+                }}
+              />
+            </CardModal>
           )}
         </>
       )}

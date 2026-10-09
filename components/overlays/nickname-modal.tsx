@@ -11,17 +11,24 @@ import { NICK_MAX, NICK_MIN, nicknameProblem } from '@/lib/nickname'
 
 // The card itself, with no window of its own — `CardModal` is the host, for the keyboard's
 // sake. See there. Saving hands over to `EmailDialog`, which brings its own.
+//
+// Two callers, one card: the claim after a first scoring run, and the pencil beside the
+// name on the player's own profile. `current` is the whole of the difference — seeded, it
+// is a rename, and the way out says CANCEL rather than SKIP, because there is nothing left
+// to skip once you have a name.
 export function NicknameModal({
+  current = '',
   onSave,
-  onSkip,
+  onDismiss,
 }: {
+  current?: string
   onSave: (name: string) => Promise<{ error: string | null }>
-  onSkip: () => void
+  onDismiss: () => void
 }) {
   // `t` rather than <Trans>: a TextInput placeholder takes a string, not a node.
   const { t } = useLingui()
   const online = useOnline()
-  const [value, setValue] = useState('')
+  const [value, setValue] = useState(current)
   const [error, setError] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
 
@@ -58,14 +65,14 @@ export function NicknameModal({
       setError('Something went wrong, try again')
       return
     }
-    setValue('')
+    setValue(current)
     setError(null)
   }
 
-  const handleSkip = () => {
-    setValue('')
+  const handleDismiss = () => {
+    setValue(current)
     setError(null)
-    onSkip()
+    onDismiss()
   }
 
   return (
@@ -115,11 +122,11 @@ export function NicknameModal({
       <View className="mt-2 flex-row gap-3">
         <TrackedPressable
           id="nickname.skip"
-          onPress={handleSkip}
+          onPress={handleDismiss}
           className="flex-1 items-center rounded-xl bg-card py-3"
         >
           <Text selectable={false} className={cn(TYPE.buttonSm, 'text-dim')}>
-            <Trans>SKIP</Trans>
+            {current === '' ? <Trans>SKIP</Trans> : <Trans>CANCEL</Trans>}
           </Text>
         </TrackedPressable>
 

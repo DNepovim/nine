@@ -33,6 +33,9 @@ export function ProfileVariant({
           viewerId={viewerId}
           email="you@example.com"
           onOpenEmail={() => {}}
+          // The gallery writes nothing. A rename here would have to go to the real row,
+          // and the card is being looked at rather than used.
+          onRename={() => Promise.resolve({ error: null })}
           onCompare={(id, profile) => {
             setRival({ userId: id, profile })
           }}

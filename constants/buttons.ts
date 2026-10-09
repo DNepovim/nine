@@ -22,6 +22,7 @@ export type ButtonId =
   | 'menu.play_mode'
   | 'menu.options'
   | 'menu.how_to_play'
+  | 'menu.profile'
   | 'menu.create_room'
   | 'menu.join_room'
   | 'menu.dev'
@@ -64,14 +65,12 @@ export type ButtonId =
   | 'options.locale_toggle'
   | 'options.dial_hint'
   | 'options.whats_new'
-  | 'options.done'
   | 'trainee_options.corner'
   | 'trainee_options.switch'
 
   // ── How to play ──
   | 'how_to_play.page'
   | 'how_to_play.try_it'
-  | 'how_to_play.got_it'
 
   // ── News ──
   | 'news.action'
@@ -92,10 +91,10 @@ export type ButtonId =
   | 'profile.action'
   | 'profile.add_motto'
   | 'profile.edit_motto'
+  | 'profile.edit_nickname'
   | 'profile.publish_scores'
   | 'profile.try_again'
   | 'profile.show_more'
-  | 'profile.close'
   | 'nickname.save'
   | 'nickname.skip'
   | 'motto.save'
@@ -111,7 +110,8 @@ export type ButtonId =
   | 'email_code.resend'
   | 'email_code.edit_address'
   | 'email_code.cancel'
-  | 'profile.email'
+  | 'profile.add_email'
+  | 'profile.edit_email'
   | 'menu.confirm_email'
   | 'menu.profile_moved'
 
@@ -166,6 +166,7 @@ export type ButtonId =
 
   // ── Shared chrome, on whatever screen it is drawn ──
   | 'shared.page_dot'
+  | 'shared.dialog_close'
   | 'crash.try_again'
 
 // The screen half of an id, as a type rather than a second list to keep in step.

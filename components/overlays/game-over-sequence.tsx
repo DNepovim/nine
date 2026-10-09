@@ -136,13 +136,17 @@ export function GameOverSequence({
         />
       </Animated.View>
 
-      {/* Flying title — pops in over the frozen targets, flies up during blend. */}
+      {/* Flying title — pops in over the frozen targets, flies up during blend, and at
+          `done` is swapped for the overlay's own title in a single commit. The swap only
+          goes unseen if the two copies are the same drawing, so the shadow is taken off
+          the screen exactly as the overlay takes it — a painted screen's haloes, anything
+          else's glass shadow. */}
       {!revealed && (
         <Animated.View pointerEvents="none" style={[FILL_CENTER, titleStyle]}>
           <GameOverTitle
             gameMode={gameMode}
             words={words}
-            shadow={medals[0] === 'ever'}
+            shadow={screen === 'crown' || screen === 'bird'}
           />
         </Animated.View>
       )}

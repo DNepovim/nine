@@ -6,17 +6,14 @@ import { LinearGradient } from 'expo-linear-gradient'
 import type { ReactNode } from 'react'
 import { useMemo, useRef } from 'react'
 import { ScrollView, Text, View } from 'react-native'
-import { Gesture, GestureDetector } from 'react-native-gesture-handler'
-import { scheduleOnRN } from 'react-native-worklets'
 
-import { MenuButton } from '@/components/game/menu-button'
-import { PrimaryButton } from '@/components/primary-button'
-import { ScreenLayer } from '@/components/screen'
+import { ModalCard } from '@/components/overlays/modal-card'
 import { TrackedPressable } from '@/components/tracked-pressable'
-import { ACHIEVEMENT_SCALE, GAME_SCALE, MUTED_INK } from '@/constants/colors'
+import { ACHIEVEMENT_SCALE, GAME_SCALE } from '@/constants/colors'
 import { TIPS } from '@/constants/tips'
 import { TYPE } from '@/constants/typography'
 import { useFlag } from '@/hooks/use-flags'
+import { useViewport } from '@/hooks/use-viewport'
 import { cn } from '@/lib/cn'
 import {
   darkGradientOf,
@@ -370,16 +367,7 @@ function ModeCard({ mode, facts }: { mode: Mode; facts: string[] }) {
   )
 }
 
-// ── Overlay ─────────────────────────────────────────────────────────────────
-
-// A drag that starts within this much of the left edge and pulls right closes the
-// guide — the back gesture every mobile browser has trained into the thumb. The
-// origin is what makes it safe: a horizontal drag anywhere else is ignored, so the
-// gesture cannot fire while someone is reading. Measured from where the finger
-// landed rather than where it ended, which is why the check subtracts the travel.
-const EDGE_ZONE = 32
-const CLOSE_DISTANCE = 80
-const CLOSE_VELOCITY = 800
+// ── Dialog ──────────────────────────────────────────────────────────────────
 
 // A jumped-to header lands this far below the top edge rather than flush against it,
 // so it reads as a heading with a page under it instead of a cropped line.
@@ -395,6 +383,7 @@ export function HowToPlayOverlay({
   onTryTutorial: () => void
 }) {
   const { t } = useLingui()
+  const { height } = useViewport()
 
   // Read once and used twice — by the contents list and by the chapter itself — so the
   // list cannot offer a jump to a section that is not on the page.
@@ -422,38 +411,31 @@ export function HowToPlayOverlay({
     scrollRef.current?.scrollTo({ y: Math.max(0, y - JUMP_MARGIN), animated: true })
   }
 
-  // activeOffsetX waits for real horizontal intent; failOffsetY hands the touch back
-  // to the ScrollView the moment it turns into a scroll, so reading still works.
-  const edgeSwipe = Gesture.Pan()
-    .activeOffsetX(24)
-    .failOffsetY([-12, 12])
-    .onEnd((e) => {
-      'worklet'
-      if (e.absoluteX - e.translationX > EDGE_ZONE) return
-      if (e.translationX < CLOSE_DISTANCE && e.velocityX < CLOSE_VELOCITY) return
-      scheduleOnRN(onClose)
-    })
-
+  // The guide is a dialog over whatever asked for it — the intro or the paused run —
+  // and the same one the player's profile opens in. It used to be a screen of its own,
+  // with its own title band, its own close cross and a swipe in from the left edge to
+  // dismiss it; the card brings the first two, and the third went with the screen: an
+  // edge gesture is a reading-sized affordance, and there is no screen edge inside a
+  // card for a thumb to start from.
   return (
-    <GestureDetector gesture={edgeSwipe}>
-      <ScreenLayer>
+    <ModalCard
+      title={<Trans>HOW TO PLAY</Trans>}
+      onDismiss={onClose}
+      maxHeight={height * 0.85}
+    >
+      {() => (
         <ScrollView
           ref={scrollRef}
-          contentContainerStyle={{
-            paddingHorizontal: 22,
-            paddingTop: 64,
-            paddingBottom: 56,
-          }}
+          // The card pads the sides; this adds only the vertical air the page needs.
+          // `flexShrink` lets the guide scroll inside the cap rather than claim all of
+          // it — see the note in ModalCard's other callers.
+          contentContainerStyle={{ paddingTop: 4, paddingBottom: 16 }}
+          style={{ flexGrow: 0, flexShrink: 1 }}
           showsVerticalScrollIndicator={false}
         >
-          {/* Title */}
-          <Text
-            selectable={false}
-            className="font-mono text-[22px] font-black tracking-[3px] text-primary"
-          >
-            <Trans>HOW TO PLAY</Trans>
-          </Text>
-          <Text selectable={false} className={cn(TYPE.figure, 'mt-1 text-dim')}>
+          {/* The page's own title is the card's header now; this line stays, since it
+              says what the guide is about rather than repeating its name. */}
+          <Text selectable={false} className={cn(TYPE.figure, 'text-dim')}>
             <Trans>DIAL THE GRID · MATCH THE NUMBER</Trans>
           </Text>
 
@@ -801,27 +783,8 @@ export function HowToPlayOverlay({
               {t(tip)}
             </Bullet>
           ))}
-
-          {/* Done. The other way out — the offer to go and play — is at the top of the
-              page now rather than under the last tip: a guide can be read, but the dial
-              is what teaches it, and an offer nobody scrolls far enough to find is no
-              offer at all. See TryItButton. */}
-          <View className="mt-10 self-center" style={{ width: 224 }}>
-            <PrimaryButton
-              id="how_to_play.got_it"
-              onPress={onClose}
-              label={<Trans>GOT IT</Trans>}
-            />
-          </View>
         </ScrollView>
-
-        {/* Close — the same 5-dot cross + CLOSE label every dialog carries. */}
-        <MenuButton
-          onToggle={onClose}
-          color={MUTED_INK}
-          style={{ position: 'absolute', top: 12, right: 18, zIndex: 20 }}
-        />
-      </ScreenLayer>
-    </GestureDetector>
+      )}
+    </ModalCard>
   )
 }

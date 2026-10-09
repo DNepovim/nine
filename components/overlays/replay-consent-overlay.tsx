@@ -33,6 +33,7 @@ export function ReplayConsentOverlay({
 }) {
   return (
     <ModalCard
+      closeButton={false}
       title={<Trans>CAN WE LOOK UNDER YOUR THUMBS?</Trans>}
       onDismiss={onDismiss}
     >

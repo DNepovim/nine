@@ -1,17 +1,17 @@
 import { AntDesign } from '@expo/vector-icons'
 import { Trans } from '@lingui/react/macro'
 import type { ReactNode } from 'react'
-import { Text, View } from 'react-native'
+import { ScrollView, Text, View } from 'react-native'
 
 import { LocaleToggle } from '@/components/locale-toggle'
+import { ModalCard } from '@/components/overlays/modal-card'
 import { OptionCheckbox } from '@/components/overlays/option-checkbox'
-import { PrimaryButton } from '@/components/primary-button'
-import { Screen } from '@/components/screen'
 import { TrackedPressable } from '@/components/tracked-pressable'
 import { DIM_INK } from '@/constants/colors'
 import { TYPE } from '@/constants/typography'
 import { useLocale } from '@/hooks/use-locale'
 import type { ReplayConsent } from '@/hooks/use-replay-consent'
+import { useViewport } from '@/hooks/use-viewport'
 import { buildInfo } from '@/lib/build-info'
 import { cn } from '@/lib/cn'
 
@@ -33,7 +33,6 @@ function AdvancedOption({
       id="options.toggle"
       onPress={onToggle}
       className="flex-row items-center gap-3 py-3"
-      style={{ width: 300 }}
     >
       <OptionCheckbox checked={checked} />
       <View className="flex-1">
@@ -67,65 +66,67 @@ export function AdvancedOptionsOverlay({
   onClose: () => void
 }) {
   const { locale, setLocale } = useLocale()
+  const { height } = useViewport()
   const build = buildInfo()
+  // OPTIONS, not ADVANCED: this is the only settings screen there is, and both buttons
+  // that open it — on the intro and on the pause screen — say OPTIONS. The identifiers
+  // still say advanced.
   return (
-    <Screen overlay>
-      <Text selectable={false} className={cn(TYPE.screenTitle, 'mb-8 text-primary')}>
-        <Trans>ADVANCED</Trans>
-      </Text>
-
-      <AdvancedOption
-        checked={showSum}
-        label={<Trans>SHOW SUM IN BUTTONS</Trans>}
-        description={<Trans>Display value × row × column</Trans>}
-        onToggle={onToggleSum}
-      />
-
-      <AdvancedOption
-        checked={replayConsent === 'granted'}
-        label={<Trans>SESSION RECORDING</Trans>}
-        description={<Trans>Let us watch replays to fix bugs</Trans>}
-        onToggle={onToggleReplayConsent}
-      />
-
-      {/* Language */}
-      <View className="flex-row items-center justify-between py-3" style={{ width: 300 }}>
-        <Text selectable={false} className={cn(TYPE.button, 'text-primary')}>
-          <Trans>LANGUAGE</Trans>
-        </Text>
-        <LocaleToggle locale={locale} onSelect={setLocale} />
-      </View>
-
-      {/* What's new */}
-      <TrackedPressable
-        id="options.whats_new"
-        onPress={onOpenNews}
-        className="flex-row items-center justify-between py-3"
-        style={{ width: 300 }}
-      >
-        <Text selectable={false} className={cn(TYPE.button, 'text-primary')}>
-          <Trans>WHAT’S NEW</Trans>
-        </Text>
-        <AntDesign name="right" size={14} color={DIM_INK} />
-      </TrackedPressable>
-
-      {/* Build stamp — the line to quote in a bug report. */}
-      <View className="flex-row items-center justify-between pt-3" style={{ width: 300 }}>
-        <Text
-          selectable={false}
-          className={cn(TYPE.value, 'text-center w-full text-dim')}
+    <ModalCard
+      title={<Trans>OPTIONS</Trans>}
+      onDismiss={onClose}
+      maxHeight={height * 0.85}
+    >
+      {() => (
+        // flexShrink lets the list scroll on a short display while leaving the card its
+        // own height on a tall one — see the note in ModalCard's callers.
+        <ScrollView
+          showsVerticalScrollIndicator={false}
+          style={{ flexGrow: 0, flexShrink: 1 }}
         >
-          {build.label}
-        </Text>
-      </View>
+          <AdvancedOption
+            checked={showSum}
+            label={<Trans>SHOW SUM IN BUTTONS</Trans>}
+            description={<Trans>Display value × row × column</Trans>}
+            onToggle={onToggleSum}
+          />
 
-      <PrimaryButton
-        id="options.done"
-        onPress={onClose}
-        className="mt-8"
-        style={{ width: 224 }}
-        label={<Trans>DONE</Trans>}
-      />
-    </Screen>
+          <AdvancedOption
+            checked={replayConsent === 'granted'}
+            label={<Trans>SESSION RECORDING</Trans>}
+            description={<Trans>Let us watch replays to fix bugs</Trans>}
+            onToggle={onToggleReplayConsent}
+          />
+
+          {/* Language */}
+          <View className="flex-row items-center justify-between py-3">
+            <Text selectable={false} className={cn(TYPE.button, 'text-primary')}>
+              <Trans>LANGUAGE</Trans>
+            </Text>
+            <LocaleToggle locale={locale} onSelect={setLocale} />
+          </View>
+
+          {/* What's new */}
+          <TrackedPressable
+            id="options.whats_new"
+            onPress={onOpenNews}
+            className="flex-row items-center justify-between py-3"
+          >
+            <Text selectable={false} className={cn(TYPE.button, 'text-primary')}>
+              <Trans>WHAT’S NEW</Trans>
+            </Text>
+            <AntDesign name="right" size={14} color={DIM_INK} />
+          </TrackedPressable>
+
+          {/* Build stamp — the line to quote in a bug report. */}
+          <Text
+            selectable={false}
+            className={cn(TYPE.value, 'w-full pt-3 text-center text-dim')}
+          >
+            {build.label}
+          </Text>
+        </ScrollView>
+      )}
+    </ModalCard>
   )
 }

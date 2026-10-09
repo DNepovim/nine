@@ -1,6 +1,8 @@
 import { Trans, useLingui } from '@lingui/react/macro'
-import { ScrollView, Text, View } from 'react-native'
+import { useRef, useState } from 'react'
+import { ScrollView, Text, View, type LayoutChangeEvent } from 'react-native'
 
+import { GradientName } from '@/components/gradient-name'
 import { CardSection } from '@/components/overlays/card-section'
 import { CompareBoardRow } from '@/components/overlays/compare-board-row'
 import { CompareHead } from '@/components/overlays/compare-head'
@@ -23,6 +25,20 @@ import { lifetimeOf, nameFactorsOf, type PlayerProfile } from '@/lib/player-prof
 // A player with no nickname cannot be on a board and so cannot be on this table either —
 // the type still allows it, so this is what the header would print if one ever arrived.
 const NO_NAME = '…'
+
+// How much of the header has to have gone before the card's title takes the two names
+// over. A little short of the whole of it, so the swap lands while the last line of the
+// header is still leaving rather than after a gap where the card says neither thing.
+//
+// Coming back the other way takes twice as much, and the gap is the point: two long names
+// are a line longer in the title than the question is, so the swap can move the card's own
+// height — and one threshold crossed in both directions is a thumb resting on it flickering
+// the header. Undoing has to cost more than causing.
+const HEAD_SLACK = 24
+
+// How often a scroll reports its position. One frame: the title swaps on the way past the
+// header, and a coarser rate is a swap that lands visibly late.
+const SCROLL_MS = 16
 
 // The two careers side by side, opened from the bottom of a profile.
 //
@@ -49,6 +65,14 @@ export function CompareOverlay({
   const { t } = useLingui()
   const { height } = useViewport()
   const { profile: myProfile, loading, error, reload } = usePlayerProfile(viewerId)
+  // Whether the header has been scrolled out of the card. The two names move up into the
+  // title when it has — the one thing a reader down among the boards still needs, since a
+  // caret in a row means nothing without knowing whose column it is in.
+  const [passedHead, setPassedHead] = useState(false)
+  // Measured rather than guessed: the header is two names, two marks, two medal strips
+  // and a sentence whose length is the verdict's, so its height is not a number anyone
+  // can write down here.
+  const headHeight = useRef(0)
   // Read from the context rather than fetched here, the way the profile card reads it: the
   // two Extreme leaders are already known and kept live off the board connection, so a
   // mark on this table cannot contradict the one on the card it opened from.
@@ -86,12 +110,46 @@ export function CompareOverlay({
     lifetimeOf(theirProfile.totals, theirProfile.winnings),
   )
 
+  // The two names, for the header and for the title that takes over from it.
+  const myName = myProfile === null ? NO_NAME : (myProfile.nickname ?? NO_NAME)
+  const theirName = theirProfile.nickname ?? NO_NAME
+
+  // Two titles, one slot. The question is what the card is for and is what it opens
+  // saying; once the header carrying the two names has been scrolled past, the names take
+  // the slot over — it is the only line that is pinned, and whose column a caret is in is
+  // the one thing the figures below cannot say for themselves.
+  //
+  // Each name in its own colour, as the header above and the card behind it draw it — the
+  // left column and the right are told apart by colour on every row of this table, and a
+  // title that spelled them both in dim would be the one line here not doing that. It
+  // nests inside the header's own `Text` because a gradient name is a `Text` of letters,
+  // so it takes the heading's size and weight and sets only the ink.
+  //
   // `replacing`: this table only ever opens from the bottom of a profile card, and it
-  // opens under that card. It is covered for the length of the profile's exit, so it is
-  // there in full the moment that card clears rather than fading up through it.
+  // opens under that card, so the scrim is already dark while the profile shrinks off it.
+  // See `ModalCard`.
   return (
     <ModalCard
-      title={t`WHO IS BETTER?`}
+      closeButton={false}
+      title={
+        passedHead ? (
+          <Trans>
+            <GradientName
+              nickname={myName}
+              avgAccuracy={myFactors?.avgAccuracy ?? null}
+              avgSpeed={myFactors?.avgSpeed ?? null}
+            />{' '}
+            vs{' '}
+            <GradientName
+              nickname={theirName}
+              avgAccuracy={theirFactors.avgAccuracy}
+              avgSpeed={theirFactors.avgSpeed}
+            />
+          </Trans>
+        ) : (
+          t`WHO IS BETTER?`
+        )
+      }
       onDismiss={onClose}
       maxHeight={height * 0.85}
       replacing
@@ -134,55 +192,78 @@ export function CompareOverlay({
             myProfile !== null &&
             myFactors !== null && (
               <>
-                {/* Each side's best claim in each mode, from the profile that was read for
-                    it — the same reduction the intro puts under the title and the profile
-                    card under the nickname, never derived a second time here. */}
-                <CompareHead
-                  myId={viewerId}
-                  myNickname={myProfile.nickname ?? NO_NAME}
-                  myAvgAccuracy={myFactors.avgAccuracy}
-                  myAvgSpeed={myFactors.avgSpeed}
-                  myMark={championMark(viewerId, champions)}
-                  myMedals={myProfile.medals}
-                  theirId={theirId}
-                  theirNickname={theirProfile.nickname ?? NO_NAME}
-                  theirAvgAccuracy={theirFactors.avgAccuracy}
-                  theirAvgSpeed={theirFactors.avgSpeed}
-                  theirMark={championMark(theirId, champions)}
-                  theirMedals={theirProfile.medals}
-                  verdict={verdict}
-                />
-
-                {/* What the table came to, in a sentence. Thirteen rows of figures answer
-                    the question in full and answer it slowly; this is the same answer at a
-                    glance, and it is the only line on the card written as prose — sentence
-                    case and narrow tracking, like the motto and the announcement bar, since
-                    the house's wide caps would make a sentence read as a heading.
-
-                    Seeded on the two players and the score between them, so closing the
-                    table and opening it again says the same thing, and only a board
-                    actually changing hands changes the words. */}
-                <Text
-                  selectable={false}
-                  className={cn(TYPE.proseSm, 'px-2 text-center text-dim')}
-                >
-                  {verdictLine(
-                    verdict,
-                    `${viewerId}:${theirId}:${tally.mine}-${tally.theirs}`,
-                    t,
-                  )}
-                </Text>
-
-                {/* The same shape the profile card uses: the scroll gives way inside the
-                    card's height cap while a short table stays its own height. The header
-                    and the verdict stay above it — they are what the card is, and a reader
-                    who has scrolled to the boards should still be able to see whose they
-                    are. */}
                 <ScrollView
                   showsVerticalScrollIndicator={false}
                   style={{ flexGrow: 0, flexShrink: 1 }}
+                  scrollEventThrottle={SCROLL_MS}
+                  onScroll={(event) => {
+                    const { y } = event.nativeEvent.contentOffset
+                    // Only ever set to something it is not: React bails out on an
+                    // unchanged value, so a scroll through the body costs no renders
+                    // beyond the one at the threshold.
+                    setPassedHead((was) =>
+                      was
+                        ? y > headHeight.current - HEAD_SLACK * 2
+                        : y > headHeight.current - HEAD_SLACK,
+                    )
+                  }}
                 >
                   <View className="gap-3">
+                    {/* The header scrolls with the table rather than being pinned over
+                        it. It is the tallest thing on the card — two names, two marks,
+                        two medal strips and a sentence — and a band that cannot scroll
+                        takes that height off the figures the reader came for on every
+                        display. What they actually need further down is who is in which
+                        column, and that is one line: the card's own title takes the two
+                        names over the moment this has gone. */}
+                    <View
+                      onLayout={(event: LayoutChangeEvent) => {
+                        headHeight.current = event.nativeEvent.layout.height
+                      }}
+                      className="gap-3"
+                    >
+                      {/* Each side's best claim in each mode, from the profile that was
+                          read for it — the same reduction the intro puts under the title
+                          and the profile card under the nickname, never derived a second
+                          time here. */}
+                      <CompareHead
+                        myId={viewerId}
+                        myNickname={myName}
+                        myAvgAccuracy={myFactors.avgAccuracy}
+                        myAvgSpeed={myFactors.avgSpeed}
+                        myMark={championMark(viewerId, champions)}
+                        myMedals={myProfile.medals}
+                        theirId={theirId}
+                        theirNickname={theirName}
+                        theirAvgAccuracy={theirFactors.avgAccuracy}
+                        theirAvgSpeed={theirFactors.avgSpeed}
+                        theirMark={championMark(theirId, champions)}
+                        theirMedals={theirProfile.medals}
+                        verdict={verdict}
+                      />
+
+                      {/* What the table came to, in a sentence. Thirteen rows of figures
+                          answer the question in full and answer it slowly; this is the
+                          same answer at a glance, and it is the only line on the card
+                          written as prose — sentence case and narrow tracking, like the
+                          motto and the announcement bar, since the house's wide caps
+                          would make a sentence read as a heading.
+
+                          Seeded on the two players and the score between them, so
+                          closing the table and opening it again says the same thing, and
+                          only a board actually changing hands changes the words. */}
+                      <Text
+                        selectable={false}
+                        className={cn(TYPE.proseSm, 'px-2 text-center text-dim')}
+                      >
+                        {verdictLine(
+                          verdict,
+                          `${viewerId}:${theirId}:${tally.mine}-${tally.theirs}`,
+                          t,
+                        )}
+                      </Text>
+                    </View>
+
                     <CardSection label={t`CAREER`}>
                       {comparison.lifetime.map((row, index) => (
                         <CompareStatRow

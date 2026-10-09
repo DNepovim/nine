@@ -2,7 +2,9 @@ import { createContext, useCallback, useContext, useMemo, useState } from 'react
 import type { ReactNode } from 'react'
 
 import { CompareOverlay } from '@/components/overlays/compare-overlay'
+import { EmailDialog } from '@/components/overlays/email-dialog'
 import { PlayerProfileOverlay } from '@/components/overlays/player-profile-overlay'
+import type { AccountEmailFlow } from '@/hooks/use-account-email'
 import type { PlayerProfile } from '@/lib/player-profile'
 
 // Opening a profile is a function, not a screen each surface has to own.
@@ -34,7 +36,16 @@ export function PlayerProfileProvider({
   account: {
     // The confirmed address, or null for a player who has not given one.
     email: string | null
-    onOpenEmail: () => void
+    // The whole address flow, not just its door: this provider draws the dialog as well
+    // as opening it. Every other entry point — the invitation after a nickname, the
+    // intro's confirm line, the one-time ask — reaches the same flow from under here, so
+    // one instance up here serves all of them.
+    emailFlow: AccountEmailFlow
+    // Writing the nickname, for the pencil beside it on the player's own card. From auth
+    // rather than from the profile read: the name is held on the session as well as on
+    // the row, and one of the two going stale is how a player ends up on a board under a
+    // name the app no longer thinks is theirs.
+    onRename: (name: string) => Promise<{ error: string | null }>
   }
 }) {
   const [userId, setUserId] = useState<string | null>(null)
@@ -86,7 +97,8 @@ export function PlayerProfileProvider({
           userId={userId}
           viewerId={viewerId}
           email={account.email}
-          onOpenEmail={account.onOpenEmail}
+          onOpenEmail={account.emailFlow.open}
+          onRename={account.onRename}
           // Left off while the sign-in has not landed: there is no viewer to compare
           // against yet, and the card reads the absence of this as "no button".
           onCompare={
@@ -101,6 +113,16 @@ export function PlayerProfileProvider({
           }}
         />
       )}
+      {/* The address, and the profile its code brings back — both cards in one dialog,
+          which draws its own or nothing.
+
+          Drawn here, after the profile card, and that order is the whole reason it moved:
+          the pencil beside an address used to close the profile to get out from under it,
+          because two dialogs share one z-index and the one written later wins. A player
+          changing their address was then sent back to the game to do it. Now it opens
+          over the card it was asked for from, and closing it leaves the player where they
+          were. */}
+      <EmailDialog flow={account.emailFlow} />
     </ProfileModalContext.Provider>
   )
 }

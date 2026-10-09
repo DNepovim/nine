@@ -23,6 +23,7 @@ import { useFlag } from '@/hooks/use-flags'
 import type { LostMedalNews } from '@/hooks/use-lost-medals'
 import { useOnline } from '@/hooks/use-online'
 import { EMPTY_IDS, usePlayerFactors } from '@/hooks/use-player-factors'
+import { useOpenProfile } from '@/hooks/use-profile-modal'
 import { useViewport } from '@/hooks/use-viewport'
 import { championMark } from '@/lib/champions'
 import { cn } from '@/lib/cn'
@@ -202,6 +203,9 @@ export function MenuOverlay({
   // Creating or joining a room is a Supabase round trip either way, so both are
   // dead ends with no connection — disabled rather than left to fail after a tap.
   const online = useOnline()
+  // The same function every name on a board calls. This screen's PROFILE link is the one
+  // caller that does not open somebody else — it opens whoever is holding the phone.
+  const openProfile = useOpenProfile()
   const showMultiplayer = useFlag('multiplayer')
   const showArcade = useFlag('arcade')
   const showDev = useFlag('dev')
@@ -587,67 +591,99 @@ export function MenuOverlay({
             </TrackedPressable>
           )}
 
-          <View className="flex-row flex-wrap items-center justify-center gap-x-5 gap-y-2">
-            <TrackedPressable id="menu.options" onPress={onOpenAdvanced} hitSlop={10}>
-              <View className="flex-row items-center gap-1">
-                <Ionicons name="settings-outline" size={10} color={DIM_INK} />
-                <Text selectable={false} className={cn(TYPE.quietAction, 'text-dim')}>
-                  <Trans>OPTIONS</Trans>
-                </Text>
-              </View>
-            </TrackedPressable>
-            <TrackedPressable
-              id="menu.board"
-              onPress={() => {
-                // The sentence lives here rather than in lib/ because it is the
-                // one place that knows the active language; lib/ keeps the
-                // decision and the board name, which are what a test can pin.
-                const board = boardName(
-                  t(labelOf(gameMode)),
-                  t(DIFFICULTIES[difficulty].label),
-                )
-                const invite = shouldBoast(gameMode, bestScore)
-                  ? t`My best at Nine is ${bestScore} — ${board}. Think you can beat it?`
-                  : t`Nine buttons, one number to hit. Come take a run at it.`
-                // iOS takes the link as its own item, so the sheet can offer it to
-                // AirDrop and Copy Link; Android ignores `url` and needs it inline.
-                void Share.share(
-                  Platform.OS === 'ios'
-                    ? { message: invite, url: SHARE_URL }
-                    : { message: `${invite}\n\n${SHARE_URL}` },
-                )
-              }}
-              hitSlop={10}
-            >
-              <View className="flex-row items-center gap-1">
-                <Ionicons name="share-outline" size={10} color={DIM_INK} />
-                <Text selectable={false} className={cn(TYPE.quietAction, 'text-dim')}>
-                  <Trans>SHARE</Trans>
-                </Text>
-              </View>
-            </TrackedPressable>
-            <TrackedPressable id="menu.how_to_play" onPress={onHowToPlay} hitSlop={10}>
-              <View className="flex-row items-center gap-1">
-                <Ionicons name="help-circle-outline" size={11} color={DIM_INK} />
-                <Text selectable={false} className={cn(TYPE.quietAction, 'text-dim')}>
-                  <Trans>HOW TO PLAY</Trans>
-                </Text>
-              </View>
-            </TrackedPressable>
-          </View>
+          {/* The two link rows are one block, and the air between them is a fraction of
+              what separates the pair from PLAY GAME: they are the same footer read twice
+              over, not two things the screen offers. */}
+          <View className="items-center gap-3">
+            <View className="flex-row flex-wrap items-center justify-center gap-x-5 gap-y-2">
+              <TrackedPressable id="menu.options" onPress={onOpenAdvanced} hitSlop={10}>
+                <View className="flex-row items-center gap-1">
+                  <Ionicons name="settings-outline" size={10} color={DIM_INK} />
+                  <Text selectable={false} className={cn(TYPE.quietAction, 'text-dim')}>
+                    <Trans>OPTIONS</Trans>
+                  </Text>
+                </View>
+              </TrackedPressable>
+              <TrackedPressable
+                id="menu.board"
+                onPress={() => {
+                  // The sentence lives here rather than in lib/ because it is the
+                  // one place that knows the active language; lib/ keeps the
+                  // decision and the board name, which are what a test can pin.
+                  const board = boardName(
+                    t(labelOf(gameMode)),
+                    t(DIFFICULTIES[difficulty].label),
+                  )
+                  const invite = shouldBoast(gameMode, bestScore)
+                    ? t`My best at Nine is ${bestScore} — ${board}. Think you can beat it?`
+                    : t`Nine buttons, one number to hit. Come take a run at it.`
+                  // iOS takes the link as its own item, so the sheet can offer it to
+                  // AirDrop and Copy Link; Android ignores `url` and needs it inline.
+                  void Share.share(
+                    Platform.OS === 'ios'
+                      ? { message: invite, url: SHARE_URL }
+                      : { message: `${invite}\n\n${SHARE_URL}` },
+                  )
+                }}
+                hitSlop={10}
+              >
+                <View className="flex-row items-center gap-1">
+                  <Ionicons name="share-outline" size={10} color={DIM_INK} />
+                  <Text selectable={false} className={cn(TYPE.quietAction, 'text-dim')}>
+                    <Trans>SHARE</Trans>
+                  </Text>
+                </View>
+              </TrackedPressable>
+              {/* The player's own card, from the screen they spend the most time on — the
+                one place it was not reachable from, since every other door onto a profile
+                is a name on a board and your own name is only there once you are on it.
+                Last in the row: it is about the player rather than about the run, which
+                is what the other two are.
 
-          {/* Its own row rather than folded into the one above: these two are not for the
-              player this screen otherwise addresses, and a row that only a role ever sees
-              stays out of the way of the one everybody does. Each link asks for its own
-              feature — see constants/features.ts.
+                Only once the sign-in has landed. Before that there is no id to open, and
+                a link that does nothing for the first second of a launch is worse than
+                one that arrives a moment late. */}
+              {userId !== null && (
+                <TrackedPressable
+                  id="menu.profile"
+                  onPress={() => {
+                    openProfile(userId)
+                  }}
+                  hitSlop={10}
+                >
+                  <View className="flex-row items-center gap-1">
+                    <Ionicons name="person-outline" size={10} color={DIM_INK} />
+                    <Text selectable={false} className={cn(TYPE.quietAction, 'text-dim')}>
+                      <Trans>PROFILE</Trans>
+                    </Text>
+                  </View>
+                </TrackedPressable>
+              )}
+            </View>
+
+            {/* A second row, under the one every player reads. HOW TO PLAY leads it and the
+              role links follow: the guide is not one of the three things the row above
+              offers — those are about this screen, and it is about the game — and a row
+              of its own is what stops the first one wrapping on a narrow phone now that
+              it carries four.
+
+              DEV and ADMIN are not for the player this screen otherwise addresses, and
+              each asks for its own feature — see constants/features.ts.
 
               ADMIN used to be drawn inside DEV, which quietly undid the protection the
               database puts on the `admin` key: `dev` revoked for one person took the
               admin screen away with it, and the way back in was the screen that had just
               gone. A door that cannot be switched off cannot be nested inside one that
               can. */}
-          {(showDev || showAdmin) && (
             <View className="flex-row flex-wrap items-center justify-center gap-x-5 gap-y-2">
+              <TrackedPressable id="menu.how_to_play" onPress={onHowToPlay} hitSlop={10}>
+                <View className="flex-row items-center gap-1">
+                  <Ionicons name="help-circle-outline" size={11} color={DIM_INK} />
+                  <Text selectable={false} className={cn(TYPE.quietAction, 'text-dim')}>
+                    <Trans>HOW TO PLAY</Trans>
+                  </Text>
+                </View>
+              </TrackedPressable>
               {showDev && (
                 <TrackedPressable id="menu.dev" onPress={onOpenDev} hitSlop={10}>
                   <View className="flex-row items-center gap-1">
@@ -669,7 +705,7 @@ export function MenuOverlay({
                 </TrackedPressable>
               )}
             </View>
-          )}
+          </View>
         </View>
       </View>
     </Screen>

@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { AppState } from 'react-native'
 
 import { type Flag } from '@/constants/features'
 import {
@@ -18,9 +19,21 @@ import { reloadApp } from '@/lib/app-reload'
 import { isNetworkFailure } from '@/lib/connectivity'
 import { knownFeatures, sameFeatures } from '@/lib/features'
 import { resetLocalPlayer } from '@/lib/local-reset'
+import { sessionVerdict, type SessionVerdict } from '@/lib/session-verdict'
 import { supabase } from '@/lib/supabase'
 
 const EMPTY_FEATURES: ReadonlySet<Flag> = new Set()
+
+// How often a device holding an address asks whether it still holds its session.
+//
+// Two minutes is a number picked against what goes wrong in the meantime, which is not an
+// inconvenience but a wrong row: every run finished in this window is filed under a player
+// who has already taken their profile to another phone. Two minutes is at most one run.
+//
+// It costs one request per two minutes per *addressed* player — nobody else runs this —
+// and it is the only one of the three checks that catches the case that matters most,
+// which is a phone left open on a table while the profile is restored somewhere else.
+const SESSION_CHECK_MS = 2 * 60_000
 
 // What a card gets back from any of the four calls below. Null is the only good answer;
 // everything else is one of the lines `lib/account-email.ts` names.
@@ -76,6 +89,53 @@ type AuthState = {
   restoreProfile: (code: string) => Promise<Answer>
 }
 
+// Everything a launch needs to know about the session it found, in one round trip.
+//
+// Reading the nickname doubles as checking the session is real. A stored session outlives
+// the user it names — the auth schema is wiped by every local `db:reset`, and removing a
+// row in the dashboard does the same in production — and nothing in the app ever signs
+// out, so a device left holding one is a device where every write fails the `profiles`
+// foreign key from then on. Scores, achievements, feedback: all of it filed under an
+// `auth.uid()` that is not there.
+//
+// The three reads go together and ask different things: one whether this session still
+// names a real row, one what that person may be shown, and the third whether the session
+// itself is one the server still knows about.
+//
+// That third one is the restore, and nothing else here would catch it. `getSession` reads
+// the stored session without asking anybody, and PostgREST takes an access token on its
+// signature alone — measured against the local stack, a device whose session has just been
+// revoked still reads its profile and runs its RPCs, and only `/auth/v1/user` answers 403.
+// Which is the whole reason `getUser` is worth a request.
+const inspectSession = async (
+  uid: string,
+): Promise<{
+  verdict: SessionVerdict
+  nickname: string | null
+  features: ReadonlySet<Flag>
+}> => {
+  const [profile, featureRows, account] = await Promise.all([
+    supabase.from('profiles').select('nickname').eq('id', uid).maybeSingle(),
+    supabase.rpc('my_features'),
+    supabase.auth.getUser(),
+  ])
+
+  return {
+    verdict: sessionVerdict({
+      profileError: profile.error,
+      profileFound: profile.data !== null,
+      accountError: account.error,
+    }),
+    nickname: typeof profile.data?.nickname === 'string' ? profile.data.nickname : null,
+    // A failed feature read is an ordinary player, not an error worth a screen: the doors
+    // it would have opened are all unfinished work, and showing none of them is the right
+    // answer to not knowing.
+    features: knownFeatures(
+      Array.isArray(featureRows.data) ? (featureRows.data as string[]) : [],
+    ),
+  }
+}
+
 export function useSupabaseAuth(): AuthState {
   const [userId, setUserId] = useState<string | null>(null)
   const [nickname, setNickname] = useState<string | null>(null)
@@ -123,48 +183,27 @@ export function useSupabaseAuth(): AuthState {
       let held: ReadonlySet<Flag> = EMPTY_FEATURES
 
       if (uid !== null) {
-        // Reading the nickname doubles as checking the session is real. A stored session
-        // outlives the user it names — the auth schema is wiped by every local
-        // `db:reset`, and removing a row in the dashboard does the same in production —
-        // and nothing in the app ever signs out, so a device left holding one is a device
-        // where every write fails the `profiles` foreign key from then on. Scores,
-        // achievements, feedback: all of it filed under an `auth.uid()` that is not there.
-        // The profile read and the feature read are one round trip's worth of waiting
-        // rather than two, and they are about different things: one asks whether this
-        // session still names a real row, the other asks what that person may be shown.
-        const [profile, featureRows] = await Promise.all([
-          supabase.from('profiles').select('nickname').eq('id', uid).maybeSingle(),
-          supabase.rpc('my_features'),
-        ])
-        const { data, error } = profile
+        const found = await inspectSession(uid)
 
-        // No row, from a server that answered. `maybeSingle` is what draws that line: an
-        // absent profile comes back as null with no error, while a request that never
-        // arrived comes back with one. The distinction is the whole point — a player who
-        // is merely offline must keep their session rather than be signed out of it and
-        // handed a new identity they never asked for.
-        //
-        // Not the same thing as the refusal above, and the difference is worth holding on
-        // to: this is a session naming nobody, and nothing has been taken from anyone. It
-        // leaves no note behind.
-        if (error === null && data === null) {
+        if (found.verdict === 'live') {
+          nick = found.nickname
+          held = found.features
+          // Read off the stored session rather than asked for: every change to either of
+          // these passes through this hook, which updates the state as it goes.
+          setEmail(session?.user.email ?? null)
+          setPendingEmail(session?.user.new_email ?? null)
+        } else {
+          // The two bad verdicts share an ending — the session goes, and the launch falls
+          // through to a fresh anonymous one below — and differ in the one thing that
+          // matters to the player: only a profile that was taken leaves a note behind.
+          if (found.verdict === 'revoked') {
+            await markProfileMoved()
+            setMoved(true)
+          }
           signingOutSelf.current = true
           await supabase.auth.signOut({ scope: 'local' })
           signingOutSelf.current = false
           uid = null
-        } else {
-          nick = typeof data?.nickname === 'string' ? data.nickname : null
-          // A failed feature read is an ordinary player, not an error worth a screen:
-          // the doors it would have opened are all unfinished work, and showing none of
-          // them is the right answer to not knowing.
-          held = knownFeatures(
-            Array.isArray(featureRows.data) ? (featureRows.data as string[]) : [],
-          )
-          // Both read off the session rather than asked for: `getUser()` would be a second
-          // round trip to learn what the stored user already says, and every change to it
-          // passes through this hook, which updates the state as it goes.
-          setEmail(session?.user.email ?? null)
-          setPendingEmail(session?.user.new_email ?? null)
         }
       }
 
@@ -216,6 +255,47 @@ export function useSupabaseAuth(): AuthState {
       data.subscription.unsubscribe()
     }
   }, [])
+
+  // The third way the news can arrive, and the one that decides whether a restore is a
+  // move at all: this device asks, rather than waiting to be told.
+  //
+  // The other two are both too late on their own. The launch read only fires on a launch,
+  // and a phone that is merely backgrounded never has one; the refused refresh waits on
+  // the access token running down, which is an hour of this device playing — and scoring,
+  // and publishing — as somebody who has already taken their profile somewhere else.
+  //
+  // So the question is asked on coming back to the foreground *and* on a timer while the
+  // app is open. The timer is not belt and braces: a phone left open on a table never
+  // backgrounds and never relaunches, and that is exactly the phone somebody walks away
+  // from to restore their profile on another one.
+  //
+  // Only for a player holding a confirmed address. A restore is the one thing that revokes
+  // a session and an address is the only thing that can ask for one, so everybody else
+  // runs none of this — which is nearly everybody, nearly always.
+  useEffect(() => {
+    if (!isReady || email === null) return
+
+    const check = async (): Promise<void> => {
+      const { error } = await supabase.auth.getUser()
+      if (error === null || isNetworkFailure(error.message)) return
+      // Signed out locally rather than handled here, so that the news arriving this way
+      // and the news arriving as a refused refresh end up in the same place: this fires
+      // `SIGNED_OUT`, and the listener above is what a device does about losing its
+      // session. `signingOutSelf` stays down on purpose — this is not our own doing.
+      await supabase.auth.signOut({ scope: 'local' })
+    }
+
+    const timer = setInterval(() => void check(), SESSION_CHECK_MS)
+    const subscription = AppState.addEventListener('change', (state) => {
+      // Timers do not run reliably in the background on either platform, so coming back
+      // is its own event rather than something the interval can be trusted to cover.
+      if (state === 'active') void check()
+    })
+    return () => {
+      clearInterval(timer)
+      subscription.remove()
+    }
+  }, [isReady, email])
 
   const updateNickname = async (name: string): Promise<{ error: string | null }> => {
     if (!userId) return { error: 'not_authenticated' }
@@ -332,11 +412,17 @@ export function useSupabaseAuth(): AuthState {
     if (error !== null) return { error: authProblem(error) }
     if (data.session === null) return { error: 'unknown' }
 
-    // Deliberately unread. There is nothing to tell the player if this fails: the profile
-    // is theirs from here, and the other phone keeps it only until any call from this one
-    // revokes it.
+    // The move itself, and the only moment it can happen: this is the call that revokes
+    // every other session on this profile, and nothing retries it later. Fail it silently
+    // and the old phone keeps the profile for good — its refresh token was never revoked,
+    // so it goes on refreshing forever and two devices hold one profile.
+    //
+    // So it is tried twice and then let go. Still nothing to tell the player either way:
+    // the profile is theirs from here, and a card that said otherwise would be asking
+    // them to do something about a phone they are not holding.
     signingOutSelf.current = true
-    await supabase.auth.signOut({ scope: 'others' })
+    const { error: keptError } = await supabase.auth.signOut({ scope: 'others' })
+    if (keptError !== null) await supabase.auth.signOut({ scope: 'others' })
     signingOutSelf.current = false
 
     await resetLocalPlayer()

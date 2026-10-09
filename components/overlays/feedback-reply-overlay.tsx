@@ -83,6 +83,7 @@ export function FeedbackReplyOverlay({
 
   return (
     <ModalCard
+      closeButton={false}
       title={<Trans>A REPLY</Trans>}
       titleColor={modeColor}
       icon={<Ionicons name="chatbox-ellipses-outline" size={14} color={modeColor} />}

@@ -82,7 +82,7 @@ export function InstallOverlay({
   }, [])
 
   return (
-    <ModalCard title={<Trans>INSTALL</Trans>} onDismiss={onDismiss}>
+    <ModalCard closeButton={false} title={<Trans>INSTALL</Trans>} onDismiss={onDismiss}>
       {(close) => (
         <>
           <View className="items-center pt-2">
