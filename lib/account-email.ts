@@ -48,7 +48,10 @@ export type EmailProblem =
 // as the app being broken rather than as them being quick.
 export const RESEND_COOLDOWN_MS = 30_000
 
-// Six digits, and exactly six: `otp_length` in supabase/config.toml says so.
+// Six digits, and exactly six, because the server is told to send six: `otp_length` in
+// supabase/config.toml for the local stack, and the same number in the dashboard for
+// production, which that file never reaches. Change one and the other has to follow — a
+// server on another length sends a code this card has no room for.
 export const CODE_LENGTH = 6
 
 const CODE_SHAPE = /^\d{6}$/

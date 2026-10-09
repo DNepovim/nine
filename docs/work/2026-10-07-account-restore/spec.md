@@ -317,6 +317,7 @@ local stack and in the dashboard for production:
 | `auth.email.smtp`                  | Resend — `smtp.resend.com:465`, user `resend`, pass `env(RESEND_API_KEY)`   |
 | `auth.email.template.confirmation` | `./supabase/templates/confirm-email.html`, carrying `{{ .Token }}`          |
 | `auth.email.template.magic_link`   | `./supabase/templates/magic-link.html`, carrying `{{ .Token }}`             |
+| `auth.email.otp_length`            | `6` — the code card has six frames and accepts nothing longer               |
 | `auth.email.otp_expiry`            | `600` — ten minutes. An hour is a long time for a code sitting in an inbox. |
 | `auth.rate_limit.email_sent`       | raised off `2`; the built-in sender's cap is what that number is for        |
 

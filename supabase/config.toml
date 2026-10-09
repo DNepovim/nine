@@ -236,6 +236,12 @@ secure_password_change = false
 # Controls the minimum amount of time that must pass before sending another signup confirmation or password reset email.
 max_frequency = "1s"
 # Number of characters used in the email OTP.
+#
+# Local only, like everything else in this file: nothing here runs `supabase config push`,
+# so production reads its own copy of this number from the dashboard (Authentication →
+# Emails → Email OTP Length), where it has to say 6 as well. The code card has six frames
+# and `CODE_LENGTH` in lib/account-email.ts refuses anything longer, so a server set to
+# eight sends a code that cannot be typed in at all.
 otp_length = 6
 # Number of seconds before the email OTP expires (defaults to 1 hour).
 #
