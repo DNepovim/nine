@@ -1,3 +1,4 @@
+import { isAuthRetryableFetchError } from '@supabase/supabase-js'
 import { useEffect, useRef, useState } from 'react'
 import { AppState } from 'react-native'
 
@@ -16,7 +17,6 @@ import {
   wasProfileMoved,
 } from '@/lib/account-markers'
 import { reloadApp } from '@/lib/app-reload'
-import { isNetworkFailure } from '@/lib/connectivity'
 import { knownFeatures, sameFeatures } from '@/lib/features'
 import { resetLocalPlayer } from '@/lib/local-reset'
 import { sessionVerdict, type SessionVerdict } from '@/lib/session-verdict'
@@ -129,6 +129,7 @@ const inspectSession = async (
       profileError: profile.error,
       profileFound: profile.data !== null,
       accountError: account.error,
+      accountRetryable: isAuthRetryableFetchError(account.error),
     }),
     nickname: typeof profile.data?.nickname === 'string' ? profile.data.nickname : null,
     // A failed feature read is an ordinary player, not an error worth a screen: the doors
@@ -170,10 +171,18 @@ export function useSupabaseAuth(): AuthState {
       // device calls `signOut({ scope: 'others' })` — see `restoreProfile`.
       //
       // The distinction is the whole of this branch, and getting it wrong tells a player
-      // on a train that their profile has gone. Offline, supabase-js keeps the stored
-      // session and hands back a network failure; refused, it drops the session and hands
-      // back the server's refusal.
-      if (sessionError !== null && !isNetworkFailure(sessionError.message)) {
+      // on a train — or a player whose provider is having five bad minutes — that their
+      // profile has gone.
+      //
+      // Asked of supabase-js rather than of the message, which is what this used to do.
+      // `isNetworkFailure` reads transport phrasings, and a 503 is not one: it arrived and
+      // it answered. But supabase-js has already sorted that out, and sorts it the way
+      // this branch needs — `AuthRetryableFetchError` covers both the request that never
+      // left and every 500–530 that came back, and `_removeSession` runs only for errors
+      // that are *not* that. So "supabase-js dropped the session" and "not retryable" are
+      // one condition, and it is exactly the one that means refused. Checked against the
+      // library's own guard so the list of codes stays theirs to maintain.
+      if (sessionError !== null && !isAuthRetryableFetchError(sessionError)) {
         await markProfileMoved()
         setMoved(true)
       }
@@ -273,11 +282,33 @@ export function useSupabaseAuth(): AuthState {
   // a session and an address is the only thing that can ask for one, so everybody else
   // runs none of this — which is nearly everybody, nearly always.
   useEffect(() => {
-    if (!isReady || email === null) return
+    if (!isReady || email === null || userId === null) return
 
     const check = async (): Promise<void> => {
-      const { error } = await supabase.auth.getUser()
-      if (error === null || isNetworkFailure(error.message)) return
+      // Two reads rather than one, and the second is the whole point. This used to sign a
+      // player out on any `getUser()` error that did not read like a lost connection,
+      // which made every 503 and every rate limit indistinguishable from the restore it
+      // is watching for — and the ending here is that the profile leaves the device.
+      //
+      // So it asks the same question the launch asks, through the same function, and acts
+      // only on the one verdict that means somebody took this session. `gone` is left
+      // alone deliberately: a profile row that has vanished under a running app is not
+      // this check's business, and the launch will meet it soon enough.
+      //
+      // The profile read is the cost — two requests every two minutes instead of one, for
+      // the players holding a confirmed address and nobody else. `inspectSession` would
+      // have been three, and its feature read buys nothing here.
+      const [profile, account] = await Promise.all([
+        supabase.from('profiles').select('id').eq('id', userId).maybeSingle(),
+        supabase.auth.getUser(),
+      ])
+      const verdict = sessionVerdict({
+        profileError: profile.error,
+        profileFound: profile.data !== null,
+        accountError: account.error,
+        accountRetryable: isAuthRetryableFetchError(account.error),
+      })
+      if (verdict !== 'revoked') return
       // Signed out locally rather than handled here, so that the news arriving this way
       // and the news arriving as a refused refresh end up in the same place: this fires
       // `SIGNED_OUT`, and the listener above is what a device does about losing its
@@ -295,7 +326,7 @@ export function useSupabaseAuth(): AuthState {
       clearInterval(timer)
       subscription.remove()
     }
-  }, [isReady, email])
+  }, [isReady, email, userId])
 
   const updateNickname = async (name: string): Promise<{ error: string | null }> => {
     if (!userId) return { error: 'not_authenticated' }
