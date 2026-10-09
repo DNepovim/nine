@@ -52,3 +52,6 @@ locales/*/messages.ts
 # Agent scratch: isolated worktrees and subagent-driven-development ledgers
 .claude/worktrees/
 .superpowers/
+
+# ESLint's --cache file. Prettier's lives under node_modules/.cache, already ignored.
+.eslintcache
