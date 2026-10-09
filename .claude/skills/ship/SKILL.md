@@ -39,13 +39,35 @@ it just must not be shipped _silently_.
 No folder, no problem: work that never entered the cycle ships from the diff, exactly
 as before. Read `.claude/skills/sdlc/PROTOCOL.md` only if you need the format.
 
+## Ask once, not four times
+
+Steps 0b, 0bb and 0c each end in an `AskUserQuestion`, and **none of them depends
+on another's answer** — migrations, the announcement and the branch-or-main choice
+are independent. `AskUserQuestion` takes up to four questions per call, so gather
+them into **one** call and save three round trips.
+
+Do the cheap reads first (`git status supabase/migrations/`, the diff) so the
+questions you ask are the ones that actually apply: a tree with no migration files
+and no player-visible change collapses to a single question, or none at all in
+`prod` mode.
+
+The deploy offer in Step 3 is the exception and stays separate — it is only valid
+once the push has actually landed.
+
 ## Step 0 — Gate on checks (both modes)
 
 Invoke the **`check`** skill (lint, Prettier, types, Knip). It fixes what it can;
 if anything can't be made green, **stop** and report — do not ship failing checks.
 
-Then look at what will ship: `git status --short` and `git diff` (staged +
-unstaged). If the tree is clean, say there's nothing to ship and stop.
+Then look at what will ship, in one call rather than several:
+
+```bash
+git status --short && git diff --stat && git status --short supabase/migrations/
+```
+
+If the tree is clean, say there's nothing to ship and stop. Reach for the full
+`git diff` only on the files whose _why_ the stat cannot give you — on a large
+change it is mostly noise, and the commit message does not quote it.
 
 Having run `check` here, tell the `commit` skill it's already green so it doesn't
 run the suite a second time.
