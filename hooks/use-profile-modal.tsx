@@ -97,7 +97,12 @@ export function PlayerProfileProvider({
           userId={userId}
           viewerId={viewerId}
           email={account.email}
-          onOpenEmail={account.emailFlow.open}
+          onOpenEmail={() => {
+            // Seeded with what is on the profile, because this door is a pencil: the
+            // player opening it means to change an address they can already see, not to
+            // type one from nothing.
+            account.emailFlow.open(account.email ?? '')
+          }}
           onRename={account.onRename}
           // Left off while the sign-in has not landed: there is no viewer to compare
           // against yet, and the card reads the absence of this as "no button".

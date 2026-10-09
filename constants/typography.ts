@@ -95,6 +95,20 @@ export const TYPE = {
   // digits is what makes a reader count them instead.
   figure: 'font-mono text-[11px] font-bold',
 
+  // The figure a card *is about* rather than one inside a row: the reward the winnings
+  // page is offering. Headline-sized, because it is the thing the page is for, and black
+  // because at this size bold reads as light.
+  //
+  // Not `cardTitle`, which is the role a card's *words* take. A heading carries 2px of
+  // tracking and a number must carry none, for the reason `figure` above gives — so the
+  // two could never have been one role however close their sizes came.
+  //
+  // There is a family of raw large-mono values in the app this role does not yet own: a
+  // profile score's suffix, the admin headers, the top bar's clock. Sweeping those onto
+  // roles is its own job — see the design-guide skill's sweep — and this is deliberately
+  // not that change.
+  figureLarge: 'font-mono text-[22px] font-black',
+
   // A figure or a name *in* a row rather than the label naming it, where the row is dense
   // enough that `figure` would crowd it. Narrow tracking rather than none, because this
   // one carries words as often as numbers — a nickname with 1px between its letters stops

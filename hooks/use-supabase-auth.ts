@@ -86,7 +86,11 @@ type AuthState = {
   // One field, one call. Which of the two things it did comes back on `branch`.
   sendCode: (address: string) => Promise<SendResult>
   confirmEmail: (code: string) => Promise<Answer>
-  restoreProfile: (code: string) => Promise<Answer>
+  // The address beside the code, from the card that is showing it. `verifyOtp` needs both,
+  // and the card is the one place that is certain to still have the address: this hook held
+  // it in state until a killed process took the state with it, which on a home-screen web
+  // app is the ordinary end of a trip to a mail client.
+  restoreProfile: (code: string, address: string) => Promise<Answer>
 }
 
 // Everything a launch needs to know about the session it found, in one round trip.
@@ -144,10 +148,6 @@ export function useSupabaseAuth(): AuthState {
   const [email, setEmail] = useState<string | null>(null)
   const [pendingEmail, setPendingEmail] = useState<string | null>(null)
   const [moved, setMoved] = useState(false)
-  // Where the last restore code was sent. Held rather than retyped: `verifyOtp` wants the
-  // address beside the code, and asking the player for it twice is asking them to make
-  // the same typo twice.
-  const [restoreTarget, setRestoreTarget] = useState<string | null>(null)
   // Set while this hook is doing the signing out itself, so the listener below can tell
   // its own work from a session pulled out from under it. Without it, every ordinary
   // sign-out would announce that the profile had moved to another phone.
@@ -350,7 +350,6 @@ export function useSupabaseAuth(): AuthState {
     // Somebody has this address. `shouldCreateUser: false` is belt and braces here — we
     // already know the account exists — but it is what keeps this call from ever being the
     // one that invents an account for a typo.
-    setRestoreTarget(address)
     const { error: otpError } = await supabase.auth.signInWithOtp({
       email: address,
       options: { shouldCreateUser: false },
@@ -373,6 +372,23 @@ export function useSupabaseAuth(): AuthState {
         type,
       })
       if (error === null) {
+        // Accepted, which is not the same as done. With `double_confirm_changes` on, a
+        // change to an address that already has one needs a code from *each* of the two
+        // addresses, and verifying the first is accepted with no error at all while
+        // `email` stays where it was — so the only way to tell a finished change from a
+        // half-finished one is to look at whether an address is still pending.
+        //
+        // It is read rather than assumed because the old code assumed: it set `email` to
+        // `data.user.email`, which on the half-done change is still the *old* address,
+        // and cleared the pending one. The player was told their address had changed, it
+        // had not, and the change could no longer be finished.
+        //
+        // That setting is off, so this should not fire. It is here because the setting
+        // lives in a dashboard this repo cannot see, and the cost of it being wrong is a
+        // player who thinks a different inbox will bring their profile back.
+        const stillPending = data.user?.new_email ?? null
+        if (stillPending !== null && stillPending !== '') return { error: 'unknown' }
+
         setEmail(data.user?.email ?? pendingEmail)
         setPendingEmail(null)
         return OK
@@ -399,13 +415,12 @@ export function useSupabaseAuth(): AuthState {
   // Step 2 is allowed to fail quietly and is the only one that is. It is somebody else's
   // device, it will be revoked by the next successful call, and a restore that refused to
   // finish over it would strand the player holding this phone with neither profile.
-  const restoreProfile = async (code: string): Promise<Answer> => {
+  const restoreProfile = async (code: string, address: string): Promise<Answer> => {
     const problem = codeProblem(code)
     if (problem !== null) return { error: problem }
-    if (restoreTarget === null) return { error: 'unknown' }
 
     const { data, error } = await supabase.auth.verifyOtp({
-      email: restoreTarget,
+      email: address,
       token: code.trim(),
       type: 'email',
     })

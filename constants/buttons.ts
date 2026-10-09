@@ -76,6 +76,11 @@ export type ButtonId =
   | 'news.action'
   | 'news.dismiss'
   | 'news.done'
+  // The launch popup's own button while it is on the winnings page: the press that turns
+  // what the player is owed into fortune. Reported separately from `news.dismiss`, which
+  // is the same button doing the other thing — a reward accepted and a dialog advanced
+  // are not one funnel.
+  | 'news.accept'
 
   // ── Achievements and medals ──
   | 'achievements.earned'
@@ -109,6 +114,8 @@ export type ButtonId =
   | 'email_code.confirm'
   | 'email_code.resend'
   | 'email_code.edit_address'
+  | 'email_code.paste'
+  | 'email_code.clear'
   | 'email_code.cancel'
   | 'profile.add_email'
   | 'profile.edit_email'

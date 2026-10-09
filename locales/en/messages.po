@@ -97,7 +97,7 @@ msgstr ""
 "\n"
 "The hero eats. The bar beside the hearts is how fed they are, and every way you walk takes a bite out of it — a smaller bite the fewer moves you took to dial the target, so the tidy route is the one that keeps you fed. Getting dragged back costs the largest bite there is."
 
-#: lib/winnings-lines.ts:66
+#: lib/winnings-lines.ts:100
 msgid " and [B] with [S]"
 msgstr " and [B] with [S]"
 
@@ -181,7 +181,7 @@ msgstr "— TODAY, NOBODY WAS FAST ENOUGH —"
 msgid "— UNAVAILABLE —"
 msgstr "— UNAVAILABLE —"
 
-#: lib/winnings-lines.ts:65
+#: lib/winnings-lines.ts:99
 msgid ", [B] with [S]"
 msgstr ", [B] with [S]"
 
@@ -258,11 +258,19 @@ msgstr "[C] all-time records went down, which is more than most months manage."
 msgid "[C] names across [P] days, and no pattern to speak of. [A] came closest with [N]."
 msgstr "[C] names across [P] days, and no pattern to speak of. [A] came closest with [N]."
 
-#: lib/winnings-lines.ts:45
+#: lib/winnings-lines.ts:67
+msgid "[DATE] left you one place short on [B] with [S]"
+msgstr "[DATE] left you one place short on [B] with [S]"
+
+#: lib/winnings-lines.ts:71
+msgid "[DATE] put you on the podium: [B] with [S]"
+msgstr "[DATE] put you on the podium: [B] with [S]"
+
+#: lib/winnings-lines.ts:60
 msgid "[DATE] was yours — [B] with [S]"
 msgstr "[DATE] was yours — [B] with [S]"
 
-#: lib/winnings-lines.ts:48
+#: lib/winnings-lines.ts:63
 msgid "[DATE] went your way: [B] with [S]"
 msgstr "[DATE] went your way: [B] with [S]"
 
@@ -283,7 +291,7 @@ msgid "[W] took the all-time [BOARD] record on [D], and still has it."
 msgstr "[W] took the all-time [BOARD] record on [D], and still has it."
 
 #. placeholder {0}: Math.floor(joinedMonths / MONTHS_IN_YEAR)
-#: components/overlays/player-profile-overlay.tsx:324
+#: components/overlays/player-profile-overlay.tsx:322
 msgid "{0, plural, one {joined a year ago} other {joined # years ago}}"
 msgstr "{0, plural, one {joined a year ago} other {joined # years ago}}"
 
@@ -303,7 +311,7 @@ msgstr "{fromDay} {fromMonth} – {toDay} {toMonth}"
 msgid "{hidden, plural, one {SHOW # MORE} other {SHOW # MORE}}"
 msgstr "{hidden, plural, one {SHOW # MORE} other {SHOW # MORE}}"
 
-#: components/overlays/player-profile-overlay.tsx:318
+#: components/overlays/player-profile-overlay.tsx:316
 msgid "{joinedMonths, plural, one {joined a month ago} other {joined # months ago}}"
 msgstr "{joinedMonths, plural, one {joined a month ago} other {joined # months ago}}"
 
@@ -328,7 +336,7 @@ msgstr "<0/> won yesterday"
 msgid "<0/> won yesterday and last week"
 msgstr "<0/> won yesterday and last week"
 
-#: components/overlays/player-profile-overlay.tsx:445
+#: components/overlays/player-profile-overlay.tsx:443
 msgid "<0>{shownAchievements}</0> OF {ACHIEVEMENT_COUNT} ACHIEVEMENTS"
 msgstr "<0>{shownAchievements}</0> OF {ACHIEVEMENT_COUNT} ACHIEVEMENTS"
 
@@ -356,7 +364,7 @@ msgstr "A button on 9 goes to 0 in a single tap — quicker than swiping there."
 msgid "A coach line says when a move was wasted, and what a hit cost."
 msgstr "A coach line says when a move was wasted, and what a hit cost."
 
-#: lib/account-email.ts:136
+#: lib/account-email.ts:152
 msgid "A code is six digits."
 msgstr "A code is six digits."
 
@@ -376,7 +384,7 @@ msgstr "A glowing target number floats onto the board. Turn the nine dial button
 msgid "A good lead. Leads have been lost from here."
 msgstr "A good lead. Leads have been lost from here."
 
-#: components/overlays/email-code-modal.tsx:203
+#: components/overlays/email-code-modal.tsx:505
 msgid "A profile lives on one device. Restoring it here takes it off the phone it is on now — and anything played on this phone under another name stays behind."
 msgstr "A profile lives on one device. Restoring it here takes it off the phone it is on now — and anything played on this phone under another name stays behind."
 
@@ -452,7 +460,7 @@ msgstr "A whisker in it, and the whisker is theirs."
 msgid "A whisker in it, and the whisker is yours."
 msgstr "A whisker in it, and the whisker is yours."
 
-#: components/overlays/player-profile-overlay.tsx:88
+#: components/overlays/player-profile-overlay.tsx:87
 #: modes/definitions/accuracy.ts:12
 msgid "ACC"
 msgstr "ACC"
@@ -505,9 +513,13 @@ msgstr "Add your email and a lost phone stops meaning a lost career. New device,
 msgid "ADD YOUR NICKNAME"
 msgstr "ADD YOUR NICKNAME"
 
-#: components/overlays/winnings-card.tsx:71
+#: components/overlays/winnings-card.tsx:91
 msgid "ADDED TO YOUR FORTUNE"
 msgstr "ADDED TO YOUR FORTUNE"
+
+#: components/overlays/email-code-modal.tsx:123
+msgid "Address confirmed."
+msgstr "Address confirmed."
 
 #: components/overlays/admin-overlay.tsx:86
 #: components/overlays/menu-overlay.tsx:702
@@ -612,9 +624,9 @@ msgstr "Average 90% speed over a run of 20 hits or more."
 msgid "Average 95% accuracy over a run of 20 hits or more."
 msgstr "Average 95% accuracy over a run of 20 hits or more."
 
-#: components/overlays/player-profile-overlay.tsx:424
-#: components/overlays/player-profile-overlay.tsx:429
-#: components/overlays/player-profile-overlay.tsx:505
+#: components/overlays/player-profile-overlay.tsx:422
+#: components/overlays/player-profile-overlay.tsx:427
+#: components/overlays/player-profile-overlay.tsx:503
 msgid "AVG"
 msgstr "AVG"
 
@@ -629,7 +641,7 @@ msgid "AVG SPD"
 msgstr "AVG SPD"
 
 #: components/game/arcade-over.tsx:49
-#: components/overlays/whats-new-overlay.tsx:85
+#: components/overlays/whats-new-overlay.tsx:107
 msgid "BACK"
 msgstr "BACK"
 
@@ -662,8 +674,8 @@ msgid "Behind, and within reach — two boards would do it."
 msgstr "Behind, and within reach — two boards would do it."
 
 #: components/game/best-scores-line.tsx:57
-#: components/overlays/player-profile-overlay.tsx:496
-#: components/overlays/player-profile-overlay.tsx:510
+#: components/overlays/player-profile-overlay.tsx:494
+#: components/overlays/player-profile-overlay.tsx:508
 msgid "BEST"
 msgstr "BEST"
 
@@ -676,7 +688,7 @@ msgid "BLUR"
 msgstr "BLUR"
 
 #: components/overlays/compare-overlay.tsx:283
-#: components/overlays/player-profile-overlay.tsx:458
+#: components/overlays/player-profile-overlay.tsx:456
 msgid "BOARDS"
 msgstr "BOARDS"
 
@@ -720,7 +732,7 @@ msgstr "Chain your hits — a streak multiplies your points ×2 → ×4 → ×8.
 msgid "CHAMPIONS"
 msgstr "CHAMPIONS"
 
-#: components/overlays/email-code-modal.tsx:287
+#: components/overlays/email-code-modal.tsx:593
 msgid "CHANGE EMAIL"
 msgstr "CHANGE EMAIL"
 
@@ -728,14 +740,21 @@ msgstr "CHANGE EMAIL"
 msgid "Choose Add to Home Screen"
 msgstr "Choose Add to Home Screen"
 
+#: components/overlays/popup-card-view.tsx:74
+msgid "CLAIM"
+msgstr "CLAIM"
+
+#: components/overlays/email-code-modal.tsx:156
+msgid "CLEAR"
+msgstr "CLEAR"
+
 #: modes/definitions/arcade.ts:20
 msgid "Climb the way, or fall back."
 msgstr "Climb the way, or fall back."
 
 #: components/overlays/compare-overlay.tsx:316
-#: components/overlays/email-code-modal.tsx:219
+#: components/overlays/email-code-modal.tsx:521
 #: components/overlays/modal-card.tsx:183
-#: components/overlays/player-profile-overlay.tsx:606
 msgid "CLOSE"
 msgstr "CLOSE"
 
@@ -747,11 +766,11 @@ msgstr "Come back to Trainee once you have been scoring a while. It is the only 
 msgid "Comfortable. Comfort is how boards change hands."
 msgstr "Comfortable. Comfort is how boards change hands."
 
-#: components/overlays/player-profile-overlay.tsx:637
+#: components/overlays/player-profile-overlay.tsx:625
 msgid "COMPARE WITH ME"
 msgstr "COMPARE WITH ME"
 
-#: components/overlays/email-code-modal.tsx:26
+#: components/overlays/email-code-modal.tsx:34
 msgid "CONFIRM"
 msgstr "CONFIRM"
 
@@ -759,7 +778,11 @@ msgstr "CONFIRM"
 msgid "CONFIRM YOUR EMAIL"
 msgstr "CONFIRM YOUR EMAIL"
 
-#: components/overlays/email-code-modal.tsx:31
+#: components/overlays/email-code-modal.tsx:41
+msgid "CONFIRMED"
+msgstr "CONFIRMED"
+
+#: components/overlays/email-code-modal.tsx:44
 msgid "CONFIRMING…"
 msgstr "CONFIRMING…"
 
@@ -773,7 +796,7 @@ msgstr "CONNECT TO THE INTERNET TO PLAY WITH FRIENDS"
 msgid "CONTINUE"
 msgstr "CONTINUE"
 
-#: app/(tabs)/index.tsx:1957
+#: app/(tabs)/index.tsx:1964
 msgid "Continue the tutorial"
 msgstr "Continue the tutorial"
 
@@ -1148,7 +1171,7 @@ msgstr "Hit while most of the ring is left to build your combo streak."
 
 #: components/game/trainee-stats.tsx:64
 #: components/overlays/compare-stat-row.tsx:21
-#: components/overlays/player-profile-overlay.tsx:397
+#: components/overlays/player-profile-overlay.tsx:395
 #: lib/run-stats.ts:47
 msgid "HITS"
 msgstr "HITS"
@@ -1224,9 +1247,17 @@ msgstr "IN AND OUT"
 msgid "In Speed, go for whichever target sits closest to the current sum — fewer moves means more of the ring left, and the ring is what feeds your combo."
 msgstr "In Speed, go for whichever target sits closest to the current sum — fewer moves means more of the ring left, and the ring is what feeds your combo."
 
-#: lib/winnings-lines.ts:51
+#: lib/winnings-lines.ts:82
+msgid "In the week of [DATE] you came second on [B] with [S]"
+msgstr "In the week of [DATE] you came second on [B] with [S]"
+
+#: lib/winnings-lines.ts:76
 msgid "In the week of [DATE] you took [B] with [S]"
 msgstr "In the week of [DATE] you took [B] with [S]"
+
+#: lib/winnings-lines.ts:86
+msgid "In the week of [DATE] you took third on [B] with [S]"
+msgstr "In the week of [DATE] you took third on [B] with [S]"
 
 #: components/overlays/install-overlay.tsx:85
 msgid "INSTALL"
@@ -1236,9 +1267,13 @@ msgstr "INSTALL"
 msgid "INTO THE DEEP"
 msgstr "INTO THE DEEP"
 
-#: components/overlays/player-profile-overlay.tsx:219
+#: components/overlays/player-profile-overlay.tsx:217
 msgid "IS THAT YOU?"
 msgstr "IS THAT YOU?"
+
+#: components/overlays/winnings-card.tsx:93
+msgid "IS WAITING FOR YOU"
+msgstr "IS WAITING FOR YOU"
 
 #: components/overlays/feedback-overlay.tsx:119
 msgid "It went straight to the person who makes this, and it is read. If it gets an answer, you will find one here next time you open the game."
@@ -1261,7 +1296,7 @@ msgstr "JOIN ROOM"
 msgid "JOIN WITH CODE"
 msgstr "JOIN WITH CODE"
 
-#: components/overlays/player-profile-overlay.tsx:316
+#: components/overlays/player-profile-overlay.tsx:314
 msgid "joined this month"
 msgstr "joined this month"
 
@@ -1349,6 +1384,10 @@ msgstr "LET THE ADVENTURE BEGIN"
 msgid "Let us watch replays to fix bugs"
 msgstr "Let us watch replays to fix bugs"
 
+#: components/overlays/whats-new-overlay.tsx:129
+msgid "LET’S GO"
+msgstr "LET’S GO"
+
 #: components/tutorial-curtain.tsx:132
 msgid "LET'S LEARN THE GAME"
 msgstr "LET'S LEARN THE GAME"
@@ -1401,7 +1440,7 @@ msgstr "May"
 msgid "MAY"
 msgstr "MAY"
 
-#: components/overlays/player-profile-overlay.tsx:535
+#: components/overlays/player-profile-overlay.tsx:533
 msgid "MEDALS HELD, EVER"
 msgstr "MEDALS HELD, EVER"
 
@@ -1446,6 +1485,10 @@ msgstr "Never lose your scores"
 msgid "Never miss an update"
 msgstr "Never miss an update"
 
+#: components/overlays/whats-new-overlay.tsx:129
+msgid "NEXT"
+msgstr "NEXT"
+
 #: components/overlays/high-scores.tsx:281
 msgid "NICK"
 msgstr "NICK"
@@ -1488,7 +1531,7 @@ msgstr "No connection — a code can only be sent online."
 msgid "No connection — a nickname can only be claimed online."
 msgstr "No connection — a nickname can only be claimed online."
 
-#: lib/account-email.ts:139
+#: lib/account-email.ts:155
 msgid "No connection — nothing was sent."
 msgstr "No connection — nothing was sent."
 
@@ -1504,7 +1547,7 @@ msgstr "No lives, no rush."
 msgid "No records fell. They rarely do."
 msgstr "No records fell. They rarely do."
 
-#: components/overlays/player-profile-overlay.tsx:582
+#: components/overlays/player-profile-overlay.tsx:580
 msgid "No runs counted yet."
 msgstr "No runs counted yet."
 
@@ -1516,11 +1559,11 @@ msgstr "No runs, no records, no argument. Yet."
 msgid "NO THANKS"
 msgstr "NO THANKS"
 
-#: lib/winnings-lines.ts:46
+#: lib/winnings-lines.ts:61
 msgid "Nobody beat you on [DATE]: [B] with [S]"
 msgstr "Nobody beat you on [DATE]: [B] with [S]"
 
-#: lib/winnings-lines.ts:54
+#: lib/winnings-lines.ts:79
 msgid "Nobody caught you in the week of [DATE]: [B] with [S]"
 msgstr "Nobody caught you in the week of [DATE]: [B] with [S]"
 
@@ -1633,9 +1676,17 @@ msgstr "OCTOBER"
 msgid "off for everyone"
 msgstr "off for everyone"
 
-#: lib/winnings-lines.ts:44
+#: lib/winnings-lines.ts:66
+msgid "On [DATE] you came second on [B] with [S]"
+msgstr "On [DATE] you came second on [B] with [S]"
+
+#: lib/winnings-lines.ts:59
 msgid "On [DATE] you took [B] with [S]"
 msgstr "On [DATE] you took [B] with [S]"
+
+#: lib/winnings-lines.ts:70
+msgid "On [DATE] you took third on [B] with [S]"
+msgstr "On [DATE] you took third on [B] with [S]"
 
 #: constants/achievements.ts:403
 msgid "ON THE BOARD"
@@ -1718,6 +1769,10 @@ msgstr "Out of hearts and the run is over. That and the mouth are the only two w
 #: constants/achievements.ts:557
 msgid "PALINDROME"
 msgstr "PALINDROME"
+
+#: components/overlays/email-code-modal.tsx:179
+msgid "PASTE FROM CLIPBOARD"
+msgstr "PASTE FROM CLIPBOARD"
 
 #: constants/achievements.ts:333
 msgid "PERFECT ROUTE"
@@ -1821,11 +1876,11 @@ msgstr "Records, celebrated"
 msgid "REMOVE"
 msgstr "REMOVE"
 
-#: components/overlays/email-code-modal.tsx:267
+#: components/overlays/email-code-modal.tsx:573
 msgid "RESEND CODE"
 msgstr "RESEND CODE"
 
-#: components/overlays/email-code-modal.tsx:265
+#: components/overlays/email-code-modal.tsx:571
 msgid "RESEND IN {waiting}S"
 msgstr "RESEND IN {waiting}S"
 
@@ -1837,11 +1892,7 @@ msgstr "RESET TO ROLE DEFAULTS"
 msgid "RESTART RUN"
 msgstr "RESTART RUN"
 
-#: components/overlays/email-code-modal.tsx:27
-msgid "RESTORE PROFILE"
-msgstr "RESTORE PROFILE"
-
-#: components/overlays/email-code-modal.tsx:32
+#: components/overlays/email-code-modal.tsx:45
 msgid "RESTORING…"
 msgstr "RESTORING…"
 
@@ -1878,8 +1929,8 @@ msgid "RUN"
 msgstr "RUN"
 
 #: components/overlays/compare-stat-row.tsx:20
-#: components/overlays/player-profile-overlay.tsx:392
-#: components/overlays/player-profile-overlay.tsx:493
+#: components/overlays/player-profile-overlay.tsx:390
+#: components/overlays/player-profile-overlay.tsx:491
 msgid "RUNS"
 msgstr "RUNS"
 
@@ -1916,7 +1967,7 @@ msgid "SCENIC ROUTE"
 msgstr "SCENIC ROUTE"
 
 #: components/overlays/high-scores.tsx:284
-#: components/overlays/player-profile-overlay.tsx:497
+#: components/overlays/player-profile-overlay.tsx:495
 msgid "SCORE"
 msgstr "SCORE"
 
@@ -1984,7 +2035,7 @@ msgstr "SEND CODE"
 msgid "Send feedback, and get an answer back."
 msgstr "Send feedback, and get an answer back."
 
-#: components/overlays/email-code-modal.tsx:263
+#: components/overlays/email-code-modal.tsx:569
 #: components/overlays/email-modal.tsx:145
 msgid "SENDING…"
 msgstr "SENDING…"
@@ -2059,11 +2110,11 @@ msgstr "SOMETHING BROKE"
 msgid "Something went wrong, try again"
 msgstr "Something went wrong, try again"
 
-#: lib/account-email.ts:140
+#: lib/account-email.ts:156
 msgid "Something went wrong, try again."
 msgstr "Something went wrong, try again."
 
-#: components/overlays/player-profile-overlay.tsx:89
+#: components/overlays/player-profile-overlay.tsx:88
 #: modes/definitions/speed.ts:11
 msgid "SPD"
 msgstr "SPD"
@@ -2143,6 +2194,10 @@ msgstr "STRIKES"
 #: machines/tutorial-lesson.ts:257
 msgid "STRUCK — THE NEXT IS YOURS"
 msgstr "STRUCK — THE NEXT IS YOURS"
+
+#: components/overlays/email-code-modal.tsx:35
+msgid "SUBMIT"
+msgstr "SUBMIT"
 
 #: lib/recap-lines.ts:192
 msgid "Sunday"
@@ -2254,15 +2309,15 @@ msgstr "TERMINAL VELOCITY"
 msgid "THANK YOU"
 msgstr "THANK YOU"
 
-#: lib/account-email.ts:135
+#: lib/account-email.ts:151
 msgid "That address is already on another profile."
 msgstr "That address is already on another profile."
 
-#: lib/account-email.ts:137
-msgid "That code is wrong or has expired — ask for a new one."
-msgstr "That code is wrong or has expired — ask for a new one."
+#: lib/account-email.ts:153
+msgid "That code is wrong or has expired."
+msgstr "That code is wrong or has expired."
 
-#: lib/account-email.ts:134
+#: lib/account-email.ts:150
 msgid "That does not look like an email address."
 msgstr "That does not look like an email address."
 
@@ -2370,11 +2425,19 @@ msgstr "The table leans your way, but it is not nailed down."
 msgid "The week belonged to [A], [D] excepted — [B] saw to that."
 msgstr "The week belonged to [A], [D] excepted — [B] saw to that."
 
-#: lib/winnings-lines.ts:53
+#: lib/winnings-lines.ts:78
 msgid "The week of [DATE] ended in your hands: [B] with [S]"
 msgstr "The week of [DATE] ended in your hands: [B] with [S]"
 
-#: lib/winnings-lines.ts:52
+#: lib/winnings-lines.ts:83
+msgid "The week of [DATE] left you second on [B] with [S]"
+msgstr "The week of [DATE] left you second on [B] with [S]"
+
+#: lib/winnings-lines.ts:87
+msgid "The week of [DATE] put you third on [B] with [S]"
+msgstr "The week of [DATE] put you third on [B] with [S]"
+
+#: lib/winnings-lines.ts:77
 msgid "The week of [DATE] was yours — [B] with [S]"
 msgstr "The week of [DATE] was yours — [B] with [S]"
 
@@ -2402,7 +2465,7 @@ msgstr "There is a long climb in front of you, and they are at the top of it."
 msgid "They are ahead, but the gap has a bottom to it."
 msgstr "They are ahead, but the gap has a bottom to it."
 
-#: components/overlays/email-code-modal.tsx:144
+#: components/overlays/email-code-modal.tsx:443
 msgid "They are good for ten minutes."
 msgstr "They are good for ten minutes."
 
@@ -2442,7 +2505,7 @@ msgstr "Things you keep"
 msgid "Think in horizontal swipes before you tap. Left sends a button to 0, right to 9, and each is one move however far it travels — a big gap is often two swipes and a tap."
 msgstr "Think in horizontal swipes before you tap. Left sends a button to 0, right to 9, and each is one move however far it travels — a big gap is often two swipes and a tap."
 
-#: components/overlays/email-code-modal.tsx:183
+#: components/overlays/email-code-modal.tsx:485
 msgid "This address already has a profile — almost certainly yours. The code brings it here."
 msgstr "This address already has a profile — almost certainly yours. The code brings it here."
 
@@ -2466,7 +2529,7 @@ msgstr "This is not a contest, it is a demonstration."
 msgid "This one is over. The dial has been kinder to them."
 msgstr "This one is over. The dial has been kinder to them."
 
-#: components/overlays/player-profile-overlay.tsx:346
+#: components/overlays/player-profile-overlay.tsx:344
 msgid "This profile could not be loaded."
 msgstr "This profile could not be loaded."
 
@@ -2492,7 +2555,7 @@ msgid "Thursday"
 msgstr "Thursday"
 
 #: components/overlays/compare-stat-row.tsx:22
-#: components/overlays/player-profile-overlay.tsx:412
+#: components/overlays/player-profile-overlay.tsx:410
 #: lib/run-stats.ts:51
 #: lib/run-stats.ts:85
 msgid "TIME"
@@ -2520,7 +2583,7 @@ msgstr "TO PUBLISH YOUR BESTS"
 msgid "TODAY"
 msgstr "TODAY"
 
-#: lib/account-email.ts:138
+#: lib/account-email.ts:154
 msgid "Too many tries. Give it a few minutes."
 msgstr "Too many tries. Give it a few minutes."
 
@@ -2536,9 +2599,9 @@ msgstr "TOP OF THE BOARD"
 msgid "TOP RIGHT"
 msgstr "TOP RIGHT"
 
-#: components/overlays/player-profile-overlay.tsx:393
-#: components/overlays/player-profile-overlay.tsx:398
-#: components/overlays/player-profile-overlay.tsx:413
+#: components/overlays/player-profile-overlay.tsx:391
+#: components/overlays/player-profile-overlay.tsx:396
+#: components/overlays/player-profile-overlay.tsx:411
 msgid "TOTAL"
 msgstr "TOTAL"
 
@@ -2574,7 +2637,7 @@ msgstr "TRY {modeName}"
 
 #: components/crash-screen.tsx:27
 #: components/overlays/compare-overlay.tsx:178
-#: components/overlays/player-profile-overlay.tsx:354
+#: components/overlays/player-profile-overlay.tsx:352
 msgid "TRY AGAIN"
 msgstr "TRY AGAIN"
 
@@ -2662,7 +2725,7 @@ msgstr "Warriors leave the gate one after another, and faster the longer the fig
 msgid "Waste too many moves on a hit and you lose a life — the bar is 25% accuracy on Easy, 20% on Hard, 15% on Extreme."
 msgstr "Waste too many moves on a hit and you lose a life — the bar is 25% accuracy on Easy, 20% on Hard, 15% on Extreme."
 
-#: components/overlays/email-code-modal.tsx:138
+#: components/overlays/email-code-modal.tsx:437
 msgid "We sent six digits to <0>{address}</0>."
 msgstr "We sent six digits to <0>{address}</0>."
 
@@ -2682,12 +2745,16 @@ msgstr "WEIGHT"
 msgid "WEIGHT = ROW ORDER × COLUMN ORDER"
 msgstr "WEIGHT = ROW ORDER × COLUMN ORDER"
 
+#: components/overlays/popup-card-view.tsx:41
+msgid "WHAT DID YOU PULL OFF?"
+msgstr "WHAT DID YOU PULL OFF?"
+
 #: components/overlays/advanced-options-overlay.tsx:116
 #: components/overlays/news-archive-overlay.tsx:20
 msgid "WHAT’S NEW"
 msgstr "WHAT’S NEW"
 
-#: components/overlays/whats-new-overlay.tsx:43
+#: components/overlays/popup-card-view.tsx:43
 msgid "WHAT’S NEW IN THE GAME?"
 msgstr "WHAT’S NEW IN THE GAME?"
 
@@ -2711,7 +2778,7 @@ msgstr "WHO DO YOU WANT TO BE?"
 msgid "WHO IS BETTER?"
 msgstr "WHO IS BETTER?"
 
-#: components/overlays/player-profile-overlay.tsx:219
+#: components/overlays/player-profile-overlay.tsx:217
 msgid "WHO IS IT?"
 msgstr "WHO IS IT?"
 
@@ -2766,7 +2833,7 @@ msgstr "You are up, with just enough left over for them to want."
 msgid "You are winning, which is not the same as having won."
 msgstr "You are winning, which is not the same as having won."
 
-#: lib/winnings-lines.ts:47
+#: lib/winnings-lines.ts:62
 msgid "You finished [DATE] on top of [B] with [S]"
 msgstr "You finished [DATE] on top of [B] with [S]"
 
@@ -2785,10 +2852,6 @@ msgstr "You lead by the width of one row."
 #: lib/compare-lines.ts:33
 msgid "You took the room and left them the door."
 msgstr "You took the room and left them the door."
-
-#: components/overlays/winnings-card.tsx:48
-msgid "YOU WON"
-msgstr "YOU WON"
 
 #: components/overlays/menu-overlay.tsx:545
 #: components/overlays/offline-notice.tsx:17

@@ -140,11 +140,17 @@ export function cooldownRemaining(sentAt: number | null, now: number): number {
 // `expired` says "wrong or expired" because that is the truth: the server answers the same
 // way for a code that was never right and one that merely sat too long, and inventing a
 // distinction it did not make would send a player hunting for a code they typed correctly.
+//
+// Every line here is one short sentence, and the two that used to carry a second clause
+// after a dash have lost it. They are drawn in a band of fixed height under the frames —
+// see `email-code-modal.tsx` — so a line long enough to wrap is a line that draws outside
+// its own space. What came after the dash was advice the card gives anyway: RESEND CODE is
+// on screen beneath the very message that said to ask for a new one.
 export const EMAIL_PROBLEM_LINES = {
   shape: msg`That does not look like an email address.`,
   taken: msg`That address is already on another profile.`,
   bad_code: msg`A code is six digits.`,
-  expired: msg`That code is wrong or has expired — ask for a new one.`,
+  expired: msg`That code is wrong or has expired.`,
   rate_limited: msg`Too many tries. Give it a few minutes.`,
   offline: msg`No connection — nothing was sent.`,
   unknown: msg`Something went wrong, try again.`,

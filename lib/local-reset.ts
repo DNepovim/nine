@@ -4,9 +4,12 @@ import {
   ACHIEVEMENTS_KEY,
   ARCADE_FOCUS_KEY,
   ARCADE_ROSE_KEY,
+  ASKED_WINNINGS_KEY,
   CAREER_KEY,
   DIFFICULTY_KEY,
+  EMAIL_CODE_KEY,
   EMAIL_PROMPT_KEY,
+  EMAIL_SENT_KEY,
   FEEDBACK_ANSWERED_KEY,
   HOW_TO_PLAY_KEY,
   LOCAL_SCORES_KEY,
@@ -21,7 +24,6 @@ import {
   SEEN_NEWS_KEY,
   SEEN_RECAP_KEY,
   SEEN_STANDINGS_KEY,
-  SEEN_WINNINGS_KEY,
   STATS_KEY,
   WELCOME_KEY,
 } from '@/constants/storage'
@@ -55,7 +57,7 @@ export const RESET_KEYS = [
   RUN_TOTALS_KEY,
   SEEN_STANDINGS_KEY,
   MEDAL_HISTORY_KEY,
-  SEEN_WINNINGS_KEY,
+  ASKED_WINNINGS_KEY,
   // A run left in progress. It belonged to the player walking away, and resuming it under
   // a new name would file its score on the wrong profile.
   RUN_KEY,
@@ -70,6 +72,10 @@ export const RESET_KEYS = [
   EMAIL_PROMPT_KEY,
   // The note that a profile was taken off this device. A profile has just arrived on it.
   PROFILE_MOVED_KEY,
+  // A code card left open, which is the restore's own card and is finished with. Same
+  // reasoning as the run above: it belonged to the moment the player walked away from,
+  // and reopening it after the boot would ask for a code against a flow that has landed.
+  EMAIL_CODE_KEY,
 ] as const
 
 export const KEPT_KEYS = [
@@ -89,6 +95,12 @@ export const KEPT_KEYS = [
   // into the opening tutorial, which is not what a player who just got their career back
   // is asking for.
   WELCOME_KEY,
+  // The odd one out, and the only key here that is about neither a preference nor a thing
+  // shown: when this device last sent a code. It stays because the floor it mirrors is the
+  // server's, and the server has not forgotten — the restore that just landed was itself
+  // the most recent send, and clearing this would light the resend button up against a
+  // wall that is still standing.
+  EMAIL_SENT_KEY,
 ] as const
 
 // Clears the previous player's half. Called only after a restore has actually landed —

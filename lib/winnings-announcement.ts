@@ -1,44 +1,35 @@
-import { nextDay, previousDay } from '@/lib/leaderboard-period'
-import { awardValue, type Award, type WinPeriod } from '@/lib/winnings'
+import { awardValue, type Award, type WinPeriod, type WinRank } from '@/lib/winnings'
 import { DIFFICULTY_ORDER, SCORED_MODES } from '@/modes'
 
-// Which closed windows a launch still has to tell the player about, and how they are
-// grouped once the server has answered.
+// How a launch groups what the player is owed, once the server has answered.
 //
-// The whole of this file is about one off-by-one. `SEEN_WINNINGS_KEY` holds the last day
-// already announced, so the span to ask for starts the day *after* it — and ends at
-// yesterday, never today, because today's own day has not closed and cannot have been
-// won. A day out in either direction is something a player sees: one way re-announces
-// yesterday on every launch, the other silently swallows a win.
-
-export type AnnouncementRange = { from: string; to: string }
-
-// Null when there is nothing to say — the marker is already yesterday, which is the case
-// on every launch but the first of a day.
-export function announcementRange(
-  // The last day already announced.
-  marker: string,
-  today: string,
-): AnnouncementRange | null {
-  const from = nextDay(marker)
-  const to = previousDay(today)
-  // ISO days compare correctly as strings.
-  return from > to ? null : { from, to }
-}
-
-// What the marker becomes once a launch has announced everything it found. Yesterday, not
-// today: storing today would skip today's own window the moment it closes tonight.
+// Which windows those are is no longer a sum this file works out. It used to be: the
+// stored marker held the last day announced, the span to ask for started the day after it,
+// and that off-by-one was what the money hung on — a day out in either direction either
+// re-announced yesterday or swallowed a win. The watermark on the player's profile holds
+// that boundary now, and `my_unpaid_winnings` draws the span from it, so the device no
+// longer has an opinion about what it is owed.
 //
-// Also what a device with no record at all starts from, so a first-ever launch stays quiet
-// rather than opening with a ledger of days the player was not here for. That was briefly
-// a second named export aliasing this one, which reads better at the two call sites and is
-// still one function — so the name that says what it computes is the one that survived.
-export const markerAfter = (today: string): string => previousDay(today)
+// What is left here is the brake. A player who has never placed on a board would otherwise
+// ask the server about a span that only grows, on every launch, forever.
 
-// One heading in the modal and the awards under it — a day that was won, or a week.
+// Whether the server has already been asked today and answered that nothing is owed.
+//
+// Only ever today: a stored day in the past means the question is open again, which is
+// what makes the first launch of a new day the one that asks. A device with nothing stored
+// has never asked, so it asks — unlike the old marker, which started a wiped device at
+// yesterday and quietly forfeited whatever was behind it.
+export const askedToday = (stored: string | null, today: string): boolean =>
+  stored === today
+
+// One heading in the modal and the awards under it — a day or a week, at one step of the
+// podium. Keyed by the step as well, so a sentence never has to say that one board was
+// taken and the next one came third: a block is one rank throughout, which is what keeps
+// the phrasings from multiplying by three.
 export type AwardBlock = {
   period: WinPeriod
   wonOn: string
+  rank: WinRank
   awards: Award[]
 }
 
@@ -67,10 +58,15 @@ const PERIOD_ORDER = {
 export function awardBlocks(awards: readonly Award[]): AwardBlock[] {
   const blocks = new Map<string, AwardBlock>()
   for (const award of awards) {
-    const key = `${award.period}:${award.wonOn}`
+    const key = `${award.period}:${award.wonOn}:${award.rank}`
     const held = blocks.get(key)
     if (held === undefined) {
-      blocks.set(key, { period: award.period, wonOn: award.wonOn, awards: [award] })
+      blocks.set(key, {
+        period: award.period,
+        wonOn: award.wonOn,
+        rank: award.rank,
+        awards: [award],
+      })
       continue
     }
     held.awards.push(award)
@@ -85,6 +81,9 @@ export function awardBlocks(awards: readonly Award[]): AwardBlock[] {
     .sort(
       (a, b) =>
         (a.wonOn < b.wonOn ? 1 : a.wonOn > b.wonOn ? -1 : 0) ||
-        PERIOD_ORDER[a.period] - PERIOD_ORDER[b.period],
+        PERIOD_ORDER[a.period] - PERIOD_ORDER[b.period] ||
+        // Gold, then silver, then bronze. The step a player is proudest of leads, which is
+        // the same argument the ordering above it is made of.
+        a.rank - b.rank,
     )
 }

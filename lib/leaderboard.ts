@@ -4,7 +4,6 @@ import type { Leader } from '@/lib/announcements'
 import { noteRequest } from '@/lib/connectivity'
 import { isDifficulty } from '@/lib/is-difficulty'
 import {
-  nextDay,
   previousDay,
   previousWeek,
   tabSince,
@@ -20,7 +19,7 @@ import {
 import type { RecapRow } from '@/lib/recap'
 import type { Winner } from '@/lib/recent-winners'
 import { supabase } from '@/lib/supabase'
-import { WIN_PERIODS, type Award } from '@/lib/winnings'
+import { WIN_PERIODS, WIN_RANKS, type Award } from '@/lib/winnings'
 import { SCORED_MODES, type Difficulty, type ModeId } from '@/modes'
 
 export type { LeaderboardTab }
@@ -160,28 +159,44 @@ export async function fetchPlayerProfile(
   return { profile: shapeProfile(raw), error: null }
 }
 
-// What this player won in every window that closed since they were last told.
+// Every podium place this player is owed for: the windows that closed after the day their
+// winnings are paid through, up to but not including today, whose own day has not closed.
+//
+// No span is passed and no user id either. Where the boundary falls is the watermark on
+// the player's own profile, which the server holds and this device does not — a launch
+// that worked it out from a local marker was a launch that could forfeit a reward by
+// having its storage wiped. `auth.uid()` identifies the asker, because what a player is
+// owed is the one thing on this path that is nobody else's business.
 //
 // Rows are validated on the way in the way every other board read here is: the database
-// has no idea what a `ScoredMode` is, so a row whose mode or difficulty it does not
+// has no idea what a `ScoredMode` is, so a row whose mode, difficulty or step it does not
 // recognise is dropped rather than trusted. The award itself is never asked for — the
-// server returns what a window was won with, and `lib/winnings.ts` decides what that is
-// worth, so the difficulty weighting has exactly one definition.
-export async function fetchMyWinnings(
-  userId: string,
-  range: { from: string; to: string },
+// server returns what a window was placed with, and `lib/winnings.ts` decides what that is
+// worth, so the weighting has exactly one definition.
+export async function fetchUnpaidWinnings(
+  today: string,
 ): Promise<{ awards: Award[]; error: string | null }> {
-  const res = await supabase.rpc('my_winnings', {
-    p_user_id: userId,
-    p_from_day: range.from,
-    // The RPC's upper bound is exclusive and means "today", so the inclusive last day the
-    // caller wants is handed over as the day after it.
-    p_today: nextDay(range.to),
-  })
+  const res = await supabase.rpc('my_unpaid_winnings', { p_today: today })
   noteRequest(res.error)
   if (res.error) return { awards: [], error: res.error.message }
   const rows = (res.data as WinningsRow[] | null) ?? []
   return { awards: rows.flatMap(toAward), error: null }
+}
+
+// Turning what is owed into fortune. The one write on this path.
+//
+// Moves the player's watermark to yesterday, which is what puts every window behind it
+// into the figure `player_profile` adds up. Idempotent at the database — the watermark only
+// ever moves forward — so a retry, or a second press, lands on the same number.
+//
+// The error is returned rather than thrown because of what the caller does with it: the
+// page advances either way, since the button is the only way off it and trapping a player
+// there would be worse than making them press again tomorrow. An accept that failed simply
+// leaves the reward where it was.
+export async function acceptWinnings(today: string): Promise<{ error: string | null }> {
+  const res = await supabase.rpc('accept_winnings', { p_today: today })
+  noteRequest(res.error)
+  return { error: res.error === null ? null : res.error.message }
 }
 
 type WinningsRow = {
@@ -190,12 +205,14 @@ type WinningsRow = {
   difficulty: string
   won_on: string
   best_score: number
+  rank: number
 }
 
 const toAward = (row: WinningsRow): Award[] =>
   isOneOf(row.period, WIN_PERIODS) &&
   isOneOf(row.mode, SCORED_MODES) &&
-  isDifficulty(row.difficulty)
+  isDifficulty(row.difficulty) &&
+  isOneOf(row.rank, WIN_RANKS)
     ? [
         {
           period: row.period,
@@ -203,6 +220,7 @@ const toAward = (row: WinningsRow): Award[] =>
           difficulty: row.difficulty,
           wonOn: row.won_on,
           score: row.best_score,
+          rank: row.rank,
         },
       ]
     : []

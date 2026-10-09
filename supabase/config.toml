@@ -224,7 +224,24 @@ web3 = 30
 enable_signup = true
 # If enabled, a user will be required to confirm any email change on both the old, and new email
 # addresses. If disabled, only the new email is required to confirm.
-double_confirm_changes = true
+#
+# Off, and the reason is what an address is *for* here. It exists so a player can get their
+# profile back, and the usual reason somebody changes one is that they have lost the old
+# inbox — a provider closed, a school address gone. Requiring a code from that inbox makes
+# the change impossible in exactly the case the feature exists to serve.
+#
+# What it costs: somebody holding a player's session could re-point the address without the
+# old one agreeing. That is a real loss and it is accepted knowingly — the session is
+# already the only credential this app has, and a device in the wrong hands can take a
+# profile without touching the address at all.
+#
+# On, GoTrue sends *two* different codes, one to each address, and verifying only one is
+# accepted with no error while `email` stays put and `email_change_confirm_status` goes to
+# 1 — a half-done change the app has no card for. `confirmEmail` guards against that state
+# anyway, in case this is ever turned back on.
+#
+# Production reads `mailer_secure_email_change_enabled` from the dashboard. Both or neither.
+double_confirm_changes = false
 # If enabled, users need to confirm their email address before signing in.
 #
 # True, and it is load-bearing rather than a precaution: with it off, `updateUser({ email })`
@@ -235,16 +252,20 @@ enable_confirmations = true
 secure_password_change = false
 # Controls the minimum amount of time that must pass before sending another signup confirmation or password reset email.
 #
-# Under `RESEND_COOLDOWN_MS` in lib/account-email.ts, and that is the whole point of the
-# number: the server floor has to sit below the moment the resend button lights up, or the
-# first press a player is invited to make is refused with `over_email_send_rate_limit` and
-# no mail is handed to the sender at all. Twenty seconds leaves ten of margin under the
-# thirty-second button, and the hourly `email_sent` cap above is what actually stops an
-# address being bombed.
+# Not above `RESEND_COOLDOWN_MS` in lib/account-email.ts, and that is the whole point of
+# the number: the server floor has to be spent by the time the resend button lights up, or
+# the first press a player is invited to make is refused with `over_email_send_rate_limit`
+# and no mail is handed to the sender at all. Production sat on Supabase's 60s default
+# against a 30s button, which is how that was found.
+#
+# Equal to the button rather than under it, which is thinner than it looks but does hold:
+# the button's clock starts when the *response* arrives, so it always runs out after the
+# server's does, by one round trip. The hourly `email_sent` cap above is what actually
+# stops an address being bombed; this only stops a double-tap.
 #
 # Local only, like the rest of this file. Production reads `smtp_max_frequency` from the
-# dashboard, where it must be this same 20 — it defaults to 60, which is above the button.
-max_frequency = "20s"
+# dashboard, where it is also 30 — and the two must be changed together.
+max_frequency = "30s"
 # Number of characters used in the email OTP.
 #
 # Local only, like everything else in this file: nothing here runs `supabase config push`,

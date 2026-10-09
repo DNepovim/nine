@@ -1,3 +1,4 @@
+import { msg } from '@lingui/core/macro'
 import { Trans, useLingui } from '@lingui/react/macro'
 import { useState } from 'react'
 import { Platform, Text, TextInput, View } from 'react-native'
@@ -9,8 +10,15 @@ import { useOnline } from '@/hooks/use-online'
 import { cn } from '@/lib/cn'
 import { NICK_MAX, NICK_MIN, nicknameProblem } from '@/lib/nickname'
 
-// The card itself, with no window of its own — `CardModal` is the host, for the keyboard's
-// sake. See there. Saving hands over to `EmailDialog`, which brings its own.
+// The question this card asks, exported because the card no longer draws it: it is the
+// title of the dialog around it, the way `EmailDialog` does it, so that a heading inside
+// the card and a heading above it cannot both exist and disagree.
+export const NICKNAME_TITLE = msg`WHO DO YOU WANT TO BE?`
+
+// The card itself, with no window of its own — `ModalCard` is the host, the app's ordinary
+// dialog, with `avoidKeyboard` set for the field below. Saving hands over to
+// `EmailDialog`, which is the same kind of dialog, so nothing is presented as this one
+// dismisses.
 //
 // Two callers, one card: the claim after a first scoring run, and the pencil beside the
 // name on the player's own profile. `current` is the whole of the difference — seeded, it
@@ -77,9 +85,7 @@ export function NicknameModal({
 
   return (
     <>
-      <Text selectable={false} className={cn(TYPE.heading, 'mb-1 text-primary')}>
-        <Trans>WHO DO YOU WANT TO BE?</Trans>
-      </Text>
+      {/* The question this answers is the dialog's own title — see `NICKNAME_TITLE`. */}
       <Text selectable={false} className={cn(TYPE.hint, 'mb-4 text-dim')}>
         <Trans>Your name appears on the leaderboard.</Trans>
       </Text>

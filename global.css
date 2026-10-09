@@ -16,6 +16,7 @@
   --color-dim: #6a655c; /* secondary text — 5.1:1 on surface, 4.6:1 on card */
   --color-primary: #1c1928; /* primary text */
   --color-score: #147a32; /* digital score readout */
+  --color-fortune: #a82a22; /* a fortune figure — 5.5:1 on card, 6.1:1 on surface */
   --color-dial: #1c1928; /* dial button numerals */
   --color-factor: #9a96a8; /* dial button factor */
   --color-pie: #171421; /* countdown numerals */

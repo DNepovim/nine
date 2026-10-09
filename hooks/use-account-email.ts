@@ -1,10 +1,22 @@
 import { isNonEmptyString } from 'narrowland'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 
 import type { EmailBranch, EmailProblem } from '@/lib/account-email'
-import { markEmailAsked, wasEmailAsked } from '@/lib/account-markers'
+import {
+  clearCodeCard,
+  lastCodeSentAt,
+  markCodeCard,
+  markCodeSent,
+  markEmailAsked,
+  openCodeAddress,
+  wasEmailAsked,
+} from '@/lib/account-markers'
 
 type Answer = { error: EmailProblem | null }
+
+// How long the card stays up saying it worked. Long enough to read three words, short
+// enough that nobody reaches for a close button first.
+const DONE_HOLD_MS = 1400
 type SendResult = { error: EmailProblem | null; branch: EmailBranch | null }
 
 // Which of the two cards is up, and what it is about. One value rather than two booleans:
@@ -22,17 +34,33 @@ type EmailCard =
   | { kind: 'address'; typed: string }
   // `sentAt` is null when no code went out to bring this card up — a player reopening it
   // off the intro's confirm line, days after the one they were sent.
-  | { kind: 'code'; branch: EmailBranch; address: string; sentAt: number | null }
+  // `done` is the beat between the server accepting a code and the card going: the player
+  // pressed something and it worked, and a dialog that simply vanished would leave them
+  // asking whether it had. Only ever set on an attach — a restore's success is the app
+  // booting into the restored profile, which is a louder answer than any line of text.
+  | {
+      kind: 'code'
+      branch: EmailBranch
+      address: string
+      sentAt: number | null
+      done?: boolean
+    }
 
 // The half of `use-supabase-auth` this flow needs. Named rather than taken whole so the
 // dependency reads in one line, and so nothing here can reach for a part of auth that is
 // none of its business.
 type Account = {
+  // Whether the session has been read. The pick-up below waits for it: an address is sorted
+  // into attach or restore by what the session is holding, and before it has loaded the
+  // session is holding null — which would call every attach a restore.
+  ready: boolean
   email: string | null
   pendingEmail: string | null
   sendCode: (address: string) => Promise<SendResult>
   confirmEmail: (code: string) => Promise<Answer>
-  restoreProfile: (code: string) => Promise<Answer>
+  // Takes the address beside the code rather than remembering which one a code was sent
+  // to: the remembering died with the process, and this card has the address anyway.
+  restoreProfile: (code: string, address: string) => Promise<Answer>
 }
 
 export type AccountEmailFlow = {
@@ -40,7 +68,10 @@ export type AccountEmailFlow = {
   // The one door. The invitation after a nickname, the row on the player's own profile,
   // the one-time ask and the moved line all land here, and none of them has to know which
   // of the two things the player is about to do — nor does the player.
-  open: () => void
+  // Seeded when the door was a pencil beside an address already held: editing one letter
+  // of it should not mean typing the other twenty-four, which is the same reasoning the
+  // code card's EDIT ADDRESS already follows.
+  open: (typed?: string) => void
   // Reopen the code card for an address already given — the intro's confirm line. The only
   // entry point that knows its branch in advance, because an address sitting in
   // `pendingEmail` is by definition one that was being attached.
@@ -71,6 +102,33 @@ export function useAccountEmail({
   nickname: string | null
 }): AccountEmailFlow {
   const [card, setCard] = useState<EmailCard | null>(null)
+  // When a code last went out from this device, for as long as the app is open.
+  //
+  // Not on the card, which is where it used to be and where it cannot stay: the card is
+  // destroyed by `dismiss` and built again by the next `open`, so closing the dialog and
+  // reopening it handed the player a live RESEND button while the server was still
+  // refusing — the one press they were invited to make being the one that could not work.
+  // A cooldown belongs to the sending, not to the window it was started in.
+  //
+  // One moment rather than one per address, because that is how the server counts it:
+  // `max_frequency` is spent per *user*, so a code to a second address inside the window
+  // is refused exactly like a second code to the first. Measured, not assumed — see the
+  // comment on `RESEND_COOLDOWN_MS`.
+  //
+  // A ref rather than state: nothing renders off it directly, and every write to it
+  // happens beside a `setCard` that renders anyway.
+  const lastSentAt = useRef<number | null>(null)
+
+  // Stamps the send and hands back the moment, so a card is seeded from the same clock
+  // read that the next one will be measured against. Written to disk as well, because the
+  // trip to a mail app that this whole flow asks for is the trip the process may not
+  // survive — see `EMAIL_SENT_KEY`.
+  const noteSent = (): number => {
+    const at = Date.now()
+    lastSentAt.current = at
+    void markCodeSent(at)
+    return at
+  }
   // Latched once the question has been put, so the effect below cannot put it twice — the
   // marker is written to storage at the same moment, but a write is a round trip and the
   // effect can run again before it lands.
@@ -78,8 +136,40 @@ export function useAccountEmail({
 
   const hasAddress = account.email !== null || account.pendingEmail !== null
 
+  // What the last launch was in the middle of, picked up once the session is known.
+  //
+  // The case this is for is not an edge: reading a code means leaving for a mail app, and
+  // a home-screen web app on iOS is often killed while it is away. Without this, coming
+  // back lands on the intro with the cooldown forgotten and, on a restore, with the
+  // address forgotten too — so the player starts the whole thing again and the second code
+  // meets the server's floor.
+  //
+  // The branch is derived rather than stored: an address the session is holding in
+  // `new_email` is one being attached, and any other is a restore. One fact, read where it
+  // already lives and so unable to disagree with itself.
+  const pickedUp = useRef(false)
+  useEffect(() => {
+    if (!account.ready || pickedUp.current) return
+    pickedUp.current = true
+    void (async () => {
+      lastSentAt.current = await lastCodeSentAt()
+      const address = await openCodeAddress()
+      if (address === null) return
+      const branch: EmailBranch = account.pendingEmail === address ? 'attach' : 'restore'
+      // Never over a card already up: the player opened that one just now, and this is a
+      // note from a launch that is over.
+      setCard(
+        (current) =>
+          current ?? { kind: 'code', branch, address, sentAt: lastSentAt.current },
+      )
+    })()
+  }, [account.ready, account.pendingEmail])
+
   useEffect(() => {
     if (!canPrompt || asked || hasAddress) return
+    // Nor over a card already up — the one picked up above, most likely, which is a player
+    // mid-task rather than somebody to interrupt.
+    if (card !== null) return
     if (!isNonEmptyString(nickname)) return
     // No cancellation flag, deliberately. Every step below is idempotent — latching a
     // latch, marking a mark, opening a card that is already open — so a second run that
@@ -94,10 +184,10 @@ export function useAccountEmail({
       await markEmailAsked()
       setCard({ kind: 'address', typed: '' })
     })()
-  }, [canPrompt, asked, hasAddress, nickname])
+  }, [canPrompt, asked, hasAddress, nickname, card])
 
-  const open = (): void => {
-    setCard({ kind: 'address', typed: '' })
+  const open = (typed = ''): void => {
+    setCard({ kind: 'address', typed })
   }
 
   // Nothing is undone on the way back, because there is nothing that would want undoing: an
@@ -106,16 +196,22 @@ export function useAccountEmail({
   // what the intro's confirm line goes on saying.
   const editAddress = (): void => {
     if (card?.kind !== 'code') return
+    void clearCodeCard()
     setCard({ kind: 'address', typed: card.address })
   }
 
   const openPendingConfirm = (): void => {
     const address = account.pendingEmail
     if (address === null) return
-    setCard({ kind: 'code', branch: 'attach', address, sentAt: null })
+    // Whatever is left of the last send's cooldown, which is usually nothing: this is the
+    // intro's confirm line, reopened days later. It is not nothing when the player has
+    // just closed this very dialog, which is the case that was broken.
+    void markCodeCard(address)
+    setCard({ kind: 'code', branch: 'attach', address, sentAt: lastSentAt.current })
   }
 
   const dismiss = (): void => {
+    void clearCodeCard()
     setCard(null)
   }
 
@@ -124,14 +220,16 @@ export function useAccountEmail({
   const send = async (raw: string): Promise<Answer> => {
     const res = await account.sendCode(raw)
     if (res.error !== null || res.branch === null) return { error: res.error }
+    const address = raw.trim().toLowerCase()
+    void markCodeCard(address)
     setCard({
       kind: 'code',
       branch: res.branch,
       // The address the server answered about rather than the one that was typed: see
       // `normalizeEmail`. What the next card echoes back has to be what a code was
       // actually sent to.
-      address: raw.trim().toLowerCase(),
-      sentAt: Date.now(),
+      address,
+      sentAt: noteSent(),
     })
     return { error: null }
   }
@@ -144,7 +242,7 @@ export function useAccountEmail({
     if (card?.kind !== 'code') return { error: 'unknown' }
     const res = await account.sendCode(card.address)
     if (res.error !== null || res.branch === null) return { error: res.error }
-    setCard({ ...card, branch: res.branch, sentAt: Date.now() })
+    setCard({ ...card, branch: res.branch, sentAt: noteSent() })
     return { error: null }
   }
 
@@ -153,9 +251,17 @@ export function useAccountEmail({
   // whoever was signed in a moment ago.
   const confirm = async (code: string): Promise<Answer> => {
     if (card?.kind !== 'code') return { error: 'unknown' }
-    if (card.branch === 'restore') return account.restoreProfile(code)
+    if (card.branch === 'restore') return account.restoreProfile(code, card.address)
     const res = await account.confirmEmail(code)
-    if (res.error === null) setCard(null)
+    if (res.error === null) {
+      void clearCodeCard()
+      // Said, then closed. The note on disk goes at once either way: a card that is about
+      // to close is not one to reopen if the app dies inside the next second and a half.
+      setCard({ ...card, done: true })
+      setTimeout(() => {
+        setCard(null)
+      }, DONE_HOLD_MS)
+    }
     return res
   }
 

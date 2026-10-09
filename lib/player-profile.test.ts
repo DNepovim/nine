@@ -520,4 +520,99 @@ describe('shapeProfile', () => {
       shapeProfile({ nickname: null, totals: [], bests: [], medals: [], reigns: [] }),
     ).toEqual(EMPTY_PROFILE)
   })
+
+  const bare = { nickname: null, totals: [], bests: [], medals: [], reigns: [] }
+
+  it('reads a podium row as the one step it says it is', () => {
+    expect(
+      shapeProfile({
+        ...bare,
+        winnings: [
+          {
+            mode: 'speed',
+            difficulty: 'extreme',
+            period: 'week',
+            rank: 2,
+            scoreSum: 1000,
+          },
+        ],
+      }).winnings,
+    ).toEqual([
+      { mode: 'speed', difficulty: 'extreme', period: 'week', rank: 2, scoreSum: 1000 },
+    ])
+  })
+
+  // A build that ships ahead of its migration. The old server pays a winner two sums and
+  // has never heard of a step, so both are read as rank one — and the fortune comes out
+  // exactly where it was.
+  it('reads an older server’s day and week sums as rank one', () => {
+    expect(
+      shapeProfile({
+        ...bare,
+        winnings: [{ mode: 'speed', difficulty: 'hard', daySum: 400, weekSum: 900 }],
+      }).winnings,
+    ).toEqual([
+      { mode: 'speed', difficulty: 'hard', period: 'day', rank: 1, scoreSum: 400 },
+      { mode: 'speed', difficulty: 'hard', period: 'week', rank: 1, scoreSum: 900 },
+    ])
+  })
+
+  it('pays a legacy row what the old arithmetic paid it', () => {
+    const { winnings } = shapeProfile({
+      ...bare,
+      winnings: [{ mode: 'speed', difficulty: 'hard', daySum: 400, weekSum: 900 }],
+    })
+    // 400 × 0.5 + 900 × 1, which is what `winningsValue` came to before the podium.
+    expect(lifetimeOf([], winnings).fortune).toBe(1100)
+  })
+
+  // The other half of that compatibility seam, and the one the deployment order actually
+  // exercises: the migration lands before the bundle, so the new server carries `daySum`
+  // and `weekSum` alongside the step for whatever old builds are still out there. A client
+  // that understands the podium must read the step and ignore the pair, or a rank-one board
+  // would be counted twice.
+  it('ignores the legacy sums a new server carries for older builds', () => {
+    const { winnings } = shapeProfile({
+      ...bare,
+      winnings: [
+        {
+          mode: 'speed',
+          difficulty: 'hard',
+          period: 'day',
+          rank: 1,
+          scoreSum: 400,
+          daySum: 400,
+          weekSum: 0,
+        },
+        {
+          mode: 'speed',
+          difficulty: 'hard',
+          period: 'week',
+          rank: 2,
+          scoreSum: 900,
+          daySum: 0,
+          weekSum: 0,
+        },
+      ],
+    })
+    expect(winnings).toEqual([
+      { mode: 'speed', difficulty: 'hard', period: 'day', rank: 1, scoreSum: 400 },
+      { mode: 'speed', difficulty: 'hard', period: 'week', rank: 2, scoreSum: 900 },
+    ])
+    // 400 × 0.5 (day, gold) + 900 × 1 × 0.5 (week, silver). The legacy pair contributes
+    // nothing — counted, it would have added another 200.
+    expect(lifetimeOf([], winnings).fortune).toBe(650)
+  })
+
+  it('drops a step it has no factor for rather than inventing one', () => {
+    expect(
+      shapeProfile({
+        ...bare,
+        winnings: [
+          { mode: 'speed', difficulty: 'hard', period: 'day', rank: 4, scoreSum: 1000 },
+          { mode: 'speed', difficulty: 'hard', period: 'month', rank: 1, scoreSum: 1000 },
+        ],
+      }).winnings,
+    ).toEqual([])
+  })
 })

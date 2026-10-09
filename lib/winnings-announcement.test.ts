@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
 import type { Award } from '@/lib/winnings'
-import { announcementRange, awardBlocks, markerAfter } from '@/lib/winnings-announcement'
+import { askedToday, awardBlocks } from '@/lib/winnings-announcement'
 
 // 2026-09-23 is a Wednesday; the week before it runs Mon 14th to Sun 20th.
 const TODAY = '2026-09-23'
@@ -12,61 +12,27 @@ const award = (over: Partial<Award> = {}): Award => ({
   difficulty: 'extreme',
   wonOn: '2026-09-22',
   score: 1000,
+  rank: 1,
   ...over,
 })
 
-describe('announcementRange', () => {
-  it('has nothing to say when the marker is already yesterday', () => {
-    expect(announcementRange('2026-09-22', TODAY)).toBeNull()
+describe('askedToday', () => {
+  it('holds the launch back once the server has answered today', () => {
+    expect(askedToday(TODAY, TODAY)).toBe(true)
   })
 
-  it('asks for yesterday alone when the marker is the day before it', () => {
-    expect(announcementRange('2026-09-21', TODAY)).toEqual({
-      from: '2026-09-22',
-      to: '2026-09-22',
-    })
+  it('opens the question again on the first launch of a new day', () => {
+    expect(askedToday('2026-09-22', TODAY)).toBe(false)
   })
 
-  it('starts the day after the marker, never on it', () => {
-    const range = announcementRange('2026-09-19', TODAY)
-    expect(range?.from).toBe('2026-09-20')
+  // The old marker started a wiped device at yesterday and forfeited whatever was behind
+  // it. Nothing stored now means the question has never been asked, so it gets asked.
+  it('asks on a device that has never asked', () => {
+    expect(askedToday(null, TODAY)).toBe(false)
   })
 
-  it('never reaches today, whose window has not closed', () => {
-    expect(announcementRange('2026-09-01', TODAY)?.to).toBe('2026-09-22')
-  })
-
-  it('covers a long absence in one span', () => {
-    expect(announcementRange('2026-08-31', TODAY)).toEqual({
-      from: '2026-09-01',
-      to: '2026-09-22',
-    })
-  })
-
-  it('says nothing when the marker is somehow ahead of today', () => {
-    expect(announcementRange('2026-09-30', TODAY)).toBeNull()
-  })
-
-  it('steps across a month boundary', () => {
-    expect(announcementRange('2026-08-30', '2026-09-01')).toEqual({
-      from: '2026-08-31',
-      to: '2026-08-31',
-    })
-  })
-})
-
-describe('markerAfter', () => {
-  it('stores yesterday, so today is still announced once it closes', () => {
-    expect(markerAfter(TODAY)).toBe('2026-09-22')
-  })
-
-  it('leaves a first launch with nothing to catch up on', () => {
-    expect(announcementRange(markerAfter(TODAY), TODAY)).toBeNull()
-  })
-
-  it('round-trips: announcing then storing leaves nothing to repeat', () => {
-    const stored = markerAfter(TODAY)
-    expect(announcementRange(stored, TODAY)).toBeNull()
+  it('asks again when the stored day is somehow ahead of today', () => {
+    expect(askedToday('2026-09-30', TODAY)).toBe(false)
   })
 })
 
@@ -117,5 +83,43 @@ describe('awardBlocks', () => {
       award({ mode: 'accuracy', difficulty: 'hard', score: 1000 }),
     ])
     expect(blocks[0]?.awards.map((a) => a.mode)).toEqual(['accuracy', 'speed'])
+  })
+
+  // One block is one step of the podium, which is what lets a sentence open with "you
+  // took" or "you came second" and then list boards without qualifying any of them.
+  it('splits one day’s podium steps into separate blocks', () => {
+    const blocks = awardBlocks([
+      award({ rank: 2, mode: 'accuracy' }),
+      award({ rank: 1, mode: 'speed' }),
+    ])
+    expect(blocks).toHaveLength(2)
+    expect(
+      blocks.every((block) => block.awards.every((a) => a.rank === block.rank)),
+    ).toBe(true)
+  })
+
+  it('reads a day gold before its silver before its bronze', () => {
+    const blocks = awardBlocks([
+      award({ rank: 3 }),
+      award({ rank: 1 }),
+      award({ rank: 2 }),
+    ])
+    expect(blocks.map((b) => b.rank)).toEqual([1, 2, 3])
+  })
+
+  it('still puts a whole newer window ahead of an older one’s gold', () => {
+    const blocks = awardBlocks([
+      award({ wonOn: '2026-09-20', rank: 1 }),
+      award({ wonOn: '2026-09-22', rank: 3 }),
+    ])
+    expect(blocks.map((b) => b.wonOn)).toEqual(['2026-09-22', '2026-09-20'])
+  })
+
+  it('orders a day’s steps before a week’s on the same date', () => {
+    const blocks = awardBlocks([
+      award({ period: 'week', wonOn: '2026-09-21', rank: 1 }),
+      award({ period: 'day', wonOn: '2026-09-21', rank: 2 }),
+    ])
+    expect(blocks.map((b) => b.period)).toEqual(['day', 'week'])
   })
 })

@@ -13,6 +13,7 @@ import {
 import type { NameFactors } from '@/lib/name-gradient'
 import {
   WIN_PERIODS,
+  WIN_RANKS,
   winningsValue,
   type BoardWinnings,
   type WinPeriod,
@@ -111,9 +112,10 @@ export type PlayerProfile = {
   // a screen deriving it a second time is how the two start disagreeing.
   held: Medal[]
   reigns: Reign[]
-  // The winning scores this player has taken on each board, summed over all history and
-  // split by window so each half can be weighted. Empty for a player who has never taken
-  // a day, and also for any player when the server predates winnings.
+  // The scores this player placed with on each board, summed over the half of history
+  // they have already accepted, split by window kind and by step of the podium so each
+  // can be weighted. Empty for a player who has never placed on a board, and also for
+  // any player when the server predates winnings.
   winnings: BoardWinnings[]
 }
 
@@ -363,7 +365,20 @@ export type PlayerProfileResponse = {
   // Absent, not empty, from a server that predates winnings — read the same way
   // `achievements` and `timeMs` above are, so an older server draws a fortune without
   // them rather than failing to draw a profile at all.
-  winnings?: (RawBoard & { daySum: number; weekSum: number })[]
+  //
+  // Two shapes, because an app can ship ahead of its migration. A row with `rank` on it
+  // comes from a server that knows about the podium and says which step one sum belongs
+  // to; a row with `daySum`/`weekSum` comes from one that does not, and means the two
+  // sums a winner used to be paid. Reading only the new shape would pay such a player
+  // nothing — their fortune would fall by every board they have ever taken, which is the
+  // one thing this whole change promised not to do.
+  winnings?: (RawBoard & {
+    period?: string
+    rank?: number
+    scoreSum?: number
+    daySum?: number
+    weekSum?: number
+  })[]
 }
 
 const board = (raw: RawBoard): { mode: ScoredMode; difficulty: Difficulty } | null =>
@@ -423,11 +438,32 @@ export function shapeProfile(raw: PlayerProfileResponse): PlayerProfile {
           : [{ ...on, period: row.period, from: row.fromDay, to: row.toDay }]
       }),
     ]),
-    winnings: (raw.winnings ?? []).flatMap((row) => {
-      const on = board(row)
-      return on === null ? [] : [{ ...on, daySum: row.daySum, weekSum: row.weekSum }]
-    }),
+    winnings: (raw.winnings ?? []).flatMap(boardWinnings),
   }
+}
+
+// One wire row as however many `BoardWinnings` it means: one for a server that knows the
+// podium, and up to two — a day and a week, both at rank one — for one that does not.
+//
+// An unknown step is dropped rather than coerced. A fourth place is not a thing the podium
+// pays, and a row claiming one is a server saying something this build has no factor for;
+// counting it as a third would quietly invent money.
+const boardWinnings = (
+  row: NonNullable<PlayerProfileResponse['winnings']>[number],
+): BoardWinnings[] => {
+  const on = board(row)
+  if (on === null) return []
+
+  if (row.rank !== undefined) {
+    return isOneOf(row.period, WIN_PERIODS) && isOneOf(row.rank, WIN_RANKS)
+      ? [{ ...on, period: row.period, rank: row.rank, scoreSum: row.scoreSum ?? 0 }]
+      : []
+  }
+
+  return [
+    { ...on, period: 'day' as const, rank: 1 as const, scoreSum: row.daySum ?? 0 },
+    { ...on, period: 'week' as const, rank: 1 as const, scoreSum: row.weekSum ?? 0 },
+  ]
 }
 
 const pickTotals = (

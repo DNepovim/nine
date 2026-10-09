@@ -398,7 +398,8 @@ const won = (
   score: number,
   wonOn: string,
   period: Award['period'] = 'day',
-): Award => ({ period, mode, difficulty, wonOn, score })
+  rank: Award['rank'] = 1,
+): Award => ({ period, mode, difficulty, wonOn, score, rank })
 
 const WINNINGS_CASES = {
   ONE: [won('speed', 'extreme', 31219, '2026-09-22')],
@@ -422,15 +423,39 @@ const WINNINGS_CASES = {
     won('speed', 'hard', 12400, '2026-09-18'),
     won('speed', 'extreme', 29050, '2026-09-14', 'week'),
   ],
+  // The whole podium of one day, which is the case the prose was hardest to get right:
+  // three sentences, one per step, each naming its own step once.
+  PODIUM: [
+    won('speed', 'extreme', 31219, '2026-09-22'),
+    won('accuracy', 'hard', 9404, '2026-09-22', 'day', 2),
+    won('speed', 'easy', 6100, '2026-09-22', 'day', 3),
+  ],
+  // A step on its own, so the silver phrasings can be read without a win above them
+  // carrying the sentence.
+  'SECOND ONLY': [
+    won('speed', 'extreme', 31219, '2026-09-22', 'day', 2),
+    won('accuracy', 'hard', 9404, '2026-09-22', 'day', 2),
+  ],
 } as const satisfies Record<string, readonly Award[]>
 
+// Drawn unaccepted, which is the state the player actually meets: the figure is an offer
+// and the dialog's own button carries it. `onAccept` closes rather than writing anything —
+// the gallery has no session to settle a reward under, and a card that moved a real
+// watermark from here would pay a seeded player for a window nobody played.
 const winnings = (label: keyof typeof WINNINGS_CASES): Variant => ({
   key: `winnings-${label}`,
   label,
   render: (close) => (
     <WhatsNewOverlay
-      cards={[{ kind: 'winnings', blocks: awardBlocks(WINNINGS_CASES[label]) }]}
+      cards={[
+        {
+          kind: 'winnings',
+          blocks: awardBlocks(WINNINGS_CASES[label]),
+          accepted: false,
+        },
+      ]}
       onDismiss={close}
+      onAccept={close}
     />
   ),
 })
@@ -785,6 +810,8 @@ const SCREENS: Section[] = [
       winnings('DAY + WEEK'),
       winnings('SWEEP'),
       winnings('CATCH UP'),
+      winnings('PODIUM'),
+      winnings('SECOND ONLY'),
     ],
   },
   {

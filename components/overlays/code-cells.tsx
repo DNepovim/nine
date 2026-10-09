@@ -56,6 +56,9 @@ export function CodeCells({
   length,
   onChange,
   onSubmit,
+  // Taken by the field as the card arrives. The card asks one question and has one place
+  // to answer it, so there is nothing else a tap could usefully land on first.
+  autoFocus = false,
   // False while something is in flight, so a code cannot be edited out from under a
   // request that is already carrying it.
   editable,
@@ -69,6 +72,7 @@ export function CodeCells({
   onSubmit: () => void
   editable: boolean
   wrong: boolean
+  autoFocus?: boolean
 }) {
   const [focused, setFocused] = useState(false)
 
@@ -134,6 +138,7 @@ export function CodeCells({
           setFocused(false)
         }}
         editable={editable}
+        autoFocus={autoFocus}
         keyboardType="number-pad"
         autoCapitalize="none"
         autoCorrect={false}

@@ -7,6 +7,11 @@ import { compactNumber } from '@/lib/compact-number'
 // The player's fortune, on one line under their name — everything they have ever scored,
 // weighted by the difficulty it was scored on.
 //
+// In `--color-fortune` rather than the score green: a fortune is not a score, and the one
+// figure this card is about should say so in the colour it is written in wherever it
+// appears. The green token stays where it belongs — on scores. See the winnings card for
+// why that colour is a *darkened* red and not `APP_RED`.
+//
 // The seven-segment face every score in the app wears, at headline size — and shortened,
 // because a career total runs into the millions and the full figure would either wrap or
 // shrink until it stopped reading as a headline. The exact, unweighted numbers live in
@@ -37,7 +42,7 @@ export function ProfileScore({
     <View className="flex-row items-baseline justify-center gap-1 py-2">
       <Text
         selectable={false}
-        className={cn(READOUT.scoreLarge, 'text-score')}
+        className={cn(READOUT.scoreLarge, 'text-fortune')}
         style={{ fontFamily: digitFont }}
       >
         {value}
@@ -45,7 +50,7 @@ export function ProfileScore({
       {suffix !== '' && (
         <Text
           selectable={false}
-          className="font-mono text-[18px] font-black tracking-[1px] text-score"
+          className="font-mono text-[18px] font-black tracking-[1px] text-fortune"
         >
           {suffix}
         </Text>

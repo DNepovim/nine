@@ -25,7 +25,8 @@ const won = (
   score: number,
   wonOn: string,
   period: Award['period'] = 'day',
-): Award => ({ period, mode, difficulty, wonOn, score })
+  rank: Award['rank'] = 1,
+): Award => ({ period, mode, difficulty, wonOn, score, rank })
 
 const textOf = (sentence: readonly { text: string }[]): string =>
   sentence.map((segment) => segment.text).join('')
@@ -87,8 +88,77 @@ describe('blockSentence', () => {
 
   it('has nothing to say about a window with no awards in it', () => {
     expect(
-      blockSentence({ period: 'day', wonOn: '2026-10-05', awards: [] }, t),
+      blockSentence({ period: 'day', wonOn: '2026-10-05', rank: 1, awards: [] }, t),
     ).toBeNull()
+  })
+})
+
+describe('the podium in words', () => {
+  const sentenceFor = (award: Award, turn = 0): string => {
+    const [block] = awardBlocks([award])
+    if (block === undefined) return ''
+    return textOf(blockSentence(block, t, turn) ?? [])
+  }
+
+  it('says a second place rather than calling it a win', () => {
+    const text = sentenceFor(won('speed', 'extreme', 31219, '2026-10-05', 'day', 2))
+    expect(text).toContain('second')
+    expect(text).toContain('SPD EXT with 31,219')
+  })
+
+  it('says a third place', () => {
+    expect(sentenceFor(won('accuracy', 'hard', 9404, '2026-10-05', 'day', 3))).toContain(
+      'third',
+    )
+  })
+
+  // Every pool is walked, not sampled, so every rotation of a second- or third-place pool
+  // has to still be about that step. A variant that read as a win would be the card
+  // telling a player they took a board they came third on.
+  it('never reads a lesser step as a win, whichever opening it draws', () => {
+    for (const period of ['day', 'week'] as const) {
+      for (const rank of [2, 3] as const) {
+        for (let turn = 0; turn < 6; turn++) {
+          const text = sentenceFor(
+            won('speed', 'extreme', 31219, '2026-10-05', period, rank),
+            turn,
+          )
+          expect(text, text).not.toContain('was yours')
+          expect(text, text).not.toContain('Nobody')
+          expect(text, text).not.toContain('you took SPD')
+        }
+      }
+    }
+  })
+
+  it('lists three boards of one step under one opening', () => {
+    const [block] = awardBlocks([
+      won('speed', 'extreme', 31219, '2026-10-05', 'day', 2),
+      won('accuracy', 'hard', 9404, '2026-10-05', 'day', 2),
+      won('speed', 'easy', 2000, '2026-10-05', 'day', 2),
+    ])
+    expect(block).toBeDefined()
+    if (block === undefined) return
+    const text = textOf(blockSentence(block, t) ?? [])
+    // One "second", three boards, one full stop.
+    expect(text.match(/second/g)).toHaveLength(1)
+    expect(text).toContain(' and ')
+    expect(text.endsWith('.')).toBe(true)
+  })
+
+  it('gives a day its own sentence per step it placed on', () => {
+    const blocks = awardBlocks([
+      won('speed', 'extreme', 31219, '2026-10-05', 'day', 1),
+      won('accuracy', 'hard', 9404, '2026-10-05', 'day', 2),
+      won('speed', 'easy', 2000, '2026-10-05', 'day', 3),
+    ])
+    const sentences = winningsSentences(blocks, t).map(textOf)
+    expect(sentences).toHaveLength(3)
+    // Matched against the whole pool rather than one variant: which opening a step draws
+    // is seeded, and pinning the assertion to one of the two would make this test a
+    // record of today's seed instead of of the step.
+    expect(sentences[1]).toMatch(/second|one place short/)
+    expect(sentences[2]).toMatch(/third|on the podium/)
   })
 })
 
@@ -168,6 +238,19 @@ describe('the openings', () => {
       if (block === undefined) return
       expect(textOf(blockSentence(block, t, turn) ?? [])).toContain('week of 14 Sep')
     }
+  })
+
+  it('never opens two sentences of one step the same way', () => {
+    const days = ['2026-10-05', '2026-10-04', '2026-10-03']
+    const blocks = awardBlocks(
+      days.map((day, index) => won('speed', 'extreme', 10000 + index, day, 'day', 2)),
+    )
+    const openings = winningsSentences(blocks, t).map((sentence) =>
+      textOf(sentence).replace(/[\d,]+/g, ''),
+    )
+    // Three windows out of a pool of two: the third wraps onto the first, which is the
+    // pool being walked rather than running out.
+    expect(new Set(openings).size).toBe(2)
   })
 
   it('says the same thing to a player who dismisses the popup and opens it again', () => {

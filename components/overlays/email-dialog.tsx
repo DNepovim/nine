@@ -50,6 +50,7 @@ export function EmailDialog({ flow }: { flow: AccountEmailFlow }) {
             branch={card.branch}
             address={card.address}
             sentAt={card.sentAt}
+            done={card.done ?? false}
             onConfirm={flow.confirm}
             onResend={flow.resend}
             onEditAddress={flow.editAddress}

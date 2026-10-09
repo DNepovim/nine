@@ -32,7 +32,6 @@ import { AchievementDetail } from '@/components/overlays/achievement-detail'
 import { AchievementsOverlay } from '@/components/overlays/achievements-overlay'
 import { AdminOverlay } from '@/components/overlays/admin-overlay'
 import { AdvancedOptionsOverlay } from '@/components/overlays/advanced-options-overlay'
-import { CardModal } from '@/components/overlays/card-modal'
 import { DevOverlay } from '@/components/overlays/dev-overlay'
 import { FeedbackOverlay } from '@/components/overlays/feedback-overlay'
 import { FeedbackReplyOverlay } from '@/components/overlays/feedback-reply-overlay'
@@ -42,11 +41,12 @@ import { InstallOverlay } from '@/components/overlays/install-overlay'
 import { JoinRoomOverlay } from '@/components/overlays/join-room-overlay'
 import { MedalsOverlay } from '@/components/overlays/medals-overlay'
 import { MenuOverlay } from '@/components/overlays/menu-overlay'
+import { ModalCard } from '@/components/overlays/modal-card'
 import { MultiplayerGameOver } from '@/components/overlays/multiplayer-game-over'
 import { MultiplayerMenu } from '@/components/overlays/multiplayer-menu'
 import { MultiplayerWaiting } from '@/components/overlays/multiplayer-waiting'
 import { NewsArchiveOverlay } from '@/components/overlays/news-archive-overlay'
-import { NicknameModal } from '@/components/overlays/nickname-modal'
+import { NICKNAME_TITLE, NicknameModal } from '@/components/overlays/nickname-modal'
 import { PausedOverlay } from '@/components/overlays/paused-overlay'
 import { ReplayConsentOverlay } from '@/components/overlays/replay-consent-overlay'
 import { StepUpOverlay } from '@/components/overlays/step-up-overlay'
@@ -56,6 +56,7 @@ import { Screen } from '@/components/screen'
 import { TrackedPressable } from '@/components/tracked-pressable'
 import { TutorialCurtain } from '@/components/tutorial-curtain'
 import type { AchievementId } from '@/constants/achievements'
+import { PRIMARY_INK } from '@/constants/colors'
 import { DEFAULT_DIAL_CORNERS } from '@/constants/dial-hints'
 import { PIE_SIZE } from '@/constants/game'
 import { mono } from '@/constants/theme'
@@ -1411,7 +1412,14 @@ export default function GameScreen() {
   // `onIntro`, which it reads: the one-time ask is a launch ask like the three above it
   // and waits its turn behind every one of them.
   const accountEmail = useAccountEmail({
-    account: { email, pendingEmail, sendCode, confirmEmail, restoreProfile },
+    account: {
+      ready: isReady,
+      email,
+      pendingEmail,
+      sendCode,
+      confirmEmail,
+      restoreProfile,
+    },
     nickname,
     canPrompt: mayAskForEmail({
       splashDone,
@@ -2244,7 +2252,11 @@ export default function GameScreen() {
               feedbackReplies.ready &&
               feedbackReplies.reply === null &&
               whatsNew.visible && (
-                <WhatsNewOverlay cards={whatsNew.cards} onDismiss={whatsNew.dismiss} />
+                <WhatsNewOverlay
+                  cards={whatsNew.cards}
+                  onDismiss={whatsNew.dismiss}
+                  onAccept={whatsNew.accept}
+                />
               )}
 
             {/* ── Install prompt — web only, and only once the news has had its turn.
@@ -2427,41 +2439,45 @@ export default function GameScreen() {
             )}
 
             {/* ── The nickname ──
-              Its own platform modal, because it has a keyboard under it and a real modal
-              is what gets `KeyboardAvoidingView` a window of its own to lift inside — see
-              `CardModal`. A saved nickname hands over to the address dialog below, which is
-              an ordinary one: nothing is dismissed while something else is presented, so
-              the swap iOS used to drop cannot happen between them. */}
-            <CardModal
-              visible={showNicknameModal}
-              onRequestClose={() => {
-                setShowNicknameModal(false)
-                setPendingMultiAction(null)
-              }}
-            >
-              <NicknameModal
-                onSave={async (name) => {
-                  const res = await updateNickname(name)
-                  if (res.error) return res
-                  setShowNicknameModal(false)
-                  if (pendingMultiAction) {
-                    executeMultiAction(pendingMultiAction)
-                    setPendingMultiAction(null)
-                  }
-                  // The second step of claiming a name, and it is immediate: the card turns
-                  // over to ask for an address. Nothing gates it but already having one —
-                  // a player on their way into a multiplayer room gets the room *and* the
-                  // card, because the ask is worth more than the half second of tidiness
-                  // that skipping it would buy.
-                  if (email === null) accountEmail.open()
-                  return res
-                }}
+              The app's ordinary dialog, like the address one it hands over to. It used to
+              be a platform window for the keyboard's sake; `ModalCard`'s `avoidKeyboard`
+              is what made that unnecessary, and being the same kind of dialog as its
+              successor is what makes the hand-over safe — nothing is presented while
+              something else is dismissing, which is the swap iOS used to drop. */}
+            {showNicknameModal && (
+              <ModalCard
+                title={t(NICKNAME_TITLE)}
+                titleColor={PRIMARY_INK}
+                closeButton={false}
+                avoidKeyboard
                 onDismiss={() => {
                   setShowNicknameModal(false)
                   setPendingMultiAction(null)
                 }}
-              />
-            </CardModal>
+              >
+                {(close) => (
+                  <NicknameModal
+                    onSave={async (name) => {
+                      const res = await updateNickname(name)
+                      if (res.error) return res
+                      setShowNicknameModal(false)
+                      if (pendingMultiAction) {
+                        executeMultiAction(pendingMultiAction)
+                        setPendingMultiAction(null)
+                      }
+                      // The second step of claiming a name, and it is immediate: the card turns
+                      // over to ask for an address. Nothing gates it but already having one —
+                      // a player on their way into a multiplayer room gets the room *and* the
+                      // card, because the ask is worth more than the half second of tidiness
+                      // that skipping it would buy.
+                      if (email === null) accountEmail.open()
+                      return res
+                    }}
+                    onDismiss={close}
+                  />
+                )}
+              </ModalCard>
+            )}
 
             {/* ── Multiplayer screens (above everything) ── */}
 

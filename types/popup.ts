@@ -15,6 +15,9 @@ import type { NewsItem } from '@/types/news'
 // `from` is the seed as well as the window, which is what makes a reopened dialog say the
 // same thing. See lib/recap.ts.
 export type PopupCard =
-  | { kind: 'winnings'; blocks: readonly AwardBlock[] }
+  // `accepted` is the page's own state rather than the deck's: a reward is turned into
+  // fortune by pressing the dialog's button, and both the card's footer and that button
+  // read this to know whether it has been.
+  | { kind: 'winnings'; blocks: readonly AwardBlock[]; accepted: boolean }
   | { kind: 'recap'; facts: WeekFacts; from: string; to: string }
   | { kind: 'news'; item: NewsItem }

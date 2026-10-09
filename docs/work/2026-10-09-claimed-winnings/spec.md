@@ -1,8 +1,8 @@
 # Winnings you accept, and a podium that pays
 
 Slug: claimed-winnings
-Stage: spec
-Next: /build claimed-winnings
+Stage: review
+Next: /ship claimed-winnings
 Track: full
 Branch: feat/claimed-winnings
 Started: 2026-10-09
@@ -40,8 +40,10 @@ gradient at its difficulty. Two things have changed on it.
 
 The sentences now say which step of the podium each board gave them — took it, came second
 on it, came third on it — and the figure at the foot is no longer a report. Where it said
-ADDED TO YOUR FORTUNE it says the reward is waiting, and the dialog's own primary button,
-which would have read NEXT, reads ACCEPT with the figure on it.
+ADDED TO YOUR FORTUNE it says the figure IS WAITING FOR YOU — and the figure itself is now
+set like the figure the page is about — `TYPE.figureLarge`, in `--color-fortune`.
+The dialog's own primary button, which would have read NEXT, reads CLAIM. The heading over
+all of it asks WHAT DID YOU PULL OFF?, so the card needs no title of its own and has none.
 
 They press it. The day their winnings are paid through moves to yesterday, their fortune is
 that much larger the next time the profile is read, and the page advances to the recap or
@@ -113,7 +115,8 @@ CLAUDE.md's domain table gains a row for any of them — is `spec`'s first job.
 
 - A server-side **paid through** date per profile, backfilled so no existing fortune moves.
 - The fortune counting only winnings paid through that day.
-- ACCEPT on the deck's own button, carrying the figure, as the only way off the page.
+- CLAIM on the deck's own button, as the only way off the page. The figure stays on the
+  card rather than being printed twice.
 - Silver at half and bronze at a tenth of the same window's gold, on the player's own score.
 - The card's prose saying which step of the podium each board gave.
 - A fresh or restored device reading the paid-through day from the server, so nothing is
@@ -171,7 +174,7 @@ CLAUDE.md's domain table gains a row for any of them — is `spec`'s first job.
 
 **Used as CLAUDE.md already defines them.** **fortune** (what a career comes to, and the
 only figure this work moves), **board** (one mode × difficulty), **winnings** (what taking
-a board's day or week pays), **medal** (a losable standing — *not* what is being paid
+a board's day or week pays), **medal** (a losable standing — _not_ what is being paid
 here), **record**, **achievement**, **run**. A **window** is a day or a week of a board;
 `WinPeriod` already names the two.
 
@@ -179,57 +182,60 @@ here), **record**, **achievement**, **run**. A **window** is a day or a week of 
 
 - **podium** — the three places a closed window pays: first, second and third, at 1, ½ and
   ⅒ of the same window's gold. `WinRank` and `PODIUM_SHARE` in `lib/winnings.ts`. The
-  *medal* words gold / silver / bronze stay player-facing and stay out of the code, where
+  _medal_ words gold / silver / bronze stay player-facing and stay out of the code, where
   they would read as the standings on the profile rather than as a payment for a window
   that has shut.
 - **paid through** — the last day whose winnings are in a player's fortune. One date per
   player, `winnings_paid.paid_through`. Moves forward only, and only when a player accepts.
-- **accept** — what the player does to turn winnings into fortune. The verb in the copy and
-  in `accept_winnings`; nothing calls it claiming.
+- **accept** — what the player does to turn winnings into fortune. The verb in code
+  throughout: `accept_winnings`, `useWinnings().accept`, `paid_through`. The **button says
+  CLAIM**, which is the word a player uses for taking a reward — the same split the repo
+  already runs between host/guest and `admin`, and between a takeover and a record. The
+  code may not say claim, because `toMedals` means something else by it.
 
 **Collisions, and how they stay apart.**
 
-- **`claim`** is spoken for: `toMedals` keeps a player's best *claim* per mode, and
+- **`claim`** is spoken for: `toMedals` keeps a player's best _claim_ per mode, and
   CLAUDE.md says so. It appears nowhere in this work — not the column, not the function,
   not the copy, not a variable. `accept` is the verb; `paid through` is the state.
 - **gold / silver / bronze** already colour the profile's medals. On this path they are
   player-facing words only; the code says rank 1, 2, 3.
-- **podium** vs **medal**: a podium is the three steps of one *closed* window and is paid
-  once; a medal is a standing on an *open* board and can be taken back. `heldMedals` keeps
+- **podium** vs **medal**: a podium is the three steps of one _closed_ window and is paid
+  once; a medal is a standing on an _open_ board and can be taken back. `heldMedals` keeps
   its own podium rule for standings and is not touched.
 
 ### Files
 
 **Created**
 
-| Path                                                     | Responsibility                                                                                                                                    |
-| -------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Path                                                       | Responsibility                                                                                                                                                                  |
+| ---------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `supabase/migrations/20261009120000_winnings_accepted.sql` | The `winnings_paid` table and its backfill; `my_winnings` gaining ranks and a podium floor; `my_unpaid_winnings`; `accept_winnings`; `player_profile` summing to the watermark. |
 
 **Modified**
 
-| Path                                            | What changes                                                                                                                                         |
-| ----------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `lib/winnings.ts`                               | `WinRank`, `PODIUM_SHARE`, `winFactor` taking a rank, `rank` on `Award`, `BoardWinnings` becoming one row per board × period × rank.                 |
-| `lib/winnings.test.ts`                          | The podium share, and that a sum is rounded once.                                                                                                     |
-| `lib/winnings-announcement.ts`                  | A block is keyed by rank as well as period and day; `announcementRange`/`markerAfter` give way to the asked-today brake.                              |
-| `lib/winnings-announcement.test.ts`             | Blocking and ordering with ranks in play.                                                                                                             |
-| `lib/winnings-lines.ts`                         | A lead pool per period **per rank**; `ALL_PHRASINGS` grows.                                                                                            |
-| `lib/winnings-lines.test.ts`                    | Second and third place read correctly, and no two stacked sentences open alike.                                                                        |
-| `lib/leaderboard.ts`                            | `fetchMyWinnings` becomes `fetchUnpaidWinnings`; `acceptWinnings` added; the row type gains `rank`.                                                   |
-| `lib/player-profile.ts`                         | The `winnings` wire rows gain `period` and `rank`; a row without `rank` is read as the old gold-only shape.                                            |
-| `lib/player-profile.test.ts`                    | The fortune over podium rows, and over legacy rows.                                                                                                   |
-| `hooks/use-winnings.ts`                         | Asks the server what is unpaid, offers it, and accepts rather than dismisses.                                                                         |
-| `hooks/use-popup-deck.ts`                       | Exposes `accept`; `dismiss` no longer settles winnings.                                                                                               |
-| `components/overlays/winnings-card.tsx`         | The footer says the reward is waiting rather than added.                                                                                               |
-| `components/overlays/popup-card-view.tsx`       | `popupPrimary(card)` beside `popupAccent(card)` — a page's own button, when it wants one.                                                             |
-| `components/overlays/whats-new-overlay.tsx`     | The footer's `PrimaryButton` takes its label and action from the page.                                                                                 |
-| `constants/buttons.ts`                          | `'news.accept'`.                                                                                                                                      |
-| `constants/storage.ts`                          | `SEEN_WINNINGS_KEY` → `ASKED_WINNINGS_KEY`, new string, new meaning.                                                                                   |
-| `lib/local-reset.ts`                            | The renamed key in `RESET_KEYS`.                                                                                                                       |
-| `dev/gallery.tsx`                               | Awards gain a rank; a podium case among the winnings variants.                                                                                         |
-| `locales/en/messages.po`, `locales/cs/messages.po` | The new copy.                                                                                                                                       |
-| `CLAUDE.md`                                     | Rows for **podium**, **paid through** and **accept**; the **fortune** row saying winnings are accepted rather than counted.                           |
+| Path                                               | What changes                                                                                                                         |
+| -------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
+| `lib/winnings.ts`                                  | `WinRank`, `PODIUM_SHARE`, `winFactor` taking a rank, `rank` on `Award`, `BoardWinnings` becoming one row per board × period × rank. |
+| `lib/winnings.test.ts`                             | The podium share, and that a sum is rounded once.                                                                                    |
+| `lib/winnings-announcement.ts`                     | A block is keyed by rank as well as period and day; `announcementRange`/`markerAfter` give way to the asked-today brake.             |
+| `lib/winnings-announcement.test.ts`                | Blocking and ordering with ranks in play.                                                                                            |
+| `lib/winnings-lines.ts`                            | A lead pool per period **per rank**; `ALL_PHRASINGS` grows.                                                                          |
+| `lib/winnings-lines.test.ts`                       | Second and third place read correctly, and no two stacked sentences open alike.                                                      |
+| `lib/leaderboard.ts`                               | `fetchMyWinnings` becomes `fetchUnpaidWinnings`; `acceptWinnings` added; the row type gains `rank`.                                  |
+| `lib/player-profile.ts`                            | The `winnings` wire rows gain `period` and `rank`; a row without `rank` is read as the old gold-only shape.                          |
+| `lib/player-profile.test.ts`                       | The fortune over podium rows, and over legacy rows.                                                                                  |
+| `hooks/use-winnings.ts`                            | Asks the server what is unpaid, offers it, and accepts rather than dismisses.                                                        |
+| `hooks/use-popup-deck.ts`                          | Exposes `accept`; `dismiss` no longer settles winnings.                                                                              |
+| `components/overlays/winnings-card.tsx`            | The footer says the reward is waiting rather than added.                                                                             |
+| `components/overlays/popup-card-view.tsx`          | `popupPrimary(card)` beside `popupAccent(card)` — a page's own button, when it wants one.                                            |
+| `components/overlays/whats-new-overlay.tsx`        | The footer's `PrimaryButton` takes its label and action from the page.                                                               |
+| `constants/buttons.ts`                             | `'news.accept'`.                                                                                                                     |
+| `constants/storage.ts`                             | `SEEN_WINNINGS_KEY` → `ASKED_WINNINGS_KEY`, new string, new meaning.                                                                 |
+| `lib/local-reset.ts`                               | The renamed key in `RESET_KEYS`.                                                                                                     |
+| `dev/gallery.tsx`                                  | Awards gain a rank; a podium case among the winnings variants.                                                                       |
+| `locales/en/messages.po`, `locales/cs/messages.po` | The new copy.                                                                                                                        |
+| `CLAUDE.md`                                        | Rows for **podium**, **paid through** and **accept**; the **fortune** row saying winnings are accepted rather than counted.          |
 
 Nothing `code-guide` forbids: the new helpers are pure and colocated with tests, the one
 new component seam is a function beside `popupAccent` rather than a second dialog, and no
@@ -263,10 +269,10 @@ export type BoardWinnings = {
 `score` on an `Award` is **the player's own** best in that window, not the winner's — which
 for rank 1 is the same number it is today.
 
-**Storage key.** `SEEN_WINNINGS_KEY` (`nine.seen-winnings.v1`) held *the last day
-announced* and was what the money hung on. It becomes `ASKED_WINNINGS_KEY`
-(`nine.asked-winnings.v1`), holding *the day the server was last asked and answered
-nothing owed* — a brake on re-querying, never a record of payment. A new string rather
+**Storage key.** `SEEN_WINNINGS_KEY` (`nine.seen-winnings.v1`) held _the last day
+announced_ and was what the money hung on. It becomes `ASKED_WINNINGS_KEY`
+(`nine.asked-winnings.v1`), holding _the day the server was last asked and answered
+nothing owed_ — a brake on re-querying, never a record of payment. A new string rather
 than a new meaning on the old one, because a v1 value read under v2 rules would be a date
 in the past claiming the server was asked then. The old key is left on the device
 unread; `RESET_KEYS` carries the new one.
@@ -274,7 +280,7 @@ unread; `RESET_KEYS` carries the new one.
 **Schema** — `supabase/migrations/20261009120000_winnings_accepted.sql`.
 
 - **`winnings_paid`** — `user_id uuid primary key references profiles(id) on delete
-  cascade`, `paid_through date not null`, `podium_from date not null`. RLS enabled and
+cascade`, `paid_through date not null`, `podium_from date not null`. RLS enabled and
   **no policies at all**: every read and write goes through the `security definer`
   functions below, so the table is unreachable directly. That is also what keeps it off
   `profiles`, whose `public read` policy would publish a player's paid-through day — and
@@ -284,16 +290,16 @@ unread; `RESET_KEYS` carries the new one.
   fortune the day this ships. Set once at backfill and never moved; `paid_through` is the
   one that advances.
 - **The backfill, in the same migration:** one row per existing profile, `paid_through =
-  current_date - 1` and `podium_from = current_date`. This is the whole of "no fortune
+current_date - 1` and `podium_from = current_date`. This is the whole of "no fortune
   moves" — every window already closed is already paid, and the podium starts tomorrow.
 - **A profile with no row** (one created after the migration) reads as `paid_through =
-  created_at - 1` and `podium_from = created_at`: they cannot have won before they existed.
+created_at - 1` and `podium_from = created_at`: they cannot have won before they existed.
   `accept_winnings` inserts their row on first accept with `podium_from = created_at`.
 - **`my_winnings(p_user_id, p_from_day, p_today, p_podium_from)`** — the ranged primitive,
   now returning a window's top three with each player's own score and its `rank`, with
   ranks 2 and 3 suppressed for `won_on < p_podium_from`. The `distinct on` becomes a
   `rank() over (partition by mode, difficulty, day order by best_score desc, updated_at
-  asc)` cut at three; the no-zeros and nickname-required rules are unchanged. The three-arg
+asc)` cut at three; the no-zeros and nickname-required rules are unchanged. The three-arg
   version is **dropped explicitly** — a `create or replace` adding a parameter leaves the
   old function and its grant standing beside the new one, which is the trap the existing
   migration's own closing comment warns about. Its grants to `anon`/`authenticated` are
@@ -318,24 +324,32 @@ money lost, but the feature simply absent. The reverse order is safe: the migrat
 changes no fortune, because the backfill is what makes it a no-op. **Push the migration
 first**, then deploy. CI applies neither.
 
+> **Review found this paragraph wrong where it matters.** The reverse order is _not_ safe:
+> the backfill keeps the fortune's **value** still but not its **wire shape**, and the
+> shipped client reads `daySum`/`weekSum`, which the new `player_profile` stops sending. It
+> renders `FORTUNE  NaN` for every player between the migration landing and the bundle
+> reaching them. Do not push the migration on the strength of this note — see **R2** in
+> `plan.md`, which carries the fix.
+
 ### Copy, and the gates
 
 **Copy / i18n** — every string through Lingui, Czech beside it, `pnpm i18n:extract` then
 `pnpm i18n:verify`.
 
-| String                                               | Where                     |
-| ---------------------------------------------------- | ------------------------- |
-| `WAITING TO BE ACCEPTED`                             | the card's footer caption, replacing `ADDED TO YOUR FORTUNE` while unaccepted |
-| `ACCEPT +{total}`                                    | the deck's button on the winnings page |
-| 2 day leads and 2 week leads for **second place**    | `LEADS` in `lib/winnings-lines.ts` |
-| 2 day leads and 2 week leads for **third place**     | same |
+| String                                            | Where                                                                         |
+| ------------------------------------------------- | ----------------------------------------------------------------------------- |
+| `WHAT DID YOU PULL OFF?`                          | the dialog's heading while it is on the winnings page, via `popupTitle`       |
+| `IS WAITING FOR YOU`                              | the card's footer caption, replacing `ADDED TO YOUR FORTUNE` while unaccepted |
+| `CLAIM`                                           | the deck's button on the winnings page                                        |
+| 2 day leads and 2 week leads for **second place** | `LEADS` in `lib/winnings-lines.ts`                                            |
+| 2 day leads and 2 week leads for **third place**  | same                                                                          |
 
 The eight new leads obey the rule the file already states: every phrasing ends with its
 first board as `[B] with [S]`, and a week phrasing says the week. `MORE` and `LAST` are
 untouched — a block is one rank throughout, so the tail never has to name a step. Shapes,
-for `build` to finish: *On [DATE] you came second on [B] with [S]* · *The week of [DATE]
-left you second on [B] with [S]* · *On [DATE] you took third on [B] with [S]* · *The week
-of [DATE] put you third on [B] with [S]*. All eight join `ALL_PHRASINGS`, which is what the
+for `build` to finish: _On [DATE] you came second on [B] with [S]_ · _The week of [DATE]
+left you second on [B] with [S]_ · _On [DATE] you took third on [B] with [S]_ · _The week
+of [DATE] put you third on [B] with [S]_. All eight join `ALL_PHRASINGS`, which is what the
 catalog test reads to check Czech keeps every token.
 
 **How to Play** — **no**. Nothing here touches controls, targets, timers, modes,
@@ -354,10 +368,12 @@ growing.
 
 1. **No fortune moves on the day it lands.** With the migration applied and the app
    unchanged, a profile that showed a fortune of _F_ before still shows exactly _F_.
-2. A board's day won yesterday is offered on the next launch with the deck's button
-   reading `ACCEPT +N`, where _N_ is `totalAwards` of the offered awards — not `NEXT`, and
-   not `LET'S GO`.
-3. Pressing it advances the page, and the profile's FORTUNE read afterwards is higher by
+2. A board's day won yesterday is offered on the next launch under the heading `WHAT DID
+YOU PULL OFF?`, with the deck's button reading `CLAIM` — not `NEXT`, and not `LET'S GO`.
+   The card shows _N_ = `totalAwards` of the offered awards in `TYPE.figureLarge` and
+   `text-fortune`, over the caption `IS WAITING FOR YOU`. The figure appears once on the
+   page: it is not also on the button. The profile modal's own FORTUNE is the same colour.
+3. Pressing CLAIM advances the page, and the profile's FORTUNE read afterwards is higher by
    _N_ ± 1 point. (The one point is inherent and bounded — see Review focus 3 — and the
    criterion is that neither figure is derived from the other.)
 4. Killing the app on an unaccepted winnings page, or paging past it with the dots and
@@ -384,12 +400,12 @@ growing.
 
 ## Tests
 
-| File                                | Behaviours                                                                                                                                              |
-| ----------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| File                                | Behaviours                                                                                                                                                                                                                                      |
+| ----------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `lib/winnings.test.ts`              | `winFactor` over all three ranks × both periods × three difficulties; rank 1 matching today's numbers; `totalAwards` rounding once over a mixed podium, including the tenths a rank-3 share introduces; `winningsValue` over the new row shape. |
-| `lib/winnings-announcement.test.ts` | Blocks split by rank as well as by period and day; ordering newest-first then day-before-week then gold-before-silver-before-bronze; the asked-today brake answering true only for today. |
-| `lib/winnings-lines.test.ts`        | A second-place and a third-place sentence read correctly with one board and with three; no two stacked sentences open with the same lead; `ALL_PHRASINGS` holds every new descriptor. |
-| `lib/player-profile.test.ts`        | A fortune over podium rows; a legacy `daySum`/`weekSum` row read as gold so an older server still pays; an unknown rank dropped rather than thrown on.    |
+| `lib/winnings-announcement.test.ts` | Blocks split by rank as well as by period and day; ordering newest-first then day-before-week then gold-before-silver-before-bronze; the asked-today brake answering true only for today.                                                       |
+| `lib/winnings-lines.test.ts`        | A second-place and a third-place sentence read correctly with one board and with three; no two stacked sentences open with the same lead; `ALL_PHRASINGS` holds every new descriptor.                                                           |
+| `lib/player-profile.test.ts`        | A fortune over podium rows; a legacy `daySum`/`weekSum` row read as gold so an older server still pays; an unknown rank dropped rather than thrown on.                                                                                          |
 
 No UI test. The card and the dialog are drawn from these pure functions, and `dev/gallery.tsx`
 carries the podium case for looking at.

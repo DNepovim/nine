@@ -45,11 +45,16 @@ export const SEEN_STANDINGS_KEY = 'nine.seen-standings.v1'
 // a record of what was said, not of what is true, and the boards themselves are the truth.
 export const MEDAL_HISTORY_KEY = 'nine.medal-history.v1'
 export const SEEN_NEWS_KEY = 'nine.seen-news.v1'
-// The last day whose winnings have already been announced. A day, not a list of windows:
-// everything closed after it is owed, and everything on or before it has been told. Local
-// rather than server-side, like SEEN_NEWS_KEY — a reinstall loses the telling, never the
-// winnings themselves, which are derived from the boards.
-export const SEEN_WINNINGS_KEY = 'nine.seen-winnings.v1'
+// The last day the server was asked what this player is owed and answered nothing. A
+// brake, not a record of payment: what has been paid is the watermark on the player's own
+// profile, and it moves only when they accept. This exists because a player who never
+// places on a board would otherwise ask about a span that only grows, on every launch.
+//
+// A new string rather than a new meaning on `nine.seen-winnings.v1`, which held the last
+// day *announced* and was what the money used to hang on. A v1 value read under these
+// rules would be a past date claiming the server was asked then — true of the old
+// question, not of this one. The old key is retired below and cleared on boot.
+export const ASKED_WINNINGS_KEY = 'nine.asked-winnings.v1'
 // The Monday of the last week whose recap has already been told. A Monday, not a list and
 // not a date the telling happened on: a recap only ever speaks for the week that has just
 // closed, so one week behind the current one is owed and anything older has expired
@@ -102,6 +107,24 @@ export const EMAIL_PROMPT_KEY = 'nine.email-prompt.v1'
 // is worth saying once and is a puzzle on the third launch.
 export const PROFILE_MOVED_KEY = 'nine.moved.v1'
 
+// When a verification code last went out from this device, as epoch milliseconds.
+//
+// On disk rather than in memory because of where the player goes next: reading the code
+// means leaving for a mail app, and iOS ends a home-screen web app's process often enough
+// that coming back is a cold boot about one time in three. A cooldown held in memory dies
+// there, the resend button lights up early, and the server — which counts the same floor
+// per user and is not reloading — refuses the press. See `RESEND_COOLDOWN_MS`.
+export const EMAIL_SENT_KEY = 'nine.email-sent.v1'
+// The address a code card is open on, or absent when none is. Written as the card goes up
+// and cleared as it comes down, so the same trip to the mail app comes back to the six
+// digits rather than to the intro.
+//
+// The address alone, with no branch beside it: which of the two things the card is doing
+// is derivable — an address parked in `new_email` on the session is one being attached,
+// and anything else is a restore — and a stored branch would be a second copy of that
+// fact, free to disagree with the session.
+export const EMAIL_CODE_KEY = 'nine.email-code.v1'
+
 // Keys no build reads any more, cleared once on boot so the retired data does not sit on
 // the device forever. Anything listed here is gone for good: the pending queue is on the
 // list because an unpublished score from the old mechanics would otherwise publish itself
@@ -111,4 +134,9 @@ export const RETIRED_KEYS = [
   'nine.tutorial.v1',
   'nine.pending-scores.v1',
   'nine.daily-bests.v1',
+  // The day winnings were last *announced*, which is what the money used to hang on before
+  // the watermark moved to the player's profile. Nothing reads it, and leaving it would be
+  // a date on the device that looks like it still means something — see
+  // `ASKED_WINNINGS_KEY`, which deliberately took a new string rather than this one.
+  'nine.seen-winnings.v1',
 ]
