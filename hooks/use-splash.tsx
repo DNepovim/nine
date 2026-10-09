@@ -7,8 +7,10 @@ import {
   useState,
   type ReactNode,
 } from 'react'
+import { AppState } from 'react-native'
 
 import { useSavedRun } from '@/hooks/use-saved-run'
+import { cameStraightBack, noteLeaving } from '@/lib/recent-return'
 import { consumeUpdateReload } from '@/lib/update-reload'
 
 type SplashState = {
@@ -32,13 +34,17 @@ const SplashContext = createContext<SplashState>({
 // mounted. Anything time-based down there — a target's ring, the welcome run — has to
 // wait for this, or it burns through while nobody can see it.
 //
-// It starts already finished when this launch is the reload a service-worker update ends
-// in. The player was looking at the app a second ago and did not ask to go anywhere, so
-// replaying the logo would read as the app having restarted itself. Passed as the lazy
-// initialiser rather than called: the note is read once, on the first launch that finds
-// it, and never on a cold start.
+// It starts already finished on the two launches that are not really launches.
+//
+// One is the reload a service-worker update ends in. The other is a home-screen web app
+// coming back from a trip to another app, which on iOS is often a killed process and a
+// full boot — and the trip the player was sent on was to read a code out of their mail,
+// at this app's own asking. Either way the player was looking at the app a moment ago and
+// did not ask to go anywhere, so replaying the logo would read as the app having restarted
+// itself. Passed as a lazy initialiser rather than called: both notes are read once, on
+// the launch that finds them, and neither on a cold start.
 export function SplashProvider({ children }: { children: ReactNode }) {
-  const [done, setDone] = useState(consumeUpdateReload)
+  const [done, setDone] = useState(() => consumeUpdateReload() || cameStraightBack())
   const [exiting, setExiting] = useState(false)
 
   // The other launch with no logo to play: the app is opening onto a run it was closed
@@ -49,6 +55,19 @@ export function SplashProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (savedRun.pending !== null) setDone(true)
   }, [savedRun.pending])
+
+  // The note itself, left on every departure. Written on `change` rather than on unload:
+  // a web app being evicted is not asked whether it minds, and `background` is the last
+  // moment anything of ours runs. On native this is a no-op twice over — the stub does
+  // nothing, and the process comes back where it was with no splash to skip.
+  useEffect(() => {
+    const subscription = AppState.addEventListener('change', (next) => {
+      if (next !== 'active') noteLeaving()
+    })
+    return () => {
+      subscription.remove()
+    }
+  }, [])
 
   const beginExit = useCallback(() => {
     setExiting(true)
