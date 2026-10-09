@@ -725,3 +725,16 @@ has no `sessionVerdict` cross-check at all, so any transient non-network error f
 row to still be there, or demand a repeated refusal before acting — and both want their own
 spec, because "when do we decide a profile has moved" is a design decision about the one
 piece of a player that outlives the device.
+
+### Shipped
+
+`4c4ba20` on `main`, pushed 2026-10-09. No PR — `ship prod`. The address/restore work
+shares five files with this one and rode in the same commit; the splash change went
+separately as `49457cb`.
+
+The migration was pushed to production earlier in the same session, before the bundle, as
+the spec's order requires — so production has the schema and still serves the previous
+build. Until a deploy lands, the shipped app calls the dropped three-argument
+`my_winnings` and its winnings card is quiet. No money is at risk: the old client's error
+path returns before touching its marker, and the fortune reads correctly off the
+`daySum`/`weekSum` carry-along.

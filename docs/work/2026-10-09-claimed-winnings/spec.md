@@ -1,8 +1,8 @@
 # Winnings you accept, and a podium that pays
 
 Slug: claimed-winnings
-Stage: review
-Next: /ship claimed-winnings
+Stage: shipped
+Next: /deploy — on `main`, not live
 Track: full
 Branch: feat/claimed-winnings
 Started: 2026-10-09
