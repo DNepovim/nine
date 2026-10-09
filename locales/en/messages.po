@@ -13,7 +13,7 @@ msgstr ""
 "Language-Team: \n"
 "Plural-Forms: \n"
 
-#: components/overlays/how-to-play-overlay.tsx:734
+#: components/overlays/how-to-play-overlay.tsx:726
 msgid ""
 "\n"
 "A mark is only ever lent. Take somebody’s record and it moves to you; lose yours and it leaves with the board."
@@ -21,7 +21,7 @@ msgstr ""
 "\n"
 "A mark is only ever lent. Take somebody’s record and it moves to you; lose yours and it leaves with the board."
 
-#: components/overlays/how-to-play-overlay.tsx:523
+#: components/overlays/how-to-play-overlay.tsx:515
 msgid ""
 "\n"
 "Accuracy and Speed give you three hearts each, and lose one when a target’s ring runs out. All three gone ends the run. Trainee is unscored practice with unlimited lives, so take your time."
@@ -29,7 +29,7 @@ msgstr ""
 "\n"
 "Accuracy and Speed give you three hearts each, and lose one when a target’s ring runs out. All three gone ends the run. Trainee is unscored practice with unlimited lives, so take your time."
 
-#: components/overlays/how-to-play-overlay.tsx:555
+#: components/overlays/how-to-play-overlay.tsx:547
 msgid ""
 "\n"
 "Accuracy leans almost entirely on precision; Speed on the clock. Each keeps its own streak: Accuracy wants the fewest moves, Speed wants you early on the ring."
@@ -37,7 +37,7 @@ msgstr ""
 "\n"
 "Accuracy leans almost entirely on precision; Speed on the clock. Each keeps its own streak: Accuracy wants the fewest moves, Speed wants you early on the ring."
 
-#: components/overlays/how-to-play-overlay.tsx:767
+#: components/overlays/how-to-play-overlay.tsx:759
 msgid ""
 "\n"
 "Achieve one mid-run and the score bar says so in green — tap that line and the run pauses so you can read what the achievement asked of you. Most are asked once per difficulty — Easy, Hard and Extreme count separately, and the list draws a bar for each. The whole list is behind the achievements line under NINE on the start screen, along with how far along you are on the ones you have not got yet."
@@ -45,7 +45,7 @@ msgstr ""
 "\n"
 "Achieve one mid-run and the score bar says so in green — tap that line and the run pauses so you can read what the achievement asked of you. Most are asked once per difficulty — Easy, Hard and Extreme count separately, and the list draws a bar for each. The whole list is behind the achievements line under NINE on the start screen, along with how far along you are on the ones you have not got yet."
 
-#: components/overlays/how-to-play-overlay.tsx:798
+#: components/overlays/how-to-play-overlay.tsx:790
 msgid ""
 "\n"
 "After the tenth target everyone’s score goes up on one list. The host can pick a mode and deal another game to the same room, so nobody has to swap codes again."
@@ -53,7 +53,7 @@ msgstr ""
 "\n"
 "After the tenth target everyone’s score goes up on one list. The host can pick a mode and deal another game to the same room, so nobody has to swap codes again."
 
-#: components/overlays/how-to-play-overlay.tsx:703
+#: components/overlays/how-to-play-overlay.tsx:695
 msgid ""
 "\n"
 "How deep you got is the whole score: every way costs about the same number of moves, so what you are choosing is where to go, not what is cheaper. Villages taken is counted beside it on the cards, but it is a tally rather than points. There is no difficulty to pick — the clock tightens the deeper you climb, which is the only one the mode has."
@@ -61,7 +61,7 @@ msgstr ""
 "\n"
 "How deep you got is the whole score: every way costs about the same number of moves, so what you are choosing is where to go, not what is cheaper. Villages taken is counted beside it on the cards, but it is a tally rather than points. There is no difficulty to pick — the clock tightens the deeper you climb, which is the only one the mode has."
 
-#: components/overlays/how-to-play-overlay.tsx:481
+#: components/overlays/how-to-play-overlay.tsx:473
 msgid ""
 "\n"
 "So the bottom-right button (row 3 × column 3 = 9) moves the total in big leaps, while the top-left (1 × 1 = 1) nudges it by exactly its digit — perfect for fine-tuning the last few points."
@@ -69,7 +69,7 @@ msgstr ""
 "\n"
 "So the bottom-right button (row 3 × column 3 = 9) moves the total in big leaps, while the top-left (1 × 1 = 1) nudges it by exactly its digit — perfect for fine-tuning the last few points."
 
-#: components/overlays/how-to-play-overlay.tsx:627
+#: components/overlays/how-to-play-overlay.tsx:619
 msgid ""
 "\n"
 "Some villages have walls, and you can see which before you choose — a walled village is drawn heavier, with bigger towers and a pennant flying from its wall. Dial that way and you do not walk in. You take it. Three hearts sit on the bar under ARCADE, and a siege is the fastest way to spend them — and the only way to get one back."
@@ -77,7 +77,7 @@ msgstr ""
 "\n"
 "Some villages have walls, and you can see which before you choose — a walled village is drawn heavier, with bigger towers and a pennant flying from its wall. Dial that way and you do not walk in. You take it. Three hearts sit on the bar under ARCADE, and a siege is the fastest way to spend them — and the only way to get one back."
 
-#: components/overlays/how-to-play-overlay.tsx:490
+#: components/overlays/how-to-play-overlay.tsx:482
 msgid ""
 "\n"
 "Tap to count up — 9 wraps back to 0 — swipe down to step back one, and swipe left or right to jump straight to 0 or 9.\n"
@@ -89,7 +89,7 @@ msgstr ""
 "\n"
 "You can keep going without lifting your finger. Drag across the dial and each button takes the direction you leave it by, so one sweep right along a row sets all three to 9. Change your mind on a button and only the way you leave it counts, and a button only answers to a finger that really crosses it — so brushing the edge of its neighbour on the way past costs you nothing. Tip: turn on “Show sum in buttons” under Options to see each button’s live contribution."
 
-#: components/overlays/how-to-play-overlay.tsx:672
+#: components/overlays/how-to-play-overlay.tsx:664
 msgid ""
 "\n"
 "The hero eats. The bar beside the hearts is how fed they are, and every way you walk takes a bite out of it — a smaller bite the fewer moves you took to dial the target, so the tidy route is the one that keeps you fed. Getting dragged back costs the largest bite there is."
@@ -177,7 +177,7 @@ msgstr "— TODAY TOOK NO NAMES —"
 msgid "— TODAY, NOBODY WAS FAST ENOUGH —"
 msgstr "— TODAY, NOBODY WAS FAST ENOUGH —"
 
-#: components/overlays/tab-panel.tsx:124
+#: components/overlays/tab-panel.tsx:125
 msgid "— UNAVAILABLE —"
 msgstr "— UNAVAILABLE —"
 
@@ -189,8 +189,8 @@ msgstr ", [B] with [S]"
 msgid "???"
 msgstr "???"
 
-#: components/overlays/admin-people.tsx:76
-#: components/overlays/admin-person.tsx:185
+#: components/overlays/admin-people.tsx:71
+#: components/overlays/admin-person.tsx:177
 msgid "(no nickname)"
 msgstr "(no nickname)"
 
@@ -283,7 +283,7 @@ msgid "[W] took the all-time [BOARD] record on [D], and still has it."
 msgstr "[W] took the all-time [BOARD] record on [D], and still has it."
 
 #. placeholder {0}: Math.floor(joinedMonths / MONTHS_IN_YEAR)
-#: components/overlays/player-profile-overlay.tsx:273
+#: components/overlays/player-profile-overlay.tsx:293
 msgid "{0, plural, one {joined a year ago} other {joined # years ago}}"
 msgstr "{0, plural, one {joined a year ago} other {joined # years ago}}"
 
@@ -299,11 +299,11 @@ msgstr "{fromDay} – {toDay} {toMonth}"
 msgid "{fromDay} {fromMonth} – {toDay} {toMonth}"
 msgstr "{fromDay} {fromMonth} – {toDay} {toMonth}"
 
-#: components/overlays/show-more.tsx:39
+#: components/overlays/show-more.tsx:38
 msgid "{hidden, plural, one {SHOW # MORE} other {SHOW # MORE}}"
 msgstr "{hidden, plural, one {SHOW # MORE} other {SHOW # MORE}}"
 
-#: components/overlays/player-profile-overlay.tsx:267
+#: components/overlays/player-profile-overlay.tsx:287
 msgid "{joinedMonths, plural, one {joined a month ago} other {joined # months ago}}"
 msgstr "{joinedMonths, plural, one {joined a month ago} other {joined # months ago}}"
 
@@ -312,31 +312,31 @@ msgstr "{joinedMonths, plural, one {joined a month ago} other {joined # months a
 msgid "+{0} TO YOUR FORTUNE"
 msgstr "+{0} TO YOUR FORTUNE"
 
-#: components/overlays/recent-winners.tsx:32
+#: components/overlays/recent-winners.tsx:34
 msgid "<0/> won last week"
 msgstr "<0/> won last week"
 
-#: components/overlays/recent-winners.tsx:27
+#: components/overlays/recent-winners.tsx:29
 msgid "<0/> won yesterday"
 msgstr "<0/> won yesterday"
 
-#: components/overlays/recent-winners.tsx:37
+#: components/overlays/recent-winners.tsx:39
 msgid "<0/> won yesterday and last week"
 msgstr "<0/> won yesterday and last week"
 
-#: components/overlays/player-profile-overlay.tsx:406
+#: components/overlays/player-profile-overlay.tsx:414
 msgid "<0>{shownAchievements}</0> OF {ACHIEVEMENT_COUNT} ACHIEVEMENTS"
 msgstr "<0>{shownAchievements}</0> OF {ACHIEVEMENT_COUNT} ACHIEVEMENTS"
 
-#: components/overlays/how-to-play-overlay.tsx:727
+#: components/overlays/how-to-play-overlay.tsx:719
 msgid "👑 The crown is both at once — the rarest thing in the game, and the only way to wear one mark instead of two."
 msgstr "👑 The crown is both at once — the rarest thing in the game, and the only way to wear one mark instead of two."
 
-#: components/overlays/how-to-play-overlay.tsx:722
+#: components/overlays/how-to-play-overlay.tsx:714
 msgid "🦅 The eagle is Speed at its hardest, for the dive rather than the search."
 msgstr "🦅 The eagle is Speed at its hardest, for the dive rather than the search."
 
-#: components/overlays/how-to-play-overlay.tsx:716
+#: components/overlays/how-to-play-overlay.tsx:708
 msgid "🦉 The owl is Accuracy at its hardest. That board rewards the exact route, and the owl is the eye that finds it."
 msgstr "🦉 The owl is Accuracy at its hardest. That board rewards the exact route, and the owl is the eye that finds it."
 
@@ -348,11 +348,11 @@ msgstr "A bad week for the record boards: [C] of them fell."
 msgid "A button on 9 goes to 0 in a single tap — quicker than swiping there."
 msgstr "A button on 9 goes to 0 in a single tap — quicker than swiping there."
 
-#: components/overlays/how-to-play-overlay.tsx:530
+#: components/overlays/how-to-play-overlay.tsx:522
 msgid "A coach line says when a move was wasted, and what a hit cost."
 msgstr "A coach line says when a move was wasted, and what a hit cost."
 
-#: lib/account-email.ts:133
+#: lib/account-email.ts:136
 msgid "A code is six digits."
 msgstr "A code is six digits."
 
@@ -360,7 +360,7 @@ msgstr "A code is six digits."
 msgid "A fresh face"
 msgstr "A fresh face"
 
-#: components/overlays/how-to-play-overlay.tsx:475
+#: components/overlays/how-to-play-overlay.tsx:467
 msgid "A glowing target number floats onto the board. Turn the nine dial buttons so the whole grid adds up to exactly that number, and the target pops — a hit.\n"
 "\n"
 "Every button holds a digit 0–9, but where it sits decides how much it counts. Each button’s weight is its row order × its column order — rows numbered 1–3 top to bottom, columns 1–3 left to right — so it adds row × column × value to the total."
@@ -396,15 +396,15 @@ msgstr "A REPLY"
 msgid "A rout. Somebody should tell them where the keys are."
 msgstr "A rout. Somebody should tell them where the keys are."
 
-#: components/overlays/how-to-play-overlay.tsx:547
+#: components/overlays/how-to-play-overlay.tsx:539
 msgid "A shorter clock — the sooner you hit, the more it scores."
 msgstr "A shorter clock — the sooner you hit, the more it scores."
 
-#: components/overlays/how-to-play-overlay.tsx:550
+#: components/overlays/how-to-play-overlay.tsx:542
 msgid "A slow hit breaks the streak; let a target run out and you lose a life."
 msgstr "A slow hit breaks the streak; let a target run out and you lose a life."
 
-#: components/overlays/how-to-play-overlay.tsx:763
+#: components/overlays/how-to-play-overlay.tsx:755
 msgid "A stack of them nobody is told about until they happen."
 msgstr "A stack of them nobody is told about until they happen."
 
@@ -420,15 +420,15 @@ msgstr "A thin line above the game now shows your best on this board next to tod
 msgid "A tie, which is the one result neither of you wanted."
 msgstr "A tie, which is the one result neither of you wanted."
 
-#: components/overlays/how-to-play-overlay.tsx:638
+#: components/overlays/how-to-play-overlay.tsx:630
 msgid "A tower takes several hits — more of them the deeper you are — and a hit means arriving at its number. Every hit it survives it takes a new number, so a tower is several journeys across the dial rather than one answer found and then repeated."
 msgstr "A tower takes several hits — more of them the deeper you are — and a hit means arriving at its number. Every hit it survives it takes a new number, so a tower is several journeys across the dial rather than one answer found and then repeated."
 
-#: components/overlays/how-to-play-overlay.tsx:581
+#: components/overlays/how-to-play-overlay.tsx:573
 msgid "A village whose ring runs out withers off the fan and stops answering the dial. The others stay — you are only dragged back when the last of them gives up, which is what the red creeping along the way behind you is counting down to."
 msgstr "A village whose ring runs out withers off the fan and stops answering the dial. The others stay — you are only dragged back when the last of them gives up, which is what the red creeping along the way behind you is counting down to."
 
-#: components/overlays/how-to-play-overlay.tsx:676
+#: components/overlays/how-to-play-overlay.tsx:668
 msgid "A walled village is the only food on the map. Take one and the bar goes back to full — which is why a hungry run has to go looking for a fight rather than away from one."
 msgstr "A walled village is the only food on the map. Take one and the bar goes back to full — which is why a hungry run has to go looking for a fight rather than away from one."
 
@@ -448,7 +448,7 @@ msgstr "A whisker in it, and the whisker is theirs."
 msgid "A whisker in it, and the whisker is yours."
 msgstr "A whisker in it, and the whisker is yours."
 
-#: components/overlays/player-profile-overlay.tsx:83
+#: components/overlays/player-profile-overlay.tsx:85
 #: modes/definitions/accuracy.ts:12
 msgid "ACC"
 msgstr "ACC"
@@ -458,18 +458,18 @@ msgstr "ACC"
 msgid "ACCURACY"
 msgstr "ACCURACY"
 
-#: components/overlays/how-to-play-overlay.tsx:507
+#: components/overlays/how-to-play-overlay.tsx:499
 msgid "Accuracy — how close to the fewest possible moves you were."
 msgstr "Accuracy — how close to the fewest possible moves you were."
 
-#: components/overlays/achievement-progress.tsx:15
+#: components/overlays/achievement-progress.tsx:17
 #: components/overlays/achievements-overlay.tsx:75
 #: components/overlays/compare-stat-row.tsx:25
-#: components/overlays/how-to-play-overlay.tsx:48
+#: components/overlays/how-to-play-overlay.tsx:49
 msgid "ACHIEVEMENTS"
 msgstr "ACHIEVEMENTS"
 
-#: components/overlays/how-to-play-overlay.tsx:741
+#: components/overlays/how-to-play-overlay.tsx:733
 msgid "Achievements are the other kind. Nothing can take one back: they are achieved once and yours for good, and they are measured against you rather than against anybody else — so they are there to be collected whether or not your score is ever good enough for a board.\n"
 "\n"
 "There are dozens, and they ask for all sorts of things."
@@ -477,15 +477,15 @@ msgstr "Achievements are the other kind. Nothing can take one back: they are ach
 "\n"
 "There are dozens, and they ask for all sorts of things."
 
-#: components/overlays/admin-roles.tsx:87
+#: components/overlays/admin-roles.tsx:80
 msgid "ADD"
 msgstr "ADD"
 
-#: components/overlays/player-profile-overlay.tsx:603
+#: components/overlays/player-profile-overlay.tsx:579
 msgid "ADD AN EMAIL"
 msgstr "ADD AN EMAIL"
 
-#: components/overlays/profile-motto.tsx:49
+#: components/overlays/profile-motto.tsx:48
 msgid "ADD MOTTO"
 msgstr "ADD MOTTO"
 
@@ -505,12 +505,12 @@ msgstr "ADD YOUR NICKNAME"
 msgid "ADDED TO YOUR FORTUNE"
 msgstr "ADDED TO YOUR FORTUNE"
 
-#: components/overlays/admin-overlay.tsx:85
-#: components/overlays/menu-overlay.tsx:654
+#: components/overlays/admin-overlay.tsx:86
+#: components/overlays/menu-overlay.tsx:666
 msgid "ADMIN"
 msgstr "ADMIN"
 
-#: components/overlays/advanced-options-overlay.tsx:76
+#: components/overlays/advanced-options-overlay.tsx:74
 msgid "ADVANCED"
 msgstr "ADVANCED"
 
@@ -538,11 +538,11 @@ msgstr "ALL THREE"
 msgid "ALLOW"
 msgstr "ALLOW"
 
-#: components/overlays/title-mark.tsx:75
+#: components/overlays/title-mark.tsx:76
 msgid "An eagle dives at 240 km/h. This player is the quicker one — Extreme Speed's all-time record is theirs."
 msgstr "An eagle dives at 240 km/h. This player is the quicker one — Extreme Speed's all-time record is theirs."
 
-#: components/overlays/title-mark.tsx:74
+#: components/overlays/title-mark.tsx:75
 msgid "An eagle dives at 240 km/h. You are the quicker one — Extreme Speed's all-time record is yours."
 msgstr "An eagle dives at 240 km/h. You are the quicker one — Extreme Speed's all-time record is yours."
 
@@ -550,23 +550,23 @@ msgstr "An eagle dives at 240 km/h. You are the quicker one — Extreme Speed's 
 msgid "An empty table. Somebody go first."
 msgstr "An empty table. Somebody go first."
 
-#: components/overlays/title-mark.tsx:69
+#: components/overlays/title-mark.tsx:70
 msgid "An owl can hear a mouse under half a metre of snow. This player is the more exact one — Extreme Accuracy's all-time record is theirs."
 msgstr "An owl can hear a mouse under half a metre of snow. This player is the more exact one — Extreme Accuracy's all-time record is theirs."
 
-#: components/overlays/title-mark.tsx:68
+#: components/overlays/title-mark.tsx:69
 msgid "An owl can hear a mouse under half a metre of snow. You are the more exact one — Extreme Accuracy's all-time record is yours."
 msgstr "An owl can hear a mouse under half a metre of snow. You are the more exact one — Extreme Accuracy's all-time record is yours."
 
-#: components/overlays/how-to-play-overlay.tsx:589
+#: components/overlays/how-to-play-overlay.tsx:581
 msgid "Answer while most of that clock is still full and you strike: the hero does not stop at the next crossroad, it rockets through and lands one deeper."
 msgstr "Answer while most of that clock is still full and you strike: the hero does not stop at the next crossroad, it rockets through and lands one deeper."
 
-#: components/overlays/feedback-overlay.tsx:152
+#: components/overlays/feedback-overlay.tsx:142
 msgid "Anything at all — what broke, what annoyed you, what you wish it did. The mode, difficulty and score you are on go with it, and so does the run you have paused."
 msgstr "Anything at all — what broke, what annoyed you, what you wish it did. The mode, difficulty and score you are on go with it, and so does the run you have paused."
 
-#: components/overlays/feedback-overlay.tsx:147
+#: components/overlays/feedback-overlay.tsx:137
 msgid "Anything at all — what broke, what annoyed you, what you wish it did. The mode, difficulty and score you are on go with it."
 msgstr "Anything at all — what broke, what annoyed you, what you wish it did. The mode, difficulty and score you are on go with it."
 
@@ -583,16 +583,16 @@ msgid "ARC"
 msgstr "ARC"
 
 #: components/game/arcade-game.tsx:734
-#: components/overlays/how-to-play-overlay.tsx:51
+#: components/overlays/how-to-play-overlay.tsx:52
 #: modes/definitions/arcade.ts:15
 msgid "ARCADE"
 msgstr "ARCADE"
 
-#: components/overlays/medals-overlay.tsx:177
+#: components/overlays/medals-overlay.tsx:173
 msgid "ARE YOU WINNING?"
 msgstr "ARE YOU WINNING?"
 
-#: components/overlays/join-room-overlay.tsx:52
+#: components/overlays/join-room-overlay.tsx:49
 msgid "Ask whoever created the room for their 4-digit code."
 msgstr "Ask whoever created the room for their 4-digit code."
 
@@ -612,9 +612,9 @@ msgstr "Average 90% speed over a run of 20 hits or more."
 msgid "Average 95% accuracy over a run of 20 hits or more."
 msgstr "Average 95% accuracy over a run of 20 hits or more."
 
-#: components/overlays/player-profile-overlay.tsx:385
-#: components/overlays/player-profile-overlay.tsx:390
-#: components/overlays/player-profile-overlay.tsx:468
+#: components/overlays/player-profile-overlay.tsx:393
+#: components/overlays/player-profile-overlay.tsx:398
+#: components/overlays/player-profile-overlay.tsx:474
 msgid "AVG"
 msgstr "AVG"
 
@@ -629,11 +629,11 @@ msgid "AVG SPD"
 msgstr "AVG SPD"
 
 #: components/game/arcade-over.tsx:49
-#: components/overlays/whats-new-overlay.tsx:85
+#: components/overlays/whats-new-overlay.tsx:84
 msgid "BACK"
 msgstr "BACK"
 
-#: components/game/tutorial-stepper.tsx:112
+#: components/game/tutorial-stepper.tsx:113
 msgid "Back a step"
 msgstr "Back a step"
 
@@ -662,8 +662,8 @@ msgid "Behind, and within reach — two boards would do it."
 msgstr "Behind, and within reach — two boards would do it."
 
 #: components/game/best-scores-line.tsx:57
-#: components/overlays/player-profile-overlay.tsx:459
-#: components/overlays/player-profile-overlay.tsx:473
+#: components/overlays/player-profile-overlay.tsx:465
+#: components/overlays/player-profile-overlay.tsx:479
 msgid "BEST"
 msgstr "BEST"
 
@@ -675,8 +675,8 @@ msgstr "Best scores, up top"
 msgid "BLUR"
 msgstr "BLUR"
 
-#: components/overlays/compare-overlay.tsx:201
-#: components/overlays/player-profile-overlay.tsx:421
+#: components/overlays/compare-overlay.tsx:202
+#: components/overlays/player-profile-overlay.tsx:427
 msgid "BOARDS"
 msgstr "BOARDS"
 
@@ -688,7 +688,7 @@ msgstr "BOTTOM LEFT"
 msgid "BOTTOM RIGHT"
 msgstr "BOTTOM RIGHT"
 
-#: components/overlays/how-to-play-overlay.tsx:529
+#: components/overlays/how-to-play-overlay.tsx:521
 msgid "Buttons can show their weight, their ceiling, and what each is giving right now — pick which from MENU during a run."
 msgstr "Buttons can show their weight, their ceiling, and what each is giving right now — pick which from MENU during a run."
 
@@ -697,13 +697,13 @@ msgid "CAN WE LOOK UNDER YOUR THUMBS?"
 msgstr "CAN WE LOOK UNDER YOUR THUMBS?"
 
 #: components/overlays/email-modal.tsx:131
-#: components/overlays/join-room-overlay.tsx:90
+#: components/overlays/join-room-overlay.tsx:87
 #: components/overlays/motto-modal.tsx:123
-#: components/overlays/multiplayer-waiting.tsx:230
+#: components/overlays/multiplayer-waiting.tsx:221
 msgid "CANCEL"
 msgstr "CANCEL"
 
-#: components/overlays/compare-overlay.tsx:185
+#: components/overlays/compare-overlay.tsx:186
 msgid "CAREER"
 msgstr "CAREER"
 
@@ -715,11 +715,11 @@ msgstr "CEILING"
 msgid "Chain your hits — a streak multiplies your points ×2 → ×4 → ×8. Accuracy counts optimal routes, Speed counts hits with most of the ring left."
 msgstr "Chain your hits — a streak multiplies your points ×2 → ×4 → ×8. Accuracy counts optimal routes, Speed counts hits with most of the ring left."
 
-#: components/overlays/how-to-play-overlay.tsx:45
+#: components/overlays/how-to-play-overlay.tsx:46
 msgid "CHAMPIONS"
 msgstr "CHAMPIONS"
 
-#: components/overlays/email-code-modal.tsx:285
+#: components/overlays/email-code-modal.tsx:287
 msgid "CHANGE EMAIL"
 msgstr "CHANGE EMAIL"
 
@@ -731,9 +731,9 @@ msgstr "Choose Add to Home Screen"
 msgid "Climb the way, or fall back."
 msgstr "Climb the way, or fall back."
 
-#: components/overlays/compare-overlay.tsx:240
+#: components/overlays/compare-overlay.tsx:235
 #: components/overlays/email-code-modal.tsx:219
-#: components/overlays/player-profile-overlay.tsx:636
+#: components/overlays/player-profile-overlay.tsx:603
 msgid "CLOSE"
 msgstr "CLOSE"
 
@@ -745,7 +745,7 @@ msgstr "Come back to Trainee once you have been scoring a while. It is the only 
 msgid "Comfortable. Comfort is how boards change hands."
 msgstr "Comfortable. Comfort is how boards change hands."
 
-#: components/overlays/player-profile-overlay.tsx:574
+#: components/overlays/player-profile-overlay.tsx:637
 msgid "COMPARE WITH ME"
 msgstr "COMPARE WITH ME"
 
@@ -761,7 +761,7 @@ msgstr "CONFIRM YOUR EMAIL"
 msgid "CONFIRMING…"
 msgstr "CONFIRMING…"
 
-#: components/overlays/menu-overlay.tsx:535
+#: components/overlays/menu-overlay.tsx:547
 msgid "CONNECT TO THE INTERNET TO PLAY WITH FRIENDS"
 msgstr "CONNECT TO THE INTERNET TO PLAY WITH FRIENDS"
 
@@ -775,11 +775,11 @@ msgstr "CONTINUE"
 msgid "Continue the tutorial"
 msgstr "Continue the tutorial"
 
-#: components/overlays/how-to-play-overlay.tsx:42
+#: components/overlays/how-to-play-overlay.tsx:43
 msgid "CONTROLS"
 msgstr "CONTROLS"
 
-#: components/overlays/menu-overlay.tsx:499
+#: components/overlays/menu-overlay.tsx:511
 msgid "CREATE ROOM"
 msgstr "CREATE ROOM"
 
@@ -804,20 +804,20 @@ msgstr "Dec"
 msgid "DECEMBER"
 msgstr "DECEMBER"
 
-#: components/overlays/admin-role.tsx:198
+#: components/overlays/admin-role.tsx:193
 msgid "DELETE ROLE"
 msgstr "DELETE ROLE"
 
-#: components/overlays/dev-overlay.tsx:89
-#: components/overlays/menu-overlay.tsx:644
+#: components/overlays/dev-overlay.tsx:83
+#: components/overlays/menu-overlay.tsx:656
 msgid "DEV"
 msgstr "DEV"
 
-#: components/overlays/how-to-play-overlay.tsx:568
+#: components/overlays/how-to-play-overlay.tsx:560
 msgid "Dial any target at the crossroad and you take that way. The ways you refused wither behind you."
 msgstr "Dial any target at the crossroad and you take that way. The ways you refused wither behind you."
 
-#: components/overlays/how-to-play-overlay.tsx:465
+#: components/overlays/how-to-play-overlay.tsx:457
 msgid "DIAL THE GRID · MATCH THE NUMBER"
 msgstr "DIAL THE GRID · MATCH THE NUMBER"
 
@@ -825,7 +825,7 @@ msgstr "DIAL THE GRID · MATCH THE NUMBER"
 msgid "DID IT REACH YOU?"
 msgstr "DID IT REACH YOU?"
 
-#: components/overlays/advanced-options-overlay.tsx:82
+#: components/overlays/advanced-options-overlay.tsx:80
 msgid "Display value × row × column"
 msgstr "Display value × row × column"
 
@@ -833,12 +833,12 @@ msgstr "Display value × row × column"
 msgid "Do something nobody thought to ask for."
 msgstr "Do something nobody thought to ask for."
 
-#: components/overlays/admin-overlay.tsx:135
-#: components/overlays/admin-person.tsx:289
-#: components/overlays/admin-role.tsx:211
-#: components/overlays/advanced-options-overlay.tsx:137
-#: components/overlays/dev-overlay.tsx:116
-#: components/overlays/news-archive-overlay.tsx:45
+#: components/overlays/admin-overlay.tsx:131
+#: components/overlays/admin-person.tsx:276
+#: components/overlays/admin-role.tsx:204
+#: components/overlays/advanced-options-overlay.tsx:127
+#: components/overlays/dev-overlay.tsx:108
+#: components/overlays/news-archive-overlay.tsx:43
 msgid "DONE"
 msgstr "DONE"
 
@@ -850,7 +850,7 @@ msgstr "e.g. ACE_9"
 msgid "e.g. I dial faster than I think"
 msgstr "e.g. I dial faster than I think"
 
-#: components/overlays/how-to-play-overlay.tsx:496
+#: components/overlays/how-to-play-overlay.tsx:488
 msgid "Each target carries a shrinking ring — its countdown. Land the sum before the ring empties. The colour behind the ring tells you the target’s hundreds at a glance: plain grey under 100, violet in the 100s, rose in the 200s, amber in the 300s — so 223 never passes for 123. Several targets can share the board at once (up to 3, or 4 on Extreme), and new ones keep arriving, so pick your order wisely. Both scored modes tighten as you go, in opposite ways. In Speed each new target arrives with a slightly shorter ring than the last. In Accuracy the ring never shrinks — you always get the full time to think — but targets start arriving closer together, so the board fills up around you. Either squeeze eases off as it goes, so a long run gets harder without ever running away from you."
 msgstr "Each target carries a shrinking ring — its countdown. Land the sum before the ring empties. The colour behind the ring tells you the target’s hundreds at a glance: plain grey under 100, violet in the 100s, rose in the 200s, amber in the 300s — so 223 never passes for 123. Several targets can share the board at once (up to 3, or 4 on Extreme), and new ones keep arriving, so pick your order wisely. Both scored modes tighten as you go, in opposite ways. In Speed each new target arrives with a slightly shorter ring than the last. In Accuracy the ring never shrinks — you always get the full time to think — but targets start arriving closer together, so the board fills up around you. Either squeeze eases off as it goes, so a long run gets harder without ever running away from you."
 
@@ -862,11 +862,11 @@ msgstr "EARLY BIRD"
 msgid "EASY"
 msgstr "EASY"
 
-#: components/overlays/player-profile-overlay.tsx:603
+#: components/overlays/player-profile-overlay.tsx:579
 msgid "EMAIL"
 msgstr "EMAIL"
 
-#: components/overlays/how-to-play-overlay.tsx:689
+#: components/overlays/how-to-play-overlay.tsx:681
 msgid "Empty the bar and it turns red and starts to pulse: you are starving, and a heart goes every five seconds until you eat."
 msgstr "Empty the bar and it turns red and starts to pulse: you are starving, and a heart goes every five seconds until you eat."
 
@@ -900,7 +900,7 @@ msgid "Even. Perfectly, annoyingly even."
 msgstr "Even. Perfectly, annoyingly even."
 
 #: components/game/best-scores-line.tsx:50
-#: components/overlays/board-medals.tsx:16
+#: components/overlays/board-medals.tsx:18
 #: components/overlays/high-scores.tsx:35
 msgid "EVER"
 msgstr "EVER"
@@ -909,7 +909,7 @@ msgstr "EVER"
 msgid "Every button tops out at nine times its weight: 81 on the 9×, 9 on a 1×. Knowing the ceilings is what tells you which button can close a gap, and in how few moves."
 msgstr "Every button tops out at nine times its weight: 81 on the 9×, 9 on a 1×. Knowing the ceilings is what tells you which button can close a gap, and in how few moves."
 
-#: components/overlays/dev-overlay.tsx:92
+#: components/overlays/dev-overlay.tsx:86
 msgid "EVERY CHALLENGE, ANY WINDOW — NO BOARD KEPT"
 msgstr "EVERY CHALLENGE, ANY WINDOW — NO BOARD KEPT"
 
@@ -925,19 +925,19 @@ msgstr "Every day was [A]’s except [D]. [B] got exactly one, and made it count
 msgid "Every row you lose here, you lost first on a board."
 msgstr "Every row you lose here, you lost first on a board."
 
-#: components/overlays/how-to-play-overlay.tsx:608
+#: components/overlays/how-to-play-overlay.tsx:600
 msgid "Every target is a village with a name, and the country between them is drawn as you climb: farmland, then forest, then hills, then mountains."
 msgstr "Every target is a village with a name, and the country between them is drawn as you climb: farmland, then forest, then hills, then mountains."
 
-#: components/overlays/how-to-play-overlay.tsx:574
+#: components/overlays/how-to-play-overlay.tsx:566
 msgid "Every village holds out for its own length of time, and the ring inside its wall is what is left of it. They are not the same: the one you want may be the one about to go."
 msgstr "Every village holds out for its own length of time, and the ring inside its wall is what is left of it. They are not the same: the one you want may be the one about to go."
 
-#: components/overlays/how-to-play-overlay.tsx:785
+#: components/overlays/how-to-play-overlay.tsx:777
 msgid "Everyone who hits is ranked by how few moves it took."
 msgstr "Everyone who hits is ranked by how few moves it took."
 
-#: components/overlays/admin-people.tsx:224
+#: components/overlays/admin-people.tsx:210
 msgid "EVERYONE WITH A ROLE OR AN OVERRIDE"
 msgstr "EVERYONE WITH A ROLE OR AN OVERRIDE"
 
@@ -965,11 +965,11 @@ msgstr "Fast hits build big combos."
 msgid "FAST START"
 msgstr "FAST START"
 
-#: components/overlays/admin-person.tsx:251
+#: components/overlays/admin-person.tsx:240
 msgid "FEATURES"
 msgstr "FEATURES"
 
-#: components/overlays/admin-role.tsx:145
+#: components/overlays/admin-role.tsx:146
 msgid "FEATURES IN THIS STACK"
 msgstr "FEATURES IN THIS STACK"
 
@@ -989,11 +989,11 @@ msgstr "FEEDBACK"
 msgid "FELL"
 msgstr "FELL"
 
-#: components/overlays/trainee-display-options.tsx:37
+#: components/overlays/trainee-display-options.tsx:38
 msgid "FEWEST MOVES"
 msgstr "FEWEST MOVES"
 
-#: components/overlays/admin-people.tsx:199
+#: components/overlays/admin-people.tsx:186
 msgid "FIND"
 msgstr "FIND"
 
@@ -1053,7 +1053,7 @@ msgstr "FIRST HIT"
 msgid "FIRST RUN"
 msgstr "FIRST RUN"
 
-#: components/overlays/how-to-play-overlay.tsx:654
+#: components/overlays/how-to-play-overlay.tsx:646
 msgid "Flatten every tower and the village is yours — the walls come down, a heart comes back, up to three again, and you eat your fill."
 msgstr "Flatten every tower and the village is yours — the walls come down, a heart comes back, up to three again, and you eat your fill."
 
@@ -1065,7 +1065,7 @@ msgstr "FLAWLESS TEN"
 msgid "FORTUNE"
 msgstr "FORTUNE"
 
-#: components/game/tutorial-stepper.tsx:161
+#: components/game/tutorial-stepper.tsx:162
 msgid "Forward a step"
 msgstr "Forward a step"
 
@@ -1093,11 +1093,11 @@ msgstr "GAME"
 msgid "GAME CODE"
 msgstr "GAME CODE"
 
-#: components/overlays/trainee-display-options.tsx:35
+#: components/overlays/trainee-display-options.tsx:36
 msgid "GAME STATS"
 msgstr "GAME STATS"
 
-#: components/overlays/how-to-play-overlay.tsx:602
+#: components/overlays/how-to-play-overlay.tsx:594
 msgid "Get dragged back off the first crossroad and you fall into the mouth, and the run is over."
 msgstr "Get dragged back off the first crossroad and you fall into the mouth, and the run is over."
 
@@ -1113,8 +1113,8 @@ msgstr "GOOD SPORT"
 msgid "GOOSE EGG"
 msgstr "GOOSE EGG"
 
-#: components/overlays/feedback-reply-overlay.tsx:114
-#: components/overlays/how-to-play-overlay.tsx:824
+#: components/overlays/feedback-reply-overlay.tsx:109
+#: components/overlays/how-to-play-overlay.tsx:813
 msgid "GOT IT"
 msgstr "GOT IT"
 
@@ -1146,13 +1146,13 @@ msgstr "HELD SPEED"
 msgid "HELP US SEE THE ROUGH EDGES"
 msgstr "HELP US SEE THE ROUGH EDGES"
 
-#: components/overlays/how-to-play-overlay.tsx:549
+#: components/overlays/how-to-play-overlay.tsx:541
 msgid "Hit while most of the ring is left to build your combo streak."
 msgstr "Hit while most of the ring is left to build your combo streak."
 
 #: components/game/trainee-stats.tsx:64
 #: components/overlays/compare-stat-row.tsx:21
-#: components/overlays/player-profile-overlay.tsx:358
+#: components/overlays/player-profile-overlay.tsx:366
 #: lib/run-stats.ts:47
 msgid "HITS"
 msgstr "HITS"
@@ -1177,15 +1177,15 @@ msgstr "Hold first all-time on Extreme Accuracy."
 msgid "Hold first all-time on Extreme Speed."
 msgstr "Hold first all-time on Extreme Speed."
 
-#: components/overlays/how-to-play-overlay.tsx:712
+#: components/overlays/how-to-play-overlay.tsx:704
 msgid "Hold the all-time record on a mode’s Extreme board and you carry its mark. It travels with your name everywhere it is drawn — the boards, your own row, a multiplayer room — so the hardest boards say who holds them without anyone having to look them up."
 msgstr "Hold the all-time record on a mode’s Extreme board and you carry its mark. It travels with your name everywhere it is drawn — the boards, your own row, a multiplayer room — so the hardest boards say who holds them without anyone having to look them up."
 
-#: components/overlays/medals-overlay.tsx:190
+#: components/overlays/medals-overlay.tsx:186
 msgid "HOLDING"
 msgstr "HOLDING"
 
-#: components/overlays/admin-role.tsx:126
+#: components/overlays/admin-role.tsx:127
 msgid "holding this role"
 msgstr "holding this role"
 
@@ -1195,12 +1195,12 @@ msgid "HOME"
 msgstr "HOME"
 
 #: components/game/arcade-dawn.tsx:127
-#: components/overlays/arcade-teaser.tsx:138
+#: components/overlays/arcade-teaser.tsx:147
 msgid "How far can you go?"
 msgstr "How far can you go?"
 
-#: components/overlays/how-to-play-overlay.tsx:459
-#: components/overlays/menu-overlay.tsx:621
+#: components/overlays/how-to-play-overlay.tsx:454
+#: components/overlays/menu-overlay.tsx:633
 msgid "HOW TO PLAY"
 msgstr "HOW TO PLAY"
 
@@ -1240,11 +1240,11 @@ msgstr "INSTALL"
 msgid "INTO THE DEEP"
 msgstr "INTO THE DEEP"
 
-#: components/overlays/player-profile-overlay.tsx:206
+#: components/overlays/player-profile-overlay.tsx:208
 msgid "IS THAT YOU?"
 msgstr "IS THAT YOU?"
 
-#: components/overlays/feedback-overlay.tsx:121
+#: components/overlays/feedback-overlay.tsx:118
 msgid "It went straight to the person who makes this, and it is read. If it gets an answer, you will find one here next time you open the game."
 msgstr "It went straight to the person who makes this, and it is read. If it gets an answer, you will find one here next time you open the game."
 
@@ -1256,8 +1256,8 @@ msgstr "Jan"
 msgid "JANUARY"
 msgstr "JANUARY"
 
-#: components/overlays/join-room-overlay.tsx:78
-#: components/overlays/menu-overlay.tsx:518
+#: components/overlays/join-room-overlay.tsx:75
+#: components/overlays/menu-overlay.tsx:530
 msgid "JOIN ROOM"
 msgstr "JOIN ROOM"
 
@@ -1265,7 +1265,7 @@ msgstr "JOIN ROOM"
 msgid "JOIN WITH CODE"
 msgstr "JOIN WITH CODE"
 
-#: components/overlays/player-profile-overlay.tsx:265
+#: components/overlays/player-profile-overlay.tsx:285
 msgid "joined this month"
 msgstr "joined this month"
 
@@ -1285,7 +1285,7 @@ msgstr "Jun"
 msgid "JUNE"
 msgstr "JUNE"
 
-#: components/tutorial-curtain.tsx:140
+#: components/tutorial-curtain.tsx:142
 msgid "JUST THE TUTORIAL - NOTHING HERE IS SCORED"
 msgstr "JUST THE TUTORIAL - NOTHING HERE IS SCORED"
 
@@ -1297,7 +1297,7 @@ msgstr "Keep a single run going for a whole hour."
 msgid "Keep a single run going for ten minutes."
 msgstr "Keep a single run going for ten minutes."
 
-#: components/overlays/player-profile-overlay.tsx:617
+#: components/overlays/player-profile-overlay.tsx:590
 msgid "Keep this profile, or bring back one from another phone"
 msgstr "Keep this profile, or bring back one from another phone"
 
@@ -1325,7 +1325,7 @@ msgstr "Land your 999th target."
 msgid "Land your first target."
 msgstr "Land your first target."
 
-#: components/overlays/advanced-options-overlay.tsx:99
+#: components/overlays/advanced-options-overlay.tsx:94
 msgid "LANGUAGE"
 msgstr "LANGUAGE"
 
@@ -1341,7 +1341,7 @@ msgstr "Learn the nine times table cold. The 9× button steps 9, 18, 27 up to 81
 msgid "LEAVE GAME"
 msgstr "LEAVE GAME"
 
-#: components/overlays/how-to-play-overlay.tsx:539
+#: components/overlays/how-to-play-overlay.tsx:531
 msgid "Let a target’s ring run out and you lose one too — precision still has a clock."
 msgstr "Let a target’s ring run out and you lose one too — precision still has a clock."
 
@@ -1349,11 +1349,11 @@ msgstr "Let a target’s ring run out and you lose one too — precision still h
 msgid "LET THE ADVENTURE BEGIN"
 msgstr "LET THE ADVENTURE BEGIN"
 
-#: components/overlays/advanced-options-overlay.tsx:89
+#: components/overlays/advanced-options-overlay.tsx:87
 msgid "Let us watch replays to fix bugs"
 msgstr "Let us watch replays to fix bugs"
 
-#: components/tutorial-curtain.tsx:130
+#: components/tutorial-curtain.tsx:132
 msgid "LET'S LEARN THE GAME"
 msgstr "LET'S LEARN THE GAME"
 
@@ -1389,7 +1389,7 @@ msgstr "MARCH"
 msgid "Marks for the hardest boards"
 msgstr "Marks for the hardest boards"
 
-#: components/overlays/how-to-play-overlay.tsx:540
+#: components/overlays/how-to-play-overlay.tsx:532
 msgid "Matching every target in its optimal move count builds your streak."
 msgstr "Matching every target in its optimal move count builds your streak."
 
@@ -1405,7 +1405,7 @@ msgstr "May"
 msgid "MAY"
 msgstr "MAY"
 
-#: components/overlays/player-profile-overlay.tsx:498
+#: components/overlays/player-profile-overlay.tsx:504
 msgid "MEDALS HELD, EVER"
 msgstr "MEDALS HELD, EVER"
 
@@ -1413,7 +1413,7 @@ msgstr "MEDALS HELD, EVER"
 msgid "MENU"
 msgstr "MENU"
 
-#: components/overlays/how-to-play-overlay.tsx:44
+#: components/overlays/how-to-play-overlay.tsx:45
 msgid "MODES"
 msgstr "MODES"
 
@@ -1434,11 +1434,11 @@ msgid "More to find"
 msgstr "More to find"
 
 #: components/game/multiplayer-game.tsx:160
-#: components/overlays/how-to-play-overlay.tsx:52
+#: components/overlays/how-to-play-overlay.tsx:53
 msgid "MULTIPLAYER"
 msgstr "MULTIPLAYER"
 
-#: components/overlays/menu-overlay.tsx:598
+#: components/overlays/menu-overlay.tsx:610
 msgid "My best at Nine is {bestScore} — {board}. Think you can beat it?"
 msgstr "My best at Nine is {bestScore} — {board}. Think you can beat it?"
 
@@ -1458,7 +1458,7 @@ msgstr "NICK"
 msgid "NIGHT SHIFT"
 msgstr "NIGHT SHIFT"
 
-#: components/overlays/menu-overlay.tsx:599
+#: components/overlays/menu-overlay.tsx:611
 msgid "Nine buttons, one number to hit. Come take a run at it."
 msgstr "Nine buttons, one number to hit. Come take a run at it."
 
@@ -1480,7 +1480,7 @@ msgstr "Nine has a new look, and it goes all the way down.\n"
 msgid "NINE NINE NINE"
 msgstr "NINE NINE NINE"
 
-#: components/overlays/dev-overlay.tsx:104
+#: components/overlays/dev-overlay.tsx:98
 msgid "No challenges have been written yet."
 msgstr "No challenges have been written yet."
 
@@ -1492,7 +1492,7 @@ msgstr "No connection — a code can only be sent online."
 msgid "No connection — a nickname can only be claimed online."
 msgstr "No connection — a nickname can only be claimed online."
 
-#: lib/account-email.ts:136
+#: lib/account-email.ts:139
 msgid "No connection — nothing was sent."
 msgstr "No connection — nothing was sent."
 
@@ -1508,7 +1508,7 @@ msgstr "No lives, no rush."
 msgid "No records fell. They rarely do."
 msgstr "No records fell. They rarely do."
 
-#: components/overlays/player-profile-overlay.tsx:545
+#: components/overlays/player-profile-overlay.tsx:551
 msgid "No runs counted yet."
 msgstr "No runs counted yet."
 
@@ -1536,11 +1536,11 @@ msgstr "Nobody could take [BOARD] off [W] once."
 msgid "Nobody got a grip on it — [C] different players took a day of it."
 msgstr "Nobody got a grip on it — [C] different players took a day of it."
 
-#: components/overlays/medals-overlay.tsx:217
+#: components/overlays/medals-overlay.tsx:213
 msgid "Nobody has taken anything off you."
 msgstr "Nobody has taken anything off you."
 
-#: components/overlays/admin-people.tsx:253
+#: components/overlays/admin-people.tsx:236
 msgid "Nobody holds a role yet."
 msgstr "Nobody holds a role yet."
 
@@ -1560,7 +1560,7 @@ msgstr "Not close, not nearly. Go and play."
 msgid "Not everywhere, though. [W] held [BOARD] every day of the week."
 msgstr "Not everywhere, though. [W] held [BOARD] every day of the week."
 
-#: components/overlays/admin-features.tsx:162
+#: components/overlays/admin-features.tsx:159
 msgid "not in this build"
 msgstr "not in this build"
 
@@ -1569,15 +1569,15 @@ msgid "Not much happened. [A] took [N] of the [P] days anyone turned up for."
 msgstr "Not much happened. [A] took [N] of the [P] days anyone turned up for."
 
 #: components/game/step-up-toast.tsx:115
-#: components/overlays/tutorial-done-modal.tsx:110
+#: components/overlays/tutorial-done-modal.tsx:113
 msgid "NOT NOW"
 msgstr "NOT NOW"
 
-#: components/overlays/tab-panel.tsx:25
+#: components/overlays/tab-panel.tsx:26
 msgid "NOT PUBLISHED"
 msgstr "NOT PUBLISHED"
 
-#: components/overlays/tab-panel.tsx:26
+#: components/overlays/tab-panel.tsx:27
 msgid "NOT SYNCED"
 msgstr "NOT SYNCED"
 
@@ -1609,7 +1609,7 @@ msgstr "Nothing on the boards yet, for either of you."
 msgid "Nothing to choose between you."
 msgstr "Nothing to choose between you."
 
-#: components/overlays/medals-overlay.tsx:193
+#: components/overlays/medals-overlay.tsx:189
 msgid "Nothing yet — a top three on any board puts a medal here."
 msgstr "Nothing yet — a top three on any board puts a medal here."
 
@@ -1621,7 +1621,7 @@ msgstr "Nov"
 msgid "NOVEMBER"
 msgstr "NOVEMBER"
 
-#: components/overlays/trainee-display-options.tsx:101
+#: components/overlays/trainee-display-options.tsx:99
 msgid "NUMBERS ON THE KEYS"
 msgstr "NUMBERS ON THE KEYS"
 
@@ -1633,7 +1633,7 @@ msgstr "Oct"
 msgid "OCTOBER"
 msgstr "OCTOBER"
 
-#: components/overlays/admin-role.tsx:179
+#: components/overlays/admin-role.tsx:174
 msgid "off for everyone"
 msgstr "off for everyone"
 
@@ -1657,7 +1657,7 @@ msgstr "One board did not go along with it: [BOARD] stayed [W]’s throughout."
 msgid "One line under your name, for anyone who opens your profile."
 msgstr "One line under your name, for anyone who opens your profile."
 
-#: components/overlays/how-to-play-overlay.tsx:794
+#: components/overlays/how-to-play-overlay.tsx:786
 msgid "One point, winner takes all — everyone else gets nothing."
 msgstr "One point, winner takes all — everyone else gets nothing."
 
@@ -1677,7 +1677,7 @@ msgstr "One row between you. One run would take it."
 msgid "One sweep, three keys"
 msgstr "One sweep, three keys"
 
-#: components/overlays/how-to-play-overlay.tsx:250
+#: components/overlays/how-to-play-overlay.tsx:251
 msgid "ONE TARGET · NO CLOCK · NO LIVES"
 msgstr "ONE TARGET · NO CLOCK · NO LIVES"
 
@@ -1689,7 +1689,7 @@ msgstr "Only [P] days were played at all, and [A] took every one."
 msgid "Only ever used to get your profile back. No newsletters, no offers, nothing else — ever."
 msgstr "Only ever used to get your profile back. No newsletters, no offers, nothing else — ever."
 
-#: components/overlays/how-to-play-overlay.tsx:793
+#: components/overlays/how-to-play-overlay.tsx:785
 msgid "Only the first player to land it scores."
 msgstr "Only the first player to land it scores."
 
@@ -1705,16 +1705,16 @@ msgstr "Open a session on an easier difficulty. The first run is a warm-up, and 
 msgid "Open the How to Play guide."
 msgstr "Open the How to Play guide."
 
-#: components/overlays/trainee-display-options.tsx:36
+#: components/overlays/trainee-display-options.tsx:37
 msgid "OPTIMAL PATH"
 msgstr "OPTIMAL PATH"
 
-#: components/overlays/menu-overlay.tsx:583
+#: components/overlays/menu-overlay.tsx:595
 #: components/overlays/paused-overlay.tsx:254
 msgid "OPTIONS"
 msgstr "OPTIONS"
 
-#: components/overlays/how-to-play-overlay.tsx:660
+#: components/overlays/how-to-play-overlay.tsx:652
 msgid "Out of hearts and the run is over. That and the mouth are the only two ways one ends."
 msgstr "Out of hearts and the run is over. That and the mouth are the only two ways one ends."
 
@@ -1730,7 +1730,7 @@ msgstr "PERFECT ROUTE"
 msgid "PERFECTIONIST"
 msgstr "PERFECTIONIST"
 
-#: components/overlays/how-to-play-overlay.tsx:776
+#: components/overlays/how-to-play-overlay.tsx:768
 msgid "Pick “With friends” on the start screen. Create a game and share the four-digit code, or type a friend’s code to join. Two players are enough to start, and the one who created the room starts it.\n"
 "\n"
 "Everyone dials the same ten targets, one at a time, on their own grid. There are no lives — every target scores, and how it scores is the mode the host picked:"
@@ -1738,7 +1738,7 @@ msgstr "Pick “With friends” on the start screen. Create a game and share the
 "\n"
 "Everyone dials the same ten targets, one at a time, on their own grid. There are no lives — every target scores, and how it scores is the mode the host picked:"
 
-#: components/overlays/how-to-play-overlay.tsx:564
+#: components/overlays/how-to-play-overlay.tsx:556
 msgid "Pick ARCADE on the start screen. The dial is the same dial — but the targets are not scattered any more. Two to four of them hang at the ends of ways out of the crossroad you are standing on, and the one you dial is the one you walk."
 msgstr "Pick ARCADE on the start screen. The dial is the same dial — but the targets are not scattered any more. Two to four of them hang at the ends of ways out of the crossroad you are standing on, and the one you dial is the one you walk."
 
@@ -1752,7 +1752,7 @@ msgstr "Play a Hard board."
 
 #: components/game/arcade-over.tsx:68
 #: components/overlays/game-over-overlay.tsx:364
-#: components/overlays/multiplayer-game-over.tsx:191
+#: components/overlays/multiplayer-game-over.tsx:188
 msgid "PLAY AGAIN"
 msgstr "PLAY AGAIN"
 
@@ -1760,7 +1760,7 @@ msgstr "PLAY AGAIN"
 msgid "Play five runs with friends and win none of them."
 msgstr "Play five runs with friends and win none of them."
 
-#: components/overlays/menu-overlay.tsx:572
+#: components/overlays/menu-overlay.tsx:584
 msgid "PLAY GAME"
 msgstr "PLAY GAME"
 
@@ -1780,7 +1780,7 @@ msgstr "Play Trainee, Accuracy and Speed."
 msgid "Play with two hands, a thumb to each side of the grid. Reaching across for every button is time the ring is already spending."
 msgstr "Play with two hands, a thumb to each side of the grid. Reaching across for every button is time the ring is already spending."
 
-#: components/overlays/multiplayer-waiting.tsx:164
+#: components/overlays/multiplayer-waiting.tsx:161
 msgid "PLAYERS"
 msgstr "PLAYERS"
 
@@ -1792,7 +1792,7 @@ msgstr "Post a score on every mode and difficulty."
 msgid "Precision over speed."
 msgstr "Precision over speed."
 
-#: components/overlays/how-to-play-overlay.tsx:528
+#: components/overlays/how-to-play-overlay.tsx:520
 msgid "Pure practice — no lives, no score, and a relaxed clock."
 msgstr "Pure practice — no lives, no score, and a relaxed clock."
 
@@ -1804,11 +1804,11 @@ msgstr "Reach 25 hits in one run before losing a life."
 msgid "Reach the ×8 multiplier."
 msgstr "Reach the ×8 multiplier."
 
-#: components/overlays/multiplayer-game-over.tsx:211
+#: components/overlays/multiplayer-game-over.tsx:208
 msgid "READY"
 msgstr "READY"
 
-#: components/overlays/tutorial-done-modal.tsx:75
+#: components/overlays/tutorial-done-modal.tsx:78
 msgid "Ready to play for real?"
 msgstr "Ready to play for real?"
 
@@ -1820,15 +1820,15 @@ msgstr "Records, celebrated"
 msgid "REMOVE"
 msgstr "REMOVE"
 
-#: components/overlays/email-code-modal.tsx:265
+#: components/overlays/email-code-modal.tsx:267
 msgid "RESEND CODE"
 msgstr "RESEND CODE"
 
-#: components/overlays/email-code-modal.tsx:263
+#: components/overlays/email-code-modal.tsx:265
 msgid "RESEND IN {waiting}S"
 msgstr "RESEND IN {waiting}S"
 
-#: components/overlays/admin-person.tsx:276
+#: components/overlays/admin-person.tsx:265
 msgid "RESET TO ROLE DEFAULTS"
 msgstr "RESET TO ROLE DEFAULTS"
 
@@ -1844,11 +1844,11 @@ msgstr "RESTORE PROFILE"
 msgid "RESTORING…"
 msgstr "RESTORING…"
 
-#: components/overlays/multiplayer-game-over.tsx:152
+#: components/overlays/multiplayer-game-over.tsx:149
 msgid "RESULTS"
 msgstr "RESULTS"
 
-#: components/overlays/admin-person.tsx:209
+#: components/overlays/admin-person.tsx:201
 msgid "ROLE"
 msgstr "ROLE"
 
@@ -1872,21 +1872,21 @@ msgstr "ROUND NUMBER"
 msgid "Row for row, hit for hit. Nobody takes this one."
 msgstr "Row for row, hit for hit. Nobody takes this one."
 
-#: components/overlays/dev-overlay.tsx:66
+#: components/overlays/dev-overlay.tsx:61
 msgid "RUN"
 msgstr "RUN"
 
 #: components/overlays/compare-stat-row.tsx:20
-#: components/overlays/player-profile-overlay.tsx:353
-#: components/overlays/player-profile-overlay.tsx:456
+#: components/overlays/player-profile-overlay.tsx:361
+#: components/overlays/player-profile-overlay.tsx:462
 msgid "RUNS"
 msgstr "RUNS"
 
-#: components/overlays/arcade-teaser.tsx:127
+#: components/overlays/arcade-teaser.tsx:136
 msgid "Same dial, new adventures. Set out on the path of multiplication and conquest."
 msgstr "Same dial, new adventures. Set out on the path of multiplication and conquest."
 
-#: components/overlays/how-to-play-overlay.tsx:503
+#: components/overlays/how-to-play-overlay.tsx:495
 msgid "Same grid, different pressure. Difficulty (Easy / Hard / Extreme) tightens the clock and adds targets.\n"
 "\n"
 "A hit is worth up to 100 points, blended from two factors and weighted by the mode:"
@@ -1915,7 +1915,7 @@ msgid "SCENIC ROUTE"
 msgstr "SCENIC ROUTE"
 
 #: components/overlays/high-scores.tsx:284
-#: components/overlays/player-profile-overlay.tsx:460
+#: components/overlays/player-profile-overlay.tsx:466
 msgid "SCORE"
 msgstr "SCORE"
 
@@ -1959,11 +1959,11 @@ msgstr "Score 5 000 in Accuracy."
 msgid "Score 5 000 in Speed."
 msgstr "Score 5 000 in Speed."
 
-#: components/overlays/how-to-play-overlay.tsx:537
+#: components/overlays/how-to-play-overlay.tsx:529
 msgid "Score rewards precision: solve each target in the fewest moves."
 msgstr "Score rewards precision: solve each target in the fewest moves."
 
-#: components/overlays/how-to-play-overlay.tsx:745
+#: components/overlays/how-to-play-overlay.tsx:737
 msgid "Scores, one ladder per mode — Accuracy and Speed ask for opposite things, so each has its own rungs to climb."
 msgstr "Scores, one ladder per mode — Accuracy and Speed ask for opposite things, so each has its own rungs to climb."
 
@@ -1983,6 +1983,7 @@ msgstr "SEND CODE"
 msgid "Send feedback, and get an answer back."
 msgstr "Send feedback, and get an answer back."
 
+#: components/overlays/email-code-modal.tsx:263
 #: components/overlays/email-modal.tsx:145
 msgid "SENDING…"
 msgstr "SENDING…"
@@ -1995,7 +1996,7 @@ msgstr "Sep"
 msgid "SEPTEMBER"
 msgstr "SEPTEMBER"
 
-#: components/overlays/advanced-options-overlay.tsx:88
+#: components/overlays/advanced-options-overlay.tsx:86
 msgid "SESSION RECORDING"
 msgstr "SESSION RECORDING"
 
@@ -2011,20 +2012,20 @@ msgstr "SEVEN DAY STREAK"
 msgid "Seven days, one name. [A] had the week from Monday and never let go."
 msgstr "Seven days, one name. [A] had the week from Monday and never let go."
 
-#: components/overlays/how-to-play-overlay.tsx:792
+#: components/overlays/how-to-play-overlay.tsx:784
 msgid "Seven seconds a target — the clock everyone races."
 msgstr "Seven seconds a target — the clock everyone races."
 
-#: components/overlays/menu-overlay.tsx:613
+#: components/overlays/menu-overlay.tsx:625
 #: components/overlays/multiplayer-waiting.tsx:120
 msgid "SHARE"
 msgstr "SHARE"
 
-#: components/overlays/show-more.tsx:37
+#: components/overlays/show-more.tsx:36
 msgid "SHOW LESS"
 msgstr "SHOW LESS"
 
-#: components/overlays/advanced-options-overlay.tsx:81
+#: components/overlays/advanced-options-overlay.tsx:79
 msgid "SHOW SUM IN BUTTONS"
 msgstr "SHOW SUM IN BUTTONS"
 
@@ -2033,7 +2034,7 @@ msgstr "SHOW SUM IN BUTTONS"
 msgid "SINCE {0}"
 msgstr "SINCE {0}"
 
-#: components/overlays/how-to-play-overlay.tsx:751
+#: components/overlays/how-to-play-overlay.tsx:743
 msgid "Skill inside a single run: a long streak, the top multiplier, a stretch without losing a life."
 msgstr "Skill inside a single run: a long streak, the top multiplier, a stretch without losing a life."
 
@@ -2057,11 +2058,11 @@ msgstr "SOMETHING BROKE"
 msgid "Something went wrong, try again"
 msgstr "Something went wrong, try again"
 
-#: lib/account-email.ts:137
+#: lib/account-email.ts:140
 msgid "Something went wrong, try again."
 msgstr "Something went wrong, try again."
 
-#: components/overlays/player-profile-overlay.tsx:84
+#: components/overlays/player-profile-overlay.tsx:86
 #: modes/definitions/speed.ts:11
 msgid "SPD"
 msgstr "SPD"
@@ -2071,7 +2072,7 @@ msgstr "SPD"
 msgid "SPEED"
 msgstr "SPEED"
 
-#: components/overlays/how-to-play-overlay.tsx:510
+#: components/overlays/how-to-play-overlay.tsx:502
 msgid "Speed — how much time was left on the ring. Land it with most of the ring intact and it pays a bonus on top."
 msgstr "Speed — how much time was left on the ring. Land it with most of the ring intact and it pays a bonus on top."
 
@@ -2095,12 +2096,12 @@ msgstr "Spend half an hour in Trainee without leaving."
 msgid "Spot your nines"
 msgstr "Spot your nines"
 
-#: components/overlays/multiplayer-waiting.tsx:207
+#: components/overlays/multiplayer-waiting.tsx:201
 #: components/overlays/step-up-overlay.tsx:83
 msgid "START GAME"
 msgstr "START GAME"
 
-#: components/overlays/how-to-play-overlay.tsx:695
+#: components/overlays/how-to-play-overlay.tsx:687
 msgid "Starving stops nothing else. The clock still runs, the dial still listens and the ways are still there — so an empty bar is a reason to hurry toward walls, not a reason the run is over."
 msgstr "Starving stops nothing else. The clock still runs, the dial still listens and the ways are still there — so an empty bar is a reason to hurry toward walls, not a reason the run is over."
 
@@ -2109,7 +2110,7 @@ msgid "STEADY HAND"
 msgstr "STEADY HAND"
 
 #. placeholder {0}: board + 1
-#: components/game/tutorial-stepper.tsx:130
+#: components/game/tutorial-stepper.tsx:131
 msgid "Step {0}"
 msgstr "Step {0}"
 
@@ -2121,11 +2122,11 @@ msgstr "STEP DOWN TO {rungName}"
 msgid "STEP UP TO {rungName}"
 msgstr "STEP UP TO {rungName}"
 
-#: components/overlays/how-to-play-overlay.tsx:757
+#: components/overlays/how-to-play-overlay.tsx:749
 msgid "Sticking with it — targets landed across every run you have ever played, and days played in a row."
 msgstr "Sticking with it — targets landed across every run you have ever played, and days played in a row."
 
-#: components/overlays/how-to-play-overlay.tsx:516
+#: components/overlays/how-to-play-overlay.tsx:508
 msgid "Streak — consecutive perfect plays multiply your points ×2 → ×4 → ×8. One imperfect hit and you start again."
 msgstr "Streak — consecutive perfect plays multiply your points ×2 → ×4 → ×8. One imperfect hit and you start again."
 
@@ -2182,17 +2183,17 @@ msgstr "Take the shortest route to 25 targets in one run."
 msgid "Take twenty targets in Speed averaging under 20% speed."
 msgstr "Take twenty targets in Speed averaging under 20% speed."
 
-#: components/overlays/lost-medal-line.tsx:70
-#: components/overlays/medals-overlay.tsx:118
+#: components/overlays/lost-medal-line.tsx:69
+#: components/overlays/medals-overlay.tsx:114
 msgid "TAKEN"
 msgstr "TAKEN"
 
-#: components/overlays/lost-medal-line.tsx:86
-#: components/overlays/medals-overlay.tsx:129
+#: components/overlays/lost-medal-line.tsx:82
+#: components/overlays/medals-overlay.tsx:125
 msgid "TAKEN BY <0/>"
 msgstr "TAKEN BY <0/>"
 
-#: components/overlays/medals-overlay.tsx:214
+#: components/overlays/medals-overlay.tsx:210
 msgid "TAKEN IN THE LAST {HISTORY_DAYS} DAYS"
 msgstr "TAKEN IN THE LAST {HISTORY_DAYS} DAYS"
 
@@ -2212,11 +2213,11 @@ msgstr "TAP TO BRING IT BACK"
 msgid "TAP TO ENTER YOUR CODE"
 msgstr "TAP TO ENTER YOUR CODE"
 
-#: components/overlays/how-to-play-overlay.tsx:43
+#: components/overlays/how-to-play-overlay.tsx:44
 msgid "TARGETS & THE CLOCK"
 msgstr "TARGETS & THE CLOCK"
 
-#: components/overlays/how-to-play-overlay.tsx:541
+#: components/overlays/how-to-play-overlay.tsx:533
 msgid "Targets arrive faster the longer you last, but each still gets its full ring."
 msgstr "Targets arrive faster the longer you last, but each still gets its full ring."
 
@@ -2224,7 +2225,7 @@ msgstr "Targets arrive faster the longer you last, but each still gets its full 
 msgid "Tell me what you think"
 msgstr "Tell me what you think"
 
-#: components/feedback-bookmark.tsx:154
+#: components/feedback-bookmark.tsx:155
 msgid "TELL US"
 msgstr "TELL US"
 
@@ -2236,7 +2237,7 @@ msgstr "TEN BESTS"
 msgid "TEN RUNS"
 msgstr "TEN RUNS"
 
-#: components/overlays/how-to-play-overlay.tsx:784
+#: components/overlays/how-to-play-overlay.tsx:776
 msgid "Ten seconds a target, the same one for everybody."
 msgstr "Ten seconds a target, the same one for everybody."
 
@@ -2252,15 +2253,15 @@ msgstr "TERMINAL VELOCITY"
 msgid "THANK YOU"
 msgstr "THANK YOU"
 
-#: lib/account-email.ts:132
+#: lib/account-email.ts:135
 msgid "That address is already on another profile."
 msgstr "That address is already on another profile."
 
-#: lib/account-email.ts:134
+#: lib/account-email.ts:137
 msgid "That code is wrong or has expired — ask for a new one."
 msgstr "That code is wrong or has expired — ask for a new one."
 
-#: lib/account-email.ts:131
+#: lib/account-email.ts:134
 msgid "That does not look like an email address."
 msgstr "That does not look like an email address."
 
@@ -2268,7 +2269,7 @@ msgstr "That does not look like an email address."
 msgid "THAT IS EVERY MOVE — LET’S TRAIN"
 msgstr "THAT IS EVERY MOVE — LET’S TRAIN"
 
-#: components/overlays/tutorial-done-modal.tsx:69
+#: components/overlays/tutorial-done-modal.tsx:72
 msgid "That is every move learned."
 msgstr "That is every move learned."
 
@@ -2280,15 +2281,15 @@ msgstr "That is longer than {MOTTO_MAX} characters."
 msgid "The all-time boards were left exactly as they were found."
 msgstr "The all-time boards were left exactly as they were found."
 
-#: components/overlays/how-to-play-overlay.tsx:786
+#: components/overlays/how-to-play-overlay.tsx:778
 msgid "The best takes the most points; the last to land it takes none."
 msgstr "The best takes the most points; the last to land it takes none."
 
-#: components/overlays/how-to-play-overlay.tsx:548
+#: components/overlays/how-to-play-overlay.tsx:540
 msgid "The clock keeps tightening as your run goes on, less and less each time."
 msgstr "The clock keeps tightening as your run goes on, less and less each time."
 
-#: components/overlays/title-mark.tsx:79
+#: components/overlays/title-mark.tsx:80
 msgid "THE CROWN"
 msgstr "THE CROWN"
 
@@ -2310,12 +2311,12 @@ msgstr "The dial tells you more at a glance.\n"
 "\n"
 "No more squinting at the top of the range mid-run."
 
-#: components/overlays/title-mark.tsx:73
+#: components/overlays/title-mark.tsx:74
 #: constants/achievements.ts:427
 msgid "THE EAGLE"
 msgstr "THE EAGLE"
 
-#: components/overlays/how-to-play-overlay.tsx:683
+#: components/overlays/how-to-play-overlay.tsx:675
 msgid "The fight itself costs nothing to stand in. Dialling at towers and warriors leaves the bar exactly where it was when the walls closed."
 msgstr "The fight itself costs nothing to stand in. Dialling at towers and warriors leaves the bar exactly where it was when the walls closed."
 
@@ -2323,11 +2324,11 @@ msgstr "The fight itself costs nothing to stand in. Dialling at towers and warri
 msgid "The gap is not a gap. It is a floor and a ceiling."
 msgstr "The gap is not a gap. It is a floor and a ceiling."
 
-#: components/overlays/how-to-play-overlay.tsx:41
+#: components/overlays/how-to-play-overlay.tsx:42
 msgid "THE GOAL"
 msgstr "THE GOAL"
 
-#: components/overlays/how-to-play-overlay.tsx:631
+#: components/overlays/how-to-play-overlay.tsx:623
 msgid "The hero halts well short of the gate, with the walls across the top of the screen and open ground between. Every tower on them carries a number, and so does every warrior who comes out of the gate."
 msgstr "The hero halts well short of the gate, with the walls across the top of the screen and open ground between. Every tower on them carries a number, and so does every warrior who comes out of the gate."
 
@@ -2335,7 +2336,7 @@ msgstr "The hero halts well short of the gate, with the walls across the top of 
 msgid "THE LONG WAY"
 msgstr "THE LONG WAY"
 
-#: components/overlays/how-to-play-overlay.tsx:614
+#: components/overlays/how-to-play-overlay.tsx:606
 msgid "The map turns as you walk, to keep you pointed forward. Tap the compass in the corner if you would rather north stayed at the top of the screen — it remembers whichever you chose."
 msgstr "The map turns as you walk, to keep you pointed forward. Tap the compass in the corner if you would rather north stayed at the top of the screen — it remembers whichever you chose."
 
@@ -2343,16 +2344,16 @@ msgstr "The map turns as you walk, to keep you pointed forward. Tap the compass 
 msgid "THE MARK TO MEET"
 msgstr "THE MARK TO MEET"
 
-#: components/overlays/title-mark.tsx:67
+#: components/overlays/title-mark.tsx:68
 #: constants/achievements.ts:421
 msgid "THE OWL"
 msgstr "THE OWL"
 
-#: components/overlays/title-mark.tsx:81
+#: components/overlays/title-mark.tsx:82
 msgid "The owl's ear and the eagle's dive, and this player out-does both: the all-time record on Extreme Accuracy and Extreme Speed at once."
 msgstr "The owl's ear and the eagle's dive, and this player out-does both: the all-time record on Extreme Accuracy and Extreme Speed at once."
 
-#: components/overlays/title-mark.tsx:80
+#: components/overlays/title-mark.tsx:81
 msgid "The owl's ear and the eagle's dive, and you out-do both: the all-time record on Extreme Accuracy and Extreme Speed at once."
 msgstr "The owl's ear and the eagle's dive, and you out-do both: the all-time record on Extreme Accuracy and Extreme Speed at once."
 
@@ -2464,7 +2465,7 @@ msgstr "This is not a contest, it is a demonstration."
 msgid "This one is over. The dial has been kinder to them."
 msgstr "This one is over. The dial has been kinder to them."
 
-#: components/overlays/player-profile-overlay.tsx:304
+#: components/overlays/player-profile-overlay.tsx:315
 msgid "This profile could not be loaded."
 msgstr "This profile could not be loaded."
 
@@ -2472,7 +2473,7 @@ msgstr "This profile could not be loaded."
 msgid "THIS PROFILE MOVED TO ANOTHER PHONE"
 msgstr "THIS PROFILE MOVED TO ANOTHER PHONE"
 
-#: components/overlays/board-medals.tsx:17
+#: components/overlays/board-medals.tsx:19
 #: components/overlays/high-scores.tsx:34
 msgid "THIS WEEK"
 msgstr "THIS WEEK"
@@ -2490,13 +2491,13 @@ msgid "Thursday"
 msgstr "Thursday"
 
 #: components/overlays/compare-stat-row.tsx:22
-#: components/overlays/player-profile-overlay.tsx:373
+#: components/overlays/player-profile-overlay.tsx:381
 #: lib/run-stats.ts:51
 #: lib/run-stats.ts:85
 msgid "TIME"
 msgstr "TIME"
 
-#: components/overlays/trainee-display-options.tsx:186
+#: components/overlays/trainee-display-options.tsx:181
 msgid "TIME PER TARGET"
 msgstr "TIME PER TARGET"
 
@@ -2504,7 +2505,7 @@ msgstr "TIME PER TARGET"
 msgid "TIP"
 msgstr "TIP"
 
-#: components/overlays/how-to-play-overlay.tsx:53
+#: components/overlays/how-to-play-overlay.tsx:54
 msgid "TIPS & TRICKS"
 msgstr "TIPS & TRICKS"
 
@@ -2513,12 +2514,12 @@ msgid "TO PUBLISH YOUR BESTS"
 msgstr "TO PUBLISH YOUR BESTS"
 
 #: components/game/best-scores-line.tsx:48
-#: components/overlays/board-medals.tsx:18
+#: components/overlays/board-medals.tsx:20
 #: components/overlays/high-scores.tsx:33
 msgid "TODAY"
 msgstr "TODAY"
 
-#: lib/account-email.ts:135
+#: lib/account-email.ts:138
 msgid "Too many tries. Give it a few minutes."
 msgstr "Too many tries. Give it a few minutes."
 
@@ -2534,9 +2535,9 @@ msgstr "TOP OF THE BOARD"
 msgid "TOP RIGHT"
 msgstr "TOP RIGHT"
 
-#: components/overlays/player-profile-overlay.tsx:354
-#: components/overlays/player-profile-overlay.tsx:359
-#: components/overlays/player-profile-overlay.tsx:374
+#: components/overlays/player-profile-overlay.tsx:362
+#: components/overlays/player-profile-overlay.tsx:367
+#: components/overlays/player-profile-overlay.tsx:382
 msgid "TOTAL"
 msgstr "TOTAL"
 
@@ -2566,13 +2567,13 @@ msgstr "TRN"
 
 #: components/game/step-up-toast.tsx:102
 #: components/overlays/game-over-overlay.tsx:92
-#: components/overlays/tutorial-done-modal.tsx:97
+#: components/overlays/tutorial-done-modal.tsx:100
 msgid "TRY {modeName}"
 msgstr "TRY {modeName}"
 
-#: components/crash-screen.tsx:29
-#: components/overlays/compare-overlay.tsx:119
-#: components/overlays/player-profile-overlay.tsx:315
+#: components/crash-screen.tsx:27
+#: components/overlays/compare-overlay.tsx:120
+#: components/overlays/player-profile-overlay.tsx:323
 msgid "TRY AGAIN"
 msgstr "TRY AGAIN"
 
@@ -2580,7 +2581,7 @@ msgstr "TRY AGAIN"
 msgid "TRY ANOTHER MODE"
 msgstr "TRY ANOTHER MODE"
 
-#: components/overlays/how-to-play-overlay.tsx:241
+#: components/overlays/how-to-play-overlay.tsx:242
 msgid "TRY IT"
 msgstr "TRY IT"
 
@@ -2612,7 +2613,7 @@ msgstr "TWO IN A ROW"
 msgid "Two names all week: [A] took [N] days, [B] the other [M]."
 msgstr "Two names all week: [A] took [N] days, [B] the other [M]."
 
-#: components/overlays/feedback-overlay.tsx:166
+#: components/overlays/feedback-overlay.tsx:156
 msgid "Type here"
 msgstr "Type here"
 
@@ -2636,15 +2637,15 @@ msgstr "VILLAGES"
 msgid "VS"
 msgstr "VS"
 
-#: components/overlays/player-tile.tsx:122
+#: components/overlays/player-tile.tsx:117
 msgid "WAITING"
 msgstr "WAITING"
 
-#: components/overlays/multiplayer-waiting.tsx:220
+#: components/overlays/multiplayer-waiting.tsx:211
 msgid "WAITING FOR HOST"
 msgstr "WAITING FOR HOST"
 
-#: components/overlays/multiplayer-game-over.tsx:222
+#: components/overlays/multiplayer-game-over.tsx:216
 msgid "WAITING FOR OTHERS…"
 msgstr "WAITING FOR OTHERS…"
 
@@ -2652,15 +2653,15 @@ msgstr "WAITING FOR OTHERS…"
 msgid "WALL"
 msgstr "WALL"
 
-#: components/overlays/how-to-play-overlay.tsx:646
+#: components/overlays/how-to-play-overlay.tsx:638
 msgid "Warriors leave the gate one after another, and faster the longer the fight drags on. Dial a warrior’s number and he is gone. Let one reach you and it costs a heart. There is no way out of a siege but winning it, so look at the walls before you dial that way."
 msgstr "Warriors leave the gate one after another, and faster the longer the fight drags on. Dial a warrior’s number and he is gone. Let one reach you and it costs a heart. There is no way out of a siege but winning it, so look at the walls before you dial that way."
 
-#: components/overlays/how-to-play-overlay.tsx:538
+#: components/overlays/how-to-play-overlay.tsx:530
 msgid "Waste too many moves on a hit and you lose a life — the bar is 25% accuracy on Easy, 20% on Hard, 15% on Extreme."
 msgstr "Waste too many moves on a hit and you lose a life — the bar is 25% accuracy on Easy, 20% on Hard, 15% on Extreme."
 
-#: components/overlays/email-code-modal.tsx:135
+#: components/overlays/email-code-modal.tsx:138
 msgid "We sent six digits to <0>{address}</0>."
 msgstr "We sent six digits to <0>{address}</0>."
 
@@ -2676,16 +2677,16 @@ msgstr "WEEK"
 msgid "WEIGHT"
 msgstr "WEIGHT"
 
-#: components/overlays/how-to-play-overlay.tsx:309
+#: components/overlays/how-to-play-overlay.tsx:307
 msgid "WEIGHT = ROW ORDER × COLUMN ORDER"
 msgstr "WEIGHT = ROW ORDER × COLUMN ORDER"
 
-#: components/overlays/advanced-options-overlay.tsx:115
+#: components/overlays/advanced-options-overlay.tsx:107
 #: components/overlays/news-archive-overlay.tsx:20
 msgid "WHAT’S NEW"
 msgstr "WHAT’S NEW"
 
-#: components/overlays/whats-new-overlay.tsx:40
+#: components/overlays/whats-new-overlay.tsx:42
 msgid "WHAT’S NEW IN THE GAME?"
 msgstr "WHAT’S NEW IN THE GAME?"
 
@@ -2693,7 +2694,7 @@ msgstr "WHAT’S NEW IN THE GAME?"
 msgid "WHAT’S ON YOUR MIND?"
 msgstr "WHAT’S ON YOUR MIND?"
 
-#: components/overlays/how-to-play-overlay.tsx:596
+#: components/overlays/how-to-play-overlay.tsx:588
 msgid "When the red reaches you it drags you back one crossroad — and the ways you find there are the ones you left."
 msgstr "When the red reaches you it drags you back one crossroad — and the ways you find there are the ones you left."
 
@@ -2705,11 +2706,11 @@ msgstr "WHERE CAN WE REACH YOU?"
 msgid "WHO DO YOU WANT TO BE?"
 msgstr "WHO DO YOU WANT TO BE?"
 
-#: components/overlays/compare-overlay.tsx:93
+#: components/overlays/compare-overlay.tsx:94
 msgid "WHO IS BETTER?"
 msgstr "WHO IS BETTER?"
 
-#: components/overlays/player-profile-overlay.tsx:206
+#: components/overlays/player-profile-overlay.tsx:208
 msgid "WHO IS IT?"
 msgstr "WHO IS IT?"
 
@@ -2717,7 +2718,7 @@ msgstr "WHO IS IT?"
 msgid "Who is that, anyway"
 msgstr "Who is that, anyway"
 
-#: components/overlays/admin-overlay.tsx:88
+#: components/overlays/admin-overlay.tsx:89
 msgid "WHO SEES WHAT"
 msgstr "WHO SEES WHAT"
 
@@ -2733,14 +2734,14 @@ msgstr "WINNER"
 msgid "With your OK, we'll record a replay of how you play — taps, swipes, what's on screen — so we can see bugs the numbers alone don't show. Every text field, nickname included, is blanked out before it ever leaves your device. Change your mind any time from OPTIONS."
 msgstr "With your OK, we'll record a replay of how you play — taps, swipes, what's on screen — so we can see bugs the numbers alone don't show. Every text field, nickname included, is blanked out before it ever leaves your device. Change your mind any time from OPTIONS."
 
-#: components/overlays/compare-won-row.tsx:41
+#: components/overlays/compare-won-row.tsx:43
 msgid "WON"
 msgstr "WON"
 
 #: components/game/best-scores-line.tsx:61
-#: components/overlays/admin-people.tsx:34
-#: components/overlays/player-tile.tsx:129
-#: components/overlays/tab-panel.tsx:21
+#: components/overlays/admin-people.tsx:32
+#: components/overlays/player-tile.tsx:124
+#: components/overlays/tab-panel.tsx:22
 msgid "YOU"
 msgstr "YOU"
 
@@ -2788,7 +2789,7 @@ msgstr "You took the room and left them the door."
 msgid "YOU WON"
 msgstr "YOU WON"
 
-#: components/overlays/menu-overlay.tsx:529
+#: components/overlays/menu-overlay.tsx:541
 #: components/overlays/offline-notice.tsx:17
 msgid "YOU'RE OFFLINE"
 msgstr "YOU'RE OFFLINE"
@@ -2805,7 +2806,7 @@ msgstr "YOUR"
 msgid "Your finger no longer has to come off the glass. Drag across the dial and every button you pass through takes the direction you left it by — one sweep along a row is three keys set."
 msgstr "Your finger no longer has to come off the glass. Drag across the dial and every button you pass through takes the direction you left it by — one sweep along a row is three keys set."
 
-#: components/overlays/how-to-play-overlay.tsx:531
+#: components/overlays/how-to-play-overlay.tsx:523
 msgid "Your hit count, the last hit’s accuracy and speed, the fewest moves each target needs, and the route you should have pressed — all off until you switch them on from MENU."
 msgstr "Your hit count, the last hit’s accuracy and speed, the fewest moves each target needs, and the route you should have pressed — all off until you switch them on from MENU."
 
@@ -2813,7 +2814,7 @@ msgstr "Your hit count, the last hit’s accuracy and speed, the fewest moves ea
 msgid "Your name appears on the leaderboard."
 msgstr "Your name appears on the leaderboard."
 
-#: components/overlays/compare-overlay.tsx:111
+#: components/overlays/compare-overlay.tsx:112
 msgid "Your profile could not be loaded."
 msgstr "Your profile could not be loaded."
 

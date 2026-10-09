@@ -75,12 +75,18 @@ export function EmailCodeModal({
   const { t } = useLingui()
   const [value, setValue] = useState('')
   const [problem, setProblem] = useState<EmailProblem | null>(null)
-  const [busy, setBusy] = useState(false)
+  // Two flags rather than one. They disable the same things — a card with a request in
+  // flight takes no second press of anything — but only one of them may speak for the
+  // confirm button: a shared flag had asking for a new code announce CONFIRMING…, which
+  // is the one thing that press is not doing.
+  const [confirming, setConfirming] = useState(false)
+  const [resending, setResending] = useState(false)
   const [sentAt, setSentAt] = useState<number | null>(initialSentAt)
   // Read through a lazy initialiser rather than in the render path — the compiler is free
   // to take a clock read at a different moment than you meant it.
   const [now, setNow] = useState(() => Date.now())
 
+  const busy = confirming || resending
   const waiting = cooldownRemaining(sentAt, now)
 
   // Only while there is something to count. An interval that ran for the life of the card
@@ -99,20 +105,20 @@ export function EmailCodeModal({
 
   const handleConfirm = async () => {
     if (!ready) return
-    setBusy(true)
+    setConfirming(true)
     const res = await onConfirm(value)
     // Left busy on the way out of a restore: the app is about to boot, and a button that
     // came back to life for the half-second before it would invite a second press of
     // something that has already happened.
-    if (res.error !== null) setBusy(false)
+    if (res.error !== null) setConfirming(false)
     setProblem(res.error)
   }
 
   const handleResend = async () => {
     if (waiting > 0 || busy) return
-    setBusy(true)
+    setResending(true)
     const res = await onResend()
-    setBusy(false)
+    setResending(false)
     setProblem(res.error)
     if (res.error === null) {
       setSentAt(Date.now())
@@ -224,7 +230,7 @@ export function EmailCodeModal({
           style={{ opacity: ready ? 1 : 0.5 }}
         >
           <Text selectable={false} className={cn(TYPE.buttonSm, 'text-on-strong')}>
-            {busy ? t(BUSY_LABELS[branch]) : t(ACTIONS[branch])}
+            {confirming ? t(BUSY_LABELS[branch]) : t(ACTIONS[branch])}
           </Text>
         </TrackedPressable>
       </View>
@@ -253,7 +259,9 @@ export function EmailCodeModal({
           <View className="flex-row items-center gap-1">
             <Ionicons name="refresh-outline" size={10} color={DIM_INK} />
             <Text selectable={false} className={cn(TYPE.quietAction, 'text-dim')}>
-              {waiting > 0 ? (
+              {resending ? (
+                <Trans>SENDING…</Trans>
+              ) : waiting > 0 ? (
                 <Trans>RESEND IN {waiting}S</Trans>
               ) : (
                 <Trans>RESEND CODE</Trans>
