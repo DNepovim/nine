@@ -29,6 +29,7 @@
     "db:push": "supabase db push",
     "db:status": "supabase status",
     "db:test": "node scripts/db-test.js",
+    "config:push": "node scripts/supabase-config.js",
     "i18n:extract": "lingui extract --clean",
     "i18n:verify": "node scripts/check-i18n.js",
     "i18n:compile": "lingui compile --typescript"

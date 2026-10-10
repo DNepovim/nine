@@ -119,14 +119,45 @@ A CLI that isn't linked, isn't authenticated, or can't reach the project tells
 you **nothing** about the schema. Do not read that as "clean". Report what
 failed and ask whether to deploy blind or stop.
 
+## Step 3b — Project config (ask when it has changed)
+
+`supabase/config.toml` is production's auth and API settings, not only the local
+stack's: the `[remotes.production]` block at the foot of it is pushed with
+`pnpm config:push`. Site URL, redirect allow-list, OTP length and expiry, the
+rate limits, secure email change, the Resend SMTP block — all of it.
+
+Only worth raising when the deploy touches it:
+
+```bash
+git diff origin/main...HEAD -- supabase/config.toml
+```
+
+Nothing in the diff: say nothing and move on. Something in the diff, then ask
+with **`AskUserQuestion`** — same shape as the migrations above, and for the
+same reason: code that assumes a setting production does not have is a broken
+app.
+
+- **"Push the config, then deploy"** — run `pnpm config:push`. It refuses
+  outright if the sender is still a placeholder or `RESEND_API_KEY` is unset,
+  then hands over to the CLI, which **prints a diff and asks**. (Recommended)
+- **"Deploy without pushing"** — fine when the change is local-only; say which
+  setting you are leaving as it is.
+- **"Cancel"**
+
+**Never pass `--yes`, and never confirm the CLI's prompt on the user's behalf.**
+The diff carries every pushable key in the file rather than only the edited
+ones, so the first push on any project is a diff somebody has to read. Show it
+and hand the decision back.
+
 ## Step 4 — Confirm
 
-Ask with **`AskUserQuestion`**, naming the commit from Step 1 and what Step 3
-settled:
+Ask with **`AskUserQuestion`**, naming the commit from Step 1 and what Steps 3
+and 3b settled:
 
 - **"Deploy `<sha> <subject>` to production"** — and in the description, say
   where the schema stands: migrations pushed, nothing pending, or pending and
-  deliberately skipped.
+  deliberately skipped. Add the config in the same breath when Step 3b had
+  anything to say.
 - **"Cancel"**
 
 No confirmation, no deploy.

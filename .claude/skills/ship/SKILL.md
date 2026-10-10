@@ -41,15 +41,16 @@ as before. Read `.claude/skills/sdlc/PROTOCOL.md` only if you need the format.
 
 ## Ask once, not four times
 
-Steps 0b, 0bb and 0c each end in an `AskUserQuestion`, and **none of them depends
-on another's answer** — migrations, the announcement and the branch-or-main choice
-are independent. `AskUserQuestion` takes up to four questions per call, so gather
-them into **one** call and save three round trips.
+Steps 0b, 0bb and 0c end in up to four `AskUserQuestion`s, and **none of them
+depends on another's answer** — migrations, the project config, the announcement
+and the branch-or-main choice are independent. `AskUserQuestion` takes four
+questions per call, which is exactly what those come to at their fullest, so
+gather them into **one** call and save three round trips.
 
-Do the cheap reads first (`git status supabase/migrations/`, the diff) so the
-questions you ask are the ones that actually apply: a tree with no migration files
-and no player-visible change collapses to a single question, or none at all in
-`prod` mode.
+Do the cheap reads first (`git status supabase/migrations/ supabase/config.toml`,
+the diff) so the questions you ask are the ones that actually apply: a tree with
+no migration files, no config change and nothing player-visible collapses to a
+single question, or none at all in `prod` mode.
 
 The deploy offer in Step 3 is the exception and stays separate — it is only valid
 once the push has actually landed.
@@ -72,9 +73,14 @@ change it is mostly noise, and the commit message does not quote it.
 Having run `check` here, tell the `commit` skill it's already green so it doesn't
 run the suite a second time.
 
-## Step 0b — Migration check (both modes)
+## Step 0b — Production state (both modes)
 
-Check whether any migration files are new or modified in the current working tree:
+Two things live on the server rather than in the bundle, and code that assumes
+either one is a broken app rather than a slow rollout. Both are checked in the
+working tree, which is what is about to be committed — a change already
+committed before `/ship` ran is caught later, by `deploy`'s own pass.
+
+### Migrations
 
 ```bash
 git status --short supabase/migrations/
@@ -89,6 +95,33 @@ user before proceeding using **`AskUserQuestion`**:
 - **"No, skip"** — continue without pushing migrations.
 
 If no migration files changed, skip this step silently.
+
+### Project config
+
+`supabase/config.toml` is production's auth and API settings as well as the
+local stack's — site URL, OTP length and expiry, the rate limits, secure email
+change, the Resend SMTP block — pushed from its `[remotes.production]` block.
+
+```bash
+git status --short supabase/config.toml
+```
+
+If it appears, ask with **`AskUserQuestion`**:
+
+- **"Yes, push the config"** — run `pnpm config:push`. It refuses outright if
+  the sender is still a placeholder or `RESEND_API_KEY` is unset, then hands
+  over to the CLI, which prints a diff and asks. (Recommended for `ship prod`)
+- **"No, skip"** — continue, and say which settings stay as production has them.
+
+**Never pass `--yes`, and never answer the CLI's prompt on the user's behalf.**
+The diff carries every pushable key in the file rather than only the edited
+ones, so it is a diff somebody has to read. Show it and hand the decision back.
+
+In branch mode this puts a setting live before the code that assumes it has
+merged. Usually harmless and sometimes the point — a loosened rate limit hurts
+nothing early — but say it out loud rather than pushing quietly.
+
+If `config.toml` did not change, skip this step silently.
 
 ## Step 0bb — Offer a release announcement (both modes)
 

@@ -240,7 +240,10 @@ enable_signup = true
 # 1 — a half-done change the app has no card for. `confirmEmail` guards against that state
 # anyway, in case this is ever turned back on.
 #
-# Production reads `mailer_secure_email_change_enabled` from the dashboard. Both or neither.
+# Pushed to production as `mailer_secure_email_change_enabled` — see `[remotes.production]`.
+# Until the first push lands, the dashboard is still the authority there and has disagreed
+# with this line: a change to an already-confirmed address was asking for two codes and so
+# could not be completed at all.
 double_confirm_changes = false
 # If enabled, users need to confirm their email address before signing in.
 #
@@ -281,20 +284,12 @@ otp_length = 6
 # readable in somebody's inbox.
 otp_expiry = 600
 
-# The production sender is Resend, and it is configured in the Supabase dashboard rather
-# than here — on purpose, twice over. Nothing in this repo runs `supabase config push`, so
-# a block here would be documentation that never reaches the server; and the local stack
-# is better off without it, because `[local_smtp]` above catches every message at
+# The sender stays commented out *here* and is set under `[remotes.production]` at the foot
+# of this file instead. Not a dashboard any more — it used to be, on the reasoning that
+# nothing in this repo ran `supabase config push` — but the local stack is still better off
+# with no sender at all: `[local_smtp]` above catches every message at
 # http://127.0.0.1:54324, where the code is readable without a verified sending domain, a
 # real inbox, or a single email actually leaving the machine.
-#
-# The dashboard's Auth → SMTP settings, for whoever sets it up next:
-#
-#   host         smtp.resend.com
-#   port         465
-#   user         resend
-#   pass         the Resend API key
-#   sender       the verified address on the sending domain
 #
 # [auth.email.smtp]
 # enabled = true
@@ -487,3 +482,59 @@ enabled = true
 # declarative_schema_path = "./database"
 # JSON string passed through to pg-delta SQL formatting.
 # format_options = "{\"keywordCase\":\"upper\",\"indent\":2,\"maxWidth\":80,\"commaStyle\":\"trailing\"}"
+
+# ── Production ────────────────────────────────────────────────────────────────────────
+#
+# Everything above this line describes the local stack, and `supabase config push` sends
+# all of it to the linked project — so the few values that cannot be the same on both
+# are overridden here, keyed by the project they belong to. The CLI merges the block
+# whose `project_id` matches the push target; nothing in it affects `supabase start`.
+#
+# This is the whole point of the arrangement: a dashboard switch somebody flipped eleven
+# months ago is invisible, and `double_confirm_changes = false` up at line 244 was a
+# comment asserting something about production that production disagreed with. Under a
+# push it is the setting, and a drifted dashboard shows up as a diff.
+#
+# **Read the diff.** The push prints one and asks before applying. It carries the pushable
+# half of this file whether or not anybody meant it to — the schemas, `max_rows`, the rate
+# limits, every provider toggle — so the first push is the one to read line by line.
+#
+# What it does not reach: compute size, the Postgres version, custom domains, API keys,
+# log drains, Vault and Edge Function secrets. Buckets and policies stay migrations.
+[remotes.production]
+project_id = "fcoyeycjvuizlxrzdhiw"
+
+[remotes.production.auth]
+# Where the app actually is. The local 127.0.0.1 value above is the one thing in this
+# file that would break production outright: `site_url` is the allow-list redirects are
+# measured against, and pointing it at a loopback address is pointing it at the player's
+# own phone.
+site_url = "https://nine.expo.app"
+additional_redirect_urls = ["https://nine.expo.app"]
+
+# Resend, as Supabase's SMTP rather than as a sender of our own — Supabase's templates,
+# Supabase's tokens, and it lifts the two-emails-an-hour cap the built-in sender imposes.
+# It lived in the dashboard until this block existed, which is why `[auth.email.smtp]`
+# above is still commented out: enabling it there would turn it on for the local stack,
+# where `[local_smtp]` is better than any real sender — the code is readable at
+# http://127.0.0.1:54324 without a verified domain or a single email leaving the machine.
+#
+# The key is the one value here that is a secret, so it is the one value read from the
+# environment: `env()` is documented for credential fields, and `scripts/supabase-config.js`
+# refuses to push while `RESEND_API_KEY` is unset. An empty password pushes production back
+# onto the built-in sender and its cap, which is a failure nobody would notice until a
+# player could not get a code.
+[remotes.production.auth.email.smtp]
+enabled = true
+host = "smtp.resend.com"
+port = 465
+user = "resend"
+pass = "env(RESEND_API_KEY)"
+# The verified address on the Resend sending domain, and the name a player sees it from.
+# Not a secret and so not in the environment — it is a public, stable fact about
+# production, which is the whole class of thing this block exists to version. It is worth
+# checking against Resend's own domain list before a push, though: a sender on an
+# unverified domain is accepted by the API, suppressed on the way out, and reported as a
+# successful send. `scripts/supabase-config.js` can only catch the placeholder it replaced.
+admin_email = "nine@quoin.red"
+sender_name = "Nine"
