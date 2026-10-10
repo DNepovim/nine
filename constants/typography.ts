@@ -128,7 +128,7 @@ export const TYPE = {
   // airy, which is why the announcement bar drops to 0.3px and prose drops it entirely.
   prose: 'font-mono text-[12px] font-medium leading-[19px]',
 
-  // Prose where the card is tight — the curtain, a crash, a long helper paragraph.
+  // Prose where the card is tight — a crash page, a long helper paragraph.
   proseSm: 'font-mono text-[11px] leading-[18px]',
 } as const
 

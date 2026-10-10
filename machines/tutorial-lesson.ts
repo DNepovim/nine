@@ -1,7 +1,7 @@
 import type { MessageDescriptor } from '@lingui/core'
 import { msg } from '@lingui/core/macro'
 
-import { TUTORIAL_BANNER_MS, TUTORIAL_FIRST_WORD_MS } from '@/constants/tutorial'
+import { TUTORIAL_FIRST_WORD_MS } from '@/constants/tutorial'
 
 // The lesson the tutorial run plays: what is being said right now, and what moves it on.
 //
@@ -24,6 +24,11 @@ import { TUTORIAL_BANNER_MS, TUTORIAL_FIRST_WORD_MS } from '@/constants/tutorial
 // LESSON_DIAL below, so the screen never works either out from the step's name.
 
 export type LessonStep =
+  // The lesson's own first word, set in the middle of an empty board: what this run is
+  // and that none of it counts. It stands where a screen of its own used to — a curtain
+  // over the whole app — and the target it is standing in the way of waits for the tap
+  // that takes it away.
+  | 'welcome'
   // The beat before the first word. Long enough for the target to finish arriving.
   | 'waiting'
   // A card on the target: this is the number to reach.
@@ -33,7 +38,13 @@ export type LessonStep =
   // The route, one lit key at a time, with a banner saying to tap the lit one. The dial is
   // shut to everything else.
   | 'guided'
-  // The hit landed, and the lesson hands the dial over.
+  // What a key is worth, in one line: the rule behind every number on the dial. Said
+  // once the first target has gone down — a player who has just watched three taps land
+  // has something for the rule to be about — and the row and column multipliers come up
+  // beside the dial with it, and stay up.
+  | 'weights'
+  // The hit landed. The last thing the lesson says about the board it set up, and the
+  // dial is handed over on the tap that takes it away.
   | 'congrats'
   // Nothing said and nothing watched for. The lesson is between targets.
   | 'free'
@@ -50,13 +61,13 @@ export type LessonStep =
   // is the slow way round, and the one gesture the dial has that is not a move.
   | 'sweep'
   // The script's last word: every move has been shown, and what is left is practice. The
-  // board behind it is already a rolled one, so the run has handed itself over before the
-  // line saying so has finished being read.
+  // board behind it is already a rolled one, so the tap that takes this away is the tap
+  // that hands the run over.
   | 'practice'
   // Taught. The run carries on as a tutorial run, and the lesson says nothing more.
   | 'done'
 
-export const FIRST_STEP: LessonStep = 'waiting'
+export const FIRST_STEP: LessonStep = 'welcome'
 
 // The three gestures the lesson ever asks for by name. A tap it never has to: the guided
 // route makes that point by being the only thing the dial will take. The drag the last
@@ -84,10 +95,12 @@ export type LessonEvent =
 // itself is one no clock can end: the route waits for the hit, the three gesture lessons wait
 // for their gesture, the last for a drag, `free` for the next target, `done` for nothing.
 const ON_ADVANCE = {
+  welcome: 'waiting',
   waiting: 'target',
   target: 'sum',
   sum: 'guided',
   guided: 'guided',
+  weights: 'congrats',
   congrats: 'free',
   free: 'free',
   swipeDown: 'swipeDown',
@@ -103,12 +116,13 @@ const ON_ADVANCE = {
 //
 // One entry per scripted target, plus two that are not boards: index 0 answers no hit —
 // none lands at nought — but it is what the stepper reads going back to the opening board,
-// and it is FIRST_STEP, so a rewind and a fresh deal open the lesson the same way. The
-// last is the sign-off, which answers the hit that clears the final scripted board and has
-// a rolled one behind it. Past the end of the list the script is over.
+// and it is the silent beat the two pointing cards follow, so a rewind opens the opening
+// board the way a fresh deal does bar the welcome, which is said once a launch and not
+// again. The last is the sign-off, which answers the hit that clears the final scripted
+// board and has a rolled one behind it. Past the end of the list the script is over.
 export const LESSON_AFTER_HIT: readonly LessonStep[] = [
   'waiting',
-  'congrats',
+  'weights',
   'swipeDown',
   'swipeLeft',
   'swipeRight',
@@ -127,27 +141,34 @@ const SWIPE_DOWN_BOARD = LESSON_AFTER_HIT.indexOf('swipeDown')
 // is the first the player takes alone. So the lesson is brought to the board they are
 // standing on instead of waiting for the hit that would have dealt its own.
 //
-// Only from the two steps that have handed the dial over and are saying nothing binding:
-// the congratulation, which the player can already play through, and the free board after
-// it. Every lesson asking for something of its own is left alone — including the
-// swipe-down one, which is already up — and once the script has reached it the overshoot
-// is a player playing.
+// Only from the steps that have handed the dial over and are saying nothing binding. In
+// practice that is the free board between targets: the two banners around it hold the dial
+// shut while they are up, so no press can cross the target during one. They are answered
+// anyway, because the crossing is reported a render after the press that caused it and the
+// lesson may have moved on by then — and because if either ever opened its dial again, the
+// answer here should not have to be remembered.
+//
+// Every lesson asking for something of its own is left alone — including the swipe-down
+// one, which is already up — and once the script has reached it the overshoot is a player
+// playing.
 //
 // The scripted board still gives the lesson again when it is dealt, which is right: that
 // board is nine below its own sum, so the gesture is needed there whether or not it has
 // been needed once already.
 const brought = (step: LessonStep, hits: number): LessonStep => {
   if (hits >= SWIPE_DOWN_BOARD) return step
-  return step === 'congrats' || step === 'free' ? 'swipeDown' : step
+  return step === 'weights' || step === 'congrats' || step === 'free' ? 'swipeDown' : step
 }
 
 // Which gesture ends which lesson, and `null` for every step not asking for one. A gesture
 // the lesson did not ask for is a player playing, and leaves the step where it was.
 const ENDED_BY = {
+  welcome: null,
   waiting: null,
   target: null,
   sum: null,
   guided: null,
+  weights: null,
   congrats: null,
   free: null,
   swipeDown: 'down',
@@ -173,15 +194,17 @@ export function lessonStep(step: LessonStep, event: LessonEvent): LessonStep {
   return ENDED_BY[step] === event.swipe ? 'free' : step
 }
 
-// How the lesson speaks at each step: a card pointing at something, a banner over the board,
-// or nothing at all.
-export type LessonVoice = 'silent' | 'targetTip' | 'sumTip' | 'banner'
+// How the lesson speaks at each step: its first word set plainly in the middle of an empty
+// board, a card pointing at something on it, a banner under the sum, or nothing at all.
+export type LessonVoice = 'silent' | 'opening' | 'targetTip' | 'sumTip' | 'banner'
 
 export const LESSON_VOICE = {
+  welcome: 'opening',
   waiting: 'silent',
   target: 'targetTip',
   sum: 'sumTip',
   guided: 'banner',
+  weights: 'banner',
   congrats: 'banner',
   free: 'silent',
   swipeDown: 'banner',
@@ -194,25 +217,32 @@ export const LESSON_VOICE = {
 
 // What the dial will take at each step.
 //
-// `off` is the whole dial inert: it covers the two pointing cards, because a card that can be
-// played through is a card nobody reads, and the silent beat before them, because a thumb
-// already on a key would otherwise get a press in before the lesson had said anything. `one`
-// is the guided route — the key the route is owed, taps only, every other key dead. `all` is
-// the game, and nothing turns the dial back off once it is on.
+// `off` is the whole dial inert, and it covers every step the lesson is waiting to be
+// tapped through: a card that can be played through is a card nobody reads. That is the
+// opening word, the two pointing cards and the three banners that ask for nothing — and
+// the silent beat among them, because a thumb already on a key would otherwise get a press
+// in before the lesson had said anything.
+//
+// `one` is the guided route — the key the route is owed, taps only, every other key dead.
+// `all` is the game, and it is what the dial is at exactly the steps the lesson is waiting
+// on the player to *do* something rather than to read something: the three gesture lessons,
+// the drag, the free board between targets, and the run once it has been taught.
 export type LessonDial = 'off' | 'one' | 'all'
 
 export const LESSON_DIAL = {
+  welcome: 'off',
   waiting: 'off',
   target: 'off',
   sum: 'off',
   guided: 'one',
-  congrats: 'all',
+  weights: 'off',
+  congrats: 'off',
   free: 'all',
   swipeDown: 'all',
   swipeLeft: 'all',
   swipeRight: 'all',
   sweep: 'all',
-  practice: 'all',
+  practice: 'off',
   done: 'all',
 } as const satisfies Record<LessonStep, LessonDial>
 
@@ -243,20 +273,31 @@ export const dismissedByTap = (step: LessonStep): boolean => LESSON_DIAL[step] =
 // What the lesson says, step by step. `null` is a step that says nothing — the beat before
 // the first word, the gaps between targets, and the run once it has been taught.
 //
-// Short, and in the app's own caps: these are labels on the thing they point at rather than
-// prose about it, and every one is read in the second before a thumb moves. Each names the
-// move the board in front of the player is asking for, never the mechanic behind it — the
-// dial teaches that part by answering.
+// An instruction and nothing else. Every line here is read in the second before a thumb
+// moves, by a player who has the dial in front of them and does not yet know what it does
+// — so each one names the move the board is asking for, in as few words as the move can
+// be named in, and nothing is said twice. No turn of phrase, nothing about the mechanic
+// behind the move, and no line that has to be finished before it means anything: the dial
+// teaches the rest by answering.
 export const LESSON_LINE = {
+  // The one card that is not an instruction: what this run is, said on the board it is
+  // about. Both halves earn their words — a lesson that opens straight onto a dial looks
+  // exactly like a run, and a player who thinks they are being scored plays it like one.
+  welcome: msg`LET'S LEARN THE GAME — NOTHING IS SCORED`,
   waiting: null,
-  target: msg`THE MARK TO MEET`,
-  sum: msg`YOUR TOTAL — BRING IT LEVEL`,
+  target: msg`REACH THIS NUMBER`,
+  sum: msg`THIS IS YOUR TOTAL`,
   // The halo says which key; this says what to do with it. Without a line the route asks a
   // player to work out from a dimmed dial that the one bright key is an instruction.
-  guided: msg`TAP THE KEY THAT GLOWS`,
-  congrats: msg`STRUCK — THE NEXT IS YOURS`,
+  guided: msg`TAP THE GLOWING KEY`,
+  // The rule the whole dial is built on, as the arithmetic itself rather than a sentence
+  // about it: the row's multiplier, the column's, and the digit the key is standing on.
+  // The two multipliers come up beside the dial as this is read, so the line names three
+  // things the player can see.
+  weights: msg`KEY = ROW × COLUMN × DIGIT`,
+  congrats: msg`GOOD. THE NEXT ONE IS YOURS`,
   free: null,
-  swipeDown: msg`LOWER NOW — SWIPE A KEY DOWN`,
+  swipeDown: msg`SWIPE A KEY DOWN`,
   // Said as what the gesture does rather than as where it gets you: a player who knows a
   // swipe left empties a key can work out when to reach for one, where "swipe left to go far
   // down" leaves them guessing how far.
@@ -265,38 +306,95 @@ export const LESSON_LINE = {
   // Named as the board's own move first and the drag second, because the move is the part
   // the player can already do: three keys they know how to empty, and the only new thing
   // being that the finger need not come up between them.
-  sweep: msg`EMPTY THE ROW — ONE DRAG, DON’T LIFT`,
+  sweep: msg`EMPTY THE ROW IN ONE DRAG`,
   // Every gesture the dial has has now been asked for — a tap, all three swipes, and the
-  // drag that strings them together — so this names the set rather than one more move, and
-  // hands the run over. What follows is
-  // a tutorial run with nothing left to say: rolled targets, no clock, one at a time.
-  practice: msg`THAT IS EVERY MOVE — LET’S TRAIN`,
+  // drag that strings them together — so this hands the run over rather than naming one
+  // more move. What follows is a tutorial run with nothing left to say: rolled targets, no
+  // clock, one at a time.
+  practice: msg`THAT IS EVERY MOVE. NOW PRACTISE`,
   done: null,
 } as const satisfies Record<LessonStep, MessageDescriptor | null>
 
 // How long each step holds before moving itself on, and `null` for every step that waits on
 // the player instead.
 //
-// Most of them wait. The two pointing cards go on a tap and on nothing else — a clock would
-// be the lesson deciding they had been read, and the player who had not read one would be
-// handed a live board with no idea what had just been asked of them. The three gesture
-// lessons hold until the gesture, and the drag until the drag: each is the one thing the
+// Every step that says anything waits. Nothing the lesson puts on the screen is taken off
+// it by a clock: a clock is the lesson deciding a line has been read, and the player who
+// had not read one is handed a board that has silently started expecting something. So the
+// cards and the banners go on a tap, the guided route goes on the hit, and the three
+// gesture lessons and the drag go on the gesture — each of those being the one thing the
 // dial has not needed yet, and timed away it would be advice nobody had to take.
 //
-// The holds left are the beat before the first word, which nobody is waiting on, and the two
-// banners that ask for nothing — the congratulation and the sign-off — both read while the
-// player is already playing.
+// What is left is the one beat that shows nothing: the gap between the opening word being
+// tapped away and the first card pointing at the target. The target is springing in across
+// it, and a tooltip pointing at something still on its way in points at nothing. Nobody is
+// waiting on it and nothing of it can be missed.
 export const LESSON_HOLD_MS = {
+  welcome: null,
   waiting: TUTORIAL_FIRST_WORD_MS,
   target: null,
   sum: null,
   guided: null,
-  congrats: TUTORIAL_BANNER_MS,
+  weights: null,
+  congrats: null,
   free: null,
   swipeDown: null,
   swipeLeft: null,
   swipeRight: null,
   sweep: null,
-  practice: TUTORIAL_BANNER_MS,
+  practice: null,
   done: null,
 } as const satisfies Record<LessonStep, number | null>
+
+// Whether the dial wears its multipliers at this step: a small `1×` over each column and
+// beside each row, in the grey the app keeps for a number that is not part of the game.
+//
+// On from the step that explains them and never off again, which is what makes them a
+// labelled dial rather than a card that flashed. Before that step they would be three
+// numbers nobody had introduced, at the one moment the lesson is asking the player to
+// look at a target instead.
+export const LESSON_AXES = {
+  welcome: false,
+  waiting: false,
+  target: false,
+  sum: false,
+  guided: false,
+  weights: true,
+  congrats: true,
+  free: true,
+  swipeDown: true,
+  swipeLeft: true,
+  swipeRight: true,
+  sweep: true,
+  practice: true,
+  // The run carries on as a tutorial run once the script is done, and so does the
+  // labelling: a dial that lost its multipliers at the sign-off would be taking the
+  // lesson back the moment the player was left to use it.
+  done: true,
+} as const satisfies Record<LessonStep, boolean>
+
+// The gesture the lesson is miming, and `null` at every step that is not asking for one.
+//
+// A line naming a swipe is a line about something the player has never done. So the step
+// that says it also shows it: a thumb over the dial, travelling the way the gesture goes,
+// again and again until the gesture is made. `drag` is the last lesson's — the same
+// travel, held across a whole row.
+export type HandGesture = Swipe | 'drag'
+
+export const LESSON_HAND = {
+  welcome: null,
+  waiting: null,
+  target: null,
+  sum: null,
+  // Nothing to mime: the route is taps, and the lit key is already the instruction.
+  guided: null,
+  weights: null,
+  congrats: null,
+  free: null,
+  swipeDown: 'down',
+  swipeLeft: 'left',
+  swipeRight: 'right',
+  sweep: 'drag',
+  practice: null,
+  done: null,
+} as const satisfies Record<LessonStep, HandGesture | null>

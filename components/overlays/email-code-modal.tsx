@@ -8,6 +8,7 @@ import { AppState, Platform, Text, View } from 'react-native'
 import Animated, { FadeInDown } from 'react-native-reanimated'
 
 import { CodeCells } from '@/components/overlays/code-cells'
+import { useHoldsDialogOpen } from '@/components/overlays/dialog-hold'
 import { TrackedPressable } from '@/components/tracked-pressable'
 import { DIM_INK, PRIMARY_INK } from '@/constants/colors'
 import { TYPE } from '@/constants/typography'
@@ -254,6 +255,12 @@ export function EmailCodeModal({
   // `done` joins the two in-flight flags for everything that disables: there is nothing
   // left to type, resend or press on a card whose code has already been taken.
   const busy = confirming || resending || done
+
+  // Against a tap beside the card: a code half typed off an email is worth more than the
+  // tap that would have thrown it away, and a card in the middle of spending one is not
+  // to be closed under the request. Held shut for both — but not once the code has
+  // landed, since the card is leaving by itself at that point.
+  useHoldsDialogOpen(!done && (value !== '' || confirming || resending))
   const waiting = cooldownRemaining(sentAt, now)
 
   // Only while there is something to count. An interval that ran for the life of the card

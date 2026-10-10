@@ -2,6 +2,7 @@ import { Trans, useLingui } from '@lingui/react/macro'
 import { useState } from 'react'
 import { Platform, Text, TextInput, View } from 'react-native'
 
+import { useHoldsDialogOpen } from '@/components/overlays/dialog-hold'
 import { TrackedPressable } from '@/components/tracked-pressable'
 import { DIM_INK } from '@/constants/colors'
 import { TYPE } from '@/constants/typography'
@@ -40,6 +41,10 @@ export function EmailModal({
   const [value, setValue] = useState(typed)
   const [problem, setProblem] = useState<EmailProblem | null>(null)
   const [sending, setSending] = useState(false)
+
+  // An address is slow to type and nothing here keeps it, so a tap beside the card is
+  // ignored while there is one in the field — the dialog around this one asks us.
+  useHoldsDialogOpen(value.trim() !== '')
 
   // Nothing here can be done offline — an address is checked and a code is sent by the
   // server, both of them — so SEND dims and the line underneath says why, rather than

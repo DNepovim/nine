@@ -7,11 +7,14 @@ import {
   dismissedByTap,
   FIRST_STEP,
   LESSON_AFTER_HIT,
+  LESSON_AXES,
   LESSON_DIAL,
+  LESSON_HAND,
   LESSON_HOLD_MS,
   LESSON_LINE,
   LESSON_VOICE,
   lessonStep,
+  type HandGesture,
   type LessonDial,
   type LessonStep,
   type LessonVoice,
@@ -33,10 +36,10 @@ export function useTutorialLesson({
   targets,
 }: {
   tutorial: boolean
-  // Paused counts as not playing, which stops the two banner holds where they are: a banner
-  // that timed out behind the pause screen would be read by nobody. Coming back restarts
-  // the hold it was in rather than resuming it, which is the generous way round. The
-  // pointing cards are on no clock at all and so cannot be lost to a pause.
+  // Paused counts as not playing. Nothing the lesson says is on a clock, so there is no
+  // longer a hold a pause could run out behind — what it stops is the one silent beat
+  // between the opening word and the first card, which restarts rather than resumes when
+  // the player comes back.
   isPlaying: boolean
   // Which run this is. Every fresh deal restarts the lesson, and every run that is not a
   // tutorial has none.
@@ -123,9 +126,9 @@ export function useTutorialLesson({
     [noteSwipe],
   )
 
-  // The hold. A step with no hold arms nothing and waits for the player instead: a tap for
-  // the two pointing cards, one of the watchers below for the route and the free board, and
-  // nothing at all for the end.
+  // The hold, which only the silent beat has one of. Every other step arms nothing and
+  // waits for the player: a tap for the cards and the banners, one of the watchers below
+  // for the route and the free board, and nothing at all for the end.
   useEffect(() => {
     if (!active) return
     const hold = LESSON_HOLD_MS[step]
@@ -178,6 +181,7 @@ export function useTutorialLesson({
 
   const line: MessageDescriptor | null = active ? LESSON_LINE[step] : null
   const voice: LessonVoice = active ? LESSON_VOICE[step] : 'silent'
+  const hand: HandGesture | null = active ? LESSON_HAND[step] : null
 
   return {
     // Whether the lesson has nothing left to say — every step given and the sign-off
@@ -188,6 +192,10 @@ export function useTutorialLesson({
     // What is being said, and where it is drawn. `silent` draws nothing.
     voice,
     line,
+    // Whether the dial wears the two multipliers the lesson explained, and which gesture
+    // it is miming over the keys. Both are off in every run that is not a live tutorial.
+    axes: active && LESSON_AXES[step],
+    hand,
     // What the dial will take, and — while it will take one key only — which.
     dial,
     liveKey,

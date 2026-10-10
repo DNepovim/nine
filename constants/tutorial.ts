@@ -18,10 +18,11 @@ import { type Grid } from '@/modes'
 //   · The options. The dial prints the one number it cannot be worked out without, the
 //     weight on each key, and the pause screen offers nothing to change.
 //
-// Over that board runs the lesson: a fixed opening, two tooltips naming the two numbers,
-// a route walked one lit key at a time, and then a board apiece for every gesture the
-// route did not need. The script itself is machines/tutorial-lesson.ts; the numbers it
-// runs on are below.
+// Over that board runs the lesson: an opening card saying what the run is, two tooltips
+// naming the two numbers, a route walked one lit key at a time, the rule a key is worth
+// its row times its column, and then a board apiece for every gesture the route did not
+// need. The script itself is machines/tutorial-lesson.ts; the numbers it runs on are
+// below.
 
 // What the run is called on screen, in place of the mode's own name.
 //
@@ -93,26 +94,22 @@ export const TUTORIAL_OPENING_TARGET = TUTORIAL_TARGETS[0]
 export const scriptedTarget = (hits: number): number | null =>
   TUTORIAL_TARGETS[hits] ?? null
 
-// How long the lesson waits before its first word. Long enough that the board is drawn
-// and the target has finished springing in — a tooltip pointing at something still on
-// its way in points at nothing — and short enough to read as part of the arrival.
+// The one beat in the lesson on a clock, and it shows nothing at all: the gap between the
+// opening word being tapped away and the first card pointing at the target.
+//
+// Long enough that the target has finished springing in — a tooltip pointing at something
+// still on its way in points at nothing — and short enough to read as part of the arrival.
+// Everything the lesson actually says waits for the player instead; see LESSON_HOLD_MS.
 export const TUTORIAL_FIRST_WORD_MS = 300
 
-// How long the congratulation holds — the one thing in the lesson on a clock.
+// The band the lesson talks in: between the sum and the dial, held open for the whole run
+// so the canvas above it never changes size.
 //
-// Nothing else is. The two pointing cards hold the dial shut while they are up, so a clock
-// taking one away is a clock deciding the player has read it, and the one who had not is
-// left looking at a board that has silently started expecting something. The swipe lesson
-// waits for the swipe: it is the only line in the tutorial asking for a gesture nothing else
-// has asked for, so the gesture itself is what says it landed.
-//
-// The congratulation asks for nothing and is read while the player is already playing, which
-// leaves it nothing to wait for.
-export const TUTORIAL_BANNER_MS = 4000
-
-// The band the lesson talks in, above the spawn canvas — held open for the whole run so the
-// canvas under it never changes size. It stands where Trainee's stat block stands, which the
-// tutorial does not draw.
+// It stood above the spawn canvas once, where Trainee's stat block stands. Down here it is
+// a hand's width from the keys it is talking about and from the total it is talking about
+// — a line telling you to swipe a key down read as a headline at the top of the screen,
+// and reads as an instruction between the two things it names. The sum goes up by exactly
+// this much to make the room, and the dial does not move at all.
 //
 // Two lines' worth. Most of what the lesson says fits on one, and the ones naming a gesture
 // do not — nor does much of anything once it has been translated.

@@ -189,7 +189,7 @@ msgstr ", [B] se skóre [S]"
 msgid "???"
 msgstr "???"
 
-#: components/overlays/admin-people.tsx:71
+#: components/overlays/admin-people.tsx:75
 #: components/overlays/admin-person.tsx:177
 msgid "(no nickname)"
 msgstr "(bez přezdívky)"
@@ -291,7 +291,7 @@ msgid "[W] took the all-time [BOARD] record on [D], and still has it."
 msgstr "[W] vzal [D] historický rekord [BOARD] a pořád ho má."
 
 #. placeholder {0}: Math.floor(joinedMonths / MONTHS_IN_YEAR)
-#: components/overlays/player-profile-overlay.tsx:322
+#: components/overlays/player-profile-overlay.tsx:320
 msgid "{0, plural, one {joined a year ago} other {joined # years ago}}"
 msgstr "{0, plural, one {členem už rok} few {členem už # roky} other {členem už # let}}"
 
@@ -311,7 +311,7 @@ msgstr "{fromDay}. {fromMonth} – {toDay}. {toMonth}"
 msgid "{hidden, plural, one {SHOW # MORE} other {SHOW # MORE}}"
 msgstr "{hidden, plural, one {ZOBRAZIT DALŠÍ #} few {ZOBRAZIT DALŠÍ #} other {ZOBRAZIT DALŠÍCH #}}"
 
-#: components/overlays/player-profile-overlay.tsx:316
+#: components/overlays/player-profile-overlay.tsx:314
 msgid "{joinedMonths, plural, one {joined a month ago} other {joined # months ago}}"
 msgstr "{joinedMonths, plural, one {členem už měsíc} few {členem už # měsíce} other {členem už # měsíců}}"
 
@@ -336,7 +336,7 @@ msgstr "<0/> ovládl včerejšek"
 msgid "<0/> won yesterday and last week"
 msgstr "<0/> ovládl včerejšek i minulý týden"
 
-#: components/overlays/player-profile-overlay.tsx:443
+#: components/overlays/player-profile-overlay.tsx:441
 msgid "<0>{shownAchievements}</0> OF {ACHIEVEMENT_COUNT} ACHIEVEMENTS"
 msgstr "<0>{shownAchievements}</0> Z {ACHIEVEMENT_COUNT} ÚSPĚCHŮ"
 
@@ -384,7 +384,7 @@ msgstr "Na mřížce se objeví zářící cílové číslo. Nastav devět tlač
 msgid "A good lead. Leads have been lost from here."
 msgstr "Pěkný náskok. Z téhle pozice se už náskoky ztrácely."
 
-#: components/overlays/email-code-modal.tsx:505
+#: components/overlays/email-code-modal.tsx:512
 msgid "A profile lives on one device. Restoring it here takes it off the phone it is on now — and anything played on this phone under another name stays behind."
 msgstr "Profil patří vždycky jen jednomu zařízení. Když si ho vrátíš sem, zmizí z telefonu, kde je teď — a co se tady odehrálo pod jiným jménem, zůstane za tebou."
 
@@ -493,23 +493,27 @@ msgstr "Úspěchy jsou ten druhý druh. Nikdo ti je nevezme: dosáhneš jich jed
 msgid "ADD"
 msgstr "PŘIDAT"
 
-#: components/overlays/profile-email.tsx:51
-msgid "ADD EMAIL"
-msgstr "PŘIDAT E-MAIL"
-
-#: components/overlays/profile-motto.tsx:48
+#: components/overlays/profile-motto.tsx:44
 msgid "ADD MOTTO"
 msgstr "PŘIDAT MOTTO"
+
+#: components/overlays/profile-name.tsx:58
+msgid "ADD NICKNAME"
+msgstr "PŘIDAT PŘEZDÍVKU"
 
 #: components/overlays/install-overlay.tsx:101
 msgid "ADD TO HOME SCREEN"
 msgstr "PŘIDAT NA PLOCHU"
 
+#: components/overlays/profile-email.tsx:37
+msgid "ADD YOUR EMAIL"
+msgstr "PŘIDEJ SI E-MAIL"
+
 #: constants/news.ts:19
 msgid "Add your email and a lost phone stops meaning a lost career. New device, fresh install, cleared browser — type that address and your name, your scores and your medals come back to you. We only ever use it for that, and we send nothing else."
 msgstr "Přidej si e-mail a ztracený telefon přestane znamenat ztracenou kariéru. Nové zařízení, čistá instalace, vymazaný prohlížeč — zadáš adresu a tvoje jméno, skóre i medaile se ti vrátí. Použijeme ji jen k tomuhle a nic jiného ti neposíláme."
 
-#: components/overlays/publish-scores-button.tsx:48
+#: components/overlays/publish-scores-button.tsx:64
 msgid "ADD YOUR NICKNAME"
 msgstr "PŘIDEJ PŘEZDÍVKU"
 
@@ -517,12 +521,12 @@ msgstr "PŘIDEJ PŘEZDÍVKU"
 msgid "ADDED TO YOUR FORTUNE"
 msgstr "PŘIČTENO K JMĚNÍ"
 
-#: components/overlays/email-code-modal.tsx:123
+#: components/overlays/email-code-modal.tsx:124
 msgid "Address confirmed."
 msgstr "Adresa potvrzena."
 
 #: components/overlays/admin-overlay.tsx:86
-#: components/overlays/menu-overlay.tsx:702
+#: components/overlays/menu-overlay.tsx:708
 msgid "ADMIN"
 msgstr "ADMIN"
 
@@ -574,11 +578,11 @@ msgstr "Sova uslyší myš pod půl metrem sněhu. Ty jsi přesnější — reko
 msgid "Answer while most of that clock is still full and you strike: the hero does not stop at the next crossroad, it rockets through and lands one deeper."
 msgstr "Odpověz, dokud je většina hodin ještě plná, a máš sérii: hrdina se na další křižovatce nezastaví — proletí jí a přistane o jednu hlouběji."
 
-#: components/overlays/feedback-overlay.tsx:143
+#: components/overlays/feedback-overlay.tsx:147
 msgid "Anything at all — what broke, what annoyed you, what you wish it did. The mode, difficulty and score you are on go with it, and so does the run you have paused."
 msgstr "Cokoliv — co se rozbilo, co tě štvalo, co by sis přál. Mód, obtížnost a skóre se pošlou s tím — a spolu s nimi i rozehraná hra, kterou máš pozastavenou."
 
-#: components/overlays/feedback-overlay.tsx:138
+#: components/overlays/feedback-overlay.tsx:142
 msgid "Anything at all — what broke, what annoyed you, what you wish it did. The mode, difficulty and score you are on go with it."
 msgstr "Cokoliv — co se rozbilo, co tě štvalo, co by sis přál. Mód, obtížnost a skóre se pošlou s tím."
 
@@ -624,9 +628,9 @@ msgstr "Udrž průměr 90 % rychlosti ve hře o 20 a více zásazích."
 msgid "Average 95% accuracy over a run of 20 hits or more."
 msgstr "Udrž průměr 95 % přesnosti ve hře o 20 a více zásazích."
 
-#: components/overlays/player-profile-overlay.tsx:422
-#: components/overlays/player-profile-overlay.tsx:427
-#: components/overlays/player-profile-overlay.tsx:503
+#: components/overlays/player-profile-overlay.tsx:420
+#: components/overlays/player-profile-overlay.tsx:425
+#: components/overlays/player-profile-overlay.tsx:501
 msgid "AVG"
 msgstr "PRŮM"
 
@@ -645,7 +649,7 @@ msgstr "PRŮM RYCH"
 msgid "BACK"
 msgstr "ZPĚT"
 
-#: components/game/tutorial-stepper.tsx:113
+#: components/game/tutorial-stepper.tsx:119
 msgid "Back a step"
 msgstr "O krok zpět"
 
@@ -674,8 +678,8 @@ msgid "Behind, and within reach — two boards would do it."
 msgstr "Ztrácíš, ale na dosah — stačily by dvě tabulky."
 
 #: components/game/best-scores-line.tsx:57
-#: components/overlays/player-profile-overlay.tsx:494
-#: components/overlays/player-profile-overlay.tsx:508
+#: components/overlays/player-profile-overlay.tsx:492
+#: components/overlays/player-profile-overlay.tsx:506
 msgid "BEST"
 msgstr "NEJLEPŠÍ"
 
@@ -688,7 +692,7 @@ msgid "BLUR"
 msgstr "ROZMAZANĚ"
 
 #: components/overlays/compare-overlay.tsx:283
-#: components/overlays/player-profile-overlay.tsx:456
+#: components/overlays/player-profile-overlay.tsx:454
 msgid "BOARDS"
 msgstr "TABULKY"
 
@@ -708,11 +712,11 @@ msgstr "Tlačítka umí ukázat svou váhu, svůj strop i to, kolik zrovna dáva
 msgid "CAN WE LOOK UNDER YOUR THUMBS?"
 msgstr "MŮŽEME TI KOUKAT POD PRSTY?"
 
-#: components/overlays/email-modal.tsx:131
+#: components/overlays/email-modal.tsx:136
 #: components/overlays/join-room-overlay.tsx:87
-#: components/overlays/motto-modal.tsx:123
+#: components/overlays/motto-modal.tsx:138
 #: components/overlays/multiplayer-waiting.tsx:221
-#: components/overlays/nickname-modal.tsx:129
+#: components/overlays/nickname-modal.tsx:142
 msgid "CANCEL"
 msgstr "ZRUŠIT"
 
@@ -732,19 +736,23 @@ msgstr "Navazuj zásahy na sebe — série násobí body ×2 → ×4 → ×8. P�
 msgid "CHAMPIONS"
 msgstr "ŠAMPIONI"
 
-#: components/overlays/email-code-modal.tsx:593
+#: components/overlays/email-code-modal.tsx:600
 msgid "CHANGE EMAIL"
 msgstr "ZMĚNIT E-MAIL"
+
+#: components/overlays/profile-email.tsx:39
+msgid "CHANGE YOUR EMAIL"
+msgstr "ZMĚŇ SI E-MAIL"
 
 #: components/overlays/install-steps.tsx:25
 msgid "Choose Add to Home Screen"
 msgstr "Zvol Přidat na plochu"
 
-#: components/overlays/popup-card-view.tsx:74
+#: components/overlays/popup-card-view.tsx:79
 msgid "CLAIM"
 msgstr "VYZVEDNOUT"
 
-#: components/overlays/email-code-modal.tsx:156
+#: components/overlays/email-code-modal.tsx:157
 msgid "CLEAR"
 msgstr "VYMAZAT"
 
@@ -753,8 +761,8 @@ msgid "Climb the way, or fall back."
 msgstr "Stoupej cestou, nebo padej zpět."
 
 #: components/overlays/compare-overlay.tsx:316
-#: components/overlays/email-code-modal.tsx:521
-#: components/overlays/modal-card.tsx:183
+#: components/overlays/email-code-modal.tsx:528
+#: components/overlays/modal-card.tsx:211
 msgid "CLOSE"
 msgstr "ZAVŘÍT"
 
@@ -766,27 +774,28 @@ msgstr "Až budeš chvíli sbírat body, vrať se k Nováčkovi. Je to jediné m
 msgid "Comfortable. Comfort is how boards change hands."
 msgstr "Pohodlné vedení. Právě tak tabulky mění majitele."
 
-#: components/overlays/player-profile-overlay.tsx:625
+#: components/overlays/player-profile-overlay.tsx:636
 msgid "COMPARE WITH ME"
 msgstr "POROVNAT SE MNOU"
 
-#: components/overlays/email-code-modal.tsx:34
+#: components/overlays/email-code-modal.tsx:35
 msgid "CONFIRM"
 msgstr "POTVRDIT"
 
-#: components/overlays/account-notice.tsx:18
+#: components/overlays/account-notice.tsx:52
+#: components/overlays/profile-email.tsx:38
 msgid "CONFIRM YOUR EMAIL"
 msgstr "POTVRĎ SVŮJ E-MAIL"
 
-#: components/overlays/email-code-modal.tsx:41
+#: components/overlays/email-code-modal.tsx:42
 msgid "CONFIRMED"
 msgstr "POTVRZENO"
 
-#: components/overlays/email-code-modal.tsx:44
+#: components/overlays/email-code-modal.tsx:45
 msgid "CONFIRMING…"
 msgstr "POTVRZUJI…"
 
-#: components/overlays/menu-overlay.tsx:551
+#: components/overlays/menu-overlay.tsx:557
 msgid "CONNECT TO THE INTERNET TO PLAY WITH FRIENDS"
 msgstr "PŘIPOJ SE K INTERNETU A HRAJ S PŘÁTELI"
 
@@ -796,7 +805,7 @@ msgstr "PŘIPOJ SE K INTERNETU A HRAJ S PŘÁTELI"
 msgid "CONTINUE"
 msgstr "POKRAČOVAT"
 
-#: app/(tabs)/index.tsx:1964
+#: app/(tabs)/index.tsx:2024
 msgid "Continue the tutorial"
 msgstr "Pokračovat v tutoriálu"
 
@@ -804,7 +813,7 @@ msgstr "Pokračovat v tutoriálu"
 msgid "CONTROLS"
 msgstr "OVLÁDÁNÍ"
 
-#: components/overlays/menu-overlay.tsx:515
+#: components/overlays/menu-overlay.tsx:521
 msgid "CREATE ROOM"
 msgstr "VYTVOŘIT HRU"
 
@@ -834,7 +843,7 @@ msgid "DELETE ROLE"
 msgstr "SMAZAT ROLI"
 
 #: components/overlays/dev-overlay.tsx:83
-#: components/overlays/menu-overlay.tsx:692
+#: components/overlays/menu-overlay.tsx:698
 msgid "DEV"
 msgstr "DEV"
 
@@ -866,11 +875,11 @@ msgstr "Udělej něco, co nikoho nenapadlo chtít."
 msgid "DONE"
 msgstr "HOTOVO"
 
-#: components/overlays/nickname-modal.tsx:93
+#: components/overlays/nickname-modal.tsx:106
 msgid "e.g. ACE_9"
 msgstr "např. ACE_9"
 
-#: components/overlays/motto-modal.tsx:79
+#: components/overlays/motto-modal.tsx:94
 msgid "e.g. I dial faster than I think"
 msgstr "např. Vytáčím rychleji, než přemýšlím"
 
@@ -890,9 +899,9 @@ msgstr "LEHKÁ"
 msgid "Empty the bar and it turns red and starts to pulse: you are starving, and a heart goes every five seconds until you eat."
 msgstr "Když proužek vyprázdníš, zčervená a začne pulzovat: hladovíš, a každých pět sekund přijdeš o život, dokud se nenajíš."
 
-#: machines/tutorial-lesson.ts:268
-msgid "EMPTY THE ROW — ONE DRAG, DON’T LIFT"
-msgstr "VYNULUJ ŘADU JEDNÍM TAHEM — NEZVEDEJ PRST"
+#: machines/tutorial-lesson.ts:308
+msgid "EMPTY THE ROW IN ONE DRAG"
+msgstr "VYNULUJ ŘADU JEDNÍM TAHEM"
 
 #: components/game/arcade-paused.tsx:63
 #: components/overlays/paused-overlay.tsx:248
@@ -957,7 +966,7 @@ msgstr "Každá vesnice vydrží jinak dlouho a prstenec uvnitř jejích hradeb 
 msgid "Everyone who hits is ranked by how few moves it took."
 msgstr "Každý, kdo trefí, se seřadí podle toho, na kolik tahů to zvládl."
 
-#: components/overlays/admin-people.tsx:210
+#: components/overlays/admin-people.tsx:214
 msgid "EVERYONE WITH A ROLE OR AN OVERRIDE"
 msgstr "VŠICHNI S ROLÍ NEBO VÝJIMKOU"
 
@@ -1001,7 +1010,7 @@ msgstr "2."
 msgid "FEBRUARY"
 msgstr "února"
 
-#: components/overlays/feedback-overlay.tsx:103
+#: components/overlays/feedback-overlay.tsx:107
 msgid "FEEDBACK"
 msgstr "ZPĚTNÁ VAZBA"
 
@@ -1013,7 +1022,7 @@ msgstr "PÁD"
 msgid "FEWEST MOVES"
 msgstr "NEJMÉNĚ TAHŮ"
 
-#: components/overlays/admin-people.tsx:186
+#: components/overlays/admin-people.tsx:190
 msgid "FIND"
 msgstr "NAJÍT"
 
@@ -1085,7 +1094,7 @@ msgstr "BEZCHYBNÝCH DESET"
 msgid "FORTUNE"
 msgstr "JMĚNÍ"
 
-#: components/game/tutorial-stepper.tsx:162
+#: components/game/tutorial-stepper.tsx:168
 msgid "Forward a step"
 msgstr "O krok vpřed"
 
@@ -1129,6 +1138,10 @@ msgstr "DÁVÁ TEĎ"
 msgid "GOOD SPORT"
 msgstr "FAIR PLAY"
 
+#: machines/tutorial-lesson.ts:297
+msgid "GOOD. THE NEXT ONE IS YOURS"
+msgstr "DOBŘE. DALŠÍ JE NA TOBĚ"
+
 #: constants/achievements.ts:508
 msgid "GOOSE EGG"
 msgstr "ČISTÁ NULA"
@@ -1171,7 +1184,7 @@ msgstr "Trefuj, dokud je kruh z větší části plný, a poroste ti combo."
 
 #: components/game/trainee-stats.tsx:64
 #: components/overlays/compare-stat-row.tsx:21
-#: components/overlays/player-profile-overlay.tsx:395
+#: components/overlays/player-profile-overlay.tsx:393
 #: lib/run-stats.ts:47
 msgid "HITS"
 msgstr "ZÁSAHY"
@@ -1219,7 +1232,7 @@ msgid "How far can you go?"
 msgstr "Jak daleko to dotáhneš?"
 
 #: components/overlays/how-to-play-overlay.tsx:422
-#: components/overlays/menu-overlay.tsx:683
+#: components/overlays/menu-overlay.tsx:689
 msgid "HOW TO PLAY"
 msgstr "JAK HRÁT"
 
@@ -1267,7 +1280,7 @@ msgstr "NAINSTALOVAT"
 msgid "INTO THE DEEP"
 msgstr "DO HLOUBKY"
 
-#: components/overlays/player-profile-overlay.tsx:217
+#: components/overlays/player-profile-overlay.tsx:224
 msgid "IS THAT YOU?"
 msgstr "TO JSI TY?"
 
@@ -1275,7 +1288,7 @@ msgstr "TO JSI TY?"
 msgid "IS WAITING FOR YOU"
 msgstr "ČEKÁ NA TEBE"
 
-#: components/overlays/feedback-overlay.tsx:119
+#: components/overlays/feedback-overlay.tsx:123
 msgid "It went straight to the person who makes this, and it is read. If it gets an answer, you will find one here next time you open the game."
 msgstr "Šlo to rovnou člověku, který to dělá, a čte se to. Když si to vyžádá odpověď, najdeš ji tady, až hru příště otevřeš."
 
@@ -1288,7 +1301,7 @@ msgid "JANUARY"
 msgstr "ledna"
 
 #: components/overlays/join-room-overlay.tsx:75
-#: components/overlays/menu-overlay.tsx:534
+#: components/overlays/menu-overlay.tsx:540
 msgid "JOIN ROOM"
 msgstr "PŘIPOJIT SE"
 
@@ -1296,7 +1309,7 @@ msgstr "PŘIPOJIT SE"
 msgid "JOIN WITH CODE"
 msgstr "PŘIPOJIT SE KÓDEM"
 
-#: components/overlays/player-profile-overlay.tsx:314
+#: components/overlays/player-profile-overlay.tsx:312
 msgid "joined this month"
 msgstr "členem od tohoto měsíce"
 
@@ -1316,10 +1329,6 @@ msgstr "6."
 msgid "JUNE"
 msgstr "června"
 
-#: components/tutorial-curtain.tsx:142
-msgid "JUST THE TUTORIAL - NOTHING HERE IS SCORED"
-msgstr "JEN VÝUKA - NIC SE TU NEPOČÍTÁ"
-
 #: constants/achievements.ts:544
 msgid "Keep a single run going for a whole hour."
 msgstr "Udrž jednu hru v běhu celou hodinu."
@@ -1328,9 +1337,9 @@ msgstr "Udrž jednu hru v běhu celou hodinu."
 msgid "Keep a single run going for ten minutes."
 msgstr "Udrž jednu hru v běhu deset minut."
 
-#: components/overlays/profile-email.tsx:59
-msgid "Keep this profile, or bring back one from another phone"
-msgstr "Nech si tenhle profil, nebo si vrať ten z jiného telefonu"
+#: machines/tutorial-lesson.ts:296
+msgid "KEY = ROW × COLUMN × DIGIT"
+msgstr "TLAČÍTKO = ŘÁDEK × SLOUPEC × ČÍSLICE"
 
 #: constants/achievements.ts:358
 msgid "Land 1 000 targets across every run."
@@ -1384,13 +1393,13 @@ msgstr "AŤ ZAČNE DOBRODRUŽSTVÍ"
 msgid "Let us watch replays to fix bugs"
 msgstr "Nech nás sledovat záznamy a opravovat chyby"
 
-#: components/overlays/whats-new-overlay.tsx:129
+#: components/overlays/whats-new-overlay.tsx:135
 msgid "LET’S GO"
 msgstr "JDEME NA TO"
 
-#: components/tutorial-curtain.tsx:132
-msgid "LET'S LEARN THE GAME"
-msgstr "POJĎME SE NAUČIT HRU"
+#: machines/tutorial-lesson.ts:285
+msgid "LET'S LEARN THE GAME — NOTHING IS SCORED"
+msgstr "POJĎME SE NAUČIT HRU — NIC SE NEPOČÍTÁ"
 
 #: components/splash-screen.tsx:219
 msgid "Let's multiply"
@@ -1407,10 +1416,6 @@ msgstr "DLOUHÁ TRAŤ"
 #: constants/achievements.ts:516
 msgid "Lose every life in under ten seconds."
 msgstr "Ztrať všechny životy do deseti sekund."
-
-#: machines/tutorial-lesson.ts:259
-msgid "LOWER NOW — SWIPE A KEY DOWN"
-msgstr "TEĎ NÍŽ — ŠVIHNI TLAČÍTKEM DOLŮ"
 
 #: lib/prose.ts:108
 msgid "Mar"
@@ -1440,7 +1445,7 @@ msgstr "5."
 msgid "MAY"
 msgstr "května"
 
-#: components/overlays/player-profile-overlay.tsx:533
+#: components/overlays/player-profile-overlay.tsx:531
 msgid "MEDALS HELD, EVER"
 msgstr "HISTORIE MEDAILÍ"
 
@@ -1473,7 +1478,7 @@ msgstr "Je toho víc k nalezení"
 msgid "MULTIPLAYER"
 msgstr "VÍCE HRÁČŮ"
 
-#: components/overlays/menu-overlay.tsx:618
+#: components/overlays/menu-overlay.tsx:624
 msgid "My best at Nine is {bestScore} — {board}. Think you can beat it?"
 msgstr "Moje maximum v Nine je {bestScore} — {board}. Myslíš, že to překonáš?"
 
@@ -1485,11 +1490,11 @@ msgstr "O skóre už nepřijdeš"
 msgid "Never miss an update"
 msgstr "Neuteče ti žádná novinka"
 
-#: components/overlays/whats-new-overlay.tsx:129
+#: components/overlays/whats-new-overlay.tsx:135
 msgid "NEXT"
 msgstr "DALŠÍ"
 
-#: components/overlays/high-scores.tsx:281
+#: components/overlays/high-scores.tsx:286
 msgid "NICK"
 msgstr "NICK"
 
@@ -1497,7 +1502,7 @@ msgstr "NICK"
 msgid "NIGHT SHIFT"
 msgstr "NOČNÍ SMĚNA"
 
-#: components/overlays/menu-overlay.tsx:619
+#: components/overlays/menu-overlay.tsx:625
 msgid "Nine buttons, one number to hit. Come take a run at it."
 msgstr "Devět tlačítek, jedno číslo k trefení. Pojď si to zkusit."
 
@@ -1523,11 +1528,11 @@ msgstr "DEVĚT DEVĚT DEVĚT"
 msgid "No challenges have been written yet."
 msgstr "Zatím nebyla napsaná žádná výzva."
 
-#: components/overlays/email-modal.tsx:106
+#: components/overlays/email-modal.tsx:111
 msgid "No connection — a code can only be sent online."
 msgstr "Bez připojení — kód se dá poslat jen online."
 
-#: components/overlays/nickname-modal.tsx:118
+#: components/overlays/nickname-modal.tsx:131
 msgid "No connection — a nickname can only be claimed online."
 msgstr "Bez připojení — přezdívku si můžeš zabrat jen online."
 
@@ -1547,7 +1552,7 @@ msgstr "Žádné životy, žádný spěch."
 msgid "No records fell. They rarely do."
 msgstr "Nepadl žádný rekord. Ono se to stává málokdy."
 
-#: components/overlays/player-profile-overlay.tsx:580
+#: components/overlays/player-profile-overlay.tsx:578
 msgid "No runs counted yet."
 msgstr "Zatím tu není započítaná žádná hra."
 
@@ -1579,7 +1584,7 @@ msgstr "Nikdo ho neuchopil. Různých jmen na jeho dnech: [C]."
 msgid "Nobody has taken anything off you."
 msgstr "Nikdo ti nic nesebral."
 
-#: components/overlays/admin-people.tsx:236
+#: components/overlays/admin-people.tsx:240
 msgid "Nobody holds a role yet."
 msgstr "Zatím nikdo nemá roli."
 
@@ -1700,7 +1705,7 @@ msgstr "Padl jeden historický rekord: [BOARD], [D]. Teď patří hráči [W]."
 msgid "One board did not go along with it: [BOARD] stayed [W]’s throughout."
 msgstr "Jedna tabulka se tomu vymkla: [BOARD] zůstala celou dobu hráči [W]."
 
-#: components/overlays/motto-modal.tsx:70
+#: components/overlays/motto-modal.tsx:85
 msgid "One line under your name, for anyone who opens your profile."
 msgstr "Jeden řádek pod tvým jménem, pro každého, kdo si otevře tvůj profil."
 
@@ -1732,7 +1737,7 @@ msgstr "JEDEN CÍL · BEZ ČASU · BEZ ŽIVOTŮ"
 msgid "Only [P] days were played at all, and [A] took every one."
 msgstr "Hrálo se dohromady jen [P]× a [A] vzal všechno."
 
-#: components/overlays/email-modal.tsx:118
+#: components/overlays/email-modal.tsx:123
 msgid "Only ever used to get your profile back. No newsletters, no offers, nothing else — ever."
 msgstr "Použijeme ho jen k vrácení profilu. Žádné newslettery, žádné nabídky, nic jiného — nikdy."
 
@@ -1757,10 +1762,14 @@ msgid "OPTIMAL PATH"
 msgstr "NEJLEPŠÍ CESTA"
 
 #: components/overlays/advanced-options-overlay.tsx:76
-#: components/overlays/menu-overlay.tsx:603
+#: components/overlays/menu-overlay.tsx:609
 #: components/overlays/paused-overlay.tsx:254
 msgid "OPTIONS"
 msgstr "NASTAVENÍ"
+
+#: components/overlays/publish-scores-button.tsx:80
+msgid "OR RESTORE YOUR PROFILE"
+msgstr "NEBO SI VRAŤ PROFIL"
 
 #: components/overlays/how-to-play-overlay.tsx:634
 msgid "Out of hearts and the run is over. That and the mouth are the only two ways one ends."
@@ -1770,7 +1779,7 @@ msgstr "Když dojdou životy, hra končí. Spolu s jícnem jsou to jediné dva k
 msgid "PALINDROME"
 msgstr "PALINDROM"
 
-#: components/overlays/email-code-modal.tsx:179
+#: components/overlays/email-code-modal.tsx:180
 msgid "PASTE FROM CLIPBOARD"
 msgstr "VLOŽIT ZE SCHRÁNKY"
 
@@ -1812,7 +1821,7 @@ msgstr "HRÁT ZNOVU"
 msgid "Play five runs with friends and win none of them."
 msgstr "Zahraj si pět her s přáteli a ani jednu nevyhraj."
 
-#: components/overlays/menu-overlay.tsx:588
+#: components/overlays/menu-overlay.tsx:594
 msgid "PLAY GAME"
 msgstr "HRÁT"
 
@@ -1844,7 +1853,7 @@ msgstr "Zapiš skóre v každém módu a obtížnosti."
 msgid "Precision over speed."
 msgstr "Preciznost před rychlostí."
 
-#: components/overlays/menu-overlay.tsx:657
+#: components/overlays/menu-overlay.tsx:663
 msgid "PROFILE"
 msgstr "PROFIL"
 
@@ -1860,6 +1869,10 @@ msgstr "Dosáhni v jedné hře 25 zásahů, než přijdeš o život."
 msgid "Reach the ×8 multiplier."
 msgstr "Dosáhni násobitele ×8."
 
+#: machines/tutorial-lesson.ts:287
+msgid "REACH THIS NUMBER"
+msgstr "TREF TOHLE ČÍSLO"
+
 #: components/overlays/multiplayer-game-over.tsx:208
 msgid "READY"
 msgstr "PŘIPRAVEN"
@@ -1872,15 +1885,15 @@ msgstr "Jdeme na opravdovou hru?"
 msgid "Records, celebrated"
 msgstr "Rekordy se slaví"
 
-#: components/overlays/motto-modal.tsx:140
+#: components/overlays/motto-modal.tsx:155
 msgid "REMOVE"
 msgstr "SMAZAT"
 
-#: components/overlays/email-code-modal.tsx:573
+#: components/overlays/email-code-modal.tsx:580
 msgid "RESEND CODE"
 msgstr "POSLAT ZNOVU"
 
-#: components/overlays/email-code-modal.tsx:571
+#: components/overlays/email-code-modal.tsx:578
 msgid "RESEND IN {waiting}S"
 msgstr "ZNOVU ZA {waiting}S"
 
@@ -1892,7 +1905,7 @@ msgstr "ZPĚT NA VÝCHOZÍ ROLI"
 msgid "RESTART RUN"
 msgstr "ZAČÍT ZNOVU"
 
-#: components/overlays/email-code-modal.tsx:45
+#: components/overlays/email-code-modal.tsx:46
 msgid "RESTORING…"
 msgstr "VRACÍM…"
 
@@ -1929,8 +1942,8 @@ msgid "RUN"
 msgstr "SPUSTIT"
 
 #: components/overlays/compare-stat-row.tsx:20
-#: components/overlays/player-profile-overlay.tsx:390
-#: components/overlays/player-profile-overlay.tsx:491
+#: components/overlays/player-profile-overlay.tsx:388
+#: components/overlays/player-profile-overlay.tsx:489
 msgid "RUNS"
 msgstr "HRY"
 
@@ -1954,11 +1967,11 @@ msgstr "SYTOST"
 msgid "Saturday"
 msgstr "v sobotu"
 
-#: components/overlays/motto-modal.tsx:141
+#: components/overlays/motto-modal.tsx:156
 msgid "SAVE"
 msgstr "ULOŽIT"
 
-#: components/overlays/motto-modal.tsx:139
+#: components/overlays/motto-modal.tsx:154
 msgid "SAVING…"
 msgstr "UKLÁDÁM…"
 
@@ -1966,8 +1979,8 @@ msgstr "UKLÁDÁM…"
 msgid "SCENIC ROUTE"
 msgstr "VYHLÍDKOVÁ JÍZDA"
 
-#: components/overlays/high-scores.tsx:284
-#: components/overlays/player-profile-overlay.tsx:495
+#: components/overlays/high-scores.tsx:289
+#: components/overlays/player-profile-overlay.tsx:493
 msgid "SCORE"
 msgstr "SKÓRE"
 
@@ -2027,7 +2040,7 @@ msgstr "Zatím na druhém místě."
 msgid "See the better way"
 msgstr "Podívej se na lepší cestu"
 
-#: components/overlays/email-modal.tsx:145
+#: components/overlays/email-modal.tsx:150
 msgid "SEND CODE"
 msgstr "POSLAT KÓD"
 
@@ -2035,8 +2048,8 @@ msgstr "POSLAT KÓD"
 msgid "Send feedback, and get an answer back."
 msgstr "Pošli zpětnou vazbu a přijde ti na ni odpověď."
 
-#: components/overlays/email-code-modal.tsx:569
-#: components/overlays/email-modal.tsx:145
+#: components/overlays/email-code-modal.tsx:576
+#: components/overlays/email-modal.tsx:150
 msgid "SENDING…"
 msgstr "POSÍLÁM…"
 
@@ -2068,7 +2081,7 @@ msgstr "Sedm dní, jedno jméno. [A] držel týden od pondělí a už ho nepusti
 msgid "Seven seconds a target — the clock everyone races."
 msgstr "Sedm vteřin na cíl — stejný čas pro všechny."
 
-#: components/overlays/menu-overlay.tsx:633
+#: components/overlays/menu-overlay.tsx:639
 #: components/overlays/multiplayer-waiting.tsx:120
 msgid "SHARE"
 msgstr "SDÍLET"
@@ -2090,7 +2103,7 @@ msgstr "OD {0}"
 msgid "Skill inside a single run: a long streak, the top multiplier, a stretch without losing a life."
 msgstr "Dovednost v jedné hře: dlouhá série, nejvyšší násobitel, úsek bez ztráty života."
 
-#: components/overlays/nickname-modal.tsx:129
+#: components/overlays/nickname-modal.tsx:142
 msgid "SKIP"
 msgstr "PŘESKOČIT"
 
@@ -2098,7 +2111,7 @@ msgstr "PŘESKOČIT"
 msgid "SLIPSTREAM"
 msgstr "ZÁVĚTŘÍ"
 
-#: components/overlays/email-modal.tsx:70
+#: components/overlays/email-modal.tsx:75
 msgid "So you can get your profile back on another phone."
 msgstr "Ať si svůj profil vrátíš i v jiném telefonu."
 
@@ -2106,7 +2119,7 @@ msgstr "Ať si svůj profil vrátíš i v jiném telefonu."
 msgid "SOMETHING BROKE"
 msgstr "NĚCO SE ROZBILO"
 
-#: components/overlays/motto-modal.tsx:56
+#: components/overlays/motto-modal.tsx:57
 msgid "Something went wrong, try again"
 msgstr "Něco se pokazilo, zkus to znovu"
 
@@ -2162,7 +2175,7 @@ msgid "STEADY HAND"
 msgstr "PEVNÁ RUKA"
 
 #. placeholder {0}: board + 1
-#: components/game/tutorial-stepper.tsx:131
+#: components/game/tutorial-stepper.tsx:137
 msgid "Step {0}"
 msgstr "Krok {0}"
 
@@ -2191,11 +2204,7 @@ msgstr "SÉRIE"
 msgid "STRIKES"
 msgstr "V SÉRII"
 
-#: machines/tutorial-lesson.ts:257
-msgid "STRUCK — THE NEXT IS YOURS"
-msgstr "ZÁSAH — DALŠÍ JE NA TOBĚ"
-
-#: components/overlays/email-code-modal.tsx:35
+#: components/overlays/email-code-modal.tsx:36
 msgid "SUBMIT"
 msgstr "ODESLAT"
 
@@ -2207,11 +2216,15 @@ msgstr "v neděli"
 msgid "SURGEON"
 msgstr "CHIRURG"
 
-#: machines/tutorial-lesson.ts:263
+#: machines/tutorial-lesson.ts:299
+msgid "SWIPE A KEY DOWN"
+msgstr "ŠVIHNI TLAČÍTKEM DOLŮ"
+
+#: machines/tutorial-lesson.ts:303
 msgid "SWIPE LEFT TO EMPTY A KEY"
 msgstr "ŠVIHNUTÍM VLEVO TLAČÍTKO VYNULUJEŠ"
 
-#: machines/tutorial-lesson.ts:264
+#: machines/tutorial-lesson.ts:304
 msgid "SWIPE RIGHT TO FILL A KEY"
 msgstr "ŠVIHNUTÍM VPRAVO HO VYTOČÍŠ NA DEVÍTKU"
 
@@ -2257,17 +2270,13 @@ msgstr "SEBRÁNO ZA POSLEDNÍCH {HISTORY_DAYS} DNÍ"
 msgid "Tap any name — on a board, in a room, on the winners line — and their profile opens: the mark they carry, what they have played, the medals they hold and the records they once held. A name on a leaderboard is a player now, not a row."
 msgstr "Ťukni na kterékoliv jméno — na žebříčku, v místnosti, na řádku vítězů — a otevře se jeho profil: odznak, který nosí, co všechno odehrál, medaile, které právě drží, i rekordy, které kdy držel. Jméno na žebříčku už není řádek, ale hráč."
 
-#: machines/tutorial-lesson.ts:256
-msgid "TAP THE KEY THAT GLOWS"
+#: machines/tutorial-lesson.ts:291
+msgid "TAP THE GLOWING KEY"
 msgstr "ŤUKNI NA SVÍTÍCÍ TLAČÍTKO"
 
-#: components/overlays/account-notice.tsx:24
+#: components/overlays/account-notice.tsx:26
 msgid "TAP TO BRING IT BACK"
 msgstr "KLEPNUTÍM SI HO VRÁTÍŠ"
-
-#: components/overlays/account-notice.tsx:23
-msgid "TAP TO ENTER YOUR CODE"
-msgstr "KLEPNUTÍM ZADÁŠ KÓD"
 
 #: components/overlays/how-to-play-overlay.tsx:41
 msgid "TARGETS & THE CLOCK"
@@ -2305,7 +2314,7 @@ msgstr "DESET TISÍC ZÁSAHŮ"
 msgid "TERMINAL VELOCITY"
 msgstr "MEZNÍ RYCHLOST"
 
-#: components/overlays/feedback-overlay.tsx:116
+#: components/overlays/feedback-overlay.tsx:120
 msgid "THANK YOU"
 msgstr "DÍKY"
 
@@ -2321,15 +2330,15 @@ msgstr "Kód je špatně nebo vypršel."
 msgid "That does not look like an email address."
 msgstr "Tohle nevypadá jako e-mailová adresa."
 
-#: machines/tutorial-lesson.ts:273
-msgid "THAT IS EVERY MOVE — LET’S TRAIN"
-msgstr "TO JSOU VŠECHNY TAHY — TRÉNUJ"
-
 #: components/overlays/tutorial-done-modal.tsx:73
 msgid "That is every move learned."
 msgstr "Všechny tahy už umíš."
 
-#: components/overlays/motto-modal.tsx:50
+#: machines/tutorial-lesson.ts:313
+msgid "THAT IS EVERY MOVE. NOW PRACTISE"
+msgstr "TO JSOU VŠECHNY TAHY. TEĎ TRÉNUJ"
+
+#: components/overlays/motto-modal.tsx:51
 msgid "That is longer than {MOTTO_MAX} characters."
 msgstr "To je delší než {MOTTO_MAX} znaků."
 
@@ -2396,10 +2405,6 @@ msgstr "OKLIKOU"
 msgid "The map turns as you walk, to keep you pointed forward. Tap the compass in the corner if you would rather north stayed at the top of the screen — it remembers whichever you chose."
 msgstr "Mapa se za chůze otáčí, aby tvůj směr mířil vždy nahoru. Když chceš radši sever nahoře, klepni na růžici v rohu — co si vybereš, to si pamatuje."
 
-#: machines/tutorial-lesson.ts:252
-msgid "THE MARK TO MEET"
-msgstr "CÍL, KTERÝ MÁŠ TREFIT"
-
 #: components/overlays/title-mark.tsx:68
 #: constants/achievements.ts:421
 msgid "THE OWL"
@@ -2465,7 +2470,7 @@ msgstr "Před tebou je dlouhý výstup a soupeř stojí na jeho vrcholu."
 msgid "They are ahead, but the gap has a bottom to it."
 msgstr "Soupeř vede, ale ta propast má dno."
 
-#: components/overlays/email-code-modal.tsx:443
+#: components/overlays/email-code-modal.tsx:450
 msgid "They are good for ten minutes."
 msgstr "Platí deset minut."
 
@@ -2505,7 +2510,7 @@ msgstr "Co ti zůstane"
 msgid "Think in horizontal swipes before you tap. Left sends a button to 0, right to 9, and each is one move however far it travels — a big gap is often two swipes and a tap."
 msgstr "Mysli ve vodorovných švihnutích: doleva pošle tlačítko na nulu, doprava na devítku, a každé je jeden tah. Velkou mezeru tak zavřeš dvěma švihnutími a ťuknutím."
 
-#: components/overlays/email-code-modal.tsx:485
+#: components/overlays/email-code-modal.tsx:492
 msgid "This address already has a profile — almost certainly yours. The code brings it here."
 msgstr "Na téhle adrese už profil je — skoro určitě tvůj. Kód ho přenese sem."
 
@@ -2525,15 +2530,19 @@ msgstr "Takhle ti Nine řekne, co se změnilo.\n"
 msgid "This is not a contest, it is a demonstration."
 msgstr "Tohle není souboj, tohle je ukázka."
 
+#: machines/tutorial-lesson.ts:288
+msgid "THIS IS YOUR TOTAL"
+msgstr "TOHLE JE TVŮJ SOUČET"
+
 #: lib/compare-lines.ts:44
 msgid "This one is over. The dial has been kinder to them."
 msgstr "Tohle je rozhodnuté. Číselník byl k soupeři laskavější."
 
-#: components/overlays/player-profile-overlay.tsx:344
+#: components/overlays/player-profile-overlay.tsx:342
 msgid "This profile could not be loaded."
 msgstr "Profil se nepodařilo načíst."
 
-#: components/overlays/account-notice.tsx:19
+#: components/overlays/account-notice.tsx:25
 msgid "THIS PROFILE MOVED TO ANOTHER PHONE"
 msgstr "TENHLE PROFIL SE PŘESUNUL DO JINÉHO TELEFONU"
 
@@ -2555,7 +2564,7 @@ msgid "Thursday"
 msgstr "ve čtvrtek"
 
 #: components/overlays/compare-stat-row.tsx:22
-#: components/overlays/player-profile-overlay.tsx:410
+#: components/overlays/player-profile-overlay.tsx:408
 #: lib/run-stats.ts:51
 #: lib/run-stats.ts:85
 msgid "TIME"
@@ -2573,7 +2582,7 @@ msgstr "TIP"
 msgid "TIPS & TRICKS"
 msgstr "TIPY A TRIKY"
 
-#: components/overlays/publish-scores-button.tsx:53
+#: components/overlays/publish-scores-button.tsx:69
 msgid "TO PUBLISH YOUR BESTS"
 msgstr "PRO ZVEŘEJNĚNÍ SVÝCH REKORDŮ"
 
@@ -2599,9 +2608,9 @@ msgstr "ŠPICE ŽEBŘÍČKU"
 msgid "TOP RIGHT"
 msgstr "VPRAVO NAHOŘE"
 
-#: components/overlays/player-profile-overlay.tsx:391
-#: components/overlays/player-profile-overlay.tsx:396
-#: components/overlays/player-profile-overlay.tsx:411
+#: components/overlays/player-profile-overlay.tsx:389
+#: components/overlays/player-profile-overlay.tsx:394
+#: components/overlays/player-profile-overlay.tsx:409
 msgid "TOTAL"
 msgstr "CELKEM"
 
@@ -2637,7 +2646,7 @@ msgstr "ZKUS {modeName}"
 
 #: components/crash-screen.tsx:27
 #: components/overlays/compare-overlay.tsx:178
-#: components/overlays/player-profile-overlay.tsx:352
+#: components/overlays/player-profile-overlay.tsx:350
 msgid "TRY AGAIN"
 msgstr "ZKUSIT ZNOVU"
 
@@ -2657,7 +2666,7 @@ msgstr "v úterý"
 msgid "Turn on SHOW SUM IN BUTTONS under Options. Each button then reads out what it is contributing, so the arithmetic sits on the grid instead of in your head."
 msgstr "V Nastavení zapni ZOBRAZIT SOUČET V TLAČÍTKÁCH. Každé tlačítko pak ukazuje, čím zrovna přispívá, takže počítání máš na mřížce místo v hlavě."
 
-#: constants/tutorial.ts:32
+#: constants/tutorial.ts:33
 msgid "TUTORIAL"
 msgstr "TUTORIÁL"
 
@@ -2677,7 +2686,7 @@ msgstr "DVA V ŘADĚ"
 msgid "Two names all week: [A] took [N] days, [B] the other [M]."
 msgstr "Celý týden dvě jména: [A] vzal [N], [B] zbylých [M]."
 
-#: components/overlays/feedback-overlay.tsx:157
+#: components/overlays/feedback-overlay.tsx:161
 msgid "Type here"
 msgstr "Piš sem"
 
@@ -2725,7 +2734,7 @@ msgstr "Bojovníci vycházejí z brány jeden za druhým, a čím déle boj trv�
 msgid "Waste too many moves on a hit and you lose a life — the bar is 25% accuracy on Easy, 20% on Hard, 15% on Extreme."
 msgstr "Když na zásah promrháš moc tahů, přijdeš o život — laťka je 25 % přesnosti na Lehké, 20 % na Těžké a 15 % na Extrémní."
 
-#: components/overlays/email-code-modal.tsx:437
+#: components/overlays/email-code-modal.tsx:444
 msgid "We sent six digits to <0>{address}</0>."
 msgstr "Poslali jsme šest číslic na <0>{address}</0>."
 
@@ -2758,7 +2767,7 @@ msgstr "CO JE NOVÉHO"
 msgid "WHAT’S NEW IN THE GAME?"
 msgstr "CO JE VE HŘE NOVÉHO?"
 
-#: components/overlays/motto-modal.tsx:67
+#: components/overlays/motto-modal.tsx:82
 msgid "WHAT’S ON YOUR MIND?"
 msgstr "CO MÁŠ NA SRDCI?"
 
@@ -2770,7 +2779,7 @@ msgstr "Až k tobě červená dojde, stáhne tě o jednu křižovatku zpět — 
 msgid "WHERE CAN WE REACH YOU?"
 msgstr "KAM TI MÁME NAPSAT?"
 
-#: components/overlays/nickname-modal.tsx:81
+#: components/overlays/nickname-modal.tsx:17
 msgid "WHO DO YOU WANT TO BE?"
 msgstr "KÝM CHCEŠ BÝT?"
 
@@ -2778,7 +2787,7 @@ msgstr "KÝM CHCEŠ BÝT?"
 msgid "WHO IS BETTER?"
 msgstr "KDO JE LEPŠÍ?"
 
-#: components/overlays/player-profile-overlay.tsx:217
+#: components/overlays/player-profile-overlay.tsx:224
 msgid "WHO IS IT?"
 msgstr "KDO TO JE?"
 
@@ -2853,12 +2862,12 @@ msgstr "Vedeš o šířku jednoho řádku."
 msgid "You took the room and left them the door."
 msgstr "Bereš si celou místnost a soupeři necháváš dveře."
 
-#: components/overlays/menu-overlay.tsx:545
+#: components/overlays/menu-overlay.tsx:551
 #: components/overlays/offline-notice.tsx:17
 msgid "YOU'RE OFFLINE"
 msgstr "JSI OFFLINE"
 
-#: components/overlays/email-modal.tsx:79
+#: components/overlays/email-modal.tsx:84
 msgid "you@example.com"
 msgstr "ty@priklad.cz"
 
@@ -2874,7 +2883,7 @@ msgstr "Prst už nemusíš zvedat z displeje. Taž přes číselník a každé t
 msgid "Your hit count, the last hit’s accuracy and speed, the fewest moves each target needs, and the route you should have pressed — all off until you switch them on from MENU."
 msgstr "Počet zásahů, přesnost a rychlost posledního zásahu, nejméně tahů na každý cíl i nejlepší cesta k němu — všechno je vypnuté, dokud si to nezapneš v MENU."
 
-#: components/overlays/nickname-modal.tsx:84
+#: components/overlays/nickname-modal.tsx:97
 msgid "Your name appears on the leaderboard."
 msgstr "Tvoje jméno se objeví na žebříčku."
 
@@ -2889,7 +2898,3 @@ msgid "Your Speed combo now grows on every quick hit instead of waiting for a cl
 msgstr "Combo v Rychlosti teď roste s každým rychlým zásahem a nečeká na prázdnou mřížku — pomalý zásah ho ale přeruší.\n"
 "\n"
 "Když trefíš cíl s kruhem z větší části plným, vyplatí se to navíc."
-
-#: machines/tutorial-lesson.ts:253
-msgid "YOUR TOTAL — BRING IT LEVEL"
-msgstr "TVŮJ SOUČET — SROVNEJ HO"

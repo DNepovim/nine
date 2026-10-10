@@ -4,7 +4,9 @@ import { Gesture, GestureDetector } from 'react-native-gesture-handler'
 import { useSharedValue } from 'react-native-reanimated'
 import { scheduleOnRN } from 'react-native-worklets'
 
+import { DialAxes } from '@/components/game/dial-axes'
 import { DialButton } from '@/components/game/dial-button'
+import { GestureHint } from '@/components/game/gesture-hint'
 import { DEFAULT_DIAL_CORNERS, type DialCorners } from '@/constants/dial-hints'
 import { useDialMetrics } from '@/hooks/use-dial-metrics'
 import {
@@ -19,7 +21,7 @@ import {
   type DialCommand,
   type DialMove,
 } from '@/lib/dial-gesture'
-import type { DialControl } from '@/machines/tutorial-lesson'
+import type { DialControl, HandGesture } from '@/machines/tutorial-lesson'
 import { cellsOf, weightAt, type DialSpec } from '@/modes'
 
 // Every key live, which is every run but a guided tutorial route.
@@ -61,6 +63,9 @@ export function Dial({
   corners = DEFAULT_DIAL_CORNERS,
   controls,
   liveKey = null,
+  bigHints = false,
+  axes = false,
+  hand = null,
   onDelta,
   onSet,
   onSweep,
@@ -80,6 +85,15 @@ export function Dial({
   controls?: readonly DialControl[]
   // The key the tutorial is pointing at, wearing the halo that says so.
   liveKey?: number | null
+  // The corner numbers, drawn larger. The lesson's own dial asks for it: those numbers are
+  // the whole of what it has to teach, where in a practice run they are a reference beside
+  // a game somebody is already playing.
+  bigHints?: boolean
+  // The row and column multipliers, printed outside the keys — see
+  // components/game/dial-axes.tsx. The lesson turns them on once it has explained them.
+  axes?: boolean
+  // A gesture to mime over the keys, for as long as the lesson is asking for one.
+  hand?: HandGesture | null
   onDelta: (index: number, delta: 1 | -1) => void
   onSet: (index: number, value: number) => void
   // Said once, the moment one gesture moves a second key — the one thing a run of separate
@@ -226,39 +240,52 @@ export function Dial({
     // comfortable to swipe on rather than a decision the game, the room and the arcade
     // each make for themselves.
     <View className="mb-6 items-center">
-      <GestureDetector gesture={gesture}>
-        <View
-          style={{ width: metrics.width, height: metrics.height, gap: metrics.gap }}
-          className="flex-row flex-wrap"
-        >
-          {cellsOf(dial).map((index) => (
-            <DialButton
-              key={index}
-              index={index}
-              value={values[index] ?? 0}
-              size={metrics.button}
-              weight={weightAt(dial, index)}
-              digits={dial.digits}
-              showSum={showSum}
-              trainee={trainee}
-              corners={corners}
-              control={live[index] ?? 'full'}
-              hinted={liveKey === index}
-              peakFrom={peakFrom}
-              peakTo={peakTo}
-              commands={commands}
-              pressed={pressed}
-              inFlight={inFlight}
-              onDelta={(delta) => {
-                onDelta(index, delta)
-              }}
-              onSet={(value) => {
-                onSet(index, value)
-              }}
-            />
-          ))}
-        </View>
-      </GestureDetector>
+      {/* The keys' own box, so the two things the lesson draws outside them — the
+        multipliers above and to the left, the thumb miming a gesture over them — are
+        placed against the dial rather than against the screen. Absolute, every one of
+        them: a label about the dial must never be a reason the dial moves.
+
+        Not clipped, said out loud: the labels above and to the left are the first things
+        in the app drawn properly outside this box — the key halos only ever reach a few
+        points past it — and a box that clipped them would simply eat them. */}
+      <View style={{ width: metrics.width, height: metrics.height, overflow: 'visible' }}>
+        <GestureDetector gesture={gesture}>
+          <View
+            style={{ width: metrics.width, height: metrics.height, gap: metrics.gap }}
+            className="flex-row flex-wrap"
+          >
+            {cellsOf(dial).map((index) => (
+              <DialButton
+                key={index}
+                index={index}
+                value={values[index] ?? 0}
+                size={metrics.button}
+                weight={weightAt(dial, index)}
+                digits={dial.digits}
+                showSum={showSum}
+                trainee={trainee}
+                bigHints={bigHints}
+                corners={corners}
+                control={live[index] ?? 'full'}
+                hinted={liveKey === index}
+                peakFrom={peakFrom}
+                peakTo={peakTo}
+                commands={commands}
+                pressed={pressed}
+                inFlight={inFlight}
+                onDelta={(delta) => {
+                  onDelta(index, delta)
+                }}
+                onSet={(value) => {
+                  onSet(index, value)
+                }}
+              />
+            ))}
+          </View>
+        </GestureDetector>
+        {axes && <DialAxes dial={dial} metrics={metrics} />}
+        {hand !== null && <GestureHint gesture={hand} dial={dial} metrics={metrics} />}
+      </View>
     </View>
   )
 }

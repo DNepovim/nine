@@ -55,11 +55,15 @@ function PersonRow({
       id="admin.person"
       onPress={onPress}
       className={cn(
-        'flex-row items-center gap-2 py-2.5',
+        'flex-row items-center gap-2 px-2 py-2.5',
         // Lifted out of the list as a card rather than tinted in place: a card is how the
         // rest of the app raises a thing worth noticing, and it carries its own separation,
         // so the row gives up the hairline the others are divided by.
-        me ? '-mx-2 rounded-lg bg-card px-2' : 'border-b border-dim/10',
+        //
+        // It hangs the row's own padding further out and pads the same amount further in,
+        // which is what keeps this name — and the role and the count after it — on the
+        // line every other row's are on.
+        me ? '-mx-2 rounded-lg bg-card px-4' : 'border-b border-dim/10',
       )}
     >
       <View className="flex-1 flex-row items-center gap-1.5">

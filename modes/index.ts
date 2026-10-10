@@ -14,6 +14,7 @@ export {
   cellCount,
   cellsOf,
   defineDial,
+  dialFactors,
   emptyGrid,
   NINE_DIAL,
   pressGrid,

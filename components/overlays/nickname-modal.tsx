@@ -3,6 +3,7 @@ import { Trans, useLingui } from '@lingui/react/macro'
 import { useState } from 'react'
 import { Platform, Text, TextInput, View } from 'react-native'
 
+import { useHoldsDialogOpen } from '@/components/overlays/dialog-hold'
 import { TrackedPressable } from '@/components/tracked-pressable'
 import { DIM_INK } from '@/constants/colors'
 import { TYPE } from '@/constants/typography'
@@ -39,6 +40,12 @@ export function NicknameModal({
   const [value, setValue] = useState(current)
   const [error, setError] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
+
+  // Against a tap beside the card, which closes the dialog this sits in: held only once
+  // the name differs from the one already held. A rename opened and left alone has
+  // nothing to lose by closing, and holding it shut on its own seeded value would mean
+  // the one dialog a player opens by mistake is the one they cannot tap out of.
+  useHoldsDialogOpen(value.trim() !== current.trim())
 
   // A nickname is claimed on the server or not at all — the name has to be checked
   // against everyone else's. So with the connection down there is nothing to press:

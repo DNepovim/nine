@@ -14,7 +14,9 @@ import {
   FIRST_STEP,
   keyControl,
   LESSON_AFTER_HIT,
+  LESSON_AXES,
   LESSON_DIAL,
+  LESSON_HAND,
   LESSON_HOLD_MS,
   LESSON_LINE,
   LESSON_VOICE,
@@ -26,10 +28,12 @@ import { NINE_DIAL, pressGrid, sumOf, type Grid } from '@/modes'
 // Every step, in the order the lesson meets them. Shared by the tables below so a new step
 // cannot be added to one and forgotten in another.
 const STEPS: readonly LessonStep[] = [
+  'welcome',
   'waiting',
   'target',
   'sum',
   'guided',
+  'weights',
   'congrats',
   'free',
   'swipeDown',
@@ -54,29 +58,31 @@ let runs = 0
 const nextRunId = () => `run-${++runs}`
 
 describe('the lesson script', () => {
-  it('opens on the beat before its first word', () => {
-    expect(FIRST_STEP).toBe('waiting')
+  it('opens on the card saying what the run is', () => {
+    expect(FIRST_STEP).toBe('welcome')
   })
 
-  it('reaches the guided route in three advances', () => {
-    expect(tapThrough(FIRST_STEP, 1)).toBe('target')
-    expect(tapThrough(FIRST_STEP, 2)).toBe('sum')
-    expect(tapThrough(FIRST_STEP, 3)).toBe('guided')
+  it('reaches the guided route in four advances', () => {
+    expect(tapThrough(FIRST_STEP, 1)).toBe('waiting')
+    expect(tapThrough(FIRST_STEP, 2)).toBe('target')
+    expect(tapThrough(FIRST_STEP, 3)).toBe('sum')
+    expect(tapThrough(FIRST_STEP, 4)).toBe('guided')
   })
 
   it('holds on the guided route until the hit lands', () => {
     expect(tapThrough('guided', 5)).toBe('guided')
-    expect(lessonStep('guided', { type: 'HIT', hits: 1 })).toBe('congrats')
+    expect(lessonStep('guided', { type: 'HIT', hits: 1 })).toBe('weights')
   })
 
-  it('hands the dial over after the congratulation', () => {
+  it('says what a key is worth, then hands the dial over', () => {
+    expect(lessonStep('weights', { type: 'ADVANCE' })).toBe('congrats')
     expect(lessonStep('congrats', { type: 'ADVANCE' })).toBe('free')
   })
 
   it('opens one lesson per target the script deals, in order', () => {
     // Each hit clears one of TUTORIAL_TARGETS and is answered by the lesson for the board
     // dealt in its place.
-    expect(lessonStep('guided', { type: 'HIT', hits: 1 })).toBe('congrats')
+    expect(lessonStep('guided', { type: 'HIT', hits: 1 })).toBe('weights')
     expect(lessonStep('free', { type: 'HIT', hits: 2 })).toBe('swipeDown')
     expect(lessonStep('free', { type: 'HIT', hits: 3 })).toBe('swipeLeft')
     expect(lessonStep('free', { type: 'HIT', hits: 4 })).toBe('swipeRight')
@@ -158,8 +164,10 @@ describe('the lesson script', () => {
     // the target there, nothing the lesson has taught gets them back. The lesson for it
     // arrives on the board they are standing on rather than on the hit after it.
     expect(lessonStep('free', { type: 'OVERSHOT', hits: 1 })).toBe('swipeDown')
-    // Mid-congratulation too, which hands the dial over before its banner is done.
+    // Mid-congratulation too, which hands the dial over before its banner is done — and
+    // over the weights line, which is the other banner a player can play through.
     expect(lessonStep('congrats', { type: 'OVERSHOT', hits: 1 })).toBe('swipeDown')
+    expect(lessonStep('weights', { type: 'OVERSHOT', hits: 1 })).toBe('swipeDown')
   })
 
   it('ends a brought-forward lesson on the same swipe its own board would', () => {
@@ -212,7 +220,11 @@ describe('the lesson script', () => {
   // and the stepper going back to the opening board is the one thing that reads it. It
   // was already the right answer, which is why a rewind needs no second table.
   it('opens the board a rewind lands on from the same table a hit does', () => {
-    expect(LESSON_AFTER_HIT[0]).toBe(FIRST_STEP)
+    // The silent beat the two pointing cards follow, rather than FIRST_STEP: the welcome
+    // card is said once a launch, and a player stepping back to the opening board has
+    // already read it.
+    expect(LESSON_AFTER_HIT[0]).toBe('waiting')
+    expect(lessonStep(FIRST_STEP, { type: 'ADVANCE' })).toBe(LESSON_AFTER_HIT[0])
   })
 })
 
@@ -277,48 +289,84 @@ describe('what each step shows', () => {
     }
   })
 
-  it('puts a clock on every step a clock can end, and on no other', () => {
-    const untimed = STEPS.filter((step) => LESSON_HOLD_MS[step] === null)
-    expect(untimed).toEqual([
-      'target',
-      'sum',
-      'guided',
-      'free',
-      'swipeDown',
-      'swipeLeft',
-      'swipeRight',
-      'sweep',
-      'done',
-    ])
-  })
-
-  it('never puts a clock on a card that is holding the dial shut', () => {
-    // A card up with the dial off is a card being waited for. Timing one away would hand
-    // the board back to a player who had not finished reading it.
-    for (const step of STEPS) {
-      if (LESSON_DIAL[step] === 'off' && LESSON_VOICE[step] !== 'silent') {
-        expect(LESSON_HOLD_MS[step]).toBeNull()
-      }
+  it('puts a clock on the one step that says nothing, and on no other', () => {
+    // Everything the lesson says waits for the player. The only hold left is the silent
+    // beat between the opening word being tapped away and the first card pointing at the
+    // target, which is there for the target's own arrival.
+    const timed = STEPS.filter((step) => LESSON_HOLD_MS[step] !== null)
+    expect(timed).toEqual(['waiting'])
+    for (const step of timed) {
+      expect(LESSON_VOICE[step]).toBe('silent')
     }
   })
 
-  it('holds the dial shut until the route, and never again after it', () => {
-    // Off through the opening beat and both tooltips — a press landing before the lesson
-    // has said anything is a press it cannot then explain — and on from the route
-    // onwards, one key at a time and then all nine.
+  it('never puts a clock on anything it says', () => {
+    // A line on the screen is taken off it by the player and by nothing else: a clock
+    // there is the lesson deciding a line has been read.
+    for (const step of STEPS) {
+      if (LESSON_VOICE[step] !== 'silent') expect(LESSON_HOLD_MS[step]).toBeNull()
+    }
+  })
+
+  it('waits for a tap on every line that is not waiting for a move', () => {
+    // The lines asking for something of their own end on the thing they ask for — the hit
+    // for the guided route, the gesture for the three swipe lessons, a drag for the last.
+    // Every other line the lesson speaks is tapped away, and the dial is shut while it is
+    // up so the tap is never also a press.
+    const tapped = STEPS.filter((step) => dismissedByTap(step))
+    expect(tapped).toEqual([
+      'welcome',
+      'waiting',
+      'target',
+      'sum',
+      'weights',
+      'congrats',
+      'practice',
+    ])
+  })
+
+  it('labels the dial from the step that explains the labels, and never unlabels it', () => {
+    // Nothing before the weights line, everything from it on. Written as the shape rather
+    // than as the list, so a step inserted anywhere in the script has to pick a side.
+    const labelled = STEPS.map((step) => LESSON_AXES[step])
+    const first = labelled.indexOf(true)
+    expect(STEPS[first]).toBe('weights')
+    expect(labelled.slice(first).every((on) => on)).toBe(true)
+    expect(labelled.slice(0, first).some((on) => on)).toBe(false)
+  })
+
+  it('mimes exactly the gestures the lesson is waiting on', () => {
+    // A thumb shown where nothing is being asked for is a thumb nobody can obey, and a
+    // gesture lesson with no thumb is words about a move the player has never made. The
+    // steps a gesture ends are the steps that mime one — and the drag, which is ended by
+    // a sweep rather than by a swipe and so has to be named here.
+    const mimed = STEPS.filter((step) => LESSON_HAND[step] !== null)
+    expect(mimed).toEqual(['swipeDown', 'swipeLeft', 'swipeRight', 'sweep'])
+    expect(LESSON_HAND.swipeDown).toBe('down')
+    expect(LESSON_HAND.swipeLeft).toBe('left')
+    expect(LESSON_HAND.swipeRight).toBe('right')
+    expect(LESSON_HAND.sweep).toBe('drag')
+  })
+
+  it('holds the dial shut at exactly the steps it is waiting to be tapped through', () => {
+    // A press landing while a line is up is a press the lesson cannot then explain — and
+    // worse, it is the tap that line is waiting for, spent on a key. So the dial is shut
+    // for the whole of what the lesson says and open for the whole of what it asks.
     expect(STEPS.map((step) => LESSON_DIAL[step])).toEqual([
-      'off',
-      'off',
-      'off',
-      'one',
-      'all',
-      'all',
-      'all',
-      'all',
-      'all',
-      'all',
-      'all',
-      'all',
+      'off', // welcome — the first word, on an empty board
+      'off', // waiting — the beat the target arrives across
+      'off', // target
+      'off', // sum
+      'one', // guided — the lit key, taps only
+      'off', // weights
+      'off', // congrats
+      'all', // free
+      'all', // swipeDown
+      'all', // swipeLeft
+      'all', // swipeRight
+      'all', // sweep
+      'off', // practice — the sign-off, and the tap that hands the run over
+      'all', // done
     ])
   })
 })

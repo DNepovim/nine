@@ -47,7 +47,6 @@ export type ButtonId =
   | 'tutorial.tap_through'
   | 'tutorial.step'
   | 'tutorial.step_dot'
-  | 'tutorial.curtain_lift'
 
   // ── The step-up ladder ──
   // Two doors onto it and one screen behind them: the toast a practice run floats, and
@@ -96,6 +95,7 @@ export type ButtonId =
   | 'profile.action'
   | 'profile.add_motto'
   | 'profile.edit_motto'
+  | 'profile.add_nickname'
   | 'profile.edit_nickname'
   | 'profile.publish_scores'
   | 'profile.try_again'
@@ -119,6 +119,8 @@ export type ButtonId =
   | 'email_code.cancel'
   | 'profile.add_email'
   | 'profile.edit_email'
+  | 'profile.confirm_email'
+  | 'profile.restore'
   | 'menu.confirm_email'
   | 'menu.profile_moved'
 

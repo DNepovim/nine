@@ -100,6 +100,10 @@ export function FeedbackOverlay({
   return (
     <ModalCard
       closeButton={false}
+      // A tap beside the card closes a dialog — except this one once there are words in
+      // it. The message is the whole of what the player came here to do, and it is not
+      // kept anywhere if this unmounts.
+      held={message.trim() !== '' && status !== 'sent'}
       title={<Trans>FEEDBACK</Trans>}
       titleColor={modeColor}
       icon={<Ionicons name="chatbox-outline" size={14} color={modeColor} />}

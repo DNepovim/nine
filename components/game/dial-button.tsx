@@ -65,6 +65,19 @@ const BADGE_RATIO = 0.28
 const BADGE_FONT_SIZE = 12
 const BADGE_BORDER = 1
 
+// The same discs on the dial a lesson is given on, drawn larger.
+//
+// Not a second opinion about the badge: it is the same chip, and the lesson is asking a
+// different thing of it. In a practice run the corner numbers are a reference beside a
+// game the player is already playing, and small is right — in the tutorial they *are* the
+// lesson, and the player is being asked to read them before they know what they mean.
+// A notch under half the key, which is as far as a disc can grow before it starts
+// crowding the digit it is labelling.
+const TAUGHT_BADGE_MIN = 28
+const TAUGHT_BADGE_MAX = 44
+const TAUGHT_BADGE_RATIO = 0.36
+const TAUGHT_BADGE_FONT_SIZE = 16
+
 // Which way the digit leaves for each move. Up and right raise the key, so the old
 // digit is pushed off the top; down and left lower it, so it drops off the bottom.
 // A tap has no flip at all — it pops the digit in place — so it is not in here.
@@ -104,6 +117,7 @@ export function DialButton({
   digits,
   showSum,
   trainee,
+  bigHints = false,
   peakFrom,
   peakTo,
   commands,
@@ -124,6 +138,9 @@ export function DialButton({
   digits: number
   showSum: boolean
   trainee: boolean
+  // Whether the corner numbers are the lesson or a reference — see the two sets of badge
+  // sizes above. Ignored, like `corners`, wherever `trainee` draws no badges at all.
+  bigHints?: boolean
   // The mode's dark CTA gradient, worn by the button at its maximum value.
   peakFrom: string
   peakTo: string
@@ -300,18 +317,22 @@ export function DialButton({
   // out — the space between two pills read as 32, and the gap in the layout was not
   // the gap on the screen.
   const radius = size / 2
-  const badgeSize = Math.min(
-    BADGE_MAX,
-    Math.max(BADGE_MIN, Math.round(size * BADGE_RATIO)),
-  )
+  const badgeSize = bigHints
+    ? Math.min(
+        TAUGHT_BADGE_MAX,
+        Math.max(TAUGHT_BADGE_MIN, Math.round(size * TAUGHT_BADGE_RATIO)),
+      )
+    : Math.min(BADGE_MAX, Math.max(BADGE_MIN, Math.round(size * BADGE_RATIO)))
   // Where a badge centred on the pill's rim, on the diagonal toward a corner, lands:
   // the distance from that corner in to the circle — a circle's closest approach to its
   // bounding square's corner is radius short of it on both axes, by Math.SQRT1_2
   // (cos/sin 45°). Expressed as a top/left (or, mirrored, bottom/right) offset from the
   // box so the badge's own centre, not its corner, sits exactly on the rim. It stays
-  // positive at every size the dial produces, so a badge still lands inside the box
-  // rather than hanging off it.
-  const badgeOffset = radius * (1 - Math.SQRT1_2) - badgeSize / 2
+  // positive at every size the dial produces for the small badge — and can go a little
+  // negative for the lesson's larger one, where the disc is wide enough that its centre on
+  // the rim would put its edge outside the box. Held at the corner there instead, which
+  // rests the badge a hair outside the rim rather than hanging it off the key.
+  const badgeOffset = Math.max(0, radius * (1 - Math.SQRT1_2) - badgeSize / 2)
 
   return (
     // Explicit pixel size (not w-1/3 + aspect-square): iOS WebKit fails to derive height
@@ -387,7 +408,7 @@ export function DialButton({
             key={corner}
             label={HINT_LABEL[hint](value, weight, digits - 1)}
             size={badgeSize}
-            fontSize={BADGE_FONT_SIZE}
+            fontSize={bigHints ? TAUGHT_BADGE_FONT_SIZE : BADGE_FONT_SIZE}
             offset={badgeOffset}
             corner={corner}
             low={DIAL_COLORS.low}

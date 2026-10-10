@@ -19,9 +19,10 @@ const TINT = gradientOf('trainee')[0]
 
 // The row's height, held whether anything in it is live or not.
 //
-// Fixed for the same reason the banner band below it is: this sits above the spawn canvas,
-// and a row that grew or shrank would resize the canvas under a target already placed in
-// the taller one.
+// Fixed because of where the row sits: in the top bar's own block, in the slot a scored run
+// puts its hearts and its score in. That block is above everything the dial is measured
+// against, and a row that grew or shrank would move the board under a target already
+// placed.
 const TUTORIAL_STEPPER_HEIGHT = 34
 
 const DOT = 22
@@ -93,6 +94,10 @@ export function TutorialStepper({
   // card holds the whole viewport to hear the tap that dismisses it, so every press on
   // this row goes to the card instead, and a row that looked live while that was true
   // would be offering something it cannot do. Passes on its own, when the card does.
+  //
+  // It is deaf as well as dim while that is true, rather than merely disabled. This row
+  // sits in the band the card's tap-through is deliberately drawn *under*, so the tap it
+  // would otherwise swallow is the one the player is making to move the lesson on.
   live,
   onGo,
 }: {
@@ -104,6 +109,7 @@ export function TutorialStepper({
   const { t } = useLingui()
   return (
     <View
+      pointerEvents={live ? 'auto' : 'none'}
       className="flex-row items-center justify-center"
       style={{ height: TUTORIAL_STEPPER_HEIGHT, opacity: live ? 1 : 0.35 }}
     >

@@ -86,6 +86,19 @@ export const cellsOf = (dial: DialSpec): readonly number[] =>
 export const weightAt = (dial: DialSpec, index: number): number =>
   dial.weights[index] ?? 0
 
+// The two multipliers a key's weight is the product of: its row's and its column's.
+//
+// Read off the first row and the first column, where each stands on its own — the rule is
+// row order times column order, counting both from one, so the first of either is one and
+// whatever is along it is the other's multiplier. `rows[r] * cols[c]` is `weightAt` at
+// that key, which is the whole of what the lesson prints beside the dial.
+export const dialFactors = (
+  dial: DialSpec,
+): { rows: readonly number[]; cols: readonly number[] } => ({
+  rows: Array.from({ length: dial.rows }, (_, row) => weightAt(dial, row * dial.cols)),
+  cols: Array.from({ length: dial.cols }, (_, col) => weightAt(dial, col)),
+})
+
 // The weights laid back out in rows, for the one place that draws them as a table — the
 // guide's explanation of what a key is worth.
 export const weightRows = (dial: DialSpec): readonly (readonly number[])[] =>

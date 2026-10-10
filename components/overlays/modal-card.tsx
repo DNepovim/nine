@@ -2,7 +2,7 @@ import { Trans } from '@lingui/react/macro'
 import { LinearGradient } from 'expo-linear-gradient'
 import type { ReactNode } from 'react'
 import { useEffect } from 'react'
-import { KeyboardAvoidingView, Platform, Text, View } from 'react-native'
+import { KeyboardAvoidingView, Platform, Pressable, Text, View } from 'react-native'
 import Animated, {
   Easing,
   useAnimatedStyle,
@@ -12,6 +12,7 @@ import Animated, {
 import { scheduleOnRN } from 'react-native-worklets'
 
 import { MenuButton } from '@/components/game/menu-button'
+import { HoldProvider, useDialogHold } from '@/components/overlays/dialog-hold'
 import { PrimaryButton } from '@/components/primary-button'
 import { MUTED_INK, SPECTRUM } from '@/constants/colors'
 import { LAYER } from '@/constants/layers'
@@ -56,6 +57,7 @@ export function ModalCard({
   replacing = false,
   avoidKeyboard = false,
   closeButton = true,
+  held = false,
   children,
 }: {
   // Left off by a dialog whose subject names itself — the profile card, whose first
@@ -92,8 +94,14 @@ export function ModalCard({
   // ALLOW and DECLINE. Those say what pressing them does, which a CLOSE under them would
   // only muddle: a dialog asking a question must not offer a way out that answers it.
   closeButton?: boolean
+  // Set by a dialog whose own state says there is something typed inside it, which holds
+  // the scrim shut — see `dialog-hold.ts`. A dialog whose field lives in a card below it
+  // reports from there with `useHoldsDialogOpen` and leaves this alone.
+  held?: boolean
   children: (close: () => void) => ReactNode
 }) {
+  // Whether a field inside is holding the scrim shut — see `dialog-hold.ts`.
+  const hold = useDialogHold()
   // The scrim and the card are two values rather than one, because `replacing` holds the
   // first and not the second.
   const fade = useSharedValue(replacing ? 1 : 0)
@@ -134,8 +142,28 @@ export function ModalCard({
         fadeStyle,
       ]}
     >
+      {/* The scrim as a way out, which is the one every player tries first. It is a
+          sibling under the card rather than a wrapper around it, so a tap on the card
+          itself — on its padding, on a line of its prose — lands on the card and stops
+          there; `box-none` below is what lets the space beside it fall through to here.
+
+          Held shut while something is typed inside: see `dialog-hold.ts`. */}
+      <Pressable
+        className="absolute inset-0"
+        accessible={false}
+        onPress={() => {
+          if (held || hold.held.current) return
+          close()
+        }}
+      />
       <KeyboardAvoidingView
         className="w-full flex-1 items-center justify-center"
+        // `box-none`: the card inside takes touches, this does not, so everything beside
+        // it reaches the scrim behind. `zIndex` says in one place what paint order would
+        // otherwise be left to infer — an absolutely positioned sibling is painted over
+        // an in-flow one on the web, and the scrim must stay under the card on both.
+        pointerEvents="box-none"
+        style={{ zIndex: 1 }}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         enabled={avoidKeyboard}
       >
@@ -174,7 +202,7 @@ export function ModalCard({
                     dialog header already reads as one. */}
                 <MenuButton showLabel={false} onToggle={close} color={MUTED_INK} />
               </View>
-              {children(close)}
+              <HoldProvider value={hold.report}>{children(close)}</HoldProvider>
               {closeButton && (
                 <View className="mt-4">
                   <PrimaryButton

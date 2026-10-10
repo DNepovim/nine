@@ -13,6 +13,7 @@ import { ArcadeGame } from '@/components/game/arcade-game'
 import { BestScoresLine } from '@/components/game/best-scores-line'
 import { Confetti } from '@/components/game/confetti'
 import { Dial } from '@/components/game/dial'
+import { AXIS_STRIP } from '@/components/game/dial-axes'
 import { FloatingLifeLoss } from '@/components/game/floating-life-loss'
 import { FloatingPoints } from '@/components/game/floating-points'
 import { FloatingStat } from '@/components/game/floating-stat'
@@ -26,6 +27,7 @@ import { StrikeShot } from '@/components/game/strike-shot'
 import { TargetCard } from '@/components/game/target-card'
 import { TraineeStats } from '@/components/game/trainee-stats'
 import { TutorialCard } from '@/components/game/tutorial-card'
+import { TutorialIntro } from '@/components/game/tutorial-intro'
 import { TutorialStepper } from '@/components/game/tutorial-stepper'
 import type { AccountNoticeKind } from '@/components/overlays/account-notice'
 import { AchievementDetail } from '@/components/overlays/achievement-detail'
@@ -54,7 +56,6 @@ import { TutorialDoneModal } from '@/components/overlays/tutorial-done-modal'
 import { WhatsNewOverlay } from '@/components/overlays/whats-new-overlay'
 import { Screen } from '@/components/screen'
 import { TrackedPressable } from '@/components/tracked-pressable'
-import { TutorialCurtain } from '@/components/tutorial-curtain'
 import type { AchievementId } from '@/constants/achievements'
 import { PRIMARY_INK } from '@/constants/colors'
 import { DEFAULT_DIAL_CORNERS } from '@/constants/dial-hints'
@@ -138,7 +139,7 @@ import { valueProgress } from '@/lib/value-progress'
 import { WELCOME_BOARD } from '@/lib/welcome'
 import { bestOn, gameMachine } from '@/machines/game'
 import { computePar } from '@/machines/scoring'
-import { keyControl } from '@/machines/tutorial-lesson'
+import { keyControl, type LessonVoice } from '@/machines/tutorial-lesson'
 import {
   cellsOf,
   darkGradientOf,
@@ -153,7 +154,7 @@ import {
   streakMultiplier,
   sumOf,
 } from '@/modes'
-import type { Position } from '@/types/game'
+import type { DisplayTarget, Position } from '@/types/game'
 import type { MultiMode } from '@/types/multiplayer'
 
 // The screen gallery's stage, in development only — the screen being looked at, drawn
@@ -243,9 +244,9 @@ function introStanding(
 type TitleDialog = 'none' | 'medals' | 'achievements'
 
 // The three ways into the tutorial: the first launch opening on it by itself, TRY IT at
-// the end of the guide, and the dev sidebar. All three go through the same curtain and
-// deal the same run; what the door decides is what the funnel is told — and 'dev' is told
-// nothing. The two a player can reach are the `from` values `run_started` already names.
+// the end of the guide, and the dev sidebar. All three deal the same run straight onto the
+// board; what the door decides is what the funnel is told — and 'dev' is told nothing. The
+// two a player can reach are the `from` values `run_started` already names.
 type TutorialDoor = 'welcome' | 'guide' | 'dev'
 
 // Overlay names → the screen names the warehouse knows, so the event table stays the
@@ -323,6 +324,21 @@ function showFeedbackBookmark({
 // The two can never both be true — a device told its profile moved was signed out and
 // handed a fresh anonymous account, which has no address pending on it — so the order
 // below is a statement about which matters, not a tie-break.
+//
+// CONFIRM YOUR EMAIL is any address waiting on its code, including one on a profile that
+// already has a confirmed address beside it — which is every change in flight.
+//
+// It was read as "no address yet" for a while, and that was a worse answer to a real
+// problem. The problem: a restore hands the new phone a session carrying whatever was
+// parked in `email_change` on the profile it brought over, so a change somebody started
+// on another handset nags here, every launch, about an inbox this player may not have.
+// The cost of answering it this way: a player who starts a change and closes the dialog
+// loses the only door back to the six digits — no line here, and their own card offering
+// to change an address they had just changed. Stranding somebody mid-task is the worse of
+// the two, and the nag at least opens on a card that can resend, re-point or finish.
+//
+// Putting a change *down* is the piece neither version has: nothing in the app clears
+// `email_change`, because GoTrue has no call for it. That is the fix this is waiting on.
 function accountNoticeFor({
   moved,
   pendingEmail,
@@ -369,6 +385,20 @@ function mayAskForEmail({
   if (!newsReady || newsVisible) return false
   return !installing && !consentVisible
 }
+
+// What the board draws, given what the lesson is saying.
+//
+// Everything standing on it, except behind the lesson's first word — which is set in the
+// middle of the board and is the only thing on it until the player taps it away.
+//
+// Held back on the way out rather than dealt late: the machine opens a tutorial with its
+// target already standing, which is right — the run is the run from the moment it starts,
+// and a target that arrived a beat after it would be a second kind of opening to get wrong.
+// So this is a target not yet drawn, and it springs in on the tap that takes the words away.
+const drawnTargets = (
+  voice: LessonVoice,
+  placed: readonly DisplayTarget[],
+): readonly DisplayTarget[] => (voice === 'opening' ? [] : placed)
 
 export default function GameScreen() {
   const { t } = useLingui()
@@ -613,8 +643,8 @@ export default function GameScreen() {
     pauseRun('dev')
     send({ type: 'MENU' })
     setMenuOverlay('none')
-    setCurtain('dev')
-  }, [tutorialsAsked, send])
+    startTutorial('dev')
+  }, [tutorialsAsked, send, startTutorial])
 
   // A device nobody has played on opens into a run rather than into the intro: the
   // fastest thing the app can say about itself is the game itself. What it opens is the
@@ -636,34 +666,25 @@ export default function GameScreen() {
     send({ type: 'SET_DIFFICULTY', difficulty: WELCOME_BOARD.difficulty })
   }, [welcome.pending, isMenu, send])
 
-  // No lesson goes straight onto a board. Whichever door it came through, it pauses on a
-  // curtain that says what is about to happen and that none of it is scored, and the
-  // lesson fades up through that. Which door is what `curtain` holds — the state is the
-  // door, not a boolean, because the run it deals is reported by the door it came through.
+  // The first launch's own door into the lesson, opened as the splash *begins* its exit
+  // so the logo scales away onto a board that is already there rather than onto an empty
+  // screen — the same hand-off the splash was written for.
   //
-  // This effect is only the first launch's. The other two doors raise the curtain where
-  // they are pressed: the guide's TRY IT, and the dev sidebar's request.
+  // The lesson used to be dealt behind a curtain: a full-app screen saying what was about
+  // to happen and that none of it was scored, with the run started as the words faded.
+  // The words are still said, on a card in the middle of the board they are about — see
+  // the lesson's `welcome` step — and the screen in front of them is gone. A lesson should
+  // not open on a door.
   //
-  // For the welcome, the curtain is raised as the splash *begins* its exit, so the logo
-  // scales away onto a screen that is already there rather than onto an empty one — the
-  // same hand-off the splash was written for. Its own beat does not start until the logo
-  // has finished going, which is `hold` at the render below: the exit takes seconds, and
-  // a curtain that counted its reading time from the moment it went up spent all of it
-  // behind an opaque screen and dealt the lesson before a word of it had been seen. The
-  // run is dealt when the curtain lifts, which is what puts a board with a target already
-  // springing in under the last of the words. See components/tutorial-curtain.tsx.
-  //
-  // `menu` because START is only accepted there. What keeps a second curtain from going
-  // up over the first is the curtain's own state rather than `pending`: the launch is
-  // written down as welcomed when the run is dealt, not when the words appear — an app
-  // killed under them would otherwise come back to an install marked as having had a
-  // tutorial it never got — so `pending` is still true for the whole hold, and only
-  // `curtain` can say that one is already there.
-  const [curtain, setCurtain] = useState<TutorialDoor | 'none'>('none')
+  // `menu` because START is only accepted there. It runs once: dealing the run writes the
+  // launch down as welcomed, which is what takes `pending` away.
   useEffect(() => {
-    if (curtain !== 'none' || !welcome.pending || !splashExiting || !isMenu) return
-    setCurtain('welcome')
-  }, [curtain, welcome.pending, splashExiting, isMenu])
+    if (!welcome.pending || !splashExiting || !isMenu) return
+    startTutorial('welcome')
+    // Written down beside the run it records. Only the first launch owes it — the other
+    // two doors are a tutorial asked for a second time.
+    welcome.taken()
+  }, [welcome.pending, welcome.taken, splashExiting, isMenu, startTutorial])
 
   const {
     userId,
@@ -1204,6 +1225,8 @@ export default function GameScreen() {
       ? null
       : tipForTarget(lessonTarget.position, canvas.height, TUTORIAL_BANNER_HEIGHT)
 
+  const boardTargets = drawnTargets(lesson.voice, displayedTargets)
+
   // Where the board sits inside the effect layer over it, taken from the same layout
   // event that sizes it for target placement. A shot needs the board's origin as well
   // as its size: a target's position is measured from the board, and the sum row the
@@ -1397,7 +1420,6 @@ export default function GameScreen() {
     !arcadeOpen &&
     welcome.decided &&
     !welcome.pending &&
-    curtain === 'none' &&
     // A run the app was closed on is still being asked about, or is on its way into the
     // machine. Either way the player is about to be looking at a pause screen, and the
     // start screen has no business flashing up in front of it.
@@ -1495,6 +1517,7 @@ export default function GameScreen() {
           viewerId={userId}
           account={{
             email,
+            pendingEmail,
             emailFlow: accountEmail,
             onRename: updateNickname,
           }}
@@ -1622,7 +1645,7 @@ export default function GameScreen() {
                   />
                 </View>
 
-                {/* Row 2 — hearts · center stat · score cluster */}
+                {/* Row 2 — hearts · center stat or the lesson's steps · score cluster */}
                 <View className="mt-1.5 flex-row items-center">
                   {/* Hearts — a mode that spends no lives shows none. */}
                   <View className="relative flex-1 flex-row gap-1">
@@ -1651,6 +1674,33 @@ export default function GameScreen() {
                         />
                       ))}
                   </View>
+
+                  {/* Where the player is in the lesson, in the slot a scored run keeps its
+                      score bar in — which a tutorial draws nothing of: no hearts, since its
+                      lives never run out, no accuracy, and no score. So the row is empty in
+                      a lesson, and this is the one place on the screen that both belongs to
+                      the run's own chrome and has nothing else to say.
+
+                      It sat under the board once, between the targets and the banner. Up
+                      here it is the top bar's third line rather than something floating in
+                      the playfield, and the canvas below keeps the height the dots were
+                      taking.
+
+                      Dark and deaf while one of the lesson's cards is up: the card's
+                      tap-through takes the whole viewport under this band, so a press here
+                      is a press meant for the card. `onTapThrough` is non-null exactly at
+                      those steps. */}
+                  {tutorial && (
+                    <TutorialStepper
+                      current={hits}
+                      furthest={furthestStep}
+                      live={lesson.onTapThrough === null}
+                      onGo={(board) => {
+                        send({ type: 'REWIND', board, now: Date.now() })
+                        setRewindSeq((seq) => seq + 1)
+                      }}
+                    />
+                  )}
 
                   {/* Center: avg accuracy or avg speed depending on mode */}
                   {isOneOf(mode, SCORED_MODES) && (
@@ -1754,44 +1804,6 @@ export default function GameScreen() {
                     />
                   )}
 
-                  {/* Where the player is in the lesson. Above the band the lesson talks in,
-                    so the two read top to bottom: which step this is, then what it says.
-                    Tutorial runs only, and a fixed height for the same reason the band
-                    below it is — see components/game/tutorial-stepper.tsx.
-
-                    Dark while one of the lesson's cards is up: the card's tap-through takes
-                    the whole viewport, including this row, so a press here would only turn
-                    the card's page. `onTapThrough` is non-null exactly at those steps. */}
-                  {tutorial && (
-                    <TutorialStepper
-                      current={hits}
-                      furthest={furthestStep}
-                      live={lesson.onTapThrough === null}
-                      onGo={(board) => {
-                        send({ type: 'REWIND', board, now: Date.now() })
-                        setRewindSeq((seq) => seq + 1)
-                      }}
-                    />
-                  )}
-                  {/* The band the tutorial talks in, in the slot the readout above would have
-                  taken, and held open for the whole run rather than appearing with the words.
-
-                  Reserved for the same reason the bests strip is reserved in Trainee: this
-                  sits above the spawn canvas, so a card arriving would shorten the canvas
-                  under a target already placed in the taller one. Held open, the canvas is
-                  one size from the first target to the last — and the two pointing cards
-                  below, which are measured against that canvas, cannot be moved by a banner
-                  arriving somewhere else. */}
-                  {tutorial && (
-                    <View
-                      className="justify-center px-1"
-                      style={{ height: TUTORIAL_BANNER_HEIGHT }}
-                    >
-                      {lesson.voice === 'banner' && lesson.line !== null && (
-                        <TutorialCard text={t(lesson.line)} beak="none" />
-                      )}
-                    </View>
-                  )}
                   {/* The canvas the targets actually spawn into. It carries the measurement,
                   so its bounds are whatever is left after the readout above. */}
                   <View
@@ -1802,7 +1814,7 @@ export default function GameScreen() {
                       noteBoardRect(event)
                     }}
                   >
-                    {displayedTargets.map((target) => (
+                    {boardTargets.map((target) => (
                       <TargetCard
                         maxValue={dial.maxSum}
                         key={target.id}
@@ -1851,6 +1863,14 @@ export default function GameScreen() {
                           }}
                         />
                       )}
+                    {/* The lesson's first word, set in the middle of the board with
+                    nothing else on it: what this run is, and that none of it counts. No
+                    card around it, because a card is something said about something else
+                    on the screen and there is nothing else on the screen yet — see
+                    components/game/tutorial-intro.tsx. */}
+                    {lesson.voice === 'opening' && lesson.line !== null && (
+                      <TutorialIntro text={t(lesson.line)} />
+                    )}
                     {lesson.voice === 'sumTip' && lesson.line !== null && (
                       <TutorialCard
                         text={t(lesson.line)}
@@ -1886,6 +1906,40 @@ export default function GameScreen() {
                     </View>
                   </HitSync>
                 </View>
+
+                {/* The band the tutorial talks in: between the sum and the dial, held open
+                  for the whole run rather than appearing with the words.
+
+                  It was above the board once, in the slot Trainee's readout takes. Down
+                  here a line saying to swipe a key down is a hand's width from the keys and
+                  from the total it is about, rather than a headline at the top of a screen
+                  — and the two pointing cards still have the whole canvas above it to be
+                  placed in.
+
+                  Held open for the reason it always was: the canvas above is measured, so a
+                  card arriving would shorten it under a target already placed in the taller
+                  one. What the band costs comes off that canvas, which is to say the sum
+                  sits exactly this much higher in a lesson than in a run. The dial does not
+                  move at all — it is sized from the viewport, and it is the one thing on
+                  this screen whose place a lesson may not change.
+
+                  The strip at the foot of it is the dial's own multipliers, which are drawn
+                  up out of the dial's box into this band — see components/game/dial-axes.tsx.
+                  Reserved rather than shared, so a banner and a `1×` are never in the same
+                  place. */}
+                {tutorial && (
+                  <View
+                    className="justify-center px-1"
+                    style={{
+                      height: TUTORIAL_BANNER_HEIGHT + AXIS_STRIP,
+                      paddingBottom: AXIS_STRIP,
+                    }}
+                  >
+                    {lesson.voice === 'banner' && lesson.line !== null && (
+                      <TutorialCard text={t(lesson.line)} beak="none" />
+                    )}
+                  </View>
+                )}
 
                 {/* ── Strike shots ── */}
                 <View pointerEvents="none" className="absolute inset-0 overflow-visible">
@@ -1927,6 +1981,14 @@ export default function GameScreen() {
                 // everywhere in every run but a guided tutorial route.
                 controls={dialControls}
                 liveKey={lesson.liveKey}
+                // The lesson's own dial: its corner numbers drawn large, because in a
+                // lesson they are the thing being taught rather than a reference beside a
+                // game; the row and column multipliers up once the lesson has explained
+                // them; and whichever gesture it is currently asking for, mimed over the
+                // keys until the player makes it.
+                bigHints={tutorial}
+                axes={lesson.axes}
+                hand={lesson.hand}
                 peakFrom={darkGradientOf(mode)[0]}
                 peakTo={darkGradientOf(mode)[1]}
                 onDelta={(index, delta) => {
@@ -2171,14 +2233,15 @@ export default function GameScreen() {
                   setMenuOverlay('none')
                   howToPlay.markRead()
                 }}
-                // The same run a first launch opens on, asked for this time — and dealt
-                // the same way, from behind the curtain rather than straight onto a board.
-                // Reaching the bottom of the guide is reading it, whichever button is
-                // pressed there, so this marks it read exactly as GOT IT does.
+                // The same run a first launch opens on, asked for this time, and dealt the
+                // same way: straight onto the board, with the lesson's own opening card
+                // the first thing said over it. Reaching the bottom of the guide is
+                // reading it, whichever button is pressed there, so this marks it read
+                // exactly as GOT IT does.
                 onTryTutorial={() => {
                   setMenuOverlay('none')
                   howToPlay.markRead()
-                  setCurtain('guide')
+                  startTutorial('guide')
                 }}
               />
             )}
@@ -2361,6 +2424,12 @@ export default function GameScreen() {
                 }}
                 onAddNickname={() => {
                   setShowNicknameModal(true)
+                }}
+                // Unseeded: a player taking this door has no address on this profile to
+                // correct — the one card they get is the field, empty, and what it turns
+                // out to mean is the server's answer rather than a question.
+                onRestoreProfile={() => {
+                  accountEmail.open()
                 }}
                 onHowToPlay={() => {
                   setMenuOverlay('howToPlay')
@@ -2559,27 +2628,6 @@ export default function GameScreen() {
               />
             )}
 
-            {/* ── The curtain every lesson is dealt behind, whichever door it came
-                through. Last among the full-viewport overlays so nothing the screen
-                already stacks can land on top of it — see the welcome effect above. ── */}
-            {curtain !== 'none' && (
-              <TutorialCurtain
-                // The splash is over it on the first launch, and over nothing on the
-                // other two doors, which are pressed on a screen the logo left long ago.
-                hold={!splashDone}
-                onLift={() => {
-                  startTutorial(curtain)
-                  // Written down beside the run it records, not when the curtain went up:
-                  // this is the flag that says this install has had its tutorial, and a
-                  // launch killed under the words has had nothing. Only the first launch
-                  // owes it — the other two doors are a tutorial asked for a second time.
-                  if (curtain === 'welcome') welcome.taken()
-                }}
-                onGone={() => {
-                  setCurtain('none')
-                }}
-              />
-            )}
             {/* Last child and explicitly stacked: every overlay above is absolutely
               positioned and opaque, so a stage mounted earlier draws underneath the
               screen it is meant to be showing. Renders nothing until the picker on the

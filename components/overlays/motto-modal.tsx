@@ -4,6 +4,7 @@ import {
   KeyboardAvoidingView,
   Modal,
   Platform,
+  Pressable,
   Text,
   TextInput,
   View,
@@ -62,7 +63,21 @@ export function MottoModal({
         className="flex-1 items-center justify-center bg-black/60 px-8"
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       >
-        <View className="w-full max-w-xs rounded-2xl bg-card p-6">
+        {/* A tap beside the card closes it, as on every other dialog — but not once the
+            line has been touched, because a stray tap must not be what throws away
+            something the player has just written. The field as it was stored is not
+            touched: closing on it loses nothing. */}
+        <Pressable
+          className="absolute inset-0"
+          accessible={false}
+          onPress={() => {
+            if (next !== (motto ?? '')) return
+            onCancel()
+          }}
+        />
+        {/* `zIndex` keeps the card over the scrim behind it on the web too, where an
+            absolutely positioned sibling is otherwise painted over an in-flow one. */}
+        <View className="w-full max-w-xs rounded-2xl bg-card p-6" style={{ zIndex: 1 }}>
           <Text selectable={false} className={cn(TYPE.heading, 'mb-1 text-primary')}>
             <Trans>WHAT’S ON YOUR MIND?</Trans>
           </Text>
