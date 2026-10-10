@@ -36,6 +36,9 @@ export function PlayerProfileProvider({
   account: {
     // The confirmed address, or null for a player who has not given one.
     email: string | null
+    // The one typed and not yet proved. Threaded alongside the confirmed one because the
+    // card's address row is in three states, not two — see `ProfileEmail`.
+    pendingEmail: string | null
     // The whole address flow, not just its door: this provider draws the dialog as well
     // as opening it. Every other entry point — the invitation after a nickname, the
     // intro's confirm line, the one-time ask — reaches the same flow from under here, so
@@ -97,11 +100,18 @@ export function PlayerProfileProvider({
           userId={userId}
           viewerId={viewerId}
           email={account.email}
+          pendingEmail={account.pendingEmail}
           onOpenEmail={() => {
             // Seeded with what is on the profile, because this door is a pencil: the
             // player opening it means to change an address they can already see, not to
             // type one from nothing.
             account.emailFlow.open(account.email ?? '')
+          }}
+          // The other door, for an address still waiting on its code. It needs no seed:
+          // the flow has the address the code went to, and reopening the card is the
+          // whole of what this does.
+          onEnterCode={() => {
+            account.emailFlow.openPendingConfirm()
           }}
           onRename={account.onRename}
           // Left off while the sign-in has not landed: there is no viewer to compare

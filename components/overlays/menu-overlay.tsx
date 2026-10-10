@@ -117,6 +117,7 @@ export function MenuOverlay({
   onSetDifficulty,
   onOpenAdvanced,
   onAddNickname,
+  onRestoreProfile,
   onHowToPlay,
   onCreateRoom,
   onOpenJoinRoom,
@@ -181,6 +182,10 @@ export function MenuOverlay({
   onSetDifficulty: (difficulty: Difficulty) => void
   onOpenAdvanced: () => void
   onAddNickname: () => void
+  // The address card, opened from under the nickname button for a player whose profile is
+  // on another phone. The intro is the only screen that offers it: a restore reloads the
+  // app, which the pause screen would be doing to a live run.
+  onRestoreProfile: () => void
   onHowToPlay: () => void
   onCreateRoom: () => void
   // The code entry itself lives on its own screen now — this just opens it.
@@ -474,6 +479,7 @@ export function MenuOverlay({
                       userId={userId}
                       nickname={nickname}
                       onAddNickname={onAddNickname}
+                      onRestoreProfile={onRestoreProfile}
                     />
                   </>
                 )}

@@ -57,6 +57,7 @@ export function HighScores({
   userId,
   nickname,
   onAddNickname,
+  onRestoreProfile,
   halo = false,
   compact = false,
   pinMedalTab = false,
@@ -74,6 +75,10 @@ export function HighScores({
   // the moment the run ends — a button offering the prompt behind it would be the same
   // question twice.
   onAddNickname?: () => void
+  // The other way to a name on the board: bringing a profile back from its address. Under
+  // the nickname button and only ever beside it — see `PublishScoresButton` for why the
+  // pause screen passes the one and not the other.
+  onRestoreProfile?: () => void
   // Set on the gold game-over screen, where the board sits on the celebration.
   halo?: boolean
   // Short board: three rows and no row below the cut. See TabPanel.
@@ -345,6 +350,7 @@ export function HighScores({
           to={gradientColors[1]}
           disabled={!online}
           onPress={onAddNickname}
+          onRestore={onRestoreProfile}
         />
       )}
     </View>

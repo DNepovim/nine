@@ -261,6 +261,7 @@ const intro = (
           onSetDifficulty={noop}
           onOpenAdvanced={close}
           onAddNickname={close}
+          onRestoreProfile={close}
           onHowToPlay={close}
           onCreateRoom={close}
           onOpenJoinRoom={close}

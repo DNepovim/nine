@@ -142,7 +142,9 @@ export function PlayerProfileOverlay({
   viewerId,
   onCompare,
   email,
+  pendingEmail,
   onOpenEmail,
+  onEnterCode,
   onRename,
   onClose,
 }: {
@@ -159,7 +161,12 @@ export function PlayerProfileOverlay({
   // The player's own confirmed address, or null. Only ever drawn on their own card — an
   // address is the one thing about a player that is not public data about them.
   email: string | null
+  // The address given and not yet proved, which is its own state at the foot of the card
+  // rather than the same as having none — see `ProfileEmail`.
+  pendingEmail: string | null
   onOpenEmail: () => void
+  // Back to the six digits for the address above, for a player who walked away from them.
+  onEnterCode: () => void
   // Writing the nickname. Only ever called from the player's own card, and the one write
   // on this modal that is not about the profile being *read* — which is why it comes from
   // above rather than from the profile hook: the name lives on the session as well as on
@@ -257,7 +264,7 @@ export function PlayerProfileOverlay({
                 the colour and the numbers explaining it can never disagree. */}
               {profile !== null && (
                 <ProfileName
-                  nickname={profile.nickname ?? '…'}
+                  nickname={profile.nickname}
                   avgAccuracy={avgAccuracy}
                   avgSpeed={avgSpeed}
                   // Yours to rewrite, and the pencil is the only way to — a nickname used
@@ -286,15 +293,6 @@ export function PlayerProfileOverlay({
                   }}
                 />
               )}
-              {/* The address, with the two lines the player wrote about themselves rather
-                than down among the figures — it is a thing about *them*, and the figures
-                are things they have done. Its own card row at the foot of this one for a
-                while, which put the door back onto a profile from another phone below
-                every board the player has ever played.
-
-                Only on your own card. An address is the one piece of a player that is
-                not public data about them. */}
-              {isMine && <ProfileEmail email={email} onPress={onOpenEmail} />}
               {/* How long they have been at this, under the name where the rest of who
                 they are is. In months rather than on a date: a date is a fact to be
                 looked up, and the only thing anyone reads it for is the answer this
@@ -584,6 +582,19 @@ export function PlayerProfileOverlay({
               )}
             </View>
           </ScrollView>
+
+          {/* The address, in the slot the compare link holds on a stranger's card — the
+              two never show together, so the foot of the card says the one thing there is
+              to do with the profile you are looking at. See `ProfileEmail` for why it is
+              down here rather than up with the name it used to sit under. */}
+          {isMine && (
+            <ProfileEmail
+              email={email}
+              pendingEmail={pendingEmail}
+              onOpenEmail={onOpenEmail}
+              onEnterCode={onEnterCode}
+            />
+          )}
 
           {/* Over the card's own CLOSE, outside the scroll and so pinned to the foot of
               the card with it. Everything above is the career, which is as long as the

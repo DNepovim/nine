@@ -1,13 +1,10 @@
-import { Ionicons } from '@expo/vector-icons'
 import { Trans } from '@lingui/react/macro'
 import { Text, View } from 'react-native'
 
-import { TrackedPressable } from '@/components/tracked-pressable'
-import { DIM_INK } from '@/constants/colors'
 import { TYPE } from '@/constants/typography'
 import { cn } from '@/lib/cn'
 
-const ICON = 11
+import { PILL_INSET, ProfilePill, ProfilePillFloat } from './profile-pill'
 
 // The line under the nickname: what the player says about themselves, and — on their own
 // profile — the way in to changing it.
@@ -20,6 +17,10 @@ const ICON = 11
 // Drawn in dim rather than in a colour of its own. The nickname above it is the loud
 // thing, and a motto that competed with it would turn the top of the modal into two
 // headlines.
+//
+// Centred in the card with the pencil floating beside it, exactly as the name above is
+// drawn — the two lines are a pair and are read as one block, so a motto centred on
+// different middle from the name would read as a mistake rather than as a choice.
 export function ProfileMotto({
   motto,
   // Only ever true on the profile of the player holding the phone. A motto is public to
@@ -37,35 +38,28 @@ export function ProfileMotto({
 
   if (motto === null) {
     return (
-      <TrackedPressable
-        id="profile.add_motto"
-        onPress={onEdit}
-        hitSlop={8}
-        className="flex-row items-center gap-1 self-center rounded-full bg-card px-3 py-1"
-      >
-        <Ionicons name="add" size={ICON} color={DIM_INK} />
-        <Text selectable={false} className={cn(TYPE.sectionLabel, 'text-dim')}>
-          <Trans>ADD MOTTO</Trans>
-        </Text>
-      </TrackedPressable>
+      <View className="items-center">
+        <ProfilePill
+          id="profile.add_motto"
+          label={<Trans>ADD MOTTO</Trans>}
+          onPress={onEdit}
+        />
+      </View>
     )
   }
 
   return (
-    <View className="flex-row items-center justify-center gap-1.5 px-2">
-      {/* `shrink` so the pencil is never pushed off the card by a long motto — the text
-          wraps to a second line instead, which fifty characters can do on a narrow
-          phone. */}
+    <View className="justify-center">
       <Text
         selectable={false}
-        className={cn(TYPE.proseSm, 'shrink text-center text-dim')}
+        className={cn(TYPE.proseSm, PILL_INSET, 'text-center text-dim')}
       >
         {motto}
       </Text>
       {editable && (
-        <TrackedPressable id="profile.edit_motto" onPress={onEdit} hitSlop={10}>
-          <Ionicons name="create-outline" size={ICON} color={DIM_INK} />
-        </TrackedPressable>
+        <ProfilePillFloat>
+          <ProfilePill id="profile.edit_motto" onPress={onEdit} />
+        </ProfilePillFloat>
       )}
     </View>
   )

@@ -1,4 +1,5 @@
 import { isAuthRetryableFetchError } from '@supabase/supabase-js'
+import { isNonEmptyString } from 'narrowland'
 import { useEffect, useRef, useState } from 'react'
 import { AppState } from 'react-native'
 
@@ -75,8 +76,12 @@ type AuthState = {
 
   // The confirmed address, or null. Only a confirmed one can restore anything.
   email: string | null
-  // An address that has been given and not yet confirmed. The intro's confirm line is
-  // this being non-null, and nothing else.
+  // An address that has been given and not yet confirmed — `email_change` on the account,
+  // under the name supabase-js gives it. Empty is read as none; see the boot read below.
+  //
+  // Not on its own the intro's confirm line, which it used to be: an account that already
+  // has a confirmed address can carry a parked change too, and that is not a profile
+  // waiting to be reachable. See `accountNoticeFor` in app/(tabs)/index.tsx.
   pendingEmail: string | null
   // This device's session was refused rather than merely unreachable, which happens for
   // exactly one reason: somebody restored this profile onto another phone.
@@ -200,7 +205,14 @@ export function useSupabaseAuth(): AuthState {
           // Read off the stored session rather than asked for: every change to either of
           // these passes through this hook, which updates the state as it goes.
           setEmail(session?.user.email ?? null)
-          setPendingEmail(session?.user.new_email ?? null)
+          // `isNonEmptyString` rather than `?? null`, because the column this comes off is
+          // emptied rather than nulled: GoTrue sets `email_change` back to `''` once a
+          // change lands, and `'' ?? null` is `''` — a pending address that is not one.
+          // Everything downstream asks `!== null`, so the empty string would read as an
+          // address awaiting a code on every profile that has ever confirmed one.
+          // `confirmEmail` below already guards the same value the same way.
+          const parked = session?.user.new_email
+          setPendingEmail(isNonEmptyString(parked) ? parked : null)
         } else {
           // The two bad verdicts share an ending — the session goes, and the launch falls
           // through to a fresh anonymous one below — and differ in the one thing that

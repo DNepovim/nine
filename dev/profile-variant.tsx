@@ -32,7 +32,9 @@ export function ProfileVariant({
           userId={userId}
           viewerId={viewerId}
           email="you@example.com"
+          pendingEmail={null}
           onOpenEmail={() => {}}
+          onEnterCode={() => {}}
           // The gallery writes nothing. A rename here would have to go to the real row,
           // and the card is being looked at rather than used.
           onRename={() => Promise.resolve({ error: null })}
