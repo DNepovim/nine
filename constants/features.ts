@@ -28,6 +28,11 @@ export const FLAGS = [
   // says what last week on the boards came to. Gates the read as well as the card — a
   // player who cannot be shown it has no business asking the server about it.
   'recap',
+  // Czech: the LANGUAGE row in options, and so the only door to any language but
+  // English. Without the feature the app is in English and stays there — a locale
+  // stored by a build that reached this one is kept, not cleared, so granting it again
+  // lands the player back in the language they chose. See hooks/use-locale.tsx.
+  'czech',
   // The ADMIN link on the intro, and the screen behind it. Protected in the database:
   // it cannot be switched off, and nobody can take it from themselves — this is not a
   // feature being tried out, it is the door that decides who sees the others.

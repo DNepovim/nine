@@ -21,6 +21,13 @@ begin
   assert (select count(*) from role_features where feature_key = 'admin') = 1,
     'only one stack should hold admin';
 
+  -- `czech` is seeded at the same three rungs `dev` is: whoever can report on the
+  -- translation can read it, and an ordinary player reaches neither.
+  assert (select count(*) from role_features where feature_key = 'czech') = 3,
+    'czech should be in all three stacks';
+  assert (select active from features where key = 'czech') = true,
+    'czech should be active — what is gated is who holds it, not the key';
+
   -- `multiplayer` is seeded into every stack but switched off, so flipping `active`
   -- restores the tester floor in one move rather than four.
   assert (select count(*) from role_features where feature_key = 'multiplayer') = 3,
@@ -54,8 +61,9 @@ begin
     'a profile with no role should reach nothing';
 
   -- ── A role gives its stack, minus whatever is inactive ──────────────────────
-  assert (select array_agg(k order by k) from effective_features(v_test) k) = array['dev'],
-    'tester should reach dev and only dev (multiplayer is inactive)';
+  assert (select array_agg(k order by k) from effective_features(v_test) k)
+         = array['czech', 'dev'],
+    'tester should reach czech and dev and no more (multiplayer is inactive)';
 
   -- ── An override adds ────────────────────────────────────────────────────────
   insert into user_features (user_id, feature_key, granted) values (v_test, 'arcade', true);

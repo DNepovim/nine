@@ -65,7 +65,10 @@ export function AdvancedOptionsOverlay({
   onOpenNews: () => void
   onClose: () => void
 }) {
-  const { locale, setLocale } = useLocale()
+  // `czech` and not `useFlag('czech')`: the provider already holds the answer, and
+  // reading it twice is how a row comes to be offered for a language the app will not
+  // switch to. See hooks/use-locale.tsx.
+  const { locale, setLocale, czech } = useLocale()
   const { height } = useViewport()
   const build = buildInfo()
   // OPTIONS, not ADVANCED: this is the only settings screen there is, and both buttons
@@ -98,13 +101,17 @@ export function AdvancedOptionsOverlay({
             onToggle={onToggleReplayConsent}
           />
 
-          {/* Language */}
-          <View className="flex-row items-center justify-between py-3">
-            <Text selectable={false} className={cn(TYPE.button, 'text-primary')}>
-              <Trans>LANGUAGE</Trans>
-            </Text>
-            <LocaleToggle locale={locale} onSelect={setLocale} />
-          </View>
+          {/* Language. The whole row and not a disabled toggle: with Czech gated there
+              is one language left, and a two-segment switch with nothing on the other
+              side reads as something broken rather than as something not yet offered. */}
+          {czech && (
+            <View className="flex-row items-center justify-between py-3">
+              <Text selectable={false} className={cn(TYPE.button, 'text-primary')}>
+                <Trans>LANGUAGE</Trans>
+              </Text>
+              <LocaleToggle locale={locale} onSelect={setLocale} />
+            </View>
+          )}
 
           {/* What's new */}
           <TrackedPressable

@@ -82,6 +82,7 @@ import { useFloatingStat } from '@/hooks/use-floating-stat'
 import { useHitCelebration } from '@/hooks/use-hit-celebration'
 import { useHowToPlay } from '@/hooks/use-how-to-play'
 import { useInstall } from '@/hooks/use-install'
+import { LocaleGate } from '@/hooks/use-locale'
 import { useLostMedals } from '@/hooks/use-lost-medals'
 import { useMedalHistory } from '@/hooks/use-medal-history'
 import { useMultiplayerGame } from '@/hooks/use-multiplayer-game'
@@ -1508,6 +1509,9 @@ export default function GameScreen() {
     // all — a question that comes before anything behind the door. Empty until auth has
     // answered, which for all but a handful of players is the answer; see use-flags.
     <FlagsProvider features={features}>
+      {/* Renders nothing. The language lives above the splash and the feature set
+          arrives here, so this is where the two meet — see LocaleGate. */}
+      <LocaleGate />
       {/* Every board on screen reads this one store, so the intro, the pause screen and
           the game over screen cannot show three different answers to the same question. */}
       <ChampionsProvider value={champions}>
