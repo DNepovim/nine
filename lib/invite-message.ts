@@ -14,7 +14,7 @@ export const titleCase = (label: string): string =>
 // nothing to boast about — both fall back to describing the game rather than the player,
 // so the message never brags about a zero.
 export const shouldBoast = (mode: ModeId, bestScore: number): boolean =>
-  traitsOf(mode).scored && bestScore > 0
+  traitsOf(mode).board && bestScore > 0
 
 // The board an invite names, from labels the caller has already resolved. Taking the
 // words rather than the keys is what keeps this pure: the sentence around it is

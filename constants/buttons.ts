@@ -156,6 +156,15 @@ export type ButtonId =
   | 'replay_consent.allow'
   | 'replay_consent.decline'
 
+  // ── Challenges, as a player meets them ──
+  // The card on the start screen, and the dialog behind it. `challenge.board` is the
+  // standings inside that dialog — tracked because a player who opens the card and then
+  // reads the board rather than pressing START is telling us something about the card.
+  | 'menu.challenge'
+  | 'challenge.start'
+  | 'challenge.dismiss'
+  | 'challenge.board'
+
   // ── Dev and admin ──
   | 'dev.run'
   | 'dev.done'
@@ -170,6 +179,17 @@ export type ButtonId =
   | 'admin.role_delete'
   | 'admin.role_feature'
   | 'admin.feature_active'
+  // The hub's two buttons, and the planner behind the second of them. `admin.section`
+  // is both hub buttons and `admin.session_when` both date-time fields: the breakdown
+  // is by screen, and a second id per pair would split one affordance in the funnel for
+  // a question nobody is asking.
+  | 'admin.section'
+  | 'admin.session'
+  | 'admin.session_new'
+  | 'admin.session_save'
+  | 'admin.session_cancel'
+  | 'admin.session_challenge'
+  | 'admin.session_when'
   | 'admin.back'
   | 'admin.done'
 

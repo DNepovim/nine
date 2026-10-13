@@ -6,6 +6,7 @@ import {
   previousDay,
   previousWeek,
   qualifiesForTab,
+  startOfDayInPrague,
   tabSince,
   weekStart,
 } from './leaderboard-period'
@@ -176,5 +177,62 @@ describe('previousWeek', () => {
   it('ends the day before the current week starts', () => {
     const day = '2026-03-01'
     expect(previousWeek(day).to).toBe(previousDay(weekStart(day)))
+  })
+})
+
+describe('startOfDayInPrague', () => {
+  // Round-trip against `dayInPrague`, which is the property that matters: the instant
+  // this returns must be the first millisecond that reads as that day in Prague.
+  const roundTrips = (day: string) => {
+    const at = startOfDayInPrague(day)
+    return [dayInPrague(new Date(at)), dayInPrague(new Date(at - 1))]
+  }
+
+  it('lands on the first millisecond of a winter day', () => {
+    expect(roundTrips('2026-01-15')).toEqual(['2026-01-15', '2026-01-14'])
+    // CET is UTC+1, so Prague midnight is 23:00 UTC the day before.
+    expect(new Date(startOfDayInPrague('2026-01-15')).toISOString()).toBe(
+      '2026-01-14T23:00:00.000Z',
+    )
+  })
+
+  it('lands on the first millisecond of a summer day', () => {
+    expect(roundTrips('2026-07-15')).toEqual(['2026-07-15', '2026-07-14'])
+    // CEST is UTC+2.
+    expect(new Date(startOfDayInPrague('2026-07-15')).toISOString()).toBe(
+      '2026-07-14T22:00:00.000Z',
+    )
+  })
+
+  it('is right on the day the clocks go forward', () => {
+    // 29 March 2026. The day begins in CET and ends in CEST, so its midnight is the
+    // winter one — the single-pass reading would put it an hour out.
+    expect(roundTrips('2026-03-29')).toEqual(['2026-03-29', '2026-03-28'])
+    expect(new Date(startOfDayInPrague('2026-03-29')).toISOString()).toBe(
+      '2026-03-28T23:00:00.000Z',
+    )
+  })
+
+  it('is right on the day the clocks go back', () => {
+    // 25 October 2026, the other way round: begins in CEST.
+    expect(roundTrips('2026-10-25')).toEqual(['2026-10-25', '2026-10-24'])
+    expect(new Date(startOfDayInPrague('2026-10-25')).toISOString()).toBe(
+      '2026-10-24T22:00:00.000Z',
+    )
+  })
+
+  it('round-trips every day across both changeovers', () => {
+    // A sweep rather than four examples: the two edges are where a one-pass answer goes
+    // wrong, and this is what would catch a third case nobody thought of. The property
+    // is the whole of it — the instant returned reads back as the day asked for, and
+    // the millisecond before it reads as the day before.
+    for (const prefix of ['2026-03-2', '2026-10-2']) {
+      for (let d = 5; d <= 9; d++) {
+        const day = `${prefix}${d}`
+        const at = startOfDayInPrague(day)
+        expect(dayInPrague(new Date(at)), day).toBe(day)
+        expect(dayInPrague(new Date(at - 1)), day).not.toBe(day)
+      }
+    }
   })
 })

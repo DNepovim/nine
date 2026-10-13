@@ -34,3 +34,17 @@ export function FlagsProvider({
 export function useFlag(flag: Flag): boolean {
   return use(FlagsContext).can(flag)
 }
+
+// Whether any of them is reachable — what a door onto several features asks.
+//
+// The DEV link is the one caller: it opens a screen that will hold a section per dev
+// feature, so the link belongs to whoever holds *any* of them rather than to one key
+// standing in for the lot. See `DEV_FEATURES` in constants/features.ts.
+//
+// Reads the context once rather than calling `useFlag` per key: the list is a module
+// constant today and a hook call per element would make its length part of the render's
+// hook order, which is a trap to leave for whoever adds the second entry.
+export function useAnyFlag(flags: readonly Flag[]): boolean {
+  const { can } = use(FlagsContext)
+  return flags.some(can)
+}

@@ -49,6 +49,6 @@ export const TRAINEE = defineMode({
     lives: { count: Number.POSITIVE_INFINITY, expiryCostsLife: false },
     // Unscored, so no leaderboard, no rank, no medal and no personal best — and it
     // teaches, so it gets the stat block, the coach and the hints on the keys.
-    capabilities: { scored: false, coached: true, keyHints: true },
+    capabilities: { board: false, scored: false, coached: true, keyHints: true },
   }),
 })

@@ -35,16 +35,21 @@ describe('the registry', () => {
     expect(rulesFor('arcade', 'hard')).toBeNull()
   })
 
-  it('holds SCORED_MODES and the `scored` capability to the same answer', () => {
+  it('holds SCORED_MODES and the `board` capability to the same answer', () => {
     // SCORED_MODES is written out because it has to produce a type; this is what keeps
     // it from drifting from the capability the engine actually reads.
-    const scored = MODE_ORDER.filter((mode) => traitsOf(mode).scored)
-    expect(scored).toEqual([...SCORED_MODES])
+    //
+    // `board`, not `scored`: the two came apart when challenges arrived. A board is a
+    // mode × difficulty pairing and these two are the modes that keep one; `scored`
+    // only says a run has a figure worth showing, which a challenge does too.
+    const keepsBoard = MODE_ORDER.filter((mode) => traitsOf(mode).board)
+    expect(keepsBoard).toEqual([...SCORED_MODES])
   })
 
   it('answers no to every trait for a mode nothing is registered under', () => {
     // Which is the safe answer in each case: nothing is shown, nothing is recorded.
     expect(traitsOf('challenge/gone')).toEqual({
+      board: false,
       scored: false,
       coached: false,
       keyHints: false,

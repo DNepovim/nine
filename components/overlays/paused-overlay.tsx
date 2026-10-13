@@ -149,7 +149,7 @@ export function PausedOverlay({
         // is what the run is worth to everyone else, and the stats under it are what it
         // was worth to the player. A mode that reaches no board has nothing to stand on.
         beforeStats={
-          traits.scored ? <BoardMedals medals={medals} gameMode={gameMode} /> : null
+          traits.board ? <BoardMedals medals={medals} gameMode={gameMode} /> : null
         }
         stats={runStats({
           mode: gameMode,

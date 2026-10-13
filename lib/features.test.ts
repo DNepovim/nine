@@ -4,7 +4,9 @@ import { knownFeatures, sameFeatures, sourceOf, toggleOverride } from './feature
 
 describe('knownFeatures', () => {
   it('keeps the keys this build has guards for', () => {
-    expect(knownFeatures(['arcade', 'dev'])).toStrictEqual(new Set(['arcade', 'dev']))
+    expect(knownFeatures(['arcade', 'challengeLab'])).toStrictEqual(
+      new Set(['arcade', 'challengeLab']),
+    )
   })
 
   it('drops a key the server knows and this build does not', () => {
@@ -72,17 +74,22 @@ describe('sourceOf', () => {
 
 describe('sameFeatures', () => {
   it('sees two spellings of the same set as the same', () => {
-    expect(sameFeatures(new Set(['dev', 'arcade']), new Set(['arcade', 'dev']))).toBe(
-      true,
-    )
+    expect(
+      sameFeatures(
+        new Set(['challengeLab', 'arcade']),
+        new Set(['arcade', 'challengeLab']),
+      ),
+    ).toBe(true)
   })
 
   it('sees a different size as different', () => {
-    expect(sameFeatures(new Set(['dev']), new Set(['dev', 'arcade']))).toBe(false)
+    expect(
+      sameFeatures(new Set(['challengeLab']), new Set(['challengeLab', 'arcade'])),
+    ).toBe(false)
   })
 
   it('sees the same size with a different member as different', () => {
-    expect(sameFeatures(new Set(['dev']), new Set(['arcade']))).toBe(false)
+    expect(sameFeatures(new Set(['challengeLab']), new Set(['arcade']))).toBe(false)
   })
 
   it('sees two empty sets as the same, which is the common case', () => {

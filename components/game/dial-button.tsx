@@ -23,6 +23,7 @@ import {
   type DialHint,
 } from '@/constants/dial-hints'
 import { mono } from '@/constants/theme'
+import { LESSON_DIM, LESSON_DIM_MS } from '@/constants/tutorial'
 import {
   MOVE_EFFECT,
   NO_COMMAND,
@@ -43,13 +44,14 @@ const TINT_TIMING = { duration: 260, easing: Easing.out(Easing.quad) }
 
 // How far a key dims while the tutorial has it shut, and how long it takes either way.
 //
-// The same clock as the tint above, because the two land together: the moment the lesson
-// hands the dial back, eight keys brighten and the ninth loses its halo, and two speeds
-// there would read as two separate events. Eased out on the way up and in on the way down,
-// the app's rule for anything arriving and anything leaving.
-const DIM = 0.35
-const DIM_UP = { duration: 260, easing: Easing.out(Easing.quad) }
-const DIM_DOWN = { duration: 260, easing: Easing.in(Easing.quad) }
+// The depth is LESSON_DIM, shared with the sum — everything the lesson takes out of the
+// player's hands steps back by the same amount. The clock is the tint's above, because the
+// two land together: the moment the lesson hands the dial back, eight keys brighten and the
+// ninth loses its halo, and two speeds there would read as two separate events. Eased out
+// on the way up and in on the way down, the app's rule for anything arriving and leaving.
+const DIM = LESSON_DIM
+const DIM_UP = { duration: LESSON_DIM_MS, easing: Easing.out(Easing.quad) }
+const DIM_DOWN = { duration: LESSON_DIM_MS, easing: Easing.in(Easing.quad) }
 
 // Trainee's weight and max badges — small discs riding the pill's own rim rather
 // than text stacked inside it, so they read off a chip built for contrast instead

@@ -44,6 +44,7 @@ export function GameOverSequence({
   achievements,
   achievementStore,
   achievementFacts,
+  sessionId,
   onPlayAgain,
   onChallenge,
   onMenu,
@@ -76,6 +77,9 @@ export function GameOverSequence({
   // Passed straight through to the game over screen; see EarnedAchievements.
   achievementStore: AchievementStore
   achievementFacts: AchievementFacts
+  // Which session the run belonged to, if any — forwarded straight through to the
+  // screen, which is what decides between a session board and a three-period one.
+  sessionId: string | null
   onPlayAgain: () => void
   onChallenge: (mode: ModeId, difficulty: Difficulty) => void
   onMenu: () => void
@@ -128,6 +132,7 @@ export function GameOverSequence({
           achievements={achievements}
           achievementStore={achievementStore}
           achievementFacts={achievementFacts}
+          sessionId={sessionId}
           titleHidden={!revealed}
           onTitleLayout={onTitleLayout}
           onPlayAgain={onPlayAgain}

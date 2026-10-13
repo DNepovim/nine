@@ -191,7 +191,10 @@ export function PlayerProfileOverlay({
   // contradict the row that opened it.
   const mark = championMark(userId, useChampionsContext())
 
-  const lifetime = profile === null ? null : lifetimeOf(profile.totals, profile.winnings)
+  const lifetime =
+    profile === null
+      ? null
+      : lifetimeOf(profile.totals, profile.winnings, profile.sessions)
   const rows = profile === null ? [] : boardRows(profile)
   // Newest first already, so the opening slice is the most recent stretches — the ones a
   // player is most likely to still be holding, and the open one is the headline of the
@@ -402,8 +405,10 @@ export function PlayerProfileOverlay({
                       anyway would sit it off centre over its own label.
 
                       Coarse, not the run stats' format: the largest unit a career has
-                      reached and nothing under it, because nobody reads the minutes of
-                      247ʰ38′12″ and a figure that long would be what sizes the row. */}
+                      reached and the one under it — 10ᵈ07ʰ — because nobody reads the
+                      seconds of 247ʰ38′12″ and a figure that long would be what sizes
+                      the row. Two units and not one, so the cell says something that
+                      moves between two visits rather than the same word for a day. */}
                     <StatCell
                       label={t`TIME`}
                       kicker={t`TOTAL`}

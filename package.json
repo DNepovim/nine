@@ -39,6 +39,7 @@
     "@lingui/core": "^6.7.0",
     "@lingui/react": "^6.7.0",
     "@react-native-async-storage/async-storage": "2.2.0",
+    "@react-native-community/datetimepicker": "^9.2.1",
     "@react-navigation/native": "^7.1.33",
     "@supabase/supabase-js": "^2.110.8",
     "@t3-oss/env-core": "^0.13.11",

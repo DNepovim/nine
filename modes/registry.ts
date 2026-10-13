@@ -139,6 +139,7 @@ export type ModeTraits = Capabilities & {
 }
 
 const NO_TRAITS: ModeTraits = {
+  board: false,
   scored: false,
   coached: false,
   keyHints: false,

@@ -49,6 +49,7 @@ import { GameOverTitle } from './game-over-title'
 import { HighScores } from './high-scores'
 import { RecordBackdrop } from './record-backdrop'
 import { CardButton, RunScreen } from './run-screen'
+import { SessionStandings } from './session-standings'
 
 // What the screen wears over its title. The crown is a reign — both Extreme all-time
 // boards at once; a bird is one of them, and each mode gets the one that describes what
@@ -146,6 +147,8 @@ export function GameOverOverlay({
   achievements,
   achievementStore,
   achievementFacts,
+  // The session this run belonged to, or null for an ordinary run.
+  sessionId,
   onPlayAgain,
   onChallenge,
   onMenu,
@@ -177,6 +180,7 @@ export function GameOverOverlay({
   // Only for the card a tapped chip opens — see EarnedAchievements.
   achievementStore: AchievementStore
   achievementFacts: AchievementFacts
+  sessionId: string | null
   // Straight back into a run on this same board.
   onPlayAgain: () => void
   // Into a run on the board one rung up, or one down — see `runChallenge`.
@@ -346,7 +350,22 @@ export function GameOverOverlay({
             halo={painted}
           />
 
-          {isOneOf(gameMode, SCORED_MODES) && (
+          {/* Where this run stands. A **session** run has one set of standings and no
+              periods, so it gets the session board rather than the three-tab one; a
+              board run gets what it always got. A challenge played outside a session —
+              dealt from the challenge lab — gets neither, which is right: it kept no
+              board and posted to no standings. */}
+          {sessionId !== null && (
+            <SessionStandings
+              sessionId={sessionId}
+              gameMode={gameMode}
+              difficulty={difficulty}
+              userId={userId}
+              nickname={nickname}
+            />
+          )}
+
+          {sessionId === null && isOneOf(gameMode, SCORED_MODES) && (
             <HighScores
               gameMode={gameMode}
               difficulty={difficulty}

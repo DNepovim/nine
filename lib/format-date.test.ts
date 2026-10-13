@@ -1,6 +1,11 @@
 import { describe, expect, it } from 'vitest'
 
-import { formatReleaseDate, formatShortDate, monthsSince } from './format-date'
+import {
+  formatDayTime,
+  formatReleaseDate,
+  formatShortDate,
+  monthsSince,
+} from './format-date'
 
 describe('formatReleaseDate', () => {
   it('spells out the month', () => {
@@ -64,5 +69,26 @@ describe('monthsSince', () => {
   it('returns nothing at all for something that is not a day', () => {
     expect(monthsSince('not-a-date', at('2026-09-29'))).toBeNull()
     expect(monthsSince('2026-13-01', at('2026-09-29'))).toBeNull()
+  })
+})
+
+describe('formatDayTime', () => {
+  const at = (y: number, m: number, d: number, h: number, min: number) =>
+    new Date(y, m - 1, d, h, min).getTime()
+
+  it('prints the day, the month and the time in local time', () => {
+    expect(formatDayTime(at(2026, 10, 11, 12, 0))).toBe('11 OCT 12:00')
+  })
+
+  it('pads the minutes and leaves the hour and the day unpadded', () => {
+    expect(formatDayTime(at(2026, 1, 5, 9, 5))).toBe('5 JAN 9:05')
+  })
+
+  it('keeps midnight legible rather than printing it as 0:00 of the day before', () => {
+    expect(formatDayTime(at(2026, 3, 1, 0, 0))).toBe('1 MAR 0:00')
+  })
+
+  it('returns nothing at all for something that is not an instant', () => {
+    expect(formatDayTime(Number.NaN)).toBe('')
   })
 })

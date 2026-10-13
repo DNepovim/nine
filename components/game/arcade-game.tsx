@@ -257,7 +257,15 @@ type BudSpec = {
   clockMs: number
 }
 
-export function ArcadeGame({ onEnd }: { onEnd: () => void }) {
+export function ArcadeGame({
+  drag,
+  onEnd,
+}: {
+  // Whether one gesture may move more than one key, as the player has it set. The map is
+  // walked on the same keys as a run on the dial, so it takes the same answer.
+  drag: boolean
+  onEnd: () => void
+}) {
   const insets = useSafeAreaInsets()
   const run = useArcadeRun()
   const [canvas, setCanvas] = useState({ width: 0, height: 0 })
@@ -989,6 +997,7 @@ export function ArcadeGame({ onEnd }: { onEnd: () => void }) {
           values={run.grid.flat()}
           showSum={false}
           trainee={false}
+          drag={drag}
           controls={run.dialable ? undefined : ALL_OFF}
           peakFrom={darkGradientOf('arcade')[0]}
           peakTo={darkGradientOf('arcade')[1]}

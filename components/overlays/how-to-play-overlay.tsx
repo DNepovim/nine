@@ -47,6 +47,10 @@ const SECTIONS = {
   // Arcade's own amber, which is the last stop of the scale and the one the pill, the
   // hero and the lit way are all drawn in. Behind the `arcade` flag, like the chapter.
   arcade: { icon: 'git-network', title: msg`ARCADE`, color: GAME_SCALE[4] },
+  // A challenge borrows the scale's third stop rather than taking one of its own: it is
+  // a mode like the others for the few hours it is on, and a colour nothing else uses
+  // would have said it was a different kind of thing.
+  challenges: { icon: 'flame', title: msg`CHALLENGES`, color: GAME_SCALE[3] },
   multiplayer: { icon: 'people', title: msg`MULTIPLAYER`, color: GAME_SCALE[3] },
   tips: { icon: 'bulb', title: msg`TIPS & TRICKS`, color: GAME_SCALE[4] },
 } as const satisfies Record<
@@ -71,6 +75,7 @@ const ALL_SECTIONS = [
   'controls',
   'targets',
   'modes',
+  'challenges',
   'arcade',
   'champions',
   'achievements',
@@ -88,10 +93,12 @@ const ALL_SECTIONS = [
 function sectionOrder(
   showMultiplayer: boolean,
   showArcade: boolean,
+  showChallenges: boolean,
 ): readonly SectionKey[] {
   return ALL_SECTIONS.filter((key) => {
     if (key === 'multiplayer') return showMultiplayer
     if (key === 'arcade') return showArcade
+    if (key === 'challenges') return showChallenges
     return true
   })
 }
@@ -389,9 +396,10 @@ export function HowToPlayOverlay({
   // list cannot offer a jump to a section that is not on the page.
   const showMultiplayer = useFlag('multiplayer')
   const showArcade = useFlag('arcade')
+  const showChallenges = useFlag('challenges')
   const sections = useMemo(
-    () => sectionOrder(showMultiplayer, showArcade),
-    [showMultiplayer, showArcade],
+    () => sectionOrder(showMultiplayer, showArcade, showChallenges),
+    [showMultiplayer, showArcade, showChallenges],
   )
 
   const scrollRef = useRef<ScrollView>(null)
@@ -461,7 +469,7 @@ export function HowToPlayOverlay({
             <ControlsDiagram />
           </Card>
           <Body>
-            {t`\nTap to count up — 9 wraps back to 0 — swipe down to step back one, and swipe left or right to jump straight to 0 or 9.\n\nYou can keep going without lifting your finger. Drag across the dial and each button takes the direction you leave it by, so one sweep right along a row sets all three to 9. Change your mind on a button and only the way you leave it counts, and a button only answers to a finger that really crosses it — so brushing the edge of its neighbour on the way past costs you nothing. Tip: turn on “Show sum in buttons” under Options to see each button’s live contribution.`}
+            {t`\nTap to count up — 9 wraps back to 0 — swipe down to step back one, and swipe left or right to jump straight to 0 or 9.\n\nYou can keep going without lifting your finger. Drag across the dial and each button takes the direction you leave it by, so one sweep right along a row sets all three to 9. Change your mind on a button and only the way you leave it counts, and a button only answers to a finger that really crosses it — so brushing the edge of its neighbour on the way past costs you nothing. If you would rather one gesture only ever moved the button it started on, turn off “Drag across keys” under Options. Tip: turn on “Show sum in buttons” under Options to see each button’s live contribution.`}
           </Body>
 
           {/* Targets & clock */}
@@ -528,6 +536,53 @@ export function HowToPlayOverlay({
           <Body>
             {t`\nAccuracy leans almost entirely on precision; Speed on the clock. Each keeps its own streak: Accuracy wants the fewest moves, Speed wants you early on the ring.`}
           </Body>
+
+          {/* Challenges. Gone with the card that leads to them — see the `challenges`
+              feature in constants/features.ts.
+
+              Deliberately vague about the rules, and that is the chapter's one hard
+              rule: a challenge may change the dial, the clock, the scoring and the
+              lives, so anything this said about how one plays would be wrong for the
+              next one. What it can promise is the *shape* — a window, one set of
+              standings, and rules printed on the card before you start. */}
+          {showChallenges && (
+            <>
+              <SectionHeader section="challenges" onMeasure={measure} />
+              <Body>
+                {t`\nEvery so often a challenge appears at the top of the start screen, with a clock running down beside it. It is a game of Nine with something changed — and what has changed is different every time.`}
+              </Body>
+              <Card>
+                <Bullet color={GAME_SCALE[3]}>
+                  <Trans>
+                    It is on for a window and then it is gone. The clock on the card is
+                    what is left of it.
+                  </Trans>
+                </Bullet>
+                <Bullet color={GAME_SCALE[3]}>
+                  <Trans>
+                    The rules are its own. The keys, the clock, the scoring, how many
+                    lives you get — any of it may be different, and the card says what
+                    before you start.
+                  </Trans>
+                </Bullet>
+                <Bullet color={GAME_SCALE[3]}>
+                  <Trans>
+                    One set of standings, shared by everyone playing it, and it never
+                    resets. Your best run is the one that counts.
+                  </Trans>
+                </Bullet>
+                <Bullet color={GAME_SCALE[3]}>
+                  <Trans>
+                    No medal rides on it — a challenge keeps no board of its own. The
+                    points still count towards your fortune.
+                  </Trans>
+                </Bullet>
+              </Card>
+              <Body>
+                {t`If the same challenge comes round again it starts from nothing: a new window is a new contest, and the last one stays where it is.`}
+              </Body>
+            </>
+          )}
 
           {/* Arcade. Gone with the pill that leads to it — see the arcade flag in
               constants/features.ts. */}

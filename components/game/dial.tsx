@@ -66,6 +66,7 @@ export function Dial({
   bigHints = false,
   axes = false,
   hand = null,
+  drag = true,
   onDelta,
   onSet,
   onSweep,
@@ -94,6 +95,13 @@ export function Dial({
   axes?: boolean
   // A gesture to mime over the keys, for as long as the lesson is asking for one.
   hand?: HandGesture | null
+  // Whether one gesture may move more than one key. Off is two different answers, and
+  // both are the caller's to give: the player's own setting, which is on by default and
+  // turned off from Options, and the tutorial's — where the drag is the last move the
+  // lesson teaches and so must not work before it has been taught. What is left when it
+  // is off is every move on one key: a tap, the three swipes, and a finger that wanders
+  // off a key and back onto it.
+  drag?: boolean
   onDelta: (index: number, delta: 1 | -1) => void
   onSet: (index: number, value: number) => void
   // Said once, the moment one gesture moves a second key — the one thing a run of separate
@@ -156,6 +164,12 @@ export function Dial({
     'worklet'
     const taken = allowedMove(live[cell] ?? 'full', move, lift)
     if (taken === null) return
+    // A second key, where one gesture may only move one. Refused here rather than at the
+    // end of the gesture, so a drag that is not allowed simply leaves the keys it crosses
+    // where they were instead of moving them and taking it back a moment later. The key
+    // this gesture has already moved is still its own — leaving a key and coming back to
+    // it is one key moved twice, not a drag.
+    if (!drag && lastCommit.value !== NONE && lastCommit.value !== cell) return
     const was = held.value[cell] ?? 0
     const now = nextValue(taken, was, dial.digits)
     // Nothing to do, and so nothing to say: sliding off the right of a key already on 9

@@ -188,7 +188,7 @@ export function foldRun(career: Career, run: RunSummary): Career {
   // A mode with no board of its own puts nothing on one, and a run that scored nothing
   // has not put anything on the board it was played on.
   const traits = traitsOf(run.mode)
-  const board = run.score > 0 && traits.scored ? boardKey(run.mode, run.difficulty) : null
+  const board = run.score > 0 && traits.board ? boardKey(run.mode, run.difficulty) : null
   // Which board's mastery the run counts towards. Scoring nothing is no bar here — the
   // mastery figures are about what happened in the run, not about what reached a board.
   const stage = traits.usesDifficulty ? run.difficulty : null
@@ -212,8 +212,9 @@ export function foldRun(career: Career, run: RunSummary): Career {
     lastDay:
       career.lastDay === null || run.day > career.lastDay ? run.day : career.lastDay,
     dayStreak,
-    // Trainee is left out: it keeps no board and no score worth the name, so a quiet
-    // practice run is not a run that went badly.
+    // Trainee is left out: it has no score worth the name, so a quiet practice run is
+    // not a run that went badly. `scored` rather than `board` on purpose — a challenge
+    // run is scored and can be a poor one, even though it keeps no board.
     poorRunStreak: !traits.scored
       ? career.poorRunStreak
       : run.score < POOR_RUN_SCORE

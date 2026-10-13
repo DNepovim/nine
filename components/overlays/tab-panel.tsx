@@ -1,3 +1,4 @@
+import type { MessageDescriptor } from '@lingui/core'
 import { msg } from '@lingui/core/macro'
 import { Trans, useLingui } from '@lingui/react/macro'
 import { isEmptyArray } from 'narrowland'
@@ -60,6 +61,7 @@ export function TabPanel({
   digitFont,
   halo = false,
   compact = false,
+  emptyLine,
 }: {
   data: PeriodBoard
   // Which period this panel is, and which board it belongs to — between them they pick
@@ -79,6 +81,14 @@ export function TabPanel({
   // cut. Their score is the headline directly above it, so repeating it under a row of
   // dots says nothing and costs the screen two lines it does not have.
   compact?: boolean
+  // What to say when there is nothing on it, overriding the line `tab` would pick.
+  //
+  // Asked for by a **session board**, which has no period at all: `tab` exists only to
+  // index `EMPTY_LINES`, and adding a fourth `LeaderboardTab` for the one-window case
+  // would have pushed a session entry into that table's thirty-six lines, and into
+  // `tabSince`, `qualifiesForTab`, `my_medals` and lib/medals.ts — all for one sentence.
+  // The caller passing its own line is the smaller change by a wide margin.
+  emptyLine?: MessageDescriptor
 }) {
   const { t } = useLingui()
   const champions = useChampionsContext()
@@ -147,7 +157,7 @@ export function TabPanel({
     return (
       <View style={{ width }} className={cn('items-center justify-center', bodyHeight)}>
         <Text selectable={false} numberOfLines={1} className={cn(TYPE.hint, 'text-dim')}>
-          {t(emptyBoardLine(headline, difficulty, tab))}
+          {t(emptyLine ?? emptyBoardLine(headline, difficulty, tab))}
         </Text>
       </View>
     )

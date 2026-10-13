@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import { formatCareerTime, formatGameTime } from './duration'
+import { formatCareerTime, formatCountdown, formatGameTime } from './duration'
 
 describe('formatGameTime', () => {
   it('formats zero', () => {
@@ -41,20 +41,31 @@ describe('formatGameTime', () => {
 })
 
 describe('formatCareerTime', () => {
-  it('says only the largest unit there is', () => {
-    expect(formatCareerTime(40 * 60_000)).toBe('40′')
-    expect(formatCareerTime(7 * 3_600_000)).toBe('7ʰ')
-    expect(formatCareerTime(12 * 86_400_000)).toBe('12ᵈ')
+  it('says the largest unit there is and the one under it', () => {
+    expect(formatCareerTime(40 * 60_000 + 12_000)).toBe('40′12″')
+    expect(formatCareerTime(7 * 3_600_000 + 38 * 60_000)).toBe('7ʰ38′')
+    expect(formatCareerTime(12 * 86_400_000 + 7 * 3_600_000)).toBe('12ᵈ07ʰ')
   })
 
-  it('drops everything under that unit rather than rounding it up', () => {
-    expect(formatCareerTime(247 * 3_600_000 + 38 * 60_000 + 12_000)).toBe('10ᵈ')
-    expect(formatCareerTime(86_400_000 - 1)).toBe('23ʰ')
-    expect(formatCareerTime(3_600_000 - 1)).toBe('59′')
+  it('pads the smaller figure and leaves the leading one alone', () => {
+    expect(formatCareerTime(7 * 3_600_000 + 8 * 60_000)).toBe('7ʰ08′')
+    expect(formatCareerTime(40 * 60_000 + 5_000)).toBe('40′05″')
+  })
+
+  it('says the second unit even when it is nought', () => {
+    // Two orders always, so the figure a player reads twice has moved between the two.
+    expect(formatCareerTime(7 * 3_600_000)).toBe('7ʰ00′')
+    expect(formatCareerTime(12 * 86_400_000)).toBe('12ᵈ00ʰ')
+  })
+
+  it('drops everything under the second unit rather than rounding it up', () => {
+    expect(formatCareerTime(247 * 3_600_000 + 38 * 60_000 + 12_000)).toBe('10ᵈ07ʰ')
+    expect(formatCareerTime(86_400_000 - 1)).toBe('23ʰ59′')
+    expect(formatCareerTime(3_600_000 - 1)).toBe('59′59″')
     expect(formatCareerTime(60_000 - 1)).toBe('59″')
   })
 
-  it('falls back to seconds below a minute, as a first run is', () => {
+  it('falls back to seconds below a minute, there being nothing under them to add', () => {
     expect(formatCareerTime(12_000)).toBe('12″')
     expect(formatCareerTime(0)).toBe('0″')
   })
@@ -64,6 +75,55 @@ describe('formatCareerTime', () => {
   })
 
   it('does not cap the leading figure', () => {
-    expect(formatCareerTime(400 * 86_400_000)).toBe('400ᵈ')
+    expect(formatCareerTime(400 * 86_400_000)).toBe('400ᵈ00ʰ')
+  })
+})
+
+describe('formatCountdown', () => {
+  const s = 1000
+  const m = 60 * s
+  const h = 60 * m
+
+  it('writes a clock, not a duration', () => {
+    // The opposite choice from `formatGameTime` one function up, and deliberately so.
+    expect(formatCountdown(1 * h + 52 * m + 9 * s)).toBe('1:52')
+    expect(formatGameTime(1 * h + 52 * m + 9 * s)).toBe('1ʰ52′09″')
+  })
+
+  it('shows two figures and never three', () => {
+    // The seconds give way to the hour rather than standing beside it: with an hour left
+    // nobody reads them, and the first figure would change meaning as the column arrived.
+    expect(formatCountdown(1 * h + 52 * m + 9 * s)).toBe('1:52')
+    expect(formatCountdown(52 * m + 9 * s)).toBe('52:09')
+  })
+
+  it('keeps counting in hours rather than growing a days column', () => {
+    // A window is a day long. 1ᵈ would sit unmoved for its first hour.
+    expect(formatCountdown(25 * h + 1 * m)).toBe('25:01')
+    expect(formatCountdown(400 * h)).toBe('400:00')
+  })
+
+  it('drops the hours when there are none', () => {
+    expect(formatCountdown(52 * m + 9 * s)).toBe('52:09')
+  })
+
+  it('keeps the minutes even when there are none, so the shape never changes', () => {
+    expect(formatCountdown(9 * s)).toBe('0:09')
+    expect(formatCountdown(59 * s)).toBe('0:59')
+    expect(formatCountdown(60 * s)).toBe('1:00')
+  })
+
+  it('pads the second figure and leaves the leading one alone', () => {
+    expect(formatCountdown(1 * h + 5 * m)).toBe('1:05')
+    expect(formatCountdown(5 * m)).toBe('5:00')
+  })
+
+  it('floors rather than rounding, so it never claims a second still running', () => {
+    expect(formatCountdown(9 * s + 999)).toBe('0:09')
+  })
+
+  it('clamps at zero for a window that shut while the card was up', () => {
+    expect(formatCountdown(0)).toBe('0:00')
+    expect(formatCountdown(-5000)).toBe('0:00')
   })
 })

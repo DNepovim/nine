@@ -271,7 +271,7 @@ export function useBoard(
   fetchAllRef.current = fetchAll
 
   useEffect(() => {
-    if (!traitsOf(mode).scored) return
+    if (!traitsOf(mode).board) return
 
     abortedRef.current = false
     void fetchAll()
@@ -303,7 +303,7 @@ export function useBoard(
   // fires only when a score moves, so a board sitting open at midnight would keep
   // yesterday's rows until one did. Re-armed after each rollover.
   useEffect(() => {
-    if (!traitsOf(mode).scored) return
+    if (!traitsOf(mode).board) return
     const timer = setTimeout(() => {
       setDayEpoch((epoch) => epoch + 1)
       // Every cached board's today and week rows belong to the day that just ended, so
@@ -318,7 +318,7 @@ export function useBoard(
   }, [mode, dayEpoch])
 
   const refresh = useCallback(async () => {
-    if (!traitsOf(mode).scored) return
+    if (!traitsOf(mode).board) return
     await fetchAll()
   }, [mode, fetchAll])
 
@@ -329,7 +329,7 @@ export function useBoard(
   // Memoised so the boards are not rebuilt on every render of the game screen, which
   // ticks on every hit — every consumer of the context reads this object.
   return useMemo(() => {
-    if (!traitsOf(mode).scored) return { ...NO_BOARD, refresh }
+    if (!traitsOf(mode).board) return { ...NO_BOARD, refresh }
     const period = (tab: LeaderboardTab): PeriodBoard =>
       toPeriod(
         fetched[tab],

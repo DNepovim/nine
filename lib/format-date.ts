@@ -86,3 +86,21 @@ export function monthsSince(iso: string, now: Date): number | null {
   // placeholder date outliving the day it was written. It reads as brand new.
   return Math.max(0, whole)
 }
+
+// An instant as '11 OCT 12:00', on the reader's own clock.
+//
+// The admin planner's one format: a session's start and end, which are stored as
+// instants and set with a picker that works in whoever is holding the phone's own zone.
+// Printing them back in local time is what makes the pair the admin typed and the pair
+// the screen shows the same pair.
+//
+// No year. Every session the planner draws is within weeks of today — a challenge is on
+// for a day — and the column is narrow enough that a year would cost the time.
+export function formatDayTime(ms: number): string {
+  const at = new Date(ms)
+  if (Number.isNaN(at.getTime())) return ''
+  const month = SHORT_MONTHS[at.getMonth()]
+  if (month === undefined) return ''
+  const minutes = String(at.getMinutes()).padStart(2, '0')
+  return `${at.getDate()} ${month} ${at.getHours()}:${minutes}`
+}

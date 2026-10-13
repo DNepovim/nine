@@ -20,6 +20,11 @@ import {
 import { DEFAULT_DIAL_CORNERS } from '@/constants/dial-hints'
 import { FLAGS } from '@/constants/features'
 import { ArcadeSection } from '@/dev/arcade-section'
+import {
+  CHALLENGE_TAG,
+  ChallengeCardVariant,
+  type ChallengeCase,
+} from '@/dev/challenge-card-variant'
 import { GalleryButton } from '@/dev/gallery-button'
 import {
   isVariant,
@@ -244,6 +249,9 @@ const intro = (
           difficulty="extreme"
           userId="dev"
           nickname="DONDA"
+          // Nothing to open: the gallery renders this to be looked at, and the dialog
+          // behind the card belongs to the screen above it rather than to this panel.
+          onOpenChallenge={() => undefined}
           bestScore={RUN.score}
           medals={medals}
           lostMedals={lostMedals}
@@ -288,6 +296,8 @@ const gameOver = (
   } · ${emblemFor(screen, mode)}`,
   render: (close) => (
     <GameOverOverlay
+      // Looked at, not played — no session behind it.
+      sessionId={null}
       gameMode={mode}
       difficulty={difficulty}
       userId="dev"
@@ -630,6 +640,16 @@ const strip = (names: NameLength, scores: ScoreLength): Variant => ({
   render: (close) => <ScoreStripVariant names={names} scores={scores} onClose={close} />,
 })
 
+// One state of the challenge card. Four buttons rather than a switcher, because none of
+// the four can be asked for on demand in the real app: a window is open or it is not,
+// somebody has played it or nobody has, and the last minute of a day-long window comes
+// round once a day. See dev/challenge-card-variant.tsx for the sessions behind them.
+const challengeCard = (which: ChallengeCase): Variant => ({
+  key: `challenge-${which}`,
+  label: CHALLENGE_TAG[which],
+  render: (close) => <ChallengeCardVariant which={which} onClose={close} />,
+})
+
 // The screens, in the order they are met in the app: the splash, then the intro, then a
 // run's endings, then the things reached from a menu.
 const SCREENS: Section[] = [
@@ -706,6 +726,19 @@ const SCREENS: Section[] = [
       intro('EAGLE', [], MEDALS_KEPT, { accuracy: null, speed: 'dev' }),
       // Both boards at once, which is the crown.
       intro('CROWN', [], MEDALS_KEPT, { accuracy: 'dev', speed: 'dev' }),
+    ],
+  },
+  {
+    // The first row of the ALONE panel, which the real intro only draws on the days a
+    // session is open — so this is the one place every state of it can be looked at.
+    // Beside the intro rather than inside it, for the reason INTRO · MARK is: it is a
+    // different part of the screen with a different thing to look at.
+    title: 'CHALLENGE CARD',
+    items: [
+      challengeCard('leader'),
+      challengeCard('fresh'),
+      challengeCard('last-minute'),
+      challengeCard('teaser'),
     ],
   },
   {

@@ -312,12 +312,13 @@ export function BestScoresLine({
       ? nearestRecord(score, { you: yourBest, today, week, ever })
       : null
 
-  // Trainee is practice against no board, so it has no scores to put here — but it
-  // still occupies the strip's height. Everything above the dial is drawn from the same
+  // Trainee is practice against no board, so it has no scores to put here — and nor
+  // does a challenge, whose standings belong to its session. Either way the strip
+  // still occupies its height. Everything above the dial is drawn from the same
   // leftover the dial is sized from, so a mode that gave this space back would get a
   // bigger dial than the others, and the dial has to be the same in every mode. After
   // the hooks, not before: the reveal timers run identically whatever the mode.
-  if (!traitsOf(mode).scored) return <View style={{ height: BEST_SCORES_HEIGHT }} />
+  if (!traitsOf(mode).board) return <View style={{ height: BEST_SCORES_HEIGHT }} />
 
   return (
     <View className="mb-1.5">

@@ -54,6 +54,24 @@ export function msUntilNextDay(at: Date = new Date()): number {
   return DAY_MS - (((shifted % DAY_MS) + DAY_MS) % DAY_MS)
 }
 
+// The instant Prague midnight falls on at the start of a given ISO day.
+//
+// The inverse of `dayInPrague`, and the one thing the teaser needs that nothing here
+// answered: a challenge's card appears from midnight Prague on the day before the
+// session opens, which is a *moment* rather than a date. `msUntilNextDay` computes one
+// privately and throws it away.
+//
+// The offset is read at the resulting instant rather than at the day's UTC midnight,
+// because a day that begins in CET and a day that begins in CEST begin an hour apart
+// and the naive reading is wrong for one of them. Two passes settle it: guess with the
+// offset at UTC midnight, then re-read the offset where that guess landed.
+export function startOfDayInPrague(day: string): number {
+  const utcMidnight = Date.parse(`${day}T00:00:00Z`)
+  if (Number.isNaN(utcMidnight)) return Number.NaN
+  const guess = utcMidnight - pragueOffsetHours(new Date(utcMidnight)) * HOUR_MS
+  return utcMidnight - pragueOffsetHours(new Date(guess)) * HOUR_MS
+}
+
 // The Monday of the calendar week containing `day`. Weeks run Monday to Sunday on the
 // Prague clock, so the `week` board is "this week so far" and empties at Prague
 // midnight every Monday, rather than a rolling window that quietly drops a day.

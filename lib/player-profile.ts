@@ -117,6 +117,10 @@ export type PlayerProfile = {
   // can be weighted. Empty for a player who has never placed on a board, and also for
   // any player when the server predates winnings.
   winnings: BoardWinnings[]
+  // What their challenge runs came to, by rung. Empty for a player who has played none
+  // — which is everyone until challenges reach players — and for any player when the
+  // server predates them.
+  sessions: SessionTotals[]
 }
 
 // One row of the modal's per-board block: what this player has done on one board.
@@ -213,9 +217,22 @@ const EMPTY_LIFETIME: Lifetime = {
 //
 // `winnings` defaults to none rather than being required, because that is the honest
 // reading of a server that has never heard of them — see `winnings?` on the response.
+// What a player's challenge runs came to, by the rung each was pinned at.
+//
+// Not a `BoardTotals`, and the missing field is the point: a session has no mode ×
+// difficulty to name, because it is not a board. The difficulty is still here because
+// the fortune is weighted by it, and it comes off the stored row rather than off the
+// registry — the server has never heard of a mode, so the rung has to be a fact the row
+// carries. See `session_scores.difficulty`.
+export type SessionTotals = {
+  difficulty: Difficulty
+  scoreSum: number
+}
+
 export function lifetimeOf(
   totals: readonly BoardTotals[],
   winnings: readonly BoardWinnings[] = [],
+  sessions: readonly SessionTotals[] = [],
 ): Lifetime {
   const sum = totals.reduce<Lifetime>(
     (held, board) => ({
@@ -229,7 +246,23 @@ export function lifetimeOf(
     }),
     EMPTY_LIFETIME,
   )
-  return { ...sum, fortune: Math.round(sum.fortune + winningsValue(winnings)) }
+  // Challenge points join the fortune and nothing else. `runs`, `hits`, `score` and
+  // `timeMs` are what the per-board table on the profile adds up to, and a session is
+  // not a board — feeding them would make the table stop explaining the figures beside
+  // it. Winnings already behave this way and the modal already says so: a fortune may
+  // exceed what the table accounts for.
+  //
+  // Weighted by the rung the challenge pinned, on the same scale every board point is
+  // weighted by, so a point scored in a challenge is worth what a point is worth.
+  const fromSessions = sessions.reduce(
+    (held, played) =>
+      held + played.scoreSum * DIFFICULTIES[played.difficulty].scoreWeight,
+    0,
+  )
+  return {
+    ...sum,
+    fortune: Math.round(sum.fortune + winningsValue(winnings) + fromSessions),
+  }
 }
 
 // What a career's name is coloured by: the same two lifetime averages the profile prints
@@ -379,6 +412,13 @@ export type PlayerProfileResponse = {
     daySum?: number
     weekSum?: number
   })[]
+  // Absent, not empty, from a server that predates challenge sessions — read the same
+  // way `winnings` above is, so a build that ships ahead of its migration draws a
+  // fortune without them rather than failing to draw a profile.
+  //
+  // No mode on the row: a session is not a board, and what the fortune needs from it is
+  // the rung it was played at and the points it came to.
+  sessionTotals?: { difficulty: string; scoreSum: number }[]
 }
 
 const board = (raw: RawBoard): { mode: ScoredMode; difficulty: Difficulty } | null =>
@@ -439,6 +479,14 @@ export function shapeProfile(raw: PlayerProfileResponse): PlayerProfile {
       }),
     ]),
     winnings: (raw.winnings ?? []).flatMap(boardWinnings),
+    // A rung this build does not recognise is dropped rather than guessed at: there is
+    // no weight to price it by, and counting it at someone else's rate would invent
+    // fortune. The same instinct `boardWinnings` applies to an unknown podium step.
+    sessions: (raw.sessionTotals ?? []).flatMap((row) =>
+      isDifficulty(row.difficulty)
+        ? [{ difficulty: row.difficulty, scoreSum: row.scoreSum }]
+        : [],
+    ),
   }
 }
 
@@ -489,4 +537,5 @@ export const EMPTY_PROFILE: PlayerProfile = {
   held: [],
   reigns: [],
   winnings: [],
+  sessions: [],
 }

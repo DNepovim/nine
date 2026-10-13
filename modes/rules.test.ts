@@ -215,7 +215,14 @@ describe('the rules each shipped mode resolves to', () => {
     // Practice weighs the route two to one. Nothing reads it — both screens that show a
     // factor are behind `scored` — but the answer still follows the blend.
     expect(rules('trainee', 'easy').scoring.headline).toBe('acc')
+    // Practice is the one mode that answers no to both halves of the split: no board to
+    // keep, and no score worth showing either.
     expect(rules('trainee', 'easy').capabilities.scored).toBe(false)
+    expect(rules('trainee', 'easy').capabilities.board).toBe(false)
+    // And the ordinary scored run answers yes to both, which is what makes the two
+    // flags worth having apart.
+    expect(rules('accuracy', 'hard').capabilities.board).toBe(true)
+    expect(rules('accuracy', 'hard').capabilities.scored).toBe(true)
   })
 
   it('gives each mode the streak its own play is made of', () => {

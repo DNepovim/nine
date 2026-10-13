@@ -75,7 +75,14 @@ describe('defineChallenge', () => {
     expect(rules.lives.count).toBe(1)
     expect(rules.lives.wasteful).toBeCloseTo(0.15)
     expect(rules.lives.expiryCosts).toBe(false)
-    expect(rules.capabilities).toEqual({ scored: false, coached: true, keyHints: true })
+    expect(rules.capabilities).toEqual({
+      // `board` is not in the patch above and never can be — `defineChallenge` forces
+      // it off after the merge, whatever the spec says.
+      board: false,
+      scored: false,
+      coached: true,
+      keyHints: true,
+    })
   })
 
   it('leaves everything the patch is silent about as the base mode had it', () => {
@@ -90,7 +97,15 @@ describe('defineChallenge', () => {
     if (bare.engine !== 'targets') throw new Error('a challenge runs on targets')
     const asSpeed = rulesFor('speed', 'hard')
     const asChallenge = resolveRules(bare.rules, 'speed', 'hard')
-    expect(asChallenge).toEqual(asSpeed)
+    // Everything but the board. A challenge is its base mode in every respect except
+    // that its standings belong to the session it was aired in, so this is the one
+    // field a bare challenge may not inherit — see `noBoard` in define.ts.
+    expect(asSpeed?.capabilities.board).toBe(true)
+    expect(asChallenge.capabilities.board).toBe(false)
+    expect({
+      ...asChallenge,
+      capabilities: { ...asChallenge.capabilities, board: true },
+    }).toEqual(asSpeed)
   })
 
   it('is open inside its window and closed either side of it', () => {
@@ -192,5 +207,46 @@ describe('FOUR KEYS', () => {
     expect(dial.weights).toEqual([1, 2, 2, 4])
     expect(dial.maxSum).toBe(9 * (1 + 2 + 2 + 4))
     expect(dial.maxSum).toBe(81)
+  })
+})
+
+describe('a challenge and the board it does not keep', () => {
+  it('is scored but keeps no board, with no spec saying so', () => {
+    // The whole of the split, on the catalog's own entry — which names no capabilities
+    // at all, so both answers come from `defineChallenge` and the base mode rather than
+    // from the spec. A challenge run has a figure worth showing and counting, and no
+    // mode × difficulty leaderboard behind it.
+    const fourKeys = CHALLENGES.find((mode) => mode.id === challengeId('four-keys'))
+    if (fourKeys?.engine !== 'targets') throw new Error('four keys runs on targets')
+    expect(fourKeys.rules.capabilities.board).toBe(false)
+    expect(fourKeys.rules.capabilities.scored).toBe(true)
+  })
+
+  it('refuses a spec that claims a board, whatever else the patch says', () => {
+    // Review focus 2. `patchRules` merges capabilities, so a force applied to the base
+    // rather than to the result would be overwritten by exactly this spec — and the
+    // catalog's own entry names no capabilities, so the wrong order would have shipped
+    // green and failed on the second challenge anybody wrote.
+    const greedy = defineChallenge({
+      slug: 'greedy',
+      label: msg`GREEDY`,
+      description: msg`Wants a board it cannot have.`,
+      base: SPEED,
+      from: OPENS,
+      until: OPENS + DAY,
+      rules: { capabilities: { board: true, coached: true } },
+    })
+    if (greedy.engine !== 'targets') throw new Error('greedy runs on targets')
+    expect(greedy.rules.capabilities.board).toBe(false)
+    // And the rest of the patch is untouched — the force is one field, not a reset.
+    expect(greedy.rules.capabilities.coached).toBe(true)
+  })
+
+  it('keeps every challenge in the catalog off the boards', () => {
+    // A sweep rather than one example, so a hand-written entry cannot slip past.
+    for (const challenge of CHALLENGES) {
+      if (challenge.engine !== 'targets') continue
+      expect(challenge.rules.capabilities.board).toBe(false)
+    }
   })
 })

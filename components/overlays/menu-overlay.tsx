@@ -13,22 +13,27 @@ import Animated, {
 } from 'react-native-reanimated'
 
 import { GradientName } from '@/components/gradient-name'
+import { ChallengeCard } from '@/components/overlays/challenge-card'
 import { Screen } from '@/components/screen'
 import { TrackedPressable } from '@/components/tracked-pressable'
 import type { AchievementId } from '@/constants/achievements'
 import { DIM_INK } from '@/constants/colors'
+import { DEV_FEATURES } from '@/constants/features'
 import { TYPE } from '@/constants/typography'
 import { useChampionsContext } from '@/hooks/use-champions'
-import { useFlag } from '@/hooks/use-flags'
+import { useAnyFlag, useFlag } from '@/hooks/use-flags'
 import type { LostMedalNews } from '@/hooks/use-lost-medals'
 import { useOnline } from '@/hooks/use-online'
 import { EMPTY_IDS, usePlayerFactors } from '@/hooks/use-player-factors'
 import { useOpenProfile } from '@/hooks/use-profile-modal'
+import { useSessionCard } from '@/hooks/use-session-card'
 import { useViewport } from '@/hooks/use-viewport'
+import type { SessionCard } from '@/lib/challenge-session'
 import { championMark } from '@/lib/champions'
 import { cn } from '@/lib/cn'
 import { boardName, SHARE_URL, shouldBoast } from '@/lib/invite-message'
 import type { Medal } from '@/lib/medals'
+import type { OpenSession } from '@/lib/session-board'
 import {
   ARCADE_TEASER,
   DARK_MULTIPLAYER_GRADIENT,
@@ -39,7 +44,6 @@ import {
   lerpColor,
   MODE_ORDER,
   MULTIPLAYER_GRADIENT,
-  openModes,
   SCORED_MODES,
   traitsOf,
   type Difficulty,
@@ -66,12 +70,7 @@ const shadow = {
   shadowRadius: 12,
 }
 
-// What a challenge's pill wears in its corner. A mode that is only here today has to say
-// so on the pill, or it reads as one of the permanent three.
-const CHALLENGE_TAG = '24H'
-
-// The mode pills this screen shows, in order: the player's three, then whichever
-// challenges are open right now, then ARCADE.
+// The mode pills this screen shows, in order: the player's three, then ARCADE.
 //
 // ARCADE is last and is everyone's. For whoever holds the `arcade` flag it is a door; for
 // everyone else it is a teaser wearing SOON, with PLAY GAME dead under it and a card in
@@ -80,16 +79,14 @@ const CHALLENGE_TAG = '24H'
 // A tab that *says* something is not that tab: the promise was already made the first time
 // a player saw the badge, and answering it is cheaper than withdrawing it.
 //
-// The challenges are read off the registry rather than listed here, which is the whole
-// point of their having a window: one opens and closes without this screen being touched.
-// There are none open today, so this adds nothing to the row — see modes/challenges.
-const introModes = (now: number): ModeId[] => [
-  ...MODE_ORDER,
-  ...openModes(now)
-    .filter((mode) => mode.window !== null && mode.engine === 'targets')
-    .map((mode) => mode.id),
-  'arcade',
-]
+// **No challenges.** They used to join this row, read off the registry, each wearing a
+// 24H badge. They have their own card above the pills now — see `ChallengeCard` — and
+// two doors to one thing on one screen is the drift that gets a feature built twice:
+// the pill skipped the description and the standings, which is most of what there is to
+// say about a challenge. It also buys something structural, which is that `openModes`
+// stays a synchronous read of a compiled registry: a session lives on the server, and a
+// pill driven by one would have made this list wait on a request.
+const introModes = (): ModeId[] => [...MODE_ORDER, 'arcade']
 
 export function MenuOverlay({
   gameMode,
@@ -121,6 +118,7 @@ export function MenuOverlay({
   onHowToPlay,
   onCreateRoom,
   onOpenJoinRoom,
+  onOpenChallenge,
   onOpenDev,
   onOpenAdmin,
 }: {
@@ -193,6 +191,9 @@ export function MenuOverlay({
   // The dev and admin screens, each its own door behind its own flag — see
   // constants/features.ts. Always passed, since whether either is shown at all is decided
   // below rather than by the caller.
+  // Pressed on the challenge card. The dialog behind it belongs to the screen above —
+  // a ModalCard mounted in this panel would scrim the panel rather than the app.
+  onOpenChallenge: (card: NonNullable<SessionCard<OpenSession>>) => void
   onOpenDev: () => void
   onOpenAdmin: () => void
 }) {
@@ -213,7 +214,12 @@ export function MenuOverlay({
   const openProfile = useOpenProfile()
   const showMultiplayer = useFlag('multiplayer')
   const showArcade = useFlag('arcade')
-  const showDev = useFlag('dev')
+  // Any dev feature, not one key: the screen behind DEV holds a section per feature, so
+  // the link belongs to whoever holds any of them. See DEV_FEATURES.
+  const showDev = useAnyFlag(DEV_FEATURES)
+  // Held in a const so the press handler below closes over a narrowed value rather than
+  // re-reading something it cannot narrow.
+  const challenge = useSessionCard()
   const showAdmin = useFlag('admin')
   // A stored ARCADE focus is only honoured by a reader who can actually *open* it. The
   // pill is everyone's now, so this is no longer about a tab that is not there — it is
@@ -223,19 +229,11 @@ export function MenuOverlay({
   const [focused, setFocused] = useState<ModeId>(
     initialFocus === 'arcade' && !showArcade ? gameMode : initialFocus,
   )
-  // Read once per open rather than per render: a window closing while the player is
-  // looking at the intro would otherwise take the pill out from under their thumb.
-  const [openedAt] = useState(() => Date.now())
-  const modeItems = useMemo(() => introModes(openedAt), [openedAt])
-  const badges: Partial<Record<string, string>> = useMemo(() => {
-    const marks: Record<string, string> = {
-      arcade: showArcade ? ARCADE_TEASER.devTag : ARCADE_TEASER.tag,
-    }
-    for (const id of modeItems) {
-      if (id.startsWith('challenge/')) marks[id] = CHALLENGE_TAG
-    }
-    return marks
-  }, [modeItems, showArcade])
+  const modeItems = useMemo(() => introModes(), [])
+  const badges: Partial<Record<string, string>> = useMemo(
+    () => ({ arcade: showArcade ? ARCADE_TEASER.devTag : ARCADE_TEASER.tag }),
+    [showArcade],
+  )
 
   const [playMode, setPlayMode] = useState<PlayMode>(initialPlayMode)
   const [panelWidth, setPanelWidth] = useState(0)
@@ -435,6 +433,18 @@ export function MenuOverlay({
                 className="gap-2"
                 style={{ width: effectivePanelWidth, overflow: 'hidden' }}
               >
+                {/* A challenge that is on, or opens tomorrow. First row of the panel:
+                    it is the thing that goes away, and the pills below it are not. Draws
+                    nothing at all most days, and the panel's own `gap-2` is what means
+                    its absence leaves no hole. */}
+                {challenge !== null && (
+                  <ChallengeCard
+                    card={challenge}
+                    onPress={() => {
+                      onOpenChallenge(challenge)
+                    }}
+                  />
+                )}
                 <ModeSelector
                   focused={focused}
                   items={modeItems}

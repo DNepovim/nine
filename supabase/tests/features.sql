@@ -7,9 +7,27 @@
 do $$
 begin
   -- ── The seed reproduces today's floors ──────────────────────────────────────
-  -- `dev` was floored at tester, so all three roles reach it.
-  assert (select count(*) from role_features where feature_key = 'dev') = 3,
-    'dev should be in all three stacks';
+  -- `dev` was floored at tester, so all three roles reach it — and
+  -- …_challenge_lab_rename.sql carried every one of those rows onto the new key.
+  assert (select count(*) from role_features where feature_key = 'challengeLab') = 3,
+    'challengeLab should be in all three stacks';
+  -- Nothing anywhere still names the old key. The foreign keys are `on delete cascade`,
+  -- so deleting the `features` row is what cleared the grants — if any of these is
+  -- non-zero the cascade did not run in the direction the migration assumed.
+  assert not exists (select 1 from features      where key         = 'dev'),
+    'the dev feature row should be gone';
+  assert not exists (select 1 from role_features where feature_key = 'dev'),
+    'no stack should still name dev';
+  assert not exists (select 1 from user_features where feature_key = 'dev'),
+    'no override should still name dev';
+
+  -- `challenges` is seeded into every stack and switched off — the same arrangement
+  -- `multiplayer` has. The stack says who could reach it; the switch says whether
+  -- anybody does, and turning it on for players is one tap rather than a migration.
+  assert (select active from features where key = 'challenges') = false,
+    'challenges should be inactive';
+  assert (select count(*) from role_features where feature_key = 'challenges') = 3,
+    'challenges should be seeded into every stack';
   -- `arcade` was floored at developer.
   assert exists (select 1 from role_features where role_key = 'developer' and feature_key = 'arcade'),
     'developer should hold arcade';
@@ -21,7 +39,7 @@ begin
   assert (select count(*) from role_features where feature_key = 'admin') = 1,
     'only one stack should hold admin';
 
-  -- `czech` is seeded at the same three rungs `dev` is: whoever can report on the
+  -- `czech` is seeded at the same three rungs the challenge lab is: whoever can report on the
   -- translation can read it, and an ordinary player reaches neither.
   assert (select count(*) from role_features where feature_key = 'czech') = 3,
     'czech should be in all three stacks';
@@ -61,17 +79,19 @@ begin
     'a profile with no role should reach nothing';
 
   -- ── A role gives its stack, minus whatever is inactive ──────────────────────
+  -- Ordered by key, so the rename moved the first element as well as renaming it:
+  -- 'challengeLab' sorts before 'czech' where 'dev' sorted after it.
   assert (select array_agg(k order by k) from effective_features(v_test) k)
-         = array['czech', 'dev'],
-    'tester should reach czech and dev and no more (multiplayer is inactive)';
+         = array['challengeLab', 'czech'],
+    'tester should reach challengeLab and czech and no more (multiplayer and challenges are inactive)';
 
   -- ── An override adds ────────────────────────────────────────────────────────
   insert into user_features (user_id, feature_key, granted) values (v_test, 'arcade', true);
   assert has_feature(v_test, 'arcade'), 'a true override should add a feature';
 
   -- ── An override subtracts ───────────────────────────────────────────────────
-  insert into user_features (user_id, feature_key, granted) values (v_test, 'dev', false);
-  assert not has_feature(v_test, 'dev'),
+  insert into user_features (user_id, feature_key, granted) values (v_test, 'challengeLab', false);
+  assert not has_feature(v_test, 'challengeLab'),
     'a false override should take away a feature the role gives';
 
   -- ── The master switch beats both ────────────────────────────────────────────
@@ -80,8 +100,9 @@ begin
     'an inactive feature should not be reachable even by a true override';
 
   -- ── Removing the override row returns the role's answer ─────────────────────
-  delete from user_features where user_id = v_test and feature_key = 'dev';
-  assert has_feature(v_test, 'dev'), 'deleting an override should fall back to the role';
+  delete from user_features where user_id = v_test and feature_key = 'challengeLab';
+  assert has_feature(v_test, 'challengeLab'),
+    'deleting an override should fall back to the role';
 
   -- ── Review Focus 2: no caller at all ────────────────────────────────────────
   -- `my_features()` runs on the first launch, before the anonymous sign-in has

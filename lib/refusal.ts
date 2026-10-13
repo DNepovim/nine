@@ -6,7 +6,7 @@ import { captureError } from '@/lib/analytics'
 // Structural rather than Supabase's own `PostgrestError`, for the same reason
 // `noteRequest` in lib/connectivity.ts takes `{ message: string }`: these helpers care
 // about the shape of an answer, not about which client produced it.
-type ServerError = {
+export type ServerError = {
   message: string
   code?: string | null
   details?: string | null

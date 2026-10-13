@@ -55,6 +55,7 @@ export function MultiplayerGame({
   players,
   currentTarget,
   targetCount,
+  drag,
   onHit,
   onTargetExpire,
   onMenu,
@@ -64,6 +65,9 @@ export function MultiplayerGame({
   players: PlayerState[]
   currentTarget: MultiTarget | null
   targetCount: number
+  // Whether one gesture may move more than one key, as the player has it set. A room is
+  // played on the same dial with the same controls as a run alone.
+  drag: boolean
   onHit: (accuracy: number) => void
   onTargetExpire: () => void
   onMenu: () => void
@@ -270,6 +274,7 @@ export function MultiplayerGame({
         values={grid.flat()}
         showSum={false}
         trainee={false}
+        drag={drag}
         peakFrom={DARK_MULTIPLAYER_GRADIENT[mode][0]}
         peakTo={DARK_MULTIPLAYER_GRADIENT[mode][1]}
         onDelta={handlePress}

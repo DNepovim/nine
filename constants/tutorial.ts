@@ -94,13 +94,46 @@ export const TUTORIAL_OPENING_TARGET = TUTORIAL_TARGETS[0]
 export const scriptedTarget = (hits: number): number | null =>
   TUTORIAL_TARGETS[hits] ?? null
 
-// The one beat in the lesson on a clock, and it shows nothing at all: the gap between the
-// opening word being tapped away and the first card pointing at the target.
+// How long the lesson's first word stands before it dissolves by itself.
 //
-// Long enough that the target has finished springing in — a tooltip pointing at something
-// still on its way in points at nothing — and short enough to read as part of the arrival.
-// Everything the lesson actually says waits for the player instead; see LESSON_HOLD_MS.
-export const TUTORIAL_FIRST_WORD_MS = 300
+// The one line the lesson says that asks for nothing: it names what the run is, and a
+// player who has read that has nothing to do about it. So it goes on its own rather than
+// waiting to be tapped away — three seconds, which is the line read at an unhurried pace
+// and then looked at for a moment, and no longer, because the board behind it is already
+// dealt and waiting.
+//
+// A tap anywhere takes it early, and that is what makes three seconds safe rather than
+// slow: the dial is shut while the word is up, so the whole viewport is the lesson's to be
+// tapped through — see `dismissedByTap` and the tap-through in app/(tabs)/index.tsx. A
+// player who has read it is one press from the board; a player still reading is not
+// holding anything up.
+export const TUTORIAL_WELCOME_MS = 3000
+
+// How long it takes to arrive and how long it takes to go — the splash screen's own two
+// gestures, since this is that screen with the screen taken off it, at about a third of
+// their lengths. The shapes are in components/game/tutorial-intro.tsx; the lengths are
+// here because the lesson's own script reads the second of them.
+export const TUTORIAL_WELCOME_IN_MS = 500
+
+// The dissolve doubles as the one beat in the lesson that shows nothing at all: the gap
+// between the opening word going and the first card pointing at the target. The card lands
+// on the frame the word has finished leaving rather than over the tail of it — and the beat
+// is long enough for the other thing it is for as well, the target springing in across it,
+// a tooltip pointing at something still on its way in pointing at nothing.
+//
+// Everything the lesson actually *asks* for waits for the player instead; see LESSON_HOLD_MS.
+export const TUTORIAL_WELCOME_OUT_MS = 600
+
+// How far anything the lesson has taken out of the player's hands dims, and how long the
+// fade takes either way.
+//
+// One figure for the two things that step back together: the keys the lesson has shut, and
+// the sum while its first word is standing over the board. Both are saying the same thing
+// — this is the lesson's for a moment, not yours — and two depths of it would read as two
+// different statements. The easing stays with each caller, since this file is plain data
+// and is read by the lesson script, which runs outside React.
+export const LESSON_DIM = 0.35
+export const LESSON_DIM_MS = 260
 
 // The band the lesson talks in: between the sum and the dial, held open for the whole run
 // so the canvas above it never changes size.

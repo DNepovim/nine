@@ -21,9 +21,18 @@ export const FLAGS = [
   // still unpressable — the teaser was already a promise to players, and taking it away
   // to build behind it would be answering a promise with an absence.
   'arcade',
-  // The DEV link on the intro, and the screen behind it: every challenge ever written,
-  // playable on demand with no board kept for it.
-  'dev',
+  // The challenge lab: every challenge ever written, playable on demand outside its own
+  // window, with no board kept for it. What a tester testing a new challenge holds.
+  //
+  // Called `dev` until the planner arrived, which named the door rather than the thing
+  // behind it — and the door is about to hold more than one. `DEV_FEATURES` below is what
+  // the link itself now asks.
+  'challengeLab',
+  // What a player sees of challenges: the card on the start screen that says one is on,
+  // the dialog behind it with the standings, and the chapter of How to Play that explains
+  // them. Gates the reads as well as the card — a player who cannot be shown a session
+  // has no business asking the server which ones are open.
+  'challenges',
   // The weekly recap: the page in the launch popup, on the first open of a new week, that
   // says what last week on the boards came to. Gates the read as well as the card — a
   // player who cannot be shown it has no business asking the server about it.
@@ -40,3 +49,9 @@ export const FLAGS = [
 ] as const
 
 export type Flag = (typeof FLAGS)[number]
+
+// The features reached through the DEV link on the intro, rather than the one that used
+// to be it. The link appears for anybody holding any of them, and the screen behind it
+// shows the sections they hold — so a second entry here is the whole of what it takes to
+// put a second thing in there without widening who can see the first.
+export const DEV_FEATURES = ['challengeLab'] as const satisfies readonly Flag[]

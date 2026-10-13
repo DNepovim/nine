@@ -9,6 +9,7 @@ import {
   LESSON_AFTER_HIT,
   LESSON_AXES,
   LESSON_DIAL,
+  LESSON_DRAG,
   LESSON_HAND,
   LESSON_HOLD_MS,
   LESSON_LINE,
@@ -36,10 +37,10 @@ export function useTutorialLesson({
   targets,
 }: {
   tutorial: boolean
-  // Paused counts as not playing. Nothing the lesson says is on a clock, so there is no
-  // longer a hold a pause could run out behind — what it stops is the one silent beat
-  // between the opening word and the first card, which restarts rather than resumes when
-  // the player comes back.
+  // Paused counts as not playing. Nothing the lesson asks for is on a clock, so what a
+  // pause holds up is only the opening word and the silent beat after it — both of which
+  // restart rather than resume when the player comes back, which is the right reading of
+  // a line nobody was there for.
   isPlaying: boolean
   // Which run this is. Every fresh deal restarts the lesson, and every run that is not a
   // tutorial has none.
@@ -65,13 +66,25 @@ export function useTutorialLesson({
     tutorial && hits === 0 ? FIRST_STEP : 'done',
   )
 
+  // The drag, once shown, stays shown. A latch rather than the step's own answer, for the
+  // two reasons LESSON_DRAG gives: `free` is the gap on both sides of the drag lesson, and
+  // the stepper can put an earlier board back under a player who has already been taught
+  // one. It is the run that resets it, below, because the run is what restarts the lesson.
+  const [dragShown, setDragShown] = useState(() => LESSON_DRAG[step])
+
   const dealt = useRef(runSeq)
   useEffect(() => {
     if (dealt.current === runSeq) return
     dealt.current = runSeq
     const { tutorial: isTutorial, hits: landed } = openingRef.current
-    setStep(isTutorial && landed === 0 ? FIRST_STEP : 'done')
+    const opening = isTutorial && landed === 0 ? FIRST_STEP : 'done'
+    setStep(opening)
+    setDragShown(LESSON_DRAG[opening])
   }, [runSeq])
+
+  useEffect(() => {
+    if (LESSON_DRAG[step]) setDragShown(true)
+  }, [step])
 
   // A rewind, followed. The board under the player has moved to a scripted one, so the
   // lesson goes to the step that board opens on — the same table a hit reads, indexed by
@@ -126,9 +139,10 @@ export function useTutorialLesson({
     [noteSwipe],
   )
 
-  // The hold, which only the silent beat has one of. Every other step arms nothing and
-  // waits for the player: a tap for the cards and the banners, one of the watchers below
-  // for the route and the free board, and nothing at all for the end.
+  // The hold, which only the opening word and the silent beat after it have one of. Every
+  // other step arms nothing and waits for the player: a tap for the cards and the banners,
+  // one of the watchers below for the route and the free board, and nothing at all for the
+  // end.
   useEffect(() => {
     if (!active) return
     const hold = LESSON_HOLD_MS[step]
@@ -196,6 +210,10 @@ export function useTutorialLesson({
     // it is miming over the keys. Both are off in every run that is not a live tutorial.
     axes: active && LESSON_AXES[step],
     hand,
+    // Whether one gesture may cross from key to key. The lesson only ever takes it away —
+    // until it has taught the drag — so every run that is not a live tutorial answers
+    // yes and leaves the question to the player's own setting.
+    drag: !active || dragShown,
     // What the dial will take, and — while it will take one key only — which.
     dial,
     liveKey,

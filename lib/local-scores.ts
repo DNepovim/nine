@@ -34,9 +34,28 @@ export type LocalScore = {
   achievedAt: string // ISO 8601
   status: ScoreStatus
   attempts: number
+  // Which **session** this run belonged to, or absent for a run that belonged to none —
+  // which is every run before challenges reached players, and every ordinary board run
+  // after. An entry carrying one publishes to that session's standings instead of to
+  // `daily_scores`; see lib/score-submission.ts.
+  //
+  // Optional rather than nullable, and the storage key deliberately does **not** move.
+  // `nine.scores.v1` holds entries written before this field existed, and absent reads
+  // as "not a session run", which is exactly what they were. Bumping the key to avoid a
+  // migration that is not needed would throw away every score still queued for
+  // publication — strictly worse than the problem it would be solving.
+  sessionId?: string
 }
 
 // Which run this is about: one board, one day. The same slot never holds two entries.
+//
+// A session run slots the same way, and that is deliberate rather than overlooked: a
+// challenge is on for a day, so one challenge on one day is one contest, and keeping the
+// player's best of it is the same rule the boards already keep. Two sessions of one
+// challenge inside a single day cannot both be slotted here — the planner refuses
+// overlapping sessions of the same challenge, so the only way to reach that is two
+// back-to-back airings in one day, which nothing plans and which would cost the earlier
+// one's queued entry if it did.
 export type ScoreSlot = Pick<LocalScore, 'mode' | 'difficulty' | 'day'>
 
 // A score the server has refused this many times, for a reason that was not the

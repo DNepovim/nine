@@ -136,7 +136,7 @@ const hydrateStats = (current: Stats, stored: Partial<Stats>): Stats => {
     ...current,
   }
   for (const [mode, boards] of Object.entries(stored)) {
-    if (boards === undefined || !traitsOf(mode).scored) continue
+    if (boards === undefined || !traitsOf(mode).board) continue
     merged[mode] = { ...merged[mode], ...boards }
   }
   return merged
@@ -555,11 +555,12 @@ function applyGrid(context: Context, newGrid: Grid, now: number) {
     context.bestSpd,
   )
 
-  // A mode with no board keeps no best. Practice is the one today: tracking one meant
-  // the personal-best celebration fired on the first hit of a later run — practice runs
-  // are short, so the stored best was low enough to clear at once.
+  // A mode with no board keeps no best. Practice is one; a challenge is the other, and
+  // its standings are the session's rather than a slot in here. Tracking one for
+  // practice meant the personal-best celebration fired on the first hit of a later run
+  // — those runs are short, so the stored best was low enough to clear at once.
   const stats =
-    anyHit && rules.capabilities.scored
+    anyHit && rules.capabilities.board
       ? {
           ...context.stats,
           [context.mode]: {

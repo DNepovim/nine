@@ -25,7 +25,7 @@ export {
   type DialSpec,
   type Grid,
 } from './dial'
-export { isOpenMode } from './challenges/define'
+export { challengeId, isOpenMode } from './challenges/define'
 export { DIFFICULTIES, DIFFICULTY_ORDER, type Difficulty } from './difficulty'
 export { ARCADE_TEASER } from './definitions/arcade'
 export { TUTORIAL } from './definitions/tutorial'

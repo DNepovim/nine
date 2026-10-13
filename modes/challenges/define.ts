@@ -6,6 +6,7 @@ import {
   type ModeDefinition,
   type RulesPatch,
   type ShotKind,
+  type TargetRules,
 } from '@/modes/types'
 
 // A **challenge**: a mode that is on the app for a day.
@@ -55,6 +56,25 @@ const PREFIX = 'challenge/'
 
 export const challengeId = (slug: string): string => `${PREFIX}${slug}`
 
+// A challenge never keeps a **board** — one mode × difficulty pairing with three
+// periods, a medal and a reign. Its standings belong to the session it was aired in,
+// which is a different thing and a different table; and `scores.mode` carries a check
+// constraint that would refuse the write in any case.
+//
+// Forced here rather than remembered by each spec, and forced **after** `patchRules`
+// rather than before it: that merge is `{ ...base.capabilities, ...patch.capabilities }`,
+// so a force applied to the base would be overwritten by any spec that mentions
+// capabilities at all. The catalog's one worked example does not mention them, which is
+// exactly how the wrong order would have shipped green and failed on the second
+// challenge anybody wrote.
+//
+// `scored` is left alone and inherited — a challenge run has a score, shows it, and
+// counts it. The two flags come apart precisely here.
+const noBoard = (rules: TargetRules): TargetRules => ({
+  ...rules,
+  capabilities: { ...rules.capabilities, board: false },
+})
+
 export function defineChallenge(spec: ChallengeSpec): ModeDefinition {
   return defineMode({
     id: challengeId(spec.slug),
@@ -66,7 +86,7 @@ export function defineChallenge(spec: ChallengeSpec): ModeDefinition {
     shot: spec.shot === undefined ? spec.base.shot : spec.shot,
     window: { from: spec.from, until: spec.until },
     engine: 'targets',
-    rules: patchRules(spec.base.rules, spec.rules ?? {}),
+    rules: noBoard(patchRules(spec.base.rules, spec.rules ?? {})),
   })
 }
 

@@ -217,3 +217,47 @@ describe('pruneLocalScores', () => {
     expect(pruneLocalScores(store, TODAY)).toHaveLength(15)
   })
 })
+
+describe('a session run in the store', () => {
+  const run = {
+    mode: 'challenge/four-keys',
+    difficulty: 'hard' as const,
+    day: '2026-10-12',
+    score: 1200,
+    hits: 9,
+    achievedAt: '2026-10-12T12:00:00.000Z',
+  }
+
+  it('reads an entry with no sessionId as not a session run', () => {
+    // Every entry written before the field existed, and every board run after it. The
+    // storage key does not move, so this is the shape most of the queue is in.
+    const [entry] = recordRun([], run)
+    expect(entry?.sessionId).toBeUndefined()
+  })
+
+  it('keeps the session on an entry that has one', () => {
+    const [entry] = recordRun([], { ...run, sessionId: 'abc-123' })
+    expect(entry?.sessionId).toBe('abc-123')
+  })
+
+  it('survives the round trip through JSON', () => {
+    // The store is read back with a bare `JSON.parse`, so a widened optional field has
+    // to need nothing — this is what says so.
+    const stored = recordRun([], { ...run, sessionId: 'abc-123' })
+    expect((JSON.parse(JSON.stringify(stored)) as typeof stored)[0]?.sessionId).toBe(
+      'abc-123',
+    )
+  })
+
+  it('keeps the better of two runs in one slot, session and all', () => {
+    // A session run slots by mode × difficulty × day like any other, so a second run of
+    // the same challenge on the same day replaces the first only if it beat it.
+    const first = recordRun([], { ...run, sessionId: 'abc-123' })
+    const worse = recordRun(first, { ...run, score: 400, sessionId: 'abc-123' })
+    expect(worse).toBe(first)
+    const better = recordRun(first, { ...run, score: 2000, sessionId: 'abc-123' })
+    expect(better).toHaveLength(1)
+    expect(better[0]?.score).toBe(2000)
+    expect(better[0]?.sessionId).toBe('abc-123')
+  })
+})

@@ -117,7 +117,7 @@ type Career = {
 
 const careerOf = (profile: PlayerProfile): Career => ({
   profile,
-  lifetime: lifetimeOf(profile.totals, profile.winnings),
+  lifetime: lifetimeOf(profile.totals, profile.winnings, profile.sessions),
   boards: boardRows(profile),
 })
 

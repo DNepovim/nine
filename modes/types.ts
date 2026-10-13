@@ -90,8 +90,21 @@ export type LivesRules = {
 // What a mode is *shown as*, rather than what it is scored by. Each one replaces a
 // `mode === …` check that used to live in the screen it affected.
 export type Capabilities = {
-  // Keeps a board: a leaderboard, a rank, a medal, a personal best, a submitted score.
-  // Every board-shaped question in the app is really this flag.
+  // Keeps a **board**: one mode × difficulty pairing with its three periods, a rank, a
+  // medal, a reign, a personal best and a published score. Every board-shaped question
+  // in the app is really this flag.
+  //
+  // False for a challenge, forced by `defineChallenge` — a challenge has standings, but
+  // they belong to the session it was aired in rather than to a mode × difficulty, and
+  // `scores.mode` would refuse the write anyway.
+  board: boolean
+  // Has a score worth showing and counting: the readout on the game screen, the pause
+  // screen's figure, RESTART RUN, the factor in the run stats, the poor-run streak.
+  //
+  // Narrower than it used to be. This flag meant *board* until challenges needed both
+  // answers at once — a run that is scored and keeps no board — so the board half moved
+  // up to the field above and this kept the name and the smaller job. True for a
+  // challenge; false only where there is no score at all, which is practice.
   scored: boolean
   // Teaches. The stat block under the dial, the coach's debrief after a wasteful hit,
   // the clean-hit celebration, the nudge up a rung.

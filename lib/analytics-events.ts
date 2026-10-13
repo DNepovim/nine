@@ -22,7 +22,21 @@ export type AnalyticsEvents = {
     // 'guide' is that same tutorial asked for, from TRY IT at the end of How to Play.
     // 'dev' is the one other than a player's own choice: a challenge started from the dev
     // screen rather than offered or picked on the intro.
-    from: 'menu' | 'play_again' | 'challenge' | 'restart' | 'welcome' | 'guide' | 'dev'
+    //
+    // Two of these are about challenges and they are not the same thing. **'challenge'**
+    // is the *dare* the game-over screen offers — the same run one rung harder, see
+    // lib/next-challenge.ts. **'session'** is the card on the intro: a challenge that is
+    // on today. The words collide in English and the funnel may not, so the second one
+    // is named for the row it came from rather than for the thing it offers.
+    from:
+      | 'menu'
+      | 'play_again'
+      | 'challenge'
+      | 'session'
+      | 'restart'
+      | 'welcome'
+      | 'guide'
+      | 'dev'
   }
   // A run stopped mid-flight. `source` is the whole point of the event: a pause the
   // player asked for and a pause the app imposed are different facts, and lumping them

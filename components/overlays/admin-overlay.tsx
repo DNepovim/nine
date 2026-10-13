@@ -2,126 +2,80 @@ import { Trans } from '@lingui/react/macro'
 import { useState } from 'react'
 import { Text, View } from 'react-native'
 
-import { AdminFeatures } from '@/components/overlays/admin-features'
-import { AdminPeople } from '@/components/overlays/admin-people'
-import { AdminPerson } from '@/components/overlays/admin-person'
-import { AdminRole } from '@/components/overlays/admin-role'
-import { AdminRoles } from '@/components/overlays/admin-roles'
+import { AdminAccess } from '@/components/overlays/admin-access'
+import { AdminSessions } from '@/components/overlays/admin-sessions'
+import { CardButton } from '@/components/overlays/run-screen'
 import { PrimaryButton } from '@/components/primary-button'
 import { ScreenLayer } from '@/components/screen'
-import { TrackedPressable } from '@/components/tracked-pressable'
 import { TYPE } from '@/constants/typography'
-import { type AdminPerson as Person } from '@/lib/admin/people'
-import { type AdminRole as Role } from '@/lib/admin/roles'
 import { cn } from '@/lib/cn'
 
-// Three objects now — people, roles, features — so three tabs. Pills rather than a new
-// shared control: the role picker on the person screen is already this shape, and a
-// second way of drawing the same affordance is a second thing to keep in step.
+// The admin door, which is now a crossroads rather than a screen.
 //
-// The detail screens are state here rather than panes of their own, because both are
-// reached from a list and both go back to it: holding the open person or role on the hub
-// is what makes a single BACK work for either.
-type Tab = 'people' | 'roles' | 'features'
-
-const TABS: readonly Tab[] = ['people', 'roles', 'features']
-
-// Not translated, and not an oversight. These name the three database objects, and they
-// sit beside role labels that are rows and cannot carry a message id — translating one
-// half of a row of pills would read worse than translating neither.
-const TAB_LABEL: Record<Tab, string> = {
-  people: 'PEOPLE',
-  roles: 'ROLES',
-  features: 'FEATURES',
-}
+// Two things are administered and they have nothing to do with each other: **who sees
+// what** — people, roles, features — and **when a challenge is on**. Both sit behind the
+// one `admin` feature, which is the key the link on the intro already asks for and the
+// one the database refuses to let anybody switch off.
+//
+// A hub rather than a fourth tab beside PEOPLE / ROLES / FEATURES. Those three are three
+// views of one question, and a tab row is how a reader is told that; a session is a
+// different question entirely, and hanging it off the same row would have said it was
+// another way of looking at a person.
+//
+// This file keeps its name and its export so `app/(tabs)/index.tsx` is untouched: what
+// opens ADMIN has no business knowing the screen behind it grew a fork.
+type Section = 'hub' | 'access' | 'sessions'
 
 export function AdminOverlay({
   viewerId,
   onClose,
 }: {
-  // Who is reading, so the people list can say which row is theirs. This screen is the one
-  // place a person can take a feature off themselves, and knowing which row that is before
-  // opening it is worth a tag.
+  // Who is reading, handed through to the people list so it can say which row is theirs.
   viewerId: string | null
   onClose: () => void
 }) {
-  const [tab, setTab] = useState<Tab>('people')
-  const [person, setPerson] = useState<Person | null>(null)
-  const [role, setRole] = useState<Role | null>(null)
-
-  // One counter rather than three reload callbacks: every list here is a snapshot, and
-  // an edit on a detail screen has to be able to tell the list behind it to read again.
-  const [epoch, setEpoch] = useState(0)
-  const refresh = () => {
-    setEpoch((n) => n + 1)
+  const [section, setSection] = useState<Section>('hub')
+  const toHub = () => {
+    setSection('hub')
   }
 
-  if (person !== null) {
-    return (
-      <AdminPerson
-        person={person}
-        onChanged={refresh}
-        onBack={() => {
-          setPerson(null)
-        }}
-      />
-    )
-  }
-
-  if (role !== null) {
-    return (
-      <AdminRole
-        role={role}
-        onChanged={refresh}
-        onBack={() => {
-          setRole(null)
-        }}
-      />
-    )
-  }
+  if (section === 'access') return <AdminAccess viewerId={viewerId} onBack={toHub} />
+  if (section === 'sessions') return <AdminSessions onBack={toHub} />
 
   return (
     <ScreenLayer className="px-6 pb-6 pt-16">
-      <Text selectable={false} className={cn(TYPE.screenTitle, 'mb-1 text-primary')}>
+      {/* No subtitle. The one it used to carry, WHO SEES WHAT, went with the tabs it
+          described — and two labelled buttons do not need a line explaining that they
+          are the two things there are. */}
+      <Text selectable={false} className={cn(TYPE.screenTitle, 'mb-8 text-primary')}>
         <Trans>ADMIN</Trans>
       </Text>
-      <Text selectable={false} className={cn(TYPE.label, 'mb-4 text-dim')}>
-        <Trans>WHO SEES WHAT</Trans>
-      </Text>
 
-      <View className="mb-4 flex-row gap-1.5">
-        {TABS.map((option) => {
-          const active = option === tab
-          return (
-            <TrackedPressable
-              key={option}
-              id="admin.tab"
-              onPress={() => {
-                setTab(option)
-              }}
-              className={cn(
-                'rounded-lg border px-3 py-1.5',
-                active ? 'border-strong bg-strong' : 'border-dim/30',
-              )}
-            >
-              <Text
-                selectable={false}
-                className={cn(TYPE.label, active ? 'text-on-strong' : 'text-dim')}
-              >
-                {TAB_LABEL[option]}
-              </Text>
-            </TrackedPressable>
-          )
-        })}
+      {/* `CardButton leads` rather than two primary buttons: these are doors, not the
+          thing this screen is for, and two gradient slabs over a third one read as three
+          equal decisions. The same dress the pause screen puts on its own card pills and
+          Trainee's option tiles — a card, a leading label, and a chevron saying it goes
+          somewhere. DONE stays the loud one, because leaving is what a hub is mostly for.
+
+          Pinned to the CTA's own width so the column has one edge rather than two. */}
+      <View className="flex-1 gap-3 self-center" style={{ width: 224 }}>
+        <CardButton
+          id="admin.section"
+          leads
+          onPress={() => {
+            setSection('access')
+          }}
+          label={<Trans>FEATURES</Trans>}
+        />
+        <CardButton
+          id="admin.section"
+          leads
+          onPress={() => {
+            setSection('sessions')
+          }}
+          label={<Trans>CHALLENGES</Trans>}
+        />
       </View>
-
-      {tab === 'people' && (
-        <AdminPeople epoch={epoch} viewerId={viewerId} onOpenPerson={setPerson} />
-      )}
-      {tab === 'roles' && (
-        <AdminRoles epoch={epoch} onOpenRole={setRole} onChanged={refresh} />
-      )}
-      {tab === 'features' && <AdminFeatures epoch={epoch} onChanged={refresh} />}
 
       <PrimaryButton
         id="admin.done"

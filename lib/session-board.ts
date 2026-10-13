@@ -1,0 +1,114 @@
+import { isNetworkFailure, noteRequest } from '@/lib/connectivity'
+import type { LeaderboardRow } from '@/lib/leaderboard'
+import type { ServerError } from '@/lib/refusal'
+import { supabase } from '@/lib/supabase'
+
+// The player's half of a **session board**: the one card the start screen draws, one
+// session's standings in full, and the write.
+//
+// Beside `lib/admin/sessions.ts` rather than inside it. That file is the planner's —
+// everything in it is guarded by `admin` and nothing in it is reached by a player. This
+// is the opposite: public reads and one write anybody signed in may make.
+
+// A session the card could be for, with whoever is ahead on it. The shape
+// `open_sessions_with_leaders` returns, which is one round trip rather than a list and
+// then a leader per row.
+export type OpenSession = {
+  id: string
+  modeId: string
+  opensAt: number
+  closesAt: number
+  // Null where nobody has played yet, which is every session until someone does — and
+  // the second line of the card says so rather than leaving a gap.
+  leader: { nickname: string; score: number } | null
+}
+
+type OpenSessionRow = {
+  id: string
+  mode_id: string
+  opens_at: string
+  closes_at: string
+  leader_name: string | null
+  leader_score: number | null
+}
+
+const atMs = (iso: string): number => new Date(iso).getTime()
+
+// Every session whose close is still ahead. *Which* of them the card draws — live now,
+// teased since Prague midnight yesterday, or neither — is `cardSession`'s to decide: the
+// Prague-day rule belongs in the one place that already owns day boundaries rather than
+// being written a second time in SQL.
+export async function loadOpenSessions(): Promise<{
+  rows: OpenSession[]
+  error: string | null
+}> {
+  const res = await supabase.rpc('open_sessions_with_leaders')
+  noteRequest(res.error)
+  if (res.error) return { rows: [], error: res.error.message }
+  return {
+    rows: ((res.data as OpenSessionRow[] | null) ?? []).map((row) => ({
+      id: row.id,
+      modeId: row.mode_id,
+      opensAt: atMs(row.opens_at),
+      closesAt: atMs(row.closes_at),
+      leader:
+        row.leader_name === null || row.leader_score === null
+          ? null
+          : { nickname: row.leader_name, score: row.leader_score },
+    })),
+    error: null,
+  }
+}
+
+// One session's standings, ranked, as the server spells them.
+//
+// Rows rather than a `PeriodBoard`: that type lives in `hooks/use-board.ts`, and
+// nothing in `lib/` imports from `hooks/` — this would be the first, and a type edge is
+// still an edge. Assembling the panel's shape is the hook's job, where it already has
+// the player's id to hand; see `sessionBoardOf`.
+export async function loadSessionBoard(
+  sessionId: string,
+): Promise<{ rows: LeaderboardRow[]; error: string | null }> {
+  const res = await supabase.rpc('session_board', { p_session_id: sessionId })
+  noteRequest(res.error)
+  if (res.error) return { rows: [], error: res.error.message }
+  return { rows: (res.data as LeaderboardRow[] | null) ?? [], error: null }
+}
+
+// What the server said about a write. The same three answers `score-submission.ts`
+// already reasons about, so a session score can ride the same queue.
+export type SessionSent = 'published' | 'offline' | 'refused'
+
+// A session score, offered to the server.
+//
+// The three answers are not interchangeable, and telling them apart is the whole of
+// this function. **Offline** means ask again when the connection is back; the score sits
+// in the queue and nothing is counted against it. **Refused** means the server said no
+// for a reason that will not change — the window has shut — and asking again will be
+// refused again, so it counts toward `MAX_PUBLISH_ATTEMPTS` and the entry is eventually
+// retired rather than retried forever.
+//
+// Getting this backwards is the failure the design is most exposed to: a shut window
+// reported as offline would have the queue re-offering a score to a contest that ended
+// days ago, on every reconnection, for as long as the app is installed.
+export async function submitSessionScore(args: {
+  sessionId: string
+  score: number
+  hits: number
+  difficulty: string
+  achievedAt: string
+}): Promise<{ sent: SessionSent; error: ServerError | null }> {
+  const res = await supabase.rpc('submit_session_score', {
+    p_session_id: args.sessionId,
+    p_score: args.score,
+    p_hits: args.hits,
+    p_difficulty: args.difficulty,
+    p_achieved_at: args.achievedAt,
+  })
+  noteRequest(res.error)
+  if (res.error === null) return { sent: 'published', error: null }
+  if (isNetworkFailure(res.error.message)) return { sent: 'offline', error: null }
+  // The whole error, not its sentence: a refusal is useless unless it says why, and
+  // `reportRefusal` wants the code, the details and the hint beside the message.
+  return { sent: 'refused', error: res.error }
+}

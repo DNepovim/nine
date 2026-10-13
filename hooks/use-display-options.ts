@@ -17,6 +17,9 @@ import { baseClockMs } from '@/modes'
 
 type StoredOptions = {
   showSum?: boolean
+  // Whether one gesture may move more than one key. The only option here that is not
+  // about what the player is shown but about what the dial will take — see `drag` below.
+  drag?: boolean
   showPar?: boolean
   showStats?: boolean
   showRoute?: boolean
@@ -38,8 +41,13 @@ const storedHint = (raw: unknown): DialHint | null | undefined => {
   return DIAL_HINTS.find((hint) => hint === raw)
 }
 
-// Advanced display options (show the button sum), persisted to AsyncStorage, plus which
-// number Trainee prints in each corner of a key — see constants/dial-hints.ts.
+// What the Options screen holds, persisted to AsyncStorage: the display options (show the
+// button sum, and the three numbers Trainee can print), which number each corner of a key
+// shows — see constants/dial-hints.ts — the clock the player set, and the one option that
+// is not about display at all, whether the dial takes a drag across keys.
+//
+// Still one hook and one record, because it is one screen and one stored object. The name
+// says display for the reason the file it is in does.
 export function useDisplayOptions() {
   const [showSum, setShowSum] = useState(false)
   // The three below are the rest of what Trainee can print, and all three start off for
@@ -52,6 +60,12 @@ export function useDisplayOptions() {
   const [showStats, setShowStats] = useState(false)
   // The keys to press for the optimal route, drawn under the coach's line.
   const [showRoute, setShowRoute] = useState(false)
+  // Whether one gesture may cross from key to key. On, because it is how the dial has
+  // always worked and the fastest way to play it — a row set in one sweep rather than
+  // three. Off is for the player it costs digits rather than saving them: a thumb that
+  // catches a neighbour on the way to a key, or one that cannot reliably leave a key
+  // without crossing the next. What is left when it is off is every move on one key.
+  const [drag, setDrag] = useState(true)
   // Where Trainee's clock starts: exactly what the mode table says, so a player who
   // never touches the slider gets the clock the game was tuned with.
   const [playerClockMs, setPlayerClockMs] = useState(() => baseClockMs('trainee', 'easy'))
@@ -72,6 +86,7 @@ export function useDisplayOptions() {
       if (typeof value?.showPar === 'boolean') setShowPar(value.showPar)
       if (typeof value?.showStats === 'boolean') setShowStats(value.showStats)
       if (typeof value?.showRoute === 'boolean') setShowRoute(value.showRoute)
+      if (typeof value?.drag === 'boolean') setDrag(value.drag)
       // Finite or not at all: a stored NaN would spawn targets that never expire, which
       // is a stuck run rather than a slow one. Held inside the slider's own range too, so
       // a value written by a build with wider ends cannot park the handle off the track.
@@ -107,11 +122,12 @@ export function useDisplayOptions() {
         showPar,
         showStats,
         showRoute,
+        drag,
         traineeTimeoutMs: playerClockMs,
         corners,
       }),
     ).catch(() => {})
-  }, [showSum, showPar, showStats, showRoute, playerClockMs, corners])
+  }, [showSum, showPar, showStats, showRoute, drag, playerClockMs, corners])
 
   const toggleSum = useCallback(() => {
     setShowSum((value) => !value)
@@ -129,6 +145,10 @@ export function useDisplayOptions() {
     setShowRoute((value) => !value)
   }, [])
 
+  const toggleDrag = useCallback(() => {
+    setDrag((value) => !value)
+  }, [])
+
   const setCorner = useCallback((corner: BadgeCorner, hint: DialHint | null) => {
     setCorners((current) => ({ ...current, [corner]: hint }))
   }, [])
@@ -142,6 +162,8 @@ export function useDisplayOptions() {
     toggleStats,
     showRoute,
     toggleRoute,
+    drag,
+    toggleDrag,
     playerClockMs,
     setPlayerClockMs,
     corners,

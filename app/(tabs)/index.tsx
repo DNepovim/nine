@@ -24,6 +24,7 @@ import { RunTopBar } from '@/components/game/run-top-bar'
 import { ScoreDigit } from '@/components/game/score-digit'
 import { StepUpToast } from '@/components/game/step-up-toast'
 import { StrikeShot } from '@/components/game/strike-shot'
+import { SumHush } from '@/components/game/sum-hush'
 import { TargetCard } from '@/components/game/target-card'
 import { TraineeStats } from '@/components/game/trainee-stats'
 import { TutorialCard } from '@/components/game/tutorial-card'
@@ -34,6 +35,7 @@ import { AchievementDetail } from '@/components/overlays/achievement-detail'
 import { AchievementsOverlay } from '@/components/overlays/achievements-overlay'
 import { AdminOverlay } from '@/components/overlays/admin-overlay'
 import { AdvancedOptionsOverlay } from '@/components/overlays/advanced-options-overlay'
+import { ChallengeModal } from '@/components/overlays/challenge-modal'
 import { DevOverlay } from '@/components/overlays/dev-overlay'
 import { FeedbackOverlay } from '@/components/overlays/feedback-overlay'
 import { FeedbackReplyOverlay } from '@/components/overlays/feedback-reply-overlay'
@@ -124,6 +126,7 @@ import {
   type Period,
 } from '@/lib/announcements'
 import { currentBoardMedals } from '@/lib/board-medals'
+import type { SessionCard } from '@/lib/challenge-session'
 import { holdsCrown, recordScreen, type RecordScreen } from '@/lib/champions'
 import { cn } from '@/lib/cn'
 import { gameSnapshot } from '@/lib/feedback-state'
@@ -133,6 +136,7 @@ import { heldPeriods, medalPeriods } from '@/lib/record-medals'
 import { newRunId } from '@/lib/run-id'
 import { countRun } from '@/lib/run-submission'
 import { restoreRun, savedPositions } from '@/lib/saved-run'
+import type { OpenSession } from '@/lib/session-board'
 import { STEP_UP_BOARD } from '@/lib/step-up'
 import { multiplierColor } from '@/lib/streak-badge'
 import { tipForTarget } from '@/lib/tutorial-tip'
@@ -148,12 +152,15 @@ import {
   DIFFICULTY_ORDER,
   getDifficultyColor,
   gradientOf,
+  isMode,
+  MODE_ORDER,
   runLabel,
   runRules,
   runSubmode,
   SCORED_MODES,
   streakMultiplier,
   sumOf,
+  type Mode,
 } from '@/modes'
 import type { DisplayTarget, Position } from '@/types/game'
 import type { MultiMode } from '@/types/multiplayer'
@@ -390,12 +397,12 @@ function mayAskForEmail({
 // What the board draws, given what the lesson is saying.
 //
 // Everything standing on it, except behind the lesson's first word — which is set in the
-// middle of the board and is the only thing on it until the player taps it away.
+// middle of the board and is the only thing on it until the word's own clock runs out.
 //
 // Held back on the way out rather than dealt late: the machine opens a tutorial with its
 // target already standing, which is right — the run is the run from the moment it starts,
 // and a target that arrived a beat after it would be a second kind of opening to get wrong.
-// So this is a target not yet drawn, and it springs in on the tap that takes the words away.
+// So this is a target not yet drawn, and it springs in as the words fade.
 const drawnTargets = (
   voice: LessonVoice,
   placed: readonly DisplayTarget[],
@@ -547,6 +554,8 @@ export default function GameScreen() {
     toggleStats,
     showRoute,
     toggleRoute,
+    drag,
+    toggleDrag,
     playerClockMs,
     setPlayerClockMs,
     corners,
@@ -564,6 +573,50 @@ export default function GameScreen() {
   // itself is hidden while any of them is open — a single source of truth avoids
   // z-order/gating clashes between separate booleans.
   const [menuOverlay, setMenuOverlay] = useState<MenuOverlayName>('none')
+  // The challenge card the player pressed, and the dialog it opened. Held here rather
+  // than in `menu-overlay.tsx`: a `ModalCard` mounted inside the paging panel would
+  // scrim the panel rather than the screen.
+  const [challengeCard, setChallengeCard] =
+    useState<NonNullable<SessionCard<OpenSession>>>()
+  // Which **session** the live run belongs to, or null for an ordinary run.
+  //
+  // Beside the run rather than on the machine's context. A session is not a rule — the
+  // engine resolves `RunRules` and has no business knowing when a mode is being offered
+  // — so putting it there would be the first thing in that neighbourhood that is not
+  // one. The cost is that a run put back from storage mid-session loses it and posts to
+  // no standings; the ten-minute grace on the write makes that a near miss rather than
+  // a loss, and a run interrupted by the app dying is already an edge.
+  const [runSession, setRunSession] = useState<string | null>(null)
+
+  // The mode the player was on before a challenge interrupted it, so the intro can be
+  // put back the way they left it. Null whenever the machine is already on one of its
+  // own modes, which is every moment but a challenge run.
+  const [modeBeforeSession, setModeBeforeSession] = useState<Mode | null>(null)
+
+  // Reaching the intro ends a run's claim on its session, and puts the machine back on a
+  // mode the intro actually offers.
+  //
+  // The second half is not tidiness. Challenges left the pill row when they got a card of
+  // their own, so after a challenge run `mode` is a name `ModeSelector` cannot find: the
+  // highlight stays on whichever pill it last lit, the difficulty row and the board
+  // vanish — `usesDifficulty` and `SCORED_MODES` are both false for a challenge — and
+  // PLAY GAME, which reads the machine's mode, deals *another* challenge run belonging to
+  // no session at all. `isMode` is the registry's own word for "one of the three the
+  // intro lists", so this asks the question rather than guessing at a name.
+  //
+  // The doors that start a fresh run in the same breath clear the session themselves — a
+  // value the next run reads has to be right before that run is dealt, not a render later
+  // — and this is the backstop for every other way out, including ones nobody has
+  // written yet. Guarded on the values already being settled, since `isMenu` is true for
+  // the whole time the player stands on the intro.
+  useEffect(() => {
+    if (!isMenu) return
+    if (runSession !== null) setRunSession(null)
+    // Where they were, or the first pill the intro lists. `MODE_ORDER` rather than a
+    // name typed here: nothing outside `modes/` gets to decide which mode is the default.
+    const back = modeBeforeSession ?? MODE_ORDER[0]
+    if (!isMode(mode) && back !== undefined) send({ type: 'SET_MODE', mode: back })
+  }, [isMenu, runSession, mode, modeBeforeSession, send])
   // Whether an arcade run is up. Its own boolean rather than a state of the game machine:
   // arcade is not that machine's run — no score, no lives, no board — and the screen it
   // puts up is mounted over the intro the way a multiplayer game is.
@@ -861,7 +914,13 @@ export default function GameScreen() {
     // only climbs within a run, and the database refuses downgrades, so an early
     // write can never spoil the final one.
     onBoardRecord: () => {
-      submitScore(mode, difficulty, state.context.score, state.context.hits)
+      submitScore(
+        mode,
+        rules.difficulty,
+        state.context.score,
+        state.context.hits,
+        runSession,
+      )
       // The counters go with it. A record is what takes a run's score public, and a run
       // whose score is on the board while its counters are still on the device is how a
       // profile came to show a best no career of its own could account for. Not final:
@@ -1016,8 +1075,14 @@ export default function GameScreen() {
     // no longer depends on this landing: it is recorded on the device as it is
     // submitted, and the board store folds that in without asking the server.
     void refreshBoard()
-    if (isGameOver && isOneOf(mode, SCORED_MODES)) {
-      submitScore(mode, difficulty, state.context.score, state.context.hits)
+    if (isGameOver && (isOneOf(mode, SCORED_MODES) || runSession !== null)) {
+      submitScore(
+        mode,
+        rules.difficulty,
+        state.context.score,
+        state.context.hits,
+        runSession,
+      )
       if (isReady && !nickname && state.context.score > 0) setShowNicknameModal(true)
     }
   }, [
@@ -1099,11 +1164,20 @@ export default function GameScreen() {
       speed: avgSpeed,
       max_streak: maxStreak,
     })
-    if (!isOneOf(mode, SCORED_MODES)) return
+    // A session run leaves here too, even though its mode keeps no board: the bar below
+    // is about `scores`, and a session's standings are not that table. Without this, END
+    // RUN and RESTART RUN were the two ways to finish a challenge run that threw the
+    // score away entirely — not posted, and not even queued on the device.
+    const onBoard = isOneOf(mode, SCORED_MODES)
+    if (!onBoard && runSession === null) return
     const { score, hits } = state.context
     // Counted before the score guard below: a run that scored nothing is still a run
     // the player played, and "how many runs" is not "how many went well".
-    if (!countedRunRef.current) {
+    //
+    // Board runs only. `countRun` writes `player_totals`, which is keyed by mode ×
+    // difficulty — a board — and takes a `ScoredMode` to say so. A challenge's figures
+    // belong to the session it was played in and reach the player's fortune from there.
+    if (onBoard && !countedRunRef.current) {
       countedRunRef.current = true
       void countRun(userId, {
         runId,
@@ -1118,7 +1192,7 @@ export default function GameScreen() {
       })
     }
     if (score <= 0) return
-    submitScore(mode, difficulty, score, hits)
+    submitScore(mode, rules.difficulty, score, hits, runSession)
     void refreshBoard()
     if (isReady && !nickname) setShowNicknameModal(true)
   }
@@ -1893,22 +1967,26 @@ export default function GameScreen() {
                   className="items-center justify-center"
                   style={{ height: SUM_ROW_HEIGHT }}
                 >
-                  {/* The sum's half of a hit — it swells as the target's number swells
-                    out of the ring collapsing above. */}
-                  <HitSync seq={hitBatch.seq}>
-                    <View className="flex-row">
-                      {String(sum)
-                        .split('')
-                        .map((digit, i, arr) => (
-                          <ScoreDigit
-                            key={arr.length - 1 - i}
-                            digit={digit}
-                            direction={direction}
-                            progress={valueProgress(sum, dial.maxSum)}
-                          />
-                        ))}
-                    </View>
-                  </HitSync>
+                  {/* Dimmed under the lesson's first word, which is the only thing on the
+                    board while it is up — see components/game/sum-hush.tsx. */}
+                  <SumHush hushed={lesson.voice === 'opening'}>
+                    {/* The sum's half of a hit — it swells as the target's number swells
+                      out of the ring collapsing above. */}
+                    <HitSync seq={hitBatch.seq}>
+                      <View className="flex-row">
+                        {String(sum)
+                          .split('')
+                          .map((digit, i, arr) => (
+                            <ScoreDigit
+                              key={arr.length - 1 - i}
+                              digit={digit}
+                              direction={direction}
+                              progress={valueProgress(sum, dial.maxSum)}
+                            />
+                          ))}
+                      </View>
+                    </HitSync>
+                  </SumHush>
                 </View>
 
                 {/* The band the tutorial talks in: between the sum and the dial, held open
@@ -1993,6 +2071,10 @@ export default function GameScreen() {
                 bigHints={tutorial}
                 axes={lesson.axes}
                 hand={lesson.hand}
+                // Both halves of the answer: the player's own setting, and the lesson's
+                // — which takes the drag away until it has taught it, and says yes in
+                // every run that is not a live tutorial.
+                drag={drag && lesson.drag}
                 peakFrom={darkGradientOf(mode)[0]}
                 peakTo={darkGradientOf(mode)[1]}
                 onDelta={(index, delta) => {
@@ -2051,6 +2133,7 @@ export default function GameScreen() {
 
             {/* ── Game-over cinematic (overlay crossfade + flying title) ── */}
             <GameOverSequence
+              sessionId={runSession}
               phase={dyingPhase}
               overlayStyle={overlayStyle}
               titleStyle={titleStyle}
@@ -2078,6 +2161,10 @@ export default function GameScreen() {
                 track('run_started', { mode, difficulty, from: 'play_again' })
               }}
               onChallenge={(nextMode, nextDifficulty) => {
+                // A dare is a different board, so it is not the session's run any more.
+                // Without this the next run posts into the challenge's standings under
+                // whatever mode and rung the dare picked — see `runSession`.
+                setRunSession(null)
                 // Both land before RESTART builds the fresh game, so it reads the board
                 // the player just accepted — and the persistence hooks remember it.
                 send({ type: 'SET_MODE', mode: nextMode })
@@ -2113,6 +2200,9 @@ export default function GameScreen() {
                   // machine's own mode, so the board has to be set before it lands, and
                   // only the menu accepts either.
                   send({ type: 'MENU' })
+                  // The step-up is a board of its own, so whatever session the paused run
+                  // belonged to is not this run's. See the dare above and `runSession`.
+                  setRunSession(null)
                   send({ type: 'SET_MODE', mode: STEP_UP_BOARD.mode })
                   send({ type: 'SET_DIFFICULTY', difficulty: STEP_UP_BOARD.difficulty })
                   send({ type: 'START', now: Date.now(), runId: newRunId() })
@@ -2132,6 +2222,7 @@ export default function GameScreen() {
                 onOtherMode={() => {
                   // The intro with every board on offer, rather than the one we picked.
                   send({ type: 'MENU' })
+                  setRunSession(null)
                   setStepUpOpen(false)
                 }}
               />
@@ -2207,6 +2298,8 @@ export default function GameScreen() {
               <AdvancedOptionsOverlay
                 showSum={showSum}
                 onToggleSum={toggleSum}
+                drag={drag}
+                onToggleDrag={toggleDrag}
                 replayConsent={replayConsent.consent}
                 onToggleReplayConsent={() => {
                   if (replayConsent.consent === 'granted') replayConsent.decline()
@@ -2264,10 +2357,39 @@ export default function GameScreen() {
               />
             )}
 
+            {/* ── A challenge, in full: what it asks, who leads, and the way in ── */}
+            {challengeCard !== undefined && (
+              <ChallengeModal
+                card={challengeCard}
+                userId={userId}
+                nickname={nickname}
+                onStart={(modeId, sessionId) => {
+                  // Set before the run is dealt, so the first thing the run can do —
+                  // cross a record on its opening hit — already knows where its score
+                  // belongs.
+                  setRunSession(sessionId)
+                  // And remember the board they were on, so the intro is handed back the
+                  // way they left it rather than stuck on a challenge with no pill.
+                  if (isMode(mode)) setModeBeforeSession(mode)
+                  send({ type: 'SET_MODE', mode: modeId })
+                  send({ type: 'START', now: Date.now(), runId: newRunId() })
+                  setChallengeCard(undefined)
+                  track('run_started', { mode: modeId, difficulty, from: 'session' })
+                }}
+                onDismiss={() => {
+                  setChallengeCard(undefined)
+                }}
+              />
+            )}
+
             {/* ── Dev — every challenge ever written, playable on demand ── */}
             {menuOverlay === 'dev' && (
               <DevOverlay
                 onRunChallenge={(modeId) => {
+                  // The lab deals a challenge outside any session, which is the point
+                  // of it: no window, and so no standings to post to.
+                  setRunSession(null)
+                  if (isMode(mode)) setModeBeforeSession(mode)
                   send({ type: 'SET_MODE', mode: modeId })
                   send({ type: 'START', now: Date.now(), runId: newRunId() })
                   setMenuOverlay('none')
@@ -2409,6 +2531,7 @@ export default function GameScreen() {
                   setMenuOnArcade(focus === 'arcade')
                 }}
                 onPlay={() => {
+                  setRunSession(null)
                   setMenuInitialTab('alone')
                   send({ type: 'START', now: Date.now(), runId: newRunId() })
                   track('run_started', { mode, difficulty, from: 'menu' })
@@ -2442,6 +2565,7 @@ export default function GameScreen() {
                 onOpenJoinRoom={() => {
                   setMenuOverlay('joinRoom')
                 }}
+                onOpenChallenge={setChallengeCard}
                 onOpenDev={() => {
                   setMenuOverlay('dev')
                 }}
@@ -2574,6 +2698,7 @@ export default function GameScreen() {
 
             {showMultiGame && (
               <MultiplayerGame
+                drag={drag}
                 mode={multiGame.mode}
                 userId={userId}
                 players={multiGame.players}
@@ -2626,6 +2751,7 @@ export default function GameScreen() {
                 ends the run. ── */}
             {arcadeOpen && (
               <ArcadeGame
+                drag={drag}
                 onEnd={() => {
                   setArcadeOpen(false)
                 }}

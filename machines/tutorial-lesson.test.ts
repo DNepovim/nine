@@ -16,6 +16,7 @@ import {
   LESSON_AFTER_HIT,
   LESSON_AXES,
   LESSON_DIAL,
+  LESSON_DRAG,
   LESSON_HAND,
   LESSON_HOLD_MS,
   LESSON_LINE,
@@ -33,8 +34,8 @@ const STEPS: readonly LessonStep[] = [
   'target',
   'sum',
   'guided',
-  'weights',
   'congrats',
+  'weights',
   'free',
   'swipeDown',
   'swipeLeft',
@@ -71,19 +72,23 @@ describe('the lesson script', () => {
 
   it('holds on the guided route until the hit lands', () => {
     expect(tapThrough('guided', 5)).toBe('guided')
-    expect(lessonStep('guided', { type: 'HIT', hits: 1 })).toBe('weights')
+    expect(lessonStep('guided', { type: 'HIT', hits: 1 })).toBe('congrats')
   })
 
-  it('says what a key is worth, then hands the dial over', () => {
-    expect(lessonStep('weights', { type: 'ADVANCE' })).toBe('congrats')
-    expect(lessonStep('congrats', { type: 'ADVANCE' })).toBe('free')
+  it('hands the dial over, then leaves the weights line up over the board', () => {
+    // The hand-over is tapped away; the rule it leads into is not. It is a rule to be used
+    // rather than an instruction to be obeyed, so it stands over the first board the
+    // player takes alone, and the hit that clears that board is what replaces it.
+    expect(lessonStep('congrats', { type: 'ADVANCE' })).toBe('weights')
+    expect(tapThrough('weights', 5)).toBe('weights')
+    expect(lessonStep('weights', { type: 'HIT', hits: 2 })).toBe('swipeDown')
   })
 
   it('opens one lesson per target the script deals, in order', () => {
     // Each hit clears one of TUTORIAL_TARGETS and is answered by the lesson for the board
     // dealt in its place.
-    expect(lessonStep('guided', { type: 'HIT', hits: 1 })).toBe('weights')
-    expect(lessonStep('free', { type: 'HIT', hits: 2 })).toBe('swipeDown')
+    expect(lessonStep('guided', { type: 'HIT', hits: 1 })).toBe('congrats')
+    expect(lessonStep('weights', { type: 'HIT', hits: 2 })).toBe('swipeDown')
     expect(lessonStep('free', { type: 'HIT', hits: 3 })).toBe('swipeLeft')
     expect(lessonStep('free', { type: 'HIT', hits: 4 })).toBe('swipeRight')
     expect(lessonStep('free', { type: 'HIT', hits: 5 })).toBe('sweep')
@@ -146,7 +151,7 @@ describe('the lesson script', () => {
   })
 
   it('takes no notice of a swipe it did not ask for', () => {
-    for (const step of ['target', 'guided', 'congrats', 'free'] as const) {
+    for (const step of ['target', 'guided', 'congrats', 'weights', 'free'] as const) {
       for (const swipe of ['down', 'left', 'right'] as const) {
         expect(lessonStep(step, { type: 'SWIPED', swipe })).toBe(step)
       }
@@ -164,8 +169,9 @@ describe('the lesson script', () => {
     // the target there, nothing the lesson has taught gets them back. The lesson for it
     // arrives on the board they are standing on rather than on the hit after it.
     expect(lessonStep('free', { type: 'OVERSHOT', hits: 1 })).toBe('swipeDown')
-    // Mid-congratulation too, which hands the dial over before its banner is done — and
-    // over the weights line, which is the other banner a player can play through.
+    // Over the weights line, which is what board two is played under and so the one this
+    // is really for — and mid-congratulation too, which hands the dial over before its
+    // banner is done.
     expect(lessonStep('congrats', { type: 'OVERSHOT', hits: 1 })).toBe('swipeDown')
     expect(lessonStep('weights', { type: 'OVERSHOT', hits: 1 })).toBe('swipeDown')
   })
@@ -289,22 +295,23 @@ describe('what each step shows', () => {
     }
   })
 
-  it('puts a clock on the one step that says nothing, and on no other', () => {
-    // Everything the lesson says waits for the player. The only hold left is the silent
-    // beat between the opening word being tapped away and the first card pointing at the
-    // target, which is there for the target's own arrival.
+  it('puts a clock on the opening word and the beat after it, and on no other step', () => {
+    // Two holds, and both of them before the lesson has asked for anything: the opening
+    // word, which names the run and wants nothing done about it, and the silent beat after
+    // it, which is there for the target's own arrival.
     const timed = STEPS.filter((step) => LESSON_HOLD_MS[step] !== null)
-    expect(timed).toEqual(['waiting'])
-    for (const step of timed) {
-      expect(LESSON_VOICE[step]).toBe('silent')
-    }
+    expect(timed).toEqual(['welcome', 'waiting'])
   })
 
-  it('never puts a clock on anything it says', () => {
-    // A line on the screen is taken off it by the player and by nothing else: a clock
-    // there is the lesson deciding a line has been read.
+  it('never puts a clock on anything it asks for', () => {
+    // An instruction on the screen is taken off it by the player and by nothing else: a
+    // clock there is the lesson deciding a line has been read, and the player who had not
+    // read one is handed a board that has silently started expecting something. The
+    // opening word is the exception because it instructs nothing.
     for (const step of STEPS) {
-      if (LESSON_VOICE[step] !== 'silent') expect(LESSON_HOLD_MS[step]).toBeNull()
+      if (LESSON_VOICE[step] !== 'silent' && step !== 'welcome') {
+        expect(LESSON_HOLD_MS[step]).toBeNull()
+      }
     }
   })
 
@@ -319,7 +326,6 @@ describe('what each step shows', () => {
       'waiting',
       'target',
       'sum',
-      'weights',
       'congrats',
       'practice',
     ])
@@ -333,6 +339,21 @@ describe('what each step shows', () => {
     expect(STEPS[first]).toBe('weights')
     expect(labelled.slice(first).every((on) => on)).toBe(true)
     expect(labelled.slice(0, first).some((on) => on)).toBe(false)
+  })
+
+  it('keeps the drag out of reach until the lesson that teaches it', () => {
+    // The last move the lesson has to teach, and the one a board could otherwise answer
+    // for the player. Written as the shape rather than as the list, so a step inserted
+    // anywhere in the script has to pick a side: nothing before the drag lesson, and
+    // everything from it on, which is what the hook's latch then holds for the rest of
+    // the run — see hooks/use-tutorial-lesson.ts.
+    const allowed = STEPS.map((step) => LESSON_DRAG[step])
+    const first = allowed.indexOf(true)
+    expect(STEPS[first]).toBe('sweep')
+    expect(allowed.slice(first).every((on) => on)).toBe(true)
+    expect(allowed.slice(0, first).some((on) => on)).toBe(false)
+    // The step a run put back from storage starts on, which has had the whole script.
+    expect(LESSON_DRAG.done).toBe(true)
   })
 
   it('mimes exactly the gestures the lesson is waiting on', () => {
@@ -358,8 +379,8 @@ describe('what each step shows', () => {
       'off', // target
       'off', // sum
       'one', // guided — the lit key, taps only
-      'off', // weights
-      'off', // congrats
+      'off', // congrats — the hand-over, tapped away
+      'all', // weights — the rule, read off a dial being used
       'all', // free
       'all', // swipeDown
       'all', // swipeLeft

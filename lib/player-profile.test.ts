@@ -616,3 +616,78 @@ describe('shapeProfile', () => {
     ).toEqual([])
   })
 })
+
+describe('lifetimeOf and challenge sessions', () => {
+  // A spread of boards, so the stillness below is tested against a real career rather
+  // than against an empty one.
+  const career = [
+    totals({ difficulty: 'easy', scoreSum: 9_431, runs: 12, hits: 140 }),
+    totals({ difficulty: 'hard', scoreSum: 24_907, runs: 31, hits: 402 }),
+    totals({ difficulty: 'extreme', scoreSum: 3_333, runs: 4, hits: 51 }),
+  ]
+
+  it('does not move the fortune of a player who has played no challenge', () => {
+    // The whole promise of the change, and the one every existing player is owed: the
+    // figure on their profile today is the figure on it tomorrow, to the point. Both
+    // the omitted argument and an explicitly empty list have to answer the same.
+    const before = lifetimeOf(career)
+    expect(lifetimeOf(career, [], [])).toStrictEqual(before)
+    expect(lifetimeOf(career, []).fortune).toBe(before.fortune)
+  })
+
+  it('adds a challenge run at the weight of the rung it was pinned at', () => {
+    const base = lifetimeOf(career).fortune
+    // Hard is the neutral rung — a point scored there is worth a point.
+    expect(
+      lifetimeOf(career, [], [{ difficulty: 'hard', scoreSum: 1_000 }]).fortune,
+    ).toBe(base + 1_000)
+    // And the other two are priced the way every board point is.
+    const easy = lifetimeOf(career, [], [{ difficulty: 'easy', scoreSum: 1_000 }]).fortune
+    const extreme = lifetimeOf(
+      career,
+      [],
+      [{ difficulty: 'extreme', scoreSum: 1_000 }],
+    ).fortune
+    expect(easy).toBeLessThan(base + 1_000)
+    expect(extreme).toBeGreaterThan(base + 1_000)
+  })
+
+  it('sums several sessions', () => {
+    const base = lifetimeOf(career).fortune
+    expect(
+      lifetimeOf(
+        career,
+        [],
+        [
+          { difficulty: 'hard', scoreSum: 400 },
+          { difficulty: 'hard', scoreSum: 600 },
+        ],
+      ).fortune,
+    ).toBe(base + 1_000)
+  })
+
+  it('leaves every figure but the fortune alone', () => {
+    // A session is not a board, so it must not appear in what the per-board table adds
+    // up to — otherwise the table stops explaining the numbers printed beside it.
+    const before = lifetimeOf(career)
+    const after = lifetimeOf(career, [], [{ difficulty: 'hard', scoreSum: 5_000 }])
+    expect(after.runs).toBe(before.runs)
+    expect(after.hits).toBe(before.hits)
+    expect(after.score).toBe(before.score)
+    expect(after.timeMs).toBe(before.timeMs)
+    expect(after.accSum).toBe(before.accSum)
+    expect(after.spdSum).toBe(before.spdSum)
+    expect(after.fortune).not.toBe(before.fortune)
+  })
+
+  it('rounds the whole fortune once, not each session', () => {
+    // Easy is half-weighted, so three odd sums each land on a half point. Rounding them
+    // apart and adding is how a total comes to be a point or two off its own parts.
+    const odd = [
+      { difficulty: 'easy' as const, scoreSum: 1 },
+      { difficulty: 'easy' as const, scoreSum: 1 },
+      { difficulty: 'easy' as const, scoreSum: 1 },
+    ]
+    expect(lifetimeOf([], [], odd).fortune).toBe(Math.round(1.5))
+  })
+})

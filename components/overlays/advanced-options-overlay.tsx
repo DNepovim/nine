@@ -50,6 +50,8 @@ function AdvancedOption({
 export function AdvancedOptionsOverlay({
   showSum,
   onToggleSum,
+  drag,
+  onToggleDrag,
   replayConsent,
   onToggleReplayConsent,
   onOpenNews,
@@ -57,6 +59,10 @@ export function AdvancedOptionsOverlay({
 }: {
   showSum: boolean
   onToggleSum: () => void
+  // Whether one gesture may move more than one key — the only row here that changes what
+  // the dial does rather than what it shows. See hooks/use-display-options.ts.
+  drag: boolean
+  onToggleDrag: () => void
   // Whichever of the three the player answered the recording banner with, or 'unknown'
   // if it has not come up yet — read as a plain checkbox either way: checked is
   // 'granted', unchecked is everything else. See hooks/use-replay-consent.ts.
@@ -92,6 +98,16 @@ export function AdvancedOptionsOverlay({
             label={<Trans>SHOW SUM IN BUTTONS</Trans>}
             description={<Trans>Display value × row × column</Trans>}
             onToggle={onToggleSum}
+          />
+
+          {/* The one row that is about the controls rather than the display. Worded as
+              what the dial does when it is on, like every other row here, so the
+              checkbox reads the same way down the list. */}
+          <AdvancedOption
+            checked={drag}
+            label={<Trans>DRAG ACROSS KEYS</Trans>}
+            description={<Trans>One gesture can move several keys</Trans>}
+            onToggle={onToggleDrag}
           />
 
           <AdvancedOption

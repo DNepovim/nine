@@ -8,6 +8,7 @@ import { ScoreReadout } from '@/components/overlays/score-readout'
 import { StatRow } from '@/components/overlays/stat-row'
 import { Screen } from '@/components/screen'
 import { TrackedPressable } from '@/components/tracked-pressable'
+import type { ButtonId } from '@/constants/buttons'
 import { DIM_INK } from '@/constants/colors'
 import { TYPE } from '@/constants/typography'
 import { cn } from '@/lib/cn'
@@ -180,22 +181,42 @@ export function RunScreen({
 // The quieter button under the CTA: a card pill rather than a gradient, so a second way
 // back into a run does not shout as loudly as the first. One component because every run
 // screen that has one wears it identically, and a copy is how they stop doing that.
+//
+// Also, now, the admin hub's two sections — which is why there is an `id` and a `leads`.
+// It is the same object there: a card pill that is not the loudest thing on the screen.
 export function CardButton({
+  id = 'run_screen.secondary',
   label,
+  leads = false,
   onPress,
 }: {
+  // Defaults to the run screens' own, which is where every caller but the admin hub is.
+  // Named rather than hardcoded because filing an admin press under `run_screen` would
+  // put it in the wrong funnel, and the funnel is the only reason this is tracked.
+  id?: ButtonId
   label: ReactNode
+  // Whether pressing this goes somewhere rather than doing something. A leading label
+  // and a chevron, which is how the Trainee pause screen's own tiles say the same thing
+  // — see the corner tiles in trainee-display-options.tsx. Centred and markless is a
+  // button; left with a chevron is a door. Asked for by the admin hub, whose two items
+  // are both doors.
+  leads?: boolean
   onPress: () => void
 }) {
   return (
     <TrackedPressable
-      id="run_screen.secondary"
+      id={id}
       onPress={onPress}
-      className="items-center rounded-2xl bg-card py-4"
+      className={cn(
+        'rounded-2xl bg-card py-4',
+        leads ? 'flex-row items-center justify-between gap-2 px-4' : 'items-center',
+      )}
     >
       <Text selectable={false} className={cn(TYPE.button, 'text-primary')}>
         {label}
       </Text>
+      {/* The mark that says this is a door and not a button. */}
+      {leads && <Ionicons name="chevron-forward" size={14} color={DIM_INK} />}
     </TrackedPressable>
   )
 }

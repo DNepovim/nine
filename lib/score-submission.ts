@@ -12,8 +12,14 @@ import {
   type LocalScore,
 } from '@/lib/local-scores'
 import { reportRefusal } from '@/lib/refusal'
+import { submitSessionScore } from '@/lib/session-board'
 import { supabase } from '@/lib/supabase'
 import { SCORED_MODES, traitsOf, type Difficulty, type ModeId } from '@/modes'
+
+// What Postgres stamps on a bare `raise exception`, which is how every guard in our own
+// functions turns a rule down. A refusal carrying it is one we wrote and expected; any
+// other code is the database objecting to something we did not plan for.
+const RAISED_BY_US = 'P0001'
 
 // How the server answered. `refused` is the one that matters: the write was rejected for
 // a reason that was not the connection, so asking again will be rejected again.
@@ -28,6 +34,44 @@ type Sent = 'published' | 'offline' | 'refused'
 // `updated_at` is the moment the run ended, not the moment it was sent. It is what the
 // board sorts ties by, so a record that waited out a flight keeps the position it was
 // earned in rather than being filed behind everything played since.
+// A session run goes somewhere else entirely: `session_scores`, through an RPC that
+// checks the window server-side. Routed on the entry rather than on the mode, because
+// *which* session a run belonged to is a fact about that run and not about its
+// challenge — the same challenge aired twice is two contests.
+//
+// `userId` is unused here: the RPC writes as `auth.uid()`, so the caller cannot post
+// under somebody else's name even by asking.
+async function upsertSessionScore(entry: LocalScore, sessionId: string): Promise<Sent> {
+  const res = await submitSessionScore({
+    sessionId,
+    score: entry.score,
+    hits: entry.hits,
+    difficulty: entry.difficulty,
+    achievedAt: entry.achievedAt,
+  })
+  if (res.sent !== 'refused') return res.sent
+  // A window refusal is expected and is not something to log — unlike a board refusal,
+  // which never is. The queue still counts it either way, so the entry retires after
+  // `MAX_PUBLISH_ATTEMPTS` rather than being offered to a dead contest forever.
+  //
+  // **Both** directions are expected, not just the shut one: `useSessionCard` reads once
+  // per launch and `cardSession` judges liveness by the device's own clock, so a phone
+  // running a few minutes fast can start a session the server says has not opened. That
+  // is a clock, not a bug.
+  //
+  // Matched on `P0001` — the SQLSTATE every `raise exception` in our own functions
+  // carries — rather than on the sentences, which are copy and will be reworded.
+  if (res.error !== null && res.error.code !== RAISED_BY_US) {
+    reportRefusal('session_score', res.error, {
+      mode: entry.mode,
+      difficulty: entry.difficulty,
+      day: entry.day,
+      score: entry.score,
+    })
+  }
+  return 'refused'
+}
+
 async function upsertScore(userId: string, entry: LocalScore): Promise<Sent> {
   const { error } = await supabase.from('daily_scores').upsert(
     {
@@ -58,6 +102,13 @@ async function upsertScore(userId: string, entry: LocalScore): Promise<Sent> {
   return 'refused'
 }
 
+// Where one entry goes. The one place that knows a session run is not a board run, so
+// the first attempt and every retry out of the queue cannot disagree about it.
+const sendScore = (userId: string, entry: LocalScore): Promise<Sent> =>
+  entry.sessionId === undefined
+    ? upsertScore(userId, entry)
+    : upsertSessionScore(entry, entry.sessionId)
+
 // Applies one send to the store. Publishing clears the entry from the queue; a refusal
 // counts against it and eventually retires it; being offline changes nothing, because
 // the connection coming back is exactly what makes it worth trying again.
@@ -71,20 +122,40 @@ export async function submitScore(
   userId: string | null,
   nickname: string | null,
   mode: ModeId,
+  // The rung the run was **played at**, which is `runRules(...).difficulty` and not
+  // whatever the intro last had selected. A mode may pin its own — every challenge so
+  // far does — and this is the figure a point is priced by: posting the picked rung
+  // instead of the played one weights a challenge's points at half or double what they
+  // are worth, on a board and in the fortune alike.
   difficulty: Difficulty,
   score: number,
   hits: number,
+  // The session this run belonged to, or null for an ordinary run. A session run is
+  // published even though its mode keeps no board — the two bars below are about
+  // `scores`, and a session's standings are not that table.
+  sessionId: string | null = null,
 ): Promise<void> {
-  // Two bars, and they are different questions. `scored` is the mode's own answer to
-  // whether it keeps a board at all — practice does not. SCORED_MODES is the *server's*:
+  // Two bars, and they are different questions. `board` is the mode's own answer to
+  // whether it keeps a board at all — practice does not, and neither does a challenge,
+  // whose standings belong to the session it was aired in. SCORED_MODES is the *server's*:
   // `scores.mode` carries a `check (mode in ('accuracy', 'speed'))`, so a mode outside
   // the two cannot be published however much it would like a board of its own. A
   // challenge therefore keeps a local best and posts nothing, until that check is
   // widened — see modes/challenges/catalog.ts.
-  if (!traitsOf(mode).scored || !isOneOf(mode, SCORED_MODES)) return
+  if (sessionId === null && (!traitsOf(mode).board || !isOneOf(mode, SCORED_MODES))) {
+    return
+  }
   if (score <= 0) return
   const day = todayISO()
-  const run = { mode, difficulty, day, score, hits, achievedAt: new Date().toISOString() }
+  const run = {
+    mode,
+    difficulty,
+    day,
+    score,
+    hits,
+    achievedAt: new Date().toISOString(),
+    ...(sessionId === null ? {} : { sessionId }),
+  }
 
   // Remembered before anything is sent, and regardless of whether sending is even
   // possible. Publishing is what the rest of this does; remembering is not conditional
@@ -104,7 +175,7 @@ export async function submitScore(
     return
   }
 
-  const sent = await upsertScore(userId, entry)
+  const sent = await sendScore(userId, entry)
   await writeLocalScores(before, applySent(recorded, entry, sent), day)
 }
 
@@ -129,7 +200,7 @@ export async function flushPendingScores(
 
     let next = before
     for (const entry of queue) {
-      next = applySent(next, entry, await upsertScore(userId, entry))
+      next = applySent(next, entry, await sendScore(userId, entry))
     }
     // `writeLocalScores` no-ops on an unchanged reference, so a drain that published
     // nothing does not wake the subscribers and feed the next retry.

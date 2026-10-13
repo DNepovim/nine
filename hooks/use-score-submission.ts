@@ -66,8 +66,16 @@ export function useScoreSubmission(
   }, [isReady, userId, nickname, hasPending, online])
 
   const submit = useCallback(
-    (mode: ModeId, difficulty: Difficulty, score: number, hits: number) => {
-      void submitScore(userId, nickname, mode, difficulty, score, hits)
+    (
+      mode: ModeId,
+      difficulty: Difficulty,
+      score: number,
+      hits: number,
+      // Which session the run belonged to, or null for an ordinary one. Defaulted so
+      // the three board call sites stay as they are.
+      sessionId: string | null = null,
+    ) => {
+      void submitScore(userId, nickname, mode, difficulty, score, hits, sessionId)
     },
     [userId, nickname],
   )

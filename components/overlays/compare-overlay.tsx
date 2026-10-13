@@ -105,9 +105,11 @@ export function CompareOverlay({
   const myFactors =
     myProfile === null
       ? null
-      : nameFactorsOf(lifetimeOf(myProfile.totals, myProfile.winnings))
+      : nameFactorsOf(
+          lifetimeOf(myProfile.totals, myProfile.winnings, myProfile.sessions),
+        )
   const theirFactors = nameFactorsOf(
-    lifetimeOf(theirProfile.totals, theirProfile.winnings),
+    lifetimeOf(theirProfile.totals, theirProfile.winnings, theirProfile.sessions),
   )
 
   // The two names, for the header and for the title that takes over from it.

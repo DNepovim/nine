@@ -31,7 +31,7 @@ const BASE_TARGET_RULES: TargetRules = {
   spawn: { share: 1 / 3, cap: null, maxTargets: null, cadence: true, reach: null },
   scoring: { weights: { acc: 0.5, spd: 0.5 }, base: SCORE_BASE, streak: 'none' },
   lives: { count: 3, wastefulCostsLife: false, expiryCostsLife: true },
-  capabilities: { scored: true, coached: false, keyHints: false },
+  capabilities: { board: true, scored: true, coached: false, keyHints: false },
 }
 
 // A mode's rules with a patch laid over them — one group at a time, so a patch naming
