@@ -26,9 +26,9 @@ export function seeded(seed: number): Rng {
 // Three things need one. The arcade map needs a crossroad's randomness to depend on
 // *which* crossroad it is rather than on how many were grown before it, so that growing
 // one twice gives the same answer and React may call an updater as often as it likes. The
-// drawing needs each way to sway on its own phase, which has to be the same phase on every
-// render or a fan would jitter instead of breathe. And a recap is seeded on the Monday of
-// the week it tells, which is a date string before it is anything else.
+// drawing needs a village to be the same village on every render, hand and all, or a fan
+// would be redrawn as something else each time React came round. And a recap is seeded on
+// the Monday of the week it tells, which is a date string before it is anything else.
 export function idSeed(id: string): number {
   let hash = 2166136261
   for (let i = 0; i < id.length; i++) {

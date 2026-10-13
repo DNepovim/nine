@@ -127,15 +127,14 @@ function heroAt(
   through: Spline | null,
   throughX: number,
   throughY: number,
-  clockMs: number,
 ): { x: number; y: number } {
   'worklet'
   if (spline === null) return { x: originX, y: originY }
   if (through !== null && t > 1) {
-    const at = splinePoint(through, Math.min(1, t - 1), clockMs)
+    const at = splinePoint(through, Math.min(1, t - 1))
     return { x: throughX + at.x, y: throughY + at.y }
   }
-  const at = splinePoint(spline, Math.max(0, Math.min(1, t)), clockMs)
+  const at = splinePoint(spline, Math.max(0, Math.min(1, t)))
   return { x: originX + at.x, y: originY + at.y }
 }
 
@@ -230,7 +229,6 @@ export function ArcadeHero({
       through,
       throughX,
       throughY,
-      now,
     )
     atX.value = at.x
     atY.value = at.y

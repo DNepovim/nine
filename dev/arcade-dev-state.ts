@@ -18,6 +18,7 @@ import { useSyncExternalStore } from 'react'
 
 export type ArcadeDevActions = {
   siegeNow: () => void
+  ambushNow: () => void
   deepenBy: (steps: number) => void
   setHearts: (hearts: number) => void
   setSatiety: (satiety: number) => void
@@ -37,6 +38,9 @@ export type ArcadeDevState = {
   // which has no way in for a besieged hero to be drawn on, and false mid-movement.
   canSiege: boolean
   inSiege: boolean
+  // Whether an ambush can be sprung on the way out of where the hero stands. Needs a fan to
+  // put the men on rather than a way in, so it is true at the first crossroad too.
+  canAmbush: boolean
   actions: ArcadeDevActions
 }
 

@@ -601,17 +601,35 @@ export function HowToPlayOverlay({
                 </Bullet>
                 <Bullet color={GAME_SCALE[4]}>
                   <Trans>
-                    Every village holds out for its own length of time, and the ring
-                    inside its wall is what is left of it. They are not the same: the one
-                    you want may be the one about to go.
+                    Some roads have bandits on them, and nothing says so the first time.
+                    The hero is stopped partway along and five to ten of them close in
+                    from every side, each carrying a number — dial one to cut that man
+                    down. Let one reach you and it costs a heart, and you are driven back
+                    to the crossroad you set off from. Clear the road and you walk on, and
+                    it may be carrying food or a heart for you.
                   </Trans>
                 </Bullet>
                 <Bullet color={GAME_SCALE[4]}>
                   <Trans>
-                    A village whose ring runs out withers off the fan and stops answering
-                    the dial. The others stay — you are only dragged back when the last of
-                    them gives up, which is what the red creeping along the way behind you
-                    is counting down to.
+                    A road you were driven off is marked with crossed sabres from then on,
+                    so you can see the toll before you choose it again. The men you cut
+                    down stay down, so the second run at it is a shorter fight — and a
+                    road cleared is clear for the rest of the run.
+                  </Trans>
+                </Bullet>
+                <Bullet color={GAME_SCALE[4]}>
+                  <Trans>
+                    Every village holds out for its own length of time, and the ring drawn
+                    around its number is what is left of it. They are not the same: the
+                    one you want may be the one about to go.
+                  </Trans>
+                </Bullet>
+                <Bullet color={GAME_SCALE[4]}>
+                  <Trans>
+                    A village whose ring runs out withers off the fan, taking the way to
+                    it with it, and stops answering the dial. The others stay — you are
+                    only dragged back when the last of them gives up, which is what the
+                    red creeping along the way behind you is counting down to.
                   </Trans>
                 </Bullet>
                 <Bullet color={GAME_SCALE[4]}>
@@ -653,7 +671,7 @@ export function HowToPlayOverlay({
                   food on the map — which is what turns the fight from a risk worth
                   avoiding into the thing a hungry run has to walk toward. */}
               <Body>
-                {t`\nSome villages have walls, and you can see which before you choose — a walled village is drawn heavier, with bigger towers and a pennant flying from its wall. Dial that way and you do not walk in. You take it. Three hearts sit on the bar under ARCADE, and a siege is the fastest way to spend them — and the only way to get one back.`}
+                {t`\nSome villages have walls, and the two are drawn as two different places — an open village is a scatter of houses, a church and a hall with nothing around them, a walled one is a dark ring of wall with a tower at each corner and a pennant flying over it. Dial toward the walls and you do not walk in. You take it. Three hearts sit on the bar under ARCADE, and a siege is the fastest way to spend them. Taking a village always gives one back; clearing a road of bandits sometimes does.`}
               </Body>
               <Card>
                 <Bullet color={GAME_SCALE[4]}>
@@ -703,9 +721,11 @@ export function HowToPlayOverlay({
               <Card>
                 <Bullet color={GAME_SCALE[4]}>
                   <Trans>
-                    A walled village is the only food on the map. Take one and the bar
-                    goes back to full — which is why a hungry run has to go looking for a
-                    fight rather than away from one.
+                    A walled village is the only full meal on the map. Take one and the
+                    bar goes back to full — which is why a hungry run has to go looking
+                    for a fight rather than away from one. Bandits carry stores rather
+                    than a granary: clearing a road sometimes fills a third of the bar,
+                    which is worth having and is never worth walking past a village for.
                   </Trans>
                 </Bullet>
                 <Bullet color={GAME_SCALE[4]}>

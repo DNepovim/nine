@@ -17,22 +17,24 @@ import { tiltedAt, type Sheet } from '@/lib/arcade-tilt'
 
 const AnimatedPath = Animated.createAnimatedComponent(Path)
 
-// One way, drawn: a cubic curve that breathes, draws itself on out of the crossroad, and
-// trims back into it when the hero goes somewhere else.
+// One way, drawn: a cubic curve that draws itself on out of the crossroad and trims back
+// into it when the hero goes somewhere else.
 //
 // Both the drawing on and the trimming are one dash pattern as long as the way itself, slid
 // along it: at an offset of a whole length the dash has moved off the curve and nothing
 // shows, and at nought it covers all of it. Negative, so the end that appears first is the
 // crossroad's — a way grows outward, and withers back the same way.
 //
-// `d` comes from `animatedProps` rather than from a prop, so the sway is computed on the UI
-// thread. A way goes on breathing while React is busy, which it is on every press.
+// `d` comes from `animatedProps` rather than from a prop because the camera is a shared
+// value: the curve is projected on the UI thread so a way keeps up with a sheet that is
+// turning and drifting while React is busy, which it is on every press. The way itself holds
+// still — it is a road on a map, and nothing but the camera moves it.
 //
 // The tilt is why the box is carried by a transform rather than simply laid out at its
 // crossroad: the sheet lies away from the reader, so a crossroad up the map is drawn some way
 // down from where it sits, and the curve inside the box is measured off that drawn place. The
 // dash the way is revealed by is still measured on the flat length, which is a little more
-// than the drawn one — so a way running up the sheet has finished drawing itself on a breath
+// than the drawn one — so a way running up the sheet has finished drawing itself a moment
 // before its own animation ends, which is nothing a player can see.
 
 // How much of the way is showing, as an offset into that dash.
@@ -61,7 +63,6 @@ export function WayStem({
   lit,
   state,
   delay,
-  clock,
   creepMs,
   creepFrom,
   fade,
@@ -83,8 +84,6 @@ export function WayStem({
   state: StemState
   // The way's place in its fan, as a wait — so a crossroad blooms rather than appears.
   delay: number
-  // The screen's frame clock, which every way's sway is read off.
-  clock: SharedValue<number>
   // The clock, on the one way that carries it — the way behind the hero. Three states:
   // a number is how long the red has to creep from the far end up to the hero, `held`
   // leaves it where it got to, and null clears it. Held rather than cleared while the
@@ -146,9 +145,7 @@ export function WayStem({
   // The curve itself, once a frame. Shared by the way's three layers rather than worked out
   // per layer: they are the one line drawn three times, and projecting four points apiece is
   // four times the sum the flat path was.
-  const path = useDerivedValue(() =>
-    splinePath(spline, clock.value, half, half, sheet.value, x, y),
-  )
+  const path = useDerivedValue(() => splinePath(spline, half, half, sheet.value, x, y))
 
   const baseProps = useAnimatedProps(() => ({
     d: path.value,

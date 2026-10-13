@@ -1,11 +1,13 @@
 import { describe, expect, it } from 'vitest'
 
+import { AMBUSH_AT, GROUND_MIN } from '@/constants/ambush'
 import { ANCHOR } from '@/constants/arcade'
 import { HERO_AT, SIEGE_ZOOM, SKY, WALL_AT } from '@/constants/siege'
 import { horizonOf, type Sheet } from '@/lib/arcade-tilt'
 import { UP } from '@/machines/arcade'
 
 import {
+  ambushFrame,
   mouthStub,
   pitchFor,
   pointsOf,
@@ -13,15 +15,10 @@ import {
   splineFor,
   splinePath,
   splinePoint,
-  type Spline,
 } from './arcade-layout'
 
 const way = { to: '1.2', angle: UP + 0.3, reach: 1, value: 120, clockMs: 11000 }
 const pitch = 132
-
-// A clock at zero leaves the sine at the way's own phase rather than at nothing, so the one
-// moment a way is provably unswayed is where that sine crosses zero.
-const unswayed = (s: Spline): number => (-s.phase / (Math.PI * 2)) * s.period
 
 describe('pitchFor', () => {
   it('takes a share of the canvas', () => {
@@ -73,17 +70,60 @@ describe('siegeFrame', () => {
   })
 })
 
+describe('ambushFrame', () => {
+  // Where the hero is actually drawn: the anchor the camera would have put the way's far
+  // village on, plus the lift, plus however much of the way is still in front of it — read
+  // through the zoom the fight is fought under, which is the siege's own.
+  const heroAt = (width: number, height: number, reach: number): number => {
+    const frame = ambushFrame(width, height, reach)
+    return (
+      height * ANCHOR +
+      frame.lift +
+      (1 - frame.standoff) * reach * pitchFor(height) * SIEGE_ZOOM
+    )
+  }
+
+  it('stands the hero in the middle of the canvas, whatever the way is worth', () => {
+    for (const reach of [0.86, 1, 1.14]) {
+      expect(heroAt(390, 700, reach)).toBeCloseTo(700 * AMBUSH_AT)
+    }
+  })
+
+  it('stands it there on a short screen too', () => {
+    expect(heroAt(320, 480, 1)).toBeCloseTo(480 * AMBUSH_AT)
+  })
+
+  it('springs the fight partway along the way rather than at either end of it', () => {
+    const { standoff } = ambushFrame(390, 700, 1)
+    expect(standoff).toBeGreaterThan(0.2)
+    expect(standoff).toBeLessThan(0.5)
+  })
+
+  it('leaves a ring of ground that fits inside the canvas', () => {
+    for (const [width, height] of [
+      [390, 700],
+      [320, 480],
+      [768, 1024],
+    ]) {
+      const { ground } = ambushFrame(width ?? 0, height ?? 0, 1)
+      // Drawn at the zoom, the ring either side of the hero has to fit the shorter side.
+      expect(ground * 2 * SIEGE_ZOOM).toBeLessThanOrEqual(
+        Math.min(width ?? 0, height ?? 0),
+      )
+      expect(ground).toBeGreaterThan(0)
+    }
+  })
+
+  it('keeps a ring to fight in on a canvas with no room for one', () => {
+    expect(ambushFrame(120, 120, 1).ground).toBe(GROUND_MIN)
+  })
+})
+
 describe('splineFor', () => {
   it('ends where the way ends', () => {
     const s = splineFor(way, UP, pitch)
     expect(Math.hypot(s.toX, s.toY)).toBeCloseTo(pitch * way.reach)
     expect(Math.atan2(s.toY, s.toX)).toBeCloseTo(way.angle)
-  })
-
-  it('bends along a unit normal', () => {
-    const s = splineFor(way, UP, pitch)
-    expect(Math.hypot(s.nx, s.ny)).toBeCloseTo(1)
-    expect(s.nx * s.toX + s.ny * s.toY).toBeCloseTo(0)
   })
 
   it('measures the curve, which is never shorter than the straight line', () => {
@@ -93,49 +133,34 @@ describe('splineFor', () => {
     expect(s.length).toBeLessThan(chord * 1.5)
   })
 
-  it('gives neighbouring ways their own breath', () => {
-    const a = splineFor(
-      { to: '0', angle: UP, reach: 1, value: 10, clockMs: 11000 },
-      UP,
-      pitch,
-    )
-    const b = splineFor(
-      { to: '1', angle: UP, reach: 1, value: 20, clockMs: 11000 },
-      UP,
-      pitch,
-    )
-    expect([a.period, a.phase]).not.toEqual([b.period, b.phase])
+  // A way is a road on a map: the camera moves it and nothing else does. Two readings of
+  // the same way, any number of frames apart, are the same curve.
+  it('holds still', () => {
+    const a = splineFor(way, UP, pitch)
+    const b = splineFor(way, UP, pitch)
+    expect(a).toEqual(b)
   })
 })
 
 describe('splinePoint', () => {
   it('starts on the crossroad and ends on the bud', () => {
     const s = splineFor(way, UP, pitch)
-    const at = unswayed(s)
-    const start = splinePoint(s, 0, at)
+    const start = splinePoint(s, 0)
     expect(start.x).toBeCloseTo(0)
     expect(start.y).toBeCloseTo(0)
-    const end = splinePoint(s, 1, at)
+    const end = splinePoint(s, 1)
     expect(end.x).toBeCloseTo(s.toX)
     expect(end.y).toBeCloseTo(s.toY)
   })
 
   it('climbs the whole way there', () => {
     const s = splineFor(way, UP, pitch)
-    const at = unswayed(s)
     let last = 0
     for (let i = 1; i <= 10; i++) {
-      const y = splinePoint(s, i / 10, at).y
+      const y = splinePoint(s, i / 10).y
       expect(y).toBeLessThan(last)
       last = y
     }
-  })
-
-  it('moves as the way breathes', () => {
-    const s = splineFor(way, UP, pitch)
-    const still = splinePoint(s, 0.5, unswayed(s))
-    const later = splinePoint(s, 0.5, unswayed(s) + s.period / 4)
-    expect(Math.hypot(later.x - still.x, later.y - still.y)).toBeGreaterThan(1)
   })
 })
 
@@ -152,7 +177,7 @@ const level: Sheet = {
 describe('splinePath', () => {
   it('draws from the crossroad in the box to the way’s end', () => {
     const s = splineFor(way, UP, pitch)
-    const d = splinePath(s, unswayed(s), 200, 200, level, 0, 0)
+    const d = splinePath(s, 200, 200, level, 0, 0)
     expect(d.startsWith('M200 200 C')).toBe(true)
     expect(d.endsWith(`${200 + s.toX} ${200 + s.toY}`)).toBe(true)
   })
@@ -160,8 +185,8 @@ describe('splinePath', () => {
   it('draws a way running up the tilted sheet short of its own length', () => {
     const s = splineFor(way, UP, pitch)
     const tilted: Sheet = { ...level, tilt: 1 }
-    const flat = splinePath(s, unswayed(s), 200, 200, level, 0, 0)
-    const lean = splinePath(s, unswayed(s), 200, 200, tilted, 0, 0)
+    const flat = splinePath(s, 200, 200, level, 0, 0)
+    const lean = splinePath(s, 200, 200, tilted, 0, 0)
     expect(lean).not.toEqual(flat)
     // The tip, which is the last pair of numbers in the path.
     const tip = (d: string): number => Number(d.split(' ').slice(-1)[0])
@@ -177,7 +202,7 @@ describe('splinePath', () => {
     // in it always starts where it always did, however far off the crossroad is.
     const s = splineFor(way, UP, pitch)
     const tilted: Sheet = { ...level, tilt: 1 }
-    const d = splinePath(s, unswayed(s), 200, 200, tilted, 0, -900)
+    const d = splinePath(s, 200, 200, tilted, 0, -900)
     expect(d.startsWith('M200 200 C')).toBe(true)
   })
 })

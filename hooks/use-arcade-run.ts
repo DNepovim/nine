@@ -1,6 +1,7 @@
 import { isOneOf } from 'narrowland'
 import { useCallback, useEffect, useRef, useState } from 'react'
 
+import { CLEARED_MS, SPOIL_BITE_BACK } from '@/constants/ambush'
 import {
   BLOOM_MS,
   DAWN_MS,
@@ -14,6 +15,18 @@ import { CLOSE_MS, HEARTS, OVERRUN_MS, TAKEN_MS } from '@/constants/siege'
 import { publishArcadeDev, type ArcadeDevActions } from '@/dev/arcade-dev-state'
 import { usePauseOnBlur } from '@/hooks/use-pause-on-blur'
 import { track } from '@/lib/analytics'
+import {
+  advance as advanceAmbush,
+  land as landAmbush,
+  newAmbush,
+  nextEvent as nextAmbushEvent,
+  paidAs,
+  shift as shiftAmbush,
+  spoilOf,
+  sprung,
+  type Ambush,
+  type Spoil,
+} from '@/machines/ambush'
 import {
   ARCADE_DIAL,
   crossroadClock,
@@ -64,10 +77,17 @@ import { emptyGrid, pressGrid, setGrid, sumOf, type Grid } from '@/modes'
 //
 // `rocket` is a walk that does not stop — see the strike below.
 //
-// The four at the end are a siege. `closing` is the camera coming down on the walls, with
+// The four in the middle are a siege. `closing` is the camera coming down on the walls, with
 // the hero stopped short of the gate; `siege` is the fight and is dialable; `taken` is the
 // last tower falling; `overrun` is the last heart going, which is the one end arcade has
 // that is not the mouth.
+//
+// And the four after them are an ambush, which is the same four beats on a road rather than
+// at a wall. `springing` is the camera coming down on the hero stopped partway along the way
+// it was walking; `ambush` is the fight and is dialable; `cleared` is the last bandit going
+// down, the spoil, and the rest of the walk; `driven` is a bandit having reached the hero,
+// which costs a heart and ends with the hero back where it set off. `overrun` is shared —
+// the last heart is the last heart, however it went.
 export type ArcadePhase =
   | 'dawn'
   | 'bloom'
@@ -79,10 +99,14 @@ export type ArcadePhase =
   | 'closing'
   | 'siege'
   | 'taken'
+  | 'springing'
+  | 'ambush'
+  | 'cleared'
+  | 'driven'
   | 'overrun'
   | 'over'
 
-const DIALABLE: readonly ArcadePhase[] = ['bloom', 'open', 'siege']
+const DIALABLE: readonly ArcadePhase[] = ['bloom', 'open', 'siege', 'ambush']
 
 // How long each beat lasts, for the beats that end on a clock of their own rather than on
 // the crossroad's. `open` is missing because its length is the crossroad's clock, and the
@@ -96,6 +120,11 @@ const BEAT_MS = {
   falling: FALL_MS,
   closing: CLOSE_MS,
   taken: TAKEN_MS,
+  // The camera comes down on a road exactly as it comes down on a wall — one camera, not
+  // two — so a fight begins at the same pace wherever it is fought.
+  springing: CLOSE_MS,
+  cleared: CLEARED_MS,
+  driven: RETREAT_MS,
   overrun: OVERRUN_MS,
 } as const satisfies Partial<Record<ArcadePhase, number>>
 
@@ -125,6 +154,13 @@ type Run = {
   hearts: number
   // The fight the hero is in, and nothing at every other moment.
   siege: Siege | null
+  // The band on the road the hero is on, and nothing at every other moment. Never set at
+  // the same time as `siege`: the roll that holds a road never holds the one to a walled
+  // village, so the two fights can never be asked for at once.
+  ambush: Ambush | null
+  // What the road just cleared paid, kept for as long as the beat that says so. Null
+  // everywhere else.
+  spoil: Spoil | null
   // How many villages this run has taken. A run stat, like the strikes.
   taken: number
   // How fed the hero is, nought to one. Full at dawn, spent by walking, filled by taking
@@ -199,6 +235,8 @@ const startRun = (seed: number, now: number): Run => ({
   siege: null,
   taken: 0,
   satiety: FULL,
+  ambush: null,
+  spoil: null,
   legGrid: INITIAL_GRID,
   legPresses: 0,
   expiresAt: {},
@@ -240,6 +278,96 @@ const arrival = (
   expiresAt: {},
   expired: [],
 })
+
+// What a road remembers of a fight the hero was driven off: the men it lost, and — by the
+// list being a list at all rather than nothing — that the hero has now met it.
+//
+// One place, so neither end of a fight can forget it. The band is dealt again from the
+// road's own seed the next time it is walked, minus exactly these.
+const fought = (map: ArcadeMap, ambush: Ambush): ArcadeMap => {
+  const road = map[ambush.at]
+  if (road === undefined) return map
+  return { ...map, [ambush.at]: { ...road, cutDown: ambush.fallen } }
+}
+
+// A bandit reaching the hero, resolved: spared, or a heart and the hero driven back down
+// the way it had started, or the last heart and the run over.
+//
+// Out here rather than inside the beats effect because it is three outcomes deep and that
+// effect is long enough already — and because what a man arriving costs is a rule, which is
+// the kind of thing the rest of this file keeps out of its timers.
+const arrived = (run: Run, now: number): Run => {
+  if (run.ambush === null) return run
+  const step = advanceAmbush(run.ambush, now)
+  if (!step.lost) return { ...run, ambush: step.ambush, ...beat(run, now) }
+  // He still reaches the hero and is still taken off the ground — only the heart is
+  // spared, exactly as a warrior is.
+  if (run.invincible) return { ...run, ambush: step.ambush, ...beat(run, now) }
+  // The road keeps the men it did not lose and remembers the ones it did, whichever of the
+  // two ways this ends.
+  const map = fought(run.map, step.ambush)
+  const hearts = run.hearts - 1
+  if (hearts > 0) {
+    return {
+      ...run,
+      map,
+      ambush: step.ambush,
+      hearts,
+      phase: 'driven',
+      ...beat(run, now),
+    }
+  }
+  return {
+    ...run,
+    map,
+    ambush: step.ambush,
+    hearts: 0,
+    phase: 'overrun',
+    // The run is over at this point, so this is where its clock stops.
+    playedMs: run.playedMs + (now - run.playingSince),
+    playingSince: now,
+    ...beat(run, now),
+  }
+}
+
+// The rest of the walk, once the road is clear: the village at the end of it offers its fan
+// and the hero stands in it.
+//
+// Out here beside `arrived` and for the same reason — and because the order inside it is
+// the subtle part, which deserves to be read without a timer wrapped round it.
+const clearedOn = (run: Run, now: number): Run => {
+  const way = run.moving
+  if (way === null) return run
+  const landed = run.map[way.to]?.depth ?? 0
+  // The fan is grown *before* the road is marked clear, and that order is the whole of it:
+  // `openCrossroad` reads `ambushed` to keep bandits off a fan grown out of a road that had
+  // them, which is what stops one ambush opening straight out of another. Clear the flag
+  // first — the obvious simplification — and the road just cleared would offer a second one
+  // crossroad on.
+  //
+  // Cleared it must be, though. A road is fought over once and is then a road: a band that
+  // stood up again would be a spoil to be farmed by walking out and back.
+  const grown = openCrossroad(run.map, way.to, run.grid, run.seed)
+  const here = grown[way.to]
+  const map =
+    here === undefined
+      ? grown
+      : { ...grown, [way.to]: { ...here, ambushed: false, cutDown: null } }
+  return {
+    ...run,
+    map,
+    at: way.to,
+    phase: 'bloom',
+    moving: null,
+    ambush: null,
+    spoil: null,
+    best: Math.max(run.best, landed),
+    // The fight's presses end here, for the reason a siege's do: without it the first leg
+    // out of every cleared road would be billed for the whole ambush.
+    ...arrival(run.grid),
+    ...beat(run, now),
+  }
+}
 
 // What eating or going without leaves behind: how fed the hero is, and the clock the
 // hearts go on once there is nothing left.
@@ -285,6 +413,11 @@ const freshSeed = (): number => Math.floor(Math.random() * 0x7fffffff)
 export function useArcadeRun() {
   const [run, setRun] = useState<Run>(() => startRun(freshSeed(), Date.now()))
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  // The fight on a road runs on a timer of its own rather than on the beats' one, which is
+  // the arrangement hunger already has. Not for want of a shared one: an ambush is four
+  // beats and a clock, and folding them into the chain that drives every other beat of a run
+  // made that function longer than anyone can hold in their head at once.
+  const fight = useRef<ReturnType<typeof setTimeout> | null>(null)
   // Hunger's own clock, and the one thing here that does not run on the beat.
   //
   // Every other timer in this hook is the beat's: one at a time, cleared and re-armed by
@@ -476,6 +609,27 @@ export function useArcadeRun() {
           const way = r.moving
           if (r.phase !== 'walk' || way === null) return r
           const landed = r.map[way.to]?.depth ?? 0
+          // A road with men on it is not walked through. The hero is stopped partway along
+          // it and `at` stays the crossroad behind — the journey is not finished, and
+          // whether it finishes at all is what the fight decides. `moving` stays set for the
+          // same reason: the hero is still on that way, standing in the middle of it.
+          if (r.map[way.to]?.ambushed === true) {
+            return {
+              ...r,
+              phase: 'springing',
+              ambush: newAmbush(
+                way.to,
+                landed,
+                r.seed,
+                r.grid,
+                r.map[way.to]?.cutDown ?? [],
+              ),
+              // Nothing to answer while the camera comes down, and the dozens of presses
+              // the fight is about to take are not the next leg's.
+              ...arrival(r.grid),
+              ...beat(r, now),
+            }
+          }
           // A walled village is not walked into. The hero stops short of the gate, the
           // camera comes down, and the fan at the far end waits until the walls are down —
           // which is why `openCrossroad` is not called here for one.
@@ -691,6 +845,93 @@ export function useArcadeRun() {
     }
   }, [run.phase, run.seq, run.paused, run.beatAt, clockMs, run.expired, run.expiresAt])
 
+  // An ambush, beat by beat: the camera coming down, the fight, and the two ways out of it.
+  //
+  // The same shape the beats above have — what is left of a beat rather than the whole of
+  // it, so a pause and a resume end it when it would have ended anyway.
+  useEffect(() => {
+    if (run.paused) return
+    const elapsed = Date.now() - run.beatAt
+    const after = (full: number, step: () => void) => {
+      fight.current = setTimeout(step, Math.max(0, full - elapsed))
+    }
+
+    // The camera has come down on the road. The band sets off — all of it at once, and
+    // from here rather than from the spring, for the reason the gate's clock is stamped on
+    // the way in. See `sprung` in machines/ambush.
+    if (run.phase === 'springing') {
+      after(BEAT_MS.springing, () => {
+        const now = Date.now()
+        setRun((r) =>
+          r.phase === 'springing'
+            ? {
+                ...r,
+                phase: 'ambush',
+                ambush: r.ambush === null ? null : sprung(r.ambush, now),
+                ...beat(r, now),
+              }
+            : r,
+        )
+      })
+    }
+
+    // The fight on the road. One timer, armed to the soonest man to reach the hero and
+    // re-armed by the `seq` bump every cut carries — which is not optional here the way it
+    // is in a siege. A siege has a gate still counting behind whatever the dial did; an
+    // ambush has nothing but the men, so a cut that did not re-arm would leave the timer
+    // pointed at a man who is already down. `nextEvent` hands back null for a band with
+    // nobody left in it, and nothing is armed at all.
+    if (run.phase === 'ambush' && run.ambush !== null) {
+      const due = nextAmbushEvent(run.ambush)
+      if (due !== null) {
+        fight.current = setTimeout(
+          () => {
+            const now = Date.now()
+            setRun((r) => (r.phase === 'ambush' ? arrived(r, now) : r))
+          },
+          Math.max(0, due - Date.now()),
+        )
+      }
+    }
+
+    // The last man is down. The camera opens out, the spoil is read, and the hero walks the
+    // rest of the way it was on — one beat, the way a fallen wall is one beat.
+    if (run.phase === 'cleared') {
+      after(BEAT_MS.cleared, () => {
+        const now = Date.now()
+        setRun((r) => (r.phase === 'cleared' ? clearedOn(r, now) : r))
+      })
+    }
+
+    // A bandit reached the hero. It is dragged back down the way it had started and ends
+    // where it set off — which is the crossroad the run never stopped calling `at`, with the
+    // fan it was offered before it chose.
+    if (run.phase === 'driven') {
+      after(BEAT_MS.driven, () => {
+        const now = Date.now()
+        setRun((r) =>
+          r.phase === 'driven'
+            ? {
+                ...r,
+                phase: 'bloom',
+                moving: null,
+                ambush: null,
+                // The fan here was grown against a grid the fight's own presses have moved
+                // since, so par for the ways it offers is measured from this one.
+                ...arrival(r.grid),
+                ...beat(r, now),
+              }
+            : r,
+        )
+      })
+    }
+
+    return () => {
+      if (fight.current !== null) clearTimeout(fight.current)
+      fight.current = null
+    }
+  }, [run.phase, run.seq, run.paused, run.beatAt])
+
   // Starving: a heart every STARVE_MS while there is nothing left to eat.
   //
   // Armed off `starvingAt`, which is a wall-clock stamp rather than a countdown, so what
@@ -782,6 +1023,37 @@ export function useArcadeRun() {
         }
       }
 
+      // On a road the sum answers to the men standing on it, exactly as it answers to the
+      // walls at a village. Above the leg's press count for the same reason the siege is:
+      // a press that cut a bandit is not a press spent answering the next crossroad.
+      if (r.phase === 'ambush' && r.ambush !== null) {
+        const hit = landAmbush(r.ambush, sumOf(ARCADE_DIAL, r.grid), sum, now)
+        // Every cut stamps a beat, and that is load-bearing: the one timer in the fight is
+        // armed to the soonest arrival, and cutting that man down is what changes it.
+        if (!hit.cleared) {
+          return { ...r, grid: next, ambush: hit.ambush, ...beat(r, now) }
+        }
+        // The road is clear, and pays what that road pays — resolved against the hero
+        // standing on it, so a heart offered to a hero already carrying three becomes the
+        // one thing there is always room for.
+        const spoil = paidAs(spoilOf(hit.ambush.at, r.seed), r.hearts)
+        const fed = eat(
+          r,
+          spoil === 'food' ? Math.min(FULL, r.satiety + SPOIL_BITE_BACK) : r.satiety,
+          now,
+        )
+        return {
+          ...r,
+          grid: next,
+          ambush: hit.ambush,
+          phase: 'cleared',
+          spoil,
+          hearts: spoil === 'heart' ? Math.min(HEARTS, r.hearts + 1) : r.hearts,
+          ...fed,
+          ...beat(r, now),
+        }
+      }
+
       // The press counts toward this leg from here down. Below the siege branch on
       // purpose: a press at the walls answers to the towers, and billing the fight to the
       // leg out of the village would make the first crossroad past every siege the
@@ -813,14 +1085,18 @@ export function useArcadeRun() {
       const leftMs = r.phase === 'open' ? answered - (now - r.beatAt) : answered
       const struck = isStrike(leftMs, answered)
 
-      // A strike cannot skip a siege: the rocket's first hop is a crossroad it passes
-      // *through* without stopping, and a village with walls on it is not passed through.
-      // It still counts as a strike — it was answered fast — it simply has nowhere to
-      // rocket to, so the walk it degrades to carries the stat with it.
+      // A strike cannot skip a fight. The rocket's first hop is a crossroad it passes
+      // *through* without stopping — and neither a village with walls on it nor a road with
+      // men on it is passed through: one stops the hero at the gate and the other stops it
+      // halfway along itself, and a rocket is one movement with no stop in the middle of it.
+      // It still counts as a strike — it was answered fast — it simply has nowhere to rocket
+      // to, so the walk it degrades to carries the stat with it.
       //
-      // Two cases, not one. Walking into those same walls slowly was never a strike and
-      // adds nothing, which is why `struck` is asked again here rather than assumed.
-      if (r.map[taken.to]?.fortified === true) {
+      // Two cases, not one. Walking into that same fight slowly was never a strike and adds
+      // nothing, which is why `struck` is asked again here rather than assumed.
+      const fight =
+        r.map[taken.to]?.fortified === true || r.map[taken.to]?.ambushed === true
+      if (fight) {
         return {
           ...r,
           grid: next,
@@ -852,7 +1128,10 @@ export function useArcadeRun() {
       // either way.
       const map = openCrossroad(r.map, taken.to, next, r.seed)
       const through = straightestWay(map[taken.to])
-      if (through === null) {
+      // And not *onto* one either. The second hop is a way the rocket flies rather than
+      // walks, so a band standing halfway along it would have nothing to stop — the strike
+      // gives way to the walk that can meet them.
+      if (through === null || map[through.to]?.ambushed === true) {
         return {
           ...r,
           grid: next,
@@ -906,7 +1185,16 @@ export function useArcadeRun() {
   // Where the movement in flight ends, which is what the canvas follows. Asked of the run
   // rather than worked out by the screen, because only this hook holds the map.
   const destinationOf = (): Crossroad | undefined => {
-    if (run.phase === 'walk' && run.moving !== null) return run.map[run.moving.to]
+    // A fight on a road does not move the hero off the way it was walking, so the camera
+    // keeps following the village at the end of it — which is what leaves the hero where it
+    // stopped and the frame free to lift it to the middle of the canvas. `driven` is the one
+    // of the four that falls through: the hero is on its way back to where it is standing.
+    if (
+      isOneOf(run.phase, ['walk', 'springing', 'ambush', 'cleared']) &&
+      run.moving !== null
+    ) {
+      return run.map[run.moving.to]
+    }
     // Two crossroads on, not one: a rocket's destination is where it *stops*.
     if (run.phase === 'rocket' && run.through !== null) return run.map[run.through.to]
     if (run.phase === 'retreat' && parentId !== null) return run.map[parentId]
@@ -946,6 +1234,35 @@ export function useArcadeRun() {
           moving: null,
           through: null,
           siege: newSiege(r.at, here.depth, r.seed, r.grid, now),
+          ...beat(r, now),
+        }
+      })
+    },
+
+    // An ambush on the first way out of where the hero stands, walked onto at once.
+    //
+    // Unlike `siegeNow` this has to pick a *road*, so it takes the first way of the fan and
+    // marks it — and then goes straight to the spring rather than walking there, because
+    // what is being looked at is the fight and not the eight hundred milliseconds in front
+    // of it. Everything after that is the machinery a dialled ambush uses.
+    ambushNow: () => {
+      const now = Date.now()
+      setRun((r) => {
+        const here = r.map[r.at]
+        const way = here?.ways[0]
+        if (here === undefined || way === undefined) return r
+        if (!isOneOf(r.phase, DIALABLE)) return r
+        const to = r.map[way.to]
+        if (to === undefined) return r
+        const depth = to.depth
+        return {
+          ...r,
+          map: { ...r.map, [way.to]: { ...to, ambushed: true, fortified: false } },
+          phase: 'springing',
+          moving: way,
+          through: null,
+          ambush: newAmbush(way.to, depth, r.seed, r.grid, to.cutDown ?? []),
+          ...arrival(r.grid),
           ...beat(r, now),
         }
       })
@@ -1038,6 +1355,10 @@ export function useArcadeRun() {
       invincible: run.invincible,
       canSiege: standing?.from != null && !run.paused && isOneOf(run.phase, DIALABLE),
       inSiege: run.phase === 'siege',
+      // An ambush needs a way to put the men on rather than a way in, so it can be sprung
+      // from the first crossroad where a siege cannot.
+      canAmbush:
+        (standing?.ways.length ?? 0) > 0 && !run.paused && isOneOf(run.phase, DIALABLE),
       actions: dev,
     })
   })
@@ -1062,6 +1383,10 @@ export function useArcadeRun() {
     strikes: run.strikes,
     hearts: run.hearts,
     siege: run.siege,
+    // The band on the road, and what the last road cleared paid. Both null at every moment
+    // there is no fight on a way.
+    ambush: run.ambush,
+    spoil: run.spoil,
     taken: run.taken,
     // How fed the hero is, and whether the hearts are going. Two readings rather than one
     // because the bar draws them differently: a fraction is a width, and starving is a
@@ -1084,6 +1409,14 @@ export function useArcadeRun() {
     // and asked at all because a fan has to say which of its ways is a fight *before* one
     // of them is dialled.
     walledAt: (id: string) => run.map[id]?.fortified === true,
+    // Whether the way to here is *known* to have men on it: held, and met at least once.
+    // The two together, because the first time is the whole point — a road that announced
+    // its bandits before anyone had met them would not be an ambush. After that it is a
+    // toll, and a toll the player can see is a decision rather than the same trap twice.
+    waylaidAt: (id: string) => {
+      const road = run.map[id]
+      return road?.ambushed === true && road.cutDown !== null
+    },
     moving: run.moving,
     through: run.through,
     // What the clock on the way behind has left to run, and the fraction of it already gone
@@ -1120,6 +1453,8 @@ export function useArcadeRun() {
           beatAt: now - r.heldMs,
           playingSince: now,
           siege: r.siege === null ? null : shift(r.siege, away),
+          // And every man on the road, so one three quarters of the way in still is.
+          ambush: r.ambush === null ? null : shiftAmbush(r.ambush, away),
           // Hunger moves by exactly the same amount, so a hero four seconds from losing a
           // heart still is.
           starvingAt: r.starvingAt === null ? null : r.starvingAt + away,

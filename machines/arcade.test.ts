@@ -66,6 +66,8 @@ describe('newMap', () => {
       from: null,
       depth: 0,
       fortified: false,
+      ambushed: false,
+      cutDown: null,
       dry: 0,
       heading: UP,
       pos: { x: 0, y: 0 },
@@ -194,6 +196,8 @@ describe('rngFor', () => {
       from: null,
       depth: 0,
       fortified: false,
+      ambushed: false,
+      cutDown: null,
       dry: 0,
       heading: UP,
       pos: { x: 0, y: 0 },
@@ -398,6 +402,98 @@ describe('fortified villages', () => {
   })
 })
 
+describe('ambushed ways', () => {
+  const grown = (seed: number, id: string, map = newMap(seed)) =>
+    openCrossroad(map, id, zeros, seed)
+
+  // Walk one branch, always taking the first way, growing each fan on the way. The three
+  // guards below are all about what one crossroad's fan may offer given the road the hero
+  // arrived on, so a branch is the only thing that can ask them.
+  const branch = (seed: number, steps: number) => {
+    const visited: string[] = [START]
+    let map = grown(seed, START)
+    let at = START
+    for (let step = 0; step < steps; step++) {
+      const next = map[at]?.ways[0]
+      if (next === undefined) break
+      map = openCrossroad(map, next.to, zeros, seed)
+      at = next.to
+      visited.push(at)
+    }
+    return { map, visited }
+  }
+
+  it('leaves the first fan of a run alone', () => {
+    for (let seed = 1; seed <= 80; seed++) {
+      for (const way of grown(seed, START)[START]?.ways ?? []) {
+        expect(grown(seed, START)[way.to]?.ambushed).toBe(false)
+      }
+    }
+  })
+
+  it('holds at most one way in a fan', () => {
+    for (let seed = 1; seed <= 60; seed++) {
+      const { map, visited } = branch(seed, 8)
+      for (const id of visited) {
+        const held = (map[id]?.ways ?? []).filter((w) => map[w.to]?.ambushed === true)
+        expect(held.length).toBeLessThanOrEqual(1)
+      }
+    }
+  })
+
+  it('never holds the way to a walled village', () => {
+    for (let seed = 1; seed <= 80; seed++) {
+      const { map } = branch(seed, 8)
+      for (const crossroad of Object.values(map)) {
+        if (crossroad.ambushed && crossroad.fortified) {
+          expect.unreachable('a walled village was also waylaid')
+        }
+      }
+    }
+  })
+
+  it('never holds a road out of a crossroad the hero was waylaid to reach', () => {
+    for (let seed = 1; seed <= 80; seed++) {
+      const { map, visited } = branch(seed, 10)
+      for (const id of visited) {
+        const road = map[id]
+        if (road?.ambushed !== true) continue
+        for (const way of road.ways) {
+          expect(map[way.to]?.ambushed).toBe(false)
+        }
+      }
+    }
+  })
+
+  it('gives back the same roads when the crossroad is grown again', () => {
+    const { map, visited } = branch(23, 6)
+    const at = visited[2] ?? START
+    const twice = openCrossroad(map, at, busy, 23)
+    for (const way of map[at]?.ways ?? []) {
+      expect(twice[way.to]?.ambushed).toBe(map[way.to]?.ambushed)
+      expect(twice[way.to]?.cutDown).toBeNull()
+    }
+  })
+
+  it('holds a road on well under half the fans it grows', () => {
+    // Spread seeds rather than consecutive ones, for the reason the walls' own share test
+    // gives: `ambush:` draws the first step of a fresh LCG, and neighbouring inputs walk
+    // it in near lockstep.
+    let fans = 0
+    let held = 0
+    for (let i = 1; i <= 400; i++) {
+      const seed = Math.imul(i, 2654435761) >>> 0
+      const { map, visited } = branch(seed, 3)
+      const at = visited[1]
+      if (at === undefined) continue
+      fans += 1
+      if ((map[at]?.ways ?? []).some((w) => map[w.to]?.ambushed === true)) held += 1
+    }
+    expect(held / fans).toBeGreaterThan(0.2)
+    expect(held / fans).toBeLessThan(0.55)
+  })
+})
+
 describe('isStrike', () => {
   it('is a crossroad answered with most of its clock still full', () => {
     expect(isStrike(9000, 12000)).toBe(true)
@@ -426,6 +522,8 @@ describe('straightestWay', () => {
       from: START,
       depth: 1,
       fortified: false,
+      ambushed: false,
+      cutDown: null,
       dry: 0,
       heading: UP,
       pos: { x: 0, y: -1 },
@@ -447,6 +545,8 @@ describe('straightestWay', () => {
       from: START,
       depth: 1,
       fortified: false,
+      ambushed: false,
+      cutDown: null,
       dry: 0,
       heading: Math.PI - 0.05,
       pos: { x: 0, y: 0 },

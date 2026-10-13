@@ -14,6 +14,8 @@ import Animated, {
 } from 'react-native-reanimated'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
+import { AmbushField } from '@/components/game/ambush-field'
+import { AmbushMark } from '@/components/game/ambush-mark'
 import { ArcadeDawn } from '@/components/game/arcade-dawn'
 import { ArcadeHero } from '@/components/game/arcade-hero'
 import { ArcadeMouth } from '@/components/game/arcade-mouth'
@@ -32,6 +34,7 @@ import { VillageArrival } from '@/components/game/village-arrival'
 import { WayBud, type BudState } from '@/components/game/way-bud'
 import { WayStem, type StemState } from '@/components/game/way-stem'
 import { ScreenLayer } from '@/components/screen'
+import { AMBUSH_ALONG, CLEARED_MS } from '@/constants/ambush'
 import {
   ANCHOR,
   DAWN_OUT_MS,
@@ -44,7 +47,7 @@ import {
   TRAIL_DEPTH,
   WALK_MS,
 } from '@/constants/arcade'
-import { ARCADE_INK, MAP_INK, PIE_INK, SURFACE } from '@/constants/colors'
+import { ARCADE_INK, MAP_INK, PIE_INK, SURFACE, WAY_INK } from '@/constants/colors'
 import { CLOSE_MS, HEARTS, OPEN_MS, SIEGE_ZOOM, TAKEN_MS } from '@/constants/siege'
 import { TYPE } from '@/constants/typography'
 import { useArcadeLand } from '@/hooks/use-arcade-land'
@@ -53,18 +56,20 @@ import { SUM_ROW_HEIGHT } from '@/hooks/use-dial-metrics'
 import { usePersistedRose } from '@/hooks/use-persisted-rose'
 import { useScoreDirection } from '@/hooks/use-score-direction'
 import {
+  ambushFrame,
   mouthStub,
   pitchFor,
   pointsOf,
   siegeFrame,
   splineFor,
   splinePoint,
+  type SiegeFrame,
   type Spline,
 } from '@/lib/arcade-layout'
 import { horizonOf, type Sheet } from '@/lib/arcade-tilt'
 import { cn } from '@/lib/cn'
 import { valueProgress } from '@/lib/value-progress'
-import { ARCADE_DIAL, idSeed, UP } from '@/machines/arcade'
+import { ARCADE_DIAL, idSeed, UP, type Crossroad } from '@/machines/arcade'
 import type { DialControl } from '@/machines/tutorial-lesson'
 import { cellsOf, darkGradientOf, gradientOf, lerpColor, sumOf } from '@/modes'
 
@@ -121,7 +126,53 @@ const AT_THE_GATE: readonly ArcadePhase[] = [
 // The beats the camera is in close for, which is those four less `taken`: the walls coming
 // down is the camera letting go, and it opens out while the hero is still walking in — so
 // the fan the village blooms into arrives on a sheet already back at rest.
-const CAMERA_IN: readonly ArcadePhase[] = ['closing', 'siege', 'overrun']
+// An ambush is in close for the same three of its own four, and for the same reason:
+// `cleared` is the camera letting go while the hero walks the rest of its way, so the fan at
+// the far end blooms onto a sheet already back at rest. `driven` lets go too — being dragged
+// home is a journey across the map rather than a fight on it.
+// The beats the hero is standing on a road rather than at a crossroad or a gate. What they
+// share is the framing: the stop partway along the way, and the camera that put it there.
+const AMBUSH_PHASES: readonly ArcadePhase[] = ['springing', 'ambush', 'cleared', 'driven']
+
+// Whether what lies along the way to a crossroad is a fight. Both kinds, because two things
+// on this screen ask the question and neither of them cares which kind it is: how far along
+// the way the hero gets, and whether the sheet squares up to what is at the end of it.
+const fightAt = (to: Crossroad | undefined): boolean =>
+  to?.fortified === true || to?.ambushed === true
+
+// And which framing this beat is looked at under. Both answer the same two questions — how
+// far along the way the hero holds, and what the camera does to put it there — so the screen
+// reads one shape and never asks which fight it is in.
+const frameFor = (
+  phase: ArcadePhase,
+  width: number,
+  height: number,
+  reach: number,
+): SiegeFrame =>
+  isOneOf(phase, AMBUSH_PHASES)
+    ? ambushFrame(width, height, reach)
+    : siegeFrame(height, reach)
+
+// Every beat the hero is somewhere along a way rather than standing on a crossroad, and so
+// is drawn on a spline out of the one behind it. A walk and a strike, and the four beats of
+// an ambush — which is a walk stopped in the middle, fought over, and then either finished
+// or given up.
+const ON_A_WAY: readonly ArcadePhase[] = [
+  'walk',
+  'rocket',
+  'springing',
+  'ambush',
+  'cleared',
+  'driven',
+]
+
+const CAMERA_IN: readonly ArcadePhase[] = [
+  'closing',
+  'siege',
+  'overrun',
+  'springing',
+  'ambush',
+]
 
 // What the country and the ways fade to while a siege is on. Not hidden — the run has to
 // stay somewhere on the map, and a player who breaks off has to see where the way back is —
@@ -147,6 +198,14 @@ const DRIFT_MS = {
   closing: 0,
   siege: 0,
   taken: 0,
+  // An ambush is fought at a standstill too: the hero stops partway along the way it was
+  // walking and holds there, so the canvas has nothing to cover for either beat. `cleared`
+  // is the rest of that way, which it does cover; `driven` is the way back, which is the
+  // retreat's own distance travelled in the retreat's own time.
+  springing: 0,
+  ambush: 0,
+  cleared: CLEARED_MS,
+  driven: RETREAT_MS,
   overrun: 0,
   over: 0,
 } as const satisfies Record<ArcadePhase, number>
@@ -180,6 +239,23 @@ const TRAVEL = {
   // any more but whatever the fight was framed at — so it walks on from wherever it was
   // standing rather than from a figure written down here. See `siegeFrame`.
   taken: { from: null, to: 1, duration: TAKEN_MS, easing: Easing.inOut(Easing.cubic) },
+  // The hero holds where the ambush caught it for both of the fight's own beats, the way it
+  // holds at a gate — and `springing` sets it once for the same reason `closing` does, to
+  // put it on the spring point the frame chose rather than to move it.
+  springing: null,
+  ambush: null,
+  // The rest of the way, walked on the same spline from wherever the fight was fought from.
+  // No `from`, for the reason `taken` has none.
+  cleared: {
+    from: null,
+    to: 1,
+    duration: CLEARED_MS,
+    easing: Easing.inOut(Easing.cubic),
+  },
+  // And the way back, from wherever that was to the crossroad it set off from. Eased in
+  // only, like every other beat that happens *to* the player rather than being a move they
+  // made.
+  driven: { from: null, to: 0, duration: RETREAT_MS, easing: Easing.in(Easing.cubic) },
   overrun: null,
   over: null,
 } as const satisfies Record<
@@ -210,6 +286,13 @@ const CREEP = {
   closing: null,
   siege: null,
   taken: null,
+  // An ambush has no crossroad clock either. What is counting down is the band, and the
+  // crossroad behind holds whatever it had left — a hero driven home finds the fan it left,
+  // with its clocks started again.
+  springing: null,
+  ambush: null,
+  cleared: null,
+  driven: null,
   overrun: null,
   over: 'held',
 } as const satisfies Record<ArcadePhase, 'running' | 'held' | null>
@@ -343,7 +426,10 @@ export function ArcadeGame({
     run.phase === 'rocket'
       ? run.through
       : (run.moving ?? run.parent?.ways.find((way) => way.to === here?.id) ?? null)
-  const frame = siegeFrame(canvas.height, wayIn?.reach ?? 1)
+  const frame = frameFor(run.phase, canvas.width, canvas.height, wayIn?.reach ?? 1)
+  // And the ring the band stands on, which only an ambush has and which the field needs
+  // whether or not the camera is framing one yet.
+  const road = ambushFrame(canvas.width, canvas.height, wayIn?.reach ?? 1)
 
   // The canvas follows whatever the hero is about to be standing on. Driven off the
   // destination rather than off the arrival, so the drift and the walk are one movement —
@@ -391,7 +477,11 @@ export function ArcadeGame({
   // the walls as it closes on them, from the walk in, and the sheet goes back to the reading
   // the player asked for once the village is taken.
   useEffect(() => {
-    const squared = destination?.fortified === true
+    // A fight squares the sheet up, whichever fight it is. A wall wants to lie across the
+    // top of the canvas; a road wants to run straight up it, so that a bandit's bearing is
+    // read against the way the hero was going rather than against whatever angle the map
+    // happened to be lying at.
+    const squared = fightAt(destination)
     const turn = northUp && !squared ? 0 : UP - (destination?.heading ?? UP)
     camTurn.value = withTiming(turn, {
       duration: DRIFT_MS[run.phase] || (squared ? CLOSE_MS : TURN_MS),
@@ -404,7 +494,11 @@ export function ArcadeGame({
     // short of the gate when what is standing at the end has walls, which is what leaves the
     // walls at the top of the canvas and the whole of the ground under them for the warriors
     // to cross.
-    const stop = run.destination?.fortified === true ? frame.standoff : 1
+    // A walk that ends in a fight stops short of its own end: at the gate when there are
+    // walls, and partway along the road when there are men on it. The second is read off
+    // the map rather than off the phase, because the beat that has to stop short is the
+    // walk itself — the fight is not sprung until it has.
+    const stop = fightAt(run.destination) ? frame.standoff : 1
     // A strike is one movement with two halves: out of the crossroad under power, then
     // settling into the landing two crossroads on. One `withTiming` cannot say that, and
     // two of them in sequence is exactly what speeding up means.
@@ -437,7 +531,7 @@ export function ArcadeGame({
     // on the way *in*, in the frame of the crossroad behind — one spline where a strike had
     // two — and the point it is already standing on is the stand-off in that frame. Same
     // point on the sheet, so the handover costs not a frame.
-    if (run.phase === 'closing') {
+    if (isOneOf(run.phase, ['closing', 'springing'])) {
       progress.value = frame.standoff
       return
     }
@@ -508,6 +602,9 @@ export function ArcadeGame({
   // ── What is on the canvas ──
   const stems: StemSpec[] = []
   const buds: BudSpec[] = []
+  // The roads on this fan the hero has already been driven off, and where along each the
+  // men are waiting. Never the first time — see AmbushMark.
+  const waylaid: { key: string; x: number; y: number }[] = []
   const stub = pitch > 0 ? mouthStub(pitch) : null
   const leaving = isOneOf(run.phase, ['walk', 'rocket', 'retreat', 'falling', 'over'])
   // Nothing on the canvas while the card is up. Not hidden behind it — not drawn at all:
@@ -579,14 +676,25 @@ export function ArcadeGame({
         lit: chosen,
         // A chosen way is already drawn and stays: after the arrival commits it is the first
         // way of the trail, under the same key and with the same geometry — so the handover
-        // costs not a frame.
-        state: chosen ? 'steady' : leaving ? 'withering' : 'growing',
+        // costs not a frame. A way whose village has given up trims back into the crossroad
+        // with it, and by the same wither a refused way uses — the two are one thing
+        // happening for different reasons, and a road still drawn to a town that is gone is
+        // a road to nowhere.
+        state: chosen
+          ? 'steady'
+          : leaving || run.expired.includes(way.to)
+            ? 'withering'
+            : 'growing',
         creepMs: null,
         creepFrom: 0,
         delay: i * STAGGER_MS,
         fade: 1,
         gradientId: gradientFor(way.to),
       })
+      if (run.waylaidAt(way.to)) {
+        const at = splinePoint(spline, AMBUSH_ALONG)
+        waylaid.push({ key: way.to, x: herePt.x + at.x, y: herePt.y + at.y })
+      }
       buds.push({
         key: way.to,
         x: herePt.x + spline.toX,
@@ -659,7 +767,10 @@ export function ArcadeGame({
   const travelling = (): { spline: Spline | null; x: number; y: number } => {
     if (pitch === 0 || here === undefined) return { spline: null, x: 0, y: 0 }
     const standingAt = pointsOf(here.pos, pitch)
-    if (isOneOf(run.phase, ['walk', 'rocket']) && run.moving !== null) {
+    // The four beats of an ambush ride the same way a walk does, from the same crossroad:
+    // the hero never arrived anywhere, it was stopped in the middle of the road — and the
+    // way back out of that is the same curve walked the other way.
+    if (isOneOf(run.phase, ON_A_WAY) && run.moving !== null) {
       return { spline: splineFor(run.moving, here.heading, pitch), ...standingAt }
     }
     if (run.phase === 'retreat' && run.moving !== null && run.parent !== undefined) {
@@ -700,12 +811,9 @@ export function ArcadeGame({
   const hero = travelling()
   // Where the hero is *drawn*. `hero.x/.y` is the crossroad the way it is on leaves, which
   // is a frame rather than a place — and the warriors have to walk at the hero itself.
-  // Read at the stand-off, which is where it holds for the whole of a fight, and read
-  // without the sway — the way's breath moves this point by a couple of points out of the
-  // hundred and thirty it stands from the crossroad behind, and reading it off the clock
-  // would mean carrying the spline into the warriors' own worklet for that.
+  // Read at the stand-off, which is where it holds for the whole of a fight.
   const stand =
-    hero.spline === null ? { x: 0, y: 0 } : splinePoint(hero.spline, frame.standoff, 0)
+    hero.spline === null ? { x: 0, y: 0 } : splinePoint(hero.spline, frame.standoff)
 
   // What the land is, where the hero is standing. A pure function of the world and the run's
   // seed — see hooks/use-arcade-land.ts for why the answers are kept.
@@ -839,12 +947,11 @@ export function ArcadeGame({
                       lit={stem.lit}
                       state={stem.state}
                       delay={stem.delay}
-                      clock={clock}
                       creepMs={stem.creepMs}
                       creepFrom={stem.creepFrom}
                       fade={stem.fade}
                       gradientId={stem.gradientId}
-                      aheadInk={MAP_INK.line}
+                      aheadInk={WAY_INK}
                       amber={AMBER}
                       ember={EMBER}
                     />
@@ -883,6 +990,16 @@ export function ArcadeGame({
                     />
                   ))}
                 </Animated.View>
+                {waylaid.map((mark) => (
+                  <AmbushMark
+                    key={mark.key}
+                    x={mark.x}
+                    y={mark.y}
+                    sheet={sheet}
+                    face={SURFACE}
+                    line={MAP_INK.line}
+                  />
+                ))}
                 {skipped !== null && (
                   <ArcadeStrike
                     // Keyed on the beat, so each strike is its own word rather than one view
@@ -913,6 +1030,22 @@ export function ArcadeGame({
                     // The one red on this screen, which is arcade's own first stop. A
                     // siege does not get a second — see the design guide.
                     blood={EMBER}
+                    face={SURFACE}
+                  />
+                )}
+                {/* The men on the road, round the hero they are closing on. Outside the
+                group above for the reason the siege's field is: the country steps back while
+                a fight is on, and what is left to look at is the fight. */}
+                {run.ambush !== null && pitch > 0 && (
+                  <AmbushField
+                    ambush={run.ambush}
+                    now={now}
+                    turn={camTurn}
+                    heroX={hero.x + stand.x}
+                    heroY={hero.y + stand.y}
+                    ground={road.ground}
+                    ink={PIE_INK}
+                    line={MAP_INK.line}
                     face={SURFACE}
                   />
                 )}

@@ -85,6 +85,14 @@ export function ArcadeSection() {
         <GalleryButton label="RAZE" disabled={!dev.inSiege} onPress={dev.actions.raze} />
       </Group>
 
+      <Group title="AMBUSH">
+        <GalleryButton
+          label="AMBUSH NOW"
+          disabled={!dev.canAmbush}
+          onPress={dev.actions.ambushNow}
+        />
+      </Group>
+
       <Group title="DEPTH">
         {DEPTH_STEPS.map((steps) => (
           <GalleryButton

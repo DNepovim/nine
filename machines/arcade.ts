@@ -1,3 +1,4 @@
+import { AMBUSH_CHANCE } from '@/constants/ambush'
 import { settlementName } from '@/lib/place-names'
 import { idSeed, seeded, type Rng } from '@/lib/rng'
 import { parTable, speedFactor } from '@/machines/scoring'
@@ -118,6 +119,21 @@ export type Crossroad = {
   // walked into. Decided when this crossroad is created — that is, when the fan that
   // offers it is grown — so a retreat gives back the same walls it left.
   fortified: boolean
+  // Whether the way *into* here has bandits standing on it. The map is a tree, so a
+  // crossroad has exactly one way in — which is what lets a road be named by the place it
+  // leads to rather than by a key of its own. Decided with the walls and for the same
+  // reason, and cleared when the road is: a cleared road is clear for the rest of the run.
+  ambushed: boolean
+  // Which of that road's bandits are already down, from a meeting the hero was driven off
+  // — the ids, so the band can be dealt again minus the men it lost.
+  //
+  // Three states in one field, and the third is the one that earns it. **Null** is a road
+  // the hero has never met: nothing on the fan says it is held, because an ambush that
+  // announced itself would not be one. **Empty** is a road met and fled with nobody cut
+  // down — which is a real way to lose a fight, and has to read differently from never
+  // having been there. And a list is a road worn down by that much. Null again when the
+  // road is cleared, by which point it is answering about a fight that can never happen.
+  cutDown: readonly string[] | null
   // How many fans in a row up this branch offered no walls. Carried rather than counted,
   // because the map is a tree: there is no sequence to look back along, only a parent.
   dry: number
@@ -162,6 +178,10 @@ export function newMap(seed: number): ArcadeMap {
       from: null,
       depth: 0,
       fortified: false,
+      // Nothing was walked to reach the first crossroad, so there is no road behind it to
+      // be held — and the stub down to the mouth is not a way anyone walks up.
+      ambushed: false,
+      cutDown: null,
       dry: 0,
       heading: UP,
       pos: { x: 0, y: 0 },
@@ -256,6 +276,24 @@ export function openCrossroad(
   const offers = !at.fortified && (at.dry >= FORT_DRY_MAX || fortRng() < FORT_CHANCE)
   const walled = offers ? Math.floor(fortRng() * values.length) : -1
 
+  // Bandits, on a stream of their own — the same arrangement the walls have, and for the
+  // same reason: a seed that walked a fan before the roads had men on them walks the same
+  // fan now.
+  //
+  // Three guards, and each one is a decision rather than a safety rail. Not out of a
+  // crossroad the hero was itself ambushed to reach, so a run is never two fights in a row
+  // with nothing between them. Not out of the first crossroad, so a player meets what a
+  // crossroad *is* before they meet a road that bites. And never the walled way, which is
+  // already a fight — walls are announced and bandits are not, and stacking the unannounced
+  // one on top of the announced one would make the warning a lie.
+  const banditRng = rngFor(seed, `ambush:${id}`)
+  const waylaid = !at.ambushed && at.depth > 0 && banditRng() < AMBUSH_CHANCE
+  // Rolled over the ways that are *not* the walled one rather than over all of them and
+  // re-rolled on a clash. A re-roll would land more often on a short fan than on a long
+  // one, which would quietly make two-way crossroads the safe ones.
+  const open = values.map((_, i) => i).filter((i) => i !== walled)
+  const ambushedWay = waylaid ? (open[Math.floor(banditRng() * open.length)] ?? -1) : -1
+
   // The clocks, on a stream of their own — the same arrangement the walls have, and for
   // the same reason: a seed that walked a fan before villages had clocks walks the same fan
   // now. One way keeps the crossroad's whole clock so that a fan is never uniformly
@@ -295,6 +333,8 @@ export function openCrossroad(
       ways: [],
       name: settlementName(rngFor(seed, `name:${way.to}`)),
       fortified: i === walled,
+      ambushed: i === ambushedWay,
+      cutDown: null,
       dry: offers ? 0 : at.dry + 1,
     }
   })

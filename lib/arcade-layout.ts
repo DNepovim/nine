@@ -1,7 +1,8 @@
+import { AMBUSH_ALONG, AMBUSH_AT, GROUND_MARGIN, GROUND_MIN } from '@/constants/ambush'
 import { ANCHOR } from '@/constants/arcade'
 import { FIELD_MIN, HERO_AT, SIEGE_ZOOM, SKY, WALL_AT } from '@/constants/siege'
 import { tiltedAt, type Sheet } from '@/lib/arcade-tilt'
-import { idSeed, type ArcadeWay } from '@/machines/arcade'
+import { type ArcadeWay } from '@/machines/arcade'
 
 // Arcade's geometry: a crossroad and its ways turned into points and curves, and the two
 // worklets that draw one and ride along it.
@@ -12,25 +13,10 @@ import { idSeed, type ArcadeWay } from '@/machines/arcade'
 // machines/arcade.ts holds the map in pitches, and this is the one place that knows how long
 // a pitch is.
 
-const TAU = Math.PI * 2
-
-// How far along the way each control point sits, and how much of the sway the far one takes.
-// The near control leans along the way in and the far one along the way out, which is what
-// makes two ways meeting at a crossroad read as one continuous line rather than as a corner.
+// How far along the way each control point sits. The near control leans along the way in and
+// the far one along the way out, which is what makes two ways meeting at a crossroad read as
+// one continuous line rather than as a corner.
 const CONTROL = 0.42
-const FAR_SWAY = 0.55
-
-// How far a way bends as it breathes, as a fraction of its own length. Small: this is meant
-// to read as a living line, not as a wobble.
-const SWAY = 0.06
-
-// The window each way's sway runs in. A way takes its own period from this range and its own
-// phase, so a fan of four breathes rather than pulsing in step.
-const PERIOD_MIN = 2600
-const PERIOD_STEPS = 9
-const PERIOD_STEP = 100
-const PHASE_STEPS = 17
-const PHASE_STEP = 0.37
 
 // How many segments a length measurement samples. The length only has to be long enough to
 // set a dash pattern that can cover the whole way, so a close answer is plenty.
@@ -53,15 +39,9 @@ export type Spline = {
   c1y: number
   c2x: number
   c2y: number
-  // The unit normal of the way, which is the direction its sway bends the curve in.
-  nx: number
-  ny: number
-  amp: number
   // Roughly how long the curve is. The draw-on and the wither are measured against it: a
   // dash this long can hide the whole way.
   length: number
-  period: number
-  phase: number
 }
 
 export const pitchFor = (canvasHeight: number): number => canvasHeight * PITCH
@@ -107,40 +87,68 @@ export function siegeFrame(canvasHeight: number, reach: number): SiegeFrame {
   }
 }
 
+// How an ambush is framed, worked out from the canvas and the way the hero is walking.
+//
+// Two answers like a siege's, and for a different reason in each case. A siege lifts a wall
+// to the top of the canvas and leaves the ground under it; an ambush has no near side and no
+// far one — the men come from every direction at once — so what the camera has to do is put
+// the hero in the *middle* and leave as much room round it on every side as the canvas has.
+//
+// `lift` is what carries the hero there. The sheet puts the way's far village on the anchor
+// as it always does, and the hero is standing short of it by however much of the way is
+// left, drawn at the siege's own zoom; the lift is whatever it takes to move that point to
+// `AMBUSH_AT`. Worked backwards from the hero rather than named, for the same reason a
+// siege's stand-off is: the ways are not all one length, and what has to come out the same
+// on the screen is the picture.
+//
+// `ground` is how far the furthest bandit stands, in map points. The lesser of the canvas's
+// two half-dimensions, because the band is a circle and a circle fits inside the shorter
+// side — through the zoom, since that is what the sheet is drawn under, and short of the
+// edge by the room a man and his number need.
+export type AmbushFrame = {
+  lift: number
+  // Where along the way the hero stops. A fixed share rather than a worked-out one: what has
+  // to be constant here is the ring round the hero, which the ground answers for, and the
+  // spring point is free to be the same fraction of every way.
+  standoff: number
+  ground: number
+}
+
+export function ambushFrame(
+  canvasWidth: number,
+  canvasHeight: number,
+  reach: number,
+): AmbushFrame {
+  const short = Math.min(canvasWidth, canvasHeight)
+  const left = (1 - AMBUSH_ALONG) * reach * pitchFor(canvasHeight) * SIEGE_ZOOM
+  return {
+    lift: canvasHeight * AMBUSH_AT - canvasHeight * ANCHOR - left,
+    standoff: AMBUSH_ALONG,
+    ground: Math.max(GROUND_MIN, short / 2 / SIEGE_ZOOM - GROUND_MARGIN),
+  }
+}
+
 // Above its callers rather than below them: the worklet transform rewrites every function in
 // here into a `const`, so a forward reference that would have hoisted throws on the way in.
 //
 // The curve always starts at the crossroad, so the first term of the cubic is zero and is
 // left out.
-function bezierAt(
-  s: Spline,
-  nearX: number,
-  nearY: number,
-  farX: number,
-  farY: number,
-  t: number,
-): Point {
+function bezierAt(s: Omit<Spline, 'length'>, t: number): Point {
   'worklet'
   const u = 1 - t
   const near = 3 * u * u * t
   const far = 3 * u * t * t
   const end = t * t * t
   return {
-    x: near * (s.c1x + nearX) + far * (s.c2x + farX) + end * s.toX,
-    y: near * (s.c1y + nearY) + far * (s.c2y + farY) + end * s.toY,
+    x: near * s.c1x + far * s.c2x + end * s.toX,
+    y: near * s.c1y + far * s.c2y + end * s.toY,
   }
 }
 
-// How far the way is bent right now. One sine per way, off the screen's own clock, so every
-// way is at a different point in its own breath.
-function swayAt(s: Spline, clockMs: number): number {
-  'worklet'
-  return Math.sin((clockMs / s.period) * TAU + s.phase) * s.amp
-}
-
-// The way as an SVG path, swayed to wherever its breath has got to and drawn where the tilt
-// puts it. Built on the UI thread from `animatedProps`, so a way goes on breathing whatever
-// React is doing.
+// The way as an SVG path, drawn where the tilt puts it. A way is a road on a map and holds
+// still; what moves it is the camera, and nothing else. Built on the UI thread all the same,
+// because the camera is a shared value and a way has to be redrawn under it whatever React
+// is doing.
 //
 // `cx`/`cy` say where the crossroad sits inside the box the path is drawn in — the curve is
 // measured from the crossroad, and the box has to put that origin somewhere all of its ways
@@ -152,11 +160,10 @@ function swayAt(s: Spline, clockMs: number): number {
 // on this sheet allowed to come out distorted. It has to be: a way is a line between two
 // towns, both of its ends are placed by the tilt, so a way running up the map must be drawn
 // short enough that its tip is still the point its town was drawn to. What it costs is a
-// curve that is no longer exactly the curve the spline describes — over the pitch a way runs,
-// less than its own breath already bends it.
+// curve that is no longer exactly the curve the spline describes — a couple of points over
+// the hundred and thirty a way runs.
 export function splinePath(
   s: Spline,
-  clockMs: number,
   cx: number,
   cy: number,
   sheet: Sheet,
@@ -164,14 +171,9 @@ export function splinePath(
   y: number,
 ): string {
   'worklet'
-  const k = swayAt(s, clockMs)
   const root = tiltedAt(sheet, x, y)
-  const c1 = tiltedAt(sheet, x + s.c1x + s.nx * k, y + s.c1y + s.ny * k)
-  const c2 = tiltedAt(
-    sheet,
-    x + s.c2x + s.nx * k * FAR_SWAY,
-    y + s.c2y + s.ny * k * FAR_SWAY,
-  )
+  const c1 = tiltedAt(sheet, x + s.c1x, y + s.c1y)
+  const c2 = tiltedAt(sheet, x + s.c2x, y + s.c2y)
   const end = tiltedAt(sheet, x + s.toX, y + s.toY)
   // Off the crossroad's drawn place rather than off where it was laid out, the box having
   // been carried there already.
@@ -183,21 +185,19 @@ export function splinePath(
   )
 }
 
-// Where on the way the hero is, read at the same moment the way is drawn — so it rides the
-// line rather than crossing it.
-export function splinePoint(s: Spline, t: number, clockMs: number): Point {
+// Where on the way the hero is: the same curve the way is drawn from, so it rides the line
+// rather than crossing it.
+export function splinePoint(s: Spline, t: number): Point {
   'worklet'
-  const k = swayAt(s, clockMs)
-  return bezierAt(s, s.nx * k, s.ny * k, s.nx * k * FAR_SWAY, s.ny * k * FAR_SWAY, t)
+  return bezierAt(s, t)
 }
 
-// Roughly how long a curve is, sampled without its sway — the breath changes the length by
-// well under a percent.
-function splineLength(s: Spline): number {
+// Roughly how long a curve is.
+function splineLength(s: Omit<Spline, 'length'>): number {
   let total = 0
   let prev: Point = { x: 0, y: 0 }
   for (let i = 1; i <= SAMPLES; i++) {
-    const at = bezierAt(s, 0, 0, 0, 0, i / SAMPLES)
+    const at = bezierAt(s, i / SAMPLES)
     total += Math.hypot(at.x - prev.x, at.y - prev.y)
     prev = at
   }
@@ -209,8 +209,6 @@ export function splineFor(way: ArcadeWay, heading: number, pitch: number): Splin
   const d = pitch * way.reach
   const toX = Math.cos(way.angle) * d
   const toY = Math.sin(way.angle) * d
-  const chord = Math.hypot(toX, toY) || 1
-  const seed = idSeed(way.to)
   const shape = {
     toX,
     toY,
@@ -218,15 +216,9 @@ export function splineFor(way: ArcadeWay, heading: number, pitch: number): Splin
     c1y: Math.sin(heading) * d * CONTROL,
     c2x: toX - Math.cos(way.angle) * d * CONTROL,
     c2y: toY - Math.sin(way.angle) * d * CONTROL,
-    nx: -toY / chord,
-    ny: toX / chord,
-    amp: d * SWAY,
-    period: PERIOD_MIN + (seed % PERIOD_STEPS) * PERIOD_STEP,
-    phase: (seed % PHASE_STEPS) * PHASE_STEP,
   }
-  // The length is of the curve, so it can only be measured once the curve exists. The chord
-  // stands in for it in the one call that measures it, and is replaced by the answer.
-  return { ...shape, length: splineLength({ ...shape, length: chord }) }
+  // The length is of the curve, so it can only be measured once the curve exists.
+  return { ...shape, length: splineLength(shape) }
 }
 
 // The stub the mouth hangs on: a short way straight down out of the first crossroad, ending

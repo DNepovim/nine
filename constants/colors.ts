@@ -110,6 +110,16 @@ export const GRAYSCALE = ['#5F5C6E', '#7A7688', '#95919F', '#B0ACB8'] as const
 // token itself, so it is invisible by construction.
 export const MAP_INK = { line: '#6A655C', hatch: '#8E8A80', faint: '#BDB8AC' } as const
 
+// A way the hero has not walked yet, which is the one thing on the sheet drawn in earth
+// rather than in the map's own grey. Beside `MAP_INK` rather than inside it, because the
+// difference is the point: the country is drawn in `line` and the roads through it are
+// drawn in this, so a fan reads as the thing to answer and the land reads as the place it
+// crosses. A little more present than `line` — 5.5:1 on the parchment against its 5:1,
+// which is the right way round for the only mark on the sheet a player is choosing between
+// — and nowhere near the amber a walked way is lit in, which is 2:1 and could never be
+// mistaken for it.
+export const WAY_INK = '#7A5A3A'
+
 // Arcade's amber as *text*, which `gradientOf('arcade')` cannot be — same reason and same
 // shape as GOLD_INK. #FF8C00 on the parchment surface is about 2:1: a fine stroke, a fine
 // fill, and an invisible label. So the one place arcade's colour has to *be* the text —
