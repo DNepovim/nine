@@ -37,6 +37,7 @@ The first lines of `spec.md` are the state of the item. Nothing else holds it, a
 # Haptics on the dial
 
 Slug: dial-haptics
+Ticket: NNN-12
 Stage: spec
 Next: /build dial-haptics
 Track: full
@@ -50,6 +51,8 @@ Started: 2026-10-07
   the backwards command here.
 - **Track** — `small` or `full`, decided by `shape`.
 - **Branch** — written by `shape` as an intention; `ship` is what actually creates it.
+- **Ticket** — the Jira key, written by **`ticket`**. Absent on work that never got
+  one; never invented by another stage.
 
 ## Step 0 — Load (every skill does this, before anything else)
 
