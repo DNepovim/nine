@@ -1,8 +1,7 @@
 import Animated, { useAnimatedProps, type SharedValue } from 'react-native-reanimated'
 import Svg, { Circle } from 'react-native-svg'
 
-import { TOWN_BOX } from '@/components/game/town-mark'
-import { BUD_SIZE } from '@/constants/arcade'
+import { CLOCK_RING, TOWN_BOX } from '@/lib/town-marks'
 
 // How long the village at a way's end will hold out, drawn as a ring draining inside its
 // wall.
@@ -24,8 +23,9 @@ const AnimatedCircle = Animated.createAnimatedComponent(Circle)
 
 const MID = TOWN_BOX / 2
 // Inside the wall, where the amber ring has always sat: the merlons and the towers have
-// already said wall, and a second ring outside them would only crowd the fan.
-const R = BUD_SIZE / 2 - 1 - 3.5
+// already said wall, and a second ring outside them would only crowd the fan. The radius is
+// the hand's — see lib/town-marks.ts, which draws every other line of the mark clear of it.
+const R = CLOCK_RING
 const CIRCUMFERENCE = 2 * Math.PI * R
 const STROKE = 1.6
 

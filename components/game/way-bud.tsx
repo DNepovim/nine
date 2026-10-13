@@ -10,11 +10,12 @@ import Animated, {
   type SharedValue,
 } from 'react-native-reanimated'
 
-import { TOWN_BOX, TownMark } from '@/components/game/town-mark'
+import { TownMark } from '@/components/game/town-mark'
 import { VillageClock } from '@/components/game/village-clock'
 import { WALK_MS, WITHER_MS } from '@/constants/arcade'
 import { mapLabel } from '@/constants/theme'
 import { tiltedAt, type Sheet } from '@/lib/arcade-tilt'
+import { NAME_BELOW, TOWN_BOX } from '@/lib/town-marks'
 
 // The target at a way's end.
 //
@@ -62,7 +63,7 @@ export function WayBud({
   value: number
   // What the place at the end of this way is called — see lib/place-names.ts.
   name: string
-  // The crossroad's seed, which is how many merlons its wall has.
+  // The crossroad's seed, which is the hand its village is drawn by — see TownMark.
   seed: number
   // Whether there is room for the name. Two towns on the same fan can stand close enough
   // that their names would cross, and a crossed name is worse than no name — the place is
@@ -138,13 +139,17 @@ export function WayBud({
     ],
   }))
 
-  // The name only turns. Hung off the town's own edge though, so it stays tucked under a
-  // wall that has been drawn smaller rather than floating clear of it.
+  // How far under the middle the name hangs: clear of the lowest thing this kind of
+  // settlement reaches down to, which a village and a wall do not agree about.
+  const nameAt = NAME_BELOW[fortified ? 'walled' : 'open']
+
+  // The name only turns. Hung off the settlement's own edge though, so it stays tucked under
+  // a village that has been drawn smaller rather than floating clear of it.
   const label = useAnimatedStyle(() => {
     const lie = tiltedAt(sheet.value, x, y)
     return {
       transform: [
-        { translateY: -(1 - lie.scale) * (TOWN_BOX / 2 + 2) },
+        { translateY: -(1 - lie.scale) * nameAt },
         { rotate: `${-sheet.value.turn}rad` },
       ],
     }
@@ -190,7 +195,7 @@ export function WayBud({
       {named && (
         <Animated.View
           className="absolute"
-          style={[{ left: -54, top: TOWN_BOX / 2 + 2, width: 108 }, label]}
+          style={[{ left: -54, top: nameAt, width: 108 }, label]}
         >
           <Text
             selectable={false}
