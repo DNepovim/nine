@@ -205,3 +205,74 @@ begin
                   time_ms   = excluded.time_ms;
 
 end $$;
+
+-- ── The person at the keyboard ──────────────────────────────────────────────────
+-- Everything above is dummy data: eight invented players with names, mottoes and
+-- boards, so the leaderboards have something in them. None of it is *you*.
+--
+-- A device signing in to the local stack gets an **anonymous** account with a random
+-- id, so there is no uuid to hand a nickname and a role to ahead of time. Before this,
+-- every reset left the operator as a nameless, roleless player: no ADMIN link, no DEV
+-- link, and a profile screen with a blank where the name goes. The fix has to be a
+-- trigger, because the row does not exist until the app opens.
+--
+-- Scoped to profiles that are **not** from the seed, and that exclusion is what keeps
+-- the SQL tests honest: `features.sql` proves that a player with no role reaches no
+-- features, and it needs a roleless profile to prove it with. The eight seeded ids all
+-- carry the `5eed0000-` prefix, so excluding them leaves the tests their subject and
+-- still catches every real sign-in.
+--
+-- Local only, twice over: this file is never run by `supabase db push`, and the guard
+-- below refuses regardless unless the database carries the well-known dev JWT secret.
+
+create or replace function public.is_local_stack() returns boolean
+  language sql stable set search_path = public as $dev$
+  select coalesce(current_setting('app.settings.jwt_secret', true), '')
+       = 'super-secret-jwt-token-with-at-least-32-characters-long'
+$dev$;
+
+-- A nickname derived from the id, so it is stable for a given profile and needs no
+-- counter. `nickname` is unique and shape-checked (3–16 chars, no emoji), which six hex
+-- characters behind a `DEV_` prefix satisfies at ten. Widens to eight on the vanishingly
+-- unlikely collision, and gives up rather than looping forever.
+create or replace function public.dev_nickname(p_id uuid) returns text
+  language plpgsql stable set search_path = public as $dev$
+declare
+  candidate text;
+begin
+  foreach candidate in array array[
+    'DEV_' || upper(substr(md5(p_id::text), 1, 6)),
+    'DEV_' || upper(substr(md5(p_id::text), 1, 8))
+  ] loop
+    if not exists (select 1 from public.profiles where nickname = candidate) then
+      return candidate;
+    end if;
+  end loop;
+  return null;
+end
+$dev$;
+
+-- Named for what it grants rather than for the role alone: a nickname and a role are one
+-- act here, which is "make this profile usable", and splitting them into two triggers
+-- would be two things to remember instead of one.
+create or replace function public.dev_identity_by_default() returns trigger
+  language plpgsql security definer set search_path = public as $dev$
+begin
+  if not public.is_local_stack() then return new; end if;
+  if new.id::text like '5eed0000-%' then return new; end if;
+
+  update public.profiles
+     set role     = coalesce(role, 'admin'),
+         nickname = coalesce(nickname, public.dev_nickname(new.id))
+   where id = new.id;
+  return new;
+end
+$dev$;
+
+-- The old name, from when this only granted a role. Dropped so a stack seeded by the
+-- previous version does not end up firing both.
+drop trigger if exists dev_admin_by_default on public.profiles;
+drop trigger if exists dev_identity_by_default on public.profiles;
+create trigger dev_identity_by_default
+  after insert on public.profiles
+  for each row execute function public.dev_identity_by_default();
