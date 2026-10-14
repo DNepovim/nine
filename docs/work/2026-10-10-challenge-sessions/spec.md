@@ -1,12 +1,12 @@
 # Challenge sessions
 
 Slug: challenge-sessions
-Stage: build
-Next: /verify challenge-sessions — phase two, re-verifying criteria 10, 15 and 16
+Stage: verify
+Next: /build challenge-sessions — criterion 21, the game-over rung badge
 Track: full
 Branch: feat/challenge-sessions
 Started: 2026-10-10
-Phases: one (admin plans a session) — verified, 15 pass / 1 partial · two (a player meets it) — rebuilt after review · three (what it is worth keeping) — shaped
+Phases: one (admin plans a session) — verified, 15 pass / 1 partial · two (a player meets it) — re-verified, 10/15/16 pass, criterion 21 open · three (what it is worth keeping) — shaped
 
 ## Problem
 
@@ -1053,6 +1053,14 @@ floor moves to `tester` as part of this phase so the feature can be looked at; i
 17. How to Play has a challenges chapter, it appears only with the `challenges` feature,
     and it does not say the dial has nine keys.
 18. `pnpm check` green, Czech included, and `pnpm db:test` green.
+19. The hearts row does not play a losing-heart animation for a life the player never
+    had when a challenge run starts from the card. (Filed by verify; carried to its own
+    work item — the row is hardcoded to three slots.)
+20. Superseded by 21, which is the half of it that is still open.
+21. A challenge's game-over screen names **no rung**, the way its pause screen already
+    names none: `BoardBadges` is handed a `difficulty` only where
+    `traitsOf(gameMode).usesDifficulty`, so a run of a mode that pins its own rung is
+    badged with the mode alone. A run played at Hard is never badged `EASY`.
 
 ## Tests
 

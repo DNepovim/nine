@@ -182,6 +182,7 @@ job and it is the bulk of what is left.
 - [x] 12. `app/(tabs)/index.tsx` — `runSession`, START from the modal, and the session board on game over
 - [x] 13. `components/overlays/how-to-play-overlay.tsx` — the challenges chapter, gated on `challenges`
 - [x] 14. `constants/buttons.ts` + `CLAUDE.md` + `pnpm i18n:extract` + Czech; `pnpm check`
+- [ ] 15. **Reopened by verify (criterion 21).** `components/overlays/game-over-overlay.tsx:297` — pass `difficulty` to `BoardBadges` only where `traitsOf(gameMode).usesDifficulty`, matching `paused-overlay.tsx:141`. No change needed in `board-badges.tsx`, which already reads an omitted `difficulty` as a run with no rung to record. Glance at `paused-overlay.tsx:202` while there — same root.
 
 ## Verification log — phase two
 
@@ -337,9 +338,64 @@ Two things `verify` should be told before it starts. The feature is `active = fa
 is seeded but the master switch gates it. And `FOUR_KEYS` is the only challenge in the
 catalog, so a session has to be planned against it to see anything at all.
 
-## Verification log — phase two
+## Verification log — phase two, round two
 
-_(verify fills this in)_
+**Verdict: 3 re-verified PASS (10, 15, 16), 0 FAIL among them — but one new criterion, 21,
+FAILS.** Hands **backwards**: criterion 21 is the display half of a defect whose submit half
+round two fixed as F3, and it is player-visible.
+
+Scope was the three criteria `Next:` named. `pnpm check` green on a clean tree at `c7f16db`
+(0 errors, 218 files, 3514 tests; `i18n:verify` 703 messages). `pnpm db:test` green — note
+it passed **3** SQL files, not the four the first phase-two log claimed; only three exist and
+`db-test.js` globs the directory, so that figure was wrong when written rather than a
+regression now.
+
+| #   | Criterion                             | Result | Evidence                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
+| --- | ------------------------------------- | ------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 10  | START, the score, the game-over board | PASS   | The gesture gap the first pass left SKIPPED is closed on the **machine** instead of the dial: a scratch actor sent `SET_MODE` → `START` → `ADD_TARGET 4` → `PRESS index 3` scored `hits: 1`, `score > 0`, resolved `lives: 2` from the challenge's own rules, and the score survived two expiries to `gameOver` unchanged. F1 confirmed at source — `endRunEarly` now reads `if (!onBoard && runSession === null) return`, so a session run passes the early return while `countRun` stays behind `onBoard`. F3 confirmed at all three submit sites (`index.tsx:919, 1081, 1195`), each passing `rules.difficulty`; a scratch test pinned `runRules(challenge, picked).difficulty === 'hard'` at all three intro picks. |
+| 15  | Fortune                               | PASS   | End to end, both halves. **Server:** `player_profile` in psql returns `sessionTotals: []` for a player with no session rows — the key present and empty, so the `?? []` stillness holds — and `[{"difficulty":"hard","scoreSum":1500}]` after one 1500 Hard run. **Client:** a scratch test over `shapeProfile` + `lifetimeOf` showed the absent key and `[]` giving byte-identical `Lifetime` objects; the rise being exactly `scoreSum × scoreWeight` at all three rungs (1500 / 750 / 3000); `runs`, `hits`, `score`, `timeMs`, `accSum`, `spdSum` all unmoved; and an unrecognised rung dropped rather than priced.                                                                                                 |
+| 16  | Offline and refusal                   | PASS   | F8's `P0001` match verified against the **live server**, not against the copy: a plpgsql probe called `submit_session_score` on a session closed past its grace, one not yet open, and one that does not exist — all three raised `SQLSTATE=P0001`. The old sentence-match on `'has closed'` would have logged the latter two as server bugs. `isNetworkFailure` returns false for all three sentences and true for five real network failures. Queue shape confirmed at source: `sendScore` routes on `entry.sessionId` so first attempt and retry cannot disagree, and `applySent` leaves an offline entry pending while a refusal counts toward `MAX_PUBLISH_ATTEMPTS = 5` and then retires it.                      |
+
+### Found past the criteria
+
+- **21 (new, FAIL): a challenge's game-over screen still names a rung the challenge never
+  offered.** This is verify's old finding 20, and round two only fixed half of it. F3 moved
+  the three **submit** sites to `rules.difficulty`; the **display** was left reading the
+  machine's context. `game-over-overlay.tsx:297` passes `difficulty={difficulty}`, and that
+  `difficulty` is destructured straight off `state.context` (`index.tsx:423`) — which
+  `SET_MODE` does not pin. Proved with a scratch actor: after `SET_DIFFICULTY easy` →
+  `SET_MODE challenge/four-keys` → `START`, `context.difficulty` is `easy` while
+  `runRules(...).difficulty` is `hard`. So a run played and posted at Hard is badged
+  `FOUR KEYS · EASY`.
+
+  What makes this a clean fix rather than a judgement call: **the pause screen already
+  guards it.** `paused-overlay.tsx:141` passes
+  `difficulty={traitsOf(gameMode).usesDifficulty ? difficulty : undefined}`, so mid-run the
+  badge correctly reads `FOUR KEYS` alone. The two screens disagree about the same run, and
+  the game-over site wants the same guard. `BoardBadges` already treats an omitted
+  `difficulty` as "a run with no difficulty to record" (`board-badges.tsx:38-41, 50`), so
+  nothing new is needed there.
+
+- **Not a defect, and worth recording because it looked like one.** The `+N TO YOUR FORTUNE`
+  line on the same screen computes `fortuneOf(score, difficulty)` off that same context
+  rung — but it is gated by `isOneOf(gameMode, SCORED_MODES)` (`game-over-overlay.tsx:320`),
+  which a challenge is never in. **No wrong figure is shown to anybody.**
+
+- **A gap rather than a bug, for `shape` to rule on.** Criterion 15 now proves a challenge's
+  points _do_ reach the fortune, but because that line is gated on `SCORED_MODES` the
+  game-over screen never tells a challenge player so. The comment above it — "Only where
+  there is a fortune to add to" — was true when written and is not any more.
+
+- **`paused-overlay.tsx:202`** passes an unguarded `difficulty={difficulty}` to a second
+  reader. Not chased; worth a glance when 21 is fixed, since it is the same root.
+
+### Environment
+
+`pnpm db:test` begins with `supabase db reset`, which **wiped the local database** — the live
+`four-keys` session, the operator's `kakak` profile and its `admin` role all went with it, and
+`challenges.active` is back to the migration default of `false`. Only the eight seed profiles
+remain, all with a null role. Nothing in this is state the feature needs; it is a fixture cost
+of running criterion 18's own command, and it has to be rebuilt by hand to drive the app again.
 
 ## Review — phases one and two
 
