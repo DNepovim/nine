@@ -37,6 +37,15 @@ export default defineConfig({
   test: {
     environment: 'node',
     include: ['**/*.test.ts'],
+    // `.claude/worktrees/` holds a checkout of this same repo per agent branch, so an
+    // unqualified `**/*.test.ts` swept 92 duplicate files — the suite ran twice over,
+    // reported every failure twice, and put enough load on the run that the slowest test
+    // in it tipped past the 5s default and failed on time rather than on an assertion.
+    //
+    // Vitest's own defaults cover `node_modules` and `dist` and know nothing about this
+    // directory. Excluding it rather than narrowing `include`, so a test added anywhere
+    // in the repo proper is still picked up without a second list to maintain.
+    exclude: ['**/node_modules/**', '**/dist/**', '.claude/**'],
   },
   resolve: {
     alias: {

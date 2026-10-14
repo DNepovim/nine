@@ -151,6 +151,16 @@ describe('townMarks', () => {
 
   // SVG clips what leaves the box, and a cropped roof or a flag with its top cut off reads
   // as a drawing error rather than as a village.
+  // Its own timeout, and not because it is slow by accident: 400 seeds against two
+  // fortifications against every point of every mark is a few hundred thousand
+  // assertions, and vitest's per-expect overhead is most of the time. It ran at about
+  // 4.8s against the 5s default — passing alone and failing the moment anything else was
+  // running beside it, which reads as a flake rather than as the sweep it is.
+  //
+  // The narrower fix is to assert once on the furthest point rather than once per point.
+  // Left alone deliberately: a failure would then say "something left the box" instead of
+  // naming the seed and the point that did, and this test's whole value is that it names
+  // them.
   it('keeps the whole drawing inside the box', () => {
     const reach = TOWN_BOX / 2 - 0.7
     for (const seed of ALL) {
@@ -160,7 +170,7 @@ describe('townMarks', () => {
         }
       }
     }
-  })
+  }, 20_000)
 
   // The buildings stand around the clock, never across it: it drains inside them, and a
   // roof laid over it would take a bite out of the one mark that is the game speaking.
