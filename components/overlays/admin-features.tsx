@@ -7,11 +7,28 @@ import { DIM_INK } from '@/constants/colors'
 import { TYPE } from '@/constants/typography'
 import { listFeatures, setFeature, type AdminFeature } from '@/lib/admin/features'
 import { cn } from '@/lib/cn'
+import { nextVisibility, type Visibility } from '@/lib/features'
 
-// The one key nobody may switch off. The database refuses it too — a check constraint on
-// `features`, because it has to hold against a migration as well as against this screen
-// — and this is only so the switch does not look tappable.
+// The one key whose switch nobody may move, in either direction: hiding it locks every
+// admin out of the only screen that could put it back, and making it public puts the
+// ADMIN link in front of every player. The database refuses both too — a check
+// constraint on `features`, because it has to hold against a migration as well as
+// against this screen — and this is only so the switch does not look tappable.
 const PROTECTED = 'admin'
+
+// What each position says on the pill, and how loud it is drawn. Deliberately not
+// translated, the way the key beside it is not: the people who open this screen are the
+// people who write the catalog.
+//
+// The three read as a scale of how far a feature has got out: faint for nobody, outlined
+// for whoever holds it, filled for everybody. Filled is the loudest because public is
+// the one position that cannot be undone quietly — it is already in front of players by
+// the time anybody notices the row.
+const PILL: Record<Visibility, { label: string; box: string; ink: string }> = {
+  hidden: { label: 'HIDDEN', box: 'border-dim/30', ink: 'text-dim' },
+  private: { label: 'PRIVATE', box: 'border-strong', ink: 'text-primary' },
+  public: { label: 'PUBLIC', box: 'border-strong bg-strong', ink: 'text-on-strong' },
+}
 
 // What the note fields hold after a read. A draft beats what the server just said: a
 // note being typed in one row has to survive a switch being flipped in another, and
@@ -22,12 +39,12 @@ const mergeNotes = (
 ): Record<string, string> =>
   Object.fromEntries(rows.map((row) => [row.key, current[row.key] ?? row.note ?? '']))
 
-// One row with its switch already moved, for the optimistic half of a toggle.
-const withActive = (
+// One row with its switch already moved, for the optimistic half of a tap.
+const withVisibility = (
   rows: readonly AdminFeature[],
   key: string,
-  active: boolean,
-): AdminFeature[] => rows.map((row) => (row.key === key ? { ...row, active } : row))
+  visibility: Visibility,
+): AdminFeature[] => rows.map((row) => (row.key === key ? { ...row, visibility } : row))
 
 export function AdminFeatures({
   epoch,
@@ -105,32 +122,33 @@ export function AdminFeatures({
             <View key={row.key} className="mb-4">
               <View className="flex-row items-center">
                 <TrackedPressable
-                  id="admin.feature_active"
+                  id="admin.feature_visibility"
                   disabled={pending.has(row.key) || locked}
                   onPress={() => {
-                    const next = !row.active
+                    const next = nextVisibility(row.visibility)
                     // The switch moves on the tap. A write and a read stand between the
                     // press and the truth, and a control that shows nothing until both
                     // land is a control you press again.
-                    setRows((current) => withActive(current, row.key, next))
+                    setRows((current) => withVisibility(current, row.key, next))
                     void write(row.key, () =>
                       setFeature(row.key, next, note === '' ? null : note),
                     )
                   }}
+                  // A fixed width, because the three labels are three lengths and a key
+                  // that slid left every third tap read as the list redrawing rather
+                  // than as one switch moving.
+                  style={{ width: 68 }}
                   className={cn(
-                    'mr-2 rounded-lg border px-2.5 py-1',
-                    row.active ? 'border-strong bg-strong' : 'border-dim/30',
+                    'mr-2 items-center rounded-lg border py-1',
+                    PILL[row.visibility].box,
                     locked && 'opacity-40',
                   )}
                 >
                   <Text
                     selectable={false}
-                    className={cn(
-                      TYPE.rowLabel,
-                      row.active ? 'text-on-strong' : 'text-dim',
-                    )}
+                    className={cn(TYPE.rowLabel, PILL[row.visibility].ink)}
                   >
-                    {row.active ? 'ON' : 'OFF'}
+                    {PILL[row.visibility].label}
                   </Text>
                 </TrackedPressable>
                 <Text
@@ -141,10 +159,16 @@ export function AdminFeatures({
                   {locked ? ' 🔒' : ''}
                 </Text>
                 {/* Roles granting it, then people who actually reach it — the second
-                    counts overrides in, which is the number somebody about to flip the
-                    switch wants. */}
+                    counts overrides in, which is the number somebody about to move the
+                    switch wants. A public feature has no such pair: it reaches a
+                    population that grows with every player who opens the app, and the
+                    stack beside it has stopped deciding anything. */}
                 <Text selectable={false} className={cn(TYPE.value, 'text-dim')}>
-                  {row.roleCount} · {row.personCount}
+                  {row.visibility === 'public' ? (
+                    <Trans>everyone</Trans>
+                  ) : (
+                    `${row.roleCount} · ${row.personCount}`
+                  )}
                 </Text>
               </View>
 
@@ -172,7 +196,7 @@ export function AdminFeatures({
                   if (inFlight.current.has(row.key)) return
                   if (note !== (row.note ?? '')) {
                     void write(row.key, () =>
-                      setFeature(row.key, row.active, note === '' ? null : note),
+                      setFeature(row.key, row.visibility, note === '' ? null : note),
                     )
                   }
                 }}

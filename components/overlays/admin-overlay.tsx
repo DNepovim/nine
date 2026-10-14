@@ -28,10 +28,15 @@ type Section = 'hub' | 'access' | 'sessions'
 
 export function AdminOverlay({
   viewerId,
+  onPreview,
   onClose,
 }: {
   // Who is reading, handed through to the people list so it can say which row is theirs.
   viewerId: string | null
+  // Wear a role and go and look, handed through to the ROLES tab. Starting one takes this
+  // screen down — the caller does both, because the set a preview installs is the one the
+  // link back here is drawn from.
+  onPreview: (role: string | null, label: string | null) => void
   onClose: () => void
 }) {
   const [section, setSection] = useState<Section>('hub')
@@ -39,7 +44,9 @@ export function AdminOverlay({
     setSection('hub')
   }
 
-  if (section === 'access') return <AdminAccess viewerId={viewerId} onBack={toHub} />
+  if (section === 'access') {
+    return <AdminAccess viewerId={viewerId} onPreview={onPreview} onBack={toHub} />
+  }
   if (section === 'sessions') return <AdminSessions onBack={toHub} />
 
   return (

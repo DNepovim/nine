@@ -45,6 +45,23 @@ export async function loadRoleFeatures(
   return { keys: (res.data as string[] | null) ?? [], error: null }
 }
 
+// The resolved set a device would be handed if the person holding it had this role: the
+// stack, minus whatever is hidden, plus whatever is public. `null` is an ordinary player
+// with no role, and resolves to the public features alone.
+//
+// Not `loadRoleFeatures` above, which is the raw stack — the rows the ROLES screen ticks.
+// This is what those rows *come to*, which is a different question and the only one a
+// preview can be drawn from. Both come from SQL rather than being combined here; see
+// `features_as_role`, and the note in lib/features.ts about why the resolve has one home.
+export async function featuresAsRole(
+  role: string | null,
+): Promise<{ keys: string[]; error: string | null }> {
+  const res = await supabase.rpc('features_as_role', { p_role: role })
+  noteRequest(res.error)
+  if (res.error) return { keys: [], error: res.error.message }
+  return { keys: (res.data as string[] | null) ?? [], error: null }
+}
+
 export async function createRole(
   key: string,
   label: string,

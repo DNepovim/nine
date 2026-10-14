@@ -2,8 +2,8 @@
 -- but that no migration and no seed may contain.
 --
 -- Applied **after** a reset rather than during one, and that is the whole design. The
--- SQL tests assert the shipped defaults — `features.sql` pins `challenges.active` and
--- `multiplayer.active` to false, and needs a profile with no role at all to prove that a
+-- SQL tests assert the shipped defaults — `features.sql` pins `challenges` and
+-- `multiplayer` to hidden, and needs a profile with no role at all to prove that a
 -- roleless player reaches nothing — so putting any of this in `seed.sql` would make
 -- `pnpm db:test` fail on its own fixtures. The seed is what the tests read; this is what
 -- a person reads.
@@ -43,12 +43,16 @@ begin
     return;
   end if;
 
-  -- ── Every feature on ────────────────────────────────────────────────────────
-  -- The stack already grants these at all three rungs; only the master switch is off,
-  -- because shipping them on is a decision for the admin screen rather than for a
+  -- ── Every feature private rather than hidden ───────────────────────────────
+  -- The stack already grants these at all three rungs; only the switch is at hidden,
+  -- because shipping them further is a decision for the admin screen rather than for a
   -- migration. Locally there is nobody to decide, and a door that cannot be opened is
   -- the same as no door.
-  update public.features set active = true where not active;
+  --
+  -- Private, not public: an admin profile below reaches everything through its stack
+  -- anyway, and making the lot public here would take away the one thing these fixtures
+  -- exist to show — what an ordinary player sees.
+  update public.features set visibility = 'private' where visibility = 'hidden';
 
   -- ── A profile that can open them ────────────────────────────────────────────
   -- Three of the eight, not all: `features.sql` is not the only reader that wants a
@@ -111,8 +115,8 @@ begin
 
   select count(*) into n_admin from public.profiles where role is not null;
 
-  raise notice 'dev-fixtures: % features on, % profiles with a role, 1 live session + 1 teaser',
-    (select count(*) from public.features where active), n_admin;
+  raise notice 'dev-fixtures: % features reachable, % profiles with a role, 1 live session + 1 teaser',
+    (select count(*) from public.features where visibility <> 'hidden'), n_admin;
   raise notice 'dev-fixtures: new sign-ins get a DEV_ nickname and admin automatically';
 end
 $dev$;

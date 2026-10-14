@@ -6,6 +6,7 @@ import { PrimaryButton } from '@/components/primary-button'
 import { TrackedPressable } from '@/components/tracked-pressable'
 import { DIM_INK } from '@/constants/colors'
 import { TYPE } from '@/constants/typography'
+import { useFlag } from '@/hooks/use-flags'
 import { createRole, listRoles, type AdminRole } from '@/lib/admin/roles'
 import { cn } from '@/lib/cn'
 
@@ -21,10 +22,16 @@ const toKey = (label: string) =>
 export function AdminRoles({
   epoch,
   onOpenRole,
+  onPreview,
   onChanged,
 }: {
   epoch: number
   onOpenRole: (role: AdminRole) => void
+  // Wear this role and go and look. Takes the label as well as the key because the badge
+  // that ends the preview prints it, and a `roles` row is the only place it exists —
+  // fetching it again from under a screen that already has it would be asking the server
+  // to repeat itself.
+  onPreview: (role: string | null, label: string | null) => void
   onChanged: () => void
 }) {
   const [rows, setRows] = useState<AdminRole[]>([])
@@ -32,6 +39,9 @@ export function AdminRoles({
   const [error, setError] = useState<string | null>(null)
   const [draft, setDraft] = useState('')
   const [busy, setBusy] = useState(false)
+  // The real answer, not a previewed one: a preview takes this screen down with it, so
+  // the row below can never be asking about the set it just installed.
+  const canPreview = useFlag('rolePreview')
 
   // Only the first read blanks the list — see the note on the same effect in
   // admin-people.tsx. A reload keeps the rows that are already on screen.
@@ -114,6 +124,41 @@ export function AdminRoles({
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
         />
+      )}
+
+      {/* ── Wearing one of them ──
+          Pills rather than a button per row in the list above: the list is for opening a
+          role and editing it, and hanging a second action off each row would make every
+          tap a question about which half was meant. The shape is the role picker on the
+          person screen, which is the control this app already uses to pick a role.
+
+          NONE leftmost, as it is there: it is an ordinary player with no role at all —
+          all but a handful of profiles, and the preview most worth having.
+
+          A tap takes the admin screen down and puts the badge up. The badge is the only
+          way back, because a preview of a role without `admin` takes the link away. */}
+      {canPreview && !loading && (
+        <View className="mt-3 border-t border-dim/10 pt-3">
+          <Text selectable={false} className={cn(TYPE.label, 'mb-1.5 text-dim')}>
+            <Trans>PREVIEW AS</Trans>
+          </Text>
+          <View className="flex-row flex-wrap gap-1.5">
+            {[null, ...rows].map((option) => (
+              <TrackedPressable
+                key={option?.key ?? 'none'}
+                id="admin.role_preview"
+                onPress={() => {
+                  onPreview(option?.key ?? null, option?.label ?? null)
+                }}
+                className="rounded-lg border border-dim/30 px-2.5 py-1"
+              >
+                <Text selectable={false} className={cn(TYPE.rowLabel, 'text-dim')}>
+                  {option?.label ?? 'NONE'}
+                </Text>
+              </TrackedPressable>
+            ))}
+          </View>
+        </View>
       )}
     </View>
   )

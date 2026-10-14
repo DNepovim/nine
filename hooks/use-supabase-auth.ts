@@ -58,9 +58,10 @@ const ATTACH_TYPES = ['email_change', 'signup'] as const
 type AuthState = {
   userId: string | null
   nickname: string | null
-  // What this player may be shown — the empty set for all but a handful. Resolved on
-  // the server by `effective_features`, which is the only place the rules are written;
-  // handed on to FlagsProvider, which is what reads it.
+  // What this player may be shown — the empty set for all but a handful, until a feature
+  // goes public and is in everybody's. Resolved on the server by `effective_features`,
+  // which is the only place the rules are written; handed on to FlagsProvider, which is
+  // what reads it.
   //
   // Once per launch is the whole story of when a change takes effect: an admin editing
   // a stack moves everybody, and each device picks it up on its next start.

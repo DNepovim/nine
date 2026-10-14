@@ -178,7 +178,8 @@ export type ButtonId =
   | 'admin.role_new'
   | 'admin.role_delete'
   | 'admin.role_feature'
-  | 'admin.feature_active'
+  | 'admin.role_preview'
+  | 'admin.feature_visibility'
   // The hub's two buttons, and the planner behind the second of them. `admin.section`
   // is both hub buttons and `admin.session_when` both date-time fields: the breakdown
   // is by screen, and a second id per pair would split one affordance in the funnel for
@@ -196,6 +197,10 @@ export type ButtonId =
   // ── Shared chrome, on whatever screen it is drawn ──
   | 'shared.page_dot'
   | 'shared.dialog_close'
+  // The badge that ends a role preview. Here rather than under admin: it is drawn over
+  // whichever screen the preview is being looked at, and the screen it is pressed on is
+  // never the one it was started from.
+  | 'shared.preview_exit'
   | 'crash.try_again'
 
 // The screen half of an id, as a type rather than a second list to keep in step.

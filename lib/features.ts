@@ -31,39 +31,90 @@ export function sameFeatures(
 }
 
 // One person's override of one feature. Null is the third state and the usual one —
-// no row, so whatever the role says.
+// no row, so whatever is inherited.
 export type Override = boolean | null
+
+// A feature's own switch, and the three positions it has:
+//
+//   hidden   nobody reaches it, whatever any stack or override says.
+//   private  whoever their role's stack, or their own override, says.
+//   public   everybody, role or no role.
+//
+// The resolve itself is in SQL — see `effective_features` in the migration — because a
+// second copy of those rules is how a screen and an app come to disagree. What is here
+// is what the admin screen does with one row of the answer.
+export type Visibility = 'hidden' | 'private' | 'public'
+
+// What the column says, narrowed. A value this build has never heard of reads as
+// `private`, which is the same instinct `knownFeatures` has about an unknown key: the
+// player path never sees this column — `my_features()` resolves server-side — so the
+// only cost of the fallback is the admin screen describing an unfamiliar switch as the
+// ordinary one rather than refusing to draw the row at all.
+export function parseVisibility(value: string): Visibility {
+  return value === 'hidden' || value === 'public' ? value : 'private'
+}
+
+// What a tap on the switch does. Hidden → private → public → hidden, in the order the
+// three widen: nobody, then whoever holds it, then everybody. A cycle rather than three
+// pills, because the row it sits on also has to hold the key and its counts on a phone.
+export function nextVisibility(current: Visibility): Visibility {
+  if (current === 'hidden') return 'private'
+  return current === 'private' ? 'public' : 'hidden'
+}
+
+// Whether somebody reaches this feature without a row of their own naming them. Public
+// is the second source of that: before it, inheriting meant the role's stack and nothing
+// else, and the two call sites below both used to read `inRoleStack` directly.
+const inherits = ({
+  inRoleStack,
+  visibility,
+}: {
+  inRoleStack: boolean
+  visibility: Visibility
+}) => visibility === 'public' || inRoleStack
 
 // What a tap on a feature row does. Two answers, not three: on or off. The third state
 // is where the answer *comes from*, not an answer of its own — so a tap asks for the
-// opposite of what the person reaches today, and keeps the override only when the role
-// does not already say that. Cycling through all three instead made the stop that agrees
-// with the role indistinguishable from inheriting it: same dot, same reach, one extra
-// press.
-export function toggleOverride(current: Override, inRoleStack: boolean): Override {
-  const reaches = current ?? inRoleStack
-  const wanted = !reaches
-  return wanted === inRoleStack ? null : wanted
+// opposite of what the person reaches today, and keeps the override only when what they
+// inherit does not already say that. Cycling through all three instead made the stop that
+// agrees with the inherited answer indistinguishable from inheriting it: same dot, same
+// reach, one extra press.
+//
+// Takes the row rather than a boolean, because "what is inherited" stopped being one
+// column the day public arrived, and a caller passing the wrong one of the two would be
+// writing an override that silently repeats what it meant to change.
+export function toggleOverride(row: {
+  override: Override
+  inRoleStack: boolean
+  visibility: Visibility
+}): Override {
+  const inherited = inherits(row)
+  const wanted = !(row.override ?? inherited)
+  return wanted === inherited ? null : wanted
 }
 
 // Where a row's answer came from, which is the thing that makes the person screen
 // debuggable rather than merely editable.
 export type FeatureSource =
-  'inactive' | 'role-on' | 'role-off' | 'override-on' | 'override-off'
+  'hidden' | 'public' | 'role-on' | 'role-off' | 'override-on' | 'override-off'
 
 export function sourceOf({
   override,
   inRoleStack,
-  active,
+  visibility,
 }: {
   override: Override
   inRoleStack: boolean
-  active: boolean
+  visibility: Visibility
 }): FeatureSource {
-  // Reported before either of the others because it beats both: an inactive feature is
+  // Reported before all the others because it beats all of them: a hidden feature is
   // unreachable however the stack and the override are set, and a screen that showed
   // "on, from role" for something nobody can see would be lying.
-  if (!active) return 'inactive'
-  if (override === null) return inRoleStack ? 'role-on' : 'role-off'
-  return override ? 'override-on' : 'override-off'
+  if (visibility === 'hidden') return 'hidden'
+  // The override next, and so above public: a feature revoked for one person stays
+  // revoked when it goes out to everybody, and this row is the only place that is
+  // visible. Same order the resolve reads in.
+  if (override !== null) return override ? 'override-on' : 'override-off'
+  if (visibility === 'public') return 'public'
+  return inRoleStack ? 'role-on' : 'role-off'
 }

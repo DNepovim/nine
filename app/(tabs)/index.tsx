@@ -57,6 +57,7 @@ import { ReplayConsentOverlay } from '@/components/overlays/replay-consent-overl
 import { StepUpOverlay } from '@/components/overlays/step-up-overlay'
 import { TutorialDoneModal } from '@/components/overlays/tutorial-done-modal'
 import { WhatsNewOverlay } from '@/components/overlays/whats-new-overlay'
+import { RolePreviewBadge } from '@/components/role-preview-badge'
 import { Screen } from '@/components/screen'
 import { TrackedPressable } from '@/components/tracked-pressable'
 import type { AchievementId } from '@/constants/achievements'
@@ -102,6 +103,7 @@ import { usePopupDeck } from '@/hooks/use-popup-deck'
 import { PlayerProfileProvider } from '@/hooks/use-profile-modal'
 import { useReplayConsent } from '@/hooks/use-replay-consent'
 import { useRivalRecords } from '@/hooks/use-rival-records'
+import { useRolePreview } from '@/hooks/use-role-preview'
 import { useSavedRun } from '@/hooks/use-saved-run'
 import { useScoreDirection } from '@/hooks/use-score-direction'
 import { useScoreSubmission } from '@/hooks/use-score-submission'
@@ -832,6 +834,13 @@ export default function GameScreen() {
     confirmEmail,
     restoreProfile,
   } = useSupabaseAuth()
+
+  // An admin borrowing a role, so they can see what a stack came to without holding it.
+  // Below `useSupabaseAuth` because it stands beside its answer rather than replacing it:
+  // `features` stays what this person actually reaches — the analytics opt-out just below
+  // reads it, and an admin looking at the app as a player must not start being tracked —
+  // and only what the tree is *drawn* from is swapped, at the provider.
+  const rolePreview = useRolePreview()
 
   // Analytics reuses the identity the boards already rank — the anonymous Supabase user
   // id — so an event can be read next to the score it produced. Re-runs when the
@@ -1663,7 +1672,11 @@ export default function GameScreen() {
     // Outermost, because what a player may be shown decides whether a door is drawn at
     // all — a question that comes before anything behind the door. Empty until auth has
     // answered, which for all but a handful of players is the answer; see use-flags.
-    <FlagsProvider features={features}>
+    //
+    // A role preview replaces the set here and nowhere else: this is the one place that
+    // decides what is drawn, and a preview is a view rather than a grant. Every write is
+    // still guarded on the server against the caller's own row.
+    <FlagsProvider features={rolePreview.preview?.features ?? features}>
       {/* Renders nothing. The language lives above the splash and the feature set
           arrives here, so this is where the two meet — see LocaleGate. */}
       <LocaleGate />
@@ -2492,6 +2505,12 @@ export default function GameScreen() {
             {menuOverlay === 'admin' && (
               <AdminOverlay
                 viewerId={userId}
+                onPreview={(role, label) => {
+                  rolePreview.start(role, label)
+                  // And out of the way. The point of a preview is the app underneath it,
+                  // and the screen that started it is about to lose the link that drew it.
+                  setMenuOverlay('none')
+                }}
                 onClose={() => {
                   setMenuOverlay('none')
                 }}
@@ -2857,6 +2876,17 @@ export default function GameScreen() {
               <Suspense fallback={null}>
                 <GalleryStage />
               </Suspense>
+            )}
+
+            {/* ── Which role the app is being drawn as, and the way back out ──
+                Last child and above every layer: a preview of a role without `admin` has
+                taken away the link that started it, so this badge is the only way back.
+                Not inside any screen, because the preview is looked at from all of them. */}
+            {rolePreview.preview !== null && (
+              <RolePreviewBadge
+                label={rolePreview.preview.label}
+                onExit={rolePreview.stop}
+              />
             )}
           </BoardProvider>
         </PlayerProfileProvider>

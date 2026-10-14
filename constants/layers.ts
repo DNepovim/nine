@@ -16,6 +16,10 @@ export const LAYER = {
   bookmark: 11,
   // Dialogs: they cover a screen without replacing it, scrim and all.
   dialog: 40,
+  // The role preview badge. Over the dialogs as well as the screens, because it is the
+  // way out of a preview and a preview is looked at from everywhere — a badge a dialog
+  // could cover would be an escape hatch that is sometimes not there.
+  rolePreview: 50,
   // The cold-start logo, over everything the app has managed to build behind it.
   splash: 100,
   // The one thing allowed over the splash — the install prompt it holds for.

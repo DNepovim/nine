@@ -1,11 +1,11 @@
 import { noteRequest } from '@/lib/connectivity'
-import { type Override } from '@/lib/features'
+import { parseVisibility, type Override, type Visibility } from '@/lib/features'
 import { supabase } from '@/lib/supabase'
 
 // The people half of the admin screen. Reads go through the `admin_people` family
 // rather than a select on `profiles`, because the screen wants counts the table cannot
 // give it — how many features somebody actually reaches, after their role, their
-// overrides and the master switches have all been applied.
+// overrides and each feature's own visibility have all been applied.
 
 export type AdminPerson = {
   id: string
@@ -65,14 +65,14 @@ export type PersonFeature = {
   key: string
   override: Override
   inRoleStack: boolean
-  active: boolean
+  visibility: Visibility
 }
 
 type PersonFeatureRow = {
   key: string
   override: boolean | null
   in_role_stack: boolean
-  active: boolean
+  visibility: string
 }
 
 export async function loadPersonFeatures(userId: string): Promise<{
@@ -87,7 +87,7 @@ export async function loadPersonFeatures(userId: string): Promise<{
       key: row.key,
       override: row.override,
       inRoleStack: row.in_role_stack,
-      active: row.active,
+      visibility: parseVisibility(row.visibility),
     })),
     error: null,
   }

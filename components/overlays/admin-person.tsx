@@ -20,18 +20,20 @@ import { listRoles, type AdminRole } from '@/lib/admin/roles'
 import { cn } from '@/lib/cn'
 import { sourceOf, toggleOverride, type FeatureSource } from '@/lib/features'
 
-// What each of the five answers says on the row. The point of printing the *source*
+// What each of the six answers says on the row. The point of printing the *source*
 // rather than only the state is that "why can this person see this" is answerable here
 // rather than by opening the other two tabs and doing the arithmetic.
 const SOURCE_LABEL: Record<FeatureSource, string> = {
-  inactive: 'off for everyone',
+  hidden: 'hidden from everyone',
+  public: 'public',
   'role-on': 'from role',
   'role-off': 'from role',
   'override-on': 'override',
   'override-off': 'override',
 }
 
-const isOn = (source: FeatureSource) => source === 'role-on' || source === 'override-on'
+const isOn = (source: FeatureSource) =>
+  source === 'role-on' || source === 'override-on' || source === 'public'
 
 function FeatureRow({
   row,
@@ -45,9 +47,11 @@ function FeatureRow({
   onToggle: () => void
 }) {
   const source = sourceOf(row)
-  // An inactive feature is nobody's to change from here — the switch for it is on the
-  // FEATURES tab, and offering a tap that cannot take effect would be a lie.
-  const locked = source === 'inactive'
+  // A hidden feature is nobody's to change from here — the switch for it is on the
+  // FEATURES tab, and offering a tap that cannot take effect would be a lie. A public
+  // one stays tappable: revoking it for one person is a thing this screen can still do,
+  // and it is the only screen that can.
+  const locked = source === 'hidden'
   return (
     <TrackedPressable
       id="admin.person_feature"
@@ -140,7 +144,7 @@ export function AdminPerson({
   // The dot moves on the tap, and the person is read back after. Waiting on the round
   // trip before showing anything is what had these rows wanting a second press.
   const toggle = async (row: PersonFeature) => {
-    const next = toggleOverride(row.override, row.inRoleStack)
+    const next = toggleOverride(row)
     setPending((current) => new Set(current).add(row.key))
     setRows((current) =>
       current.map((r) => (r.key === row.key ? { ...r, override: next } : r)),

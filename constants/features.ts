@@ -5,11 +5,12 @@
 //
 // This list is the whole of what the code knows. *Who* reaches each one — which roles
 // exist, what each role's stack holds, what one person has had added or taken away, and
-// whether the feature is switched on at all — is rows in the database, edited from the
-// admin screen. See the …_feature_flags.sql migration, and `effective_features`, which
-// is the one place the rules are written.
+// how far out the feature itself has got (hidden from everybody, private to whoever holds
+// it, or public) — is rows in the database, edited from the admin screen. See the
+// …_feature_flags.sql and …_feature_visibility.sql migrations, and `effective_features`,
+// which is the one place the rules are written.
 //
-// A key here with no row in `features` resolves to off; a row there with no key here is
+// A key here with no row in `features` reaches nobody; a row there with no key here is
 // shown on the admin screen as not in this build. Both are worth seeing and neither is
 // an error — a device can be older than the server, and a migration can outlive a guard.
 export const FLAGS = [
@@ -42,9 +43,16 @@ export const FLAGS = [
   // stored by a build that reached this one is kept, not cleared, so granting it again
   // lands the player back in the language they chose. See hooks/use-locale.tsx.
   'czech',
-  // The ADMIN link on the intro, and the screen behind it. Protected in the database:
-  // it cannot be switched off, and nobody can take it from themselves — this is not a
-  // feature being tried out, it is the door that decides who sees the others.
+  // Role preview: the pills on the ROLES tab that redraw the app with another role's
+  // features, and the badge in the corner that says which role and ends it. Its own key
+  // rather than part of `admin`, because the badge is the only way back out of a preview
+  // — a feature that can leave somebody somewhere wants a switch that is not the door
+  // they would use to turn it off.
+  'rolePreview',
+  // The ADMIN link on the intro, and the screen behind it. Protected in the database: it
+  // cannot be hidden, it cannot be made public, and nobody can take it from themselves —
+  // this is not a feature being tried out, it is the door that decides who sees the
+  // others.
   'admin',
 ] as const
 

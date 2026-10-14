@@ -18,7 +18,8 @@ import { cn } from '@/lib/cn'
 
 // One role: its name, who holds it, and the features in its stack. Plain on and off —
 // a stack has no third state, because the tri-state belongs to one person's overrides
-// and lives on the other screen.
+// and lives on the other screen, and the three positions of a feature's own switch are
+// on the tab before it.
 export function AdminRole({
   role,
   onChanged,
@@ -164,14 +165,23 @@ export function AdminRole({
                   selectable={false}
                   className={cn(
                     cn(TYPE.prose, 'flex-1 text-primary'),
-                    !feature.active && 'line-through',
+                    feature.visibility === 'hidden' && 'line-through',
                   )}
                 >
                   {feature.key}
                 </Text>
-                {!feature.active && (
+                {/* A hidden feature is struck: this stack decides nothing about it, and
+                    the switch that does is on the FEATURES tab. A public one is not —
+                    the stack has stopped deciding who reaches it, but it is still what
+                    the feature falls back to the day somebody makes it private again,
+                    so the dot stays worth setting. */}
+                {feature.visibility !== 'private' && (
                   <Text selectable={false} className={cn(TYPE.value, 'text-dim')}>
-                    <Trans>off for everyone</Trans>
+                    {feature.visibility === 'hidden' ? (
+                      <Trans>hidden from everyone</Trans>
+                    ) : (
+                      <Trans>public to everyone</Trans>
+                    )}
                   </Text>
                 )}
               </TrackedPressable>

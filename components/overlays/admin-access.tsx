@@ -45,12 +45,18 @@ const TAB_LABEL: Record<Tab, string> = {
 
 export function AdminAccess({
   viewerId,
+  onPreview,
   onBack,
 }: {
   // Who is reading, so the people list can say which row is theirs. This screen is the one
   // place a person can take a feature off themselves, and knowing which row that is before
   // opening it is worth a tag.
   viewerId: string | null
+  // Wear a role and go and look — handed through to the ROLES tab, which is where the
+  // roles are. Goes all the way up to the app root rather than being held here: the set
+  // it moves is the one the whole tree is drawn from, and the first thing a preview does
+  // is take this screen down.
+  onPreview: (role: string | null, label: string | null) => void
   // To the hub. Not `onClose`: the hub is where the other section is, and finishing with
   // one of two sections is not finishing with admin.
   onBack: () => void
@@ -129,7 +135,12 @@ export function AdminAccess({
         <AdminPeople epoch={epoch} viewerId={viewerId} onOpenPerson={setPerson} />
       )}
       {tab === 'roles' && (
-        <AdminRoles epoch={epoch} onOpenRole={setRole} onChanged={refresh} />
+        <AdminRoles
+          epoch={epoch}
+          onOpenRole={setRole}
+          onPreview={onPreview}
+          onChanged={refresh}
+        />
       )}
       {tab === 'features' && <AdminFeatures epoch={epoch} onChanged={refresh} />}
 
