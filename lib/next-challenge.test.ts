@@ -148,3 +148,37 @@ describe('runChallenge', () => {
     )
   })
 })
+
+describe('a mode that pins its own rung', () => {
+  // `challenge/four-keys` sets `fixedDifficulty: 'hard'`, so `usesDifficulty` is false
+  // and there is no ladder for the dare to point along.
+  const CHALLENGE = 'challenge/four-keys'
+
+  it('is offered nothing however well the run went', () => {
+    // A run that would earn the dare on any scored mode: every hit on a streak.
+    expect(runChallenge(CHALLENGE, 'hard', 40, 40)).toBeNull()
+  })
+
+  it('is offered nothing however badly the run went', () => {
+    // A run that would be offered a step down anywhere else: no hits at all.
+    expect(runChallenge(CHALLENGE, 'hard', 0, 0)).toBeNull()
+  })
+
+  it('does not answer off the rung the intro was left on', () => {
+    // The defect this guards: the run's difficulty here is the machine's context, not
+    // the rung the challenge pinned, so every rung had to answer the same.
+    for (const picked of ['easy', 'hard', 'extreme'] as const) {
+      expect(runChallenge(CHALLENGE, picked, 40, 40), picked).toBeNull()
+      expect(runChallenge(CHALLENGE, picked, 0, 0), picked).toBeNull()
+    }
+  })
+
+  it('still dares an ordinary scored mode', () => {
+    // The guard must not have silenced the feature it is narrowing.
+    expect(runChallenge('accuracy', 'easy', 40, 40)).toEqual({
+      mode: 'accuracy',
+      difficulty: 'hard',
+      kind: 'stepUp',
+    })
+  })
+})

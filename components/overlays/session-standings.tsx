@@ -5,7 +5,7 @@ import { View } from 'react-native'
 import DSEG7Font from '@/assets/fonts/DSEG7Classic-Bold.ttf'
 import { TabPanel } from '@/components/overlays/tab-panel'
 import { mono } from '@/constants/theme'
-import { useSessionBoard } from '@/hooks/use-session-card'
+import type { PeriodBoard } from '@/hooks/use-board'
 import { useViewport } from '@/hooks/use-viewport'
 import { gradientOf, headlineOf, type Difficulty, type ModeId } from '@/modes'
 
@@ -16,17 +16,22 @@ const NOBODY_YET = msg`— NOBODY HAS SCORED HERE —`
 
 // Where a session run came, on the screen that ends it.
 //
-// Its own component rather than a block inside the game-over screen, because it fetches:
-// a hook cannot live behind the `sessionId !== null` branch that decides whether to draw
-// it. One component per file is the house rule and this is what it is for.
+// Given the board rather than fetching it. It used to read `useSessionBoard` itself, which
+// is why it is a component at all — a hook cannot sit behind the `sessionId !== null`
+// branch that decides whether to draw it. The game-over screen reads it now, because the
+// **medal** above the score comes off the same standings, and two reads of one board can
+// disagree: a rival landing a score between them would have put the player on a podium
+// the table under it does not show.
 export function SessionStandings({
-  sessionId,
+  board,
   gameMode,
   difficulty,
   userId,
   nickname,
 }: {
-  sessionId: string
+  // Null while the read is in flight, which is the caller's own `useSessionBoard` answer
+  // passed straight through.
+  board: PeriodBoard | null
   gameMode: ModeId
   difficulty: Difficulty
   userId: string | null
@@ -34,7 +39,6 @@ export function SessionStandings({
 }) {
   const { width } = useViewport()
   const [dsegLoaded] = useFonts({ DSEG7: DSEG7Font })
-  const { board } = useSessionBoard(sessionId, userId)
   if (board === null) return null
 
   return (

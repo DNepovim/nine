@@ -1,5 +1,11 @@
 import type { MessageDescriptor } from '@lingui/core'
+import { msg } from '@lingui/core/macro'
 
+import {
+  challengeDarkPairFor,
+  challengeHue,
+  challengePairFor,
+} from '@/modes/challenges/palette'
 import { patchRules } from '@/modes/rules'
 import {
   defineMode,
@@ -44,10 +50,33 @@ export type ChallengeSpec = {
   from: number
   until: number
   rules?: RulesPatch
+  // A hue of its own, in degrees, where the generated one will not do — `TURQUOISE` and
+  // friends in `modes/challenges/palette.ts`, which is also where the cost of leaving the
+  // arc is written down.
+  //
+  // A hue and not a pair of hexes: the near-black every challenge shares, the two
+  // saturations and the two lightnesses are the palette's, so a challenge that picks its
+  // own colour is still built the same way as one that was given one. Naming hexes here
+  // was how a hand-picked challenge ended up with a bright stop from one convention and
+  // a CTA stop from another.
+  hue?: number
+  // The last resort, for a pair no single hue describes. Nothing uses it; `hue` is the
+  // door, and this is the window beside it.
   gradient?: readonly [string, string]
   darkGradient?: readonly [string, string]
   shot?: ShotKind | null
 }
+
+// What a challenge *is*, for the screens that have to say so beside the name of one.
+//
+// Here rather than in each screen because two of them need it and they must not drift:
+// the pill on the pause and game-over screens, and the line under the name in the game's
+// own top bar. `labelOf` answers for which challenge; this answers for what kind of
+// thing it is.
+//
+// Upper case, as every label in this app is. The top bar lower-cases it the same way it
+// lower-cases a rung, which is that screen's own voice rather than a second string.
+export const CHALLENGE_WORD = msg`CHALLENGE`
 
 // What every challenge's id begins with. Namespaced so nothing that merely carries a
 // mode — a stored run, a stat row, an analytics event — can confuse one for a permanent
@@ -70,23 +99,72 @@ export const challengeId = (slug: string): string => `${PREFIX}${slug}`
 //
 // `scored` is left alone and inherited — a challenge run has a score, shows it, and
 // counts it. The two flags come apart precisely here.
+// What a challenge is scored and spent by, unless its own spec says otherwise.
+//
+// Laid over the **base mode** and then under the spec's own patch, so these are defaults
+// rather than forces: a challenge may still ask for a speed-heavy blend, and one that
+// does is saying so on purpose. `board: false` below is the opposite — a force, applied
+// after everything, because no challenge may keep a board whatever it asks for.
+//
+// **The blend is even.** Every permanent mode leans: accuracy 85/15 one way, speed 85/15
+// the other, and each is a board you get good at by getting good at one thing. A
+// challenge is on the app for a day and is nobody's long game — it is a puzzle to be met
+// once — so it asks for both halves at the same weight rather than inheriting whichever
+// lean the mode it was built from happens to have. Without this, a challenge based on
+// SPEED was quietly a Speed run with a different dial.
+//
+// **Bad accuracy costs no life.** A wasteful hit takes one in Accuracy, which is the rule
+// that board is about. On a challenge the dial, the clock and the scoring are all strange
+// at once and the player has a day to work them out; spending a life on the way to
+// understanding the thing is a punishment for not already knowing it. Lives still go to
+// an expiry, which is the clock doing its job rather than the rules second-guessing.
+const CHALLENGE_DEFAULTS: RulesPatch = {
+  scoring: { weights: { acc: 0.5, spd: 0.5 } },
+  lives: { wastefulCostsLife: false },
+}
+
 const noBoard = (rules: TargetRules): TargetRules => ({
   ...rules,
   capabilities: { ...rules.capabilities, board: false },
 })
 
-export function defineChallenge(spec: ChallengeSpec): ModeDefinition {
+// `index` is the challenge's place in the catalog, and the only reason it is a parameter
+// is colour: the pair is derived from it (see `modes/challenges/palette.ts`). The catalog
+// passes it by mapping over its own list, so nobody writes a number down and nobody can
+// get it wrong — `[A, B].map(defineChallenge)` hands each spec its own position.
+//
+// Defaulted so a test, which has no catalog to be a position in, can define one in a
+// line. Every such challenge is index 0 and so shares a colour, which is correct: they
+// are not in the catalog together and never drawn beside each other.
+export function defineChallenge(spec: ChallengeSpec, index = 0): ModeDefinition {
   return defineMode({
     id: challengeId(spec.slug),
     label: spec.label,
     code: spec.code ?? spec.base.code,
     description: spec.description,
-    gradient: spec.gradient ?? spec.base.gradient,
-    darkGradient: spec.darkGradient ?? spec.base.darkGradient,
+    // **Not** the base mode's pair, which is what this did until challenges had colours
+    // of their own: a challenge built on SPEED came out wearing Speed's exact gradient,
+    // so the one thing on the intro that is only here today was the hardest thing on it
+    // to tell apart. The pair is a near-black and a hue — the challenge's own if it named
+    // one, otherwise the one its place in the catalog works out to.
+    //
+    // Both stops resolve from the same hue, which is the point of doing it here rather
+    // than letting a spec name two hexes: a bright stop and a CTA stop that disagreed
+    // about which colour the challenge is would be a card and a button from two
+    // different challenges.
+    gradient: spec.gradient ?? challengePairFor(spec.hue ?? challengeHue(index)),
+    darkGradient:
+      spec.darkGradient ?? challengeDarkPairFor(spec.hue ?? challengeHue(index)),
     shot: spec.shot === undefined ? spec.base.shot : spec.shot,
     window: { from: spec.from, until: spec.until },
     engine: 'targets',
-    rules: noBoard(patchRules(spec.base.rules, spec.rules ?? {})),
+    // Three layers, and the order is the whole of their meaning: the base mode, then
+    // what every challenge is unless it says otherwise, then what this one says. A spec
+    // naming its own weights still wins; a spec naming none gets the even blend rather
+    // than whichever lean its base mode had.
+    rules: noBoard(
+      patchRules(patchRules(spec.base.rules, CHALLENGE_DEFAULTS), spec.rules ?? {}),
+    ),
   })
 }
 

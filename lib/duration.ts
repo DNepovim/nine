@@ -83,8 +83,8 @@ export function formatCareerTime(ms: number): string {
   return `${totalSeconds}${DOUBLE_PRIME}`
 }
 
-// Time left, as a clock: 1:52 with an hour or more to run, 52:09 under one, 0:09 in the
-// last minute.
+// Time left, as a clock: 1:52:09 with an hour or more to run, 52:09 under one, 0:09 in
+// the last minute.
 //
 // A colon here, where `formatGameTime` refuses one — and the two are opposites on
 // purpose. That function writes a *length*, in a row of figures where "12:04" would have
@@ -92,11 +92,18 @@ export function formatCareerTime(ms: number): string {
 // that genuinely is a clock running down, and prime marks on it would read as a duration
 // somebody had measured rather than as time the player is losing.
 //
-// Two figures and never three. A clock face that gains a column mid-countdown is a figure
-// that changes width and meaning at once — the first number means hours at 1:52:09 and
-// minutes at 52:09 — and the pair that matters is always the two at the top: with an hour
-// left nobody is reading the seconds, and under one the seconds are the whole of the
-// urgency. So the seconds give way to the hour rather than standing beside it.
+// **The seconds always show.** This held two figures and never three for a while, on the
+// reasoning that the pair at the top is the pair that matters — with an hour left nobody
+// reads the second hand, and the figure is easier for losing it. That is true of the
+// figure and wrong about the card it stands on: the countdown is drawn as a split-flap
+// board on the intro, and a board whose last column never turns reads as a clock that has
+// stopped. A window plainly running is most of what the banner is for, so the seconds are
+// there to move rather than to be read.
+//
+// The cost is a figure that changes width when the hour column arrives or goes, and the
+// first number changing meaning with it — hours at 1:52:09, minutes at 52:09. Accepted:
+// it happens once per window, and the alternative was a still board for all but the last
+// hour of one.
 //
 // Hours are the largest unit and are left uncapped. There is no days column: the one thing
 // counted down to in this app is a challenge window, which is a day long — a 1ᵈ that sat
@@ -114,6 +121,14 @@ export function formatCountdown(ms: number): string {
   const hours = Math.floor(totalSeconds / 3600)
   const minutes = Math.floor(totalSeconds / 60) % 60
   const seconds = totalSeconds % 60
-  if (hours > 0) return `${hours}:${pad(minutes)}`
+  // The seconds stand beside the hour rather than giving way to it, which is the opposite
+  // of what this did. The reasoning for dropping them was that nobody reads a second hand
+  // with an hour still to go — true of the *figure*, and wrong about the card. A board
+  // whose last column is still is a board that looks stopped, and a window that is
+  // plainly running is the whole of what the thing is for. So the seconds are there to
+  // move, not to be read.
+  //
+  // Still no days column: see the note below.
+  if (hours > 0) return `${hours}:${pad(minutes)}:${pad(seconds)}`
   return `${minutes}:${pad(seconds)}`
 }

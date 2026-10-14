@@ -22,10 +22,11 @@ import { CROWN_CORONA, ON_GOLD_LABEL_SHADOW } from '@/constants/theme'
 import { GLYPH, TYPE } from '@/constants/typography'
 import { useBarColor } from '@/hooks/use-bar-color'
 import { useBoardContext } from '@/hooks/use-board'
+import { useSessionBoard } from '@/hooks/use-session-card'
 import type { AchievementStore } from '@/lib/achievement-store'
 import type { AchievementFacts, Award } from '@/lib/achievements'
 import type { Period } from '@/lib/announcements'
-import { currentBoardMedals } from '@/lib/board-medals'
+import { currentBoardMedals, sessionMedal } from '@/lib/board-medals'
 import type { RecordScreen } from '@/lib/champions'
 import { cn } from '@/lib/cn'
 import type { TitleWords } from '@/lib/game-over-title'
@@ -35,9 +36,10 @@ import { runStats } from '@/lib/run-stats'
 import {
   darkGradientOf,
   DIFFICULTIES,
-  gradientOf,
   labelOf,
   SCORED_MODES,
+  scoreInkOf,
+  traitsOf,
   type Difficulty,
   type ModeId,
 } from '@/modes'
@@ -245,7 +247,24 @@ export function GameOverOverlay({
     opacity: Math.min(1, crownIn.value),
     transform: [{ scale: 0.6 + crownIn.value * 0.4 }],
   }))
-  const medals = currentBoardMedals(board, score, userId)
+  // Read here rather than inside `SessionStandings`, which is where it used to be, so
+  // the medal above the score and the standings below it come out of one read. Two reads
+  // could disagree — a rival landing a score between them would have put the player on a
+  // podium the table under it does not show.
+  //
+  // Unconditional, and it has to be: a hook cannot sit behind the `sessionId !== null`
+  // branch that decides whether any of this is drawn. `useSessionBoard` answers null for
+  // a null id without asking the server, which is what makes that safe.
+  const { board: sessionBoard } = useSessionBoard(sessionId, userId)
+
+  // Where the run stands, as a medal. A **session** run has one set of standings and so
+  // one medal with no period beside it; a board run has up to three, one per period. A
+  // challenge played outside a session — dealt from the challenge lab — has neither, and
+  // both halves of this answer nothing for it.
+  const medals =
+    sessionId !== null
+      ? sessionMedal(sessionBoard?.rows ?? [], score, userId)
+      : currentBoardMedals(board, score, userId)
 
   return (
     <RunScreen
@@ -294,16 +313,28 @@ export function GameOverOverlay({
             <GameOverTitle gameMode={gameMode} words={titleWords} shadow={painted} />
           </View>
 
-          <BoardBadges gameMode={gameMode} difficulty={difficulty} />
+          {/* No rung where the mode pins its own. A challenge sets `fixedDifficulty`
+              and shows no difficulty row on the intro, so the player never chose one —
+              and the badge was printing whatever the intro happened to be left on,
+              which named EASY over a run played and posted at Hard. The pause screen
+              has always asked this question; this is the same guard, one screen later.
+              `BoardBadges` reads an omitted `difficulty` as a run with no rung to
+              record, which is exactly what this is. */}
+          <BoardBadges
+            gameMode={gameMode}
+            difficulty={traitsOf(gameMode).usesDifficulty ? difficulty : undefined}
+          />
         </>
       }
       // Unlabelled: under a title this size the number can only be the score, and the
       // label was a third line of small caps on a screen that already had too many. Lit
       // in the mode's own colour, so the score says which board it was set on — but on
-      // gold the glow turns white, since the mode's hue would light gold with gold.
+      // gold the glow turns white, since the mode's hue would light gold with gold, and
+      // on a challenge it is the app's score green, there being no board for the figure
+      // to name. See `scoreInkOf`.
       score={{
         value: score,
-        color: gradientOf(gameMode)[0],
+        color: scoreInkOf(gameMode),
         glow: painted ? WHITE_GLOW : undefined,
       }}
       beforeStats={
@@ -357,7 +388,7 @@ export function GameOverOverlay({
               board and posted to no standings. */}
           {sessionId !== null && (
             <SessionStandings
-              sessionId={sessionId}
+              board={sessionBoard}
               gameMode={gameMode}
               difficulty={difficulty}
               userId={userId}

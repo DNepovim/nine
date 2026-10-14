@@ -14,11 +14,12 @@ import Animated, {
 import DSEG7Font from '@/assets/fonts/DSEG7Classic-Bold.ttf'
 import { AnnouncementBar } from '@/components/game/announcement-bar'
 import { BEST_CELL_HEIGHT, BestScoreCell } from '@/components/game/best-score-cell'
+import { ChallengeCountdown } from '@/components/overlays/challenge-countdown'
 import { TrackedPressable } from '@/components/tracked-pressable'
 import type { AchievementId } from '@/constants/achievements'
 import { GOLD_INK, SPECTRUM } from '@/constants/colors'
 import { mono } from '@/constants/theme'
-import { TYPE } from '@/constants/typography'
+import { READOUT, TYPE } from '@/constants/typography'
 import type { RecordHolder } from '@/hooks/use-board'
 import { useOnline } from '@/hooks/use-online'
 import { useOpenProfile } from '@/hooks/use-profile-modal'
@@ -26,9 +27,28 @@ import { announcementStyle } from '@/lib/announcement-style'
 import { RUN_SETTLE_MS, type Announcement } from '@/lib/announcements'
 import { cn } from '@/lib/cn'
 import { nearestRecord } from '@/lib/near-record'
-import { traitsOf, type ModeId } from '@/modes'
+import { gradientOf, isChallenge, traitsOf, type ModeId } from '@/modes'
+import { challengeInk } from '@/modes/challenges/palette'
 
-type BestKey = 'you' | 'today' | 'week' | 'ever'
+// The four periods of a board, plus the one a **session** has instead of them. Never
+// both: a mode either keeps a board or belongs to a session, and `traitsOf(mode).board`
+// is the question that decides which face this strip wears.
+type BestKey = 'you' | 'today' | 'week' | 'ever' | 'session'
+
+// What a run that belongs to a session knows about it.
+export type SessionBests = {
+  // The top score on the session board, or 0 where nobody has posted one yet — the same
+  // answer an untouched board gives, and drawn the same way.
+  best: number
+  // Who holds it, or null where the read has not landed or nobody holds it.
+  holder: RecordHolder | null
+  // Whether that top score is the player's own, which the cell says as YOU rather than
+  // by printing the name they already know.
+  mine: boolean
+  // When the window shuts, ms since the epoch. The one figure on this strip that is not
+  // a score.
+  closesAt: number
+}
 
 // A score that survived the "is there anything to show?" filter, with whatever goes on
 // the line under it: a player to name, or a word where a name would be the wrong thing
@@ -48,6 +68,9 @@ const BEST_LABELS = {
   today: msg`TODAY`,
   week: msg`WEEK`,
   ever: msg`EVER`,
+  // Not THIS CHALLENGE: the top bar two rows up already names the challenge, and the
+  // cell has one short line to say which of the two scores beside it this is.
+  session: msg`SESSION`,
 } as const satisfies Record<BestKey, MessageDescriptor>
 
 // The player's own cell is one phrase across the cell's two lines — YOUR / BEST — where
@@ -67,9 +90,42 @@ const BEST_COLORS = {
   today: SPECTRUM[1],
   week: SPECTRUM[2],
   ever: SPECTRUM[3],
+  // Overridden per challenge — see `cellColor`. The entry is here so the table stays
+  // exhaustive over `BestKey`, and the stop is the one the four-cell row ends on, which
+  // is what a lone second cell would want if a challenge ever had no colour of its own.
+  session: SPECTRUM[3],
 } as const satisfies Record<BestKey, string>
 
 const BEST_ORDER = ['you', 'today', 'week', 'ever'] as const satisfies readonly BestKey[]
+
+// What a session run shows instead: what the player has done, and what the session has.
+// Two cells and not four, because a session has no day, week or all time to be the best
+// of — it is its own window, which is the whole of why it needs none of the three.
+const SESSION_ORDER = ['you', 'session'] as const satisfies readonly BestKey[]
+
+// And what is left when the three server-backed cells cannot be reached.
+const ONLY_YOURS = ['you'] as const satisfies readonly BestKey[]
+
+// Which cells the row draws.
+//
+// A session run shows its own two whether or not the device is online: `you` is off the
+// device and the session's best was read before the run was dealt, so neither is a thing
+// the connection can take away mid-run. A board run offline drops the three that are the
+// server's — a 0 there would misreport an empty board rather than an unreachable one.
+const keysFor = (session: SessionBests | null, online: boolean): readonly BestKey[] => {
+  if (session !== null) return SESSION_ORDER
+  return online ? BEST_ORDER : ONLY_YOURS
+}
+
+// What a cell is painted in.
+//
+// The session cell wears the challenge's own colour rather than a stop off the game
+// spectrum: the rest of the row is the app's scale, and this one cell is about the thing
+// the run belongs to. `challengeInk` is the shade of that colour which carries a word.
+const cellColor = (key: BestKey, mode: ModeId): string =>
+  key === 'session' && isChallenge(mode)
+    ? challengeInk(gradientOf(mode)[1])
+    : BEST_COLORS[key]
 
 // The bar starts empty and reveals its scores a second and a half into a run, so the
 // first thing a player sees is the game rather than a row of other people's numbers.
@@ -122,7 +178,16 @@ export function BestScoresLine({
   todayHolder,
   weekHolder,
   everHolder,
+  session,
 }: {
+  // The standings this run belongs to, where it belongs to a **session** rather than to
+  // a board. Null for every ordinary run, which is what makes this the switch between
+  // the strip's two faces.
+  //
+  // One object rather than four loose props, so there is no way to be holding a session's
+  // best without the window it was set in — the two are drawn side by side and a cell
+  // naming one without the other would be a figure with no contest behind it.
+  session: SessionBests | null
   // True for the whole of a run, pauses included, so resuming does not restart the
   // countdown — the same notion of "in a run" the menu button uses.
   inRun: boolean
@@ -252,6 +317,7 @@ export function BestScoresLine({
     today,
     week,
     ever,
+    session: session?.best ?? 0,
   } as const satisfies Record<BestKey, number | null>
 
   const heldByMe = {
@@ -259,6 +325,7 @@ export function BestScoresLine({
     today: todayIsMine,
     week: weekIsMine,
     ever: everIsMine,
+    session: session?.mine ?? false,
   } as const satisfies Record<BestKey, boolean>
 
   const holders = {
@@ -266,6 +333,7 @@ export function BestScoresLine({
     today: todayHolder,
     week: weekHolder,
     ever: everHolder,
+    session: session?.holder ?? null,
   } as const satisfies Record<BestKey, RecordHolder | null>
 
   // Whose profile each cell opens. A record the player holds resolves to the same id
@@ -275,6 +343,7 @@ export function BestScoresLine({
     today: todayHolder?.userId ?? null,
     week: weekHolder?.userId ?? null,
     ever: everHolder?.userId ?? null,
+    session: session?.holder?.userId ?? null,
   } as const satisfies Record<BestKey, string | null>
 
   // What goes under each label. Exactly one of the two is ever set: the player's own
@@ -291,7 +360,7 @@ export function BestScoresLine({
   // Offline, the three server-backed keys are dropped instead — see the note that
   // fills their place below — since a 0 there would misreport an empty board rather
   // than one that simply cannot be reached.
-  const shownKeys = online ? BEST_ORDER : (['you'] as const satisfies readonly BestKey[])
+  const shownKeys = keysFor(session, online)
   const shown: ShownBest[] = revealed
     ? shownKeys.map((key) => ({
         key,
@@ -312,13 +381,20 @@ export function BestScoresLine({
       ? nearestRecord(score, { you: yourBest, today, week, ever })
       : null
 
-  // Trainee is practice against no board, so it has no scores to put here — and nor
-  // does a challenge, whose standings belong to its session. Either way the strip
-  // still occupies its height. Everything above the dial is drawn from the same
-  // leftover the dial is sized from, so a mode that gave this space back would get a
-  // bigger dial than the others, and the dial has to be the same in every mode. After
-  // the hooks, not before: the reveal timers run identically whatever the mode.
-  if (!traitsOf(mode).board) return <View style={{ height: BEST_SCORES_HEIGHT }} />
+  // Trainee is practice against no board, so it has no scores to put here. A challenge
+  // has none either — its standings belong to its session — but a challenge run *in* a
+  // session does: `session` carries them, and the row above draws two cells instead of
+  // four. A challenge dealt outside one, from the challenge lab, falls through to the
+  // blank below, which is right: it kept no board and posted to no standings.
+  //
+  // The strip still occupies its height when it is blank. Everything above the dial is
+  // drawn from the same leftover the dial is sized from, so a mode that gave this space
+  // back would get a bigger dial than the others, and the dial has to be the same in
+  // every mode. After the hooks, not before: the reveal timers run identically whatever
+  // the mode.
+  if (!traitsOf(mode).board && session === null) {
+    return <View style={{ height: BEST_SCORES_HEIGHT }} />
+  }
 
   return (
     <View className="mb-1.5">
@@ -338,7 +414,7 @@ export function BestScoresLine({
               key={key}
               label={t(BEST_LABELS[key])}
               value={value}
-              color={BEST_COLORS[key]}
+              color={cellColor(key, mode)}
               digitFont={digitFont}
               holder={holder}
               sub={sub}
@@ -357,7 +433,26 @@ export function BestScoresLine({
               }
             />
           ))}
-          {revealed && !online && (
+          {/* What is left of the window, on the end of the row. The one figure here that
+              is not a score, and the reason a challenge's strip is worth drawing at all
+              while the run is going: the two numbers beside it say where the player
+              stands, and this says how long they have to do something about it.
+
+              Its own component so the second hand does not re-render the dial around it
+              — see `ChallengeCountdown`, which exists for exactly that reason on the
+              intro. */}
+          {revealed && session !== null && (
+            <View className="items-end">
+              <Text selectable={false} className={cn(TYPE.caption, 'text-dim')}>
+                <Trans>LEFT</Trans>
+              </Text>
+              <ChallengeCountdown
+                until={session.closesAt}
+                className={cn(READOUT.row, 'text-dim')}
+              />
+            </View>
+          )}
+          {revealed && !online && session === null && (
             <Text selectable={false} className={cn(TYPE.caption, 'text-dim')}>
               <Trans>— OFFLINE —</Trans>
             </Text>

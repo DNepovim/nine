@@ -1,6 +1,6 @@
 import type { MessageDescriptor } from '@lingui/core'
 import { msg } from '@lingui/core/macro'
-import { Trans, useLingui } from '@lingui/react/macro'
+import { useLingui } from '@lingui/react/macro'
 import { useFonts } from 'expo-font'
 import { LinearGradient } from 'expo-linear-gradient'
 import { useCallback, useEffect, useRef, useState } from 'react'
@@ -26,6 +26,7 @@ import { gradientOf, headlineOf, type Difficulty, type ModeId } from '@/modes'
 
 import { OfflineNotice } from './offline-notice'
 import { PublishScoresButton } from './publish-scores-button'
+import { ScoreColumns } from './score-columns'
 import { TabMedal } from './tab-medal'
 import { TabPanel } from './tab-panel'
 
@@ -269,26 +270,7 @@ export function HighScores({
         </Animated.View>
       </View>
 
-      {/* Column headers */}
-      <View className="mb-1 flex-row px-2">
-        <Text
-          selectable={false}
-          className={cn(TYPE.caption, 'w-7 text-dim')}
-          style={glow}
-        >
-          #
-        </Text>
-        <Text
-          selectable={false}
-          className={cn(TYPE.caption, 'flex-1 text-dim')}
-          style={glow}
-        >
-          <Trans>NICK</Trans>
-        </Text>
-        <Text selectable={false} className={cn(TYPE.caption, 'text-dim')} style={glow}>
-          <Trans>SCORE</Trans>
-        </Text>
-      </View>
+      <ScoreColumns glow={glow} />
 
       {/* Paging scroll view — swipe or tap tabs to navigate */}
       <View

@@ -8,6 +8,7 @@ import { ARCADE } from './definitions/arcade'
 import { SPEED } from './definitions/speed'
 import { TRAINEE } from './definitions/trainee'
 import { TUTORIAL } from './definitions/tutorial'
+import type { DialSpec } from './dial'
 import type { Difficulty } from './difficulty'
 import { resolveRules, type RunRules } from './rules'
 import type { Capabilities, Headline, ModeDefinition, ModeEngine, Submode } from './types'
@@ -95,6 +96,15 @@ export function rulesFor(
   return resolveRules(mode.rules, mode.id, difficulty, submode)
 }
 
+// Whether a mode is a **challenge** — one that is on the app for a window and then is
+// not, rather than one of the permanent four.
+//
+// Asked of the window, which is the thing that actually makes a challenge one, rather
+// than of the `challenge/` prefix on its id. The prefix is a namespace and the window is
+// the definition, and a screen reading the prefix would be parsing a name for a fact the
+// registry already holds.
+export const isChallenge = (id: ModeId): boolean => modeById(id)?.window != null
+
 // Every mode open right now, in registry order — the intro's pills. Permanent modes
 // always; a challenge only inside its window.
 export const openModes = (now: number): readonly ModeDefinition[] =>
@@ -160,6 +170,15 @@ export function traitsOf(id: ModeId): ModeTraits {
 
 export const descriptionOf = (id: ModeId): MessageDescriptor =>
   modeById(id)?.description ?? GONE_LABEL
+
+// The dial a run of this mode is played on, or null for a mode with no dial — one on
+// another engine, or a name nothing is registered under.
+//
+// Asked at Hard, and the rung does not matter: no mode varies its dial by difficulty, and
+// a mode that pins its own rung resolves to that rung whatever it is handed. Hard rather
+// than a parameter because the one caller — the challenge card's mark, which draws the
+// dial's own shape — has no difficulty to hand and should not have to invent one.
+export const dialOf = (id: ModeId): DialSpec | null => rulesFor(id, 'hard')?.dial ?? null
 
 // The clock a target gets at the start of a run of this mode, difficulty applied — what
 // the slider on the pause screen takes its bounds from, and the figure a mode's own entry

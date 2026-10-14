@@ -1,4 +1,4 @@
-import { isMode, type Difficulty, type Mode, type ModeId } from '@/modes'
+import { isMode, traitsOf, type Difficulty, type Mode, type ModeId } from '@/modes'
 
 // What the game-over screen offers next to "play again": the same run one rung
 // harder. Losing is the moment a player is most willing to be dared, and the dare
@@ -104,6 +104,17 @@ export function runChallenge(
   hits: number,
   strikes: number,
 ): Challenge | null {
+  // A mode that pins its own rung has no ladder to offer, in either direction. Both
+  // branches below read the *run's* difficulty, which for such a mode is whatever the
+  // intro was last left on rather than anything the player chose — so the offer came
+  // out as STEP UP TO HARD on a challenge that is always played at Hard, and would
+  // have come out as a step down on one pinned to Easy.
+  //
+  // Asked as `usesDifficulty` rather than by naming challenges: a challenge is only
+  // the first mode to pin a rung, and a permanent mode that pinned one would want the
+  // same silence. The dare is about climbing a mode's own ladder, and this is a mode
+  // with one rung.
+  if (!traitsOf(mode).usesDifficulty) return null
   if (earnedChallenge(hits, strikes)) return nextChallenge(mode, difficulty)
   if (struggledRun(hits)) return easierChallenge(mode, difficulty)
   return null

@@ -27,6 +27,7 @@ export {
 } from './dial'
 export { challengeId, isOpenMode } from './challenges/define'
 export { DIFFICULTIES, DIFFICULTY_ORDER, type Difficulty } from './difficulty'
+export { CHALLENGE_WORD } from './challenges/define'
 export { ARCADE_TEASER } from './definitions/arcade'
 export { TUTORIAL } from './definitions/tutorial'
 export {
@@ -36,6 +37,7 @@ export {
   gradientOf,
   lerpColor,
   MULTIPLAYER_GRADIENT,
+  scoreInkOf,
 } from './palette'
 export { decayed } from './ramp'
 export {
@@ -43,7 +45,9 @@ export {
   baseClockMs,
   codeOf,
   descriptionOf,
+  dialOf,
   headlineOf,
+  isChallenge,
   isMode,
   isModeId,
   labelOf,

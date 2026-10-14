@@ -2,6 +2,7 @@ import { isNonEmptyString } from 'narrowland'
 import { Text, View } from 'react-native'
 
 import { GradientName } from '@/components/gradient-name'
+import { RANK_COLUMN } from '@/components/overlays/score-columns'
 import { TrackedPressable } from '@/components/tracked-pressable'
 import { ON_GOLD_LABEL_SHADOW } from '@/constants/theme'
 import { GLYPH, READOUT, TYPE } from '@/constants/typography'
@@ -96,7 +97,10 @@ export function ScoreRow({
       <Text
         selectable={false}
         className={cn(
-          'w-7 font-mono font-bold leading-[14px] text-dim',
+          // The same class string the `#` over it wears — see `RANK_COLUMN`, which is
+          // shared precisely so these two cannot drift apart again.
+          RANK_COLUMN,
+          'font-mono font-bold leading-[14px] text-dim',
           RANK_MARK_SIZES[rankMark(entry.rank)],
         )}
         style={[accentStyle, glow]}

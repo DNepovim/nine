@@ -124,14 +124,44 @@ confetti. Stepping through it by index keeps every colour evenly represented.
 
 ### 2. Mode scale — which mode you are in
 
-`MODE_GRADIENT` in `machines/modes.ts`. One two-stop gradient per mode, and **each
-mode's end is the next mode's start**, so the four gradients chain into one
-continuous spectrum. Preserve that when editing — it is why mode changes feel like
+A `gradient` on each mode's own definition in `modes/definitions/`, read by
+`gradientOf(id)`. One two-stop pair per mode, and from accuracy on, **each mode's end
+is the next mode's start** — so accuracy, speed and arcade chain into one continuous
+spectrum. Preserve that when editing: it is why moving between those modes feels like
 sliding along a scale rather than jumping between themes.
+
+**Trainee is the deliberate exception**, and the only one: two shades of a single blue
+rather than a step along the spectrum. It used to end on the violet accuracy starts
+from, which made practice read as half an accuracy run — the one mode wearing the
+colour of the mode after it. So it keeps its end stop to itself, and the chain begins
+at accuracy. `modes/rules.test.ts` holds both halves of that.
+
+**Trainee is the exception among the permanent modes. A challenge is a different shape
+again** — not a link in the chain and not two shades of one hue, but a near-black and a
+hue of its own:
+
+- The **first stop is `PRIMARY_INK`**, the same for every challenge, and is what says
+  _this is a challenge_ before the hue beside it has been read. No permanent mode starts
+  dark. It is also the card's **ink**: `gradientOf(id)[0]` is what colours the name and
+  the mark, so a challenge needs no separate `*_INK` beside its scale the way gold and
+  the achievement green both do.
+- The **second stop is derived from the challenge's place in the catalog**, stepping
+  through 255–330° by the golden ratio. That arc is the one wide run of hue space nothing
+  else owns — the mode chain holds blue through amber, 43° is the gold of a record you
+  hold, 96–136° the green of an achievement you keep, 175° the teal of multiplayer. A
+  challenge never picks a colour, and `modes/challenges/palette.test.ts` holds it off
+  every hue above.
+
+A challenge may name a **hue** — `hue: TURQUOISE` on its spec — where the generated one
+will not do; `four-keys` does. A hue and not a pair of hexes, so the shared near-black and
+both saturations stay the palette's. Leaving the arc has a cost, and `modes/challenges/
+palette.ts` records it beside each named hue: turquoise is the multiplayer family one
+degree over, and its bright stop is too pale to carry a word, so the edge and the name are
+two shades of it — the same bargain `GOLD_SCALE` and `GOLD_INK` strike.
 
 | Mode     | From      | To        |
 | -------- | --------- | --------- |
-| trainee  | `#4C7EFF` | `#7273D2` |
+| trainee  | `#4C7EFF` | `#2E54B9` |
 | accuracy | `#7273D2` | `#c36282` |
 | speed    | `#c36282` | `#E5534B` |
 | arcade   | `#E5534B` | `#FF8C00` |
@@ -143,12 +173,13 @@ so difficulty never introduces a new hue.
 
 ### 3. CTA scale — things you press
 
-`DARK_MODE_GRADIENT` in `machines/modes.ts`. The same four hues darkened enough to
-carry light text.
+A `darkGradient` beside each mode's own `gradient`, read by `darkGradientOf(id)`. The
+same four pairs darkened enough to carry light text — and chaining the same way, with
+trainee the same exception.
 
 | Mode     | From      | To        |
 | -------- | --------- | --------- |
-| trainee  | `#102972` | `#27255a` |
+| trainee  | `#102972` | `#0B1C4C` |
 | accuracy | `#27255a` | `#501b2e` |
 | speed    | `#501b2e` | `#620b0c` |
 | arcade   | `#620b0c` | `#7A3800` |
@@ -159,6 +190,17 @@ that should read as pressable and sit _under_ text. Pair with `text-on-strong`.
 > **Naming trap:** `DARK_MODE_GRADIENT` is not a dark _theme_ — the app has one colour
 > scheme and no switch. It is the darkened CTA scale, the answer to "this mode's colour,
 > carrying text". Don't reach for `MODE_GRADIENT` for a button.
+
+## A nickname carries its own colour
+
+A player's nickname is drawn in the gradient their own lifetime averages earn them, which
+makes one person one colour everywhere the app writes their name. **Always
+`GradientName`** — see `references/components.md`, which has the rule, the two measured
+exceptions, and what to do when the data you are holding has no averages on it.
+
+`NAME_INK` is the pair it interpolates, and it is its own ink rather than two mode stops
+for the reason `GOLD_INK` and `ACHIEVEMENT_INK` are: a scale tuned to _be_ a colour does
+not carry text at 10px.
 
 ## Supporting palettes
 

@@ -5,8 +5,11 @@ import { Text, View } from 'react-native'
 import { TYPE } from '@/constants/typography'
 import { cn } from '@/lib/cn'
 import {
+  CHALLENGE_WORD,
+  darkGradientOf,
   DIFFICULTIES,
   gradientOf,
+  isChallenge,
   runLabel,
   runSubmode,
   type Difficulty,
@@ -46,22 +49,54 @@ export function BoardBadges({
 }) {
   const { t } = useLingui()
   const mode = t(runLabel(gameMode, runSubmode(tutorial)))
-  const labels =
-    difficulty === undefined ? [mode] : [mode, t(DIFFICULTIES[difficulty].label)]
+  // What the run was, as pills. Three shapes, and which one is drawn says what kind of
+  // thing the player just played:
+  //
+  //   **A challenge** — CHALLENGE, then its own name. Two pills because the name alone
+  //   does not say what it is: FOUR KEYS is a mode nobody has seen before and will not
+  //   see again after today, and on the screens that stop a run there is nothing else
+  //   left to say so. A challenge pins its own rung, so the second slot is free.
+  //
+  //   **A mode with a rung** — the mode, then the rung.
+  //
+  //   **A mode that pins its own rung, or a run with none** — the mode alone.
+  const labels = isChallenge(gameMode)
+    ? [t(CHALLENGE_WORD), mode]
+    : difficulty === undefined
+      ? [mode]
+      : [mode, t(DIFFICULTIES[difficulty].label)]
+
+  // What each pill is painted in.
+  //
+  // A board run wears the mode's own pair on both, which is the gradient the selectors
+  // give the option you picked — there they are the choice, here the record of it.
+  //
+  // A **challenge** splits them, because its two pills say two different things. The
+  // first says *what kind of thing this was* and takes the near-black every challenge
+  // shares, so CHALLENGE looks the same whichever one was played. The second names
+  // *which* challenge and takes that challenge's own colour — the darkened stop rather
+  // than the bright one, because a pill is a filled ground behind white text and that is
+  // the stop tuned to carry it. The bright stop is the arc's light end and would put
+  // white on about 1.7:1.
+  const pillPair = (index: number): readonly [string, string] => {
+    if (!isChallenge(gameMode)) return gradientOf(gameMode)
+    const [shared, own] = darkGradientOf(gameMode)
+    return index === 0 ? [shared, shared] : [own, own]
+  }
 
   return (
     <View className="mb-5 flex-row items-center gap-2">
-      {labels.map((label) => (
+      {labels.map((label, index) => (
         <View
           key={label}
           className="rounded-lg"
           // The opaque ground iOS draws the shadow from: a transparent view has no
           // shape to cast one, and this is the gradient's own first stop, so nothing
           // of it shows past the pill on top.
-          style={{ ...shadow, backgroundColor: gradientOf(gameMode)[0] }}
+          style={{ ...shadow, backgroundColor: pillPair(index)[0] }}
         >
           <LinearGradient
-            colors={[...gradientOf(gameMode)]}
+            colors={[...pillPair(index)]}
             start={{ x: 0, y: 0.5 }}
             end={{ x: 1, y: 0.5 }}
             className="overflow-hidden rounded-lg px-3 py-1"

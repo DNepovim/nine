@@ -86,21 +86,23 @@ describe('formatCountdown', () => {
 
   it('writes a clock, not a duration', () => {
     // The opposite choice from `formatGameTime` one function up, and deliberately so.
-    expect(formatCountdown(1 * h + 52 * m + 9 * s)).toBe('1:52')
+    expect(formatCountdown(1 * h + 52 * m + 9 * s)).toBe('1:52:09')
     expect(formatGameTime(1 * h + 52 * m + 9 * s)).toBe('1ʰ52′09″')
   })
 
-  it('shows two figures and never three', () => {
-    // The seconds give way to the hour rather than standing beside it: with an hour left
-    // nobody reads them, and the first figure would change meaning as the column arrived.
-    expect(formatCountdown(1 * h + 52 * m + 9 * s)).toBe('1:52')
+  it('always shows the seconds, so the last column is always moving', () => {
+    // This replaced a rule that dropped them once there was an hour left. The figure was
+    // easier to read for it and the card looked stopped, which is the worse trade: the
+    // seconds are on the banner to move rather than to be read.
+    expect(formatCountdown(1 * h + 52 * m + 9 * s)).toBe('1:52:09')
     expect(formatCountdown(52 * m + 9 * s)).toBe('52:09')
+    expect(formatCountdown(22 * h + 41 * m + 29 * s)).toBe('22:41:29')
   })
 
   it('keeps counting in hours rather than growing a days column', () => {
     // A window is a day long. 1ᵈ would sit unmoved for its first hour.
-    expect(formatCountdown(25 * h + 1 * m)).toBe('25:01')
-    expect(formatCountdown(400 * h)).toBe('400:00')
+    expect(formatCountdown(25 * h + 1 * m)).toBe('25:01:00')
+    expect(formatCountdown(400 * h)).toBe('400:00:00')
   })
 
   it('drops the hours when there are none', () => {
@@ -114,7 +116,7 @@ describe('formatCountdown', () => {
   })
 
   it('pads the second figure and leaves the leading one alone', () => {
-    expect(formatCountdown(1 * h + 5 * m)).toBe('1:05')
+    expect(formatCountdown(1 * h + 5 * m)).toBe('1:05:00')
     expect(formatCountdown(5 * m)).toBe('5:00')
   })
 

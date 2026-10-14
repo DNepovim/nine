@@ -1,3 +1,4 @@
+import type { MessageDescriptor } from '@lingui/core'
 import { useLingui } from '@lingui/react/macro'
 import { useMachine } from '@xstate/react'
 import { useFonts } from 'expo-font'
@@ -10,7 +11,7 @@ import DSEG7Font from '@/assets/fonts/DSEG7Classic-Bold.ttf'
 import { FeedbackBookmark } from '@/components/feedback-bookmark'
 import { AnnouncementEffect } from '@/components/game/announcement-effect'
 import { ArcadeGame } from '@/components/game/arcade-game'
-import { BestScoresLine } from '@/components/game/best-scores-line'
+import { BestScoresLine, type SessionBests } from '@/components/game/best-scores-line'
 import { Confetti } from '@/components/game/confetti'
 import { Dial } from '@/components/game/dial'
 import { AXIS_STRIP } from '@/components/game/dial-axes'
@@ -69,7 +70,7 @@ import { useAccountEmail } from '@/hooks/use-account-email'
 import { useAchievementQueue, useAchievements } from '@/hooks/use-achievements'
 import { useAnnouncements } from '@/hooks/use-announcements'
 import { useAppUpdate } from '@/hooks/use-app-update'
-import { BoardProvider, useBoard } from '@/hooks/use-board'
+import { BoardProvider, useBoard, type PeriodBoard } from '@/hooks/use-board'
 import { ChampionsProvider, useChampions } from '@/hooks/use-champions'
 import { SUM_ROW_HEIGHT } from '@/hooks/use-dial-metrics'
 import { useDisplayOptions } from '@/hooks/use-display-options'
@@ -104,6 +105,7 @@ import { useRivalRecords } from '@/hooks/use-rival-records'
 import { useSavedRun } from '@/hooks/use-saved-run'
 import { useScoreDirection } from '@/hooks/use-score-direction'
 import { useScoreSubmission } from '@/hooks/use-score-submission'
+import { useSessionBoard } from '@/hooks/use-session-card'
 import { useSplash } from '@/hooks/use-splash'
 import { useStepUp } from '@/hooks/use-step-up'
 import { useStrikeShots, type ShotAim } from '@/hooks/use-strike-shots'
@@ -147,11 +149,13 @@ import { computePar } from '@/machines/scoring'
 import { keyControl, type LessonVoice } from '@/machines/tutorial-lesson'
 import {
   cellsOf,
+  CHALLENGE_WORD,
   darkGradientOf,
   DIFFICULTIES,
   DIFFICULTY_ORDER,
   getDifficultyColor,
   gradientOf,
+  isChallenge,
   isMode,
   MODE_ORDER,
   runLabel,
@@ -160,8 +164,11 @@ import {
   SCORED_MODES,
   streakMultiplier,
   sumOf,
+  type Difficulty,
   type Mode,
+  type ModeId,
 } from '@/modes'
+import { challengeInk } from '@/modes/challenges/palette'
 import type { DisplayTarget, Position } from '@/types/game'
 import type { MultiMode } from '@/types/multiplayer'
 
@@ -408,6 +415,62 @@ const drawnTargets = (
   placed: readonly DisplayTarget[],
 ): readonly DisplayTarget[] => (voice === 'opening' ? [] : placed)
 
+// What the top bar is painted in.
+//
+// Every permanent mode opens on its own first stop. A **challenge**'s first stop is the
+// near-black every challenge shares, so taking it would make every challenge's top bar
+// identical and leave the name as the only thing saying which one this is. Its second
+// stop is the challenge's own, and `challengeInk` is the shade of that which carries a
+// word on the surface.
+const accentFor = (mode: ModeId): string =>
+  isChallenge(mode) ? challengeInk(gradientOf(mode)[1]) : gradientOf(mode)[0]
+
+// NINE's own colour on that bar. A challenge takes the same ink as the rest of the row
+// rather than a point along its pair: `getDifficultyColor` lerps between the two stops by
+// rung, and a challenge pins its rung — so the lerp returns the same blend of near-black
+// and hue on every run, which is a colour neither stop is.
+const wordmarkFor = (mode: ModeId, difficulty: Difficulty): string =>
+  isChallenge(mode) ? accentFor(mode) : getDifficultyColor(mode, difficulty)
+
+// What the title is, under the title.
+//
+// A scored run says its rung. A **challenge** says that it is one — the name above it is
+// a mode nobody has seen before and will not see again, so the line that would carry a
+// rung is the only place left to say what kind of thing is being played. A challenge pins
+// its own rung and so has none to report, which is exactly what leaves the line free.
+//
+// The descriptor rather than the string, so the one caller lower-cases it the same way it
+// lower-cases a rung — that casing is the top bar's voice, not this decision's.
+const subtitleFor = (
+  mode: ModeId,
+  usesDifficulty: boolean,
+  difficulty: Difficulty,
+): MessageDescriptor | null => {
+  if (isChallenge(mode)) return CHALLENGE_WORD
+  return usesDifficulty ? DIFFICULTIES[difficulty].label : null
+}
+
+// The standings a run belongs to, as the score bar wants them — or null for an ordinary
+// run, and for a session run whose two halves are not both in hand yet.
+//
+// Both are needed: the close time came off the card the run was started from, the
+// standings off the server. Until the read lands there is nothing honest to draw, and the
+// strip falls back to its blank height rather than showing a session whose best is a
+// guess.
+const sessionBestsOf = (
+  id: string | null,
+  closesAt: number | null,
+  board: PeriodBoard | null,
+): SessionBests | null =>
+  id !== null && closesAt !== null && board !== null
+    ? {
+        best: board.record ?? 0,
+        holder: board.recordHolder,
+        mine: board.recordIsMine,
+        closesAt,
+      }
+    : null
+
 export default function GameScreen() {
   const { t } = useLingui()
   const [state, send] = useMachine(gameMachine)
@@ -438,6 +501,8 @@ export default function GameScreen() {
   // One lookup rather than a branch at each reader, and the only thing on this screen
   // that knows a mode has rules at all.
   const rules = runRules(mode, difficulty, tutorial)
+  const runAccent = accentFor(mode)
+  const runSubtitle = subtitleFor(mode, rules.usesDifficulty, difficulty)
   const submode = runSubmode(tutorial)
   // The dial this run is played on. `board` on this screen is already the leaderboard.
   const dial = rules.dial
@@ -587,6 +652,19 @@ export default function GameScreen() {
   // no standings; the ten-minute grace on the write makes that a near miss rather than
   // a loss, and a run interrupted by the app dying is already an edge.
   const [runSession, setRunSession] = useState<string | null>(null)
+
+  // When the run's session shuts, for the countdown on the score bar.
+  //
+  // Beside `runSession` rather than folded into it, which keeps the id a plain string
+  // for the handful of places that pass it on. **Never cleared**, and it does not need
+  // to be: every reader below is already behind `runSession !== null`, so a figure left
+  // over from a finished run is a value nothing asks for.
+  //
+  // Taken from the card the run was started from rather than fetched. The session was
+  // read once at launch and the dialog was looking at it a moment ago; asking the server
+  // again for a timestamp the screen is already holding would be a round trip to learn
+  // something it knows.
+  const [runSessionClosesAt, setRunSessionClosesAt] = useState<number | null>(null)
 
   // The mode the player was on before a challenge interrupted it, so the intro can be
   // put back the way they left it. Null whenever the machine is already on one of its
@@ -787,6 +865,9 @@ export default function GameScreen() {
   // the top bar, the intro, the pause screen and the game over screen — so they cannot
   // answer the same question differently. Trainee has no board and it stays quiet.
   const board = useBoard(mode, difficulty, userId)
+  // The run's session standings, for the score bar's SESSION cell. Null for an ordinary
+  // run, which `useSessionBoard` answers without asking the server.
+  const { board: runSessionBoard } = useSessionBoard(runSession, userId)
   // Who holds each mode's Extreme all-time board. Two ids, read wherever a name is
   // drawn and by the game-over screen to tell a reign from a single record.
   const champions = useChampions()
@@ -1669,6 +1750,7 @@ export default function GameScreen() {
               Trainee included: it has no board to report, and reserves the height
               instead, so that the dial below is the same size in all of them. */}
               <BestScoresLine
+                session={sessionBestsOf(runSession, runSessionClosesAt, runSessionBoard)}
                 inRun={inRun}
                 mode={mode}
                 announcement={announcement}
@@ -1705,14 +1787,10 @@ export default function GameScreen() {
                     slot rather than needing a button of its own on top. */}
                 <View className="mb-1">
                   <RunTopBar
-                    accent={gradientOf(mode)[0]}
+                    accent={runAccent}
                     title={t(runLabel(mode, submode))}
-                    subtitle={
-                      rules.usesDifficulty
-                        ? t(DIFFICULTIES[difficulty].label).toLowerCase()
-                        : null
-                    }
-                    wordmark={getDifficultyColor(mode, difficulty)}
+                    subtitle={runSubtitle === null ? null : t(runSubtitle).toLowerCase()}
+                    wordmark={wordmarkFor(mode, difficulty)}
                     onPause={
                       isPlaying
                         ? () => {
@@ -1725,17 +1803,25 @@ export default function GameScreen() {
 
                 {/* Row 2 — hearts · center stat or the lesson's steps · score cluster */}
                 <View className="mt-1.5 flex-row items-center">
-                  {/* Hearts — a mode that spends no lives shows none. */}
+                  {/* Hearts — one per life the mode actually gives, and a mode that
+                    spends none shows none.
+
+                    **As many as the mode gives, not three.** This drew a fixed `[0, 1, 2]`
+                    whatever the rules said, which was right while every mode that spent
+                    lives spent three of them. A challenge may pin two — `four-keys` does —
+                    and the third heart then rendered empty: it stayed mounted across the
+                    mode change with `filled` flipping true → false, which is precisely the
+                    signal `HeartIcon` plays the *losing a life* sequence for. So a
+                    challenge opened by visibly killing a heart the player never had, on
+                    its first frame.
+
+                    Drawing the real count fixes it at the source: the extra heart is
+                    unmounted rather than emptied, and an unmount animates nothing. Losing
+                    a life mid-run still flips a mounted heart and still plays. */}
                   <View className="relative flex-1 flex-row gap-1">
                     {rules.lives.count !== Number.POSITIVE_INFINITY &&
-                      [0, 1, 2].map((i) => (
-                        <HeartIcon
-                          key={i}
-                          filled={
-                            rules.lives.count === Number.POSITIVE_INFINITY || i < lives
-                          }
-                          emptyColor={'#FDFCFA'}
-                        />
+                      Array.from({ length: rules.lives.count }, (_, i) => (
+                        <HeartIcon key={i} filled={i < lives} emptyColor={'#FDFCFA'} />
                       ))}
                     {/* Says why, the moment a hit rather than an expiry is what took the
                       heart — Accuracy's wasteful-hit rule is invisible otherwise.
@@ -2368,6 +2454,7 @@ export default function GameScreen() {
                   // cross a record on its opening hit — already knows where its score
                   // belongs.
                   setRunSession(sessionId)
+                  setRunSessionClosesAt(challengeCard.session.closesAt)
                   // And remember the board they were on, so the intro is handed back the
                   // way they left it rather than stuck on a challenge with no pill.
                   if (isMode(mode)) setModeBeforeSession(mode)

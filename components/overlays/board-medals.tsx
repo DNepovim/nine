@@ -45,20 +45,26 @@ export function BoardMedals({
   return (
     <View className="mb-5 flex-row items-center justify-center gap-3">
       {medals.map(({ period, rank }) => (
-        <View key={period} className="flex-row items-center gap-1">
+        <View key={period ?? 'session'} className="flex-row items-center gap-1">
           <Text selectable={false} className={cn(GLYPH.lg, 'leading-[15px]')}>
             {rankMedal(rank)}
           </Text>
-          <Text
-            selectable={false}
-            className={cn(TYPE.rowLabel, 'leading-[15px]')}
-            style={[
-              { color: gradientOf(gameMode)[0] },
-              shadow ? ON_GOLD_LABEL_SHADOW : null,
-            ]}
-          >
-            {t(PERIOD_LABEL[period])}
-          </Text>
+          {/* No word on a session's medal. The label exists to say *which* board a place
+              was taken on, and a session has one set of standings — so the word would be
+              naming the only thing it could possibly be, which is how a screen comes to
+              read as though it were generated. The metal still says the place. */}
+          {period !== null && (
+            <Text
+              selectable={false}
+              className={cn(TYPE.rowLabel, 'leading-[15px]')}
+              style={[
+                { color: gradientOf(gameMode)[0] },
+                shadow ? ON_GOLD_LABEL_SHADOW : null,
+              ]}
+            >
+              {t(PERIOD_LABEL[period])}
+            </Text>
+          )}
         </View>
       ))}
     </View>

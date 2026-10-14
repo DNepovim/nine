@@ -12,9 +12,9 @@ import { currentBoardMedals } from '@/lib/board-medals'
 import { runStats } from '@/lib/run-stats'
 import {
   darkGradientOf,
-  gradientOf,
   runRules,
   SCORED_MODES,
+  scoreInkOf,
   traitsOf,
   type Difficulty,
   type ModeId,
@@ -144,7 +144,7 @@ export function PausedOverlay({
         }
         // A mode with no board has no score worth showing here: it measures nothing. The
         // run's own numbers still do, so they are what the screen leads with instead.
-        score={traits.scored ? { value: score, color: gradientOf(gameMode)[0] } : null}
+        score={traits.scored ? { value: score, color: scoreInkOf(gameMode) } : null}
         // Above the run's own numbers, where the game-over screen puts them too: a medal
         // is what the run is worth to everyone else, and the stats under it are what it
         // was worth to the player. A mode that reaches no board has nothing to stand on.

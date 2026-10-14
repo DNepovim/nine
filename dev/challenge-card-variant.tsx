@@ -42,7 +42,14 @@ const sessionFor = (which: ChallengeCase, now: number): OpenSession => {
         modeId: MODE_ID,
         opensAt: now - 7 * HOUR,
         closesAt: now + 7 * HOUR,
-        leader: { nickname: 'Žluťoučký_kůň99', score: 184220 },
+        // Vivid at both ends, so the long name shows the gradient travelling its whole
+        // length — which is the thing a one-colour name could never show.
+        leader: {
+          nickname: 'Žluťoučký_kůň99',
+          score: 184220,
+          avgAccuracy: 94,
+          avgSpeed: 91,
+        },
       }
     // Open, and nobody has touched it. The line the card says instead of a leader.
     case 'fresh':
@@ -61,7 +68,10 @@ const sessionFor = (which: ChallengeCase, now: number): OpenSession => {
         modeId: MODE_ID,
         opensAt: now - 23 * HOUR,
         closesAt: now + 45_000,
-        leader: { nickname: 'Mia', score: 98430 },
+        // Three characters and lopsided: exact and slow, so the name is nearly one
+        // colour and the little it does travel is visible at the shortest length a
+        // nickname comes in.
+        leader: { nickname: 'Mia', score: 98430, avgAccuracy: 96, avgSpeed: 42 },
       }
     // Not open yet: the name, the time until it opens, and its one-line description in
     // place of a leader nobody can be.
@@ -71,7 +81,10 @@ const sessionFor = (which: ChallengeCase, now: number): OpenSession => {
         modeId: MODE_ID,
         opensAt: now + 18 * HOUR,
         closesAt: now + 42 * HOUR,
-        leader: { nickname: 'nobody', score: 0 },
+        // Never counted, which `nameColors` reads as no saturation — the one case where
+        // the name comes out grey. Drawn by nothing on the teaser, which shows its
+        // description instead, and kept here so the shape is a whole `OpenSession`.
+        leader: { nickname: 'nobody', score: 0, avgAccuracy: null, avgSpeed: null },
       }
   }
 }

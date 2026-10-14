@@ -1,5 +1,7 @@
+import { SCORE_INK } from '@/constants/colors'
+
 import { DIFFICULTY_T, type Difficulty } from './difficulty'
-import { modeById, type ModeId, type ScoredMode } from './registry'
+import { isChallenge, modeById, type ModeId, type ScoredMode } from './registry'
 
 // Linear interpolation between two 6-digit hex colors.
 export function lerpColor(from: string, to: string, t: number): string {
@@ -57,3 +59,19 @@ export function getDifficultyColor(id: ModeId, difficulty: Difficulty): string {
   const [start, end] = gradientOf(id)
   return lerpColor(start, end, DIFFICULTY_T[difficulty])
 }
+
+// What a run's final score is lit in, on the screens that stop a run.
+//
+// A board run takes its mode's own first stop, so the figure says which board it was set
+// on — the same hue the selectors gave the option that was picked.
+//
+// A **challenge** takes the app's score green instead. Its first stop is the near-black
+// every challenge shares, which would draw the one number the screen is about in the
+// colour text is drawn in — a score that looked switched off. Green is what every other
+// score in the app wears, and a challenge has no board for the figure to name anyway.
+//
+// The hex rather than the `text-score` class because the screens derive the glow behind
+// the digits from it, and a glow is a runtime value. Safe here for the reason `SCORE_INK`
+// records: the two token re-bindings belong to screens a challenge never reaches.
+export const scoreInkOf = (id: ModeId): string =>
+  isChallenge(id) ? SCORE_INK : gradientOf(id)[0]

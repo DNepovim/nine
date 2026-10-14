@@ -1,7 +1,7 @@
 import { Trans } from '@lingui/react/macro'
 import { LinearGradient } from 'expo-linear-gradient'
 import type { ReactNode } from 'react'
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { KeyboardAvoidingView, Platform, Pressable, Text, View } from 'react-native'
 import Animated, {
   Easing,
@@ -13,6 +13,7 @@ import { scheduleOnRN } from 'react-native-worklets'
 
 import { MenuButton } from '@/components/game/menu-button'
 import { HoldProvider, useDialogHold } from '@/components/overlays/dialog-hold'
+import { TurningEdge } from '@/components/overlays/turning-edge'
 import { PrimaryButton } from '@/components/primary-button'
 import { MUTED_INK, SPECTRUM } from '@/constants/colors'
 import { LAYER } from '@/constants/layers'
@@ -57,6 +58,7 @@ export function ModalCard({
   replacing = false,
   avoidKeyboard = false,
   closeButton = true,
+  edge,
   held = false,
   children,
 }: {
@@ -98,8 +100,21 @@ export function ModalCard({
   // the scrim shut — see `dialog-hold.ts`. A dialog whose field lives in a card below it
   // reports from there with `useHoldsDialogOpen` and leaves this alone.
   held?: boolean
+  // Two stops to paint the card's border in, instead of the game spectrum.
+  //
+  // **The challenge dialog is the caller that asked for this.** It is opened from the
+  // challenge banner on the intro, which wears that challenge's own pair on its edge, and
+  // a dialog arriving in the app's four stops read as a different object from the row that
+  // had just been pressed. Every other dialog keeps the spectrum: a dialog is the app
+  // speaking, and only this one is about a single mode.
+  edge?: readonly [string, string]
   children: (close: () => void) => ReactNode
 }) {
+  // The card's own box, for the turning edge below — which is absolutely positioned and
+  // so has no size of its own to report. Measured only to be handed over; a dialog with
+  // no `edge` never reads it.
+  const [box, setBox] = useState({ width: 0, height: 0 })
+
   // Whether a field inside is holding the scrim shut — see `dialog-hold.ts`.
   const hold = useDialogHold()
   // The scrim and the card are two values rather than one, because `replacing` holds the
@@ -168,12 +183,52 @@ export function ModalCard({
         enabled={avoidKeyboard}
       >
         <Animated.View style={[{ width: '90%', maxWidth: 460 }, cardStyle]}>
-          <LinearGradient
-            colors={[...SPECTRUM]}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
+          {/* Two shapes of edge, and which one is drawn is the whole of what `edge`
+            decides. **Without it** the border is the four game stops, held still — a
+            dialog is the app speaking, and the app's own colours do not need to move to
+            say so. **With it** the pair turns, because the dialog was opened from the
+            challenge banner, whose edge turns: a border that stopped moving the moment
+            the card arrived would read as a different object from the row that was
+            pressed.
+
+            The turning one is a plain `View` with the gradient as a layer inside it
+            rather than a `LinearGradient` wrapping everything, since a layer is the only
+            thing that can be rotated without turning the card's contents with it. The
+            clip is what keeps the corners of a square swinging inside the radius. */}
+          <View
+            className={edge === undefined ? '' : 'overflow-hidden'}
             style={{ borderRadius: RADIUS, padding: BORDER, maxHeight }}
+            onLayout={
+              edge === undefined
+                ? undefined
+                : (e) => {
+                    setBox({
+                      width: e.nativeEvent.layout.width,
+                      height: e.nativeEvent.layout.height,
+                    })
+                  }
+            }
           >
+            {edge === undefined ? (
+              <LinearGradient
+                colors={[...SPECTRUM]}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={{
+                  position: 'absolute',
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  bottom: 0,
+                  borderRadius: RADIUS,
+                }}
+              />
+            ) : (
+              box.width > 0 &&
+              box.height > 0 && (
+                <TurningEdge edge={edge} width={box.width} height={box.height} />
+              )
+            )}
             <View
               className="bg-surface px-5 pb-5 pt-4"
               style={{ borderRadius: RADIUS - BORDER, flexShrink: 1 }}
@@ -213,7 +268,7 @@ export function ModalCard({
                 </View>
               )}
             </View>
-          </LinearGradient>
+          </View>
         </Animated.View>
       </KeyboardAvoidingView>
     </Animated.View>

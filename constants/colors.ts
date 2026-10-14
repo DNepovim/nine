@@ -14,8 +14,12 @@ export const APP_RED = '#E5534B'
 // element that speaks for the app rather than for a mode.
 export const APP_VIOLET = '#7273D2'
 
-// The game's full spectrum, as seen on the splash and the app icon. Also the
-// span of the mode gradients: trainee blue through to speed red.
+// The game's full spectrum, as seen on the splash and the app icon: the app's own blue
+// through to the red of its fastest mode.
+//
+// No longer the span of the mode gradients, which it was until trainee took a second
+// blue for its end stop instead of the violet accuracy starts from — these four stops
+// are the identity arc, and three of the four modes still chain along it.
 export const SPECTRUM = ['#4C7EFF', '#7273D2', '#c36282', '#E5534B'] as const
 
 // Gold marks the three board records. Needs dark ink — white on it is about 1.5:1.
@@ -45,6 +49,17 @@ export const DIM_INK = '#6A655C'
 // takes its colour as a prop rather than as a class. Never text — this is the hairline
 // weight, well under the contrast a word needs.
 export const MUTED_INK = '#D4D0C8'
+
+// The `--color-score` token as JavaScript, for the same reason the three below it are:
+// a screen that hands the readout a colour rather than a class needs the value, and the
+// run screens do — the glow behind the digits is derived from it, and a glow cannot be
+// a class.
+//
+// **Only correct where the token is at its default.** `GOLD_SCREEN_TOKENS` and
+// `MODE_SCREEN_TOKENS` both re-bind `--color-score`, so a screen under either of those
+// must let the class answer rather than reaching for this. The run screens use it for a
+// challenge, which keeps no board and so reaches neither.
+export const SCORE_INK = '#147A32'
 
 // The `--color-primary` token as JavaScript, and the same bargain as the two above: a
 // framed digit takes its colour as a prop, because the box around it is already computing

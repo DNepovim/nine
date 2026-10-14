@@ -33,6 +33,21 @@ export const TYPE = {
   // what is on screen when it is up, but it is still a card rather than a screen.
   cardTitle: 'font-mono text-[17px] font-black tracking-[2px]',
 
+  // A card title where the card is a **row** rather than the whole of what is on screen:
+  // the challenge banner on the intro, which is one row above the mode pills. Named off
+  // `cardTitle` because it is the same job — the name of the thing the card is about —
+  // and three points down because a popup card has the screen to itself while this has a
+  // pill row under it and a countdown beside it.
+  //
+  // The gap it fills was real: between `cardTitle` and `heading` is six points, and a
+  // title that wanted to be a little quieter had to drop to the size of its own subtitle
+  // or stay where it was. Tracking comes down with the size, as it does across the rest
+  // of this scale.
+  //
+  // **Normal text, not large**, which matters to whatever colours it: 14px bold is under
+  // the 18.66px WCAG calls large, so an ink on this role needs 4.5:1 rather than 3:1.
+  cardTitleSm: 'font-mono text-[14px] font-black tracking-[1.5px]',
+
   // A heading inside a card: a dialog's own header (drawn by `ModalCard`), and the block
   // headings in its content. Much smaller than a screen title on purpose — a dialog is
   // already framed by its card and its scrim, so the heading does not also have to

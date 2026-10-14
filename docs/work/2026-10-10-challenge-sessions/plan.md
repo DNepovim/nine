@@ -646,7 +646,12 @@ Left as specified.
   sole use, and no web-only regression is visible to `pnpm check` at all. It blocked two
   correct changes in this cycle. The likely fix is to make the web variants _entries_
   rather than ignored, so knip follows their imports.
-- **The hearts row is hardcoded to three slots** — `verify`'s finding 19, unchanged.
+- ~~**The hearts row is hardcoded to three slots**~~ — `verify`'s finding 19. **Fixed**:
+  the row draws `rules.lives.count` hearts rather than a fixed `[0, 1, 2]`, so the heart a
+  two-life mode does not have is unmounted instead of emptied — and an unmount animates
+  nothing, where emptying a mounted heart is exactly the signal `HeartIcon` plays the
+  losing-a-life sequence for. Reported from the app as "the first life is lost
+  immediately", which is what it looked like. `modes/lives.test.ts` pins the counts.
 - **The other session's worktree is nested inside this repo** at
   `.claude/worktrees/road-bandits/`, and `vitest`'s `**/*.test.ts` glob, `prettier` and
   `knip` all now sweep it. `pnpm check` fails on ten of its tests. `vitest.config.ts` and

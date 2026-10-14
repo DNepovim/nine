@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import { boardMedals, currentBoardMedals, runMedal } from './board-medals'
+import { boardMedals, currentBoardMedals, runMedal, sessionMedal } from './board-medals'
 
 const theirs = (score: number) => ({ score, isMine: false })
 const mine = (score: number) => ({ score, isMine: true })
@@ -117,5 +117,41 @@ describe('currentBoardMedals', () => {
       today: { rows: [row(900), row(800), row(700)] },
     }
     expect(currentBoardMedals(board, 500, 'me')).toEqual([])
+  })
+})
+
+describe('sessionMedal', () => {
+  const row = (best_score: number, user_id = 'them') => ({ best_score, user_id })
+
+  it('carries no period, because a session has only one set of standings', () => {
+    expect(sessionMedal([row(400), row(300)], 500, 'me')).toEqual([
+      { period: null, rank: 1 },
+    ])
+  })
+
+  it('counts the players standing above the run', () => {
+    expect(sessionMedal([row(900), row(800)], 500, 'me')).toEqual([
+      { period: null, rank: 3 },
+    ])
+  })
+
+  it('is nothing past third', () => {
+    expect(sessionMedal([row(900), row(800), row(700)], 500, 'me')).toEqual([])
+  })
+
+  it('is nothing when the player’s own better run is what the standings show', () => {
+    // The same rule `runMedal` applies to a board: beating a score you already beat wins
+    // nothing twice, and the standings are still showing the 900.
+    expect(sessionMedal([row(900, 'me')], 500, 'me')).toEqual([])
+  })
+
+  it('is gold on standings nobody else is on', () => {
+    expect(sessionMedal([], 500, 'me')).toEqual([{ period: null, rank: 1 }])
+  })
+
+  it('treats a signed-out player as on nobody’s row', () => {
+    expect(sessionMedal([row(900, 'them')], 500, null)).toEqual([
+      { period: null, rank: 2 },
+    ])
   })
 })

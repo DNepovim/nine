@@ -103,6 +103,9 @@ export function ScoreStripVariant({
     // on, and a cell takes its own press before this one ever sees it.
     <Pressable className="flex-1 bg-surface px-4 py-2" onPress={onClose}>
       <BestScoresLine
+        // This screen previews the four-cell board face; the session face is the
+        // challenge card's own preview to grow if it is ever wanted here.
+        session={null}
         inRun
         mode="accuracy"
         announcement={null}

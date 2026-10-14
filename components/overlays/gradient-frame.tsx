@@ -13,6 +13,8 @@ import { SPECTRUM } from '@/constants/colors'
 import { TYPE } from '@/constants/typography'
 import { cn } from '@/lib/cn'
 
+import { TurningEdge } from './turning-edge'
+
 // The edge's own measurements, as the challenge card wants them — the one caller so far.
 // Thin, because the thing framed is a two-line row rather than a card of its own, and a
 // rule any heavier reads as a box drawn around a box. The radius is `rounded-2xl`, which
@@ -51,6 +53,22 @@ const BAND: readonly [string, string, ...string[]] = [
 // it cycle their own gradient every two seconds, and an edge drifting at that rate would
 // read as a second thing happening rather than as one thing being alive.
 const SWEEP_MS = 8000
+
+// The lift. Lighter than the pills' in `board-badges.tsx` — opacity 0.2 at a 6pt radius —
+// and deliberately so: that shadow is carried by a shape about as wide as a word, where
+// this one is a card the width of the screen. The same settings under a surface this size
+// read as the box having come loose from the screen rather than as sitting just above it.
+//
+// It cannot go on the box itself. That box is `overflow-hidden`, which is what keeps the
+// gradient inside its corners, and a clipped layer casts no shadow — so this rides a
+// wrapper around it, which is the same arrangement the pills use and for the same reason.
+const SHADOW = {
+  shadowColor: '#000',
+  shadowOpacity: 0.12,
+  shadowOffset: { width: 0, height: 2 },
+  shadowRadius: 5,
+  elevation: 2,
+}
 
 // One thing standing in the top rule, with the rule broken behind it.
 //
@@ -131,6 +149,7 @@ export function GradientFrame({
   inner = '',
   legend,
   badge,
+  edge,
 }: {
   children: ReactNode
   // Classes for the white box — the padding, and anything else about the ground the
@@ -148,6 +167,21 @@ export function GradientFrame({
   // worth reading before its contents. Anything, rather than a string — the challenge
   // card sets its countdown here.
   badge?: ReactNode
+  // Two stops to paint the edge in, instead of the game spectrum.
+  //
+  // **The challenge card is the caller that asked for this**, and the reason is that a
+  // challenge now has colours of its own. The default is still the four game stops, which
+  // is the app speaking rather than any one mode — see the note on `BAND`. A challenge
+  // wants the opposite: the edge is the loudest thing the card has, and the near-black and
+  // the hue it is paired with are what tell one challenge from another.
+  //
+  // It also sweeps differently, and it has to. The spectrum band slides, which only loops
+  // because the band is periodic — `[...SPECTRUM, ...SPECTRUM, SPECTRUM[0]]`. Making a
+  // two-stop pair periodic means repeating it as `[a, b, a, b, a]`, and the edge then
+  // reads as three stops rather than two: a bright middle with the dark stop at both ends.
+  // So a two-stop edge turns instead, which keeps it the one clean sweep from a to b that
+  // it is, and moves for the same reason the band does.
+  edge?: readonly [string, string]
 }) {
   // Measured rather than given in percentages: a translate in percent is newer than the
   // oldest platform this ships to, and the width is wanted for the band anyway.
@@ -156,6 +190,11 @@ export function GradientFrame({
   // How tall each thing standing in the rule is, so each can be lifted by half of itself.
   // Two numbers rather than one: the word and the board are different heights, and what
   // they share is the line through their middles rather than an edge.
+  // The box's own height, wanted only by a rotating edge: a square turned inside a
+  // rectangle has to be as wide as the rectangle's diagonal or its corners swing clear of
+  // the shape they are meant to be filling.
+  const [height, setHeight] = useState(0)
+
   const [legendHeight, setLegendHeight] = useState(0)
   const [badgeHeight, setBadgeHeight] = useState(0)
   const overhang = Math.max(legendHeight, badgeHeight) / 2
@@ -187,40 +226,63 @@ export function GradientFrame({
     // does not need the parent's help: the box gives up the room, and the halves standing
     // above its rule are inside the parent either way.
     <View className="w-full" style={{ marginTop: overhang }}>
+      {/* The shadow's own view, between the root and the clipped box.
+        
+        Not the root, which the chips standing in the rule are also children of — a shadow
+        there would be cast by a rectangle the full height of the overhang as well, with
+        the chips' halves hanging outside the shape casting it. And not the box, which is
+        clipped and so casts nothing.
+
+        Its background has to be opaque for iOS to have a shape to draw from, and the box
+        on top of it covers it completely — so the colour is only ever the one the edge
+        itself opens on, and none of it is ever seen. */}
       <View
-        className="w-full overflow-hidden"
-        style={{ borderRadius: RADIUS, padding: EDGE }}
-        onLayout={(e) => {
-          setWidth(e.nativeEvent.layout.width)
+        style={{
+          ...SHADOW,
+          borderRadius: RADIUS,
+          backgroundColor: edge === undefined ? SPECTRUM[0] : edge[0],
         }}
       >
-        {width > 0 && (
-          <Animated.View
-            pointerEvents="none"
-            style={[
-              { position: 'absolute', top: 0, bottom: 0, left: 0, width: width * 2 },
-              bandStyle,
-            ]}
-          >
-            <LinearGradient
-              colors={BAND}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 0 }}
-              style={{ flex: 1 }}
-            />
-          </Animated.View>
-        )}
+        <View
+          className="w-full overflow-hidden"
+          style={{ borderRadius: RADIUS, padding: EDGE }}
+          onLayout={(e) => {
+            setWidth(e.nativeEvent.layout.width)
+            setHeight(e.nativeEvent.layout.height)
+          }}
+        >
+          {edge !== undefined && width > 0 && height > 0 && (
+            <TurningEdge edge={edge} width={width} height={height} />
+          )}
 
-        {/* `elevated` and not a literal white: it is the whitest surface the theme has
+          {edge === undefined && width > 0 && (
+            <Animated.View
+              pointerEvents="none"
+              style={[
+                { position: 'absolute', top: 0, bottom: 0, left: 0, width: width * 2 },
+                bandStyle,
+              ]}
+            >
+              <LinearGradient
+                colors={BAND}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+                style={{ flex: 1 }}
+              />
+            </Animated.View>
+          )}
+
+          {/* `elevated` and not a literal white: it is the whitest surface the theme has
           (#fdfcfa), and against the warm surface the intro is drawn on it reads as white
           without being the one colour in the app that came from outside the tokens. It is
           also a step away from the `bg-card` the mode pills under it wear, which is what
           stops the announcement reading as one more row of the same list. */}
-        <View
-          className={cn('w-full bg-elevated', inner)}
-          style={{ borderRadius: RADIUS - EDGE }}
-        >
-          {children}
+          <View
+            className={cn('w-full bg-elevated', inner)}
+            style={{ borderRadius: RADIUS - EDGE }}
+          >
+            {children}
+          </View>
         </View>
       </View>
 

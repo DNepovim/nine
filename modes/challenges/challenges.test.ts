@@ -2,14 +2,16 @@ import { msg } from '@lingui/core/macro'
 import { describe, expect, it } from 'vitest'
 
 import { parTable } from '@/machines/scoring'
+import { ACCURACY } from '@/modes/definitions/accuracy'
 import { SPEED } from '@/modes/definitions/speed'
 import { defineDial, emptyGrid } from '@/modes/dial'
 import { DIFFICULTY_ORDER } from '@/modes/difficulty'
-import { rulesFor } from '@/modes/registry'
+import { rulesFor, runRules } from '@/modes/registry'
 import { resolveRules, spawnInterval } from '@/modes/rules'
 
 import { CHALLENGES } from './catalog'
 import { challengeId, defineChallenge, isOpenMode } from './define'
+import { challengeDarkGradient, challengeGradient } from './palette'
 
 const DAY = 24 * 3600_000
 const OPENS = Date.UTC(2027, 0, 1)
@@ -40,10 +42,34 @@ describe('defineChallenge', () => {
     expect(EVERYTHING.id.startsWith('challenge/')).toBe(true)
   })
 
-  it('borrows the base mode’s colours and shot unless the spec names its own', () => {
-    expect(EVERYTHING.gradient).toEqual(SPEED.gradient)
-    expect(EVERYTHING.darkGradient).toEqual(SPEED.darkGradient)
+  it('borrows the base mode’s shot unless the spec names its own', () => {
     expect(EVERYTHING.shot).toBe(SPEED.shot)
+  })
+
+  it('takes a colour of its own rather than the base mode’s', () => {
+    // This is the behaviour that replaced colour inheritance, and the reason it had to:
+    // a challenge built on SPEED came out wearing Speed's exact pair, so the one thing
+    // on the intro that is only there today was the hardest thing on it to tell from a
+    // permanent mode.
+    expect(EVERYTHING.gradient).not.toEqual(SPEED.gradient)
+    expect(EVERYTHING.darkGradient).not.toEqual(SPEED.darkGradient)
+    expect(EVERYTHING.gradient).toEqual(challengeGradient(0))
+    expect(EVERYTHING.darkGradient).toEqual(challengeDarkGradient(0))
+  })
+
+  it('still lets a spec name its own pair', () => {
+    const painted = defineChallenge({
+      slug: 'painted',
+      label: msg`PAINTED`,
+      description: msg`Picks its own.`,
+      base: SPEED,
+      from: OPENS,
+      until: OPENS + DAY,
+      gradient: ['#111111', '#222222'],
+      darkGradient: ['#333333', '#444444'],
+    })
+    expect(painted.gradient).toEqual(['#111111', '#222222'])
+    expect(painted.darkGradient).toEqual(['#333333', '#444444'])
   })
 
   it('carries every rule the patch names through to a resolved run', () => {
@@ -97,14 +123,33 @@ describe('defineChallenge', () => {
     if (bare.engine !== 'targets') throw new Error('a challenge runs on targets')
     const asSpeed = rulesFor('speed', 'hard')
     const asChallenge = resolveRules(bare.rules, 'speed', 'hard')
-    // Everything but the board. A challenge is its base mode in every respect except
-    // that its standings belong to the session it was aired in, so this is the one
-    // field a bare challenge may not inherit — see `noBoard` in define.ts.
-    expect(asSpeed?.capabilities.board).toBe(true)
+    if (asSpeed === null) throw new Error('speed resolves')
+
+    // Three fields a bare challenge does not inherit, and nothing else. Each is deliberate
+    // and each is written down in `define.ts`:
+    //
+    //   **board** — forced off. Its standings belong to the session it was aired in.
+    //   **weights** — evened. A challenge is nobody's long game, so it does not take
+    //   whichever lean the mode it was built from happens to have.
+    //   **wasteful** — off. A day to work out a strange dial is not a day to be fined for
+    //   not already knowing it.
+    //
+    // The assertion is written as "put those three back and it is the base mode", which
+    // is what makes it fail if a fourth ever joins them quietly.
+    expect(asSpeed.capabilities.board).toBe(true)
     expect(asChallenge.capabilities.board).toBe(false)
+    expect(asChallenge.scoring.weights).toEqual({ acc: 0.5, spd: 0.5 })
+    expect(asChallenge.lives.wasteful).toBeNull()
+
     expect({
       ...asChallenge,
       capabilities: { ...asChallenge.capabilities, board: true },
+      scoring: {
+        ...asChallenge.scoring,
+        weights: asSpeed.scoring.weights,
+        headline: asSpeed.scoring.headline,
+      },
+      lives: { ...asChallenge.lives, wasteful: asSpeed.lives.wasteful },
     }).toEqual(asSpeed)
   })
 
@@ -248,5 +293,70 @@ describe('a challenge and the board it does not keep', () => {
       if (challenge.engine !== 'targets') continue
       expect(challenge.rules.capabilities.board).toBe(false)
     }
+  })
+})
+
+describe('what a challenge is scored and spent by unless it says otherwise', () => {
+  it('blends the two factors evenly, whichever mode it was built on', () => {
+    // SPEED leans 85/15 towards the clock. A challenge built on it inherited that lean
+    // and was quietly a Speed run with a different dial.
+    const onSpeed = defineChallenge({
+      slug: 'on-speed',
+      label: msg`ON SPEED`,
+      description: msg`Built on speed.`,
+      base: SPEED,
+      from: OPENS,
+      until: OPENS + DAY,
+    })
+    if (onSpeed.engine !== 'targets') throw new Error('targets')
+    expect(onSpeed.rules.scoring.weights).toEqual({ acc: 0.5, spd: 0.5 })
+    expect(SPEED.rules.scoring.weights).not.toEqual({ acc: 0.5, spd: 0.5 })
+  })
+
+  it('costs no life for a wasteful hit, whichever mode it was built on', () => {
+    // ACCURACY spends one, which is the rule that board is about. A challenge is strange
+    // in several ways at once and gives a day to work them out.
+    const onAccuracy = defineChallenge({
+      slug: 'on-accuracy',
+      label: msg`ON ACCURACY`,
+      description: msg`Built on accuracy.`,
+      base: ACCURACY,
+      from: OPENS,
+      until: OPENS + DAY,
+    })
+    if (onAccuracy.engine !== 'targets') throw new Error('targets')
+    expect(onAccuracy.rules.lives.wastefulCostsLife).toBe(false)
+    expect(ACCURACY.rules.lives.wastefulCostsLife).toBe(true)
+    // The clock still takes one. A life going to an expiry is the clock doing its job.
+    expect(onAccuracy.rules.lives.expiryCostsLife).toBe(true)
+  })
+
+  it('lets a spec ask for a lean of its own', () => {
+    // Defaults, not forces — unlike the board, which no challenge may keep.
+    const leaning = defineChallenge({
+      slug: 'leaning',
+      label: msg`LEANING`,
+      description: msg`Wants the clock to matter.`,
+      base: SPEED,
+      from: OPENS,
+      until: OPENS + DAY,
+      rules: {
+        scoring: { weights: { acc: 0.2, spd: 0.8 } },
+        lives: { wastefulCostsLife: true },
+      },
+    })
+    if (leaning.engine !== 'targets') throw new Error('targets')
+    expect(leaning.rules.scoring.weights).toEqual({ acc: 0.2, spd: 0.8 })
+    expect(leaning.rules.lives.wastefulCostsLife).toBe(true)
+  })
+
+  it('reads the even blend as a run about the route', () => {
+    // `favoured` breaks a dead heat towards accuracy — the half of the game a player can
+    // work at — so a challenge leads its stats with the route rather than the clock.
+    expect(runRules(challengeId('four-keys'), 'hard').scoring.headline).toBe('acc')
+    expect(runRules(challengeId('four-keys'), 'hard').scoring.weights).toEqual({
+      acc: 0.5,
+      spd: 0.5,
+    })
   })
 })

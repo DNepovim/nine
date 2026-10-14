@@ -4,7 +4,8 @@ import { SPEED } from '@/modes/definitions/speed'
 import { defineDial } from '@/modes/dial'
 import type { ModeDefinition } from '@/modes/types'
 
-import { defineChallenge } from './define'
+import { defineChallenge, type ChallengeSpec } from './define'
+import { TURQUOISE } from './palette'
 
 // Every challenge the app has ever carried, each with the window it ran in.
 //
@@ -36,10 +37,15 @@ const DAY = 24 * HOUR
 // Its window has closed, so it is in no list the player sees. It is kept because it is
 // the thing to copy — every group a challenge may bend is bent in it exactly once — and
 // because the tests walk it.
-const FOUR_KEYS = defineChallenge({
+const FOUR_KEYS: ChallengeSpec = {
   slug: 'four-keys',
   label: msg`FOUR KEYS`,
-  description: msg`Four keys, two of them twins.`,
+  description: msg`Four keys, doubled speed`,
+  // Turquoise at its blue end, rather than the violet its place in the catalog works out
+  // to. The arc never reaches this hue on its own — see `TURQUOISE`, which also records
+  // what naming it costs: its bright stop is too pale to carry a word, so the edge and
+  // the name are two shades of it.
+  hue: TURQUOISE,
   base: SPEED,
   from: Date.UTC(2026, 8, 1),
   until: Date.UTC(2026, 8, 1) + DAY,
@@ -66,6 +72,12 @@ const FOUR_KEYS = defineChallenge({
     scoring: { streak: 'clear', base: 150 },
     lives: { count: 2 },
   },
-})
+}
 
-export const CHALLENGES: readonly ModeDefinition[] = [FOUR_KEYS]
+// Mapped rather than listed, and that is what gives each challenge its colour: `.map`
+// hands `defineChallenge` the spec's own index, which is what the pair is derived from.
+// The list is append-only — see the note at the top of this file — so an index is a
+// permanent fact about a challenge and its colour never moves.
+export const CHALLENGES: readonly ModeDefinition[] = [FOUR_KEYS].map((spec, index) =>
+  defineChallenge(spec, index),
+)

@@ -47,9 +47,12 @@ const SECTIONS = {
   // Arcade's own amber, which is the last stop of the scale and the one the pill, the
   // hero and the lit way are all drawn in. Behind the `arcade` flag, like the chapter.
   arcade: { icon: 'git-network', title: msg`ARCADE`, color: GAME_SCALE[4] },
-  // A challenge borrows the scale's third stop rather than taking one of its own: it is
-  // a mode like the others for the few hours it is on, and a colour nothing else uses
-  // would have said it was a different kind of thing.
+  // A challenge borrows the scale's third stop rather than its own colour, which it does
+  // now have — a near-black paired with a hue off the violet arc, see
+  // `modes/challenges/palette.ts`. That pair cannot do this job: the near-black is the
+  // colour text is drawn in, so a chapter accented with it would read as no accent at
+  // all, and the hue belongs to whichever challenge is on today rather than to the
+  // chapter that explains all of them. This list is the app speaking, like the scale.
   challenges: { icon: 'flame', title: msg`CHALLENGES`, color: GAME_SCALE[3] },
   multiplayer: { icon: 'people', title: msg`MULTIPLAYER`, color: GAME_SCALE[3] },
   tips: { icon: 'bulb', title: msg`TIPS & TRICKS`, color: GAME_SCALE[4] },
@@ -573,8 +576,9 @@ export function HowToPlayOverlay({
                 </Bullet>
                 <Bullet color={GAME_SCALE[3]}>
                   <Trans>
-                    No medal rides on it — a challenge keeps no board of its own. The
-                    points still count towards your fortune.
+                    Finish in the top three and you get the medal for it. A challenge
+                    keeps no board of its own, so there is nothing to lose it to
+                    afterwards — and the points still count towards your fortune.
                   </Trans>
                 </Bullet>
               </Card>

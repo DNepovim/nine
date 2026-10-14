@@ -20,7 +20,17 @@ export type OpenSession = {
   closesAt: number
   // Null where nobody has played yet, which is every session until someone does — and
   // the second line of the card says so rather than leaving a gap.
-  leader: { nickname: string; score: number } | null
+  //
+  // The two averages ride along because the card draws the name in the player's own
+  // colours, like every other name the app writes on its own surface — see
+  // `GradientName`. Null for a player the counters have never seen, which
+  // `nameColors` reads as no saturation and draws uncoloured.
+  leader: {
+    nickname: string
+    score: number
+    avgAccuracy: number | null
+    avgSpeed: number | null
+  } | null
 }
 
 type OpenSessionRow = {
@@ -30,6 +40,8 @@ type OpenSessionRow = {
   closes_at: string
   leader_name: string | null
   leader_score: number | null
+  leader_acc: number | null
+  leader_spd: number | null
 }
 
 const atMs = (iso: string): number => new Date(iso).getTime()
@@ -54,7 +66,16 @@ export async function loadOpenSessions(): Promise<{
       leader:
         row.leader_name === null || row.leader_score === null
           ? null
-          : { nickname: row.leader_name, score: row.leader_score },
+          : {
+              nickname: row.leader_name,
+              score: row.leader_score,
+              // Kept nullable rather than defaulted to zero: a nought is a real average
+              // a real player can have, and `nameColors` already treats the absence as
+              // no saturation. Defaulting here would have made "never counted" and
+              // "counted, and bad at it" the same colour by accident.
+              avgAccuracy: row.leader_acc,
+              avgSpeed: row.leader_spd,
+            },
     })),
     error: null,
   }

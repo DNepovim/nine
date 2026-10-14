@@ -1,8 +1,14 @@
 import { PERIODS, type Period } from '@/lib/announcements'
 import { medalRank } from '@/lib/medals'
 
-// A place the run earned on one period of a board.
-export type BoardMedal = { period: Period; rank: 1 | 2 | 3 }
+// A place the run earned on one period of a board — or, with no period, on a **session**,
+// which has exactly one set of standings and so nothing to distinguish them from.
+//
+// `null` rather than a fourth period: a session is not a longer or shorter window on the
+// same board, it is its own window and the only one it has. Adding `'session'` to
+// `Period` would have put it in every table keyed by period — the board tabs, the medal
+// collapse, the reigns — none of which has anything to say about it.
+export type BoardMedal = { period: Period | null; rank: 1 | 2 | 3 }
 
 // One row of a board, as the medal count sees it.
 export type BoardRow = { score: number; isMine: boolean }
@@ -80,4 +86,28 @@ export function currentBoardMedals(
     week: earned(board.week),
     today: earned(board.today),
   })
+}
+
+// Where a run came on its session's standings, as a medal with no period beside it.
+//
+// A list rather than a single value so the caller can hand it straight to `BoardMedals`
+// alongside the board case, and empty rather than null for no medal, which is the same
+// shape `boardMedals` returns when a run earned nothing.
+//
+// Reuses `runMedal`, which is the whole reason this is three lines: the rule for whether
+// a run's score is what the standings now show, and whether that lands on the podium, is
+// not different because the standings happen to be a session's.
+export function sessionMedal(
+  rows: readonly { best_score: number; user_id: string }[],
+  score: number,
+  userId: string | null,
+): BoardMedal[] {
+  const rank = runMedal(
+    score,
+    rows.map((row) => ({
+      score: row.best_score,
+      isMine: userId !== null && row.user_id === userId,
+    })),
+  )
+  return rank === null ? [] : [{ period: null, rank }]
 }

@@ -37,6 +37,37 @@ In every case the fix was one component with slots, not a tidier copy.
 | Loading                  | `overlays/skeleton.tsx`, `skeleton-row.tsx`                    |
 | Page indicator           | `page-dots.tsx`, `page-dot.tsx`                                |
 | Markdown copy            | `markdown-text.tsx`, `markdown-block.tsx`, `markdown-span.tsx` |
+| **A player's nickname**  | **`gradient-name.tsx` — `GradientName`. Always. See below.**   |
+
+### A nickname is never flat ink
+
+**Every nickname the app writes on its own surface goes through `GradientName`.** Not a
+`Text` with a token, not an accent colour, not `text-primary` — the component, every
+time.
+
+The reason is that a name is not a label, it is an identity: `GradientName` draws it in
+the gradient that player's own lifetime averages earn them, so the same person is the
+same colour on a leaderboard row, in the winners stripe, in the intro greeting, on their
+own profile, and in the sentence naming who leads a challenge. A name drawn flat
+anywhere is that player losing their colour on one screen out of nine, which reads as a
+different person rather than as a styling slip.
+
+It takes `nickname` plus `avgAccuracy` and `avgSpeed`, both nullable — null is a player
+the counters have never seen, which comes out uncoloured rather than wrong. **If the
+data you have does not carry the two averages, that is the thing to fix**, not a reason
+to fall back to flat ink: the challenge banner needed a migration
+(`…_session_leader_factors.sql`) to put them on the one row it draws, and that was the
+right trade.
+
+A nested `Text` per character inside one parent `Text`, so it inherits size, weight and
+tracking from the caller and still wraps inside a sentence. Style it with `className` as
+you would any other text; the per-character colour is set on the children and cannot be
+overridden from outside, which is the point.
+
+**Two deliberate exceptions, and only two**: the multiplayer tile and the live corner,
+where the name sits on a saturated gradient card and the themed name ink measures about
+1.0–1.3:1 against it. Those keep white, and `player-tile.tsx` says so at the call site. A
+third exception wants the same treatment — measured, and commented where it is made.
 
 ### Pressables
 
@@ -47,6 +78,32 @@ In every case the fix was one component with slots, not a tidier copy.
 | A checkbox                | `overlays/option-checkbox.tsx`                                                       |
 | A slider                  | `overlays/value-slider.tsx`                                                          |
 | A mode / difficulty cell  | `overlays/mode-selector.tsx`, `difficulty-selector.tsx`                              |
+
+### A link button carries an icon and no underline
+
+The quiet way out of a screen — CLOSE, RESEND, LEAVE, CHANGE ADDRESS — is a **link
+button**, and it looks the same everywhere:
+
+- an **`Ionicons` at `size={10}` in `DIM_INK`**, then
+- a **`TYPE.quietAction` label in `text-dim`**, in a `flex-row items-center gap-1`.
+- **No underline.**
+
+The icon is what makes it findable without an underline, and that trade is the point: an
+underline under 10px small-caps reads as a mis-set label rather than as a link, and in a
+column of them the rules stack up into a pattern the eye follows instead of the words. The
+icon says _pressable_ in one glyph and leaves the label alone.
+
+`email-code-modal.tsx`'s RESEND and the intro's footer are the reference, and
+`publish-scores-button.tsx` is the same voice beside an ask.
+
+Disabled is **opacity**, not a dropped underline — there is no underline to drop. See
+`DISABLED_OPACITY` at that call site.
+
+**Eight call sites still wear an underline and no icon**, from before this was written
+down: `multiplayer-menu`, `multiplayer-game-over`, `multiplayer-waiting`,
+`join-room-overlay`, `tutorial-done-modal`, `account-notice`, `game/step-up-toast` and
+`game/arcade-over`. They are a sweep somebody has to agree to, not a thing to fix on the
+way past — see the consistency sweep in `SKILL.md`. A _new_ link follows the rule.
 
 `TrackedPressable` is `Pressable` verbatim — props forwarded untouched, `children` as a
 render prop included — so swapping the tag changes nothing a player can see. It exists
