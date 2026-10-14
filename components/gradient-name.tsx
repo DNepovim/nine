@@ -1,7 +1,7 @@
 import type { StyleProp, TextStyle } from 'react-native'
-import { Text } from 'react-native'
 
-import { nameColors } from '@/lib/name-gradient'
+import { GradientText } from '@/components/gradient-text'
+import { nameStops } from '@/lib/name-gradient'
 
 // One player's nickname, drawn in the gradient their own averages earn them. Every place
 // the app writes a name on its own surface uses this, so a player is the same colour on a
@@ -38,19 +38,15 @@ export function GradientName({
 }) {
   // The two stops are their own ink — the mode hues are tuned to be a colour, not to
   // carry text at 10px. See NAME_INK.
-  const letters = nameColors(nickname, { avgAccuracy, avgSpeed })
+  const [from, to] = nameStops({ avgAccuracy, avgSpeed })
   return (
-    <Text
-      selectable={false}
+    <GradientText
+      text={nickname}
+      from={from}
+      to={to}
       className={className}
       style={style}
       numberOfLines={numberOfLines}
-    >
-      {letters.map(({ char, color }, index) => (
-        <Text key={`${char}-${index}`} style={{ color }}>
-          {char}
-        </Text>
-      ))}
-    </Text>
+    />
   )
 }

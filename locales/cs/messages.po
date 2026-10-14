@@ -162,7 +162,7 @@ msgstr "— CELÝ TÝDEN NIKDO NESTAČIL —"
 msgid "— NOTHING HAS OUTRUN THIS YET —"
 msgstr "— TOHLE JEŠTĚ NIKDO NEPŘEDBĚHL —"
 
-#: components/game/best-scores-line.tsx:449
+#: components/game/best-scores-line.tsx:464
 msgid "— OFFLINE —"
 msgstr "— OFFLINE —"
 
@@ -203,7 +203,7 @@ msgid "???"
 msgstr "???"
 
 #: components/overlays/admin-people.tsx:75
-#: components/overlays/admin-person.tsx:177
+#: components/overlays/admin-person.tsx:181
 msgid "(no nickname)"
 msgstr "(bez přezdívky)"
 
@@ -329,12 +329,16 @@ msgid "{joinedMonths, plural, one {joined a month ago} other {joined # months ag
 msgstr "{joinedMonths, plural, one {členem už měsíc} few {členem už # měsíce} other {členem už # měsíců}}"
 
 #. placeholder {0}: fortuneOf(score, difficulty)
-#: components/overlays/game-over-overlay.tsx:354
+#: components/overlays/game-over-overlay.tsx:356
 msgid "+{0} TO YOUR FORTUNE"
 msgstr "+{0} K TVÉMU JMĚNÍ"
 
+#: components/overlays/challenge-card.tsx:111
+msgid "<0/> event starts in"
+msgstr "<0/> začíná za"
+
 #. placeholder {0}: session.leader.score
-#: components/overlays/challenge-card.tsx:166
+#: components/overlays/challenge-card.tsx:237
 msgid "<0/> leads with <1>{0}</1>"
 msgstr "<0/> vede s <1>{0}</1>"
 
@@ -511,7 +515,7 @@ msgstr "Úspěchy jsou ten druhý druh. Nikdo ti je nevezme: dosáhneš jich jed
 "\n"
 "Jsou jich desítky a chtějí po tobě kdeco."
 
-#: components/overlays/admin-roles.tsx:80
+#: components/overlays/admin-roles.tsx:90
 msgid "ADD"
 msgstr "PŘIDAT"
 
@@ -547,7 +551,7 @@ msgstr "PŘIČTENO K JMĚNÍ"
 msgid "Address confirmed."
 msgstr "Adresa potvrzena."
 
-#: components/overlays/admin-overlay.tsx:51
+#: components/overlays/admin-overlay.tsx:58
 #: components/overlays/menu-overlay.tsx:718
 msgid "ADMIN"
 msgstr "ADMIN"
@@ -667,7 +671,7 @@ msgid "AVG SPD"
 msgstr "PRŮM RYCH"
 
 #: components/game/arcade-over.tsx:49
-#: components/overlays/admin-access.tsx:141
+#: components/overlays/admin-access.tsx:152
 #: components/overlays/admin-session.tsx:166
 #: components/overlays/admin-sessions.tsx:116
 #: components/overlays/whats-new-overlay.tsx:107
@@ -762,13 +766,13 @@ msgid "Chain your hits — a streak multiplies your points ×2 → ×4 → ×8. 
 msgstr "Navazuj zásahy na sebe — série násobí body ×2 → ×4 → ×8. Přesnost počítá optimální cesty, Rychlost zásahy s kruhem z větší části plným."
 
 #: components/overlays/admin-session.tsx:100
-#: components/overlays/board-badges.tsx:24
-#: components/overlays/challenge-card.tsx:91
+#: components/overlays/challenge-card.tsx:158
 #: components/overlays/challenge-modal.tsx:90
+#: modes/challenges/define.ts:79
 msgid "CHALLENGE"
 msgstr "VÝZVA"
 
-#: components/overlays/admin-overlay.tsx:76
+#: components/overlays/admin-overlay.tsx:83
 #: components/overlays/admin-session.tsx:93
 #: components/overlays/admin-sessions.tsx:71
 #: components/overlays/how-to-play-overlay.tsx:56
@@ -810,6 +814,10 @@ msgstr "Stoupej cestou, nebo padej zpět."
 msgid "CLOSE"
 msgstr "ZAVŘÍT"
 
+#: components/game/best-scores-line.tsx:454
+msgid "CLOSES IN"
+msgstr "ZAVÍRÁ SE"
+
 #: constants/tips.ts:19
 msgid "Come back to Trainee once you have been scoring a while. It is the only place to take a route apart with no run riding on it."
 msgstr "Až budeš chvíli sbírat body, vrať se k Nováčkovi. Je to jediné místo, kde si můžeš cestu rozebrat, aniž by na tom visela hra."
@@ -849,7 +857,7 @@ msgstr "PŘIPOJ SE K INTERNETU A HRAJ S PŘÁTELI"
 msgid "CONTINUE"
 msgstr "POKRAČOVAT"
 
-#: app/(tabs)/index.tsx:2163
+#: app/(tabs)/index.tsx:2212
 msgid "Continue the tutorial"
 msgstr "Pokračovat v tutoriálu"
 
@@ -882,7 +890,7 @@ msgstr "12."
 msgid "DECEMBER"
 msgstr "prosince"
 
-#: components/overlays/admin-role.tsx:193
+#: components/overlays/admin-role.tsx:203
 msgid "DELETE ROLE"
 msgstr "SMAZAT ROLI"
 
@@ -911,9 +919,9 @@ msgstr "Zobrazit hodnotu × řádek × sloupec"
 msgid "Do something nobody thought to ask for."
 msgstr "Udělej něco, co nikoho nenapadlo chtít."
 
-#: components/overlays/admin-overlay.tsx:85
-#: components/overlays/admin-person.tsx:276
-#: components/overlays/admin-role.tsx:204
+#: components/overlays/admin-overlay.tsx:92
+#: components/overlays/admin-person.tsx:280
+#: components/overlays/admin-role.tsx:214
 #: components/overlays/dev-overlay.tsx:150
 #: components/overlays/news-archive-overlay.tsx:43
 msgid "DONE"
@@ -1014,6 +1022,10 @@ msgstr "Každý cíl je vesnice se jménem a krajina mezi nimi se kreslí, jak s
 msgid "Every village holds out for its own length of time, and the ring drawn around its number is what is left of it. They are not the same: the one you want may be the one about to go."
 msgstr "Každá vesnice vydrží jinak dlouho a prstenec kolem jejího čísla ukazuje, kolik jí zbývá. Nejsou stejné: zrovna ta, kterou chceš, může být na odchodu."
 
+#: components/overlays/admin-features.tsx:168
+msgid "everyone"
+msgstr "všichni"
+
 #: components/overlays/how-to-play-overlay.tsx:838
 msgid "Everyone who hits is ranked by how few moves it took."
 msgstr "Každý, kdo trefí, se seřadí podle toho, na kolik tahů to zvládl."
@@ -1046,13 +1058,13 @@ msgstr "Rychlé zásahy staví velká comba."
 msgid "FAST START"
 msgstr "RYCHLÝ START"
 
-#: components/overlays/admin-access.tsx:96
-#: components/overlays/admin-overlay.tsx:68
-#: components/overlays/admin-person.tsx:240
+#: components/overlays/admin-access.tsx:102
+#: components/overlays/admin-overlay.tsx:75
+#: components/overlays/admin-person.tsx:244
 msgid "FEATURES"
 msgstr "FUNKCE"
 
-#: components/overlays/admin-role.tsx:146
+#: components/overlays/admin-role.tsx:147
 msgid "FEATURES IN THIS STACK"
 msgstr "FUNKCE V TÉTO SADĚ"
 
@@ -1236,6 +1248,10 @@ msgstr "DRŽEL RYCHLOST"
 msgid "HELP US SEE THE ROUGH EDGES"
 msgstr "POMOZ NÁM NAJÍT, KDE TO DRHNE"
 
+#: components/overlays/admin-role.tsx:181
+msgid "hidden from everyone"
+msgstr "skryto pro všechny"
+
 #: components/overlays/how-to-play-overlay.tsx:534
 msgid "Hit while most of the ring is left to build your combo streak."
 msgstr "Trefuj, dokud je kruh z větší části plný, a poroste ti combo."
@@ -1275,7 +1291,7 @@ msgstr "Když držíš rekord všech dob na žebříčku Extreme některého mó
 msgid "HOLDING"
 msgstr "DRŽÍŠ"
 
-#: components/overlays/admin-role.tsx:127
+#: components/overlays/admin-role.tsx:128
 msgid "holding this role"
 msgstr "má tuto roli"
 
@@ -1446,10 +1462,6 @@ msgstr "Nauč se malou násobilku devítky nazpaměť. Tlačítko 9× jde po 9, 
 #: components/overlays/multiplayer-menu.tsx:51
 msgid "LEAVE GAME"
 msgstr "OPUSTIT HRU"
-
-#: components/game/best-scores-line.tsx:439
-msgid "LEFT"
-msgstr "ZBÝVÁ"
 
 #: components/overlays/how-to-play-overlay.tsx:524
 msgid "Let a target’s ring run out and you lose one too — precision still has a clock."
@@ -1622,6 +1634,10 @@ msgstr "Žádné životy, žádný spěch."
 msgid "No records fell. They rarely do."
 msgstr "Nepadl žádný rekord. Ono se to stává málokdy."
 
+#: components/role-preview-badge.tsx:48
+msgid "NO ROLE"
+msgstr "BEZ ROLE"
+
 #: components/overlays/player-profile-overlay.tsx:583
 msgid "No runs counted yet."
 msgstr "Zatím tu není započítaná žádná hra."
@@ -1654,7 +1670,7 @@ msgstr "[BOARD] nikdo hráči [W] ani jednou nesebral."
 msgid "Nobody got a grip on it — [C] different players took a day of it."
 msgstr "Nikdo ho neuchopil. Různých jmen na jeho dnech: [C]."
 
-#: components/overlays/challenge-card.tsx:146
+#: components/overlays/challenge-card.tsx:217
 msgid "Nobody has played it yet."
 msgstr "Zatím ji nikdo nehrál."
 
@@ -1682,7 +1698,7 @@ msgstr "Ani zdaleka vyrovnané. Běž hrát."
 msgid "Not everywhere, though. [W] held [BOARD] every day of the week."
 msgstr "Ne ale všude. [W] držel [BOARD] každý den v týdnu."
 
-#: components/overlays/admin-features.tsx:159
+#: components/overlays/admin-features.tsx:183
 msgid "not in this build"
 msgstr "není v tomto buildu"
 
@@ -1758,10 +1774,6 @@ msgstr "10."
 #: lib/prose.ts:90
 msgid "OCTOBER"
 msgstr "října"
-
-#: components/overlays/admin-role.tsx:174
-msgid "off for everyone"
-msgstr "vypnuto pro všechny"
 
 #: lib/winnings-lines.ts:66
 msgid "On [DATE] you came second on [B] with [S]"
@@ -1914,7 +1926,7 @@ msgid "Play a Hard board."
 msgstr "Zahraj si Těžký žebříček."
 
 #: components/game/arcade-over.tsx:68
-#: components/overlays/game-over-overlay.tsx:412
+#: components/overlays/game-over-overlay.tsx:414
 #: components/overlays/multiplayer-game-over.tsx:188
 msgid "PLAY AGAIN"
 msgstr "HRÁT ZNOVU"
@@ -1955,9 +1967,21 @@ msgstr "Zapiš skóre v každém módu a obtížnosti."
 msgid "Precision over speed."
 msgstr "Preciznost před rychlostí."
 
+#: components/role-preview-badge.tsx:46
+msgid "PREVIEW"
+msgstr "NÁHLED"
+
+#: components/overlays/admin-roles.tsx:143
+msgid "PREVIEW AS"
+msgstr "NÁHLED JAKO"
+
 #: components/overlays/menu-overlay.tsx:673
 msgid "PROFILE"
 msgstr "PROFIL"
+
+#: components/overlays/admin-role.tsx:183
+msgid "public to everyone"
+msgstr "zveřejněno pro všechny"
 
 #: components/overlays/how-to-play-overlay.tsx:513
 msgid "Pure practice — no lives, no score, and a relaxed clock."
@@ -1999,7 +2023,7 @@ msgstr "POSLAT ZNOVU"
 msgid "RESEND IN {waiting}S"
 msgstr "ZNOVU ZA {waiting}S"
 
-#: components/overlays/admin-person.tsx:265
+#: components/overlays/admin-person.tsx:269
 msgid "RESET TO ROLE DEFAULTS"
 msgstr "ZPĚT NA VÝCHOZÍ ROLI"
 
@@ -2015,7 +2039,7 @@ msgstr "VRACÍM…"
 msgid "RESULTS"
 msgstr "VÝSLEDKY"
 
-#: components/overlays/admin-person.tsx:201
+#: components/overlays/admin-person.tsx:205
 msgid "ROLE"
 msgstr "ROLE"
 
@@ -2923,7 +2947,7 @@ msgstr "KDO TO JE?"
 msgid "Who is that, anyway"
 msgstr "Kdo to vlastně je"
 
-#: components/overlays/admin-access.tsx:99
+#: components/overlays/admin-access.tsx:105
 msgid "WHO SEES WHAT"
 msgstr "KDO CO VIDÍ"
 

@@ -443,8 +443,15 @@ export function BestScoresLine({
               intro. */}
           {revealed && session !== null && (
             <View className="items-end">
+              {/* **Closes**, not ends. This said LEFT, which reads as left-hand side as
+                readily as remaining — and ENDS IN is worse here than either: the clock
+                beside it on this row is the run's, so a label about something ending is
+                read as the run ending. A run ends; a window closes. No game is ever
+                described as closing, so the verb carries the subject on its own and the
+                label needs no room to name it. It is also the word the rest of this
+                feature uses — `closesAt`, and the window that has shut. */}
               <Text selectable={false} className={cn(TYPE.caption, 'text-dim')}>
-                <Trans>LEFT</Trans>
+                <Trans>CLOSES IN</Trans>
               </Text>
               <ChallengeCountdown
                 until={session.closesAt}

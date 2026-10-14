@@ -5,6 +5,7 @@ import { Text, View } from 'react-native'
 
 import DSEG7Font from '@/assets/fonts/DSEG7Classic-Bold.ttf'
 import { GradientName } from '@/components/gradient-name'
+import { GradientText } from '@/components/gradient-text'
 import { ChallengeCountdown } from '@/components/overlays/challenge-countdown'
 import { DialMark } from '@/components/overlays/dial-mark'
 import { GradientFrame } from '@/components/overlays/gradient-frame'
@@ -15,7 +16,7 @@ import type { SessionCard } from '@/lib/challenge-session'
 import { cn } from '@/lib/cn'
 import { rankMedal } from '@/lib/rank-emoji'
 import type { OpenSession } from '@/lib/session-board'
-import { darkGradientOf, descriptionOf, dialOf, gradientOf, labelOf } from '@/modes'
+import { darkGradientOf, dialOf, gradientOf, labelOf } from '@/modes'
 import { challengeInk } from '@/modes/challenges/palette'
 
 // A challenge that is on, or about to be — the first row of the ALONE panel, above the
@@ -54,6 +55,18 @@ export function ChallengeCard({
   // The challenge's own hue, at the shade that carries a word on the card's white. Taken
   // from the pair's second stop rather than from the challenge's index, so a challenge
   // that named its own colours gets an ink matching them — see `challengeInk`.
+  // The challenge's pair as **ink**: both stops at a shade that carries a word on the
+  // card's white, so the name can be drawn across them a character at a time.
+  //
+  // Not the raw pair. Its second stop is the arc's bright end and measures about 1.7:1
+  // here, so a name lerped onto it would fade out as it was read — legible at the first
+  // letter and gone by the last. The first stop needs nothing done to it, being the
+  // near-black text is drawn in anyway, and `challengeInk` returns a stop that already
+  // clears the bar untouched.
+  //
+  // The same bargain `NAME_INK` strikes for a nickname, which is the two mode stops taken
+  // toward black for exactly this reason.
+  const inkFrom = challengeInk(gradientOf(session.modeId)[0])
   const ink = challengeInk(gradientOf(session.modeId)[1])
   // The dial this challenge is played on, drawn as its mark. Null for a session naming a
   // mode this build does not have — which `useSessionCard` already filters out before a
@@ -68,11 +81,65 @@ export function ChallengeCard({
   // in the wrong face for a frame beats a row that is not there.
   const [dsegLoaded] = useFonts({ DSEG7: DSEG7Font })
 
+  // ─── Not open yet ───────────────────────────────────────────────────────────
+  //
+  // A line, not a card. The framed box is for a challenge the player can press START on
+  // *now*; wearing it a day early gave the loudest thing on the intro to the one thing
+  // on it that cannot be played, and the mode pills under it — which can — read as the
+  // smaller offer. A sentence says the same thing and asks for none of that room.
+  //
+  // The name keeps its colour and the clock keeps its flaps, so the two halves a player
+  // will recognise tomorrow are the two halves they meet today. Everything else goes:
+  // the edge, the legend, the mark, the description.
+  //
+  // Still pressable, and to the same dialog. There is a board to read and a description
+  // to find there even before it opens — only its START is dead.
+  if (state === 'teaser') {
+    return (
+      <TrackedPressable
+        id="menu.challenge"
+        onPress={onPress}
+        // Wrapping, because the board is up to eight flaps wide once the window is more
+        // than a day out and the line has 270pt to live in.
+        className="mx-auto w-full max-w-[270px] flex-row flex-wrap items-center justify-center gap-x-1.5 gap-y-1"
+      >
+        {/* The clock is a `View` of flaps and cannot sit inside a `Text`, so the sentence
+          stops short of it rather than wrapping it — which is also why the clock is not a
+          placeholder in the message. Czech puts the name first here too, so nothing is
+          lost by the split. */}
+        <Text selectable={false} className={cn(TYPE.value, 'text-dim')}>
+          <Trans>
+            <GradientText text={t(labelOf(session.modeId))} from={inkFrom} to={ink} />{' '}
+            event starts in
+          </Trans>
+        </Text>
+        <ChallengeCountdown
+          until={session.opensAt}
+          gradient={darkGradientOf(session.modeId)}
+          flip
+        />
+      </TrackedPressable>
+    )
+  }
+
   return (
     // The pressable is outside the frame rather than inside it, so the edge is part of
     // the button: the whole card is one press target, which is the thing the note above
     // says. Its padding lives on the frame's white box, where the words are.
-    <TrackedPressable id="menu.challenge" onPress={onPress} className="w-full">
+    // Capped and centred. The panel it stands in is the width of the screen, and the
+    // banner read as the widest thing on the intro — wider than the mode switcher under
+    // it, which is the row it is really in conversation with. `mx-auto` rather than
+    // `self-center` because the cap and the centring are one decision about this box and
+    // read better written as one.
+    //
+    // On the pressable rather than on the frame inside it, so the press target is the
+    // card the player can see. A 270pt card inside a full-width button would take a tap
+    // from the parchment either side of it.
+    <TrackedPressable
+      id="menu.challenge"
+      onPress={onPress}
+      className="mx-auto w-full max-w-[270px]"
+    >
       {/* Singular: the box holds one challenge, which is the whole of what the card is
         — the plural named a section of a list it is not in.
 
@@ -91,15 +158,24 @@ export function ChallengeCard({
         legend={<Trans>CHALLENGE</Trans>}
         badge={
           <ChallengeCountdown
-            until={state === 'live' ? session.closesAt : session.opensAt}
+            // Always the close: a teaser never reaches this layout now — it is the
+            // line above, which counts to the open instead.
+            until={session.closesAt}
             gradient={darkGradientOf(session.modeId)}
             flip
           />
         }
-        // Thinner than it was (`px-3.5 py-3`). The row is one name over one line of
-        // detail, and the card sits above the mode pills rather than standing alone — the
-        // padding it opened with was a dialog's, on a thing that is a row.
-        inner="px-3 py-2"
+        // Thinner than it was (`px-3.5 py-3`), and thinner than the mode switcher under
+        // it. The row is one name over one line of detail, and the card sits above the
+        // pills rather than standing alone — the padding it opened with was a dialog's,
+        // on a thing that is a row.
+        //
+        // The switcher is the thing to be shorter than, and it is taller than it looks:
+        // its pills are only about 22pt, but the block carries 8pt above them and a
+        // 16pt line of mode description below, which comes to about 58. At `py-1.5` this
+        // sits near 50 — plainly the lighter of the two rows without the challenge
+        // reading as an afterthought above them.
+        inner="px-3 py-1.5"
         // The challenge's own pair, turning. The default spectrum band is the app
         // speaking; a challenge has something of its own to say now — see the note on
         // `edge` in GradientFrame for why a two-stop edge turns rather than slides.
@@ -130,18 +206,13 @@ export function ChallengeCard({
               setTextHeight(Math.round(e.nativeEvent.layout.height))
             }}
           >
-            <Text
-              selectable={false}
+            <GradientText
+              text={t(labelOf(session.modeId))}
+              from={inkFrom}
+              to={ink}
               className={cn(TYPE.cardTitleSm, 'shrink')}
-              style={{ color: ink }}
-            >
-              {t(labelOf(session.modeId))}
-            </Text>
-            {state === 'teaser' ? (
-              <Text selectable={false} className={cn(TYPE.value, 'text-dim')}>
-                {t(descriptionOf(session.modeId))}
-              </Text>
-            ) : session.leader === null ? (
+            />
+            {session.leader === null ? (
               <Text selectable={false} className={cn(TYPE.value, 'text-dim')}>
                 <Trans>Nobody has played it yet.</Trans>
               </Text>

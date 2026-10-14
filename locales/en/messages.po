@@ -162,7 +162,7 @@ msgstr "— NOT ONE FAST ENOUGH THIS WEEK —"
 msgid "— NOTHING HAS OUTRUN THIS YET —"
 msgstr "— NOTHING HAS OUTRUN THIS YET —"
 
-#: components/game/best-scores-line.tsx:449
+#: components/game/best-scores-line.tsx:464
 msgid "— OFFLINE —"
 msgstr "— OFFLINE —"
 
@@ -203,7 +203,7 @@ msgid "???"
 msgstr "???"
 
 #: components/overlays/admin-people.tsx:75
-#: components/overlays/admin-person.tsx:177
+#: components/overlays/admin-person.tsx:181
 msgid "(no nickname)"
 msgstr "(no nickname)"
 
@@ -329,12 +329,16 @@ msgid "{joinedMonths, plural, one {joined a month ago} other {joined # months ag
 msgstr "{joinedMonths, plural, one {joined a month ago} other {joined # months ago}}"
 
 #. placeholder {0}: fortuneOf(score, difficulty)
-#: components/overlays/game-over-overlay.tsx:354
+#: components/overlays/game-over-overlay.tsx:356
 msgid "+{0} TO YOUR FORTUNE"
 msgstr "+{0} TO YOUR FORTUNE"
 
+#: components/overlays/challenge-card.tsx:111
+msgid "<0/> event starts in"
+msgstr "<0/> event starts in"
+
 #. placeholder {0}: session.leader.score
-#: components/overlays/challenge-card.tsx:166
+#: components/overlays/challenge-card.tsx:237
 msgid "<0/> leads with <1>{0}</1>"
 msgstr "<0/> leads with <1>{0}</1>"
 
@@ -511,7 +515,7 @@ msgstr "Achievements are the other kind. Nothing can take one back: they are ach
 "\n"
 "There are dozens, and they ask for all sorts of things."
 
-#: components/overlays/admin-roles.tsx:80
+#: components/overlays/admin-roles.tsx:90
 msgid "ADD"
 msgstr "ADD"
 
@@ -547,7 +551,7 @@ msgstr "ADDED TO YOUR FORTUNE"
 msgid "Address confirmed."
 msgstr "Address confirmed."
 
-#: components/overlays/admin-overlay.tsx:51
+#: components/overlays/admin-overlay.tsx:58
 #: components/overlays/menu-overlay.tsx:718
 msgid "ADMIN"
 msgstr "ADMIN"
@@ -667,7 +671,7 @@ msgid "AVG SPD"
 msgstr "AVG SPD"
 
 #: components/game/arcade-over.tsx:49
-#: components/overlays/admin-access.tsx:141
+#: components/overlays/admin-access.tsx:152
 #: components/overlays/admin-session.tsx:166
 #: components/overlays/admin-sessions.tsx:116
 #: components/overlays/whats-new-overlay.tsx:107
@@ -762,13 +766,13 @@ msgid "Chain your hits — a streak multiplies your points ×2 → ×4 → ×8. 
 msgstr "Chain your hits — a streak multiplies your points ×2 → ×4 → ×8. Accuracy counts optimal routes, Speed counts hits with most of the ring left."
 
 #: components/overlays/admin-session.tsx:100
-#: components/overlays/board-badges.tsx:24
-#: components/overlays/challenge-card.tsx:91
+#: components/overlays/challenge-card.tsx:158
 #: components/overlays/challenge-modal.tsx:90
+#: modes/challenges/define.ts:79
 msgid "CHALLENGE"
 msgstr "CHALLENGE"
 
-#: components/overlays/admin-overlay.tsx:76
+#: components/overlays/admin-overlay.tsx:83
 #: components/overlays/admin-session.tsx:93
 #: components/overlays/admin-sessions.tsx:71
 #: components/overlays/how-to-play-overlay.tsx:56
@@ -810,6 +814,10 @@ msgstr "Climb the way, or fall back."
 msgid "CLOSE"
 msgstr "CLOSE"
 
+#: components/game/best-scores-line.tsx:454
+msgid "CLOSES IN"
+msgstr "CLOSES IN"
+
 #: constants/tips.ts:19
 msgid "Come back to Trainee once you have been scoring a while. It is the only place to take a route apart with no run riding on it."
 msgstr "Come back to Trainee once you have been scoring a while. It is the only place to take a route apart with no run riding on it."
@@ -849,7 +857,7 @@ msgstr "CONNECT TO THE INTERNET TO PLAY WITH FRIENDS"
 msgid "CONTINUE"
 msgstr "CONTINUE"
 
-#: app/(tabs)/index.tsx:2163
+#: app/(tabs)/index.tsx:2212
 msgid "Continue the tutorial"
 msgstr "Continue the tutorial"
 
@@ -882,7 +890,7 @@ msgstr "Dec"
 msgid "DECEMBER"
 msgstr "DECEMBER"
 
-#: components/overlays/admin-role.tsx:193
+#: components/overlays/admin-role.tsx:203
 msgid "DELETE ROLE"
 msgstr "DELETE ROLE"
 
@@ -911,9 +919,9 @@ msgstr "Display value × row × column"
 msgid "Do something nobody thought to ask for."
 msgstr "Do something nobody thought to ask for."
 
-#: components/overlays/admin-overlay.tsx:85
-#: components/overlays/admin-person.tsx:276
-#: components/overlays/admin-role.tsx:204
+#: components/overlays/admin-overlay.tsx:92
+#: components/overlays/admin-person.tsx:280
+#: components/overlays/admin-role.tsx:214
 #: components/overlays/dev-overlay.tsx:150
 #: components/overlays/news-archive-overlay.tsx:43
 msgid "DONE"
@@ -1014,6 +1022,10 @@ msgstr "Every target is a village with a name, and the country between them is d
 msgid "Every village holds out for its own length of time, and the ring drawn around its number is what is left of it. They are not the same: the one you want may be the one about to go."
 msgstr "Every village holds out for its own length of time, and the ring drawn around its number is what is left of it. They are not the same: the one you want may be the one about to go."
 
+#: components/overlays/admin-features.tsx:168
+msgid "everyone"
+msgstr "everyone"
+
 #: components/overlays/how-to-play-overlay.tsx:838
 msgid "Everyone who hits is ranked by how few moves it took."
 msgstr "Everyone who hits is ranked by how few moves it took."
@@ -1046,13 +1058,13 @@ msgstr "Fast hits build big combos."
 msgid "FAST START"
 msgstr "FAST START"
 
-#: components/overlays/admin-access.tsx:96
-#: components/overlays/admin-overlay.tsx:68
-#: components/overlays/admin-person.tsx:240
+#: components/overlays/admin-access.tsx:102
+#: components/overlays/admin-overlay.tsx:75
+#: components/overlays/admin-person.tsx:244
 msgid "FEATURES"
 msgstr "FEATURES"
 
-#: components/overlays/admin-role.tsx:146
+#: components/overlays/admin-role.tsx:147
 msgid "FEATURES IN THIS STACK"
 msgstr "FEATURES IN THIS STACK"
 
@@ -1236,6 +1248,10 @@ msgstr "HELD SPEED"
 msgid "HELP US SEE THE ROUGH EDGES"
 msgstr "HELP US SEE THE ROUGH EDGES"
 
+#: components/overlays/admin-role.tsx:181
+msgid "hidden from everyone"
+msgstr "hidden from everyone"
+
 #: components/overlays/how-to-play-overlay.tsx:534
 msgid "Hit while most of the ring is left to build your combo streak."
 msgstr "Hit while most of the ring is left to build your combo streak."
@@ -1275,7 +1291,7 @@ msgstr "Hold the all-time record on a mode’s Extreme board and you carry its m
 msgid "HOLDING"
 msgstr "HOLDING"
 
-#: components/overlays/admin-role.tsx:127
+#: components/overlays/admin-role.tsx:128
 msgid "holding this role"
 msgstr "holding this role"
 
@@ -1446,10 +1462,6 @@ msgstr "Learn the nine times table cold. The 9× button steps 9, 18, 27 up to 81
 #: components/overlays/multiplayer-menu.tsx:51
 msgid "LEAVE GAME"
 msgstr "LEAVE GAME"
-
-#: components/game/best-scores-line.tsx:439
-msgid "LEFT"
-msgstr "LEFT"
 
 #: components/overlays/how-to-play-overlay.tsx:524
 msgid "Let a target’s ring run out and you lose one too — precision still has a clock."
@@ -1622,6 +1634,10 @@ msgstr "No lives, no rush."
 msgid "No records fell. They rarely do."
 msgstr "No records fell. They rarely do."
 
+#: components/role-preview-badge.tsx:48
+msgid "NO ROLE"
+msgstr "NO ROLE"
+
 #: components/overlays/player-profile-overlay.tsx:583
 msgid "No runs counted yet."
 msgstr "No runs counted yet."
@@ -1654,7 +1670,7 @@ msgstr "Nobody could take [BOARD] off [W] once."
 msgid "Nobody got a grip on it — [C] different players took a day of it."
 msgstr "Nobody got a grip on it — [C] different players took a day of it."
 
-#: components/overlays/challenge-card.tsx:146
+#: components/overlays/challenge-card.tsx:217
 msgid "Nobody has played it yet."
 msgstr "Nobody has played it yet."
 
@@ -1682,7 +1698,7 @@ msgstr "Not close, not nearly. Go and play."
 msgid "Not everywhere, though. [W] held [BOARD] every day of the week."
 msgstr "Not everywhere, though. [W] held [BOARD] every day of the week."
 
-#: components/overlays/admin-features.tsx:159
+#: components/overlays/admin-features.tsx:183
 msgid "not in this build"
 msgstr "not in this build"
 
@@ -1758,10 +1774,6 @@ msgstr "Oct"
 #: lib/prose.ts:90
 msgid "OCTOBER"
 msgstr "OCTOBER"
-
-#: components/overlays/admin-role.tsx:174
-msgid "off for everyone"
-msgstr "off for everyone"
 
 #: lib/winnings-lines.ts:66
 msgid "On [DATE] you came second on [B] with [S]"
@@ -1914,7 +1926,7 @@ msgid "Play a Hard board."
 msgstr "Play a Hard board."
 
 #: components/game/arcade-over.tsx:68
-#: components/overlays/game-over-overlay.tsx:412
+#: components/overlays/game-over-overlay.tsx:414
 #: components/overlays/multiplayer-game-over.tsx:188
 msgid "PLAY AGAIN"
 msgstr "PLAY AGAIN"
@@ -1955,9 +1967,21 @@ msgstr "Post a score on every mode and difficulty."
 msgid "Precision over speed."
 msgstr "Precision over speed."
 
+#: components/role-preview-badge.tsx:46
+msgid "PREVIEW"
+msgstr "PREVIEW"
+
+#: components/overlays/admin-roles.tsx:143
+msgid "PREVIEW AS"
+msgstr "PREVIEW AS"
+
 #: components/overlays/menu-overlay.tsx:673
 msgid "PROFILE"
 msgstr "PROFILE"
+
+#: components/overlays/admin-role.tsx:183
+msgid "public to everyone"
+msgstr "public to everyone"
 
 #: components/overlays/how-to-play-overlay.tsx:513
 msgid "Pure practice — no lives, no score, and a relaxed clock."
@@ -1999,7 +2023,7 @@ msgstr "RESEND CODE"
 msgid "RESEND IN {waiting}S"
 msgstr "RESEND IN {waiting}S"
 
-#: components/overlays/admin-person.tsx:265
+#: components/overlays/admin-person.tsx:269
 msgid "RESET TO ROLE DEFAULTS"
 msgstr "RESET TO ROLE DEFAULTS"
 
@@ -2015,7 +2039,7 @@ msgstr "RESTORING…"
 msgid "RESULTS"
 msgstr "RESULTS"
 
-#: components/overlays/admin-person.tsx:201
+#: components/overlays/admin-person.tsx:205
 msgid "ROLE"
 msgstr "ROLE"
 
@@ -2923,7 +2947,7 @@ msgstr "WHO IS IT?"
 msgid "Who is that, anyway"
 msgstr "Who is that, anyway"
 
-#: components/overlays/admin-access.tsx:99
+#: components/overlays/admin-access.tsx:105
 msgid "WHO SEES WHAT"
 msgstr "WHO SEES WHAT"
 
