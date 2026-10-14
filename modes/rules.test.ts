@@ -4,6 +4,7 @@ import { TUTORIAL_LABEL } from '@/constants/tutorial'
 
 import {
   baseClockMs,
+  darkGradientOf,
   descriptionOf,
   DIFFICULTIES,
   DIFFICULTY_ORDER,
@@ -292,12 +293,41 @@ describe('the tutorial submode', () => {
   })
 })
 
+// A hex stop as its three channels, for asking what hue a pair is in rather than what
+// its two spellings are.
+const channels = (hex: string): [number, number, number] => [
+  parseInt(hex.slice(1, 3), 16),
+  parseInt(hex.slice(3, 5), 16),
+  parseInt(hex.slice(5, 7), 16),
+]
+
 describe('colors and descriptions', () => {
+  // Trainee is deliberately off this chain — see the two tests below — so it starts at
+  // accuracy rather than at the first mode.
   it('mode gradient stops chain correctly (end of N = start of N+1)', () => {
-    expect(gradientOf('trainee')[1]).toBe(gradientOf('accuracy')[0])
     expect(gradientOf('accuracy')[1]).toBe(gradientOf('speed')[0])
     expect(gradientOf('speed')[1]).toBe(gradientOf('arcade')[0])
     expect(descriptionOf('speed').message?.length ?? 0).toBeGreaterThan(0)
+  })
+
+  it('trainee is two shades of one blue rather than a step along the spectrum', () => {
+    for (const pair of [gradientOf('trainee'), darkGradientOf('trainee')]) {
+      const from = channels(pair[0])
+      const to = channels(pair[1])
+      // Blue dominant at both ends, and the red and green channels in the same order as
+      // each other — which is what makes the two stops one hue rather than two.
+      for (const [r, g, b] of [from, to]) {
+        expect(b).toBeGreaterThan(g)
+        expect(g).toBeGreaterThan(r)
+      }
+      // Two shades, and the darker one second: the pill and the button both ramp down.
+      expect(to[2]).toBeLessThan(from[2])
+    }
+  })
+
+  it('trainee does not hand its end stop to accuracy', () => {
+    expect(gradientOf('trainee')[1]).not.toBe(gradientOf('accuracy')[0])
+    expect(darkGradientOf('trainee')[1]).not.toBe(darkGradientOf('accuracy')[0])
   })
 
   it('getDifficultyColor returns gradient endpoints for easy/extreme and hex for others', () => {
