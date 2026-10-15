@@ -7,7 +7,7 @@ import { SPEED } from '@/modes/definitions/speed'
 import { defineDial, emptyGrid } from '@/modes/dial'
 import { DIFFICULTY_ORDER } from '@/modes/difficulty'
 import { rulesFor, runRules } from '@/modes/registry'
-import { resolveRules, spawnInterval } from '@/modes/rules'
+import { rampedTimeout, resolveRules, spawnInterval } from '@/modes/rules'
 
 import { CHALLENGES } from './catalog'
 import { challengeId, defineChallenge, isOpenMode } from './define'
@@ -252,6 +252,68 @@ describe('FOUR KEYS', () => {
     expect(dial.weights).toEqual([1, 2, 2, 4])
     expect(dial.maxSum).toBe(9 * (1 + 2 + 2 + 4))
     expect(dial.maxSum).toBe(81)
+  })
+})
+
+describe('FOUR BY FOUR', () => {
+  const FOUR_BY_FOUR = CHALLENGES.find((mode) => mode.id === challengeId('four-by-four'))
+
+  it('gives a target 8250 ms — 11 000 before the rung, half of Accuracy’s 22 000', () => {
+    if (FOUR_BY_FOUR?.engine !== 'targets')
+      throw new Error('four by four runs on targets')
+    const rules = resolveRules(FOUR_BY_FOUR.rules, FOUR_BY_FOUR.id, 'easy')
+    // Double time means half the ring the game at rest gives a target, which is what the
+    // 11 000 in the catalog is half of. The figure here is after Hard's 0.75.
+    expect(rules.clock.base).toBe(8250)
+    // The ring never closes in, because the base mode is Accuracy: the clock a target
+    // gets forty hits in is the clock the first one got. What tightens is below.
+    expect(rules.clock.ramps).toBe('spawn')
+    expect(rampedTimeout(rules, 40)).toBe(rules.clock.base)
+    // The rung's three, not one of its own.
+    expect(rules.spawn.maxTargets).toBe(3)
+  })
+
+  it('deals a target every third of that clock, and closes the gap as the run goes', () => {
+    if (FOUR_BY_FOUR?.engine !== 'targets')
+      throw new Error('four by four runs on targets')
+    const rules = resolveRules(FOUR_BY_FOUR.rules, FOUR_BY_FOUR.id, 'easy')
+    expect(rules.spawn.share).toBeCloseTo(1 / 3)
+    expect(spawnInterval(rules, 0)).toBe(2750)
+    // Accuracy's own ramp, inherited: the ring holds and the arrivals close up, which is
+    // the only thing here that gets harder on its own and so the thing that ends a run.
+    // FOUR KEYS tightens the other one — its clock — and its gap follows that down.
+    expect(spawnInterval(rules, 40)).toBeLessThan(spawnInterval(rules, 0))
+  })
+
+  it('is sixteen keys weighted row × column, reaching 900', () => {
+    if (FOUR_BY_FOUR?.engine !== 'targets')
+      throw new Error('four by four runs on targets')
+    const { dial } = resolveRules(FOUR_BY_FOUR.rules, FOUR_BY_FOUR.id, 'easy')
+    expect(dial.rows).toBe(4)
+    expect(dial.cols).toBe(4)
+    expect(dial.weights).toEqual([1, 2, 3, 4, 2, 4, 6, 8, 3, 6, 9, 12, 4, 8, 12, 16])
+    // 9 × (1 + 2 + 3 + 4)², which is the dial's own rule rather than a figure to keep.
+    expect(dial.maxSum).toBe(9 * 100)
+  })
+
+  it('builds its chain on every row of that dial, and prints no key weights', () => {
+    if (FOUR_BY_FOUR?.engine !== 'targets')
+      throw new Error('four by four runs on targets')
+    const rules = resolveRules(FOUR_BY_FOUR.rules, FOUR_BY_FOUR.id, 'easy')
+    expect(rules.scoring.streak).toBe('spread')
+    // `whole` would be sixteen presses for one target and `clear` cannot be broken at
+    // all; this is the rule written for a dial this wide. See `STREAK_TRIGGERED.spread`.
+    expect(rules.capabilities.keyHints).toBe(false)
+    // The even blend and the ordinary hundred, both a challenge's defaults rather than
+    // Accuracy's 85/15 lean.
+    expect(rules.scoring.weights).toEqual({ acc: 0.5, spd: 0.5 })
+    expect(rules.scoring.base).toBe(100)
+  })
+
+  it('draws nothing when a hit lands', () => {
+    // The one challenge that names `null` rather than inheriting a shot: there is no kind
+    // that draws this streak, and a beam per key would be sixteen of them.
+    expect(FOUR_BY_FOUR?.shot).toBeNull()
   })
 })
 

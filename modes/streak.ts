@@ -1,7 +1,7 @@
 // What extends a mode's streak. `optimal` and `fast` are chains of decisions — every
 // matching hit either builds them or breaks them — where `clear` depends on the spawn
 // timing cooperating, so most hits leave it untouched.
-export type StreakTrigger = 'optimal' | 'fast' | 'clear' | 'whole' | 'none'
+export type StreakTrigger = 'optimal' | 'fast' | 'clear' | 'whole' | 'spread' | 'none'
 
 // A hit counts as fast when this much of the target's ring is still full.
 export const FAST_HIT_THRESHOLD = 0.6
@@ -12,6 +12,7 @@ export type StreakFacts = {
   allOptimal: boolean
   allFast: boolean
   allWhole: boolean
+  allSpread: boolean
   clearedBoard: boolean
 }
 
@@ -29,17 +30,35 @@ export const STREAK_TRIGGERED = {
   // A challenge's, and only a challenge's — see `everyKeyMoved`. Nine keys is not a
   // route.
   whole: ({ anyHit, allWhole }) => anyHit && allWhole,
+  // A key moved in every row of the dial on the way to the target — see `everyRowMoved`.
+  //
+  // `whole`'s rule for a dial too wide to ask for all of: on sixteen keys a route through
+  // every one of them is not a route, where a route through every row is four keys and an
+  // ordinary thing to do deliberately. It pulls against the score the same way, and
+  // measurably: on the 4 × 4 it costs a median of one extra press over par — an accuracy
+  // factor of 0.90 — and the cost is concentrated where the cheap answer is two keys. A
+  // par route on that dial already uses five keys of the sixteen, so about half of targets
+  // satisfy this for nothing; it is the small ones the player has to decide about.
+  //
+  // One target in a hundred cannot satisfy it at all, and breaks the chain with nothing
+  // the player could have done: four rows of a 4 × 4 cannot add up to less than ten, so
+  // every target under that is out of reach of the rule rather than of the dial. Left
+  // standing rather than carved out — knowing a target is unsatisfiable means a
+  // constrained pass over the whole range on every spawn, which is far more than a streak
+  // fact may cost.
+  spread: ({ anyHit, allSpread }) => anyHit && allSpread,
   none: () => false,
 } as const satisfies Record<StreakTrigger, (facts: StreakFacts) => boolean>
 
 // Whether a hit batch breaks it. A streak only feels like a chain when both halves
-// are in play: `optimal`, `fast` and `whole` are broken by a matching hit that missed
-// the mark, where `clear` is never broken by a hit — only by a target running out.
+// are in play: `optimal`, `fast`, `whole` and `spread` are broken by a matching hit that
+// missed the mark, where `clear` is never broken by a hit — only by a target running out.
 export const STREAK_BROKEN = {
   optimal: ({ anyHit }) => anyHit,
   fast: ({ anyHit }) => anyHit,
   clear: () => false,
   whole: ({ anyHit }) => anyHit,
+  spread: ({ anyHit }) => anyHit,
   none: () => false,
 } as const satisfies Record<StreakTrigger, (facts: StreakFacts) => boolean>
 

@@ -1216,11 +1216,15 @@ msgstr "JMĚNÍ"
 msgid "Forward a step"
 msgstr "O krok vpřed"
 
-#: modes/challenges/catalog.ts:42
+#: modes/challenges/catalog.ts:136
+msgid "FOUR BY FOUR"
+msgstr "ČTYŘI NA ČTYŘI"
+
+#: modes/challenges/catalog.ts:43
 msgid "FOUR KEYS"
 msgstr "ČTYŘI TLAČÍTKA"
 
-#: modes/challenges/catalog.ts:43
+#: modes/challenges/catalog.ts:44
 msgid "Four keys, doubled speed"
 msgstr "Čtyři tlačítka, dvojnásobná rychlost"
 
@@ -2435,6 +2439,10 @@ msgstr "OD {0}"
 #: components/overlays/admin-stats.tsx:54
 msgid "Since Monday, the week a player sees"
 msgstr "Od pondělí, týden jak ho vidí hráč"
+
+#: modes/challenges/catalog.ts:137
+msgid "Sixteen keys, double time"
+msgstr "Šestnáct tlačítek, dvojnásobné tempo"
 
 #: components/overlays/how-to-play-overlay.tsx:804
 msgid "Skill inside a single run: a long streak, the top multiplier, a stretch without losing a life."

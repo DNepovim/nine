@@ -1,5 +1,6 @@
 import { msg } from '@lingui/core/macro'
 
+import { ACCURACY } from '@/modes/definitions/accuracy'
 import { SPEED } from '@/modes/definitions/speed'
 import { defineDial } from '@/modes/dial'
 import type { ModeDefinition } from '@/modes/types'
@@ -118,10 +119,101 @@ const FOUR_KEYS: ChallengeSpec = {
   },
 }
 
+// The four-keys dial turned inside out: sixteen keys in four rows of four, at twice the
+// pace of the game at rest.
+//
+// Its one thing is the dial. Four rows of four, weighted row order × column order like
+// every dial in the app — 1 2 3 4 / 2 4 6 8 / 3 6 9 12 / 4 8 12 16 — so the rule is the
+// one the guide already prints and nothing new has to be learned to read it. The keys
+// come to 100, which puts targets anywhere in 0 … 900: the first dial in the app whose
+// range is bigger than a glance.
+//
+// The clock is the twist and nothing else is. A target gets exactly half the ring
+// Accuracy gives one, which is what "double time" means here — the game at rest, at
+// twice the pace.
+const FOUR_BY_FOUR: ChallengeSpec = {
+  slug: 'four-by-four',
+  label: msg`FOUR BY FOUR`,
+  description: msg`Sixteen keys, double time`,
+  // Nothing named here, so the hue is whatever this entry's place in the catalog works
+  // out to — see `challengeHue`. Index 1 lands around 301°, a violet-magenta well clear
+  // of four-keys' turquoise and of every hue the app has spoken for.
+  //
+  // Nothing is drawn when a hit lands, either. A shot is the streak made visible and the
+  // streak below is about the whole dial, so the honest shot would be a beam per row —
+  // which is a new `ShotKind` and a component to draw it, more than a challenge should
+  // carry. `quartet` was the alternative and is a beam per *key*: sixteen of them at
+  // once, on keys 59pt wide.
+  shot: null,
+  // Every line about the dial and the rows, as four-keys' are about its four keys. No
+  // tier here can be about a board, because there is no board — only the session's own
+  // standings, which is what `board` and `medal` mean for a challenge.
+  claims: {
+    board: [
+      ['FOUR', 'ROWS'],
+      ['WIDE', 'HAND'],
+      ['ALL', 'ROWS'],
+    ],
+    medal: [
+      ['NEAR', 'FULL'],
+      ['WIDE', 'MARK'],
+    ],
+    strong: [
+      ['WIDE', 'WORK'],
+      ['GOOD', 'SPAN'],
+    ],
+    cold: [
+      ['COLD', 'ROWS'],
+      ['WIDE', 'DIAL'],
+    ],
+  },
+  // Accuracy rather than Speed: the clock below is halved once, flatly, and a mode that
+  // also tightens its ring as the run goes would be two things moving at once on a dial
+  // the player is still reading. The ring is the same from the first target to the last;
+  // what ends a run here is the dial.
+  base: ACCURACY,
+  from: Date.UTC(2026, 9, 1),
+  until: Date.UTC(2026, 9, 1) + DAY,
+  rules: {
+    // Sixteen keys, and the weights left to the dial's own rule — `defineDial` fills in
+    // row order × column order, which is what the nine every mode is played on uses.
+    //
+    // Reachable throughout: the first key is worth 1, so every number in 0 … 900 can be
+    // dialled and the spawner — which never asks — cannot deal an impossible target. See
+    // the catalog's own test, which holds this for every challenge rather than for one.
+    dial: defineDial({ id: 'four-by-four', rows: 4, cols: 4 }),
+    // Hard, as four-keys is: the rung that counts for itself, pinned because the choice
+    // is being taken away rather than made by the player, and because one session board
+    // cannot hold three clocks at once.
+    fixedDifficulty: 'hard',
+    // Half of Accuracy's 22 000, which is what double time is measured against: the game
+    // at rest. 11 000 × Hard's 0.75 = 8250 ms a target, and the ring stays there all run
+    // — Accuracy ramps its *arrivals* rather than its clock, so what tightens is the gap
+    // between targets: a third of the ring to begin with, 2750 ms, and closing from
+    // there. That is also what ends a run here, since the ring never closes in on its
+    // own. The dial is hard from the first target; the board is what gets hard later.
+    clock: { base: 11000 },
+    // The streak this one is about, and a rule written for it: a key moved in **every
+    // row** of the dial. `whole` has no meaning on sixteen keys — a route through all of
+    // them is not a route — and this is its wide-dial counterpart, four keys rather than
+    // sixteen, costing a median of one press over par. See `STREAK_TRIGGERED.spread`,
+    // where what it costs and what it cannot do are both written down.
+    scoring: { streak: 'spread' },
+    // No `base` and no `weights`: a hit is worth the ordinary hundred and is blended
+    // evenly, which is every challenge's default. The run is no shorter than an Accuracy
+    // run — arrivals are twice as frequent and the routes are twice as long — so there is
+    // nothing here for a bigger figure to make up for.
+    //
+    // No `capabilities` either, so the dial prints no key weights. The rule behind them
+    // is the one the guide prints, and a dial that explained itself would be the one mode
+    // on the app that does.
+  },
+}
+
 // Mapped rather than listed, and that is what gives each challenge its colour: `.map`
 // hands `defineChallenge` the spec's own index, which is what the pair is derived from.
 // The list is append-only — see the note at the top of this file — so an index is a
 // permanent fact about a challenge and its colour never moves.
-export const CHALLENGES: readonly ModeDefinition[] = [FOUR_KEYS].map((spec, index) =>
-  defineChallenge(spec, index),
+export const CHALLENGES: readonly ModeDefinition[] = [FOUR_KEYS, FOUR_BY_FOUR].map(
+  (spec, index) => defineChallenge(spec, index),
 )

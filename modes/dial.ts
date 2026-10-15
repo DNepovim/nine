@@ -140,6 +140,30 @@ const stepValue = (dial: DialSpec, value: number, delta: 1 | -1): number =>
 export const everyKeyMoved = (from: Grid, to: Grid): boolean =>
   from.length === to.length && from.every((digit, index) => digit !== to[index])
 
+// Whether a route touched **every row** of the dial — at least one key moved in each,
+// measured the same net way `everyKeyMoved` is.
+//
+// Rows rather than any other grouping, because a row *is* a scale: the weights are row
+// order × column order, so the first row is the dial's units, the second counts in twos
+// and the fourth in fours. A route through all four rows is therefore an answer composed
+// from every scale the dial offers rather than from the corner of it the player trusts.
+//
+// The wide-dial counterpart to `everyKeyMoved`, and written because that rule has no
+// meaning on sixteen keys: a route through all of them is not a route. Four rows is.
+// See `STREAK_TRIGGERED.spread`.
+export function everyRowMoved(dial: DialSpec, from: Grid, to: Grid): boolean {
+  if (from.length !== to.length) return false
+  for (let row = 0; row < dial.rows; row++) {
+    let moved = false
+    for (let col = 0; col < dial.cols && !moved; col++) {
+      const index = row * dial.cols + col
+      moved = from[index] !== to[index]
+    }
+    if (!moved) return false
+  }
+  return true
+}
+
 export const pressGrid = (
   dial: DialSpec,
   grid: Grid,

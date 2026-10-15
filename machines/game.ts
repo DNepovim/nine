@@ -6,6 +6,7 @@ import { tutorialBoardEntry } from '@/lib/tutorial-board'
 import {
   emptyGrid,
   everyKeyMoved,
+  everyRowMoved,
   FAST_HIT_THRESHOLD,
   NINE_DIAL,
   pressGrid,
@@ -19,6 +20,7 @@ import {
   sumOf,
   traitsOf,
   TUTORIAL,
+  type DialSpec,
   type Difficulty,
   type Grid,
   type ModeId,
@@ -441,6 +443,9 @@ const streakFactsOf = (
     spdFactor: number
     refGrid: Grid
   }[],
+  // The dial the run is played on, for the two facts that are about its shape rather than
+  // about the numbers a hit came to.
+  dial: DialSpec,
   newGrid: Grid,
   clearedBoard: boolean,
 ): StreakFacts => {
@@ -453,6 +458,7 @@ const streakFactsOf = (
     // route is what happened since that target went up, which is the window `par` and
     // `userSteps` are counted over too.
     allWhole: anyHit && perTarget.every((t) => everyKeyMoved(t.refGrid, newGrid)),
+    allSpread: anyHit && perTarget.every((t) => everyRowMoved(dial, t.refGrid, newGrid)),
     clearedBoard,
   }
 }
@@ -511,7 +517,7 @@ function applyGrid(context: Context, newGrid: Grid, now: number) {
     })
   }
 
-  const streakFacts = streakFactsOf(perTarget, newGrid, clearedBoard)
+  const streakFacts = streakFactsOf(perTarget, rules.dial, newGrid, clearedBoard)
   const trigger = rules.scoring.streak
   const triggered = STREAK_TRIGGERED[trigger](streakFacts)
   let streak = context.streak

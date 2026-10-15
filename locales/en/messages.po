@@ -1216,11 +1216,15 @@ msgstr "FORTUNE"
 msgid "Forward a step"
 msgstr "Forward a step"
 
-#: modes/challenges/catalog.ts:42
+#: modes/challenges/catalog.ts:136
+msgid "FOUR BY FOUR"
+msgstr "FOUR BY FOUR"
+
+#: modes/challenges/catalog.ts:43
 msgid "FOUR KEYS"
 msgstr "FOUR KEYS"
 
-#: modes/challenges/catalog.ts:43
+#: modes/challenges/catalog.ts:44
 msgid "Four keys, doubled speed"
 msgstr "Four keys, doubled speed"
 
@@ -2435,6 +2439,10 @@ msgstr "SINCE {0}"
 #: components/overlays/admin-stats.tsx:54
 msgid "Since Monday, the week a player sees"
 msgstr "Since Monday, the week a player sees"
+
+#: modes/challenges/catalog.ts:137
+msgid "Sixteen keys, double time"
+msgstr "Sixteen keys, double time"
 
 #: components/overlays/how-to-play-overlay.tsx:804
 msgid "Skill inside a single run: a long streak, the top multiplier, a stretch without losing a life."

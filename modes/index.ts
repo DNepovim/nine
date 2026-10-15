@@ -17,6 +17,7 @@ export {
   dialFactors,
   emptyGrid,
   everyKeyMoved,
+  everyRowMoved,
   NINE_DIAL,
   pressGrid,
   setGrid,
