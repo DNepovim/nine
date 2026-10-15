@@ -2,7 +2,6 @@ import { describe, expect, it } from 'vitest'
 
 import {
   knownFeatures,
-  nextVisibility,
   parseVisibility,
   sameFeatures,
   sourceOf,
@@ -38,15 +37,6 @@ describe('parseVisibility', () => {
     // A device older than the server. The player path never reads this column, so the
     // only cost is the admin screen describing an unfamiliar switch as the ordinary one.
     expect(parseVisibility('everybody-on-tuesdays')).toBe('private')
-  })
-})
-
-describe('nextVisibility', () => {
-  it('widens, then starts over', () => {
-    // Nobody, then whoever holds it, then everybody — the order the three widen in.
-    expect(nextVisibility('hidden')).toBe('private')
-    expect(nextVisibility('private')).toBe('public')
-    expect(nextVisibility('public')).toBe('hidden')
   })
 })
 

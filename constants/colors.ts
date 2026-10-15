@@ -56,6 +56,12 @@ export const MUTED_INK = '#D4D0C8'
 // which is the same near-black doing the other job.
 export const PRIMARY_INK = '#1C1928'
 
+// The `--color-on-strong` token as JavaScript, and the fourth of these mirrors. The admin
+// lists tick a feature on with an `Ionicons` checkmark, and an icon takes its colour as a
+// prop — so the ink that goes on `bg-strong` has to exist as a value as well as a class.
+// Must move with its definition in global.css, like the three above it.
+export const ON_STRONG_INK = '#D8D2F4'
+
 // Earning an achievement: the one hue the app had left. Modes own blue through amber,
 // gold marks a board record you *currently hold*, teal means multiplayer and grey means a
 // record just left you. An achievement is permanent and belongs to nobody else, so it

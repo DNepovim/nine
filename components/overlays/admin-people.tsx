@@ -1,10 +1,15 @@
 import { Trans } from '@lingui/react/macro'
 import { useEffect, useState } from 'react'
-import { ActivityIndicator, FlatList, Text, TextInput, View } from 'react-native'
+import { ActivityIndicator, ScrollView, Text, TextInput, View } from 'react-native'
 
 import { GradientName } from '@/components/gradient-name'
+import {
+  AdminChip,
+  AdminTable,
+  type AdminColumn,
+  type AdminTableRow,
+} from '@/components/overlays/admin-table'
 import { PrimaryButton } from '@/components/primary-button'
-import { TrackedPressable } from '@/components/tracked-pressable'
 import { DIM_INK } from '@/constants/colors'
 import { TYPE } from '@/constants/typography'
 import { EMPTY_IDS, usePlayerFactors } from '@/hooks/use-player-factors'
@@ -16,92 +21,73 @@ import {
 import { cn } from '@/lib/cn'
 import type { NameFactors } from '@/lib/name-gradient'
 
-// The row that is the person reading it.
+// Everybody who holds a role or carries an override, and a search to find somebody who
+// does neither yet. The list is read once on open, and again whenever a detail screen
+// says it changed something — `epoch` is that signal.
 //
-// This screen is the one place in the app where somebody can take a feature off a player,
-// and the player they are most able to lock out of it is themselves. So the list says which
-// row is theirs before they open it rather than after.
-//
-// A tag beside the name rather than a column of its own: the name cell shrinks to make room
-// on the one row that needs it, so the role and the count stay in line down the whole list
-// and nobody else's row pays for the mark.
-function You() {
-  return (
-    <View className="rounded border border-dim/30 px-1 py-px">
-      <Text selectable={false} className={cn(TYPE.caption, 'text-dim')}>
-        <Trans>YOU</Trans>
-      </Text>
-    </View>
-  )
-}
+// Three columns, named at the top and the same three on the row the search turns up:
+// who they are, what role they hold, and how many features they end up with. That last
+// pair used to be one string with a star in it.
 
-function PersonRow({
+// The columns, written once and handed to both tables — the list, and the one row above
+// it a search puts there. Two tables with the same columns rather than one with a gap in
+// it: a found person is not a row of this list, and drawing them inside it would say they
+// were.
+// The name column is `flex-1` and the other two are as narrow as their contents: the
+// name is the thing a row is read by, it carries a chip beside it on one row of the list,
+// and it was the column being squeezed — ROLE at 68 and FEATURES at 60 left the YOU chip
+// hanging off the end of its own cell. A role key is short and a count is two digits, so
+// the room belongs to the name.
+const COLUMNS: readonly AdminColumn[] = [
+  { label: 'PLAYER', tone: 'name' },
+  { label: 'ROLE', width: 52 },
+  { label: 'FEAT', width: 34, align: 'right' },
+]
+
+// The name cell: a player's own colour wherever the app writes their name, and plain ink
+// for a profile that has not got one yet — there is no name there to colour, and a
+// gradient would be this screen wearing somebody else's.
+function NameCell({
   person,
   factors,
   me,
-  onPress,
 }: {
   person: AdminPerson
   // What this person's name is coloured by, from the list's one lookup. A player is the
   // same colour here as on a board row, and the handful of people who open this screen
   // are the ones most likely to recognise each other by it.
   factors: NameFactors
-  // Whether this row is the person reading it.
+  // Whether this row is the person reading it. This screen is the one place in the app
+  // where somebody can take a feature off a player, and the player they are most able to
+  // lock out of it is themselves — so the list says which row is theirs before they open
+  // it rather than after.
+  //
+  // Said with the chip and nothing else. The row used to be lifted onto a card with a
+  // coloured bar down its edge as well, which was three marks for one fact — and the two
+  // that were not the chip both cost the row its alignment with the rest of the list. It
+  // is also the **first row** now, which is a stronger statement than any of them.
   me: boolean
-  onPress: () => void
 }) {
   return (
-    <TrackedPressable
-      id="admin.person"
-      onPress={onPress}
-      className={cn(
-        'flex-row items-center gap-2 px-2 py-2.5',
-        // Lifted out of the list as a card rather than tinted in place: a card is how the
-        // rest of the app raises a thing worth noticing, and it carries its own separation,
-        // so the row gives up the hairline the others are divided by.
-        //
-        // It hangs the row's own padding further out and pads the same amount further in,
-        // which is what keeps this name — and the role and the count after it — on the
-        // line every other row's are on.
-        me ? '-mx-2 rounded-lg bg-card px-4' : 'border-b border-dim/10',
+    <View className="flex-row items-center gap-1.5">
+      {person.nickname === null ? (
+        <Text selectable={false} className={cn(TYPE.prose, 'shrink text-dim')}>
+          <Trans>(no nickname)</Trans>
+        </Text>
+      ) : (
+        <GradientName
+          nickname={person.nickname}
+          avgAccuracy={factors.avgAccuracy}
+          avgSpeed={factors.avgSpeed}
+          numberOfLines={1}
+          className={cn(TYPE.prose, 'shrink')}
+        />
       )}
-    >
-      <View className="flex-1 flex-row items-center gap-1.5">
-        {/* A profile with no nickname is not a name to draw — it is this screen saying
-            there is nothing there, so it stays in the plain ink the rest of the row is in
-            rather than wearing a gradient belonging to somebody. */}
-        {person.nickname === null ? (
-          <Text selectable={false} className={cn(TYPE.prose, 'shrink text-primary')}>
-            <Trans>(no nickname)</Trans>
-          </Text>
-        ) : (
-          <GradientName
-            nickname={person.nickname}
-            avgAccuracy={factors.avgAccuracy}
-            avgSpeed={factors.avgSpeed}
-            numberOfLines={1}
-            className={cn(TYPE.prose, 'shrink')}
-          />
-        )}
-        {me && <You />}
-      </View>
-      <Text selectable={false} className={cn(TYPE.label, 'w-20 text-dim')}>
-        {person.role ?? ''}
-      </Text>
-      {/* The count is features in effect, and the star marks somebody whose count is not
-          their role's — the one thing a list of people can usefully say about an
-          override without opening anybody. */}
-      <Text selectable={false} className={cn(TYPE.label, 'w-8 text-right text-dim')}>
-        {person.featureCount}
-        {person.hasOverrides ? ' ✦' : ''}
-      </Text>
-    </TrackedPressable>
+      {me && <AdminChip label={<Trans>YOU</Trans>} />}
+    </View>
   )
 }
 
-// Everybody who holds a role or carries an override, and a search to find somebody who
-// does neither yet. The list is read once on open, and again whenever a detail screen
-// says it changed something — `epoch` is that signal.
 export function AdminPeople({
   epoch,
   viewerId,
@@ -144,6 +130,15 @@ export function AdminPeople({
     })()
   }, [epoch])
 
+  // The reader's own row first, and the server's order kept under it. The list comes back
+  // ordered by role and then by nickname, which is the right order for everybody except
+  // the one person who is going to open their own row — and that row is the one this
+  // screen exists to be careful with.
+  const ordered =
+    viewerId === null
+      ? rows
+      : [...rows].sort((a, b) => (a.id === viewerId ? -1 : b.id === viewerId ? 1 : 0))
+
   const handleSearch = async () => {
     const trimmed = query.trim()
     if (trimmed === '') return
@@ -161,9 +156,28 @@ export function AdminPeople({
     }
   }
 
+  const toRow = (person: AdminPerson): AdminTableRow => ({
+    key: person.id,
+    cells: [
+      <NameCell
+        person={person}
+        factors={factorsOf(person.id)}
+        me={person.id === viewerId}
+      />,
+      person.role ?? '—',
+      // The count is features in effect, and the star marks somebody whose count is not
+      // their role's — the one thing a list of people can usefully say about an override
+      // without opening anybody.
+      `${person.featureCount}${person.hasOverrides ? ' ✦' : ''}`,
+    ],
+    onPress: () => {
+      onOpenPerson(person)
+    },
+  })
+
   return (
     <View className="flex-1">
-      <View className="mb-2 flex-row gap-2">
+      <View className="mb-2.5 flex-row gap-2">
         <TextInput
           value={query}
           onChangeText={(next) => {
@@ -178,7 +192,7 @@ export function AdminPeople({
           onSubmitEditing={() => {
             void handleSearch()
           }}
-          className="flex-1 rounded-lg border border-dim/30 bg-background px-3 py-2 font-mono font-bold tracking-[1px] text-primary"
+          className="h-9 flex-1 rounded-xl border border-muted bg-elevated px-2.5 font-mono font-bold tracking-[1px] text-primary"
         />
         <PrimaryButton
           id="admin.find"
@@ -191,57 +205,37 @@ export function AdminPeople({
         />
       </View>
 
-      {searching && <ActivityIndicator className="my-2" />}
+      {searching && <ActivityIndicator className="mb-2" />}
       {searchError !== null && (
         <Text selectable={false} className={cn(TYPE.value, 'mb-2 text-red-500')}>
           {searchError}
         </Text>
       )}
       {searchResult !== null && (
-        <View className="mb-4 rounded-xl border border-dim/20 px-3">
-          <PersonRow
-            person={searchResult}
-            factors={factorsOf(searchResult.id)}
-            me={searchResult.id === viewerId}
-            onPress={() => {
-              onOpenPerson(searchResult)
-            }}
-          />
-        </View>
-      )}
-
-      <Text selectable={false} className={cn(TYPE.label, 'mb-1 text-dim')}>
-        <Trans>EVERYONE WITH A ROLE OR AN OVERRIDE</Trans>
-      </Text>
-      {loading ? (
-        <ActivityIndicator className="my-4" />
-      ) : listError !== null ? (
-        <Text selectable={false} className={cn(TYPE.figure, 'text-red-500')}>
-          {listError}
-        </Text>
-      ) : (
-        <FlatList
-          data={rows}
-          keyExtractor={(row) => row.id}
-          renderItem={({ item }) => (
-            <PersonRow
-              person={item}
-              factors={factorsOf(item.id)}
-              me={item.id === viewerId}
-              onPress={() => {
-                onOpenPerson(item)
-              }}
-            />
-          )}
-          showsVerticalScrollIndicator={false}
-          keyboardShouldPersistTaps="handled"
-          ListEmptyComponent={
-            <Text selectable={false} className={cn(TYPE.prose, 'text-dim')}>
-              <Trans>Nobody holds a role yet.</Trans>
-            </Text>
-          }
+        <AdminTable
+          className="mb-2.5"
+          rowId="admin.person"
+          columns={COLUMNS}
+          rows={[toRow(searchResult)]}
         />
       )}
+
+      <Text selectable={false} className={cn(TYPE.caption, 'mb-1.5 text-dim')}>
+        <Trans>EVERYONE WITH A ROLE OR AN OVERRIDE</Trans>
+      </Text>
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+      >
+        <AdminTable
+          rowId="admin.person"
+          columns={COLUMNS}
+          rows={ordered.map(toRow)}
+          loading={loading}
+          error={listError}
+          empty={<Trans>Nobody holds a role yet.</Trans>}
+        />
+      </ScrollView>
     </View>
   )
 }

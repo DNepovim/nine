@@ -1,6 +1,11 @@
 import { describe, expect, it } from 'vitest'
 
-import { formatCareerTime, formatCountdown, formatGameTime } from './duration'
+import {
+  formatCareerTime,
+  formatCountdown,
+  formatGameTime,
+  formatWindowLength,
+} from './duration'
 
 describe('formatGameTime', () => {
   it('formats zero', () => {
@@ -127,5 +132,39 @@ describe('formatCountdown', () => {
   it('clamps at zero for a window that shut while the card was up', () => {
     expect(formatCountdown(0)).toBe('0:00')
     expect(formatCountdown(-5000)).toBe('0:00')
+  })
+})
+
+describe('formatWindowLength', () => {
+  const HOUR = 3_600_000
+
+  it('says a session a day long in hours', () => {
+    // The figure the admin typed into the form, and the one case that has to read
+    // instantly — nearly every session in this app is this one.
+    expect(formatWindowLength(24 * HOUR)).toBe('24ʰ')
+  })
+
+  it('stays in hours right up to two days', () => {
+    expect(formatWindowLength(HOUR)).toBe('1ʰ')
+    expect(formatWindowLength(36 * HOUR)).toBe('36ʰ')
+    expect(formatWindowLength(47 * HOUR)).toBe('47ʰ')
+  })
+
+  it('turns over to days at two of them', () => {
+    expect(formatWindowLength(48 * HOUR)).toBe('2ᵈ')
+    expect(formatWindowLength(72 * HOUR)).toBe('3ᵈ')
+  })
+
+  it('pads the hours it keeps beside a day', () => {
+    expect(formatWindowLength(54 * HOUR)).toBe('2ᵈ06ʰ')
+    expect(formatWindowLength(75 * HOUR)).toBe('3ᵈ03ʰ')
+  })
+
+  it('floors a part hour rather than claiming it', () => {
+    expect(formatWindowLength(24 * HOUR + 59 * 60_000)).toBe('24ʰ')
+  })
+
+  it('clamps a span that has not been filled in yet', () => {
+    expect(formatWindowLength(-HOUR)).toBe('0ʰ')
   })
 })

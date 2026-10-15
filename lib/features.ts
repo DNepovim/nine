@@ -54,14 +54,6 @@ export function parseVisibility(value: string): Visibility {
   return value === 'hidden' || value === 'public' ? value : 'private'
 }
 
-// What a tap on the switch does. Hidden → private → public → hidden, in the order the
-// three widen: nobody, then whoever holds it, then everybody. A cycle rather than three
-// pills, because the row it sits on also has to hold the key and its counts on a phone.
-export function nextVisibility(current: Visibility): Visibility {
-  if (current === 'hidden') return 'private'
-  return current === 'private' ? 'public' : 'hidden'
-}
-
 // Whether somebody reaches this feature without a row of their own naming them. Public
 // is the second source of that: before it, inheriting meant the role's stack and nothing
 // else, and the two call sites below both used to read `inRoleStack` directly.

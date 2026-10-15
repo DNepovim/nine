@@ -1,14 +1,13 @@
 import { Trans } from '@lingui/react/macro'
 import { useEffect, useState } from 'react'
-import { ActivityIndicator, ScrollView, Text, TextInput, View } from 'react-native'
+import { ScrollView, Text, TextInput, View } from 'react-native'
 
+import { AdminScreen } from '@/components/overlays/admin-screen'
+import { AdminChip, AdminTable, AdminTick } from '@/components/overlays/admin-table'
 import { PrimaryButton } from '@/components/primary-button'
-import { ScreenLayer } from '@/components/screen'
-import { TrackedPressable } from '@/components/tracked-pressable'
 import { TYPE } from '@/constants/typography'
 import { listFeatures, type AdminFeature } from '@/lib/admin/features'
 import {
-  deleteRole,
   loadRoleFeatures,
   renameRole,
   setRoleFeature,
@@ -53,7 +52,7 @@ export function AdminRole({
     // Read once on open, keyed on the role. Every write below reloads deliberately.
   }, [role.key])
 
-  // The dot moves on the tap, and the server is read back after. Waiting on the round
+  // The tick moves on the tap, and the server is read back after. Waiting on the round
   // trip before showing anything is what had this list wanting a second press.
   const toggle = async (key: string, on: boolean) => {
     setPending((current) => new Set(current).add(key))
@@ -65,7 +64,7 @@ export function AdminRole({
     })
     const res = await setRoleFeature(role.key, key, !on)
     setError(res.error)
-    // Read back whether or not it was taken: a refused write has to put the dot back to
+    // Read back whether or not it was taken: a refused write has to put the tick back to
     // what the stack actually holds.
     const mine = await loadRoleFeatures(role.key)
     setStack(new Set(mine.keys))
@@ -85,134 +84,101 @@ export function AdminRole({
     if (res.error === null) onChanged()
   }
 
-  const remove = async () => {
-    setBusy(true)
-    const res = await deleteRole(role.key)
-    setError(res.error)
-    setBusy(false)
-    if (res.error === null) {
-      onChanged()
-      onBack()
-    }
-  }
-
   const held = role.personCount
 
   return (
-    <ScreenLayer className="px-6 pb-6 pt-16">
-      <View className="mb-1 flex-row items-center gap-3">
-        <TrackedPressable id="admin.back" onPress={onBack} hitSlop={8}>
-          <Text selectable={false} className="font-mono text-[16px] font-black text-dim">
-            ‹
-          </Text>
-        </TrackedPressable>
-        {/* Renaming is a blur, not a press — there is no button to give an id to, which
-            is why `admin.role_rename` is not in the ButtonId union. */}
-        <TextInput
-          value={label}
-          onChangeText={setLabel}
-          onBlur={() => {
-            const next = label.trim()
-            if (next !== '' && next !== role.label) {
-              void rename(next)
-            }
-          }}
-          autoCapitalize="characters"
-          autoCorrect={false}
-          className="flex-1 font-mono text-[18px] font-black tracking-[2px] text-primary"
-        />
-      </View>
-      {/* The count is the warning: editing the stack below moves every one of them who
-          has not overridden the feature being changed. */}
-      <Text selectable={false} className={cn(TYPE.label, 'mb-4 ml-6 text-dim')}>
-        {held} <Trans>holding this role</Trans>
-      </Text>
-
-      {error !== null && (
-        <Text selectable={false} className={cn(TYPE.value, 'mb-2 text-red-500')}>
-          {error}
-        </Text>
-      )}
-
-      {loading ? (
-        <ActivityIndicator className="my-4" />
-      ) : (
-        // The name above is a text field, and a tap that only puts the keyboard away is
-        // the tap somebody counts as the first of two.
-        <ScrollView
-          showsVerticalScrollIndicator={false}
-          keyboardShouldPersistTaps="handled"
-        >
-          <Text selectable={false} className={cn(TYPE.label, 'mb-1 text-dim')}>
-            <Trans>FEATURES IN THIS STACK</Trans>
-          </Text>
-          {features.map((feature) => {
-            const on = stack.has(feature.key)
-            return (
-              <TrackedPressable
-                key={feature.key}
-                id="admin.role_feature"
-                disabled={pending.has(feature.key)}
-                onPress={() => {
-                  void toggle(feature.key, on)
-                }}
-                className="flex-row items-center py-2"
-              >
-                <Text selectable={false} className={cn(TYPE.prose, 'w-5 text-primary')}>
-                  {on ? '●' : '○'}
-                </Text>
-                <Text
-                  selectable={false}
-                  className={cn(
-                    cn(TYPE.prose, 'flex-1 text-primary'),
-                    feature.visibility === 'hidden' && 'line-through',
-                  )}
-                >
-                  {feature.key}
-                </Text>
-                {/* A hidden feature is struck: this stack decides nothing about it, and
-                    the switch that does is on the FEATURES tab. A public one is not —
-                    the stack has stopped deciding who reaches it, but it is still what
-                    the feature falls back to the day somebody makes it private again,
-                    so the dot stays worth setting. */}
-                {feature.visibility !== 'private' && (
-                  <Text selectable={false} className={cn(TYPE.value, 'text-dim')}>
-                    {feature.visibility === 'hidden' ? (
-                      <Trans>hidden from everyone</Trans>
-                    ) : (
-                      <Trans>public to everyone</Trans>
-                    )}
-                  </Text>
-                )}
-              </TrackedPressable>
-            )
-          })}
-
-          <TrackedPressable
-            id="admin.role_delete"
-            disabled={busy || held > 0}
-            onPress={() => {
-              void remove()
+    <AdminScreen
+      error={error}
+      heading={
+        // The role's own name is the heading, and it is editable in place — so this
+        // screen passes a heading rather than a title, the same way the person screen
+        // does with a nickname.
+        <View className="mb-2.5 flex-row items-end justify-between gap-3">
+          {/* Renaming is a blur, not a press — there is no button to give an id to,
+              which is why `admin.role_rename` is not in the ButtonId union. */}
+          <TextInput
+            value={label}
+            onChangeText={setLabel}
+            onBlur={() => {
+              const next = label.trim()
+              if (next !== '' && next !== role.label) {
+                void rename(next)
+              }
             }}
-            className={cn(
-              'mt-5 items-center rounded-xl border border-red-500/40 py-3',
-              (busy || held > 0) && 'opacity-40',
-            )}
-          >
-            <Text selectable={false} className={cn(TYPE.buttonSm, 'text-red-500')}>
-              <Trans>DELETE ROLE</Trans>
-            </Text>
-          </TrackedPressable>
-        </ScrollView>
-      )}
+            autoCapitalize="characters"
+            autoCorrect={false}
+            editable={!busy}
+            className={cn(TYPE.cardTitle, 'h-9 flex-1 text-primary')}
+          />
+          {/* The count is the warning: editing the stack below moves every one of them
+              who has not overridden the feature being changed. */}
+          <Text selectable={false} className={cn(TYPE.hint, 'mb-1.5 text-dim')}>
+            {held} <Trans>holding</Trans>
+          </Text>
+        </View>
+      }
+      footer={
+        <PrimaryButton id="admin.done" onPress={onBack} label={<Trans>DONE</Trans>} />
+      }
+    >
+      {/* The name above is a text field, and a tap that only puts the keyboard away is
+          the tap somebody counts as the first of two. */}
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+      >
+        <Text selectable={false} className={cn(TYPE.caption, 'mb-1.5 text-dim')}>
+          <Trans>FEATURES IN THIS STACK</Trans>
+        </Text>
+        <AdminTable
+          rowId="admin.role_feature"
+          loading={loading}
+          columns={[
+            { width: 22 },
+            { label: 'FEATURE', tone: 'name' },
+            { width: 76, align: 'right' },
+          ]}
+          rows={features.map((feature) => {
+            const on = stack.has(feature.key)
+            return {
+              key: feature.key,
+              leads: false,
+              // A hidden feature is faded: this stack decides nothing about it, and the
+              // switch that does is on the FEATURES tab. A public one is not — the stack
+              // has stopped deciding who reaches it, but it is still what the feature
+              // falls back to the day somebody makes it private again, so the tick stays
+              // worth setting.
+              faded: feature.visibility === 'hidden',
+              onPress: pending.has(feature.key)
+                ? undefined
+                : () => {
+                    void toggle(feature.key, on)
+                  },
+              cells: [
+                <AdminTick on={on} />,
+                feature.key,
+                feature.visibility === 'private' ? null : (
+                  <AdminChip
+                    label={feature.visibility === 'hidden' ? 'HIDDEN' : 'PUBLIC'}
+                    tone={feature.visibility === 'hidden' ? 'quiet' : 'filled'}
+                  />
+                ),
+              ],
+            }
+          })}
+        />
 
-      <PrimaryButton
-        id="admin.done"
-        onPress={onBack}
-        className="mt-4 self-center"
-        style={{ width: 224 }}
-        label={<Trans>DONE</Trans>}
-      />
-    </ScreenLayer>
+        {/* **No DELETE ROLE.** It was here, under the stack, and it was shut on every
+            role anybody would want to press it on: `delete_role` refuses a role somebody
+            still holds — `still held by 3 people` — so the only roles it ever offered to
+            delete were the empty ones nobody had got round to using. A button that is
+            disabled whenever it would matter is a button that only ever teaches you it is
+            disabled.
+
+            Deleting a role is now what it was always closest to being: a thing done in
+            SQL, deliberately, after the people holding it have been moved off it. The
+            screen's job is the stack. */}
+      </ScrollView>
+    </AdminScreen>
   )
 }

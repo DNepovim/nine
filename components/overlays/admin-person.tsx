@@ -1,11 +1,12 @@
 import { Trans } from '@lingui/react/macro'
 import { useEffect, useState } from 'react'
-import { ActivityIndicator, ScrollView, Text, View } from 'react-native'
+import { ScrollView, Text, View } from 'react-native'
 
 import { GradientName } from '@/components/gradient-name'
+import { AdminScreen } from '@/components/overlays/admin-screen'
+import { AdminSelect } from '@/components/overlays/admin-select'
+import { AdminTable, AdminTick } from '@/components/overlays/admin-table'
 import { PrimaryButton } from '@/components/primary-button'
-import { ScreenLayer } from '@/components/screen'
-import { TrackedPressable } from '@/components/tracked-pressable'
 import { TYPE } from '@/constants/typography'
 import { EMPTY_IDS, usePlayerFactors } from '@/hooks/use-player-factors'
 import {
@@ -34,46 +35,6 @@ const SOURCE_LABEL: Record<FeatureSource, string> = {
 
 const isOn = (source: FeatureSource) =>
   source === 'role-on' || source === 'override-on' || source === 'public'
-
-function FeatureRow({
-  row,
-  pending,
-  onToggle,
-}: {
-  row: PersonFeature
-  // This row's own write is in flight. Per row rather than one flag for the screen: a
-  // single `busy` dimmed every row at once, which is what a tap on one of them read as.
-  pending: boolean
-  onToggle: () => void
-}) {
-  const source = sourceOf(row)
-  // A hidden feature is nobody's to change from here — the switch for it is on the
-  // FEATURES tab, and offering a tap that cannot take effect would be a lie. A public
-  // one stays tappable: revoking it for one person is a thing this screen can still do,
-  // and it is the only screen that can.
-  const locked = source === 'hidden'
-  return (
-    <TrackedPressable
-      id="admin.person_feature"
-      onPress={onToggle}
-      disabled={pending || locked}
-      className={cn('flex-row items-center py-2', locked && 'opacity-40')}
-    >
-      <Text selectable={false} className={cn(TYPE.prose, 'w-5 text-primary')}>
-        {isOn(source) ? '●' : '○'}
-      </Text>
-      <Text
-        selectable={false}
-        className={cn(cn(TYPE.prose, 'flex-1 text-primary'), locked && 'line-through')}
-      >
-        {row.key}
-      </Text>
-      <Text selectable={false} className={cn(TYPE.value, 'text-dim')}>
-        {SOURCE_LABEL[source]}
-      </Text>
-    </TrackedPressable>
-  )
-}
 
 // One person: the role they hold, every feature with where its answer came from, and
 // the way back to the role's own stack.
@@ -141,7 +102,7 @@ export function AdminPerson({
     if (res.error === null) onChanged()
   }
 
-  // The dot moves on the tap, and the person is read back after. Waiting on the round
+  // The tick moves on the tap, and the person is read back after. Waiting on the round
   // trip before showing anything is what had these rows wanting a second press.
   const toggle = async (row: PersonFeature) => {
     const next = toggleOverride(row)
@@ -166,119 +127,101 @@ export function AdminPerson({
   const hasOverrides = rows.some((row) => row.override !== null)
 
   return (
-    <ScreenLayer className="px-6 pb-6 pt-16">
-      <View className="mb-4 flex-row items-center gap-3">
-        <TrackedPressable id="admin.back" onPress={onBack} hitSlop={8}>
-          <Text selectable={false} className="font-mono text-[16px] font-black text-dim">
-            ‹
-          </Text>
-        </TrackedPressable>
-        {person.nickname === null ? (
-          <Text
-            selectable={false}
-            className="font-mono text-[18px] font-black tracking-[2px] text-primary"
-          >
-            <Trans>(no nickname)</Trans>
-          </Text>
-        ) : (
-          <GradientName
-            nickname={person.nickname}
-            avgAccuracy={factorsOf(person.id).avgAccuracy}
-            avgSpeed={factorsOf(person.id).avgSpeed}
-            numberOfLines={1}
-            className="font-mono text-[18px] font-black tracking-[2px]"
-          />
-        )}
-      </View>
-
-      {error !== null && (
-        <Text selectable={false} className={cn(TYPE.value, 'mb-2 text-red-500')}>
-          {error}
-        </Text>
-      )}
-
-      {loading ? (
-        <ActivityIndicator className="my-4" />
-      ) : (
-        <ScrollView showsVerticalScrollIndicator={false}>
-          <Text selectable={false} className={cn(TYPE.label, 'mb-1 text-dim')}>
-            <Trans>ROLE</Trans>
-          </Text>
-          {/* NONE leftmost, as it has been: it is the one option that undoes the other
-              three, and any order that put it last would bury it. */}
-          <View className="mb-5 flex-row flex-wrap gap-1.5">
-            {[null, ...roles.map((r) => r.key)].map((option) => {
-              const active = option === role
-              return (
-                <TrackedPressable
-                  key={option ?? 'none'}
-                  id="admin.person_role"
-                  disabled={busy || active}
-                  onPress={() => {
-                    void write(async () => {
-                      const res = await setUserRole(person.id, option)
-                      if (res.error === null) setRole(option)
-                      return res
-                    })
-                  }}
-                  className={cn(
-                    'rounded-lg border px-2.5 py-1',
-                    active ? 'border-strong bg-strong' : 'border-dim/30',
-                    busy && !active && 'opacity-40',
-                  )}
-                >
-                  <Text
-                    selectable={false}
-                    className={cn(TYPE.rowLabel, active ? 'text-on-strong' : 'text-dim')}
-                  >
-                    {option === null
-                      ? 'NONE'
-                      : (roles.find((r) => r.key === option)?.label ?? option)}
-                  </Text>
-                </TrackedPressable>
-              )
-            })}
-          </View>
-
-          <Text selectable={false} className={cn(TYPE.label, 'mb-1 text-dim')}>
-            <Trans>FEATURES</Trans>
-          </Text>
-          {rows.map((row) => (
-            <FeatureRow
-              key={row.key}
-              row={row}
-              pending={pending.has(row.key)}
-              onToggle={() => {
-                void toggle(row)
-              }}
-            />
-          ))}
-
-          <TrackedPressable
-            id="admin.person_reset"
-            disabled={busy || !hasOverrides}
-            onPress={() => {
-              void write(() => resetUserFeatures(person.id))
-            }}
-            className={cn(
-              'mt-5 items-center rounded-xl border border-dim/30 py-3',
-              (busy || !hasOverrides) && 'opacity-40',
-            )}
-          >
-            <Text selectable={false} className={cn(TYPE.buttonSm, 'text-dim')}>
-              <Trans>RESET TO ROLE DEFAULTS</Trans>
+    <AdminScreen
+      error={error}
+      heading={
+        // The person's own name is the heading, so this screen passes one rather than a
+        // title: a nickname is drawn in that player's own colours and cannot be handed to
+        // `AdminTitle`, which spells a word out across the app's spectrum.
+        //
+        // The role sits on the same line as the name. It is one setting about the person
+        // whose features fill the rest of the screen — a row of pills above that list was
+        // a control taking two lines to say what a closed combobox says in one, and
+        // taking them whether or not anybody was going to change it.
+        <View className="mb-2.5 flex-row items-center justify-between gap-3">
+          {person.nickname === null ? (
+            <Text selectable={false} className={cn(TYPE.cardTitle, 'shrink text-dim')}>
+              <Trans>(no nickname)</Trans>
             </Text>
-          </TrackedPressable>
-        </ScrollView>
-      )}
+          ) : (
+            <GradientName
+              nickname={person.nickname}
+              avgAccuracy={factorsOf(person.id).avgAccuracy}
+              avgSpeed={factorsOf(person.id).avgSpeed}
+              numberOfLines={1}
+              className={cn(TYPE.cardTitle, 'shrink')}
+            />
+          )}
+          <AdminSelect
+            title={<Trans>ROLE</Trans>}
+            disabled={busy || loading}
+            value={role}
+            className="w-[124px]"
+            // NONE first, as it has been: it is the one option that undoes all the
+            // others, and any order that put it last would bury it.
+            options={[
+              { value: null, label: 'NONE', note: <Trans>An ordinary player</Trans> },
+              ...roles.map((r) => ({ value: r.key, label: r.label })),
+            ]}
+            onSelect={(option) => {
+              void write(async () => {
+                const res = await setUserRole(person.id, option)
+                if (res.error === null) setRole(option)
+                return res
+              })
+            }}
+          />
+        </View>
+      }
+      footer={
+        <PrimaryButton id="admin.done" onPress={onBack} label={<Trans>DONE</Trans>} />
+      }
+    >
+      <ScrollView showsVerticalScrollIndicator={false}>
+        <Text selectable={false} className={cn(TYPE.caption, 'mb-1.5 text-dim')}>
+          <Trans>FEATURES</Trans>
+        </Text>
+        <AdminTable
+          rowId="admin.person_feature"
+          loading={loading}
+          columns={[
+            { width: 22 },
+            { label: 'FEATURE', tone: 'name' },
+            { label: 'WHERE FROM', width: 96, align: 'right' },
+          ]}
+          rows={rows.map((row) => {
+            const source = sourceOf(row)
+            // A hidden feature is nobody's to change from here — the switch for it is on
+            // the FEATURES tab, and offering a tap that cannot take effect would be a
+            // lie. A public one stays tappable: revoking it for one person is a thing
+            // this screen can still do, and it is the only screen that can.
+            const locked = source === 'hidden'
+            return {
+              key: row.key,
+              leads: false,
+              faded: locked,
+              onPress:
+                locked || pending.has(row.key)
+                  ? undefined
+                  : () => {
+                      void toggle(row)
+                    },
+              cells: [<AdminTick on={isOn(source)} />, row.key, SOURCE_LABEL[source]],
+            }
+          })}
+        />
 
-      <PrimaryButton
-        id="admin.done"
-        onPress={onBack}
-        className="mt-4 self-center"
-        style={{ width: 224 }}
-        label={<Trans>DONE</Trans>}
-      />
-    </ScreenLayer>
+        <PrimaryButton
+          id="admin.person_reset"
+          tone="quiet"
+          className="mt-3"
+          disabled={busy || !hasOverrides}
+          onPress={() => {
+            void write(() => resetUserFeatures(person.id))
+          }}
+          label={<Trans>RESET TO ROLE DEFAULTS</Trans>}
+        />
+      </ScrollView>
+    </AdminScreen>
   )
 }

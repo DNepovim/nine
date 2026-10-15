@@ -1,13 +1,19 @@
 import { Trans } from '@lingui/react/macro'
 import { useEffect, useRef, useState } from 'react'
-import { ActivityIndicator, ScrollView, Text, TextInput, View } from 'react-native'
+import { ScrollView, Text, TextInput, View } from 'react-native'
 
+import {
+  AdminChip,
+  AdminTable,
+  type AdminTableRow,
+} from '@/components/overlays/admin-table'
+import { AdminVisibilityModal } from '@/components/overlays/admin-visibility-modal'
 import { TrackedPressable } from '@/components/tracked-pressable'
 import { DIM_INK } from '@/constants/colors'
 import { TYPE } from '@/constants/typography'
 import { listFeatures, setFeature, type AdminFeature } from '@/lib/admin/features'
 import { cn } from '@/lib/cn'
-import { nextVisibility, type Visibility } from '@/lib/features'
+import { type Visibility } from '@/lib/features'
 
 // The one key whose switch nobody may move, in either direction: hiding it locks every
 // admin out of the only screen that could put it back, and making it public puts the
@@ -16,19 +22,30 @@ import { nextVisibility, type Visibility } from '@/lib/features'
 // against this screen — and this is only so the switch does not look tappable.
 const PROTECTED = 'admin'
 
-// What each position says on the pill, and how loud it is drawn. Deliberately not
-// translated, the way the key beside it is not: the people who open this screen are the
-// people who write the catalog.
+// What each position says on the row's own button, and how solid it is drawn. The three
+// read as a scale of how far a feature has got out: outlined faintly for nobody, outlined
+// for whoever holds it, filled for everybody. Filled is the loudest because public is the
+// one position that cannot be undone quietly.
 //
-// The three read as a scale of how far a feature has got out: faint for nobody, outlined
-// for whoever holds it, filled for everybody. Filled is the loudest because public is
-// the one position that cannot be undone quietly — it is already in front of players by
-// the time anybody notices the row.
-const PILL: Record<Visibility, { label: string; box: string; ink: string }> = {
-  hidden: { label: 'HIDDEN', box: 'border-dim/30', ink: 'text-dim' },
-  private: { label: 'PRIVATE', box: 'border-strong', ink: 'text-primary' },
-  public: { label: 'PUBLIC', box: 'border-strong bg-strong', ink: 'text-on-strong' },
+// Deliberately not translated, the way the key beside it is not: the people who open this
+// screen are the people who write the catalog. The sentence under each of them, in the
+// dialog this button opens, is copy and is extracted.
+const CHIP: Record<Visibility, 'quiet' | 'strong' | 'filled'> = {
+  hidden: 'quiet',
+  private: 'strong',
+  public: 'filled',
 }
+
+const CHIP_LABEL: Record<Visibility, string> = {
+  hidden: 'HIDDEN',
+  private: 'PRIVATE',
+  public: 'PUBLIC',
+}
+
+// A fixed width, because the three labels are three lengths and a column that resized
+// itself every time one row changed read as the list redrawing rather than as one switch
+// moving.
+const SWITCH_W = 76
 
 // What the note fields hold after a read. A draft beats what the server just said: a
 // note being typed in one row has to survive a switch being flipped in another, and
@@ -39,7 +56,7 @@ const mergeNotes = (
 ): Record<string, string> =>
   Object.fromEntries(rows.map((row) => [row.key, current[row.key] ?? row.note ?? '']))
 
-// One row with its switch already moved, for the optimistic half of a tap.
+// One row with its switch already moved, for the optimistic half of a confirm.
 const withVisibility = (
   rows: readonly AdminFeature[],
   key: string,
@@ -60,13 +77,16 @@ export function AdminFeatures({
   // one switch read as: the whole list flashing, and the next tap landing on nothing.
   const [pending, setPending] = useState<ReadonlySet<string>>(new Set())
   // The same answer as `pending`, readable the moment it changes rather than on the next
-  // render. A tap on a row's switch blurs that row's note field in the same breath, and
-  // the blur handler has to be able to see the write the tap already sent.
+  // render. Confirming a row's visibility blurs that row's note field in the same breath,
+  // and the blur handler has to be able to see the write the confirm already sent.
   const inFlight = useRef<Set<string>>(new Set())
   const [error, setError] = useState<string | null>(null)
   // The note is edited in place, so the field needs somewhere to live between keystrokes
   // that is not the row it came from.
   const [notes, setNotes] = useState<Record<string, string>>({})
+  // Which row's visibility is being asked about. One dialog for the list rather than one
+  // per row: only one can be open, and the row it is about is the whole of its state.
+  const [asking, setAsking] = useState<AdminFeature | null>(null)
 
   // Only the first read has nothing to draw, so only the first read is allowed to blank
   // the list. `epoch` bumps after this screen's own writes as well, and swapping the
@@ -100,7 +120,79 @@ export function AdminFeatures({
     if (res.error === null) onChanged()
   }
 
-  if (loading) return <ActivityIndicator className="my-4" />
+  const tableRows: readonly AdminTableRow[] = rows.map((row) => {
+    const locked = row.key === PROTECTED
+    const note = notes[row.key] ?? ''
+    const busy = pending.has(row.key)
+    return {
+      key: row.key,
+      cells: [
+        `${row.key}${locked ? ' 🔒' : ''}`,
+        // Roles granting it, then people who actually reach it — the second counts
+        // overrides in, which is the number somebody about to move the switch wants. A
+        // public feature has no such pair: it reaches a population that grows with every
+        // player who opens the app, and the stack beside it has stopped deciding
+        // anything.
+        row.visibility === 'public' ? (
+          <Text selectable={false} className={cn(TYPE.value, 'text-dim')}>
+            <Trans>everyone</Trans>
+          </Text>
+        ) : (
+          `${row.roleCount} · ${row.personCount}`
+        ),
+        // The row's own button, and the only way the switch moves now. It opens the
+        // question rather than answering it — see `AdminVisibilityModal`.
+        <TrackedPressable
+          id="admin.feature_visibility"
+          disabled={busy || locked}
+          hitSlop={6}
+          onPress={() => {
+            setAsking(row)
+          }}
+          className={cn('w-full', (busy || locked) && 'opacity-40')}
+        >
+          <AdminChip
+            label={CHIP_LABEL[row.visibility]}
+            tone={CHIP[row.visibility]}
+            className="w-full"
+          />
+        </TrackedPressable>,
+      ],
+      note: (
+        <View>
+          {!row.inBuild && (
+            <Text selectable={false} className={cn(TYPE.hint, 'mb-1 text-red-500')}>
+              {/* A row the database holds and this build does not: a key left behind by
+                  a migration, or a device older than the server. Shown rather than
+                  hidden — unseen configuration is how it goes stale. */}
+              ⚠ <Trans>not in this build</Trans>
+            </Text>
+          )}
+          <TextInput
+            value={note}
+            onChangeText={(next) => {
+              setNotes((current) => ({ ...current, [row.key]: next }))
+            }}
+            onBlur={() => {
+              // Confirming this row's visibility blurs this field, and that write
+              // carried the draft below with it. Writing again from here would only send
+              // the switch back to where it stood before the dialog.
+              if (inFlight.current.has(row.key)) return
+              if (note !== (row.note ?? '')) {
+                void write(row.key, () =>
+                  setFeature(row.key, row.visibility, note === '' ? null : note),
+                )
+              }
+            }}
+            placeholder="why"
+            placeholderTextColor={DIM_INK}
+            multiline
+            className={cn(TYPE.value, 'leading-[15px] text-dim')}
+          />
+        </View>
+      ),
+    }
+  })
 
   return (
     <View className="flex-1">
@@ -115,100 +207,41 @@ export function AdminFeatures({
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
       >
-        {rows.map((row) => {
-          const locked = row.key === PROTECTED
-          const note = notes[row.key] ?? ''
-          return (
-            <View key={row.key} className="mb-4">
-              <View className="flex-row items-center">
-                <TrackedPressable
-                  id="admin.feature_visibility"
-                  disabled={pending.has(row.key) || locked}
-                  onPress={() => {
-                    const next = nextVisibility(row.visibility)
-                    // The switch moves on the tap. A write and a read stand between the
-                    // press and the truth, and a control that shows nothing until both
-                    // land is a control you press again.
-                    setRows((current) => withVisibility(current, row.key, next))
-                    void write(row.key, () =>
-                      setFeature(row.key, next, note === '' ? null : note),
-                    )
-                  }}
-                  // A fixed width, because the three labels are three lengths and a key
-                  // that slid left every third tap read as the list redrawing rather
-                  // than as one switch moving.
-                  style={{ width: 68 }}
-                  className={cn(
-                    'mr-2 items-center rounded-lg border py-1',
-                    PILL[row.visibility].box,
-                    locked && 'opacity-40',
-                  )}
-                >
-                  <Text
-                    selectable={false}
-                    className={cn(TYPE.rowLabel, PILL[row.visibility].ink)}
-                  >
-                    {PILL[row.visibility].label}
-                  </Text>
-                </TrackedPressable>
-                <Text
-                  selectable={false}
-                  className={cn(TYPE.prose, 'flex-1 text-primary')}
-                >
-                  {row.key}
-                  {locked ? ' 🔒' : ''}
-                </Text>
-                {/* Roles granting it, then people who actually reach it — the second
-                    counts overrides in, which is the number somebody about to move the
-                    switch wants. A public feature has no such pair: it reaches a
-                    population that grows with every player who opens the app, and the
-                    stack beside it has stopped deciding anything. */}
-                <Text selectable={false} className={cn(TYPE.value, 'text-dim')}>
-                  {row.visibility === 'public' ? (
-                    <Trans>everyone</Trans>
-                  ) : (
-                    `${row.roleCount} · ${row.personCount}`
-                  )}
-                </Text>
-              </View>
-
-              {!row.inBuild && (
-                <Text
-                  selectable={false}
-                  className={cn(TYPE.value, 'ml-1 mt-1 text-red-500')}
-                >
-                  {/* A row the database holds and this build does not: a key left behind
-                      by a migration, or a device older than the server. Shown rather than
-                      hidden — unseen configuration is how it goes stale. */}
-                  ⚠ <Trans>not in this build</Trans>
-                </Text>
-              )}
-
-              <TextInput
-                value={note}
-                onChangeText={(next) => {
-                  setNotes((current) => ({ ...current, [row.key]: next }))
-                }}
-                onBlur={() => {
-                  // A tap on this row's switch blurs this field, and that write carried
-                  // the draft below with it. Writing again from here would only send the
-                  // switch back to where it stood before the tap.
-                  if (inFlight.current.has(row.key)) return
-                  if (note !== (row.note ?? '')) {
-                    void write(row.key, () =>
-                      setFeature(row.key, row.visibility, note === '' ? null : note),
-                    )
-                  }
-                }}
-                placeholder="why"
-                placeholderTextColor={DIM_INK}
-                multiline
-                className={cn(TYPE.value, 'ml-1 mt-1 leading-[15px] text-dim')}
-              />
-            </View>
-          )
-        })}
+        <AdminTable
+          rowId="admin.feature_visibility"
+          loading={loading}
+          columns={[
+            { label: 'FEATURE', tone: 'name' },
+            { label: 'ROLE · PPL', width: 62, align: 'right' },
+            { width: SWITCH_W, align: 'right' },
+          ]}
+          rows={tableRows}
+          empty={<Trans>No features in the database.</Trans>}
+        />
       </ScrollView>
+
+      {asking !== null && (
+        <AdminVisibilityModal
+          featureKey={asking.key}
+          visibility={asking.visibility}
+          onConfirm={(next) => {
+            // The switch moves on the confirm. A write and a read stand between the
+            // press and the truth, and a control that shows nothing until both land is a
+            // control you press again.
+            setRows((current) => withVisibility(current, asking.key, next))
+            void write(asking.key, () =>
+              setFeature(
+                asking.key,
+                next,
+                (notes[asking.key] ?? '') === '' ? null : (notes[asking.key] ?? ''),
+              ),
+            )
+          }}
+          onDismiss={() => {
+            setAsking(null)
+          }}
+        />
+      )}
     </View>
   )
 }

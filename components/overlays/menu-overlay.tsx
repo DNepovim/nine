@@ -14,6 +14,7 @@ import Animated, {
 
 import { GradientName } from '@/components/gradient-name'
 import { ChallengeCard } from '@/components/overlays/challenge-card'
+import { UnreadDot } from '@/components/overlays/unread-dot'
 import { Screen } from '@/components/screen'
 import { TrackedPressable } from '@/components/tracked-pressable'
 import type { AchievementId } from '@/constants/achievements'
@@ -21,6 +22,7 @@ import { DIM_INK } from '@/constants/colors'
 import { DEV_FEATURES } from '@/constants/features'
 import { TYPE } from '@/constants/typography'
 import { useChampionsContext } from '@/hooks/use-champions'
+import { useFeedbackOwed } from '@/hooks/use-feedback-owed'
 import { useAnyFlag, useFlag } from '@/hooks/use-flags'
 import type { LostMedalNews } from '@/hooks/use-lost-medals'
 import { useOnline } from '@/hooks/use-online'
@@ -221,6 +223,10 @@ export function MenuOverlay({
   // re-reading something it cannot narrow.
   const challenge = useSessionCard()
   const showAdmin = useFlag('admin')
+  // How many messages are waiting for an answer, which puts a dot on the link below.
+  // Asked only of a launch that holds `admin` — the hook sees to that — because the
+  // function behind it refuses anybody else.
+  const feedbackOwed = useFeedbackOwed()
   // A stored ARCADE focus is only honoured by a reader who can actually *open* it. The
   // pill is everyone's now, so this is no longer about a tab that is not there — it is
   // about where a launch lands: opening every time on a pill whose PLAY GAME is dead
@@ -712,11 +718,17 @@ export function MenuOverlay({
               )}
               {showAdmin && (
                 <TrackedPressable id="menu.admin" onPress={onOpenAdmin} hitSlop={10}>
-                  <View className="flex-row items-center gap-1">
+                  {/* `relative`, for the dot: there is a message a player sent in that
+                      nobody has answered, and this link is the only route to it. The one
+                      thing on the intro that is a task rather than a door — see
+                      `UnreadDot`, and `useFeedbackOwed`, which asks nothing at all of a
+                      launch that does not hold this key. */}
+                  <View className="relative flex-row items-center gap-1">
                     <Ionicons name="shield-outline" size={10} color={DIM_INK} />
                     <Text selectable={false} className={cn(TYPE.quietAction, 'text-dim')}>
                       <Trans>ADMIN</Trans>
                     </Text>
+                    {feedbackOwed > 0 && <UnreadDot />}
                   </View>
                 </TrackedPressable>
               )}

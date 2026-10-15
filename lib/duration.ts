@@ -132,3 +132,28 @@ export function formatCountdown(ms: number): string {
   if (hours > 0) return `${hours}:${pad(minutes)}:${pad(seconds)}`
   return `${minutes}:${pad(seconds)}`
 }
+
+// How long a window is open for, as a length rather than a clock: 24ʰ for the usual
+// session, 36ʰ for one that runs over, 3ᵈ for one that is really a weekend.
+//
+// Hours all the way to two days, and days after that. A session in this app is a day
+// long, so the figure that has to read instantly is the one-day case — and "1ᵈ00ʰ" spends
+// its characters saying that a day is a day, where "24ʰ" is the number the admin typed
+// into the form. Past two days the hours stop being interesting and the days start:
+// nobody books a four-day window and then counts its hours.
+//
+// Minutes never appear. A window is planned in whole hours from a form that opens on noon
+// to noon, and a session showing 23ʰ59′ would be reporting the rounding of the clock that
+// drew it rather than anything anybody chose. The one figure that counts minutes here is
+// the countdown, which is a different thing: time left, not length.
+//
+// Floors, as everything in this file does, and clamps at nought — a span whose end is not
+// after its start is a form in the middle of being filled in, which `isValidSpan` is what
+// refuses.
+export function formatWindowLength(ms: number): string {
+  const hours = Math.floor(Math.max(0, ms) / 3_600_000)
+  if (hours < 48) return `${hours}${HOUR_MARK}`
+  const days = Math.floor(hours / 24)
+  const rest = hours % 24
+  return rest === 0 ? `${days}${DAY_MARK}` : `${days}${DAY_MARK}${pad(rest)}${HOUR_MARK}`
+}

@@ -22,12 +22,21 @@ import { cn } from '@/lib/cn'
 // Always a `TrackedPressable` rather than a `Pressable`, because every one of the nineteen
 // already was: a button this loud is one the funnel wants to know about. The `id` comes
 // from `constants/buttons.ts` and is not free text.
+// What each tone is made of. The fill and its ink in one place, so the pair can never be
+// set half way — `text-on-strong` on a transparent box is the bug this table prevents.
+const TONE = {
+  strong: { box: 'bg-strong', ink: 'text-on-strong' },
+  quiet: { box: 'border border-muted', ink: 'text-dim' },
+  danger: { box: 'border border-red-500/40', ink: 'text-red-500' },
+} as const
+
 export function PrimaryButton({
   id,
   onPress,
   label,
   icon,
   variant = 'full',
+  tone = 'strong',
   disabled = false,
   hitSlop,
   className,
@@ -45,6 +54,18 @@ export function PrimaryButton({
   // smaller radius and the smaller label, because it is competing with a field for the
   // eye rather than ending a screen.
   variant?: 'full' | 'compact'
+  // How loud it is. `strong` is the filled CTA and the default — the thing the screen is
+  // asking you to press. The other two are the same button at the same size saying
+  // something else about itself, and both were asked for by the **admin screens**, which
+  // had hand-rolled a bordered pressable apiece: `quiet` is RESET TO ROLE DEFAULTS, an
+  // action that undoes rather than commits, and `danger` is DELETE ROLE, which is the one
+  // irreversible press in the app. Those two were the only outlined full-width buttons
+  // anywhere, at two radii and a padding of their own.
+  //
+  // A tone and not a colour: a caller choosing a hue here is the drift this component
+  // exists to stop. Red is the app's refusal ink, which every error message on these
+  // screens already wears.
+  tone?: 'strong' | 'quiet' | 'danger'
   disabled?: boolean
   // Asked for by the dev screen's RUN, which is `compact` and sits in a tight row of
   // challenge rows — small enough that the touch target wants to be bigger than the paint.
@@ -62,7 +83,11 @@ export function PrimaryButton({
       disabled={disabled}
       hitSlop={hitSlop}
       className={cn(
-        'items-center justify-center bg-strong',
+        'items-center justify-center',
+        // The two quiet tones are an outline on the screen's own ground rather than a
+        // fill, which is the whole of the difference: same shape, same height, same
+        // label, and it does not read as the thing to press.
+        TONE[tone].box,
         compact ? 'rounded-lg px-4' : 'rounded-2xl py-3.5',
         // The row only when there is a second thing in it. A `flex-row` around a lone
         // label would centre it the same way and then surprise the next person who adds
@@ -75,7 +100,7 @@ export function PrimaryButton({
     >
       <Text
         selectable={false}
-        className={cn(compact ? TYPE.buttonSm : TYPE.button, 'text-on-strong')}
+        className={cn(compact ? TYPE.buttonSm : TYPE.button, TONE[tone].ink)}
       >
         {label}
       </Text>

@@ -1,23 +1,19 @@
-import { Trans } from '@lingui/react/macro'
+import { msg } from '@lingui/core/macro'
+import { Trans, useLingui } from '@lingui/react/macro'
 import { useState } from 'react'
-import { Text, View } from 'react-native'
 
 import { AdminFeatures } from '@/components/overlays/admin-features'
 import { AdminPeople } from '@/components/overlays/admin-people'
 import { AdminPerson } from '@/components/overlays/admin-person'
 import { AdminRole } from '@/components/overlays/admin-role'
 import { AdminRoles } from '@/components/overlays/admin-roles'
+import { AdminScreen } from '@/components/overlays/admin-screen'
+import { AdminSegments } from '@/components/overlays/admin-segments'
 import { PrimaryButton } from '@/components/primary-button'
-import { ScreenLayer } from '@/components/screen'
-import { TrackedPressable } from '@/components/tracked-pressable'
-import { TYPE } from '@/constants/typography'
 import { type AdminPerson as Person } from '@/lib/admin/people'
 import { type AdminRole as Role } from '@/lib/admin/roles'
-import { cn } from '@/lib/cn'
 
-// Who sees what: three objects — people, roles, features — so three tabs. Pills rather
-// than a new shared control: the role picker on the person screen is already this shape,
-// and a second way of drawing the same affordance is a second thing to keep in step.
+// Who sees what: three objects — people, roles, features — so three tabs.
 //
 // The detail screens are state here rather than panes of their own, because both are
 // reached from a list and both go back to it: holding the open person or role *on this
@@ -36,12 +32,14 @@ const TABS: readonly Tab[] = ['people', 'roles', 'features']
 
 // Not translated, and not an oversight. These name the three database objects, and they
 // sit beside role labels that are rows and cannot carry a message id — translating one
-// half of a row of pills would read worse than translating neither.
+// half of a row of segments would read worse than translating neither.
 const TAB_LABEL: Record<Tab, string> = {
   people: 'PEOPLE',
   roles: 'ROLES',
   features: 'FEATURES',
 }
+
+const TITLE = msg`FEATURES`
 
 export function AdminAccess({
   viewerId,
@@ -61,6 +59,7 @@ export function AdminAccess({
   // one of two sections is not finishing with admin.
   onBack: () => void
 }) {
+  const { t } = useLingui()
   const [tab, setTab] = useState<Tab>('people')
   const [person, setPerson] = useState<Person | null>(null)
   const [role, setRole] = useState<Role | null>(null)
@@ -97,39 +96,21 @@ export function AdminAccess({
   }
 
   return (
-    <ScreenLayer className="px-6 pb-6 pt-16">
-      <Text selectable={false} className={cn(TYPE.screenTitle, 'mb-1 text-primary')}>
-        <Trans>FEATURES</Trans>
-      </Text>
-      <Text selectable={false} className={cn(TYPE.label, 'mb-4 text-dim')}>
-        <Trans>WHO SEES WHAT</Trans>
-      </Text>
-
-      <View className="mb-4 flex-row gap-1.5">
-        {TABS.map((option) => {
-          const active = option === tab
-          return (
-            <TrackedPressable
-              key={option}
-              id="admin.tab"
-              onPress={() => {
-                setTab(option)
-              }}
-              className={cn(
-                'rounded-lg border px-3 py-1.5',
-                active ? 'border-strong bg-strong' : 'border-dim/30',
-              )}
-            >
-              <Text
-                selectable={false}
-                className={cn(TYPE.label, active ? 'text-on-strong' : 'text-dim')}
-              >
-                {TAB_LABEL[option]}
-              </Text>
-            </TrackedPressable>
-          )
-        })}
-      </View>
+    <AdminScreen
+      title={t(TITLE)}
+      footer={
+        <PrimaryButton id="admin.back" onPress={onBack} label={<Trans>BACK</Trans>} />
+      }
+    >
+      {/* One control rather than three loose pills, and short: it sits above the list it
+          sorts, and every pixel it takes is a pixel of that list. */}
+      <AdminSegments
+        id="admin.tab"
+        className="mb-2.5"
+        value={tab}
+        onSelect={setTab}
+        options={TABS.map((option) => ({ value: option, label: TAB_LABEL[option] }))}
+      />
 
       {tab === 'people' && (
         <AdminPeople epoch={epoch} viewerId={viewerId} onOpenPerson={setPerson} />
@@ -143,14 +124,6 @@ export function AdminAccess({
         />
       )}
       {tab === 'features' && <AdminFeatures epoch={epoch} onChanged={refresh} />}
-
-      <PrimaryButton
-        id="admin.back"
-        onPress={onBack}
-        className="mt-4 self-center"
-        style={{ width: 224 }}
-        label={<Trans>BACK</Trans>}
-      />
-    </ScreenLayer>
+    </AdminScreen>
   )
 }

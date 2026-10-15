@@ -6,9 +6,16 @@ import { HoldProvider, useDialogHold } from '@/components/overlays/dialog-hold'
 // A platform modal with one of the app's cards inside it, and the nickname card is what it
 // holds.
 //
-// A plain `Modal` rather than the app's `ModalCard`, and the one place that is the right
-// call: this card has a keyboard under it, and a real platform modal is what gets
-// `KeyboardAvoidingView` a window of its own to lift inside.
+// A plain `Modal` rather than the app's `ModalCard`, and there are two cases where that
+// is the right call. The first is this one: the nickname card has a keyboard under it, and
+// a real platform modal is what gets `KeyboardAvoidingView` a window of its own to lift
+// inside.
+//
+// The second arrived with the admin screens' combobox, and it is about *where the dialog
+// is raised from* rather than what is in it. `ModalCard` is `absolute inset-0` of its own
+// parent, which is right for a dialog a screen opens and wrong for one a 36px row opens:
+// `AdminSelect` sits inside whatever row needs a setting, and from there only a window
+// covers the screen. See the note at that call site.
 //
 // It used to carry the address and the six digits too, in a single host whose contents
 // swapped — because swapping two platform modals in one commit is how iOS came to drop the

@@ -80,14 +80,6 @@ export async function renameRole(
   return { error: res.error?.message ?? null }
 }
 
-// Refused while anybody holds it. The error says how many, because a constraint name is
-// not something to show to somebody holding a phone.
-export async function deleteRole(key: string): Promise<{ error: string | null }> {
-  const res = await supabase.rpc('delete_role', { p_key: key })
-  noteRequest(res.error)
-  return { error: res.error?.message ?? null }
-}
-
 export async function setRoleFeature(
   roleKey: string,
   featureKey: string,

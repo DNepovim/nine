@@ -104,3 +104,20 @@ export function formatDayTime(ms: number): string {
   const minutes = String(at.getMinutes()).padStart(2, '0')
   return `${at.getDate()} ${month} ${at.getHours()}:${minutes}`
 }
+
+// An instant split into the two halves a date block draws: the day as a figure and the
+// month as a word, both on the reader's own clock.
+//
+// Two fields rather than one string, because the whole point of the block is that the two
+// are set at different sizes — a big day over a small month, which is how a date is read
+// at a glance down a column of them. `formatShortDate` is the same two facts joined into
+// a line for the places a date sits inside a sentence.
+//
+// Takes an instant and not a bare ISO day, so `Date` can be trusted with it: an instant
+// carries its own zone, and reading it back in local time is what makes a session say the
+// day the admin booked it for.
+export function dayAndMonth(ms: number): { day: string; month: string } {
+  const at = new Date(ms)
+  if (Number.isNaN(at.getTime())) return { day: '', month: '' }
+  return { day: String(at.getDate()), month: SHORT_MONTHS[at.getMonth()] ?? '' }
+}

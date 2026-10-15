@@ -171,17 +171,23 @@ export type ButtonId =
   | 'admin.tab'
   | 'admin.find'
   | 'admin.person'
-  | 'admin.person_role'
   | 'admin.person_feature'
   | 'admin.person_reset'
   | 'admin.role'
   | 'admin.role_new'
-  | 'admin.role_delete'
   | 'admin.role_feature'
   | 'admin.role_preview'
+  // The row's own button on the FEATURES list, which opens the dialog rather than moving
+  // the switch, and the two presses inside that dialog. Three ids for what used to be
+  // one, because they are now three different things to have done: opening the question,
+  // choosing an answer, and committing it. The press that matters is the last one — a
+  // reader who opened the dialog and left is a reader who thought better of it, and that
+  // is worth being able to see.
   | 'admin.feature_visibility'
-  // The hub's two buttons, and the planner behind the second of them. `admin.section`
-  // is both hub buttons and `admin.session_when` both date-time fields: the breakdown
+  | 'admin.visibility_option'
+  | 'admin.visibility_confirm'
+  // The hub's three buttons, and the planner behind the second of them. `admin.section`
+  // is every hub button and `admin.session_when` both date-time fields: the breakdown
   // is by screen, and a second id per pair would split one affordance in the funnel for
   // a question nobody is asking.
   | 'admin.section'
@@ -191,6 +197,20 @@ export type ButtonId =
   | 'admin.session_cancel'
   | 'admin.session_challenge'
   | 'admin.session_when'
+  // The two halves of a combobox, wherever one is drawn: the closed control that opens
+  // the list, and a row inside it. One pair for all of them — the role on a person, the
+  // window the figures are read over — because what is being reported is *a choice was
+  // made with the combobox*, and which combobox is the screen already in the breakdown.
+  | 'admin.select'
+  | 'admin.select_option'
+  // The filter above a list: which statuses of session, which state of message.
+  | 'admin.filter'
+  // A row of the messages list, opened to read the whole of what was written.
+  | 'admin.message'
+  // Adding a role, which is a dialog now rather than a field above the list: this is the
+  // button that opens it, and `admin.role_new` above is the press inside it that creates
+  // the role — which is what that id always reported.
+  | 'admin.role_add'
   | 'admin.back'
   | 'admin.done'
 

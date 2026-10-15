@@ -1,11 +1,12 @@
-import { Trans } from '@lingui/react/macro'
+import { msg } from '@lingui/core/macro'
+import { Trans, useLingui } from '@lingui/react/macro'
 import { useState } from 'react'
-import { Text, View } from 'react-native'
+import { ScrollView, Text, View } from 'react-native'
 
 import { DateTimeField } from '@/components/date-time-field'
-import { AdminChallengePicker } from '@/components/overlays/admin-challenge-picker'
+import { AdminPills } from '@/components/overlays/admin-pills'
+import { AdminScreen } from '@/components/overlays/admin-screen'
 import { PrimaryButton } from '@/components/primary-button'
-import { ScreenLayer } from '@/components/screen'
 import { TYPE } from '@/constants/typography'
 import {
   cancelSession,
@@ -21,6 +22,7 @@ import {
   type SessionSpan,
 } from '@/lib/challenge-session'
 import { cn } from '@/lib/cn'
+import { CHALLENGES } from '@/modes/challenges/catalog'
 
 // One session, being planned or being corrected — and one form for both, because they
 // differ only in whether there is a row behind it. `session` null is a new one.
@@ -28,6 +30,8 @@ import { cn } from '@/lib/cn'
 // The span lives here rather than in the two fields. That is what lets the start move
 // the end: a field holding its own draft could only ever report its own value, and the
 // rule that the span is preserved when the start is dragged is a fact about the pair.
+const TITLE = msg`CHALLENGES`
+
 export function AdminSession({
   session,
   onChanged,
@@ -40,6 +44,7 @@ export function AdminSession({
   // away the thing the edit was about to be read against.
   onBack: () => void
 }) {
+  const { t } = useLingui()
   // Tomorrow at noon through the day after at noon, for a new one. Read once on mount:
   // the default is a function of *when the form was opened*, and recomputing it per
   // render would move the fields under the admin at midnight.
@@ -88,83 +93,84 @@ export function AdminSession({
   }
 
   return (
-    <ScreenLayer className="px-6 pb-6 pt-16">
-      <Text selectable={false} className={cn(TYPE.screenTitle, 'mb-1 text-primary')}>
-        <Trans>CHALLENGES</Trans>
-      </Text>
-      <Text selectable={false} className={cn(TYPE.label, 'mb-6 text-dim')}>
-        <Trans>WHEN A CHALLENGE IS ON</Trans>
-      </Text>
-
-      <Text selectable={false} className={cn(TYPE.label, 'mb-2 text-dim')}>
-        <Trans>CHALLENGE</Trans>
-      </Text>
-      <AdminChallengePicker modeId={modeId} onSelect={setModeId} />
-
-      <View className="mt-6">
-        {/* Moving the start takes the end with it, keeping the length the admin set —
-            so booking the same window a day later is one change rather than two. The end
-            moves alone, because changing it *is* asking for a different length. */}
-        <DateTimeField
-          label={<Trans>STARTS</Trans>}
-          value={span.opensAt}
-          onChange={(next) => {
-            setSpan((current) => withOpensAt(current, next))
-          }}
-        />
-        <DateTimeField
-          label={<Trans>ENDS</Trans>}
-          value={span.closesAt}
-          // Only the end is marked. The pair is what is wrong, but the end is the half
-          // the admin has to move to fix it — the start is whatever they meant it to be.
-          invalid={!valid}
-          onChange={(next) => {
-            setSpan((current) => withClosesAt(current, next))
-          }}
-        />
-      </View>
-
-      {error !== null && (
-        <Text selectable={false} className={cn(TYPE.value, 'mt-4 text-red-500')}>
-          {error}
-        </Text>
-      )}
-
-      <View className="mt-8 flex-1 items-center gap-3">
-        <PrimaryButton
-          id="admin.session_save"
-          onPress={() => {
-            void save()
-          }}
-          disabled={!canSave}
-          className={cn(!canSave && 'opacity-40')}
-          style={{ width: 224 }}
-          label={<Trans>SAVE</Trans>}
-        />
-        {/* Offered whatever state the session is in, expired included. An expired
-            session is the record of what ran and nothing deletes one on its own — but an
-            admin who booked the wrong thing can take it away, and a guard stopping them
-            would be preserving the mistake instead. */}
-        {session !== null && (
+    <AdminScreen
+      title={t(TITLE)}
+      error={error}
+      footer={
+        <View className="gap-2">
           <PrimaryButton
-            id="admin.session_cancel"
-            variant="compact"
+            id="admin.session_save"
             onPress={() => {
-              void cancel()
+              void save()
             }}
-            disabled={busy}
-            label={<Trans>CANCEL SESSION</Trans>}
+            disabled={!canSave}
+            label={<Trans>SAVE</Trans>}
           />
-        )}
-      </View>
+          {/* Offered whatever state the session is in, expired included. An expired
+              session is the record of what ran and nothing deletes one on its own — but
+              an admin who booked the wrong thing can take it away, and a guard stopping
+              them would be preserving the mistake instead. */}
+          {session !== null && (
+            <PrimaryButton
+              id="admin.session_cancel"
+              tone="danger"
+              onPress={() => {
+                void cancel()
+              }}
+              disabled={busy}
+              label={<Trans>CANCEL SESSION</Trans>}
+            />
+          )}
+          <PrimaryButton
+            id="admin.back"
+            tone="quiet"
+            onPress={onBack}
+            label={<Trans>BACK</Trans>}
+          />
+        </View>
+      }
+    >
+      <ScrollView showsVerticalScrollIndicator={false}>
+        <Text selectable={false} className={cn(TYPE.caption, 'mb-1.5 text-dim')}>
+          <Trans>CHALLENGE</Trans>
+        </Text>
+        {/* Every challenge ever written, not only the ones whose compiled window happens
+            to be open — the whole point of a session is that when a challenge is on stops
+            being a build-time fact, so a picker filtered by the old windows would offer
+            the one thing nobody needs to plan. */}
+        <AdminPills
+          id="admin.session_challenge"
+          value={modeId}
+          onSelect={setModeId}
+          options={CHALLENGES.map((challenge) => ({
+            value: challenge.id,
+            label: t(challenge.label),
+          }))}
+        />
 
-      <PrimaryButton
-        id="admin.back"
-        onPress={onBack}
-        className="mt-4 self-center"
-        style={{ width: 224 }}
-        label={<Trans>BACK</Trans>}
-      />
-    </ScreenLayer>
+        <View className="mt-4">
+          {/* Moving the start takes the end with it, keeping the length the admin set —
+              so booking the same window a day later is one change rather than two. The
+              end moves alone, because changing it *is* asking for a different length. */}
+          <DateTimeField
+            label={<Trans>STARTS</Trans>}
+            value={span.opensAt}
+            onChange={(next) => {
+              setSpan((current) => withOpensAt(current, next))
+            }}
+          />
+          <DateTimeField
+            label={<Trans>ENDS</Trans>}
+            value={span.closesAt}
+            // Only the end is marked. The pair is what is wrong, but the end is the half
+            // the admin has to move to fix it — the start is whatever they meant it to be.
+            invalid={!valid}
+            onChange={(next) => {
+              setSpan((current) => withClosesAt(current, next))
+            }}
+          />
+        </View>
+      </ScrollView>
+    </AdminScreen>
   )
 }
