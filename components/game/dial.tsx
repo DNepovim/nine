@@ -149,6 +149,29 @@ export function Dial({
   const lastCommit = useSharedValue(NONE)
   const swept = useSharedValue(false)
 
+  // A run on another dial, which is the one thing that changes the *shape* of everything
+  // above rather than its contents.
+  //
+  // Both copies are made once, at mount, and are as long as the dial had keys then — and
+  // this component is never unmounted between runs: every screen but the game itself is
+  // an overlay stacked over it, so the intro, the pause and the game-over screen all come
+  // and go above a dial that stays. `commit` writes through `map`, which cannot grow an
+  // array, so a sixteen-key challenge opened after a nine-key run was left with nine
+  // command slots: keys ten upwards had nowhere to be told they had moved, and so never
+  // animated, never called back, and read as dead to every gesture. A dial *smaller* than
+  // the one before it never showed this, because its keys all fit in the slots it
+  // inherited — which is why four keys was fine and sixteen was not.
+  //
+  // Keyed on the dial's own id, which is what tells one dial from another everywhere else
+  // — see `DialSpec`.
+  useEffect(() => {
+    commands.value = noCommands(dial)
+    held.value = values
+    // Nothing is in flight to a dial that is not on screen any more. Cleared so the
+    // effect below is not held off by a count left over from the run before.
+    inFlight.value = 0
+  }, [dial.id])
+
   // Where the copy is put right again — the only thing that ever changes the grid from
   // outside the dial is a new run starting, and this is how the pan hears about it.
   //
