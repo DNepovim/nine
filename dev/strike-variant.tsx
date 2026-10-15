@@ -8,9 +8,10 @@ import { StrikeShot } from '@/components/game/strike-shot'
 import { PIE_SIZE } from '@/constants/game'
 import { SUM_ROW_HEIGHT } from '@/hooks/use-dial-metrics'
 import { useStrikeShots, type ShotAim } from '@/hooks/use-strike-shots'
+import { keyCentres } from '@/lib/strike-shot'
 import { valueProgress } from '@/lib/value-progress'
 import type { HitBatch, HitInfo } from '@/machines/game'
-import { NINE_DIAL, type Grid, type Mode } from '@/modes'
+import { dialOf, NINE_DIAL, type Grid, type ModeId } from '@/modes'
 import type { Position } from '@/types/game'
 
 // Two values, and where each sits on the board. A strike needs a live multiplier, which
@@ -55,7 +56,10 @@ export function StrikeVariant({
   targets,
   onClose,
 }: {
-  mode: Mode
+  // Any mode with a shot, which now includes a **challenge** — a quartet leaves from the
+  // keys rather than from the sum, so this is the one entry here that needs a dial under
+  // it. `ModeId` rather than `Mode` for that reason alone.
+  mode: ModeId
   // How many targets the press takes. Two is the case that decides how a burst is
   // shared, and the only way to see a sweep rather than a single burst.
   targets: 1 | 2
@@ -65,6 +69,11 @@ export function StrikeVariant({
   // The press, replayed on every tap. A fresh seq is what both halves read as a hit.
   const [batch, setBatch] = useState<HitBatch>({ seq: 0, hits: [] })
   const boardRect = useRef({ x: 0, y: 0, width: 0, height: 0 })
+  // The dial's box, measured the way the game measures it, so a quartet's four beams
+  // land where they would in a run rather than where this file guessed. Zero-sized for
+  // the modes that fire from the sum row, which `keyCentres` answers with no muzzles.
+  const dialRect = useRef({ x: 0, y: 0, width: 0, height: 0 })
+  const dial = dialOf(mode)
 
   const aim = (value: number): ShotAim | null => {
     const board = boardRect.current
@@ -79,6 +88,7 @@ export function StrikeVariant({
         x: board.x + target.at.x + PIE_SIZE / 2,
         y: board.y + target.at.y + PIE_SIZE / 2,
       },
+      muzzles: dial === null ? [] : keyCentres(dialRect.current, dial),
     }
   }
 
@@ -145,6 +155,40 @@ export function StrikeVariant({
           </HitSync>
         </View>
 
+        {/* The keys, for a shot that leaves from them. Drawn as the dial's own grid of
+          cells rather than as a real `Dial`: what is being looked at is where four beams
+          start and how they converge, and a live dial on this stage would be a dial the
+          stage then has to keep in a state. Only for a quartet — every other shot fires
+          from the sum row above and would be drawn over an empty box. */}
+        {dial !== null && dial.rows * dial.cols < NINE_DIAL.rows * NINE_DIAL.cols && (
+          <View
+            className="mb-2 self-center"
+            style={{ width: 180, height: (180 / dial.cols) * dial.rows }}
+            onLayout={(event) => {
+              const { x, y, width, height } = event.nativeEvent.layout
+              dialRect.current = { x, y, width, height }
+            }}
+          >
+            {Array.from({ length: dial.rows }, (_, row) => (
+              <View key={row} className="flex-1 flex-row">
+                {Array.from({ length: dial.cols }, (_, col) => (
+                  <View
+                    key={col}
+                    className="m-0.5 flex-1 items-center justify-center rounded-xl bg-card"
+                  >
+                    <Text
+                      selectable={false}
+                      className="font-mono text-[10px] font-bold text-dim"
+                    >
+                      {String(dial.weights[row * dial.cols + col] ?? '')}
+                    </Text>
+                  </View>
+                ))}
+              </View>
+            ))}
+          </View>
+        )}
+
         <View pointerEvents="none" className="absolute inset-0 overflow-visible">
           {shots.map((shot) => (
             <StrikeShot
@@ -156,6 +200,7 @@ export function StrikeVariant({
               toY={shot.to.y}
               radius={PIE_SIZE / 2}
               rounds={shot.rounds}
+              gradient={shot.gradient}
               onDone={() => {
                 removeShot(shot.id)
               }}

@@ -82,6 +82,7 @@ import type { Award } from '@/lib/winnings'
 import { awardBlocks } from '@/lib/winnings-announcement'
 import { emptyStats } from '@/machines/game'
 import { DIFFICULTIES, type Difficulty, type Mode, type ScoredMode } from '@/modes'
+import { challengeId } from '@/modes/challenges/define'
 
 // NINE_DEV_GALLERY — a marker for the bundle check. `pnpm build:web` must not contain
 // this string: the gallery is reached through a `__DEV__` dynamic import, which
@@ -926,8 +927,10 @@ const EFFECTS: Section[] = [
   {
     // The only thing in the gallery that is tapped over and over: every entry here is
     // under a quarter of a second, and a strike needs a live multiplier to see in a real
-    // run. Every mode, because what each one fires is the point — and Speed twice, since
-    // sharing one burst between two targets is the case the rounds are dealt for.
+    // run — which for a challenge means a route through every key, on a window that is
+    // open. Every mode, because what each one fires is the point: Speed twice, since
+    // sharing one burst between two targets is the case the rounds are dealt for, and
+    // the challenge twice for the same reason.
     title: 'HIT',
     items: [
       {
@@ -963,6 +966,22 @@ const EFFECTS: Section[] = [
         label: 'ACCURACY · TWO',
         render: (close: () => void) => (
           <StrikeVariant mode="accuracy" targets={2} onClose={close} />
+        ),
+      },
+      {
+        // The one shot that does not leave from the sum row, so the one entry here with
+        // a dial on the stage: four beams, one per key, in the challenge's own colour.
+        key: 'strike-challenge',
+        label: 'CHALLENGE QUARTET',
+        render: (close: () => void) => (
+          <StrikeVariant mode={challengeId('four-keys')} targets={1} onClose={close} />
+        ),
+      },
+      {
+        key: 'strike-challenge-two',
+        label: 'CHALLENGE · TWO',
+        render: (close: () => void) => (
+          <StrikeVariant mode={challengeId('four-keys')} targets={2} onClose={close} />
         ),
       },
     ],
