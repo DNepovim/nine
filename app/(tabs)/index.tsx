@@ -129,7 +129,7 @@ import {
   type Leaders,
   type Period,
 } from '@/lib/announcements'
-import { currentBoardMedals } from '@/lib/board-medals'
+import { currentBoardMedals, sessionMedal } from '@/lib/board-medals'
 import type { SessionCard } from '@/lib/challenge-session'
 import { holdsCrown, recordScreen, type RecordScreen } from '@/lib/champions'
 import { cn } from '@/lib/cn'
@@ -143,6 +143,7 @@ import { restoreRun, savedPositions } from '@/lib/saved-run'
 import type { OpenSession } from '@/lib/session-board'
 import { STEP_UP_BOARD } from '@/lib/step-up'
 import { multiplierColor } from '@/lib/streak-badge'
+import { keyCentres } from '@/lib/strike-shot'
 import { tipForTarget } from '@/lib/tutorial-tip'
 import { valueProgress } from '@/lib/value-progress'
 import { WELCOME_BOARD } from '@/lib/welcome'
@@ -1402,6 +1403,15 @@ export default function GameScreen() {
     boardRect.current = { x, y, width, height }
   }
 
+  // The dial's own box, for a shot that leaves from the keys rather than from the sum.
+  // Measured rather than derived: the dial sizes itself from the width and the layout
+  // above it takes the slack, so where it lands is not arithmetic this screen can do.
+  const dialRect = useRef({ x: 0, y: 0, width: 0, height: 0 })
+  const noteDialRect = (event: LayoutChangeEvent) => {
+    const { x, y, width, height } = event.nativeEvent.layout
+    dialRect.current = { x, y, width, height }
+  }
+
   // Where a strike fires from and what it is aimed at. The muzzle is the middle of the
   // sum row, which follows the board directly, so its centre is the board's own bottom
   // edge plus half the row the layout reserves — no second measurement needed.
@@ -1420,6 +1430,7 @@ export default function GameScreen() {
         x: board.x + target.position.x + PIE_SIZE / 2,
         y: board.y + target.position.y + PIE_SIZE / 2,
       },
+      muzzles: keyCentres(dialRect.current, rules.dial),
     }
   }
 
@@ -2134,6 +2145,7 @@ export default function GameScreen() {
                       toY={shot.to.y}
                       radius={PIE_SIZE / 2}
                       rounds={shot.rounds}
+                      gradient={shot.gradient}
                       onDone={() => {
                         removeShot(shot.id)
                       }}
@@ -2148,46 +2160,48 @@ export default function GameScreen() {
                 screen: the dial's size comes from the width now, so half the leftover
                 height is not a number it can be asked to fit inside. The targets area
                 above takes the slack instead. */}
-              <Dial
-                dial={dial}
-                values={grid.flat()}
-                showSum={showSum && !tutorial}
-                trainee={rules.capabilities.keyHints}
-                // The tutorial prints the weight and nothing else, whatever the player
-                // has since chosen for practice: it is the one number a key cannot be
-                // worked out without, and every other corner is a lesson that has not
-                // been given yet.
-                corners={tutorial ? DEFAULT_DIAL_CORNERS : corners}
-                // What each key will take, and which one is being asked for. `full`
-                // everywhere in every run but a guided tutorial route.
-                controls={dialControls}
-                liveKey={lesson.liveKey}
-                // The lesson's own dial: its corner numbers drawn large, because in a
-                // lesson they are the thing being taught rather than a reference beside a
-                // game; the row and column multipliers up once the lesson has explained
-                // them; and whichever gesture it is currently asking for, mimed over the
-                // keys until the player makes it.
-                bigHints={tutorial}
-                axes={lesson.axes}
-                hand={lesson.hand}
-                // Both halves of the answer: the player's own setting, and the lesson's
-                // — which takes the drag away until it has taught it, and says yes in
-                // every run that is not a live tutorial.
-                drag={drag && lesson.drag}
-                peakFrom={darkGradientOf(mode)[0]}
-                peakTo={darkGradientOf(mode)[1]}
-                onDelta={(index, delta) => {
-                  coach.notePress(index, delta)
-                  lesson.notePress(delta)
-                  send({ type: 'PRESS', index, delta, now: Date.now() })
-                }}
-                onSet={(index, cellValue) => {
-                  coach.noteSet(index, cellValue)
-                  lesson.noteSet(cellValue)
-                  send({ type: 'SET_CELL', index, value: cellValue, now: Date.now() })
-                }}
-                onSweep={lesson.noteSweep}
-              />
+              <View onLayout={noteDialRect}>
+                <Dial
+                  dial={dial}
+                  values={grid.flat()}
+                  showSum={showSum && !tutorial}
+                  trainee={rules.capabilities.keyHints}
+                  // The tutorial prints the weight and nothing else, whatever the player
+                  // has since chosen for practice: it is the one number a key cannot be
+                  // worked out without, and every other corner is a lesson that has not
+                  // been given yet.
+                  corners={tutorial ? DEFAULT_DIAL_CORNERS : corners}
+                  // What each key will take, and which one is being asked for. `full`
+                  // everywhere in every run but a guided tutorial route.
+                  controls={dialControls}
+                  liveKey={lesson.liveKey}
+                  // The lesson's own dial: its corner numbers drawn large, because in a
+                  // lesson they are the thing being taught rather than a reference beside a
+                  // game; the row and column multipliers up once the lesson has explained
+                  // them; and whichever gesture it is currently asking for, mimed over the
+                  // keys until the player makes it.
+                  bigHints={tutorial}
+                  axes={lesson.axes}
+                  hand={lesson.hand}
+                  // Both halves of the answer: the player's own setting, and the lesson's
+                  // — which takes the drag away until it has taught it, and says yes in
+                  // every run that is not a live tutorial.
+                  drag={drag && lesson.drag}
+                  peakFrom={darkGradientOf(mode)[0]}
+                  peakTo={darkGradientOf(mode)[1]}
+                  onDelta={(index, delta) => {
+                    coach.notePress(index, delta)
+                    lesson.notePress(delta)
+                    send({ type: 'PRESS', index, delta, now: Date.now() })
+                  }}
+                  onSet={(index, cellValue) => {
+                    coach.noteSet(index, cellValue)
+                    lesson.noteSet(cellValue)
+                    send({ type: 'SET_CELL', index, value: cellValue, now: Date.now() })
+                  }}
+                  onSweep={lesson.noteSweep}
+                />
+              </View>
 
               {/* ── Tap-through for the lesson's two pointing cards ── */}
               {/* A card asking to be read holds the dial shut, and this is the other half
@@ -2233,6 +2247,15 @@ export default function GameScreen() {
             {/* ── Game-over cinematic (overlay crossfade + flying title) ── */}
             <GameOverSequence
               sessionId={runSession}
+              // Where this run came on its session, for the title. Read from the board
+              // already held for the score bar rather than fetched again — see
+              // `runSessionBoard`. The overlay below works its own medal out from the
+              // same standings; this one is needed a layer higher, because the title is
+              // decided here and flies up before that screen exists.
+              sessionRank={
+                sessionMedal(runSessionBoard?.rows ?? [], state.context.score, userId)[0]
+                  ?.rank ?? null
+              }
               phase={dyingPhase}
               overlayStyle={overlayStyle}
               titleStyle={titleStyle}

@@ -10,8 +10,11 @@ describe('how many hearts a run draws', () => {
   // The row draws `rules.lives.count` hearts. It drew three whatever the rules said,
   // which emptied a heart on the first frame of any mode that gives fewer — and an
   // emptied heart is the losing-a-life animation.
-  it('a challenge gives fewer than the three the row used to assume', () => {
-    expect(runRules('challenge/four-keys', 'hard').lives.count).toBe(2)
+  it('a challenge gives three, like every other mode that spends them', () => {
+    // It pinned two for a while, which is what exposed the row drawing a fixed three —
+    // the heart it did not have was emptied on the first frame rather than left out.
+    // The row is right now whatever the count is, and this is back to three.
+    expect(runRules('challenge/four-keys', 'hard').lives.count).toBe(3)
   })
 
   it('the scored modes still give three, so nothing moved for them', () => {

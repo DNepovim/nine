@@ -1,5 +1,4 @@
-import { SCORE_INK } from '@/constants/colors'
-
+import { challengeInk } from './challenges/palette'
 import { DIFFICULTY_T, type Difficulty } from './difficulty'
 import { isChallenge, modeById, type ModeId, type ScoredMode } from './registry'
 
@@ -65,13 +64,14 @@ export function getDifficultyColor(id: ModeId, difficulty: Difficulty): string {
 // A board run takes its mode's own first stop, so the figure says which board it was set
 // on — the same hue the selectors gave the option that was picked.
 //
-// A **challenge** takes the app's score green instead. Its first stop is the near-black
-// every challenge shares, which would draw the one number the screen is about in the
-// colour text is drawn in — a score that looked switched off. Green is what every other
-// score in the app wears, and a challenge has no board for the figure to name anyway.
+// A **challenge** takes its own colour too, but the shade of it that carries a word: its
+// first stop is the near-black every challenge shares, which would draw the one number
+// the screen is about in the colour text is drawn in — a score that looked switched off.
+// `challengeInk` is that hue at a lightness which clears the bar, and the glow the
+// screens derive from it comes out in the same colour.
 //
-// The hex rather than the `text-score` class because the screens derive the glow behind
-// the digits from it, and a glow is a runtime value. Safe here for the reason `SCORE_INK`
-// records: the two token re-bindings belong to screens a challenge never reaches.
+// The hex rather than a token, because those screens light the digits from behind and a
+// glow is a runtime value. Safe for a challenge, which reaches neither of the two screens
+// that re-bind `--color-score`: both belong to board records.
 export const scoreInkOf = (id: ModeId): string =>
-  isChallenge(id) ? SCORE_INK : gradientOf(id)[0]
+  isChallenge(id) ? challengeInk(gradientOf(id)[1]) : gradientOf(id)[0]

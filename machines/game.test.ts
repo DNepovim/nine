@@ -1024,3 +1024,52 @@ describe('rewinding a tutorial', () => {
     expect(actor.getSnapshot().context.hits).toBe(0)
   })
 })
+
+describe('the whole-dial streak', () => {
+  // `challenge/four-keys` is the one mode on it. Its dial is 2×2 weighted [1, 2, 2, 4],
+  // so one press of each key sums to 9 and a single press of the 4 key sums to 4.
+  const start = () => {
+    const actor = createActor(gameMachine)
+    actor.start()
+    actor.send({ type: 'SET_MODE', mode: 'challenge/four-keys' })
+    actor.send({ type: 'START', now: 0, runId: nextRunId() })
+    return actor
+  }
+
+  it('builds on a target taken with every key', () => {
+    const actor = start()
+    actor.send({ type: 'ADD_TARGET', value: 9, at: 0 })
+    for (const index of [0, 1, 2, 3]) {
+      actor.send({ type: 'PRESS', index, delta: 1, now: 0 })
+    }
+    expect(actor.getSnapshot().context.hits).toBe(1)
+    expect(actor.getSnapshot().context.streak).toBe(1)
+  })
+
+  it('does not build on a target taken with one key', () => {
+    // The cheapest route to 4 is a single press of the 4 key — par, and worth more per
+    // point than the long way round. That it earns no streak is the whole trade.
+    const actor = start()
+    actor.send({ type: 'ADD_TARGET', value: 4, at: 0 })
+    actor.send({ type: 'PRESS', index: 3, delta: 1, now: 0 })
+    expect(actor.getSnapshot().context.hits).toBe(1)
+    expect(actor.getSnapshot().context.streak).toBe(0)
+  })
+
+  it('is broken by a hit that left a key alone', () => {
+    // A chain, unlike the `clear` rule it replaced, which nothing a player did could
+    // break. Build it, then take the cheap route and watch it go.
+    const actor = start()
+    actor.send({ type: 'ADD_TARGET', value: 9, at: 0 })
+    for (const index of [0, 1, 2, 3]) {
+      actor.send({ type: 'PRESS', index, delta: 1, now: 0 })
+    }
+    expect(actor.getSnapshot().context.streak).toBe(1)
+
+    actor.send({ type: 'ADD_TARGET', value: 13, at: 0 })
+    // 9 + 4: one more press of the 4 key, leaving the other three where they are.
+    actor.send({ type: 'PRESS', index: 3, delta: 1, now: 0 })
+    expect(actor.getSnapshot().context.hits).toBe(2)
+    expect(actor.getSnapshot().context.streak).toBe(0)
+  })
+})

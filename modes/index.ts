@@ -16,6 +16,7 @@ export {
   defineDial,
   dialFactors,
   emptyGrid,
+  everyKeyMoved,
   NINE_DIAL,
   pressGrid,
   setGrid,
@@ -71,5 +72,6 @@ export {
   STREAK_BROKEN,
   STREAK_TRIGGERED,
   streakMultiplier,
+  type StreakFacts,
 } from './streak'
 export type { Headline, ShotKind, Submode } from './types'

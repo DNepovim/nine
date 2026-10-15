@@ -1,5 +1,7 @@
 import type { MessageDescriptor } from '@lingui/core'
 
+import type { ClaimTier, TitleWords } from '@/lib/game-over-title'
+
 import type { DialSpec, Grid } from './dial'
 import type { Difficulty } from './difficulty'
 import type { RampTarget } from './ramp'
@@ -169,12 +171,13 @@ export type Submode = {
 }
 
 // What a strike fires. Each scored mode gets the shot its streak is made of: a chain of
-// exact presses draws a single held beam, a run of fast ones empties a magazine. Null for
-// a mode whose streak is not a chain of decisions at all.
+// exact presses draws a single held beam, a run of fast ones empties a magazine, and a
+// route through every key on the dial fires one beam from each of them. Null for a mode
+// whose streak is not a chain of decisions at all.
 //
 // On the mode rather than in a table beside the drawing, so a challenge inherits the shot
 // of the mode it is based on and a new mode brings its own.
-export type ShotKind = 'sniper' | 'burst'
+export type ShotKind = 'sniper' | 'burst' | 'quartet'
 
 // What every mode says about itself, whichever engine runs it.
 type ModeIdentity = {
@@ -198,6 +201,15 @@ type ModeIdentity = {
   // text.
   darkGradient: readonly [string, string]
   shot: ShotKind | null
+  // What the game-over screen claims about a run of this mode, for the outcomes this
+  // mode names. Undefined on every permanent mode: the pools in `lib/game-over-title.ts`
+  // are the app's own voice about its own boards, which is exactly right for them.
+  //
+  // A **challenge** is neither the app's board nor a mode a player knows, so it may say
+  // its own thing — and it reaches tiers the permanent modes do differently, through its
+  // session standing rather than through a board. A tier it does not name falls through
+  // to the app's pool.
+  claims?: Partial<Record<ClaimTier, readonly TitleWords[]>>
   window: ModeWindow | null
 }
 

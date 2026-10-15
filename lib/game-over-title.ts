@@ -3,10 +3,12 @@ import type { RecordScreen } from '@/lib/champions'
 import { earnedChallenge } from '@/lib/next-challenge'
 import { type Difficulty, type ScoredMode } from '@/modes'
 
-// The wordmark over the game-over screen, as two four-letter words. Four and four is
-// not a style choice: the title animates as two rows of four letters, and both the
-// overlay's copy and the one the dying sequence flies up index their letters by that
-// shape (see game-over-title.tsx).
+// The wordmark over the game-over screen, as two words — one row each.
+//
+// Four letters apiece throughout the pools below, and that is a choice rather than a
+// constraint: the component measures its own ramp now, so a longer word is drawn
+// correctly. Four and four simply reads as a mark rather than as a sentence, which is
+// what this is. A challenge naming its own claims is free to be longer.
 export type TitleWords = readonly [string, string]
 
 // "GAME OVER" told the player the one thing they already knew, in the most final way
@@ -17,7 +19,7 @@ export type TitleWords = readonly [string, string]
 // What kind of run it was. The tier is decided first, then a line is drawn from that
 // tier's pool, the same shape the announcement bar uses — one meaning, several ways of
 // saying it, so a player who dies twice in a row is not read the same words twice.
-type Tier =
+export type ClaimTier =
   | 'crown'
   | 'owl'
   | 'eagle'
@@ -90,7 +92,7 @@ const TITLES = {
     ['NINE', 'DOWN'],
     ['FAIR', 'GAME'],
   ],
-} as const satisfies Record<Tier, readonly [TitleWords, ...TitleWords[]]>
+} as const satisfies Record<ClaimTier, readonly [TitleWords, ...TitleWords[]]>
 
 // Under this, the run never got going. A hit is worth at most SCORE_BASE (100) and an
 // ordinary one lands nearer 50, so these are roughly three hits on Easy and two on
@@ -120,6 +122,7 @@ const tierFor = ({
   score,
   hits,
   strikes,
+  sessionRank = null,
 }: {
   // How loudly the screen is celebrating — the crown and the birds are its two loudest
   // settings, and each has words of its own.
@@ -138,7 +141,15 @@ const tierFor = ({
   score: number
   hits: number
   strikes: number
-}): Tier => {
+  // Where the run came on its **session**, for a challenge — which keeps no board, so
+  // every board fact above is empty for one and it could only ever be told it was cold,
+  // strong, or played. The same three things a bad Accuracy run is told.
+  //
+  // Reusing `board` and `medal` rather than adding tiers of its own: those pools say
+  // gold and rank, which is exactly what a standing is, and a challenge that wants
+  // different words names them — see `claims` on its spec.
+  sessionRank?: 1 | 2 | 3 | null
+}): ClaimTier => {
   // A reign outranks everything, and each mode's is its own claim.
   if (screen === 'crown') return 'crown'
   if (screen === 'bird') return mode === 'accuracy' ? 'owl' : 'eagle'
@@ -147,6 +158,11 @@ const tierFor = ({
   // the same breath as earning a medal would read as the game arguing with itself.
   if (medals.includes('ever')) return 'allTime'
   if (medals.length > 0) return 'board'
+  // A session's standing, where there is one. Above `podium` for the same reason the
+  // board tiers are above `cold`: a run that took its contest must not be told in the
+  // same breath that it went badly.
+  if (sessionRank === 1) return 'board'
+  if (sessionRank === 2 || sessionRank === 3) return 'medal'
   if (podium) return 'medal'
   if (personalBest) return 'personal'
   if (score < COLD_BELOW[difficulty]) return 'cold'
@@ -162,8 +178,15 @@ const tierFor = ({
 export function gameOverTitle(
   run: Parameters<typeof tierFor>[0],
   roll: number,
+  // What this mode claims instead, for the tiers it names. A **challenge** supplies
+  // these — see `claims` on its spec — because the pools below are the app's own voice
+  // about its own boards, and a challenge is neither. A tier it does not name falls
+  // through to the pool here, so naming one word does not mean naming ten.
+  claims?: Partial<Record<ClaimTier, readonly TitleWords[]>>,
 ): TitleWords {
-  const pool = TITLES[tierFor(run)]
+  const tier = tierFor(run)
+  const named = claims?.[tier]
+  const pool = named !== undefined && named.length > 0 ? named : TITLES[tier]
   const index = Math.min(pool.length - 1, Math.max(0, Math.floor(roll * pool.length)))
-  return pool[index] ?? pool[0]
+  return pool[index] ?? pool[0] ?? TITLES.played[0]
 }

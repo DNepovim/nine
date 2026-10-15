@@ -46,6 +46,35 @@ const FOUR_KEYS: ChallengeSpec = {
   // what naming it costs: its bright stop is too pale to carry a word, so the edge and
   // the name are two shades of it.
   hue: TURQUOISE,
+  // One beam from each key, in this challenge's own colour — the shot its streak is
+  // made of. See `ShotKind`, and the `whole` rule above that it draws.
+  shot: 'quartet',
+  // What the screen says when this one ends. Only the tiers a challenge actually
+  // reaches: a session standing through `board` and `medal`, and the three a run earns
+  // on its own merits. The rest fall through to the app's own pools.
+  //
+  // Every line is about this dial rather than about a board — FOUR KEYS has no board to
+  // take, and being told it took gold on one would be the screen describing a thing that
+  // does not exist.
+  claims: {
+    board: [
+      ['FOUR', 'KEYS'],
+      ['KEPT', 'FOUR'],
+      ['ALL', 'FOUR'],
+    ],
+    medal: [
+      ['NEAR', 'FOUR'],
+      ['HELD', 'FOUR'],
+    ],
+    strong: [
+      ['GOOD', 'KEYS'],
+      ['SURE', 'FOUR'],
+    ],
+    cold: [
+      ['FOUR', 'HARD'],
+      ['COLD', 'KEYS'],
+    ],
+  },
   base: SPEED,
   from: Date.UTC(2026, 8, 1),
   until: Date.UTC(2026, 8, 1) + DAY,
@@ -69,8 +98,23 @@ const FOUR_KEYS: ChallengeSpec = {
     // tightens with the ramp rather than staying at the figure the run opened on:
     // 6750 / 4 ≈ 1688 ms at the start, and less the deeper the run goes.
     spawn: { maxTargets: 2, share: 1 / 4 },
-    scoring: { streak: 'clear', base: 150 },
-    lives: { count: 2 },
+    // The streak this challenge is really about: a target taken with **every key moved**
+    // builds it, and any hit that did not breaks it.
+    //
+    // It inherited `clear` from the base mode, which is the legacy board-clear rule —
+    // it builds only when the board empties and `STREAK_BROKEN.clear` is `false`, so
+    // nothing the player does can break it. The most forgiving of the four, on the one
+    // mode meant to be read carefully.
+    //
+    // `whole` pulls against the score, which is the point: the cheapest route to a sum
+    // rarely wants all four keys, so the multiplier and the accuracy factor are asking
+    // for different things and the player picks one on every target. A rule that only
+    // works on a small dial, on the only mode that has one.
+    scoring: { streak: 'whole', base: 150 },
+    // No `lives` here, deliberately: three, like every other mode that spends them.
+    // This pinned two, which made the one mode a player meets cold — a dial they have
+    // never used, a clock they have not learned — also the one that forgives least. A
+    // challenge may still pin its own count; this one has no reason to.
   },
 }
 

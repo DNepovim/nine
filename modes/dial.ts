@@ -126,6 +126,20 @@ const stepValue = (dial: DialSpec, value: number, delta: 1 | -1): number =>
 // Exported because Trainee's coach applies a press itself, to compare the route before
 // against the route after while the machine's snapshot still holds the position from
 // before. A second copy of the wrap arithmetic was the alternative.
+// Whether a route touched **every** key on the dial — every cell standing at a different
+// digit than it did when the target was put up.
+//
+// Net change rather than a count of presses, because presses are not kept per key: the
+// grid is the whole of what a route leaves behind. A key wound all the way round to the
+// digit it started on therefore reads as untouched, which is the right answer for a
+// streak that is asking the player to *use* the dial rather than to fidget with it.
+//
+// Only meaningful on a small dial. On the nine every shipped mode is played on, a route
+// through all nine keys is not a route — which is why the rule that reads this belongs to
+// a challenge. See `STREAK_TRIGGERED.whole`.
+export const everyKeyMoved = (from: Grid, to: Grid): boolean =>
+  from.length === to.length && from.every((digit, index) => digit !== to[index])
+
 export const pressGrid = (
   dial: DialSpec,
   grid: Grid,

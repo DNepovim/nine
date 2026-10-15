@@ -124,3 +124,26 @@ export function burstRounds(
     return { ...shotLine(from, aim), delay: index * BURST_CADENCE_MS }
   })
 }
+
+// The middle of every key on the dial, in the effect layer's coordinates.
+//
+// What a **quartet** fires from — one beam per key, all aimed at the card the route
+// took. The grid is even, so a cell's centre is arithmetic once the box is known: the
+// dial measures itself from the width and the layout above it takes the slack, which is
+// why the box is measured rather than worked out.
+//
+// Empty for a box that has not been measured yet. The shot layer reads that as "no
+// muzzles" and falls back to the single beam from the sum row, so a strike landing in
+// the first frames of a run is drawn rather than dropped.
+export const keyCentres = (
+  box: { x: number; y: number; width: number; height: number },
+  dial: { rows: number; cols: number },
+): readonly Point[] => {
+  if (box.width === 0 || box.height === 0) return []
+  const cellW = box.width / dial.cols
+  const cellH = box.height / dial.rows
+  return Array.from({ length: dial.rows * dial.cols }, (_, index) => ({
+    x: box.x + (index % dial.cols) * cellW + cellW / 2,
+    y: box.y + Math.floor(index / dial.cols) * cellH + cellH / 2,
+  }))
+}

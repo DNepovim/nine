@@ -3,20 +3,34 @@ import { useEffect, useRef, useState } from 'react'
 
 import { shareRounds, type Point } from '@/lib/strike-shot'
 import type { HitBatch } from '@/machines/game'
-import { modeById, type ModeId, type ShotKind } from '@/modes'
+import { gradientOf, modeById, type ModeId, type ShotKind } from '@/modes'
 
 // Where a shot leaves from and what it is aimed at, both in the effect layer's own
 // coordinates.
-export type ShotAim = { from: Point; to: Point }
+export type ShotAim = {
+  from: Point
+  to: Point
+  // Where a **quartet** fires from: the centre of every key on the dial. Absent for the
+  // two shots that leave from the sum row, which is every other mode's.
+  //
+  // On the aim rather than worked out here, because the screen is what has measured the
+  // dial — this hook knows nothing about where anything is drawn.
+  muzzles?: readonly Point[]
+}
 
 // A shot in flight. Its geometry is fixed the instant it is fired rather than read each
 // frame: the target is already playing its exit by then, and following it would have the
 // beam chase a card that is no longer where it was hit.
-export type Shot = ShotAim & {
+export type Shot = {
   id: number
   kind: ShotKind
+  from: Point
+  to: Point
   // Which rounds of the press's one burst this shot fires — see shareRounds.
   rounds: number[]
+  // The two stops this shot's beam is drawn in, where the mode wants its own. Only a
+  // quartet sets it; the rest take the shot layer's default.
+  gradient?: readonly [string, string]
 }
 
 // Turns the strikes in a hit batch into shots for the board to draw. A strike is a hit
@@ -47,6 +61,9 @@ export function useStrikeShots({
     lastSeq.current = hitBatch.seq
     const kind = modeById(mode)?.shot ?? null
     if (kind === null) return
+    // A quartet is a challenge's shot, so it is drawn in that challenge's own colour —
+    // see the `gradient` prop on `StrikeBeam`. Every other shot takes the layer's own.
+    const gradient = kind === 'quartet' ? gradientOf(mode) : undefined
     // Never the hit that cost a life: Accuracy only multiplies when every hit in the
     // press was optimal, and an optimal hit is not a wasteful one.
     const strikes = hitBatch.hits.filter((hit) => hit.bonus)
@@ -55,7 +72,33 @@ export function useStrikeShots({
     const fired = strikes.flatMap((hit, index) => {
       const aimed = aimRef.current(hit.value)
       if (aimed === null) return []
-      return [{ id: ++shotId.current, kind, rounds: share[index] ?? [], ...aimed }]
+      const rounds = share[index] ?? []
+      // A quartet is one strike drawn as several shots — a beam from each key, all
+      // aimed at the same card. Fanned out here rather than inside the drawing, so the
+      // layer keeps drawing one line per shot and the shape of the thing lives in one
+      // place. A quartet with no muzzles measured yet falls back to the single line
+      // every other shot fires, which is a beam from the sum row rather than nothing.
+      const muzzles = kind === 'quartet' ? (aimed.muzzles ?? []) : []
+      if (isNonEmptyArray(muzzles)) {
+        return muzzles.map((from) => ({
+          id: ++shotId.current,
+          kind,
+          rounds,
+          from,
+          to: aimed.to,
+          gradient,
+        }))
+      }
+      return [
+        {
+          id: ++shotId.current,
+          kind,
+          rounds,
+          from: aimed.from,
+          to: aimed.to,
+          gradient,
+        },
+      ]
     })
     if (!isNonEmptyArray(fired)) return
     setShots((prev) => [...prev, ...fired])

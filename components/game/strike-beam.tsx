@@ -48,10 +48,16 @@ export function StrikeBeam({
   offset,
   length,
   angle,
+  gradient = BEAM_GRADIENT,
 }: {
   offset: number
   length: number
   angle: number
+  // The two stops along the beam. Defaulted to the gold-into-red every sniper has fired
+  // since there were strikes; **the quartet asked for this prop**, because four beams in
+  // the app's own shot colour would say nothing about which challenge fired them, and a
+  // challenge's colour is the one thing on that screen only it has.
+  gradient?: readonly [string, string]
 }) {
   const draw = useSharedValue(0)
   const opacity = useSharedValue(0)
@@ -100,7 +106,7 @@ export function StrikeBeam({
         ]}
       >
         <LinearGradient
-          colors={[...BEAM_GRADIENT]}
+          colors={[gradient[0], gradient[1]]}
           start={{ x: 0, y: 0.5 }}
           end={{ x: 1, y: 0.5 }}
           style={{ flex: 1, borderRadius: GLOW / 2, opacity: GLOW_OPACITY }}
@@ -120,7 +126,7 @@ export function StrikeBeam({
         ]}
       >
         <LinearGradient
-          colors={[...BEAM_GRADIENT]}
+          colors={[gradient[0], gradient[1]]}
           start={{ x: 0, y: 0.5 }}
           end={{ x: 1, y: 0.5 }}
           style={{ flex: 1, borderRadius: CORE / 2 }}

@@ -8,7 +8,7 @@ import type { AchievementFacts, Award } from '@/lib/achievements'
 import type { Period } from '@/lib/announcements'
 import type { RecordScreen } from '@/lib/champions'
 import { gameOverTitle } from '@/lib/game-over-title'
-import { SCORED_MODES, type Difficulty, type ModeId } from '@/modes'
+import { modeById, SCORED_MODES, type Difficulty, type ModeId } from '@/modes'
 
 import { GameOverOverlay } from './game-over-overlay'
 import { GameOverTitle } from './game-over-title'
@@ -45,6 +45,7 @@ export function GameOverSequence({
   achievementStore,
   achievementFacts,
   sessionId,
+  sessionRank,
   onPlayAgain,
   onChallenge,
   onMenu,
@@ -80,6 +81,10 @@ export function GameOverSequence({
   // Which session the run belonged to, if any — forwarded straight through to the
   // screen, which is what decides between a session board and a three-period one.
   sessionId: string | null
+  // Where the run came on its session's standings, for a challenge. Null for an ordinary
+  // run and for a session whose board has not been read yet — the title falls back to
+  // what the run itself was worth, which is what it did before sessions existed.
+  sessionRank: 1 | 2 | 3 | null
   onPlayAgain: () => void
   onChallenge: (mode: ModeId, difficulty: Difficulty) => void
   onMenu: () => void
@@ -103,8 +108,12 @@ export function GameOverSequence({
       score,
       hits,
       strikes,
+      sessionRank,
     },
     titleRoll,
+    // What this mode claims instead, where it has words of its own. Undefined for every
+    // permanent mode, which is what the pools were written for.
+    modeById(gameMode)?.claims,
   )
 
   return (

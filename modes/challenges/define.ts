@@ -1,6 +1,7 @@
 import type { MessageDescriptor } from '@lingui/core'
 import { msg } from '@lingui/core/macro'
 
+import type { ClaimTier, TitleWords } from '@/lib/game-over-title'
 import {
   challengeDarkPairFor,
   challengeHue,
@@ -64,6 +65,9 @@ export type ChallengeSpec = {
   // door, and this is the window beside it.
   gradient?: readonly [string, string]
   darkGradient?: readonly [string, string]
+  // What the game-over screen says about a run of this challenge — see `claims` on
+  // `ModeDefinition`. Left out by a challenge content with the app's own words.
+  claims?: Partial<Record<ClaimTier, readonly TitleWords[]>>
   shot?: ShotKind | null
 }
 
@@ -156,6 +160,7 @@ export function defineChallenge(spec: ChallengeSpec, index = 0): ModeDefinition 
     darkGradient:
       spec.darkGradient ?? challengeDarkPairFor(spec.hue ?? challengeHue(index)),
     shot: spec.shot === undefined ? spec.base.shot : spec.shot,
+    claims: spec.claims,
     window: { from: spec.from, until: spec.until },
     engine: 'targets',
     // Three layers, and the order is the whole of their meaning: the base mode, then

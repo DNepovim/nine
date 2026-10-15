@@ -5,6 +5,7 @@ import { TUTORIAL_TARGETS } from '@/constants/tutorial'
 import { tutorialBoardEntry } from '@/lib/tutorial-board'
 import {
   emptyGrid,
+  everyKeyMoved,
   FAST_HIT_THRESHOLD,
   NINE_DIAL,
   pressGrid,
@@ -22,6 +23,7 @@ import {
   type Grid,
   type ModeId,
   type RunRules,
+  type StreakFacts,
   type Submode,
 } from '@/modes'
 
@@ -422,6 +424,39 @@ const clockLeft = (target: Target, rules: RunRules, now: number): number =>
     ? Math.max(0, target.duration - (now - target.spawnedAt))
     : target.duration
 
+// What a hit batch did, as far as the streak rules care.
+//
+// Read off the figures the scoring loop has already worked out rather than tracked beside
+// it. Three flags carried through that loop as mutable `let`s were three more branches in
+// a function that is already the busiest in the engine, and every one of them was a
+// restatement of something `perTarget` was about to record anyway.
+//
+// Each `all*` opens false on an empty batch through `anyHit`, which is what stops a frame
+// with no hit in it extending a chain — `[].every(…)` is true, and a streak built on a
+// vacuous truth would climb while the player did nothing.
+const streakFactsOf = (
+  perTarget: readonly {
+    steps: number
+    par: number
+    spdFactor: number
+    refGrid: Grid
+  }[],
+  newGrid: Grid,
+  clearedBoard: boolean,
+): StreakFacts => {
+  const anyHit = isNonEmptyArray(perTarget)
+  return {
+    anyHit,
+    allOptimal: anyHit && perTarget.every((t) => t.steps === t.par),
+    allFast: anyHit && perTarget.every((t) => t.spdFactor >= FAST_HIT_THRESHOLD),
+    // Measured from each target's own reference grid, not from the start of the run: a
+    // route is what happened since that target went up, which is the window `par` and
+    // `userSteps` are counted over too.
+    allWhole: anyHit && perTarget.every((t) => everyKeyMoved(t.refGrid, newGrid)),
+    clearedBoard,
+  }
+}
+
 // Applies a new grid: scores any targets whose value equals the new sum, resets
 // the reference for surviving targets when a hit happened, applies streak multiplier,
 // and emits a hit batch for the UI.
@@ -434,8 +469,6 @@ function applyGrid(context: Context, newGrid: Grid, now: number) {
   const clearedBoard = anyHit && remaining.length === 0
 
   let rawScore = 0
-  let allOptimal = isNonEmptyArray(matched)
-  let allFast = isNonEmptyArray(matched)
   let accAdded = 0
   let spdAdded = 0
   const perTarget: {
@@ -463,8 +496,6 @@ function applyGrid(context: Context, newGrid: Grid, now: number) {
     })
     const acc = accuracyFactor(t.par, userSteps)
     const spd = speedFactor(timeLeft, t.duration)
-    if (userSteps !== t.par) allOptimal = false
-    if (spd < FAST_HIT_THRESHOLD) allFast = false
     accAdded += acc
     spdAdded += spd
     rawScore += pts
@@ -480,7 +511,7 @@ function applyGrid(context: Context, newGrid: Grid, now: number) {
     })
   }
 
-  const streakFacts = { anyHit, allOptimal, allFast, clearedBoard }
+  const streakFacts = streakFactsOf(perTarget, newGrid, clearedBoard)
   const trigger = rules.scoring.streak
   const triggered = STREAK_TRIGGERED[trigger](streakFacts)
   let streak = context.streak

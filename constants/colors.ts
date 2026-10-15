@@ -50,17 +50,6 @@ export const DIM_INK = '#6A655C'
 // weight, well under the contrast a word needs.
 export const MUTED_INK = '#D4D0C8'
 
-// The `--color-score` token as JavaScript, for the same reason the three below it are:
-// a screen that hands the readout a colour rather than a class needs the value, and the
-// run screens do — the glow behind the digits is derived from it, and a glow cannot be
-// a class.
-//
-// **Only correct where the token is at its default.** `GOLD_SCREEN_TOKENS` and
-// `MODE_SCREEN_TOKENS` both re-bind `--color-score`, so a screen under either of those
-// must let the class answer rather than reaching for this. The run screens use it for a
-// challenge, which keeps no board and so reaches neither.
-export const SCORE_INK = '#147A32'
-
 // The `--color-primary` token as JavaScript, and the same bargain as the two above: a
 // framed digit takes its colour as a prop, because the box around it is already computing
 // one. Primary text, so it is the darkest ink the app owns — identical to `--color-strong`,

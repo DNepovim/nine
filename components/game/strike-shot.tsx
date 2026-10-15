@@ -20,6 +20,10 @@ import type { ShotKind } from '@/modes'
 const SHOT_MS = {
   sniper: SNIPER_MS,
   burst: BURST_MS,
+  // The quartet is the sniper's beam fired four times at once, so it owns its slot for
+  // exactly as long. One timing rather than two within ten milliseconds of each other:
+  // nobody can see the difference and a second constant is a second thing to keep true.
+  quartet: SNIPER_MS,
 } as const satisfies Record<ShotKind, number>
 
 // One strike's shot, from the sum row to the target it took. Positions the anchor both
@@ -33,6 +37,7 @@ export function StrikeShot({
   toY,
   radius,
   rounds,
+  gradient,
   onDone,
 }: {
   kind: ShotKind
@@ -45,6 +50,8 @@ export function StrikeShot({
   // Which rounds of the press's one burst this target gets. Empty for a sniper, which
   // fires one beam and nothing else.
   rounds: readonly number[]
+  // The two stops this beam is drawn in, where the mode wants its own. See `StrikeBeam`.
+  gradient?: readonly [string, string]
   onDone: () => void
 }) {
   useEffect(() => {
@@ -59,14 +66,18 @@ export function StrikeShot({
 
   return (
     <View pointerEvents="none" style={{ position: 'absolute', left: fromX, top: fromY }}>
-      {kind === 'sniper' ? (
+      {kind === 'sniper' || kind === 'quartet' ? (
         // The beam is aimed at the target's middle but drawn short of it at both ends:
         // clear of the digits it leaves, and clear of the rim it is aimed at.
         <StrikeBeam
           angle={shotLine(from, to).angle}
+          gradient={gradient}
           {...insetLine(
             shotLine(from, to).length,
-            BEAM_START_GAP,
+            // A quartet leaves from a key rather than from the digits of the sum, and a
+            // key is a small thing with nothing above it to clear — so it starts at the
+            // muzzle instead of a line's height away from it.
+            kind === 'quartet' ? 0 : BEAM_START_GAP,
             radius + BEAM_END_CLEARANCE,
           )}
         />

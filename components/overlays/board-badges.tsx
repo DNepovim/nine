@@ -10,6 +10,7 @@ import {
   DIFFICULTIES,
   gradientOf,
   isChallenge,
+  lerpColor,
   runLabel,
   runSubmode,
   type Difficulty,
@@ -66,22 +67,33 @@ export function BoardBadges({
       ? [mode]
       : [mode, t(DIFFICULTIES[difficulty].label)]
 
-  // What each pill is painted in.
+  // What each pill is painted in: **one gradient across both of them**.
   //
-  // A board run wears the mode's own pair on both, which is the gradient the selectors
-  // give the option you picked — there they are the choice, here the record of it.
+  // The pair is the mode's own, and the two pills divide it — the first runs from its
+  // opening stop to the middle, the second from that middle to its closing stop. So the
+  // row reads as one ramp interrupted by the gap between the pills rather than as two
+  // separate labels that happen to share a palette, which is what it was when each pill
+  // carried the whole gradient.
   //
-  // A **challenge** splits them, because its two pills say two different things. The
-  // first says *what kind of thing this was* and takes the near-black every challenge
-  // shares, so CHALLENGE looks the same whichever one was played. The second names
-  // *which* challenge and takes that challenge's own colour — the darkened stop rather
-  // than the bright one, because a pill is a filled ground behind white text and that is
-  // the stop tuned to carry it. The bright stop is the arc's light end and would put
-  // white on about 1.7:1.
+  // Split at the middle rather than by width. The pills are rarely the same size —
+  // CHALLENGE beside FOUR KEYS, ACCURACY beside HARD — so a true continuation would
+  // divide the ramp in proportion to how wide each one measured. The halves meet on the
+  // same colour either way, which is the part the eye follows; what differs is how fast
+  // each pill gets there, and that is not a thing anybody can see across an 8pt gap.
+  //
+  // A **challenge** takes its darkened pair rather than its bright one. Its first stop is
+  // the near-black every challenge shares, so the row opens the same whichever was
+  // played and arrives at that challenge's own colour — and both ends carry white, where
+  // the bright stop is the arc's light end and would put white on about 1.7:1.
+  const [from, to] = isChallenge(gameMode)
+    ? darkGradientOf(gameMode)
+    : gradientOf(gameMode)
+  const middle = lerpColor(from, to, 0.5)
+
   const pillPair = (index: number): readonly [string, string] => {
-    if (!isChallenge(gameMode)) return gradientOf(gameMode)
-    const [shared, own] = darkGradientOf(gameMode)
-    return index === 0 ? [shared, shared] : [own, own]
+    // A lone pill is the whole ramp: there is no second half for it to hand on to.
+    if (labels.length < 2) return [from, to]
+    return index === 0 ? [from, middle] : [middle, to]
   }
 
   return (
