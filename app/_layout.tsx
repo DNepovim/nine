@@ -1,5 +1,7 @@
 import 'react-native-url-polyfill/auto'
 
+import { i18n } from '@lingui/core'
+import { I18nProvider } from '@lingui/react'
 import { DefaultTheme, ThemeProvider, type Theme } from '@react-navigation/native'
 import { Stack, type ErrorBoundaryProps } from 'expo-router'
 import { StatusBar } from 'expo-status-bar'
@@ -16,7 +18,7 @@ import { SplashScreen } from '@/components/splash-screen'
 import { SURFACE } from '@/constants/colors'
 import { LAYER } from '@/constants/layers'
 import { InstallProvider, useInstall } from '@/hooks/use-install'
-import { LocaleProvider } from '@/hooks/use-locale'
+import { LocaleProvider, TransText } from '@/hooks/use-locale'
 import { SavedRunProvider, useSavedRun } from '@/hooks/use-saved-run'
 import { SplashProvider, useSplash } from '@/hooks/use-splash'
 import { captureError, initAnalytics } from '@/lib/analytics'
@@ -45,12 +47,26 @@ export function ErrorBoundary({ error, retry }: ErrorBoundaryProps) {
     captureError(error, { boundary: 'root' })
   }, [error])
 
+  // Its own `I18nProvider`, and it has to be its own: expo-router renders this boundary
+  // *outside* the tree the layout below returns, so the `LocaleProvider` in there is not
+  // above it. Without this the crash screen's own `<Trans>` throws — every crash became
+  // two, and the second one hid the first.
+  //
+  // Safe on the worst day the app has. `i18n` is loaded and activated at module scope in
+  // `use-locale`, before anything renders at all, so this needs nothing of the app to
+  // have worked. It carries the same `defaultComponent` the real provider does, or a
+  // `Trans` would render differently on the one screen nobody reaches on purpose.
+  //
+  // The player keeps their language here. Falling back to English would be the simpler
+  // fix and the wrong one — a crash is the moment copy most needs to be readable.
   return (
-    <CrashScreen
-      onRetry={() => {
-        void retry()
-      }}
-    />
+    <I18nProvider i18n={i18n} defaultComponent={TransText}>
+      <CrashScreen
+        onRetry={() => {
+          void retry()
+        }}
+      />
+    </I18nProvider>
   )
 }
 

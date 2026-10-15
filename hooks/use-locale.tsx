@@ -50,7 +50,11 @@ export const useLocale = () => useContext(LocaleContext)
 // React Native has no host element that accepts a bare string, so a <Trans> rendered
 // outside a <Text> would crash rather than render. Every one in this app sits inside a
 // <Text> already; this is the net under the one that someday will not.
-const TransText = (props: TransRenderProps) => <Text>{props.children}</Text>
+//
+// Exported for the crash screen, which needs a provider of its own — see the
+// `ErrorBoundary` in app/_layout.tsx. Both have to pass the same renderer or a `Trans`
+// would behave differently on the one screen nobody can test by playing.
+export const TransText = (props: TransRenderProps) => <Text>{props.children}</Text>
 
 // The active language, and the one control that changes it.
 //
