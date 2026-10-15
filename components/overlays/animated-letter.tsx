@@ -23,6 +23,7 @@ import {
   GLASS_SHEEN_STEPS,
   GLASS_SHEEN_UNTIL,
   GLASS_TINT,
+  rgbaWorklet,
 } from '@/lib/glass'
 import { mixHex } from '@/lib/mix-hex'
 import { type ModeId } from '@/modes'
@@ -55,14 +56,6 @@ const MID_COLORS: Record<string, string> = {
 
 function getMidColor(from: TitleMode, to: TitleMode): string {
   return MID_COLORS[`${from}->${to}`] ?? '#FFFFFF'
-}
-
-function rgbaWl(hex: string, alpha: number): string {
-  'worklet'
-  const r = parseInt(hex.slice(1, 3), 16)
-  const g = parseInt(hex.slice(3, 5), 16)
-  const b = parseInt(hex.slice(5, 7), 16)
-  return `rgba(${r}, ${g}, ${b}, ${alpha})`
 }
 
 // The glyph, and the box it is drawn in.
@@ -228,13 +221,13 @@ export function AnimatedLetter({
   })
 
   const paneStyle = useAnimatedStyle(() => ({
-    color: rgbaWl(colour.value, GLASS_TINT),
+    color: rgbaWorklet(colour.value, GLASS_TINT),
   }))
   const rimStyle = useAnimatedStyle(() => ({
-    color: rgbaWl(mixHex(colour.value, '#ffffff', GLASS_RIM_LIFT), GLASS_RIM_ALPHA),
+    color: rgbaWorklet(mixHex(colour.value, '#ffffff', GLASS_RIM_LIFT), GLASS_RIM_ALPHA),
   }))
   const farStyle = useAnimatedStyle(() => ({
-    color: rgbaWl(mixHex(colour.value, '#000000', GLASS_FAR_SHADE), GLASS_FAR_ALPHA),
+    color: rgbaWorklet(mixHex(colour.value, '#000000', GLASS_FAR_SHADE), GLASS_FAR_ALPHA),
   }))
 
   const glyph = { fontSize: FONT_SIZE, lineHeight: LINE_HEIGHT } as const

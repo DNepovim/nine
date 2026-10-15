@@ -97,6 +97,20 @@ export type GlassTones = {
   far: string
 }
 
+// A hex and an alpha as an `rgba()` string, **on the UI thread**.
+//
+// `withAlpha` below does the same off it. This one is a worklet because the two marks
+// that cycle their colour a frame at a time — the title letters and the pause bars —
+// build their tones inside a `useDerivedValue`, where a function that is not a worklet
+// cannot be called.
+export function rgbaWorklet(hex: string, alpha: number): string {
+  'worklet'
+  const r = parseInt(hex.slice(1, 3), 16)
+  const g = parseInt(hex.slice(3, 5), 16)
+  const b = parseInt(hex.slice(5, 7), 16)
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`
+}
+
 export const glassTones = (base: string): GlassTones => ({
   pane: withAlpha(base, GLASS_TINT),
   rim: withAlpha(lerpColor(base, WHITE, GLASS_RIM_LIFT), GLASS_RIM_ALPHA),
