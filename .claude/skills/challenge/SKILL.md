@@ -1,6 +1,6 @@
 ---
 name: challenge
-description: Author a new challenge for the nine app — `/challenge <idea>`, "add a challenge", "make a challenge where the dial is...". Settles the one thing a challenge is about, then asks for its colour, its mark, its dial, its scoring, its streak, its shot and what its end screen claims, and writes the catalog entry. Use whenever a new challenge is being added; not for changing one that already exists.
+description: Author a new challenge for the nine app — `/challenge <idea>`, "add a challenge", "make a challenge where the dial is...". Settles the one thing a challenge is about, then proposes the rest — its colour, its mark, its dial, its scoring, its streak, its shot and what its end screen claims — as named options to confirm or overrule rather than blanks to fill, and writes the catalog entry. Use whenever a new challenge is being added; not for changing one that already exists.
 ---
 
 # Challenge
@@ -37,9 +37,42 @@ the right answer more often than one challenge with two ideas.
 Ask in **one `AskUserQuestion` call** wherever the answers do not depend on each other
 — most of these do not. Give each option a `preview` where the choice is visual.
 
-Everything below has a default, and a challenge that takes every default is a
-perfectly good challenge. **Offer the default as the recommended option and say what
-it gives**, rather than asking the author to design six things from nothing.
+### Never ask an author to invent something
+
+**Anything the author did not specify, you propose.** Not "what should the streak be?"
+— two or three named rules, each with what it would feel like to play, and a
+recommendation. The author's job here is to recognise the right answer, which is a
+different and much smaller job than producing one.
+
+An unspecified part is not a blank to be filled. It is a question you already have most
+of the answer to, because the author told you the one thing the challenge is about and
+nearly everything else follows from it:
+
+> _"a challenge where you only get one life"_ → the lives are given. But a one-life
+> challenge wants a streak that cannot be broken by a hit (a broken chain on your only
+> life is two punishments for one mistake), it wants a loud claim for surviving, and it
+> probably wants an ordinary dial so the one thing that is strange stays the one thing
+> that is strange. **Propose those**, say why each follows, and let the author overrule
+> any of them.
+
+Three rules for the proposals themselves:
+
+- **Derive them from the idea, not from the catalog.** A suggestion that would fit any
+  challenge is not a suggestion, it is a default wearing a question mark. Say which part
+  of _this_ challenge each one comes from.
+- **Give two or three, not one and not six.** One is a decision taken on the author's
+  behalf; six is the blank page again with extra steps.
+- **Always recommend one, and say what it costs.** Every section below records what its
+  options cost — a hue that is hard to read, a streak that fights the score, a shot that
+  needs a dial on screen. Put the cost in the option's description, not in a note
+  afterwards.
+
+**Say when there is nothing to ask.** The colour and the mark are decided by things the
+author has already chosen, and a question about them is a question with one answer. Tell
+the author what they are getting and move on — see sections 1 and 2.
+
+The defaults below are what a proposal falls back to when nothing about the idea points
+anywhere. A challenge that takes every default is still a perfectly good challenge.
 
 ### 1. The colour
 
@@ -77,6 +110,11 @@ the next question, rather than wondering where to put an icon.
 is `NINE_DIAL`, the three-by-three every shipped mode is played on, and a challenge
 that changes nothing else should probably not change this either.
 
+**Unspecified?** Propose `NINE_DIAL` unless the idea is _about_ the keys. A challenge
+whose one thing is the clock or the scoring should keep the dial every mode is played
+on — two strange things at once is two challenges. Where the idea does name the dial,
+propose the smallest shape that expresses it and say what it can reach.
+
 Two things to check for the author, because both have bitten:
 
 - **Reachability.** Targets are drawn from the whole of `0 … maxSum` with no
@@ -98,6 +136,11 @@ Two fields, and the defaults are already a challenge's own rather than the base 
   challenge is met once, so it asks for both halves at the same weight.
 - **`base`** — the points a hit is worth before the blend. `SCORE_BASE` unless the
   challenge is much shorter or much longer than an ordinary run.
+
+**Unspecified?** Propose the defaults and say so in one line. They are already a
+challenge's own rather than the base mode's, so there is usually nothing to decide here
+— the place to spend a question is the streak below, which is what the player actually
+feels.
 
 The **headline** is not a question: `favoured` derives it from the weights, and a dead
 heat goes to accuracy — the half of the game a player can work at.
@@ -125,6 +168,12 @@ What exists, and what each is made of:
 and `STREAK_BROKEN.clear` is `false`, so nothing the player does can break it — the
 most forgiving of the five, inherited from whichever base mode was picked.
 
+**Unspecified?** This is the one most worth proposing properly, because it is what the
+challenge feels like to play. Derive two or three from the idea: what does this
+challenge make hard, and what would it look like to do that _deliberately_ rather than
+by luck? A dial challenge wants a rule about the route; a clock challenge wants one
+about timing; a lives challenge wants one that a single mistake does not erase.
+
 The good ones **pull against the score**. `whole` is the example: the cheapest route
 rarely wants every key, so the multiplier and the accuracy factor ask for different
 things and the player chooses on every target. A streak that agrees with the score is
@@ -147,6 +196,10 @@ fast ones empties a magazine, a route through every key fires one beam from each
 | `burst`   | five rounds, 30ms apart                                   | the sum row |
 | `quartet` | one beam per key, together, in the challenge's own colour | each key    |
 | `null`    | nothing                                                   | —           |
+
+**Unspecified?** Propose whichever shot is the streak you just agreed, made visible.
+That is not a style question and should not be asked as one — if the streak is about the
+route, say so and propose the shot that draws a route.
 
 A challenge inherits its base mode's shot unless it names one. **If the streak changed,
 the shot almost certainly should too** — a `whole` streak firing `burst` is the mode
@@ -176,6 +229,11 @@ claims: {
   cold:   [['COLD', 'KEYS']],                      // barely got going
 },
 ```
+
+**Unspecified?** Draft them rather than asking for them. Copy is the hardest thing to
+produce on demand and the easiest to react to: write two or three lines per reachable
+tier, all about the thing the challenge changed, and ask which to keep. An author who
+hates all of them will say so in a sentence and mean something specific by it.
 
 **Which tiers are worth naming.** A challenge reaches `board` and `medal` through its
 **session standing** rather than through a board — rank one is `board`, second and third
