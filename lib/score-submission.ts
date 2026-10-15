@@ -166,9 +166,15 @@ export async function submitScore(
   // either — the better score is already on its way or already there.
   if (recorded === before) return
 
+  // The slot this run was just recorded into — the session included, or the find would
+  // return another airing's entry on a day that held two and publish the wrong score to
+  // the wrong standings.
   const entry = recorded.find(
     (other) =>
-      other.mode === mode && other.difficulty === difficulty && other.day === day,
+      other.mode === mode &&
+      other.difficulty === difficulty &&
+      other.day === day &&
+      other.sessionId === (sessionId ?? undefined),
   )
   if (entry === undefined || !userId || !nickname) {
     await writeLocalScores(before, recorded, day)

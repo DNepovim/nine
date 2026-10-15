@@ -261,3 +261,64 @@ describe('a session run in the store', () => {
     expect(better[0]?.sessionId).toBe('abc-123')
   })
 })
+
+describe('two airings of one challenge inside a day', () => {
+  // What production actually schedules: one session running to 05:00 and the next
+  // opening at 06:00, both inside one Prague day. The planner permits it — it only
+  // refuses sessions of the same challenge that overlap.
+  const run = (sessionId: string, score: number) => ({
+    mode: 'challenge/four-keys',
+    difficulty: 'hard' as const,
+    day: '2026-10-15',
+    score,
+    hits: 10,
+    achievedAt: '2026-10-15T08:00:00.000Z',
+    sessionId,
+  })
+
+  it('keeps a score for each, even when the later one is worse', () => {
+    // The bug this fixes: with the session out of the slot the second run beat nothing
+    // the store held, `recordRun` returned it unchanged, and `submitScore` returned
+    // before sending — so the later session never saw a score at all.
+    const first = recordRun([], run('session-a', 1037))
+    const both = recordRun(first, run('session-b', 400))
+    expect(both).not.toBe(first)
+    expect(both).toHaveLength(2)
+    expect(both.map((entry) => entry.score).sort((a, b) => b - a)).toEqual([1037, 400])
+  })
+
+  it('still keeps only the best within one airing', () => {
+    const first = recordRun([], run('session-a', 1037))
+    expect(recordRun(first, run('session-a', 400))).toBe(first)
+    expect(recordRun(first, run('session-a', 2000))).toHaveLength(1)
+    expect(recordRun(first, run('session-a', 2000))[0]?.score).toBe(2000)
+  })
+
+  it('leaves a board run slotting exactly as it did', () => {
+    const board = {
+      mode: 'accuracy' as const,
+      difficulty: 'hard' as const,
+      day: '2026-10-15',
+      score: 500,
+      hits: 10,
+      achievedAt: '2026-10-15T08:00:00.000Z',
+    }
+    const first = recordRun([], board)
+    // Two entries with no session are the same slot, as they always were.
+    expect(recordRun(first, { ...board, score: 400 })).toBe(first)
+    expect(recordRun(first, { ...board, score: 900 })).toHaveLength(1)
+  })
+
+  it('does not confuse a session run with a board run on the same day', () => {
+    const board = recordRun([], {
+      mode: 'challenge/four-keys',
+      difficulty: 'hard' as const,
+      day: '2026-10-15',
+      score: 900,
+      hits: 10,
+      achievedAt: '2026-10-15T08:00:00.000Z',
+    })
+    // The same mode and day, this time inside a session — a different contest.
+    expect(recordRun(board, run('session-a', 100))).toHaveLength(2)
+  })
+})

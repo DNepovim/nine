@@ -47,16 +47,22 @@ export type LocalScore = {
   sessionId?: string
 }
 
-// Which run this is about: one board, one day. The same slot never holds two entries.
+// Which run this is about: one board, one day — and for a session run, one **session**.
 //
-// A session run slots the same way, and that is deliberate rather than overlooked: a
-// challenge is on for a day, so one challenge on one day is one contest, and keeping the
-// player's best of it is the same rule the boards already keep. Two sessions of one
-// challenge inside a single day cannot both be slotted here — the planner refuses
-// overlapping sessions of the same challenge, so the only way to reach that is two
-// back-to-back airings in one day, which nothing plans and which would cost the earlier
-// one's queued entry if it did.
-export type ScoreSlot = Pick<LocalScore, 'mode' | 'difficulty' | 'day'>
+// The session used to be left out, on the reasoning that a challenge is on for a day, so
+// one challenge on one day is one contest. That reasoning was wrong about how sessions
+// are actually planned. Production ran one from 05:00 on the 14th to 05:00 on the 15th
+// and the next from 06:00 on the 15th — two contests inside one Prague day, which the
+// planner permits because it only refuses sessions of the same challenge that *overlap*.
+//
+// With one slot between them the second score was never sent: `recordRun` returns the
+// store unchanged when a run beats nothing it already holds, and `submitScore` returns
+// before sending when it does. A player who did better in the earlier window simply did
+// not appear on the later board, with nothing anywhere saying why.
+//
+// Including it costs the board case nothing — an ordinary run carries no session, and
+// two entries with none are still the same slot.
+export type ScoreSlot = Pick<LocalScore, 'mode' | 'difficulty' | 'day' | 'sessionId'>
 
 // A score the server has refused this many times, for a reason that was not the
 // connection, is not going to be accepted by asking again.
@@ -69,9 +75,16 @@ const KEEP_DAYS = 14
 const inSlot = (entry: LocalScore, slot: ScoreSlot): boolean =>
   entry.mode === slot.mode &&
   entry.difficulty === slot.difficulty &&
-  entry.day === slot.day
+  entry.day === slot.day &&
+  // Both absent is a match: that is every board run, and every entry written before
+  // challenges existed.
+  entry.sessionId === slot.sessionId
 
-const boardKey = (entry: LocalScore): string => `${entry.mode}:${entry.difficulty}`
+// What the pruner keeps one of, forever: the player's best per board. A session entry
+// is keyed by its session as well, so one airing's best is never mistaken for another's
+// — and a challenge keeps no board, so these are only ever kept for the queue's sake.
+const boardKey = (entry: LocalScore): string =>
+  `${entry.mode}:${entry.difficulty}:${entry.sessionId ?? ''}`
 
 // Records a finished run. One entry per board per day, keeping the best — the store is a
 // record of what was achieved, not a log of every attempt. Returns the store unchanged
