@@ -70,6 +70,10 @@ export function TurningEdge({
           height: span,
           left: (width - span) / 2,
           top: (height - span) / 2,
+          // Pairs with the `isolate` on the box that clips this — see the note there.
+          // This square is as wide as that box's diagonal, so an unclipped frame of it
+          // is not a cosmetic slip: it is a tilted slab across half the screen.
+          backfaceVisibility: 'hidden',
         },
         turnStyle,
       ]}
