@@ -13,13 +13,18 @@ import Animated, {
 
 import DSEG7Font from '@/assets/fonts/DSEG7Classic-Bold.ttf'
 import { AnnouncementBar } from '@/components/game/announcement-bar'
-import { BEST_CELL_HEIGHT, BestScoreCell } from '@/components/game/best-score-cell'
+import {
+  BEST_CELL_HEIGHT,
+  BestScoreCell,
+  CELL_LINE,
+  CELL_TEXT_SIZE,
+} from '@/components/game/best-score-cell'
 import { ChallengeCountdown } from '@/components/overlays/challenge-countdown'
 import { TrackedPressable } from '@/components/tracked-pressable'
 import type { AchievementId } from '@/constants/achievements'
 import { GOLD_INK, SPECTRUM } from '@/constants/colors'
 import { mono } from '@/constants/theme'
-import { READOUT, TYPE } from '@/constants/typography'
+import { TYPE } from '@/constants/typography'
 import type { RecordHolder } from '@/hooks/use-board'
 import { useOnline } from '@/hooks/use-online'
 import { useOpenProfile } from '@/hooks/use-profile-modal'
@@ -27,7 +32,7 @@ import { announcementStyle } from '@/lib/announcement-style'
 import { RUN_SETTLE_MS, type Announcement } from '@/lib/announcements'
 import { cn } from '@/lib/cn'
 import { nearestRecord } from '@/lib/near-record'
-import { gradientOf, isChallenge, traitsOf, type ModeId } from '@/modes'
+import { darkGradientOf, gradientOf, isChallenge, traitsOf, type ModeId } from '@/modes'
 import { challengeInk } from '@/modes/challenges/palette'
 
 // The four periods of a board, plus the one a **session** has instead of them. Never
@@ -105,6 +110,13 @@ const SESSION_ORDER = ['you', 'session'] as const satisfies readonly BestKey[]
 
 // And what is left when the three server-backed cells cannot be reached.
 const ONLY_YOURS = ['you'] as const satisfies readonly BestKey[]
+
+// How wide the countdown's label is allowed to be, which is what makes it wrap to two
+// lines. Nine characters at this size and tracking come to about forty points, so this
+// is a little over one word's worth — wide enough that a word is never broken across a
+// line, narrow enough that two never fit on one. Czech runs longer and lands on two the
+// same way.
+const LABEL_WIDTH = 46
 
 // Which cells the row draws.
 //
@@ -381,6 +393,39 @@ export function BestScoresLine({
       ? nearestRecord(score, { you: yourBest, today, week, ever })
       : null
 
+  // The cells, named once so the two layouts below draw the same thing. A board run puts
+  // them straight into the row so `justify-between` can spread them; a session run wraps
+  // them, which is what holds the pair together on the left.
+  //
+  // **After `nearKey`, which it reads.** `.map` runs here rather than at render time, so
+  // a `const` declared below this would be read inside its own dead zone — a
+  // `ReferenceError` on every frame of the game screen. The compiler allows it: the
+  // reference sits in an arrow function, which it has to assume might be called later.
+  const cells = shown.map(({ key, value, mine, holder, sub, profileId }) => (
+    <BestScoreCell
+      key={key}
+      label={t(BEST_LABELS[key])}
+      value={value}
+      color={cellColor(key, mode)}
+      digitFont={digitFont}
+      holder={holder}
+      sub={sub}
+      mine={mine}
+      mineColor={GOLD_INK}
+      pulsing={key === nearKey}
+      // The run stops first. A profile is a card to read, and reading it while the
+      // targets keep coming is losing a run to a tap.
+      onPress={
+        profileId === null
+          ? undefined
+          : () => {
+              onPause()
+              openProfile(profileId)
+            }
+      }
+    />
+  ))
+
   // Trainee is practice against no board, so it has no scores to put here. A challenge
   // has none either — its standings belong to its session — but a challenge run *in* a
   // session does: `session` carries them, and the row above draws two cells instead of
@@ -409,30 +454,24 @@ export function BestScoresLine({
           ]}
           className="flex-row items-center justify-between"
         >
-          {shown.map(({ key, value, mine, holder, sub, profileId }) => (
-            <BestScoreCell
-              key={key}
-              label={t(BEST_LABELS[key])}
-              value={value}
-              color={cellColor(key, mode)}
-              digitFont={digitFont}
-              holder={holder}
-              sub={sub}
-              mine={mine}
-              mineColor={GOLD_INK}
-              pulsing={key === nearKey}
-              // The run stops first. A profile is a card to read, and reading it while
-              // the targets keep coming is losing a run to a tap.
-              onPress={
-                profileId === null
-                  ? undefined
-                  : () => {
-                      onPause()
-                      openProfile(profileId)
-                    }
-              }
-            />
-          ))}
+          {/* The scores, grouped **only** where there are two of them.
+            
+            The row is `justify-between`, which is right for a board's four cells: they
+            spread across the strip and the eye reads them as a scale. Two cells spread
+            that way sit a third of the strip apart with nothing between them, and
+            `SESSION` drifts into the middle where it reads as its own thing rather than
+            as the figure `YOUR BEST` is to be compared against. Grouped, they read as a
+            pair and the countdown keeps the right-hand end.
+
+            The grouping is a wrapper, so it has to be absent rather than merely gapless
+            on a board run — a wrapper is one child, and four cells inside one child are
+            four cells `justify-between` can no longer spread. That is what putting them
+            in an unconditional box did: it packed the whole scale against the left. */}
+          {session === null ? (
+            cells
+          ) : (
+            <View className="flex-row items-center gap-5">{cells}</View>
+          )}
           {/* What is left of the window, on the end of the row. The one figure here that
               is not a score, and the reason a challenge's strip is worth drawing at all
               while the run is going: the two numbers beside it say where the player
@@ -442,20 +481,41 @@ export function BestScoresLine({
               — see `ChallengeCountdown`, which exists for exactly that reason on the
               intro. */}
           {revealed && session !== null && (
-            <View className="items-end">
-              {/* **Closes**, not ends. This said LEFT, which reads as left-hand side as
-                readily as remaining — and ENDS IN is worse here than either: the clock
-                beside it on this row is the run's, so a label about something ending is
-                read as the run ending. A run ends; a window closes. No game is ever
-                described as closing, so the verb carries the subject on its own and the
-                label needs no room to name it. It is also the word the rest of this
-                feature uses — `closesAt`, and the window that has shut. */}
-              <Text selectable={false} className={cn(TYPE.caption, 'text-dim')}>
-                <Trans>CLOSES IN</Trans>
+            // The label **beside** the board rather than over it, which is the one way
+            // both fit: a cell here is 15pt from its label's cap to its holder's foot,
+            // and a caption stacked on a flap board comes to twenty-two. Side by side it
+            // is the board's own height and nothing has to shrink.
+            <View className="flex-row items-center gap-1.5">
+              {/* **Closes**, not ends, and it names what closes. A run ends and a
+                window closes, so the verb already keeps this off the clock beside it —
+                but the subject is cheap here, and a bare CLOSES IN was a label the player
+                had to work out from context. It is also the word the rest of this feature
+                uses: `closesAt`, and the window that has shut.
+
+                Two lines by wrapping rather than by two strings. A translator decides
+                where a phrase breaks, and Czech does not break this one where English
+                does. Built from the cell's own metrics, so the block comes to a cell's
+                height exactly — see `CELL_TEXT_SIZE`. */}
+              <Text
+                selectable={false}
+                numberOfLines={2}
+                className="font-mono font-bold tracking-[0.5px] text-dim"
+                style={{
+                  fontSize: CELL_TEXT_SIZE,
+                  lineHeight: CELL_LINE,
+                  width: LABEL_WIDTH,
+                }}
+              >
+                <Trans>CHALLENGE CLOSES IN</Trans>
               </Text>
+              {/* The same board the intro's banner counts down on — flaps in this
+                challenge's own CTA pair, turning as they change. It was a plain figure
+                here, which made the one thing on this strip that is not a score look
+                like one more of them. */}
               <ChallengeCountdown
                 until={session.closesAt}
-                className={cn(READOUT.row, 'text-dim')}
+                gradient={darkGradientOf(mode)}
+                flip
               />
             </View>
           )}

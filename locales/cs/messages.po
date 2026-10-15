@@ -162,7 +162,7 @@ msgstr "— CELÝ TÝDEN NIKDO NESTAČIL —"
 msgid "— NOTHING HAS OUTRUN THIS YET —"
 msgstr "— TOHLE JEŠTĚ NIKDO NEPŘEDBĚHL —"
 
-#: components/game/best-scores-line.tsx:464
+#: components/game/best-scores-line.tsx:524
 msgid "— OFFLINE —"
 msgstr "— OFFLINE —"
 
@@ -706,7 +706,7 @@ msgstr "Ztrácíš o vlásek. To nic není."
 msgid "Behind, and within reach — two boards would do it."
 msgstr "Ztrácíš, ale na dosah — stačily by dvě tabulky."
 
-#: components/game/best-scores-line.tsx:80
+#: components/game/best-scores-line.tsx:85
 #: components/overlays/player-profile-overlay.tsx:497
 #: components/overlays/player-profile-overlay.tsx:511
 msgid "BEST"
@@ -768,9 +768,13 @@ msgstr "Navazuj zásahy na sebe — série násobí body ×2 → ×4 → ×8. P�
 #: components/overlays/admin-session.tsx:100
 #: components/overlays/challenge-card.tsx:158
 #: components/overlays/challenge-modal.tsx:90
-#: modes/challenges/define.ts:79
+#: modes/challenges/define.ts:83
 msgid "CHALLENGE"
 msgstr "VÝZVA"
+
+#: components/game/best-scores-line.tsx:509
+msgid "CHALLENGE CLOSES IN"
+msgstr "VÝZVA SE ZAVÍRÁ ZA"
 
 #: components/overlays/admin-overlay.tsx:83
 #: components/overlays/admin-session.tsx:93
@@ -814,10 +818,6 @@ msgstr "Stoupej cestou, nebo padej zpět."
 msgid "CLOSE"
 msgstr "ZAVŘÍT"
 
-#: components/game/best-scores-line.tsx:454
-msgid "CLOSES IN"
-msgstr "ZAVÍRÁ SE"
-
 #: constants/tips.ts:19
 msgid "Come back to Trainee once you have been scoring a while. It is the only place to take a route apart with no run riding on it."
 msgstr "Až budeš chvíli sbírat body, vrať se k Nováčkovi. Je to jediné místo, kde si můžeš cestu rozebrat, aniž by na tom visela hra."
@@ -857,7 +857,7 @@ msgstr "PŘIPOJ SE K INTERNETU A HRAJ S PŘÁTELI"
 msgid "CONTINUE"
 msgstr "POKRAČOVAT"
 
-#: app/(tabs)/index.tsx:2212
+#: app/(tabs)/index.tsx:2226
 msgid "Continue the tutorial"
 msgstr "Pokračovat v tutoriálu"
 
@@ -988,7 +988,7 @@ msgstr "VĚČNÝ STUDENT"
 msgid "Even. Perfectly, annoyingly even."
 msgstr "Nerozhodně. Dokonale, otravně nerozhodně."
 
-#: components/game/best-scores-line.tsx:70
+#: components/game/best-scores-line.tsx:75
 #: components/overlays/board-medals.tsx:18
 #: components/overlays/high-scores.tsx:36
 msgid "EVER"
@@ -1634,7 +1634,7 @@ msgstr "Žádné životy, žádný spěch."
 msgid "No records fell. They rarely do."
 msgstr "Nepadl žádný rekord. Ono se to stává málokdy."
 
-#: components/role-preview-badge.tsx:48
+#: components/role-preview-badge.tsx:55
 msgid "NO ROLE"
 msgstr "BEZ ROLE"
 
@@ -1967,7 +1967,7 @@ msgstr "Zapiš skóre v každém módu a obtížnosti."
 msgid "Precision over speed."
 msgstr "Preciznost před rychlostí."
 
-#: components/role-preview-badge.tsx:46
+#: components/role-preview-badge.tsx:53
 msgid "PREVIEW"
 msgstr "NÁHLED"
 
@@ -2188,7 +2188,7 @@ msgstr "9."
 msgid "SEPTEMBER"
 msgstr "září"
 
-#: components/game/best-scores-line.tsx:73
+#: components/game/best-scores-line.tsx:78
 msgid "SESSION"
 msgstr "OKNO"
 
@@ -2733,7 +2733,7 @@ msgstr "TIPY A TRIKY"
 msgid "TO PUBLISH YOUR BESTS"
 msgstr "PRO ZVEŘEJNĚNÍ SVÝCH REKORDŮ"
 
-#: components/game/best-scores-line.tsx:68
+#: components/game/best-scores-line.tsx:73
 #: components/overlays/board-medals.tsx:20
 #: components/overlays/high-scores.tsx:34
 msgid "TODAY"
@@ -2889,7 +2889,7 @@ msgstr "Poslali jsme šest číslic na <0>{address}</0>."
 msgid "Wednesday"
 msgstr "ve středu"
 
-#: components/game/best-scores-line.tsx:69
+#: components/game/best-scores-line.tsx:74
 msgid "WEEK"
 msgstr "TÝDEN"
 
@@ -2967,7 +2967,7 @@ msgstr "S tvým svolením zaznamenáme, jak hraješ — ťuknutí, švihnutí, c
 msgid "WON"
 msgstr "VYHRÁNO"
 
-#: components/game/best-scores-line.tsx:84
+#: components/game/best-scores-line.tsx:89
 #: components/overlays/admin-people.tsx:32
 #: components/overlays/player-tile.tsx:124
 #: components/overlays/tab-panel.tsx:23
@@ -3023,7 +3023,7 @@ msgstr "JSI OFFLINE"
 msgid "you@example.com"
 msgstr "ty@priklad.cz"
 
-#: components/game/best-scores-line.tsx:67
+#: components/game/best-scores-line.tsx:72
 msgid "YOUR"
 msgstr "TVŮJ"
 

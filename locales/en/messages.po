@@ -162,7 +162,7 @@ msgstr "— NOT ONE FAST ENOUGH THIS WEEK —"
 msgid "— NOTHING HAS OUTRUN THIS YET —"
 msgstr "— NOTHING HAS OUTRUN THIS YET —"
 
-#: components/game/best-scores-line.tsx:464
+#: components/game/best-scores-line.tsx:524
 msgid "— OFFLINE —"
 msgstr "— OFFLINE —"
 
@@ -706,7 +706,7 @@ msgstr "Behind by a hair. That is nothing."
 msgid "Behind, and within reach — two boards would do it."
 msgstr "Behind, and within reach — two boards would do it."
 
-#: components/game/best-scores-line.tsx:80
+#: components/game/best-scores-line.tsx:85
 #: components/overlays/player-profile-overlay.tsx:497
 #: components/overlays/player-profile-overlay.tsx:511
 msgid "BEST"
@@ -768,9 +768,13 @@ msgstr "Chain your hits — a streak multiplies your points ×2 → ×4 → ×8.
 #: components/overlays/admin-session.tsx:100
 #: components/overlays/challenge-card.tsx:158
 #: components/overlays/challenge-modal.tsx:90
-#: modes/challenges/define.ts:79
+#: modes/challenges/define.ts:83
 msgid "CHALLENGE"
 msgstr "CHALLENGE"
+
+#: components/game/best-scores-line.tsx:509
+msgid "CHALLENGE CLOSES IN"
+msgstr "CHALLENGE CLOSES IN"
 
 #: components/overlays/admin-overlay.tsx:83
 #: components/overlays/admin-session.tsx:93
@@ -814,10 +818,6 @@ msgstr "Climb the way, or fall back."
 msgid "CLOSE"
 msgstr "CLOSE"
 
-#: components/game/best-scores-line.tsx:454
-msgid "CLOSES IN"
-msgstr "CLOSES IN"
-
 #: constants/tips.ts:19
 msgid "Come back to Trainee once you have been scoring a while. It is the only place to take a route apart with no run riding on it."
 msgstr "Come back to Trainee once you have been scoring a while. It is the only place to take a route apart with no run riding on it."
@@ -857,7 +857,7 @@ msgstr "CONNECT TO THE INTERNET TO PLAY WITH FRIENDS"
 msgid "CONTINUE"
 msgstr "CONTINUE"
 
-#: app/(tabs)/index.tsx:2212
+#: app/(tabs)/index.tsx:2226
 msgid "Continue the tutorial"
 msgstr "Continue the tutorial"
 
@@ -988,7 +988,7 @@ msgstr "ETERNAL STUDENT"
 msgid "Even. Perfectly, annoyingly even."
 msgstr "Even. Perfectly, annoyingly even."
 
-#: components/game/best-scores-line.tsx:70
+#: components/game/best-scores-line.tsx:75
 #: components/overlays/board-medals.tsx:18
 #: components/overlays/high-scores.tsx:36
 msgid "EVER"
@@ -1634,7 +1634,7 @@ msgstr "No lives, no rush."
 msgid "No records fell. They rarely do."
 msgstr "No records fell. They rarely do."
 
-#: components/role-preview-badge.tsx:48
+#: components/role-preview-badge.tsx:55
 msgid "NO ROLE"
 msgstr "NO ROLE"
 
@@ -1967,7 +1967,7 @@ msgstr "Post a score on every mode and difficulty."
 msgid "Precision over speed."
 msgstr "Precision over speed."
 
-#: components/role-preview-badge.tsx:46
+#: components/role-preview-badge.tsx:53
 msgid "PREVIEW"
 msgstr "PREVIEW"
 
@@ -2188,7 +2188,7 @@ msgstr "Sep"
 msgid "SEPTEMBER"
 msgstr "SEPTEMBER"
 
-#: components/game/best-scores-line.tsx:73
+#: components/game/best-scores-line.tsx:78
 msgid "SESSION"
 msgstr "SESSION"
 
@@ -2733,7 +2733,7 @@ msgstr "TIPS & TRICKS"
 msgid "TO PUBLISH YOUR BESTS"
 msgstr "TO PUBLISH YOUR BESTS"
 
-#: components/game/best-scores-line.tsx:68
+#: components/game/best-scores-line.tsx:73
 #: components/overlays/board-medals.tsx:20
 #: components/overlays/high-scores.tsx:34
 msgid "TODAY"
@@ -2889,7 +2889,7 @@ msgstr "We sent six digits to <0>{address}</0>."
 msgid "Wednesday"
 msgstr "Wednesday"
 
-#: components/game/best-scores-line.tsx:69
+#: components/game/best-scores-line.tsx:74
 msgid "WEEK"
 msgstr "WEEK"
 
@@ -2967,7 +2967,7 @@ msgstr "With your OK, we'll record a replay of how you play — taps, swipes, wh
 msgid "WON"
 msgstr "WON"
 
-#: components/game/best-scores-line.tsx:84
+#: components/game/best-scores-line.tsx:89
 #: components/overlays/admin-people.tsx:32
 #: components/overlays/player-tile.tsx:124
 #: components/overlays/tab-panel.tsx:23
@@ -3023,7 +3023,7 @@ msgstr "YOU'RE OFFLINE"
 msgid "you@example.com"
 msgstr "you@example.com"
 
-#: components/game/best-scores-line.tsx:67
+#: components/game/best-scores-line.tsx:72
 msgid "YOUR"
 msgstr "YOUR"
 

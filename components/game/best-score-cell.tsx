@@ -24,10 +24,14 @@ import { shortName } from '@/lib/short-name'
 // slack inside the two boxes is what separates them. They are a pair read together — a
 // label in one size over a name in another read as one thing said and a second thing
 // added, which is not what a cell is.
-const TEXT_SIZE = 6
+// Exported because the strip's countdown stacks its own two lines beside the cells and
+// has to come to the same height — see `best-scores-line.tsx`. Shared rather than
+// retyped: these are three numbers below every role in the type scale, chosen for this
+// row alone, and a second copy of them is a second thing to keep in step.
+export const CELL_TEXT_SIZE = 6
+export const CELL_LINE = 7
 const LABEL_LINE = 8
-const HOLDER_LINE = 7
-export const BEST_CELL_HEIGHT = LABEL_LINE + HOLDER_LINE
+export const BEST_CELL_HEIGHT = LABEL_LINE + CELL_LINE
 
 // A nickname is allowed sixteen characters and there is room here for twelve, so a long
 // one is cut and marked with an ellipsis. Capped rather than free because the name is in
@@ -135,7 +139,7 @@ export function BestScoreCell({
         <Text
           selectable={false}
           className="font-mono font-bold tracking-[1px] text-dim"
-          style={{ fontSize: TEXT_SIZE, lineHeight: LABEL_LINE }}
+          style={{ fontSize: CELL_TEXT_SIZE, lineHeight: LABEL_LINE }}
         >
           {label}
         </Text>
@@ -146,7 +150,7 @@ export function BestScoreCell({
             avgSpeed={holder.avgSpeed}
             numberOfLines={1}
             className="font-mono font-bold tracking-[0.5px]"
-            style={{ fontSize: TEXT_SIZE, lineHeight: HOLDER_LINE }}
+            style={{ fontSize: CELL_TEXT_SIZE, lineHeight: CELL_LINE }}
           />
         )}
         {sub !== null && (
@@ -155,7 +159,7 @@ export function BestScoreCell({
             numberOfLines={1}
             className={cn('font-mono font-bold tracking-[1px]', !mine && 'text-dim')}
             style={[
-              { fontSize: TEXT_SIZE, lineHeight: HOLDER_LINE },
+              { fontSize: CELL_TEXT_SIZE, lineHeight: CELL_LINE },
               mine && mineColor !== undefined ? { color: mineColor } : null,
             ]}
           >
