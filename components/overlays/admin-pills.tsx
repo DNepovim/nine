@@ -17,6 +17,21 @@ import { cn } from '@/lib/cn'
 // A pill and not a dropdown, which is the shape these screens have always used: the
 // catalog holds a couple of dozen challenges and the roles are a handful, so a row that
 // wraps is the right failure for both, and a native picker per platform is not.
+//
+// Two modes, as a discriminated union rather than a `multi` boolean beside a `value` that
+// would then mean one thing or several:
+//
+//   `select`  one of them is chosen. The role on a person, the challenge a session airs.
+//   `toggle`  any number are lit, and the set is the answer. The planner's status filters,
+//             where picking one used to mean losing the other two.
+//
+// The filters were a segmented track before — one bordered rail with the chosen segment
+// lifted out of it, which is the right shape for *navigation* between three views of one
+// thing and the wrong one for a set. Loose chips with air between them read as several
+// independent switches, because that is what they are.
+type Mode<T> =
+  | { mode?: 'select'; value: T; onSelect: (value: T) => void }
+  | { mode: 'toggle'; lit: ReadonlySet<T>; onToggle: (value: T) => void }
 export type AdminPill<T> = {
   value: T
   // Not translated, by and large: these are role labels and database keys, which are rows
@@ -27,33 +42,40 @@ export type AdminPill<T> = {
 export function AdminPills<T>({
   id,
   options,
-  value,
-  onSelect,
   busy = false,
   className,
+  ...mode
 }: {
   id: ButtonId
   options: readonly AdminPill<T>[]
-  value: T
-  onSelect: (value: T) => void
   // A write about the whole screen is in flight, so nothing here should answer. Dims the
   // options that are not the current one — the current one is already where the screen
   // says it is, and fading it would read as the choice being lost.
   busy?: boolean
   // Placement only — a margin. Never the shape.
   className?: string
-}) {
+} & Mode<T>) {
   return (
     <View className={cn('flex-row flex-wrap gap-2', className)}>
       {options.map((option) => {
-        const active = option.value === value
+        const active =
+          mode.mode === 'toggle'
+            ? mode.lit.has(option.value)
+            : option.value === mode.value
         return (
           <TrackedPressable
             key={String(option.value)}
             id={id}
-            disabled={busy || active}
+            // A chosen pill in `select` mode is not pressable: it is already where the
+            // screen says it is. A lit one in `toggle` mode very much is — turning it off
+            // is half of what a toggle does.
+            disabled={busy || (mode.mode !== 'toggle' && active)}
             onPress={() => {
-              onSelect(option.value)
+              if (mode.mode === 'toggle') {
+                mode.onToggle(option.value)
+                return
+              }
+              mode.onSelect(option.value)
             }}
             // 40px tall, which is the row height the rest of this redesign settled on for
             // anything a thumb aims at. The pills used to be `py-1` — a 22px target in a

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 
 import type { PeriodBoard } from '@/hooks/use-board'
 import { useFlag } from '@/hooks/use-flags'
@@ -15,20 +15,41 @@ import { modeById } from '@/modes'
 // that vanished under a thumb already travelling towards it is worse than a card that is
 // a few minutes stale.
 //
+// **With one exception, and only one.** A teaser whose countdown runs out is a card that
+// has to turn into the live card there and then — it has just finished telling the player
+// the challenge starts *now*, and going on to say "starts in 0ʰ" until the app is
+// restarted makes a liar of the one part of this screen that is a literal clock. That
+// crossing is safe to wake on because it changes a card's *face*: it stays in place, stays
+// pressable, and gains a START. The case the paragraph above is about — a live session
+// closing, where the card leaves the screen — is still frozen, deliberately. `reckon` is
+// how the card is asked to think again, and `ChallengeCountdown` calls it once, at the
+// boundary, rather than on every tick.
+//
 // The feature gates the *read*, not just the card. A player who can never be shown this
 // has no business asking the server about it — the same rule `useWeeklyRecap` keeps.
 
-// The card, or none. Returned bare rather than wrapped in an object: it held a `ready`
-// flag beside it for a while, and nothing ever read one — the card is the only thing
-// waiting on this read and it has nothing to hold still for. There is no card until the
-// answer arrives and no space reserved for one, so a session appearing a moment after
-// the screen paints is a row arriving rather than a layout shifting.
+// The card and the way to reckon it again.
+//
+// It was returned bare for a long time, and the note here said why: a `ready` flag had sat
+// beside it and nothing ever read one. `reckon` is a different kind of passenger — it is
+// not a thing to wait on but a thing to call, and the only caller is the clock on the card
+// itself. There is still no card until the answer arrives and no space reserved for one,
+// so a session appearing a moment after the screen paints is a row arriving rather than a
+// layout shifting.
 //
 // `cardSession` is generic over the span, which is what lets the leader ride along here
 // without the pure half of the lib having to know the server's shape.
-export function useSessionCard(): SessionCard<OpenSession> {
+export function useSessionCard(): {
+  card: SessionCard<OpenSession>
+  reckon: () => void
+} {
   const canSee = useFlag('challenges')
   const [card, setCard] = useState<SessionCard<OpenSession>>(null)
+
+  // The rows as they came back, kept so the card can be reckoned again without asking the
+  // server twice. A teaser becoming live is a fact about the clock, not about the rows —
+  // nothing on the server changed when the countdown hit zero.
+  const known = useRef<readonly OpenSession[]>([])
 
   // A ref rather than a local `let`, which is the shape `use-board.ts` uses for the
   // same job: a plain flag reads as always-false to the type checker, since nothing it
@@ -45,15 +66,22 @@ export function useSessionCard(): SessionCard<OpenSession> {
       // than drawn: there is no name to print and no rules to run it under. The same
       // answer `modeById` gives everywhere else, and a device older than the server is
       // the ordinary way it happens.
-      const known = res.rows.filter((row) => modeById(row.modeId) !== null)
-      setCard(cardSession(known, Date.now()))
+      const rows = res.rows.filter((row) => modeById(row.modeId) !== null)
+      known.current = rows
+      setCard(cardSession(rows, Date.now()))
     })()
     return () => {
       dropped.current = true
     }
   }, [canSee])
 
-  return card
+  // Think again, against the clock as it stands now. Idempotent and cheap: it is a filter
+  // and a sort over at most a handful of rows, and it reads the same rows the launch read.
+  const reckon = useCallback(() => {
+    setCard(cardSession(known.current, Date.now()))
+  }, [])
+
+  return { card, reckon }
 }
 
 // One session's standings in the shape `TabPanel` draws.

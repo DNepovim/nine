@@ -42,6 +42,8 @@ const sessionFor = (which: ChallengeCase, now: number): OpenSession => {
         modeId: MODE_ID,
         opensAt: now - 7 * HOUR,
         closesAt: now + 7 * HOUR,
+        teaserMinutes: 2160,
+        extendedAt: null,
         // Vivid at both ends, so the long name shows the gradient travelling its whole
         // length — which is the thing a one-colour name could never show.
         leader: {
@@ -58,6 +60,8 @@ const sessionFor = (which: ChallengeCase, now: number): OpenSession => {
         modeId: MODE_ID,
         opensAt: now - 20 * MINUTE,
         closesAt: now + 40 * MINUTE,
+        teaserMinutes: 2160,
+        extendedAt: null,
         leader: null,
       }
     // The last minute of a window, which is the one stretch where the coarse figure drops
@@ -68,6 +72,11 @@ const sessionFor = (which: ChallengeCase, now: number): OpenSession => {
         modeId: MODE_ID,
         opensAt: now - 23 * HOUR,
         closesAt: now + 45_000,
+        teaserMinutes: 2160,
+        // The one case here carrying an extension, so the gallery shows the line a card
+        // wears for the rest of a window it was given more time in. A window in its last
+        // minute is also where that line matters most.
+        extendedAt: now - 2 * HOUR,
         // Three characters and lopsided: exact and slow, so the name is nearly one
         // colour and the little it does travel is visible at the shortest length a
         // nickname comes in.
@@ -81,6 +90,10 @@ const sessionFor = (which: ChallengeCase, now: number): OpenSession => {
         modeId: MODE_ID,
         opensAt: now + 18 * HOUR,
         closesAt: now + 42 * HOUR,
+        // Eighteen hours out and teasing from thirty-six, so this case is inside its own
+        // teaser — which is what makes it a teaser card at all.
+        teaserMinutes: 2160,
+        extendedAt: null,
         // Never counted, which `nameColors` reads as no saturation — the one case where
         // the name comes out grey. Drawn by nothing on the teaser, which shows its
         // description instead, and kept here so the shape is a whole `OpenSession`.

@@ -10,11 +10,17 @@
 // daylight-saving boundary — is a thing a test can pin, and this is the file it is
 // pinned in.
 
-import { dayInPrague, previousDay, startOfDayInPrague } from '@/lib/leaderboard-period'
-
 export type SessionSpan = {
   opensAt: number
   closesAt: number
+}
+
+// A span that knows how long its own teaser runs. The figure arrives already resolved —
+// the session's own if it has one, the general one if it does not, coalesced by
+// `open_sessions_with_leaders` — so nothing on this side has an opinion about what a
+// missing figure means. See `teaserOpensAt`.
+export type TeasedSpan = SessionSpan & {
+  teaserMinutes: number
 }
 
 // Live, still to come, or over. The same three words `dev-overlay.tsx` already used for
@@ -92,16 +98,22 @@ export function spanStatus(span: SessionSpan, now: number): SpanStatus {
 
 // ─── What the start screen draws ─────────────────────────────────────────────
 
-// When a session's **teaser** appears: midnight Prague on the day before it opens.
+// When a session's **teaser** appears: this many minutes before it opens.
 //
-// Prague because that is the clock every board in this app is reckoned by, and a
-// challenge that showed up a day early for some players and on time for others would
-// be the first thing in the app whose timing depended on where you were standing.
+// It used to be midnight Prague on the day before, and that was two promises rather than
+// one. The first was zone-independence — a challenge must not show up a day early for
+// some players and on time for others — and a duration before an instant keeps it, since
+// an instant is the same instant everywhere. The second was that a player who opens the
+// app once a day sees the thing coming at least once before it arrives, and a duration
+// **does not** keep that: set this to two hours and a daily player can miss the teaser
+// entirely. That is the trade the figure buys, and the reason the general default is
+// seeded at the thirty-six hours the app already behaved as — nothing moves until
+// somebody decides to move it.
 //
-// A day before rather than an hour, so a player who opens the app once a day sees the
-// thing coming at least once before it arrives.
-export const teaserOpensAt = (opensAt: number): number =>
-  startOfDayInPrague(previousDay(dayInPrague(new Date(opensAt))))
+// Zero is a legitimate answer and means no teaser at all: the card appears when the
+// session opens. Nothing here floors it, because the admin can see what it did.
+export const teaserOpensAt = (opensAt: number, teaserMinutes: number): number =>
+  opensAt - teaserMinutes * 60_000
 
 // The one session the card is for, and which of its two faces it wears.
 //
@@ -122,7 +134,7 @@ export type SessionCard<T extends SessionSpan> =
 // Generic over the span so this can be given whatever shape the caller is holding — the
 // card's own rows carry a leader, the admin's do not — rather than forcing one type on
 // both and making the pure half depend on the server's.
-export function cardSession<T extends SessionSpan>(
+export function cardSession<T extends TeasedSpan>(
   sessions: readonly T[],
   now: number,
 ): SessionCard<T> {
@@ -131,11 +143,34 @@ export function cardSession<T extends SessionSpan>(
     .sort((a, b) => a.closesAt - b.closesAt)[0]
   if (live !== undefined) return { state: 'live', session: live }
 
+  // Each row against its **own** teaser rather than one rule over all of them: a session
+  // carrying an override teases on its own schedule, and two sessions coming up on the
+  // same evening can quite legitimately start announcing themselves hours apart.
   const teased = sessions
     .filter(
       (session) =>
-        spanStatus(session, now) === 'upcoming' && now >= teaserOpensAt(session.opensAt),
+        spanStatus(session, now) === 'upcoming' &&
+        now >= teaserOpensAt(session.opensAt, session.teaserMinutes),
     )
     .sort((a, b) => a.opensAt - b.opensAt)[0]
   return teased === undefined ? null : { state: 'teaser', session: teased }
 }
+
+// ─── What the planner draws ──────────────────────────────────────────────────
+
+// The rows a set of lit filters asks for.
+//
+// A set rather than one chosen status, which is what the pills above the planner used to
+// hand down: the four of them included an ALL that was the union of the other three, and
+// a pill that is the sum of its neighbours is not a filter. Three toggles say everything
+// four radio buttons said and several things they could not — LIVE and PAST together,
+// say, which is every session except the ones still to come.
+//
+// An empty set draws nothing, and that is the honest answer rather than a special case:
+// the admin turned every filter off, and a list that responded by showing everything
+// would be overruling them.
+export const shownByStatus = <T extends SessionSpan>(
+  sessions: readonly T[],
+  enabled: ReadonlySet<SpanStatus>,
+  now: number,
+): T[] => sessions.filter((session) => enabled.has(spanStatus(session, now)))

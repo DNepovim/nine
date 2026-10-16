@@ -221,7 +221,11 @@ export function MenuOverlay({
   const showDev = useAnyFlag(DEV_FEATURES)
   // Held in a const so the press handler below closes over a narrowed value rather than
   // re-reading something it cannot narrow.
-  const challenge = useSessionCard()
+  // `reckon` goes down to the card, which hands it to its own clock: a teaser that runs
+  // out becomes the live card on that tick rather than on the next launch. One re-render
+  // of this screen, at the boundary — see the note on `ChallengeCountdown`, which is the
+  // reason the clock lives in a component of its own.
+  const { card: challenge, reckon: reckonChallenge } = useSessionCard()
   const showAdmin = useFlag('admin')
   // How many messages are waiting for an answer, which puts a dot on the link below.
   // Asked only of a launch that holds `admin` — the hook sees to that — because the
@@ -446,6 +450,7 @@ export function MenuOverlay({
                 {challenge !== null && (
                   <ChallengeCard
                     card={challenge}
+                    onArrive={reckonChallenge}
                     onPress={() => {
                       onOpenChallenge(challenge)
                     }}

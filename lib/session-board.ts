@@ -18,6 +18,14 @@ export type OpenSession = {
   modeId: string
   opensAt: number
   closesAt: number
+  // How many minutes before it opens this session announces itself, already resolved by
+  // the RPC — its own figure if it has one, the general figure from `settings` if not.
+  // Resolved server-side so there is exactly one opinion about what a missing one means;
+  // see the note on `open_sessions_with_leaders`.
+  teaserMinutes: number
+  // When it was last given more time, or null. The card says so for the rest of the
+  // window, which is why this rides along rather than being asked for separately.
+  extendedAt: number | null
   // Null where nobody has played yet, which is every session until someone does — and
   // the second line of the card says so rather than leaving a gap.
   //
@@ -38,6 +46,8 @@ type OpenSessionRow = {
   mode_id: string
   opens_at: string
   closes_at: string
+  teaser_minutes: number
+  extended_at: string | null
   leader_name: string | null
   leader_score: number | null
   leader_acc: number | null
@@ -63,6 +73,8 @@ export async function loadOpenSessions(): Promise<{
       modeId: row.mode_id,
       opensAt: atMs(row.opens_at),
       closesAt: atMs(row.closes_at),
+      teaserMinutes: row.teaser_minutes,
+      extendedAt: row.extended_at === null ? null : atMs(row.extended_at),
       leader:
         row.leader_name === null || row.leader_score === null
           ? null

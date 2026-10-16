@@ -2,6 +2,7 @@ import { Trans, useLingui } from '@lingui/react/macro'
 import { useFonts } from 'expo-font'
 import { useState } from 'react'
 import { Text, View } from 'react-native'
+import Animated, { FadeIn } from 'react-native-reanimated'
 
 import DSEG7Font from '@/assets/fonts/DSEG7Classic-Bold.ttf'
 import { GradientName } from '@/components/gradient-name'
@@ -38,9 +39,15 @@ import { challengeInk } from '@/modes/challenges/palette'
 export function ChallengeCard({
   card,
   onPress,
+  onArrive,
 }: {
   card: NonNullable<SessionCard<OpenSession>>
   onPress: () => void
+  // Handed straight to the clock: a teaser that runs out has to become the live card on
+  // that tick rather than on the next launch. Passed through rather than acted on here —
+  // which card to draw is `cardSession`'s answer, and this is only the news that the
+  // answer has changed.
+  onArrive?: () => void
 }) {
   const { t } = useLingui()
   const { state, session } = card
@@ -110,13 +117,14 @@ export function ChallengeCard({
         <Text selectable={false} className={cn(TYPE.value, 'text-dim')}>
           <Trans>
             <GradientText text={t(labelOf(session.modeId))} from={inkFrom} to={ink} />{' '}
-            event starts in
+            challenge starts in
           </Trans>
         </Text>
         <ChallengeCountdown
           until={session.opensAt}
           gradient={darkGradientOf(session.modeId)}
           flip
+          onArrive={onArrive}
         />
       </TrackedPressable>
     )
@@ -251,6 +259,27 @@ export function ChallengeCard({
                   </Trans>
                 </Text>
               </View>
+            )}
+
+            {/* Given more time, for the rest of the window.
+
+                No seen-state and no dismissal: the flag is the session's own, so a player
+                who opens the app an hour later still learns the window moved, and one who
+                has already read it reads it again. That is the trade — the alternative
+                needs a per-extension identity and a stored list of what each player has
+                seen, which is the apparatus the what's-new popup carries, for news that
+                outlives a window rather than news that dies with one.
+
+                `TYPE.value` on `text-dim`, which is the role and the ink the leader line
+                above already uses: this is the same kind of line in the same column, and
+                a third size here would be the card growing a voice it does not need. It
+                fades in rather than appearing, because nothing in this app appears. */}
+            {session.extendedAt !== null && (
+              <Animated.View entering={FadeIn.duration(260)}>
+                <Text selectable={false} className={cn(TYPE.value, 'text-dim')}>
+                  <Trans>Given more time.</Trans>
+                </Text>
+              </Animated.View>
             )}
           </View>
         </View>

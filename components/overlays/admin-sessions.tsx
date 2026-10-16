@@ -1,22 +1,32 @@
+import { Ionicons } from '@expo/vector-icons'
 import { msg } from '@lingui/core/macro'
 import { Trans, useLingui } from '@lingui/react/macro'
+import { isEmptyArray } from 'narrowland'
 import { useEffect, useState } from 'react'
 import { ScrollView, Text, View } from 'react-native'
 
 import { GradientText } from '@/components/gradient-text'
+import { AdminPills } from '@/components/overlays/admin-pills'
 import { AdminScreen } from '@/components/overlays/admin-screen'
-import { AdminSegments } from '@/components/overlays/admin-segments'
 import { AdminSession } from '@/components/overlays/admin-session'
 import {
   AdminChip,
   AdminTable,
   type AdminTableRow,
 } from '@/components/overlays/admin-table'
+import { TeaserModal } from '@/components/overlays/admin-teaser-modal'
 import { LiveDot } from '@/components/overlays/live-dot'
 import { PrimaryButton } from '@/components/primary-button'
+import { TrackedPressable } from '@/components/tracked-pressable'
+import { DIM_INK } from '@/constants/colors'
 import { TYPE } from '@/constants/typography'
 import { listSessions, type AdminSession as Session } from '@/lib/admin/sessions'
-import { spanStatus, STATUS_LABEL, type SpanStatus } from '@/lib/challenge-session'
+import {
+  shownByStatus,
+  spanStatus,
+  STATUS_LABEL,
+  type SpanStatus,
+} from '@/lib/challenge-session'
 import { cn } from '@/lib/cn'
 import { formatWindowLength } from '@/lib/duration'
 import { dayAndMonth } from '@/lib/format-date'
@@ -50,20 +60,27 @@ const STATUS_TONE: Record<SpanStatus, 'filled' | 'strong' | 'quiet'> = {
 }
 
 // Which sessions are listed, and in the order a planner reads them: what is on now, what
-// is coming, what already ran. ALL last, because the whole list is mostly a record.
-type Filter = SpanStatus | 'all'
+// is coming, what already ran.
+//
+// Three rather than the four there were. The fourth was ALL, and once these became
+// toggles it was the union of the other three — a pill that is the sum of its neighbours
+// is not a filter. Lighting all three says what it said, and the pairs it could never
+// say (LIVE and PAST, which is everything except what is still to come) are now sayable.
 
-const FILTERS: readonly Filter[] = ['live', 'upcoming', 'expired', 'all']
+const FILTERS: readonly SpanStatus[] = ['live', 'upcoming', 'expired']
+
+// What the screen opens on: what is on now and what is coming. The record below them is
+// a press away and is not what somebody opening this screen came to see.
+const LIT_ON_ARRIVAL: readonly SpanStatus[] = ['live', 'upcoming']
 
 // Not translated, the way `STATUS_LABEL` beside it is not: these name the state of a
 // database row on a screen whose readers are the people who write the catalog. Shorter
 // than the chips they filter, because four of them share one row.
-const FILTER_LABEL: Record<Filter, string> = {
+const FILTER_LABEL = {
   live: 'LIVE',
   upcoming: 'PLANNED',
   expired: 'PAST',
-  all: 'ALL',
-}
+} as const satisfies Record<SpanStatus, string>
 
 // The date a session opens, as a block: the day as a figure with its month under it.
 //
@@ -92,20 +109,29 @@ export function AdminSessions({ onBack }: { onBack: () => void }) {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [editing, setEditing] = useState<Editing>(null)
-  const [filter, setFilter] = useState<Filter>('all')
+  const [lit, setLit] = useState<ReadonlySet<SpanStatus>>(() => new Set(LIT_ON_ARRIVAL))
+  const [tuning, setTuning] = useState(false)
 
   // One counter, the way every other admin list has one: the list is a snapshot, and a
   // write on the form behind it has to be able to tell this to read again.
   const [epoch, setEpoch] = useState(0)
 
-  // Read once per open rather than per render, the same way the intro reads `openedAt`
-  // and the challenge lab reads its own: a window closing while this screen is up would
-  // otherwise relabel a row under a thumb already travelling towards it.
-  const [openedAt] = useState(() => Date.now())
+  // Read once per *read* rather than per render: a window closing on its own while this
+  // screen is up must not relabel a row under a thumb already travelling towards it,
+  // which is why this is not a ticker.
+  //
+  // But it is re-seeded with `epoch`, and that is new. CLOSE EARLY and EXTEND let this
+  // screen change a window's status from inside itself, which nothing here could do
+  // before. Frozen at mount, a session closed early reloads with `closes_at` already
+  // behind us and still reads `live` against the old clock — keeping its LIVE chip and
+  // its dot, still counting under the LIVE filter, and offering EXTEND on a form whose
+  // writes the server now refuses. The clock has to move when the rows do.
+  const [openedAt, setOpenedAt] = useState(() => Date.now())
 
   useEffect(() => {
     void (async () => {
       const res = await listSessions()
+      setOpenedAt(Date.now())
       setRows(res.rows)
       setError(res.error)
       setLoading(false)
@@ -128,14 +154,19 @@ export function AdminSessions({ onBack }: { onBack: () => void }) {
     )
   }
 
-  const countOf = (option: Filter) =>
-    option === 'all'
-      ? rows.length
-      : rows.filter((session) => spanStatus(session, openedAt) === option).length
-
-  const shown = rows.filter(
-    (session) => filter === 'all' || spanStatus(session, openedAt) === filter,
+  // One pass for all three chips rather than one pass each. The list is tens of rows, so
+  // this is not about the clock — it is that `spanStatus` was being asked the same
+  // question about the same row three times on every render, which reads as though the
+  // three counts were three different questions.
+  const counts = rows.reduce<Record<SpanStatus, number>>(
+    (tally, session) => {
+      tally[spanStatus(session, openedAt)] += 1
+      return tally
+    },
+    { live: 0, upcoming: 0, expired: 0 },
   )
+
+  const shown = shownByStatus(rows, lit, openedAt)
 
   // One planned session per row: which challenge, when it opens, how long it runs, and
   // where that span stands against now.
@@ -206,7 +237,28 @@ export function AdminSessions({ onBack }: { onBack: () => void }) {
 
   return (
     <AdminScreen
-      title={t(TITLE)}
+      // A heading rather than a title, because the row has a second thing in it now: the
+      // general teaser figure used to sit above the filters as a labelled field, which put
+      // a number somebody sets once a year in front of the list every time they opened it.
+      // Behind a cog it is still one press away and no longer in the way.
+      heading={
+        <View className="mb-3 flex-row items-center justify-between gap-3">
+          <Text selectable={false} className={cn(TYPE.screenTitle, 'text-primary')}>
+            {t(TITLE)}
+          </Text>
+          <TrackedPressable
+            id="admin.session_settings"
+            onPress={() => {
+              setTuning(true)
+            }}
+            // 40 square, the thumb target the rest of these screens settled on, with the
+            // glyph smaller than its box rather than the box shrunk to the glyph.
+            className="h-10 w-10 items-center justify-center rounded-xl border border-muted bg-surface"
+          >
+            <Ionicons name="settings-outline" size={18} color={DIM_INK} />
+          </TrackedPressable>
+        </View>
+      }
       error={error}
       footer={
         <View className="gap-2">
@@ -226,14 +278,24 @@ export function AdminSessions({ onBack }: { onBack: () => void }) {
         </View>
       }
     >
-      <AdminSegments
+      <AdminPills
         id="admin.filter"
         className="mb-2.5"
-        value={filter}
-        onSelect={setFilter}
+        mode="toggle"
+        lit={lit}
+        onToggle={(option) => {
+          // The set is this screen's, so the new one is worked out here rather than in
+          // the control — which is handed the pill that was pressed and nothing else.
+          setLit((was) => {
+            const next = new Set(was)
+            if (next.has(option)) next.delete(option)
+            else next.add(option)
+            return next
+          })
+        }}
         options={FILTERS.map((option) => ({
           value: option,
-          label: `${FILTER_LABEL[option]} ${countOf(option)}`,
+          label: `${FILTER_LABEL[option]} ${counts[option]}`,
         }))}
       />
 
@@ -248,14 +310,27 @@ export function AdminSessions({ onBack }: { onBack: () => void }) {
           ]}
           rows={tableRows}
           empty={
-            filter === 'all' ? (
+            // Three answers rather than two, because "nothing to show" now has a third
+            // cause: every filter turned off. Saying *that* rather than "nothing planned"
+            // is the difference between a list that looks broken and one that is obeying.
+            isEmptyArray([...lit]) ? (
+              <Trans>No filters are on.</Trans>
+            ) : rows.length === 0 ? (
               <Trans>No sessions planned yet.</Trans>
             ) : (
-              <Trans>Nothing in this state.</Trans>
+              <Trans>Nothing in these states.</Trans>
             )
           }
         />
       </ScrollView>
+
+      {tuning && (
+        <TeaserModal
+          onDismiss={() => {
+            setTuning(false)
+          }}
+        />
+      )}
     </AdminScreen>
   )
 }

@@ -197,6 +197,17 @@ export type ButtonId =
   | 'admin.session_cancel'
   | 'admin.session_challenge'
   | 'admin.session_when'
+  // The two acts a live window allows, and the confirmations in front of them. Separate
+  // from `admin.session_cancel`, which deletes a booking: closing early settles the
+  // standings of a session that is running, and the two sit one above the other on the
+  // same form.
+  | 'admin.session_close_early'
+  | 'admin.session_close_confirm'
+  | 'admin.session_extend'
+  | 'admin.session_extend_confirm'
+  // The cog on the planner's title row, and the save inside the window behind it.
+  | 'admin.session_settings'
+  | 'admin.session_settings_save'
   // The two halves of a combobox, wherever one is drawn: the closed control that opens
   // the list, and a row inside it. One pair for all of them — the role on a person, the
   // window the figures are read over — because what is being reported is *a choice was

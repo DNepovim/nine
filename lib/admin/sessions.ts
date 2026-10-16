@@ -5,7 +5,7 @@ import { modeById } from '@/modes'
 
 // The sessions half, beside features.ts and roles.ts: when a challenge is on.
 //
-// One read and three writes. The read is a plain select rather than a fourth RPC —
+// One read and five writes. The read is a plain select rather than a sixth RPC —
 // there are no counts to resolve the way `feature_stats` has, the rows are public, and
 // the start screen will want exactly this select in the phase that puts a challenge in
 // front of a player. The writes are RPCs because the admin guard and the no-overlap rule
@@ -24,6 +24,21 @@ export type AdminSession = {
   // reasoning as `AdminFeature.inBuild` — the row is drawn rather than hidden, because
   // unseen configuration is how it goes stale.
   inBuild: boolean
+  // This session's **own** teaser in minutes, unresolved — null where it has none and
+  // takes the general figure instead.
+  //
+  // Deliberately not the resolved figure `OpenSession` carries. The planner is the one
+  // screen that has to tell an override from an inherited value, because that is the
+  // difference between a field with a number in it and a field left blank: resolving it
+  // here would make every session look as though somebody had typed 2160 into it.
+  teaserMinutes: number | null
+  // When it was last given more time, or null.
+  extendedAt: number | null
+  // How many players have scored on it. The form locks on **this**, not on whether the
+  // session is live, because that is what the server locks on — a board is a contest
+  // people have run in, and a live session nobody has touched is still just a booking.
+  // See the edit guard in 20261016020000_session_controls.sql.
+  played: number
 }
 
 type SessionRow = {
@@ -31,6 +46,11 @@ type SessionRow = {
   mode_id: string
   opens_at: string
   closes_at: string
+  teaser_minutes: number | null
+  extended_at: string | null
+  // PostgREST's embedded aggregate: one row holding the count of the related rows. Asked
+  // for here rather than through a fifth RPC, which is what the read already avoids.
+  session_scores: { count: number }[]
 }
 
 // The column holds `timestamptz`, which arrives as an ISO string; everything above this
@@ -46,7 +66,9 @@ export async function listSessions(): Promise<{
 }> {
   const res = await supabase
     .from('challenge_sessions')
-    .select('id, mode_id, opens_at, closes_at')
+    .select(
+      'id, mode_id, opens_at, closes_at, teaser_minutes, extended_at, session_scores(count)',
+    )
     .order('opens_at', { ascending: false })
   noteRequest(res.error)
   if (res.error) return { rows: [], error: res.error.message }
@@ -56,6 +78,9 @@ export async function listSessions(): Promise<{
       modeId: row.mode_id,
       opensAt: atMs(row.opens_at),
       closesAt: atMs(row.closes_at),
+      teaserMinutes: row.teaser_minutes,
+      extendedAt: row.extended_at === null ? null : atMs(row.extended_at),
+      played: row.session_scores[0]?.count ?? 0,
       inBuild: modeById(row.mode_id) !== null,
     })),
     error: null,
@@ -73,10 +98,12 @@ const spanArgs = (span: SessionSpan) => ({
 export async function planSession(
   modeId: string,
   span: SessionSpan,
+  teaserMinutes: number | null,
 ): Promise<{ error: string | null }> {
   const res = await supabase.rpc('plan_challenge_session', {
     p_mode_id: modeId,
     ...spanArgs(span),
+    p_teaser_minutes: teaserMinutes,
   })
   noteRequest(res.error)
   return { error: res.error?.message ?? null }
@@ -89,18 +116,47 @@ export async function editSession(
   id: string,
   modeId: string,
   span: SessionSpan,
+  teaserMinutes: number | null,
 ): Promise<{ error: string | null }> {
   const res = await supabase.rpc('edit_challenge_session', {
     p_id: id,
     p_mode_id: modeId,
     ...spanArgs(span),
+    p_teaser_minutes: teaserMinutes,
   })
   noteRequest(res.error)
   return { error: res.error?.message ?? null }
 }
 
+// Deletes the booking, and the server refuses it for a live session or one anybody has
+// scored on — see the guard in 20261016020000_session_controls.sql. The screen hides the
+// button in those cases; this is the promise underneath it.
 export async function cancelSession(id: string): Promise<{ error: string | null }> {
   const res = await supabase.rpc('cancel_challenge_session', { p_id: id })
+  noteRequest(res.error)
+  return { error: res.error?.message ?? null }
+}
+
+// Shuts a live window now, keeping its board. Not a cancel, and the two are one keystroke
+// apart on the same screen: cancelling deletes a booking nobody has played, and this
+// settles the standings of one that is running.
+export async function closeSessionEarly(id: string): Promise<{ error: string | null }> {
+  const res = await supabase.rpc('close_challenge_session_early', { p_id: id })
+  noteRequest(res.error)
+  return { error: res.error?.message ?? null }
+}
+
+// Moves a live window's end forward, and marks it as given more time. Minutes, because
+// the dialog asks for hours and minutes and one figure is what the server wants — the
+// screen does that sum, not this.
+export async function extendSession(
+  id: string,
+  minutes: number,
+): Promise<{ error: string | null }> {
+  const res = await supabase.rpc('extend_challenge_session', {
+    p_id: id,
+    p_minutes: minutes,
+  })
   noteRequest(res.error)
   return { error: res.error?.message ?? null }
 }

@@ -157,3 +157,17 @@ export function formatWindowLength(ms: number): string {
   const rest = hours % 24
   return rest === 0 ? `${days}${DAY_MARK}` : `${days}${DAY_MARK}${pad(rest)}${HOUR_MARK}`
 }
+
+// A figure of minutes as whole hours, for a form that asks in hours.
+//
+// The admin screens hold the teaser in hours because that is the unit somebody thinks in
+// — a day and a half, not two thousand minutes — while the column holds minutes so that
+// allowing half an hour later is a change of the field and nothing else.
+//
+// **Rounds, and the rounding is the whole reason this is a function.** A figure that is
+// not a whole number of hours (90, set by hand in SQL) reads as 2 here and saves back as
+// 120, quietly rewriting it. Nothing in the app writes such a value, so this is a note
+// rather than a defect — but it was documented in two components with the same paragraph,
+// which is one copy too many for something that could drift.
+export const minutesAsHours = (minutes: number): string =>
+  String(Math.round(minutes / 60))
