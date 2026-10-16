@@ -84,7 +84,8 @@ export function AdminStats({
   // How many messages are owed an answer, handed down from the hub rather than read
   // again here. The hub already asks `admin_feedback_owed` to decide whether to draw its
   // dot, and that function is the app's one definition of owed — it is the only one that
-  // knows a message can be set aside. See the note on `feedback_owed` in lib/admin/stats.
+  // knows a message can be set aside. `admin_stats` used to answer this too, counting
+  // every unanswered message; that key is gone rather than left to be read by mistake.
   messagesOwed,
   onBack,
 }: {

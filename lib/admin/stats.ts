@@ -98,15 +98,6 @@ type StatsPayload = {
   }[]
   pulse: {
     feedback: number
-    // On the wire and **deliberately not read**. It counts every message with no answer,
-    // which stopped being the same question as *how many are owed* the day a message
-    // could be set aside unanswered: this one would still count those, and the chip it
-    // used to feed sits two taps from the hub's dot, which reads `admin_feedback_owed`.
-    // One definition of owed, in one function, asked by both — see
-    // `countMessagesOwed` in lib/admin/feedback.ts. The key stays until something else
-    // has reason to rewrite `admin_stats`, whose body is a hundred and fifty lines that
-    // would otherwise be copied into a migration to change this one predicate.
-    feedback_owed: number
     achievements: number
     rooms: number
     reigns: number
