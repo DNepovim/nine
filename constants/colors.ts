@@ -151,11 +151,31 @@ export const GAME_SCALE = ['#4C7EFF', '#7273D2', '#c36282', '#E5534B', '#FF8C00'
 // global.css — the token still paints it everywhere else, and the two are one colour.
 export const PIE_INK = '#171421'
 
+// Bands 1 to 3 are the game's own arc at tint strength — accuracy's violet, speed's
+// pink, arcade's amber, each taken to around 85% lightness. Bands 4 to 9 carry that walk
+// on round the wheel, through lime, green, teal and sky to a blue that stops short of
+// coming back to band 1.
+//
+// **And they deepen as they climb**, 83% down to 73%, which the first four do not need
+// and these six do: six pale tints at one lightness are more than the eye separates, and
+// the two cues together mean a band differs from its neighbour in hue *and* in weight.
+// It also says the right thing — the heaviest track is the biggest number. The deepest
+// of them still carries the numeral at 7.2:1.
+//
+// Only a dial that reaches that high ever draws them: 324 is the ceiling of the nine
+// every permanent mode is played on, so bands 4 and up belong to the four-by-four
+// challenge and to whatever dial comes after it.
 export const TARGET_BAND_TRACK = {
   0: MUTED_INK,
   1: '#CFCBEE',
   2: '#EBC7D2',
   3: '#F2DCB4',
+  4: '#E9EEBA',
+  5: '#C7E6B7',
+  6: '#AFDEBF',
+  7: '#A8DCDA',
+  8: '#9FC5DF',
+  9: '#96A0DE',
 } as const satisfies Record<TargetBand, string>
 
 type Palette = { low: string; high: string }

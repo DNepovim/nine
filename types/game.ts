@@ -18,7 +18,13 @@ export type DisplayTarget = Target & {
   startProgress: number
 }
 
-// Which hundred a target's value falls in — 0 for 0–99 through 3 for 300+. MAX_TARGET
-// is 324, so these four cover the range. The countdown pie tints its track by band so
-// the hundreds digit reads without being parsed: 223 cannot pass for 123.
-export type TargetBand = 0 | 1 | 2 | 3
+// Which hundred a target's value falls in — 0 for 0–99 through 9 for 900. The countdown
+// pie tints its track by band so the hundreds digit reads without being parsed: 223
+// cannot pass for 123.
+//
+// Ten rather than the four the nine dial needs. A **dial** decides how high the range
+// goes — `maxSum` is 324 on the nine every permanent mode is played on, and 900 on the
+// four-by-four challenge — so the bands have to cover the widest dial any mode may hand
+// over rather than the one the game grew up on. Below band 4 nothing has changed; those
+// are the only bands a 324 board ever reaches.
+export type TargetBand = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9
