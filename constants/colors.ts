@@ -142,6 +142,26 @@ export const WAY_INK = '#7A5A3A'
 // surface allows before a label stops being a colour and starts being a smudge.
 export const ARCADE_INK = '#9A4F06'
 
+// The three readings of an arcade run's satiety bar: fed, low, and about to go. The bands
+// themselves are `SATIETY_LOW` and `SATIETY_DIRE` in machines/satiety.ts, which owns what a
+// satiety figure means; this is only what each one is drawn in.
+//
+// A palette of its own rather than three stops of the game scale, because the thing it says
+// is not "which mode" — it is one bar getting worse. It begins on arcade's own ink and ends
+// on the app red every other alarm in the app uses, so the ladder is two colours the player
+// has already been taught plus one between them.
+//
+// That middle one is measured against the bar's track (`--color-muted`, #D4D0C8) rather than
+// against the surface, the track being what a fill of any length actually sits on: 2.53:1,
+// where `fed` is 3.91:1 and `spent` is 2.41:1. So the ladder darkens-to-brightens evenly and
+// the warning is never the faintest of the three — which is the trap here, a bar that lights
+// up by *fading*. None of the three reaches the 3:1 a control that carries its meaning in
+// colour would owe, and they do not have to: the reading is the bar's **width**, and the
+// colour is emphasis on top of it. See rule 1 in the design guide's accessibility notes —
+// hue is never the only carrier here, and the one state hue could not carry on its own, an
+// empty bar, is the one that pulses.
+export const SATIETY_INK = { fed: ARCADE_INK, low: '#CC6410', spent: APP_RED } as const
+
 // The game's whole scale, blue through to the arcade amber — every mode's colour at
 // once.
 export const GAME_SCALE = ['#4C7EFF', '#7273D2', '#c36282', '#E5534B', '#FF8C00'] as const

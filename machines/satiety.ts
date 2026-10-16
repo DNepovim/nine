@@ -72,3 +72,21 @@ export function spent(satiety: number, bite: number): number {
 export function starving(satiety: number): boolean {
   return satiety <= 0
 }
+
+// Where the bar stops reading as fed, and where it stops reading as merely low.
+//
+// The one pair of figures in this file with **no rule behind them**. Nothing happens at a
+// fifth of a bar and nothing happens at a tenth: a leg costs what it costs, and the hearts
+// go at nought and nowhere else — see `starving`, which is still the only threshold that
+// spends anything. These two are how far ahead the player is told, and that is all.
+//
+// Here rather than in the bar that draws them because what a satiety figure *means* is this
+// file's business, the way `starving` is: a component deciding on its own that a fifth is
+// worth worrying about would be a second opinion about the same number. The colours they
+// resolve to are `SATIETY_INK` in constants/colors.ts, which is the bar's half of it.
+//
+// A fifth is about one bad leg's warning and a tenth is about one good one's — which is the
+// point of having two. By the time the bar is red there is no walk left that does not empty
+// it, so red says "the next village or the hearts start going" rather than "mind out".
+export const SATIETY_LOW = 0.2
+export const SATIETY_DIRE = 0.1

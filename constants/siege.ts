@@ -7,22 +7,20 @@
 // the player already knows — a siege is the only thing in arcade that spends them.
 export const HEARTS = 3
 
-// The walls: how many towers a siege has and how many hits each takes, at the start of a
-// run and at the deepest a siege is asked to be.
+// The walls: how many towers a siege has and how many hits each takes, at the first stage
+// and at the stage the ramp tops out on. See lib/arcade-stage.ts — every pair in this file
+// is read off a **stage** rather than off how deep the run has got, which is what lets the
+// first wall a player ever meets be two towers of two hits while a late one is six of four.
 //
 // Both counts are even, and that is the gate's doing rather than a round number: the towers
 // stand in the middle of equal bays along the wall, so an even count always leaves a bay
 // straddling the middle of it and an odd one always stands a tower there — on top of the
 // one opening the men have to come out of. `towerCount` steps between these two in twos for
 // the same reason. What carries the ramp smoothly is the hits.
-export const TOWERS_SHALLOW = 4
-export const TOWERS_DEEP = 6
-export const TOWER_HITS_SHALLOW = 3
-export const TOWER_HITS_DEEP = 5
-
-// How many crossroads deep a siege is at its hardest. Past it nothing more is added — a
-// run that climbs forever should not meet a wall that grows forever with it.
-export const SIEGE_DEPTH_FULL = 24
+export const TOWERS_ONE = 2
+export const TOWERS_FULL = 6
+export const TOWER_HITS_ONE = 2
+export const TOWER_HITS_FULL = 4
 
 // The press band every number in a siege is drawn from. Cheaper than a fan's three to
 // four, because a crossroad asks for one number and a siege asks for dozens.
@@ -30,15 +28,26 @@ export const SIEGE_PAR_MIN = 2
 export const SIEGE_PAR_MAX = 3
 
 // Warriors: how many may be on the ground at once, how long one takes to cross it, when
-// the first leaves the gate and how long the gap between them starts at.
+// the first leaves the gate and how long the gap between them starts at — each as the two
+// ends of a stage ramp.
 //
-// The last two are bases: both are run through the same decay everything in the app that
-// tightens uses, counting warriors-already-sent plus the depth of the siege. So a fight
-// speeds up as it drags on *and* starts faster the deeper it is.
-export const WARRIORS_LIVE_MAX = 3
-export const WARRIOR_WALK_MS = 7000
-export const SPAWN_FIRST_MS = 2600
-export const SPAWN_EVERY_MS = 5200
+// The first stage sends them **one at a time**, and that is the single figure that decides
+// what a first siege feels like: a player reading a wall for the first time is reading one
+// number crossing the ground, not three. The gate still counts while the ground is full, so
+// the cadence is a queue rather than a crowd.
+//
+// The gap is a base twice over: the stage sets where it starts, and it is then run through
+// the same decay everything in the app that tightens uses, counting warriors-already-sent.
+// So a fight speeds up as it drags on — which is pressure inside one siege, and is what
+// keeps a stalled wall from being free — and a later stage opens faster than an early one.
+export const WARRIORS_LIVE_ONE = 1
+export const WARRIORS_LIVE_FULL = 3
+export const WARRIOR_WALK_ONE = 11000
+export const WARRIOR_WALK_FULL = 6000
+export const SPAWN_FIRST_ONE = 7000
+export const SPAWN_FIRST_FULL = 2600
+export const SPAWN_EVERY_ONE = 9000
+export const SPAWN_EVERY_FULL = 4800
 
 // How wide the warriors' lanes fan out below the gate, in radians, so two never come down
 // the same line, and how far off the straight that carries a man at the middle of his walk.
@@ -75,7 +84,19 @@ export const SIEGE_ZOOM = 2
 // stand-off is worked backwards from it rather than named — see `siegeFrame` in
 // lib/arcade-layout.ts. Shares of the canvas rather than points, so the same fight fills a
 // tall phone and a short one the same way.
-export const WALL_AT = 0.26
+//
+// The wall is lifted as near the top of the canvas as the towers' own sky allows, and the
+// hero is left where it was. That is what the extra ground is for rather than tidiness: a
+// warrior's walk is the only warning a siege gives, and everything the fight asks of the
+// player happens in the space between these two figures — so a sixth of it given back to
+// empty country above the merlons was a sixth of the fight given away.
+//
+// How far apart they can be pulled is not a free choice. The hero stands *on the way in*,
+// so the ground it leaves in front of the gate can never be longer than the way it walked
+// up — see `HELD` in lib/arcade-layout.ts, which is the margin that keeps it from being
+// asked to stand behind the crossroad it came from. These two figures and that one are
+// within a hair of each other on purpose: the field is as deep as the map can pay for.
+export const WALL_AT = 0.2
 export const HERO_AT = 0.84
 
 // How much room the wall keeps above its own foot line before the camera will raise it any

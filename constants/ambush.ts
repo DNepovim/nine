@@ -8,27 +8,26 @@
 // this reuses rather than copies. Two fights that closed at different speeds would read as
 // two cameras rather than as one game picking a fight out of the map.
 
-// How often a fan offers a way with bandits on it.
+// How often a fan offers a way with bandits on it, at the first stage and at the stage the
+// ramp tops out on. Like every pair in this file it is read off a **stage** rather than off
+// how deep the run has got — see lib/arcade-stage.ts.
 //
-// Lower than FORT_CHANCE, and that is the balance between the two fights rather than a
+// Both ends below FORT_CHANCE, and that is the balance between the two fights rather than a
 // guess: a walled village is announced before it is chosen and an ambush is not, so the
-// unannounced one has to be the rarer. With two to four ways to a fan and the guards in
-// `openCrossroad` on top, this comes to an ambush about every eighth leg — often enough
-// that a run meets several, rare enough that a road is still usually just a road.
-export const AMBUSH_CHANCE = 0.4
+// unannounced one has to be the rarer. The first stage is well below it again — with two to
+// four ways to a fan and the guards in `openCrossroad` on top, a sixth comes to an ambush
+// about every twentieth leg, which is a road that bites often enough to be learned from and
+// seldom enough that an early run is mostly walking.
+export const AMBUSH_CHANCE_ONE = 0.16
+export const AMBUSH_CHANCE_FULL = 0.4
 
-// How many bandits are standing on a road, at the start of a run and at the deepest an
-// ambush is asked to be.
+// How many bandits are standing on a road, at the first stage and at the last.
 //
 // One figure for the whole band rather than a roll per road: what the player is reading in
 // the first second of a fight is how many numbers there are, and a count that wandered
 // would make that unreadable without making it interesting.
-export const BANDITS_SHALLOW = 5
-export const BANDITS_DEEP = 10
-
-// How many crossroads deep an ambush is at its worst. The same figure a siege uses, so the
-// two fights get harder at the same rate and a run meets one ramp rather than two.
-export const AMBUSH_DEPTH_FULL = 24
+export const BANDITS_ONE = 3
+export const BANDITS_FULL = 9
 
 // The press band every number in an ambush is drawn from. Cheap, because a fight asks for
 // ten numbers where a crossroad asks for one.
@@ -47,11 +46,14 @@ export const AMBUSH_PAR_MAX = 3
 // placed in proportion — so "the nearest one is the clock" is true by construction rather
 // than by a second number agreeing with the first.
 //
-// Both are run through the decay everything in the app that tightens uses, counting the
-// depth. So a deep ambush closes faster *and* has more men in it, which is the same double
-// escalation a siege gets from counting warriors-already-sent alongside its depth.
-export const BANDIT_FIRST_MS = 5200
-export const BANDIT_EVERY_MS = 3400
+// Both are read off the stage. So a late ambush closes faster *and* has more men in it,
+// which is the same double escalation a late siege gets. At the first stage three men come
+// in nine seconds apart — slow enough that the band can be read before it is answered,
+// which is the one thing the old figures never gave a player.
+export const BANDIT_FIRST_ONE = 9000
+export const BANDIT_FIRST_FULL = 5000
+export const BANDIT_EVERY_ONE = 4500
+export const BANDIT_EVERY_FULL = 3000
 
 // How far round the circle a bandit may stand off the place its slot gave it, as a share of
 // a slot. Under a half, so a jitter can never carry one man into his neighbour's slot
@@ -80,7 +82,12 @@ export const AMBUSH_AT = 0.5
 // it keeps inside the canvas and the floor it will not go under. In map points, which is
 // what everything on the sheet is drawn in; the camera is what turns them into screen
 // points, at twice the size.
-export const GROUND_MARGIN = 24
+//
+// The margin is as small as the men themselves allow — half of WARRIOR_SIZE and a couple of
+// points of air — so the band comes in off the *edges* of the screen rather than off a ring
+// drawn comfortably inside it. That ring is the whole of the warning an ambush gives, and a
+// quarter of the canvas left empty outside it was a quarter of the warning thrown away.
+export const GROUND_MARGIN = 12
 export const GROUND_MIN = 50
 
 // How long a cut bandit stays on the screen after it has left the band: long enough for the

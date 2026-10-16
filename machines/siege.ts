@@ -1,18 +1,23 @@
 import {
   LANE_SPREAD,
-  SIEGE_DEPTH_FULL,
   SIEGE_PAR_MAX,
   SIEGE_PAR_MIN,
-  SPAWN_EVERY_MS,
-  SPAWN_FIRST_MS,
-  TOWER_HITS_DEEP,
-  TOWER_HITS_SHALLOW,
-  TOWERS_DEEP,
-  TOWERS_SHALLOW,
-  WARRIOR_WALK_MS,
-  WARRIORS_LIVE_MAX,
+  SPAWN_EVERY_FULL,
+  SPAWN_EVERY_ONE,
+  SPAWN_FIRST_FULL,
+  SPAWN_FIRST_ONE,
+  TOWER_HITS_FULL,
+  TOWER_HITS_ONE,
+  TOWERS_FULL,
+  TOWERS_ONE,
+  WARRIOR_WALK_FULL,
+  WARRIOR_WALK_ONE,
+  WARRIORS_LIVE_FULL,
+  WARRIORS_LIVE_ONE,
 } from '@/constants/siege'
-import { parValues, rngFor } from '@/machines/arcade'
+import { byStage } from '@/lib/arcade-stage'
+import { ARCADE_DIAL, parValues, rngFor } from '@/machines/arcade'
+import { accuracyFactor, computePar } from '@/machines/scoring'
 import { decayed, type Grid } from '@/modes'
 
 // A siege: the walls at a fortified village, the warriors coming out of its gate, and
@@ -73,23 +78,30 @@ export type Blow = {
 export type Siege = {
   // The crossroad this is the siege of, which is also what its randomness is keyed on.
   at: string
-  depth: number
+  // The stage this wall was built at — see lib/arcade-stage.ts. Every figure of the fight
+  // is read off it, and it is kept on the siege rather than asked for again so that a wall
+  // is the wall it was when the hero arrived at it.
+  stage: number
   seed: number
   towers: readonly Tower[]
   warriors: readonly Warrior[]
-  // How many have left the gate. What the cadence tightens on, along with the depth.
+  // How many have left the gate. What the cadence tightens on inside the fight.
   spawned: number
   // When the next one leaves.
   nextAt: number
   // The last blow struck, or nothing yet. See `Blow`.
   blow: Blow | null
+  // The dial as it stood when the answer being given now began: the hero's arrival, or
+  // whatever the last press to land left behind. What `land` measures a route against —
+  // see the note on a clean hit there — and the siege's own half of the arrangement a
+  // target has in machines/game.ts, where it is also called `refGrid`.
+  refGrid: Grid
+  // How many presses have gone into that answer. Every press in a siege goes through
+  // `land`, so this is counted there rather than handed in.
+  presses: number
 }
 
-// How far into the ramp a depth sits, nought at the start and one at the deepest a siege
-// is asked to be.
-const ramp = (depth: number): number => Math.min(1, Math.max(0, depth) / SIEGE_DEPTH_FULL)
-
-// How many towers a siege of this depth has, and how many hits each of them takes.
+// How many towers a siege at this stage has, and how many hits each of them takes.
 //
 // One figure for the whole siege rather than a roll per tower: a wall is of one build, and
 // four towers each needing a different unsaid number of hits reads as noise rather than as
@@ -97,12 +109,18 @@ const ramp = (depth: number): number => Math.min(1, Math.max(0, depth) / SIEGE_D
 //
 // The count steps in twos, so it is as even as the two ends of its range are — an odd one
 // would stand a tower over the gate, which is the one place on the wall nothing may stand.
-// See TOWERS_SHALLOW. The ramp is carried by the hits, which climb one at a time.
-export const towerCount = (depth: number): number =>
-  TOWERS_SHALLOW + 2 * Math.round(((TOWERS_DEEP - TOWERS_SHALLOW) / 2) * ramp(depth))
+// See TOWERS_ONE. The ramp is carried by the hits, which climb one at a time.
+export const towerCount = (stage: number): number =>
+  Math.round(byStage(TOWERS_ONE / 2, TOWERS_FULL / 2, stage)) * 2
 
-export const towerHits = (depth: number): number =>
-  Math.round(TOWER_HITS_SHALLOW + (TOWER_HITS_DEEP - TOWER_HITS_SHALLOW) * ramp(depth))
+export const towerHits = (stage: number): number =>
+  Math.round(byStage(TOWER_HITS_ONE, TOWER_HITS_FULL, stage))
+
+// How many warriors may be on the ground at once. One at the first stage, which is most of
+// what makes a first siege readable: the ground holds a single number at a time and the
+// gate queues behind it.
+export const warriorsLive = (stage: number): number =>
+  Math.round(byStage(WARRIORS_LIVE_ONE, WARRIORS_LIVE_FULL, stage))
 
 // Every number a press could resolve right now. Flattened towers are not among them, so
 // their old numbers are free to be handed to a warrior later.
@@ -118,14 +136,14 @@ export const liveValues = (siege: Siege): readonly number[] => [
 // near reachable from another.
 export function newSiege(
   at: string,
-  depth: number,
+  stage: number,
   seed: number,
   grid: Grid,
   now: number,
 ): Siege {
   const rng = rngFor(seed, `siege:${at}`)
-  const count = towerCount(depth)
-  const hits = towerHits(depth)
+  const count = towerCount(stage)
+  const hits = towerHits(stage)
   const values = parValues(grid, count, rng, {
     min: SIEGE_PAR_MIN,
     max: SIEGE_PAR_MAX,
@@ -138,7 +156,7 @@ export function newSiege(
     // One to a bay, in the middle of its own: evenly spread, so the wall reads as one
     // build rather than as a scatter, and the tower the player is looking for is where it
     // was in the last fight. The count is even, so no tower ever stands in the middle of
-    // the wall — which is the bay the gate is in. See TOWERS_SHALLOW.
+    // the wall — which is the bay the gate is in. See TOWERS_ONE.
     at: (i + 0.5) / values.length,
   }))
   // The gate's clock through `opened`, which is also what stamps it again when the fight
@@ -146,7 +164,20 @@ export function newSiege(
   // fought until a camera move later. See below. The `nextAt` handed in is a placeholder
   // for a field that cannot be left out; `opened` is what sets it.
   return opened(
-    { at, depth, seed, towers, warriors: [], spawned: 0, nextAt: now, blow: null },
+    {
+      at,
+      stage,
+      seed,
+      towers,
+      warriors: [],
+      spawned: 0,
+      nextAt: now,
+      blow: null,
+      // The first answer of the fight is measured from the dial the hero arrived holding,
+      // which is the grid the towers' own numbers were drawn against.
+      refGrid: grid,
+      presses: 0,
+    },
     now,
   )
 }
@@ -155,16 +186,16 @@ export function newSiege(
 //
 // The gate's first clock is set here rather than on arrival, and the difference is most of
 // a second. A hero that reaches a walled village stands through the camera coming down on
-// it with a dial that answers nothing, and `SPAWN_FIRST_MS` counted from the arrival would
-// have spent nearly a third of itself before the player could press a key — so the grace
-// the constant names would not be the grace the player gets.
+// it with a dial that answers nothing, and the first gap counted from the arrival would
+// have spent part of itself before the player could press a key — so the grace
+// `spawnFirst` names would not be the grace the player gets.
 //
 // It is also the one beat of a siege that nothing pauses — the camera move is not dialable,
 // so `usePauseOnBlur` does not cover it — and a phone put away under it would freeze the JS
 // timer for as long as the player liked and open the fight with a warrior already due.
 // Stamping on the way in rather than on arrival is what makes that stretch cost nothing.
 export function opened(siege: Siege, now: number): Siege {
-  return { ...siege, nextAt: now + SPAWN_FIRST_MS }
+  return { ...siege, nextAt: now + spawnFirst(siege.stage) }
 }
 
 // What one press resolved. At most one of `tower` and `warrior` is ever set: every live
@@ -198,6 +229,14 @@ const walked = (warrior: Warrior, now: number): number =>
 // reading between hits is the wall rather than their own last move. The old number goes
 // back into the pool the moment it is gone from the tower, so a man can be sent out under
 // it later.
+//
+// And a tower reached by the shortest route there is comes down whole, however many hits it
+// was standing for. That is the one thing in a siege that rewards reading the wall rather
+// than hurrying at it: `accuracyFactor` is the curve a hit is scored by everywhere else in
+// the app, and it is 1 only when the player spent exactly par — so a clean answer is worth
+// the whole tower and a scrambled one is worth the chip it always was. Par is measured from
+// `refGrid`, the dial as it stood when this answer began, for the same reason a target's par
+// is: a route has to be counted from where the player started dialling.
 export function land(
   siege: Siege,
   prevSum: number,
@@ -205,13 +244,22 @@ export function land(
   grid: Grid,
   now: number,
 ): SiegeHit {
-  const miss: SiegeHit = { siege, tower: null, warrior: null, taken: false }
+  // The press is spent whatever it reached, this one included: a dial that did not move the
+  // sum is still a key the player pressed, and an answer billed for fewer presses than it
+  // took would hand out clean hits nobody earned.
+  const spent = { ...siege, presses: siege.presses + 1 }
+  const miss: SiegeHit = { siege: spent, tower: null, warrior: null, taken: false }
   if (nextSum === prevSum) return miss
   const id = (siege.blow?.id ?? 0) + 1
+  // Where the next answer starts from, for whichever branch below lands: the dial as this
+  // press left it, with nothing spent against it yet.
+  const afresh = { refGrid: grid, presses: 0 }
 
   const struck = siege.towers.find((tower) => tower.left > 0 && tower.value === nextSum)
   if (struck !== undefined) {
-    const left = struck.left - 1
+    const clean =
+      accuracyFactor(computePar(ARCADE_DIAL, siege.refGrid, nextSum), spent.presses) === 1
+    const left = clean ? 0 : struck.left - 1
     const chipped: Tower = {
       ...struck,
       left,
@@ -221,7 +269,8 @@ export function land(
     const felled = left === 0
     return {
       siege: {
-        ...siege,
+        ...spent,
+        ...afresh,
         towers,
         blow: { id, tower: { id: struck.id, felled }, warrior: null },
       },
@@ -235,7 +284,8 @@ export function land(
   if (cut !== undefined) {
     return {
       siege: {
-        ...siege,
+        ...spent,
+        ...afresh,
         warriors: siege.warriors.filter((warrior) => warrior.id !== cut.id),
         blow: {
           id,
@@ -281,18 +331,24 @@ function asked(
   return value ?? struck.value
 }
 
-// How long a warrior takes to cross the ground, and how long the gate waits between
-// sending them.
+// How long a warrior takes to cross the ground, how long the gate waits before sending the
+// first, and how long it waits between the rest.
 //
-// Both on the one curve everything in the app that tightens already uses, so a siege
-// squeezes at the same felt rate a Speed clock does. The gap counts warriors-already-sent
-// *plus* the depth, which is how one curve does the two escalations the mode asks for: a
-// fight speeds up as it drags on, and a deeper fight starts faster.
-export const warriorWalk = (depth: number): number =>
-  Math.round(decayed(WARRIOR_WALK_MS, depth))
+// The two escalations a siege asks for, one from each ramp. The **stage** is what sets all
+// three of these: a later wall sends them sooner, closer together and at a quicker pace. And
+// inside one fight the gap is then run through the curve everything in the app that tightens
+// uses, counting warriors-already-sent — so a siege that drags on squeezes at the same felt
+// rate a Speed clock does, which is what stops a stalled wall from being free.
+export const warriorWalk = (stage: number): number =>
+  Math.round(byStage(WARRIOR_WALK_ONE, WARRIOR_WALK_FULL, stage))
+
+const spawnFirst = (stage: number): number =>
+  Math.round(byStage(SPAWN_FIRST_ONE, SPAWN_FIRST_FULL, stage))
 
 export const spawnGap = (siege: Siege): number =>
-  Math.round(decayed(SPAWN_EVERY_MS, siege.spawned + siege.depth))
+  Math.round(
+    decayed(byStage(SPAWN_EVERY_ONE, SPAWN_EVERY_FULL, siege.stage), siege.spawned),
+  )
 
 // One more out of the gate.
 //
@@ -305,7 +361,7 @@ export const spawnGap = (siege: Siege): number =>
 // of men; it is short of room.
 export function spawnWarrior(siege: Siege, grid: Grid, now: number): Siege {
   const waited = { ...siege, nextAt: now + spawnGap(siege) }
-  if (siege.warriors.length >= WARRIORS_LIVE_MAX) return waited
+  if (siege.warriors.length >= warriorsLive(siege.stage)) return waited
 
   const rng = rngFor(siege.seed, `siege:${siege.at}:w${siege.spawned}`)
   const [value] = parValues(grid, 1, rng, {
@@ -324,7 +380,7 @@ export function spawnWarrior(siege: Siege, grid: Grid, now: number): Siege {
         id: `w${siege.spawned}`,
         value,
         spawnedAt: now,
-        walkMs: warriorWalk(siege.depth),
+        walkMs: warriorWalk(siege.stage),
         lane: (rng() - 0.5) * LANE_SPREAD,
       },
     ],

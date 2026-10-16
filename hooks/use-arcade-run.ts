@@ -15,6 +15,7 @@ import { CLOSE_MS, HEARTS, OVERRUN_MS, TAKEN_MS } from '@/constants/siege'
 import { publishArcadeDev, type ArcadeDevActions } from '@/dev/arcade-dev-state'
 import { usePauseOnBlur } from '@/hooks/use-pause-on-blur'
 import { track } from '@/lib/analytics'
+import { FIRST_STAGE } from '@/lib/arcade-stage'
 import {
   advance as advanceAmbush,
   land as landAmbush,
@@ -619,7 +620,7 @@ export function useArcadeRun() {
               phase: 'springing',
               ambush: newAmbush(
                 way.to,
-                landed,
+                FIRST_STAGE,
                 r.seed,
                 r.grid,
                 r.map[way.to]?.cutDown ?? [],
@@ -640,7 +641,7 @@ export function useArcadeRun() {
               phase: 'closing',
               moving: null,
               best: Math.max(r.best, landed),
-              siege: newSiege(way.to, landed, r.seed, r.grid, now),
+              siege: newSiege(way.to, FIRST_STAGE, r.seed, r.grid, now),
               // Nothing to answer behind the walls, but the presses the fight is about to
               // make are not the next leg's and must not be billed to it.
               ...arrival(r.grid),
@@ -686,7 +687,7 @@ export function useArcadeRun() {
               moving: null,
               through: null,
               best: Math.max(r.best, landed),
-              siege: newSiege(through.to, landed, r.seed, r.grid, now),
+              siege: newSiege(through.to, FIRST_STAGE, r.seed, r.grid, now),
               ...arrival(r.grid),
               ...beat(r, now),
             }
@@ -1233,7 +1234,7 @@ export function useArcadeRun() {
           phase: 'closing',
           moving: null,
           through: null,
-          siege: newSiege(r.at, here.depth, r.seed, r.grid, now),
+          siege: newSiege(r.at, FIRST_STAGE, r.seed, r.grid, now),
           ...beat(r, now),
         }
       })
@@ -1254,14 +1255,13 @@ export function useArcadeRun() {
         if (!isOneOf(r.phase, DIALABLE)) return r
         const to = r.map[way.to]
         if (to === undefined) return r
-        const depth = to.depth
         return {
           ...r,
           map: { ...r.map, [way.to]: { ...to, ambushed: true, fortified: false } },
           phase: 'springing',
           moving: way,
           through: null,
-          ambush: newAmbush(way.to, depth, r.seed, r.grid, to.cutDown ?? []),
+          ambush: newAmbush(way.to, FIRST_STAGE, r.seed, r.grid, to.cutDown ?? []),
           ...arrival(r.grid),
           ...beat(r, now),
         }

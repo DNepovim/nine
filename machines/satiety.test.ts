@@ -1,6 +1,16 @@
 import { describe, expect, it } from 'vitest'
 
-import { BITE_MAX, BITE_MIN, biteFor, FULL, spent, starving } from './satiety'
+import {
+  BITE_MAX,
+  BITE_MIN,
+  biteFor,
+  FULL,
+  RETREAT_BITE,
+  SATIETY_DIRE,
+  SATIETY_LOW,
+  spent,
+  starving,
+} from './satiety'
 
 describe('biteFor', () => {
   it('takes the smallest bite from a leg answered in par presses', () => {
@@ -62,5 +72,45 @@ describe('starving', () => {
   it('is false while there is a crumb left', () => {
     expect(starving(0.01)).toBe(false)
     expect(starving(FULL)).toBe(false)
+  })
+})
+
+// The two bands the bar reads, and the one thing that has to stay true about them: they
+// are warnings, and the pulse is not one of them. A band that overlapped `starving` would
+// put the loudest mark the row has on a run with food still in it.
+describe('the bands the bar warns in', () => {
+  it('warns before the hearts go, twice, and in order', () => {
+    expect(SATIETY_LOW).toBeGreaterThan(SATIETY_DIRE)
+    expect(SATIETY_DIRE).toBeGreaterThan(0)
+    expect(SATIETY_LOW).toBeLessThan(FULL)
+  })
+
+  it('leaves the pulse to nought alone', () => {
+    expect(starving(SATIETY_DIRE)).toBe(false)
+    expect(starving(SATIETY_LOW)).toBe(false)
+  })
+
+  // The loaves are five because a bite divides into them — half a one at par, a whole one
+  // at worst — and that is the whole of why the row is readable. If a bite stops landing on
+  // a half or a whole, five loaves become a count nobody can read and the drawing has to be
+  // reconsidered rather than the figures quietly retuned. See satiety-loaves.tsx.
+  it('divides into the five loaves the row is drawn as', () => {
+    const LOAVES = 5
+    expect(BITE_MIN * LOAVES).toBeCloseTo(0.5)
+    expect(BITE_MAX * LOAVES).toBeCloseTo(1)
+    expect(RETREAT_BITE * LOAVES).toBeCloseTo(1)
+    // And both bands are a countable number of them, which is what lets the guide say
+    // "down to one" and "down to half of one" rather than quoting percentages.
+    expect(SATIETY_LOW * LOAVES).toBeCloseTo(1)
+    expect(SATIETY_DIRE * LOAVES).toBeCloseTo(0.5)
+  })
+
+  it('is reachable on the tidiest run there is', () => {
+    // A full bar spent one par leg at a time passes through both bands rather than
+    // stepping over either — which is what makes them worth drawing at all.
+    const legs: number[] = []
+    for (let left = FULL; left > 0; left = spent(left, BITE_MIN)) legs.push(left)
+    expect(legs.some((left) => left < SATIETY_LOW && left >= SATIETY_DIRE)).toBe(true)
+    expect(legs.some((left) => left < SATIETY_DIRE)).toBe(true)
   })
 })

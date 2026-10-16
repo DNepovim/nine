@@ -50,6 +50,18 @@ describe('siegeFrame', () => {
     }
   })
 
+  // The field is as deep as the map can pay for, and this is the line that says so. The
+  // hero stands on the way in, so the ground it leaves in front of the gate cannot be
+  // longer than the shortest way the map grows — pull `WALL_AT` and `HERO_AT` any further
+  // apart and `HELD` clamps the stand-off, which draws the hero short of the wall's foot
+  // instead of at it. Every canvas tall enough to be governed by `WALL_AT` rather than by
+  // the towers' sky, because that is the case with the least slack in it.
+  it('still reaches the foot on the shortest way the map grows', () => {
+    for (const height of [520, 700, 900, 1200]) {
+      expect(heroAt(height, 0.86)).toBeCloseTo(height * HERO_AT)
+    }
+  })
+
   it('keeps the sky the towers need on a canvas too short to spare it', () => {
     expect(wallAt(300, 1)).toBeCloseTo(SKY * SIEGE_ZOOM)
     expect(wallAt(300, 1)).toBeGreaterThan(300 * WALL_AT)

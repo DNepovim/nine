@@ -1,4 +1,5 @@
-import { AMBUSH_CHANCE } from '@/constants/ambush'
+import { AMBUSH_CHANCE_FULL, AMBUSH_CHANCE_ONE } from '@/constants/ambush'
+import { byStage, FIRST_STAGE } from '@/lib/arcade-stage'
 import { settlementName } from '@/lib/place-names'
 import { idSeed, seeded, type Rng } from '@/lib/rng'
 import { parTable, speedFactor } from '@/machines/scoring'
@@ -287,7 +288,13 @@ export function openCrossroad(
   // already a fight — walls are announced and bandits are not, and stacking the unannounced
   // one on top of the announced one would make the warning a lie.
   const banditRng = rngFor(seed, `ambush:${id}`)
-  const waylaid = !at.ambushed && at.depth > 0 && banditRng() < AMBUSH_CHANCE
+  // How often is a stage's business — see lib/arcade-stage.ts. `FIRST_STAGE` rather than
+  // the run's own stage because there is only the one today; this is one of the three
+  // places that reads the run's stage instead when a second one arrives.
+  const waylaid =
+    !at.ambushed &&
+    at.depth > 0 &&
+    banditRng() < byStage(AMBUSH_CHANCE_ONE, AMBUSH_CHANCE_FULL, FIRST_STAGE)
   // Rolled over the ways that are *not* the walled one rather than over all of them and
   // re-rolled on a clash. A re-roll would land more often on a short fan than on a long
   // one, which would quietly make two-way crossroads the safe ones.

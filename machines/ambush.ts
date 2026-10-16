@@ -1,18 +1,20 @@
 import {
-  AMBUSH_DEPTH_FULL,
   AMBUSH_PAR_MAX,
   AMBUSH_PAR_MIN,
-  BANDIT_EVERY_MS,
-  BANDIT_FIRST_MS,
-  BANDITS_DEEP,
-  BANDITS_SHALLOW,
+  BANDIT_EVERY_FULL,
+  BANDIT_EVERY_ONE,
+  BANDIT_FIRST_FULL,
+  BANDIT_FIRST_ONE,
+  BANDITS_FULL,
+  BANDITS_ONE,
   BEARING_JITTER,
   SPOIL_FOOD,
   SPOIL_HEART,
 } from '@/constants/ambush'
 import { HEARTS } from '@/constants/siege'
+import { byStage } from '@/lib/arcade-stage'
 import { parValues, rngFor } from '@/machines/arcade'
-import { decayed, type Grid } from '@/modes'
+import { type Grid } from '@/modes'
 
 // An ambush: the bandits standing on a way, and what a press does to them.
 //
@@ -30,7 +32,7 @@ import { decayed, type Grid } from '@/modes'
 //
 // And a bandit takes one hit. A tower stands for several and takes a new number with each,
 // which is what makes a wall several journeys across the dial; a man is answered once and is
-// gone. Ten of them at two or three presses apiece is journeys enough.
+// gone. A band of them at two or three presses apiece is journeys enough.
 
 const TAU = Math.PI * 2
 
@@ -71,7 +73,10 @@ export type Ambush = {
   // and it is also what the randomness is keyed on, which is what makes a road the same
   // road every time it is walked.
   at: string
-  depth: number
+  // The stage the band was laid out at — see lib/arcade-stage.ts. How many men are on the
+  // road, how soon the first of them arrives and how far behind the rest are, all come off
+  // it, and it is kept here so that a road the hero is driven off is the road it was.
+  stage: number
   seed: number
   bandits: readonly Bandit[]
   // Every bandit of this road that is down: the ones cut on an earlier meeting and the ones
@@ -85,36 +90,31 @@ export type Ambush = {
 // itself and nothing else.
 export type Spoil = 'food' | 'heart' | 'nothing'
 
-// How far into the ramp a depth sits, nought at the start and one at the deepest an ambush
-// is asked to be. The siege's own shape, against the same figure.
-const ramp = (depth: number): number =>
-  Math.min(1, Math.max(0, depth) / AMBUSH_DEPTH_FULL)
-
-// How many men are on a road of this depth.
+// How many men are on a road at this stage.
 //
 // One figure for the whole band rather than a roll per road: the first thing a player reads
 // when the camera lands is how many numbers there are, and a count that wandered between
 // roads would make that unreadable without making it interesting.
-export const banditCount = (depth: number): number =>
-  Math.round(BANDITS_SHALLOW + (BANDITS_DEEP - BANDITS_SHALLOW) * ramp(depth))
+export const banditCount = (stage: number): number =>
+  Math.round(byStage(BANDITS_ONE, BANDITS_FULL, stage))
 
 // Where every bandit of a road stands, before any of them have been cut down.
 //
 // The band is laid out from its arrivals rather than from its distances, and that is the one
 // idea the whole encounter rests on: the nearest man is the one due first *because* near and
-// soon are the same fact here. One walks in at `BANDIT_FIRST_MS`, the next
-// `BANDIT_EVERY_MS` behind it, and so on down the band — then each one's distance is read
+// soon are the same fact here. One walks in at the stage's own `first`, the next its `every`
+// behind it, and so on down the band — then each one's distance is read
 // back off its own walk as a share of the longest. So a player who looks at the ground knows
 // the order they have to answer in, and no second number has to agree with the first.
 //
 // Bearings are slots round the circle, shuffled before they are handed out. Evenly spread,
 // so two men never come in on one line however many there are; shuffled, so the band is not
 // a spiral with the nearest man always next to the second nearest.
-function band(at: string, depth: number, seed: number): readonly Omit<Bandit, 'value'>[] {
+function band(at: string, stage: number, seed: number): readonly Omit<Bandit, 'value'>[] {
   const rng = rngFor(seed, `ambush:${at}`)
-  const count = banditCount(depth)
-  const first = decayed(BANDIT_FIRST_MS, depth)
-  const every = decayed(BANDIT_EVERY_MS, depth)
+  const count = banditCount(stage)
+  const first = byStage(BANDIT_FIRST_ONE, BANDIT_FIRST_FULL, stage)
+  const every = byStage(BANDIT_EVERY_ONE, BANDIT_EVERY_FULL, stage)
   const longest = first + every * Math.max(0, count - 1)
 
   const slot = TAU / count
@@ -156,12 +156,12 @@ function band(at: string, depth: number, seed: number): readonly Omit<Bandit, 'v
 // to be holding then and nowhere near reachable from the one it is holding now.
 export function newAmbush(
   at: string,
-  depth: number,
+  stage: number,
   seed: number,
   grid: Grid,
   cutDown: readonly string[],
 ): Ambush {
-  const standing = band(at, depth, seed).filter((bandit) => !cutDown.includes(bandit.id))
+  const standing = band(at, stage, seed).filter((bandit) => !cutDown.includes(bandit.id))
   const rng = rngFor(seed, `ambush:values:${at}`)
   const values = parValues(grid, standing.length, rng, {
     min: AMBUSH_PAR_MIN,
@@ -169,7 +169,7 @@ export function newAmbush(
   })
   return {
     at,
-    depth,
+    stage,
     seed,
     // A man the grid has no number for is a man who cannot be answered, so he is not dealt.
     // It cannot happen on this dial — the band stretches until it finds enough — but a
@@ -188,7 +188,7 @@ export function newAmbush(
 // Stamped here rather than when the ambush was built, and the difference is the camera
 // coming down — a little under a second in which the dial answers nothing. Counted from the
 // build, the nearest bandit would have spent a fifth of his walk before the player could
-// press a key, so the grace `BANDIT_FIRST_MS` names would not be the grace they get. The
+// press a key, so the grace the stage's first gap names would not be the grace they get. The
 // same reasoning, and the same beat, as the siege's `opened`.
 export function sprung(ambush: Ambush, now: number): Ambush {
   return {

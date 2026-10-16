@@ -475,7 +475,7 @@ describe('ambushed ways', () => {
     }
   })
 
-  it('holds a road on well under half the fans it grows', () => {
+  it('holds a road on a small share of the fans it grows at the first stage', () => {
     // Spread seeds rather than consecutive ones, for the reason the walls' own share test
     // gives: `ambush:` draws the first step of a fresh LCG, and neighbouring inputs walk
     // it in near lockstep.
@@ -489,8 +489,12 @@ describe('ambushed ways', () => {
       fans += 1
       if ((map[at]?.ways ?? []).some((w) => map[w.to]?.ambushed === true)) held += 1
     }
-    expect(held / fans).toBeGreaterThan(0.2)
-    expect(held / fans).toBeLessThan(0.55)
+    // A band rather than a figure, and both ends of it are the decision: an ambush is
+    // unannounced, so the first stage has to offer one seldom enough that a new player is
+    // mostly walking — and often enough that they meet one at all, a road that never bites
+    // being a rule nobody learns. See AMBUSH_CHANCE_ONE, which this is the share of.
+    expect(held / fans).toBeGreaterThan(0.08)
+    expect(held / fans).toBeLessThan(0.3)
   })
 })
 

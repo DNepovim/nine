@@ -1,12 +1,8 @@
 import { describe, expect, it } from 'vitest'
 
-import {
-  BANDITS_DEEP,
-  BANDITS_SHALLOW,
-  SPOIL_FOOD,
-  SPOIL_HEART,
-} from '@/constants/ambush'
+import { BANDITS_FULL, BANDITS_ONE, SPOIL_FOOD, SPOIL_HEART } from '@/constants/ambush'
 import { HEARTS } from '@/constants/siege'
+import { FIRST_STAGE, STAGE_FULL } from '@/lib/arcade-stage'
 import { ARCADE_DIAL } from '@/machines/arcade'
 import { computePar } from '@/machines/scoring'
 import type { Grid } from '@/modes'
@@ -28,38 +24,49 @@ import {
 const busy: Grid = [3, 7, 1, 9, 2, 4, 0, 6, 8]
 
 // A road as the hero would actually meet it: built, then sprung, so every man is walking.
-const road = (at = '1.2', depth = 0, seed = 7, cutDown: readonly string[] = []): Ambush =>
-  sprung(newAmbush(at, depth, seed, busy, cutDown), 0)
+const road = (
+  at = '1.2',
+  stage = FIRST_STAGE,
+  seed = 7,
+  cutDown: readonly string[] = [],
+): Ambush => sprung(newAmbush(at, stage, seed, busy, cutDown), 0)
 
 describe('banditCount', () => {
-  it('stands five on a shallow road and ten on the deepest', () => {
-    expect(banditCount(0)).toBe(BANDITS_SHALLOW)
-    expect(banditCount(100)).toBe(BANDITS_DEEP)
+  it('stands a few on a first-stage road and a band on a last-stage one', () => {
+    expect(banditCount(FIRST_STAGE)).toBe(BANDITS_ONE)
+    expect(banditCount(STAGE_FULL)).toBe(BANDITS_FULL)
   })
 
-  it('never shrinks as a run climbs', () => {
-    for (let depth = 1; depth <= 40; depth++) {
-      expect(banditCount(depth)).toBeGreaterThanOrEqual(banditCount(depth - 1))
+  it('never shrinks as the stages climb, and never grows past the last', () => {
+    for (let stage = FIRST_STAGE + 1; stage <= STAGE_FULL + 20; stage++) {
+      expect(banditCount(stage)).toBeGreaterThanOrEqual(banditCount(stage - 1))
+      expect(banditCount(stage)).toBeLessThanOrEqual(BANDITS_FULL)
     }
+  })
+
+  it('closes on the hero sooner at a later stage', () => {
+    const early = road('1.0', FIRST_STAGE)
+    const late = road('1.0', STAGE_FULL)
+    expect(nextEvent(late) ?? 0).toBeLessThan(nextEvent(early) ?? 0)
   })
 })
 
 describe('newAmbush', () => {
   it('deals the whole band, every man answering a number no other does', () => {
     const ambush = road()
-    expect(ambush.bandits).toHaveLength(banditCount(0))
+    expect(ambush.bandits).toHaveLength(banditCount(FIRST_STAGE))
     const values = ambush.bandits.map((bandit) => bandit.value)
     expect(new Set(values).size).toBe(values.length)
   })
 
   it('deals numbers the dial can actually reach from the grid handed in', () => {
-    for (const bandit of road('3.1', 18, 41).bandits) {
+    for (const bandit of road('3.1', 6, 41).bandits) {
       expect(computePar(ARCADE_DIAL, busy, bandit.value)).toBeGreaterThan(0)
     }
   })
 
   it('spreads the band round the hero, never two on one line', () => {
-    const bearings = road('2.0', 24, 11)
+    const bearings = road('2.0', 7, 11)
       .bandits.map((bandit) => bandit.bearing)
       .sort((a, b) => a - b)
     const slot = (Math.PI * 2) / bearings.length
@@ -70,7 +77,7 @@ describe('newAmbush', () => {
   })
 
   it('stands the man due first nearest the hero', () => {
-    const band = [...road('4.1', 12, 3).bandits].sort(
+    const band = [...road('4.1', 5, 3).bandits].sort(
       (a, b) => a.spawnedAt + a.walkMs - (b.spawnedAt + b.walkMs),
     )
     for (let i = 1; i < band.length; i++) {
@@ -79,21 +86,21 @@ describe('newAmbush', () => {
   })
 
   it('deals the same road twice', () => {
-    expect(road('5.2', 9, 23)).toEqual(road('5.2', 9, 23))
+    expect(road('5.2', 4, 23)).toEqual(road('5.2', 4, 23))
   })
 
   it('deals a different road differently', () => {
-    const here = road('5.2', 9, 23).bandits.map((b) => b.bearing)
-    const there = road('5.3', 9, 23).bandits.map((b) => b.bearing)
+    const here = road('5.2', 4, 23).bandits.map((b) => b.bearing)
+    const there = road('5.3', 4, 23).bandits.map((b) => b.bearing)
     expect(here).not.toEqual(there)
   })
 })
 
 describe('newAmbush, on a road already fought over', () => {
   it('leaves out the men already cut down and nobody else', () => {
-    const whole = road('6.0', 14, 5)
+    const whole = road('6.0', 5, 5)
     const gone = [whole.bandits[1]?.id ?? '', whole.bandits[3]?.id ?? '']
-    const again = road('6.0', 14, 5, gone)
+    const again = road('6.0', 5, 5, gone)
     expect(again.bandits).toHaveLength(whole.bandits.length - 2)
     expect(again.bandits.map((bandit) => bandit.id)).toEqual(
       whole.bandits.filter((bandit) => !gone.includes(bandit.id)).map((b) => b.id),
@@ -101,9 +108,9 @@ describe('newAmbush, on a road already fought over', () => {
   })
 
   it('leaves every survivor standing exactly where he stood', () => {
-    const whole = road('6.1', 14, 5)
+    const whole = road('6.1', 5, 5)
     const gone = [whole.bandits[0]?.id ?? '']
-    for (const bandit of road('6.1', 14, 5, gone).bandits) {
+    for (const bandit of road('6.1', 5, 5, gone).bandits) {
       const before = whole.bandits.find((other) => other.id === bandit.id)
       expect(bandit.bearing).toBe(before?.bearing)
       expect(bandit.from).toBe(before?.from)
@@ -112,7 +119,7 @@ describe('newAmbush, on a road already fought over', () => {
   })
 
   it('carries the fallen forward, so a road is only ever worn down', () => {
-    expect(road('6.2', 14, 5, ['b0', 'b2']).fallen).toEqual(['b0', 'b2'])
+    expect(road('6.2', 5, 5, ['b0', 'b2']).fallen).toEqual(['b0', 'b2'])
   })
 })
 

@@ -70,7 +70,14 @@ export type SiegeFrame = {
 
 // How close to either end of the way in the hero may be held. A short way on a tall screen
 // would otherwise ask for a stand-off behind the crossroad it came from.
-const HELD = 0.1
+//
+// It is also the ceiling on how deep a siege's field can be, which is why it is as small as
+// it is: the ground in front of the gate is the way in minus this, so every point given to
+// the margin is a point taken off the fight. At `WALL_AT` and `HERO_AT` as they stand the
+// shortest way the map grows lands a touch inside it — pull those two any further apart and
+// the clamp bites, which shows up as a hero drawn above the foot of the wall rather than at
+// it. lib/arcade-layout.test.ts holds that line.
+const HELD = 0.05
 
 export function siegeFrame(canvasHeight: number, reach: number): SiegeFrame {
   const wallY = Math.max(canvasHeight * WALL_AT, SKY * SIEGE_ZOOM)

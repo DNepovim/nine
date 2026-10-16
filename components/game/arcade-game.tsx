@@ -1,7 +1,7 @@
 import { Trans } from '@lingui/react/macro'
 import { isOneOf } from 'narrowland'
 import { useEffect, useRef, useState } from 'react'
-import { Text, View, type LayoutChangeEvent } from 'react-native'
+import { View, type LayoutChangeEvent } from 'react-native'
 import Animated, {
   Easing,
   FadeIn,
@@ -27,7 +27,7 @@ import { Dial } from '@/components/game/dial'
 import { HeartIcon } from '@/components/game/heart-icon'
 import { LandMark } from '@/components/game/land-mark'
 import { RunTopBar } from '@/components/game/run-top-bar'
-import { SatietyBar } from '@/components/game/satiety-bar'
+import { EMPTY_LOAF, SatietyLoaves } from '@/components/game/satiety-loaves'
 import { ScoreDigit } from '@/components/game/score-digit'
 import { SiegeField } from '@/components/game/siege-field'
 import { VillageArrival } from '@/components/game/village-arrival'
@@ -49,7 +49,6 @@ import {
 } from '@/constants/arcade'
 import { ARCADE_INK, MAP_INK, PIE_INK, SURFACE, WAY_INK } from '@/constants/colors'
 import { CLOSE_MS, HEARTS, OPEN_MS, SIEGE_ZOOM, TAKEN_MS } from '@/constants/siege'
-import { TYPE } from '@/constants/typography'
 import { useArcadeLand } from '@/hooks/use-arcade-land'
 import { useArcadeRun, type ArcadePhase } from '@/hooks/use-arcade-run'
 import { SUM_ROW_HEIGHT } from '@/hooks/use-dial-metrics'
@@ -67,7 +66,6 @@ import {
   type Spline,
 } from '@/lib/arcade-layout'
 import { horizonOf, type Sheet } from '@/lib/arcade-tilt'
-import { cn } from '@/lib/cn'
 import { valueProgress } from '@/lib/value-progress'
 import { ARCADE_DIAL, idSeed, UP, type Crossroad } from '@/machines/arcade'
 import type { DialControl } from '@/machines/tutorial-lesson'
@@ -862,32 +860,28 @@ export function ArcadeGame({
               to do because its own count can be infinite and a literal there is a
               deliberate ceiling. Here there is one tuning constant and a bar that would
               quietly stop matching the run if it were changed. */}
-          {/* And the bar, in the same row at the other end of it: the hearts on the left
-              under ARCADE, how fed the hero is on the right under the way out. The two
+          {/* And the loaves, in the same row at the other end of it: the hearts on the
+              left under ARCADE, how fed the hero is on the right under the way out. The two
               belong in one row because they are one reading — the hearts are what is left
-              to lose, and the bar is how long before losing them starts — but the bar is
-              short and tucked under the pause button rather than stretched between them.
-              A rule running the width of the screen reads as a loading bar, and this one
-              is a gauge. */}
-          <View className="mt-1.5 flex-row items-end justify-between">
+              to lose, and the loaves are how long before losing them starts.
+
+              Two counts, and neither carries a label. The hearts never wanted one — three
+              hearts are three hearts in every game ever made — and the loaves stopped
+              needing one when they stopped being a bar: a draining rule could be a clock, a
+              charge or a score, which is why the word SATIETY used to sit over it, and five
+              loaves could not be any of the three. The name lives on the row itself now,
+              for anyone the drawing does not reach. See satiety-loaves.tsx.
+
+              `items-center` rather than `items-end`, which is what the caption used to want:
+              with the label gone there are two rows of icons here and nothing to sit them
+              on a shared baseline for. */}
+          <View className="mt-1.5 flex-row items-center justify-between">
             <View className="flex-row gap-1">
               {Array.from({ length: HEARTS }, (_, i) => (
-                <HeartIcon key={i} filled={i < run.hearts} emptyColor={'#FDFCFA'} />
+                <HeartIcon key={i} filled={i < run.hearts} emptyColor={EMPTY_LOAF} />
               ))}
             </View>
-            {/* About as wide as the MENU button above it, so the two read as one column
-                down the right-hand edge, with the bar named over it.
-
-                The hearts opposite carry no label and want none — three hearts are three
-                hearts in every game ever made. A draining bar is not that: it could be a
-                clock, a charge or a score until something says otherwise, and the one
-                place a player looks to find out is directly above it. */}
-            <View className="w-16 items-end gap-1">
-              <Text selectable={false} className={cn(TYPE.caption, 'text-dim')}>
-                <Trans>SATIETY</Trans>
-              </Text>
-              <SatietyBar satiety={run.satiety} starving={run.starving} />
-            </View>
+            <SatietyLoaves satiety={run.satiety} starving={run.starving} />
           </View>
         </View>
 
