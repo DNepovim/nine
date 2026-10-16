@@ -80,7 +80,17 @@ const against = (now: number, before: number, was: string): string =>
 const rungOf = (value: string): Difficulty | null =>
   value === 'easy' || value === 'hard' || value === 'extreme' ? value : null
 
-export function AdminStats({ onBack }: { onBack: () => void }) {
+export function AdminStats({
+  // How many messages are owed an answer, handed down from the hub rather than read
+  // again here. The hub already asks `admin_feedback_owed` to decide whether to draw its
+  // dot, and that function is the app's one definition of owed — it is the only one that
+  // knows a message can be set aside. See the note on `feedback_owed` in lib/admin/stats.
+  messagesOwed,
+  onBack,
+}: {
+  messagesOwed: number
+  onBack: () => void
+}) {
   const { t } = useLingui()
   const was = t(WAS)
   const owed = t(OWED)
@@ -290,12 +300,9 @@ export function AdminStats({ onBack }: { onBack: () => void }) {
                 key: 'feedback',
                 cells: [
                   t(msg`Messages sent in`),
-                  stats.pulse.feedbackOwed > 0 ? (
+                  messagesOwed > 0 ? (
                     <View className="flex-row items-center gap-2">
-                      <AdminChip
-                        label={`${stats.pulse.feedbackOwed} ${owed}`}
-                        tone="danger"
-                      />
+                      <AdminChip label={`${messagesOwed} ${owed}`} tone="danger" />
                       <Text selectable={false} className={cn(TYPE.figure, 'text-dim')}>
                         {stats.pulse.feedback}
                       </Text>

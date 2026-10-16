@@ -207,6 +207,16 @@ export type ButtonId =
   | 'admin.filter'
   // A row of the messages list, opened to read the whole of what was written.
   | 'admin.message'
+  // The two things that can be done about a message, and the press inside the dialog
+  // that sends. `admin.message_open_answer` only opens the window — it is the one of the
+  // three that writes nothing, and keeping them apart is what makes the figures read as
+  // *answers opened* against *answers sent*.
+  | 'admin.message_open_answer'
+  | 'admin.message_answer'
+  // Setting one aside and putting it back, which is one button saying two things — the
+  // row's own state says which, and a single id keeps the pair counted as the one
+  // decision it is.
+  | 'admin.message_dismiss'
   // Adding a role, which is a dialog now rather than a field above the list: this is the
   // button that opens it, and `admin.role_new` above is the press inside it that creates
   // the role — which is what that id always reported.

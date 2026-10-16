@@ -138,7 +138,11 @@ export function AdminOverlay({
 }) {
   const { t } = useLingui()
   const [section, setSection] = useState<Section>('hub')
-  const owed = useFeedbackOwed()
+  // Bumped when the messages screen writes, so the dot beside MESSAGES — and the figure
+  // under it — answer for what the pile holds now rather than for what it held when this
+  // overlay opened.
+  const [messagesEpoch, setMessagesEpoch] = useState(0)
+  const owed = useFeedbackOwed(messagesEpoch)
   const [notes, setNotes] = useState<Notes>({
     features: null,
     sessions: null,
@@ -217,8 +221,17 @@ export function AdminOverlay({
     return <AdminAccess viewerId={viewerId} onPreview={onPreview} onBack={toHub} />
   }
   if (section === 'sessions') return <AdminSessions onBack={toHub} />
-  if (section === 'stats') return <AdminStats onBack={toHub} />
-  if (section === 'messages') return <AdminMessages onBack={toHub} />
+  if (section === 'stats') return <AdminStats messagesOwed={owed} onBack={toHub} />
+  if (section === 'messages') {
+    return (
+      <AdminMessages
+        onChanged={() => {
+          setMessagesEpoch((n) => n + 1)
+        }}
+        onBack={toHub}
+      />
+    )
+  }
 
   return (
     <AdminScreen

@@ -7,6 +7,18 @@ description: Use when answering a player's feedback — `/answer-feedback <row i
 
 A player wrote something. This is the reply, and the run that delivers it.
 
+**The admin screen can also answer now**, and the split between the two is the
+build gate. MESSAGES → open a row → ANSWER writes the words and nothing else:
+delivered on the player's next launch, no `answer_needs_build`. That is the right
+tool for _thanks_, _noted_, _not planned_, _here is how that works_ — and for
+setting a message aside unanswered, which is SET ASIDE and reaches the player not
+at all.
+
+This skill is for the other kind: an answer that says **fixed**. The gate it sets
+is read off what a session actually changed, which is a judgement no phone can
+make, and an ungated "fixed" delivered to a player still on the broken build is
+the exact failure the column exists to prevent.
+
 Read `supabase/migrations/20260923000000_feedback_reply.sql`,
 `…20260924000000_feedback_reply_build.sql` and
 `…20260925000000_feedback_reply_quote.sql` before changing anything here — they

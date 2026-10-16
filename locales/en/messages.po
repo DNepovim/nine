@@ -207,7 +207,7 @@ msgstr "???"
 msgid "(no nickname)"
 msgstr "(no nickname)"
 
-#: components/overlays/admin-messages.tsx:94
+#: components/overlays/admin-messages.tsx:252
 msgid "(profile removed)"
 msgstr "(profile removed)"
 
@@ -332,7 +332,7 @@ msgstr "{hidden, plural, one {SHOW # MORE} other {SHOW # MORE}}"
 msgid "{joinedMonths, plural, one {joined a month ago} other {joined # months ago}}"
 msgstr "{joinedMonths, plural, one {joined a month ago} other {joined # months ago}}"
 
-#: components/overlays/admin-overlay.tsx:289
+#: components/overlays/admin-overlay.tsx:302
 msgid "{owed} owed an answer"
 msgstr "{owed} owed an answer"
 
@@ -531,7 +531,7 @@ msgstr "Achievements are the other kind. Nothing can take one back: they are ach
 "\n"
 "There are dozens, and they ask for all sorts of things."
 
-#: components/overlays/admin-stats.tsx:310
+#: components/overlays/admin-stats.tsx:317
 msgid "Achievements unlocked"
 msgstr "Achievements unlocked"
 
@@ -584,7 +584,7 @@ msgstr "Ahead by a hair — do not breathe out."
 msgid "Ahead on points, and holding."
 msgstr "Ahead on points, and holding."
 
-#: components/overlays/admin-overlay.tsx:287
+#: components/overlays/admin-overlay.tsx:300
 msgid "All answered"
 msgstr "All answered"
 
@@ -600,7 +600,7 @@ msgstr "ALL THREE"
 msgid "ALLOW"
 msgstr "ALLOW"
 
-#: components/overlays/admin-stats.tsx:284
+#: components/overlays/admin-stats.tsx:294
 msgid "ALSO IN THIS WINDOW"
 msgstr "ALSO IN THIS WINDOW"
 
@@ -628,10 +628,15 @@ msgstr "An owl can hear a mouse under half a metre of snow. This player is the m
 msgid "An owl can hear a mouse under half a metre of snow. You are the more exact one — Extreme Accuracy's all-time record is yours."
 msgstr "An owl can hear a mouse under half a metre of snow. You are the more exact one — Extreme Accuracy's all-time record is yours."
 
-#: components/overlays/admin-overlay.tsx:275
+#: components/overlays/admin-overlay.tsx:288
 #: components/overlays/admin-stats.tsx:37
 msgid "ANALYTICS"
 msgstr "ANALYTICS"
+
+#: components/overlays/admin-messages.tsx:98
+#: components/overlays/admin-messages.tsx:332
+msgid "ANSWER"
+msgstr "ANSWER"
 
 #: components/overlays/how-to-play-overlay.tsx:640
 msgid "Answer while most of that clock is still full and you strike: the hero does not stop at the next crossroad, it rockets through and lands one deeper."
@@ -671,6 +676,10 @@ msgstr "ARE YOU WINNING?"
 msgid "As far back as the run receipts go"
 msgstr "As far back as the run receipts go"
 
+#: components/overlays/admin-messages.tsx:269
+msgid "ASIDE"
+msgstr "ASIDE"
+
 #: components/overlays/join-room-overlay.tsx:49
 msgid "Ask whoever created the room for their 4-digit code."
 msgstr "Ask whoever created the room for their 4-digit code."
@@ -709,10 +718,10 @@ msgstr "AVG SPD"
 
 #: components/game/arcade-over.tsx:49
 #: components/overlays/admin-access.tsx:102
-#: components/overlays/admin-messages.tsx:165
+#: components/overlays/admin-messages.tsx:373
 #: components/overlays/admin-session.tsx:128
 #: components/overlays/admin-sessions.tsx:224
-#: components/overlays/admin-stats.tsx:116
+#: components/overlays/admin-stats.tsx:126
 #: components/overlays/whats-new-overlay.tsx:107
 msgid "BACK"
 msgstr "BACK"
@@ -764,7 +773,7 @@ msgstr "BLUR"
 msgid "BOARDS"
 msgstr "BOARDS"
 
-#: components/overlays/admin-stats.tsx:318
+#: components/overlays/admin-stats.tsx:325
 msgid "Boards taken over"
 msgstr "Boards taken over"
 
@@ -819,7 +828,7 @@ msgstr "CHALLENGE"
 msgid "CHALLENGE CLOSES IN"
 msgstr "CHALLENGE CLOSES IN"
 
-#: components/overlays/admin-overlay.tsx:240
+#: components/overlays/admin-overlay.tsx:253
 #: components/overlays/admin-session.tsx:33
 #: components/overlays/admin-sessions.tsx:41
 #: components/overlays/how-to-play-overlay.tsx:56
@@ -963,7 +972,7 @@ msgstr "Display value × row × column"
 msgid "Do something nobody thought to ask for."
 msgstr "Do something nobody thought to ask for."
 
-#: components/overlays/admin-overlay.tsx:227
+#: components/overlays/admin-overlay.tsx:240
 #: components/overlays/admin-person.tsx:177
 #: components/overlays/admin-role.tsx:121
 #: components/overlays/dev-overlay.tsx:150
@@ -1107,7 +1116,7 @@ msgid "FAST START"
 msgstr "FAST START"
 
 #: components/overlays/admin-access.tsx:42
-#: components/overlays/admin-overlay.tsx:233
+#: components/overlays/admin-overlay.tsx:246
 #: components/overlays/admin-person.tsx:182
 msgid "FEATURES"
 msgstr "FEATURES"
@@ -1300,7 +1309,7 @@ msgstr "HELD SPEED"
 msgid "HELP US SEE THE ROUGH EDGES"
 msgstr "HELP US SEE THE ROUGH EDGES"
 
-#: components/overlays/admin-overlay.tsx:184
+#: components/overlays/admin-overlay.tsx:188
 msgid "hidden"
 msgstr "hidden"
 
@@ -1309,7 +1318,7 @@ msgid "Hit while most of the ring is left to build your combo streak."
 msgstr "Hit while most of the ring is left to build your combo streak."
 
 #: components/game/trainee-stats.tsx:64
-#: components/overlays/admin-stats.tsx:176
+#: components/overlays/admin-stats.tsx:186
 #: components/overlays/compare-stat-row.tsx:21
 #: components/overlays/player-profile-overlay.tsx:396
 #: lib/run-stats.ts:47
@@ -1391,7 +1400,7 @@ msgstr "IN AND OUT"
 msgid "In Speed, go for whichever target sits closest to the current sum — fewer moves means more of the ring left, and the ring is what feeds your combo."
 msgstr "In Speed, go for whichever target sits closest to the current sum — fewer moves means more of the ring left, and the ring is what feeds your combo."
 
-#: components/overlays/admin-messages.tsx:110
+#: components/overlays/admin-messages.tsx:273
 msgid "IN THE POST"
 msgstr "IN THE POST"
 
@@ -1448,11 +1457,11 @@ msgstr "JOIN ROOM"
 msgid "JOIN WITH CODE"
 msgstr "JOIN WITH CODE"
 
-#: components/overlays/admin-overlay.tsx:205
+#: components/overlays/admin-overlay.tsx:209
 msgid "joined"
 msgstr "joined"
 
-#: components/overlays/admin-stats.tsx:154
+#: components/overlays/admin-stats.tsx:164
 msgid "JOINED"
 msgstr "JOINED"
 
@@ -1516,7 +1525,7 @@ msgstr "Land your first target."
 msgid "LANGUAGE"
 msgstr "LANGUAGE"
 
-#: components/overlays/admin-stats.tsx:260
+#: components/overlays/admin-stats.tsx:270
 msgid "LAST FIVE SESSIONS"
 msgstr "LAST FIVE SESSIONS"
 
@@ -1532,7 +1541,7 @@ msgstr "Learn the nine times table cold. The 9× button steps 9, 18, 27 up to 81
 msgid "LEAVE GAME"
 msgstr "LEAVE GAME"
 
-#: components/overlays/admin-overlay.tsx:261
+#: components/overlays/admin-overlay.tsx:274
 msgid "left"
 msgstr "left"
 
@@ -1608,16 +1617,16 @@ msgstr "MEDALS HELD, EVER"
 msgid "MENU"
 msgstr "MENU"
 
-#: components/overlays/admin-messages.tsx:32
-#: components/overlays/admin-overlay.tsx:282
+#: components/overlays/admin-messages.tsx:44
+#: components/overlays/admin-overlay.tsx:295
 msgid "MESSAGES"
 msgstr "MESSAGES"
 
-#: components/overlays/admin-stats.tsx:292
+#: components/overlays/admin-stats.tsx:302
 msgid "Messages sent in"
 msgstr "Messages sent in"
 
-#: components/overlays/admin-stats.tsx:171
+#: components/overlays/admin-stats.tsx:181
 msgid "MINUTES"
 msgstr "MINUTES"
 
@@ -1650,7 +1659,7 @@ msgstr "MULTIPLAYER"
 msgid "My best at Nine is {bestScore} — {board}. Think you can beat it?"
 msgstr "My best at Nine is {bestScore} — {board}. Think you can beat it?"
 
-#: components/overlays/admin-stats.tsx:181
+#: components/overlays/admin-stats.tsx:191
 msgid "NAMED"
 msgstr "NAMED"
 
@@ -1721,7 +1730,7 @@ msgstr "No connection — nothing was sent."
 msgid "No features in the database."
 msgstr "No features in the database."
 
-#: components/overlays/admin-stats.tsx:144
+#: components/overlays/admin-stats.tsx:154
 msgid "No figures. See the error above."
 msgstr "No figures. See the error above."
 
@@ -1733,7 +1742,7 @@ msgstr "NO JOKE"
 msgid "No lives, no rush."
 msgstr "No lives, no rush."
 
-#: components/overlays/admin-messages.tsx:195
+#: components/overlays/admin-messages.tsx:403
 msgid "No messages."
 msgstr "No messages."
 
@@ -1753,7 +1762,7 @@ msgstr "No roles yet."
 msgid "No runs counted yet."
 msgstr "No runs counted yet."
 
-#: components/overlays/admin-stats.tsx:227
+#: components/overlays/admin-stats.tsx:237
 msgid "No runs in this window."
 msgstr "No runs in this window."
 
@@ -1761,7 +1770,7 @@ msgstr "No runs in this window."
 msgid "No runs, no records, no argument. Yet."
 msgstr "No runs, no records, no argument. Yet."
 
-#: components/overlays/admin-stats.tsx:277
+#: components/overlays/admin-stats.tsx:287
 msgid "No sessions have been planned."
 msgstr "No sessions have been planned."
 
@@ -1870,11 +1879,11 @@ msgstr "Nothing announced yet."
 msgid "Nothing in this state."
 msgstr "Nothing in this state."
 
-#: components/overlays/admin-messages.tsx:193
+#: components/overlays/admin-messages.tsx:401
 msgid "Nothing is waiting for an answer."
 msgstr "Nothing is waiting for an answer."
 
-#: components/overlays/admin-overlay.tsx:194
+#: components/overlays/admin-overlay.tsx:198
 msgid "Nothing on now"
 msgstr "Nothing on now"
 
@@ -1910,11 +1919,11 @@ msgstr "Oct"
 msgid "OCTOBER"
 msgstr "OCTOBER"
 
-#: components/overlays/admin-stats.tsx:183
+#: components/overlays/admin-stats.tsx:193
 msgid "of the joined"
 msgstr "of the joined"
 
-#: components/overlays/admin-stats.tsx:328
+#: components/overlays/admin-stats.tsx:335
 msgid "Of them, named"
 msgstr "Of them, named"
 
@@ -1934,7 +1943,7 @@ msgstr "On [DATE] you took third on [B] with [S]"
 msgid "ON THE BOARD"
 msgstr "ON THE BOARD"
 
-#: components/overlays/admin-stats.tsx:173
+#: components/overlays/admin-stats.tsx:183
 msgid "on the dial"
 msgstr "on the dial"
 
@@ -2028,11 +2037,11 @@ msgstr "OR RESTORE YOUR PROFILE"
 msgid "Out of hearts and the run is over. That and the mouth are the only two ways one ends."
 msgstr "Out of hearts and the run is over. That and the mouth are the only two ways one ends."
 
-#: components/overlays/admin-stats.tsx:124
+#: components/overlays/admin-stats.tsx:134
 msgid "OVER WHAT WINDOW"
 msgstr "OVER WHAT WINDOW"
 
-#: components/overlays/admin-messages.tsx:106
+#: components/overlays/admin-messages.tsx:264
 #: components/overlays/admin-stats.tsx:63
 msgid "OWED"
 msgstr "OWED"
@@ -2045,7 +2054,7 @@ msgstr "PALINDROME"
 msgid "PASTE FROM CLIPBOARD"
 msgstr "PASTE FROM CLIPBOARD"
 
-#: components/overlays/admin-stats.tsx:197
+#: components/overlays/admin-stats.tsx:207
 msgid "peak"
 msgstr "peak"
 
@@ -2073,8 +2082,8 @@ msgstr "Pick ARCADE on the start screen. The dial is the same dial — but the t
 msgid "PLAN SESSION"
 msgstr "PLAN SESSION"
 
-#: components/overlays/admin-overlay.tsx:194
 #: components/overlays/admin-overlay.tsx:198
+#: components/overlays/admin-overlay.tsx:202
 msgid "planned"
 msgstr "planned"
 
@@ -2120,11 +2129,11 @@ msgstr "Play Trainee, Accuracy and Speed."
 msgid "Play with two hands, a thumb to each side of the grid. Reaching across for every button is time the ring is already spending."
 msgstr "Play with two hands, a thumb to each side of the grid. Reaching across for every button is time the ring is already spending."
 
-#: components/overlays/admin-overlay.tsx:205
+#: components/overlays/admin-overlay.tsx:209
 msgid "played"
 msgstr "played"
 
-#: components/overlays/admin-stats.tsx:159
+#: components/overlays/admin-stats.tsx:169
 msgid "PLAYED"
 msgstr "PLAYED"
 
@@ -2148,7 +2157,7 @@ msgstr "PREVIEW"
 msgid "PREVIEW AS"
 msgstr "PREVIEW AS"
 
-#: components/overlays/admin-overlay.tsx:184
+#: components/overlays/admin-overlay.tsx:188
 msgid "private"
 msgstr "private"
 
@@ -2156,21 +2165,25 @@ msgstr "private"
 msgid "PROFILE"
 msgstr "PROFILE"
 
-#: components/overlays/admin-stats.tsx:161
+#: components/overlays/admin-stats.tsx:171
 msgid "profiles"
 msgstr "profiles"
 
-#: components/overlays/admin-stats.tsx:323
+#: components/overlays/admin-stats.tsx:330
 msgid "Profiles, all time"
 msgstr "Profiles, all time"
 
-#: components/overlays/admin-overlay.tsx:183
+#: components/overlays/admin-overlay.tsx:187
 msgid "public"
 msgstr "public"
 
 #: components/overlays/how-to-play-overlay.tsx:513
 msgid "Pure practice — no lives, no score, and a relaxed clock."
 msgstr "Pure practice — no lives, no score, and a relaxed clock."
+
+#: components/overlays/admin-messages.tsx:353
+msgid "PUT BACK"
+msgstr "PUT BACK"
 
 #: constants/achievements.ts:312
 msgid "Reach 25 hits in one run before losing a life."
@@ -2184,7 +2197,7 @@ msgstr "Reach the ×8 multiplier."
 msgid "REACH THIS NUMBER"
 msgstr "REACH THIS NUMBER"
 
-#: components/overlays/admin-stats.tsx:138
+#: components/overlays/admin-stats.tsx:148
 msgid "Reading…"
 msgstr "Reading…"
 
@@ -2228,6 +2241,14 @@ msgstr "RESTORING…"
 msgid "RESULTS"
 msgstr "RESULTS"
 
+#: components/overlays/admin-messages.tsx:334
+msgid "REWRITE"
+msgstr "REWRITE"
+
+#: components/overlays/admin-messages.tsx:98
+msgid "REWRITE THE ANSWER"
+msgstr "REWRITE THE ANSWER"
+
 #: components/overlays/admin-person.tsx:156
 msgid "ROLE"
 msgstr "ROLE"
@@ -2240,7 +2261,7 @@ msgstr "ROOM FOR TWO"
 msgid "ROOM LEFT"
 msgstr "ROOM LEFT"
 
-#: components/overlays/admin-stats.tsx:314
+#: components/overlays/admin-stats.tsx:321
 msgid "Rooms created"
 msgstr "Rooms created"
 
@@ -2260,22 +2281,22 @@ msgstr "Row for row, hit for hit. Nobody takes this one."
 msgid "RUN"
 msgstr "RUN"
 
-#: components/overlays/admin-overlay.tsx:204
+#: components/overlays/admin-overlay.tsx:208
 msgid "runs"
 msgstr "runs"
 
-#: components/overlays/admin-stats.tsx:164
+#: components/overlays/admin-stats.tsx:174
 #: components/overlays/compare-stat-row.tsx:20
 #: components/overlays/player-profile-overlay.tsx:391
 #: components/overlays/player-profile-overlay.tsx:494
 msgid "RUNS"
 msgstr "RUNS"
 
-#: components/overlays/admin-stats.tsx:194
+#: components/overlays/admin-stats.tsx:204
 msgid "RUNS A DAY"
 msgstr "RUNS A DAY"
 
-#: components/overlays/admin-stats.tsx:222
+#: components/overlays/admin-stats.tsx:232
 msgid "RUNS BY BOARD"
 msgstr "RUNS BY BOARD"
 
@@ -2373,6 +2394,14 @@ msgstr "Second, for now."
 msgid "See the better way"
 msgstr "See the better way"
 
+#: components/overlays/admin-messages.tsx:148
+msgid "SEND"
+msgstr "SEND"
+
+#: components/overlays/admin-messages.tsx:148
+msgid "SEND AGAIN"
+msgstr "SEND AGAIN"
+
 #: components/overlays/email-modal.tsx:150
 msgid "SEND CODE"
 msgstr "SEND CODE"
@@ -2380,6 +2409,10 @@ msgstr "SEND CODE"
 #: constants/achievements.ts:594
 msgid "Send feedback, and get an answer back."
 msgstr "Send feedback, and get an answer back."
+
+#: components/overlays/admin-messages.tsx:135
+msgid "Sending again — the player sees this reply once more."
+msgstr "Sending again — the player sees this reply once more."
 
 #: components/overlays/email-code-modal.tsx:576
 #: components/overlays/email-modal.tsx:150
@@ -2401,6 +2434,10 @@ msgstr "SESSION"
 #: components/overlays/advanced-options-overlay.tsx:115
 msgid "SESSION RECORDING"
 msgstr "SESSION RECORDING"
+
+#: components/overlays/admin-messages.tsx:355
+msgid "SET ASIDE"
+msgstr "SET ASIDE"
 
 #: constants/tips.ts:11
 msgid "Set the coarse 9× / 6× buttons first to get near the target, then fine-tune with the 1× / 2× buttons."
@@ -2647,7 +2684,7 @@ msgstr "TARGETS & THE CLOCK"
 msgid "Targets arrive faster the longer you last, but each still gets its full ring."
 msgstr "Targets arrive faster the longer you last, but each still gets its full ring."
 
-#: components/overlays/admin-stats.tsx:178
+#: components/overlays/admin-stats.tsx:188
 msgid "targets met"
 msgstr "targets met"
 
@@ -2711,7 +2748,7 @@ msgstr "That is longer than {MOTTO_MAX} characters."
 msgid "The all-time boards were left exactly as they were found."
 msgstr "The all-time boards were left exactly as they were found."
 
-#: components/overlays/admin-messages.tsx:146
+#: components/overlays/admin-messages.tsx:310
 msgid "THE ANSWER"
 msgstr "THE ANSWER"
 
@@ -3062,6 +3099,10 @@ msgstr "Two names all week: [A] took [N] days, [B] the other [M]."
 #: components/overlays/feedback-overlay.tsx:161
 msgid "Type here"
 msgstr "Type here"
+
+#: components/overlays/admin-messages.tsx:119
+msgid "Type the answer"
+msgstr "Type the answer"
 
 #: constants/achievements.ts:311
 msgid "UNSCATHED"
