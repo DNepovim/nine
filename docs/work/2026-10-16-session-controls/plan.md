@@ -305,4 +305,5 @@ driven in the app.
 `3311aef` on `main`, 2026-10-16. The migration was pushed to production before the commit
 (additive, and the live client's RPC calls still bind because the new parameters carry
 defaults) — so production's schema is ahead of its bundle, which is the safe direction.
-Not deployed.
+Deployed 2026-10-16 from `5c039c9`, GitHub run 38942247085 — static checks, `pnpm audit`
+and the EAS deploy all green.
