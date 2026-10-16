@@ -8,12 +8,13 @@ description: Use when choosing or changing a colour, gradient, font, size, spaci
 Nine has one visual system, and it is held in four files rather than in the screens that
 use it:
 
-| What                | Where                                              | Reference                  |
-| ------------------- | -------------------------------------------------- | -------------------------- |
-| Colour              | `constants/colors.ts`, `global.css`                | this file, below           |
-| Type                | `constants/typography.ts`                          | `references/typography.md` |
-| Screens and dialogs | `components/screen.tsx`, `overlays/modal-card.tsx` | `references/layout.md`     |
-| What already exists | `components/`                                      | `references/components.md` |
+| What                | Where                                              | Reference                     |
+| ------------------- | -------------------------------------------------- | ----------------------------- |
+| Colour              | `constants/colors.ts`, `global.css`                | this file, below              |
+| Type                | `constants/typography.ts`                          | `references/typography.md`    |
+| Screens and dialogs | `components/screen.tsx`, `overlays/modal-card.tsx` | `references/layout.md`        |
+| What already exists | `components/`                                      | `references/components.md`    |
+| Readable to anyone  | `scripts/contrast.js`                              | `references/accessibility.md` |
 
 **Read the relevant reference before picking a value.** The scales below are the colour
 half; type, layout and reuse each have a file of their own.
@@ -261,6 +262,13 @@ exactly that case and must move with their definitions: `DIM_INK` is `--color-di
 exist to stop.
 
 ## Contrast
+
+**Measure it — don't look at it.** `node scripts/contrast.js` prints every ink in the app
+against every ground it is drawn on, and `node scripts/contrast.js '#4e4a43' '#f3efe9'`
+answers for one pair. Run it whenever you add or move a colour that sits under text, and
+put the ratio in the comment above the value the way every ink in `constants/colors.ts`
+already does. **`references/accessibility.md` is the pass in full** — the bars, the four
+things contrast does not catch, and what the table currently admits to.
 
 Check text against **both ends** of a gradient before shipping it, and don't assume
 white works:
