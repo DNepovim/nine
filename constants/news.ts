@@ -9,6 +9,18 @@ import type { Release } from '@/types/news'
 // different announcement or players who already saw the old one will miss it.
 export const RELEASES: Release[] = [
   {
+    date: '2026-10-16',
+    items: [
+      {
+        id: 'challenges',
+        icon: 'flame',
+        accent: '#E5534B',
+        title: msg`Not the same game twice`,
+        body: msg`Every so often a challenge appears at the top of the start screen: a game of Nine with the rules changed, on for a while and then gone. Everyone plays the same one, and finishing in the top three wins a medal nothing can take back.`,
+      },
+    ],
+  },
+  {
     date: '2026-10-07',
     items: [
       {
