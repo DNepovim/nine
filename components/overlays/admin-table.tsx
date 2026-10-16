@@ -42,10 +42,17 @@ export type AdminColumn = {
   // Fixed width in pixels. Absent is `flex-1`, and at most one column should be.
   width?: number
   align?: 'left' | 'right'
-  // What a **string** cell in this column is: the thing the row is about (`name`), or
-  // something said about it (`quiet`). A `ReactNode` cell passes through untouched — this
-  // only saves the lists wrapping every plain word in the same `Text`.
-  tone?: 'name' | 'quiet'
+  // What a **string** cell in this column is: the thing the row is about (`name`), the
+  // figure it came to (`figure`), or something said about it (`quiet`, the default). A
+  // `ReactNode` cell passes through untouched — this only saves the lists wrapping every
+  // plain word in the same `Text`.
+  //
+  // `figure` was asked for by the **analytics screen**, where every column but the first
+  // is a number and all of them came out in secondary ink: a table of nothing but
+  // secondary text has no hierarchy to read, and the figures are what the screen is for.
+  // It is not the default, because the other lists put a *date* or a *status* in that
+  // lane — said about the row rather than the point of it, and those stay quiet.
+  tone?: 'name' | 'figure' | 'quiet'
 }
 
 export type AdminTableRow = {
@@ -161,7 +168,11 @@ function Cell({ column, children }: { column: AdminColumn; children: ReactNode }
           numberOfLines={1}
           className={cn(
             column.tone === 'name' ? TYPE.prose : TYPE.value,
-            column.tone === 'name' ? 'text-primary' : 'text-dim',
+            // A name and a figure are both the row's own content and carry primary ink;
+            // everything else is an aside about it.
+            column.tone === 'name' || column.tone === 'figure'
+              ? 'text-primary'
+              : 'text-dim',
           )}
         >
           {children}

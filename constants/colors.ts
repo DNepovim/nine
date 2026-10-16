@@ -39,11 +39,15 @@ export const GOLD_INK = '#B8860B'
 // between two inks. The value is the one in global.css and must move with it — before
 // this existed the same hex was copied into a dozen components.
 //
-// It clears 4.5:1 on the surface *and* on the card above it: about 5.1:1 and 4.6:1. That
-// is as light as this ink goes — the card is the tighter of the two backgrounds, and a
-// step further drops it under the bar. Secondary text is still the app's quietest voice;
-// it is no longer the one nobody can read.
-export const DIM_INK = '#6A655C'
+// About 7.7:1 on the surface and 7.0:1 on the card above it — AAA on the first and a
+// hair under it on the second, where the bar for ordinary text is 4.5:1.
+//
+// It was #6A655C, which cleared that bar at 5.1:1 and 4.6:1 and read, on a screen with a
+// lot of it, as a page written in pencil. The admin screens were where that showed worst
+// because nearly every line on them is secondary, but the ink is the app's and so is the
+// change. Secondary text is still the quietest voice here; `--color-primary` is 15:1 and
+// twice as loud, which is the distance that makes a hierarchy.
+export const DIM_INK = '#4E4A43'
 
 // The `--color-muted` token as JavaScript, for the same reason DIM_INK is: the dot menu
 // takes its colour as a prop rather than as a class. Never text — this is the hairline

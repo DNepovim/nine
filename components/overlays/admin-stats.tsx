@@ -273,8 +273,8 @@ export function AdminStats({
             className="mb-3"
             columns={[
               { label: 'CHALLENGE', tone: 'name' },
-              { label: 'PLAYERS', width: 56, align: 'right' },
-              { label: 'BEST', width: 56, align: 'right' },
+              { label: 'PLAYERS', width: 56, align: 'right', tone: 'figure' },
+              { label: 'BEST', width: 56, align: 'right', tone: 'figure' },
             ]}
             rows={stats.sessions.map((session) => ({
               key: session.id,
@@ -294,7 +294,7 @@ export function AdminStats({
             <Trans>ALSO IN THIS WINDOW</Trans>
           </Text>
           <AdminTable
-            columns={[{ tone: 'name' }, { width: 96, align: 'right' }]}
+            columns={[{ tone: 'name' }, { width: 96, align: 'right', tone: 'figure' }]}
             rows={[
               {
                 key: 'feedback',
@@ -303,7 +303,10 @@ export function AdminStats({
                   messagesOwed > 0 ? (
                     <View className="flex-row items-center gap-2">
                       <AdminChip label={`${messagesOwed} ${owed}`} tone="danger" />
-                      <Text selectable={false} className={cn(TYPE.figure, 'text-dim')}>
+                      <Text
+                        selectable={false}
+                        className={cn(TYPE.figure, 'text-primary')}
+                      >
                         {stats.pulse.feedback}
                       </Text>
                     </View>
