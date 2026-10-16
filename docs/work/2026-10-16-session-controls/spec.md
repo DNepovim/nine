@@ -1,9 +1,9 @@
 # Running a challenge's window
 
 Slug: session-controls
-Stage: review
+Stage: shipped
 Skipped: verify (second pass) — skipped at the users instruction on 2026-10-16, after the first pass returned 8 PASS / 1 FAIL / 5 SKIPPED. The fix for criterion 14 and the amendments to 6 and 7 were never re-verified; criteria 1, 2, 3, 10 and 12 have still never been driven in the app.
-Next: /ship session-controls
+Next: /deploy — on `main`, not live
 Track: full
 Branch: feat/session-controls
 Started: 2026-10-16

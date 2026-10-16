@@ -299,3 +299,10 @@ from a clean reset.
 **Three of these fixes are behavioural** (1, 2, 4) and this item already skipped `verify`
 once at the user's instruction. They are covered by SQL assertions but have not been
 driven in the app.
+
+### Shipped
+
+`3311aef` on `main`, 2026-10-16. The migration was pushed to production before the commit
+(additive, and the live client's RPC calls still bind because the new parameters carry
+defaults) — so production's schema is ahead of its bundle, which is the safe direction.
+Not deployed.
