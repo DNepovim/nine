@@ -11,6 +11,7 @@ import Animated, {
 } from 'react-native-reanimated'
 import { scheduleOnRN } from 'react-native-worklets'
 
+import { LEGEND_BOX, LegendBox } from '@/components/overlays/legend-box'
 import { TipSizer } from '@/components/overlays/tip-sizer'
 import { PageDots } from '@/components/page-dots'
 import { SWIPE_THRESHOLD } from '@/constants/game'
@@ -30,15 +31,6 @@ import { gradientOf } from '@/modes'
 // than as a meter parked on top of it.
 const TINT = gradientOf('trainee')[0]
 
-// The line is held right back — a third — so it frames the tip without competing
-// with the mode selector above it, while the dots stay solid because they are the
-// control and want to be seen.
-//
-// Alpha on the colour rather than an `opacity` style: opacity applies to the whole
-// subtree, so it would take the card and its text down with the border. Tune here
-// — 55 is a third, 99 is 60%, CC is 80%.
-const BORDER_TINT = `${TINT}55`
-
 // How many of the tips a visit gets. Not all of them: at ROTATE_MS each, the full list
 // is half a minute of reading parked above the PLAY button, and a panel that always
 // shows the same tips in the same order stops being read. Three is a set the dots can
@@ -56,20 +48,24 @@ const SLIDE_PX = 16
 const FORWARD = 1
 const BACK = -1
 
-// The what's-new dialog's edge at half weight — thinner and tighter, because this
-// is a 256px panel rather than a full-width sheet. A plain border rather than that
-// dialog's padded-gradient sandwich: one flat colour needs no gradient, and React
-// Native draws borders inside the box, so the line still ends exactly at the card's
-// bounds and the dots' offset below is unaffected.
+// Half the legend's own height, which is what `LegendBox` hangs above its box and so what
+// the card costs the slot over and above its padding.
 //
-// Shared with the teaser ARCADE puts in this same slot, which is the only other card that
-// stands here — see `constants/intro-slot.ts`.
-const { border: BORDER, radius: RADIUS } = SLOT_CARD
+// A constant because the slot's budget below is arithmetic rather than a measurement, and
+// this is the one term in it that is a measurement — `TYPE.sectionLabel` is 9px, whose
+// line box comes out around 11. Being a point out either way is invisible; the check that
+// matters is the one the slot's own note describes, which is watching PLAY GAME while
+// pressing through the pills.
+const LEGEND_LIFT = 6
 
-// Everything the card carries above and below the tip itself: `pt-3` and `pb-5`, the two
-// border lines, and the TIP label with its `mb-1`. Named because it is what turns the one
-// height the slot is allowed into the height this box may give a tip.
-const CARD_CHROME = 12 + 20 + BORDER * 2 + 15
+// Everything the card carries above and below the tip itself: `pt-4` and `pb-5`, the two
+// border lines, and the legend's overhang. Named because it is what turns the one height
+// the slot is allowed into the height this box may give a tip.
+//
+// The TIP label used to be in here too, at 15 — a line of the box spent on saying what the
+// box is. It rides the rule now, so what it costs is the overhang alone and the rest went
+// back to the tip.
+const CARD_CHROME = 16 + 20 + LEGEND_BOX.border * 2 + LEGEND_LIFT
 
 // Tips vary in length, and this sits directly above PLAY. A box that fitted each tip on
 // its own would hop the button every six seconds, so all of them share one height — and
@@ -89,7 +85,7 @@ const DOTS_HEIGHT = 22
 
 // Centre the row on the border's centreline, so half of it sits inside the card
 // and half outside and the dots read as the border continuing.
-const DOTS_OFFSET = -(DOTS_HEIGHT / 2 - BORDER / 2)
+const DOTS_OFFSET = -(DOTS_HEIGHT / 2 - LEGEND_BOX.border / 2)
 
 // Fills the slot the leaderboard occupies in Accuracy and Speed. Trainee is where
 // a new player starts and had nothing there at all, which made the mode that most
@@ -196,17 +192,7 @@ export function ModeTips() {
   return (
     <View className="mb-8 w-full max-w-3xs self-center">
       <GestureDetector gesture={swipe}>
-        <View
-          className="bg-surface px-4 pb-5 pt-3"
-          style={{ borderRadius: RADIUS, borderWidth: BORDER, borderColor: BORDER_TINT }}
-        >
-          <Text
-            selectable={false}
-            className={cn(TYPE.labelSm, 'mb-1 text-center text-dim')}
-          >
-            <Trans>TIP</Trans>
-          </Text>
-
+        <LegendBox legend={<Trans>TIP</Trans>} color={TINT} className="px-4 pb-5 pt-4">
           {/* overflow-hidden keeps the departing tip inside the card rather than
               letting it drift out over the border. */}
           <View className="overflow-hidden" style={{ height: bodyHeight }}>
@@ -223,7 +209,7 @@ export function ModeTips() {
           </View>
 
           <TipSizer tips={tips} onMeasure={measure} />
-        </View>
+        </LegendBox>
       </GestureDetector>
 
       {/* The dots hang off the bottom edge rather than sitting under the card, so

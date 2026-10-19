@@ -13,6 +13,7 @@ import { SPECTRUM } from '@/constants/colors'
 import { TYPE } from '@/constants/typography'
 import { cn } from '@/lib/cn'
 
+import { RuleChip } from './rule-chip'
 import { TurningEdge } from './turning-edge'
 
 // The edge's own measurements, as the challenge card wants them — the one caller so far.
@@ -21,16 +22,6 @@ import { TurningEdge } from './turning-edge'
 // is what the card wore before it had an edge, so the shape has not changed.
 const EDGE = 2
 const RADIUS = 16
-
-// What is set into the top edge, and where: the legend at the left of the rule, a badge at
-// the right, each in from its corner by enough that the curve is finished before the gap
-// starts, and each with a breath of white either side so the edge is plainly interrupted
-// rather than crowded.
-// The corner's own radius, which is the smallest gap that leaves the curve whole: a chip
-// set in any closer would cut across the arc, and a corner clipped mid-turn reads as a
-// drawing error rather than as an interruption.
-const CHIP_X = RADIUS
-const CHIP_PAD = 6
 
 // The band that paints the edge: the game scale, laid end to end and swept sideways.
 //
@@ -68,66 +59,6 @@ const SHADOW = {
   shadowOffset: { width: 0, height: 2 },
   shadowRadius: 5,
   elevation: 2,
-}
-
-// One thing standing in the top rule, with the rule broken behind it.
-//
-// Its ground is two colours and not one, which is the whole of this component. A chip
-// centred on the rule has half of itself outside the box and half inside, and those two
-// halves stand on different things: the app's surface above, the box's own white below.
-// Painted all white it was a white tab stuck on the parchment; painted in halves it is
-// not a tab at all — it is the rule simply stopping, with whatever was already on each
-// side of the line carrying on through the gap.
-//
-// Which means this assumes the box stands on the app's surface. Everything with a
-// `GradientFrame` around it does, and a frame on some other ground would want the colour
-// passed in rather than assumed.
-//
-// Lifted by half of its own measured height, which is the only way two chips of different
-// heights sit on one line — a constant would centre the word and leave the board low, or
-// the other way about. Rounded, so the seam between the two halves lands on a whole pixel
-// and does not show as a hairline. Hidden until it has been measured, since the frame
-// before that is the one frame it would be in the wrong place.
-//
-// `pointerEvents` is off: a card that is one big button should not have the things
-// standing on its rule taking presses out of it.
-function RuleChip({
-  side,
-  height,
-  onHeight,
-  children,
-}: {
-  side: 'left' | 'right'
-  height: number
-  onHeight: (height: number) => void
-  children: ReactNode
-}) {
-  const lift = Math.round(height / 2)
-  return (
-    <View
-      pointerEvents="none"
-      className="absolute"
-      style={{
-        top: -lift,
-        [side]: CHIP_X,
-        paddingHorizontal: CHIP_PAD,
-        opacity: height === 0 ? 0 : 1,
-      }}
-      onLayout={(e) => {
-        onHeight(e.nativeEvent.layout.height)
-      }}
-    >
-      <View
-        className="absolute left-0 right-0 top-0 bg-surface"
-        style={{ height: lift }}
-      />
-      <View
-        className="absolute bottom-0 left-0 right-0 bg-elevated"
-        style={{ top: lift }}
-      />
-      {children}
-    </View>
-  )
 }
 
 // A white box inside a moving gradient edge.
@@ -306,7 +237,13 @@ export function GradientFrame({
         breaks the rule under them is their own ground, and a ground can only do that from
         on top. */}
       {legend !== undefined && (
-        <RuleChip side="left" height={legendHeight} onHeight={setLegendHeight}>
+        <RuleChip
+          side="left"
+          inset={RADIUS}
+          below="bg-elevated"
+          height={legendHeight}
+          onHeight={setLegendHeight}
+        >
           <Text selectable={false} className={cn(TYPE.sectionLabel, 'text-dim')}>
             {legend}
           </Text>
@@ -314,7 +251,13 @@ export function GradientFrame({
       )}
 
       {badge !== undefined && (
-        <RuleChip side="right" height={badgeHeight} onHeight={setBadgeHeight}>
+        <RuleChip
+          side="right"
+          inset={RADIUS}
+          below="bg-elevated"
+          height={badgeHeight}
+          onHeight={setBadgeHeight}
+        >
           {badge}
         </RuleChip>
       )}

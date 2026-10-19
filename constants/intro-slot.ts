@@ -15,11 +15,11 @@
 //
 // Re-measure if any of those three change. The check is the one the player would make:
 // press through TRAINEE, ACCURACY, SPEED and ARCADE and watch PLAY GAME — it must not move.
+//
+// The height and nothing else. The two cards also shared a radius and a border here
+// once; the teaser has had neither since it became a page of the map, and the tips
+// card's edge belongs to `LegendBox` now, which is the shape it wears and the shape the
+// challenge dialog's STRIKE card wears beside it.
 export const SLOT_CARD = {
   height: 178,
-  // The tips card's own edge, shared so the teaser cannot drift from it. The what's-new
-  // dialog's edge at half weight — see mode-tips.tsx for why a plain border rather than
-  // that dialog's padded gradient.
-  radius: 20,
-  border: 1,
 } as const
