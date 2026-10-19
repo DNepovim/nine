@@ -9,6 +9,7 @@ import { AdminScreen } from '@/components/overlays/admin-screen'
 import { AdminSessions } from '@/components/overlays/admin-sessions'
 import { AdminStats } from '@/components/overlays/admin-stats'
 import { ChallengeCountdown } from '@/components/overlays/challenge-countdown'
+import { LiveDot } from '@/components/overlays/live-dot'
 import { UnreadDot } from '@/components/overlays/unread-dot'
 import { PrimaryButton } from '@/components/primary-button'
 import { TrackedPressable } from '@/components/tracked-pressable'
@@ -259,15 +260,29 @@ export function AdminOverlay({
                 notes.sessions
               ) : (
                 <View>
-                  <Text
-                    selectable={false}
-                    numberOfLines={1}
-                    className={cn(TYPE.cardTitleSm, 'text-primary')}
-                  >
-                    {modeById(live.modeId) === null
-                      ? live.modeId
-                      : t(labelOf(live.modeId))}
-                  </Text>
+                  {/* The breathing red dot the sessions list puts beside LIVE, here
+                      ahead of the name for the same reason: this tile is the only one
+                      on the hub reporting something that is *happening* rather than
+                      counted, and the clock under it says how long for but not that it
+                      is running. Drawn unconditionally because this branch is the live
+                      one — `live` is the session `spanStatus` answered `live` for, and
+                      a tile with nothing on shows the planned count instead.
+
+                      `flex-1` on the name so it is the part that truncates: the tile is
+                      half a phone wide, and without it a long challenge name pushes the
+                      dot off its own row. */}
+                  <View className="flex-row items-center gap-1.5">
+                    <LiveDot />
+                    <Text
+                      selectable={false}
+                      numberOfLines={1}
+                      className={cn(TYPE.cardTitleSm, 'flex-1 text-primary')}
+                    >
+                      {modeById(live.modeId) === null
+                        ? live.modeId
+                        : t(labelOf(live.modeId))}
+                    </Text>
+                  </View>
                   <View className="flex-row items-center gap-1">
                     <ChallengeCountdown until={live.closesAt} className="text-dim" />
                     <Text selectable={false} className={cn(TYPE.prose, 'text-dim')}>
