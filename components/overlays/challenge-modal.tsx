@@ -7,6 +7,7 @@ import { Text, View } from 'react-native'
 import DSEG7Font from '@/assets/fonts/DSEG7Classic-Bold.ttf'
 import { ChallengeCountdown } from '@/components/overlays/challenge-countdown'
 import { GameOverTitle } from '@/components/overlays/game-over-title'
+import { LegendBox } from '@/components/overlays/legend-box'
 import { ModalCard } from '@/components/overlays/modal-card'
 import { ScoreColumns } from '@/components/overlays/score-columns'
 import { TabPanel } from '@/components/overlays/tab-panel'
@@ -20,6 +21,7 @@ import { useViewport } from '@/hooks/use-viewport'
 import type { SessionCard } from '@/lib/challenge-session'
 import { cn } from '@/lib/cn'
 import type { OpenSession } from '@/lib/session-board'
+import { strikeRuleOf } from '@/lib/strike-rule'
 import { descriptionOf, gradientOf, headlineOf, labelOf, runRules } from '@/modes'
 import { challengeInk } from '@/modes/challenges/palette'
 
@@ -74,9 +76,16 @@ export function ChallengeModal({
   // `challengeInk`.
   const edge = gradientOf(session.modeId)
   const accent = challengeInk(edge[1])
-  // The rung the challenge pinned. A challenge may pin one, and the standings' own
-  // colour scale is read off the board it belongs to — see `TabPanel`.
-  const difficulty = runRules(session.modeId, 'hard').difficulty
+  // The rules a run of this challenge is played under. A challenge may pin its own rung,
+  // so the difficulty handed in is the one the intro holds and `runRules` ignores it
+  // wherever the challenge said otherwise.
+  const rules = runRules(session.modeId, 'hard')
+  // The rung the challenge pinned. The standings' own colour scale is read off the board
+  // they belong to — see `TabPanel`.
+  const difficulty = rules.difficulty
+  // What builds the multiplier here, which is the one rule a player cannot read off the
+  // dial. Null for a challenge whose streak is `none`, and then the row is simply absent.
+  const strike = strikeRuleOf(rules.scoring.streak)
   // Named once and handed to both the header and the panel, because the two have to be
   // the same number: a header the width of the card over rows held to 280 is a header
   // whose columns line up with nothing under them.
@@ -122,6 +131,40 @@ export function ChallengeModal({
           >
             {t(descriptionOf(session.modeId))}
           </Text>
+
+          {/* How a strike is built here, under the line that says what the challenge is.
+
+            Printed in the dialog because How to Play cannot print it: the guide has a
+            card per permanent mode spelling out that mode's streak rule, and the
+            challenges chapter is deliberately vague about rules for the reason the
+            comment there gives — a challenge may change any of them. So this is the one
+            place the rule of *this* challenge is written down, and the player reads it
+            before pressing START rather than working it out from a multiplier that came
+            and went.
+
+            The same box Trainee's tips stand in — `LegendBox`, named on its own rule —
+            because it is the same kind of thing: one short paragraph that has to read as
+            an aside beside what the screen is actually about. Its edge is the challenge's
+            own ink where the tips card's is Trainee's blue.
+
+            Held to the same width as the description above it and the standings below,
+            and `self-center` for the same reason — see the note on the description. */}
+          {strike !== null && (
+            <View className="mb-4 self-center" style={{ width: boardWidth }}>
+              <LegendBox
+                legend={<Trans>STRIKE</Trans>}
+                color={accent}
+                className="px-4 pb-4 pt-4"
+              >
+                <Text
+                  selectable={false}
+                  className={cn(TYPE.prose, 'text-center text-dim')}
+                >
+                  {t(strike)}
+                </Text>
+              </LegendBox>
+            </View>
+          )}
           {/* The standings, drawn by the same panel every board in the app is drawn by —
           one period, no tabs, and its own line for an empty one. `tab` is still handed
           over because the panel's signature wants one; `emptyLine` is what makes it

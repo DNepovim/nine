@@ -74,5 +74,6 @@ export {
   STREAK_TRIGGERED,
   streakMultiplier,
   type StreakFacts,
+  type StreakTrigger,
 } from './streak'
 export type { Headline, ShotKind, Submode } from './types'

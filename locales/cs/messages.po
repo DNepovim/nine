@@ -145,7 +145,7 @@ msgstr "— DNES ŽÁDNÁ ČISTÁ CESTA —"
 msgid "— NOBODY BEAT THE CLOCK TODAY —"
 msgstr "— DNES NIKDO NEPŘEDBĚHL ČAS —"
 
-#: components/overlays/challenge-modal.tsx:32
+#: components/overlays/challenge-modal.tsx:33
 #: components/overlays/session-standings.tsx:15
 msgid "— NOBODY HAS SCORED HERE —"
 msgstr "— ZDE JEŠTĚ NIKDO NESKÓROVAL —"
@@ -633,11 +633,11 @@ msgstr "Sova uslyší myš pod půl metrem sněhu. Ty jsi přesnější — reko
 msgid "ANALYTICS"
 msgstr "ANALYTIKA"
 
-#: components/overlays/admin-teaser-modal.tsx:88
+#: components/overlays/admin-teaser-modal.tsx:94
 msgid "ANNOUNCE AHEAD"
 msgstr "OHLÁSIT PŘEDEM"
 
-#: components/overlays/admin-session.tsx:271
+#: components/overlays/admin-session.tsx:283
 msgid "ANNOUNCE AHEAD (HOURS)"
 msgstr "OHLÁSIT PŘEDEM (HODINY)"
 
@@ -727,8 +727,8 @@ msgstr "PRŮM RYCH"
 #: components/game/arcade-over.tsx:49
 #: components/overlays/admin-access.tsx:102
 #: components/overlays/admin-messages.tsx:373
-#: components/overlays/admin-session.tsx:203
-#: components/overlays/admin-sessions.tsx:259
+#: components/overlays/admin-session.tsx:215
+#: components/overlays/admin-sessions.tsx:276
 #: components/overlays/admin-stats.tsx:127
 #: components/overlays/whats-new-overlay.tsx:107
 msgid "BACK"
@@ -772,7 +772,7 @@ msgstr "NEJLEPŠÍ"
 msgid "Best scores, up top"
 msgstr "Nejlepší skóre nahoře"
 
-#: components/overlays/admin-session.tsx:277
+#: components/overlays/admin-session.tsx:289
 msgid "Blank uses the general figure."
 msgstr "Prázdné pole použije obecnou hodnotu."
 
@@ -813,7 +813,7 @@ msgstr "MŮŽEME TI KOUKAT POD PRSTY?"
 msgid "CANCEL"
 msgstr "ZRUŠIT"
 
-#: components/overlays/admin-session.tsx:196
+#: components/overlays/admin-session.tsx:208
 msgid "CANCEL SESSION"
 msgstr "ZRUŠIT TERMÍN"
 
@@ -829,9 +829,9 @@ msgstr "STROP"
 msgid "Chain your hits — a streak multiplies your points ×2 → ×4 → ×8. Accuracy counts optimal routes, Speed counts hits with most of the ring left."
 msgstr "Navazuj zásahy na sebe — série násobí body ×2 → ×4 → ×8. Přesnost počítá optimální cesty, Rychlost zásahy s kruhem z větší části plným."
 
-#: components/overlays/admin-session.tsx:210
+#: components/overlays/admin-session.tsx:222
 #: components/overlays/challenge-card.tsx:166
-#: components/overlays/challenge-modal.tsx:90
+#: components/overlays/challenge-modal.tsx:98
 #: modes/challenges/define.ts:83
 msgid "CHALLENGE"
 msgstr "VÝZVA"
@@ -841,7 +841,7 @@ msgid "CHALLENGE CLOSES IN"
 msgstr "VÝZVA SE ZAVÍRÁ ZA"
 
 #: components/overlays/admin-overlay.tsx:253
-#: components/overlays/admin-session.tsx:45
+#: components/overlays/admin-session.tsx:46
 #: components/overlays/admin-sessions.tsx:51
 #: components/overlays/how-to-play-overlay.tsx:56
 msgid "CHALLENGES"
@@ -875,19 +875,19 @@ msgstr "VYMAZAT"
 msgid "Climb the way, or fall back."
 msgstr "Stoupej cestou, nebo padej zpět."
 
-#: components/overlays/challenge-modal.tsx:199
+#: components/overlays/challenge-modal.tsx:237
 #: components/overlays/compare-overlay.tsx:318
 #: components/overlays/email-code-modal.tsx:528
 #: components/overlays/modal-card.tsx:266
 msgid "CLOSE"
 msgstr "ZAVŘÍT"
 
-#: components/overlays/admin-session.tsx:179
-#: components/overlays/admin-session.tsx:318
+#: components/overlays/admin-session.tsx:191
+#: components/overlays/admin-session.tsx:330
 msgid "CLOSE EARLY"
 msgstr "UKONČIT PŘEDČASNĚ"
 
-#: components/overlays/admin-session.tsx:298
+#: components/overlays/admin-session.tsx:310
 msgid "CLOSE THIS CHALLENGE NOW?"
 msgstr "UKONČIT TUTO VÝZVU TEĎ?"
 
@@ -1043,8 +1043,8 @@ msgstr "UKONČIT HRU"
 msgid "END TUTORIAL"
 msgstr "UKONČIT TUTORIÁL"
 
-#: components/overlays/admin-session.tsx:237
-#: components/overlays/admin-session.tsx:252
+#: components/overlays/admin-session.tsx:249
+#: components/overlays/admin-session.tsx:264
 msgid "ENDS"
 msgstr "KONEC"
 
@@ -1126,7 +1126,7 @@ msgstr "VŠECHNO, CO SE ZMĚNILO"
 msgid "EXT"
 msgstr "EXT"
 
-#: components/overlays/admin-session.tsx:170
+#: components/overlays/admin-session.tsx:182
 msgid "EXTEND"
 msgstr "PRODLOUŽIT"
 
@@ -1402,7 +1402,7 @@ msgid "HOME"
 msgstr "DOMŮ"
 
 #: components/overlays/admin-extend-dialog.tsx:43
-#: components/overlays/admin-teaser-modal.tsx:102
+#: components/overlays/admin-teaser-modal.tsx:108
 msgid "HOURS"
 msgstr "HODINY"
 
@@ -1411,7 +1411,7 @@ msgstr "HODINY"
 msgid "How far can you go?"
 msgstr "Jak daleko to dotáhneš?"
 
-#: components/overlays/admin-teaser-modal.tsx:90
+#: components/overlays/admin-teaser-modal.tsx:96
 msgid "How long before it opens a challenge starts announcing itself, for every session that does not set its own."
 msgstr "Jak dlouho před začátkem se výzva začne ohlašovat — pro každý termín, který si neurčí vlastní čas."
 
@@ -1589,6 +1589,10 @@ msgstr "Nauč se malou násobilku devítky nazpaměť. Tlačítko 9× jde po 9, 
 msgid "LEAVE GAME"
 msgstr "OPUSTIT HRU"
 
+#: lib/strike-rule.ts:26
+msgid "Leave the board empty — clear every target standing on it."
+msgstr "Nech mřížku prázdnou — sejmi každý cíl, který na ní stojí."
+
 #: components/overlays/admin-overlay.tsx:274
 msgid "left"
 msgstr "zbývá"
@@ -1699,6 +1703,14 @@ msgstr "Víc z toho patří tobě než soupeři. Ne všechno."
 msgid "More to find"
 msgstr "Je toho víc k nalezení"
 
+#: lib/strike-rule.ts:28
+msgid "Move at least one key in every row of the dial."
+msgstr "Pohni aspoň jedním tlačítkem v každém řádku číselníku."
+
+#: lib/strike-rule.ts:27
+msgid "Move every key on the dial on the way to the target."
+msgstr "Cestou k cíli pohni každým tlačítkem na číselníku."
+
 #: components/game/multiplayer-game.tsx:164
 #: components/overlays/how-to-play-overlay.tsx:57
 msgid "MULTIPLAYER"
@@ -1783,7 +1795,7 @@ msgstr "V databázi nejsou žádné funkce."
 msgid "No figures. See the error above."
 msgstr "Žádná čísla. Viz chyba výše."
 
-#: components/overlays/admin-sessions.tsx:300
+#: components/overlays/admin-sessions.tsx:317
 msgid "No filters are on."
 msgstr "Není zapnutý žádný filtr."
 
@@ -1827,7 +1839,7 @@ msgstr "Žádné běhy, žádné rekordy, žádný spor. Zatím."
 msgid "No sessions have been planned."
 msgstr "Zatím není naplánovaný žádný termín."
 
-#: components/overlays/admin-sessions.tsx:302
+#: components/overlays/admin-sessions.tsx:319
 msgid "No sessions planned yet."
 msgstr "Zatím není naplánovaný žádný termín."
 
@@ -1887,7 +1899,7 @@ msgstr "Ne ale všude. [W] držel [BOARD] každý den v týdnu."
 msgid "not in this build"
 msgstr "není v tomto buildu"
 
-#: components/overlays/admin-sessions.tsx:205
+#: components/overlays/admin-sessions.tsx:222
 msgid "NOT IN THIS BUILD"
 msgstr "NENÍ V TÉTO VERZI"
 
@@ -1932,7 +1944,7 @@ msgstr "V historických tabulkách se nic nehnulo. Každý rekord, který stál 
 msgid "Nothing announced yet."
 msgstr "Zatím nic oznámeného."
 
-#: components/overlays/admin-sessions.tsx:304
+#: components/overlays/admin-sessions.tsx:321
 msgid "Nothing in these states."
 msgstr "V těchto stavech nic není."
 
@@ -2072,7 +2084,7 @@ msgstr "Začínej na lehčí obtížnosti. První hra je rozehřívací a váhy 
 msgid "Open the How to Play guide."
 msgstr "Otevři návod Jak hrát."
 
-#: components/overlays/challenge-modal.tsx:182
+#: components/overlays/challenge-modal.tsx:220
 msgid "OPENS IN"
 msgstr "ZAČÍNÁ ZA"
 
@@ -2135,7 +2147,7 @@ msgstr "Na úvodní obrazovce zvol „S přáteli“. Založ hru a pošli ostatn
 msgid "Pick ARCADE on the start screen. The dial is the same dial — but the targets are not scattered any more. Two to four of them hang at the ends of ways out of the crossroad you are standing on, and the one you dial is the one you walk."
 msgstr "Na úvodní obrazovce zvol ARKÁDU. Číselník je pořád ten samý — jen cíle už nejsou rozesety po ploše. Dva až čtyři visí na koncích cest, které vedou z křižovatky, na níž stojíš, a vydáš se tou, kterou vytočíš."
 
-#: components/overlays/admin-sessions.tsx:253
+#: components/overlays/admin-sessions.tsx:270
 msgid "PLAN SESSION"
 msgstr "NAPLÁNOVAT TERMÍN"
 
@@ -2381,8 +2393,8 @@ msgstr "Sytost"
 msgid "Saturday"
 msgstr "v sobotu"
 
-#: components/overlays/admin-session.tsx:157
-#: components/overlays/admin-teaser-modal.tsx:114
+#: components/overlays/admin-session.tsx:169
+#: components/overlays/admin-teaser-modal.tsx:120
 #: components/overlays/motto-modal.tsx:156
 msgid "SAVE"
 msgstr "ULOŽIT"
@@ -2609,7 +2621,7 @@ msgstr "Zůstaň v Nováčkovi půl hodiny v kuse."
 msgid "Spot your nines"
 msgstr "Devítky na první pohled"
 
-#: components/overlays/challenge-modal.tsx:170
+#: components/overlays/challenge-modal.tsx:208
 msgid "START"
 msgstr "HRÁT"
 
@@ -2618,8 +2630,8 @@ msgstr "HRÁT"
 msgid "START GAME"
 msgstr "SPUSTIT HRU"
 
-#: components/overlays/admin-session.tsx:236
-#: components/overlays/admin-session.tsx:245
+#: components/overlays/admin-session.tsx:248
+#: components/overlays/admin-session.tsx:257
 msgid "STARTS"
 msgstr "ZAČÁTEK"
 
@@ -2657,6 +2669,7 @@ msgid "Streak — consecutive perfect plays multiply your points ×2 → ×4 →
 msgstr "Série — dokonalé tahy za sebou násobí body ×2 → ×4 → ×8. Stačí jeden nedokonalý zásah a začínáš od začátku."
 
 #: components/game/arcade-strike.tsx:77
+#: components/overlays/challenge-modal.tsx:153
 msgid "STRIKE"
 msgstr "SÉRIE"
 
@@ -2692,6 +2705,14 @@ msgstr "ŠVIHNUTÍM VPRAVO HO VYTOČÍŠ NA DEVÍTKU"
 #: constants/tips.ts:12
 msgid "Swipe to 0 or 9 to reset a button in a single gesture instead of tapping through."
 msgstr "Švihnutím na 0 nebo 9 vynuluješ tlačítko jediným gestem místo proťukávání."
+
+#: lib/strike-rule.ts:24
+msgid "Take every target in the fewest moves it can be done in."
+msgstr "Slož každý cíl na nejmenší možný počet tahů."
+
+#: lib/strike-rule.ts:25
+msgid "Take every target while most of its ring is still full."
+msgstr "Slož každý cíl, dokud je většina jeho kruhu ještě plná."
 
 #: constants/achievements.ts:411
 msgid "Take first place on a board."
@@ -2895,7 +2916,7 @@ msgstr "Sluch sovy a střemhlavý let orla — a ty překonáváš oba: rekord v
 msgid "The rules are its own. The keys, the clock, the scoring, how many lives you get — any of it may be different, and the card says what before you start."
 msgstr "Pravidla má vlastní. Klávesy, čas, bodování i počet životů — cokoli z toho může být jinak, a karta to řekne, než začneš."
 
-#: components/overlays/admin-session.tsx:304
+#: components/overlays/admin-session.tsx:316
 msgid "The standings stay exactly as they are and the places settle now. This cannot be undone — running it again is a new session, with a board of its own."
 msgstr "Pořadí zůstane přesně takové, jaké je, a umístění se teď uzavřou. Nejde to vzít zpět — spustit ji znovu znamená nový termín s vlastním pořadím."
 

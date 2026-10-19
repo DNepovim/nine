@@ -145,7 +145,7 @@ msgstr "— NO SHORT ROUTE TODAY —"
 msgid "— NOBODY BEAT THE CLOCK TODAY —"
 msgstr "— NOBODY BEAT THE CLOCK TODAY —"
 
-#: components/overlays/challenge-modal.tsx:32
+#: components/overlays/challenge-modal.tsx:33
 #: components/overlays/session-standings.tsx:15
 msgid "— NOBODY HAS SCORED HERE —"
 msgstr "— NOBODY HAS SCORED HERE —"
@@ -633,11 +633,11 @@ msgstr "An owl can hear a mouse under half a metre of snow. You are the more exa
 msgid "ANALYTICS"
 msgstr "ANALYTICS"
 
-#: components/overlays/admin-teaser-modal.tsx:88
+#: components/overlays/admin-teaser-modal.tsx:94
 msgid "ANNOUNCE AHEAD"
 msgstr "ANNOUNCE AHEAD"
 
-#: components/overlays/admin-session.tsx:271
+#: components/overlays/admin-session.tsx:283
 msgid "ANNOUNCE AHEAD (HOURS)"
 msgstr "ANNOUNCE AHEAD (HOURS)"
 
@@ -727,8 +727,8 @@ msgstr "AVG SPD"
 #: components/game/arcade-over.tsx:49
 #: components/overlays/admin-access.tsx:102
 #: components/overlays/admin-messages.tsx:373
-#: components/overlays/admin-session.tsx:203
-#: components/overlays/admin-sessions.tsx:259
+#: components/overlays/admin-session.tsx:215
+#: components/overlays/admin-sessions.tsx:276
 #: components/overlays/admin-stats.tsx:127
 #: components/overlays/whats-new-overlay.tsx:107
 msgid "BACK"
@@ -772,7 +772,7 @@ msgstr "BEST"
 msgid "Best scores, up top"
 msgstr "Best scores, up top"
 
-#: components/overlays/admin-session.tsx:277
+#: components/overlays/admin-session.tsx:289
 msgid "Blank uses the general figure."
 msgstr "Blank uses the general figure."
 
@@ -813,7 +813,7 @@ msgstr "CAN WE LOOK UNDER YOUR THUMBS?"
 msgid "CANCEL"
 msgstr "CANCEL"
 
-#: components/overlays/admin-session.tsx:196
+#: components/overlays/admin-session.tsx:208
 msgid "CANCEL SESSION"
 msgstr "CANCEL SESSION"
 
@@ -829,9 +829,9 @@ msgstr "CEILING"
 msgid "Chain your hits — a streak multiplies your points ×2 → ×4 → ×8. Accuracy counts optimal routes, Speed counts hits with most of the ring left."
 msgstr "Chain your hits — a streak multiplies your points ×2 → ×4 → ×8. Accuracy counts optimal routes, Speed counts hits with most of the ring left."
 
-#: components/overlays/admin-session.tsx:210
+#: components/overlays/admin-session.tsx:222
 #: components/overlays/challenge-card.tsx:166
-#: components/overlays/challenge-modal.tsx:90
+#: components/overlays/challenge-modal.tsx:98
 #: modes/challenges/define.ts:83
 msgid "CHALLENGE"
 msgstr "CHALLENGE"
@@ -841,7 +841,7 @@ msgid "CHALLENGE CLOSES IN"
 msgstr "CHALLENGE CLOSES IN"
 
 #: components/overlays/admin-overlay.tsx:253
-#: components/overlays/admin-session.tsx:45
+#: components/overlays/admin-session.tsx:46
 #: components/overlays/admin-sessions.tsx:51
 #: components/overlays/how-to-play-overlay.tsx:56
 msgid "CHALLENGES"
@@ -875,19 +875,19 @@ msgstr "CLEAR"
 msgid "Climb the way, or fall back."
 msgstr "Climb the way, or fall back."
 
-#: components/overlays/challenge-modal.tsx:199
+#: components/overlays/challenge-modal.tsx:237
 #: components/overlays/compare-overlay.tsx:318
 #: components/overlays/email-code-modal.tsx:528
 #: components/overlays/modal-card.tsx:266
 msgid "CLOSE"
 msgstr "CLOSE"
 
-#: components/overlays/admin-session.tsx:179
-#: components/overlays/admin-session.tsx:318
+#: components/overlays/admin-session.tsx:191
+#: components/overlays/admin-session.tsx:330
 msgid "CLOSE EARLY"
 msgstr "CLOSE EARLY"
 
-#: components/overlays/admin-session.tsx:298
+#: components/overlays/admin-session.tsx:310
 msgid "CLOSE THIS CHALLENGE NOW?"
 msgstr "CLOSE THIS CHALLENGE NOW?"
 
@@ -1043,8 +1043,8 @@ msgstr "END RUN"
 msgid "END TUTORIAL"
 msgstr "END TUTORIAL"
 
-#: components/overlays/admin-session.tsx:237
-#: components/overlays/admin-session.tsx:252
+#: components/overlays/admin-session.tsx:249
+#: components/overlays/admin-session.tsx:264
 msgid "ENDS"
 msgstr "ENDS"
 
@@ -1126,7 +1126,7 @@ msgstr "EVERYTHING THAT’S CHANGED"
 msgid "EXT"
 msgstr "EXT"
 
-#: components/overlays/admin-session.tsx:170
+#: components/overlays/admin-session.tsx:182
 msgid "EXTEND"
 msgstr "EXTEND"
 
@@ -1402,7 +1402,7 @@ msgid "HOME"
 msgstr "HOME"
 
 #: components/overlays/admin-extend-dialog.tsx:43
-#: components/overlays/admin-teaser-modal.tsx:102
+#: components/overlays/admin-teaser-modal.tsx:108
 msgid "HOURS"
 msgstr "HOURS"
 
@@ -1411,7 +1411,7 @@ msgstr "HOURS"
 msgid "How far can you go?"
 msgstr "How far can you go?"
 
-#: components/overlays/admin-teaser-modal.tsx:90
+#: components/overlays/admin-teaser-modal.tsx:96
 msgid "How long before it opens a challenge starts announcing itself, for every session that does not set its own."
 msgstr "How long before it opens a challenge starts announcing itself, for every session that does not set its own."
 
@@ -1589,6 +1589,10 @@ msgstr "Learn the nine times table cold. The 9× button steps 9, 18, 27 up to 81
 msgid "LEAVE GAME"
 msgstr "LEAVE GAME"
 
+#: lib/strike-rule.ts:26
+msgid "Leave the board empty — clear every target standing on it."
+msgstr "Leave the board empty — clear every target standing on it."
+
 #: components/overlays/admin-overlay.tsx:274
 msgid "left"
 msgstr "left"
@@ -1699,6 +1703,14 @@ msgstr "More of this is yours than theirs. Not all of it."
 msgid "More to find"
 msgstr "More to find"
 
+#: lib/strike-rule.ts:28
+msgid "Move at least one key in every row of the dial."
+msgstr "Move at least one key in every row of the dial."
+
+#: lib/strike-rule.ts:27
+msgid "Move every key on the dial on the way to the target."
+msgstr "Move every key on the dial on the way to the target."
+
 #: components/game/multiplayer-game.tsx:164
 #: components/overlays/how-to-play-overlay.tsx:57
 msgid "MULTIPLAYER"
@@ -1783,7 +1795,7 @@ msgstr "No features in the database."
 msgid "No figures. See the error above."
 msgstr "No figures. See the error above."
 
-#: components/overlays/admin-sessions.tsx:300
+#: components/overlays/admin-sessions.tsx:317
 msgid "No filters are on."
 msgstr "No filters are on."
 
@@ -1827,7 +1839,7 @@ msgstr "No runs, no records, no argument. Yet."
 msgid "No sessions have been planned."
 msgstr "No sessions have been planned."
 
-#: components/overlays/admin-sessions.tsx:302
+#: components/overlays/admin-sessions.tsx:319
 msgid "No sessions planned yet."
 msgstr "No sessions planned yet."
 
@@ -1887,7 +1899,7 @@ msgstr "Not everywhere, though. [W] held [BOARD] every day of the week."
 msgid "not in this build"
 msgstr "not in this build"
 
-#: components/overlays/admin-sessions.tsx:205
+#: components/overlays/admin-sessions.tsx:222
 msgid "NOT IN THIS BUILD"
 msgstr "NOT IN THIS BUILD"
 
@@ -1932,7 +1944,7 @@ msgstr "Nothing all-time moved. Every record standing on Monday was still standi
 msgid "Nothing announced yet."
 msgstr "Nothing announced yet."
 
-#: components/overlays/admin-sessions.tsx:304
+#: components/overlays/admin-sessions.tsx:321
 msgid "Nothing in these states."
 msgstr "Nothing in these states."
 
@@ -2072,7 +2084,7 @@ msgstr "Open a session on an easier difficulty. The first run is a warm-up, and 
 msgid "Open the How to Play guide."
 msgstr "Open the How to Play guide."
 
-#: components/overlays/challenge-modal.tsx:182
+#: components/overlays/challenge-modal.tsx:220
 msgid "OPENS IN"
 msgstr "OPENS IN"
 
@@ -2135,7 +2147,7 @@ msgstr "Pick “With friends” on the start screen. Create a game and share the
 msgid "Pick ARCADE on the start screen. The dial is the same dial — but the targets are not scattered any more. Two to four of them hang at the ends of ways out of the crossroad you are standing on, and the one you dial is the one you walk."
 msgstr "Pick ARCADE on the start screen. The dial is the same dial — but the targets are not scattered any more. Two to four of them hang at the ends of ways out of the crossroad you are standing on, and the one you dial is the one you walk."
 
-#: components/overlays/admin-sessions.tsx:253
+#: components/overlays/admin-sessions.tsx:270
 msgid "PLAN SESSION"
 msgstr "PLAN SESSION"
 
@@ -2381,8 +2393,8 @@ msgstr "Satiety"
 msgid "Saturday"
 msgstr "Saturday"
 
-#: components/overlays/admin-session.tsx:157
-#: components/overlays/admin-teaser-modal.tsx:114
+#: components/overlays/admin-session.tsx:169
+#: components/overlays/admin-teaser-modal.tsx:120
 #: components/overlays/motto-modal.tsx:156
 msgid "SAVE"
 msgstr "SAVE"
@@ -2609,7 +2621,7 @@ msgstr "Spend half an hour in Trainee without leaving."
 msgid "Spot your nines"
 msgstr "Spot your nines"
 
-#: components/overlays/challenge-modal.tsx:170
+#: components/overlays/challenge-modal.tsx:208
 msgid "START"
 msgstr "START"
 
@@ -2618,8 +2630,8 @@ msgstr "START"
 msgid "START GAME"
 msgstr "START GAME"
 
-#: components/overlays/admin-session.tsx:236
-#: components/overlays/admin-session.tsx:245
+#: components/overlays/admin-session.tsx:248
+#: components/overlays/admin-session.tsx:257
 msgid "STARTS"
 msgstr "STARTS"
 
@@ -2657,6 +2669,7 @@ msgid "Streak — consecutive perfect plays multiply your points ×2 → ×4 →
 msgstr "Streak — consecutive perfect plays multiply your points ×2 → ×4 → ×8. One imperfect hit and you start again."
 
 #: components/game/arcade-strike.tsx:77
+#: components/overlays/challenge-modal.tsx:153
 msgid "STRIKE"
 msgstr "STRIKE"
 
@@ -2692,6 +2705,14 @@ msgstr "SWIPE RIGHT TO FILL A KEY"
 #: constants/tips.ts:12
 msgid "Swipe to 0 or 9 to reset a button in a single gesture instead of tapping through."
 msgstr "Swipe to 0 or 9 to reset a button in a single gesture instead of tapping through."
+
+#: lib/strike-rule.ts:24
+msgid "Take every target in the fewest moves it can be done in."
+msgstr "Take every target in the fewest moves it can be done in."
+
+#: lib/strike-rule.ts:25
+msgid "Take every target while most of its ring is still full."
+msgstr "Take every target while most of its ring is still full."
 
 #: constants/achievements.ts:411
 msgid "Take first place on a board."
@@ -2895,7 +2916,7 @@ msgstr "The owl's ear and the eagle's dive, and you out-do both: the all-time re
 msgid "The rules are its own. The keys, the clock, the scoring, how many lives you get — any of it may be different, and the card says what before you start."
 msgstr "The rules are its own. The keys, the clock, the scoring, how many lives you get — any of it may be different, and the card says what before you start."
 
-#: components/overlays/admin-session.tsx:304
+#: components/overlays/admin-session.tsx:316
 msgid "The standings stay exactly as they are and the places settle now. This cannot be undone — running it again is a new session, with a board of its own."
 msgstr "The standings stay exactly as they are and the places settle now. This cannot be undone — running it again is a new session, with a board of its own."
 
