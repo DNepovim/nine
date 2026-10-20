@@ -13,7 +13,7 @@ import { cn } from '@/lib/cn'
 import { emptyBoardLine } from '@/lib/empty-board'
 import type { LeaderboardTab } from '@/lib/leaderboard-period'
 import { displayRows } from '@/lib/leaderboard-rows'
-import type { Difficulty, Headline } from '@/modes'
+import type { Difficulty, Headline, Measure } from '@/modes'
 
 import { ScoreRow } from './score-row'
 import { SkeletonPulse } from './skeleton'
@@ -59,6 +59,7 @@ export function TabPanel({
   nickname,
   width,
   digitFont,
+  measure = 'score',
   halo = false,
   compact = false,
   emptyLine,
@@ -75,6 +76,10 @@ export function TabPanel({
   width: number
   // Resolved once by the parent — 'DSEG7', or `mono` while the face is still loading.
   digitFont: string
+  // What these standings are ordered by. Only a **session board** is ever anything but
+  // its score — a board has one figure and always will — and the panel passes it to the
+  // header and every row so the four columns line up.
+  measure?: Measure
   // Set on the gold game-over screen, where the board sits on the celebration.
   halo?: boolean
   // The game-over screen's short board: three rows, and no row for the player below the
@@ -174,6 +179,7 @@ export function TabPanel({
             mark: championMark(row.userId, champions),
             nickname: row.nickname,
             score: row.score,
+            timeMs: row.timeMs,
             isUser: row.isUser,
             note: row.unpublished ? note : undefined,
             achievedAt: row.achievedAt ?? undefined,
@@ -182,6 +188,7 @@ export function TabPanel({
           }}
           accentColor={accentColor}
           digitFont={digitFont}
+          measure={measure}
           halo={halo}
         />
       ))}
@@ -211,6 +218,7 @@ export function TabPanel({
             }}
             accentColor={accentColor}
             digitFont={digitFont}
+            measure={measure}
             halo={halo}
           />
         </>

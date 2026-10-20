@@ -53,6 +53,7 @@ export {
   isMode,
   isModeId,
   labelOf,
+  measureOf,
   MODE_ORDER,
   modeById,
   openModes,
@@ -76,4 +77,4 @@ export {
   type StreakFacts,
   type StreakTrigger,
 } from './streak'
-export type { Headline, ShotKind, Submode } from './types'
+export type { Headline, Measure, ShotKind, Submode } from './types'

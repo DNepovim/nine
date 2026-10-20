@@ -28,8 +28,20 @@ const BASE_TARGET_RULES: TargetRules = {
   dial: NINE_DIAL,
   fixedDifficulty: null,
   clock: { base: 22000, ramps: 'none', playerSet: false, countsDown: true },
-  spawn: { share: 1 / 3, cap: null, maxTargets: null, cadence: true, reach: null },
-  scoring: { weights: { acc: 0.5, spd: 0.5 }, base: SCORE_BASE, streak: 'none' },
+  spawn: {
+    share: 1 / 3,
+    cap: null,
+    maxTargets: null,
+    cadence: true,
+    reach: null,
+    drill: null,
+  },
+  scoring: {
+    weights: { acc: 0.5, spd: 0.5 },
+    base: SCORE_BASE,
+    streak: 'none',
+    measure: 'score',
+  },
   lives: { count: 3, wastefulCostsLife: false, expiryCostsLife: true },
   capabilities: { board: true, scored: true, coached: false, keyHints: false },
 }
@@ -90,6 +102,7 @@ export type RunRules = {
     maxTargets: number
     cadence: boolean
     reach: number | null
+    drill: number | null
   }
   // The mode's scoring with its headline filled in, so no reader has to work out which
   // factor a mode is about.
@@ -146,6 +159,7 @@ export function resolveRules(
       maxTargets: patched.spawn.maxTargets ?? grade.maxTargets,
       cadence: patched.spawn.cadence,
       reach: patched.spawn.reach,
+      drill: patched.spawn.drill,
     },
     scoring: {
       ...patched.scoring,

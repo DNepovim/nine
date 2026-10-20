@@ -30,6 +30,13 @@ export type LeaderboardRow = {
   nickname: string
   best_score: number
   hits: number
+  // What the run took, in ms, or null where the row is not claiming one — a
+  // score-measured session, or a run posted before a session had a **measure** at all.
+  //
+  // Optional rather than required because this shape is also what `leaderboard`
+  // returns, and a **board** has no time to give: `scores` has one figure and always
+  // will. Only a session board fills it in.
+  time_ms?: number | null
   // When the record was set — the row's `updated_at`, as an ISO string. Drives the
   // "how long it has stood" mark beside the nickname.
   achieved_at: string

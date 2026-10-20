@@ -74,8 +74,22 @@ export function useScoreSubmission(
       // Which session the run belonged to, or null for an ordinary one. Defaulted so
       // the three board call sites stay as they are.
       sessionId: string | null = null,
+      // How long the run took. Handed over whatever the mode is — `submitScore` keeps
+      // it only where the measure is the clock. Undefined on the mid-run record post,
+      // which has nothing to say about a finished run's time because the run is not
+      // finished.
+      elapsedMs?: number,
     ) => {
-      void submitScore(userId, nickname, mode, difficulty, score, hits, sessionId)
+      void submitScore(
+        userId,
+        nickname,
+        mode,
+        difficulty,
+        score,
+        hits,
+        sessionId,
+        elapsedMs,
+      )
     },
     [userId, nickname],
   )

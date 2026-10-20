@@ -2,7 +2,7 @@ import type { MessageDescriptor } from '@lingui/core'
 import { msg } from '@lingui/core/macro'
 
 import { formatGameTime } from '@/lib/duration'
-import { headlineOf, traitsOf, type ModeId } from '@/modes'
+import { headlineOf, measureOf, traitsOf, type ModeId } from '@/modes'
 
 // The figures a run leaves behind, named.
 //
@@ -43,15 +43,25 @@ export function runStats(run: {
       ? { label: msg`AVG SPD`, value: run.avgSpeed }
       : { label: msg`AVG ACC`, value: run.avgAccuracy }
 
+  // A run whose standings are placed on the clock has already shown it, in the readout
+  // at the top of the screen and to the hundredth. Printing it here again — rounded to
+  // the second, in a row of things the run merely *did* — would be the one figure the
+  // run is judged by said twice, less precisely the second time.
+  const timed = measureOf(run.mode) === 'time'
+
   return [
     { key: 'hits', label: msg`HITS`, value: `${run.hits}`, overhang: false },
     { key: 'strikes', label: msg`STRIKES`, value: `${run.strikes}`, overhang: false },
-    {
-      key: 'time',
-      label: msg`TIME`,
-      value: formatGameTime(run.gameTimeMs),
-      overhang: true,
-    },
+    ...(timed
+      ? []
+      : [
+          {
+            key: 'time',
+            label: msg`TIME`,
+            value: formatGameTime(run.gameTimeMs),
+            overhang: true,
+          },
+        ]),
     ...(traitsOf(run.mode).scored
       ? [
           {

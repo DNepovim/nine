@@ -11,7 +11,14 @@ import { TUTORIAL } from './definitions/tutorial'
 import type { DialSpec } from './dial'
 import type { Difficulty } from './difficulty'
 import { resolveRules, type RunRules } from './rules'
-import type { Capabilities, Headline, ModeDefinition, ModeEngine, Submode } from './types'
+import type {
+  Capabilities,
+  Headline,
+  Measure,
+  ModeDefinition,
+  ModeEngine,
+  Submode,
+} from './types'
 
 // Every mode the app knows, and the one place that knows how many there are.
 //
@@ -192,6 +199,18 @@ export const baseClockMs = (id: ModeId, difficulty: Difficulty): number =>
 // Does not depend on the rung, so a reader with no difficulty in hand can still ask.
 export const headlineOf = (id: ModeId): Headline =>
   rulesFor(id, 'hard')?.scoring.headline ?? 'acc'
+
+// What a **session** of this mode is judged by: the figure its standings are ordered by
+// and its places settled on. The score everywhere but a race.
+//
+// Asked once, by the planner, when a session is booked — the answer is stamped onto the
+// row and it is the stamp the server orders by. Nothing on the game screen reads this:
+// a measure says how a contest is won, not how a run is played.
+//
+// 'score' for a mode nothing is registered under, which is the answer every session
+// booked before a measure existed carries.
+export const measureOf = (id: ModeId): Measure =>
+  rulesFor(id, 'hard')?.scoring.measure ?? 'score'
 
 // How many lives a run of this mode starts with — `Number.POSITIVE_INFINITY` in a mode
 // that spends none. Three is the fallback for a mode nothing is registered under, which

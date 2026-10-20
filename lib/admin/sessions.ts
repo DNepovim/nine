@@ -1,7 +1,7 @@
 import type { SessionSpan } from '@/lib/challenge-session'
 import { noteRequest } from '@/lib/connectivity'
 import { supabase } from '@/lib/supabase'
-import { modeById } from '@/modes'
+import { measureOf, modeById } from '@/modes'
 
 // The sessions half, beside features.ts and roles.ts: when a challenge is on.
 //
@@ -95,6 +95,15 @@ const spanArgs = (span: SessionSpan) => ({
   p_closes_at: new Date(span.closesAt).toISOString(),
 })
 
+// What a session is **measured** by, taken from the challenge rather than asked for.
+//
+// A measure is a fact about the challenge — a race is a race whenever it is aired — so
+// the planner has nothing to decide and no field for it. Resolved here, in the one place
+// a booking is written, rather than on the form: a second caller that forgot would book
+// a race measured by its score, and nothing would look wrong until the standings came
+// out in the wrong order.
+const measureArg = (modeId: string) => ({ p_measure: measureOf(modeId) })
+
 export async function planSession(
   modeId: string,
   span: SessionSpan,
@@ -104,6 +113,7 @@ export async function planSession(
     p_mode_id: modeId,
     ...spanArgs(span),
     p_teaser_minutes: teaserMinutes,
+    ...measureArg(modeId),
   })
   noteRequest(res.error)
   return { error: res.error?.message ?? null }
@@ -123,6 +133,10 @@ export async function editSession(
     p_mode_id: modeId,
     ...spanArgs(span),
     p_teaser_minutes: teaserMinutes,
+    // Re-pointing a booking at another challenge re-measures it. Only reachable while
+    // nobody has scored — the server refuses a challenge change after that — so a
+    // session's measure cannot move once it means something.
+    ...measureArg(modeId),
   })
   noteRequest(res.error)
   return { error: res.error?.message ?? null }

@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { type LayoutChangeEvent } from 'react-native'
 
+import { drillPlaces } from '@/lib/drill'
 import { clampToContainer, findPosition, fitsContainer } from '@/lib/find-position'
 import { remainingFraction } from '@/lib/target-clock'
 import { type HitBatch, type HitInfo, type Target } from '@/machines/game'
@@ -15,6 +16,19 @@ const exitFor = (value: number, hits: readonly HitInfo[]): TargetExit => {
   return hit !== undefined && !hit.costLife ? 'hit' : 'failed'
 }
 
+// Where a drilled run's cards stand on a canvas of this size, and how big they are, or
+// null for a run that places its own. Memoising it would be the wrong trade: it is a few
+// hundred arithmetic steps, it is asked only when a card arrives or the board is
+// measured, and a cache keyed on three values is more code than the thing it saves.
+const drilled = (
+  drill: { seed: string; count: number } | null,
+  width: number,
+  height: number,
+) =>
+  drill === null || width <= 0 || height <= 0
+    ? null
+    : drillPlaces(drill.seed, drill.count, width, height)
+
 // Mirrors the machine's targets into a display list that outlives removals long
 // enough to play exit animations, assigns each new target a non-overlapping
 // position, and clears the list when a fresh game starts or the stepper puts a tutorial
@@ -25,6 +39,7 @@ export function useDisplayedTargets({
   runSeq,
   rewindSeq,
   restoredPositions,
+  drill,
 }: {
   machineTargets: Target[]
   // The press that just landed, if any. It is what tells a target the player dialled
@@ -44,9 +59,25 @@ export function useDisplayedTargets({
   // usable for the whole run: `nextTargetId` is restored along with the board, so no
   // target spawned afterwards can be dealt an id that is in here.
   restoredPositions: ReadonlyMap<number, Position>
+  // The **drill** this run deals from, or null for a run that rolls its targets.
+  //
+  // A drilled run does not place its cards, it is *given* their places: the same nine
+  // spots every run of that session, scattered from the session's own id. So the two
+  // things this hook normally decides — where a card goes, and how big it is — are
+  // answers it looks up instead.
+  //
+  // Recomputed whenever the canvas changes rather than once at placement, which is the
+  // whole reason it is held here. The first target of a run can arrive before the board
+  // has been measured, and a place worked out against a canvas of nought would be the
+  // one place that card kept for the rest of the run.
+  drill: { seed: string; count: number } | null
 }) {
   const [displayedTargets, setDisplayedTargets] = useState<DisplayTarget[]>([])
   const containerSize = useRef({ width: 0, height: 0 })
+  // Read at placement time, like the canvas beside it: a drill arriving a render after
+  // the first card would otherwise place that card by rolling.
+  const drillRef = useRef(drill)
+  drillRef.current = drill
   // The same measurement again, as state. The ref above is read at placement time and must
   // not cause a render; this is for the tutorial, which puts a card beside a target — above
   // it or below it depending on the room — and so has to re-render when the canvas changes.
@@ -105,16 +136,29 @@ export function useDisplayedTargets({
           // A target put back from storage goes back where it was, so the board the
           // player comes back to is the board they left. Anything else — and anything
           // remembered for a board this one no longer matches — is placed afresh.
+          // A drilled card's place is the drill's, by the target's `seq` — its place
+          // in *this run*. Not its id, which climbs for the life of the machine and so
+          // points past the end of the drill on every run after the first.
+          //
+          // Ahead of the restored place on purpose: the two agree whenever the canvas
+          // does, and where they disagree the drill is the one telling the truth about
+          // where this session's fifth target stands.
+          const spot = drilled(
+            drillRef.current,
+            containerSize.current.width,
+            containerSize.current.height,
+          )?.[t.seq]?.at
           const kept = restoredPositions.get(t.id)
           const position =
-            kept !== undefined &&
+            spot ??
+            (kept !== undefined &&
             fitsContainer(kept, containerSize.current.width, containerSize.current.height)
               ? kept
               : findPosition(
                   placed,
                   containerSize.current.width,
                   containerSize.current.height,
-                )
+                ))
           const entry: DisplayTarget = {
             ...t,
             exit: null,
@@ -141,8 +185,14 @@ export function useDisplayedTargets({
     // see clampToContainer for the three ways the two come apart — and a card left where
     // it was would hang over the sum row below.
     setDisplayedTargets((prev) => {
+      // A drilled board is re-placed rather than pulled back in. Its places are a pure
+      // function of the session and the canvas, so a canvas that changed has new ones —
+      // and clamping the old places would slide two cards towards the same edge and let
+      // them touch, which a scatter is built never to do.
+      const laid = drilled(drillRef.current, width, height)
       const pulled = prev.map((target) => {
-        const position = clampToContainer(target.position, width, height)
+        const position =
+          laid?.[target.seq]?.at ?? clampToContainer(target.position, width, height)
         return position.x === target.position.x && position.y === target.position.y
           ? target
           : { ...target, position }
@@ -153,5 +203,20 @@ export function useDisplayedTargets({
     })
   }
 
-  return { displayedTargets, removeDisplayed, onContainerLayout, canvas }
+  // The drill's own cards — one per target, each with the size it is drawn at and the
+  // place it stands in — or undefined for a run that places its own. Derived from
+  // `canvas` rather than from the ref beside it, so it re-renders with the board it was
+  // measured from.
+  //
+  // Handed back whole rather than as a size, because a drill's cards differ from one
+  // another: the screen looks a card up by its target's id.
+  const drillCards = drilled(drill, canvas.width, canvas.height)
+
+  return {
+    displayedTargets,
+    removeDisplayed,
+    onContainerLayout,
+    canvas,
+    drillCards,
+  }
 }

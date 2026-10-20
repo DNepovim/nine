@@ -45,6 +45,12 @@ export type LocalScore = {
   // migration that is not needed would throw away every score still queued for
   // publication — strictly worse than the problem it would be solving.
   sessionId?: string
+  // What the run took, in ms, for a run whose session is **measured** by the clock.
+  //
+  // Absent on every other entry, under the same judgement `sessionId` was added by and
+  // with the key again left where it is: an entry written before this field existed has
+  // no time, which is exactly true of it.
+  timeMs?: number
 }
 
 // Which run this is about: one board, one day — and for a session run, one **session**.
@@ -92,12 +98,28 @@ const boardKey = (entry: LocalScore): string =>
 //
 // A better score on a slot that already published starts again as pending: the server
 // holds the old number and has not been told about this one.
+// Whether the run just played beat what the device already holds for its slot.
+//
+// Two questions, and which one is asked is the slot's own answer rather than a caller's.
+// **If both runs carry a time, the faster wins** — that is a session measured by the
+// clock, where a run that scored less but got through quicker is plainly the better one
+// and refusing it would hide the player's own best from them. Otherwise the higher score
+// wins, which is every board and every score-measured session.
+//
+// The same rule the server keeps, in the same words, deliberately: `prevent_session_
+// downgrade` decides this again on the way in, and the two disagreeing would mean a
+// device showing one best and the standings showing another.
+const beats = (run: { score: number; timeMs?: number }, held: LocalScore): boolean =>
+  run.timeMs !== undefined && held.timeMs !== undefined
+    ? run.timeMs < held.timeMs
+    : run.score > held.score
+
 export function recordRun(
   store: LocalScore[],
   run: Omit<LocalScore, 'status' | 'attempts'>,
 ): LocalScore[] {
   const held = store.find((entry) => inSlot(entry, run))
-  if (held !== undefined && held.score >= run.score) return store
+  if (held !== undefined && !beats(run, held)) return store
   const entry: LocalScore = { ...run, status: 'pending', attempts: 0 }
   return [...store.filter((other) => !inSlot(other, run)), entry]
 }

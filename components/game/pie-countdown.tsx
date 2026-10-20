@@ -7,6 +7,7 @@ import Animated, {
   useAnimatedProps,
   useAnimatedStyle,
   useSharedValue,
+  withSequence,
   withTiming,
 } from 'react-native-reanimated'
 import Svg, { Circle } from 'react-native-svg'
@@ -56,6 +57,7 @@ export function PieCountdown({
   exit = null,
   startProgress = 1,
   clocked = true,
+  settles = false,
 }: {
   value: number
   // The highest sum the board being played reaches, which is what the band tint is
@@ -79,6 +81,16 @@ export function PieCountdown({
   // disc with the number on it, and nothing on it can run out. The exits below are
   // untouched; a target still collapses under its number when it is hit.
   clocked?: boolean
+  // Whether this target **stays on the board** once it is taken, rather than leaving it.
+  //
+  // A **drilled** run is the one that does: its nine are a fixed picture the player is
+  // learning, and a card that vanished the moment it was hit would take a ninth of that
+  // picture with it every time. So the hit plays and then settles — the number swells
+  // out of the disc and comes back to where it was, and the disc itself does not
+  // collapse, because on a drill the disc *is* the thing being remembered.
+  //
+  // The dimming that follows is the card's, not the pie's: see `spent` on `TargetCard`.
+  settles?: boolean
 }) {
   const scale = size / PIE_SIZE
   const radius = size / 4
@@ -130,14 +142,33 @@ export function PieCountdown({
   useEffect(() => {
     if (exit === null) return
     if (exit === 'hit') {
-      ringScale.value = withTiming(HIT_RING_SCALE, {
-        duration: TARGET_EXIT_MS,
-        easing: Easing.in(Easing.quad),
-      })
-      numberScale.value = withTiming(HIT_NUMBER_SCALE, {
-        duration: TARGET_EXIT_MS,
-        easing: Easing.out(Easing.quad),
-      })
+      // A card that settles keeps its disc: collapsing it would throw away the one
+      // thing a drilled board is read by. A card that leaves collapses as it always
+      // has — the ring going in is what makes the number come out.
+      if (!settles) {
+        ringScale.value = withTiming(HIT_RING_SCALE, {
+          duration: TARGET_EXIT_MS,
+          easing: Easing.in(Easing.quad),
+        })
+      }
+      numberScale.value = settles
+        ? // Out and back, in the same time the leaving card takes to go — so a hit
+          // reads as the same beat whether the card stays or not. Held at 1.7 it would
+          // be a numeral standing over its neighbours for the rest of the run.
+          withSequence(
+            withTiming(HIT_NUMBER_SCALE, {
+              duration: TARGET_EXIT_MS / 2,
+              easing: Easing.out(Easing.quad),
+            }),
+            withTiming(1, {
+              duration: TARGET_EXIT_MS / 2,
+              easing: Easing.inOut(Easing.quad),
+            }),
+          )
+        : withTiming(HIT_NUMBER_SCALE, {
+            duration: TARGET_EXIT_MS,
+            easing: Easing.out(Easing.quad),
+          })
       return
     }
     failColor.value = withTiming(1, {

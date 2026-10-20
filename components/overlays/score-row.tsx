@@ -2,15 +2,21 @@ import { isNonEmptyString } from 'narrowland'
 import { Text, View } from 'react-native'
 
 import { GradientName } from '@/components/gradient-name'
-import { RANK_COLUMN } from '@/components/overlays/score-columns'
+import {
+  RANK_COLUMN,
+  SCORE_COLUMN,
+  TIME_COLUMN,
+} from '@/components/overlays/score-columns'
 import { TrackedPressable } from '@/components/tracked-pressable'
 import { ON_GOLD_LABEL_SHADOW } from '@/constants/theme'
 import { GLYPH, READOUT, TYPE } from '@/constants/typography'
 import { useOpenProfile } from '@/hooks/use-profile-modal'
 import { cn } from '@/lib/cn'
+import { formatRaceTime } from '@/lib/duration'
 import { rankEmoji, rankMark } from '@/lib/rank-emoji'
 import type { RankMark } from '@/lib/rank-emoji'
 import { timeAgo } from '@/lib/time-ago'
+import type { Measure } from '@/modes'
 
 // A fixed line height on all three keeps a row the same height whichever mark it
 // shows — the board's five rows would otherwise stand taller than the player's own row
@@ -33,6 +39,9 @@ export type ScoreEntry = {
   mark: string | null
   nickname: string
   score: number
+  // What the run took, on a board **measured** by the clock. Undefined on every other
+  // board, which has no time to show and no column to show it in.
+  timeMs?: number | null
   isUser?: boolean
   // What the nickname is coloured by — see lib/name-gradient.ts. Null for a player the
   // counters have never seen, whose name is drawn uncoloured.
@@ -48,10 +57,14 @@ export function ScoreRow({
   entry,
   accentColor,
   digitFont,
+  measure = 'score',
   halo = false,
 }: {
   entry: ScoreEntry
   accentColor: string
+  // What the board this row is on is ordered by — see `ScoreColumns`, which draws the
+  // header these cells sit under and owns the two widths they share.
+  measure?: Measure
   // The seven-segment face, or `mono` until it loads. Passed in rather than loaded
   // here: a board is six of these rows, and they should not each ask for the font.
   digitFont: string
@@ -154,11 +167,25 @@ export function ScoreRow({
           colour on one line stops reading as a column. */}
       <Text
         selectable={false}
-        className={cn(READOUT.row, 'text-score')}
+        className={cn(READOUT.row, measure === 'time' && SCORE_COLUMN, 'text-score')}
         style={[{ fontFamily: digitFont }, glow]}
       >
         {entry.score}
       </Text>
+      {/* The figure the board is actually placed on, where that is not the score.
+          Drawn in the label ink rather than the score green: the green means *this is
+          what the run was worth*, and a clock is not that — it is what the run took.
+          Two green columns would also leave nothing saying which one the places came
+          from. */}
+      {measure === 'time' && (
+        <Text
+          selectable={false}
+          className={cn(READOUT.row, TIME_COLUMN, 'text-primary')}
+          style={[{ fontFamily: digitFont }, glow]}
+        >
+          {entry.timeMs == null ? '—' : formatRaceTime(entry.timeMs)}
+        </Text>
+      )}
     </TrackedPressable>
   )
 }

@@ -88,11 +88,14 @@ export function StrikeVariant({
         x: board.x + target.at.x + PIE_SIZE / 2,
         y: board.y + target.at.y + PIE_SIZE / 2,
       },
+      radius: PIE_SIZE / 2,
       muzzles: dial === null ? [] : keyCentres(dialRect.current, dial),
     }
   }
 
-  const { shots, removeShot } = useStrikeShots({ mode, hitBatch: batch, aim })
+  // One run, forever: this screen fires the same board over and over, and a chain that
+  // reset would draw its first beam from the sum row on every press.
+  const { shots, removeShot } = useStrikeShots({ mode, runSeq: 0, hitBatch: batch, aim })
 
   const fire = () => {
     setBatch((prev) => ({
@@ -198,7 +201,7 @@ export function StrikeVariant({
               fromY={shot.from.y}
               toX={shot.to.x}
               toY={shot.to.y}
-              radius={PIE_SIZE / 2}
+              radius={shot.radius}
               rounds={shot.rounds}
               gradient={shot.gradient}
               onDone={() => {

@@ -282,3 +282,111 @@ begin
   update profiles set nickname = null where id = v_u;
 end;
 $$;
+
+-- ─── The measure ─────────────────────────────────────────────────────────────
+--
+-- A session board ordered by the clock rather than the score, and the keep-better rule
+-- that has to follow it. The thing this guards is a silent one: before the measure, a
+-- player who ran *faster but scored less* had their better time refused by the shared
+-- no-downgrade trigger, with nothing anywhere saying so.
+do $$
+declare
+  v_a     uuid;
+  v_b     uuid;
+  v_race  uuid;
+  v_plain uuid;
+  v_rank  bigint;
+  v_time  int;
+begin
+  select id into v_a from profiles order by id limit 1;
+  select id into v_b from profiles where id <> v_a order by id limit 1;
+  update profiles set nickname = 'RACER_A' where id = v_a;
+  update profiles set nickname = 'RACER_B' where id = v_b;
+
+  insert into challenge_sessions (mode_id, opens_at, closes_at, measure)
+  values ('challenge/habit', now() - interval '1 hour',
+          now() + interval '1 hour', 'time')
+  returning id into v_race;
+
+  insert into challenge_sessions (mode_id, opens_at, closes_at)
+  values ('challenge/four-keys', now() - interval '1 hour',
+          now() + interval '1 hour')
+  returning id into v_plain;
+
+  -- A session booked without a measure is a score one, which is what every row already
+  -- in the table is.
+  assert (select measure from challenge_sessions where id = v_plain) = 'score',
+    'a session should be measured by its score unless it says otherwise';
+
+  -- ── The five-argument call still works ──
+  --
+  -- Every app already in players' hands calls this with five. If the default on the
+  -- sixth were ever dropped, those builds would stop posting session scores the moment
+  -- the migration landed, and they would do it quietly.
+  perform set_config('request.jwt.claims', json_build_object('sub', v_a)::text, true);
+  perform submit_session_score(v_plain, 500, 4, 'hard', now());
+  assert (select time_ms from session_scores
+           where session_id = v_plain and user_id = v_a) is null,
+    'a five-argument submission should record no time';
+
+  -- ── Ordered by the clock ──
+  perform submit_session_score(v_race, 900, 9, 'hard', now(), 14000);
+  perform set_config('request.jwt.claims', json_build_object('sub', v_b)::text, true);
+  perform submit_session_score(v_race, 400, 9, 'hard', now(), 11000);
+
+  select rank into v_rank from session_board(v_race) where user_id = v_b;
+  assert v_rank = 1,
+    'the faster run should lead a time-measured session however it scored';
+  select rank into v_rank from session_board(v_race) where user_id = v_a;
+  assert v_rank = 2, 'the slower run should be second on a time-measured session';
+
+  -- The same two scores on a score-measured session rank the other way round, which is
+  -- what says the order is the measure's doing rather than the data's.
+  perform set_config('request.jwt.claims', json_build_object('sub', v_a)::text, true);
+  perform submit_session_score(v_plain, 900, 9, 'hard', now());
+  perform set_config('request.jwt.claims', json_build_object('sub', v_b)::text, true);
+  perform submit_session_score(v_plain, 400, 9, 'hard', now());
+  select rank into v_rank from session_board(v_plain) where user_id = v_a;
+  assert v_rank = 1, 'the higher score should lead a score-measured session';
+
+  -- ── Faster but worse-scoring replaces the held row ──
+  --
+  -- The whole reason `prevent_session_downgrade` exists. The shared
+  -- `prevent_score_downgrade` reads the score and nothing else, so it would refuse this
+  -- write and the player's better time would never appear.
+  perform set_config('request.jwt.claims', json_build_object('sub', v_a)::text, true);
+  perform submit_session_score(v_race, 100, 9, 'hard', now(), 9000);
+  select time_ms into v_time from session_scores
+    where session_id = v_race and user_id = v_a;
+  assert v_time = 9000,
+    'a faster run should replace a slower one even when it scored less';
+
+  -- And a slower run never does, whatever it scored.
+  perform submit_session_score(v_race, 5000, 9, 'hard', now(), 20000);
+  select time_ms into v_time from session_scores
+    where session_id = v_race and user_id = v_a;
+  assert v_time = 9000, 'a slower run should not replace a faster one';
+  assert (select best_score from session_scores
+           where session_id = v_race and user_id = v_a) = 100,
+    'the refused run should have left the whole row alone, not just its time';
+
+  -- ── The score rule is untouched where there is no time ──
+  perform submit_session_score(v_plain, 10, 1, 'hard', now());
+  assert (select best_score from session_scores
+           where session_id = v_plain and user_id = v_a) = 900,
+    'a worse score should still be refused on a score-measured session';
+
+  -- ── The card names the leader by the measure ──
+  assert (select leader_name from open_sessions_with_leaders() where id = v_race)
+         = 'RACER_B',
+    'the card should name the fastest player on a race';
+  assert (select leader_name from open_sessions_with_leaders() where id = v_plain)
+         = 'RACER_A',
+    'the card should name the highest-scoring player on a score-measured session';
+
+  raise notice 'session_scores.sql: the measure OK';
+
+  delete from challenge_sessions where id in (v_race, v_plain);
+  update profiles set nickname = null where id in (v_a, v_b);
+end;
+$$;

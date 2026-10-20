@@ -10,6 +10,11 @@ import { gradientOf, modeById, type ModeId, type ShotKind } from '@/modes'
 export type ShotAim = {
   from: Point
   to: Point
+  // Half the card this shot is aimed at. On its own rather than a constant at the
+  // drawing, because a **drilled** run draws its nine at nine different sizes — a beam
+  // inset by half of some other card's width stops short of its target or lands inside
+  // it.
+  radius: number
   // Where a **quartet** fires from: the centre of every key on the dial. Absent for the
   // two shots that leave from the sum row, which is every other mode's.
   //
@@ -26,6 +31,9 @@ export type Shot = {
   kind: ShotKind
   from: Point
   to: Point
+  // Half the card it was aimed at, fixed with the rest of the geometry the instant the
+  // shot was fired.
+  radius: number
   // Which rounds of the press's one burst this shot fires — see shareRounds.
   rounds: number[]
   // The two stops this shot's beam is drawn in, where the mode wants its own. Only a
@@ -39,10 +47,16 @@ export type Shot = {
 // built.
 export function useStrikeShots({
   mode,
+  runSeq,
   hitBatch,
   aim,
 }: {
   mode: ModeId
+  // Which run these strikes belong to. A **chain** fires from the card it took last, and
+  // the first strike of a run has no last card — so the memory has to be dropped on a
+  // fresh deal, or the first beam of a new run would be drawn from a card that was
+  // standing on the board before it.
+  runSeq: number
   hitBatch: HitBatch
   // Read when a strike lands rather than depended on: it closes over the board's
   // measurements and the targets standing, so it is a new function on every render, and
@@ -53,10 +67,20 @@ export function useStrikeShots({
   const [shots, setShots] = useState<Shot[]>([])
   const shotId = useRef(0)
   const lastSeq = useRef(hitBatch.seq)
+  // Where the last strike landed, which is where the next **chain** beam leaves from.
+  // Null at the start of every run, and advanced through a multi-target press in the
+  // order the strikes were drawn — so one press that clears three cards draws the route
+  // between them rather than three beams from the same place.
+  const chainFrom = useRef<Point | null>(null)
+  const lastRun = useRef(runSeq)
   const aimRef = useRef(aim)
   aimRef.current = aim
 
   useEffect(() => {
+    if (runSeq !== lastRun.current) {
+      lastRun.current = runSeq
+      chainFrom.current = null
+    }
     if (hitBatch.seq === lastSeq.current) return
     lastSeq.current = hitBatch.seq
     const kind = modeById(mode)?.shot ?? null
@@ -86,23 +110,31 @@ export function useStrikeShots({
           rounds,
           from,
           to: aimed.to,
+          radius: aimed.radius,
           gradient,
         }))
       }
+      // A chain leaves the card taken before this one, falling back to the sum row for
+      // the first strike of a run. Advanced here rather than in `aim`, because which
+      // end a beam leaves from is a fact about the shot kind and `aim` only knows where
+      // things are.
+      const from = kind === 'chain' ? (chainFrom.current ?? aimed.from) : aimed.from
+      if (kind === 'chain') chainFrom.current = aimed.to
       return [
         {
           id: ++shotId.current,
           kind,
           rounds,
-          from: aimed.from,
+          from,
           to: aimed.to,
+          radius: aimed.radius,
           gradient,
         },
       ]
     })
     if (!isNonEmptyArray(fired)) return
     setShots((prev) => [...prev, ...fired])
-  }, [hitBatch, mode])
+  }, [hitBatch, mode, runSeq])
 
   const removeShot = (id: number) => {
     setShots((prev) => prev.filter((shot) => shot.id !== id))

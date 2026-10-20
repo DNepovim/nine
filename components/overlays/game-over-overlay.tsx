@@ -38,7 +38,6 @@ import {
   DIFFICULTIES,
   labelOf,
   SCORED_MODES,
-  scoreInkOf,
   traitsOf,
   type Difficulty,
   type ModeId,
@@ -50,6 +49,7 @@ import { EarnedAchievements } from './earned-achievements'
 import { GameOverTitle } from './game-over-title'
 import { HighScores } from './high-scores'
 import { RecordBackdrop } from './record-backdrop'
+import { runHeadline } from './run-headline'
 import { CardButton, RunScreen } from './run-screen'
 import { SessionStandings } from './session-standings'
 
@@ -332,11 +332,12 @@ export function GameOverOverlay({
       // gold the glow turns white, since the mode's hue would light gold with gold, and
       // on a challenge it is the app's score green, there being no board for the figure
       // to name. See `scoreInkOf`.
-      score={{
-        value: score,
-        color: scoreInkOf(gameMode),
+      score={runHeadline({
+        mode: gameMode,
+        score,
+        gameTimeMs,
         glow: painted ? WHITE_GLOW : undefined,
-      }}
+      })}
       beforeStats={
         <>
           {/* What the run is worth away from this board. The score above is what was

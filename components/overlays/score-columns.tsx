@@ -3,6 +3,7 @@ import { Text, View, type StyleProp, type TextStyle } from 'react-native'
 
 import { TYPE } from '@/constants/typography'
 import { cn } from '@/lib/cn'
+import type { Measure } from '@/modes'
 
 // What the three columns of a board are called: the rank, the name, the figure.
 //
@@ -32,9 +33,23 @@ import { cn } from '@/lib/cn'
 // after it — so the breathing room has to come from the column itself.
 export const RANK_COLUMN = 'w-9 text-center'
 
+// The two figure columns on a board **measured** by the clock, shared by the header and
+// the rows for the same reason `RANK_COLUMN` is.
+//
+// Only a timed board uses them. A score board's figure sits at the end of the row with
+// no width of its own and is unchanged by any of this — giving every board in the app a
+// fixed score column would be a sweep across eleven screens for the sake of one, and the
+// `design-guide` skill is clear about whose decision that is.
+//
+// Both right-aligned, which is the rule the SCORE header already states: a column of
+// numbers is read down its last digit.
+export const SCORE_COLUMN = 'w-14 text-right'
+export const TIME_COLUMN = 'w-12 text-right'
+
 export function ScoreColumns({
   glow,
   width,
+  measure = 'score',
   className,
 }: {
   // The gold screen's text shadow, where these sit straight on the metal with a
@@ -45,6 +60,10 @@ export function ScoreColumns({
   // a header spanning the whole card over rows narrower than it is a header whose columns
   // line up with nothing.
   width?: number
+  // What the board under these is ordered by. A timed board carries both figures — the
+  // score the run was worth and the clock it is placed on — so it gets a fourth column,
+  // and both figures take a width of their own to line up under it.
+  measure?: Measure
   className?: string
 }) {
   return (
@@ -69,11 +88,24 @@ export function ScoreColumns({
           with one row by accident and none on purpose. */}
       <Text
         selectable={false}
-        className={cn(TYPE.caption, 'text-right text-dim')}
+        className={cn(
+          TYPE.caption,
+          measure === 'time' && SCORE_COLUMN,
+          'text-right text-dim',
+        )}
         style={glow}
       >
         <Trans>SCORE</Trans>
       </Text>
+      {measure === 'time' && (
+        <Text
+          selectable={false}
+          className={cn(TYPE.caption, TIME_COLUMN, 'text-dim')}
+          style={glow}
+        >
+          <Trans>TIME</Trans>
+        </Text>
+      )}
     </View>
   )
 }

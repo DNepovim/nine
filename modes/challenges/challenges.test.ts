@@ -6,7 +6,7 @@ import { ACCURACY } from '@/modes/definitions/accuracy'
 import { SPEED } from '@/modes/definitions/speed'
 import { defineDial, emptyGrid } from '@/modes/dial'
 import { DIFFICULTY_ORDER } from '@/modes/difficulty'
-import { rulesFor, runRules } from '@/modes/registry'
+import { measureOf, rulesFor, runRules } from '@/modes/registry'
 import { rampedTimeout, resolveRules, spawnInterval } from '@/modes/rules'
 
 import { CHALLENGES } from './catalog'
@@ -95,6 +95,9 @@ describe('defineChallenge', () => {
       maxTargets: 6,
       cadence: false,
       reach: 40,
+      // Not in the patch, so the base's own answer: this challenge rolls its targets
+      // like every mode but a drilled one.
+      drill: null,
     })
     expect(rules.scoring.base).toBe(250)
     expect(rules.scoring.streak).toBe('clear')
@@ -314,6 +317,63 @@ describe('FOUR BY FOUR', () => {
     // The one challenge that names `null` rather than inheriting a shot: there is no kind
     // that draws this streak, and a beam per key would be sixteen of them.
     expect(FOUR_BY_FOUR?.shot).toBeNull()
+  })
+})
+
+describe('habit', () => {
+  const HABIT = CHALLENGES.find((mode) => mode.id === challengeId('habit'))
+
+  it('deals a drill of nine and lets all nine stand', () => {
+    if (HABIT?.engine !== 'targets') throw new Error('habit runs on targets')
+    const rules = resolveRules(HABIT.rules, HABIT.id, 'easy')
+    expect(rules.spawn.drill).toBe(9)
+    // The two have to agree. `ADD_TARGET` refuses a deal that would overflow the board,
+    // and a drilled run that lost a target could never reach nine and so never end.
+    expect(rules.spawn.maxTargets).toBe(9)
+    // Half a second apart, whatever the clock works out to.
+    expect(spawnInterval(rules, 0)).toBe(500)
+  })
+
+  it('takes the ring off every target and spends no lives', () => {
+    if (HABIT?.engine !== 'targets') throw new Error('habit runs on targets')
+    const rules = resolveRules(HABIT.rules, HABIT.id, 'easy')
+    expect(rules.clock.countsDown).toBe(false)
+    expect(rules.lives.count).toBe(Number.POSITIVE_INFINITY)
+    expect(rules.lives.expiryCosts).toBe(false)
+    // Which is what takes the hearts off the top bar: it draws `lives.count` of them.
+    expect(rules.lives.wasteful).toBeNull()
+  })
+
+  it('scores on the route alone, because the clock is the contest', () => {
+    if (HABIT?.engine !== 'targets') throw new Error('habit runs on targets')
+    const rules = resolveRules(HABIT.rules, HABIT.id, 'easy')
+    // Not the even blend every other challenge defaults to. With `countsDown: false`
+    // the speed factor is a constant 1, so half of every hit would be a free fifty.
+    expect(rules.scoring.weights).toEqual({ acc: 1, spd: 0 })
+    expect(rules.scoring.headline).toBe('acc')
+    expect(rules.scoring.streak).toBe('optimal')
+  })
+
+  it('is the one mode whose standings are ordered by the clock', () => {
+    expect(measureOf(challengeId('habit'))).toBe('time')
+    expect(measureOf(challengeId('four-keys'))).toBe('score')
+    expect(measureOf('accuracy')).toBe('score')
+    // A mode nothing is registered under, which is every session booked before a
+    // measure existed.
+    expect(measureOf('nothing-here')).toBe('score')
+  })
+
+  it('pins Hard and keeps no board, like every challenge', () => {
+    if (HABIT?.engine !== 'targets') throw new Error('habit runs on targets')
+    const rules = resolveRules(HABIT.rules, HABIT.id, 'easy')
+    expect(rules.difficulty).toBe('hard')
+    expect(rules.usesDifficulty).toBe(false)
+    expect(rules.capabilities.board).toBe(false)
+    expect(rules.capabilities.scored).toBe(true)
+  })
+
+  it('draws its strike as the route it walked', () => {
+    expect(HABIT?.shot).toBe('chain')
   })
 })
 

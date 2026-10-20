@@ -177,7 +177,7 @@ export function ChallengeModal({
               {/* The same three column names every other board in the app carries. The
                 session board was drawn by `TabPanel` directly and so arrived without
                 them — on the one screen where the table is unfamiliar. */}
-              <ScoreColumns width={boardWidth} />
+              <ScoreColumns width={boardWidth} measure={session.measure} />
               <TabPanel
                 data={board}
                 tab="forever"
@@ -185,6 +185,11 @@ export function ChallengeModal({
                 headline={headlineOf(session.modeId)}
                 difficulty={difficulty}
                 accentColor={accent}
+                // The server's own answer, stamped on the session when it was booked —
+                // not `measureOf(modeId)` resolved a second time here. A session is
+                // measured by what it was booked as, which is what its standings have
+                // meant since the first run posted to them.
+                measure={session.measure}
                 userId={userId}
                 nickname={nickname}
                 width={boardWidth}

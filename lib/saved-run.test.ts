@@ -24,6 +24,7 @@ const GRID: Grid = [1, 2, 3, 4, 5, 6, 7, 8, 9]
 
 const target = (over: Partial<Target> = {}): Target => ({
   id: 3,
+  seq: 3,
   value: 42,
   spawnedAt: 1_000,
   duration: 8_000,
@@ -56,6 +57,7 @@ const snapshot = (over: Partial<RunSnapshot> = {}): RunSnapshot => ({
   bestSpd: 0.65,
   targets: [target()],
   nextTargetId: 9,
+  dealt: 4,
   elapsedMs: 20_000,
   runSeq: 2,
   runId: 'run-7',

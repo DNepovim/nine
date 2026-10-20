@@ -5,7 +5,7 @@ import { TUTORIAL_OPENING_TARGET, TUTORIAL_TARGETS } from '@/constants/tutorial'
 import { tutorialBoardEntry } from '@/lib/tutorial-board'
 import { bestOn, gameMachine } from '@/machines/game'
 import { cleanHitReason } from '@/machines/scoring'
-import { baseClockMs, type Grid } from '@/modes'
+import { baseClockMs, challengeId, type Grid } from '@/modes'
 
 // A name per run, because START and RESTART each deal a new one. Nothing here reads it —
 // it belongs to the lifetime counters outside the machine — so a legible one will do.
@@ -34,6 +34,121 @@ describe('mode selection + lives', () => {
     actor.send({ type: 'TARGET_EXPIRED', id, now: 0 })
     expect(actor.getSnapshot().context.lives).toBe(Number.POSITIVE_INFINITY)
     expect(actor.getSnapshot().value).toBe('playing')
+  })
+})
+
+describe('a drilled run', () => {
+  // HABIT: nine targets from the session's own drill, no ring, no lives. What
+  // ends it is the drill being spent with the board clear — there is nothing else that
+  // could, since no life can be lost.
+  const HABIT = challengeId('habit')
+
+  // Dials the grid to `value` the cheap way: the top-left key is worth 1, so `value`
+  // presses on it reach any sum under ten. Used with small targets only.
+  const dialTo = (
+    actor: ReturnType<typeof createActor<typeof gameMachine>>,
+    value: number,
+  ) => {
+    for (let press = 0; press < value; press++) {
+      actor.send({ type: 'PRESS', index: 0, delta: 1, now: 0 })
+    }
+  }
+
+  const drilled = () => {
+    const actor = createActor(gameMachine)
+    actor.start()
+    actor.send({ type: 'SET_MODE', mode: HABIT })
+    actor.send({ type: 'START', now: 0, runId: nextRunId() })
+    return actor
+  }
+
+  it('plays on while any of the drill is still standing', () => {
+    const actor = drilled()
+    // Two dealt, one hit: the board is not clear, so the run is not over — even though
+    // nothing here can ever cost a life.
+    actor.send({ type: 'ADD_TARGET', value: 3, at: 0 })
+    actor.send({ type: 'ADD_TARGET', value: 7, at: 0 })
+    dialTo(actor, 3)
+    expect(actor.getSnapshot().context.targets).toHaveLength(1)
+    expect(actor.getSnapshot().value).toBe('playing')
+  })
+
+  it('plays on when the board clears but the drill has more to deal', () => {
+    const actor = drilled()
+    actor.send({ type: 'ADD_TARGET', value: 4, at: 0 })
+    dialTo(actor, 4)
+    // The board is empty and only one of the nine has been dealt. An empty board
+    // between arrivals is not a finished run.
+    expect(actor.getSnapshot().context.targets).toHaveLength(0)
+    expect(actor.getSnapshot().value).toBe('playing')
+  })
+
+  it('ends the moment the last of the drill is taken', () => {
+    const actor = drilled()
+    // All nine dealt — `maxTargets` is nine, so none is refused — and eight already
+    // down. Values are small and distinct so each is one run of presses on key zero.
+    for (let value = 1; value <= 9; value++) {
+      actor.send({ type: 'ADD_TARGET', value, at: 0 })
+    }
+    expect(actor.getSnapshot().context.nextTargetId).toBe(9)
+    for (let value = 1; value <= 8; value++) {
+      dialTo(actor, 1)
+      expect(actor.getSnapshot().value).toBe('playing')
+    }
+    expect(actor.getSnapshot().context.targets).toHaveLength(1)
+    dialTo(actor, 1)
+    expect(actor.getSnapshot().context.targets).toHaveLength(0)
+    expect(actor.getSnapshot().value).toBe('gameOver')
+  })
+
+  it('counts its arrivals from nought again on every run', () => {
+    // The regression this pins, and it emptied the board completely. `nextTargetId`
+    // climbs for the life of the machine on purpose — the display list keys a card's
+    // animations on it, and a restart leaves the last run's cards still going — so a
+    // drill indexed by the id starts the second run at nine, past the end of its own
+    // list, and deals nothing at all for the rest of the run.
+    const actor = drilled()
+    for (let value = 1; value <= 9; value++) {
+      actor.send({ type: 'ADD_TARGET', value, at: 0 })
+    }
+    expect(actor.getSnapshot().context.dealt).toBe(9)
+    for (let press = 0; press < 9; press++) {
+      actor.send({ type: 'PRESS', index: 0, delta: 1, now: 0 })
+    }
+    expect(actor.getSnapshot().value).toBe('gameOver')
+
+    actor.send({ type: 'RESTART', now: 0, runId: nextRunId() })
+    // The run's own count starts again; the ids do not, and must not.
+    expect(actor.getSnapshot().context.dealt).toBe(0)
+    expect(actor.getSnapshot().context.nextTargetId).toBeGreaterThanOrEqual(9)
+
+    actor.send({ type: 'ADD_TARGET', value: 5, at: 0 })
+    const first = actor.getSnapshot().context.targets[0]
+    if (first === undefined) throw new Error('a second run deals a first target')
+    // Which is what the drill is indexed by: the first card of the second run is the
+    // drill's first card, not its tenth.
+    expect(first.seq).toBe(0)
+  })
+
+  it('stops the run clock when the drill ends it', () => {
+    // The same thing a life running out does. `elapsedMs` is what the standings are
+    // ordered by on this challenge, so a run that ended without folding its last
+    // stretch in would post a time short by however long the final target took.
+    const actor = createActor(gameMachine)
+    actor.start()
+    actor.send({ type: 'SET_MODE', mode: HABIT })
+    actor.send({ type: 'START', now: 1000, runId: nextRunId() })
+    for (let value = 1; value <= 9; value++) {
+      actor.send({ type: 'ADD_TARGET', value, at: 1000 })
+    }
+    // One press per target: key zero is worth 1, so the sum climbs 1 … 9 and takes the
+    // nine in order.
+    for (let press = 0; press < 9; press++) {
+      actor.send({ type: 'PRESS', index: 0, delta: 1, now: 5000 })
+    }
+    expect(actor.getSnapshot().value).toBe('gameOver')
+    expect(actor.getSnapshot().context.playingSince).toBeNull()
+    expect(actor.getSnapshot().context.elapsedMs).toBe(4000)
   })
 })
 
@@ -756,6 +871,7 @@ describe('restoring a run the app was closed on', () => {
     targets: [
       {
         id: 11,
+        seq: 4,
         value: 88,
         spawnedAt: 1_000,
         duration: 5_000,
@@ -766,6 +882,7 @@ describe('restoring a run the app was closed on', () => {
       },
     ],
     nextTargetId: 12,
+    dealt: 5,
     elapsedMs: 42_000,
     runSeq: 7,
     runId: 'run-restored',

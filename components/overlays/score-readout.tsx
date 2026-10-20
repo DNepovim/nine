@@ -19,7 +19,11 @@ export function ScoreReadout({
   color,
   glow,
 }: {
-  score: number
+  // A number for every run scored in points, and a string for one whose headline is a
+  // figure of another kind — the run clock, on a mode whose standings are placed on it.
+  // Already formatted when it is a string, and formatted into something this face can
+  // draw: DSEG7 has digits, a point and a colon, and nothing else. See `formatRunClock`.
+  score: number | string
   // The digits' own colour. Defaults to the score token — the green every other score
   // in the app wears.
   color?: string

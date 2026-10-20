@@ -6,6 +6,7 @@ import { remainingFraction } from './target-clock'
 
 const target = (over: Partial<Target> = {}): Target => ({
   id: 1,
+  seq: 1,
   value: 42,
   spawnedAt: 1_000,
   duration: 8_000,

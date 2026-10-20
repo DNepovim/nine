@@ -24,7 +24,23 @@ const SHOT_MS = {
   // exactly as long. One timing rather than two within ten milliseconds of each other:
   // nobody can see the difference and a second constant is a second thing to keep true.
   quartet: SNIPER_MS,
+  // And the chain is the sniper's beam with both ends moved, for the same reason.
+  chain: SNIPER_MS,
 } as const satisfies Record<ShotKind, number>
+
+// How far a beam of each kind starts from its muzzle.
+//
+// A sniper leaves the sum row and has to clear the digits standing there. A quartet
+// leaves a key, which is a small thing with nothing above it. A chain leaves the card it
+// took last, so it clears that card's rim exactly as it clears the rim it is aimed at —
+// which makes the start gap the one value this map cannot hold, since it depends on how
+// big the card is. `-1` asks for the radius; see the call below.
+const RIM = -1
+const START_GAP = {
+  sniper: BEAM_START_GAP,
+  quartet: 0,
+  chain: RIM,
+} as const satisfies Record<Exclude<ShotKind, 'burst'>, number>
 
 // One strike's shot, from the sum row to the target it took. Positions the anchor both
 // kinds of line are laid out from — every line inside runs along +X from here — and
@@ -66,7 +82,7 @@ export function StrikeShot({
 
   return (
     <View pointerEvents="none" style={{ position: 'absolute', left: fromX, top: fromY }}>
-      {kind === 'sniper' || kind === 'quartet' ? (
+      {kind !== 'burst' ? (
         // The beam is aimed at the target's middle but drawn short of it at both ends:
         // clear of the digits it leaves, and clear of the rim it is aimed at.
         <StrikeBeam
@@ -74,10 +90,12 @@ export function StrikeShot({
           gradient={gradient}
           {...insetLine(
             shotLine(from, to).length,
-            // A quartet leaves from a key rather than from the digits of the sum, and a
-            // key is a small thing with nothing above it to clear — so it starts at the
-            // muzzle instead of a line's height away from it.
-            kind === 'quartet' ? 0 : BEAM_START_GAP,
+            // See `START_GAP`: a sniper clears the sum's digits, a quartet leaves a key
+            // and clears nothing, a chain clears the rim of the card it came from. The
+            // first chain beam of a run has no previous card and leaves the sum row
+            // instead — eight points further out than a sniper would, which is not a
+            // difference anybody can see.
+            START_GAP[kind] === RIM ? radius + BEAM_END_CLEARANCE : START_GAP[kind],
             radius + BEAM_END_CLEARANCE,
           )}
         />

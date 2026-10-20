@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef } from 'react'
 
+import { drillValues } from '@/lib/drill'
 import {
   fullRange,
   pickTargetValue,
@@ -19,6 +20,8 @@ import { spawnInterval, type RunRules, type Submode } from '@/modes'
 export function useTargetSpawner({
   isPlaying,
   targetCount,
+  dealt,
+  drill,
   rules,
   submode,
   hits,
@@ -29,6 +32,17 @@ export function useTargetSpawner({
 }: {
   isPlaying: boolean
   targetCount: number
+  // How many targets this run has dealt so far, which is what indexes a **drill**.
+  //
+  // Not `hits`, and the difference is the whole of why this is a parameter. A drilled
+  // run deals nine in a fixed order whether or not any of them has been hit yet, so
+  // indexing by hits would deal the first target again every time one was still
+  // standing. The machine counts arrivals in `nextTargetId`; that is this.
+  dealt: number
+  // The **drill** this run deals from — its seed and how many it holds — or null for a
+  // mode that rolls its targets. Resolved once by the caller through `drillFor`, so
+  // this and the board's own placement are reading the same answer.
+  drill: { seed: string; count: number } | null
   // The rules the run is played under — `spawn` is the half of them this reads, and
   // `board` is what bounds the values a target may take.
   rules: RunRules
@@ -48,6 +62,9 @@ export function useTargetSpawner({
 }) {
   const spawnTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const cadence = rules.spawn.cadence
+  // A **drilled** run deals a fixed list on a metronome and nothing hurries it. See the
+  // respawn below, which is the one thing that would.
+  const drilled = drill !== null
 
   // Latest exclusions, read at spawn time without re-creating the interval.
   const excludeRef = useRef<{ sum: number; values: number[] }>({
@@ -59,8 +76,8 @@ export function useTargetSpawner({
   // Read at spawn time for the same reason: `spawnTarget` is the callback the cadence
   // and the respawn both hold, and depending on either of these would rebuild both on a
   // change that only matters when a target is actually being dealt.
-  const runRef = useRef({ rules, submode, hits })
-  runRef.current = { rules, submode, hits }
+  const runRef = useRef({ rules, submode, hits, dealt, drill })
+  runRef.current = { rules, submode, hits, dealt, drill }
 
   // Latest cadence, likewise read when a spawn fires rather than when the wait is
   // armed. See startCadence for why that matters.
@@ -74,7 +91,28 @@ export function useTargetSpawner({
 
   const spawnTarget = useCallback(() => {
     const { sum, values } = excludeRef.current
-    const { rules: live, submode: part, hits: landed } = runRef.current
+    const {
+      rules: live,
+      submode: part,
+      hits: landed,
+      dealt: out,
+      drill: list,
+    } = runRef.current
+    // A **drill**: the session's own nine, dealt in order and then no more.
+    //
+    // Indexed by what has been dealt rather than by what has been hit, so the order
+    // holds however the board is doing. And read fresh on every spawn rather than held,
+    // because `dealt` is what the index comes from and the ref above is what keeps that
+    // current — a drill computed once and closed over would deal its first target
+    // forever.
+    if (list !== null) {
+      const next = drillValues(list.seed, live.dial, list.count)[out]
+      // Spent. The run ends on the machine's side, when the board clears — nothing
+      // here deals a tenth.
+      if (next === undefined) return
+      send({ type: 'ADD_TARGET', value: next, at: Date.now() })
+      return
+    }
     // A submode's own targets, dealt rather than rolled: each one is a board chosen to
     // make one move the obvious answer, and the lesson has a line ready for it. The
     // first of them is dealt by the machine at START, so what comes through here is the
@@ -142,16 +180,23 @@ export function useTargetSpawner({
   // Immediate respawn when a hit clears the board mid-game. Reset the tracker
   // whenever we're not playing so a fresh game's targets→0 reset isn't mistaken
   // for a cleared board (which would spawn an extra target on start).
+  //
+  // **Never on a drilled run**, and this is the whole of why that matters. A drill is a
+  // fixed list arriving on a fixed metronome: the player clears the board constantly —
+  // it holds one card for most of the opening seconds — and respawning on every clear
+  // deals the next target the instant the last one is taken. What that looks like on
+  // screen is the thing a drill is built not to be: you hit a card, it goes, and
+  // another appears in its place. The nine arrive when they arrive.
   const prevTargetCount = useRef(0)
   useEffect(() => {
     if (!isPlaying) {
       prevTargetCount.current = 0
       return
     }
-    if (prevTargetCount.current > 0 && targetCount === 0) {
+    if (!drilled && prevTargetCount.current > 0 && targetCount === 0) {
       spawnTarget()
       if (cadence) startCadence()
     }
     prevTargetCount.current = targetCount
-  }, [targetCount, isPlaying, cadence, spawnTarget, startCadence])
+  }, [targetCount, isPlaying, cadence, drilled, spawnTarget, startCadence])
 }

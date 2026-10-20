@@ -210,10 +210,86 @@ const FOUR_BY_FOUR: ChallengeSpec = {
   },
 }
 
+// HABIT: the same nine, every run — and the clock is the contest.
+//
+// Its one thing is the **drill**: a session of this challenge deals a fixed nine,
+// derived from the session's own id, so every player meets the same targets in the same
+// order in the same places, and meets them again on the next run. Nothing else about it
+// is strange — the dial is the nine every mode is played on, a hit is scored on the
+// route the way Accuracy scores one — because the thing being learnt has to be the board
+// rather than the rules.
+//
+// Everything else follows from the goal, which is to be *fast at a thing you know*:
+//
+//   - **No ring, and nothing expires.** `countsDown: false` is the tutorial's own field
+//     and does two jobs at once — no countdown is armed, and `clockLeft` scores every
+//     hit as though no time had passed. There is one clock in this run and it is the
+//     stopwatch the standings are ordered by; a second one on each target would be the
+//     mode asking for two things.
+//   - **Which is why the blend is all accuracy.** With the ring gone the speed factor is
+//     a constant 1, so the even blend every challenge defaults to would make half of
+//     every hit a free fifty points. `{ acc: 1, spd: 0 }` is what "scored on the route"
+//     actually means once the clock is off the target.
+//   - **No lives.** Nothing can take one, so the hearts come off — the top bar draws
+//     `lives.count` of them and draws none at infinity. The run ends when the ninth
+//     target falls, which is `spawn.drill` doing it rather than a life.
+//   - **All nine on the board.** `maxTargets: 9`, because `ADD_TARGET` refuses a deal
+//     that would overflow the board and a drilled run must never lose one. They arrive
+//     half a second apart — `cap: 500`, which is below the share of any clock here.
+const HABIT: ChallengeSpec = {
+  slug: 'habit',
+  label: msg`HABIT`,
+  // Its own, rather than Accuracy's `ACC` inherited from the base mode. A challenge
+  // takes its base's code unless the variation is the point — and here it is: a row on
+  // a profile reading ACC would file this under the board it is not.
+  code: msg`HBT`,
+  description: msg`The same nine, every run. Be quick.`,
+  // The streak the challenge is about, and the one rule that rewards knowing the board:
+  // the fewest moves is also the fewest presses, so a player who has learnt a route is
+  // faster *and* on the multiplier, where a player mashing is neither.
+  //
+  // Drawn as a `chain` — the beam runs from the target taken before this one to the one
+  // just taken, so a strike draws the route through the board in the order it was
+  // walked. The shot is the streak made visible, and on a board that never changes the
+  // thing worth seeing is the order.
+  shot: 'chain',
+  // Every line about knowing the board rather than about a score, because the contest
+  // here is the clock and the thing being claimed is recall.
+  claims: {
+    board: [
+      ['KNEW', 'IT'],
+      ['PURE', 'DRILL'],
+      ['EVERY', 'ONE'],
+    ],
+    medal: [
+      ['HALF', 'KNOWN'],
+      ['CLOSE', 'DRILL'],
+    ],
+    strong: [
+      ['GOOD', 'HANDS'],
+      ['SURE', 'DRILL'],
+    ],
+    cold: [
+      ['COLD', 'HANDS'],
+      ['NOT', 'KNOWN'],
+    ],
+  },
+  base: ACCURACY,
+  from: Date.UTC(2026, 10, 1),
+  until: Date.UTC(2026, 10, 1) + DAY,
+  rules: {
+    fixedDifficulty: 'hard',
+    clock: { countsDown: false },
+    spawn: { drill: 9, maxTargets: 9, cap: 500 },
+    scoring: { streak: 'optimal', measure: 'time', weights: { acc: 1, spd: 0 } },
+    lives: { count: Number.POSITIVE_INFINITY, expiryCostsLife: false },
+  },
+}
+
 // Mapped rather than listed, and that is what gives each challenge its colour: `.map`
 // hands `defineChallenge` the spec's own index, which is what the pair is derived from.
 // The list is append-only — see the note at the top of this file — so an index is a
 // permanent fact about a challenge and its colour never moves.
-export const CHALLENGES: readonly ModeDefinition[] = [FOUR_KEYS, FOUR_BY_FOUR].map(
+export const CHALLENGES: readonly ModeDefinition[] = [FOUR_KEYS, FOUR_BY_FOUR, HABIT].map(
   (spec, index) => defineChallenge(spec, index),
 )

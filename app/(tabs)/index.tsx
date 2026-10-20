@@ -21,6 +21,7 @@ import { FloatingStat } from '@/components/game/floating-stat'
 import { HeartIcon } from '@/components/game/heart-icon'
 import { HitSync } from '@/components/game/hit-sync'
 import { MultiplayerGame } from '@/components/game/multiplayer-game'
+import { RunStopwatch } from '@/components/game/run-stopwatch'
 import { RunTopBar } from '@/components/game/run-top-bar'
 import { ScoreDigit } from '@/components/game/score-digit'
 import { StepUpToast } from '@/components/game/step-up-toast'
@@ -133,6 +134,7 @@ import { currentBoardMedals, sessionMedal } from '@/lib/board-medals'
 import type { SessionCard } from '@/lib/challenge-session'
 import { holdsCrown, recordScreen, type RecordScreen } from '@/lib/champions'
 import { cn } from '@/lib/cn'
+import { drillFor } from '@/lib/drill'
 import { gameSnapshot } from '@/lib/feedback-state'
 import { leaderOf } from '@/lib/leaderboard'
 import { runChallenge } from '@/lib/next-challenge'
@@ -171,7 +173,7 @@ import {
   type Mode,
   type ModeId,
 } from '@/modes'
-import { challengeInk } from '@/modes/challenges/palette'
+import { challengeInk, challengeTints, hueOf } from '@/modes/challenges/palette'
 import type { DisplayTarget, Position } from '@/types/game'
 import type { MultiMode } from '@/types/multiplayer'
 
@@ -480,6 +482,10 @@ export default function GameScreen() {
 
   // Seven-segment font for the digital score readout.
   const [dsegLoaded] = useFonts({ DSEG7: DSEG7Font })
+  // The seven-segment face, or the mono voice until it has loaded. Resolved once: every
+  // readout on this screen takes the same answer, and a figure in the wrong face for a
+  // frame beats a row that is not there.
+  const digitFont = dsegLoaded ? 'DSEG7' : mono
 
   const {
     grid,
@@ -1173,6 +1179,11 @@ export default function GameScreen() {
         state.context.score,
         state.context.hits,
         runSession,
+        // The run is over, so `elapsedMs` has stopped moving — see `stopClock`.
+        // `submitScore` keeps it only where the measure is the clock; the mid-run
+        // record post above sends none, a run still being played having no time to
+        // claim.
+        state.context.elapsedMs,
       )
       if (isReady && !nickname && state.context.score > 0) setShowNicknameModal(true)
     }
@@ -1283,7 +1294,10 @@ export default function GameScreen() {
       })
     }
     if (score <= 0) return
-    submitScore(mode, rules.difficulty, score, hits, runSession)
+    // The run's own clock goes up with it. The machine folds it shut the instant
+    // `playing` is left, so this is a finished number rather than one still moving, and
+    // `submitScore` keeps it only where the measure is the clock.
+    submitScore(mode, rules.difficulty, score, hits, runSession, elapsedMs)
     void refreshBoard()
     if (isReady && !nickname) setShowNicknameModal(true)
   }
@@ -1294,9 +1308,27 @@ export default function GameScreen() {
   const direction = useScoreDirection(sum)
   const displayScore = useDisplayScore(state.context.score)
 
+  // The **drill** this run deals from, where it has one — see `drillFor`.
+  const drill = drillFor(rules, mode, runSession)
+  // One pale tint per card, out of this challenge's own hue. Stable across runs because
+  // nothing about it is rolled — the nth card of a drill is the nth tint — and null for
+  // every mode that rolls its targets, whose discs are tinted by the hundreds instead.
+  const drillTints = useMemo(
+    () =>
+      drill === null ? null : challengeTints(hueOf(gradientOf(mode)[1]), drill.count),
+    [drill === null, drill?.count, mode],
+  )
+
   useTargetSpawner({
     isPlaying,
     targetCount: targets.length,
+    // What a **drill** is indexed by: arrivals this run, not hits and not ids.
+    // `nextTargetId` climbs for the life of the machine and never restarts — see the
+    // note on it — so a second run of a drilled mode indexed by it starts past the end
+    // of the drill and deals nothing at all. `dealt` restarts with the run, and
+    // survives the run being put away and brought back.
+    dealt: state.context.dealt,
+    drill,
     rules,
     submode,
     hits,
@@ -1320,13 +1352,14 @@ export default function GameScreen() {
   // stepper that raises it.
   const [rewindSeq, setRewindSeq] = useState(0)
 
-  const { displayedTargets, removeDisplayed, onContainerLayout, canvas } =
+  const { displayedTargets, removeDisplayed, onContainerLayout, canvas, drillCards } =
     useDisplayedTargets({
       machineTargets: targets,
       hitBatch,
       runSeq: state.context.runSeq,
       rewindSeq,
       restoredPositions,
+      drill,
     })
 
   // Raised by play alone. A rewind drops `hits`, and the max is what makes that drop
@@ -1415,6 +1448,10 @@ export default function GameScreen() {
   // Where a strike fires from and what it is aimed at. The muzzle is the middle of the
   // sum row, which follows the board directly, so its centre is the board's own bottom
   // edge plus half the row the layout reserves — no second measurement needed.
+  // How wide the card for this target is drawn — the drill's own answer where there is
+  // one, and the size every other mode draws otherwise.
+  const sizeOfCard = (seq: number): number => drillCards?.[seq]?.size ?? PIE_SIZE
+
   const aimShot = (value: number): ShotAim | null => {
     const board = boardRect.current
     if (board.width === 0) return null
@@ -1427,14 +1464,22 @@ export default function GameScreen() {
         y: board.y + board.height + SUM_ROW_HEIGHT / 2,
       },
       to: {
-        x: board.x + target.position.x + PIE_SIZE / 2,
-        y: board.y + target.position.y + PIE_SIZE / 2,
+        // The middle of this card, which is not the middle of every card: a drilled run
+        // draws its nine at nine different sizes.
+        x: board.x + target.position.x + sizeOfCard(target.seq) / 2,
+        y: board.y + target.position.y + sizeOfCard(target.seq) / 2,
       },
+      radius: sizeOfCard(target.seq) / 2,
       muzzles: keyCentres(dialRect.current, rules.dial),
     }
   }
 
-  const { shots, removeShot } = useStrikeShots({ mode, hitBatch, aim: aimShot })
+  const { shots, removeShot } = useStrikeShots({
+    mode,
+    runSeq: state.context.runSeq,
+    hitBatch,
+    aim: aimShot,
+  })
 
   // Keeps the device's copy of the run in step with this one, so closing the app on it
   // is not losing it. Below the display list because it writes the board down as the
@@ -1890,8 +1935,21 @@ export default function GameScreen() {
                     />
                   )}
 
-                  {/* Center: avg accuracy or avg speed depending on mode */}
-                  {isOneOf(mode, SCORED_MODES) && (
+                  {/* Center: the figure the run is judged by.
+                      
+                      A race is judged by its clock, so that is what stands here — the
+                      same number the standings will place it on, running. Every other
+                      scored run is judged by a factor and shows the average of it.
+                      Nothing stands here on a mode with neither. */}
+                  {rules.scoring.measure === 'time' && (
+                    <RunStopwatch
+                      elapsedMs={state.context.elapsedMs}
+                      playingSince={state.context.playingSince}
+                      digitFont={digitFont}
+                    />
+                  )}
+
+                  {rules.scoring.measure !== 'time' && isOneOf(mode, SCORED_MODES) && (
                     <View style={{ alignItems: 'center' }}>
                       <View style={{ flexDirection: 'row' }}>
                         {`${avgStat}%`.split('').map((digit, i, arr) => (
@@ -1926,7 +1984,7 @@ export default function GameScreen() {
                           <Text
                             selectable={false}
                             className={cn(READOUT.best, 'text-score')}
-                            style={{ fontFamily: dsegLoaded ? 'DSEG7' : mono }}
+                            style={{ fontFamily: digitFont }}
                           >
                             {displayScore}
                           </Text>
@@ -2017,9 +2075,28 @@ export default function GameScreen() {
                         }
                         dying={isGameOver}
                         frozen={isPaused}
-                        // A tutorial target has no clock at all: it waits as long as it
-                        // takes and leaves only when it is hit.
-                        clocked={!tutorial}
+                        // Nine cards have to stand on this board at once in a drilled
+                        // run, and nine at `PIE_SIZE` do not fit a phone — so each is
+                        // given its own size, and they differ from one another on
+                        // purpose. Undefined everywhere else, which is the size every
+                        // other mode draws.
+                        size={drillCards?.[target.seq]?.size}
+                        // A drilled board keeps its taken cards. The nine are a picture
+                        // the player is learning, and one vanishing on every hit would
+                        // leave nothing to have learnt by the ninth.
+                        spent={drill !== null}
+                        // And its own colour, out of this challenge's own family. A
+                        // fixed nine is learnt as a picture, and a colour is read before
+                        // a number is — where the band tint every other mode wears says
+                        // which hundred a target is in, which on a drill the player
+                        // already knows.
+                        color={drillTints?.[target.seq]}
+                        // Whether this target has a clock to run down at all. Read off
+                        // the rules rather than off the submode: the tutorial is the
+                        // one that patches `countsDown` off today, and a drilled run
+                        // does the same for a reason of its own — one clock per run,
+                        // and here it is the stopwatch.
+                        clocked={rules.clock.countsDown}
                         onExpire={() => {
                           send({ type: 'TARGET_EXPIRED', id: target.id, now: Date.now() })
                         }}
@@ -2143,7 +2220,7 @@ export default function GameScreen() {
                       fromY={shot.from.y}
                       toX={shot.to.x}
                       toY={shot.to.y}
-                      radius={PIE_SIZE / 2}
+                      radius={shot.radius}
                       rounds={shot.rounds}
                       gradient={shot.gradient}
                       onDone={() => {

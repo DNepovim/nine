@@ -13,6 +13,8 @@ import {
   challengeHue,
   challengeInk,
   challengePairFor,
+  challengeTints,
+  hueOf,
   TURQUOISE,
 } from './palette'
 
@@ -22,22 +24,9 @@ const rgb = (hex: string): [number, number, number] => [
   parseInt(hex.slice(5, 7), 16),
 ]
 
-// The hue of a hex, 0–360. Only meaningful for a colour with some saturation, which
-// every stop compared below has.
-function hueOf(hex: string): number {
-  const [r, g, b] = rgb(hex).map((v) => v / 255) as [number, number, number]
-  const max = Math.max(r, g, b)
-  const min = Math.min(r, g, b)
-  const d = max - min
-  if (d === 0) return 0
-  const h =
-    max === r
-      ? 60 * (((g - b) / d) % 6)
-      : max === g
-        ? 60 * ((b - r) / d + 2)
-        : 60 * ((r - g) / d + 4)
-  return ((h % 360) + 360) % 360
-}
+// `hueOf` is the palette's own now — see the note there. It used to be a copy living
+// here, which meant the test measured its own arithmetic rather than the one the app
+// draws with.
 
 // How saturated a hex is, 0–1. A near-black or a near-grey has a hue in the arithmetic
 // sense but not in any sense a reader would recognise — `PRIMARY_INK` computes to 252°,
@@ -283,5 +272,60 @@ describe('a challenge that names its own hue', () => {
 
   it('carries white on its CTA, as every challenge must', () => {
     expect(contrast('#ffffff', challengeDarkPairFor(TURQUOISE)[1])).toBeGreaterThan(4.5)
+  })
+})
+
+// ─── The drill's discs ───────────────────────────────────────────────────────
+
+describe('the tints a drilled challenge draws its targets on', () => {
+  // The lightest ground the app draws a target on. A tint has to carry the near-black
+  // numeral on top of it everywhere the band tints already do.
+  const CARD_FLOOR = 4.5
+
+  it('gives every card of a drill a colour of its own', () => {
+    const tints = challengeTints(challengeHue(2), 9)
+    expect(tints).toHaveLength(9)
+    expect(new Set(tints).size).toBe(9)
+  })
+
+  it('carries the numeral, as the band tints it stands in for do', () => {
+    // Walked across the whole arc rather than one challenge's hue: a tint too dark at
+    // one end of it would be a number nobody can read on exactly one challenge.
+    for (let index = 0; index < 24; index++) {
+      for (const tint of challengeTints(challengeHue(index), 9)) {
+        expect(
+          contrast(PRIMARY_INK, tint),
+          `index ${index} (${tint})`,
+        ).toBeGreaterThanOrEqual(CARD_FLOOR)
+      }
+    }
+  })
+
+  it("keeps every card inside its challenge's own family", () => {
+    // Nine different colours that still read as one challenge, which is the whole
+    // bargain — a drill spread across the wheel would be nine unrelated cards.
+    const hue = challengeHue(2)
+    for (const tint of challengeTints(hue, 9)) {
+      expect(apart(hueOf(tint), hue)).toBeLessThanOrEqual(90)
+    }
+  })
+
+  it('does not step its neighbours one at a time', () => {
+    // Adjacent indices walk to opposite sides of the hue, so the three or four on the
+    // board together are plainly different rather than three steps of one drift.
+    const tints = challengeTints(challengeHue(2), 9)
+    const first = tints[0]
+    const second = tints[1]
+    const third = tints[2]
+    if (first === undefined || second === undefined || third === undefined) {
+      throw new Error('a drill of nine has a first three')
+    }
+    expect(apart(hueOf(second), hueOf(third))).toBeGreaterThan(
+      apart(hueOf(first), hueOf(second)),
+    )
+  })
+
+  it('answers for a drill of one without dividing by nothing', () => {
+    expect(challengeTints(challengeHue(0), 1)).toHaveLength(1)
   })
 })

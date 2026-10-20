@@ -35,6 +35,9 @@ import type { DisplayTarget, Position } from '@/types/game'
 // no clock running, and a target keeps what it had left until the player says go.
 type SavedTarget = {
   id: number
+  // Which target of its run this was — what a **drill** is indexed by. See `seq` on
+  // `Target`.
+  seq: number
   value: number
   duration: number
   // Milliseconds since this target spawned, and since its reference moment, as of the
@@ -81,6 +84,8 @@ export type SavedRun = {
   bestSpd?: number
   elapsedMs: number
   nextTargetId: number
+  // How many targets the run had been dealt — see `dealt` on the machine's context.
+  dealt: number
   runSeq: number
   // What the server calls this run. Optional on the way in for the same reason
   // `tutorial` is: a run written before the counters knew a run by name has none, and
@@ -160,6 +165,10 @@ const parseTarget = (value: unknown, keys: number): SavedTarget | null => {
   if (!isFigure(par) || !isFigure(userSteps)) return null
   return {
     id,
+    // A run put away before `seq` existed has none, and its id is the closest thing to
+    // one: those builds had no drilled mode, so the two were the same number anyway.
+    // The key is deliberately not bumped for this — see the note on `nine.run.v1`.
+    seq: isFigure(value.seq) ? value.seq : id,
     value: dialled,
     duration,
     age,
@@ -226,10 +235,12 @@ export function toSavedRun(
     // one they left.
     elapsedMs: run.elapsedMs + (now - (run.playingSince ?? now)),
     nextTargetId: run.nextTargetId,
+    dealt: run.dealt,
     runSeq: run.runSeq,
     runId: run.runId,
     targets: run.targets.map((target) => ({
       id: target.id,
+      seq: target.seq,
       value: target.value,
       duration: target.duration,
       // Clamped at zero against a device clock that moved backwards between the two
@@ -309,6 +320,9 @@ export function parseSavedRun(value: unknown): SavedRun | null {
     bestSpd: best(value.bestSpd),
     elapsedMs,
     nextTargetId,
+    // A run from before this existed counted its arrivals with the id, and on those
+    // builds the two agreed. See `seq` above, which falls back the same way.
+    dealt: isFigure(value.dealt) ? value.dealt : nextTargetId,
     runSeq,
     // Anything that is not a name is a run with none — see `runId` on `SavedRun`.
     runId: isNonEmptyString(value.runId) ? value.runId : undefined,
@@ -339,10 +353,12 @@ export function restoreRun(saved: SavedRun, now: number, freshId: string): Resto
     bestSpd: saved.bestSpd ?? 0,
     elapsedMs: saved.elapsedMs,
     nextTargetId: saved.nextTargetId,
+    dealt: saved.dealt,
     runSeq: saved.runSeq,
     runId: saved.runId ?? freshId,
     targets: saved.targets.map((target) => ({
       id: target.id,
+      seq: target.seq,
       value: target.value,
       duration: target.duration,
       spawnedAt: now - target.age,

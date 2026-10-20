@@ -46,6 +46,15 @@ const rulesOf = (context: Context): RunRules =>
 
 export type Target = {
   id: number
+  // Which target of **this run** it is, counted from nought. Not `id`, which climbs for
+  // the life of the machine and never restarts — see `nextTargetId`, where the reason
+  // is written down. A **drill** is indexed by this: its nine are the same nine every
+  // run, so the second run's first card has to be the drill's first card and not its
+  // tenth.
+  //
+  // On the target rather than worked out by whoever needs it, so the spawner choosing a
+  // value and the board drawing it read the same number and cannot disagree.
+  seq: number
   value: number
   spawnedAt: number // ms timestamp — drives the countdown / speed factor
   // The clock this target was given, fixed when it spawned. Stored per target rather
@@ -158,6 +167,8 @@ const openingTargets = (
 ): Target[] => [
   {
     id,
+    // The first target of the run, dealt before the spawner has run at all.
+    seq: 0,
     value: opening.target,
     spawnedAt: now,
     duration,
@@ -210,6 +221,17 @@ type Context = {
   bestAcc: number
   bestSpd: number
   targets: Target[]
+  // How many targets **this run** has been dealt. Reset by every fresh run, where
+  // `nextTargetId` deliberately is not.
+  //
+  // Two counters rather than one, and they answer two different questions. An id has to
+  // be unique for as long as the display list might still be holding it — a restart
+  // leaves the last run's targets animating off, and an id dealt twice reads to that
+  // list as the departing target rather than the arriving one. A **drill** needs the
+  // opposite: a number that starts again with the run, because its nine are the same
+  // nine every time. Using the id for both is what left a second run of a drilled mode
+  // with no targets at all, its index already past the end of the list.
+  dealt: number
   nextTargetId: number
   hitBatch: HitBatch
   // How much of this run has been spent actually playing, not counting time in the
@@ -264,6 +286,7 @@ export type RestoredRun = Pick<
   | 'bestSpd'
   | 'targets'
   | 'nextTargetId'
+  | 'dealt'
   | 'elapsedMs'
   | 'runSeq'
   | 'runId'
@@ -344,6 +367,7 @@ const freshGame = (context: Context, now: number, tutorial: boolean, runId: stri
     // read to the display list as the departing target, not the arriving one. A submode
     // that opens holding a target spends one on it.
     nextTargetId: context.nextTargetId + (opening === null ? 0 : 1),
+    dealt: opening === null ? 0 : 1,
     hitBatch: { seq: context.hitBatch.seq, hits: [] as HitInfo[] },
     elapsedMs: 0,
     playingSince: now,
@@ -466,6 +490,26 @@ const streakFactsOf = (
 // Applies a new grid: scores any targets whose value equals the new sum, resets
 // the reference for surviving targets when a hit happened, applies streak multiplier,
 // and emits a hit batch for the UI.
+// Whether a press has ended the run.
+//
+// Two ways, and a mode uses one or the other rather than both. Every mode that spends
+// lives ends when they are gone. A **drilled** mode ends when its drill is spent and
+// the board is clear — a session's nine are the whole run, so there is nothing left to
+// play once the last of them is down, and nothing would ever take a life anyway.
+//
+// `nextTargetId` is read off the context rather than the result, because `applyGrid`
+// deals nothing: it is the count of targets this run has been given, and the board going
+// empty with that count at the drill's length is the run finishing rather than a board
+// that happens to be clear between arrivals.
+const runOver = (
+  context: Context,
+  after: { lives: number; targets: readonly Target[] },
+): boolean => {
+  const drill = rulesOf(context).spawn.drill
+  if (drill !== null) return context.nextTargetId >= drill && after.targets.length === 0
+  return after.lives <= 0
+}
+
 function applyGrid(context: Context, newGrid: Grid, now: number) {
   const rules = rulesOf(context)
   const newSum = sumOf(rules.dial, newGrid)
@@ -661,6 +705,7 @@ export const gameMachine = createMachine({
     bestSpd: 0,
     targets: [] as Target[],
     nextTargetId: 0,
+    dealt: 0,
     hitBatch: { seq: 0, hits: [] as HitInfo[] },
     elapsedMs: 0,
     playingSince: null,
@@ -789,11 +834,19 @@ export const gameMachine = createMachine({
               context: Context
               event: Extract<Event, { type: 'PRESS' }>
             }) =>
-              applyGrid(
+              runOver(
                 context,
-                pressGrid(rulesOf(context).dial, context.grid, event.index, event.delta),
-                event.now,
-              ).lives <= 0,
+                applyGrid(
+                  context,
+                  pressGrid(
+                    rulesOf(context).dial,
+                    context.grid,
+                    event.index,
+                    event.delta,
+                  ),
+                  event.now,
+                ),
+              ),
             target: 'gameOver',
             actions: assign(
               ({
@@ -849,11 +902,14 @@ export const gameMachine = createMachine({
               context: Context
               event: Extract<Event, { type: 'SET_CELL' }>
             }) =>
-              applyGrid(
+              runOver(
                 context,
-                setGrid(context.grid, event.index, event.value),
-                event.now,
-              ).lives <= 0,
+                applyGrid(
+                  context,
+                  setGrid(context.grid, event.index, event.value),
+                  event.now,
+                ),
+              ),
             target: 'gameOver',
             actions: assign(
               ({
@@ -959,6 +1015,7 @@ export const gameMachine = createMachine({
                   ...context.targets,
                   {
                     id: context.nextTargetId,
+                    seq: context.dealt,
                     value: event.value,
                     spawnedAt: event.at,
                     duration: rules.clock.playerSet
@@ -971,6 +1028,7 @@ export const gameMachine = createMachine({
                   },
                 ],
                 nextTargetId: context.nextTargetId + 1,
+                dealt: context.dealt + 1,
               }
             },
           ),
@@ -1016,6 +1074,11 @@ export const gameMachine = createMachine({
                 targets: [
                   {
                     id: context.nextTargetId,
+                    // The board the stepper went back to, counted from nought — which
+                    // is what a drilled run would index by. The tutorial is the only
+                    // submode a rewind reaches and it deals no drill, but the two must
+                    // not be allowed to drift.
+                    seq: event.board,
                     value,
                     spawnedAt: event.now,
                     // Trainee's own clock, which the tutorial never runs down —

@@ -7,7 +7,7 @@ import { TabPanel } from '@/components/overlays/tab-panel'
 import { mono } from '@/constants/theme'
 import type { PeriodBoard } from '@/hooks/use-board'
 import { useViewport } from '@/hooks/use-viewport'
-import { gradientOf, headlineOf, type Difficulty, type ModeId } from '@/modes'
+import { gradientOf, headlineOf, measureOf, type Difficulty, type ModeId } from '@/modes'
 
 // The same line the dialog shows, for the same reason — see `NOBODY_YET` there. A run
 // that has just finished cannot actually meet it, since the player is on the board by
@@ -54,6 +54,15 @@ export function SessionStandings({
         nickname={nickname}
         width={Math.min(width - 96, 280)}
         digitFont={dsegLoaded ? 'DSEG7' : mono}
+        // Resolved from the challenge rather than read off a session row, which this
+        // screen does not have. The two always agree for a run just played: the session
+        // was booked with this challenge's own measure, and the server refuses to
+        // re-point a session anybody has scored on.
+        //
+        // The figures here are unlabelled, as the score beside them already is — this
+        // board carries no header. What matters is that the column is *there*: without
+        // it the rows would be ordered by a number the player cannot see.
+        measure={measureOf(gameMode)}
         compact
       />
     </View>

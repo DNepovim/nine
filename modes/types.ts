@@ -55,6 +55,17 @@ type SpawnRules = {
   // How far a new target may land from the sum now dialled, or null for the whole range
   // the dial reaches.
   reach: number | null
+  // How many targets this mode's run deals from its session's own **drill**, or null to
+  // roll each one as it arrives.
+  //
+  // A drill is the fixed list a session deals — the same values, in the same order, in
+  // the same places, for every player and every run of that session. It is derived from
+  // the session's id, so there is nothing to store and a rerun of the same challenge is
+  // a different drill. See lib/drill.ts.
+  //
+  // It is also what ends the run: a drilled run is over when its drill is spent and the
+  // board is clear, where every other mode plays until its lives are.
+  drill: number | null
 }
 
 // Which of the two factors a run reports as its headline: the figure that floats off a
@@ -78,7 +89,25 @@ export type ScoringRules = {
   // Read only where there is a score to read it beside — both screens that show it are
   // behind `scored` — so an unscored mode never needs to have an opinion.
   headline?: Headline
+
+  // What this mode's **session board** is ordered by, and so what its places are settled
+  // on: the score everywhere but a race, where it is the clock.
+  //
+  // Not the **headline** beside it, and the two must not be confused. A headline is
+  // which of the two *factors* a run reports — how close to the route, or how much of
+  // the ring was left. A measure is which *figure of a finished run* the standings
+  // compare, and there are only two of those worth comparing.
+  //
+  // A **board** — the mode × difficulty kind, with its periods and its reign — has no
+  // measure and never will: it is always its score, and `scores` has no other column to
+  // be ordered by. This is a session board's word alone, which is why it is read by the
+  // planner rather than by the engine: a session is stamped with its challenge's measure
+  // when it is booked, and the server orders by the stamp.
+  measure: Measure
 }
+
+// The two figures of a finished run a session board can be ordered by.
+export type Measure = 'score' | 'time'
 
 export type LivesRules = {
   // Number.POSITIVE_INFINITY = no life loss.
@@ -177,7 +206,11 @@ export type Submode = {
 //
 // On the mode rather than in a table beside the drawing, so a challenge inherits the shot
 // of the mode it is based on and a new mode brings its own.
-export type ShotKind = 'sniper' | 'burst' | 'quartet'
+// `chain` is the drilled run's: the beam runs from the target taken *before* this one to
+// the one just taken, so a run of exact presses draws the route through the board in the
+// order the player walked it. The first hit of a run has no previous target and fires
+// from the sum row, as the two above always do.
+export type ShotKind = 'sniper' | 'burst' | 'quartet' | 'chain'
 
 // What every mode says about itself, whichever engine runs it.
 type ModeIdentity = {

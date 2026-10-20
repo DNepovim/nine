@@ -14,7 +14,7 @@ import {
 import { reportRefusal } from '@/lib/refusal'
 import { submitSessionScore } from '@/lib/session-board'
 import { supabase } from '@/lib/supabase'
-import { SCORED_MODES, traitsOf, type Difficulty, type ModeId } from '@/modes'
+import { measureOf, SCORED_MODES, traitsOf, type Difficulty, type ModeId } from '@/modes'
 
 // What Postgres stamps on a bare `raise exception`, which is how every guard in our own
 // functions turns a rule down. A refusal carrying it is one we wrote and expected; any
@@ -48,6 +48,7 @@ async function upsertSessionScore(entry: LocalScore, sessionId: string): Promise
     hits: entry.hits,
     difficulty: entry.difficulty,
     achievedAt: entry.achievedAt,
+    timeMs: entry.timeMs,
   })
   if (res.sent !== 'refused') return res.sent
   // A window refusal is expected and is not something to log — unlike a board refusal,
@@ -134,6 +135,14 @@ export async function submitScore(
   // published even though its mode keeps no board — the two bars below are about
   // `scores`, and a session's standings are not that table.
   sessionId: string | null = null,
+  // How long the run took, where that is known — `elapsedMs` at game over. Handed in
+  // unconditionally and kept only where the mode's **measure** is the clock, which is
+  // the whole reason it is decided here: two call sites each asking `measureOf` is two
+  // places for a run to post a time its standings cannot use, or to post none where
+  // they need one.
+  //
+  // Undefined from the mid-run record post, which has no finished time to claim.
+  elapsedMs?: number,
 ): Promise<void> {
   // Two bars, and they are different questions. `board` is the mode's own answer to
   // whether it keeps a board at all — practice does not, and neither does a challenge,
@@ -146,6 +155,9 @@ export async function submitScore(
     return
   }
   if (score <= 0) return
+  // Only a clock-measured mode keeps one. Everything else — every board run, every
+  // score-measured session — stores no time, which is what it has always done.
+  const timeMs = measureOf(mode) === 'time' ? elapsedMs : undefined
   const day = todayISO()
   const run = {
     mode,
@@ -155,6 +167,10 @@ export async function submitScore(
     hits,
     achievedAt: new Date().toISOString(),
     ...(sessionId === null ? {} : { sessionId }),
+    // Spread rather than set, so an ordinary run's entry has no `timeMs` key at all
+    // rather than an explicit undefined — which is what `recordRun` reads to tell a
+    // timed slot from a scored one, and what the stored shape has always looked like.
+    ...(timeMs === undefined ? {} : { timeMs }),
   }
 
   // Remembered before anything is sent, and regardless of whether sending is even

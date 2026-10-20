@@ -74,6 +74,56 @@ function stop(hue: number, saturation: number, lightness: number): string {
   return `#${channel(0)}${channel(8)}${channel(4)}`
 }
 
+// The hue inside a stop this file made, read back out.
+//
+// The honest inverse of `stop` above, and it exists because the one thing a drawing
+// needs from a challenge is its hue, while the only thing a mode carries is its pair of
+// hexes. Resolving the hue from the catalog index instead would mean every caller
+// knowing a challenge's place in a list, which is the one fact about a challenge nothing
+// outside this file should have to hold.
+//
+// Grey in, nought out — a hue is meaningless without saturation, and nought is as good
+// an answer as any for a colour that has none.
+export function hueOf(hex: string): number {
+  const r = parseInt(hex.slice(1, 3), 16) / 255
+  const g = parseInt(hex.slice(3, 5), 16) / 255
+  const b = parseInt(hex.slice(5, 7), 16) / 255
+  const max = Math.max(r, g, b)
+  const span = max - Math.min(r, g, b)
+  if (span === 0) return 0
+  const sixth =
+    max === r ? ((g - b) / span) % 6 : max === g ? (b - r) / span + 2 : (r - g) / span + 4
+  return (sixth * 60 + 360) % 360
+}
+
+// The discs a **drilled** run's targets are drawn on: one pale tint each, all of them
+// this challenge's own colour.
+//
+// A drill is the same nine targets every run, so the thing a player learns is *which
+// card is which* — and a colour is read before a number is. Nine tints make the board a
+// shape to memorise rather than nine grey circles to read in turn. The band tint every
+// other mode wears says something different and useful there (which hundred the target
+// is in) and nothing here: on a fixed nine, the player knows.
+//
+// Spread around the challenge's own hue rather than across the wheel, so nine different
+// cards still read as one challenge. The walk is wide enough to tell neighbours apart and
+// narrow enough to stay inside a family — and it alternates either side of the hue, so
+// the three or four on screen together are never three steps of the same drift.
+//
+// Pale, at the lightness `TARGET_BAND_TRACK` already sits at, because the numeral on top
+// is the app's near-black and these have to carry it. `palette.test.ts` holds the floor.
+const TINT = { saturation: 0.45, lightness: 0.84 }
+const TINT_SPREAD = 150
+
+export const challengeTints = (hue: number, count: number): readonly string[] =>
+  Array.from({ length: count }, (_, index) => {
+    // Alternating outward: 0, +1, −1, +2, −2 … so adjacent indices are never adjacent
+    // hues and the first few dealt are plainly different from each other.
+    const step = Math.ceil(index / 2) * (index % 2 === 0 ? 1 : -1)
+    const walk = count <= 1 ? 0 : (step / count) * TINT_SPREAD
+    return stop((hue + walk + 360) % 360, TINT.saturation, TINT.lightness)
+  })
+
 // The pair the card and the title wear. Tuned to the vividness of the mode stops beside
 // it, so a challenge looks like it belongs to this app rather than to a colour picker.
 const BRIGHT = { saturation: 0.62, lightness: 0.58 }

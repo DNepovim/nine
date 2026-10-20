@@ -44,7 +44,7 @@ const shadow = {
 
 // The number the run was worth, and what to call it.
 export type RunScore = {
-  value: number
+  value: number | string
   // The digits' own colour — the mode's, so the figure says which run it came off.
   color: string
   // What lights it from behind. Derived from the colour, because the readout draws a
@@ -56,6 +56,14 @@ export type RunScore = {
   // A line under the digits saying what they count, for a run whose score is not points.
   // Omitted where the number can only be the score.
   caption?: ReactNode
+  // A *second figure* under the headline, for a run whose headline is not its score.
+  //
+  // Not the caption above, and the two are deliberately separate: a caption is a word
+  // naming what the digits count, drawn at label size in the dim ink, where this is a
+  // number of its own. A timed run puts its clock in the readout and its score here —
+  // the score still happened, still counts toward the fortune, and is still the second
+  // thing anybody wants to know.
+  under?: ReactNode
 }
 
 // The loud way back into a run: PLAY AGAIN, CONTINUE.
@@ -126,6 +134,14 @@ export function RunScreen({
                   color={score.color}
                   glow={score.glow ?? `${score.color}99`}
                 />
+                {score.under !== undefined && (
+                  // Pulled up under the digits, but less far than the caption is. A
+                  // caption is a label and belongs tight to the number it names; this
+                  // is a second figure, and two readouts touching read as one number
+                  // broken over two lines. The readout carries 20pt below it, so this
+                  // leaves ten.
+                  <View className="-mt-2.5 mb-5 items-center">{score.under}</View>
+                )}
                 {score.caption !== undefined && (
                   // Pulled up under the digits, which carry their own bottom margin: the
                   // caption belongs to the number rather than to the row below it.

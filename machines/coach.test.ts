@@ -34,6 +34,7 @@ const facts = (over: Partial<PressFacts> = {}): PressFacts => ({
 
 const target = (over: Partial<Target> & { value: number }): Target => ({
   id: 0,
+  seq: 0,
   spawnedAt: 0,
   duration: 10_000,
   refAt: 0,

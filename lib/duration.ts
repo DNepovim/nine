@@ -30,6 +30,44 @@ const DOUBLE_PRIME = '″'
 
 const pad = (value: number): string => String(value).padStart(2, '0')
 
+// The run clock as the **readout** draws it, on the screen a timed run stops on.
+//
+// The same two decimals the stopwatch runs at, in the one notation the seven-segment
+// face can actually draw: a colon rather than the prime marks, because DSEG7 has digits,
+// a point and a colon and nothing else. That is not a compromise here — a colon is this
+// file's mark for a figure that is a *clock* rather than a measured length, which is
+// exactly what a readout counting a race is. See `formatCountdown`, which takes it for
+// the same reason.
+//
+// Used by both ends of a timed run: the stopwatch running in the top bar, and the
+// readout on the screen the run stops at. One figure, so a player watching 12.34 climb
+// finishes on 12.34 rather than on a differently-shaped version of it.
+export function formatRunClock(ms: number): string {
+  const safe = Math.max(0, ms)
+  const minutes = Math.floor(safe / 60_000)
+  const seconds = Math.floor(safe / 1000) % 60
+  const hundredths = pad(Math.floor(safe / 10) % 100)
+  if (minutes > 0) return `${minutes}:${pad(seconds)}.${hundredths}`
+  return `${seconds}.${hundredths}`
+}
+
+// What a run took, on a **session board** measured by the clock.
+//
+// A tenth of a second, where `formatGameTime` below gives whole ones. The difference is
+// what the figure is for: that one is a stat on a card nobody compares, and this is the
+// column a contest is decided in — nine targets take a few seconds, so whole seconds
+// would put half the field on the same number and settle the places on the tie-break
+// instead of on the run.
+//
+// Past a minute it falls back to the coarser form. A run that long on a drill is not a
+// contender and a tenth of a second says nothing about it; what a reader wants there is
+// to see at a glance that it is out of the running.
+export function formatRaceTime(ms: number): string {
+  const safe = Math.max(0, ms)
+  if (safe >= 60_000) return formatGameTime(safe)
+  return `${(safe / 1000).toFixed(1)}${DOUBLE_PRIME}`
+}
+
 export function formatGameTime(ms: number): string {
   const totalSeconds = Math.floor(Math.max(0, ms) / 1000)
   const hours = Math.floor(totalSeconds / 3600)

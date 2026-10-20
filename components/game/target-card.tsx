@@ -13,14 +13,25 @@ import { PieCountdown, TARGET_EXIT_MS } from '@/components/game/pie-countdown'
 import { mono } from '@/constants/theme'
 import type { DisplayTarget } from '@/types/game'
 
+// How far a taken card is held back once it has settled.
+//
+// Plainly done and still plainly there, which is the whole job: a drilled board is nine
+// cards the player is learning as one picture, and the taken ones are what says how far
+// through it they are. Too faint and the picture loses a card anyway; too strong and the
+// board stops showing which ones are left.
+const SPENT_OPACITY = 0.3
+
 export function TargetCard({
   target,
   maxValue,
   duration,
+  size,
+  color,
   par,
   dying = false,
   frozen = false,
   clocked = true,
+  spent = false,
   onExpire,
   onExitComplete,
 }: {
@@ -28,6 +39,16 @@ export function TargetCard({
   // The board's ceiling, for the band tint under the number — see PieCountdown.
   maxValue: number
   duration: number
+  // How wide the card is drawn, where that is not the one every mode draws. A
+  // **drilled** run sets it: nine cards have to stand on the board at once, and nine at
+  // `PIE_SIZE` do not fit a phone. Undefined everywhere else, which is `PieCountdown`'s
+  // own default — the pie scales its whole drawing off this, so nothing here has to.
+  size?: number
+  // The disc this card stands on, where the mode has an opinion. A **drilled** run gives
+  // each of its nine a tint of its challenge's own family — a fixed board is learnt as a
+  // picture, and a colour is read before a number is. Undefined everywhere else, where
+  // the disc is tinted by the target's hundreds instead; see `TARGET_BAND_TRACK`.
+  color?: string
   par?: number
   dying?: boolean
   // The run is paused: hold the clock where it is until play resumes.
@@ -36,6 +57,16 @@ export function TargetCard({
   // target waits as long as it takes and leaves only when it is hit. Not the same thing
   // as `frozen`, which is a clock stopped for a moment; see PieCountdown.
   clocked?: boolean
+  // Whether a card taken on this board **stays** on it, marked, instead of leaving.
+  //
+  // True for a **drilled** run and nothing else. Its nine are a fixed picture, dealt in
+  // the same nine places every run, and the player is learning that picture — a card
+  // that vanished when it was hit would take a ninth of it away each time, so by the
+  // last target there would be nothing left to have learnt.
+  //
+  // A settled card is out of the run either way: the machine dropped it the moment it
+  // was taken, so nothing here can be hit twice. What stays is the drawing.
+  spent?: boolean
   onExpire: () => void
   onExitComplete: () => void
 }) {
@@ -56,8 +87,19 @@ export function TargetCard({
       return
     }
     if (target.exit === null) return
-    // Either exit, the card only fades and holds its size: the movement worth watching
-    // is inside the pie, and the fade is what carries the par badge out with it.
+    // A card that stays fades back rather than out, and never reports itself gone —
+    // `onExitComplete` is what takes a target off the board, and this one is not
+    // leaving. A card that goes fades all the way and says so.
+    //
+    // Either way it only fades and holds its size: the movement worth watching is
+    // inside the pie, and the fade is what carries the par badge out with it.
+    if (spent && target.exit === 'hit') {
+      opacity.value = withTiming(SPENT_OPACITY, {
+        duration: TARGET_EXIT_MS,
+        easing: Easing.out(Easing.quad),
+      })
+      return
+    }
     opacity.value = withTiming(
       0,
       { duration: TARGET_EXIT_MS, easing: Easing.in(Easing.quad) },
@@ -85,6 +127,9 @@ export function TargetCard({
     >
       <PieCountdown
         maxValue={maxValue}
+        size={size}
+        backgroundColor={color}
+        settles={spent}
         value={target.value}
         active={target.exit === null && !dying && !frozen}
         clocked={clocked}

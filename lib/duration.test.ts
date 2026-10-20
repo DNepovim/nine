@@ -4,6 +4,8 @@ import {
   formatCareerTime,
   formatCountdown,
   formatGameTime,
+  formatRaceTime,
+  formatRunClock,
   formatWindowLength,
   minutesAsHours,
 } from './duration'
@@ -186,5 +188,52 @@ describe('minutesAsHours', () => {
     // surprise if something ever does.
     expect(minutesAsHours(90)).toBe('2')
     expect(minutesAsHours(89)).toBe('1')
+  })
+})
+
+describe('formatRaceTime', () => {
+  it('gives a tenth of a second, which is what a race is decided on', () => {
+    expect(formatRaceTime(11_400)).toBe('11.4″')
+    expect(formatRaceTime(9_050)).toBe('9.1″')
+  })
+
+  it('keeps the tenth even at nought, so a column of them lines up', () => {
+    expect(formatRaceTime(0)).toBe('0.0″')
+    expect(formatRaceTime(-500)).toBe('0.0″')
+  })
+
+  it('falls back to whole seconds past a minute', () => {
+    // A run that long is not a contender, and a tenth of a second says nothing useful
+    // about it.
+    expect(formatRaceTime(75_000)).toBe(formatGameTime(75_000))
+  })
+})
+
+describe('formatRunClock', () => {
+  it('reads the hundredth, in the one notation the digits can draw', () => {
+    // A colon rather than the prime marks: DSEG7 has digits, a point and a colon and
+    // nothing else, and both ends of a timed run are set in it.
+    expect(formatRunClock(9_340)).toBe('9.34')
+    expect(formatRunClock(62_340)).toBe('1:02.34')
+  })
+
+  it('truncates rather than rounds, so the clock never reads ahead of itself', () => {
+    expect(formatRunClock(9_349)).toBe('9.34')
+    expect(formatRunClock(9_999)).toBe('9.99')
+  })
+
+  it('never changes width as the digits move', () => {
+    // The one thing a clock somebody is staring at must not do.
+    expect(formatRunClock(9_000)).toBe('9.00')
+    expect(formatRunClock(9_070)).toBe('9.07')
+  })
+
+  it('pads the seconds the moment there are minutes in front of them', () => {
+    expect(formatRunClock(60_000)).toBe('1:00.00')
+    expect(formatRunClock(59_990)).toBe('59.99')
+  })
+
+  it('never runs backwards', () => {
+    expect(formatRunClock(-1)).toBe('0.00')
   })
 })

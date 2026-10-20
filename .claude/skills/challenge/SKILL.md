@@ -258,6 +258,86 @@ challenge is put on the app by planning a **session** on the admin screen, which
 row rather than a rebuild. The window on the definition is what a session will one day
 be resolved from; keep it short and in the past if the entry is only being written.
 
+## Modulations — when a challenge needs a mechanism, not a value
+
+Everything above assumes the answer is a **value**: a field on `ChallengeSpec`, a group
+in `RulesPatch`, a line in the catalog. That assumption holds for most ideas and it is
+what makes a challenge cost one entry.
+
+Sometimes it does not, and the cost of noticing late is high — a catalog entry that
+typechecks, resolves cleanly and plays like an ordinary run of its base mode, with the
+one thing the challenge was about silently absent.
+
+### The test
+
+Walk the idea against `RunRules` and ask, for each part of it: **which field is this?**
+
+- Every part names a field → it is a value. Write the entry.
+- A part names no field → it is a **modulation**: a new thing the engine can be asked
+  for, which this challenge is the first to ask. Stop, and say so.
+
+Ask it about the _mechanism_, not the vocabulary. "The clock is halved" is `clock.base`.
+"The clock runs backwards" is nothing on `RunRules`, however much it sounds like a clock.
+
+A quick list of what the fields actually cover, which is where the test gets decided:
+
+| It is a value if it is about…                                          | Field             |
+| ---------------------------------------------------------------------- | ----------------- |
+| how many keys, their weights, how far a digit goes                     | `dial`            |
+| how long a target lasts, whether it ramps, whether it runs down at all | `clock`           |
+| how often targets arrive, how many stand, how far from the sum         | `spawn`           |
+| the blend, what a hit is worth, which rule builds the multiplier       | `scoring`         |
+| how many lives, what spends one                                        | `lives`           |
+| the rung, and whether the player picks it                              | `fixedDifficulty` |
+
+Everything else is a modulation. In particular: **which** targets arrive, **what ends a
+run**, **what the standings are ordered by**, what is drawn, what is stored.
+
+### Three that have been built
+
+Each began as "surely that is just a field", and none of them was.
+
+- **The drill** (`spawn.drill`) — MUSCLE MEMORY wanted the _same_ nine targets every
+  run. `spawn` said how often targets arrive and how many, and nothing said which. It
+  also turned out to be two mechanisms wearing one coat: the fixed list, and a run that
+  ends when the list is spent rather than when the lives are.
+- **The measure** (`scoring.measure`) — the same challenge wanted its standings ordered
+  by the clock. Nothing on `RunRules` described a **session board** at all, and the
+  honest shape was not a rules field alone: it had to reach the database, because the
+  server ranks and the server has never heard of a mode.
+- **The chain** (`ShotKind`) — the smallest of the three, and the model for what a cheap
+  modulation looks like: a new member of a union, two rows in two maps, done.
+
+### Abstracting one
+
+A modulation is **not** finished when the challenge works. It is finished when the
+_next_ challenge would not have to touch the engine again. Four rules:
+
+1. **Name it.** A mechanism without a word gets three. Both of the above have a row in
+   `CLAUDE.md`'s table, and that row was written before the code.
+2. **Put it where the mode already speaks.** A field on `RunRules`, defaulted so every
+   existing mode answers exactly as it does today. `drill: null` and `measure: 'score'`
+   changed nothing about any mode that already existed, which is the test that the
+   default is right.
+3. **Keep the engine blind.** Nothing outside `modes/` may name the challenge. The
+   spawner asks the rules how targets arrive; the machine asks the rules what ends a
+   run; the board asks the rules what it is ordered by.
+4. **Bound the union.** `measure` is `'score' | 'time'`, not an expression — two values
+   a reader can hold in their head beat an open-ended one nobody can reason about.
+
+### What to do when you find one
+
+**Do not write the catalog entry.** It would resolve, typecheck and play wrong.
+
+Say which part is a modulation and which fields cover the rest, then hand the work to
+the cycle — **`shape`** if the size is unknown, **`spec`** if it is obvious. A
+modulation touching the database or the shape of a run is full-track work by this
+repo's own rules: it introduces a domain word, it changes the rules, or it changes a
+shipped table, and usually all three.
+
+The catalog entry is then the _last_ task of that build rather than the first, and it is
+the same one line it would always have been.
+
 ## Writing it
 
 One entry, appended to `CHALLENGES` — **appended, never inserted**. The list is

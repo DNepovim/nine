@@ -44,11 +44,14 @@ const sessionFor = (which: ChallengeCase, now: number): OpenSession => {
         closesAt: now + 7 * HOUR,
         teaserMinutes: 2160,
         extendedAt: null,
+        measure: 'score',
         // Vivid at both ends, so the long name shows the gradient travelling its whole
         // length — which is the thing a one-colour name could never show.
         leader: {
           nickname: 'Žluťoučký_kůň99',
           score: 184220,
+          // Every card here is score-measured, so none of them has a time to show.
+          timeMs: null,
           avgAccuracy: 94,
           avgSpeed: 91,
         },
@@ -62,6 +65,7 @@ const sessionFor = (which: ChallengeCase, now: number): OpenSession => {
         closesAt: now + 40 * MINUTE,
         teaserMinutes: 2160,
         extendedAt: null,
+        measure: 'score',
         leader: null,
       }
     // The last minute of a window, which is the one stretch where the coarse figure drops
@@ -73,6 +77,7 @@ const sessionFor = (which: ChallengeCase, now: number): OpenSession => {
         opensAt: now - 23 * HOUR,
         closesAt: now + 45_000,
         teaserMinutes: 2160,
+        measure: 'score',
         // The one case here carrying an extension, so the gallery shows the line a card
         // wears for the rest of a window it was given more time in. A window in its last
         // minute is also where that line matters most.
@@ -80,7 +85,13 @@ const sessionFor = (which: ChallengeCase, now: number): OpenSession => {
         // Three characters and lopsided: exact and slow, so the name is nearly one
         // colour and the little it does travel is visible at the shortest length a
         // nickname comes in.
-        leader: { nickname: 'Mia', score: 98430, avgAccuracy: 96, avgSpeed: 42 },
+        leader: {
+          nickname: 'Mia',
+          score: 98430,
+          timeMs: null,
+          avgAccuracy: 96,
+          avgSpeed: 42,
+        },
       }
     // Not open yet: the name, the time until it opens, and its one-line description in
     // place of a leader nobody can be.
@@ -94,10 +105,17 @@ const sessionFor = (which: ChallengeCase, now: number): OpenSession => {
         // teaser — which is what makes it a teaser card at all.
         teaserMinutes: 2160,
         extendedAt: null,
+        measure: 'score',
         // Never counted, which `nameColors` reads as no saturation — the one case where
         // the name comes out grey. Drawn by nothing on the teaser, which shows its
         // description instead, and kept here so the shape is a whole `OpenSession`.
-        leader: { nickname: 'nobody', score: 0, avgAccuracy: null, avgSpeed: null },
+        leader: {
+          nickname: 'nobody',
+          score: 0,
+          timeMs: null,
+          avgAccuracy: null,
+          avgSpeed: null,
+        },
       }
   }
 }

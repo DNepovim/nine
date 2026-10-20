@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest'
 
 import { TUTORIAL_LABEL } from '@/constants/tutorial'
+import { ACCURACY } from '@/modes/definitions/accuracy'
+import { patchRules } from '@/modes/rules'
 
 import {
   baseClockMs,
@@ -248,6 +250,31 @@ describe('the rules each shipped mode resolves to', () => {
     // lands on a run that works rather than on a blank screen.
     const gone = runRules('challenge/not-a-thing', 'hard')
     expect(gone.clock.base).toBe(baseClockMs('accuracy', 'hard'))
+  })
+})
+
+describe('the drill and the measure', () => {
+  it('rolls its targets and ranks by score unless a mode says otherwise', () => {
+    // The two defaults, which is what keeps every mode that existed before them
+    // answering exactly as it did. A reader of this pair should never have to check a
+    // mode's own file to know what it does.
+    for (const mode of ['trainee', 'accuracy', 'speed'] as const) {
+      expect(runRules(mode, 'hard').spawn.drill).toBeNull()
+      expect(runRules(mode, 'hard').scoring.measure).toBe('score')
+    }
+  })
+
+  it('carries a patch’s drill and measure through to the run', () => {
+    const patched = patchRules(ACCURACY.rules, {
+      spawn: { drill: 9 },
+      scoring: { measure: 'time' },
+    })
+    expect(patched.spawn.drill).toBe(9)
+    expect(patched.scoring.measure).toBe('time')
+    // Merged rather than replaced: a patch naming only the drill keeps the rest of the
+    // spawn, which is the whole contract `patchRules` exists for.
+    expect(patched.spawn.share).toBe(ACCURACY.rules.spawn.share)
+    expect(patched.scoring.weights).toEqual(ACCURACY.rules.scoring.weights)
   })
 })
 

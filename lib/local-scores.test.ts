@@ -56,6 +56,52 @@ describe('recordRun', () => {
     expect(recordRun(store, run({ score: 900 }))).toBe(store)
   })
 
+  // ── A session measured by the clock ──
+  //
+  // The device has to keep the better row by the same rule the server does, or a player
+  // sees one best on their own phone and another on the standings. The rule: if both
+  // runs carry a time, the faster wins; otherwise the higher score does.
+  const SESSION = 'a-session-id'
+  const timed = (score: number, timeMs: number) =>
+    run({ sessionId: SESSION, score, timeMs })
+  const timedEntry = (score: number, timeMs: number) =>
+    entry({ sessionId: SESSION, score, timeMs })
+
+  it('keeps the faster run on a timed slot even when it scored less', () => {
+    // The case the shared no-downgrade rule got wrong: a better run, refused for
+    // scoring less, with nothing anywhere saying why.
+    const store = recordRun([timedEntry(900, 14000)], timed(400, 11000))
+    expect(store).toEqual([timedEntry(400, 11000)])
+  })
+
+  it('refuses a slower run on a timed slot however well it scored', () => {
+    const store = [timedEntry(400, 11000)]
+    expect(recordRun(store, timed(9000, 20000))).toBe(store)
+  })
+
+  it('refuses a run that only equals the held time', () => {
+    const store = [timedEntry(400, 11000)]
+    expect(recordRun(store, timed(9000, 11000))).toBe(store)
+  })
+
+  it('falls back to the score when only one of the two carries a time', () => {
+    // A run played before times existed, beside one played after. Nothing can be
+    // compared but the score, which is the only answer available.
+    const store = recordRun(
+      [entry({ sessionId: SESSION, score: 400 })],
+      timed(900, 99999),
+    )
+    expect(store).toEqual([timedEntry(900, 99999)])
+  })
+
+  it('leaves a board run judged by its score alone', () => {
+    // No session and no time, which is every board run ever played. The timed rule must
+    // not reach them.
+    expect(recordRun([entry({ score: 900 })], run({ score: 400 }))).toEqual([
+      entry({ score: 900 }),
+    ])
+  })
+
   it('reopens a published slot when the run beats it', () => {
     // The server holds the old number and has not been told about this one.
     const store = recordRun(

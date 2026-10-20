@@ -2,6 +2,7 @@ import { isNetworkFailure, noteRequest } from '@/lib/connectivity'
 import type { LeaderboardRow } from '@/lib/leaderboard'
 import type { ServerError } from '@/lib/refusal'
 import { supabase } from '@/lib/supabase'
+import type { Measure } from '@/modes'
 
 // The player's half of a **session board**: the one card the start screen draws, one
 // session's standings in full, and the write.
@@ -36,9 +37,16 @@ export type OpenSession = {
   leader: {
     nickname: string
     score: number
+    // What the leader's run took, where this session is **measured** by the clock.
+    // Null on a score-measured session, which has no time to show.
+    timeMs: number | null
     avgAccuracy: number | null
     avgSpeed: number | null
   } | null
+  // What this session's standings are ordered by — see `measureOf`. Stamped on the row
+  // when the session was booked, so the card and the dialog read the server's answer
+  // rather than resolving the challenge's rules a second time.
+  measure: Measure
 }
 
 type OpenSessionRow = {
@@ -48,8 +56,10 @@ type OpenSessionRow = {
   closes_at: string
   teaser_minutes: number
   extended_at: string | null
+  measure: Measure
   leader_name: string | null
   leader_score: number | null
+  leader_time: number | null
   leader_acc: number | null
   leader_spd: number | null
 }
@@ -75,12 +85,14 @@ export async function loadOpenSessions(): Promise<{
       closesAt: atMs(row.closes_at),
       teaserMinutes: row.teaser_minutes,
       extendedAt: row.extended_at === null ? null : atMs(row.extended_at),
+      measure: row.measure,
       leader:
         row.leader_name === null || row.leader_score === null
           ? null
           : {
               nickname: row.leader_name,
               score: row.leader_score,
+              timeMs: row.leader_time,
               // Kept nullable rather than defaulted to zero: a nought is a real average
               // a real player can have, and `nameColors` already treats the absence as
               // no saturation. Defaulting here would have made "never counted" and
@@ -130,6 +142,10 @@ export async function submitSessionScore(args: {
   hits: number
   difficulty: string
   achievedAt: string
+  // What the run took, for a session measured by the clock. Undefined on every other
+  // run, which the RPC defaults to null — and a null is what a score-measured row has
+  // always held.
+  timeMs?: number
 }): Promise<{ sent: SessionSent; error: ServerError | null }> {
   const res = await supabase.rpc('submit_session_score', {
     p_session_id: args.sessionId,
@@ -137,6 +153,7 @@ export async function submitSessionScore(args: {
     p_hits: args.hits,
     p_difficulty: args.difficulty,
     p_achieved_at: args.achievedAt,
+    p_time_ms: args.timeMs ?? null,
   })
   noteRequest(res.error)
   if (res.error === null) return { sent: 'published', error: null }
