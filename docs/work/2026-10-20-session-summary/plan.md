@@ -515,3 +515,18 @@ left alone, one of them loudly.
 
 **`simplify` was deliberately not run.** Nine fixes are about to reshape this code;
 simplifying ahead of them is work done twice. It belongs in the next review pass.
+
+### Shipped
+
+`226aa88` on `main`, 40 files. Both migrations were pushed to production **before** the
+commit, which is the required order: the client calls `my_session_summaries`, which does not
+exist on the old schema.
+
+**`simplify` was skipped**, agreed at the ship gate rather than overlooked. `/code-review
+high` had already run and all eight of its findings were fixed and re-verified; what was
+left of `review` was the quality pass, which finds no correctness bugs by design. It is
+still worth running over this code one day.
+
+Two sub-clauses were never watched and are not claimed: the countdown's **red** at the
+boundary, and the game-over title **not** rewriting itself behind a run that ended on lives.
+Both fixes read correctly; neither has been seen.

@@ -1,8 +1,8 @@
 # The summary a closed session leaves behind
 
 Slug: session-summary
-Stage: verify
-Next: /review session-summary — the simplify pass
+Stage: shipped
+Next: /deploy — on `main`, not live. `simplify` was skipped; see the review section
 Track: full
 Branch: feat/session-summary
 Started: 2026-10-20
