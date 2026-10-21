@@ -22,7 +22,7 @@ import {
 import { ChallengeCountdown } from '@/components/overlays/challenge-countdown'
 import { TrackedPressable } from '@/components/tracked-pressable'
 import type { AchievementId } from '@/constants/achievements'
-import { GOLD_INK, SPECTRUM } from '@/constants/colors'
+import { APP_RED, GOLD_INK, SPECTRUM } from '@/constants/colors'
 import { mono } from '@/constants/theme'
 import { TYPE } from '@/constants/typography'
 import type { RecordHolder } from '@/hooks/use-board'
@@ -171,6 +171,9 @@ const BEST_SCORES_HEIGHT = 1 + 4 + BEST_CELL_HEIGHT + 4 + 1 + 6
 // it lives on the device and needs no connection. An untouched board leaves its slot
 // bare rather than reading as a zero leaderboard; offline replaces all three with one
 // small note instead, since none of their numbers can be trusted right now.
+// What the countdown turns when the window shuts. `APP_RED` both ends — see the call site.
+const SHUT_GRADIENT = [APP_RED, APP_RED] as const
+
 export function BestScoresLine({
   inRun,
   mode,
@@ -191,6 +194,7 @@ export function BestScoresLine({
   weekHolder,
   everHolder,
   session,
+  onWindowShut,
 }: {
   // The standings this run belongs to, where it belongs to a **session** rather than to
   // a board. Null for every ordinary run, which is what makes this the switch between
@@ -200,6 +204,15 @@ export function BestScoresLine({
   // best without the window it was set in — the two are drawn side by side and a cell
   // naming one without the other would be a figure with no contest behind it.
   session: SessionBests | null
+  // Called once, on the tick the session's window shuts — and only ever for a run that
+  // belongs to one.
+  //
+  // The countdown below already fires `onArrive` at that boundary, including on a mount
+  // that is already past it, which is what a run resumed after the close looks like. The
+  // red is this component's (it is the one holding the clock); the run ending is the
+  // screen's, a second later. Two readers of one boundary rather than two clocks, so the
+  // colour and the end can never disagree about when it was.
+  onWindowShut: () => void
   // True for the whole of a run, pauses included, so resuming does not restart the
   // countdown — the same notion of "in a run" the menu button uses.
   inRun: boolean
@@ -245,6 +258,19 @@ export function BestScoresLine({
   everHolder: RecordHolder | null
 }) {
   const { t } = useLingui()
+  // **Which** window shut, not whether one did.
+  //
+  // A boolean here was wrong in a way that only showed up on the second challenge of a
+  // sitting. This component lives inside the game screen's unconditional `<Screen>`, so it
+  // is mounted for the whole life of the app and never remounts between runs — a `shut`
+  // flag set when one window closed was still set when the next run started, and that run's
+  // countdown was drawn in the closing red from its first frame, hours early.
+  //
+  // Storing the instant instead makes the answer *derived*: a later window has a different
+  // `closesAt` and simply does not match, so there is no state to reset and no ordering to
+  // get right. The countdown below is the one thing that does remount — it unmounts with
+  // `session` between runs — which is why its own `arrived` ref was never affected.
+  const [shutAt, setShutAt] = useState<number | null>(null)
   const openProfile = useOpenProfile()
   const online = useOnline()
   const [dsegLoaded] = useFonts({ DSEG7: DSEG7Font })
@@ -512,9 +538,32 @@ export function BestScoresLine({
                 challenge's own CTA pair, turning as they change. It was a plain figure
                 here, which made the one thing on this strip that is not a score look
                 like one more of them. */}
+              {/* Red the moment it reaches nought, and the run ends a second later —
+                  see `EXPIRED_GRACE_MS`. The app's refusal ink, which is already what a
+                  life coming off is drawn in: the one thing on this strip that is not a
+                  score turning the one colour that means something has gone against you.
+                  Both stops of the pair, so the flaps read as one slab of it rather than
+                  as a gradient that happens to be warm. */}
               <ChallengeCountdown
                 until={session.closesAt}
-                gradient={darkGradientOf(mode)}
+                gradient={
+                  shutAt === session.closesAt ? SHUT_GRADIENT : darkGradientOf(mode)
+                }
+                // An inline closure on purpose: `ChallengeCountdown` holds this in a ref
+                // and syncs it, precisely so a caller rebuilding it each render does not
+                // tear its interval down. That is what lets this capture the window it
+                // belongs to rather than reaching for it through a second ref.
+                onArrive={() => {
+                  setShutAt(session.closesAt)
+                  // Only while there is a run for it to be about. `session` stays set
+                  // through game over — it is cleared on reaching the intro — so without
+                  // this a run that ended on its *lives* a few seconds before the close
+                  // would have the boundary land on the game-over screen behind it, and
+                  // the title would rewrite itself to say the window shut. It did not;
+                  // the player ran out of hearts. The red is still correct either way,
+                  // which is why only the call upward is gated.
+                  if (inRun) onWindowShut()
+                }}
                 flip
               />
             </View>

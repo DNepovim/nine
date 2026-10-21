@@ -46,6 +46,7 @@ export function GameOverSequence({
   achievementFacts,
   sessionId,
   sessionRank,
+  windowShut,
   onPlayAgain,
   onChallenge,
   onMenu,
@@ -85,6 +86,10 @@ export function GameOverSequence({
   // run and for a session whose board has not been read yet — the title falls back to
   // what the run itself was worth, which is what it did before sessions existed.
   sessionRank: 1 | 2 | 3 | null
+  // Whether the run ended because its **session**'s window shut rather than on its own
+  // terms. Reaches the title first — it outranks every claim about how the run went — and
+  // the overlay second, where it quiets PLAY AGAIN and withholds the dare.
+  windowShut: boolean
   onPlayAgain: () => void
   onChallenge: (mode: ModeId, difficulty: Difficulty) => void
   onMenu: () => void
@@ -109,6 +114,7 @@ export function GameOverSequence({
       hits,
       strikes,
       sessionRank,
+      windowShut,
     },
     titleRoll,
     // What this mode claims instead, where it has words of its own. Undefined for every
@@ -142,6 +148,7 @@ export function GameOverSequence({
           achievementStore={achievementStore}
           achievementFacts={achievementFacts}
           sessionId={sessionId}
+          windowShut={windowShut}
           titleHidden={!revealed}
           onTitleLayout={onTitleLayout}
           onPlayAgain={onPlayAgain}

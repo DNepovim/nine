@@ -37,6 +37,15 @@ const EFFECTS = {
   todayLost: (colors) => <Implosion colors={colors} />,
   weekLost: (colors) => <Implosion colors={colors} />,
   everLost: (colors) => <Implosion colors={colors} />,
+
+  // A **session** settling plays nothing, whoever took it — the same answer `*Raised`
+  // gives, and for a stronger reason. These two arrive while the player is in the middle
+  // of a run in some *other* mode, about a contest that is already over: there is nothing
+  // they can do about it and nothing they just did to deserve a celebration. Confetti
+  // over a board the player is still playing would be the app cheering at the wrong
+  // screen. The podium gets its moment on the summary, where it belongs.
+  sessionWon: () => null,
+  sessionTaken: () => null,
 } as const satisfies Record<
   AnnouncementId,
   (colors: readonly [string, ...string[]]) => ReactElement | null

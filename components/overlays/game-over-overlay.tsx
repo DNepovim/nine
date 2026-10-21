@@ -151,6 +151,7 @@ export function GameOverOverlay({
   achievementFacts,
   // The session this run belonged to, or null for an ordinary run.
   sessionId,
+  windowShut,
   onPlayAgain,
   onChallenge,
   onMenu,
@@ -183,6 +184,12 @@ export function GameOverOverlay({
   achievementStore: AchievementStore
   achievementFacts: AchievementFacts
   sessionId: string | null
+  // Whether the run ended because its **session**'s window shut. Two things follow from
+  // it, and they are the same thing said twice: there is nothing left to play again, and
+  // there is nothing to dare the player into next. Everything else on this screen — the
+  // score, the figures, the standings, the achievements — is exactly what it would have
+  // been, because the run itself really happened.
+  windowShut: boolean
   // Straight back into a run on this same board.
   onPlayAgain: () => void
   // Into a run on the board one rung up, or one down — see `runChallenge`.
@@ -196,7 +203,11 @@ export function GameOverOverlay({
 }) {
   const { t } = useLingui()
   const titleRef = useRef<View>(null)
-  const challenge = runChallenge(gameMode, difficulty, hits, strikes)
+  // No dare on a run the window shut under. The offer is always a *next run* — one rung
+  // up, one down, the other mode — and the player has just been told the contest is over;
+  // following that with an invitation to play more of it would be the screen contradicting
+  // its own title.
+  const challenge = windowShut ? null : runChallenge(gameMode, difficulty, hits, strikes)
   // Named so the catalog carries one `TRY {modeName}` shared with the step-up toast,
   // and so a translation can put the rung wherever its own grammar wants it.
   const rungName = challenge === null ? '' : t(DIFFICULTIES[challenge.difficulty].label)
@@ -412,7 +423,14 @@ export function GameOverOverlay({
         </>
       }
       gradient={darkGradientOf(gameMode)}
-      cta={{ label: <Trans>PLAY AGAIN</Trans>, onPress: onPlayAgain }}
+      cta={{
+        label: <Trans>PLAY AGAIN</Trans>,
+        onPress: onPlayAgain,
+        // Dead rather than gone. The session's window has shut, so there is no run to
+        // play again — but a screen that drops its loudest button depending on how the
+        // run ended reads as a different screen, and HOME below is still the way on.
+        disabled: windowShut,
+      }}
       alsoCta={
         challenge === null ? null : (
           <ChallengeCta

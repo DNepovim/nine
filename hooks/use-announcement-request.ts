@@ -19,8 +19,15 @@ import type { Announcement } from '@/lib/announcements'
 // while the taker is between renders still arrives: this appends rather than replaces,
 // which is what lets one press ask for a whole burst in a single tick.
 //
-// Nothing writes to it in a production build: the only caller is `dev/gallery.tsx`,
-// which is reached through a `__DEV__` dynamic import.
+// Two callers now, and only one of them is a dev one. `dev/gallery.tsx` is reached
+// through a `__DEV__` dynamic import; `use-session-summaries.ts` is not, and is the reason
+// this store exists in a shipped build at all — a **session**'s window can shut while the
+// player is mid-run in another mode, and the hook that notices is mounted beside the game
+// screen rather than inside it.
+//
+// The line is dropped rather than held when no run is up, which is the behaviour the taker
+// already had and exactly what the summary wants: a player who was not playing when the
+// window shut is told on the intro instead, by the dialog.
 
 // Shared so an empty store hands back the same array every read — `useSyncExternalStore`
 // compares snapshots by identity, and a fresh `[]` per read would loop.

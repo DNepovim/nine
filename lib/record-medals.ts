@@ -27,6 +27,14 @@ const MEDAL_PERIOD = {
   todayLost: null,
   weekLost: null,
   everLost: null,
+
+  // A **session place** is not a medal and has no period. It is settled the moment the
+  // window shuts and cannot be taken back, where a medal is a standing on a board that a
+  // rival can have off you tomorrow — and there is no day, week or ever on a session to
+  // name here even if it were one. `sessionMedal` in lib/board-medals.ts is where a
+  // session's place is reckoned, with `period: null`, and this map is about boards.
+  sessionWon: null,
+  sessionTaken: null,
 } as const satisfies Record<AnnouncementId, Period | null>
 
 // The boards this run took, biggest first — PERIODS drives the order, so two ids naming

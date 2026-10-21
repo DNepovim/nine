@@ -35,6 +35,14 @@ const ANNOUNCEMENT_SCALE = {
   todayLost: 'gray',
   weekLost: 'gray',
   everLost: 'gray',
+  // A **session** settling. The dark CTA scale, for the same reason `*Raised` wears it: a
+  // real event without the shine of a prize. Gold would be wrong even for the line that
+  // says the player won — gold in this app means a board record you *currently hold*, and
+  // a session **place** is settled the moment the window shuts and cannot be taken back.
+  // The two lines share a scale on purpose: what changed is a contest ending, which is the
+  // same event whoever it went to.
+  sessionWon: 'cta',
+  sessionTaken: 'cta',
 } as const satisfies Record<AnnouncementId, Scale>
 
 export type AnnouncementStyle = {

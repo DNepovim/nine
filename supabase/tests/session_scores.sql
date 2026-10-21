@@ -377,8 +377,10 @@ begin
     'a worse score should still be refused on a score-measured session';
 
   -- ── The card names the leader by the measure ──
+  -- A improved to 9000ms above, which is why the leader is no longer B: the card names
+  -- whoever is fastest *now*, not whoever led when they arrived.
   assert (select leader_name from open_sessions_with_leaders() where id = v_race)
-         = 'RACER_B',
+         = 'RACER_A',
     'the card should name the fastest player on a race';
   assert (select leader_name from open_sessions_with_leaders() where id = v_plain)
          = 'RACER_A',
@@ -388,5 +390,218 @@ begin
 
   delete from challenge_sessions where id in (v_race, v_plain);
   update profiles set nickname = null where id in (v_a, v_b);
+end;
+$$;
+
+-- ─── The summary a closed session leaves behind ──────────────────────────────
+--
+-- `my_session_summaries` answers for one caller and no other, which is the whole of its
+-- access rule: there is no `p_user_id` to get wrong because eligibility *is* having a
+-- `session_scores` row, and the row is found through `auth.uid()`. The three assertions
+-- below are the three ways that could stop being true — a session leaking to somebody
+-- who never played it, a player's own session going missing, and the floor that stops a
+-- client asking about the epoch from pulling a year of podiums.
+do $$
+declare
+  v_a     uuid;
+  v_b     uuid;
+  v_mine  uuid;
+  v_other uuid;
+  v_old    uuid;
+  v_live   uuid;
+  v_row    record;
+  v_closed timestamptz;
+begin
+  select id into v_a from profiles order by id limit 1;
+  select id into v_b from profiles order by id offset 1 limit 1;
+  update profiles set nickname = 'SUMMER_A' where id = v_a;
+  update profiles set nickname = 'SUMMER_B' where id = v_b;
+
+  -- Shut an hour ago, and A played it.
+  insert into challenge_sessions (mode_id, opens_at, closes_at)
+  values ('challenge/mine', now() - interval '3 hours', now() - interval '1 hour')
+  returning id into v_mine;
+  -- Shut an hour ago, and only B played it.
+  insert into challenge_sessions (mode_id, opens_at, closes_at)
+  values ('challenge/other', now() - interval '3 hours', now() - interval '1 hour')
+  returning id into v_other;
+  -- Shut forty days ago, and A played it. Past the floor.
+  insert into challenge_sessions (mode_id, opens_at, closes_at)
+  values ('challenge/old', now() - interval '41 days', now() - interval '40 days')
+  returning id into v_old;
+  -- Still open, and A is playing it. Not a summary yet.
+  insert into challenge_sessions (mode_id, opens_at, closes_at)
+  values ('challenge/live', now() - interval '1 hour', now() + interval '1 hour')
+  returning id into v_live;
+
+  -- The rows are written straight rather than through `submit_session_score`, which
+  -- refuses a shut window — that refusal is what the top of this file asserts, and these
+  -- fixtures need the rows it would not let through.
+  insert into session_scores (session_id, user_id, best_score, hits, difficulty, updated_at)
+  values (v_mine,  v_a, 1500, 9, 'hard', now() - interval '2 hours'),
+         (v_mine,  v_b, 2500, 9, 'hard', now() - interval '2 hours'),
+         (v_other, v_b, 700,  5, 'hard', now() - interval '2 hours'),
+         (v_old,   v_a, 400,  4, 'hard', now() - interval '40 days'),
+         (v_live,  v_a, 100,  2, 'hard', now());
+
+  perform set_config('request.jwt.claims', json_build_object('sub', v_a)::text, true);
+
+  -- ── Only what this player played, and only what has shut ────────────────────
+  assert (select count(*) from my_session_summaries(now() - interval '1 day')) = 1,
+    'a summary should be owed for the one shut session this player scored on';
+  assert (select id from my_session_summaries(now() - interval '1 day')) = v_mine,
+    'the session returned should be the one this player played';
+
+  -- ── The podium, and where this player came on it ────────────────────────────
+  select * into v_row from my_session_summaries(now() - interval '1 day');
+  assert v_row.players = 2, 'players should count the whole board, not the podium';
+  assert (v_row.places -> 0 ->> 'nickname') = 'SUMMER_B',
+    'the podium should be ranked by the measure, best first';
+  assert (v_row.mine ->> 'rank') = '2',  'this player came second';
+  assert (v_row.mine ->> 'score') = '1500', 'and their own figure rides along';
+
+  -- ── The floor ───────────────────────────────────────────────────────────────
+  assert (select count(*) from my_session_summaries('epoch'::timestamptz)) = 1,
+    'a client asking about the epoch should still not reach past the thirty-day floor';
+
+  -- ── Somebody else's contest ─────────────────────────────────────────────────
+  perform set_config('request.jwt.claims', json_build_object('sub', v_b)::text, true);
+  assert (select count(*) from my_session_summaries(now() - interval '1 day')) = 2,
+    'B played both shut sessions and is owed both';
+  assert not exists (
+    select 1 from my_session_summaries(now() - interval '1 day') where id = v_live
+  ), 'a session still open is never a summary';
+
+  -- ── Told once, and once means once ──────────────────────────────────────────
+  --
+  -- The client's clock is milliseconds and this column is microseconds, so a watermark
+  -- taken from `closes_at` is that instant *floored*. Handed back as `p_since`, an
+  -- untruncated `closes_at` is strictly greater than it — and the session is offered
+  -- again, on every launch, forever. The truncation in the function is what closes that
+  -- gap, and this is the assertion that keeps it closed.
+  perform set_config('request.jwt.claims', json_build_object('sub', v_a)::text, true);
+  select closes_at into v_closed from my_session_summaries(now() - interval '1 day');
+  assert v_closed = date_trunc('milliseconds', v_closed),
+    'a summary should report its close in whole milliseconds, the unit the client stores';
+  assert not exists (
+    select 1 from my_session_summaries(v_closed) where id = v_mine
+  ), 'a summary already told must not come back when its own close is the watermark';
+
+  raise notice 'session_scores.sql: the summary OK';
+
+  delete from challenge_sessions where id in (v_mine, v_other, v_old, v_live);
+  update profiles set nickname = null where id in (v_a, v_b);
+end;
+$$;
+
+-- ─── What a session podium pays into a fortune ───────────────────────────────
+--
+-- Three rules, and losing any of them is a silent money bug. The **shares** are the whole
+-- feature: a fifth for third, where a board's podium pays a tenth. The **watermark** is
+-- what keeps every fortune already earned exactly where it is — without it, every past
+-- winner's figure jumps the day this ships. And a **live** session pays nothing, because
+-- its standings can still move and a fortune reckoned from one would wobble under the
+-- player.
+do $$
+declare
+  v_a     uuid;
+  v_b     uuid;
+  v_c     uuid;
+  v_paid  uuid;
+  v_early uuid;
+  v_live   uuid;
+  v_graced uuid;
+  v_base  bigint;
+  v_bonus bigint;
+  v_total bigint;
+begin
+  select id into v_a from profiles order by id limit 1;
+  select id into v_b from profiles where id <> v_a order by id limit 1;
+  select id into v_c from profiles where id not in (v_a, v_b) order by id limit 1;
+  update profiles set nickname = 'PODIUM_A' where id = v_a;
+  update profiles set nickname = 'PODIUM_B' where id = v_b;
+  update profiles set nickname = 'PODIUM_C' where id = v_c;
+
+  -- Closed after the watermark: pays.
+  insert into challenge_sessions (mode_id, opens_at, closes_at)
+  values ('challenge/four-keys', session_podium_from() + interval '1 hour',
+          session_podium_from() + interval '2 hours')
+  returning id into v_paid;
+  -- Closed before it: pays nothing, whatever place it was taken with.
+  insert into challenge_sessions (mode_id, opens_at, closes_at)
+  values ('challenge/habit', session_podium_from() - interval '2 days',
+          session_podium_from() - interval '1 day')
+  returning id into v_early;
+  -- Still open: pays nothing yet.
+  insert into challenge_sessions (mode_id, opens_at, closes_at)
+  values ('challenge/four-by-four', now() - interval '1 hour', now() + interval '1 hour')
+  returning id into v_live;
+
+  insert into session_scores (session_id, user_id, best_score, hits, difficulty, updated_at)
+  values (v_paid,  v_a, 1000, 9, 'hard', session_podium_from() + interval '90 minutes'),
+         (v_paid,  v_b,  800, 8, 'hard', session_podium_from() + interval '90 minutes'),
+         (v_paid,  v_c,  600, 7, 'hard', session_podium_from() + interval '90 minutes'),
+         (v_early, v_a, 5000, 9, 'hard', session_podium_from() - interval '36 hours'),
+         (v_live,  v_a,  400, 4, 'hard', now());
+
+  -- ── The shares ──────────────────────────────────────────────────────────────
+  assert session_podium_bonus(v_paid, v_a) = 1000,
+    'first should be paid their score again, got ' || session_podium_bonus(v_paid, v_a);
+  assert session_podium_bonus(v_paid, v_b) = 400,
+    'second should be paid half, got ' || session_podium_bonus(v_paid, v_b);
+  assert session_podium_bonus(v_paid, v_c) = 120,
+    'third should be paid a fifth, got ' || session_podium_bonus(v_paid, v_c);
+
+  -- ── The watermark, the open window, and the grace ───────────────────────────
+  assert session_podium_bonus(v_early, v_a) = 0,
+    'a session that closed before the watermark must pay nothing';
+  assert session_podium_bonus(v_live, v_a) = 0,
+    'a session still open must pay nothing — its standings can still move';
+
+  -- A fortune only ever grows, and this is the assertion that holds it to that. A score
+  -- is still accepted for ten minutes after a window shuts, so inside that span a rival
+  -- can push a player off a step — paying before it is out meant halving what somebody
+  -- had already been paid.
+  insert into challenge_sessions (mode_id, opens_at, closes_at)
+  values ('challenge/habit', now() - interval '2 hours', now() - interval '2 minutes')
+  returning id into v_graced;
+  insert into session_scores (session_id, user_id, best_score, hits, difficulty, updated_at)
+  values (v_graced, v_a, 1000, 9, 'hard', now() - interval '30 minutes');
+  assert session_podium_bonus(v_graced, v_a) = 0,
+    'a session still inside its ten-minute grace must pay nothing yet';
+
+  -- And the moment the grace is out, the same place pays.
+  update challenge_sessions set closes_at = now() - interval '11 minutes'
+  where id = v_graced;
+  assert session_podium_bonus(v_graced, v_a) = 1000,
+    'once the grace is out the place pays, got ' || session_podium_bonus(v_graced, v_a);
+  delete from challenge_sessions where id = v_graced;
+
+  -- ── Off the podium ──────────────────────────────────────────────────────────
+  perform set_config('request.jwt.claims', json_build_object('sub', v_a)::text, true);
+  insert into session_scores (session_id, user_id, best_score, hits, difficulty, updated_at)
+  select v_paid, p.id, 10, 1, 'hard', session_podium_from() + interval '95 minutes'
+  from   profiles p where p.id not in (v_a, v_b, v_c) and p.nickname is not null limit 1;
+  assert (select coalesce(sum(session_podium_bonus(session_id, user_id)), 0)
+          from session_scores where session_id = v_paid) = 1520,
+    'nothing below third should add to the podium''s total';
+
+  -- ── And it is what the fortune actually receives ────────────────────────────
+  select sum(best_score), sum(session_podium_bonus(session_id, user_id))
+    into v_base, v_bonus
+  from session_scores where user_id = v_a and difficulty = 'hard';
+  select (elem ->> 'scoreSum')::bigint into v_total
+  from json_array_elements(
+         player_profile(v_a, current_date, current_date - 7)::json -> 'sessionTotals'
+       ) elem
+  where elem ->> 'difficulty' = 'hard';
+  assert v_total = v_base + v_bonus,
+    'the profile should pay the points and the places, got ' || v_total
+    || ' for ' || v_base || ' + ' || v_bonus;
+
+  raise notice 'session_scores.sql: the podium bonus OK';
+
+  delete from challenge_sessions where id in (v_paid, v_early, v_live);
+  update profiles set nickname = null where id in (v_a, v_b, v_c);
 end;
 $$;

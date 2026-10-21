@@ -24,6 +24,7 @@ import {
   SEEN_NEWS_KEY,
   SEEN_RECAP_KEY,
   SEEN_STANDINGS_KEY,
+  SEEN_SUMMARY_KEY,
   STATS_KEY,
   WELCOME_KEY,
 } from '@/constants/storage'
@@ -58,6 +59,19 @@ export const RESET_KEYS = [
   SEEN_STANDINGS_KEY,
   MEDAL_HISTORY_KEY,
   ASKED_WINNINGS_KEY,
+  // The **summary** watermark, and the one key on either list where the obvious
+  // neighbour is the wrong answer. It looks like `SEEN_RECAP_KEY` below — both record
+  // that something has been told — but a recap speaks for the six scored boards and to
+  // nobody in particular, so showing it twice is noise. A summary is about a contest the
+  // player themselves entered, and whether it has been told is a fact about *them*.
+  //
+  // Left in place it would mean the previous player's telling about the restored
+  // player's sessions, which is `EMAIL_PROMPT_KEY`'s problem exactly: a key quietly
+  // meaning something about the wrong person. Cleared, the next launch reads no marker,
+  // writes the moment and stays quiet — so a profile that lands here hours after its
+  // session closed loses that one summary. That is the smaller of the two wrongs and the
+  // safe direction, and it is the same trade `ASKED_WINNINGS_KEY` above already makes.
+  SEEN_SUMMARY_KEY,
   // A run left in progress. It belonged to the player walking away, and resuming it under
   // a new name would file its score on the wrong profile.
   RUN_KEY,

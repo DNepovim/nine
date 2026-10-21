@@ -576,9 +576,17 @@ export function HowToPlayOverlay({
                 </Bullet>
                 <Bullet color={GAME_SCALE[3]}>
                   <Trans>
-                    Finish in the top three and you get the medal for it. A challenge
-                    keeps no board of its own, so there is nothing to lose it to
-                    afterwards — and the points still count towards your fortune.
+                    Finish in the top three and you get the medal for it, and the place
+                    itself pays: first takes their score again, second half of it, third a
+                    fifth — on top of the points every run already adds to your fortune. A
+                    challenge keeps no board of its own, so there is nothing to lose it to
+                    afterwards.
+                  </Trans>
+                </Bullet>
+                <Bullet color={GAME_SCALE[3]}>
+                  <Trans>
+                    If the window closes while you are playing, the run ends there — and
+                    you are told how it finished.
                   </Trans>
                 </Bullet>
               </Card>

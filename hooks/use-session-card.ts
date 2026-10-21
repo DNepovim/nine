@@ -2,18 +2,18 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 
 import type { PeriodBoard } from '@/hooks/use-board'
 import { useFlag } from '@/hooks/use-flags'
+import { useOpenSessions } from '@/hooks/use-open-sessions'
 import { cardSession, type SessionCard } from '@/lib/challenge-session'
 import type { LeaderboardRow } from '@/lib/leaderboard'
-import { loadOpenSessions, loadSessionBoard, type OpenSession } from '@/lib/session-board'
-import { modeById } from '@/modes'
+import { loadSessionBoard, type OpenSession } from '@/lib/session-board'
 
 // The one session the start screen draws, or none.
 //
-// Read once per launch and held. A session opening or closing while the app is in the
-// foreground does not change the card — the same decision the intro already makes about
-// which modes are open (`openedAt` in menu-overlay.tsx), and for the same reason: a card
-// that vanished under a thumb already travelling towards it is worse than a card that is
-// a few minutes stale.
+// Reckoned once, from rows read once per launch, and held. A session opening or closing
+// while the app is in the foreground does not change the card — the same decision the
+// intro already makes about which modes are open (`openedAt` in menu-overlay.tsx), and
+// for the same reason: a card that vanished under a thumb already travelling towards it
+// is worse than a card that is a few minutes stale.
 //
 // **With one exception, and only one.** A teaser whose countdown runs out is a card that
 // has to turn into the live card there and then — it has just finished telling the player
@@ -25,8 +25,11 @@ import { modeById } from '@/modes'
 // how the card is asked to think again, and `ChallengeCountdown` calls it once, at the
 // boundary, rather than on every tick.
 //
-// The feature gates the *read*, not just the card. A player who can never be shown this
-// has no business asking the server about it — the same rule `useWeeklyRecap` keeps.
+// The rows themselves now come from `useOpenSessions`, which is the launch's single read
+// of them and is shared with the **summary**. That it is shared changes nothing here: the
+// list resolves once and keeps its identity, so the effect below fires twice — empty, then
+// with rows — and never again. A live session closing still leaves this card where it is,
+// and the fact that something else woke up for it is none of this card's business.
 
 // The card and the way to reckon it again.
 //
@@ -43,43 +46,23 @@ export function useSessionCard(): {
   card: SessionCard<OpenSession>
   reckon: () => void
 } {
-  const canSee = useFlag('challenges')
+  // Asked here because this hook is mounted inside `MenuOverlay`, which is a child of
+  // `FlagsProvider` and so can see the answer. See the note on `useOpenSessions`.
+  const sessions = useOpenSessions(useFlag('challenges'))
   const [card, setCard] = useState<SessionCard<OpenSession>>(null)
 
-  // The rows as they came back, kept so the card can be reckoned again without asking the
-  // server twice. A teaser becoming live is a fact about the clock, not about the rows —
-  // nothing on the server changed when the countdown hit zero.
-  const known = useRef<readonly OpenSession[]>([])
-
-  // A ref rather than a local `let`, which is the shape `use-board.ts` uses for the
-  // same job: a plain flag reads as always-false to the type checker, since nothing it
-  // can see sets it between the read and the check.
-  const dropped = useRef(false)
-
+  // Against the clock as the rows land. Runs once more than it used to — once on the
+  // empty list, which resolves to no card, and once when the read answers — and the
+  // first of those sets the state it was already in.
   useEffect(() => {
-    if (!canSee) return
-    dropped.current = false
-    void (async () => {
-      const res = await loadOpenSessions()
-      if (dropped.current) return
-      // A session naming a challenge this build has never heard of is skipped rather
-      // than drawn: there is no name to print and no rules to run it under. The same
-      // answer `modeById` gives everywhere else, and a device older than the server is
-      // the ordinary way it happens.
-      const rows = res.rows.filter((row) => modeById(row.modeId) !== null)
-      known.current = rows
-      setCard(cardSession(rows, Date.now()))
-    })()
-    return () => {
-      dropped.current = true
-    }
-  }, [canSee])
+    setCard(cardSession(sessions, Date.now()))
+  }, [sessions])
 
   // Think again, against the clock as it stands now. Idempotent and cheap: it is a filter
   // and a sort over at most a handful of rows, and it reads the same rows the launch read.
   const reckon = useCallback(() => {
-    setCard(cardSession(known.current, Date.now()))
-  }, [])
+    setCard(cardSession(sessions, Date.now()))
+  }, [sessions])
 
   return { card, reckon }
 }
@@ -135,9 +118,9 @@ function sessionBoardOf(
 export function useSessionBoard(sessionId: string | null, userId: string | null) {
   const [board, setBoard] = useState<PeriodBoard | null>(null)
 
-  // Dropped the same way `useSessionCard` above drops its read. Open a challenge, dismiss
-  // it, and finish a run in another session before the first request lands, and without
-  // this the stale answer overwrites the newer standings.
+  // Dropped the same way `useOpenSessions` drops its read. Open a challenge, dismiss it,
+  // and finish a run in another session before the first request lands, and without this
+  // the stale answer overwrites the newer standings.
   const stale = useRef(false)
 
   useEffect(() => {

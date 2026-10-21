@@ -67,7 +67,12 @@ export type RunScore = {
 }
 
 // The loud way back into a run: PLAY AGAIN, CONTINUE.
-export type RunCta = { label: ReactNode; onPress: () => void }
+//
+// `disabled` was asked for by the game-over screen a **session** ended under: there is no
+// playing again, because the contest the run belonged to has closed. The button stays on
+// the screen rather than being taken off it — a screen whose shape changes depending on
+// why the run ended reads as a different screen — and goes quiet instead.
+export type RunCta = { label: ReactNode; onPress: () => void; disabled?: boolean }
 
 export function RunScreen({
   overRun = false,
@@ -170,8 +175,15 @@ export function RunScreen({
               <TrackedPressable
                 id="run_screen.cta"
                 onPress={cta.onPress}
-                className="overflow-hidden rounded-2xl"
-                style={shadow}
+                disabled={cta.disabled ?? false}
+                className={cn(
+                  'overflow-hidden rounded-2xl',
+                  // The same dimming the news dialog's BACK arrow takes when it has
+                  // nowhere to go — one opacity for "this button is here and is not for
+                  // you", rather than a second way of saying it.
+                  cta.disabled === true && 'opacity-[0.3]',
+                )}
+                style={cta.disabled === true ? undefined : shadow}
               >
                 <LinearGradient
                   colors={[...gradient]}

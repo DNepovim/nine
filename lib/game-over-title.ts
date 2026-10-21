@@ -20,6 +20,10 @@ export type TitleWords = readonly [string, string]
 // tier's pool, the same shape the announcement bar uses — one meaning, several ways of
 // saying it, so a player who dies twice in a row is not read the same words twice.
 export type ClaimTier =
+  // The **session**'s window shut under the run. Not a tier of achievement at all — it is
+  // the one claim that describes why the run ended rather than what it was worth, which
+  // is why it sits outside the ladder below and is answered before any of it.
+  | 'expired'
   | 'crown'
   | 'owl'
   | 'eagle'
@@ -35,6 +39,16 @@ export type ClaimTier =
 // only one that comments on a run going badly, and it says the run was cold rather
 // than the player.
 const TITLES = {
+  // The window shut. Every one of these names the clock on the *contest* rather than the
+  // clock on the run — a door, a bell, time itself — because the run's own clock had not
+  // run out and the player's lives had not gone. Nothing here comments on how the run was
+  // going, which is the whole point of answering this tier first: a player three targets
+  // into a good run must not be told they were cold.
+  expired: [
+    ['TIME', 'GONE'],
+    ['DOOR', 'SHUT'],
+    ['BELL', 'RANG'],
+  ],
   // Holding both Extreme all-time boards at once — the rarest thing in the game.
   crown: [
     ['BEST', 'EVER'],
@@ -123,6 +137,7 @@ const tierFor = ({
   hits,
   strikes,
   sessionRank = null,
+  windowShut = false,
 }: {
   // How loudly the screen is celebrating — the crown and the birds are its two loudest
   // settings, and each has words of its own.
@@ -149,7 +164,16 @@ const tierFor = ({
   // gold and rank, which is exactly what a standing is, and a challenge that wants
   // different words names them — see `claims` on its spec.
   sessionRank?: 1 | 2 | 3 | null
+  // Whether this run ended because its **session**'s window shut rather than because the
+  // run itself ended. Absent on every ordinary run.
+  windowShut?: boolean
 }): ClaimTier => {
+  // Above the crown, and that is deliberate. Every other tier answers "what was this run
+  // worth"; this one answers "why are you looking at this screen", and a player whose
+  // contest just closed under them needs that said first. A run that took a board on its
+  // final hit still gets the record, the gold screen and the medal row — what it does not
+  // get is a title claiming the run finished on its own terms.
+  if (windowShut) return 'expired'
   // A reign outranks everything, and each mode's is its own claim.
   if (screen === 'crown') return 'crown'
   if (screen === 'bird') return mode === 'accuracy' ? 'owl' : 'eagle'

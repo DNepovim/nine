@@ -62,6 +62,18 @@ export const ASKED_WINNINGS_KEY = 'nine.asked-winnings.v1'
 // should meet the game, not a report on a week they were not here for. Local, like the two
 // markers above: a reinstall loses the telling, and there is nothing else to lose.
 export const SEEN_RECAP_KEY = 'nine.seen-recap.v1'
+// The close of the newest **session** whose summary has already been told, as epoch
+// milliseconds. One figure rather than a list of sessions, and that is the whole of the
+// rule: a summary is owed for anything that shut after this mark, at most one is ever
+// told, and the mark then moves past every one of them — told or not. A session that
+// closed before it has expired unheard, exactly as an older week's recap has.
+//
+// Absent means a first launch, which writes the moment and stays quiet: a player opening
+// the app for the first time should meet the game, not a podium from a contest they were
+// not in. Local, like the three markers above — a reinstall loses the telling, and there
+// is nothing else to lose. Eligibility itself is never stored, being the server's answer:
+// a `session_scores` row is what says a player played it.
+export const SEEN_SUMMARY_KEY = 'nine.seen-summary.v1'
 // The run the app was last closed on, live or paused — see lib/saved-run.ts. Written
 // when a run is put down and cleared the moment there is no longer one to come back to,
 // so a key that exists always means a run in progress. Versioned on the shape of what is

@@ -10,6 +10,11 @@ import type { AchievementId } from '@/constants/achievements'
 // one id for all of them, because what changes between two achievements is the name, and
 // the `{name}` substitution below already exists for exactly that.
 //
+// The last two are not about a record at all: a **session**'s window has shut while the
+// player was in the middle of a run in some other mode, and somebody has taken it. They
+// are the only lines here that report a thing being *settled* rather than a thing being
+// crossed, which is why they say "took" where everything else says "leads".
+//
 // The array is the source of truth and the type derives from it, so the id list can
 // never drift out of sync with the union — and ANNOUNCEMENT_MESSAGES below `satisfies`
 // a Record over that union, which makes an id without a message a compile error.
@@ -27,6 +32,8 @@ export const ANNOUNCEMENT_IDS = [
   'weekLost',
   'everLost',
   'achievement',
+  'sessionWon',
+  'sessionTaken',
 ] as const
 
 export type AnnouncementId = (typeof ANNOUNCEMENT_IDS)[number]
@@ -184,6 +191,29 @@ const ANNOUNCEMENT_MESSAGES = {
     '{name} took all time from you',
     '{name} took your crown',
     'All time: {name} passed you',
+  ],
+
+  // A **session** has closed. Not a board and not a period: a session is its own window
+  // and settles once, so there is nothing here about today or the week, and nothing that
+  // could be taken back tomorrow.
+  //
+  // `sessionWon` carries no name because the name would be the player's own, and the bar
+  // does not address people by their nickname. Its partner carries the winner's, which is
+  // the whole of its news.
+  //
+  // **Taken, not lost.** Every `*Lost` id above means a record that was *yours* and is not
+  // any more; a player who never led the session never lost it, and most players reading
+  // this line were never first at all. The word also keeps these two out of the
+  // rival-announcement set, which is defined by that suffix.
+  sessionWon: [
+    'You took the challenge',
+    'The challenge is yours',
+    'First on the challenge',
+  ],
+  sessionTaken: [
+    '{name} took the challenge',
+    'The challenge went to {name}',
+    'Challenge over: {name} won',
   ],
 } as const satisfies Record<AnnouncementId, readonly [string, ...string[]]>
 

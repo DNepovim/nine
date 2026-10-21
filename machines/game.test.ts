@@ -130,6 +130,29 @@ describe('a drilled run', () => {
     expect(first.seq).toBe(0)
   })
 
+  it('does not end the second run the moment its board first goes clear', () => {
+    // The other half of the same confusion, and the half that survived. The *ending* was
+    // measured against `nextTargetId` too — so on the second run of a sitting the guard
+    // was already satisfied before a single card had been dealt, and the run ended on the
+    // first target taken. Nine cards became one.
+    const actor = drilled()
+    for (let value = 1; value <= 9; value++) {
+      actor.send({ type: 'ADD_TARGET', value, at: 0 })
+    }
+    for (let press = 0; press < 9; press++) {
+      actor.send({ type: 'PRESS', index: 0, delta: 1, now: 0 })
+    }
+    expect(actor.getSnapshot().value).toBe('gameOver')
+
+    actor.send({ type: 'RESTART', now: 0, runId: nextRunId() })
+    actor.send({ type: 'ADD_TARGET', value: 1, at: 0 })
+    dialTo(actor, 1)
+
+    // One of nine taken, eight still to come: the run goes on.
+    expect(actor.getSnapshot().context.dealt).toBe(1)
+    expect(actor.getSnapshot().value).toBe('playing')
+  })
+
   it('stops the run clock when the drill ends it', () => {
     // The same thing a life running out does. `elapsedMs` is what the standings are
     // ordered by on this challenge, so a run that ended without folding its last
@@ -1188,5 +1211,68 @@ describe('the whole-dial streak', () => {
     actor.send({ type: 'PRESS', index: 3, delta: 1, now: 0 })
     expect(actor.getSnapshot().context.hits).toBe(2)
     expect(actor.getSnapshot().context.streak).toBe(0)
+  })
+})
+
+// The one way into game over that is not about the run: the **session**'s window shut
+// under it. The machine has never heard of a session and does not learn about one here —
+// it is told the run is over, and the only thing it does differently from a last life is
+// leave every figure of the run alone.
+describe('a window shutting under a live run', () => {
+  it('ends the run without taking a life or touching what it scored', () => {
+    const actor = start('accuracy')
+    actor.send({ type: 'ADD_TARGET', value: 5, at: 0 })
+    const before = actor.getSnapshot().context
+
+    actor.send({ type: 'EXPIRE', now: 1000 })
+
+    const after = actor.getSnapshot()
+    expect(after.value).toBe('gameOver')
+    // Not a life loss. A run cut short by the clock on the contest is not a run the
+    // player lost, and the title it ends on says so.
+    expect(after.context.lives).toBe(before.lives)
+    expect(after.context.score).toBe(before.score)
+    expect(after.context.hits).toBe(before.hits)
+    expect(after.context.streak).toBe(before.streak)
+  })
+
+  it('stops the clock the way every other way into game over stops it', () => {
+    const actor = start('speed')
+    actor.send({ type: 'EXPIRE', now: 4000 })
+    const { context } = actor.getSnapshot()
+    expect(context.elapsedMs).toBe(4000)
+    expect(context.playingSince).toBeNull()
+  })
+
+  it('is ignored while paused — the pause screen is not taken away mid-read', () => {
+    const actor = start('accuracy')
+    actor.send({ type: 'PAUSE', now: 500 })
+    actor.send({ type: 'EXPIRE', now: 1000 })
+    expect(actor.getSnapshot().value).toBe('paused')
+  })
+
+  it('ends the run on the resume that follows instead', () => {
+    const actor = start('accuracy')
+    actor.send({ type: 'PAUSE', now: 500 })
+    actor.send({ type: 'EXPIRE', now: 1000 })
+    actor.send({ type: 'RESUME', now: 1500 })
+    actor.send({ type: 'EXPIRE', now: 1600 })
+    expect(actor.getSnapshot().value).toBe('gameOver')
+  })
+
+  it('does nothing on the intro or on a run that has already ended', () => {
+    const idle = createActor(gameMachine)
+    idle.start()
+    idle.send({ type: 'EXPIRE', now: 0 })
+    expect(idle.getSnapshot().value).toBe('menu')
+
+    const over = start('accuracy')
+    over.send({ type: 'EXPIRE', now: 1000 })
+    const settled = over.getSnapshot().context.elapsedMs
+    // A second one arriving a tick later — the wake and the strip can both land — must
+    // not restart the clock or move anything the screen is already drawing.
+    over.send({ type: 'EXPIRE', now: 9000 })
+    expect(over.getSnapshot().value).toBe('gameOver')
+    expect(over.getSnapshot().context.elapsedMs).toBe(settled)
   })
 })

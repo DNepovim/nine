@@ -300,6 +300,15 @@ type Event =
   | { type: 'PAUSE'; now: number }
   | { type: 'RESUME'; now: number }
   | { type: 'RESTART'; now: number; runId: string }
+  // The run's **session** window has shut. Ends the run where it stands, which is the one
+  // way into game over that is not about the run at all: the player did nothing wrong and
+  // nothing ran out on the board — the contest simply stopped accepting scores.
+  //
+  // Carried by the run rather than decided by the machine, and no mode is named: what
+  // selects it is the run having a session, which is a fact about the run. The machine has
+  // never heard of a session and does not learn about one here; it is told that this run
+  // is over, in the same words a last life would use.
+  | { type: 'EXPIRE'; now: number }
   | { type: 'MENU' }
   | { type: 'SET_MODE'; mode: ModeId }
   | { type: 'SET_DIFFICULTY'; difficulty: Difficulty }
@@ -506,7 +515,13 @@ const runOver = (
   after: { lives: number; targets: readonly Target[] },
 ): boolean => {
   const drill = rulesOf(context).spawn.drill
-  if (drill !== null) return context.nextTargetId >= drill && after.targets.length === 0
+  // `dealt`, not `nextTargetId`. The two differ by exactly one thing and it is the one
+  // that matters here: `nextTargetId` deliberately keeps climbing between runs, so that a
+  // restart cannot hand out an id the display is still animating off the last run's board
+  // — see `freshGame`. Measured against it, the second drilled run of a sitting began
+  // already over the line and ended the instant its board first went clear. `dealt` is
+  // reset by every fresh run, which is what "this run has had its nine" actually means.
+  if (drill !== null) return context.dealt >= drill && after.targets.length === 0
   return after.lives <= 0
 }
 
@@ -813,6 +828,27 @@ export const gameMachine = createMachine({
     },
     playing: {
       on: {
+        // The run's **session** window has shut. Straight to game over, with the clock
+        // stopped exactly as the three ways in below stop it — and nothing else moved.
+        //
+        // **Not a life loss.** Lives, score, hits and streaks all stand where the run left
+        // them, which is what lets the screen that follows say the run was *ended* rather
+        // than lost, and what keeps a player who was doing well from being shown a cold
+        // title for it. No guard, either: the only thing that sends this already knows the
+        // run has a session and that its window has passed, and re-deciding that here
+        // would mean the machine learning what a session is.
+        EXPIRE: {
+          target: 'gameOver',
+          actions: assign(
+            ({
+              context,
+              event,
+            }: {
+              context: Context
+              event: Extract<Event, { type: 'EXPIRE' }>
+            }) => stopClock(context, event.now),
+          ),
+        },
         PAUSE: {
           target: 'paused',
           actions: assign(
@@ -1138,6 +1174,13 @@ export const gameMachine = createMachine({
             }) => freshGame(context, event.now, context.tutorial, event.runId),
           ),
         },
+        // EXPIRE is deliberately not handled here, though `playing` handles it. A paused
+        // run is already not being played, and ending it from underneath would take the
+        // pause screen away while the player is reading it, to tell them about a window
+        // they are not currently racing. The run is already unscoreable — the server
+        // refuses the write — and it ends the moment they resume, where the strip's
+        // countdown is back on screen to say why.
+        //
         // TARGET_EXPIRED is deliberately not handled here. A paused run has no clock
         // running — every countdown is frozen where it stood — so nothing can time out
         // while paused, and an expiry that arrives anyway is one that was already in

@@ -127,3 +127,52 @@ describe('gameOverTitle', () => {
     }
   })
 })
+
+// A **session**'s window shutting under a live run. The one claim that is about why the
+// screen is up rather than what the run was worth, which is why it is answered first.
+describe('a window that shut under the run', () => {
+  it('names the window rather than the run', () => {
+    expect(run({ windowShut: true })).toEqual(['TIME', 'GONE'])
+  })
+
+  it('beats every other claim, including the crown', () => {
+    // A run that took both Extreme all-time boards on its last hit still ended because
+    // the contest closed, and that is the thing the player needs told first.
+    expect(run({ windowShut: true, screen: 'crown', medals: ['ever'] })).toEqual([
+      'TIME',
+      'GONE',
+    ])
+    expect(run({ windowShut: true, sessionRank: 1 })).toEqual(['TIME', 'GONE'])
+  })
+
+  it('does not let a cold run be called cold on the way out', () => {
+    // Without the tier answering first this would be the `cold` pool, which comments on
+    // how the run was going — and the run was stopped, not lost.
+    expect(run({ windowShut: true, score: 0, hits: 0 })).toEqual(['TIME', 'GONE'])
+  })
+
+  it('still lets a challenge name its own words for it', () => {
+    expect(
+      gameOverTitle(
+        {
+          screen: 'plain',
+          mode: 'accuracy',
+          medals: [],
+          podium: false,
+          personalBest: false,
+          difficulty: 'easy',
+          score: 800,
+          hits: 10,
+          strikes: 0,
+          windowShut: true,
+        },
+        0,
+        { expired: [['GATE', 'SHUT']] },
+      ),
+    ).toEqual(['GATE', 'SHUT'])
+  })
+
+  it('is absent on every ordinary run', () => {
+    expect(run({ medals: ['ever'] })).not.toEqual(['TIME', 'GONE'])
+  })
+})

@@ -1,4 +1,5 @@
 import { i18n } from '@lingui/core'
+import { isNotNull } from 'narrowland'
 import { useState } from 'react'
 import { Pressable, ScrollView, Text, View } from 'react-native'
 
@@ -51,6 +52,7 @@ import { requestAnnouncements } from '@/hooks/use-announcement-request'
 import { ChampionsProvider } from '@/hooks/use-champions'
 import { FlagsProvider } from '@/hooks/use-flags'
 import type { LostMedalNews } from '@/hooks/use-lost-medals'
+import { requestSummary } from '@/hooks/use-summary-request'
 import { requestTutorial } from '@/hooks/use-tutorial-request'
 import { EMPTY_STORE } from '@/lib/achievement-store'
 import { achievementAnnouncement, type AchievementFacts } from '@/lib/achievements'
@@ -61,6 +63,7 @@ import {
   type Period,
 } from '@/lib/announcements'
 import { emptyCareer } from '@/lib/career'
+import type { SessionCard } from '@/lib/challenge-session'
 import {
   championMark,
   NO_CHAMPIONS,
@@ -71,6 +74,8 @@ import type { FeedbackQuote } from '@/lib/feedback-reply'
 import { gameOverTitle } from '@/lib/game-over-title'
 import type { Medal, MedalPeriod } from '@/lib/medals'
 import type { ShapeKind } from '@/lib/recap'
+import type { OpenSession } from '@/lib/session-board'
+import type { SessionSummary, SummaryPlace } from '@/lib/session-summary'
 import {
   invitePool,
   openerPool,
@@ -81,7 +86,13 @@ import {
 import type { Award } from '@/lib/winnings'
 import { awardBlocks } from '@/lib/winnings-announcement'
 import { emptyStats } from '@/machines/game'
-import { DIFFICULTIES, type Difficulty, type Mode, type ScoredMode } from '@/modes'
+import {
+  DIFFICULTIES,
+  type Difficulty,
+  type Measure,
+  type Mode,
+  type ScoredMode,
+} from '@/modes'
 import { challengeId } from '@/modes/challenges/define'
 
 // NINE_DEV_GALLERY — a marker for the bundle check. `pnpm build:web` must not contain
@@ -297,8 +308,9 @@ const gameOver = (
   } · ${emblemFor(screen, mode)}`,
   render: (close) => (
     <GameOverOverlay
-      // Looked at, not played — no session behind it.
+      // Looked at, not played — no session behind it, and so no window to have shut.
       sessionId={null}
+      windowShut={false}
       gameMode={mode}
       difficulty={difficulty}
       userId="dev"
@@ -399,6 +411,124 @@ const recap = (kind: ShapeKind): Variant => ({
   key: `recap-${kind}`,
   label: SHAPE_LABELS[kind],
   render: (close) => <WeeklyRecapOverlay kind={kind} onDismiss={close} />,
+})
+
+// The **summary** a closed session leaves behind, as the launch popup would show it.
+//
+// Through `WhatsNewOverlay` rather than by rendering the card bare, exactly as `winnings`
+// above does: the dialog is what decides the heading, the accent and the way out, and a
+// preview that skipped it could not show a page whose title was wrong for it.
+//
+// Five cases, and they are the five the page actually has to answer rather than five sets
+// of numbers: the player won it, the player is on the podium but not on top, the player is
+// off it entirely, nobody scored at all, and the whole thing measured by the clock instead
+// of by points.
+// A session to point at, so the named half of the invitation can be read beside the
+// general one. Only the two fields the page touches are real; the rest is a fixture.
+const DEV_INVITE: SessionCard<OpenSession> = {
+  state: 'teaser',
+  session: {
+    id: 'dev-next',
+    modeId: challengeId('habit'),
+    // Three hours out, so the clock under the name has something to count rather than
+    // sitting at nought — the fixture exists to be looked at.
+    opensAt: Date.now() + 3 * 60 * 60 * 1000,
+    closesAt: Date.now() + 27 * 60 * 60 * 1000,
+    teaserMinutes: 0,
+    extendedAt: null,
+    leader: null,
+    measure: 'score',
+  },
+}
+
+const SUMMARY_PLACES = [
+  {
+    rank: 1,
+    nickname: 'DONDA',
+    score: 18400,
+    timeMs: 9400,
+    avgAccuracy: 92,
+    avgSpeed: 71,
+  },
+  {
+    rank: 2,
+    nickname: 'MARGOT',
+    score: 15120,
+    timeMs: 11200,
+    avgAccuracy: 64,
+    avgSpeed: 88,
+  },
+  {
+    rank: 3,
+    nickname: 'KRISTYNA',
+    score: 12050,
+    timeMs: 12900,
+    avgAccuracy: 41,
+    avgSpeed: 55,
+  },
+] as const satisfies readonly SummaryPlace[]
+
+const SUMMARY_CASES = {
+  WON: {
+    places: 3,
+    mine: { rank: 1, score: 18400, timeMs: 9400, difficulty: 'hard', bonus: 18400 },
+  },
+  SILVER: {
+    places: 3,
+    mine: { rank: 2, score: 15120, timeMs: 11200, difficulty: 'hard', bonus: 7560 },
+  },
+  'OFF THE PODIUM': {
+    places: 3,
+    mine: { rank: 11, score: 4300, timeMs: 24100, difficulty: 'hard', bonus: 0 },
+  },
+  // A reader with no nickname: kept off the standings they played in, so no place of
+  // their own and only their figure to print. The podium above them is still a podium —
+  // a session with *nobody* on it never reaches a card at all, which is why there is no
+  // variant for one. See the empty-podium rule in `summaryOwed`.
+  'NO NICKNAME': {
+    places: 3,
+    mine: { rank: null, score: 4300, timeMs: 24100, difficulty: 'hard', bonus: 0 },
+  },
+} as const satisfies Record<string, { places: number; mine: SessionSummary['mine'] }>
+
+const summary = (
+  label: keyof typeof SUMMARY_CASES,
+  measure: Measure = 'score',
+  // Whether the next session is one the start screen may already name. Both answers are
+  // worth looking at: the invitation is the last line on the page either way, and the
+  // general one is what a player sees whenever nothing is booked.
+  invite: SessionCard<OpenSession> = null,
+): Variant => ({
+  // Every axis the variant varies on, or two of them collide. It was `label` and
+  // `measure` alone, which gave the two OFF THE PODIUM entries — one with a session to
+  // point at, one without — the same key: React treated them as one child, lit both
+  // buttons at once, and made the invited variant unreachable.
+  key: `summary-${label}-${measure}-${invite === null ? 'alone' : invite.session.modeId}`,
+  // And the same axes in the name, so the sidebar can be read as well as clicked.
+  label: [label, measure === 'time' ? 'RACE' : null, invite === null ? null : 'NEXT UP']
+    .filter(isNotNull)
+    .join(' · '),
+  render: (close) => (
+    <WhatsNewOverlay
+      cards={[
+        {
+          kind: 'summary',
+          summary: {
+            sessionId: 'dev',
+            modeId: challengeId('four-keys'),
+            closesAt: 0,
+            measure,
+            places: SUMMARY_PLACES.slice(0, SUMMARY_CASES[label].places),
+            players: 23,
+            mine: SUMMARY_CASES[label].mine,
+          },
+          invite,
+        },
+      ]}
+      onDismiss={close}
+      onAccept={close}
+    />
+  ),
 })
 
 // The winnings card, as the launch popup would show it. Built from awards rather than from
@@ -847,6 +977,33 @@ const SCREENS: Section[] = [
       winnings('CATCH UP'),
       winnings('PODIUM'),
       winnings('SECOND ONLY'),
+    ],
+  },
+  {
+    // Read down the column: from the player on top to a player with no name to show,
+    // then the same page measured by the clock, the same page with a session to point
+    // at, and finally the real one.
+    title: 'SESSION SUMMARY',
+    items: [
+      summary('WON'),
+      summary('SILVER'),
+      summary('OFF THE PODIUM'),
+      summary('NO NICKNAME'),
+      summary('WON', 'time'),
+      summary('OFF THE PODIUM', 'score', DEV_INVITE),
+      // The seventh is not a page of its own — it is the app's. The six above are built
+      // from fixtures and answer "does it look right"; this one asks the real hook to go
+      // and fetch a real summary and put the real dialog up, which answers "does it
+      // *arrive*". That half has no mock and is the half that has actually broken.
+      //
+      // Ignores the watermark, so a summary already told is still worth a look. Needs a
+      // closed session this profile scored on; with none, nothing appears, which is
+      // itself the right answer and worth being able to see.
+      {
+        key: 'summary-live',
+        label: 'ASK THE SERVER',
+        run: requestSummary,
+      } satisfies Action,
     ],
   },
   {

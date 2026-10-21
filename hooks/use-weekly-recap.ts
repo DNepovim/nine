@@ -2,7 +2,6 @@ import AsyncStorage from '@react-native-async-storage/async-storage'
 import { useCallback, useEffect, useRef, useState } from 'react'
 
 import { SEEN_RECAP_KEY } from '@/constants/storage'
-import { useFlag } from '@/hooks/use-flags'
 import { fetchWeeklyRecap } from '@/lib/leaderboard'
 import { previousWeek, todayISO } from '@/lib/leaderboard-period'
 import { factsFromRows, hasAnyWinner, type WeekFacts } from '@/lib/recap'
@@ -12,8 +11,13 @@ import { factsFromRows, hasAnyWinner, type WeekFacts } from '@/lib/recap'
 // Shaped like `useWinnings`, and for the same reasons: `ready` is false until the storage
 // read has answered, so anything queueing behind this waits rather than painting first and
 // being covered a moment later.
-export function useWeeklyRecap() {
-  const canSee = useFlag('recap')
+export function useWeeklyRecap(
+  // Handed in for the reason `useSessionSummaries` spells out: this hook is reached from
+  // the game screen's body, above the `FlagsProvider` rendered in that component's own
+  // JSX, so `useFlag('recap')` here answered false on every launch and the recap could
+  // never appear. Found while verifying the summary, which failed the same way.
+  canSee: boolean,
+) {
   const [facts, setFacts] = useState<WeekFacts | null>(null)
   const [ready, setReady] = useState(false)
   // The window, derived once at mount and then held. `previousWeek` is already Monday to

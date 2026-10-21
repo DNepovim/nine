@@ -106,6 +106,8 @@ export function ScoreStripVariant({
         // This screen previews the four-cell board face; the session face is the
         // challenge card's own preview to grow if it is ever wanted here.
         session={null}
+        // Nothing to shut: the board face has no window behind it.
+        onWindowShut={() => undefined}
         inRun
         mode="accuracy"
         announcement={null}

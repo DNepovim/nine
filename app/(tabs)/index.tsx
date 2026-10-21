@@ -437,6 +437,11 @@ const accentFor = (mode: ModeId): string =>
 const wordmarkFor = (mode: ModeId, difficulty: Difficulty): string =>
   isChallenge(mode) ? accentFor(mode) : getDifficultyColor(mode, difficulty)
 
+// The beat between the countdown going red and the run ending. Long enough that the red is
+// read as the reason rather than as a flicker on the way to the game-over screen, and short
+// enough that it cannot be mistaken for time the player still has.
+const EXPIRED_GRACE_MS = 1000
+
 // What the title is, under the title.
 //
 // A scored run says its rung. A **challenge** says that it is one — the name above it is
@@ -675,6 +680,38 @@ export default function GameScreen() {
   // something it knows.
   const [runSessionClosesAt, setRunSessionClosesAt] = useState<number | null>(null)
 
+  // Whether the run's session shut under it. Set by the strip, which holds the clock that
+  // reaches the boundary, and read for one frame's worth of red before the run ends.
+  //
+  // Beside `runSessionClosesAt` rather than on the machine's context, and for the reason
+  // the note above gives about that one: the machine has never heard of a session and
+  // does not learn about one here. What it is told, a second later, is that this run is
+  // over — see the `EXPIRE` send below.
+  const [windowShut, setWindowShut] = useState(false)
+
+  // The strip reaching the boundary. One setter, so the colour and the end are two readers
+  // of one moment rather than two clocks that could disagree.
+  const handleWindowShut = useCallback(() => {
+    setWindowShut(true)
+  }, [])
+
+  // Red, then over. The strip fires the boundary and this is the second half of it.
+  //
+  // Guarded on `isPlaying` rather than merely on the flag, because the strip announces on
+  // a mount that is already past the close — a run resumed after the window shut does
+  // exactly that — and because the machine ignores `EXPIRE` anywhere but `playing`, a send
+  // that arrives while paused is dropped and has to arrive again on the resume. The timer
+  // is cleared on unmount so it cannot land in a run that has since restarted.
+  useEffect(() => {
+    if (!windowShut || !isPlaying) return
+    const timer = setTimeout(() => {
+      send({ type: 'EXPIRE', now: Date.now() })
+    }, EXPIRED_GRACE_MS)
+    return () => {
+      clearTimeout(timer)
+    }
+  }, [windowShut, isPlaying, send])
+
   // The mode the player was on before a challenge interrupted it, so the intro can be
   // put back the way they left it. Null whenever the machine is already on one of its
   // own modes, which is every moment but a challenge run.
@@ -699,11 +736,14 @@ export default function GameScreen() {
   useEffect(() => {
     if (!isMenu) return
     if (runSession !== null) setRunSession(null)
+    // A shut window belongs to the run it shut on. Reaching the intro is the end of that
+    // run's claim on it, exactly as it is the end of its claim on the session itself.
+    if (windowShut) setWindowShut(false)
     // Where they were, or the first pill the intro lists. `MODE_ORDER` rather than a
     // name typed here: nothing outside `modes/` gets to decide which mode is the default.
     const back = modeBeforeSession ?? MODE_ORDER[0]
     if (!isMode(mode) && back !== undefined) send({ type: 'SET_MODE', mode: back })
-  }, [isMenu, runSession, mode, modeBeforeSession, send])
+  }, [isMenu, runSession, windowShut, mode, modeBeforeSession, send])
   // Whether an arcade run is up. Its own boolean rather than a state of the game machine:
   // arcade is not that machine's run — no score, no lives, no board — and the screen it
   // puts up is mounted over the intro the way a multiplayer game is.
@@ -849,6 +889,17 @@ export default function GameScreen() {
   // and only what the tree is *drawn* from is swapped, at the provider.
   const rolePreview = useRolePreview()
 
+  // What this player is actually shown — their own set, or the one an admin is previewing.
+  //
+  // Resolved **here, in the body**, and not only at the provider below. `FlagsProvider` is
+  // rendered in this component's own JSX, which means it is not above this component's own
+  // hooks: anything called up here that asks `useFlag` gets the default context and the
+  // answer false, forever. The launch popup's pages were gated that way and two of them —
+  // the **summary** and the **recap** — never appeared at all. Hooks above the provider ask
+  // this set directly, the way the analytics opt-out just below already does; everything
+  // rendered *inside* the provider goes on using `useFlag`.
+  const shownFeatures = rolePreview.preview?.features ?? features
+
   // Analytics reuses the identity the boards already rank — the anonymous Supabase user
   // id — so an event can be read next to the score it produced. Re-runs when the
   // nickname lands or changes, which just refreshes the person's properties.
@@ -866,7 +917,7 @@ export default function GameScreen() {
 
   // Below `useSupabaseAuth`, which it reads: the winnings half of the deck is per player,
   // and there is nothing to ask the server for until there is a player to ask about.
-  const whatsNew = usePopupDeck(userId)
+  const whatsNew = usePopupDeck(userId, runSession, shownFeatures)
 
   const { submit: submitScore } = useScoreSubmission(userId, nickname, isReady)
 
@@ -1732,7 +1783,7 @@ export default function GameScreen() {
     // A role preview replaces the set here and nowhere else: this is the one place that
     // decides what is drawn, and a preview is a view rather than a grant. Every write is
     // still guarded on the server against the caller's own row.
-    <FlagsProvider features={rolePreview.preview?.features ?? features}>
+    <FlagsProvider features={shownFeatures}>
       {/* Renders nothing. The language lives above the splash and the feature set
           arrives here, so this is where the two meet — see LocaleGate. */}
       <LocaleGate />
@@ -1820,6 +1871,7 @@ export default function GameScreen() {
               instead, so that the dial below is the same size in all of them. */}
               <BestScoresLine
                 session={sessionBestsOf(runSession, runSessionClosesAt, runSessionBoard)}
+                onWindowShut={handleWindowShut}
                 inRun={inRun}
                 mode={mode}
                 announcement={announcement}
@@ -2324,6 +2376,7 @@ export default function GameScreen() {
             {/* ── Game-over cinematic (overlay crossfade + flying title) ── */}
             <GameOverSequence
               sessionId={runSession}
+              windowShut={windowShut}
               // Where this run came on its session, for the title. Read from the board
               // already held for the score bar rather than fetched again — see
               // `runSessionBoard`. The overlay below works its own medal out from the
@@ -2568,6 +2621,10 @@ export default function GameScreen() {
                   // belongs.
                   setRunSession(sessionId)
                   setRunSessionClosesAt(challengeCard.session.closesAt)
+                  // Cleared before the run is dealt rather than after, for the reason the
+                  // two lines above are set here: a value the next run reads has to be
+                  // right before that run exists.
+                  setWindowShut(false)
                   // And remember the board they were on, so the intro is handed back the
                   // way they left it rather than stuck on a challenge with no pill.
                   if (isMode(mode)) setModeBeforeSession(mode)
