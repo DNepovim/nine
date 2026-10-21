@@ -481,4 +481,54 @@ begin
 end;
 $$;
 
+-- ── The next session, booked when nobody did ─────────────────────────────────
+--
+-- `p_now` is pinned throughout, so the arithmetic is asserted against fixed instants
+-- rather than against whatever day the suite happens to run on.
+do $$
+declare
+  v_id   uuid;
+  v_next challenge_sessions%rowtype;
+begin
+  delete from challenge_sessions;
+
+  assert plan_next_challenge_session('2026-11-03 12:00+00') is null,
+    'with nothing ever booked there is no pool, so nothing should be booked';
+
+  -- Two challenges have run; four-keys was the last, closing at noon Prague on the 3rd
+  -- (11:00 UTC, the clocks having gone back on 25 October).
+  insert into challenge_sessions (mode_id, opens_at, closes_at, measure) values
+    ('challenge/habit',     '2026-10-30 11:00+00', '2026-10-31 11:00+00', 'time'),
+    ('challenge/four-keys', '2026-11-02 11:00+00', '2026-11-03 11:00+00', 'score');
+
+  -- While one is live, it is planned.
+  assert plan_next_challenge_session('2026-11-03 10:00+00') is null,
+    'a live session should count as planned';
+
+  v_id := plan_next_challenge_session('2026-11-03 11:05+00');
+  assert v_id is not null, 'with nothing live or to come, a session should be booked';
+  select * into v_next from challenge_sessions where id = v_id;
+
+  assert v_next.opens_at = '2026-11-05 11:00+00',
+    format('should open at noon Prague two days after the last close, got %s', v_next.opens_at);
+  assert v_next.closes_at - v_next.opens_at = interval '24 hours',
+    'should run for twenty-four hours';
+  assert v_next.mode_id = 'challenge/habit',
+    'should not repeat the challenge that just ran while another is in the pool';
+  assert v_next.measure = 'time', 'should carry the measure the challenge was booked with';
+  assert v_next.created_by is null, 'nobody planned it, and the row should say so';
+
+  assert plan_next_challenge_session('2026-11-03 11:10+00') is null,
+    'the session just booked is planned, so a second run should book nothing';
+
+  -- A close long past: two days after it is behind us, so the next noon to come.
+  delete from challenge_sessions where id = v_id;
+  v_id := plan_next_challenge_session('2026-11-20 09:00+00');
+  assert (select opens_at from challenge_sessions where id = v_id) = '2026-11-20 11:00+00',
+    'a stale close should fall forward to the next noon in Prague';
+
+  raise notice 'challenge_sessions.sql: next session booked on its own OK';
+end;
+$$;
+
 delete from challenge_sessions;
