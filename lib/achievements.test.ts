@@ -12,10 +12,12 @@ import { MAX_MESSAGE_LENGTH } from '@/lib/announcements'
 import { emptyCareer, observeHeld, type Career } from '@/lib/career'
 import { LOCALES } from '@/lib/i18n/locale'
 import type { BoardStanding } from '@/lib/medals'
+import { NO_PLACES, type SessionPlaces } from '@/lib/session-places'
 import { messages as cs } from '@/locales/cs/messages'
 import { messages as en } from '@/locales/en/messages'
 import { type Stats } from '@/machines/game'
 import { DIFFICULTY_ORDER } from '@/modes'
+import { CHALLENGES } from '@/modes/challenges/catalog'
 
 import {
   achievementAnnouncement,
@@ -71,6 +73,7 @@ const facts = (over: Partial<AchievementFacts> = {}): AchievementFacts => ({
   crossed: [],
   guideRead: false,
   feedbackAnswered: false,
+  sessionPlaces: NO_PLACES,
   now: new Date('2026-09-17T12:00:00.000Z'),
   ...over,
 })
@@ -532,6 +535,57 @@ describe('secret', () => {
     expect(isEarnedBy('heardBack', facts({ feedbackAnswered: true, run: NO_RUN }))).toBe(
       true,
     )
+  })
+})
+
+describe('the challenge achievements', () => {
+  const [first, second, third] = CHALLENGES.map((mode) => mode.id)
+  const played = (...modes: string[]) => career({ modesPlayed: modes })
+  const places = (over: Partial<SessionPlaces>) =>
+    facts({ sessionPlaces: { ...NO_PLACES, ...over } })
+
+  it('earns NEW IN TOWN on a finished challenge run, not a started one', () => {
+    const run = { ...facts().run, mode: first ?? '' }
+    expect(isEarnedBy('newInTown', facts({ run }))).toBe(false)
+    expect(isEarnedBy('newInTown', facts({ run: { ...run, finished: true } }))).toBe(true)
+    expect(isEarnedBy('newInTown', facts({ career: played(first ?? '') }))).toBe(true)
+  })
+
+  it('counts no permanent mode as a challenge', () => {
+    const run = { ...facts().run, finished: true }
+    expect(isEarnedBy('newInTown', facts({ run }))).toBe(false)
+    expect(
+      progressOf('sampler', facts({ career: played('trainee', 'accuracy', 'speed') })),
+    ).toBe(0)
+  })
+
+  it('leaves challenges out of ALL THREE', () => {
+    const f = facts({ career: played('trainee', first ?? '', second ?? ''), run: NO_RUN })
+    expect(isEarnedBy('allThree', f)).toBe(false)
+  })
+
+  it('counts SAMPLER off every challenge the career has seen, the live run included', () => {
+    const run = { ...facts().run, mode: third ?? '' }
+    const f = facts({ career: played('accuracy', first ?? '', second ?? ''), run })
+    expect(progressOf('sampler', f)).toBe(3)
+    expect(isEarnedBy('sampler', f)).toBe(true)
+    expect(progressOf('connoisseur', f)).toBe(3)
+    expect(isEarnedBy('connoisseur', f)).toBe(false)
+  })
+
+  it('reads the places off the server counts', () => {
+    expect(isEarnedBy('placed', places({ podiums: 1 }))).toBe(true)
+    expect(isEarnedBy('headliner', places({ podiums: 1 }))).toBe(false)
+    expect(isEarnedBy('headliner', places({ podiums: 1, wins: 1 }))).toBe(true)
+    expect(progressOf('hatTrick', places({ wins: 2 }))).toBe(2)
+    expect(isEarnedBy('hatTrick', places({ wins: 3 }))).toBe(true)
+    expect(isEarnedBy('photoFinish', places({ photoFinishes: 1 }))).toBe(true)
+    expect(isEarnedBy('firstFootprints', places({ firsts: 1 }))).toBe(true)
+  })
+
+  it('answers the places with no run at all', () => {
+    // Read once per launch, so the intro is where they land.
+    expect(isEarnedBy('placed', { ...places({ podiums: 1 }), run: NO_RUN })).toBe(true)
   })
 })
 

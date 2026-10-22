@@ -75,6 +75,7 @@ import { gameOverTitle } from '@/lib/game-over-title'
 import type { Medal, MedalPeriod } from '@/lib/medals'
 import type { ShapeKind } from '@/lib/recap'
 import type { OpenSession } from '@/lib/session-board'
+import { NO_PLACES } from '@/lib/session-places'
 import type { SessionSummary, SummaryPlace } from '@/lib/session-summary'
 import {
   invitePool,
@@ -156,6 +157,7 @@ const FACTS: AchievementFacts = {
   crossed: [],
   guideRead: true,
   feedbackAnswered: true,
+  sessionPlaces: NO_PLACES,
   now: new Date(),
 }
 

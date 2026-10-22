@@ -23,6 +23,7 @@ export const ACHIEVEMENT_GROUPS = [
   'boards',
   'held',
   'friends',
+  'challenges',
   'secret',
 ] as const
 
@@ -37,6 +38,7 @@ export const GROUP_LABELS = {
   boards: 'BOARDS',
   held: 'HELD BOARDS',
   friends: 'WITH FRIENDS',
+  challenges: 'CHALLENGES',
   secret: 'SECRET',
 } as const satisfies Record<AchievementGroup, string>
 
@@ -91,6 +93,13 @@ export const ACHIEVEMENT_IDS = [
   'winner',
   'fullHouse',
 
+  'newInTown',
+  'sampler',
+  'connoisseur',
+  'placed',
+  'headliner',
+  'hatTrick',
+
   'theLongWay',
   'nightShift',
   'gooseEgg',
@@ -105,6 +114,8 @@ export const ACHIEVEMENT_IDS = [
   'goodSport',
   'noJoke',
   'heardBack',
+  'photoFinish',
+  'firstFootprints',
 ] as const
 
 export type AchievementId = (typeof ACHIEVEMENT_IDS)[number]
@@ -487,6 +498,54 @@ export const ACHIEVEMENTS = {
     hint: msg`Play a full room — four players, the most one holds.`,
   },
 
+  // ── Challenges ─────────────────────────────────────────────────────────────────
+  // None staged: a challenge pins its own dial and often its own rung, so there is no
+  // Easy, Hard and Extreme of it to clear separately. The three places are kept rather
+  // than held — a **place** is settled the moment its window shuts and nobody can take it
+  // back, which is what lets it be an achievement where a **medal** cannot be. That is
+  // also why none of them wears 🥇🥈🥉: those are the medals.
+  newInTown: {
+    group: 'challenges',
+    emblem: '🎟️',
+    title: msg`NEW IN TOWN`,
+    hint: msg`Finish a run of a challenge.`,
+  },
+  // Three because three is how many challenges there are; the catalogue only grows, so
+  // CONNOISSEUR is the one left to grow into.
+  sampler: {
+    group: 'challenges',
+    emblem: '🍱',
+    title: msg`SAMPLER`,
+    hint: msg`Play three different challenges.`,
+    target: 3,
+  },
+  connoisseur: {
+    group: 'challenges',
+    emblem: '🗂️',
+    title: msg`CONNOISSEUR`,
+    hint: msg`Play ten different challenges.`,
+    target: 10,
+  },
+  placed: {
+    group: 'challenges',
+    emblem: '🎗️',
+    title: msg`PLACED`,
+    hint: msg`Finish a session in the top three.`,
+  },
+  headliner: {
+    group: 'challenges',
+    emblem: '🏵️',
+    title: msg`HEADLINER`,
+    hint: msg`Win a session.`,
+  },
+  hatTrick: {
+    group: 'challenges',
+    emblem: '🎩',
+    title: msg`HAT TRICK`,
+    hint: msg`Win three sessions.`,
+    target: 3,
+  },
+
   // ── Secret ─────────────────────────────────────────────────────────────────────
   theLongWay: {
     group: 'secret',
@@ -592,6 +651,22 @@ export const ACHIEVEMENTS = {
     emblem: '📬',
     title: msg`HEARD BACK`,
     hint: msg`Send feedback, and get an answer back.`,
+    secret: true,
+  },
+  // A tenth of a second on a race: the clock the board is ordered by counts milliseconds,
+  // and one of those is not a margin anybody could feel.
+  photoFinish: {
+    group: 'secret',
+    emblem: '📸',
+    title: msg`PHOTO FINISH`,
+    hint: msg`Miss a session's top three by a single point, or a tenth of a second.`,
+    secret: true,
+  },
+  firstFootprints: {
+    group: 'secret',
+    emblem: '👣',
+    title: msg`FIRST FOOTPRINTS`,
+    hint: msg`Put the first score on a session board.`,
     secret: true,
   },
 } as const satisfies Record<AchievementId, AchievementDef>

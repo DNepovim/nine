@@ -40,6 +40,7 @@ import type { AnnouncementId } from '@/lib/announcements'
 import { boardKey, foldMultiplayer, foldRun, observeHeld } from '@/lib/career'
 import { todayISO } from '@/lib/leaderboard-period'
 import type { BoardStanding } from '@/lib/medals'
+import type { SessionPlaces } from '@/lib/session-places'
 import type { HitBatch, Stats } from '@/machines/game'
 import {
   DIFFICULTY_ORDER,
@@ -84,6 +85,8 @@ export type AchievementsInput = {
   // Whether an answer to this player's feedback has ever reached them, for HEARD BACK.
   // Arrives already stored — see hooks/use-feedback-answered.ts.
   feedbackAnswered: boolean
+  // What the challenges have settled about the player — see hooks/use-session-places.ts.
+  sessionPlaces: SessionPlaces
   userId: string | null
   // Called with everything a step just unlocked, oldest first. The queue itself lives
   // outside this hook — see `useAchievementQueue` — because the announcement bar has to
@@ -250,6 +253,7 @@ export function useAchievements(input: AchievementsInput): Achievements {
     input.crossed,
     input.guideRead,
     input.feedbackAnswered,
+    input.sessionPlaces,
   ])
 
   // The finished pass, then the fold — in that order. The rules read the career as it
@@ -330,6 +334,7 @@ export function useAchievements(input: AchievementsInput): Achievements {
     input.crown,
     input.guideRead,
     input.feedbackAnswered,
+    input.sessionPlaces,
     persist,
   ])
 
@@ -439,5 +444,6 @@ const worldFacts = (
   crossed: input.crossed,
   guideRead: input.guideRead,
   feedbackAnswered: input.feedbackAnswered,
+  sessionPlaces: input.sessionPlaces,
   now: new Date(),
 })

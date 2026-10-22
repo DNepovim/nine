@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 
 import type { AchievementFacts, Award } from '@/lib/achievements'
 import { emptyCareer, type Career } from '@/lib/career'
+import { NO_PLACES } from '@/lib/session-places'
 import type { HitInfo } from '@/machines/game'
 
 import {
@@ -53,6 +54,7 @@ const worldFacts = (
   crossed: [],
   guideRead: false,
   feedbackAnswered: false,
+  sessionPlaces: NO_PLACES,
   now: new Date('2026-09-17T12:00:00.000Z'),
   ...over,
 })

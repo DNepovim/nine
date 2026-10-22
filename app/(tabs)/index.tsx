@@ -109,6 +109,7 @@ import { useSavedRun } from '@/hooks/use-saved-run'
 import { useScoreDirection } from '@/hooks/use-score-direction'
 import { useScoreSubmission } from '@/hooks/use-score-submission'
 import { useSessionBoard } from '@/hooks/use-session-card'
+import { useSessionPlaces } from '@/hooks/use-session-places'
 import { useSplash } from '@/hooks/use-splash'
 import { useStepUp } from '@/hooks/use-step-up'
 import { useStrikeShots, type ShotAim } from '@/hooks/use-strike-shots'
@@ -666,6 +667,9 @@ export default function GameScreen() {
   // no standings; the ten-minute grace on the write makes that a near miss rather than
   // a loss, and a run interrupted by the app dying is already an edge.
   const [runSession, setRunSession] = useState<string | null>(null)
+  // Bumped as a session run ends, to read the player's places and firsts again — see
+  // useSessionPlaces.
+  const [placesAsked, setPlacesAsked] = useState(0)
 
   // When the run's session shuts, for the countdown on the score bar.
   //
@@ -735,7 +739,11 @@ export default function GameScreen() {
   // the whole time the player stands on the intro.
   useEffect(() => {
     if (!isMenu) return
-    if (runSession !== null) setRunSession(null)
+    if (runSession !== null) {
+      setRunSession(null)
+      // The run just posted to its session, and may have been the first score there.
+      setPlacesAsked((asked) => asked + 1)
+    }
     // A shut window belongs to the run it shut on. Reaching the intro is the end of that
     // run's claim on it, exactly as it is the end of its claim on the session itself.
     if (windowShut) setWindowShut(false)
@@ -1098,6 +1106,7 @@ export default function GameScreen() {
   // Declared after the bar because it reads what the run has crossed: opening a day's
   // board and beating your own best are both things the bar has already worked out, and
   // working them out a second time here is how the two would come to disagree.
+  const sessionPlaces = useSessionPlaces(userId, placesAsked)
   const achievements = useAchievements({
     // Game over is part of the run here, unlike everywhere else `inRun` is used. The
     // pass that answers "did this run finish on nothing" happens at game over, and
@@ -1129,6 +1138,7 @@ export default function GameScreen() {
     crossed,
     guideRead: howToPlay.read,
     feedbackAnswered: feedbackAnswered.answered,
+    sessionPlaces,
     userId,
     onUnlocked: (awards) => {
       for (const award of awards) {

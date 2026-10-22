@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest'
 import { mergeEarned, type AchievementStore } from '@/lib/achievement-store'
 import { awardsOf, earned, type AchievementFacts } from '@/lib/achievements'
 import { emptyCareer } from '@/lib/career'
+import { NO_PLACES } from '@/lib/session-places'
 import { emptyStats } from '@/machines/game'
 import { type Difficulty, type Mode } from '@/modes'
 
@@ -36,6 +37,7 @@ const factsFor = (
   crossed: [],
   guideRead: true,
   feedbackAnswered: false,
+  sessionPlaces: NO_PLACES,
   now: new Date('2026-09-22T12:00:00Z'),
 })
 

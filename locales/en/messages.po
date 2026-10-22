@@ -579,7 +579,7 @@ msgstr "Address confirmed."
 msgid "ADMIN"
 msgstr "ADMIN"
 
-#: constants/achievements.ts:264
+#: constants/achievements.ts:275
 msgid "AFTERBURNER"
 msgstr "AFTERBURNER"
 
@@ -595,11 +595,11 @@ msgstr "Ahead on points, and holding."
 msgid "All answered"
 msgstr "All answered"
 
-#: constants/achievements.ts:391
+#: constants/achievements.ts:402
 msgid "ALL SIX BOARDS"
 msgstr "ALL SIX BOARDS"
 
-#: constants/achievements.ts:182
+#: constants/achievements.ts:193
 msgid "ALL THREE"
 msgstr "ALL THREE"
 
@@ -711,11 +711,11 @@ msgstr "Aug"
 msgid "AUGUST"
 msgstr "AUGUST"
 
-#: constants/achievements.ts:327
+#: constants/achievements.ts:338
 msgid "Average 90% speed over a run of 20 hits or more."
 msgstr "Average 90% speed over a run of 20 hits or more."
 
-#: constants/achievements.ts:320
+#: constants/achievements.ts:331
 msgid "Average 95% accuracy over a run of 20 hits or more."
 msgstr "Average 95% accuracy over a run of 20 hits or more."
 
@@ -761,7 +761,7 @@ msgstr "Barely a week — [P] days, and all of them [A]’s."
 msgid "Beat a record and the game makes a fuss about it."
 msgstr "Beat a record and the game makes a fuss about it."
 
-#: constants/achievements.ts:442
+#: constants/achievements.ts:453
 msgid "Beat your own best ten times."
 msgstr "Beat your own best ten times."
 
@@ -787,7 +787,7 @@ msgstr "Best scores, up top"
 msgid "Blank uses the general figure."
 msgstr "Blank uses the general figure."
 
-#: constants/achievements.ts:326
+#: constants/achievements.ts:337
 msgid "BLUR"
 msgstr "BLUR"
 
@@ -937,13 +937,17 @@ msgstr "CONFIRMING…"
 msgid "CONNECT TO THE INTERNET TO PLAY WITH FRIENDS"
 msgstr "CONNECT TO THE INTERNET TO PLAY WITH FRIENDS"
 
+#: constants/achievements.ts:525
+msgid "CONNOISSEUR"
+msgstr "CONNOISSEUR"
+
 #: components/game/arcade-paused.tsx:54
 #: components/overlays/multiplayer-menu.tsx:44
 #: components/overlays/paused-overlay.tsx:214
 msgid "CONTINUE"
 msgstr "CONTINUE"
 
-#: app/(tabs)/index.tsx:2355
+#: app/(tabs)/index.tsx:2365
 msgid "Continue the tutorial"
 msgstr "Continue the tutorial"
 
@@ -964,7 +968,7 @@ msgstr "CREATE ROOM"
 msgid "CROSSROADS DEEP"
 msgstr "CROSSROADS DEEP"
 
-#: constants/achievements.ts:319
+#: constants/achievements.ts:330
 msgid "DEAD EYE"
 msgstr "DEAD EYE"
 
@@ -1029,7 +1033,7 @@ msgstr "e.g. I dial faster than I think"
 msgid "Each target carries a shrinking ring — its countdown. Land the sum before the ring empties. The colour behind the ring tells you the target’s hundreds at a glance: plain grey under 100, violet in the 100s, rose in the 200s, amber in the 300s — so 223 never passes for 123. A challenge played on a wider dial reaches higher numbers, and the colours keep climbing with them. Several targets can share the board at once (up to 3, or 4 on Extreme), and new ones keep arriving, so pick your order wisely. Both scored modes tighten as you go, in opposite ways. In Speed each new target arrives with a slightly shorter ring than the last. In Accuracy the ring never shrinks — you always get the full time to think — but targets start arriving closer together, so the board fills up around you. Either squeeze eases off as it goes, so a long run gets harder without ever running away from you."
 msgstr "Each target carries a shrinking ring — its countdown. Land the sum before the ring empties. The colour behind the ring tells you the target’s hundreds at a glance: plain grey under 100, violet in the 100s, rose in the 200s, amber in the 300s — so 223 never passes for 123. A challenge played on a wider dial reaches higher numbers, and the colours keep climbing with them. Several targets can share the board at once (up to 3, or 4 on Extreme), and new ones keep arriving, so pick your order wisely. Both scored modes tighten as you go, in opposite ways. In Speed each new target arrives with a slightly shorter ring than the last. In Accuracy the ring never shrinks — you always get the full time to think — but targets start arriving closer together, so the board fills up around you. Either squeeze eases off as it goes, so a long run gets harder without ever running away from you."
 
-#: constants/achievements.ts:448
+#: constants/achievements.ts:459
 msgid "EARLY BIRD"
 msgstr "EARLY BIRD"
 
@@ -1067,7 +1071,7 @@ msgstr "ENTER ROOM CODE"
 msgid "ESY"
 msgstr "ESY"
 
-#: constants/achievements.ts:536
+#: constants/achievements.ts:595
 msgid "ETERNAL STUDENT"
 msgstr "ETERNAL STUDENT"
 
@@ -1141,7 +1145,7 @@ msgstr "EXT"
 msgid "EXTEND"
 msgstr "EXTEND"
 
-#: constants/achievements.ts:302
+#: constants/achievements.ts:313
 msgid "Extend a streak ten times in a row."
 msgstr "Extend a streak ten times in a row."
 
@@ -1153,7 +1157,7 @@ msgstr "EXTREME"
 msgid "Fast hits build big combos."
 msgstr "Fast hits build big combos."
 
-#: constants/achievements.ts:248
+#: constants/achievements.ts:259
 msgid "FAST START"
 msgstr "FAST START"
 
@@ -1191,39 +1195,47 @@ msgstr "FEWEST MOVES"
 msgid "FIND"
 msgstr "FIND"
 
-#: constants/achievements.ts:214
+#: constants/achievements.ts:225
 msgid "FINE WORK"
 msgstr "FINE WORK"
 
-#: constants/achievements.ts:344
+#: constants/achievements.ts:355
 msgid "Finish 10 runs."
 msgstr "Finish 10 runs."
 
-#: constants/achievements.ts:351
+#: constants/achievements.ts:362
 msgid "Finish 100 runs."
 msgstr "Finish 100 runs."
 
-#: constants/achievements.ts:502
+#: constants/achievements.ts:561
 msgid "Finish a run between 2am and 4am."
 msgstr "Finish a run between 2am and 4am."
 
-#: constants/achievements.ts:475
+#: constants/achievements.ts:486
 msgid "Finish a run in a room with someone else."
 msgstr "Finish a run in a room with someone else."
 
-#: constants/achievements.ts:177
+#: constants/achievements.ts:511
+msgid "Finish a run of a challenge."
+msgstr "Finish a run of a challenge."
+
+#: constants/achievements.ts:188
 msgid "Finish a run on a scored board."
 msgstr "Finish a run on a scored board."
 
-#: constants/achievements.ts:582
+#: constants/achievements.ts:641
 msgid "Finish a run on the first of April."
 msgstr "Finish a run on the first of April."
 
-#: constants/achievements.ts:509
+#: constants/achievements.ts:568
 msgid "Finish a run without scoring a single point."
 msgstr "Finish a run without scoring a single point."
 
-#: constants/achievements.ts:523
+#: constants/achievements.ts:533
+msgid "Finish a session in the top three."
+msgstr "Finish a session in the top three."
+
+#: constants/achievements.ts:582
 msgid "Finish five runs in a row, none of them worth talking about."
 msgstr "Finish five runs in a row, none of them worth talking about."
 
@@ -1231,23 +1243,27 @@ msgstr "Finish five runs in a row, none of them worth talking about."
 msgid "Finish in the top three and you get the medal for it, and the place itself pays: first takes their score again, second half of it, third a fifth — on top of the points every run already adds to your fortune. A challenge keeps no board of its own, so there is nothing to lose it to afterwards."
 msgstr "Finish in the top three and you get the medal for it, and the place itself pays: first takes their score again, second half of it, third a fifth — on top of the points every run already adds to your fortune. A challenge keeps no board of its own, so there is nothing to lose it to afterwards."
 
-#: constants/achievements.ts:404
+#: constants/achievements.ts:415
 msgid "Finish in the top three on a board."
 msgstr "Finish in the top three on a board."
 
-#: constants/achievements.ts:558
+#: constants/achievements.ts:617
 msgid "Finish on a score of four digits or more that reads the same backwards."
 msgstr "Finish on a score of four digits or more that reads the same backwards."
 
-#: constants/achievements.ts:551
+#: constants/achievements.ts:610
 msgid "Finish on a score that is an exact multiple of a thousand."
 msgstr "Finish on a score that is an exact multiple of a thousand."
 
-#: constants/achievements.ts:161
+#: constants/achievements.ts:668
+msgid "FIRST FOOTPRINTS"
+msgstr "FIRST FOOTPRINTS"
+
+#: constants/achievements.ts:172
 msgid "FIRST HIT"
 msgstr "FIRST HIT"
 
-#: constants/achievements.ts:176
+#: constants/achievements.ts:187
 msgid "FIRST RUN"
 msgstr "FIRST RUN"
 
@@ -1255,7 +1271,7 @@ msgstr "FIRST RUN"
 msgid "Flatten every tower and the village is yours — the walls come down, a heart comes back, up to three again, and you eat your fill."
 msgstr "Flatten every tower and the village is yours — the walls come down, a heart comes back, up to three again, and you eat your fill."
 
-#: constants/achievements.ts:301
+#: constants/achievements.ts:312
 msgid "FLAWLESS TEN"
 msgstr "FLAWLESS TEN"
 
@@ -1283,7 +1299,7 @@ msgstr "Four keys, doubled speed"
 msgid "Friday"
 msgstr "Friday"
 
-#: constants/achievements.ts:486
+#: constants/achievements.ts:497
 msgid "FULL HOUSE"
 msgstr "FULL HOUSE"
 
@@ -1315,7 +1331,7 @@ msgstr "Given more time."
 msgid "GIVING NOW"
 msgstr "GIVING NOW"
 
-#: constants/achievements.ts:574
+#: constants/achievements.ts:633
 msgid "GOOD SPORT"
 msgstr "GOOD SPORT"
 
@@ -1323,7 +1339,7 @@ msgstr "GOOD SPORT"
 msgid "GOOD. THE NEXT ONE IS YOURS"
 msgstr "GOOD. THE NEXT ONE IS YOURS"
 
-#: constants/achievements.ts:508
+#: constants/achievements.ts:567
 msgid "GOOSE EGG"
 msgstr "GOOSE EGG"
 
@@ -1331,7 +1347,7 @@ msgstr "GOOSE EGG"
 msgid "GOT IT"
 msgstr "GOT IT"
 
-#: constants/achievements.ts:167
+#: constants/achievements.ts:178
 msgid "GRADUATE"
 msgstr "GRADUATE"
 
@@ -1343,11 +1359,19 @@ msgstr "HABIT"
 msgid "HARD"
 msgstr "HARD"
 
+#: constants/achievements.ts:544
+msgid "HAT TRICK"
+msgstr "HAT TRICK"
+
 #: modes/challenges/catalog.ts:245
 msgid "HBT"
 msgstr "HBT"
 
-#: constants/achievements.ts:593
+#: constants/achievements.ts:538
+msgid "HEADLINER"
+msgstr "HEADLINER"
+
+#: constants/achievements.ts:652
 msgid "HEARD BACK"
 msgstr "HEARD BACK"
 
@@ -1355,11 +1379,11 @@ msgstr "HEARD BACK"
 msgid "HELD"
 msgstr "HELD"
 
-#: constants/achievements.ts:458
+#: constants/achievements.ts:469
 msgid "HELD ACCURACY"
 msgstr "HELD ACCURACY"
 
-#: constants/achievements.ts:465
+#: constants/achievements.ts:476
 msgid "HELD SPEED"
 msgstr "HELD SPEED"
 
@@ -1383,23 +1407,23 @@ msgstr "Hit while most of the ring is left to build your combo streak."
 msgid "HITS"
 msgstr "HITS"
 
-#: constants/achievements.ts:466
+#: constants/achievements.ts:477
 msgid "Hold a Speed all-time record for seven days."
 msgstr "Hold a Speed all-time record for seven days."
 
-#: constants/achievements.ts:459
+#: constants/achievements.ts:470
 msgid "Hold an Accuracy all-time record for seven days."
 msgstr "Hold an Accuracy all-time record for seven days."
 
-#: constants/achievements.ts:436
+#: constants/achievements.ts:447
 msgid "Hold first all-time on both Extreme boards at once."
 msgstr "Hold first all-time on both Extreme boards at once."
 
-#: constants/achievements.ts:422
+#: constants/achievements.ts:433
 msgid "Hold first all-time on Extreme Accuracy."
 msgstr "Hold first all-time on Extreme Accuracy."
 
-#: constants/achievements.ts:428
+#: constants/achievements.ts:439
 msgid "Hold first all-time on Extreme Speed."
 msgstr "Hold first all-time on Extreme Speed."
 
@@ -1447,7 +1471,7 @@ msgstr "HOW TO PLAY"
 msgid "HRD"
 msgstr "HRD"
 
-#: constants/achievements.ts:350
+#: constants/achievements.ts:361
 msgid "HUNDRED RUNS"
 msgstr "HUNDRED RUNS"
 
@@ -1459,7 +1483,7 @@ msgstr "If the same challenge comes round again it starts from nothing: a new wi
 msgid "If the window closes while you are playing, the run ends there — and you are told how it finished."
 msgstr "If the window closes while you are playing, the run ends there — and you are told how it finished."
 
-#: constants/achievements.ts:230
+#: constants/achievements.ts:241
 msgid "IMMACULATE"
 msgstr "IMMACULATE"
 
@@ -1467,7 +1491,7 @@ msgstr "IMMACULATE"
 msgid "In Accuracy, plan your route before you touch anything — every extra move costs you."
 msgstr "In Accuracy, plan your route before you touch anything — every extra move costs you."
 
-#: constants/achievements.ts:515
+#: constants/achievements.ts:574
 msgid "IN AND OUT"
 msgstr "IN AND OUT"
 
@@ -1495,7 +1519,7 @@ msgstr "In the week of [DATE] you took third on [B] with [S]"
 msgid "INSTALL"
 msgstr "INSTALL"
 
-#: constants/achievements.ts:194
+#: constants/achievements.ts:205
 msgid "INTO THE DEEP"
 msgstr "INTO THE DEEP"
 
@@ -1560,11 +1584,11 @@ msgstr "Jun"
 msgid "JUNE"
 msgstr "JUNE"
 
-#: constants/achievements.ts:544
+#: constants/achievements.ts:603
 msgid "Keep a single run going for a whole hour."
 msgstr "Keep a single run going for a whole hour."
 
-#: constants/achievements.ts:386
+#: constants/achievements.ts:397
 msgid "Keep a single run going for ten minutes."
 msgstr "Keep a single run going for ten minutes."
 
@@ -1572,27 +1596,27 @@ msgstr "Keep a single run going for ten minutes."
 msgid "KEY = ROW × COLUMN × DIGIT"
 msgstr "KEY = ROW × COLUMN × DIGIT"
 
-#: constants/achievements.ts:358
+#: constants/achievements.ts:369
 msgid "Land 1 000 targets across every run."
 msgstr "Land 1 000 targets across every run."
 
-#: constants/achievements.ts:365
+#: constants/achievements.ts:376
 msgid "Land 10 000 targets across every run."
 msgstr "Land 10 000 targets across every run."
 
-#: constants/achievements.ts:195
+#: constants/achievements.ts:206
 msgid "Land a hit on an Extreme board."
 msgstr "Land a hit on an Extreme board."
 
-#: constants/achievements.ts:495
+#: constants/achievements.ts:554
 msgid "Land a target after thirty presses or more."
 msgstr "Land a target after thirty presses or more."
 
-#: constants/achievements.ts:568
+#: constants/achievements.ts:627
 msgid "Land your 999th target."
 msgstr "Land your 999th target."
 
-#: constants/achievements.ts:162
+#: constants/achievements.ts:173
 msgid "Land your first target."
 msgstr "Land your first target."
 
@@ -1648,15 +1672,15 @@ msgstr "LET'S LEARN THE GAME — NOTHING IS SCORED"
 msgid "Let's multiply"
 msgstr "Let's multiply"
 
-#: constants/achievements.ts:272
+#: constants/achievements.ts:283
 msgid "LIGHTNING"
 msgstr "LIGHTNING"
 
-#: constants/achievements.ts:385
+#: constants/achievements.ts:396
 msgid "LONG HAUL"
 msgstr "LONG HAUL"
 
-#: constants/achievements.ts:516
+#: constants/achievements.ts:575
 msgid "Lose every life in under ten seconds."
 msgstr "Lose every life in under ten seconds."
 
@@ -1676,7 +1700,7 @@ msgstr "Marks for the hardest boards"
 msgid "Matching every target in its optimal move count builds your streak."
 msgstr "Matching every target in its optimal move count builds your streak."
 
-#: constants/achievements.ts:294
+#: constants/achievements.ts:305
 msgid "MAX MULTIPLIER"
 msgstr "MAX MULTIPLIER"
 
@@ -1709,6 +1733,10 @@ msgstr "Messages sent in"
 #: components/overlays/admin-stats.tsx:182
 msgid "MINUTES"
 msgstr "MINUTES"
+
+#: constants/achievements.ts:662
+msgid "Miss a session's top three by a single point, or a tenth of a second."
+msgstr "Miss a session's top three by a single point, or a tenth of a second."
 
 #: components/overlays/how-to-play-overlay.tsx:42
 msgid "MODES"
@@ -1759,6 +1787,10 @@ msgstr "Never lose your scores"
 msgid "Never miss an update"
 msgstr "Never miss an update"
 
+#: constants/achievements.ts:510
+msgid "NEW IN TOWN"
+msgstr "NEW IN TOWN"
+
 #: components/overlays/admin-roles.tsx:46
 #: components/overlays/admin-roles.tsx:166
 msgid "NEW ROLE"
@@ -1776,7 +1808,7 @@ msgstr "NEXT UP"
 msgid "NICK"
 msgstr "NICK"
 
-#: constants/achievements.ts:501
+#: constants/achievements.ts:560
 msgid "NIGHT SHIFT"
 msgstr "NIGHT SHIFT"
 
@@ -1798,7 +1830,7 @@ msgstr "Nine has a new look, and it goes all the way down.\n"
 "\n"
 "Same game underneath. It just looks like itself now."
 
-#: constants/achievements.ts:567
+#: constants/achievements.ts:626
 msgid "NINE NINE NINE"
 msgstr "NINE NINE NINE"
 
@@ -1830,7 +1862,7 @@ msgstr "No figures. See the error above."
 msgid "No filters are on."
 msgstr "No filters are on."
 
-#: constants/achievements.ts:581
+#: constants/achievements.ts:640
 msgid "NO JOKE"
 msgstr "NO JOKE"
 
@@ -2043,7 +2075,7 @@ msgstr "On [DATE] you took third on [B] with [S]"
 msgid "ON NOW"
 msgstr "ON NOW"
 
-#: constants/achievements.ts:403
+#: constants/achievements.ts:414
 msgid "ON THE BOARD"
 msgstr "ON THE BOARD"
 
@@ -2107,7 +2139,7 @@ msgstr "Only ever used to get your profile back. No newsletters, no offers, noth
 msgid "Only the first player to land it scores."
 msgstr "Only the first player to land it scores."
 
-#: constants/achievements.ts:449
+#: constants/achievements.ts:460
 msgid "Open a day's board with the first score on it."
 msgstr "Open a day's board with the first score on it."
 
@@ -2115,7 +2147,7 @@ msgstr "Open a day's board with the first score on it."
 msgid "Open a session on an easier difficulty. The first run is a warm-up, and the weights come back slower than you remember them."
 msgstr "Open a session on an easier difficulty. The first run is a warm-up, and the weights come back slower than you remember them."
 
-#: constants/achievements.ts:171
+#: constants/achievements.ts:182
 msgid "Open the How to Play guide."
 msgstr "Open the How to Play guide."
 
@@ -2150,7 +2182,7 @@ msgstr "OVER WHAT WINDOW"
 msgid "OWED"
 msgstr "OWED"
 
-#: constants/achievements.ts:557
+#: constants/achievements.ts:616
 msgid "PALINDROME"
 msgstr "PALINDROME"
 
@@ -2162,13 +2194,17 @@ msgstr "PASTE FROM CLIPBOARD"
 msgid "peak"
 msgstr "peak"
 
-#: constants/achievements.ts:333
+#: constants/achievements.ts:344
 msgid "PERFECT ROUTE"
 msgstr "PERFECT ROUTE"
 
-#: constants/achievements.ts:238
+#: constants/achievements.ts:249
 msgid "PERFECTIONIST"
 msgstr "PERFECTIONIST"
+
+#: constants/achievements.ts:661
+msgid "PHOTO FINISH"
+msgstr "PHOTO FINISH"
 
 #: components/overlays/how-to-play-overlay.tsx:864
 msgid "Pick “With friends” on the start screen. Create a game and share the four-digit code, or type a friend’s code to join. Two players are enough to start, and the one who created the room starts it.\n"
@@ -2181,6 +2217,10 @@ msgstr "Pick “With friends” on the start screen. Create a game and share the
 #: components/overlays/how-to-play-overlay.tsx:605
 msgid "Pick ARCADE on the start screen. The dial is the same dial — but the targets are not scattered any more. Two to four of them hang at the ends of ways out of the crossroad you are standing on, and the one you dial is the one you walk."
 msgstr "Pick ARCADE on the start screen. The dial is the same dial — but the targets are not scattered any more. Two to four of them hang at the ends of ways out of the crossroad you are standing on, and the one you dial is the one you walk."
+
+#: constants/achievements.ts:532
+msgid "PLACED"
+msgstr "PLACED"
 
 #: components/overlays/admin-sessions.tsx:270
 msgid "PLAN SESSION"
@@ -2195,11 +2235,11 @@ msgstr "planned"
 msgid "PLANNED"
 msgstr "PLANNED"
 
-#: constants/achievements.ts:487
+#: constants/achievements.ts:498
 msgid "Play a full room — four players, the most one holds."
 msgstr "Play a full room — four players, the most one holds."
 
-#: constants/achievements.ts:189
+#: constants/achievements.ts:200
 msgid "Play a Hard board."
 msgstr "Play a Hard board."
 
@@ -2209,7 +2249,7 @@ msgstr "Play a Hard board."
 msgid "PLAY AGAIN"
 msgstr "PLAY AGAIN"
 
-#: constants/achievements.ts:575
+#: constants/achievements.ts:634
 msgid "Play five runs with friends and win none of them."
 msgstr "Play five runs with friends and win none of them."
 
@@ -2217,15 +2257,23 @@ msgstr "Play five runs with friends and win none of them."
 msgid "PLAY GAME"
 msgstr "PLAY GAME"
 
-#: constants/achievements.ts:372
+#: constants/achievements.ts:383
 msgid "Play on two consecutive days."
 msgstr "Play on two consecutive days."
 
-#: constants/achievements.ts:379
+#: constants/achievements.ts:390
 msgid "Play seven days running."
 msgstr "Play seven days running."
 
-#: constants/achievements.ts:183
+#: constants/achievements.ts:526
+msgid "Play ten different challenges."
+msgstr "Play ten different challenges."
+
+#: constants/achievements.ts:519
+msgid "Play three different challenges."
+msgstr "Play three different challenges."
+
+#: constants/achievements.ts:194
 msgid "Play Trainee, Accuracy and Speed."
 msgstr "Play Trainee, Accuracy and Speed."
 
@@ -2245,7 +2293,7 @@ msgstr "PLAYED"
 msgid "PLAYERS"
 msgstr "PLAYERS"
 
-#: constants/achievements.ts:392
+#: constants/achievements.ts:403
 msgid "Post a score on every mode and difficulty."
 msgstr "Post a score on every mode and difficulty."
 
@@ -2289,7 +2337,11 @@ msgstr "Pure practice — no lives, no score, and a relaxed clock."
 msgid "PUT BACK"
 msgstr "PUT BACK"
 
-#: constants/achievements.ts:312
+#: constants/achievements.ts:669
+msgid "Put the first score on a session board."
+msgstr "Put the first score on a session board."
+
+#: constants/achievements.ts:323
 msgid "Reach 25 hits in one run before losing a life."
 msgstr "Reach 25 hits in one run before losing a life."
 
@@ -2297,7 +2349,7 @@ msgstr "Reach 25 hits in one run before losing a life."
 msgid "Reach a tower’s number by the shortest route there is and the whole tower comes down at once, however many hits it had left. Waste a move getting there and you only chip it. Reading the wall is worth more than hurrying at it."
 msgstr "Reach a tower’s number by the shortest route there is and the whole tower comes down at once, however many hits it had left. Waste a move getting there and you only chip it. Reading the wall is worth more than hurrying at it."
 
-#: constants/achievements.ts:295
+#: constants/achievements.ts:306
 msgid "Reach the ×8 multiplier."
 msgstr "Reach the ×8 multiplier."
 
@@ -2361,7 +2413,7 @@ msgstr "REWRITE THE ANSWER"
 msgid "ROLE"
 msgstr "ROLE"
 
-#: constants/achievements.ts:474
+#: constants/achievements.ts:485
 msgid "ROOM FOR TWO"
 msgstr "ROOM FOR TWO"
 
@@ -2373,11 +2425,11 @@ msgstr "ROOM LEFT"
 msgid "Rooms created"
 msgstr "Rooms created"
 
-#: constants/achievements.ts:522
+#: constants/achievements.ts:581
 msgid "ROUGH PATCH"
 msgstr "ROUGH PATCH"
 
-#: constants/achievements.ts:550
+#: constants/achievements.ts:609
 msgid "ROUND NUMBER"
 msgstr "ROUND NUMBER"
 
@@ -2420,6 +2472,10 @@ msgstr "Same grid, different pressure. Difficulty (Easy / Hard / Extreme) tighte
 "\n"
 "A hit is worth up to 100 points, blended from two factors and weighted by the mode:"
 
+#: constants/achievements.ts:518
+msgid "SAMPLER"
+msgstr "SAMPLER"
+
 #: components/game/satiety-loaves.tsx:287
 msgid "Satiety"
 msgstr "Satiety"
@@ -2438,7 +2494,7 @@ msgstr "SAVE"
 msgid "SAVING…"
 msgstr "SAVING…"
 
-#: constants/achievements.ts:529
+#: constants/achievements.ts:588
 msgid "SCENIC ROUTE"
 msgstr "SCENIC ROUTE"
 
@@ -2447,43 +2503,43 @@ msgstr "SCENIC ROUTE"
 msgid "SCORE"
 msgstr "SCORE"
 
-#: constants/achievements.ts:215
+#: constants/achievements.ts:226
 msgid "Score 1 000 in Accuracy."
 msgstr "Score 1 000 in Accuracy."
 
-#: constants/achievements.ts:257
+#: constants/achievements.ts:268
 msgid "Score 1 000 in Speed."
 msgstr "Score 1 000 in Speed."
 
-#: constants/achievements.ts:239
+#: constants/achievements.ts:250
 msgid "Score 10 000 in Accuracy."
 msgstr "Score 10 000 in Accuracy."
 
-#: constants/achievements.ts:281
+#: constants/achievements.ts:292
 msgid "Score 10 000 in Speed."
 msgstr "Score 10 000 in Speed."
 
-#: constants/achievements.ts:223
+#: constants/achievements.ts:234
 msgid "Score 2 500 in Accuracy."
 msgstr "Score 2 500 in Accuracy."
 
-#: constants/achievements.ts:265
+#: constants/achievements.ts:276
 msgid "Score 2 500 in Speed."
 msgstr "Score 2 500 in Speed."
 
-#: constants/achievements.ts:207
+#: constants/achievements.ts:218
 msgid "Score 250 in Accuracy."
 msgstr "Score 250 in Accuracy."
 
-#: constants/achievements.ts:249
+#: constants/achievements.ts:260
 msgid "Score 250 in Speed."
 msgstr "Score 250 in Speed."
 
-#: constants/achievements.ts:231
+#: constants/achievements.ts:242
 msgid "Score 5 000 in Accuracy."
 msgstr "Score 5 000 in Accuracy."
 
-#: constants/achievements.ts:273
+#: constants/achievements.ts:284
 msgid "Score 5 000 in Speed."
 msgstr "Score 5 000 in Speed."
 
@@ -2515,7 +2571,7 @@ msgstr "SEND AGAIN"
 msgid "SEND CODE"
 msgstr "SEND CODE"
 
-#: constants/achievements.ts:594
+#: constants/achievements.ts:653
 msgid "Send feedback, and get an answer back."
 msgstr "Send feedback, and get an answer back."
 
@@ -2552,7 +2608,7 @@ msgstr "SET ASIDE"
 msgid "Set the coarse 9× / 6× buttons first to get near the target, then fine-tune with the 1× / 2× buttons."
 msgstr "Set the coarse 9× / 6× buttons first to get near the target, then fine-tune with the 1× / 2× buttons."
 
-#: constants/achievements.ts:378
+#: constants/achievements.ts:389
 msgid "SEVEN DAY STREAK"
 msgstr "SEVEN DAY STREAK"
 
@@ -2598,7 +2654,7 @@ msgstr "Skill inside a single run: a long streak, the top multiplier, a stretch 
 msgid "SKIP"
 msgstr "SKIP"
 
-#: constants/achievements.ts:256
+#: constants/achievements.ts:267
 msgid "SLIPSTREAM"
 msgstr "SLIPSTREAM"
 
@@ -2648,7 +2704,7 @@ msgstr "Speed eases off"
 msgid "Speed mode was brutal. Now it is merely fast — about half again as long on every target."
 msgstr "Speed mode was brutal. Now it is merely fast — about half again as long on every target."
 
-#: constants/achievements.ts:537
+#: constants/achievements.ts:596
 msgid "Spend half an hour in Trainee without leaving."
 msgstr "Spend half an hour in Trainee without leaving."
 
@@ -2674,7 +2730,7 @@ msgstr "STARTS"
 msgid "Starving stops nothing else. The clock still runs, the dial still listens and the ways are still there — so an empty row is a reason to hurry toward walls, not a reason the run is over."
 msgstr "Starving stops nothing else. The clock still runs, the dial still listens and the ways are still there — so an empty row is a reason to hurry toward walls, not a reason the run is over."
 
-#: constants/achievements.ts:206
+#: constants/achievements.ts:217
 msgid "STEADY HAND"
 msgstr "STEADY HAND"
 
@@ -2721,7 +2777,7 @@ msgstr "SUBMIT"
 msgid "Sunday"
 msgstr "Sunday"
 
-#: constants/achievements.ts:222
+#: constants/achievements.ts:233
 msgid "SURGEON"
 msgstr "SURGEON"
 
@@ -2749,7 +2805,7 @@ msgstr "Take every target in the fewest moves it can be done in."
 msgid "Take every target while most of its ring is still full."
 msgstr "Take every target while most of its ring is still full."
 
-#: constants/achievements.ts:411
+#: constants/achievements.ts:422
 msgid "Take first place on a board."
 msgstr "Take first place on a board."
 
@@ -2761,11 +2817,11 @@ msgstr "Take the all-time record on a mode’s Extreme board and you carry its m
 msgid "Take the long road to a target and Trainee now shows you the short one — the keys that would have done it, in the order to press them."
 msgstr "Take the long road to a target and Trainee now shows you the short one — the keys that would have done it, in the order to press them."
 
-#: constants/achievements.ts:334
+#: constants/achievements.ts:345
 msgid "Take the shortest route to 25 targets in one run."
 msgstr "Take the shortest route to 25 targets in one run."
 
-#: constants/achievements.ts:530
+#: constants/achievements.ts:589
 msgid "Take twenty targets in Speed averaging under 20% speed."
 msgstr "Take twenty targets in Speed averaging under 20% speed."
 
@@ -2815,11 +2871,11 @@ msgstr "Tell me what you think"
 msgid "TELL US"
 msgstr "TELL US"
 
-#: constants/achievements.ts:441
+#: constants/achievements.ts:452
 msgid "TEN BESTS"
 msgstr "TEN BESTS"
 
-#: constants/achievements.ts:343
+#: constants/achievements.ts:354
 msgid "TEN RUNS"
 msgstr "TEN RUNS"
 
@@ -2827,11 +2883,11 @@ msgstr "TEN RUNS"
 msgid "Ten seconds a target, the same one for everybody."
 msgstr "Ten seconds a target, the same one for everybody."
 
-#: constants/achievements.ts:364
+#: constants/achievements.ts:375
 msgid "TEN THOUSAND HITS"
 msgstr "TEN THOUSAND HITS"
 
-#: constants/achievements.ts:280
+#: constants/achievements.ts:291
 msgid "TERMINAL VELOCITY"
 msgstr "TERMINAL VELOCITY"
 
@@ -2902,7 +2958,7 @@ msgstr "The dial tells you more at a glance.\n"
 "No more squinting at the top of the range mid-run."
 
 #: components/overlays/title-mark.tsx:74
-#: constants/achievements.ts:427
+#: constants/achievements.ts:438
 msgid "THE EAGLE"
 msgstr "THE EAGLE"
 
@@ -2926,7 +2982,7 @@ msgstr "The hero halts well short of the gate, with the walls across the top of 
 msgid "The loaves tell you before they run out. Down to one and it turns orange; down to half of one and it turns red, which is one more careful walk and no careless ones."
 msgstr "The loaves tell you before they run out. Down to one and it turns orange; down to half of one and it turns red, which is one more careful walk and no careless ones."
 
-#: constants/achievements.ts:494
+#: constants/achievements.ts:553
 msgid "THE LONG WAY"
 msgstr "THE LONG WAY"
 
@@ -2935,7 +2991,7 @@ msgid "The map turns as you walk, to keep you pointed forward. Tap the compass i
 msgstr "The map turns as you walk, to keep you pointed forward. Tap the compass in the corner if you would rather north stayed at the top of the screen — it remembers whichever you chose."
 
 #: components/overlays/title-mark.tsx:68
-#: constants/achievements.ts:421
+#: constants/achievements.ts:432
 msgid "THE OWL"
 msgstr "THE OWL"
 
@@ -3096,7 +3152,7 @@ msgstr "THIS PROFILE MOVED TO ANOTHER PHONE"
 msgid "THIS WEEK"
 msgstr "THIS WEEK"
 
-#: constants/achievements.ts:357
+#: constants/achievements.ts:368
 msgid "THOUSAND HITS"
 msgstr "THOUSAND HITS"
 
@@ -3146,7 +3202,7 @@ msgstr "Too many tries. Give it a few minutes."
 msgid "TOP LEFT"
 msgstr "TOP LEFT"
 
-#: constants/achievements.ts:410
+#: constants/achievements.ts:421
 msgid "TOP OF THE BOARD"
 msgstr "TOP OF THE BOARD"
 
@@ -3160,7 +3216,7 @@ msgstr "TOP RIGHT"
 msgid "TOTAL"
 msgstr "TOTAL"
 
-#: constants/achievements.ts:543
+#: constants/achievements.ts:602
 msgid "TOUCH GRASS"
 msgstr "TOUCH GRASS"
 
@@ -3224,7 +3280,7 @@ msgstr "Two careers, no scores. The dial is right there."
 msgid "Two days escaped [A] all week: [D], and then [E]."
 msgstr "Two days escaped [A] all week: [D], and then [E]."
 
-#: constants/achievements.ts:371
+#: constants/achievements.ts:382
 msgid "TWO IN A ROW"
 msgstr "TWO IN A ROW"
 
@@ -3240,15 +3296,15 @@ msgstr "Type here"
 msgid "Type the answer"
 msgstr "Type the answer"
 
-#: constants/achievements.ts:311
+#: constants/achievements.ts:322
 msgid "UNSCATHED"
 msgstr "UNSCATHED"
 
-#: constants/achievements.ts:435
+#: constants/achievements.ts:446
 msgid "UNTOUCHABLE"
 msgstr "UNTOUCHABLE"
 
-#: constants/achievements.ts:188
+#: constants/achievements.ts:199
 msgid "UP A RUNG"
 msgstr "UP A RUNG"
 
@@ -3353,11 +3409,19 @@ msgstr "Who is that, anyway"
 msgid "Whoever their role's stack or their own override says."
 msgstr "Whoever their role's stack or their own override says."
 
-#: constants/achievements.ts:481
+#: constants/achievements.ts:492
 msgid "Win a run in a room."
 msgstr "Win a run in a room."
 
-#: constants/achievements.ts:480
+#: constants/achievements.ts:539
+msgid "Win a session."
+msgstr "Win a session."
+
+#: constants/achievements.ts:545
+msgid "Win three sessions."
+msgstr "Win three sessions."
+
+#: constants/achievements.ts:491
 msgid "WINNER"
 msgstr "WINNER"
 

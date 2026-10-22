@@ -21,11 +21,15 @@ import {
 } from '@/lib/career'
 import { dayInPrague } from '@/lib/leaderboard-period'
 import type { BoardStanding } from '@/lib/medals'
+import type { SessionPlaces } from '@/lib/session-places'
 import { bestOn as bestScoreOn, type Stats } from '@/machines/game'
 import {
   codeOf,
   DIFFICULTIES,
   DIFFICULTY_ORDER,
+  isChallenge,
+  isMode,
+  MODE_ORDER,
   SCORED_MODES,
   type Difficulty,
   type ModeId,
@@ -122,6 +126,10 @@ export type AchievementFacts = {
   // device rather than the server, which cannot answer it twice — see
   // lib/feedback-answered.ts.
   feedbackAnswered: boolean
+  // What the challenges have settled about the player — places and firsts, from the
+  // server, since the device hears about a place only through the newest summary. See
+  // lib/session-places.ts.
+  sessionPlaces: SessionPlaces
   now: Date
 }
 
@@ -302,7 +310,7 @@ const RULES = {
   firstRun: (f) =>
     f.career.boardsPlayed.length > 0 ||
     (f.run.finished && isOneOf(f.run.mode, SCORED_MODES)),
-  allThree: (f) => modesPlayed(f).size >= MODE_COUNT,
+  allThree: (f) => introModesPlayed(f) >= MODE_ORDER.length,
   upARung: (f) => playedDifficulty(f, 'hard'),
   // A hit rather than a board opened: Extreme is the one rung where turning up is
   // not the achievement. Asked of the run alone — the career remembers which
@@ -362,6 +370,17 @@ const RULES = {
   winner: (f) => f.career.multiplayerWins >= 1,
   fullHouse: (f) => f.career.biggestRoom >= MAX_ROOM_PLAYERS,
 
+  // Finished rather than merely played, so it asks the run's end as well as the career —
+  // which hears about a challenge only once a run of it has ended anyway.
+  newInTown: (f) =>
+    f.career.modesPlayed.some((mode) => isChallenge(mode)) ||
+    (f.run.finished && f.run.mode !== null && isChallenge(f.run.mode)),
+  sampler: (f) => challengesPlayed(f) >= SAMPLER_CHALLENGES,
+  connoisseur: (f) => challengesPlayed(f) >= CONNOISSEUR_CHALLENGES,
+  placed: (f) => f.sessionPlaces.podiums >= 1,
+  headliner: (f) => f.sessionPlaces.wins >= 1,
+  hatTrick: (f) => f.sessionPlaces.wins >= HAT_TRICK_WINS,
+
   theLongWay: (f) => f.run.longestRoute >= 30,
   nightShift: (f) => {
     if (!f.run.finished) return false
@@ -394,6 +413,8 @@ const RULES = {
   // is dismissed. Both halves are already behind it — nothing is answered that was not
   // sent — so asking about the reply asks about the message too.
   heardBack: (f) => f.feedbackAnswered,
+  photoFinish: (f) => f.sessionPlaces.photoFinishes >= 1,
+  firstFootprints: (f) => f.sessionPlaces.firsts >= 1,
 } as const satisfies Record<
   AchievementId,
   // `stage` is the board being asked about. Unstaged rules ignore it and are asked once
@@ -402,7 +423,9 @@ const RULES = {
   (facts: AchievementFacts, stage: Stage) => boolean
 >
 
-const MODE_COUNT = 3
+const SAMPLER_CHALLENGES = 3
+const CONNOISSEUR_CHALLENGES = 10
+const HAT_TRICK_WINS = 3
 const ALL_BOARD_COUNT = SCORED_MODES.length * DIFFICULTY_ORDER.length
 
 // The secret ones' numbers. Each is arbitrary in the way a punchline is — the joke is
@@ -445,6 +468,18 @@ const modesPlayed = (f: AchievementFacts): Set<string> =>
     f.run.mode === null ? f.career.modesPlayed : [...f.career.modesPlayed, f.run.mode],
   )
 
+// How many of the intro's own modes the player has played. Filtered rather than counted
+// whole: `modesPlayed` holds every mode's id, challenges included, so Trainee and two
+// challenges used to add up to ALL THREE.
+const introModesPlayed = (f: AchievementFacts): number =>
+  [...modesPlayed(f)].filter((mode) => isMode(mode)).length
+
+// How many different challenges the player has played, the live run's included. Read off
+// `modesPlayed`, which has kept every mode's id since challenges arrived — so this needs
+// no store of its own and counts every challenge played before it was asked.
+const challengesPlayed = (f: AchievementFacts): number =>
+  [...modesPlayed(f)].filter((mode) => isChallenge(mode)).length
+
 const playedDifficulty = (f: AchievementFacts, difficulty: Difficulty): boolean =>
   f.career.difficultiesPlayed.includes(difficulty) ||
   (isOneOf(f.run.mode, SCORED_MODES) && f.run.difficulty === difficulty)
@@ -457,7 +492,7 @@ const PROGRESS = {
   firstHit: (f) => f.career.hits + f.run.hits,
   graduate: () => 0,
   firstRun: () => 0,
-  allThree: (f) => modesPlayed(f).size,
+  allThree: (f) => introModesPlayed(f),
   upARung: () => 0,
   intoTheDeep: () => 0,
 
@@ -504,6 +539,13 @@ const PROGRESS = {
   winner: () => 0,
   fullHouse: (f) => f.career.biggestRoom,
 
+  newInTown: () => 0,
+  sampler: (f) => challengesPlayed(f),
+  connoisseur: (f) => challengesPlayed(f),
+  placed: () => 0,
+  headliner: () => 0,
+  hatTrick: (f) => f.sessionPlaces.wins,
+
   theLongWay: () => 0,
   nightShift: () => 0,
   gooseEgg: () => 0,
@@ -518,6 +560,8 @@ const PROGRESS = {
   goodSport: () => 0,
   noJoke: () => 0,
   heardBack: () => 0,
+  photoFinish: () => 0,
+  firstFootprints: () => 0,
 } as const satisfies Record<
   AchievementId,
   (facts: AchievementFacts, stage: Stage) => number
