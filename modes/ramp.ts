@@ -15,8 +15,8 @@ export type RampTarget = 'clock' | 'spawn' | 'none'
 // Shared by everything that ramps — Speed's clock, Accuracy's spawn gap, arcade's
 // crossroad clock — so tuning one tunes them all, and they stay tightening at the same
 // felt rate.
-const RAMP_HALF_LIFE_HITS = 12
-const RAMP_FLOOR_RATIO = 0.55
+export const RAMP_HALF_LIFE_HITS = 12
+export const RAMP_FLOOR_RATIO = 0.55
 
 // The ramp itself, shared by everything that tightens — including arcade, which counts
 // crossroads where Speed counts hits and is exported to for exactly that. A second copy

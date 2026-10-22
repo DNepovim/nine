@@ -654,6 +654,9 @@ export default function GameScreen() {
   // itself is hidden while any of them is open — a single source of truth avoids
   // z-order/gating clashes between separate booleans.
   const [menuOverlay, setMenuOverlay] = useState<MenuOverlayName>('none')
+  // Whether the challenge lab was opened from the admin hub, so closing it goes back
+  // there rather than all the way out to the intro.
+  const [labFromAdmin, setLabFromAdmin] = useState(false)
   // The challenge card the player pressed, and the dialog it opened. Held here rather
   // than in `menu-overlay.tsx`: a `ModalCard` mounted inside the paging panel would
   // scrim the panel rather than the screen.
@@ -2626,7 +2629,8 @@ export default function GameScreen() {
                   setChallengeCard({ state: 'lab', modeId, session })
                 }}
                 onClose={() => {
-                  setMenuOverlay('none')
+                  setMenuOverlay(labFromAdmin ? 'admin' : 'none')
+                  setLabFromAdmin(false)
                 }}
               />
             )}
@@ -2648,6 +2652,7 @@ export default function GameScreen() {
                     send({ type: 'START', now: Date.now(), runId: newRunId() })
                     setChallengeCard(undefined)
                     setMenuOverlay('none')
+                    setLabFromAdmin(false)
                     track('run_started', { mode: modeId, difficulty, from: 'dev' })
                     return
                   }
@@ -2683,6 +2688,10 @@ export default function GameScreen() {
                   // And out of the way. The point of a preview is the app underneath it,
                   // and the screen that started it is about to lose the link that drew it.
                   setMenuOverlay('none')
+                }}
+                onOpenLab={() => {
+                  setLabFromAdmin(true)
+                  setMenuOverlay('dev')
                 }}
                 onClose={() => {
                   setMenuOverlay('none')

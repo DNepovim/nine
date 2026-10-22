@@ -723,8 +723,8 @@ export function MenuOverlay({
               )}
               {showAdmin && (
                 <TrackedPressable id="menu.admin" onPress={onOpenAdmin} hitSlop={10}>
-                  {/* `relative`, for the dot: there is a message a player sent in that
-                      nobody has answered, and this link is the only route to it. The one
+                  {/* `relative`, for the badge: messages players sent in that nobody has
+                      answered, counted, and this link is the only route to them. The one
                       thing on the intro that is a task rather than a door — see
                       `UnreadDot`, and `useFeedbackOwed`, which asks nothing at all of a
                       launch that does not hold this key. */}
@@ -733,7 +733,7 @@ export function MenuOverlay({
                     <Text selectable={false} className={cn(TYPE.quietAction, 'text-dim')}>
                       <Trans>ADMIN</Trans>
                     </Text>
-                    {feedbackOwed > 0 && <UnreadDot />}
+                    {feedbackOwed > 0 && <UnreadDot count={feedbackOwed} />}
                   </View>
                 </TrackedPressable>
               )}

@@ -41,7 +41,7 @@ export {
   MULTIPLAYER_GRADIENT,
   scoreInkOf,
 } from './palette'
-export { decayed } from './ramp'
+export { decayed, RAMP_FLOOR_RATIO, RAMP_HALF_LIFE_HITS } from './ramp'
 export {
   allModes,
   baseClockMs,

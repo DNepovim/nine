@@ -1,11 +1,11 @@
 import { msg } from '@lingui/core/macro'
 import { Trans, useLingui } from '@lingui/react/macro'
-import { useEffect, useState, type ReactNode } from 'react'
+import { useEffect, useState } from 'react'
 import { ScrollView, Text, View } from 'react-native'
 
 import { DayBars, MeterRow, StatTile } from '@/components/overlays/admin-chart'
 import { AdminScreen } from '@/components/overlays/admin-screen'
-import { AdminSelect } from '@/components/overlays/admin-select'
+import { AdminSegments } from '@/components/overlays/admin-segments'
 import { AdminChip, AdminTable } from '@/components/overlays/admin-table'
 import { PrimaryButton } from '@/components/primary-button'
 import { ARCADE_INK, DIM_INK } from '@/constants/colors'
@@ -41,18 +41,10 @@ const TITLE = msg`ANALYTICS`
 const WINDOW_LABEL: Record<StatsWindow, string> = {
   today: 'TODAY',
   yesterday: 'YESTERDAY',
-  week: 'THIS WEEK',
-  month: 'LAST 30 DAYS',
-}
-
-// What each window is to be read as, in the one place there is room to say it: the open
-// combobox. Today is always short and always rising; yesterday is the only setting here
-// whose figure is final and whose comparison is like for like.
-const WINDOW_NOTE: Record<StatsWindow, ReactNode> = {
-  today: <Trans>Still running</Trans>,
-  yesterday: <Trans>A finished day, against the day before</Trans>,
-  week: <Trans>Since Monday, the week a player sees</Trans>,
-  month: <Trans>As far back as the run receipts go</Trans>,
+  // Short, because four of these share a row of segments the width of a phone. THIS
+  // WEEK and LAST 30 DAYS did not fit a quarter of it.
+  week: 'WEEK',
+  month: '30 DAYS',
 }
 
 const WINDOWS: readonly StatsWindow[] = ['today', 'yesterday', 'week', 'month']
@@ -95,7 +87,7 @@ export function AdminStats({
   const { t } = useLingui()
   const was = t(WAS)
   const owed = t(OWED)
-  const [window, setWindow] = useState<StatsWindow>('week')
+  const [window, setWindow] = useState<StatsWindow>('today')
   const [stats, setStats] = useState<AdminStats | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -127,19 +119,20 @@ export function AdminStats({
         <PrimaryButton id="admin.back" onPress={onBack} label={<Trans>BACK</Trans>} />
       }
     >
-      {/* A combobox and not a row of four pills. The window is a *setting* on this screen
-          rather than its subject — it is read once, changed rarely, and the figures under
-          it are what anybody came for — and four pills wide enough to be pressed would
-          have wrapped onto two lines above them. */}
-      <AdminSelect
-        title={<Trans>OVER WHAT WINDOW</Trans>}
+      {/* The same row of segments every other admin list sorts by. It was a combobox
+          for a while, on the reasoning that the window is a setting read once rather than
+          the screen's subject — but it is the one thing on this screen anybody changes,
+          and a combobox put that change two presses away and looked like no other
+          control on these screens. Opens on TODAY: the figure the admin opens the app on
+          a phone to check. */}
+      <AdminSegments
+        id="admin.filter"
         className="mb-2.5"
         value={window}
         onSelect={setWindow}
         options={WINDOWS.map((option) => ({
           value: option,
           label: WINDOW_LABEL[option],
-          note: WINDOW_NOTE[option],
         }))}
       />
 

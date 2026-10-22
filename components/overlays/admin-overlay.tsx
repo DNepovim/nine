@@ -1,9 +1,11 @@
+import { Ionicons } from '@expo/vector-icons'
 import { msg } from '@lingui/core/macro'
 import { Trans, useLingui } from '@lingui/react/macro'
-import { useEffect, useState, type ReactNode } from 'react'
-import { Text, View } from 'react-native'
+import { useEffect, useState, type ComponentProps, type ReactNode } from 'react'
+import { ScrollView, Text, View } from 'react-native'
 
 import { AdminAccess } from '@/components/overlays/admin-access'
+import { AdminKnowledge } from '@/components/overlays/admin-knowledge'
 import { AdminMessages } from '@/components/overlays/admin-messages'
 import { AdminScreen } from '@/components/overlays/admin-screen'
 import { AdminSessions } from '@/components/overlays/admin-sessions'
@@ -13,14 +15,17 @@ import { LiveDot } from '@/components/overlays/live-dot'
 import { UnreadDot } from '@/components/overlays/unread-dot'
 import { PrimaryButton } from '@/components/primary-button'
 import { TrackedPressable } from '@/components/tracked-pressable'
+import { MUTED_INK } from '@/constants/colors'
 import { TYPE } from '@/constants/typography'
 import { useFeedbackOwed } from '@/hooks/use-feedback-owed'
+import { useFlag } from '@/hooks/use-flags'
 import { listFeatures } from '@/lib/admin/features'
 import { listSessions, type AdminSession } from '@/lib/admin/sessions'
 import { loadStats } from '@/lib/admin/stats'
 import { spanStatus } from '@/lib/challenge-session'
 import { cn } from '@/lib/cn'
 import { labelOf, modeById } from '@/modes'
+import { CHALLENGES } from '@/modes/challenges/catalog'
 
 // The admin door, which is a crossroads rather than a screen.
 //
@@ -44,7 +49,13 @@ import { labelOf, modeById } from '@/modes'
 //
 // This file keeps its name and its export so `app/(tabs)/index.tsx` is untouched: what
 // opens ADMIN has no business knowing the screen behind it grew a fork.
-type Section = 'hub' | 'access' | 'sessions' | 'stats' | 'messages'
+//
+// CHALLENGES LAB is the one tile that is not a section: it opens the dev screen's list of
+// every challenge, which is its own overlay at the app root and so is handed up as
+// `onOpenLab` rather than drawn here. Behind `challengeLab`, the key that screen already
+// answers to, so a person with `admin` but not that key is not shown a door that would
+// open on nothing.
+type Section = 'hub' | 'access' | 'sessions' | 'stats' | 'messages' | 'knowledge'
 
 const TITLE = msg`ADMIN`
 
@@ -56,6 +67,17 @@ type Notes = {
   sessions: ReactNode
   stats: ReactNode
 }
+
+// The hub's tiles two to a row, in the order they were listed.
+const pairs = <T,>(items: readonly T[]): T[][] =>
+  items.reduce<T[][]>((rows, item, index) => {
+    if (index % 2 === 0) rows.push([item])
+    else rows[rows.length - 1]?.push(item)
+    return rows
+  }, [])
+
+// How many challenges the lab can deal. Every one ever written, whatever its window.
+const challengeCount = CHALLENGES.length
 
 // One tile of the hub: a square, a name, and what is behind it.
 //
@@ -71,16 +93,21 @@ type Notes = {
 // key. What the room it gave back went to is the type: the name is the primary button's
 // own role and the figures under it are a size nobody has to lean in for, which is the
 // whole point of a tile that reports rather than merely opens.
+//
+// An icon over the name, in the muted ink, lighter than the name under it: a
+// shape to find a door by before the word is read, and still no hue to learn.
 function Tile({
+  icon,
   label,
   note,
-  dot = false,
+  unread = 0,
   onPress,
 }: {
+  icon: ComponentProps<typeof Ionicons>['name']
   label: ReactNode
   note: ReactNode
-  // There is something behind this that nobody has looked at.
-  dot?: boolean
+  // How many things behind this nobody has looked at. Nought draws no badge.
+  unread?: number
   onPress: () => void
 }) {
   return (
@@ -92,7 +119,11 @@ function Tile({
       // on.
       className="relative aspect-square flex-1 justify-between rounded-2xl bg-card p-3"
     >
-      <View className="flex-row items-start justify-between">
+      <View className="gap-2">
+        <View className="flex-row items-start justify-between">
+          <Ionicons name={icon} size={22} color={MUTED_INK} />
+          {unread > 0 && <UnreadDot count={unread} />}
+        </View>
         {/* `cardTitleSm` — the role for a card title where the card is a row rather than
             the whole screen, which is exactly what a tile is, and the largest role that
             fits. The ceiling is set by one word on one phone: CHALLENGES is ten
@@ -102,31 +133,45 @@ function Tile({
         <Text selectable={false} className={cn(TYPE.cardTitleSm, 'text-primary')}>
           {label}
         </Text>
-        {dot && <UnreadDot />}
       </View>
       <View>{note}</View>
     </TrackedPressable>
   )
 }
 
-// A tile's second line, in the one role the four of them share.
+// What a tile says under its name, one item to a line, in the one role the tiles share.
 //
 // `prose` rather than a label or a hint role, and it is the right one for what these
-// lines actually are: sentences with figures in them, two lines long, which is what prose
-// carries a leading for. The label roles are for naming a figure beside it — they go
-// small because something else on the row is the content. Here the line *is* the content:
-// it is the reason to open the tile, or the reason not to.
-function Note({ children }: { children: ReactNode }) {
+// lines actually are: short phrases with figures in them, which is what prose carries a
+// leading for. The label roles are for naming a figure beside it — they go small because
+// something else on the row is the content. Here the line *is* the content: it is the
+// reason to open the tile, or the reason not to.
+//
+// **A line per item rather than items joined by dots.** Three counts strung along one
+// line with `·` between them wrapped wherever the tile's width happened to fall, so the
+// second line began mid-item and a figure was parted from its word. One to a line, each
+// held to one line, keeps every count beside the word it counts.
+function Note({ lines }: { lines: readonly ReactNode[] }) {
   return (
-    <Text selectable={false} numberOfLines={2} className={cn(TYPE.prose, 'text-dim')}>
-      {children}
-    </Text>
+    <View>
+      {lines.map((line, index) => (
+        <Text
+          key={index}
+          selectable={false}
+          numberOfLines={1}
+          className={cn(TYPE.prose, 'text-dim')}
+        >
+          {line}
+        </Text>
+      ))}
+    </View>
   )
 }
 
 export function AdminOverlay({
   viewerId,
   onPreview,
+  onOpenLab,
   onClose,
 }: {
   // Who is reading, handed through to the people list so it can say which row is theirs.
@@ -135,11 +180,15 @@ export function AdminOverlay({
   // screen down — the caller does both, because the set a preview installs is the one the
   // link back here is drawn from.
   onPreview: (role: string | null, label: string | null) => void
+  // Open the challenge lab. Up to the app root, which owns that overlay and brings this
+  // screen back when the lab is closed.
+  onOpenLab: () => void
   onClose: () => void
 }) {
   const { t } = useLingui()
+  const showLab = useFlag('challengeLab')
   const [section, setSection] = useState<Section>('hub')
-  // Bumped when the messages screen writes, so the dot beside MESSAGES — and the figure
+  // Bumped when the messages screen writes, so the badge on MESSAGES — and the figure
   // under it — answer for what the pile holds now rather than for what it held when this
   // overlay opened.
   const [messagesEpoch, setMessagesEpoch] = useState(0)
@@ -184,10 +233,19 @@ export function AdminOverlay({
       setLive(running ?? null)
       setNotes({
         features: (
-          <Note>
-            {counted.public} <Trans>public</Trans> · {counted.private}{' '}
-            <Trans>private</Trans> · {counted.hidden} <Trans>hidden</Trans>
-          </Note>
+          <Note
+            lines={[
+              <>
+                {counted.public} <Trans>public</Trans>
+              </>,
+              <>
+                {counted.private} <Trans>private</Trans>
+              </>,
+              <>
+                {counted.hidden} <Trans>hidden</Trans>
+              </>,
+            ]}
+          />
         ),
         // Two shapes of the same line, decided here rather than in the tile: with a
         // session on, the clock above it has already said what is happening and this is
@@ -195,20 +253,38 @@ export function AdminOverlay({
         // says both halves.
         sessions:
           running === undefined ? (
-            <Note>
-              <Trans>Nothing on now</Trans> · {planned} <Trans>planned</Trans>
-            </Note>
+            <Note
+              lines={[
+                <Trans key="now">Nothing on now</Trans>,
+                <>
+                  {planned} <Trans>planned</Trans>
+                </>,
+              ]}
+            />
           ) : (
-            <Note>
-              {planned} <Trans>planned</Trans>
-            </Note>
+            <Note
+              lines={[
+                <>
+                  {planned} <Trans>planned</Trans>
+                </>,
+              ]}
+            />
           ),
         stats:
           stats.stats === null ? null : (
-            <Note>
-              {stats.stats.runs.runs} <Trans>runs</Trans> · {stats.stats.runs.players}{' '}
-              <Trans>played</Trans> · {stats.stats.players.joined} <Trans>joined</Trans>
-            </Note>
+            <Note
+              lines={[
+                <>
+                  {stats.stats.runs.runs} <Trans>runs</Trans>
+                </>,
+                <>
+                  {stats.stats.runs.players} <Trans>played</Trans>
+                </>,
+                <>
+                  {stats.stats.players.joined} <Trans>joined</Trans>
+                </>,
+              ]}
+            />
           ),
       })
     })()
@@ -223,6 +299,7 @@ export function AdminOverlay({
   }
   if (section === 'sessions') return <AdminSessions onBack={toHub} />
   if (section === 'stats') return <AdminStats messagesOwed={owed} onBack={toHub} />
+  if (section === 'knowledge') return <AdminKnowledge onBack={toHub} />
   if (section === 'messages') {
     return (
       <AdminMessages
@@ -241,26 +318,45 @@ export function AdminOverlay({
         <PrimaryButton id="admin.done" onPress={onClose} label={<Trans>DONE</Trans>} />
       }
     >
-      <View className="gap-2.5">
-        <View className="flex-row gap-2.5">
-          <Tile
-            label={<Trans>FEATURES</Trans>}
-            note={notes.features}
-            onPress={() => {
-              setSection('access')
-            }}
-          />
-          <Tile
-            label={<Trans>CHALLENGES</Trans>}
-            note={
-              // What is on now, and what is booked. The clock is the point of this tile:
-              // a session's window is the one thing on these screens that runs out while
-              // nobody is looking at it.
-              live === null ? (
-                notes.sessions
-              ) : (
-                <View>
-                  {/* The breathing red dot the sessions list puts beside LIVE, here
+      {/* Six doors in three rows, and so a scroller: on the smallest phones the third
+          row sits under the fold, which is the price of every door being a square with
+          room for its figures. Paired in order — the two challenge doors share a row —
+          and a lone last tile keeps its square by sharing the row with an empty one. */}
+      <ScrollView showsVerticalScrollIndicator={false}>
+        <View className="gap-2.5">
+          {pairs(
+            [
+              <Tile
+                key="features"
+                icon="toggle-outline"
+                label={<Trans>FEATURES</Trans>}
+                note={notes.features}
+                onPress={() => {
+                  setSection('access')
+                }}
+              />,
+              <Tile
+                key="stats"
+                icon="stats-chart-outline"
+                label={<Trans>ANALYTICS</Trans>}
+                note={notes.stats}
+                onPress={() => {
+                  setSection('stats')
+                }}
+              />,
+              <Tile
+                key="sessions"
+                icon="calendar-outline"
+                label={<Trans>CHALLENGES PLANNER</Trans>}
+                note={
+                  // What is on now, and what is booked. The clock is the point of this tile:
+                  // a session's window is the one thing on these screens that runs out while
+                  // nobody is looking at it.
+                  live === null ? (
+                    notes.sessions
+                  ) : (
+                    <View>
+                      {/* The breathing red dot the sessions list puts beside LIVE, here
                       ahead of the name for the same reason: this tile is the only one
                       on the hub reporting something that is *happening* rather than
                       counted, and the clock under it says how long for but not that it
@@ -271,59 +367,94 @@ export function AdminOverlay({
                       `flex-1` on the name so it is the part that truncates: the tile is
                       half a phone wide, and without it a long challenge name pushes the
                       dot off its own row. */}
-                  <View className="flex-row items-center gap-1.5">
-                    <LiveDot />
-                    <Text
-                      selectable={false}
-                      numberOfLines={1}
-                      className={cn(TYPE.cardTitleSm, 'flex-1 text-primary')}
-                    >
-                      {modeById(live.modeId) === null
-                        ? live.modeId
-                        : t(labelOf(live.modeId))}
-                    </Text>
-                  </View>
-                  <View className="flex-row items-center gap-1">
-                    <ChallengeCountdown until={live.closesAt} className="text-dim" />
-                    <Text selectable={false} className={cn(TYPE.prose, 'text-dim')}>
-                      <Trans>left</Trans>
-                    </Text>
-                  </View>
-                  {notes.sessions}
-                </View>
-              )
-            }
-            onPress={() => {
-              setSection('sessions')
-            }}
-          />
+                      <View className="flex-row items-center gap-1.5">
+                        <LiveDot />
+                        <Text
+                          selectable={false}
+                          numberOfLines={1}
+                          className={cn(TYPE.cardTitleSm, 'flex-1 text-primary')}
+                        >
+                          {modeById(live.modeId) === null
+                            ? live.modeId
+                            : t(labelOf(live.modeId))}
+                        </Text>
+                      </View>
+                      <View className="flex-row items-center gap-1">
+                        <ChallengeCountdown until={live.closesAt} className="text-dim" />
+                        <Text selectable={false} className={cn(TYPE.prose, 'text-dim')}>
+                          <Trans>left</Trans>
+                        </Text>
+                      </View>
+                      {notes.sessions}
+                    </View>
+                  )
+                }
+                onPress={() => {
+                  setSection('sessions')
+                }}
+              />,
+              showLab ? (
+                <Tile
+                  key="lab"
+                  icon="flask-outline"
+                  label={<Trans>CHALLENGES{'\n'}LAB</Trans>}
+                  note={
+                    <Note
+                      lines={[
+                        <Trans key="written">{challengeCount} to play</Trans>,
+                        <Trans key="window">Any window, no board</Trans>,
+                      ]}
+                    />
+                  }
+                  onPress={onOpenLab}
+                />
+              ) : null,
+              <Tile
+                key="messages"
+                icon="chatbubbles-outline"
+                label={<Trans>MESSAGES</Trans>}
+                unread={owed}
+                note={
+                  <Note
+                    lines={[
+                      owed === 0 ? (
+                        <Trans key="all">All answered</Trans>
+                      ) : (
+                        <Trans key="owed">{owed} owed an answer</Trans>
+                      ),
+                    ]}
+                  />
+                }
+                onPress={() => {
+                  setSection('messages')
+                }}
+              />,
+              <Tile
+                key="knowledge"
+                icon="book-outline"
+                label={<Trans>KNOWLEDGE</Trans>}
+                note={
+                  <Note
+                    lines={[
+                      <Trans key="fortune">Fortune</Trans>,
+                      <Trans key="secrets">Secrets</Trans>,
+                      <Trans key="mechanics">Mechanics</Trans>,
+                    ]}
+                  />
+                }
+                onPress={() => {
+                  setSection('knowledge')
+                }}
+              />,
+            ].filter((tile) => tile !== null),
+          ).map((row, index) => (
+            <View key={index} className="flex-row gap-2.5">
+              {row}
+              {row.length === 1 && <View className="flex-1" />}
+            </View>
+          ))}
         </View>
-        <View className="flex-row gap-2.5">
-          <Tile
-            label={<Trans>ANALYTICS</Trans>}
-            note={notes.stats}
-            onPress={() => {
-              setSection('stats')
-            }}
-          />
-          <Tile
-            label={<Trans>MESSAGES</Trans>}
-            dot={owed > 0}
-            note={
-              <Note>
-                {owed === 0 ? (
-                  <Trans>All answered</Trans>
-                ) : (
-                  <Trans>{owed} owed an answer</Trans>
-                )}
-              </Note>
-            }
-            onPress={() => {
-              setSection('messages')
-            }}
-          />
-        </View>
-      </View>
+      </ScrollView>
     </AdminScreen>
   )
 }
