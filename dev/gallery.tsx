@@ -1,5 +1,5 @@
 import { i18n } from '@lingui/core'
-import { isNotNull } from 'narrowland'
+import { isNonEmptyArray, isNotNull } from 'narrowland'
 import { useState } from 'react'
 import { Pressable, ScrollView, Text, View } from 'react-native'
 
@@ -52,6 +52,7 @@ import { requestAnnouncements } from '@/hooks/use-announcement-request'
 import { ChampionsProvider } from '@/hooks/use-champions'
 import { FlagsProvider } from '@/hooks/use-flags'
 import type { LostMedalNews } from '@/hooks/use-lost-medals'
+import { togglePhoenix } from '@/hooks/use-phoenix-request'
 import { requestSummary } from '@/hooks/use-summary-request'
 import { requestTutorial } from '@/hooks/use-tutorial-request'
 import { EMPTY_STORE } from '@/lib/achievement-store'
@@ -65,8 +66,8 @@ import {
 import { emptyCareer } from '@/lib/career'
 import type { SessionCard } from '@/lib/challenge-session'
 import {
-  championMark,
   NO_CHAMPIONS,
+  playerMarks,
   type Champions,
   type RecordScreen,
 } from '@/lib/champions'
@@ -315,6 +316,8 @@ const gameOver = (
     <GameOverOverlay
       // Looked at, not played — no session behind it, and so no window to have shut.
       sessionId={null}
+      sessionClosesAt={null}
+      sessionBoard={null}
       windowShut={false}
       gameMode={mode}
       difficulty={difficulty}
@@ -361,6 +364,8 @@ const paused = (mode: Mode, tutorial = false): Variant => ({
     <PausedOverlay
       gameMode={mode}
       tutorial={tutorial}
+      sessionClosesAt={null}
+      sessionBoard={null}
       difficulty="hard"
       userId="dev"
       nickname="DONDA"
@@ -657,11 +662,11 @@ const profile = (
   // somebody else's; like the intro, the card reads this through a context.
   champions: Champions = NO_CHAMPIONS,
 ): Variant => {
-  const mark = championMark(SEED_PLAYERS[name], champions)
-  const worn = mark === null ? '' : `${mark} `
+  const marks = playerMarks(SEED_PLAYERS[name], champions)
+  const worn = isNonEmptyArray(marks) ? `${marks.join(' ')} ` : ''
   const who = mine ? `${name} · ME` : name
   return {
-    key: `profile-${name}${mine ? '-me' : ''}${mark === null ? '' : '-marked'}`,
+    key: `profile-${name}${mine ? '-me' : ''}${isNonEmptyArray(marks) ? '-marked' : ''}`,
     label: `${worn}${who}`,
     render: (close) => (
       <ChampionsProvider value={champions}>
@@ -858,10 +863,50 @@ const SCREENS: Section[] = [
     // over each other.
     title: 'INTRO · MARK',
     items: [
-      intro('OWL', [], MEDALS_KEPT, { accuracy: 'dev', speed: null }),
-      intro('EAGLE', [], MEDALS_KEPT, { accuracy: null, speed: 'dev' }),
-      // Both boards at once, which is the crown.
-      intro('CROWN', [], MEDALS_KEPT, { accuracy: 'dev', speed: 'dev' }),
+      // One bird each, which is every standing on its own.
+      intro('OWL', [], MEDALS_KEPT, { accuracy: 'dev', speed: null, challenge: null }),
+      intro('EAGLE', [], MEDALS_KEPT, { accuracy: null, speed: 'dev', challenge: null }),
+      intro('PHOENIX', [], MEDALS_KEPT, {
+        accuracy: null,
+        speed: null,
+        challenge: 'dev',
+      }),
+      // Two of the three, which is the case `playerMarks` returns a list for — and the
+      // one that has to be looked at, since it is where the space between two marks
+      // either reads or does not. Both pairings, because the second has the phoenix in
+      // it and the phoenix is a ZWJ sequence that falls back to two glyphs on an older
+      // OS: next to a bird, that fallback is the thing worth catching.
+      intro('OWL + EAGLE', [], MEDALS_KEPT, {
+        accuracy: 'dev',
+        speed: 'dev',
+        challenge: null,
+      }),
+      intro('EAGLE + PHOENIX', [], MEDALS_KEPT, {
+        accuracy: null,
+        speed: 'dev',
+        challenge: 'dev',
+      }),
+      // All three, which is the crown — and the birds give way to it rather than standing
+      // beside it, so this draws one mark and not four.
+      intro('CROWN', [], MEDALS_KEPT, {
+        accuracy: 'dev',
+        speed: 'dev',
+        challenge: 'dev',
+      }),
+      // The last is not a screen of its own — it is the app's. The six above are built
+      // from fixtures and answer "does the mark look right over the title"; this one pins
+      // the phoenix on the real signed-in player, so it shows up everywhere their name
+      // does: the leaderboard, the score strip, a room, their profile, the medal lines.
+      // That spread is what a mocked intro cannot show, and it is where the singular mark
+      // was still hiding on four surfaces.
+      //
+      // A toggle — press it again to take it off. Nothing is published and no session
+      // changes hands, so a reload puts the real winner back either way.
+      {
+        key: 'mark-phoenix-live',
+        label: 'PIN IT ON ME',
+        run: togglePhoenix,
+      } satisfies Action,
     ],
   },
   {
@@ -947,8 +992,13 @@ const SCREENS: Section[] = [
       profile('ACE_9', true, {
         accuracy: SEED_PLAYERS.ACE_9,
         speed: SEED_PLAYERS.ACE_9,
+        challenge: null,
       }),
-      profile('DOMINO', false, { accuracy: SEED_PLAYERS.DOMINO, speed: null }),
+      profile('DOMINO', false, {
+        accuracy: SEED_PLAYERS.DOMINO,
+        speed: null,
+        challenge: SEED_PLAYERS.DOMINO,
+      }),
       profile('DOMINO'),
       profile('VORTEX'),
       profile('BLAZE'),

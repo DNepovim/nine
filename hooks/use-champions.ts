@@ -7,6 +7,7 @@ import {
   useState,
 } from 'react'
 
+import { usePhoenixWorn } from '@/hooks/use-phoenix-request'
 import { subscribeBoards } from '@/lib/board-live'
 import {
   mergeChampions,
@@ -15,6 +16,7 @@ import {
   type Champions,
 } from '@/lib/champions'
 import { fetchTop5, leaderOf } from '@/lib/leaderboard'
+import { loadLastSessionWinner } from '@/lib/session-board'
 import { SCORED_MODES } from '@/modes'
 
 // A run touches both of these boards at most once, and two requests answer for both.
@@ -42,25 +44,39 @@ const COALESCE_MS = 800
 // no such gap — the event *is* the write landing — and it covers the two things the
 // game-over hook never could: a rival taking a board while we watch, and a
 // reconnection after time asleep.
-export function useChampions(): Champions {
+export function useChampions(userId: string | null): Champions {
   const [champions, setChampions] = useState<Champions>(NO_CHAMPIONS)
   // Bumped on every load and unmount, so a slow response cannot land after a newer one.
   const requestIdRef = useRef(0)
 
   const load = useCallback(async () => {
     const requestId = ++requestIdRef.current
-    const reads = await Promise.all(
-      SCORED_MODES.map(async (mode): Promise<ChampionRead> => {
-        const { rows, error } = await fetchTop5(mode, 'extreme', 'forever')
-        // A board we could not read says nothing about who holds it. Reporting that as
-        // "nobody" would take the mark off a champion over one dropped request.
-        if (error !== null) return undefined
-        return leaderOf(rows)?.userId ?? null
-      }),
-    )
+    // All three marks in one round. The session read rides along rather than taking a
+    // hook of its own: it answers the same question the two boards do — who is standing
+    // where, right now — and every surface that draws a name wants all three together.
+    const [reads, lastWinner] = await Promise.all([
+      Promise.all(
+        SCORED_MODES.map(async (mode): Promise<ChampionRead> => {
+          const { rows, error } = await fetchTop5(mode, 'extreme', 'forever')
+          // A board we could not read says nothing about who holds it. Reporting that as
+          // "nobody" would take the mark off a champion over one dropped request.
+          if (error !== null) return undefined
+          return leaderOf(rows)?.userId ?? null
+        }),
+      ),
+      loadLastSessionWinner(),
+    ])
     if (requestIdRef.current !== requestId) return
     const [accuracy, speed] = reads
-    setChampions((prev) => mergeChampions(prev, { accuracy, speed }))
+    setChampions((prev) =>
+      mergeChampions(prev, {
+        accuracy,
+        speed,
+        // The same distinction the boards draw: a read that failed is not an answer, so
+        // the phoenix stays where it was rather than coming off over one dropped request.
+        challenge: lastWinner.error === null ? lastWinner.userId : undefined,
+      }),
+    )
   }, [])
 
   useEffect(() => {
@@ -84,7 +100,16 @@ export function useChampions(): Champions {
     }
   }, [load])
 
-  return champions
+  // The dev sidebar's phoenix, laid over the server's answer.
+  //
+  // Here rather than at the provider, so the override reaches every surface the real
+  // mark does by the one route the real mark takes — a screen cannot be wearing a
+  // different set of marks from the row that opened it. Nothing is published and no
+  // session changes hands; a reload puts the real winner back. See `use-phoenix-request`,
+  // which nothing writes to in a production build.
+  const phoenixWorn = usePhoenixWorn()
+  if (!phoenixWorn || userId === null) return champions
+  return { ...champions, challenge: userId }
 }
 
 // Held once and read wherever a name is drawn — the board, the pause screen, a

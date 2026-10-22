@@ -195,7 +195,7 @@ type Context = {
   // reads `rampedTimeout`, which is the run's own difficulty and cannot be negotiated
   // with.
   playerClockMs: number
-  // This run is the tutorial — the one a first launch opens on. A **submode**: everything
+  // This run is the tutorial — the one a first launch offers. A **submode**: everything
   // else about it is Trainee, down to the colour, so `mode` stays `trainee` and every
   // rule that asks about the mode keeps the answer it already had. What it changes is a
   // `RulesPatch` in modes/definitions/tutorial.ts, laid over Trainee by `rulesOf`, so

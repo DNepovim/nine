@@ -2,6 +2,7 @@ import { isOneOf } from 'narrowland'
 import { type StyleProp, type ViewStyle } from 'react-native'
 import Animated, { type AnimatedStyle } from 'react-native-reanimated'
 
+import type { PeriodBoard } from '@/hooks/use-board'
 import { type DyingPhase } from '@/hooks/use-dying-sequence'
 import type { AchievementStore } from '@/lib/achievement-store'
 import type { AchievementFacts, Award } from '@/lib/achievements'
@@ -45,6 +46,8 @@ export function GameOverSequence({
   achievementStore,
   achievementFacts,
   sessionId,
+  sessionBoard,
+  sessionClosesAt,
   sessionRank,
   windowShut,
   onPlayAgain,
@@ -82,6 +85,10 @@ export function GameOverSequence({
   // Which session the run belonged to, if any — forwarded straight through to the
   // screen, which is what decides between a session board and a three-period one.
   sessionId: string | null
+  // That session's standings, or null while unread — passed straight through.
+  sessionBoard: PeriodBoard | null
+  // When that session's window shuts, or null. Passed straight through.
+  sessionClosesAt: number | null
   // Where the run came on its session's standings, for a challenge. Null for an ordinary
   // run and for a session whose board has not been read yet — the title falls back to
   // what the run itself was worth, which is what it did before sessions existed.
@@ -148,6 +155,8 @@ export function GameOverSequence({
           achievementStore={achievementStore}
           achievementFacts={achievementFacts}
           sessionId={sessionId}
+          sessionBoard={sessionBoard}
+          sessionClosesAt={sessionClosesAt}
           windowShut={windowShut}
           titleHidden={!revealed}
           onTitleLayout={onTitleLayout}

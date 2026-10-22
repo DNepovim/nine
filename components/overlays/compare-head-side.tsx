@@ -5,7 +5,7 @@ import { MedalLine } from '@/components/overlays/medal-line'
 import { TrackedPressable } from '@/components/tracked-pressable'
 import { TYPE } from '@/constants/typography'
 import { useOpenProfile } from '@/hooks/use-profile-modal'
-import type { ChampionMark } from '@/lib/champions'
+import type { PlayerMark } from '@/lib/champions'
 import { cn } from '@/lib/cn'
 import type { Medal } from '@/lib/medals'
 import { shortName } from '@/lib/short-name'
@@ -20,6 +20,10 @@ const HEAD_CHARS = 10
 // Big enough to read as a mark rather than as an emoji that got into the copy, and smaller
 // than the profile's 30 — there are two of them here, over names half the size.
 const MARK_SIZE = 26
+
+// Two marks in the box one was measured for. A notch down so the pair comes to about the
+// width a single mark and its margins already claimed, and well inside `MARK_BOX`'s height.
+const PAIRED_MARK_SIZE = 19
 
 // The race animal is set smaller than a champion's mark, and on purpose. A crown is a
 // standing the player carries off this card; an animal is this card's own remark about how
@@ -67,10 +71,11 @@ export function CompareHeadSide({
   // opened that.
   avgAccuracy,
   avgSpeed,
-  // Crown, owl or eagle, or null for the players who hold neither Extreme board — which is
-  // almost everybody. Drawn plainly here, without the bubble `TitleMark` opens: the profile
-  // card one step back explains this player's mark, and the intro explains the reader's own.
-  mark,
+  // Every standing this player wears — a crown, an owl or an eagle for the boards, a phoenix
+  // for the last challenge taken — and empty for almost everybody. Drawn plainly here,
+  // without the bubble `TitleMark` opens: the profile card one step back explains this
+  // player's marks, and the intro explains the reader's own.
+  marks,
   // What this side is in the race, for the players who hold no board and so wear no mark of
   // their own — which is almost all of them, and used to leave this box empty on both halves
   // of the card. Null where there is no race to draw: a player who holds a mark has one
@@ -89,16 +94,23 @@ export function CompareHeadSide({
   nickname: string
   avgAccuracy: number | null
   avgSpeed: number | null
-  mark: ChampionMark | null
+  marks: readonly PlayerMark[]
   raceMark: string | null
   medals: readonly Medal[]
 }) {
   const openProfile = useOpenProfile()
-  // The standing wins the box whenever there is one: a crown says something true about this
+  // A standing wins the box whenever there is one: a crown says something true about this
   // player wherever their name appears, and the animal only says something about today's
   // table.
-  const glyph = mark ?? raceMark
-  const size = mark === null ? RACE_SIZE : MARK_SIZE
+  //
+  // Two marks share the box rather than widening it. The box's height is what
+  // `HEAD_NAME_LINE` is measured from, so a second glyph must not change it — they are set
+  // a size down instead, which keeps the pair inside the same band as one mark alone and
+  // leaves the VS between the two names where it was placed.
+  const standing = marks.join(' ')
+  const glyph = standing === '' ? raceMark : standing
+  const size =
+    standing === '' ? RACE_SIZE : marks.length > 1 ? PAIRED_MARK_SIZE : MARK_SIZE
   return (
     <View className="flex-1 items-center gap-0.5">
       <View className="justify-center" style={{ height: MARK_BOX }}>

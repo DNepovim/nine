@@ -31,7 +31,7 @@ import { useOpenProfile } from '@/hooks/use-profile-modal'
 import { useSessionCard } from '@/hooks/use-session-card'
 import { useViewport } from '@/hooks/use-viewport'
 import type { SessionCard } from '@/lib/challenge-session'
-import { championMark } from '@/lib/champions'
+import { playerMarks } from '@/lib/champions'
 import { cn } from '@/lib/cn'
 import { boardName, SHARE_URL, shouldBoast } from '@/lib/invite-message'
 import type { Medal } from '@/lib/medals'
@@ -200,11 +200,11 @@ export function MenuOverlay({
   onOpenAdmin: () => void
 }) {
   const { t } = useLingui()
-  // Same mark the leaderboard, the pause screen and a room wear beside this
+  // The same marks the leaderboard, the pause screen and a room wear beside this
   // player's name — worn here over the title itself, since the title is this
   // player's too.
   const champions = useChampionsContext()
-  const mark = championMark(userId, champions)
+  const marks = playerMarks(userId, champions)
   // Just the player's own, for the greeting above the title — the one name on this
   // screen with no board row behind it to carry its averages.
   const myFactors = usePlayerFactors(userId === null ? EMPTY_IDS : [userId])
@@ -327,12 +327,13 @@ export function MenuOverlay({
       <View className="w-full items-center">
         {/* Top section */}
         <View className="w-full items-center">
-          {/* The mark this player wears everywhere their name does, crowning the whole
-              block rather than sitting between the greeting and the title — it is the
-              rarest thing on the screen, and the top is where the eye starts. Silent for
-              everyone who hasn't taken an Extreme all-time board, and tappable for
-              anyone who has yet to find out what the thing over their name is. */}
-          {mark !== null && <TitleMark mark={mark} mine float className="mb-1" />}
+          {/* The marks this player wears everywhere their name does, crowning the whole
+              block rather than sitting between the greeting and the title — they are the
+              rarest things on the screen, and the top is where the eye starts. Silent for
+              everyone holding neither an Extreme all-time board nor the last challenge,
+              and tappable for anyone yet to find out what the things over their name
+              are. */}
+          <TitleMark marks={marks} mine float className="mb-1" />
 
           {/* Greeting — only shown when nickname is set. The player's own name is
               drawn the way their name is drawn everywhere else, in the gradient their

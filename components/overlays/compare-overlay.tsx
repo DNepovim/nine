@@ -16,7 +16,7 @@ import { TYPE } from '@/constants/typography'
 import { useChampionsContext } from '@/hooks/use-champions'
 import { usePlayerProfile } from '@/hooks/use-player-profile'
 import { useViewport } from '@/hooks/use-viewport'
-import { championMark } from '@/lib/champions'
+import { playerMarks } from '@/lib/champions'
 import { cn } from '@/lib/cn'
 import { boardTallyOf, compareProfiles, tallyOf, verdictOf } from '@/lib/compare'
 import { verdictLine } from '@/lib/compare-lines'
@@ -233,13 +233,13 @@ export function CompareOverlay({
                         myNickname={myName}
                         myAvgAccuracy={myFactors.avgAccuracy}
                         myAvgSpeed={myFactors.avgSpeed}
-                        myMark={championMark(viewerId, champions)}
+                        myMarks={playerMarks(viewerId, champions)}
                         myMedals={myProfile.medals}
                         theirId={theirId}
                         theirNickname={theirName}
                         theirAvgAccuracy={theirFactors.avgAccuracy}
                         theirAvgSpeed={theirFactors.avgSpeed}
-                        theirMark={championMark(theirId, champions)}
+                        theirMarks={playerMarks(theirId, champions)}
                         theirMedals={theirProfile.medals}
                         verdict={verdict}
                       />

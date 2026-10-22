@@ -3,7 +3,8 @@ import { useEffect, useState } from 'react'
 import { ScrollView, Text, TextInput, View } from 'react-native'
 
 import { AdminScreen } from '@/components/overlays/admin-screen'
-import { AdminChip, AdminTable, AdminTick } from '@/components/overlays/admin-table'
+import { AdminTable, AdminTick } from '@/components/overlays/admin-table'
+import { VisibilityChip } from '@/components/overlays/admin-visibility-picker'
 import { PrimaryButton } from '@/components/primary-button'
 import { TYPE } from '@/constants/typography'
 import { listFeatures, type AdminFeature } from '@/lib/admin/features'
@@ -158,10 +159,7 @@ export function AdminRole({
                 <AdminTick on={on} />,
                 feature.key,
                 feature.visibility === 'private' ? null : (
-                  <AdminChip
-                    label={feature.visibility === 'hidden' ? 'HIDDEN' : 'PUBLIC'}
-                    tone={feature.visibility === 'hidden' ? 'quiet' : 'filled'}
-                  />
+                  <VisibilityChip visibility={feature.visibility} />
                 ),
               ],
             }

@@ -113,29 +113,63 @@ function sessionBoardOf(
   }
 }
 
-// One session's standings, fetched and shaped. What the modal and the game-over screen
-// both call; `null` while it is still in flight.
-export function useSessionBoard(sessionId: string | null, userId: string | null) {
+// One session's standings, fetched and shaped. What the modal and the game screen both
+// call; `null` while the first read for a session is in flight.
+//
+// `refresh` reads the same session again without blanking what is drawn: the score bar,
+// the pause screen and game over all draw off this, and a strip or a table that vanished
+// for the length of a round trip every time the run paused read as a board that had gone
+// missing. Only a different session — or a different player — starts from nothing.
+//
+// `again` is any value whose change should re-read — the game screen passes whether the
+// run is paused, so the pause screen opens on standings as they are now.
+export function useSessionBoard(
+  sessionId: string | null,
+  userId: string | null,
+  again: unknown = null,
+) {
   const [board, setBoard] = useState<PeriodBoard | null>(null)
-
-  // Dropped the same way `useOpenSessions` drops its read. Open a challenge, dismiss it,
-  // and finish a run in another session before the first request lands, and without this
-  // the stale answer overwrites the newer standings.
-  const stale = useRef(false)
+  const [asked, setAsked] = useState(0)
+  // Whose standings `board` holds, so a re-read of the same ones keeps them on screen.
+  const heldFor = useRef<string | null>(null)
 
   useEffect(() => {
-    if (sessionId === null) return
-    stale.current = false
-    setBoard(null)
+    // No session, no standings: a board left over from the last challenge run would
+    // otherwise be drawn on the next ordinary run's pause screen.
+    if (sessionId === null) {
+      heldFor.current = null
+      setBoard(null)
+      return
+    }
+    // Per read rather than one ref shared by all of them. Open a challenge, dismiss it,
+    // and finish a run in another session before the first request lands, and a shared
+    // flag — reset by the newer read — let the stale answer overwrite the newer standings.
+    const read = { stale: false }
+    const key = `${sessionId}|${userId ?? 'anon'}`
+    if (heldFor.current !== key) {
+      heldFor.current = key
+      setBoard(null)
+    }
     void (async () => {
       const res = await loadSessionBoard(sessionId)
-      if (stale.current) return
-      setBoard(sessionBoardOf(res.rows, userId, res.error))
+      if (read.stale) return
+      // A failed re-read keeps the standings already drawn — the same call `useBoard`
+      // makes, for the same reason: a board that failed to load and one that emptied look
+      // alike to the player, and blanking it would be the worse lie.
+      setBoard((prev) =>
+        res.error !== null && prev !== null
+          ? prev
+          : sessionBoardOf(res.rows, userId, res.error),
+      )
     })()
     return () => {
-      stale.current = true
+      read.stale = true
     }
-  }, [sessionId, userId])
+  }, [sessionId, userId, asked, again])
 
-  return { board }
+  const refresh = useCallback(() => {
+    setAsked((n) => n + 1)
+  }, [])
+
+  return { board, refresh }
 }

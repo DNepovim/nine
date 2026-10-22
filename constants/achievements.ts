@@ -510,7 +510,12 @@ export const ACHIEVEMENTS = {
   },
   winner: {
     group: 'friends',
-    emblem: '🏆',
+    // A medal rather than the trophy it wore, and the trophy is the reason: that one is
+    // the **achievements feature's** own mark — the dialog's icon and the placeholder on
+    // the intro before anything is earned — so one achievement inside the set was also
+    // wearing the badge of the set. Not ᾔ7 either, which is a podium place on a board
+    // and a standing that can be taken back tomorrow; this is kept.
+    emblem: '🏅',
     title: msg`WINNER`,
     hint: msg`Win a run in a room.`,
   },

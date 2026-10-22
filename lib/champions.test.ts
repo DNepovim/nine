@@ -1,9 +1,10 @@
 import { describe, expect, it } from 'vitest'
 
 import {
-  championMark,
+  holdsBothBoards,
   mergeChampions,
   NO_CHAMPIONS,
+  playerMarks,
   recordScreen,
   type Champions,
 } from './champions'
@@ -16,24 +17,68 @@ const holding = (over: Partial<Champions> = {}): Champions => ({
   ...over,
 })
 
-describe('championMark', () => {
-  it('crowns a player holding both Extreme boards', () => {
-    expect(championMark(ME, holding({ accuracy: ME, speed: ME }))).toBe('👑')
+describe('playerMarks', () => {
+  it('gives each board its own bird', () => {
+    expect(playerMarks(ME, holding({ accuracy: ME }))).toEqual(['🦉'])
+    expect(playerMarks(ME, holding({ speed: ME }))).toEqual(['🦅'])
   })
 
-  it('gives each mode its own bird', () => {
-    expect(championMark(ME, holding({ accuracy: ME }))).toBe('🦉')
-    expect(championMark(ME, holding({ speed: ME }))).toBe('🦅')
+  it('gives the last challenge a phoenix', () => {
+    expect(playerMarks(ME, holding({ challenge: ME }))).toEqual(['🐦‍🔥'])
   })
 
-  it('marks nobody else', () => {
-    expect(championMark(ME, holding({ accuracy: THEM, speed: THEM }))).toBeNull()
-    expect(championMark(ME, NO_CHAMPIONS)).toBeNull()
+  it('wears two birds at once', () => {
+    // The whole reason this returns a list: the three standings are independent, and a
+    // single mark meant whichever was tested first silently won.
+    expect(playerMarks(ME, holding({ accuracy: ME, speed: ME }))).toEqual(['🦉', '🦅'])
+    expect(playerMarks(ME, holding({ speed: ME, challenge: ME }))).toEqual(['🦅', '🐦‍🔥'])
   })
 
-  it('marks nothing without a player to ask about', () => {
-    // A signed-out device must not wear someone else's crown.
-    expect(championMark(null, holding({ accuracy: null }))).toBeNull()
+  it('draws the birds in standing order', () => {
+    // Owl, eagle, phoenix — the two boards, oldest first, then the session.
+    expect(playerMarks(ME, holding({ challenge: ME, accuracy: ME }))).toEqual([
+      '🦉',
+      '🐦‍🔥',
+    ])
+  })
+
+  it('collapses all three to the crown', () => {
+    // The crown replaces the birds rather than joining them, which is what makes it mean
+    // more than the three it is made of.
+    expect(playerMarks(ME, holding({ accuracy: ME, speed: ME, challenge: ME }))).toEqual([
+      '👑',
+    ])
+  })
+
+  it('wears nothing for a player holding nothing', () => {
+    expect(playerMarks(ME, NO_CHAMPIONS)).toEqual([])
+    expect(playerMarks(ME, holding({ accuracy: THEM, challenge: THEM }))).toEqual([])
+  })
+
+  it('wears nothing without a player to ask about', () => {
+    // A signed-out device must not wear the last winner's phoenix either.
+    expect(playerMarks(null, holding({ challenge: ME }))).toEqual([])
+  })
+})
+
+describe('holdsBothBoards', () => {
+  it('is the two Extreme boards, and not the crown', () => {
+    // UNTOUCHABLE's shipped copy says both boards, so this deliberately does not ask
+    // about the phoenix the way `playerMarks` does.
+    expect(holdsBothBoards(ME, holding({ accuracy: ME, speed: ME }))).toBe(true)
+    expect(
+      holdsBothBoards(ME, holding({ accuracy: ME, speed: ME, challenge: THEM })),
+    ).toBe(true)
+  })
+
+  it('is false on one board, or none', () => {
+    expect(holdsBothBoards(ME, holding({ accuracy: ME }))).toBe(false)
+    expect(holdsBothBoards(ME, holding({ challenge: ME }))).toBe(false)
+    expect(holdsBothBoards(ME, NO_CHAMPIONS)).toBe(false)
+  })
+
+  it('is false without a player to ask about', () => {
+    expect(holdsBothBoards(null, holding({ accuracy: null, speed: null }))).toBe(false)
   })
 })
 

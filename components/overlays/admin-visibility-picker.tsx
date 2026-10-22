@@ -2,9 +2,10 @@ import { Trans } from '@lingui/react/macro'
 import { useState, type ReactNode } from 'react'
 import { Text, View } from 'react-native'
 
-import { AdminDialog } from '@/components/overlays/admin-dialog'
+import { AdminChip } from '@/components/overlays/admin-table'
 import { PrimaryButton } from '@/components/primary-button'
 import { TrackedPressable } from '@/components/tracked-pressable'
+import { VISIBILITY_INK } from '@/constants/colors'
 import { TYPE } from '@/constants/typography'
 import { cn } from '@/lib/cn'
 import type { Visibility } from '@/lib/features'
@@ -18,17 +19,18 @@ import type { Visibility } from '@/lib/features'
 // better of it, and the position it landed on was a 9px word in a row of twenty. Making a
 // feature public is in front of every player by the time anybody notices the row.
 //
-// So the row keeps a button and the button opens this: the three positions as three
-// targets a thumb cannot miss, each with the sentence that says who it reaches, and a
-// CONFIRM under them. Nothing is written until that press — closing the dialog is how a
-// reader changes their mind, and the scrim and the 5-dot both do it.
+// So it is three targets a thumb cannot miss, each with the sentence that says who it
+// reaches, and a CONFIRM under them. Nothing is written until that press. It was a dialog
+// raised from the row, and is now drawn on the feature's own screen, where the people it
+// reaches are listed under it — the answer to *who will this move* is on the same page as
+// the switch that moves them.
 //
-// The three names stay untranslated, as the pill's did and as the feature keys beside
-// them do: the people who open this screen are the people who write the catalog. The
-// sentences are copy, and copy is extracted.
+// The three names stay untranslated, as the feature keys beside them do: the people who
+// open this screen are the people who write the catalog. The sentences are copy, and copy
+// is extracted.
 const ORDER: readonly Visibility[] = ['hidden', 'private', 'public']
 
-const NAME: Record<Visibility, string> = {
+const VISIBILITY_NAME: Record<Visibility, string> = {
   hidden: 'HIDDEN',
   private: 'PRIVATE',
   public: 'PUBLIC',
@@ -43,45 +45,72 @@ const REACH: Record<Visibility, ReactNode> = {
   public: <Trans>Everybody, role or no role.</Trans>,
 }
 
+// A visibility as a chip, in its own hue. Here beside the names so that the list, the
+// feature's screen and a role's stack all say a position the same way.
+export function VisibilityChip({
+  visibility,
+  className,
+}: {
+  visibility: Visibility
+  className?: string
+}) {
+  return (
+    <AdminChip
+      label={VISIBILITY_NAME[visibility]}
+      hue={VISIBILITY_INK[visibility]}
+      className={className}
+    />
+  )
+}
+
 function Option({
   value,
   chosen,
+  disabled,
   onChoose,
 }: {
   value: Visibility
   chosen: boolean
+  disabled: boolean
   onChoose: () => void
 }) {
+  const ink = VISIBILITY_INK[value]
   return (
     <TrackedPressable
       id="admin.visibility_option"
+      disabled={disabled}
       onPress={onChoose}
-      // Tall on purpose: this is the one dialog in the app whose whole job is to be
+      // Tall on purpose: this is the one control in the app whose whole job is to be
       // pressed accurately, and a row of this height cannot be missed by a thumb holding
       // the phone it is on. The border is two pixels in both states so that choosing one
       // does not move the words inside it.
       className={cn(
         'min-h-[54px] flex-row items-center gap-2.5 rounded-xl border-2 px-2.5 py-2',
-        chosen ? 'border-strong bg-card' : 'border-muted',
+        chosen ? 'bg-card' : 'border-muted',
+        disabled && 'opacity-40',
       )}
+      style={chosen ? { borderColor: ink } : undefined}
     >
-      {/* The ring, and the dot inside it when this is the answer. Drawn rather than
-          lettered — ● and ○ at two sizes is what the feature rows used to say it with,
-          and they do not line up with each other at any size. */}
+      {/* The ring, and the dot inside it when this is the answer — both in the
+          position's own hue, so the three read as the chips in the list do. */}
       <View
-        className={cn(
-          'h-[20px] w-[20px] items-center justify-center rounded-full border-2',
-          chosen ? 'border-strong' : 'border-muted',
-        )}
+        className="h-[20px] w-[20px] items-center justify-center rounded-full border-2"
+        style={{ borderColor: ink }}
       >
-        {chosen && <View className="h-[9px] w-[9px] rounded-full bg-strong" />}
+        {chosen && (
+          <View
+            className="h-[9px] w-[9px] rounded-full"
+            style={{ backgroundColor: ink }}
+          />
+        )}
       </View>
       <View className="flex-1">
         <Text
           selectable={false}
-          className={cn(TYPE.buttonSm, chosen ? 'text-primary' : 'text-dim')}
+          className={TYPE.buttonSm}
+          style={{ color: chosen ? ink : undefined }}
         >
-          {NAME[value]}
+          {VISIBILITY_NAME[value]}
         </Text>
         <Text selectable={false} className={cn(TYPE.hint, 'mt-0.5 text-dim')}>
           {REACH[value]}
@@ -91,35 +120,34 @@ function Option({
   )
 }
 
-export function AdminVisibilityModal({
-  featureKey,
+export function AdminVisibilityPicker({
   visibility,
+  disabled = false,
   onConfirm,
-  onDismiss,
 }: {
-  featureKey: string
+  // What the server holds now.
   visibility: Visibility
-  // Called with the chosen position once CONFIRM is pressed. The dialog does not write —
-  // the list owns the write, the optimistic row and the read-back, as it did when this
-  // was a pill.
+  // The protected key, or a write still in flight.
+  disabled?: boolean
+  // Called with the chosen position once CONFIRM is pressed. The picker does not write —
+  // the screen owns the write, the optimistic value and the read-back.
   onConfirm: (next: Visibility) => void
-  onDismiss: () => void
 }) {
   // Held here, so the three targets answer immediately and the write still waits for
-  // CONFIRM. That split is the point of the dialog: a press that shows something and a
-  // press that does something.
+  // CONFIRM. That split is the point: a press that shows something and a press that does
+  // something. The caller keys this on `visibility`, so a refused confirm read back as
+  // the old position starts the choice over from there.
   const [chosen, setChosen] = useState<Visibility>(visibility)
 
   return (
-    // The feature's key as the title, which is what this screen calls a feature
-    // everywhere else.
-    <AdminDialog title={featureKey} onDismiss={onDismiss}>
+    <View>
       <View className="gap-1.5">
         {ORDER.map((option) => (
           <Option
             key={option}
             value={option}
             chosen={option === chosen}
+            disabled={disabled}
             onChoose={() => {
               setChosen(option)
             }}
@@ -132,13 +160,12 @@ export function AdminVisibilityModal({
         // Shut while the answer on screen is the answer the server already holds: there
         // is nothing to confirm, and a live button there would report a write that
         // changed nothing.
-        disabled={chosen === visibility}
+        disabled={disabled || chosen === visibility}
         onPress={() => {
           onConfirm(chosen)
-          onDismiss()
         }}
         label={<Trans>CONFIRM</Trans>}
       />
-    </AdminDialog>
+    </View>
   )
 }

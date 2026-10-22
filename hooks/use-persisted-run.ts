@@ -3,11 +3,21 @@ import { useEffect, useRef } from 'react'
 import { AppState } from 'react-native'
 
 import { RUN_KEY } from '@/constants/storage'
-import { positionsOf, toSavedRun, type RunSnapshot } from '@/lib/saved-run'
+import {
+  positionsOf,
+  toSavedRun,
+  type RunSession,
+  type RunSnapshot,
+} from '@/lib/saved-run'
 import type { DisplayTarget } from '@/types/game'
 
-const write = (run: RunSnapshot, placed: readonly DisplayTarget[], now: number) => {
-  const saved = toSavedRun(run, positionsOf(placed), now)
+const write = (
+  run: RunSnapshot,
+  placed: readonly DisplayTarget[],
+  session: RunSession | null,
+  now: number,
+) => {
+  const saved = toSavedRun(run, positionsOf(placed), now, session)
   AsyncStorage.setItem(RUN_KEY, JSON.stringify(saved)).catch(() => {})
 }
 
@@ -33,6 +43,7 @@ export function usePersistedRun({
   isPaused,
   run,
   placed,
+  session,
   settled,
 }: {
   // Whether there is a run to keep — playing or paused. Game over is not one: a
@@ -43,6 +54,8 @@ export function usePersistedRun({
   // The board as the player sees it. The machine knows what is on it; only the display
   // list knows where — see hooks/use-displayed-targets.ts.
   placed: readonly DisplayTarget[]
+  // The session the run posts to, or null — kept with the run so a restore puts it back.
+  session: RunSession | null
   // Whether the launch's own saved run has been dealt with — see `SavedRunState`.
   // Nothing may be written or cleared before it has, or the restore would be racing the
   // erase of the very thing it is restoring.
@@ -54,6 +67,8 @@ export function usePersistedRun({
   runRef.current = run
   const placedRef = useRef(placed)
   placedRef.current = placed
+  const sessionRef = useRef(session)
+  sessionRef.current = session
 
   // Which run the device's copy is of. A RESTART from a pause deals a fresh run without
   // ever leaving `playing`, so the state name alone cannot tell that what is on disk is
@@ -77,7 +92,7 @@ export function usePersistedRun({
     if (!isPaused && run.runSeq === writtenSeq.current) return
     onDisk.current = true
     writtenSeq.current = run.runSeq
-    write(run, placedRef.current, Date.now())
+    write(run, placedRef.current, sessionRef.current, Date.now())
   }, [settled, inRun, isPaused, run])
 
   useEffect(() => {
@@ -88,7 +103,7 @@ export function usePersistedRun({
       // reach a render — see usePauseOnBlur. `toSavedRun` folds the clock itself, so a
       // run caught still running is written down as exactly the run a pause would have
       // produced.
-      write(runRef.current, placedRef.current, Date.now())
+      write(runRef.current, placedRef.current, sessionRef.current, Date.now())
     })
     return () => {
       subscription.remove()

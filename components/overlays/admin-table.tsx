@@ -5,7 +5,7 @@ import { Text, View } from 'react-native'
 import { SkeletonBar, SkeletonPulse } from '@/components/overlays/skeleton'
 import { TrackedPressable } from '@/components/tracked-pressable'
 import type { ButtonId } from '@/constants/buttons'
-import { DIM_INK, ON_STRONG_INK } from '@/constants/colors'
+import { DIM_INK, ON_STRONG_INK, VISIBILITY_ON_INK } from '@/constants/colors'
 import { TYPE } from '@/constants/typography'
 import { cn } from '@/lib/cn'
 
@@ -84,10 +84,11 @@ export type AdminTableRow = {
 //
 // `filled` is the loud one and it carries `text-on-strong`, which is the only pair in the
 // app proven to carry a label at this size. So a chip says *how far out* a thing has got
-// by how solid it is, and never by a hue.
+// by how solid it is, and never by a hue — save the one `hue` below.
 export function AdminChip({
   label,
   tone = 'quiet',
+  hue,
   icon,
   className,
 }: {
@@ -96,6 +97,9 @@ export function AdminChip({
   // solid, `danger` the refusal — a row the server holds and this build does not, a
   // message still owed an answer.
   tone?: 'quiet' | 'strong' | 'filled' | 'danger'
+  // A solid fill in this colour instead of a tone, labelled in `VISIBILITY_ON_INK`. The
+  // one caller is a feature's visibility, which is told by hue — see `VISIBILITY_INK`.
+  hue?: string
   // Drawn before the label, inside the chip. The one caller is the LIVE chip on the
   // sessions list, whose mark is a dot that pulses — see `LiveDot`.
   icon?: ReactNode
@@ -117,12 +121,17 @@ export function AdminChip({
     <View
       className={cn(
         'flex-row items-center gap-1 rounded-md border px-1.5 py-0.5',
-        box,
+        hue === undefined && box,
         className,
       )}
+      style={hue === undefined ? undefined : { backgroundColor: hue, borderColor: hue }}
     >
       {icon}
-      <Text selectable={false} className={cn(TYPE.rowLabel, ink)}>
+      <Text
+        selectable={false}
+        className={cn(TYPE.rowLabel, hue === undefined && ink)}
+        style={hue === undefined ? undefined : { color: VISIBILITY_ON_INK }}
+      >
         {label}
       </Text>
     </View>

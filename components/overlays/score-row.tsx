@@ -1,4 +1,4 @@
-import { isNonEmptyString } from 'narrowland'
+import { isNonEmptyArray, isNonEmptyString } from 'narrowland'
 import { Text, View } from 'react-native'
 
 import { GradientName } from '@/components/gradient-name'
@@ -35,8 +35,11 @@ export type ScoreEntry = {
   // score that has not reached the board has none, and there is no profile behind it
   // yet to open.
   userId?: string | null
-  // The crown or bird this player wears everywhere their name appears, or null.
-  mark: string | null
+  // Every mark this player wears everywhere their name appears — a crown or a bird for
+  // the boards, a phoenix for the last challenge taken — in drawing order, and empty for
+  // the great majority who wear none. A list because two of them can be true at once;
+  // see `playerMarks`.
+  marks: readonly string[]
   nickname: string
   score: number
   // What the run took, on a board **measured** by the clock. Undefined on every other
@@ -124,9 +127,9 @@ export function ScoreRow({
         {/* Champions carry their mark wherever their name is drawn, so the board says
             who holds the hardest boards without a legend explaining it. Rendered only
             when there is one — an empty Text would still take the row's gap. */}
-        {entry.mark !== null && (
+        {isNonEmptyArray(entry.marks) && (
           <Text selectable={false} className={cn(GLYPH['2xs'], 'leading-[13px]')}>
-            {entry.mark}
+            {entry.marks.join(' ')}
           </Text>
         )}
         {/* The one text on this row that is not the board's colour but the player's.

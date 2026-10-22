@@ -21,8 +21,7 @@ import {
 import { CROWN_CORONA, ON_GOLD_LABEL_SHADOW } from '@/constants/theme'
 import { GLYPH, TYPE } from '@/constants/typography'
 import { useBarColor } from '@/hooks/use-bar-color'
-import { useBoardContext } from '@/hooks/use-board'
-import { useSessionBoard } from '@/hooks/use-session-card'
+import { useBoardContext, type PeriodBoard } from '@/hooks/use-board'
 import type { AchievementStore } from '@/lib/achievement-store'
 import type { AchievementFacts, Award } from '@/lib/achievements'
 import type { Period } from '@/lib/announcements'
@@ -51,6 +50,7 @@ import { HighScores } from './high-scores'
 import { RecordBackdrop } from './record-backdrop'
 import { runHeadline } from './run-headline'
 import { CardButton, RunScreen } from './run-screen'
+import { SessionCloses } from './session-closes'
 import { SessionStandings } from './session-standings'
 
 // What the screen wears over its title. The crown is a reign — both Extreme all-time
@@ -151,6 +151,8 @@ export function GameOverOverlay({
   achievementFacts,
   // The session this run belonged to, or null for an ordinary run.
   sessionId,
+  sessionBoard,
+  sessionClosesAt,
   windowShut,
   onPlayAgain,
   onChallenge,
@@ -184,6 +186,13 @@ export function GameOverOverlay({
   achievementStore: AchievementStore
   achievementFacts: AchievementFacts
   sessionId: string | null
+  // That session's standings, read once on the game screen for the strip, the title and
+  // this table alike — or null while unread.
+  sessionBoard: PeriodBoard | null
+  // When that session's window shuts, or null for an ordinary run. Drawn here because a
+  // run ending is the moment a player decides whether to go again, and the contest having
+  // an hour left or a minute is the whole of that decision.
+  sessionClosesAt: number | null
   // Whether the run ended because its **session**'s window shut. Two things follow from
   // it, and they are the same thing said twice: there is nothing left to play again, and
   // there is nothing to dare the player into next. Everything else on this screen — the
@@ -258,16 +267,6 @@ export function GameOverOverlay({
     opacity: Math.min(1, crownIn.value),
     transform: [{ scale: 0.6 + crownIn.value * 0.4 }],
   }))
-  // Read here rather than inside `SessionStandings`, which is where it used to be, so
-  // the medal above the score and the standings below it come out of one read. Two reads
-  // could disagree — a rival landing a score between them would have put the player on a
-  // podium the table under it does not show.
-  //
-  // Unconditional, and it has to be: a hook cannot sit behind the `sessionId !== null`
-  // branch that decides whether any of this is drawn. `useSessionBoard` answers null for
-  // a null id without asking the server, which is what makes that safe.
-  const { board: sessionBoard } = useSessionBoard(sessionId, userId)
-
   // Where the run stands, as a medal. A **session** run has one set of standings and so
   // one medal with no period beside it; a board run has up to three, one per period. A
   // challenge played outside a session — dealt from the challenge lab — has neither, and
@@ -351,6 +350,12 @@ export function GameOverOverlay({
       })}
       beforeStats={
         <>
+          {/* Above the run's own figures, where a thing that is true of the *contest*
+              rather than of the run belongs. A challenge keeps no board, so the medals
+              below never draw for one and this has the slot to itself. */}
+          {sessionClosesAt !== null && (
+            <SessionCloses mode={gameMode} closesAt={sessionClosesAt} />
+          )}
           {/* What the run is worth away from this board. The score above is what was
               scored here; this is what it counts for once it is added to the other five,
               where a point from Extreme is worth four from Easy — see `scoreWeight` in

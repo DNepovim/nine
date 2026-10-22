@@ -92,8 +92,8 @@ export const HOW_TO_PLAY_KEY = 'nine.how-to-play.v1'
 // the server's answer to "did you get one" is no from the second launch onwards. See
 // lib/feedback-answered.ts.
 export const FEEDBACK_ANSWERED_KEY = 'nine.feedback-answered.v1'
-// Whether this device has had its opening tutorial run — the welcome that a first launch
-// drops straight into. The stored flag outlives that one run: it is also what keeps
+// Whether this device has answered the opening tutorial offer — the card a first launch
+// puts over the intro. The stored flag outlives that one run: it is also what keeps
 // Trainee's invitation to a scored board coming back. See lib/welcome.ts.
 export const WELCOME_KEY = 'nine.welcome.v1'
 // Absent until the player picks a language in options; while it is absent the app is in

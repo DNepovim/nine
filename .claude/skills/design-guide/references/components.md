@@ -74,6 +74,8 @@ third exception wants the same treatment — measured, and commented where it is
 | Need                      | Use                                                                                  |
 | ------------------------- | ------------------------------------------------------------------------------------ |
 | Any button worth a funnel | `tracked-pressable.tsx` — `TrackedPressable`, with an id from `constants/buttons.ts` |
+| The primary button        | `primary-button.tsx` — `PrimaryButton`                                               |
+| A link / quiet way out    | `link-button.tsx` — `LinkButton`                                                     |
 | The 5-dot menu / close    | `game/menu-button.tsx` — `MenuButton`                                                |
 | A checkbox                | `overlays/option-checkbox.tsx`                                                       |
 | A slider                  | `overlays/value-slider.tsx`                                                          |
@@ -81,8 +83,20 @@ third exception wants the same treatment — measured, and commented where it is
 
 ### A link button carries an icon and no underline
 
-The quiet way out of a screen — CLOSE, RESEND, LEAVE, CHANGE ADDRESS — is a **link
-button**, and it looks the same everywhere:
+The quiet way out of a screen — CLOSE, NOT NOW, RESEND, LEAVE, CHANGE ADDRESS — is a
+**link button**, drawn by `components/link-button.tsx`:
+
+```tsx
+<LinkButton
+  id="shared.dialog_close"
+  onPress={close}
+  icon="close-outline"
+  label={<Trans>CLOSE</Trans>}
+/>
+```
+
+`icon` is required, `disabled` dims it, `className` is placement only. **Use the
+component; do not write the row out.** It looks the same everywhere:
 
 - an **`Ionicons` at `size={10}` in `DIM_INK`**, then
 - a **`TYPE.quietAction` label in `text-dim`**, in a `flex-row items-center gap-1`.
@@ -93,17 +107,23 @@ underline under 10px small-caps reads as a mis-set label rather than as a link, 
 column of them the rules stack up into a pattern the eye follows instead of the words. The
 icon says _pressable_ in one glyph and leaves the label alone.
 
-`email-code-modal.tsx`'s RESEND and the intro's footer are the reference, and
-`publish-scores-button.tsx` is the same voice beside an ask.
+`LinkButton` is the reference. `email-code-modal.tsx`'s RESEND and the intro's footer are
+the hand-written originals it was lifted from, and still spell it out inline — fine to
+read, wrong to copy.
 
 Disabled is **opacity**, not a dropped underline — there is no underline to drop. See
 `DISABLED_OPACITY` at that call site.
 
-**Eight call sites still wear an underline and no icon**, from before this was written
-down: `multiplayer-menu`, `multiplayer-game-over`, `multiplayer-waiting`,
-`join-room-overlay`, `tutorial-done-modal`, `account-notice`, `game/step-up-toast` and
-`game/arcade-over`. They are a sweep somebody has to agree to, not a thing to fix on the
-way past — see the consistency sweep in `SKILL.md`. A _new_ link follows the rule.
+**Two kinds of old call site remain**, from before the component existed:
+
+- **Underline and no icon** — `multiplayer-menu`, `multiplayer-game-over`,
+  `multiplayer-waiting`, `join-room-overlay`, `tutorial-done-modal`, `account-notice`,
+  `game/step-up-toast` and `game/arcade-over`. These look wrong.
+- **Right look, written inline** — every other `TYPE.quietAction` + `Ionicons size={10}`
+  pair (`grep -rn "TYPE.quietAction" components`). These look right and are copies.
+
+Both are a sweep somebody has to agree to, not a thing to fix on the way past — see the
+consistency sweep in `SKILL.md`. A _new_ link is `LinkButton`, always.
 
 `TrackedPressable` is `Pressable` verbatim — props forwarded untouched, `children` as a
 render prop included — so swapping the tag changes nothing a player can see. It exists

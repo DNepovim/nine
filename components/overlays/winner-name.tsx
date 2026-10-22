@@ -1,3 +1,4 @@
+import { isNonEmptyArray } from 'narrowland'
 import { Text } from 'react-native'
 
 import { GradientName } from '@/components/gradient-name'
@@ -8,8 +9,9 @@ export type WinnerNameProps = {
   // Whose name it is — the stripe's name opens their profile, the same as a board row.
   userId: string
   nickname: string
-  // The crown or bird this player wears everywhere their name appears, or null.
-  mark: string | null
+  // Every mark this player wears everywhere their name appears — a board standing, a
+  // phoenix for taking the last challenge, or both at once. Empty where they wear none.
+  marks: readonly string[]
   // What the name is coloured by. Null where the counters have never seen this player.
   avgAccuracy: number | null
   avgSpeed: number | null
@@ -29,7 +31,7 @@ export type WinnerNameProps = {
 export function WinnerName({
   userId,
   nickname,
-  mark,
+  marks,
   avgAccuracy,
   avgSpeed,
 }: WinnerNameProps) {
@@ -44,7 +46,7 @@ export function WinnerName({
       }}
       className={TYPE.value}
     >
-      {mark === null ? '' : `${mark} `}
+      {isNonEmptyArray(marks) ? `${marks.join(' ')} ` : ''}
       <GradientName nickname={nickname} avgAccuracy={avgAccuracy} avgSpeed={avgSpeed} />
     </Text>
   )

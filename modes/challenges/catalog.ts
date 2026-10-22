@@ -193,16 +193,22 @@ const FOUR_BY_FOUR: ChallengeSpec = {
     // there. That is also what ends a run here, since the ring never closes in on its
     // own. The dial is hard from the first target; the board is what gets hard later.
     clock: { base: 11000 },
-    // The streak this one is about, and a rule written for it: a key moved in **every
-    // row** of the dial. `whole` has no meaning on sixteen keys — a route through all of
-    // them is not a route — and this is its wide-dial counterpart, four keys rather than
-    // sixteen, costing a median of one press over par. See `STREAK_TRIGGERED.spread`,
-    // where what it costs and what it cannot do are both written down.
-    scoring: { streak: 'spread' },
-    // No `base` and no `weights`: a hit is worth the ordinary hundred and is blended like
-    // an Accuracy hit, which is every challenge's default. The run is no shorter than an Accuracy
-    // run — arrivals are twice as frequent and the routes are twice as long — so there is
-    // nothing here for a bigger figure to make up for.
+    // **No `scoring` at all**, which is the whole of what this one says about streaks:
+    // every challenge's default is Accuracy's own `optimal` — the cheapest route to the
+    // target, the rule every Accuracy run is already played under.
+    //
+    // It used to ask for `spread`, a key moved in every row, written as `whole`'s
+    // wide-dial counterpart. The trouble is that it pulls *against* the score: the cheap
+    // answer is often two keys, so taking the streak costs a median of one press over
+    // par, and on a sixteen-key dial the player is working out the dial and arguing with
+    // the streak at the same time. `optimal` asks the one question the dial already
+    // poses. `STREAK_TRIGGERED.spread` stays where it is — a rule nothing claims today
+    // is still the rule a later challenge would claim.
+    //
+    // A hit is worth the ordinary hundred and blended like an Accuracy hit, which is
+    // every challenge's default and what the absence of `weights` here means. The run is no
+    // shorter than an Accuracy run — arrivals are twice as frequent and the routes twice
+    // as long — so there is nothing for a bigger figure to make up for.
     //
     // No `capabilities` either, so the dial prints no key weights. The rule behind them
     // is the one the guide prints, and a dial that explained itself would be the one mode

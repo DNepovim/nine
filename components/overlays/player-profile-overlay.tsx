@@ -33,7 +33,7 @@ import { TYPE } from '@/constants/typography'
 import { useChampionsContext } from '@/hooks/use-champions'
 import { usePlayerProfile } from '@/hooks/use-player-profile'
 import { useViewport } from '@/hooks/use-viewport'
-import { championMark } from '@/lib/champions'
+import { playerMarks } from '@/lib/champions'
 import { cn } from '@/lib/cn'
 import { compactText } from '@/lib/compact-number'
 import { formatCareerTime } from '@/lib/duration'
@@ -189,7 +189,7 @@ export function PlayerProfileOverlay({
   // Read from the context rather than fetched here: the two Extreme leaders are already
   // known and kept live off the board connection, and a second read would let this modal
   // contradict the row that opened it.
-  const mark = championMark(userId, useChampionsContext())
+  const marks = playerMarks(userId, useChampionsContext())
 
   const lifetime =
     profile === null
@@ -262,7 +262,10 @@ export function PlayerProfileOverlay({
                 often than anywhere else: on the intro the mark is your own and you at
                 least know you took something, whereas a crown over a stranger's name is
                 a stranger's crown, with nothing on the card to say what it took. */}
-              {mark !== null && <TitleMark mark={mark} mine={isMine} size={MARK_SIZE} />}
+              {/* One apiece rather than a string of them: each carries its own bubble,
+                and a crown and a phoenix are two different things to have explained. Laid
+                in a row so two sit side by side at the size one does. */}
+              <TitleMark marks={marks} mine={isMine} size={MARK_SIZE} />
               {/* The same two averages the stat row below prints, handed to the name so
                 the colour and the numbers explaining it can never disagree. */}
               {profile !== null && (

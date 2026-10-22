@@ -18,11 +18,12 @@ import { mono } from '@/constants/theme'
 import { TYPE } from '@/constants/typography'
 import { useSessionBoard } from '@/hooks/use-session-card'
 import { useViewport } from '@/hooks/use-viewport'
-import type { SessionCard } from '@/lib/challenge-session'
+import { spanStatus, type SessionCard } from '@/lib/challenge-session'
 import { cn } from '@/lib/cn'
 import type { OpenSession } from '@/lib/session-board'
 import { strikeRuleOf } from '@/lib/strike-rule'
 import {
+  darkGradientOf,
   descriptionOf,
   gradientOf,
   headlineOf,
@@ -83,9 +84,12 @@ export function ChallengeModal({
   onDismiss: () => void
 }) {
   const { t } = useLingui()
-  const { session } = card
+  const { state, session } = card
   const modeId = card.state === 'lab' ? card.modeId : card.session.modeId
   const measure = session?.measure ?? measureOf(modeId)
+  // Whether the window is running now — for the lab, read off the session it was handed.
+  const live =
+    state === 'live' || (session !== null && spanStatus(session, Date.now()) === 'live')
   const { width } = useViewport()
   const [dsegLoaded] = useFonts({ DSEG7: DSEG7Font })
   const { board } = useSessionBoard(session?.id ?? null, userId)
@@ -146,6 +150,32 @@ export function ChallengeModal({
           >
             {t(descriptionOf(modeId))}
           </Text>
+
+          {/* How much of the window is left, under the line that says what the challenge
+            is. The one figure a player needs before pressing START and the one the dialog
+            did not carry: the card they came from has it, and the strip has it once the
+            run is going, so the only moment it went missing was the moment of deciding.
+
+            **Live only.** A teased session already answers this where the button would
+            be — see the OPENS IN block below, which stands in for START and says why
+            there is nothing to press. Drawing it here as well would be the same fact
+            twice on a short dialog, and the two would be saying it for different reasons.
+
+            The flaps rather than the plain figure, as the card and the strip both draw
+            it: a window running down is the one thing in this app that is literally a
+            clock. */}
+          {live && session !== null && (
+            <View className="mb-4 items-center gap-1.5">
+              <Text selectable={false} className={cn(TYPE.labelSm, 'text-dim')}>
+                <Trans>CLOSES IN</Trans>
+              </Text>
+              <ChallengeCountdown
+                until={session.closesAt}
+                gradient={darkGradientOf(modeId)}
+                flip
+              />
+            </View>
+          )}
 
           {/* How a strike is built here, under the line that says what the challenge is.
 

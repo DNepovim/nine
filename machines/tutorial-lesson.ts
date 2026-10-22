@@ -291,9 +291,8 @@ export const dismissedByTap = (step: LessonStep): boolean => LESSON_DIAL[step] =
 // teaches the rest by answering.
 export const LESSON_LINE = {
   // The one card that is not an instruction: what this run is, said on the board it is
-  // about. Both halves earn their words — a lesson that opens straight onto a dial looks
-  // exactly like a run, and a player who thinks they are being scored plays it like one.
-  welcome: msg`LET'S LEARN THE GAME — NOTHING IS SCORED`,
+  // about — a lesson that opens straight onto a dial looks exactly like a run.
+  welcome: msg`LET'S LEARN THE GAME`,
   waiting: null,
   target: msg`REACH THIS NUMBER`,
   sum: msg`THIS IS YOUR TOTAL`,

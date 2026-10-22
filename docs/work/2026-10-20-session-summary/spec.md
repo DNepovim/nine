@@ -501,3 +501,14 @@ has since been built in part; the other has not been started.
   `compare-overlay`, `compare-head-side`, and the profile). It also needs a lifetime rule
   with a case nobody has decided — what "until the end of the next session" means when no
   next session is booked. **`/shape challenge-mark`.**
+
+  **The mark is ☄️, decided 2026-10-21.** Picked by elimination against the source rather
+  than by taste: 🔥 is the step-up toast's, 🎯 and ⚡ and 🏅 are achievements', 👑🦉🦅 are the
+  champion marks this has to sit _beside_, 🥇🥈🥉 are podium places, and the animals are
+  race marks. `AchievementDef` states the rule it would otherwise break — "never one the
+  app already owns by a different meaning" — and 🏅 would have broken it hardest, since
+  WINNER means _won a room, kept forever_ where this means _took the last challenge, until
+  the next one ends_: one icon, a permanent achievement and an expiring standing.
+
+  A comet also happens to say the right thing. It is something passing through rather than
+  a title held, which is exactly what this standing is.

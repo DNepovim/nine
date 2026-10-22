@@ -94,8 +94,8 @@ export function AdminSelect<T>({
                   onPress={() => {
                     // Answered on the press, with no second confirm. The one choice on
                     // these screens that needs confirming is a feature's visibility, which
-                    // has its own dialog and its own reason — see
-                    // `AdminVisibilityModal`. Everything else here is undone by choosing
+                    // has its own CONFIRM and its own reason — see
+                    // `AdminVisibilityPicker`. Everything else here is undone by choosing
                     // again.
                     onSelect(option.value)
                     setOpen(false)

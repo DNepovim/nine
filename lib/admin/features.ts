@@ -66,3 +66,56 @@ export async function setFeature(
   noteRequest(res.error)
   return { error: res.error?.message ?? null }
 }
+
+// Who a private feature reaches, by name. See `feature_reach` for why only private: a
+// hidden feature reaches nobody and a public one everybody, and neither is a list.
+export type FeatureReach = {
+  roles: { key: string; label: string; personCount: number }[]
+  // `via` is where the person's answer came from: their role's stack, or an override of
+  // their own. `roleLabel` is their role either way — an override on top of a role is
+  // still worth reading as both.
+  people: {
+    id: string
+    nickname: string | null
+    roleLabel: string | null
+    via: 'role' | 'override'
+  }[]
+}
+
+type ReachRow = {
+  roles: { key: string; label: string; person_count: number }[]
+  people: {
+    id: string
+    nickname: string | null
+    role_label: string | null
+    via: string
+  }[]
+}
+
+const NO_REACH: FeatureReach = { roles: [], people: [] }
+
+export async function loadFeatureReach(
+  key: string,
+): Promise<{ reach: FeatureReach; error: string | null }> {
+  const res = await supabase.rpc('feature_reach', { p_key: key })
+  noteRequest(res.error)
+  if (res.error) return { reach: NO_REACH, error: res.error.message }
+  const data = res.data as ReachRow | null
+  if (data === null) return { reach: NO_REACH, error: null }
+  return {
+    reach: {
+      roles: data.roles.map((role) => ({
+        key: role.key,
+        label: role.label,
+        personCount: role.person_count,
+      })),
+      people: data.people.map((person) => ({
+        id: person.id,
+        nickname: person.nickname,
+        roleLabel: person.role_label,
+        via: person.via === 'override' ? 'override' : 'role',
+      })),
+    },
+    error: null,
+  }
+}

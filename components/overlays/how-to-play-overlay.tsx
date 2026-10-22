@@ -388,8 +388,8 @@ export function HowToPlayOverlay({
   onTryTutorial,
 }: {
   onClose: () => void
-  // Deals the tutorial and closes the guide. The run a first launch opens on, and this
-  // is the only other door to it — see constants/tutorial.ts.
+  // Deals the tutorial and closes the guide. The run a first launch offers, and this is
+  // the only other door to it — see constants/tutorial.ts.
   onTryTutorial: () => void
 }) {
   const { t } = useLingui()
@@ -799,7 +799,7 @@ export function HowToPlayOverlay({
               has just seen one on a row will look for them. */}
           <SectionHeader section="champions" onMeasure={measure} />
           <Body>
-            {t`Hold the all-time record on a mode’s Extreme board and you carry its mark. It travels with your name everywhere it is drawn — the boards, your own row, a multiplayer room — so the hardest boards say who holds them without anyone having to look them up.`}
+            {t`Three standings carry a mark: the all-time record on each mode’s Extreme board, and the last challenge. A mark travels with your name everywhere it is drawn — the boards, your own row, a multiplayer room — so the hardest standings say who holds them without anyone having to look them up.`}
           </Body>
           <Card>
             <Bullet color={gradientOf('accuracy')[0]}>
@@ -813,10 +813,16 @@ export function HowToPlayOverlay({
                 🦅 The eagle is Speed at its hardest, for the dive rather than the search.
               </Trans>
             </Bullet>
+            <Bullet color={GAME_SCALE[3]}>
+              <Trans>
+                🐦‍🔥 The phoenix is whoever took the last challenge. It is the one mark that
+                is not a board, and it moves on the day the next session ends.
+              </Trans>
+            </Bullet>
             <Bullet color={GAME_SCALE[4]}>
               <Trans>
-                👑 The crown is both at once — the rarest thing in the game, and the only
-                way to wear one mark instead of two.
+                👑 The crown is all three at once — the rarest thing in the game, and the
+                only way to wear one mark instead of three.
               </Trans>
             </Bullet>
           </Card>

@@ -15,23 +15,25 @@ const persist = (welcome: Welcome) => {
   AsyncStorage.setItem(WELCOME_KEY, serializeWelcome(welcome)).catch(() => {})
 }
 
-// The opening tutorial run: whether this launch owes one, and whether this install ever
-// had one.
+// The opening tutorial offer: whether this launch owes one, and whether this install ever
+// took it.
 //
 // Read once on mount and never again. A storage failure leaves both answers false, which
 // is the safe way round: the player lands on the intro, exactly as they would have before
 // any of this, rather than being dropped into a run the app cannot remember giving them.
 export function useWelcome(): {
   // Whether storage has answered yet. Until it has, the app knows neither that it owes a
-  // run nor that it does not, and painting the intro on the strength of a default would
-  // show the start screen to somebody who is about to be dropped into a game.
+  // run nor that it does not, and the launch asks would queue up in front of the offer.
   decided: boolean
-  // A run is owed. True for at most one launch, and only on a device with nothing on it.
+  // The offer is owed. True for at most one launch, and only on a device with nothing on it.
   pending: boolean
-  // This install opened with the welcome run. Outlives it — see lib/welcome.ts.
+  // This install took the welcome run. Outlives it — see lib/welcome.ts.
   welcomed: boolean
   // Called once the run has actually been started, which is also when it is written down.
   taken: () => void
+  // Called when the offer is turned down. Written down too: it is asked once, not every
+  // launch until it is taken.
+  declined: () => void
 } {
   const [decided, setDecided] = useState(false)
   const [pending, setPending] = useState(false)
@@ -71,5 +73,10 @@ export function useWelcome(): {
     persist(WELCOMED)
   }, [])
 
-  return { decided, pending, welcomed, taken }
+  const declined = useCallback(() => {
+    setPending(false)
+    persist(NOT_WELCOMED)
+  }, [])
+
+  return { decided, pending, welcomed, taken, declined }
 }

@@ -3,7 +3,7 @@ import { Text, View } from 'react-native'
 
 import { CompareHeadSide, HEAD_NAME_LINE } from '@/components/overlays/compare-head-side'
 import { TYPE } from '@/constants/typography'
-import type { ChampionMark } from '@/lib/champions'
+import type { PlayerMark } from '@/lib/champions'
 import { cn } from '@/lib/cn'
 import type { VerdictKey } from '@/lib/compare'
 import type { Medal } from '@/lib/medals'
@@ -25,13 +25,13 @@ export function CompareHead({
   myNickname,
   myAvgAccuracy,
   myAvgSpeed,
-  myMark,
+  myMarks,
   myMedals,
   theirId,
   theirNickname,
   theirAvgAccuracy,
   theirAvgSpeed,
-  theirMark,
+  theirMarks,
   theirMedals,
   verdict,
 }: {
@@ -41,13 +41,13 @@ export function CompareHead({
   myNickname: string
   myAvgAccuracy: number | null
   myAvgSpeed: number | null
-  myMark: ChampionMark | null
+  myMarks: readonly PlayerMark[]
   myMedals: readonly Medal[]
   theirId: string
   theirNickname: string
   theirAvgAccuracy: number | null
   theirAvgSpeed: number | null
-  theirMark: ChampionMark | null
+  theirMarks: readonly PlayerMark[]
   theirMedals: readonly Medal[]
   // What the table came to. The same verdict the sentence below is drawn from, so the pair
   // of animals and the pair of lines are one reading of one table rather than two.
@@ -64,7 +64,7 @@ export function CompareHead({
         nickname={myNickname}
         avgAccuracy={myAvgAccuracy}
         avgSpeed={myAvgSpeed}
-        mark={myMark}
+        marks={myMarks}
         raceMark={race.mine}
         medals={myMedals}
       />
@@ -88,7 +88,7 @@ export function CompareHead({
         nickname={theirNickname}
         avgAccuracy={theirAvgAccuracy}
         avgSpeed={theirAvgSpeed}
-        mark={theirMark}
+        marks={theirMarks}
         raceMark={race.theirs}
         medals={theirMedals}
       />

@@ -18,7 +18,7 @@ export type AnalyticsEvents = {
     difficulty: Difficulty
     // What put the player into this run, which is the whole question behind the
     // challenge button: did they choose the board or accept the one offered? 'welcome' is
-    // the one nobody chose — the tutorial a first launch opens into by itself — and
+    // the tutorial a first launch offers on a card over the intro, taken from there — and
     // 'guide' is that same tutorial asked for, from TRY IT at the end of How to Play.
     // 'dev' is the one other than a player's own choice: a challenge started from the dev
     // screen rather than offered or picked on the intro.

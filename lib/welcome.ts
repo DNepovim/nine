@@ -4,19 +4,18 @@ import { type Difficulty, type Mode } from '@/modes'
 
 // The first launch, and what the device remembers about it.
 //
-// A player who opens the app for the first time does not get a guide across their screen
-// — they get a run already going: the tutorial, which is Trainee with its clock, its
-// cadence and its options taken off, so there is one target on the board and nothing on
-// it that can be lost. How to Play is still there for anyone who wants reading, and its
-// TRY IT button deals the same run again; it just never takes the opening for itself.
-// What the tutorial changes and why is in constants/tutorial.ts.
+// A player who opens the app for the first time lands on the intro with one card over it,
+// offering the tutorial: Trainee with its clock, its cadence and its options taken off,
+// so there is one target on the board and nothing on it that can be lost. Turning it down
+// leaves them on the intro, and How to Play's TRY IT deals the same run whenever they want
+// it. What the tutorial changes and why is in constants/tutorial.ts.
 //
 // The stored flag outlives that one run. It is the second thing this file is for: a
-// player welcomed this way has never seen a scored board, so Trainee keeps offering them
+// player who took the offer has never seen a scored board, so Trainee keeps offering them
 // one — on hit count alone, in every practice run, until they take it. See
 // `fromWelcome` in lib/step-up.ts.
 
-// The board a first launch opens on, named here rather than left to the machine, whose
+// The board the welcome run is played on, named here rather than left to the machine, whose
 // own default context is Accuracy Hard. Somebody who has never played gets practice with
 // unlimited lives and the gentlest clock — the same reasoning behind STEP_UP_BOARD's
 // Easy: the one board you can be dropped onto without having been told anything first.
@@ -31,7 +30,7 @@ export const WELCOME_BOARD = { mode: 'trainee', difficulty: 'easy' } as const sa
 const welcomeSchema = z.object({ welcomed: z.boolean().optional() })
 
 // `welcomed` is not "has the welcome happened" — the key being there at all answers that.
-// It is "did this install open with the welcome run", which is the half that still
+// It is "did this install take the welcome run", which is the half that still
 // matters a week later.
 export type Welcome = { welcomed: boolean }
 
@@ -63,11 +62,11 @@ export function serializeWelcome(welcome: Welcome): string {
 
 export type WelcomeLaunch = 'start' | 'skip'
 
-// What this launch does: open into a Trainee run, or leave the player on the intro.
+// What this launch does: offer the tutorial over the intro, or just show the intro.
 //
 // `hasHistory` is the guard for everyone who was already playing before any of this
 // existed. Their device has no welcome flag either, and without the second question they
-// would be yanked out of the intro and into a practice run they never asked for.
+// would be asked about a tutorial for a game they already know.
 export function welcomeLaunch(
   stored: Welcome | null,
   hasHistory: boolean,

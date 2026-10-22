@@ -162,3 +162,19 @@ export async function submitSessionScore(args: {
   // `reportRefusal` wants the code, the details and the hint beside the message.
   return { sent: 'refused', error: res.error }
 }
+
+// Whoever took the last challenge, for the mark they wear until somebody takes the next
+// one. Null when no session has ever been won, which is every day before the first one
+// closes — and null on a failed read, which `mergeChampions` is told apart from an answer.
+//
+// Here rather than in `lib/session-summaries.ts` because this is public: it answers the
+// same question for everybody, where that file answers only for its caller.
+export async function loadLastSessionWinner(): Promise<{
+  userId: string | null
+  error: string | null
+}> {
+  const res = await supabase.rpc('last_session_winner')
+  noteRequest(res.error)
+  if (res.error) return { userId: null, error: res.error.message }
+  return { userId: typeof res.data === 'string' ? res.data : null, error: null }
+}

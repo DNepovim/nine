@@ -13,7 +13,7 @@ import { WinnerName, type WinnerNameProps } from '@/components/overlays/winner-n
 import { TYPE } from '@/constants/typography'
 import { useChampionsContext } from '@/hooks/use-champions'
 import { useRecentWinners } from '@/hooks/use-recent-winners'
-import { championMark } from '@/lib/champions'
+import { playerMarks } from '@/lib/champions'
 import { cn } from '@/lib/cn'
 import type { WinnerWindow } from '@/lib/recent-winners'
 import { type Difficulty, type ModeId } from '@/modes'
@@ -147,7 +147,7 @@ export function RecentWinners({
             {SENTENCES[line.window]({
               userId: line.winner.userId,
               nickname: line.winner.nickname,
-              mark: championMark(line.winner.userId, champions),
+              marks: playerMarks(line.winner.userId, champions),
               avgAccuracy: line.winner.avgAccuracy,
               avgSpeed: line.winner.avgSpeed,
             })}

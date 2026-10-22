@@ -1,11 +1,23 @@
 import type { Period } from '@/lib/announcements'
 import { type Difficulty, type ScoredMode } from '@/modes'
 
-// Who holds the all-time record on each mode's Extreme board — the hardest board a mode
-// has, over the longest window it keeps. One player each, because gold is rank one.
-export type Champions = Record<ScoredMode, string | null>
+// Who is currently standing where, for every mark the app draws in front of a name.
+//
+// Two of the three are boards: the all-time record on each mode's Extreme board — the
+// hardest a mode has, over the longest window it keeps — one player each, because gold is
+// rank one. The third is a **session**, which is not a board at all and is why this is no
+// longer a `Record<ScoredMode, …>`: the shape used to say "one per scored mode" and now
+// says "one per mark", which is what it was always being used for.
+export type Champions = {
+  accuracy: string | null
+  speed: string | null
+  // Whoever took the most recently closed session — see `last_session_winner`. Held here
+  // beside the boards so one read of one context answers for every mark on a name, rather
+  // than a second provider threaded to the same six places.
+  challenge: string | null
+}
 
-export const NO_CHAMPIONS: Champions = { accuracy: null, speed: null }
+export const NO_CHAMPIONS: Champions = { accuracy: null, speed: null, challenge: null }
 
 // What one board read can say about who leads it: an id, nobody, or — `undefined` —
 // nothing at all, because the request did not come back.
@@ -16,48 +28,74 @@ export const NO_CHAMPIONS: Champions = { accuracy: null, speed: null }
 // `null` over a good id and nothing ever asked again.
 export type ChampionRead = string | null | undefined
 
-// A fresh pair of reads over what is already known. Boards that answered replace what
-// they answered for; boards that did not are left exactly as they were.
+// A fresh set of reads over what is already known. Whatever answered replaces what it
+// answered for; whatever did not is left exactly as it was.
 export function mergeChampions(
   prev: Champions,
-  reads: Record<ScoredMode, ChampionRead>,
+  reads: Partial<Record<keyof Champions, ChampionRead>>,
 ): Champions {
+  const kept = (key: keyof Champions): string | null =>
+    reads[key] === undefined ? prev[key] : reads[key]
   return {
-    accuracy: reads.accuracy === undefined ? prev.accuracy : reads.accuracy,
-    speed: reads.speed === undefined ? prev.speed : reads.speed,
+    accuracy: kept('accuracy'),
+    speed: kept('speed'),
+    challenge: kept('challenge'),
   }
 }
 
 // The mark a player wears in front of their name, anywhere their name appears.
 //
-// Both boards is a crown; one is that mode's bird. Accuracy is an owl for what it asks
-// — patience and an exact eye — and Speed an eagle for the dive.
-const CHAMPION_MARKS = {
-  both: '👑',
+// One bird per standing. An owl for Accuracy — patience and an exact eye — an eagle for
+// Speed's dive, and a phoenix for whoever took the last challenge: a bird that burns down
+// and comes back is exactly what a session standing is, held until the next one closes
+// rather than kept.
+//
+// Keyed by the standing rather than listed loose, so the three can be walked in the order
+// they are drawn and a fourth standing cannot arrive without a bird to go with it.
+const BIRD_MARKS = {
   accuracy: '🦉',
   speed: '🦅',
-} as const
+  challenge: '🐦‍🔥',
+} as const satisfies Record<keyof Champions, string>
 
-export type ChampionMark = (typeof CHAMPION_MARKS)[keyof typeof CHAMPION_MARKS]
+// Every standing there is, in the order its bird is drawn: the two boards, then the
+// session. A tuple rather than `Object.keys`, which would type as `string[]` and lose the
+// exhaustiveness the map above is written for.
+const STANDINGS = ['accuracy', 'speed', 'challenge'] as const
 
-export function championMark(
+// All three at once, and the only mark that is not a bird. It **replaces** them rather
+// than joining them — a player holding everything wears one crown, not a row of three,
+// which is what makes the crown mean more than the birds it is made of.
+const CROWN = '👑'
+
+// Every mark a name can wear. `TitleMark` keys its copy on this union: a mark the player
+// cannot have explained to them is a mark they will guess at.
+export type PlayerMark = (typeof BIRD_MARKS)[keyof typeof BIRD_MARKS] | typeof CROWN
+
+// Every mark this player wears, in the order they are drawn.
+//
+// A list rather than one mark, because the three standings are independent claims that
+// can be true at once — holding Extreme Accuracy does not stop you having taken
+// yesterday's challenge — and a single value meant whichever was tested first silently
+// won. The full set is the one case that collapses, to the crown.
+export function playerMarks(
   userId: string | null,
   champions: Champions,
-): ChampionMark | null {
-  if (userId === null) return null
-  const accuracy = champions.accuracy === userId
-  const speed = champions.speed === userId
-  if (accuracy && speed) return CHAMPION_MARKS.both
-  if (accuracy) return CHAMPION_MARKS.accuracy
-  if (speed) return CHAMPION_MARKS.speed
-  return null
+): readonly PlayerMark[] {
+  if (userId === null) return []
+  const held = STANDINGS.filter((standing) => champions[standing] === userId)
+  if (held.length === STANDINGS.length) return [CROWN]
+  return held.map((standing) => BIRD_MARKS[standing])
 }
 
 // Whether this player holds both Extreme all-time boards at once — a reign rather than a
-// record. Named rather than left as a comparison against the crown emoji: the mark is a
-// rendering of the fact, and code that wants the fact should not have to go through it.
-export const holdsCrown = (userId: string | null, champions: Champions): boolean =>
-  championMark(userId, champions) === CHAMPION_MARKS.both
+// record. Named rather than left as a comparison against a mark: this is the fact the
+// UNTOUCHABLE achievement is about, and it is deliberately **not** the crown any more.
+// The crown became all three standings when the phoenix joined them; the achievement's
+// shipped copy still says both boards, so the two parted ways and the name says which
+// this one is.
+export const holdsBothBoards = (userId: string | null, champions: Champions): boolean =>
+  userId !== null && champions.accuracy === userId && champions.speed === userId
 
 // How loudly the game-over screen celebrates what the run just took.
 //

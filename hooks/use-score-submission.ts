@@ -79,8 +79,10 @@ export function useScoreSubmission(
       // which has nothing to say about a finished run's time because the run is not
       // finished.
       elapsedMs?: number,
-    ) => {
-      void submitScore(
+    ): Promise<void> =>
+      // Handed back so a caller that draws the standings can read them again once the
+      // write has landed — see the session board at game over.
+      submitScore(
         userId,
         nickname,
         mode,
@@ -89,8 +91,7 @@ export function useScoreSubmission(
         hits,
         sessionId,
         elapsedMs,
-      )
-    },
+      ).then(() => undefined),
     [userId, nickname],
   )
 

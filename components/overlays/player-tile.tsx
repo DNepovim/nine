@@ -10,7 +10,7 @@ import { DIM_INK } from '@/constants/colors'
 import { TYPE } from '@/constants/typography'
 import { useChampionsContext } from '@/hooks/use-champions'
 import { useOpenProfile } from '@/hooks/use-profile-modal'
-import { championMark } from '@/lib/champions'
+import { playerMarks } from '@/lib/champions'
 import { cn } from '@/lib/cn'
 import { rankMedal } from '@/lib/rank-emoji'
 
@@ -125,7 +125,9 @@ export function PlayerTile({
   const initial = nickname.trim().charAt(0).toUpperCase() || '?'
   // The board's crown and birds follow a player into a room: the same two ids answer it
   // here, so a champion is recognisable wherever their name is drawn.
-  const mark = championMark(userId ?? null, champions)
+  // Joined rather than spaced: these sit inline before a nickname on a narrow tile, and
+  // a gap between two of them would cost a character of the name.
+  const marks = playerMarks(userId ?? null, champions).join(' ')
   // Medals only: a room can end with four or five players, and the board's mark for
   // last place is a joke about missing the cut, which does not apply here.
   const medal = rank === undefined ? null : rankMedal(rank)
@@ -191,7 +193,7 @@ export function PlayerTile({
             className={cn(TYPE.button, 'flex-1')}
             style={{ color: WHITE }}
           >
-            {mark === null ? nickname : `${mark} ${nickname}`}
+            {marks === '' ? nickname : `${marks} ${nickname}`}
           </Text>
           {score !== undefined && (
             <View className="flex-row items-center gap-1">

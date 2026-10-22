@@ -47,6 +47,8 @@ export type ButtonId =
   | 'tutorial.tap_through'
   | 'tutorial.step'
   | 'tutorial.step_dot'
+  | 'tutorial_offer.accept'
+  | 'tutorial_offer.dismiss'
 
   // ── The step-up ladder ──
   // Two doors onto it and one screen behind them: the toast a practice run floats, and
@@ -177,13 +179,11 @@ export type ButtonId =
   | 'admin.role_new'
   | 'admin.role_feature'
   | 'admin.role_preview'
-  // The row's own button on the FEATURES list, which opens the dialog rather than moving
-  // the switch, and the two presses inside that dialog. Three ids for what used to be
-  // one, because they are now three different things to have done: opening the question,
-  // choosing an answer, and committing it. The press that matters is the last one — a
-  // reader who opened the dialog and left is a reader who thought better of it, and that
-  // is worth being able to see.
-  | 'admin.feature_visibility'
+  // A row on the FEATURES list, which opens that feature's screen, and the two presses
+  // of the visibility picker on it: choosing an answer, and committing it. The press that
+  // matters is the last one — a reader who chose and left is a reader who thought better
+  // of it, and that is worth being able to see.
+  | 'admin.feature'
   | 'admin.visibility_option'
   | 'admin.visibility_confirm'
   // The hub's three buttons, and the planner behind the second of them. `admin.section`

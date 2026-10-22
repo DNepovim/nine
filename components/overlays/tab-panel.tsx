@@ -8,7 +8,7 @@ import { TYPE } from '@/constants/typography'
 import type { PeriodBoard } from '@/hooks/use-board'
 import { useChampionsContext } from '@/hooks/use-champions'
 import { EMPTY_IDS, usePlayerFactors } from '@/hooks/use-player-factors'
-import { championMark } from '@/lib/champions'
+import { playerMarks } from '@/lib/champions'
 import { cn } from '@/lib/cn'
 import { emptyBoardLine } from '@/lib/empty-board'
 import type { LeaderboardTab } from '@/lib/leaderboard-period'
@@ -176,7 +176,7 @@ export function TabPanel({
           entry={{
             rank: row.rank,
             userId: row.userId,
-            mark: championMark(row.userId, champions),
+            marks: playerMarks(row.userId, champions),
             nickname: row.nickname,
             score: row.score,
             timeMs: row.timeMs,
@@ -209,7 +209,7 @@ export function TabPanel({
             entry={{
               rank: myRank.rank,
               userId,
-              mark: championMark(userId, champions),
+              marks: playerMarks(userId, champions),
               nickname,
               score: data.myBest,
               isUser: true,

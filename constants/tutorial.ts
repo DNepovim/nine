@@ -2,7 +2,7 @@ import { msg } from '@lingui/core/macro'
 
 import { type Grid } from '@/modes'
 
-// The tutorial: the run a first launch opens on, and the three rules that make it one.
+// The tutorial: the run a first launch offers, and the three rules that make it one.
 //
 // Not a mode of its own. It is Trainee with everything that can wait taken off it — the
 // same blue, the same infinite lives, no board and no score — so `mode` stays `trainee`

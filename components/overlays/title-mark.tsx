@@ -1,6 +1,7 @@
 import type { MessageDescriptor } from '@lingui/core'
 import { msg } from '@lingui/core/macro'
 import { useLingui } from '@lingui/react/macro'
+import { isNonEmptyArray } from 'narrowland'
 import { useEffect, useState } from 'react'
 import { Text, View } from 'react-native'
 import Animated, { FadeIn, FadeOut } from 'react-native-reanimated'
@@ -8,7 +9,7 @@ import Animated, { FadeIn, FadeOut } from 'react-native-reanimated'
 import { TrackedPressable } from '@/components/tracked-pressable'
 import { GAME_SCALE } from '@/constants/colors'
 import { TYPE } from '@/constants/typography'
-import type { ChampionMark } from '@/lib/champions'
+import type { PlayerMark } from '@/lib/champions'
 import { cn } from '@/lib/cn'
 import { gradientOf } from '@/modes'
 
@@ -59,9 +60,10 @@ const shadow = {
 // and then the player is put above it. A line that only said which board it came from
 // would be a caption, and the mark is a reward.
 //
-// The colours are the ones the guide's champions section gives the same three marks: a
-// bird wears its mode, and the crown steps off the mode scale onto the game scale's
-// amber, because it is not about one mode.
+// The colours are the ones the guide's champions section gives the same marks: a bird
+// wears what it is about — the two board birds their mode, the phoenix the challenges'
+// own colour — and the crown steps off onto the game scale's amber, because it is the one
+// mark that is about no single thing.
 const MARK_COPY = {
   '🦉': {
     tint: gradientOf('accuracy')[0],
@@ -75,14 +77,25 @@ const MARK_COPY = {
     mine: msg`An eagle dives at 240 km/h. You are the quicker one — Extreme Speed's all-time record is yours.`,
     theirs: msg`An eagle dives at 240 km/h. This player is the quicker one — Extreme Speed's all-time record is theirs.`,
   },
+  // Took the most recently closed **session**. Not a board and not kept: it moves to
+  // whoever wins the next challenge, which is what the wording has to carry — "right now"
+  // rather than "has achieved". The tint is the challenges' own colour, the one the guide
+  // gives that chapter, so the bubble belongs to the thing it is about.
+  '🐦‍🔥': {
+    tint: GAME_SCALE[3],
+    title: msg`THE PHOENIX`,
+    mine: msg`A phoenix burns down and comes back. You took the last challenge, and the mark is yours until somebody takes the next one.`,
+    theirs: msg`A phoenix burns down and comes back. This player took the last challenge, and the mark is theirs until somebody takes the next one.`,
+  },
+  // Last, because it is what the three above add up to.
   '👑': {
     tint: GAME_SCALE[4],
     title: msg`THE CROWN`,
-    mine: msg`The owl's ear and the eagle's dive, and you out-do both: the all-time record on Extreme Accuracy and Extreme Speed at once.`,
-    theirs: msg`The owl's ear and the eagle's dive, and this player out-does both: the all-time record on Extreme Accuracy and Extreme Speed at once.`,
+    mine: msg`The owl's ear, the eagle's dive and the phoenix's return — all three at once, and the birds give way to the crown.`,
+    theirs: msg`The owl's ear, the eagle's dive and the phoenix's return — all three at once, and the birds give way to the crown.`,
   },
 } as const satisfies Record<
-  ChampionMark,
+  PlayerMark,
   {
     tint: string
     title: MessageDescriptor
@@ -91,9 +104,16 @@ const MARK_COPY = {
   }
 >
 
-// The mark a player wears everywhere their name does, drawn large with a bubble
-// explaining it: over NINE on the intro, where it is the reader's own, and over the name
-// on a profile card, where it is whoever that card is about.
+// The marks a player wears everywhere their name does, drawn large with a bubble
+// explaining them: over NINE on the intro, where they are the reader's own, and over the
+// name on a profile card, where they are whoever that card is about.
+//
+// **All of them in one box, rather than one box each.** Two bird standings are
+// different claims that can be true at once, so this has to draw two — but the bubble is
+// an absolutely placed child and can only be as wide as its parent, which is why that
+// parent is full width. Two full-width boxes side by side would each claim the whole row
+// and overflow it, so the row of glyphs lives *inside* the one box and the bubble keeps
+// the width it needs.
 //
 // The mark arrives unannounced — a board changes hands while the app is shut and an emoji
 // the player has never seen is suddenly sitting over NINE — so it has to be able to say
@@ -107,68 +127,90 @@ const MARK_COPY = {
 // of the card. Below there is the greeting and the title, or the name and the motto,
 // which the bubble covers for as long as it is up. It is absolutely placed, so nothing
 // around it moves to make room for it.
+// Air between two marks, and the figure the caret does its arithmetic with — a constant
+// rather than a `gap-2` class, because the caret has to know it to find the glyph it is
+// pointing at.
+const MARK_GAP = 8
+
 export function TitleMark({
-  mark,
-  // Whose mark this is, which is the only thing that changes the words.
+  marks,
+  // Whose marks these are, which is the only thing that changes the words.
   mine,
   size = MARK_SIZE,
-  // The drift the intro's title letters ride, which the mark joins when it stands among
+  // The drift the intro's title letters ride, which the marks join when they stand among
   // them. Off inside the profile card, where nothing else moves.
   float = false,
   className,
 }: {
-  mark: ChampionMark
+  marks: readonly PlayerMark[]
   mine: boolean
   size?: number
   float?: boolean
   className?: string
 }) {
   const { t } = useLingui()
-  const [open, setOpen] = useState(false)
-  const { tint, title } = MARK_COPY[mark]
-  const body = mine ? MARK_COPY[mark].mine : MARK_COPY[mark].theirs
+  // *Which* mark is explaining itself, rather than whether one is. A player wearing both
+  // an owl and a phoenix has two different questions to ask, and a boolean could only
+  // answer the first one tapped.
+  const [open, setOpen] = useState<PlayerMark | null>(null)
 
   useEffect(() => {
-    if (!open) return
+    if (open === null) return
     const id = setTimeout(() => {
-      setOpen(false)
+      setOpen(null)
     }, HOLD_MS)
     return () => {
       clearTimeout(id)
     }
   }, [open])
 
+  // After the hooks, never before them: a player wearing nothing draws nothing, and the
+  // callers that used to guard this themselves no longer have to.
+  if (!isNonEmptyArray(marks)) return null
+
+  const copy = open === null ? null : MARK_COPY[open]
+  // How far the caret slides off centre to sit under the glyph that was tapped. The row
+  // is centred and every glyph is the same width, so the offset is arithmetic rather than
+  // a measurement — which keeps the bubble from needing a layout pass to point straight.
+  const caretShift =
+    open === null ? 0 : (marks.indexOf(open) - (marks.length - 1) / 2) * (size + MARK_GAP)
+
   return (
     // Lifted above whatever comes after it: the bubble is a child of this box, and
     // siblings later in the tree paint over earlier ones, so without this it would open
     // behind the four letters — or the name — it is meant to float over.
     //
-    // Full width rather than as wide as the emoji, because an absolutely placed child is
+    // Full width rather than as wide as the glyphs, because an absolutely placed child is
     // laid out inside its parent — the bubble can only be as wide as this box gives it
-    // room to be, and a box the width of one glyph would wrap the copy a word per line.
+    // room to be, and a box the width of one emoji would wrap the copy a word per line.
     <View
       className={cn('z-50 w-full items-center', className)}
       style={{ height: size + LEADING }}
     >
-      <TrackedPressable
-        id="title.press"
-        onPress={() => {
-          setOpen((wasOpen) => !wasOpen)
-        }}
-        hitSlop={12}
-        accessibilityRole="button"
-        accessibilityLabel={t(title)}
-      >
-        <Text
-          selectable={false}
-          className={cn(float && 'letter-float-1')}
-          style={{ fontSize: size, lineHeight: size + LEADING }}
-        >
-          {mark}
-        </Text>
-      </TrackedPressable>
+      <View className="flex-row items-center" style={{ gap: MARK_GAP }}>
+        {marks.map((mark) => (
+          <TrackedPressable
+            key={mark}
+            id="title.press"
+            onPress={() => {
+              setOpen((up) => (up === mark ? null : mark))
+            }}
+            hitSlop={12}
+            accessibilityRole="button"
+            accessibilityLabel={t(MARK_COPY[mark].title)}
+          >
+            <Text
+              selectable={false}
+              className={cn(float && 'letter-float-1')}
+              style={{ fontSize: size, lineHeight: size + LEADING }}
+            >
+              {mark}
+            </Text>
+          </TrackedPressable>
+        ))}
+      </View>
 
-      {open && (
+      {copy !== null && (
         <Animated.View
           entering={FadeIn.duration(160)}
           exiting={FadeOut.duration(140)}
@@ -190,22 +232,22 @@ export function TitleMark({
           <TrackedPressable
             id="title.secondary"
             onPress={() => {
-              setOpen(false)
+              setOpen(null)
             }}
           >
             <View
               className="rounded-2xl bg-card px-3.5 py-2.5"
-              style={{ ...shadow, borderWidth: 1, borderColor: `${tint}55` }}
+              style={{ ...shadow, borderWidth: 1, borderColor: `${copy.tint}55` }}
             >
               <Text
                 selectable={false}
                 className={cn(TYPE.quietAction, 'mb-1')}
-                style={{ color: tint }}
+                style={{ color: copy.tint }}
               >
-                {t(title)}
+                {t(copy.title)}
               </Text>
               <Text selectable={false} className={cn(TYPE.proseSm, 'text-dim')}>
-                {t(body)}
+                {t(mine ? copy.mine : copy.theirs)}
               </Text>
             </View>
             {/* Pulled up by half its side so the card's edge cuts it in two, and
@@ -219,10 +261,10 @@ export function TitleMark({
                 height: CARET,
                 top: -CARET / 2,
                 left: '50%',
-                marginLeft: -CARET / 2,
+                marginLeft: -CARET / 2 + caretShift,
                 borderLeftWidth: 1,
                 borderTopWidth: 1,
-                borderColor: `${tint}55`,
+                borderColor: `${copy.tint}55`,
               }}
             />
           </TrackedPressable>

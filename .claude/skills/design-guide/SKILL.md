@@ -92,7 +92,13 @@ The short form:
 - A dialog is `ModalCard`. A platform `Modal` is for one problem — a keyboard under the
   card — and `CardModal` is already it.
 - A screen is `Screen` / `ScreenLayer`. A screen a run stops on is `RunScreen`.
-- A button's label is `TYPE.button` on `bg-strong`; a quiet one is `TYPE.quietAction`.
+- A primary button is `PrimaryButton`. A link — CLOSE, NOT NOW, RESEND, any quiet way
+  out — is `LinkButton`: icon, `TYPE.quietAction`, dim ink, no underline. Never write
+  either out by hand, and never copy one from a neighbouring file: the neighbour may be
+  one of the drifted originals (see `references/components.md`).
+- **Before drawing any pressable, open the inventory** and look for the job. A dialog
+  built by copying the nearest similar dialog inherits whatever that dialog got wrong —
+  that is how an underlined NOT NOW reached a new modal after the link rule existed.
 - If something is close, give it a prop, and comment which caller asked for it.
 - If two things genuinely differ, name the difference in a comment on both — that comment
   is what stops a third appearing between them.

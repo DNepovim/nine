@@ -22,7 +22,7 @@ export const CLEAN_RUN = 5
 export const MIN_HITS = 10
 export const MIN_RUN_MS = 60_000
 
-// A player whose first launch opened straight into Trainee gets asked on hit count alone
+// A player who took the tutorial their first launch offered gets asked on hit count alone
 // — no clean streak, no clock. They have never seen a scored board, so the offer is how
 // they find out the boards exist rather than a reward for playing well, and waiting for
 // evidence of playing well would strand exactly the player it was written for. Ten

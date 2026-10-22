@@ -32,7 +32,7 @@ export type SpanStatus = 'upcoming' | 'live' | 'expired'
 // are not. These name the state of a database row on a screen whose readers are the
 // people who write the catalog, and they sit beside challenge ids and raw timestamps.
 export const STATUS_LABEL = {
-  live: 'LIVE NOW',
+  live: 'LIVE',
   upcoming: 'UPCOMING',
   expired: 'EXPIRED',
 } as const satisfies Record<SpanStatus, string>

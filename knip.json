@@ -8,6 +8,6 @@
     "lingui.config.ts"
   ],
   "project": ["**/*.{ts,tsx}"],
-  "ignoreDependencies": ["posthog-js", "vite"],
+  "ignoreDependencies": ["posthog-js"],
   "ignore": ["**/*.web.ts", "**/*.web.tsx"]
 }

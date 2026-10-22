@@ -1,3 +1,4 @@
+import { isNonEmptyArray } from 'narrowland'
 import { Text } from 'react-native'
 
 import { TYPE } from '@/constants/typography'
@@ -20,13 +21,14 @@ import { useOpenProfile } from '@/hooks/use-profile-modal'
 export function TakerName({
   userId,
   nickname,
-  mark,
+  marks,
   color,
 }: {
   userId: string
   nickname: string
-  // The crown or bird this player wears everywhere their name appears, or null.
-  mark: string | null
+  // Every mark this player wears everywhere their name appears — a board standing, a
+  // phoenix for taking the last challenge, or both at once. Empty where they wear none.
+  marks: readonly string[]
   // The line's own grey. Passed in rather than reached for here so the line decides how
   // drained it is, and the name cannot drift from the words beside it.
   color: string
@@ -43,7 +45,7 @@ export function TakerName({
       className={TYPE.value}
       style={{ color }}
     >
-      {mark === null ? nickname : `${mark} ${nickname}`}
+      {isNonEmptyArray(marks) ? `${marks.join(' ')} ${nickname}` : nickname}
     </Text>
   )
 }

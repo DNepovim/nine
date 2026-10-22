@@ -13,7 +13,7 @@ import { GLYPH, TYPE } from '@/constants/typography'
 import { useChampionsContext } from '@/hooks/use-champions'
 import { useViewport } from '@/hooks/use-viewport'
 import { displayName } from '@/lib/announcements'
-import { championMark } from '@/lib/champions'
+import { playerMarks } from '@/lib/champions'
 import { cn } from '@/lib/cn'
 import { formatShortDay } from '@/lib/format-date'
 import { HISTORY_DAYS, type TakenMedal } from '@/lib/medal-history'
@@ -127,7 +127,7 @@ function TakenRow({ taken }: { taken: TakenMedal }) {
               <TakerName
                 userId={taken.taker.userId}
                 nickname={displayName(taken.taker.nickname)}
-                mark={championMark(taken.taker.userId, champions)}
+                marks={playerMarks(taken.taker.userId, champions)}
                 color={GRAYSCALE[1]}
               />
             </Trans>

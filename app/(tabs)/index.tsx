@@ -60,6 +60,7 @@ import { PausedOverlay } from '@/components/overlays/paused-overlay'
 import { ReplayConsentOverlay } from '@/components/overlays/replay-consent-overlay'
 import { StepUpOverlay } from '@/components/overlays/step-up-overlay'
 import { TutorialDoneModal } from '@/components/overlays/tutorial-done-modal'
+import { TutorialOfferModal } from '@/components/overlays/tutorial-offer-modal'
 import { WhatsNewOverlay } from '@/components/overlays/whats-new-overlay'
 import { RolePreviewBadge } from '@/components/role-preview-badge'
 import { Screen } from '@/components/screen'
@@ -135,7 +136,7 @@ import {
   type Period,
 } from '@/lib/announcements'
 import { currentBoardMedals, sessionMedal } from '@/lib/board-medals'
-import { holdsCrown, recordScreen, type RecordScreen } from '@/lib/champions'
+import { holdsBothBoards, recordScreen, type RecordScreen } from '@/lib/champions'
 import { cn } from '@/lib/cn'
 import { drillFor } from '@/lib/drill'
 import { gameSnapshot } from '@/lib/feedback-state'
@@ -144,7 +145,12 @@ import { runChallenge } from '@/lib/next-challenge'
 import { heldPeriods, medalPeriods } from '@/lib/record-medals'
 import { newRunId } from '@/lib/run-id'
 import { countRun } from '@/lib/run-submission'
-import { restoreRun, savedPositions } from '@/lib/saved-run'
+import {
+  restoreRun,
+  savedPositions,
+  type RunSession,
+  type SavedRun,
+} from '@/lib/saved-run'
 import { STEP_UP_BOARD } from '@/lib/step-up'
 import { multiplierColor } from '@/lib/streak-badge'
 import { tipForTarget } from '@/lib/tutorial-tip'
@@ -258,13 +264,29 @@ function introStanding(
   return { drawn, alone: drawn && menuOverlay === 'none' }
 }
 
+// The first launch's tutorial offer, and what it holds back.
+//
+// The offer goes ahead of every other launch ask: it is the one question a player with
+// nothing on the device needs answered before any of the others mean anything. Every ask
+// waits on `free`, so holding that while the offer is owed is what queues them behind it.
+function welcomeStanding(
+  introAlone: boolean,
+  splashDone: boolean,
+  welcomePending: boolean,
+): { offer: boolean; free: boolean } {
+  return {
+    offer: introAlone && splashDone && welcomePending,
+    free: introAlone && !welcomePending,
+  }
+}
+
 // The two dialogs behind the line under the title: everything the player holds, and
 // everything there is to achieve. Not `menuOverlay`, even though two of those are dialogs
 // as well: these belong to the intro and nothing else opens them, whereas every name on
 // that list is reachable from the pause screen too.
 type TitleDialog = 'none' | 'medals' | 'achievements'
 
-// The three ways into the tutorial: the first launch opening on it by itself, TRY IT at
+// The three ways into the tutorial: the first launch's offer over the intro, TRY IT at
 // the end of the guide, and the dev sidebar. All three deal the same run straight onto the
 // board; what the door decides is what the funnel is told — and 'dev' is told nothing. The
 // two a player can reach are the `from` values `run_started` already names.
@@ -482,6 +504,34 @@ const sessionBestsOf = (
       }
     : null
 
+// The instant a run's **session** shuts, for the two screens a stopped run lands on, or
+// null for an ordinary run.
+//
+// Out here beside `sessionBestsOf` rather than inline at the two call sites, and for the
+// same reason that one is: both halves have to be in hand for the answer to mean anything
+// — a close time left over from a finished run is a figure nothing should draw — and a
+// screen component is not the place to keep remembering that.
+const sessionClockOf = (
+  sessionId: string | null,
+  closesAt: number | null,
+): number | null => (sessionId === null ? null : closesAt)
+
+// The run's session as the saved run keeps it, or null for an ordinary run — both halves
+// or neither, for the reason `sessionBestsOf` gives.
+const savedSessionOf = (
+  sessionId: string | null,
+  closesAt: number | null,
+): RunSession | null =>
+  sessionId === null || closesAt === null ? null : { id: sessionId, closesAt }
+
+// The other way: what a restored run puts back, null on both halves for an ordinary run.
+const restoredSessionOf = (
+  saved: SavedRun,
+): { id: string | null; closesAt: number | null } => ({
+  id: saved.session?.id ?? null,
+  closesAt: saved.session?.closesAt ?? null,
+})
+
 export default function GameScreen() {
   const { t } = useLingui()
   const [state, send, actor] = useMachine(gameMachine)
@@ -622,6 +672,13 @@ export default function GameScreen() {
     // is the moment the restored board has been standing still since.
     const now = Date.now()
     setRestoredPositions(savedPositions(savedRun.pending))
+    // The session it was posting to, put back with it — or cleared, for an ordinary run.
+    // Before the run is dealt, for the reason the challenge dialog sets it before START:
+    // the drill and the first record post both read it.
+    const session = restoredSessionOf(savedRun.pending)
+    setRunSession(session.id)
+    setRunSessionClosesAt(session.closesAt)
+    setWindowShut(false)
     savedRun.taken()
     send({ type: 'RESTORE', run: restoreRun(savedRun.pending, now, newRunId()), now })
   }, [savedRun, isMenu, send])
@@ -786,7 +843,7 @@ export default function GameScreen() {
   // a first ask, the toggle inside OPTIONS on every ask after. See
   // hooks/use-replay-consent.ts for why there are not two stores for this.
   const replayConsent = useReplayConsent()
-  const { exiting: splashExiting, done: splashDone } = useSplash()
+  const { done: splashDone } = useSplash()
   const { ready: updateReady, apply: applyUpdate } = useAppUpdate()
 
   // Close advanced options whenever the game starts or resumes so that pausing
@@ -837,45 +894,10 @@ export default function GameScreen() {
     startTutorial('dev')
   }, [tutorialsAsked, send, startTutorial])
 
-  // A device nobody has played on opens into a run rather than into the intro: the
-  // fastest thing the app can say about itself is the game itself. What it opens is the
-  // tutorial — Trainee with its clock, its cadence and its options taken off, so there is
-  // nothing on the board that can be lost or misread before anything has been explained.
-  // See constants/tutorial.ts.
+  // A device nobody has played on opens on the intro with one card over it, offering the
+  // tutorial — Trainee with its clock, its cadence and its options taken off. See
+  // constants/tutorial.ts. The card itself is drawn below, on `welcomeOffer`.
   const welcome = useWelcome()
-
-  // Put the machine on the welcome board as soon as the launch is known to owe a run —
-  // before the splash lifts, and separately from starting it.
-  //
-  // Starting has to wait for the splash (below), and React is free to run that effect a
-  // frame or more after the logo clears. Whatever the board is set to is what those frames
-  // show, and the machine's own default context is Accuracy Hard — so without this the
-  // welcome opens on the wrong board and corrects itself in front of the player.
-  useEffect(() => {
-    if (!welcome.pending || !isMenu) return
-    send({ type: 'SET_MODE', mode: WELCOME_BOARD.mode })
-    send({ type: 'SET_DIFFICULTY', difficulty: WELCOME_BOARD.difficulty })
-  }, [welcome.pending, isMenu, send])
-
-  // The first launch's own door into the lesson, opened as the splash *begins* its exit
-  // so the logo scales away onto a board that is already there rather than onto an empty
-  // screen — the same hand-off the splash was written for.
-  //
-  // The lesson used to be dealt behind a curtain: a full-app screen saying what was about
-  // to happen and that none of it was scored, with the run started as the words faded.
-  // The words are still said, on a card in the middle of the board they are about — see
-  // the lesson's `welcome` step — and the screen in front of them is gone. A lesson should
-  // not open on a door.
-  //
-  // `menu` because START is only accepted there. It runs once: dealing the run writes the
-  // launch down as welcomed, which is what takes `pending` away.
-  useEffect(() => {
-    if (!welcome.pending || !splashExiting || !isMenu) return
-    startTutorial('welcome')
-    // Written down beside the run it records. Only the first launch owes it — the other
-    // two doors are a tutorial asked for a second time.
-    welcome.taken()
-  }, [welcome.pending, welcome.taken, splashExiting, isMenu, startTutorial])
 
   const {
     userId,
@@ -944,10 +966,19 @@ export default function GameScreen() {
   const board = useBoard(mode, difficulty, userId)
   // The run's session standings, for the score bar's SESSION cell. Null for an ordinary
   // run, which `useSessionBoard` answers without asking the server.
-  const { board: runSessionBoard } = useSessionBoard(runSession, userId)
-  // Who holds each mode's Extreme all-time board. Two ids, read wherever a name is
-  // drawn and by the game-over screen to tell a reign from a single record.
-  const champions = useChampions()
+  //
+  // The one read of them: the strip, the pause screen and game over all draw this, so the
+  // place in the title and the table under it cannot disagree. Read again as the run
+  // pauses and resumes, and once the final score has landed.
+  const { board: runSessionBoard, refresh: refreshSessionBoard } = useSessionBoard(
+    runSession,
+    userId,
+    isPaused,
+  )
+  // Who holds each mode's Extreme all-time board, and who took the last challenge —
+  // read wherever a name is drawn, and by the game-over screen to tell a reign from a
+  // single record. The id is passed so the dev sidebar can pin the phoenix on this player.
+  const champions = useChampions(userId)
   const refreshBoard = board.refresh
   const bestToday = board.today.record
   const bestWeek = board.week.record
@@ -1072,7 +1103,7 @@ export default function GameScreen() {
     // only climbs within a run, and the database refuses downgrades, so an early
     // write can never spoil the final one.
     onBoardRecord: () => {
-      submitScore(
+      void submitScore(
         mode,
         rules.difficulty,
         state.context.score,
@@ -1160,9 +1191,10 @@ export default function GameScreen() {
     batch: hitBatch,
     stats,
     standings,
-    // The crown is both Extreme all-time boards at once — the same reign the game-over
-    // screen pays out for, read from the same two ids.
-    crown: holdsCrown(userId, champions),
+    // UNTOUCHABLE is both Extreme all-time boards at once — the same reign the game-over
+    // screen pays out for, read from the same two ids. Deliberately not the **crown**,
+    // which took the phoenix in alongside them; see `holdsBothBoards`.
+    crown: holdsBothBoards(userId, champions),
     crossed,
     guideRead: howToPlay.read,
     feedbackAnswered: feedbackAnswered.answered,
@@ -1262,7 +1294,7 @@ export default function GameScreen() {
     // submitted, and the board store folds that in without asking the server.
     void refreshBoard()
     if (isGameOver && (isOneOf(mode, SCORED_MODES) || runSession !== null)) {
-      submitScore(
+      void submitScore(
         mode,
         rules.difficulty,
         state.context.score,
@@ -1273,7 +1305,11 @@ export default function GameScreen() {
         // record post above sends none, a run still being played having no time to
         // claim.
         state.context.elapsedMs,
-      )
+        // Then the standings again, so the table on the game-over screen has this run on
+        // it. Read before the write landed, it showed the session as it was before the
+        // run — empty, on a session nobody else had played yet. Asks nothing of the
+        // server on an ordinary run, which has no session to read.
+      ).then(refreshSessionBoard)
       if (isReady && !nickname && state.context.score > 0) setShowNicknameModal(true)
     }
   }, [
@@ -1386,7 +1422,7 @@ export default function GameScreen() {
     // The run's own clock goes up with it. The machine folds it shut the instant
     // `playing` is left, so this is a finished number rather than one still moving, and
     // `submitScore` keeps it only where the measure is the clock.
-    submitScore(mode, rules.difficulty, score, hits, runSession, elapsedMs)
+    void submitScore(mode, rules.difficulty, score, hits, runSession, elapsedMs)
     void refreshBoard()
     if (isReady && !nickname) setShowNicknameModal(true)
   }
@@ -1569,6 +1605,7 @@ export default function GameScreen() {
     isPaused,
     run: state.context,
     placed: displayedTargets,
+    session: savedSessionOf(runSession, runSessionClosesAt),
     settled: savedRun.settled,
   })
 
@@ -1710,8 +1747,8 @@ export default function GameScreen() {
   const isMultiActive = showMultiWaiting || showMultiGame || showMultiResults
 
   // The intro, but for whatever is stacked over it: the machine is idle, the player is not
-  // in a room or on the map, and the opening Trainee run — if this launch owes one — is
-  // neither still being decided nor still on its way in. Read through the two answers
+  // in a room or on the map, and whether this launch owes the tutorial offer has been
+  // decided. Read through the two answers
   // below rather than directly, so nothing in the tree can decide for itself what counts
   // as being at the start screen.
   const atIntro =
@@ -1719,7 +1756,6 @@ export default function GameScreen() {
     !isMultiActive &&
     !arcadeOpen &&
     welcome.decided &&
-    !welcome.pending &&
     // A run the app was closed on is still being asked about, or is on its way into the
     // machine. Either way the player is about to be looking at a pause screen, and the
     // start screen has no business flashing up in front of it.
@@ -1727,7 +1763,12 @@ export default function GameScreen() {
 
   // `introDrawn` paints the start screen; `onIntro` is the stricter answer — a question
   // put over a card the player opened themselves is an interruption, not a launch ask.
-  const { drawn: introDrawn, alone: onIntro } = introStanding(atIntro, menuOverlay)
+  const { drawn: introDrawn, alone: introAlone } = introStanding(atIntro, menuOverlay)
+  const { offer: welcomeOffer, free: onIntro } = welcomeStanding(
+    introAlone,
+    splashDone,
+    welcome.pending,
+  )
   const menuScreenOpen = isMenuScreen(menuOverlay)
 
   // Putting an address on this profile, and fetching a profile back from one. Below
@@ -2410,6 +2451,8 @@ export default function GameScreen() {
             {/* ── Game-over cinematic (overlay crossfade + flying title) ── */}
             <GameOverSequence
               sessionId={runSession}
+              sessionBoard={runSessionBoard}
+              sessionClosesAt={sessionClockOf(runSession, runSessionClosesAt)}
               windowShut={windowShut}
               // Where this run came on its session, for the title. Read from the board
               // already held for the score bar rather than fetched again — see
@@ -2516,6 +2559,8 @@ export default function GameScreen() {
 
             {isPaused && !menuScreenOpen && !stepUpOpen && !resuming && (
               <PausedOverlay
+                sessionClosesAt={sessionClockOf(runSession, runSessionClosesAt)}
+                sessionBoard={runSessionBoard}
                 gameMode={mode}
                 difficulty={difficulty}
                 userId={userId}
@@ -2717,6 +2762,19 @@ export default function GameScreen() {
                 onClose={() => {
                   setMenuOverlay('none')
                 }}
+              />
+            )}
+
+            {/* ── The first launch's tutorial offer — ahead of every launch ask below ── */}
+            {welcomeOffer && (
+              <TutorialOfferModal
+                onAccept={() => {
+                  startTutorial('welcome')
+                  // Written down beside the run it records. Only the first launch owes
+                  // it — the other two doors are a tutorial asked for a second time.
+                  welcome.taken()
+                }}
+                onDismiss={welcome.declined}
               />
             )}
 

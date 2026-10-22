@@ -5,7 +5,7 @@ import { View } from 'react-native'
 
 import type { BadgeCorner } from '@/components/game/dial-badge'
 import type { DialCorners, DialHint } from '@/constants/dial-hints'
-import { useBoardContext } from '@/hooks/use-board'
+import { useBoardContext, type PeriodBoard } from '@/hooks/use-board'
 import type { AchievementStore } from '@/lib/achievement-store'
 import type { AchievementFacts, Award } from '@/lib/achievements'
 import { currentBoardMedals } from '@/lib/board-medals'
@@ -27,6 +27,8 @@ import { HighScores } from './high-scores'
 import { PauseMark } from './pause-mark'
 import { runHeadline } from './run-headline'
 import { CardButton, RunExit, RunScreen } from './run-screen'
+import { SessionCloses } from './session-closes'
+import { SessionStandings } from './session-standings'
 import { TraineeDisplayOptions } from './trainee-display-options'
 
 export function PausedOverlay({
@@ -44,6 +46,8 @@ export function PausedOverlay({
   achievements,
   achievementStore,
   achievementFacts,
+  sessionClosesAt,
+  sessionBoard,
   corners,
   onSelectCorner,
   showPar,
@@ -82,6 +86,12 @@ export function PausedOverlay({
   // Only for the card a tapped chip opens — see EarnedAchievements.
   achievementStore: AchievementStore
   achievementFacts: AchievementFacts
+  // When this run's **session** shuts, or null for an ordinary run. A paused run does not
+  // pause its window, and the player staring at CONTINUE is deciding against that clock.
+  sessionClosesAt: number | null
+  // That session's standings, or null for an ordinary run and while unread. A challenge
+  // keeps no board, so without these its pause screen had no high scores at all.
+  sessionBoard: PeriodBoard | null
   // What the dial is printing in each corner of a key, and the way to change one.
   // Trainee only — no other mode draws them, so no other mode shows the row.
   corners: DialCorners
@@ -151,7 +161,15 @@ export function PausedOverlay({
         // is what the run is worth to everyone else, and the stats under it are what it
         // was worth to the player. A mode that reaches no board has nothing to stand on.
         beforeStats={
-          traits.board ? <BoardMedals medals={medals} gameMode={gameMode} /> : null
+          <>
+            {/* What is true of the contest rather than of the run, above the run's own
+                figures. A challenge keeps no board, so the medals below never draw for
+                one and this has the slot to itself. */}
+            {sessionClosesAt !== null && (
+              <SessionCloses mode={gameMode} closesAt={sessionClosesAt} />
+            )}
+            {traits.board ? <BoardMedals medals={medals} gameMode={gameMode} /> : null}
+          </>
         }
         stats={runStats({
           mode: gameMode,
@@ -196,6 +214,16 @@ export function PausedOverlay({
                   onSetPlayerClock={onSetPlayerClock}
                 />
               </View>
+            )}
+
+            {sessionBoard !== null && (
+              <SessionStandings
+                board={sessionBoard}
+                gameMode={gameMode}
+                difficulty={difficulty}
+                userId={userId}
+                nickname={nickname}
+              />
             )}
 
             {isOneOf(gameMode, SCORED_MODES) && (

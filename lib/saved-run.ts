@@ -92,8 +92,17 @@ export type SavedRun = {
   // `restoreRun` gives it a fresh one — which is exactly what it had before this, since
   // nothing had been posted under the old one either.
   runId?: string
+  // The **session** the run was posting to, and when its window shuts. Not the machine's
+  // — a session is not a rule, see `runSession` on the game screen — so it is handed in
+  // beside the run rather than read off it. Without it a challenge run put back after the
+  // app was closed lost its standings: no SESSION cell on the score bar, no session board
+  // at game over, a drill dealt from nothing, and a score posted nowhere. Absent on an
+  // ordinary run and on any run written before this was kept.
+  session?: RunSession
   targets: SavedTarget[]
 }
+
+export type RunSession = { id: string; closesAt: number }
 
 // Everything `toSavedRun` reads off the machine's context. `playingSince` is in here and
 // not in `RestoredRun` because a run can be put away while it is still running — a hard
@@ -213,8 +222,10 @@ export function toSavedRun(
   run: RunSnapshot,
   positions: ReadonlyMap<number, Position>,
   now: number,
+  session: RunSession | null = null,
 ): SavedRun {
   return {
+    ...(session === null ? {} : { session }),
     mode: run.mode,
     difficulty: run.difficulty,
     tutorial: run.tutorial,
@@ -254,6 +265,16 @@ export function toSavedRun(
       position: positions.get(target.id) ?? null,
     })),
   }
+}
+
+// The run's session, spread into the parsed run — or nothing, which is an ordinary run.
+// Anything malformed is read as no session rather than as no run: the run is still the
+// player's to finish, and only its standings are lost, which is what happened before.
+const parseSession = (value: unknown): { session?: RunSession } => {
+  if (!isObject<Record<string, unknown>>(value)) return {}
+  const { id, closesAt } = value
+  if (!isNonEmptyString(id) || !isFigure(closesAt)) return {}
+  return { session: { id, closesAt } }
 }
 
 // Whatever came back off the device, or nothing. Nothing is always a safe answer: the
@@ -326,6 +347,7 @@ export function parseSavedRun(value: unknown): SavedRun | null {
     runSeq,
     // Anything that is not a name is a run with none — see `runId` on `SavedRun`.
     runId: isNonEmptyString(value.runId) ? value.runId : undefined,
+    ...parseSession(value.session),
     targets,
   }
 }

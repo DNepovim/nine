@@ -6,7 +6,7 @@ import { GRAYSCALE } from '@/constants/colors'
 import { GLYPH, TYPE } from '@/constants/typography'
 import { useChampionsContext } from '@/hooks/use-champions'
 import { displayName } from '@/lib/announcements'
-import { championMark } from '@/lib/champions'
+import { playerMarks } from '@/lib/champions'
 import { cn } from '@/lib/cn'
 import type { Taker } from '@/lib/lost-medals'
 import { PERIOD_CODES, type MedalPeriod } from '@/lib/medals'
@@ -84,7 +84,7 @@ export function LostMedalLine({
             <TakerName
               userId={taker.userId}
               nickname={displayName(taker.nickname)}
-              mark={championMark(taker.userId, champions)}
+              marks={playerMarks(taker.userId, champions)}
               color={GRAYSCALE[1]}
             />
           </Trans>

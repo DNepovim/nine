@@ -2,6 +2,7 @@ import { msg } from '@lingui/core/macro'
 import { Trans, useLingui } from '@lingui/react/macro'
 import { useState } from 'react'
 
+import { AdminFeature } from '@/components/overlays/admin-feature'
 import { AdminFeatures } from '@/components/overlays/admin-features'
 import { AdminPeople } from '@/components/overlays/admin-people'
 import { AdminPerson } from '@/components/overlays/admin-person'
@@ -10,14 +11,15 @@ import { AdminRoles } from '@/components/overlays/admin-roles'
 import { AdminScreen } from '@/components/overlays/admin-screen'
 import { AdminSegments } from '@/components/overlays/admin-segments'
 import { PrimaryButton } from '@/components/primary-button'
+import { type AdminFeature as Feature } from '@/lib/admin/features'
 import { type AdminPerson as Person } from '@/lib/admin/people'
 import { type AdminRole as Role } from '@/lib/admin/roles'
 
 // Who sees what: three objects — people, roles, features — so three tabs.
 //
-// The detail screens are state here rather than panes of their own, because both are
-// reached from a list and both go back to it: holding the open person or role *on this
-// screen* is what makes a single BACK work for either. That is also why the whole of
+// The detail screens are state here rather than panes of their own, because each is
+// reached from a list and goes back to it: holding the open person, role or feature *on
+// this screen* is what makes a single BACK work for any of them. That is also why the whole of
 // this moved out of `admin-overlay.tsx` in one piece when the hub arrived rather than
 // leaving the routing behind — a BACK out of a person has to land on the list it was
 // opened from, and a hub holding that state would have put it on the hub instead.
@@ -63,6 +65,7 @@ export function AdminAccess({
   const [tab, setTab] = useState<Tab>('people')
   const [person, setPerson] = useState<Person | null>(null)
   const [role, setRole] = useState<Role | null>(null)
+  const [feature, setFeature] = useState<Feature | null>(null)
 
   // One counter rather than three reload callbacks: every list here is a snapshot, and
   // an edit on a detail screen has to be able to tell the list behind it to read again.
@@ -90,6 +93,18 @@ export function AdminAccess({
         onChanged={refresh}
         onBack={() => {
           setRole(null)
+        }}
+      />
+    )
+  }
+
+  if (feature !== null) {
+    return (
+      <AdminFeature
+        feature={feature}
+        onChanged={refresh}
+        onBack={() => {
+          setFeature(null)
         }}
       />
     )
@@ -123,7 +138,7 @@ export function AdminAccess({
           onChanged={refresh}
         />
       )}
-      {tab === 'features' && <AdminFeatures epoch={epoch} onChanged={refresh} />}
+      {tab === 'features' && <AdminFeatures epoch={epoch} onOpenFeature={setFeature} />}
     </AdminScreen>
   )
 }

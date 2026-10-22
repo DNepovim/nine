@@ -123,6 +123,28 @@ describe('what a stored run is called', () => {
   })
 })
 
+describe('the session a run posts to', () => {
+  const SESSION = { id: 'session-1', closesAt: 90_000 }
+
+  it('survives the trip through storage', () => {
+    const saved = toSavedRun(snapshot(), SPOTS, 5_000, SESSION)
+    expect(parseSavedRun(roundTrip(saved))?.session).toEqual(SESSION)
+  })
+
+  it('is absent on an ordinary run', () => {
+    const saved = toSavedRun(snapshot(), SPOTS, 5_000)
+    expect('session' in saved).toBe(false)
+    expect(parseSavedRun(roundTrip(saved))?.session).toBeUndefined()
+  })
+
+  it('drops a malformed session and keeps the run', () => {
+    const saved = { ...toSavedRun(snapshot(), SPOTS, 5_000), session: { id: 7 } }
+    const parsed = parseSavedRun(JSON.parse(JSON.stringify(saved)) as unknown)
+    expect(parsed).not.toBeNull()
+    expect(parsed?.session).toBeUndefined()
+  })
+})
+
 describe('restoreRun', () => {
   it('lays the ages back against the clock it comes back to', () => {
     const saved = toSavedRun(snapshot(), SPOTS, 5_000)

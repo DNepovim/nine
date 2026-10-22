@@ -300,13 +300,15 @@ describe('FOUR BY FOUR', () => {
     expect(dial.maxSum).toBe(9 * 100)
   })
 
-  it('builds its chain on every row of that dial, and prints no key weights', () => {
+  it('builds its chain the way Accuracy does, and prints no key weights', () => {
     if (FOUR_BY_FOUR?.engine !== 'targets')
       throw new Error('four by four runs on targets')
     const rules = resolveRules(FOUR_BY_FOUR.rules, FOUR_BY_FOUR.id, 'easy')
-    expect(rules.scoring.streak).toBe('spread')
-    // `whole` would be sixteen presses for one target and `clear` cannot be broken at
-    // all; this is the rule written for a dial this wide. See `STREAK_TRIGGERED.spread`.
+    // Inherited from the base mode rather than named here: the cheapest route to the
+    // target, which is the rule every Accuracy run is already played under. It asked for
+    // `spread` once — a key moved in every row — and that pulled against the score on a
+    // dial the player is still working out.
+    expect(rules.scoring.streak).toBe('optimal')
     expect(rules.capabilities.keyHints).toBe(false)
     // Accuracy's 85/15 lean and the ordinary hundred, both a challenge's defaults.
     expect(rules.scoring.weights).toEqual({ acc: 0.85, spd: 0.15 })
