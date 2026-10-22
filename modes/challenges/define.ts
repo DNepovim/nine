@@ -7,6 +7,7 @@ import {
   challengeHue,
   challengePairFor,
 } from '@/modes/challenges/palette'
+import { ACCURACY } from '@/modes/definitions/accuracy'
 import { patchRules } from '@/modes/rules'
 import {
   defineMode,
@@ -110,20 +111,19 @@ export const challengeId = (slug: string): string => `${PREFIX}${slug}`
 // does is saying so on purpose. `board: false` below is the opposite — a force, applied
 // after everything, because no challenge may keep a board whatever it asks for.
 //
-// **The blend is even.** Every permanent mode leans: accuracy 85/15 one way, speed 85/15
-// the other, and each is a board you get good at by getting good at one thing. A
-// challenge is on the app for a day and is nobody's long game — it is a puzzle to be met
-// once — so it asks for both halves at the same weight rather than inheriting whichever
-// lean the mode it was built from happens to have. Without this, a challenge based on
-// SPEED was quietly a Speed run with a different dial.
+// **It counts like Accuracy.** The blend leans 85/15 towards the route and the streak is
+// built by hits taken in par presses — Accuracy's counting and Accuracy's strike,
+// whichever mode the challenge was built from. A challenge is a puzzle to be met once, and
+// the route is the half of the game a player can work out on the day; without this, a
+// challenge based on SPEED was quietly a Speed run with a different dial.
 //
-// **Bad accuracy costs no life.** A wasteful hit takes one in Accuracy, which is the rule
-// that board is about. On a challenge the dial, the clock and the scoring are all strange
-// at once and the player has a day to work them out; spending a life on the way to
-// understanding the thing is a punishment for not already knowing it. Lives still go to
-// an expiry, which is the clock doing its job rather than the rules second-guessing.
+// **Bad accuracy costs no life.** A wasteful hit takes one in Accuracy above Easy. On a
+// challenge the dial, the clock and the scoring are all strange at once and the player
+// has a day to work them out; spending a life on the way to understanding the thing is a
+// punishment for not already knowing it. Lives still go to an expiry, which is the clock
+// doing its job rather than the rules second-guessing.
 const CHALLENGE_DEFAULTS: RulesPatch = {
-  scoring: { weights: { acc: 0.5, spd: 0.5 } },
+  scoring: { weights: ACCURACY.rules.scoring.weights, streak: 'optimal' },
   lives: { wastefulCostsLife: false },
 }
 
@@ -165,8 +165,8 @@ export function defineChallenge(spec: ChallengeSpec, index = 0): ModeDefinition 
     engine: 'targets',
     // Three layers, and the order is the whole of their meaning: the base mode, then
     // what every challenge is unless it says otherwise, then what this one says. A spec
-    // naming its own weights still wins; a spec naming none gets the even blend rather
-    // than whichever lean its base mode had.
+    // naming its own weights or streak still wins; a spec naming none counts like
+    // Accuracy rather than like whichever mode it was built from.
     rules: noBoard(
       patchRules(patchRules(spec.base.rules, CHALLENGE_DEFAULTS), spec.rules ?? {}),
     ),

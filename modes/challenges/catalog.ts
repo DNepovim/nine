@@ -199,8 +199,8 @@ const FOUR_BY_FOUR: ChallengeSpec = {
     // sixteen, costing a median of one press over par. See `STREAK_TRIGGERED.spread`,
     // where what it costs and what it cannot do are both written down.
     scoring: { streak: 'spread' },
-    // No `base` and no `weights`: a hit is worth the ordinary hundred and is blended
-    // evenly, which is every challenge's default. The run is no shorter than an Accuracy
+    // No `base` and no `weights`: a hit is worth the ordinary hundred and is blended like
+    // an Accuracy hit, which is every challenge's default. The run is no shorter than an Accuracy
     // run — arrivals are twice as frequent and the routes are twice as long — so there is
     // nothing here for a bigger figure to make up for.
     //
@@ -227,8 +227,8 @@ const FOUR_BY_FOUR: ChallengeSpec = {
 //     stopwatch the standings are ordered by; a second one on each target would be the
 //     mode asking for two things.
 //   - **Which is why the blend is all accuracy.** With the ring gone the speed factor is
-//     a constant 1, so the even blend every challenge defaults to would make half of
-//     every hit a free fifty points. `{ acc: 1, spd: 0 }` is what "scored on the route"
+//     a constant 1, so the Accuracy blend every challenge defaults to would make
+//     fifteen points of every hit free. `{ acc: 1, spd: 0 }` is what "scored on the route"
 //     actually means once the clock is off the target.
 //   - **No lives.** Nothing can take one, so the hearts come off — the top bar draws
 //     `lives.count` of them and draws none at infinity. The run ends when the ninth

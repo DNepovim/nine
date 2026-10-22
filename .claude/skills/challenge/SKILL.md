@@ -130,10 +130,9 @@ Two things to check for the author, because both have bitten:
 Two fields, and the defaults are already a challenge's own rather than the base mode's
 (see `CHALLENGE_DEFAULTS` in `define.ts`):
 
-- **`weights`** — the blend of accuracy and speed. Defaults to an **even** `0.5 / 0.5`,
-  which is deliberately unlike every permanent mode: accuracy leans 85/15 one way,
-  speed the other, and each is a board you get good at by getting good at one thing. A
-  challenge is met once, so it asks for both halves at the same weight.
+- **`weights`** — the blend of accuracy and speed. Defaults to **Accuracy's** `0.85 /
+0.15`, whichever mode the challenge is built on: a challenge is met once, and the
+  route is the half a player can work out on the day.
 - **`base`** — the points a hit is worth before the blend. `SCORE_BASE` unless the
   challenge is much shorter or much longer than an ordinary run.
 
@@ -146,6 +145,8 @@ The **headline** is not a question: `favoured` derives it from the weights, and 
 heat goes to accuracy — the half of the game a player can work at.
 
 **Lives** are three, like every mode that spends them, and a wasteful hit costs none.
+The default **streak** is Accuracy's `optimal` too — the strike builds on hits in par
+presses unless the spec names another.
 Ask before pinning fewer: the one mode a player meets cold should not also be the one
 that forgives least.
 

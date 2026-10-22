@@ -16,12 +16,12 @@ type DifficultyConfig = {
   timeoutScale: number
   maxTargets: number
   // A hit scoring below this costs a life, in a mode whose lives work that way (see
-  // `wastefulCostsLife`). Counter-intuitively tightest on Easy rather than Extreme —
-  // Easy's slack lives in the clock (timeoutScale 1.45 gives far more room to find the
-  // optimal route), so a hit that's still wasteful despite all that time is the one
-  // difficulty can afford to call out. Extreme's clock is already the run's whole fight;
-  // asking for a tight route on top of it would be punishing the same thing twice.
-  wastefulThreshold: number
+  // `wastefulCostsLife`), or null on a rung where no hit ever costs one. Easy is that
+  // rung: it is where a player learns what a good route looks like, and a heart spent on
+  // finding out is a punishment for not already knowing. Above it the bar loosens as the
+  // rung hardens — Extreme's clock is already the run's whole fight, and asking for a
+  // tight route on top of it would be punishing the same thing twice.
+  wastefulThreshold: number | null
   // What a point scored here is worth once boards are added together — see
   // `lifetimeOf` in lib/player-profile.ts, the one place in the app that sums across
   // difficulties.
@@ -46,7 +46,7 @@ export const DIFFICULTIES: Record<Difficulty, DifficultyConfig> = {
     code: msg`ESY`,
     timeoutScale: 1.45,
     maxTargets: 3,
-    wastefulThreshold: 0.25,
+    wastefulThreshold: null,
     scoreWeight: 0.5,
   },
   hard: {

@@ -132,16 +132,16 @@ describe('defineChallenge', () => {
     // and each is written down in `define.ts`:
     //
     //   **board** — forced off. Its standings belong to the session it was aired in.
-    //   **weights** — evened. A challenge is nobody's long game, so it does not take
-    //   whichever lean the mode it was built from happens to have.
+    //   **weights** and **streak** — Accuracy's, whichever mode it was built from.
     //   **wasteful** — off. A day to work out a strange dial is not a day to be fined for
     //   not already knowing it.
     //
-    // The assertion is written as "put those three back and it is the base mode", which
+    // The assertion is written as "put those back and it is the base mode", which
     // is what makes it fail if a fourth ever joins them quietly.
     expect(asSpeed.capabilities.board).toBe(true)
     expect(asChallenge.capabilities.board).toBe(false)
-    expect(asChallenge.scoring.weights).toEqual({ acc: 0.5, spd: 0.5 })
+    expect(asChallenge.scoring.weights).toEqual({ acc: 0.85, spd: 0.15 })
+    expect(asChallenge.scoring.streak).toBe('optimal')
     expect(asChallenge.lives.wasteful).toBeNull()
 
     expect({
@@ -151,6 +151,7 @@ describe('defineChallenge', () => {
         ...asChallenge.scoring,
         weights: asSpeed.scoring.weights,
         headline: asSpeed.scoring.headline,
+        streak: asSpeed.scoring.streak,
       },
       lives: { ...asChallenge.lives, wasteful: asSpeed.lives.wasteful },
     }).toEqual(asSpeed)
@@ -307,9 +308,8 @@ describe('FOUR BY FOUR', () => {
     // `whole` would be sixteen presses for one target and `clear` cannot be broken at
     // all; this is the rule written for a dial this wide. See `STREAK_TRIGGERED.spread`.
     expect(rules.capabilities.keyHints).toBe(false)
-    // The even blend and the ordinary hundred, both a challenge's defaults rather than
-    // Accuracy's 85/15 lean.
-    expect(rules.scoring.weights).toEqual({ acc: 0.5, spd: 0.5 })
+    // Accuracy's 85/15 lean and the ordinary hundred, both a challenge's defaults.
+    expect(rules.scoring.weights).toEqual({ acc: 0.85, spd: 0.15 })
     expect(rules.scoring.base).toBe(100)
   })
 
@@ -347,8 +347,8 @@ describe('habit', () => {
   it('scores on the route alone, because the clock is the contest', () => {
     if (HABIT?.engine !== 'targets') throw new Error('habit runs on targets')
     const rules = resolveRules(HABIT.rules, HABIT.id, 'easy')
-    // Not the even blend every other challenge defaults to. With `countsDown: false`
-    // the speed factor is a constant 1, so half of every hit would be a free fifty.
+    // Not the Accuracy blend every other challenge defaults to. With `countsDown: false`
+    // the speed factor is a constant 1, so fifteen points of every hit would be free.
     expect(rules.scoring.weights).toEqual({ acc: 1, spd: 0 })
     expect(rules.scoring.headline).toBe('acc')
     expect(rules.scoring.streak).toBe('optimal')
@@ -419,7 +419,7 @@ describe('a challenge and the board it does not keep', () => {
 })
 
 describe('what a challenge is scored and spent by unless it says otherwise', () => {
-  it('blends the two factors evenly, whichever mode it was built on', () => {
+  it('counts like Accuracy, whichever mode it was built on', () => {
     // SPEED leans 85/15 towards the clock. A challenge built on it inherited that lean
     // and was quietly a Speed run with a different dial.
     const onSpeed = defineChallenge({
@@ -431,8 +431,9 @@ describe('what a challenge is scored and spent by unless it says otherwise', () 
       until: OPENS + DAY,
     })
     if (onSpeed.engine !== 'targets') throw new Error('targets')
-    expect(onSpeed.rules.scoring.weights).toEqual({ acc: 0.5, spd: 0.5 })
-    expect(SPEED.rules.scoring.weights).not.toEqual({ acc: 0.5, spd: 0.5 })
+    expect(onSpeed.rules.scoring.weights).toEqual(ACCURACY.rules.scoring.weights)
+    expect(onSpeed.rules.scoring.streak).toBe('optimal')
+    expect(SPEED.rules.scoring.streak).not.toBe('optimal')
   })
 
   it('costs no life for a wasteful hit, whichever mode it was built on', () => {
@@ -472,13 +473,13 @@ describe('what a challenge is scored and spent by unless it says otherwise', () 
     expect(leaning.rules.lives.wastefulCostsLife).toBe(true)
   })
 
-  it('reads the even blend as a run about the route', () => {
-    // `favoured` breaks a dead heat towards accuracy — the half of the game a player can
-    // work at — so a challenge leads its stats with the route rather than the clock.
+  it('reads the Accuracy blend as a run about the route', () => {
+    // The blend leans towards the route, so a challenge leads its stats with it rather
+    // than with the clock.
     expect(runRules(challengeId('four-keys'), 'hard').scoring.headline).toBe('acc')
     expect(runRules(challengeId('four-keys'), 'hard').scoring.weights).toEqual({
-      acc: 0.5,
-      spd: 0.5,
+      acc: 0.85,
+      spd: 0.15,
     })
   })
 })

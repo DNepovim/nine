@@ -5,7 +5,8 @@ import { defineMode } from '@/modes/types'
 
 // Precision. The clock stays where it is — deliberation is the thing this mode asks for,
 // and hurrying it would undo that — so the run tightens by targets arriving closer
-// together instead, and a hit dialled wastefully costs a life.
+// together instead, and a hit dialled wastefully costs a life — on Hard and Extreme; Easy
+// has no bar (see `wastefulThreshold`).
 export const ACCURACY = defineMode({
   id: 'accuracy',
   label: msg`ACCURACY`,

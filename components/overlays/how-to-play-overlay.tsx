@@ -520,7 +520,7 @@ export function HowToPlayOverlay({
             mode="accuracy"
             facts={[
               t`Score rewards precision: solve each target in the fewest moves.`,
-              t`Waste too many moves on a hit and you lose a life — the bar is 25% accuracy on Easy, 20% on Hard, 15% on Extreme.`,
+              t`On Hard and Extreme, waste too many moves on a hit and you lose a life — the bar is 20% accuracy on Hard, 15% on Extreme. Easy never takes one for it.`,
               t`Let a target’s ring run out and you lose one too — precision still has a clock.`,
               t`Matching every target in its optimal move count builds your streak.`,
               t`Targets arrive faster the longer you last, but each still gets its full ring.`,
@@ -565,7 +565,9 @@ export function HowToPlayOverlay({
                   <Trans>
                     The rules are its own. The keys, the clock, the scoring, how many
                     lives you get — any of it may be different, and the card says what
-                    before you start.
+                    before you start. Unless it says otherwise, it scores like Accuracy:
+                    the fewest moves build your streak, and a wasted move never costs a
+                    heart.
                   </Trans>
                 </Bullet>
                 <Bullet color={GAME_SCALE[3]}>

@@ -109,8 +109,8 @@ export type RunRules = {
   scoring: Required<ScoringRules>
   lives: {
     count: number
-    // The accuracy a hit has to beat to not cost a life, or null in a mode where a hit
-    // never costs one.
+    // The accuracy a hit has to beat to not cost a life, or null where a hit never costs
+    // one — a mode that does not spend lives that way, or a rung with no bar.
     wasteful: number | null
     expiryCosts: boolean
   }

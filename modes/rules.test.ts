@@ -208,6 +208,7 @@ describe('the rules each shipped mode resolves to', () => {
     expect(rules('accuracy', 'hard').lives.wasteful).toBeCloseTo(0.2)
     expect(rules('speed', 'hard').lives.wasteful).toBeNull()
     expect(rules('trainee', 'easy').lives.wasteful).toBeNull()
+    expect(rules('accuracy', 'easy').lives.wasteful).toBeNull()
   })
 
   it('reports the factor each mode weighs more, without being told', () => {
@@ -239,8 +240,8 @@ describe('the rules each shipped mode resolves to', () => {
     expect(rules('speed', 'hard').spawn.maxTargets).toBe(3)
   })
 
-  it('tightens the wasteful-hit bar as difficulty eases rather than as it hardens', () => {
-    expect(DIFFICULTIES.easy.wastefulThreshold).toBeCloseTo(0.25)
+  it('has no wasteful-hit bar on Easy, and loosens it as difficulty hardens', () => {
+    expect(DIFFICULTIES.easy.wastefulThreshold).toBeNull()
     expect(DIFFICULTIES.hard.wastefulThreshold).toBeCloseTo(0.2)
     expect(DIFFICULTIES.extreme.wastefulThreshold).toBeCloseTo(0.15)
   })
