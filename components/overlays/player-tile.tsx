@@ -5,6 +5,7 @@ import { LinearGradient } from 'expo-linear-gradient'
 import { isNonEmptyString } from 'narrowland'
 import { Text, View } from 'react-native'
 
+import { InlineMarks } from '@/components/player-mark'
 import { TrackedPressable } from '@/components/tracked-pressable'
 import { DIM_INK } from '@/constants/colors'
 import { TYPE } from '@/constants/typography'
@@ -13,6 +14,9 @@ import { useOpenProfile } from '@/hooks/use-profile-modal'
 import { playerMarks } from '@/lib/champions'
 import { cn } from '@/lib/cn'
 import { rankMedal } from '@/lib/rank-emoji'
+
+// A drawn mark's side, matched to the tile's `TYPE.button` name.
+const MARK_SIZE = 13
 
 // A distinct, lively gradient per attendee slot (drawn from the app palette).
 // Shared by the waiting room and the game-over screen so both grids match.
@@ -127,7 +131,7 @@ export function PlayerTile({
   // here, so a champion is recognisable wherever their name is drawn.
   // Joined rather than spaced: these sit inline before a nickname on a narrow tile, and
   // a gap between two of them would cost a character of the name.
-  const marks = playerMarks(userId ?? null, champions).join(' ')
+  const marks = playerMarks(userId ?? null, champions)
   // Medals only: a room can end with four or five players, and the board's mark for
   // last place is a joke about missing the cut, which does not apply here.
   const medal = rank === undefined ? null : rankMedal(rank)
@@ -193,7 +197,8 @@ export function PlayerTile({
             className={cn(TYPE.button, 'flex-1')}
             style={{ color: WHITE }}
           >
-            {marks === '' ? nickname : `${marks} ${nickname}`}
+            <InlineMarks marks={marks} size={MARK_SIZE} />
+            {nickname}
           </Text>
           {score !== undefined && (
             <View className="flex-row items-center gap-1">

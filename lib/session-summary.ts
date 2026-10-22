@@ -1,6 +1,6 @@
 import { isNonEmptyArray } from 'narrowland'
 
-import { cardSession, type SessionCard, type TeasedSpan } from '@/lib/challenge-session'
+import { cardSession, type SessionCard, type SessionSpan } from '@/lib/challenge-session'
 import { modeById, type Difficulty, type Measure } from '@/modes'
 
 // A **summary**: what one closed **session** came to.
@@ -143,7 +143,7 @@ const latest = (rows: readonly SessionSummary[]): SessionSummary | undefined =>
 // The **card** rather than the session inside it, because the two faces count towards
 // different instants: a teased session is counting to its open, a live one to its close.
 // Dropping the state here would leave the page with a clock and no way to know which.
-export const summaryInvite = <T extends TeasedSpan>(
+export const summaryInvite = <T extends SessionSpan>(
   sessions: readonly T[],
   now: number,
 ): SessionCard<T> => cardSession(sessions, now)

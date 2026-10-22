@@ -1,9 +1,10 @@
-import { isNonEmptyArray } from 'narrowland'
 import { Text } from 'react-native'
 
 import { GradientName } from '@/components/gradient-name'
+import { InlineMarks } from '@/components/player-mark'
 import { TYPE } from '@/constants/typography'
 import { useOpenProfile } from '@/hooks/use-profile-modal'
+import type { PlayerMark } from '@/lib/champions'
 
 export type WinnerNameProps = {
   // Whose name it is — the stripe's name opens their profile, the same as a board row.
@@ -11,11 +12,14 @@ export type WinnerNameProps = {
   nickname: string
   // Every mark this player wears everywhere their name appears — a board standing, a
   // phoenix for taking the last challenge, or both at once. Empty where they wear none.
-  marks: readonly string[]
+  marks: readonly PlayerMark[]
   // What the name is coloured by. Null where the counters have never seen this player.
   avgAccuracy: number | null
   avgSpeed: number | null
 }
+
+// A drawn mark's side, matched to the line's `TYPE.value` text.
+const MARK_SIZE = 11
 
 // A winner's name inside a sentence: their champion mark, then the nickname in the
 // gradient their own play earned.
@@ -46,7 +50,7 @@ export function WinnerName({
       }}
       className={TYPE.value}
     >
-      {isNonEmptyArray(marks) ? `${marks.join(' ')} ` : ''}
+      <InlineMarks marks={marks} size={MARK_SIZE} />
       <GradientName nickname={nickname} avgAccuracy={avgAccuracy} avgSpeed={avgSpeed} />
     </Text>
   )

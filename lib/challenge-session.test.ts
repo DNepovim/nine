@@ -6,7 +6,6 @@ import {
   isValidSpan,
   shownByStatus,
   spanStatus,
-  teaserOpensAt,
   withClosesAt,
   withOpensAt,
   type SpanStatus,
@@ -137,58 +136,8 @@ describe('spanStatus', () => {
   })
 })
 
-describe('teaserOpensAt', () => {
-  const iso = (ms: number) => new Date(ms).toISOString()
-
-  it('is the given number of minutes before the session opens', () => {
-    expect(iso(teaserOpensAt(Date.parse('2026-06-11T10:00:00Z'), 180))).toBe(
-      '2026-06-11T07:00:00.000Z',
-    )
-  })
-
-  it('is the session’s own instant when the teaser is zero', () => {
-    // Zero is legal and means no teaser at all — the card appears as the session opens.
-    const opens = Date.parse('2026-06-11T10:00:00Z')
-    expect(teaserOpensAt(opens, 0)).toBe(opens)
-  })
-
-  it('answers the same instant whatever zone the reader is in', () => {
-    // The promise the Prague-midnight rule was keeping, and the one a duration keeps for
-    // free: an instant is the same instant everywhere.
-    const opens = Date.parse('2026-06-11T10:00:00Z')
-    inZone('America/Los_Angeles')
-    const west = teaserOpensAt(opens, 180)
-    inZone('Pacific/Kiritimati')
-    expect(teaserOpensAt(opens, 180)).toBe(west)
-  })
-
-  it('is unmoved by a daylight-saving change in the middle of it', () => {
-    // 29 March is the day the clocks go forward. Thirty-six hours before noon Prague is
-    // thirty-six hours, not a wall-clock reckoning that gains or loses one — which is
-    // exactly what the old day-boundary rule could not say.
-    expect(iso(teaserOpensAt(Date.parse('2026-03-29T10:00:00Z'), 2160))).toBe(
-      '2026-03-27T22:00:00.000Z',
-    )
-  })
-
-  it('reproduces the old rule at the seeded default, for the span admins are given', () => {
-    // The general figure is seeded at 2160 so that nothing moved on the day the column
-    // landed: for the noon-to-noon span `defaultSpan` hands out, the teaser used to open
-    // at Prague midnight the day before — which is thirty-six hours ahead.
-    inZone('Europe/Prague')
-    const opens = noon(2026, 6, 11)
-    expect(iso(teaserOpensAt(opens, 2160))).toBe('2026-06-09T22:00:00.000Z')
-  })
-})
-
 describe('cardSession', () => {
-  // 2160 minutes is the seeded general figure, which is what a row without an override
-  // of its own resolves to. Overridden only by the tests that are about the teaser.
-  const span = (opensAt: number, closesAt: number, teaserMinutes = 2160) => ({
-    opensAt,
-    closesAt,
-    teaserMinutes,
-  })
+  const span = (opensAt: number, closesAt: number) => ({ opensAt, closesAt })
   const NOW = Date.parse('2026-06-10T12:00:00Z')
   const H = 3600_000
 
@@ -215,36 +164,10 @@ describe('cardSession', () => {
     expect(cardSession([later, soon], NOW)).toEqual({ state: 'live', session: soon })
   })
 
-  it('does not tease a session whose teaser has not started', () => {
-    // Opens in four days, teasing thirty-six hours ahead. Nothing to draw yet.
-    expect(cardSession([span(NOW + 96 * H, NOW + 120 * H)], NOW)).toBeNull()
-  })
-
-  it('teases from the stroke of its teaser, not a moment sooner', () => {
-    const opens = Date.parse('2026-06-12T10:00:00Z')
-    const session = span(opens, opens + 24 * H)
-    const from = teaserOpensAt(opens, session.teaserMinutes)
-    expect(cardSession([session], from - 1)).toBeNull()
-    expect(cardSession([session], from)).toEqual({ state: 'teaser', session })
-  })
-
-  it('reads each session’s own teaser rather than one rule over all of them', () => {
-    // Both open in three hours. One announces itself four hours ahead and is therefore
-    // already teasing; the other announces itself one hour ahead and is not.
-    const opens = NOW + 3 * H
-    const early = span(opens, opens + 24 * H, 240)
-    const late = span(opens, opens + 24 * H, 60)
-    expect(cardSession([late], NOW)).toBeNull()
-    expect(cardSession([early], NOW)).toEqual({ state: 'teaser', session: early })
-    // Given both, the one whose teaser has actually started is the only candidate.
-    expect(cardSession([late, early], NOW)).toEqual({ state: 'teaser', session: early })
-  })
-
-  it('teases a zero-teaser session only once it is live, which makes it a live card', () => {
-    const opens = NOW + H
-    const none = span(opens, opens + 24 * H, 0)
-    expect(cardSession([none], NOW)).toBeNull()
-    expect(cardSession([none], opens)).toEqual({ state: 'live', session: none })
+  it('teases a session from the moment it is booked, however far off it opens', () => {
+    // Opens in a month. There is no lead time any more: planned is announced.
+    const far = span(NOW + 30 * 24 * H, NOW + 31 * 24 * H)
+    expect(cardSession([far], NOW)).toEqual({ state: 'teaser', session: far })
   })
 
   it('among several teased, takes the one opening soonest', () => {

@@ -19,11 +19,6 @@ export type OpenSession = {
   modeId: string
   opensAt: number
   closesAt: number
-  // How many minutes before it opens this session announces itself, already resolved by
-  // the RPC — its own figure if it has one, the general figure from `settings` if not.
-  // Resolved server-side so there is exactly one opinion about what a missing one means;
-  // see the note on `open_sessions_with_leaders`.
-  teaserMinutes: number
   // When it was last given more time, or null. The card says so for the rest of the
   // window, which is why this rides along rather than being asked for separately.
   extendedAt: number | null
@@ -54,7 +49,6 @@ type OpenSessionRow = {
   mode_id: string
   opens_at: string
   closes_at: string
-  teaser_minutes: number
   extended_at: string | null
   measure: Measure
   leader_name: string | null
@@ -67,9 +61,7 @@ type OpenSessionRow = {
 const atMs = (iso: string): number => new Date(iso).getTime()
 
 // Every session whose close is still ahead. *Which* of them the card draws — live now,
-// teased since Prague midnight yesterday, or neither — is `cardSession`'s to decide: the
-// Prague-day rule belongs in the one place that already owns day boundaries rather than
-// being written a second time in SQL.
+// or the next one coming — is `cardSession`'s to decide.
 export async function loadOpenSessions(): Promise<{
   rows: OpenSession[]
   error: string | null
@@ -83,7 +75,6 @@ export async function loadOpenSessions(): Promise<{
       modeId: row.mode_id,
       opensAt: atMs(row.opens_at),
       closesAt: atMs(row.closes_at),
-      teaserMinutes: row.teaser_minutes,
       extendedAt: row.extended_at === null ? null : atMs(row.extended_at),
       measure: row.measure,
       leader:

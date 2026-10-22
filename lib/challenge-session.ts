@@ -15,14 +15,6 @@ export type SessionSpan = {
   closesAt: number
 }
 
-// A span that knows how long its own teaser runs. The figure arrives already resolved —
-// the session's own if it has one, the general one if it does not, coalesced by
-// `open_sessions_with_leaders` — so nothing on this side has an opinion about what a
-// missing figure means. See `teaserOpensAt`.
-export type TeasedSpan = SessionSpan & {
-  teaserMinutes: number
-}
-
 // Live, still to come, or over. The same three words `dev-overlay.tsx` already used for
 // a challenge's compiled window, kept rather than renamed: one vocabulary for one set of
 // states, whether the span came from the catalog or from a row.
@@ -98,23 +90,6 @@ export function spanStatus(span: SessionSpan, now: number): SpanStatus {
 
 // ─── What the start screen draws ─────────────────────────────────────────────
 
-// When a session's **teaser** appears: this many minutes before it opens.
-//
-// It used to be midnight Prague on the day before, and that was two promises rather than
-// one. The first was zone-independence — a challenge must not show up a day early for
-// some players and on time for others — and a duration before an instant keeps it, since
-// an instant is the same instant everywhere. The second was that a player who opens the
-// app once a day sees the thing coming at least once before it arrives, and a duration
-// **does not** keep that: set this to two hours and a daily player can miss the teaser
-// entirely. That is the trade the figure buys, and the reason the general default is
-// seeded at the thirty-six hours the app already behaved as — nothing moves until
-// somebody decides to move it.
-//
-// Zero is a legitimate answer and means no teaser at all: the card appears when the
-// session opens. Nothing here floors it, because the admin can see what it did.
-export const teaserOpensAt = (opensAt: number, teaserMinutes: number): number =>
-  opensAt - teaserMinutes * 60_000
-
 // The one session the card is for, and which of its two faces it wears.
 //
 // `null` is the usual answer: most days there is nothing on and nothing coming.
@@ -127,6 +102,10 @@ export type SessionCard<T extends SessionSpan> =
 // several live, the one closing soonest, because it is the one a player can still miss.
 // Among several teased, the one opening soonest, for the same reason read forwards.
 //
+// A session is teased from the moment it is booked: anything planned and not yet open
+// shows its countdown, however far off it is. There used to be a lead time — a general
+// figure and a per-session override — and it is gone; a booking is the announcement.
+//
 // Nothing stacks. The planner refuses two overlapping sessions of the *same* challenge
 // but not of different ones, so two at once is possible and this is where the app
 // decides it draws one card rather than a row of them.
@@ -134,7 +113,7 @@ export type SessionCard<T extends SessionSpan> =
 // Generic over the span so this can be given whatever shape the caller is holding — the
 // card's own rows carry a leader, the admin's do not — rather than forcing one type on
 // both and making the pure half depend on the server's.
-export function cardSession<T extends TeasedSpan>(
+export function cardSession<T extends SessionSpan>(
   sessions: readonly T[],
   now: number,
 ): SessionCard<T> {
@@ -143,15 +122,8 @@ export function cardSession<T extends TeasedSpan>(
     .sort((a, b) => a.closesAt - b.closesAt)[0]
   if (live !== undefined) return { state: 'live', session: live }
 
-  // Each row against its **own** teaser rather than one rule over all of them: a session
-  // carrying an override teases on its own schedule, and two sessions coming up on the
-  // same evening can quite legitimately start announcing themselves hours apart.
   const teased = sessions
-    .filter(
-      (session) =>
-        spanStatus(session, now) === 'upcoming' &&
-        now >= teaserOpensAt(session.opensAt, session.teaserMinutes),
-    )
+    .filter((session) => spanStatus(session, now) === 'upcoming')
     .sort((a, b) => a.opensAt - b.opensAt)[0]
   return teased === undefined ? null : { state: 'teaser', session: teased }
 }

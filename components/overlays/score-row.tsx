@@ -7,10 +7,12 @@ import {
   SCORE_COLUMN,
   TIME_COLUMN,
 } from '@/components/overlays/score-columns'
+import { MarkRow } from '@/components/player-mark'
 import { TrackedPressable } from '@/components/tracked-pressable'
 import { ON_GOLD_LABEL_SHADOW } from '@/constants/theme'
 import { GLYPH, READOUT, TYPE } from '@/constants/typography'
 import { useOpenProfile } from '@/hooks/use-profile-modal'
+import type { PlayerMark } from '@/lib/champions'
 import { cn } from '@/lib/cn'
 import { formatRaceTime } from '@/lib/duration'
 import { rankEmoji, rankMark } from '@/lib/rank-emoji'
@@ -23,6 +25,9 @@ import type { Measure } from '@/modes'
 // below the cut. The sizes differ because the glyphs do: a numeral is small, a medal
 // needs more room than the numeral it replaces, and the potato and the pig fill their
 // box where a medal leaves a margin, so they take a notch less to weigh the same.
+// A mark beside a board row's name: the size the emoji used to be set at (`GLYPH['2xs']`).
+const MARK_SIZE = 11
+
 const RANK_MARK_SIZES = {
   medal: GLYPH.lg,
   creature: GLYPH.sm,
@@ -39,7 +44,7 @@ export type ScoreEntry = {
   // the boards, a phoenix for the last challenge taken — in drawing order, and empty for
   // the great majority who wear none. A list because two of them can be true at once;
   // see `playerMarks`.
-  marks: readonly string[]
+  marks: readonly PlayerMark[]
   nickname: string
   score: number
   // What the run took, on a board **measured** by the clock. Undefined on every other
@@ -127,11 +132,7 @@ export function ScoreRow({
         {/* Champions carry their mark wherever their name is drawn, so the board says
             who holds the hardest boards without a legend explaining it. Rendered only
             when there is one — an empty Text would still take the row's gap. */}
-        {isNonEmptyArray(entry.marks) && (
-          <Text selectable={false} className={cn(GLYPH['2xs'], 'leading-[13px]')}>
-            {entry.marks.join(' ')}
-          </Text>
-        )}
+        {isNonEmptyArray(entry.marks) && <MarkRow marks={entry.marks} size={MARK_SIZE} />}
         {/* The one text on this row that is not the board's colour but the player's.
             Deliberately not accented on the player's own row any more: the name now
             carries what the player has done, and repainting it in the board's accent

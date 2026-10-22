@@ -24,14 +24,6 @@ export type AdminSession = {
   // reasoning as `AdminFeature.inBuild` — the row is drawn rather than hidden, because
   // unseen configuration is how it goes stale.
   inBuild: boolean
-  // This session's **own** teaser in minutes, unresolved — null where it has none and
-  // takes the general figure instead.
-  //
-  // Deliberately not the resolved figure `OpenSession` carries. The planner is the one
-  // screen that has to tell an override from an inherited value, because that is the
-  // difference between a field with a number in it and a field left blank: resolving it
-  // here would make every session look as though somebody had typed 2160 into it.
-  teaserMinutes: number | null
   // When it was last given more time, or null.
   extendedAt: number | null
   // How many players have scored on it. The form locks on **this**, not on whether the
@@ -46,7 +38,6 @@ type SessionRow = {
   mode_id: string
   opens_at: string
   closes_at: string
-  teaser_minutes: number | null
   extended_at: string | null
   // PostgREST's embedded aggregate: one row holding the count of the related rows. Asked
   // for here rather than through a fifth RPC, which is what the read already avoids.
@@ -66,9 +57,7 @@ export async function listSessions(): Promise<{
 }> {
   const res = await supabase
     .from('challenge_sessions')
-    .select(
-      'id, mode_id, opens_at, closes_at, teaser_minutes, extended_at, session_scores(count)',
-    )
+    .select('id, mode_id, opens_at, closes_at, extended_at, session_scores(count)')
     .order('opens_at', { ascending: false })
   noteRequest(res.error)
   if (res.error) return { rows: [], error: res.error.message }
@@ -78,7 +67,6 @@ export async function listSessions(): Promise<{
       modeId: row.mode_id,
       opensAt: atMs(row.opens_at),
       closesAt: atMs(row.closes_at),
-      teaserMinutes: row.teaser_minutes,
       extendedAt: row.extended_at === null ? null : atMs(row.extended_at),
       played: row.session_scores[0]?.count ?? 0,
       inBuild: modeById(row.mode_id) !== null,
@@ -107,12 +95,10 @@ const measureArg = (modeId: string) => ({ p_measure: measureOf(modeId) })
 export async function planSession(
   modeId: string,
   span: SessionSpan,
-  teaserMinutes: number | null,
 ): Promise<{ error: string | null }> {
   const res = await supabase.rpc('plan_challenge_session', {
     p_mode_id: modeId,
     ...spanArgs(span),
-    p_teaser_minutes: teaserMinutes,
     ...measureArg(modeId),
   })
   noteRequest(res.error)
@@ -126,13 +112,11 @@ export async function editSession(
   id: string,
   modeId: string,
   span: SessionSpan,
-  teaserMinutes: number | null,
 ): Promise<{ error: string | null }> {
   const res = await supabase.rpc('edit_challenge_session', {
     p_id: id,
     p_mode_id: modeId,
     ...spanArgs(span),
-    p_teaser_minutes: teaserMinutes,
     // Re-pointing a booking at another challenge re-measures it. Only reachable while
     // nobody has scored — the server refuses a challenge change after that — so a
     // session's measure cannot move once it means something.

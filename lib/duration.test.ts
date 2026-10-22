@@ -7,7 +7,6 @@ import {
   formatRaceTime,
   formatRunClock,
   formatWindowLength,
-  minutesAsHours,
 } from './duration'
 
 describe('formatGameTime', () => {
@@ -169,25 +168,6 @@ describe('formatWindowLength', () => {
 
   it('clamps a span that has not been filled in yet', () => {
     expect(formatWindowLength(-HOUR)).toBe('0ʰ')
-  })
-})
-
-describe('minutesAsHours', () => {
-  it('states a whole number of hours', () => {
-    expect(minutesAsHours(2160)).toBe('36')
-    expect(minutesAsHours(60)).toBe('1')
-  })
-
-  it('is nought for no teaser at all, which is a real answer', () => {
-    expect(minutesAsHours(0)).toBe('0')
-  })
-
-  it('rounds a figure that is not a whole number of hours', () => {
-    // The caveat the function carries: 90 reads as 2 and would save back as 120. Nothing
-    // in the app writes such a value, and this test is what stops the rounding becoming a
-    // surprise if something ever does.
-    expect(minutesAsHours(90)).toBe('2')
-    expect(minutesAsHours(89)).toBe('1')
   })
 })
 

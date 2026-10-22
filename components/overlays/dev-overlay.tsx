@@ -1,11 +1,12 @@
-import { Ionicons } from '@expo/vector-icons'
+import { msg } from '@lingui/core/macro'
 import { Trans, useLingui } from '@lingui/react/macro'
 import { useEffect, useState } from 'react'
-import { FlatList, Text, View } from 'react-native'
+import { ScrollView, Text, View } from 'react-native'
 
+import { AdminScreen } from '@/components/overlays/admin-screen'
+import { ChallengeTitle } from '@/components/overlays/admin-session-cells'
+import { AdminTable, type AdminTableRow } from '@/components/overlays/admin-table'
 import { PrimaryButton } from '@/components/primary-button'
-import { ScreenLayer } from '@/components/screen'
-import { DIM_INK } from '@/constants/colors'
 import { TYPE } from '@/constants/typography'
 import { listSessions, type AdminSession } from '@/lib/admin/sessions'
 import { spanStatus, type SpanStatus } from '@/lib/challenge-session'
@@ -14,7 +15,6 @@ import { formatDayTime } from '@/lib/format-date'
 import type { OpenSession } from '@/lib/session-board'
 import { measureOf } from '@/modes'
 import { CHALLENGES } from '@/modes/challenges/catalog'
-import type { ModeDefinition } from '@/modes/types'
 
 // The session a row speaks for, in order of what matters most: one on now, then the
 // next one booked, then the last one there was. The line under the name and the dialog
@@ -55,53 +55,10 @@ const asOpenSession = (session: AdminSession): OpenSession => ({
   modeId: session.modeId,
   opensAt: session.opensAt,
   closesAt: session.closesAt,
-  teaserMinutes: session.teaserMinutes ?? 0,
   extendedAt: session.extendedAt,
   leader: null,
   measure: measureOf(session.modeId),
 })
-
-function ChallengeRow({
-  mode,
-  sessions,
-  now,
-  onOpen,
-}: {
-  mode: ModeDefinition
-  // The sessions planned for this challenge, newest start first. Empty for one nobody
-  // has booked — which is every challenge until an admin plans one.
-  sessions: readonly AdminSession[]
-  now: number
-  onOpen: (modeId: string, session: OpenSession | null) => void
-}) {
-  const { t } = useLingui()
-  const shown = shownSession(sessions, now)
-  return (
-    <View className="border-b border-dim/10 py-3">
-      <View className="flex-row items-center justify-between gap-3">
-        <View className="flex-1">
-          <Text selectable={false} className={cn(TYPE.prose, 'text-primary')}>
-            {t(mode.label)}
-          </Text>
-          <Text selectable={false} className={cn(TYPE.value, 'mt-0.5 text-dim')}>
-            {t(mode.description)}
-          </Text>
-          <Text selectable={false} className={cn(TYPE.labelSm, 'mt-1 text-dim')}>
-            <SessionLine session={shown} now={now} />
-          </Text>
-        </View>
-        <PrimaryButton
-          id="dev.run"
-          onPress={() => {
-            onOpen(mode.id, shown === null ? null : asOpenSession(shown))
-          }}
-          tone="quiet"
-          icon={<Ionicons name="play" size={22} color={DIM_INK} />}
-        />
-      </View>
-    </View>
-  )
-}
 
 // Every challenge ever written, playable on demand regardless of whether its window is
 // open — the registry's own `openModes` is what the intro uses to hide the ones that
@@ -112,6 +69,8 @@ function ChallengeRow({
 // Behind the `challengeLab` feature, which is the key `dev` became: the link that opens
 // this screen now appears for anybody holding any dev feature, of which this is the
 // first. See `DEV_FEATURES` in constants/features.ts.
+const TITLE = msg`CHALLENGES LAB`
+
 export function DevOverlay({
   onOpenChallenge,
   onClose,
@@ -119,6 +78,7 @@ export function DevOverlay({
   onOpenChallenge: (modeId: string, session: OpenSession | null) => void
   onClose: () => void
 }) {
+  const { t } = useLingui()
   const [openedAt] = useState(() => Date.now())
   const [sessions, setSessions] = useState<readonly AdminSession[]>([])
 
@@ -132,41 +92,58 @@ export function DevOverlay({
     })()
   }, [])
 
+  // One row per challenge, in the planner's own table without its date column: the
+  // name in its own colours with what it is and where its session stands under it,
+  // and nothing beside it. Pressing a row deals the challenge.
+  const rows: readonly AdminTableRow[] = CHALLENGES.map((mode) => {
+    const shown = shownSession(
+      sessions.filter((session) => session.modeId === mode.id),
+      openedAt,
+    )
+    return {
+      key: mode.id,
+      cells: [
+        // Padded here rather than in `AdminTable`, whose rows every admin list shares:
+        // three lines to a row read as one block without air above and below them.
+        <View className="py-3">
+          <ChallengeTitle modeId={mode.id} />
+          <Text selectable={false} className={cn(TYPE.hint, 'mt-0.5 text-dim')}>
+            {t(mode.description)}
+          </Text>
+          <Text selectable={false} className={cn(TYPE.hint, 'text-dim')}>
+            <SessionLine session={shown} now={openedAt} />
+          </Text>
+        </View>,
+      ],
+      onPress: () => {
+        onOpenChallenge(mode.id, shown === null ? null : asOpenSession(shown))
+      },
+    }
+  })
+
   return (
-    <ScreenLayer className="px-6 pb-6 pt-16">
-      <Text selectable={false} className={cn(TYPE.screenTitle, 'mb-1 text-primary')}>
-        <Trans>DEV</Trans>
-      </Text>
-      <Text selectable={false} className={cn(TYPE.label, 'mb-6 text-dim')}>
+    <AdminScreen
+      title={t(TITLE)}
+      footer={
+        <PrimaryButton
+          id="dev.done"
+          tone="quiet"
+          onPress={onClose}
+          label={<Trans>DONE</Trans>}
+        />
+      }
+    >
+      <Text selectable={false} className={cn(TYPE.caption, 'mb-2.5 text-dim')}>
         <Trans>EVERY CHALLENGE, ANY WINDOW — NO BOARD KEPT</Trans>
       </Text>
-
-      <FlatList
-        data={CHALLENGES}
-        keyExtractor={(mode) => mode.id}
-        renderItem={({ item }) => (
-          <ChallengeRow
-            mode={item}
-            sessions={sessions.filter((session) => session.modeId === item.id)}
-            now={openedAt}
-            onOpen={onOpenChallenge}
-          />
-        )}
-        showsVerticalScrollIndicator={false}
-        ListEmptyComponent={
-          <Text selectable={false} className={cn(TYPE.prose, 'text-dim')}>
-            <Trans>No challenges have been written yet.</Trans>
-          </Text>
-        }
-      />
-
-      <PrimaryButton
-        id="dev.done"
-        onPress={onClose}
-        className="mt-4 self-center"
-        style={{ width: 224 }}
-        label={<Trans>DONE</Trans>}
-      />
-    </ScreenLayer>
+      <ScrollView showsVerticalScrollIndicator={false}>
+        <AdminTable
+          rowId="dev.run"
+          columns={[{ label: 'CHALLENGE', tone: 'name' }]}
+          rows={rows}
+          empty={<Trans>No challenges have been written yet.</Trans>}
+        />
+      </ScrollView>
+    </AdminScreen>
   )
 }

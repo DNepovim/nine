@@ -1,7 +1,9 @@
+import { isNonEmptyArray } from 'narrowland'
 import { Text, View } from 'react-native'
 
 import { GradientName } from '@/components/gradient-name'
 import { MedalLine } from '@/components/overlays/medal-line'
+import { MarkRow } from '@/components/player-mark'
 import { TrackedPressable } from '@/components/tracked-pressable'
 import { TYPE } from '@/constants/typography'
 import { useOpenProfile } from '@/hooks/use-profile-modal'
@@ -107,17 +109,21 @@ export function CompareHeadSide({
   // `HEAD_NAME_LINE` is measured from, so a second glyph must not change it — they are set
   // a size down instead, which keeps the pair inside the same band as one mark alone and
   // leaves the VS between the two names where it was placed.
-  const standing = marks.join(' ')
-  const glyph = standing === '' ? raceMark : standing
-  const size =
-    standing === '' ? RACE_SIZE : marks.length > 1 ? PAIRED_MARK_SIZE : MARK_SIZE
+  const size = marks.length > 1 ? PAIRED_MARK_SIZE : MARK_SIZE
   return (
     <View className="flex-1 items-center gap-0.5">
       <View className="justify-center" style={{ height: MARK_BOX }}>
-        {glyph !== null && (
-          <Text selectable={false} style={{ fontSize: size, lineHeight: size + 4 }}>
-            {glyph}
-          </Text>
+        {isNonEmptyArray(marks) ? (
+          <MarkRow marks={marks} size={size} />
+        ) : (
+          raceMark !== null && (
+            <Text
+              selectable={false}
+              style={{ fontSize: RACE_SIZE, lineHeight: RACE_SIZE + 4 }}
+            >
+              {raceMark}
+            </Text>
+          )
         )}
       </View>
       {/* A name opens the player behind it here as it does everywhere else in the app —

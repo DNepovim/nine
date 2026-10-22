@@ -8,12 +8,14 @@ import { useMemo, useRef } from 'react'
 import { ScrollView, Text, View } from 'react-native'
 
 import { ModalCard } from '@/components/overlays/modal-card'
+import { MarkGlyph } from '@/components/player-mark'
 import { TrackedPressable } from '@/components/tracked-pressable'
 import { ACHIEVEMENT_SCALE, GAME_SCALE } from '@/constants/colors'
 import { TIPS } from '@/constants/tips'
 import { TYPE } from '@/constants/typography'
 import { useFlag } from '@/hooks/use-flags'
 import { useViewport } from '@/hooks/use-viewport'
+import { PHOENIX_MARK } from '@/lib/champions'
 import { cn } from '@/lib/cn'
 import {
   darkGradientOf,
@@ -815,8 +817,9 @@ export function HowToPlayOverlay({
             </Bullet>
             <Bullet color={GAME_SCALE[3]}>
               <Trans>
-                🐦‍🔥 The phoenix is whoever took the last challenge. It is the one mark that
-                is not a board, and it moves on the day the next session ends.
+                <MarkGlyph mark={PHOENIX_MARK} size={13} inline /> The phoenix is whoever
+                took the last challenge. It is the one mark that is not a board, and it
+                moves on the day the next session ends.
               </Trans>
             </Bullet>
             <Bullet color={GAME_SCALE[4]}>

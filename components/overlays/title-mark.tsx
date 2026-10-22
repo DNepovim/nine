@@ -6,6 +6,7 @@ import { useEffect, useState } from 'react'
 import { Text, View } from 'react-native'
 import Animated, { FadeIn, FadeOut } from 'react-native-reanimated'
 
+import { MarkGlyph } from '@/components/player-mark'
 import { TrackedPressable } from '@/components/tracked-pressable'
 import { GAME_SCALE } from '@/constants/colors'
 import { TYPE } from '@/constants/typography'
@@ -199,13 +200,11 @@ export function TitleMark({
             accessibilityRole="button"
             accessibilityLabel={t(MARK_COPY[mark].title)}
           >
-            <Text
-              selectable={false}
+            <MarkGlyph
+              mark={mark}
+              size={size}
               className={cn(float && 'letter-float-1')}
-              style={{ fontSize: size, lineHeight: size + LEADING }}
-            >
-              {mark}
-            </Text>
+            />
           </TrackedPressable>
         ))}
       </View>

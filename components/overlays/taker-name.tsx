@@ -1,8 +1,12 @@
-import { isNonEmptyArray } from 'narrowland'
 import { Text } from 'react-native'
 
+import { InlineMarks } from '@/components/player-mark'
 import { TYPE } from '@/constants/typography'
 import { useOpenProfile } from '@/hooks/use-profile-modal'
+import type { PlayerMark } from '@/lib/champions'
+
+// A drawn mark's side, matched to the line's `TYPE.value` text.
+const MARK_SIZE = 11
 
 // The name of whoever took a medal off you, on the lost-medal line. Flat, in whatever
 // grey that line hands it.
@@ -28,7 +32,7 @@ export function TakerName({
   nickname: string
   // Every mark this player wears everywhere their name appears — a board standing, a
   // phoenix for taking the last challenge, or both at once. Empty where they wear none.
-  marks: readonly string[]
+  marks: readonly PlayerMark[]
   // The line's own grey. Passed in rather than reached for here so the line decides how
   // drained it is, and the name cannot drift from the words beside it.
   color: string
@@ -45,7 +49,8 @@ export function TakerName({
       className={TYPE.value}
       style={{ color }}
     >
-      {isNonEmptyArray(marks) ? `${marks.join(' ')} ${nickname}` : nickname}
+      <InlineMarks marks={marks} size={MARK_SIZE} />
+      {nickname}
     </Text>
   )
 }

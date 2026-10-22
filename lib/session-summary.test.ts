@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import type { TeasedSpan } from '@/lib/challenge-session'
+import type { SessionSpan } from '@/lib/challenge-session'
 import { challengeId } from '@/modes'
 
 import {
@@ -47,11 +47,7 @@ const summary = (
   mine: { rank: null, score: 100, timeMs: null, difficulty: 'hard', bonus: 0 },
 })
 
-const span = (opensAt: number, closesAt: number, teaserMinutes = 60): TeasedSpan => ({
-  opensAt,
-  closesAt,
-  teaserMinutes,
-})
+const span = (opensAt: number, closesAt: number): SessionSpan => ({ opensAt, closesAt })
 
 describe('summarySince', () => {
   it('asks from the marker when the marker is inside the lookback', () => {
@@ -136,14 +132,8 @@ describe('summaryInvite', () => {
     expect(summaryInvite([soon, live], NOW)).toEqual({ state: 'live', session: live })
   })
 
-  it('will not name a session whose own teaser has not opened yet', () => {
-    // Teasing for an hour before it opens; it opens in two, so the start screen is not
-    // allowed to speak about it — and neither is this.
-    expect(summaryInvite([span(NOW + 2 * HOUR, NOW + 4 * HOUR, 60)], NOW)).toBeNull()
-  })
-
-  it('names one whose teaser has opened', () => {
-    const teased = span(NOW + HOUR, NOW + 3 * HOUR, 120)
+  it('names one still to come, however far off', () => {
+    const teased = span(NOW + 48 * HOUR, NOW + 72 * HOUR)
     expect(summaryInvite([teased], NOW)).toEqual({ state: 'teaser', session: teased })
   })
 })

@@ -58,6 +58,9 @@ const BIRD_MARKS = {
   challenge: '🐦‍🔥',
 } as const satisfies Record<keyof Champions, string>
 
+// The one mark that is drawn rather than typed — see `PhoenixGlyph`.
+export const PHOENIX_MARK = BIRD_MARKS.challenge
+
 // Every standing there is, in the order its bird is drawn: the two boards, then the
 // session. A tuple rather than `Object.keys`, which would type as `string[]` and lose the
 // exhaustiveness the map above is written for.

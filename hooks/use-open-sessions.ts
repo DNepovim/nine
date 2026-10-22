@@ -25,12 +25,26 @@ const NOTHING: readonly OpenSession[] = []
 
 // The launch's one read, kept so a second consumer joins it rather than repeating it.
 //
-// Never reset. A failed read resolves to no sessions and stays that way for the launch,
-// which is exactly what the card did when it owned this read: there was no retry then
-// and there is none now. The cost of being wrong is one quiet launch, and the app is
-// restarted often enough that a retry loop would buy very little for the requests it
-// would spend.
+// Reset by one thing only: the planner writing a session (`refreshOpenSessions`). A
+// failed read otherwise resolves to no sessions and stays that way for the launch — there
+// is no retry, because the app is restarted often enough that a retry loop would buy very
+// little for the requests it would spend.
 let pending: Promise<readonly OpenSession[]> | null = null
+
+// Every mounted consumer, told to read again when the store is reset.
+const listeners = new Set<() => void>()
+
+// Throw the launch's read away and have every consumer read again. Called by the
+// planner after a write, so an admin who books a challenge and closes the admin screen
+// sees its card on the intro without restarting the app. The card's own freeze (see
+// `useSessionCard`) is about the clock moving under a player's thumb, not about a
+// booking somebody has just made on purpose.
+export function refreshOpenSessions(): void {
+  pending = null
+  listeners.forEach((listener) => {
+    listener()
+  })
+}
 
 const openSessions = (): Promise<readonly OpenSession[]> => {
   // A session naming a challenge this build has never heard of is dropped here rather
@@ -57,6 +71,18 @@ const openSessions = (): Promise<readonly OpenSession[]> => {
 // fed. It is the rule `app/(tabs)/index.tsx` already follows with `features.has('admin')`.
 export function useOpenSessions(canSee: boolean): readonly OpenSession[] {
   const [sessions, setSessions] = useState<readonly OpenSession[]>(NOTHING)
+  // Bumped by `refreshOpenSessions`, which is what re-runs the read below.
+  const [generation, setGeneration] = useState(0)
+
+  useEffect(() => {
+    const listener = () => {
+      setGeneration((n) => n + 1)
+    }
+    listeners.add(listener)
+    return () => {
+      listeners.delete(listener)
+    }
+  }, [])
 
   // A ref rather than a local `let`, which is the shape `use-board.ts` and the card both
   // use for the same job: a plain flag reads as always-false to the type checker, since
@@ -73,7 +99,7 @@ export function useOpenSessions(canSee: boolean): readonly OpenSession[] {
     return () => {
       dropped.current = true
     }
-  }, [canSee])
+  }, [canSee, generation])
 
   return sessions
 }

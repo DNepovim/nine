@@ -444,7 +444,6 @@ const DEV_INVITE: SessionCard<OpenSession> = {
     // sitting at nought — the fixture exists to be looked at.
     opensAt: Date.now() + 3 * 60 * 60 * 1000,
     closesAt: Date.now() + 27 * 60 * 60 * 1000,
-    teaserMinutes: 0,
     extendedAt: null,
     leader: null,
     measure: 'score',

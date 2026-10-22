@@ -28,7 +28,8 @@ import { loadSessionBoard, type OpenSession } from '@/lib/session-board'
 // The rows themselves now come from `useOpenSessions`, which is the launch's single read
 // of them and is shared with the **summary**. That it is shared changes nothing here: the
 // list resolves once and keeps its identity, so the effect below fires twice — empty, then
-// with rows — and never again. A live session closing still leaves this card where it is,
+// with rows — and again only when the planner books or changes a session
+// (`refreshOpenSessions`). A live session closing still leaves this card where it is,
 // and the fact that something else woke up for it is none of this card's business.
 
 // The card and the way to reckon it again.

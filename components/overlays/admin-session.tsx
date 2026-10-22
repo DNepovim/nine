@@ -6,7 +6,6 @@ import { ScrollView, Text, View } from 'react-native'
 import { DateTimeField } from '@/components/date-time-field'
 import { AdminDialog } from '@/components/overlays/admin-dialog'
 import { AdminExtendDialog } from '@/components/overlays/admin-extend-dialog'
-import { AdminNumberField } from '@/components/overlays/admin-number-field'
 import { AdminPills } from '@/components/overlays/admin-pills'
 import { AdminScreen } from '@/components/overlays/admin-screen'
 import { WhenRow } from '@/components/overlays/admin-when-row'
@@ -29,7 +28,6 @@ import {
   type SessionSpan,
 } from '@/lib/challenge-session'
 import { cn } from '@/lib/cn'
-import { minutesAsHours } from '@/lib/duration'
 import { formatDayTime } from '@/lib/format-date'
 import { CHALLENGES } from '@/modes/challenges/catalog'
 
@@ -71,15 +69,6 @@ export function AdminSession({
   const [error, setError] = useState<string | null>(null)
   const [asking, setAsking] = useState<Asking>(null)
 
-  // This session's own teaser, in hours, blank where it has none — which is the usual
-  // case and is what makes the field's emptiness meaningful. Hours to match the general
-  // figure above the list; the column is minutes. See `TeaserField`.
-  const [teaserHours, setTeaserHours] = useState(() =>
-    session?.teaserMinutes === undefined || session.teaserMinutes === null
-      ? ''
-      : minutesAsHours(session.teaserMinutes),
-  )
-
   // Read once, the way the list reads its own: a window opening or closing while this
   // form is up must not change what the form will let the admin do halfway through it.
   const [openedAt] = useState(() => Date.now())
@@ -95,34 +84,19 @@ export function AdminSession({
   // locked on liveness would shut the door the server leaves open.
   const locked = session !== null && session.played > 0
 
-  // Blank means "use the general figure", which is a null rather than a nought — nought
-  // is a real answer meaning no teaser at all.
-  //
-  // **Blank only.** Anything typed that is not a number is refused by `canSave` below
-  // rather than folded into null here, which is what the first draft did: an admin who
-  // cleared the field to retype and saved half way through would have silently dropped
-  // the session's override, and a blanked field is indistinguishable from one that was
-  // never filled.
-  //
-  // Hours in, minutes out; `minutesAsHours` owns the rounding and the note about it.
-  const teaserBlank = teaserHours.trim() === ''
-  const teaserTyped = Number.parseInt(teaserHours, 10)
-  const teaserValid = teaserBlank || (!Number.isNaN(teaserTyped) && teaserTyped >= 0)
-  const teaserMinutes = (): number | null => (teaserBlank ? null : teaserTyped * 60)
-
   const valid = isValidSpan(span)
   // The challenge is the one thing a session cannot be saved without. The span always
   // has an answer — it opens on one — so SAVE is shut only for an end that is not after
   // its start, and for a session nobody has said which challenge it is for.
-  const canSave = valid && teaserValid && modeId !== null && !busy
+  const canSave = valid && modeId !== null && !busy
 
   const save = async () => {
     if (modeId === null) return
     setBusy(true)
     const res =
       session === null
-        ? await planSession(modeId, span, teaserMinutes())
-        : await editSession(session.id, modeId, span, teaserMinutes())
+        ? await planSession(modeId, span)
+        : await editSession(session.id, modeId, span)
     setBusy(false)
     if (res.error !== null) {
       setError(res.error)
@@ -153,12 +127,8 @@ export function AdminSession({
       error={error}
       footer={
         <View className="gap-2">
-          {/* Nothing worth saving once anybody has scored. Precisely: the server refuses
-              the challenge and the span, and would still take a `teaser_minutes` — so
-              hiding SAVE puts one write out of reach that the server would allow. That is
-              the right trade rather than an oversight: a played session's teaser is
-              already behind it, and a SAVE whose only live field is the one that no longer
-              does anything is a button that implies the others are editable. */}
+          {/* Nothing worth saving once anybody has scored: the server refuses both the
+              challenge and the span. */}
           {!locked && (
             <PrimaryButton
               id="admin.session_save"
@@ -270,24 +240,6 @@ export function AdminSession({
                 setSpan((current) => withClosesAt(current, next))
               }}
             />
-          </View>
-        )}
-
-        {/* This session's own teaser. Blank is the usual answer and means the general
-            figure above the list — which is why it is not pre-filled with the figure it
-            would inherit: a number sitting here would read as an override nobody typed.
-            Hidden on a live session, whose teaser is already behind it. */}
-        {!locked && (
-          <View className="mt-4 flex-row items-end gap-2">
-            <AdminNumberField
-              label={<Trans>ANNOUNCE AHEAD (HOURS)</Trans>}
-              value={teaserHours}
-              onChange={setTeaserHours}
-              editable={!busy}
-            />
-            <Text selectable={false} className={cn(TYPE.hint, 'mb-3 flex-1 text-dim')}>
-              <Trans>Blank uses the general figure.</Trans>
-            </Text>
           </View>
         )}
       </ScrollView>

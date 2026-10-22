@@ -1,37 +1,25 @@
-import { Ionicons } from '@expo/vector-icons'
 import { msg } from '@lingui/core/macro'
 import { Trans, useLingui } from '@lingui/react/macro'
 import { isEmptyArray } from 'narrowland'
 import { useEffect, useState } from 'react'
 import { ScrollView, Text, View } from 'react-native'
 
-import { GradientText } from '@/components/gradient-text'
 import { AdminPills } from '@/components/overlays/admin-pills'
 import { AdminScreen } from '@/components/overlays/admin-screen'
 import { AdminSession } from '@/components/overlays/admin-session'
 import {
-  AdminChip,
-  AdminTable,
-  type AdminTableRow,
-} from '@/components/overlays/admin-table'
-import { TeaserModal } from '@/components/overlays/admin-teaser-modal'
-import { LiveDot } from '@/components/overlays/live-dot'
+  ChallengeTitle,
+  StatusChip,
+  WhenBlock,
+} from '@/components/overlays/admin-session-cells'
+import { AdminTable, type AdminTableRow } from '@/components/overlays/admin-table'
 import { PrimaryButton } from '@/components/primary-button'
-import { TrackedPressable } from '@/components/tracked-pressable'
-import { DIM_INK } from '@/constants/colors'
 import { TYPE } from '@/constants/typography'
+import { refreshOpenSessions } from '@/hooks/use-open-sessions'
 import { listSessions, type AdminSession as Session } from '@/lib/admin/sessions'
-import {
-  shownByStatus,
-  spanStatus,
-  STATUS_LABEL,
-  type SpanStatus,
-} from '@/lib/challenge-session'
+import { shownByStatus, spanStatus, type SpanStatus } from '@/lib/challenge-session'
 import { cn } from '@/lib/cn'
 import { formatWindowLength } from '@/lib/duration'
-import { dayAndMonth } from '@/lib/format-date'
-import { gradientOf, labelOf, modeById } from '@/modes'
-import { challengeInk } from '@/modes/challenges/palette'
 
 // When a challenge is on: every session ever planned, newest start first.
 //
@@ -49,15 +37,6 @@ import { challengeInk } from '@/modes/challenges/palette'
 type Editing = Session | 'new' | null
 
 const TITLE = msg`CHALLENGES`
-
-// How loud each status is drawn. LIVE is the filled one and the only one with a mark
-// beside it — it is the row that is in front of players this minute, and the only one on
-// this list where that is true.
-const STATUS_TONE: Record<SpanStatus, 'filled' | 'strong' | 'quiet'> = {
-  live: 'filled',
-  upcoming: 'strong',
-  expired: 'quiet',
-}
 
 // Which sessions are listed, and in the order a planner reads them: what is on now, what
 // is coming, what already ran.
@@ -82,27 +61,6 @@ const FILTER_LABEL = {
   expired: 'PAST',
 } as const satisfies Record<SpanStatus, string>
 
-// The date a session opens, as a block: the day as a figure with its month under it.
-//
-// The whole range used to be spelled out on one line — `15 Oct 12:00 → 16 Oct 12:00`,
-// which is four facts in a row where a reader scanning the list wants one. The day it
-// starts is what a session is filed under; how long it runs is said once, under the name,
-// by `formatWindowLength`; and the exact minutes are on the form behind the row, which is
-// where somebody who cares about them is going.
-function WhenBlock({ at }: { at: number }) {
-  const { day, month } = dayAndMonth(at)
-  return (
-    <View className="w-9 items-center">
-      <Text selectable={false} className={cn(TYPE.figureLarge, 'text-primary')}>
-        {day}
-      </Text>
-      <Text selectable={false} className={cn(TYPE.caption, '-mt-0.5 text-dim')}>
-        {month}
-      </Text>
-    </View>
-  )
-}
-
 export function AdminSessions({ onBack }: { onBack: () => void }) {
   const { t } = useLingui()
   const [rows, setRows] = useState<Session[]>([])
@@ -110,7 +68,6 @@ export function AdminSessions({ onBack }: { onBack: () => void }) {
   const [error, setError] = useState<string | null>(null)
   const [editing, setEditing] = useState<Editing>(null)
   const [lit, setLit] = useState<ReadonlySet<SpanStatus>>(() => new Set(LIT_ON_ARRIVAL))
-  const [tuning, setTuning] = useState(false)
 
   // One counter, the way every other admin list has one: the list is a snapshot, and a
   // write on the form behind it has to be able to tell this to read again.
@@ -146,6 +103,9 @@ export function AdminSessions({ onBack }: { onBack: () => void }) {
         session={editing === 'new' ? null : editing}
         onChanged={() => {
           setEpoch((n) => n + 1)
+          // The intro's card reads its sessions once a launch; a booking is the one
+          // thing that has to reach it without one.
+          refreshOpenSessions()
         }}
         onBack={() => {
           setEditing(null)
@@ -178,7 +138,6 @@ export function AdminSessions({ onBack }: { onBack: () => void }) {
   // is exactly the row somebody needs to open and cancel.
   const tableRows: readonly AdminTableRow[] = shown.map((session) => {
     const status = spanStatus(session, openedAt)
-    const known = modeById(session.modeId) !== null
     return {
       key: session.id,
       // Dimmed once it is over. An expired session is kept — it is the record of what
@@ -187,47 +146,12 @@ export function AdminSessions({ onBack }: { onBack: () => void }) {
       cells: [
         <WhenBlock at={session.opensAt} />,
         <View>
-          {/* The challenge's own name in the challenge's own colours, which is the one
-              place on these screens a hue carries a word. A session list reads as a list
-              of dates otherwise — and a challenge *is* its colour on the intro, on its
-              card and on the screen a run of it ends on, so it is what the row is
-              recognised by here too.
-
-              Through `challengeInk` rather than the raw pair: the second stop is the
-              bright end of the arc and measures about 1.7:1 on this surface, so a name
-              lerped onto it would fade out as it was read. See the note at that function
-              — the same bargain `NAME_INK` strikes for a nickname. */}
-          {known ? (
-            <GradientText
-              text={t(labelOf(session.modeId))}
-              from={challengeInk(gradientOf(session.modeId)[0])}
-              to={challengeInk(gradientOf(session.modeId)[1])}
-              numberOfLines={1}
-              className={TYPE.cardTitleSm}
-            />
-          ) : (
-            <Text
-              selectable={false}
-              numberOfLines={1}
-              className={cn(TYPE.cardTitleSm, 'text-dim')}
-            >
-              {session.modeId}
-            </Text>
-          )}
+          <ChallengeTitle modeId={session.modeId} />
           <Text selectable={false} className={cn(TYPE.hint, 'mt-0.5 text-dim')}>
             {formatWindowLength(session.closesAt - session.opensAt)}
           </Text>
-          {!known && (
-            <Text selectable={false} className={cn(TYPE.hint, 'text-red-500')}>
-              ⚠ <Trans>NOT IN THIS BUILD</Trans>
-            </Text>
-          )}
         </View>,
-        <AdminChip
-          label={STATUS_LABEL[status]}
-          tone={STATUS_TONE[status]}
-          icon={status === 'live' ? <LiveDot /> : undefined}
-        />,
+        <StatusChip status={status} />,
       ],
       onPress: () => {
         setEditing(session)
@@ -237,28 +161,7 @@ export function AdminSessions({ onBack }: { onBack: () => void }) {
 
   return (
     <AdminScreen
-      // A heading rather than a title, because the row has a second thing in it now: the
-      // general teaser figure used to sit above the filters as a labelled field, which put
-      // a number somebody sets once a year in front of the list every time they opened it.
-      // Behind a cog it is still one press away and no longer in the way.
-      heading={
-        <View className="mb-3 flex-row items-center justify-between gap-3">
-          <Text selectable={false} className={cn(TYPE.screenTitle, 'text-primary')}>
-            {t(TITLE)}
-          </Text>
-          <TrackedPressable
-            id="admin.session_settings"
-            onPress={() => {
-              setTuning(true)
-            }}
-            // 40 square, the thumb target the rest of these screens settled on, with the
-            // glyph smaller than its box rather than the box shrunk to the glyph.
-            className="h-10 w-10 items-center justify-center rounded-xl border border-muted bg-surface"
-          >
-            <Ionicons name="settings-outline" size={18} color={DIM_INK} />
-          </TrackedPressable>
-        </View>
-      }
+      title={t(TITLE)}
       error={error}
       footer={
         <View className="gap-2">
@@ -323,14 +226,6 @@ export function AdminSessions({ onBack }: { onBack: () => void }) {
           }
         />
       </ScrollView>
-
-      {tuning && (
-        <TeaserModal
-          onDismiss={() => {
-            setTuning(false)
-          }}
-        />
-      )}
     </AdminScreen>
   )
 }
