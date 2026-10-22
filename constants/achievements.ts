@@ -49,6 +49,9 @@ export const ACHIEVEMENT_IDS = [
   'allThree',
   'upARung',
   'intoTheDeep',
+  'longGesture',
+  'sweptHit',
+  'sweptStrike',
 
   'steadyHand',
   'fineWork',
@@ -208,6 +211,26 @@ export const ACHIEVEMENTS = {
     // staging it by board would ask the same question of Easy and Hard, which nothing
     // can ever answer. Accuracy Extreme and Speed Extreme are two different dives.
     staged: 'mode',
+  },
+  longGesture: {
+    group: 'firstSteps',
+    emblem: '〰️',
+    title: msg`LONG GESTURE`,
+    // A drag, in the code's word — but a player meets it as one swipe that kept going, and
+    // "drag" names nothing they have been told about before the lesson.
+    hint: msg`Move more than one key in a single swipe.`,
+  },
+  sweptHit: {
+    group: 'firstSteps',
+    emblem: '🖌️',
+    title: msg`ONE STROKE`,
+    hint: msg`Land a hit with a swipe across more than one key.`,
+  },
+  sweptStrike: {
+    group: 'firstSteps',
+    emblem: '🌊',
+    title: msg`SWEEPING STRIKE`,
+    hint: msg`Land a strike with a swipe across more than one key.`,
   },
 
   // ── Accuracy ───────────────────────────────────────────────────────────────────

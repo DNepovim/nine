@@ -176,8 +176,8 @@ export function DialButton({
   // colours with it and cools back to its own. Null for every mode whose shot is not a
   // flame.
   heat?: SharedValue<number> | null
-  onDelta: (delta: 1 | -1) => void
-  onSet: (value: number) => void
+  onDelta: (delta: 1 | -1, sweep: boolean) => void
+  onSet: (value: number, sweep: boolean) => void
 }) {
   const scale = useSharedValue(1)
   const translateY = useSharedValue(0)
@@ -211,24 +211,24 @@ export function DialButton({
   // turn over together — but a finger crossing this key again before then cancels that
   // animation, and the event would go with it. So a new move pays off the old one first,
   // and a scrub the animation cannot keep up with loses frames rather than presses.
-  const owed = useSharedValue<DialMove | null>(null)
+  const owed = useSharedValue<DialCommand | null>(null)
 
-  const fire = (move: DialMove) => {
+  const fire = ({ move, sweep }: DialCommand) => {
     'worklet'
     inFlight.value -= 1
     const { step, set } = MOVE_EFFECT[move]
     // `set` names an end of the key's range rather than a digit — how high a key goes is
     // the board's business — so the end is turned into a value here.
-    if (step === null) scheduleOnRN(onSet, set === 'floor' ? 0 : digits - 1)
-    else scheduleOnRN(onDelta, step)
+    if (step === null) scheduleOnRN(onSet, set === 'floor' ? 0 : digits - 1, sweep)
+    else scheduleOnRN(onDelta, step, sweep)
   }
 
   const settle = () => {
     'worklet'
-    const move = owed.value
-    if (move === null) return
+    const command = owed.value
+    if (command === null) return
     owed.value = null
-    fire(move)
+    fire(command)
   }
 
   // The digit leaves the way the finger sent it and comes back from the other side.
@@ -257,18 +257,18 @@ export function DialButton({
     )
   }
 
-  const run = (move: DialMove) => {
+  const run = (command: DialCommand) => {
     'worklet'
     settle()
     // A tap has nothing to wait for: the digit pops where it stands rather than leaving,
     // so there is no flight for the press to be owed across.
-    if (move === 'tap') {
+    if (command.move === 'tap') {
       animateTap()
-      fire('tap')
+      fire(command)
       return
     }
-    owed.value = move
-    animateFlip(FLIP_DIR[move])
+    owed.value = command
+    animateFlip(FLIP_DIR[command.move])
   }
 
   // The squash follows the thumb rather than belonging to a press. One gesture crosses
@@ -289,7 +289,7 @@ export function DialButton({
     () => commands.value[index] ?? NO_COMMAND,
     (command, previous) => {
       if (previous === null || command.seq === previous.seq) return
-      run(command.move)
+      run(command)
     },
   )
 

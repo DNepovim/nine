@@ -150,7 +150,7 @@ import { multiplierColor } from '@/lib/streak-badge'
 import { tipForTarget } from '@/lib/tutorial-tip'
 import { valueProgress } from '@/lib/value-progress'
 import { WELCOME_BOARD } from '@/lib/welcome'
-import { bestOn, gameMachine } from '@/machines/game'
+import { bestOn, gameMachine, type GameSend } from '@/machines/game'
 import { computePar } from '@/machines/scoring'
 import { keyControl, type LessonVoice } from '@/machines/tutorial-lesson'
 import {
@@ -484,7 +484,7 @@ const sessionBestsOf = (
 
 export default function GameScreen() {
   const { t } = useLingui()
-  const [state, send] = useMachine(gameMachine)
+  const [state, send, actor] = useMachine(gameMachine)
 
   // Seven-segment font for the digital score readout.
   const [dsegLoaded] = useFonts({ DSEG7: DSEG7Font })
@@ -1109,6 +1109,29 @@ export default function GameScreen() {
   // board and beating your own best are both things the bar has already worked out, and
   // working them out a second time here is how the two would come to disagree.
   const sessionPlaces = useSessionPlaces(userId, placesAsked)
+  // The run a drag last moved more than one key in, landed a hit in, and landed a strike
+  // in. Kept as the run's number rather than a flag, so the next run reads false without
+  // anything having to clear it.
+  const [sweptIn, setSweptIn] = useState({ gesture: -1, hit: -1, strike: -1 })
+  // A press the dial says was part of a drag, sent and then read back: the machine
+  // resolves a press synchronously, so a new hit batch straight after it is that press's.
+  // Asked here rather than of `hitBatch` in an effect, since one drag can send several
+  // presses inside a single render and only the last of them would still be on screen.
+  const sendDialed = (
+    event: Extract<Parameters<GameSend>[0], { type: 'PRESS' | 'SET_CELL' }>,
+    sweep: boolean,
+  ) => {
+    const before = actor.getSnapshot().context.hitBatch.seq
+    send(event)
+    if (!sweep) return
+    const { hitBatch: after, runSeq } = actor.getSnapshot().context
+    if (after.seq === before) return
+    setSweptIn((held) => ({
+      ...held,
+      hit: runSeq,
+      strike: after.hits.some((hit) => hit.bonus) ? runSeq : held.strike,
+    }))
+  }
   const achievements = useAchievements({
     // Game over is part of the run here, unlike everywhere else `inRun` is used. The
     // pass that answers "did this run finish on nothing" happens at game over, and
@@ -1131,6 +1154,9 @@ export default function GameScreen() {
     avgAccuracy,
     avgSpeed,
     personalBest: crossed.includes('record'),
+    swept: sweptIn.gesture === state.context.runSeq,
+    sweptHit: sweptIn.hit === state.context.runSeq,
+    sweptStrike: sweptIn.strike === state.context.runSeq,
     batch: hitBatch,
     stats,
     standings,
@@ -2320,17 +2346,23 @@ export default function GameScreen() {
                   flame={flame}
                   peakFrom={darkGradientOf(mode)[0]}
                   peakTo={darkGradientOf(mode)[1]}
-                  onDelta={(index, delta) => {
+                  onDelta={(index, delta, sweep) => {
                     coach.notePress(index, delta)
                     lesson.notePress(delta)
-                    send({ type: 'PRESS', index, delta, now: Date.now() })
+                    sendDialed({ type: 'PRESS', index, delta, now: Date.now() }, sweep)
                   }}
-                  onSet={(index, cellValue) => {
+                  onSet={(index, cellValue, sweep) => {
                     coach.noteSet(index, cellValue)
                     lesson.noteSet(cellValue)
-                    send({ type: 'SET_CELL', index, value: cellValue, now: Date.now() })
+                    sendDialed(
+                      { type: 'SET_CELL', index, value: cellValue, now: Date.now() },
+                      sweep,
+                    )
                   }}
-                  onSweep={lesson.noteSweep}
+                  onSweep={() => {
+                    lesson.noteSweep()
+                    setSweptIn((held) => ({ ...held, gesture: state.context.runSeq }))
+                  }}
                 />
               </View>
 

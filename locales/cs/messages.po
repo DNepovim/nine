@@ -1713,7 +1713,15 @@ msgstr "Slož 10 000 cílů napříč všemi hrami."
 msgid "Land a hit on an Extreme board."
 msgstr "Tref cíl na Extrémním žebříčku."
 
-#: constants/achievements.ts:554
+#: constants/achievements.ts:227
+msgid "Land a hit with a swipe across more than one key."
+msgstr "Trefni cíl švihnutím přes víc než jedno tlačítko."
+
+#: constants/achievements.ts:233
+msgid "Land a strike with a swipe across more than one key."
+msgstr "Trefni cíl v sérii švihnutím přes víc než jedno tlačítko."
+
+#: constants/achievements.ts:582
 msgid "Land a target after thirty presses or more."
 msgstr "Slož cíl po třiceti a více stiscích."
 
@@ -1789,7 +1797,11 @@ msgstr "BLESK"
 msgid "LIVES"
 msgstr "ŽIVOTY"
 
-#: constants/achievements.ts:396
+#: constants/achievements.ts:218
+msgid "LONG GESTURE"
+msgstr "DLOUHÉ GESTO"
+
+#: constants/achievements.ts:419
 msgid "LONG HAUL"
 msgstr "DLOUHÁ TRAŤ"
 
@@ -1886,6 +1898,10 @@ msgstr "Pohni aspoň jedním tlačítkem v každém řádku číselníku."
 #: lib/strike-rule.ts:27
 msgid "Move every key on the dial on the way to the target."
 msgstr "Cestou k cíli pohni každým tlačítkem na číselníku."
+
+#: constants/achievements.ts:221
+msgid "Move more than one key in a single swipe."
+msgstr "Pohni víc než jedním tlačítkem jediným švihnutím."
 
 #: components/game/multiplayer-game.tsx:164
 #: components/overlays/how-to-play-overlay.tsx:57
@@ -2255,6 +2271,10 @@ msgstr "Jedna hra ≥ 60 min, libovolný režim"
 #: components/overlays/how-to-play-overlay.tsx:574
 msgid "One set of standings, shared by everyone playing it, and it never resets. Your best run is the one that counts."
 msgstr "Jedno pořadí pro všechny, kdo ji hrají, a nikdy se nenuluje. Počítá se tvá nejlepší hra."
+
+#: constants/achievements.ts:226
+msgid "ONE STROKE"
+msgstr "JEDNÍM TAHEM"
 
 #: constants/news.ts:42
 msgid "One sweep, three keys"
@@ -2972,7 +2992,11 @@ msgstr "v neděli"
 msgid "SURGEON"
 msgstr "CHIRURG"
 
-#: machines/tutorial-lesson.ts:311
+#: constants/achievements.ts:232
+msgid "SWEEPING STRIKE"
+msgstr "SÉRIE JEDNÍM TAHEM"
+
+#: machines/tutorial-lesson.ts:310
 msgid "SWIPE A KEY DOWN"
 msgstr "ŠVIHNI TLAČÍTKEM DOLŮ"
 

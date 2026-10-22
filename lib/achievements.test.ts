@@ -61,6 +61,9 @@ const facts = (over: Partial<AchievementFacts> = {}): AchievementFacts => ({
     cleanHits: 0,
     parHits: 0,
     longestRoute: 0,
+    swept: false,
+    sweptHit: false,
+    sweptStrike: false,
     elapsedMs: 0,
     avgAccuracy: 0,
     avgSpeed: 0,
@@ -145,6 +148,21 @@ describe('first steps', () => {
 
   it('earns FIRST HIT retroactively from a career that already has hits', () => {
     expect(isEarnedBy('firstHit', facts({ career: career({ hits: 400 }) }))).toBe(true)
+  })
+
+  it('earns LONG GESTURE once one gesture has moved more than one key', () => {
+    expect(isEarnedBy('longGesture', facts())).toBe(false)
+    expect(
+      isEarnedBy('longGesture', facts({ run: { ...facts().run, swept: true } })),
+    ).toBe(true)
+  })
+
+  it('earns ONE STROKE and SWEEPING STRIKE apart, each on its own fact', () => {
+    const hit = facts({ run: { ...facts().run, swept: true, sweptHit: true } })
+    expect(isEarnedBy('sweptHit', hit)).toBe(true)
+    expect(isEarnedBy('sweptStrike', hit)).toBe(false)
+    const strike = facts({ run: { ...hit.run, sweptStrike: true } })
+    expect(isEarnedBy('sweptStrike', strike)).toBe(true)
   })
 
   it('earns ALL THREE only once every mode has been played', () => {

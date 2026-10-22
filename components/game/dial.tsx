@@ -107,8 +107,9 @@ export function Dial({
   // How many strikes have set every key alight — the `flame` shot, see `DialFlames`. Null
   // for every mode whose shot is drawn over the board instead.
   flame?: number | null
-  onDelta: (index: number, delta: 1 | -1) => void
-  onSet: (index: number, value: number) => void
+  // `sweep` is whether this change is part of a drag — see `DialCommand`.
+  onDelta: (index: number, delta: 1 | -1, sweep: boolean) => void
+  onSet: (index: number, value: number, sweep: boolean) => void
   // Said once, the moment one gesture moves a second key — the one thing a run of separate
   // swipes cannot do, and so the only way to know a drag was a drag. Every key it moves
   // still reports itself through `onDelta` / `onSet`; this says they came together. The
@@ -204,6 +205,9 @@ export function Dial({
     // Nothing to do, and so nothing to say: sliding off the right of a key already on 9
     // is not a press, and animating one would promise a change that never arrives.
     if (now === was) return
+    // Part of a drag from the second key it moves onwards — a key revisited after another
+    // one included, since by then the gesture already was one.
+    const sweep = swept.value || (lastCommit.value !== NONE && lastCommit.value !== cell)
     // A second key moved on the same gesture, which is a drag and nothing else can be.
     // Said before the change rather than after, so the lesson it ends is already out of
     // the way by the time the keys it swept finish animating.
@@ -215,7 +219,7 @@ export function Dial({
     inFlight.value += 1
     held.value = held.value.map((v, i) => (i === cell ? now : v))
     commands.value = commands.value.map((c, i) =>
-      i === cell ? { seq: c.seq + 1, move: taken } : c,
+      i === cell ? { seq: c.seq + 1, move: taken, sweep } : c,
     )
   }
 
@@ -319,11 +323,11 @@ export function Dial({
                 commands={commands}
                 pressed={pressed}
                 inFlight={inFlight}
-                onDelta={(delta) => {
-                  onDelta(index, delta)
+                onDelta={(delta, sweep) => {
+                  onDelta(index, delta, sweep)
                 }}
-                onSet={(value) => {
-                  onSet(index, value)
+                onSet={(value, sweep) => {
+                  onSet(index, value, sweep)
                 }}
               />
             ))}

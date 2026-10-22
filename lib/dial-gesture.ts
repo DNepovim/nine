@@ -166,9 +166,11 @@ export function nextValue(move: DialMove, value: number, digits: number): number
 }
 
 // One key being told what just happened to it, and the counter that makes a repeat of
-// the same move a second event rather than no event at all.
-export type DialCommand = { seq: number; move: DialMove }
+// the same move a second event rather than no event at all. `sweep` says the change came
+// after the gesture had already moved another key — the second key of a drag onwards —
+// so whoever hears the press can tell a hit a drag landed from one a lone swipe did.
+export type DialCommand = { seq: number; move: DialMove; sweep: boolean }
 
 // What every key starts on: a sequence nobody has reached, so the first render animates
 // nothing. The move is a placeholder the guard on `seq` never lets through.
-export const NO_COMMAND: DialCommand = { seq: 0, move: 'tap' }
+export const NO_COMMAND: DialCommand = { seq: 0, move: 'tap', sweep: false }

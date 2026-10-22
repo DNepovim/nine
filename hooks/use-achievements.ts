@@ -76,6 +76,11 @@ export type AchievementsInput = {
   // Whether this run has beaten the player's own best, from the announcement bar's own
   // reckoning — the one place that already knows.
   personalBest: boolean
+  // Whether one gesture has moved more than one key this run, for LONG GESTURE.
+  swept: boolean
+  // Whether a drag has landed a hit this run, and a strike — ONE STROKE and SWEEPING STRIKE.
+  sweptHit: boolean
+  sweptStrike: boolean
   batch: HitBatch
   stats: Stats
   standings: readonly BoardStanding[]
@@ -246,6 +251,9 @@ export function useAchievements(input: AchievementsInput): Achievements {
     input.score,
     input.hits,
     input.maxStreak,
+    input.swept,
+    input.sweptHit,
+    input.sweptStrike,
     input.batch,
     input.stats,
     input.standings,
@@ -432,6 +440,9 @@ const worldFacts = (
         cleanHits: tally.cleanHits,
         parHits: tally.parHits,
         longestRoute: tally.longestRoute,
+        swept: input.swept,
+        sweptHit: input.sweptHit,
+        sweptStrike: input.sweptStrike,
         elapsedMs: input.elapsedMs,
         avgAccuracy: input.avgAccuracy,
         avgSpeed: input.avgSpeed,

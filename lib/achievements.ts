@@ -68,6 +68,14 @@ export type RunFacts = {
   parHits: number
   // The most presses any single landed hit took.
   longestRoute: number
+  // Whether one gesture has moved more than one key this run — a drag, as the dial reports
+  // it through `onSweep`. A drag turned off in Options never sets it.
+  swept: boolean
+  // Whether such a gesture has landed a hit this run, and whether it has landed a strike —
+  // a hit on a streak multiplier. Only a key the drag moved after its first counts: a hit
+  // on the first key of a drag was a lone swipe's.
+  sweptHit: boolean
+  sweptStrike: boolean
   elapsedMs: number
   // Percentages, 0–100, as the run-stats row shows them.
   avgAccuracy: number
@@ -94,6 +102,9 @@ export const NO_RUN: RunFacts = {
   cleanHits: 0,
   parHits: 0,
   longestRoute: 0,
+  swept: false,
+  sweptHit: false,
+  sweptStrike: false,
   elapsedMs: 0,
   avgAccuracy: 0,
   avgSpeed: 0,
@@ -320,6 +331,9 @@ const RULES = {
   // mode's rather than merely on someone's.
   intoTheDeep: (f, stage) =>
     f.run.mode === stage && f.run.difficulty === 'extreme' && f.run.hits >= 1,
+  longGesture: (f) => f.run.swept,
+  sweptHit: (f) => f.run.sweptHit,
+  sweptStrike: (f) => f.run.sweptStrike,
 
   steadyHand: (f, stage) => bestOn(f, 'accuracy', stage) >= 250,
   fineWork: (f, stage) => bestOn(f, 'accuracy', stage) >= 1000,
@@ -495,6 +509,9 @@ const PROGRESS = {
   allThree: (f) => introModesPlayed(f),
   upARung: () => 0,
   intoTheDeep: () => 0,
+  longGesture: () => 0,
+  sweptHit: () => 0,
+  sweptStrike: () => 0,
 
   steadyHand: (f, stage) => bestOn(f, 'accuracy', stage),
   fineWork: (f, stage) => bestOn(f, 'accuracy', stage),
