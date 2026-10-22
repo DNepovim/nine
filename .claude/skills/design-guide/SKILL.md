@@ -19,6 +19,17 @@ use it:
 **Read the relevant reference before picking a value.** The scales below are the colour
 half; type, layout and reuse each have a file of their own.
 
+> **Every name is drawn in its own colour — no exceptions by omission.** Each time the
+> app writes a player's **nickname**, a **mode's** name or a **challenge's** name, it is
+> drawn in that thing's colour: `GradientName` for a player, `gradientOf(id)[0]` for a
+> mode, and for a challenge **its gradient** — `GradientText` from
+> `challengeInk(gradientOf(id)[0])` to `challengeInk(gradientOf(id)[1])`, as
+> `ChallengeTitle` and the intro's card draw it. Never `text-primary`, never `text-dim`,
+> and never a raw stop on a challenge — `[0]` is the near-black all of them share and
+> reads as uncoloured. Check every new row, cell, title and sentence that names one of
+> the three before calling the UI done. The full rule, and its two measured exceptions,
+> is under **A named thing is drawn in its own colour**.
+
 ---
 
 # The consistency sweep — do this first
@@ -198,7 +209,26 @@ that should read as pressable and sit _under_ text. Pair with `text-on-strong`.
 > scheme and no switch. It is the darkened CTA scale, the answer to "this mode's colour,
 > carrying text". Don't reach for `MODE_GRADIENT` for a button.
 
-## A nickname carries its own colour
+## A named thing is drawn in its own colour
+
+Three nouns in this app carry a colour of their own, and each is drawn in it **every time
+the app writes it**: a player's **nickname**, a **mode's** name, a **challenge's** name.
+The ordinary text ink is the one thing none of them takes. A name in `text-primary` is
+not a neutral choice — it is the name having lost the thing that identifies it.
+
+| The name of…     | Is drawn in                                        | Through                                     |
+| ---------------- | -------------------------------------------------- | ------------------------------------------- |
+| a player         | the gradient their own lifetime averages earn them | `GradientName`, always                      |
+| a permanent mode | its own first stop — `gradientOf(id)[0]`           | a `color` style, or `GradientText` for both |
+| a challenge      | its gradient — both stops through `challengeInk`   | `GradientText`, always                      |
+
+For a mode, one ink or the pair is a question of room: a row label or a pill takes the
+single opening ink, and a card title with a word's worth of width to travel across takes
+`GradientText`. A challenge has no such choice — its name is its gradient in a row label
+as much as in a title, the way `ChallengeTitle` draws it on the planner and the lab.
+Either way the colour comes from the thing named, never from the surface it sits on.
+
+### A nickname
 
 A player's nickname is drawn in the gradient their own lifetime averages earn them, which
 makes one person one colour everywhere the app writes their name. **Always
@@ -208,6 +238,63 @@ exceptions, and what to do when the data you are holding has no averages on it.
 `NAME_INK` is the pair it interpolates, and it is its own ink rather than two mode stops
 for the reason `GOLD_INK` and `ACHIEVEMENT_INK` are: a scale tuned to _be_ a colour does
 not carry text at 10px.
+
+### A mode's name
+
+`gradientOf(id)[0]` — the same opening stop the selector gave the option that was picked,
+so the name on the medal, the row and the header all agree with the pill that started the
+run. `medals-overlay.tsx` and `multiplayer-game.tsx` are the plain shape of it.
+
+### A challenge's name
+
+A challenge **cannot take stop `[0]` the way a mode does.** That stop is the near-black
+every challenge shares, so a name drawn in it would come out in very nearly the colour
+text is already drawn in — a name that looked switched off — and come out identical on
+every challenge, leaving the one element that says _which_ challenge this is saying
+nothing. So the name runs **to** the challenge's own stop, and both ends are lifted to a
+lightness that carries a word.
+
+The name is always drawn as the pair: `GradientText` from
+`challengeInk(gradientOf(id)[0])` to `challengeInk(gradientOf(id)[1])` — in a row label
+as much as in a title. The single lifted hue, `challengeInk(gradientOf(id)[1])`, is for
+what is not the name: an accent, a border, a legend. `challenge-card.tsx` and
+`ChallengeTitle` are the reference implementations, and the same formula appears as
+`scoreInkOf` in `modes/palette.ts` and `accentFor` in `app/(tabs)/index.tsx`.
+If you need it a fourth time, that is the sweep telling you it wants a home.
+
+### The two exceptions, and they already recur
+
+Both are the same bargain `GradientName` strikes on the multiplayer tile — the name is
+not losing its colour, the surface has taken it.
+
+- **A name on a saturated gradient keeps `text-on-strong`.** The themed ink measures
+  around 1.0–1.3:1 against the mode's own fill, so it is unreadable, not subtle. The
+  how-to-play header and the active mode-selector pill both sit on the mode's gradient
+  and both keep white. Measure it, and say so at the call site.
+- **A record taken off you drains to `GRAYSCALE`.** `medals-overlay.tsx` when `drained`,
+  and `lost-medal-line.tsx` throughout. Here the colour _leaving_ is the message, which
+  is the whole reason `GRAYSCALE` exists — so this is the rule holding, not bending.
+
+### A name inside a translated sentence
+
+A name interpolated as a bare string — `const modeName = t(labelOf(mode))`, dropped into
+a translated line — cannot carry a colour, because by the time the sentence has it, it is
+characters and not a component. Colouring it means making it a child instead:
+
+```tsx
+<Trans>
+  <GradientText text={t(labelOf(session.modeId))} from={inkFrom} to={ink} /> challenge
+  starts in
+</Trans>
+```
+
+`challenge-card.tsx` does exactly this, and keeps the translator's freedom to put the name
+where their own grammar wants it. **Four places still interpolate flat** —
+`step-up-toast.tsx`, `tutorial-done-modal.tsx`, `game-over-overlay.tsx` and
+`menu-overlay.tsx` — and each is a name losing its colour on one screen out of nine. They
+are the outstanding work on this rule, not a precedent to copy.
+
+Admin screens are out of scope: nothing there is a surface the player sees.
 
 ## Supporting palettes
 
