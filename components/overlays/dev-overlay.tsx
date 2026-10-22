@@ -6,6 +6,7 @@ import { ScrollView, Text, View } from 'react-native'
 import { AdminScreen } from '@/components/overlays/admin-screen'
 import { ChallengeTitle } from '@/components/overlays/admin-session-cells'
 import { AdminTable, type AdminTableRow } from '@/components/overlays/admin-table'
+import { DialMark } from '@/components/overlays/dial-mark'
 import { PrimaryButton } from '@/components/primary-button'
 import { TYPE } from '@/constants/typography'
 import { listSessions, type AdminSession } from '@/lib/admin/sessions'
@@ -13,8 +14,9 @@ import { spanStatus, type SpanStatus } from '@/lib/challenge-session'
 import { cn } from '@/lib/cn'
 import { formatDayTime } from '@/lib/format-date'
 import type { OpenSession } from '@/lib/session-board'
-import { measureOf } from '@/modes'
+import { dialOf, gradientOf, measureOf } from '@/modes'
 import { CHALLENGES } from '@/modes/challenges/catalog'
+import { challengeInk } from '@/modes/challenges/palette'
 
 // The session a row speaks for, in order of what matters most: one on now, then the
 // next one booked, then the last one there was. The line under the name and the dialog
@@ -71,6 +73,10 @@ const asOpenSession = (session: AdminSession): OpenSession => ({
 // first. See `DEV_FEATURES` in constants/features.ts.
 const TITLE = msg`CHALLENGES LAB`
 
+// The square each row's mark is drawn in: about the height of the name and the first line
+// under it, so the mark sits beside the block rather than towering over the name alone.
+const LAB_MARK_SIZE = 28
+
 export function DevOverlay({
   onOpenChallenge,
   onClose,
@@ -100,19 +106,33 @@ export function DevOverlay({
       sessions.filter((session) => session.modeId === mode.id),
       openedAt,
     )
+    const dial = dialOf(mode.id)
     return {
       key: mode.id,
       cells: [
         // Padded here rather than in `AdminTable`, whose rows every admin list shares:
         // three lines to a row read as one block without air above and below them.
-        <View className="py-3">
-          <ChallengeTitle modeId={mode.id} />
-          <Text selectable={false} className={cn(TYPE.hint, 'mt-0.5 text-dim')}>
-            {t(mode.description)}
-          </Text>
-          <Text selectable={false} className={cn(TYPE.hint, 'text-dim')}>
-            <SessionLine session={shown} now={openedAt} />
-          </Text>
+        //
+        // The mark beside it is the one the intro's card wears — the challenge's own dial
+        // as dots, in the bright end of its pair — so a tester recognises the row by the
+        // same thing a player recognises the card by.
+        <View className="flex-row items-center gap-3 py-3">
+          {dial !== null && (
+            <DialMark
+              dial={dial}
+              color={challengeInk(gradientOf(mode.id)[1])}
+              size={LAB_MARK_SIZE}
+            />
+          )}
+          <View className="flex-1">
+            <ChallengeTitle modeId={mode.id} />
+            <Text selectable={false} className={cn(TYPE.hint, 'mt-0.5 text-dim')}>
+              {t(mode.description)}
+            </Text>
+            <Text selectable={false} className={cn(TYPE.hint, 'text-dim')}>
+              <SessionLine session={shown} now={openedAt} />
+            </Text>
+          </View>
         </View>,
       ],
       onPress: () => {
