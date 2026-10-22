@@ -102,6 +102,65 @@ begin
     (live, u5,  830,  7, 'hard', now() - interval '9 minutes')
   on conflict (session_id, user_id) do nothing;
 
+  -- ── Messages in every state the MESSAGES screen tells apart ─────────────────
+  -- Without these the screen opens on *Nothing is waiting for an answer* and every chip,
+  -- filter and button on it goes unseen. One row per state the screen draws differently:
+  -- owed (two, one long enough to need opening), owed from a removed profile, answered
+  -- and still in the post, answered and seen, answered and waiting for a build, and set
+  -- aside.
+  --
+  -- Inserted with their stamps already in place: `stamp_feedback_answer` fires on an
+  -- update of `answer` and not on an insert, so `answered_at` and `answer_seen_at` are
+  -- taken as written. `do update` puts every state back on a re-run — a message answered
+  -- or set aside while clicking around returns to what it is here. The update leaves
+  -- `answer` equal to what is already there, so the trigger has nothing to restamp.
+  insert into public.feedback
+    (id, user_id, message, mode, difficulty, score, build, created_at,
+     answer, answered_at, answer_seen_at, answer_needs_build, dismissed_at) values
+    ('5eedfeed-0000-0000-0000-000000000001', u3,
+     'The ring on the last target froze for a second when the next one appeared.',
+     'speed', 'hard', 1840, '261020.0915', now() - interval '3 hours',
+     null, null, null, null, null),
+    ('5eedfeed-0000-0000-0000-000000000002', u5,
+     E'Love the game! Two things though.\n\nFirst, on Extreme the fourth target sometimes '
+     'lands right on top of the score, so I cannot read it. Second, could the swipe left '
+     'gesture be a bit less sensitive? I keep triggering it when I mean to press a key '
+     'near the edge of the dial, and it costs me the strike every time.',
+     'accuracy', 'extreme', 3120, '261020.0915', now() - interval '1 day',
+     null, null, null, null, null),
+    ('5eedfeed-0000-0000-0000-000000000003', null,
+     'How do I change my nickname?',
+     'trainee', 'easy', 0, '261018.1200', now() - interval '2 days',
+     null, null, null, null, null),
+    ('5eedfeed-0000-0000-0000-000000000004', u1,
+     'Speed on Easy feels slower than it used to.',
+     'speed', 'easy', 960, '261017.0800', now() - interval '3 days',
+     'It is the same clock as before — Easy gives each target about 21 seconds. Thanks for checking!',
+     now() - interval '5 hours', null, null, null),
+    ('5eedfeed-0000-0000-0000-000000000005', u3,
+     'Is there a dark mode?',
+     'accuracy', 'hard', 1410, '261015.1000', now() - interval '6 days',
+     'Not yet, but it is on the list.',
+     now() - interval '5 days', now() - interval '4 days', null, null),
+    ('5eedfeed-0000-0000-0000-000000000006', u5,
+     'The game over screen stays blank after a long run.',
+     'speed', 'extreme', 2780, '261019.1400', now() - interval '2 days',
+     'Thanks — fixed, it will be in the next update.',
+     now() - interval '1 day', null, '261021.0900', null),
+    ('5eedfeed-0000-0000-0000-000000000007', u1,
+     'asdf',
+     'trainee', 'easy', 0, '261016.0900', now() - interval '8 days',
+     null, null, null, null, now() - interval '7 days')
+  on conflict (id) do update
+    set user_id            = excluded.user_id,
+        message            = excluded.message,
+        created_at         = excluded.created_at,
+        answer             = excluded.answer,
+        answered_at        = excluded.answered_at,
+        answer_seen_at     = excluded.answer_seen_at,
+        answer_needs_build = excluded.answer_needs_build,
+        dismissed_at       = excluded.dismissed_at;
+
   -- ── The person at the keyboard, if they are already here ───────────────────
   -- The trigger in `seed.sql` catches a sign-in as it happens. This catches the other
   -- case: a device profile created before the trigger existed, or one whose nickname a
@@ -115,7 +174,7 @@ begin
 
   select count(*) into n_admin from public.profiles where role is not null;
 
-  raise notice 'dev-fixtures: % features reachable, % profiles with a role, 1 live session + 1 teaser',
+  raise notice 'dev-fixtures: % features reachable, % profiles with a role, 1 live session + 1 teaser, 7 messages',
     (select count(*) from public.features where visibility <> 'hidden'), n_admin;
   raise notice 'dev-fixtures: new sign-ins get a DEV_ nickname and admin automatically';
 end

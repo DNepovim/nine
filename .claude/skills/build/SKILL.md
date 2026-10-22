@@ -43,9 +43,38 @@ One task at a time, in the plan's order.
 4. **Strings** — any player-visible copy goes through Lingui as it is written, not
    afterwards. Then `pnpm i18n:extract` and write the Czech. A missing catalog entry
    ships the generated id to the player's screen, so this is part of the task.
-5. **Tick it** — `- [x]` in `plan.md`, with a few words after it if what landed
+5. **Dev data** — if the task added a table, a column, a state a row can be in, or a
+   screen that reads the database, ask whether the local stack has anything to show
+   it. See **Dev data** below. Skip it for a task that touches none of those.
+6. **Tick it** — `- [x]` in `plan.md`, with a few words after it if what landed
    differs from what the task said. Tick as you go: the file is the only thing that
    survives a cleared session.
+
+## Dev data
+
+A feature nobody can see locally is a feature `verify` drives against an empty screen.
+When a task gives the database something new to hold, check that a fresh
+`pnpm db:reset` leaves the screen reading it with something in it — and, where the
+screen draws states differently (a chip, a filter, a faded row, a disabled button),
+**one row in each of them**. The admin MESSAGES screen is the model: one message owed,
+one in the post, one seen, one waiting for a build, one set aside.
+
+- **Where:** `supabase/dev-fixtures.sql`, not `seed.sql`. The seed is what the SQL
+  tests read and they assert shipped defaults against it; the fixtures are what a
+  person reads, applied after the reset and refused anywhere but the local stack.
+- **How:** relative to `now()`, never a literal date — a fixture pinned to a timestamp
+  has expired by the time anybody looks. Re-runnable: `on conflict … do update` back
+  to the fixture's own state, so a row changed while clicking around goes back on the
+  next run (`do nothing` where a trigger forbids the update, as `session_scores` does).
+  Fixed ids with a recognisable prefix (`5eed…`, `5e55…`), and the seeded players
+  `u1`…`u8` as authors.
+- **Prove it:** `pnpm dev:fixtures` twice — the second run must be as clean as the
+  first — and one `select` showing every state is present.
+- **When not to:** data the app writes the moment it is used (a run, a score) needs no
+  fixture, and neither does a column no screen reads yet. If you are unsure whether it
+  is worth it, say so in the task's tick rather than skipping silently.
+
+Say in **## Build notes** what the fixtures gained, or that the task needed none.
 
 ## When the spec is wrong
 
