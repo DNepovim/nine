@@ -162,6 +162,32 @@ export const ARCADE_INK = '#9A4F06'
 // empty bar, is the one that pulses.
 export const SATIETY_INK = { fed: ARCADE_INK, low: '#CC6410', spent: APP_RED } as const
 
+// What every strike is drawn in, whichever mode fired it — the sniper's beam, the burst's
+// rounds, a drilled run's chain and a challenge's flames under the dial. One palette rather
+// than each mode's own colour, because a strike is the same news in every mode: a hit that
+// landed on a live multiplier. The shot's *shape* is what says which streak it was.
+//
+// `hot` is the brightest stop of the gold the app already marks records in, `cool` the
+// app's own red — a beam runs from one to the other along its length, and a lone mark
+// wears whichever end suits it. Both are mid-tone, so they read against the surface a
+// shot is fired over.
+export const STRIKE_COLORS = { hot: GOLD_SCALE[0], cool: APP_RED } as const
+
+// A feature's visibility on the admin screens, one hue per position: red for nobody,
+// orange for whoever their role or override says, green for everybody. The one place on
+// those screens a standing is told by hue rather than by how solid its chip is — asked
+// for, because a list of twenty features is scanned for the odd one out, and three
+// weights of one ink did not jump. Each is dark enough to carry `VISIBILITY_ON_INK` at
+// chip size: about 6.5, 5.0 and 5.0 to one.
+export const VISIBILITY_INK = {
+  hidden: '#B42318',
+  private: '#B45309',
+  public: '#15803D',
+} as const
+
+// The label on a filled visibility chip.
+export const VISIBILITY_ON_INK = '#FDFCFA'
+
 // The game's whole scale, blue through to the arcade amber — every mode's colour at
 // once.
 export const GAME_SCALE = ['#4C7EFF', '#7273D2', '#c36282', '#E5534B', '#FF8C00'] as const

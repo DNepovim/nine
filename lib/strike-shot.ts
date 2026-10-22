@@ -1,18 +1,7 @@
-import { APP_RED, GOLD_SCALE } from '@/constants/colors'
-
 export type Point = { x: number; y: number }
 
 // What a strike fires is the mode's own answer now — `shot` on its definition, so a
 // challenge inherits the shot of the mode it is based on. See modes/types.ts.
-
-// The beam runs hot at the muzzle and cools along its length: the brightest stop of the
-// gold the app already marks records in, through to the app's own red. Both are existing
-// game colours rather than a generic laser's, and both are mid-tone, so the beam reads
-// against the surface it is fired over.
-export const BEAM_GRADIENT = [GOLD_SCALE[0], APP_RED] as const
-
-// Speed's rounds are the end of that same ramp — the mode's own hue, which is this red.
-export const BURST_COLOR = APP_RED
 
 // The beam touches neither end. It starts clear of the digits it is fired from — the
 // sum stands 42pt tall, so this is half of that and a little air — and stops short of
@@ -123,27 +112,4 @@ export function burstRounds(
     const aim = { x: center.x + acrossX * reach, y: center.y + acrossY * reach }
     return { ...shotLine(from, aim), delay: index * BURST_CADENCE_MS }
   })
-}
-
-// The middle of every key on the dial, in the effect layer's coordinates.
-//
-// What a **quartet** fires from — one beam per key, all aimed at the card the route
-// took. The grid is even, so a cell's centre is arithmetic once the box is known: the
-// dial measures itself from the width and the layout above it takes the slack, which is
-// why the box is measured rather than worked out.
-//
-// Empty for a box that has not been measured yet. The shot layer reads that as "no
-// muzzles" and falls back to the single beam from the sum row, so a strike landing in
-// the first frames of a run is drawn rather than dropped.
-export const keyCentres = (
-  box: { x: number; y: number; width: number; height: number },
-  dial: { rows: number; cols: number },
-): readonly Point[] => {
-  if (box.width === 0 || box.height === 0) return []
-  const cellW = box.width / dial.cols
-  const cellH = box.height / dial.rows
-  return Array.from({ length: dial.rows * dial.cols }, (_, index) => ({
-    x: box.x + (index % dial.cols) * cellW + cellW / 2,
-    y: box.y + Math.floor(index / dial.cols) * cellH + cellH / 2,
-  }))
 }

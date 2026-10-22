@@ -15,7 +15,7 @@ import { scheduleOnRN } from 'react-native-worklets'
 
 import { DialBadge } from '@/components/game/dial-badge'
 import { DialPulse } from '@/components/game/dial-pulse'
-import { DIAL_COLORS, GRAYSCALE } from '@/constants/colors'
+import { DIAL_COLORS, GRAYSCALE, STRIKE_COLORS } from '@/constants/colors'
 import {
   DEFAULT_DIAL_CORNERS,
   DIAL_CORNERS,
@@ -52,6 +52,10 @@ const TINT_TIMING = { duration: 260, easing: Easing.out(Easing.quad) }
 const DIM = LESSON_DIM
 const DIM_UP = { duration: LESSON_DIM_MS, easing: Easing.out(Easing.quad) }
 const DIM_DOWN = { duration: LESSON_DIM_MS, easing: Easing.in(Easing.quad) }
+
+// How far a key warms under a strike's flame — see `heat`. Short of the full colour, so the
+// key still reads as itself turning hot rather than as a different key.
+const FIRE_WASH = 0.75
 
 // Trainee's weight and max badges — small discs riding the pill's own rim rather
 // than text stacked inside it, so they read off a chip built for contrast instead
@@ -128,6 +132,7 @@ export function DialButton({
   corners = DEFAULT_DIAL_CORNERS,
   control = 'full',
   hinted = false,
+  heat = null,
   onDelta,
   onSet,
 }: {
@@ -167,6 +172,10 @@ export function DialButton({
   // `control` because they are different statements: one is what the key will accept, the
   // other is what the player is being pointed at.
   hinted?: boolean
+  // How hot the dial is burning, nought to one — the `flame` shot. The key warms to fire
+  // colours with it and cools back to its own. Null for every mode whose shot is not a
+  // flame.
+  heat?: SharedValue<number> | null
   onDelta: (delta: 1 | -1) => void
   onSet: (value: number) => void
 }) {
@@ -299,6 +308,8 @@ export function DialButton({
 
   const liveStyle = useAnimatedStyle(() => ({ opacity: live.value }))
 
+  const fireStyle = useAnimatedStyle(() => ({ opacity: FIRE_WASH * (heat?.value ?? 0) }))
+
   const numStyle = useAnimatedStyle(() => ({
     transform: [{ translateY: numTranslateY.value }, { scale: numScale.value }],
     opacity: numOpacity.value,
@@ -380,6 +391,24 @@ export function DialButton({
             style={{ flex: 1, borderRadius: 999 }}
           />
         </Animated.View>
+        {/* The key turning hot under a strike: red at the crown, gold at the base where a
+              fire burns hottest. Over the fill and under the digit, like the peak above. */}
+        {heat !== null && (
+          <Animated.View
+            pointerEvents="none"
+            style={[
+              { position: 'absolute', top: 0, right: 0, bottom: 0, left: 0 },
+              fireStyle,
+            ]}
+          >
+            <LinearGradient
+              colors={[STRIKE_COLORS.cool, STRIKE_COLORS.hot]}
+              start={{ x: 0.5, y: 0 }}
+              end={{ x: 0.5, y: 1 }}
+              style={{ flex: 1, borderRadius: 999 }}
+            />
+          </Animated.View>
+        )}
         <Animated.Text
           selectable={false}
           style={[

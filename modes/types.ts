@@ -201,8 +201,13 @@ export type Submode = {
 
 // What a strike fires. Each scored mode gets the shot its streak is made of: a chain of
 // exact presses draws a single held beam, a run of fast ones empties a magazine, and a
-// route through every key on the dial fires one beam from each of them. Null for a mode
-// whose streak is not a chain of decisions at all.
+// route through every key on the dial sets every key alight. Null for a mode whose
+// streak is not a chain of decisions at all.
+//
+// `flame` is the one that is not a line: it burns under the dial rather than crossing
+// the board, so the shot layer never sees it — see `useStrikeShots` and `DialFlames`. It
+// was a beam from each key to the card, which on a small dial was a tangle of lines
+// across the very keys the streak is about.
 //
 // On the mode rather than in a table beside the drawing, so a challenge inherits the shot
 // of the mode it is based on and a new mode brings its own.
@@ -210,7 +215,7 @@ export type Submode = {
 // the one just taken, so a run of exact presses draws the route through the board in the
 // order the player walked it. The first hit of a run has no previous target and fires
 // from the sum row, as the two above always do.
-export type ShotKind = 'sniper' | 'burst' | 'quartet' | 'chain'
+export type ShotKind = 'sniper' | 'burst' | 'flame' | 'chain'
 
 // What every mode says about itself, whichever engine runs it.
 type ModeIdentity = {

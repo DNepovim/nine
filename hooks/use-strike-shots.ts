@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from 'react'
 
 import { shareRounds, type Point } from '@/lib/strike-shot'
 import type { HitBatch } from '@/machines/game'
-import { gradientOf, modeById, type ModeId, type ShotKind } from '@/modes'
+import { modeById, type ModeId, type ShotKind } from '@/modes'
 
 // Where a shot leaves from and what it is aimed at, both in the effect layer's own
 // coordinates.
@@ -15,12 +15,6 @@ export type ShotAim = {
   // inset by half of some other card's width stops short of its target or lands inside
   // it.
   radius: number
-  // Where a **quartet** fires from: the centre of every key on the dial. Absent for the
-  // two shots that leave from the sum row, which is every other mode's.
-  //
-  // On the aim rather than worked out here, because the screen is what has measured the
-  // dial — this hook knows nothing about where anything is drawn.
-  muzzles?: readonly Point[]
 }
 
 // A shot in flight. Its geometry is fixed the instant it is fired rather than read each
@@ -28,7 +22,8 @@ export type ShotAim = {
 // beam chase a card that is no longer where it was hit.
 export type Shot = {
   id: number
-  kind: ShotKind
+  // Never a flame, which burns under the dial rather than as a shot on this layer.
+  kind: Exclude<ShotKind, 'flame'>
   from: Point
   to: Point
   // Half the card it was aimed at, fixed with the rest of the geometry the instant the
@@ -36,12 +31,10 @@ export type Shot = {
   radius: number
   // Which rounds of the press's one burst this shot fires — see shareRounds.
   rounds: number[]
-  // The two stops this shot's beam is drawn in, where the mode wants its own. Only a
-  // quartet sets it; the rest take the shot layer's default.
-  gradient?: readonly [string, string]
 }
 
-// Turns the strikes in a hit batch into shots for the board to draw. A strike is a hit
+// Turns the strikes in a hit batch into shots for the board to draw — or, for a mode
+// whose shot is a `flame`, into the cue that sets every key alight. A strike is a hit
 // that landed on a live multiplier; Trainee fires none, whatever its multiplier says,
 // because its multiplier is the legacy board-clear rule rather than a chain the player
 // built.
@@ -65,6 +58,10 @@ export function useStrikeShots({
   aim: (value: number) => ShotAim | null
 }) {
   const [shots, setShots] = useState<Shot[]>([])
+  // How many presses have set the dial alight — the `flame` shot. One per press that
+  // struck, not one per strike: a press that takes two cards burns once. Null for every
+  // mode whose shot is not a flame.
+  const [flame, setFlame] = useState<number | null>(null)
   const shotId = useRef(0)
   const lastSeq = useRef(hitBatch.seq)
   // Where the last strike landed, which is where the next **chain** beam leaves from.
@@ -85,35 +82,19 @@ export function useStrikeShots({
     lastSeq.current = hitBatch.seq
     const kind = modeById(mode)?.shot ?? null
     if (kind === null) return
-    // A quartet is a challenge's shot, so it is drawn in that challenge's own colour —
-    // see the `gradient` prop on `StrikeBeam`. Every other shot takes the layer's own.
-    const gradient = kind === 'quartet' ? gradientOf(mode) : undefined
     // Never the hit that cost a life: Accuracy only multiplies when every hit in the
     // press was optimal, and an optimal hit is not a wasteful one.
     const strikes = hitBatch.hits.filter((hit) => hit.bonus)
     if (!isNonEmptyArray(strikes)) return
+    if (kind === 'flame') {
+      setFlame((prev) => (prev ?? 0) + 1)
+      return
+    }
     const share = shareRounds(strikes.length)
     const fired = strikes.flatMap((hit, index) => {
       const aimed = aimRef.current(hit.value)
       if (aimed === null) return []
       const rounds = share[index] ?? []
-      // A quartet is one strike drawn as several shots — a beam from each key, all
-      // aimed at the same card. Fanned out here rather than inside the drawing, so the
-      // layer keeps drawing one line per shot and the shape of the thing lives in one
-      // place. A quartet with no muzzles measured yet falls back to the single line
-      // every other shot fires, which is a beam from the sum row rather than nothing.
-      const muzzles = kind === 'quartet' ? (aimed.muzzles ?? []) : []
-      if (isNonEmptyArray(muzzles)) {
-        return muzzles.map((from) => ({
-          id: ++shotId.current,
-          kind,
-          rounds,
-          from,
-          to: aimed.to,
-          radius: aimed.radius,
-          gradient,
-        }))
-      }
       // A chain leaves the card taken before this one, falling back to the sum row for
       // the first strike of a run. Advanced here rather than in `aim`, because which
       // end a beam leaves from is a fact about the shot kind and `aim` only knows where
@@ -128,7 +109,6 @@ export function useStrikeShots({
           from,
           to: aimed.to,
           radius: aimed.radius,
-          gradient,
         },
       ]
     })
@@ -140,5 +120,5 @@ export function useStrikeShots({
     setShots((prev) => prev.filter((shot) => shot.id !== id))
   }
 
-  return { shots, removeShot }
+  return { shots, removeShot, flame }
 }

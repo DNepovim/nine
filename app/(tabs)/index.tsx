@@ -147,7 +147,6 @@ import { countRun } from '@/lib/run-submission'
 import { restoreRun, savedPositions } from '@/lib/saved-run'
 import { STEP_UP_BOARD } from '@/lib/step-up'
 import { multiplierColor } from '@/lib/streak-badge'
-import { keyCentres } from '@/lib/strike-shot'
 import { tipForTarget } from '@/lib/tutorial-tip'
 import { valueProgress } from '@/lib/value-progress'
 import { WELCOME_BOARD } from '@/lib/welcome'
@@ -1500,15 +1499,6 @@ export default function GameScreen() {
     boardRect.current = { x, y, width, height }
   }
 
-  // The dial's own box, for a shot that leaves from the keys rather than from the sum.
-  // Measured rather than derived: the dial sizes itself from the width and the layout
-  // above it takes the slack, so where it lands is not arithmetic this screen can do.
-  const dialRect = useRef({ x: 0, y: 0, width: 0, height: 0 })
-  const noteDialRect = (event: LayoutChangeEvent) => {
-    const { x, y, width, height } = event.nativeEvent.layout
-    dialRect.current = { x, y, width, height }
-  }
-
   // Where a strike fires from and what it is aimed at. The muzzle is the middle of the
   // sum row, which follows the board directly, so its centre is the board's own bottom
   // edge plus half the row the layout reserves — no second measurement needed.
@@ -1534,11 +1524,10 @@ export default function GameScreen() {
         y: board.y + target.position.y + sizeOfCard(target.seq) / 2,
       },
       radius: sizeOfCard(target.seq) / 2,
-      muzzles: keyCentres(dialRect.current, rules.dial),
     }
   }
 
-  const { shots, removeShot } = useStrikeShots({
+  const { shots, removeShot, flame } = useStrikeShots({
     mode,
     runSeq: state.context.runSeq,
     hitBatch,
@@ -2287,7 +2276,6 @@ export default function GameScreen() {
                       toY={shot.to.y}
                       radius={shot.radius}
                       rounds={shot.rounds}
-                      gradient={shot.gradient}
                       onDone={() => {
                         removeShot(shot.id)
                       }}
@@ -2302,7 +2290,7 @@ export default function GameScreen() {
                 screen: the dial's size comes from the width now, so half the leftover
                 height is not a number it can be asked to fit inside. The targets area
                 above takes the slack instead. */}
-              <View onLayout={noteDialRect}>
+              <View>
                 <Dial
                   dial={dial}
                   values={grid.flat()}
@@ -2329,6 +2317,7 @@ export default function GameScreen() {
                   // — which takes the drag away until it has taught it, and says yes in
                   // every run that is not a live tutorial.
                   drag={drag && lesson.drag}
+                  flame={flame}
                   peakFrom={darkGradientOf(mode)[0]}
                   peakTo={darkGradientOf(mode)[1]}
                   onDelta={(index, delta) => {

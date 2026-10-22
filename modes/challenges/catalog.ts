@@ -47,9 +47,9 @@ const FOUR_KEYS: ChallengeSpec = {
   // what naming it costs: its bright stop is too pale to carry a word, so the edge and
   // the name are two shades of it.
   hue: TURQUOISE,
-  // One beam from each key, in this challenge's own colour — the shot its streak is
-  // made of. See `ShotKind`, and the `whole` rule above that it draws.
-  shot: 'quartet',
+  // Every key alight at once, in the strike colours every shot wears — the shot its
+  // streak is made of, since a streak hit is one that moved all of them. See `ShotKind`.
+  shot: 'flame',
   // What the screen says when this one ends. Only the tiers a challenge actually
   // reaches: a session standing through `board` and `medal`, and the three a run earns
   // on its own merits. The rest fall through to the app's own pools.
@@ -142,8 +142,8 @@ const FOUR_BY_FOUR: ChallengeSpec = {
   // Nothing is drawn when a hit lands, either. A shot is the streak made visible and the
   // streak below is about the whole dial, so the honest shot would be a beam per row —
   // which is a new `ShotKind` and a component to draw it, more than a challenge should
-  // carry. `quartet` was the alternative and is a beam per *key*: sixteen of them at
-  // once, on keys 59pt wide.
+  // carry. `flame` is the alternative and sets every *key* alight, which says "the whole
+  // dial" where this streak says "every row".
   shot: null,
   // Every line about the dial and the rows, as four-keys' are about its four keys. No
   // tier here can be about a board, because there is no board — only the session's own

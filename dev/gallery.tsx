@@ -1129,9 +1129,9 @@ const EFFECTS: Section[] = [
       },
       {
         // The one shot that does not leave from the sum row, so the one entry here with
-        // a dial on the stage: four beams, one per key, in the challenge's own colour.
+        // a dial on the stage: every key catching fire at once.
         key: 'strike-challenge',
-        label: 'CHALLENGE QUARTET',
+        label: 'CHALLENGE FLAME',
         render: (close: () => void) => (
           <StrikeVariant mode={challengeId('four-keys')} targets={1} onClose={close} />
         ),

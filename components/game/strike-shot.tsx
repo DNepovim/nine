@@ -3,6 +3,7 @@ import { View } from 'react-native'
 
 import { BurstRound } from '@/components/game/burst-round'
 import { StrikeBeam } from '@/components/game/strike-beam'
+import type { Shot } from '@/hooks/use-strike-shots'
 import {
   BEAM_END_CLEARANCE,
   BEAM_START_GAP,
@@ -12,7 +13,8 @@ import {
   shotLine,
   SNIPER_MS,
 } from '@/lib/strike-shot'
-import type { ShotKind } from '@/modes'
+
+type Kind = Shot['kind']
 
 // How long each shot owns its slot on the layer. Both are shorter than the gap between
 // two hits at the hardest cadence their mode runs, so a shot is never still on screen
@@ -20,27 +22,23 @@ import type { ShotKind } from '@/modes'
 const SHOT_MS = {
   sniper: SNIPER_MS,
   burst: BURST_MS,
-  // The quartet is the sniper's beam fired four times at once, so it owns its slot for
-  // exactly as long. One timing rather than two within ten milliseconds of each other:
-  // nobody can see the difference and a second constant is a second thing to keep true.
-  quartet: SNIPER_MS,
-  // And the chain is the sniper's beam with both ends moved, for the same reason.
+  // The chain is the sniper's beam with both ends moved, so it owns its slot for exactly
+  // as long. One timing rather than two within ten milliseconds of each other: nobody can
+  // see the difference and a second constant is a second thing to keep true.
   chain: SNIPER_MS,
-} as const satisfies Record<ShotKind, number>
+} as const satisfies Record<Kind, number>
 
 // How far a beam of each kind starts from its muzzle.
 //
-// A sniper leaves the sum row and has to clear the digits standing there. A quartet
-// leaves a key, which is a small thing with nothing above it. A chain leaves the card it
-// took last, so it clears that card's rim exactly as it clears the rim it is aimed at —
+// A sniper leaves the sum row and has to clear the digits standing there. A chain leaves
+// the card it took last, so it clears that card's rim exactly as it clears the rim it is aimed at —
 // which makes the start gap the one value this map cannot hold, since it depends on how
 // big the card is. `-1` asks for the radius; see the call below.
 const RIM = -1
 const START_GAP = {
   sniper: BEAM_START_GAP,
-  quartet: 0,
   chain: RIM,
-} as const satisfies Record<Exclude<ShotKind, 'burst'>, number>
+} as const satisfies Record<Exclude<Kind, 'burst'>, number>
 
 // One strike's shot, from the sum row to the target it took. Positions the anchor both
 // kinds of line are laid out from — every line inside runs along +X from here — and
@@ -53,10 +51,9 @@ export function StrikeShot({
   toY,
   radius,
   rounds,
-  gradient,
   onDone,
 }: {
-  kind: ShotKind
+  kind: Kind
   fromX: number
   fromY: number
   toX: number
@@ -66,8 +63,6 @@ export function StrikeShot({
   // Which rounds of the press's one burst this target gets. Empty for a sniper, which
   // fires one beam and nothing else.
   rounds: readonly number[]
-  // The two stops this beam is drawn in, where the mode wants its own. See `StrikeBeam`.
-  gradient?: readonly [string, string]
   onDone: () => void
 }) {
   useEffect(() => {
@@ -87,11 +82,10 @@ export function StrikeShot({
         // clear of the digits it leaves, and clear of the rim it is aimed at.
         <StrikeBeam
           angle={shotLine(from, to).angle}
-          gradient={gradient}
           {...insetLine(
             shotLine(from, to).length,
-            // See `START_GAP`: a sniper clears the sum's digits, a quartet leaves a key
-            // and clears nothing, a chain clears the rim of the card it came from. The
+            // See `START_GAP`: a sniper clears the sum's digits, a chain clears the rim
+            // of the card it came from. The
             // first chain beam of a run has no previous card and leaves the sum row
             // instead — eight points further out than a sniper would, which is not a
             // difference anybody can see.

@@ -1,6 +1,7 @@
 import { useRef, useState } from 'react'
 import { Pressable, Text, View } from 'react-native'
 
+import { Dial } from '@/components/game/dial'
 import { HitSync } from '@/components/game/hit-sync'
 import { PieCountdown } from '@/components/game/pie-countdown'
 import { ScoreDigit } from '@/components/game/score-digit'
@@ -8,10 +9,17 @@ import { StrikeShot } from '@/components/game/strike-shot'
 import { PIE_SIZE } from '@/constants/game'
 import { SUM_ROW_HEIGHT } from '@/hooks/use-dial-metrics'
 import { useStrikeShots, type ShotAim } from '@/hooks/use-strike-shots'
-import { keyCentres } from '@/lib/strike-shot'
 import { valueProgress } from '@/lib/value-progress'
 import type { HitBatch, HitInfo } from '@/machines/game'
-import { dialOf, NINE_DIAL, type Grid, type ModeId } from '@/modes'
+import {
+  cellsOf,
+  darkGradientOf,
+  dialOf,
+  modeById,
+  NINE_DIAL,
+  type Grid,
+  type ModeId,
+} from '@/modes'
 import type { Position } from '@/types/game'
 
 // Two values, and where each sits on the board. A strike needs a live multiplier, which
@@ -56,7 +64,7 @@ export function StrikeVariant({
   targets,
   onClose,
 }: {
-  // Any mode with a shot, which now includes a **challenge** — a quartet leaves from the
+  // Any mode with a shot, which now includes a **challenge** — a flame burns under the
   // keys rather than from the sum, so this is the one entry here that needs a dial under
   // it. `ModeId` rather than `Mode` for that reason alone.
   mode: ModeId
@@ -69,10 +77,6 @@ export function StrikeVariant({
   // The press, replayed on every tap. A fresh seq is what both halves read as a hit.
   const [batch, setBatch] = useState<HitBatch>({ seq: 0, hits: [] })
   const boardRect = useRef({ x: 0, y: 0, width: 0, height: 0 })
-  // The dial's box, measured the way the game measures it, so a quartet's four beams
-  // land where they would in a run rather than where this file guessed. Zero-sized for
-  // the modes that fire from the sum row, which `keyCentres` answers with no muzzles.
-  const dialRect = useRef({ x: 0, y: 0, width: 0, height: 0 })
   const dial = dialOf(mode)
 
   const aim = (value: number): ShotAim | null => {
@@ -89,13 +93,17 @@ export function StrikeVariant({
         y: board.y + target.at.y + PIE_SIZE / 2,
       },
       radius: PIE_SIZE / 2,
-      muzzles: dial === null ? [] : keyCentres(dialRect.current, dial),
     }
   }
 
   // One run, forever: this screen fires the same board over and over, and a chain that
   // reset would draw its first beam from the sum row on every press.
-  const { shots, removeShot } = useStrikeShots({ mode, runSeq: 0, hitBatch: batch, aim })
+  const { shots, removeShot, flame } = useStrikeShots({
+    mode,
+    runSeq: 0,
+    hitBatch: batch,
+    aim,
+  })
 
   const fire = () => {
     setBatch((prev) => ({
@@ -158,37 +166,22 @@ export function StrikeVariant({
           </HitSync>
         </View>
 
-        {/* The keys, for a shot that leaves from them. Drawn as the dial's own grid of
-          cells rather than as a real `Dial`: what is being looked at is where four beams
-          start and how they converge, and a live dial on this stage would be a dial the
-          stage then has to keep in a state. Only for a quartet — every other shot fires
-          from the sum row above and would be drawn over an empty box. */}
-        {dial !== null && dial.rows * dial.cols < NINE_DIAL.rows * NINE_DIAL.cols && (
-          <View
-            className="mb-2 self-center"
-            style={{ width: 180, height: (180 / dial.cols) * dial.rows }}
-            onLayout={(event) => {
-              const { x, y, width, height } = event.nativeEvent.layout
-              dialRect.current = { x, y, width, height }
-            }}
-          >
-            {Array.from({ length: dial.rows }, (_, row) => (
-              <View key={row} className="flex-1 flex-row">
-                {Array.from({ length: dial.cols }, (_, col) => (
-                  <View
-                    key={col}
-                    className="m-0.5 flex-1 items-center justify-center rounded-xl bg-card"
-                  >
-                    <Text
-                      selectable={false}
-                      className="font-mono text-[10px] font-bold text-dim"
-                    >
-                      {String(dial.weights[row * dial.cols + col] ?? '')}
-                    </Text>
-                  </View>
-                ))}
-              </View>
-            ))}
+        {/* The real dial, so the flash is seen on the keys it is drawn on in a run. Its
+          gesture is switched off, so a tap on it fires like a tap anywhere else here.
+          Only for a flame — every other shot fires from the sum row above. */}
+        {dial !== null && modeById(mode)?.shot === 'flame' && (
+          <View pointerEvents="none" className="mb-2">
+            <Dial
+              dial={dial}
+              values={cellsOf(dial).map((_, index) => (index * 3 + 2) % dial.digits)}
+              showSum={false}
+              trainee={false}
+              peakFrom={darkGradientOf(mode)[0]}
+              peakTo={darkGradientOf(mode)[1]}
+              flame={flame}
+              onDelta={noop}
+              onSet={noop}
+            />
           </View>
         )}
 
@@ -203,7 +196,6 @@ export function StrikeVariant({
               toY={shot.to.y}
               radius={shot.radius}
               rounds={shot.rounds}
-              gradient={shot.gradient}
               onDone={() => {
                 removeShot(shot.id)
               }}

@@ -189,14 +189,14 @@ A new trigger needs a **fact** in `StreakFacts`, computed in `streakFactsOf`
 
 `ShotKind` in `modes/types.ts`. **The shot is the streak made visible**, and that is
 the rule for picking one: a chain of exact presses draws a single held beam, a run of
-fast ones empties a magazine, a route through every key fires one beam from each.
+fast ones empties a magazine, a route through every key sets every key alight.
 
-| Kind      | Draws                                                     | Fires from  |
-| --------- | --------------------------------------------------------- | ----------- |
-| `sniper`  | one beam, held                                            | the sum row |
-| `burst`   | five rounds, 30ms apart                                   | the sum row |
-| `quartet` | one beam per key, together, in the challenge's own colour | each key    |
-| `null`    | nothing                                                   | —           |
+| Kind     | Draws                          | Fires from  |
+| -------- | ------------------------------ | ----------- |
+| `sniper` | one beam, held                 | the sum row |
+| `burst`  | five rounds, 30ms apart        | the sum row |
+| `flame`  | every key catches fire at once | the dial    |
+| `null`   | nothing                        | —           |
 
 **Unspecified?** Propose whichever shot is the streak you just agreed, made visible.
 That is not a style question and should not be asked as one — if the streak is about the
@@ -355,7 +355,7 @@ const SOME_NAME: ChallengeSpec = {
   until: Date.UTC(2026, 8, 1) + DAY,
   // Only the fields this challenge actually moves.
   rules: { dial: defineDial({ … }), scoring: { streak: 'whole' } },
-  shot: 'quartet',
+  shot: 'flame',
   claims: { board: [['SOME', 'NAME']], cold: [['COLD', 'NAME']] },
 }
 ```

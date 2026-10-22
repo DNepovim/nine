@@ -6,6 +6,7 @@ import { scheduleOnRN } from 'react-native-worklets'
 
 import { DialAxes } from '@/components/game/dial-axes'
 import { DialButton } from '@/components/game/dial-button'
+import { DialFlames, useBurn } from '@/components/game/dial-flames'
 import { GestureHint } from '@/components/game/gesture-hint'
 import { DEFAULT_DIAL_CORNERS, type DialCorners } from '@/constants/dial-hints'
 import { useDialMetrics } from '@/hooks/use-dial-metrics'
@@ -67,6 +68,7 @@ export function Dial({
   axes = false,
   hand = null,
   drag = true,
+  flame = null,
   onDelta,
   onSet,
   onSweep,
@@ -102,6 +104,9 @@ export function Dial({
   // is off is every move on one key: a tap, the three swipes, and a finger that wanders
   // off a key and back onto it.
   drag?: boolean
+  // How many strikes have set every key alight — the `flame` shot, see `DialFlames`. Null
+  // for every mode whose shot is drawn over the board instead.
+  flame?: number | null
   onDelta: (index: number, delta: 1 | -1) => void
   onSet: (index: number, value: number) => void
   // Said once, the moment one gesture moves a second key — the one thing a run of separate
@@ -111,6 +116,7 @@ export function Dial({
   onSweep?: () => void
 }) {
   const metrics = useDialMetrics(dial)
+  const burn = useBurn(flame)
   const live = controls ?? allLive(dial)
 
   // What the pan has told each key to do, and which key is under the thumb. Read on the
@@ -286,6 +292,8 @@ export function Dial({
         in the app drawn properly outside this box — the key halos only ever reach a few
         points past it — and a box that clipped them would simply eat them. */}
       <View style={{ width: metrics.width, height: metrics.height, overflow: 'visible' }}>
+        {/* First, so every key is drawn over every flame. */}
+        {flame !== null && <DialFlames dial={dial} metrics={metrics} burn={burn} />}
         <GestureDetector gesture={gesture}>
           <View
             style={{ width: metrics.width, height: metrics.height, gap: metrics.gap }}
@@ -305,6 +313,7 @@ export function Dial({
                 corners={corners}
                 control={live[index] ?? 'full'}
                 hinted={liveKey === index}
+                heat={flame === null ? null : burn.heat}
                 peakFrom={peakFrom}
                 peakTo={peakTo}
                 commands={commands}

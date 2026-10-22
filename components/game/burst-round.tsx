@@ -9,13 +9,8 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated'
 
-import {
-  BURST_COLOR,
-  BURST_ROUND_MS,
-  ROUND_FROM,
-  ROUND_LENGTH,
-  ROUND_TO,
-} from '@/lib/strike-shot'
+import { STRIKE_COLORS } from '@/constants/colors'
+import { BURST_ROUND_MS, ROUND_FROM, ROUND_LENGTH, ROUND_TO } from '@/lib/strike-shot'
 
 const THICKNESS = 3
 const PEAK_OPACITY = 0.9
@@ -110,7 +105,7 @@ export function BurstRound({
             width: length * ROUND_LENGTH,
             height: THICKNESS,
             borderRadius: THICKNESS / 2,
-            backgroundColor: BURST_COLOR,
+            backgroundColor: STRIKE_COLORS.cool,
           },
           roundStyle,
         ]}
@@ -126,7 +121,7 @@ export function BurstRound({
             width: SPARK_SIZE,
             height: SPARK_SIZE,
             borderRadius: SPARK_SIZE / 2,
-            backgroundColor: BURST_COLOR,
+            backgroundColor: STRIKE_COLORS.cool,
           },
           sparkStyle,
         ]}
