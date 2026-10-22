@@ -50,6 +50,10 @@ export type SessionBests = {
   // Whether that top score is the player's own, which the cell says as YOU rather than
   // by printing the name they already know.
   mine: boolean
+  // The player's own best in this session, or 0 before they have posted one. What the
+  // YOUR BEST cell shows on a session run: the device's per-board bests are keyed by mode
+  // and difficulty, and a challenge keeps no board, so read from there it was always 0.
+  myBest: number
   // When the window shuts, ms since the epoch. The one figure on this strip that is not
   // a score.
   closesAt: number
@@ -350,8 +354,12 @@ export function BestScoresLine({
   // place reads as a glitch, where the numbers dropping in reads as motion.
   const ruleStyle = useAnimatedStyle(() => ({ opacity: opacity.value }))
 
+  // The player's own figure: the session's row for them on a session run, the device's
+  // best on this board otherwise — see `myBest` on `SessionBests`.
+  const ownBest = session?.myBest ?? yourBest
+
   const values = {
-    you: yourBest,
+    you: ownBest,
     today,
     week,
     ever,
@@ -416,7 +424,7 @@ export function BestScoresLine({
   // is not the moment to also draw the eye toward one cell over the others.
   const nearKey =
     inRun && revealed && pinned === null
-      ? nearestRecord(score, { you: yourBest, today, week, ever })
+      ? nearestRecord(score, { you: ownBest, today, week, ever })
       : null
 
   // The cells, named once so the two layouts below draw the same thing. A board run puts

@@ -500,6 +500,7 @@ const sessionBestsOf = (
         best: board.record ?? 0,
         holder: board.recordHolder,
         mine: board.recordIsMine,
+        myBest: board.myBest,
         closesAt,
       }
     : null
