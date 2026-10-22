@@ -34,6 +34,12 @@ declare
   u1 uuid := '5eed0000-0000-0000-0000-000000000001';
   u3 uuid := '5eed0000-0000-0000-0000-000000000003';
   u5 uuid := '5eed0000-0000-0000-0000-000000000005';
+  u2 uuid := '5eed0000-0000-0000-0000-000000000002';
+  u4 uuid := '5eed0000-0000-0000-0000-000000000004';
+  u6 uuid := '5eed0000-0000-0000-0000-000000000006';
+  closed_keys  uuid := '5e551011-0000-0000-0000-000000000003';
+  closed_grid  uuid := '5e551011-0000-0000-0000-000000000004';
+  closed_habit uuid := '5e551011-0000-0000-0000-000000000005';
   live   uuid := '5e551011-0000-0000-0000-000000000001';
   teased uuid := '5e551011-0000-0000-0000-000000000002';
   n_admin int;
@@ -100,6 +106,38 @@ begin
     (live, u1, 2480, 19, 'hard', now() - interval '41 minutes'),
     (live, u3, 1960, 15, 'hard', now() - interval '26 minutes'),
     (live, u5,  830,  7, 'hard', now() - interval '9 minutes')
+  on conflict (session_id, user_id) do nothing;
+
+  -- ── Sessions that have closed, with their podiums settled ─────────────────────
+  -- What fills the CHALLENGES list on a profile: a place counts only once its window
+  -- and the grace after it have shut, so these sit days back rather than hours. Three
+  -- challenges so the names wear three colours, and HABIT among them because it is the
+  -- race — its column is a time, which is the other half of what the row prints.
+  --
+  -- ACE_9 takes all three metals, one per session, so a single profile shows the whole
+  -- row; SPEEDY and NOVA come away with a mixture. Each is a day long and none overlap,
+  -- the shape the planner itself would book.
+  insert into public.challenge_sessions (id, mode_id, opens_at, closes_at, measure) values
+    (closed_keys,  'challenge/four-keys',    now() - interval '3 days',  now() - interval '2 days',  'score'),
+    (closed_grid,  'challenge/four-by-four', now() - interval '6 days',  now() - interval '5 days',  'score'),
+    (closed_habit, 'challenge/habit',        now() - interval '10 days', now() - interval '9 days',  'time')
+  on conflict (id) do update
+    set opens_at = excluded.opens_at, closes_at = excluded.closes_at, measure = excluded.measure;
+
+  insert into public.session_scores
+    (session_id, user_id, best_score, hits, time_ms, difficulty, updated_at) values
+    (closed_keys,  u1, 3120, 24, null,  'hard', now() - interval '2 days 4 hours'),
+    (closed_keys,  u3, 2710, 21, null,  'hard', now() - interval '2 days 9 hours'),
+    (closed_keys,  u5, 1980, 16, null,  'hard', now() - interval '2 days 6 hours'),
+    (closed_keys,  u2, 1240, 11, null,  'hard', now() - interval '2 days 2 hours'),
+    (closed_grid,  u5, 4480, 30, null,  'hard', now() - interval '5 days 3 hours'),
+    (closed_grid,  u1, 4105, 28, null,  'hard', now() - interval '5 days 7 hours'),
+    (closed_grid,  u4, 3390, 25, null,  'hard', now() - interval '5 days 12 hours'),
+    (closed_grid,  u3, 2950, 22, null,  'hard', now() - interval '5 days 5 hours'),
+    (closed_habit, u3, 1610,  9, 38400, 'hard', now() - interval '9 days 6 hours'),
+    (closed_habit, u6, 1590,  9, 41250, 'hard', now() - interval '9 days 3 hours'),
+    (closed_habit, u1, 1570,  9, 44900, 'hard', now() - interval '9 days 8 hours'),
+    (closed_habit, u5, 1400,  9, 52300, 'hard', now() - interval '9 days 1 hour')
   on conflict (session_id, user_id) do nothing;
 
   -- ── Messages in every state the MESSAGES screen tells apart ─────────────────
@@ -174,7 +212,7 @@ begin
 
   select count(*) into n_admin from public.profiles where role is not null;
 
-  raise notice 'dev-fixtures: % features reachable, % profiles with a role, 1 live session + 1 teaser, 7 messages',
+  raise notice 'dev-fixtures: % features reachable, % profiles with a role, 1 live session + 1 teaser + 3 closed, 7 messages',
     (select count(*) from public.features where visibility <> 'hidden'), n_admin;
   raise notice 'dev-fixtures: new sign-ins get a DEV_ nickname and admin automatically';
 end

@@ -12,9 +12,11 @@ import {
   type LeaderboardTab,
 } from '@/lib/leaderboard-period'
 import {
+  shapePlaces,
   shapeProfile,
   type PlayerProfile,
   type PlayerProfileResponse,
+  type SessionPlaceRow,
 } from '@/lib/player-profile'
 import type { RecapRow } from '@/lib/recap'
 import type { Winner } from '@/lib/recent-winners'
@@ -152,18 +154,30 @@ export async function fetchPlayerProfile(
   userId: string,
 ): Promise<{ profile: PlayerProfile | null; error: string | null }> {
   const today = todayISO()
-  const res = await supabase.rpc('player_profile', {
-    p_user_id: userId,
-    p_today: today,
-    p_week_since: weekStart(today),
-  })
+  // Both at once: the places are their own RPC (see `places` on `PlayerProfile`), and a
+  // second round trip after the first would be a profile that draws, then grows a section.
+  const [res, placesRes] = await Promise.all([
+    supabase.rpc('player_profile', {
+      p_user_id: userId,
+      p_today: today,
+      p_week_since: weekStart(today),
+    }),
+    supabase.rpc('player_session_places', { p_user_id: userId }),
+  ])
   noteRequest(res.error)
   if (res.error) return { profile: null, error: res.error.message }
   const raw = res.data as PlayerProfileResponse | null
   // A profile nobody could read is not an empty profile — the modal says so rather than
   // drawing a player with nothing on any board.
   if (raw === null) return { profile: null, error: 'empty response' }
-  return { profile: shapeProfile(raw), error: null }
+  // The places failing is not the profile failing: a server without the function yet, or
+  // a blip on the second request, draws the profile without its CHALLENGES section rather
+  // than refusing to draw it at all.
+  const places =
+    placesRes.error === null
+      ? shapePlaces((placesRes.data as SessionPlaceRow[] | null) ?? [])
+      : []
+  return { profile: { ...shapeProfile(raw), places }, error: null }
 }
 
 // Every podium place this player is owed for: the windows that closed after the day their

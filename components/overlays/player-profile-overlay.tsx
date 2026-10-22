@@ -19,6 +19,7 @@ import { BOARD_COLUMNS, ProfileBoardRow } from '@/components/overlays/profile-bo
 import { ProfileEmail } from '@/components/overlays/profile-email'
 import { ProfileMotto } from '@/components/overlays/profile-motto'
 import { ProfileName } from '@/components/overlays/profile-name'
+import { ProfilePlaceRow } from '@/components/overlays/profile-place-row'
 import { ProfileReignRow } from '@/components/overlays/profile-reign-row'
 import { ProfileScore } from '@/components/overlays/profile-score'
 import { ProfileSkeleton } from '@/components/overlays/profile-skeleton'
@@ -575,6 +576,18 @@ export function PlayerProfileOverlay({
                           }}
                         />
                       )}
+                    </CardSection>
+                  )}
+
+                  {/* The challenges' podiums, under the boards' reigns: the other half of
+                    what a player has taken, from the standings that close for good rather
+                    than the ones that keep moving. Omitted when empty, for the reason the
+                    list above is. */}
+                  {isNonEmptyArray(profile.places) && (
+                    <CardSection label={t`CHALLENGES`}>
+                      {profile.places.map((place) => (
+                        <ProfilePlaceRow key={place.sessionId} place={place} />
+                      ))}
                     </CardSection>
                   )}
 

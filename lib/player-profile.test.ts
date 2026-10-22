@@ -7,10 +7,12 @@ import {
   fortuneOf,
   heldBoards,
   lifetimeOf,
+  shapePlaces,
   shapeProfile,
   type BoardTotals,
   type PlayerProfile,
   type Reign,
+  type SessionPlaceRow,
 } from './player-profile'
 
 const totals = (over: Partial<BoardTotals> = {}): BoardTotals => ({
@@ -689,5 +691,48 @@ describe('lifetimeOf and challenge sessions', () => {
       { difficulty: 'easy' as const, scoreSum: 1 },
     ]
     expect(lifetimeOf([], [], odd).fortune).toBe(Math.round(1.5))
+  })
+})
+
+describe('shapePlaces', () => {
+  const row = (over: Partial<SessionPlaceRow> = {}): SessionPlaceRow => ({
+    session_id: 's1',
+    mode_id: 'challenge/four-keys',
+    closes_at: '2026-10-20T12:00:00.000Z',
+    measure: 'score',
+    rank: 1,
+    best_score: 3120,
+    time_ms: null,
+    ...over,
+  })
+
+  it('keeps a podium row, renamed for the client', () => {
+    expect(shapePlaces([row()])).toEqual([
+      {
+        sessionId: 's1',
+        modeId: 'challenge/four-keys',
+        closesAt: '2026-10-20T12:00:00.000Z',
+        measure: 'score',
+        rank: 1,
+        score: 3120,
+        timeMs: null,
+      },
+    ])
+  })
+
+  it('carries a race’s time', () => {
+    expect(shapePlaces([row({ measure: 'time', time_ms: 44_900 })])[0]?.timeMs).toBe(
+      44_900,
+    )
+  })
+
+  it('drops what this build cannot draw', () => {
+    expect(
+      shapePlaces([
+        row({ mode_id: 'challenge/not-in-this-build' }),
+        row({ rank: 4 }),
+        row({ measure: 'distance' }),
+      ]),
+    ).toEqual([])
   })
 })

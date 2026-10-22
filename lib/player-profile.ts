@@ -21,8 +21,10 @@ import {
 import {
   DIFFICULTIES,
   DIFFICULTY_ORDER,
+  modeById,
   SCORED_MODES,
   type Difficulty,
+  type Measure,
   type ScoredMode,
 } from '@/modes'
 
@@ -121,7 +123,62 @@ export type PlayerProfile = {
   // — which is everyone until challenges reach players — and for any player when the
   // server predates them.
   sessions: SessionTotals[]
+  // Every settled session they finished on the podium of, newest first — the profile's
+  // CHALLENGES list. Read by its own RPC beside `player_profile`, so it is filled in by
+  // `fetchPlayerProfile` rather than by `shapeProfile`, and is empty against a server
+  // that predates it.
+  places: SessionPlace[]
 }
+
+// One podium a player took on a **session board**: which challenge, when its window shut,
+// where they came, and the figure they came there with. The figure is the session's own
+// **measure** — a score, or on a race the time — so `measure` says which of the two to
+// print, and the other is never read.
+export type SessionPlace = {
+  sessionId: string
+  modeId: string
+  closesAt: string
+  measure: Measure
+  rank: 1 | 2 | 3
+  score: number
+  timeMs: number | null
+}
+
+// What `player_session_places` sends, row for row.
+export type SessionPlaceRow = {
+  session_id: string
+  mode_id: string
+  closes_at: string
+  measure: string
+  rank: number
+  best_score: number
+  time_ms: number | null
+}
+
+const PLACES = [1, 2, 3] as const
+const MEASURES = ['score', 'time'] as const
+
+// The wire rows as places, dropping what this build cannot draw: a challenge it has never
+// heard of has no name or colour to print (the list would read GAME), and a rank off the
+// podium or a measure it does not know is a server saying something it has no column for.
+export const shapePlaces = (rows: readonly SessionPlaceRow[]): SessionPlace[] =>
+  rows.flatMap((row) =>
+    modeById(row.mode_id) !== null &&
+    isOneOf(row.rank, PLACES) &&
+    isOneOf(row.measure, MEASURES)
+      ? [
+          {
+            sessionId: row.session_id,
+            modeId: row.mode_id,
+            closesAt: row.closes_at,
+            measure: row.measure,
+            rank: row.rank,
+            score: row.best_score,
+            timeMs: row.time_ms,
+          },
+        ]
+      : [],
+  )
 
 // One row of the modal's per-board block: what this player has done on one board.
 // `best`, `average` and `runs` are independent — a board can hold a best from before the
@@ -487,6 +544,8 @@ export function shapeProfile(raw: PlayerProfileResponse): PlayerProfile {
         ? [{ difficulty: row.difficulty, scoreSum: row.scoreSum }]
         : [],
     ),
+    // Not on this wire — see `places` on the type.
+    places: [],
   }
 }
 
@@ -538,4 +597,5 @@ export const EMPTY_PROFILE: PlayerProfile = {
   reigns: [],
   winnings: [],
   sessions: [],
+  places: [],
 }
