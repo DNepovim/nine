@@ -22,7 +22,14 @@ import type { SessionCard } from '@/lib/challenge-session'
 import { cn } from '@/lib/cn'
 import type { OpenSession } from '@/lib/session-board'
 import { strikeRuleOf } from '@/lib/strike-rule'
-import { descriptionOf, gradientOf, headlineOf, labelOf, runRules } from '@/modes'
+import {
+  descriptionOf,
+  gradientOf,
+  headlineOf,
+  labelOf,
+  measureOf,
+  runRules,
+} from '@/modes'
 import { challengeInk } from '@/modes/challenges/palette'
 
 // What a session board says when nobody has posted to it.
@@ -52,6 +59,14 @@ const nameRows = (label: string): string[] =>
 // A `ModalCard` rather than a screen. The player pressed a row on the start screen and
 // is deciding whether to play — a dialog over the screen they came from keeps that
 // decision reversible in a way a screen replacing it does not.
+// What the dialog is opened on. The intro's card is one session, live or teased. The dev
+// screen asked for the third: any challenge, with whichever of its sessions that screen
+// names beside it, or none — START always plays, and plays outside every session, so a
+// lab run never posts to standings a player is competing on.
+export type ChallengeModalCard =
+  | NonNullable<SessionCard<OpenSession>>
+  | { state: 'lab'; modeId: string; session: OpenSession | null }
+
 export function ChallengeModal({
   card,
   userId,
@@ -59,27 +74,30 @@ export function ChallengeModal({
   onStart,
   onDismiss,
 }: {
-  card: NonNullable<SessionCard<OpenSession>>
+  card: ChallengeModalCard
   userId: string | null
   nickname: string | null
-  // Deals the run. Only ever called from a live session — a teaser's button is dead.
-  onStart: (modeId: string, sessionId: string) => void
+  // Deals the run. Called from a live session with its id, from the lab with none — a
+  // teaser's button is dead.
+  onStart: (modeId: string, sessionId: string | null) => void
   onDismiss: () => void
 }) {
   const { t } = useLingui()
-  const { state, session } = card
+  const { session } = card
+  const modeId = card.state === 'lab' ? card.modeId : card.session.modeId
+  const measure = session?.measure ?? measureOf(modeId)
   const { width } = useViewport()
   const [dsegLoaded] = useFonts({ DSEG7: DSEG7Font })
-  const { board } = useSessionBoard(session.id, userId)
+  const { board } = useSessionBoard(session?.id ?? null, userId)
   // The challenge's own pair: its hue on the card's border, and the readable shade of
   // that hue wherever a word is drawn in it. Same split the banner makes — see
   // `challengeInk`.
-  const edge = gradientOf(session.modeId)
+  const edge = gradientOf(modeId)
   const accent = challengeInk(edge[1])
   // The rules a run of this challenge is played under. A challenge may pin its own rung,
   // so the difficulty handed in is the one the intro holds and `runRules` ignores it
   // wherever the challenge said otherwise.
-  const rules = runRules(session.modeId, 'hard')
+  const rules = runRules(modeId, 'hard')
   // The rung the challenge pinned. The standings' own colour scale is read off the board
   // they belong to — see `TabPanel`.
   const difficulty = rules.difficulty
@@ -110,10 +128,7 @@ export function ChallengeModal({
             the loudest thing in the dialog, which is right — it is the one thing the
             player opened it to see. */}
           <View className="mb-3 w-full items-center">
-            <GameOverTitle
-              gameMode={session.modeId}
-              words={nameRows(t(labelOf(session.modeId)))}
-            />
+            <GameOverTitle gameMode={modeId} words={nameRows(t(labelOf(modeId)))} />
           </View>
 
           {/* Held to the board's own width, so it breaks on the same column the standings
@@ -129,7 +144,7 @@ export function ChallengeModal({
             className={cn(TYPE.prose, 'mb-4 self-center text-center text-primary')}
             style={{ width: boardWidth }}
           >
-            {t(descriptionOf(session.modeId))}
+            {t(descriptionOf(modeId))}
           </Text>
 
           {/* How a strike is built here, under the line that says what the challenge is.
@@ -177,19 +192,19 @@ export function ChallengeModal({
               {/* The same three column names every other board in the app carries. The
                 session board was drawn by `TabPanel` directly and so arrived without
                 them — on the one screen where the table is unfamiliar. */}
-              <ScoreColumns width={boardWidth} measure={session.measure} />
+              <ScoreColumns width={boardWidth} measure={measure} />
               <TabPanel
                 data={board}
                 tab="forever"
                 emptyLine={NOBODY_YET}
-                headline={headlineOf(session.modeId)}
+                headline={headlineOf(modeId)}
                 difficulty={difficulty}
                 accentColor={accent}
                 // The server's own answer, stamped on the session when it was booked —
                 // not `measureOf(modeId)` resolved a second time here. A session is
                 // measured by what it was booked as, which is what its standings have
                 // meant since the first run posted to them.
-                measure={session.measure}
+                measure={measure}
                 userId={userId}
                 nickname={nickname}
                 width={boardWidth}
@@ -206,14 +221,14 @@ export function ChallengeModal({
             pattern for a dialog that offers an action and a refusal, rather than two
             buttons of equal weight asking the player to choose which they meant. */}
           <View className="mt-5 w-full gap-1">
-            {state === 'live' ? (
+            {card.state !== 'teaser' ? (
               <PrimaryButton
                 id="challenge.start"
                 onPress={() => {
                   // Through the card's own `close`, so the dialog plays its exit rather
                   // than being unmounted out from under it by the run arriving.
                   close()
-                  onStart(session.modeId, session.id)
+                  onStart(modeId, card.state === 'lab' ? null : card.session.id)
                 }}
                 label={<Trans>START</Trans>}
               />
@@ -229,7 +244,7 @@ export function ChallengeModal({
                   <Text selectable={false} className={cn(TYPE.button, 'text-dim')}>
                     <Trans>OPENS IN</Trans>
                   </Text>
-                  <ChallengeCountdown until={session.opensAt} className="text-dim" />
+                  <ChallengeCountdown until={card.session.opensAt} className="text-dim" />
                 </View>
               </View>
             )}

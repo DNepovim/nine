@@ -145,7 +145,7 @@ msgstr "— DNES ŽÁDNÁ ČISTÁ CESTA —"
 msgid "— NOBODY BEAT THE CLOCK TODAY —"
 msgstr "— DNES NIKDO NEPŘEDBĚHL ČAS —"
 
-#: components/overlays/challenge-modal.tsx:34
+#: components/overlays/challenge-modal.tsx:41
 #: components/overlays/session-standings.tsx:15
 msgid "— NOBODY HAS SCORED HERE —"
 msgstr "— ZDE JEŠTĚ NIKDO NESKÓROVAL —"
@@ -842,7 +842,7 @@ msgstr "Navazuj zásahy na sebe — série násobí body ×2 → ×4 → ×8. P�
 
 #: components/overlays/admin-session.tsx:222
 #: components/overlays/challenge-card.tsx:166
-#: components/overlays/challenge-modal.tsx:99
+#: components/overlays/challenge-modal.tsx:117
 #: modes/challenges/define.ts:84
 msgid "CHALLENGE"
 msgstr "VÝZVA"
@@ -886,7 +886,7 @@ msgstr "VYMAZAT"
 msgid "Climb the way, or fall back."
 msgstr "Stoupej cestou, nebo padej zpět."
 
-#: components/overlays/challenge-modal.tsx:247
+#: components/overlays/challenge-modal.tsx:262
 #: components/overlays/compare-overlay.tsx:318
 #: components/overlays/email-code-modal.tsx:528
 #: components/overlays/modal-card.tsx:266
@@ -984,7 +984,7 @@ msgstr "12."
 msgid "DECEMBER"
 msgstr "prosince"
 
-#: components/overlays/dev-overlay.tsx:120
+#: components/overlays/dev-overlay.tsx:138
 #: components/overlays/menu-overlay.tsx:719
 msgid "DEV"
 msgstr "DEV"
@@ -1012,7 +1012,7 @@ msgstr "Udělej něco, co nikoho nenapadlo chtít."
 #: components/overlays/admin-overlay.tsx:241
 #: components/overlays/admin-person.tsx:177
 #: components/overlays/admin-role.tsx:121
-#: components/overlays/dev-overlay.tsx:150
+#: components/overlays/dev-overlay.tsx:168
 #: components/overlays/news-archive-overlay.tsx:43
 msgid "DONE"
 msgstr "HOTOVO"
@@ -1089,7 +1089,7 @@ msgstr "VŠE"
 msgid "Every button tops out at nine times its weight: 81 on the 9×, 9 on a 1×. Knowing the ceilings is what tells you which button can close a gap, and in how few moves."
 msgstr "Každé tlačítko končí na devítinásobku své váhy: 81 u 9×, 9 u 1×. Znát stropy je to, co ti napoví, které tlačítko mezeru zavře — a na kolik tahů."
 
-#: components/overlays/dev-overlay.tsx:123
+#: components/overlays/dev-overlay.tsx:141
 msgid "EVERY CHALLENGE, ANY WINDOW — NO BOARD KEPT"
 msgstr "KAŽDÁ VÝZVA, KDYKOLI — BEZ ŽEBŘÍČKU"
 
@@ -1628,6 +1628,10 @@ msgstr "JAZYK"
 msgid "LAST FIVE SESSIONS"
 msgstr "POSLEDNÍCH PĚT TERMÍNŮ"
 
+#: components/overlays/dev-overlay.tsx:47
+msgid "LAST SESSION WAS {closed}"
+msgstr "POSLEDNÍ SEZENÍ BYLO {closed}"
+
 #: components/overlays/recap-card.tsx:53
 msgid "LAST WEEK IN NINE"
 msgstr "MINULÝ TÝDEN V NINE"
@@ -1834,7 +1838,7 @@ msgstr "Nine má nový vzhled, a to skrz naskrz.\n"
 msgid "NINE NINE NINE"
 msgstr "DEVĚT DEVĚT DEVĚT"
 
-#: components/overlays/dev-overlay.tsx:140
+#: components/overlays/dev-overlay.tsx:158
 msgid "No challenges have been written yet."
 msgstr "Zatím nebyla napsaná žádná výzva."
 
@@ -1897,6 +1901,10 @@ msgstr "V tomto období se nehrálo."
 #: lib/compare-lines.ts:102
 msgid "No runs, no records, no argument. Yet."
 msgstr "Žádné běhy, žádné rekordy, žádný spor. Zatím."
+
+#: components/overlays/dev-overlay.tsx:36
+msgid "NO SESSION YET"
+msgstr "ZATÍM ŽÁDNÉ SEZENÍ"
 
 #: components/overlays/admin-stats.tsx:288
 msgid "No sessions have been planned."
@@ -2155,7 +2163,7 @@ msgstr "Začínej na lehčí obtížnosti. První hra je rozehřívací a váhy 
 msgid "Open the How to Play guide."
 msgstr "Otevři návod Jak hrát."
 
-#: components/overlays/challenge-modal.tsx:230
+#: components/overlays/challenge-modal.tsx:245
 msgid "OPENS IN"
 msgstr "ZAČÍNÁ ZA"
 
@@ -2234,10 +2242,6 @@ msgstr "NAPLÁNOVAT TERMÍN"
 #: components/overlays/admin-overlay.tsx:203
 msgid "planned"
 msgstr "naplánováno"
-
-#: components/overlays/dev-overlay.tsx:70
-msgid "PLANNED"
-msgstr "NAPLÁNOVÁNO"
 
 #: constants/achievements.ts:498
 msgid "Play a full room — four players, the most one holds."
@@ -2441,10 +2445,6 @@ msgstr "OKROUHLÉ ČÍSLO"
 msgid "Row for row, hit for hit. Nobody takes this one."
 msgstr "Řádek za řádek, zásah za zásah. Tohle si nebere nikdo."
 
-#: components/overlays/dev-overlay.tsx:59
-msgid "RUN"
-msgstr "SPUSTIT"
-
 #: components/overlays/admin-overlay.tsx:209
 msgid "runs"
 msgstr "her"
@@ -2600,6 +2600,14 @@ msgstr "září"
 msgid "SESSION"
 msgstr "OKNO"
 
+#: components/overlays/dev-overlay.tsx:40
+msgid "SESSION IS LIVE UNTIL {until}"
+msgstr "SEZENÍ BĚŽÍ DO {until}"
+
+#: components/overlays/dev-overlay.tsx:44
+msgid "SESSION IS PLANNED FOR {opens}"
+msgstr "SEZENÍ JE NAPLÁNOVÁNO NA {opens}"
+
 #: components/overlays/advanced-options-overlay.tsx:115
 msgid "SESSION RECORDING"
 msgstr "ZÁZNAM HRANÍ"
@@ -2716,7 +2724,7 @@ msgstr "Zůstaň v Nováčkovi půl hodiny v kuse."
 msgid "Spot your nines"
 msgstr "Devítky na první pohled"
 
-#: components/overlays/challenge-modal.tsx:218
+#: components/overlays/challenge-modal.tsx:233
 msgid "START"
 msgstr "HRÁT"
 
@@ -2764,7 +2772,7 @@ msgid "Streak — consecutive perfect plays multiply your points ×2 → ×4 →
 msgstr "Série — dokonalé tahy za sebou násobí body ×2 → ×4 → ×8. Stačí jeden nedokonalý zásah a začínáš od začátku."
 
 #: components/game/arcade-strike.tsx:77
-#: components/overlays/challenge-modal.tsx:155
+#: components/overlays/challenge-modal.tsx:170
 msgid "STRIKE"
 msgstr "SÉRIE"
 

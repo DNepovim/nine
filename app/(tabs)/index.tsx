@@ -37,7 +37,10 @@ import { AchievementDetail } from '@/components/overlays/achievement-detail'
 import { AchievementsOverlay } from '@/components/overlays/achievements-overlay'
 import { AdminOverlay } from '@/components/overlays/admin-overlay'
 import { AdvancedOptionsOverlay } from '@/components/overlays/advanced-options-overlay'
-import { ChallengeModal } from '@/components/overlays/challenge-modal'
+import {
+  ChallengeModal,
+  type ChallengeModalCard,
+} from '@/components/overlays/challenge-modal'
 import { DevOverlay } from '@/components/overlays/dev-overlay'
 import { FeedbackOverlay } from '@/components/overlays/feedback-overlay'
 import { FeedbackReplyOverlay } from '@/components/overlays/feedback-reply-overlay'
@@ -132,7 +135,6 @@ import {
   type Period,
 } from '@/lib/announcements'
 import { currentBoardMedals, sessionMedal } from '@/lib/board-medals'
-import type { SessionCard } from '@/lib/challenge-session'
 import { holdsCrown, recordScreen, type RecordScreen } from '@/lib/champions'
 import { cn } from '@/lib/cn'
 import { drillFor } from '@/lib/drill'
@@ -143,7 +145,6 @@ import { heldPeriods, medalPeriods } from '@/lib/record-medals'
 import { newRunId } from '@/lib/run-id'
 import { countRun } from '@/lib/run-submission'
 import { restoreRun, savedPositions } from '@/lib/saved-run'
-import type { OpenSession } from '@/lib/session-board'
 import { STEP_UP_BOARD } from '@/lib/step-up'
 import { multiplierColor } from '@/lib/streak-badge'
 import { keyCentres } from '@/lib/strike-shot'
@@ -656,8 +657,7 @@ export default function GameScreen() {
   // The challenge card the player pressed, and the dialog it opened. Held here rather
   // than in `menu-overlay.tsx`: a `ModalCard` mounted inside the paging panel would
   // scrim the panel rather than the screen.
-  const [challengeCard, setChallengeCard] =
-    useState<NonNullable<SessionCard<OpenSession>>>()
+  const [challengeCard, setChallengeCard] = useState<ChallengeModalCard>()
   // Which **session** the live run belongs to, or null for an ordinary run.
   //
   // Beside the run rather than on the machine's context. A session is not a rule — the
@@ -2619,18 +2619,43 @@ export default function GameScreen() {
               />
             )}
 
-            {/* ── A challenge, in full: what it asks, who leads, and the way in ── */}
+            {/* ── Dev — every challenge ever written, playable on demand ── */}
+            {menuOverlay === 'dev' && (
+              <DevOverlay
+                onOpenChallenge={(modeId, session) => {
+                  setChallengeCard({ state: 'lab', modeId, session })
+                }}
+                onClose={() => {
+                  setMenuOverlay('none')
+                }}
+              />
+            )}
+
+            {/* ── A challenge, in full: what it asks, who leads, and the way in. After the
+                dev screen, which opens it too and has to stay under it. ── */}
             {challengeCard !== undefined && (
               <ChallengeModal
                 card={challengeCard}
                 userId={userId}
                 nickname={nickname}
                 onStart={(modeId, sessionId) => {
+                  if (sessionId === null) {
+                    // The lab deals a challenge outside any session, which is the point
+                    // of it: no window, and so no standings to post to.
+                    setRunSession(null)
+                    if (isMode(mode)) setModeBeforeSession(mode)
+                    send({ type: 'SET_MODE', mode: modeId })
+                    send({ type: 'START', now: Date.now(), runId: newRunId() })
+                    setChallengeCard(undefined)
+                    setMenuOverlay('none')
+                    track('run_started', { mode: modeId, difficulty, from: 'dev' })
+                    return
+                  }
                   // Set before the run is dealt, so the first thing the run can do —
                   // cross a record on its opening hit — already knows where its score
                   // belongs.
                   setRunSession(sessionId)
-                  setRunSessionClosesAt(challengeCard.session.closesAt)
+                  setRunSessionClosesAt(challengeCard.session?.closesAt ?? null)
                   // Cleared before the run is dealt rather than after, for the reason the
                   // two lines above are set here: a value the next run reads has to be
                   // right before that run exists.
@@ -2645,25 +2670,6 @@ export default function GameScreen() {
                 }}
                 onDismiss={() => {
                   setChallengeCard(undefined)
-                }}
-              />
-            )}
-
-            {/* ── Dev — every challenge ever written, playable on demand ── */}
-            {menuOverlay === 'dev' && (
-              <DevOverlay
-                onRunChallenge={(modeId) => {
-                  // The lab deals a challenge outside any session, which is the point
-                  // of it: no window, and so no standings to post to.
-                  setRunSession(null)
-                  if (isMode(mode)) setModeBeforeSession(mode)
-                  send({ type: 'SET_MODE', mode: modeId })
-                  send({ type: 'START', now: Date.now(), runId: newRunId() })
-                  setMenuOverlay('none')
-                  track('run_started', { mode: modeId, difficulty, from: 'dev' })
-                }}
-                onClose={() => {
-                  setMenuOverlay('none')
                 }}
               />
             )}

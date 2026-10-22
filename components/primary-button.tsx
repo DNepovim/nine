@@ -44,8 +44,10 @@ export function PrimaryButton({
 }: {
   id: ButtonId
   onPress: PressableProps['onPress']
-  // A node rather than a string: nearly every caller has a `<Trans>` to hand.
-  label: ReactNode
+  // A node rather than a string: nearly every caller has a `<Trans>` to hand. Left out
+  // for a button that is its mark alone — the dev screen's play button, asked for as an
+  // icon, which then takes the full button's shape and an even pad on every side.
+  label?: ReactNode
   // Drawn after the label, which puts the button in a row and gives it side padding.
   // For the one case where the CTA names an action with a mark — install, open, share.
   icon?: ReactNode
@@ -67,8 +69,9 @@ export function PrimaryButton({
   // screens already wears.
   tone?: 'strong' | 'quiet' | 'danger'
   disabled?: boolean
-  // Asked for by the dev screen's RUN, which is `compact` and sits in a tight row of
-  // challenge rows — small enough that the touch target wants to be bigger than the paint.
+  // Asked for by the dev screen's RUN, back when it was `compact` and sat in a tight row
+  // of challenge rows — small enough that the touch target wanted to be bigger than the
+  // paint.
   hitSlop?: number
   // Placement only — `mt-*`, `self-center`, an explicit width. Never the shape: a caller
   // passing `rounded-xl` or `py-2` here is the drift this component exists to stop.
@@ -92,18 +95,21 @@ export function PrimaryButton({
         // The row only when there is a second thing in it. A `flex-row` around a lone
         // label would centre it the same way and then surprise the next person who adds
         // an icon to a button that already looked like it had one.
-        icon !== undefined && 'flex-row gap-2 px-6',
+        icon !== undefined && label !== undefined && 'flex-row gap-2 px-6',
+        label === undefined && 'px-3.5',
         disabled && 'opacity-40',
         className,
       )}
       style={style}
     >
-      <Text
-        selectable={false}
-        className={cn(compact ? TYPE.buttonSm : TYPE.button, TONE[tone].ink)}
-      >
-        {label}
-      </Text>
+      {label !== undefined && (
+        <Text
+          selectable={false}
+          className={cn(compact ? TYPE.buttonSm : TYPE.button, TONE[tone].ink)}
+        >
+          {label}
+        </Text>
+      )}
       {icon}
     </TrackedPressable>
   )
