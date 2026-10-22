@@ -313,7 +313,7 @@ msgid "{0, plural, one {# PLAYER} other {# PLAYERS}}"
 msgstr "{0, plural, one {# HRÁČ} few {# HRÁČI} many {# HRÁČE} other {# HRÁČŮ}}"
 
 #. placeholder {0}: Math.floor(joinedMonths / MONTHS_IN_YEAR)
-#: components/overlays/player-profile-overlay.tsx:326
+#: components/overlays/player-profile-overlay.tsx:327
 msgid "{0, plural, one {joined a year ago} other {joined # years ago}}"
 msgstr "{0, plural, one {členem už rok} few {členem už # roky} other {členem už # let}}"
 
@@ -341,7 +341,7 @@ msgstr "{hidden, plural, one {ZOBRAZIT DALŠÍ #} few {ZOBRAZIT DALŠÍ #} other
 msgid "{hits} HITS"
 msgstr "{hits} ZÁSAHŮ"
 
-#: components/overlays/player-profile-overlay.tsx:320
+#: components/overlays/player-profile-overlay.tsx:321
 msgid "{joinedMonths, plural, one {joined a month ago} other {joined # months ago}}"
 msgstr "{joinedMonths, plural, one {členem už měsíc} few {členem už # měsíce} other {členem už # měsíců}}"
 
@@ -385,7 +385,7 @@ msgstr "<0/> ovládl včerejšek"
 msgid "<0/> won yesterday and last week"
 msgstr "<0/> ovládl včerejšek i minulý týden"
 
-#: components/overlays/player-profile-overlay.tsx:449
+#: components/overlays/player-profile-overlay.tsx:450
 msgid "<0>{shownAchievements}</0> OF {ACHIEVEMENT_COUNT} ACHIEVEMENTS"
 msgstr "<0>{shownAchievements}</0> Z {ACHIEVEMENT_COUNT} ÚSPĚCHŮ"
 
@@ -553,10 +553,14 @@ msgstr "Je to o chlup. A ten chlup je tvůj."
 msgid "Above {fastBand}: clock + {fastBonus} × (clock − {fastBand}) ÷ (1 − {fastBand}), so an instant hit is {instant}."
 msgstr "Nad {fastBand}: čas + {fastBonus} × (čas − {fastBand}) ÷ (1 − {fastBand}), okamžitý zásah je tedy {instant}."
 
-#: components/overlays/player-profile-overlay.tsx:87
+#: components/overlays/player-profile-overlay.tsx:88
 #: modes/definitions/accuracy.ts:13
 msgid "ACC"
 msgstr "PŘES"
+
+#: components/overlays/challenge-modal.tsx:286
+msgid "ACCEPT"
+msgstr "PŘIJMOUT"
 
 #: components/game/trainee-stats.tsx:66
 #: modes/definitions/accuracy.ts:12
@@ -771,9 +775,9 @@ msgstr "Udrž průměr 90 % rychlosti ve hře o 20 a více zásazích."
 msgid "Average 95% accuracy over a run of 20 hits or more."
 msgstr "Udrž průměr 95 % přesnosti ve hře o 20 a více zásazích."
 
-#: components/overlays/player-profile-overlay.tsx:428
-#: components/overlays/player-profile-overlay.tsx:433
-#: components/overlays/player-profile-overlay.tsx:509
+#: components/overlays/player-profile-overlay.tsx:429
+#: components/overlays/player-profile-overlay.tsx:434
+#: components/overlays/player-profile-overlay.tsx:510
 msgid "AVG"
 msgstr "PRŮM"
 
@@ -827,8 +831,8 @@ msgid "Behind, and within reach — two boards would do it."
 msgstr "Ztrácíš, ale na dosah — stačily by dvě tabulky."
 
 #: components/game/best-scores-line.tsx:85
-#: components/overlays/player-profile-overlay.tsx:500
-#: components/overlays/player-profile-overlay.tsx:514
+#: components/overlays/player-profile-overlay.tsx:501
+#: components/overlays/player-profile-overlay.tsx:515
 msgid "BEST"
 msgstr "NEJLEPŠÍ"
 
@@ -849,7 +853,7 @@ msgid "BOARD"
 msgstr "TABULKA"
 
 #: components/overlays/compare-overlay.tsx:285
-#: components/overlays/player-profile-overlay.tsx:462
+#: components/overlays/player-profile-overlay.tsx:463
 msgid "BOARDS"
 msgstr "TABULKY"
 
@@ -911,7 +915,7 @@ msgstr "Navazuj zásahy na sebe — série násobí body ×2 → ×4 → ×8. P�
 
 #: components/overlays/admin-session.tsx:192
 #: components/overlays/challenge-card.tsx:166
-#: components/overlays/challenge-modal.tsx:121
+#: components/overlays/challenge-modal.tsx:127
 #: modes/challenges/define.ts:84
 msgid "CHALLENGE"
 msgstr "VÝZVA"
@@ -924,6 +928,7 @@ msgstr "VÝZVA SE ZAVÍRÁ ZA"
 #: components/overlays/admin-session.tsx:44
 #: components/overlays/admin-sessions.tsx:39
 #: components/overlays/how-to-play-overlay.tsx:58
+#: components/overlays/player-profile-overlay.tsx:587
 msgid "CHALLENGES"
 msgstr "VÝZVY"
 
@@ -933,7 +938,7 @@ msgid "CHALLENGES\n"
 msgstr "LABORATOŘ\n"
 "VÝZEV"
 
-#: components/overlays/dev-overlay.tsx:76
+#: components/overlays/dev-overlay.tsx:74
 msgid "CHALLENGES LAB"
 msgstr "LABORATOŘ VÝZEV"
 
@@ -973,7 +978,7 @@ msgstr "Stoupej cestou, nebo padej zpět."
 msgid "clock = time left ÷ ring"
 msgstr "čas = zbývající čas ÷ kruh"
 
-#: components/overlays/challenge-modal.tsx:292
+#: components/overlays/challenge-modal.tsx:301
 #: components/overlays/compare-overlay.tsx:318
 #: components/overlays/email-code-modal.tsx:528
 #: components/overlays/modal-card.tsx:266
@@ -989,7 +994,7 @@ msgstr "UKONČIT PŘEDČASNĚ"
 msgid "CLOSE THIS CHALLENGE NOW?"
 msgstr "UKONČIT TUTO VÝZVU TEĎ?"
 
-#: components/overlays/challenge-modal.tsx:170
+#: components/overlays/challenge-modal.tsx:174
 msgid "CLOSES IN"
 msgstr "ZAVÍRÁ ZA"
 
@@ -1001,7 +1006,7 @@ msgstr "Až budeš chvíli sbírat body, vrať se k Nováčkovi. Je to jediné m
 msgid "Comfortable. Comfort is how boards change hands."
 msgstr "Pohodlné vedení. Právě tak tabulky mění majitele."
 
-#: components/overlays/player-profile-overlay.tsx:644
+#: components/overlays/player-profile-overlay.tsx:657
 msgid "COMPARE WITH ME"
 msgstr "POROVNAT SE MNOU"
 
@@ -1103,7 +1108,7 @@ msgstr "Udělej něco, co nikoho nenapadlo chtít."
 #: components/overlays/admin-overlay.tsx:318
 #: components/overlays/admin-person.tsx:177
 #: components/overlays/admin-role.tsx:122
-#: components/overlays/dev-overlay.tsx:136
+#: components/overlays/dev-overlay.tsx:152
 #: components/overlays/news-archive-overlay.tsx:43
 msgid "DONE"
 msgstr "HOTOVO"
@@ -1180,7 +1185,7 @@ msgstr "VŠE"
 msgid "Every button tops out at nine times its weight: 81 on the 9×, 9 on a 1×. Knowing the ceilings is what tells you which button can close a gap, and in how few moves."
 msgstr "Každé tlačítko končí na devítinásobku své váhy: 81 u 9×, 9 u 1×. Znát stropy je to, co ti napoví, které tlačítko mezeru zavře — a na kolik tahů."
 
-#: components/overlays/dev-overlay.tsx:141
+#: components/overlays/dev-overlay.tsx:157
 msgid "EVERY CHALLENGE, ANY WINDOW — NO BOARD KEPT"
 msgstr "KAŽDÁ VÝZVA, KDYKOLI — BEZ ŽEBŘÍČKU"
 
@@ -1519,7 +1524,7 @@ msgstr "Trefuj, dokud je kruh z větší části plný, a poroste ti combo."
 #: components/game/trainee-stats.tsx:64
 #: components/overlays/admin-stats.tsx:180
 #: components/overlays/compare-stat-row.tsx:21
-#: components/overlays/player-profile-overlay.tsx:399
+#: components/overlays/player-profile-overlay.tsx:400
 #: lib/run-stats.ts:53
 msgid "HITS"
 msgstr "ZÁSAHY"
@@ -1631,7 +1636,7 @@ msgstr "NAINSTALOVAT"
 msgid "INTO THE DEEP"
 msgstr "DO HLOUBKY"
 
-#: components/overlays/player-profile-overlay.tsx:227
+#: components/overlays/player-profile-overlay.tsx:228
 msgid "IS THAT YOU?"
 msgstr "TO JSI TY?"
 
@@ -1672,7 +1677,7 @@ msgstr "přišlo"
 msgid "JOINED"
 msgstr "PŘIŠLI"
 
-#: components/overlays/player-profile-overlay.tsx:318
+#: components/overlays/player-profile-overlay.tsx:319
 msgid "joined this month"
 msgstr "členem od tohoto měsíce"
 
@@ -1749,7 +1754,7 @@ msgstr "JAZYK"
 msgid "LAST FIVE SESSIONS"
 msgstr "POSLEDNÍCH PĚT TERMÍNŮ"
 
-#: components/overlays/dev-overlay.tsx:51
+#: components/overlays/dev-overlay.tsx:49
 msgid "LAST SESSION WAS {closed}"
 msgstr "POSLEDNÍ SEZENÍ BYLO {closed}"
 
@@ -1853,7 +1858,7 @@ msgstr "Mechaniky"
 msgid "MECHANICS"
 msgstr "MECHANIKY"
 
-#: components/overlays/player-profile-overlay.tsx:539
+#: components/overlays/player-profile-overlay.tsx:540
 msgid "MEDALS HELD, EVER"
 msgstr "HISTORIE MEDAILÍ"
 
@@ -1983,7 +1988,7 @@ msgstr "Nine má nový vzhled, a to skrz naskrz.\n"
 msgid "NINE NINE NINE"
 msgstr "DEVĚT DEVĚT DEVĚT"
 
-#: components/overlays/dev-overlay.tsx:152
+#: components/overlays/dev-overlay.tsx:164
 msgid "No challenges have been written yet."
 msgstr "Zatím nebyla napsaná žádná výzva."
 
@@ -2043,7 +2048,7 @@ msgstr "Žádná sada role tuto funkci neobsahuje."
 msgid "No roles yet."
 msgstr "Zatím žádné role."
 
-#: components/overlays/player-profile-overlay.tsx:586
+#: components/overlays/player-profile-overlay.tsx:599
 msgid "No runs counted yet."
 msgstr "Zatím tu není započítaná žádná hra."
 
@@ -2055,7 +2060,7 @@ msgstr "V tomto období se nehrálo."
 msgid "No runs, no records, no argument. Yet."
 msgstr "Žádné běhy, žádné rekordy, žádný spor. Zatím."
 
-#: components/overlays/dev-overlay.tsx:40
+#: components/overlays/dev-overlay.tsx:38
 msgid "NO SESSION YET"
 msgstr "ZATÍM ŽÁDNÉ SEZENÍ"
 
@@ -2132,7 +2137,7 @@ msgstr "Ne ale všude. [W] držel [BOARD] každý den v týdnu."
 msgid "not in this build"
 msgstr "není v tomto buildu"
 
-#: components/overlays/admin-session-cells.tsx:88
+#: components/overlays/admin-session-cells.tsx:84
 msgid "NOT IN THIS BUILD"
 msgstr "NENÍ V TÉTO VERZI"
 
@@ -2342,7 +2347,7 @@ msgstr "Začínej na lehčí obtížnosti. První hra je rozehřívací a váhy 
 msgid "Open the How to Play guide."
 msgstr "Otevři návod Jak hrát."
 
-#: components/overlays/challenge-modal.tsx:275
+#: components/overlays/challenge-modal.tsx:209
 msgid "OPENS IN"
 msgstr "ZAČÍNÁ ZA"
 
@@ -2670,8 +2675,8 @@ msgstr "her"
 
 #: components/overlays/admin-stats.tsx:168
 #: components/overlays/compare-stat-row.tsx:20
-#: components/overlays/player-profile-overlay.tsx:394
-#: components/overlays/player-profile-overlay.tsx:497
+#: components/overlays/player-profile-overlay.tsx:395
+#: components/overlays/player-profile-overlay.tsx:498
 msgid "RUNS"
 msgstr "HRY"
 
@@ -2720,7 +2725,7 @@ msgstr "UKLÁDÁM…"
 msgid "SCENIC ROUTE"
 msgstr "VYHLÍDKOVÁ JÍZDA"
 
-#: components/overlays/player-profile-overlay.tsx:501
+#: components/overlays/player-profile-overlay.tsx:502
 #: components/overlays/score-columns.tsx:98
 msgid "SCORE"
 msgstr "SKÓRE"
@@ -2830,11 +2835,11 @@ msgstr "OKNO"
 msgid "SESSION BONUS"
 msgstr "BONUS ZA TERMÍN"
 
-#: components/overlays/dev-overlay.tsx:44
+#: components/overlays/dev-overlay.tsx:42
 msgid "SESSION IS LIVE UNTIL {until}"
 msgstr "SEZENÍ BĚŽÍ DO {until}"
 
-#: components/overlays/dev-overlay.tsx:48
+#: components/overlays/dev-overlay.tsx:46
 msgid "SESSION IS PLANNED FOR {opens}"
 msgstr "SEZENÍ JE NAPLÁNOVÁNO NA {opens}"
 
@@ -2916,7 +2921,7 @@ msgstr "Něco se pokazilo, zkus to znovu"
 msgid "Something went wrong, try again."
 msgstr "Něco se pokazilo, zkus to znovu."
 
-#: components/overlays/player-profile-overlay.tsx:88
+#: components/overlays/player-profile-overlay.tsx:89
 #: modes/definitions/speed.ts:11
 msgid "SPD"
 msgstr "RYCH"
@@ -2963,7 +2968,6 @@ msgid "Spot your nines"
 msgstr "Devítky na první pohled"
 
 #: components/overlays/admin-knowledge.tsx:201
-#: components/overlays/challenge-modal.tsx:263
 msgid "START"
 msgstr "HRÁT"
 
@@ -3012,7 +3016,7 @@ msgstr "Série — dokonalé tahy za sebou násobí body ×2 → ×4 → ×8. St
 
 #: components/game/arcade-strike.tsx:77
 #: components/overlays/admin-knowledge.tsx:273
-#: components/overlays/challenge-modal.tsx:200
+#: components/overlays/challenge-modal.tsx:223
 msgid "STRIKE"
 msgstr "SÉRIE"
 
@@ -3396,7 +3400,7 @@ msgstr "TOHLE JE TVŮJ SOUČET"
 msgid "This one is over. The dial has been kinder to them."
 msgstr "Tohle je rozhodnuté. Číselník byl k soupeři laskavější."
 
-#: components/overlays/player-profile-overlay.tsx:348
+#: components/overlays/player-profile-overlay.tsx:349
 msgid "This profile could not be loaded."
 msgstr "Profil se nepodařilo načíst."
 
@@ -3430,7 +3434,7 @@ msgid "Thursday"
 msgstr "ve čtvrtek"
 
 #: components/overlays/compare-stat-row.tsx:22
-#: components/overlays/player-profile-overlay.tsx:416
+#: components/overlays/player-profile-overlay.tsx:417
 #: components/overlays/score-columns.tsx:106
 #: lib/run-stats.ts:60
 #: lib/run-stats.ts:95
@@ -3475,9 +3479,9 @@ msgstr "ŠPICE ŽEBŘÍČKU"
 msgid "TOP RIGHT"
 msgstr "VPRAVO NAHOŘE"
 
-#: components/overlays/player-profile-overlay.tsx:395
-#: components/overlays/player-profile-overlay.tsx:400
-#: components/overlays/player-profile-overlay.tsx:417
+#: components/overlays/player-profile-overlay.tsx:396
+#: components/overlays/player-profile-overlay.tsx:401
+#: components/overlays/player-profile-overlay.tsx:418
 msgid "TOTAL"
 msgstr "CELKEM"
 
@@ -3514,7 +3518,7 @@ msgstr "ZKUS {modeName}"
 
 #: components/crash-screen.tsx:27
 #: components/overlays/compare-overlay.tsx:180
-#: components/overlays/player-profile-overlay.tsx:356
+#: components/overlays/player-profile-overlay.tsx:357
 msgid "TRY AGAIN"
 msgstr "ZKUSIT ZNOVU"
 
@@ -3667,7 +3671,7 @@ msgstr "KÝM CHCEŠ BÝT?"
 msgid "WHO IS BETTER?"
 msgstr "KDO JE LEPŠÍ?"
 
-#: components/overlays/player-profile-overlay.tsx:227
+#: components/overlays/player-profile-overlay.tsx:228
 msgid "WHO IS IT?"
 msgstr "KDO TO JE?"
 

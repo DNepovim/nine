@@ -13,7 +13,7 @@ import { ScoreColumns } from '@/components/overlays/score-columns'
 import { TabPanel } from '@/components/overlays/tab-panel'
 import { PrimaryButton } from '@/components/primary-button'
 import { TrackedPressable } from '@/components/tracked-pressable'
-import { DIM_INK } from '@/constants/colors'
+import { DIM_INK, ON_STRONG_INK } from '@/constants/colors'
 import { mono } from '@/constants/theme'
 import { TYPE } from '@/constants/typography'
 import { useSessionBoard } from '@/hooks/use-session-card'
@@ -62,7 +62,7 @@ const nameRows = (label: string): string[] =>
 // decision reversible in a way a screen replacing it does not.
 // What the dialog is opened on. The intro's card is one session, live or teased. The dev
 // screen asked for the third: any challenge, with whichever of its sessions that screen
-// names beside it, or none — START always plays, and plays outside every session, so a
+// names beside it, or none — ACCEPT always plays, and plays outside every session, so a
 // lab run never posts to standings a player is competing on.
 export type ChallengeModalCard =
   | NonNullable<SessionCard<OpenSession>>
@@ -92,7 +92,13 @@ export function ChallengeModal({
     state === 'live' || (session !== null && spanStatus(session, Date.now()) === 'live')
   const { width } = useViewport()
   const [dsegLoaded] = useFonts({ DSEG7: DSEG7Font })
-  const { board } = useSessionBoard(session?.id ?? null, userId)
+  // Whether the window has yet to open — a teaser, or a lab row whose session is still
+  // planned. Such a session has no standings and cannot have any, so the dialog neither
+  // reads them nor draws an empty table promising that nobody has scored yet.
+  const upcoming =
+    state === 'teaser' ||
+    (session !== null && spanStatus(session, Date.now()) === 'upcoming')
+  const { board } = useSessionBoard(upcoming ? null : (session?.id ?? null), userId)
   // The challenge's own pair: its hue on the card's border, and the readable shade of
   // that hue wherever a word is drawn in it. Same split the banner makes — see
   // `challengeInk`.
@@ -152,14 +158,12 @@ export function ChallengeModal({
           </Text>
 
           {/* How much of the window is left, under the line that says what the challenge
-            is. The one figure a player needs before pressing START and the one the dialog
+            is. The one figure a player needs before pressing ACCEPT and the one the dialog
             did not carry: the card they came from has it, and the strip has it once the
             run is going, so the only moment it went missing was the moment of deciding.
 
-            **Live only.** A teased session already answers this where the button would
-            be — see the OPENS IN block below, which stands in for START and says why
-            there is nothing to press. Drawing it here as well would be the same fact
-            twice on a short dialog, and the two would be saying it for different reasons.
+            **Live only.** A session not yet open gets its own, larger clock below —
+            counting to the start rather than the end — in place of the strike rule.
 
             The flaps rather than the plain figure, as the card and the strip both draw
             it: a window running down is the one thing in this app that is literally a
@@ -184,7 +188,7 @@ export function ChallengeModal({
             challenges chapter is deliberately vague about rules for the reason the
             comment there gives — a challenge may change any of them. So this is the one
             place the rule of *this* challenge is written down, and the player reads it
-            before pressing START rather than working it out from a multiplier that came
+            before pressing ACCEPT rather than working it out from a multiplier that came
             and went.
 
             The same box Trainee's tips stand in — `LegendBox`, named on its own rule —
@@ -194,7 +198,26 @@ export function ChallengeModal({
 
             Held to the same width as the description above it and the standings below,
             and `self-center` for the same reason — see the note on the description. */}
-          {strike !== null && (
+          {/* A session that has not opened yet: the wait, large, where the strike rule
+            would stand. Until the window opens there is nothing to press and nothing to
+            play, so how a strike is built can wait too — the one thing worth telling a
+            player here is when. It also stands in for the button the dialog would end on,
+            which is why the foot below has no OPENS IN of its own. */}
+          {upcoming && session !== null && (
+            <View className="mb-4 items-center gap-2">
+              <Text selectable={false} className={cn(TYPE.labelSm, 'text-dim')}>
+                <Trans>OPENS IN</Trans>
+              </Text>
+              <ChallengeCountdown
+                until={session.opensAt}
+                gradient={darkGradientOf(modeId)}
+                flip
+                large
+              />
+            </View>
+          )}
+
+          {!upcoming && strike !== null && (
             <View className="mb-4 self-center" style={{ width: boardWidth }}>
               <LegendBox
                 legend={<Trans>STRIKE</Trans>}
@@ -247,11 +270,11 @@ export function ChallengeModal({
             here and one way to decline it, and a 200pt button in the middle of a 460pt
             card read as a third option beside the whitespace either side of it.
 
-            Only START is a CTA. CLOSE is the quiet way out under it — the app's own
+            Only ACCEPT is a CTA. CLOSE is the quiet way out under it — the app's own
             pattern for a dialog that offers an action and a refusal, rather than two
             buttons of equal weight asking the player to choose which they meant. */}
           <View className="mt-5 w-full gap-1">
-            {card.state !== 'teaser' ? (
+            {card.state !== 'teaser' && (
               <PrimaryButton
                 id="challenge.start"
                 onPress={() => {
@@ -260,23 +283,9 @@ export function ChallengeModal({
                   close()
                   onStart(modeId, card.state === 'lab' ? null : card.session.id)
                 }}
-                label={<Trans>START</Trans>}
+                label={<Trans>ACCEPT</Trans>}
+                icon={<Ionicons name="rocket-outline" size={14} color={ON_STRONG_INK} />}
               />
-            ) : (
-              // A teaser has nothing to start. The row stays, wearing the countdown, so
-              // the dialog ends on when rather than on nothing — and so the shape of the
-              // card does not change the moment it opens.
-              <View
-                className="w-full items-center rounded-2xl bg-card py-4 opacity-60"
-                pointerEvents="none"
-              >
-                <View className="flex-row items-center gap-1.5">
-                  <Text selectable={false} className={cn(TYPE.button, 'text-dim')}>
-                    <Trans>OPENS IN</Trans>
-                  </Text>
-                  <ChallengeCountdown until={card.session.opensAt} className="text-dim" />
-                </View>
-              </View>
             )}
 
             {/* The quiet way out, in the voice this app's links speak in: an icon, a

@@ -23,6 +23,7 @@ export function ChallengeCountdown({
   className,
   flip = false,
   gradient,
+  large = false,
   onArrive,
 }: {
   // The instant being counted towards, ms since the epoch.
@@ -41,6 +42,8 @@ export function ChallengeCountdown({
   // runtime. Only read when `flip` is set — a plain figure takes its ink from `className`,
   // which is a token everywhere one is drawn.
   gradient?: readonly [string, string]
+  // The flaps at headline size — see `large` on `FlipClock`. Only read when `flip` is set.
+  large?: boolean
   // Called once, on the tick that reaches `until`.
   //
   // The whole of what this component tells anybody else, and deliberately the whole: the
@@ -104,7 +107,9 @@ export function ChallengeCountdown({
   const text = formatCountdown(until - now)
 
   if (flip && gradient !== undefined) {
-    return <FlipClock text={text} gradient={gradient} className={className} />
+    return (
+      <FlipClock text={text} gradient={gradient} large={large} className={className} />
+    )
   }
 
   return (

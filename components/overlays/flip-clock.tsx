@@ -44,7 +44,17 @@ const PERSPECTIVE = 320
 // The swap happens at the moment the card is edge-on, where there is nothing to see: the
 // old digit falls from flat to ninety degrees, the state changes behind the edge, and the
 // new one rises from ninety back to flat.
-function FlipDigit({ char, from, to }: { char: string; from: string; to: string }) {
+function FlipDigit({
+  char,
+  from,
+  to,
+  role,
+}: {
+  char: string
+  from: string
+  to: string
+  role: string
+}) {
   const [shown, setShown] = useState(char)
   const flip = useSharedValue(0)
   // What this digit was last asked to show, which is the one thing that may arm a flip.
@@ -94,7 +104,7 @@ function FlipDigit({ char, from, to }: { char: string; from: string; to: string 
         was cut for — and about 12:1 on this gradient's darkest end. */}
       <Text
         selectable={false}
-        className={cn(TYPE.figure, 'text-surface')}
+        className={cn(role, 'text-surface')}
         style={{ paddingHorizontal: TILE_PAD_X, paddingVertical: TILE_PAD_Y }}
       >
         {shown}
@@ -139,6 +149,7 @@ const sliceOf = (
 export function FlipClock({
   text,
   gradient,
+  large = false,
   className,
 }: {
   text: string
@@ -147,10 +158,15 @@ export function FlipClock({
   // the board belongs to the challenge it is counting down and reads as the same material
   // as the button under it.
   gradient: readonly [string, string]
+  // The board as the thing a dialog is about rather than a cell in a rule: the challenge
+  // dialog's countdown to a session that has not opened yet, where the wait is the only
+  // news there is. Set in `figureLarge` — an existing role, not a size picked here.
+  large?: boolean
   // Placement only, as everywhere else: the size is the role below.
   className?: string
 }) {
   const cells = Array.from(text).length
+  const role = large ? TYPE.figureLarge : TYPE.figure
 
   return (
     <View className={cn('flex-row items-center', className)} style={{ gap: TILE_GAP }}>
@@ -162,7 +178,7 @@ export function FlipClock({
             <Text
               key={i}
               selectable={false}
-              className={cn(TYPE.figure, 'text-dim')}
+              className={cn(role, 'text-dim')}
               style={{ marginHorizontal: 1 }}
             >
               {char}
@@ -170,7 +186,7 @@ export function FlipClock({
           )
         }
         const [from, to] = sliceOf(gradient, i, cells)
-        return <FlipDigit key={i} char={char} from={from} to={to} />
+        return <FlipDigit key={i} char={char} from={from} to={to} role={role} />
       })}
     </View>
   )
