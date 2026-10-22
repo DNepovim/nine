@@ -5,8 +5,10 @@ description: Use when asked to commit — via `/commit` or in plain words ("comm
 
 # Commit
 
-**Never commit without the user's explicit confirmation of the message(s).** Use
-`AskUserQuestion` for that confirmation, never plain text — it keeps the session
+**Never commit without the user's explicit confirmation of the message(s)** — unless
+the **`ship`** skill invoked this one: running `/ship` is that confirmation, so skip
+Step 4's question, commit straight away and print the message(s) afterwards. Otherwise
+use `AskUserQuestion` for the confirmation, never plain text — it keeps the session
 unblocked.
 
 ## Step 1 — Know what you're committing

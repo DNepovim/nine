@@ -11,9 +11,9 @@ Two modes:
 - **`ship prod`** → skip the question and commit directly to `main`.
 
 The commit itself belongs to the **`commit`** skill — this skill gates, decides
-where the work lands, and pushes. **Never push or open a PR without the user's
-explicit confirmation**, which the `commit` skill collects for the message and
-Step 0c collects for the branch name.
+where the work lands, and pushes. **Running `/ship` is the confirmation for the commit
+message** — the `commit` skill writes it and commits without asking. The one
+confirmation still collected is Step 0c's, for where the work lands and the branch name.
 
 Shipping is not deploying. Nothing that happens here reaches a player: pushing
 `main` builds nothing and publishes nothing. Production moves only when someone
@@ -188,16 +188,18 @@ skill's to confirm, so include it in the same question:
 ## Step 1 — Commit
 
 Invoke the **`commit`** skill. It owns the Conventional Commit format, the
-one-commit-per-logically-separate-change rule, the confirmation gate and the
-co-author footer. Pass it the context it needs:
+one-commit-per-logically-separate-change rule and the co-author footer. Pass it the
+context it needs:
 
 - checks are already green (Step 0), so it should not re-run them
+- **skip the message confirmation** — commit as soon as the message is written, and
+  show the message(s) in the final report instead of in a question
 - any `constants/news.ts` entry added in Step 0bb belongs in the commit
 
 In branch mode, create and switch to the confirmed branch **before** invoking it
 (`git checkout -b <branch>` carries the uncommitted changes across).
 
-If the user cancels at the commit skill's gate, stop here — nothing to push.
+If the commit fails (a hook, nothing to commit), stop here — nothing to push.
 
 ## Step 2 — Push
 
