@@ -111,6 +111,45 @@ export async function loadSessionBoard(
   return { rows: (res.data as LeaderboardRow[] | null) ?? [], error: null }
 }
 
+// Who won this challenge the last time it was aired, with the figure they won it on.
+// Null on its first airing — and on a failed read, which the strip draws the same way:
+// a cell with nothing honest in it is a cell left off.
+export type PreviousWinner = {
+  userId: string
+  nickname: string
+  score: number
+  // Set on a race, which is won on the clock; null everywhere else.
+  timeMs: number | null
+  avgAccuracy: number | null
+  avgSpeed: number | null
+}
+
+type PreviousWinnerRow = {
+  user_id: string
+  nickname: string
+  best_score: number
+  time_ms: number | null
+  avg_acc: number | null
+  avg_spd: number | null
+}
+
+export async function loadPreviousWinner(
+  sessionId: string,
+): Promise<PreviousWinner | null> {
+  const res = await supabase.rpc('previous_session_winner', { p_session_id: sessionId })
+  noteRequest(res.error)
+  const row = (res.data as PreviousWinnerRow[] | null)?.[0]
+  if (res.error !== null || row === undefined) return null
+  return {
+    userId: row.user_id,
+    nickname: row.nickname,
+    score: row.best_score,
+    timeMs: row.time_ms,
+    avgAccuracy: row.avg_acc,
+    avgSpeed: row.avg_spd,
+  }
+}
+
 // What the server said about a write. The same three answers `score-submission.ts`
 // already reasons about, so a session score can ride the same queue.
 export type SessionSent = 'published' | 'offline' | 'refused'

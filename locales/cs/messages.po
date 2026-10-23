@@ -13,7 +13,7 @@ msgstr ""
 "Language-Team: \n"
 "Plural-Forms: \n"
 
-#: components/overlays/how-to-play-overlay.tsx:833
+#: components/overlays/how-to-play-overlay.tsx:835
 msgid ""
 "\n"
 "A mark is only ever lent. Take somebody’s record and it moves to you; lose yours and it leaves with the board."
@@ -37,7 +37,7 @@ msgstr ""
 "\n"
 "Přesnost stojí skoro celá na preciznosti, Rychlost na čase. Každá počítá vlastní sérii: Přesnosti jde o co nejmenší počet tahů, Rychlosti o to, abys trefil dřív, než se kruh stihne zmenšit."
 
-#: components/overlays/how-to-play-overlay.tsx:866
+#: components/overlays/how-to-play-overlay.tsx:868
 msgid ""
 "\n"
 "Achieve one mid-run and the score bar says so in green — tap that line and the run pauses so you can read what the achievement asked of you. Most are asked once per difficulty — Easy, Hard and Extreme count separately, and the list draws a bar for each. The whole list is behind the achievements line under NINE on the start screen, along with how far along you are on the ones you have not got yet."
@@ -45,7 +45,7 @@ msgstr ""
 "\n"
 "Když nějakého dosáhneš během hry, lišta se skóre to zeleně oznámí — klepni na ni a hra se pozastaví, ať si v klidu přečteš, co po tobě achievement chtěl. Většina se plní zvlášť pro každou obtížnost — Lehká, Těžká i Extrémní se počítají samostatně a seznam ke každé kreslí vlastní proužek. Celý seznam najdeš za řádkem s achievementy pod nápisem NINE na úvodní obrazovce — i s tím, jak daleko máš k těm, které ti zatím chybí."
 
-#: components/overlays/how-to-play-overlay.tsx:897
+#: components/overlays/how-to-play-overlay.tsx:899
 msgid ""
 "\n"
 "After the tenth target everyone’s score goes up on one list. The host can pick a mode and deal another game to the same room, so nobody has to swap codes again."
@@ -61,7 +61,7 @@ msgstr ""
 "\n"
 "Čas od času se nahoře na úvodní obrazovce objeví výzva a vedle ní běžící odpočet. Je to Nine s něčím změněným — a pokaždé je to něco jiného."
 
-#: components/overlays/how-to-play-overlay.tsx:795
+#: components/overlays/how-to-play-overlay.tsx:797
 msgid ""
 "\n"
 "How deep you got is the whole score: every way costs about the same number of moves, so what you are choosing is where to go, not what is cheaper. Villages taken is counted beside it on the cards, but it is a tally rather than points. There is no difficulty to pick — the clock tightens the deeper you climb, which is the only one the mode has."
@@ -77,7 +77,7 @@ msgstr ""
 "\n"
 "Tlačítkem vpravo dole (řádek 3 × sloupec 3 = 9) proto součtem hýbeš po velkých skocích, zatímco to vlevo nahoře (1 × 1 = 1) ho posune přesně o svou číslici — ideální na doladění posledních pár bodů."
 
-#: components/overlays/how-to-play-overlay.tsx:695
+#: components/overlays/how-to-play-overlay.tsx:697
 msgid ""
 "\n"
 "Some villages have walls, and the two are drawn as two different places — an open village is a scatter of houses, a church and a hall with nothing around them, a walled one is a dark ring of wall with a tower at each corner and a pennant flying over it. Dial toward the walls and you do not walk in. You take it. Three hearts sit on the bar under ARCADE, and a siege is the fastest way to spend them. Taking a village always gives one back; clearing a road of bandits sometimes does."
@@ -97,7 +97,7 @@ msgstr ""
 "\n"
 "Prst přitom nemusíš zvedat. Taž přes číselník a každé tlačítko si vezme směr, kterým ho opustíš — jedním tahem doprava po řádku tak nastavíš všechna tři na 9. Když si to nad tlačítkem rozmyslíš, platí jen to, kudy z něj odejdeš — a tlačítko se ozývá jen prstu, který přes ně opravdu přejede, takže když cestou jen škrtneš o kraj sousedního, nestane se nic. Pokud chceš, aby jedno gesto pohnulo jen tlačítkem, na kterém začalo, vypni v Nastavení „Tah přes tlačítka“. Tip: v Nastavení zapni „Zobrazit součet v tlačítkách“ a uvidíš, čím každé tlačítko právě přispívá."
 
-#: components/overlays/how-to-play-overlay.tsx:755
+#: components/overlays/how-to-play-overlay.tsx:757
 msgid ""
 "\n"
 "The hero eats. The five loaves beside the hearts are the stores, and every way you walk eats into them — half a loaf when you dialled the target in the fewest moves there are, a whole one when you wasted most of them, so the tidy route is the one that keeps you fed. Getting dragged back costs a whole loaf too."
@@ -162,7 +162,7 @@ msgstr "— CELÝ TÝDEN NIKDO NESTAČIL —"
 msgid "— NOTHING HAS OUTRUN THIS YET —"
 msgstr "— TOHLE JEŠTĚ NIKDO NEPŘEDBĚHL —"
 
-#: components/game/best-scores-line.tsx:581
+#: components/game/best-scores-line.tsx:622
 msgid "— OFFLINE —"
 msgstr "— OFFLINE —"
 
@@ -361,16 +361,15 @@ msgstr "{owed} čeká na odpověď"
 msgid "+{0} TO YOUR FORTUNE"
 msgstr "+{0} K TVÉMU JMĚNÍ"
 
-#: components/overlays/challenge-card.tsx:118
+#: components/overlays/challenge-card.tsx:134
 msgid "<0/> challenge starts in"
 msgstr "<0/> začíná za"
 
-#. placeholder {0}: session.leader.score
-#: components/overlays/challenge-card.tsx:245
-msgid "<0/> leads with <1>{0}</1>"
-msgstr "<0/> vede s <1>{0}</1>"
+#: components/overlays/challenge-card.tsx:261
+msgid "<0/> leads with <1>{leaderFigure}</1>"
+msgstr "<0/> vede s <1>{leaderFigure}</1>"
 
-#: components/overlays/how-to-play-overlay.tsx:819
+#: components/overlays/how-to-play-overlay.tsx:821
 msgid "<0/> The phoenix is whoever took the last challenge. It is the one mark that is not a board, and it moves on the day the next session ends."
 msgstr "<0/> Fénix patří tomu, kdo vyhrál poslední výzvu. Je to jediný odznak, který nestojí na žebříčku, a přechází dál v den, kdy skončí další výzva."
 
@@ -402,15 +401,15 @@ msgstr "≥ 30 stisků na jednom cíli, libovolný režim"
 msgid "≥ 5 runs with friends, 0 wins ever"
 msgstr "≥ 5 her s přáteli, nikdy žádná výhra"
 
-#: components/overlays/how-to-play-overlay.tsx:826
+#: components/overlays/how-to-play-overlay.tsx:828
 msgid "👑 The crown is all three at once — the rarest thing in the game, and the only way to wear one mark instead of three."
 msgstr "👑 Koruna je všechny tři najednou — to nejvzácnější ve hře a jediný způsob, jak nosit jeden odznak místo tří."
 
-#: components/overlays/how-to-play-overlay.tsx:814
+#: components/overlays/how-to-play-overlay.tsx:816
 msgid "🦅 The eagle is Speed at its hardest, for the dive rather than the search."
 msgstr "🦅 Orel je Rychlost v nejtěžší podobě — za střemhlavý let, ne za hledání."
 
-#: components/overlays/how-to-play-overlay.tsx:808
+#: components/overlays/how-to-play-overlay.tsx:810
 msgid "🦉 The owl is Accuracy at its hardest. That board rewards the exact route, and the owl is the eye that finds it."
 msgstr "🦉 Sova je Přesnost v nejtěžší podobě. Ten žebříček odměňuje přesně vedenou cestu a sova je to oko, které ji najde."
 
@@ -490,7 +489,7 @@ msgstr "Rekord je vždycky jen zapůjčený — dřív nebo později ti ho někd
 msgid "A REPLY"
 msgstr "ODPOVĚĎ"
 
-#: components/overlays/how-to-play-overlay.tsx:631
+#: components/overlays/how-to-play-overlay.tsx:633
 msgid "A road you were driven off is marked with crossed sabres from then on, so you can see the toll before you choose it again. The men you cut down stay down, so the second run at it is a shorter fight — and a road cleared is clear for the rest of the run."
 msgstr "Cesta, ze které tě zahnali, je od té chvíle značená zkříženými šavlemi, takže mýto vidíš dřív, než si ji vybereš znovu. Lupiči, které jsi skolil, zůstávají ležet, takže druhý pokus je kratší boj — a vyčištěná cesta zůstane čistá po zbytek běhu."
 
@@ -510,7 +509,7 @@ msgstr "Kratší čas — čím dřív trefíš, tím víc to hodí."
 msgid "A slow hit breaks the streak; let a target run out and you lose a life."
 msgstr "Pomalý zásah sérii přeruší, a když cíli vyprší čas, přijdeš i o život."
 
-#: components/overlays/how-to-play-overlay.tsx:862
+#: components/overlays/how-to-play-overlay.tsx:864
 msgid "A stack of them nobody is told about until they happen."
 msgstr "A celá řada takových, o kterých se nikdo nedozví, dokud se nestanou."
 
@@ -526,15 +525,15 @@ msgstr "Tenká lišta nad hrou teď ukazuje tvoje maximum na tomhle žebříčku
 msgid "A tie, which is the one result neither of you wanted."
 msgstr "Remíza — jediný výsledek, který nechtěl ani jeden z vás."
 
-#: components/overlays/how-to-play-overlay.tsx:706
+#: components/overlays/how-to-play-overlay.tsx:708
 msgid "A tower takes a few hits, and a hit means arriving at its number. Every hit it survives it takes a new number, so a tower is several journeys across the dial rather than one answer found and then repeated."
 msgstr "Věž snese několik zásahů a zásah znamená na její číslo dojít. Po každém zásahu, který přežije, dostane nové číslo: věž je tak několik cest po číselníku, ne jedna odpověď, kterou pak jen opakuješ."
 
-#: components/overlays/how-to-play-overlay.tsx:646
+#: components/overlays/how-to-play-overlay.tsx:648
 msgid "A village whose ring runs out withers off the fan, taking the way to it with it, and stops answering the dial. The others stay — you are only dragged back when the last of them gives up, which is what the red creeping along the way behind you is counting down to."
 msgstr "Vesnici, které prstenec dojde, to odvane z vějíře i s cestou, která k ní vedla, a přestane odpovídat číselníku. Ostatní zůstávají — zpátky tě to stáhne, až se vzdá poslední z nich, a právě k tomu odpočítává červená plazící se po cestě za tebou."
 
-#: components/overlays/how-to-play-overlay.tsx:759
+#: components/overlays/how-to-play-overlay.tsx:761
 msgid "A walled village is the only full meal on the map. Take one and all five loaves come back — which is why a hungry run has to go looking for a fight rather than away from one. Bandits carry stores rather than a granary: clearing a road sometimes pays a loaf and a half, which is worth having and is never worth walking past a village for."
 msgstr "Opevněná vesnice je jediné plné jídlo na mapě. Dobyj ji a všech pět chlebů se vrátí — proto hladová hra musí boj hledat, ne se mu vyhýbat. Lupiči vozí zásoby, ne sýpku: vyčištěná cesta občas vynese chleba a půl, což se hodí, ale nikdy nestojí za to minout kvůli tomu vesnici."
 
@@ -591,7 +590,7 @@ msgstr "Hra Přesnosti nebo Rychlosti dokončená se skóre 0"
 msgid "ACHIEVEMENTS"
 msgstr "ÚSPĚCHY"
 
-#: components/overlays/how-to-play-overlay.tsx:840
+#: components/overlays/how-to-play-overlay.tsx:842
 msgid "Achievements are the other kind. Nothing can take one back: they are achieved once and yours for good, and they are measured against you rather than against anybody else — so they are there to be collected whether or not your score is ever good enough for a board.\n"
 "\n"
 "There are dozens, and they ask for all sorts of things."
@@ -714,7 +713,7 @@ msgstr "BRZY PŘIJDE DALŠÍ VÝZVA"
 msgid "ANSWER"
 msgstr "ODPOVĚDĚT"
 
-#: components/overlays/how-to-play-overlay.tsx:654
+#: components/overlays/how-to-play-overlay.tsx:656
 msgid "Answer while most of that clock is still full and you strike: the hero does not stop at the next crossroad, it rockets through and lands one deeper."
 msgstr "Odpověz, dokud je většina hodin ještě plná, a máš sérii: hrdina se na další křižovatce nezastaví — proletí jí a přistane o jednu hlouběji."
 
@@ -835,7 +834,7 @@ msgstr "Ztrácíš o vlásek. To nic není."
 msgid "Behind, and within reach — two boards would do it."
 msgstr "Ztrácíš, ale na dosah — stačily by dvě tabulky."
 
-#: components/game/best-scores-line.tsx:89
+#: components/game/best-scores-line.tsx:106
 #: components/overlays/player-profile-overlay.tsx:501
 #: components/overlays/player-profile-overlay.tsx:515
 msgid "BEST"
@@ -919,13 +918,13 @@ msgid "Chain your hits — a streak multiplies your points ×2 → ×4 → ×8. 
 msgstr "Navazuj zásahy na sebe — série násobí body ×2 → ×4 → ×8. Přesnost počítá optimální cesty, Rychlost zásahy s kruhem z větší části plným."
 
 #: components/overlays/admin-session.tsx:192
-#: components/overlays/challenge-card.tsx:166
+#: components/overlays/challenge-card.tsx:182
 #: components/overlays/challenge-modal.tsx:127
 #: modes/challenges/define.ts:84
 msgid "CHALLENGE"
 msgstr "VÝZVA"
 
-#: components/game/best-scores-line.tsx:543
+#: components/game/best-scores-line.tsx:584
 #: components/overlays/session-closes.tsx:42
 msgid "CHALLENGE CLOSES IN"
 msgstr "VÝZVA SE ZAVÍRÁ ZA"
@@ -1049,7 +1048,7 @@ msgstr "ZNALEC"
 msgid "CONTINUE"
 msgstr "POKRAČOVAT"
 
-#: app/(tabs)/index.tsx:2433
+#: app/(tabs)/index.tsx:2468
 msgid "Continue the tutorial"
 msgstr "Pokračovat v tutoriálu"
 
@@ -1090,7 +1089,7 @@ msgstr "prosince"
 msgid "DEV"
 msgstr "DEV"
 
-#: components/overlays/how-to-play-overlay.tsx:613
+#: components/overlays/how-to-play-overlay.tsx:615
 msgid "Dial any target at the crossroad and you take that way. The ways you refused wither behind you."
 msgstr "Vytoč kterýkoli cíl na křižovatce a vydáš se jeho cestou. Nevybrané cesty za tebou uvadnou."
 
@@ -1143,7 +1142,7 @@ msgstr "RANNÍ PTÁČE"
 msgid "EASY"
 msgstr "LEHKÁ"
 
-#: components/overlays/how-to-play-overlay.tsx:781
+#: components/overlays/how-to-play-overlay.tsx:783
 msgid "Eat the last of them and the empty row starts to pulse: you are starving, and a heart goes every five seconds until you eat."
 msgstr "Dojež i poslední a prázdná řada začne pulzovat: hladovíš a každých pět sekund přijdeš o život, dokud se nenajíš."
 
@@ -1181,7 +1180,7 @@ msgstr "VĚČNÝ STUDENT"
 msgid "Even. Perfectly, annoyingly even."
 msgstr "Nerozhodně. Dokonale, otravně nerozhodně."
 
-#: components/game/best-scores-line.tsx:79
+#: components/game/best-scores-line.tsx:94
 #: components/overlays/board-medals.tsx:18
 #: components/overlays/high-scores.tsx:36
 msgid "EVER"
@@ -1211,11 +1210,11 @@ msgstr "Každý řádek, který tu ztrácíš, se ztratil dřív na tabulce."
 msgid "Every so often a challenge appears at the top of the start screen: a game of Nine with the rules changed, on for a while and then gone. Everyone plays the same one, and finishing in the top three wins a medal nothing can take back."
 msgstr "Čas od času se nahoře na úvodní obrazovce objeví výzva: Nine se změněnými pravidly, na chvíli, a pak je pryč. Hrají ji všichni stejnou a kdo skončí do třetího místa, získá medaili, o kterou už nemůže přijít."
 
-#: components/overlays/how-to-play-overlay.tsx:673
+#: components/overlays/how-to-play-overlay.tsx:675
 msgid "Every target is a village with a name, and the country between them is drawn as you climb: farmland, then forest, then hills, then mountains."
 msgstr "Každý cíl je vesnice se jménem a krajina mezi nimi se kreslí, jak stoupáš: nejdřív polnosti, pak les, pak kopce a nakonec hory."
 
-#: components/overlays/how-to-play-overlay.tsx:639
+#: components/overlays/how-to-play-overlay.tsx:641
 msgid "Every village holds out for its own length of time, and the ring drawn around its number is what is left of it. They are not the same: the one you want may be the one about to go."
 msgstr "Každá vesnice vydrží jinak dlouho a prstenec kolem jejího čísla ukazuje, kolik jí zbývá. Nejsou stejné: zrovna ta, kterou chceš, může být na odchodu."
 
@@ -1231,7 +1230,7 @@ msgstr "Všichni, s rolí i bez ní."
 msgid "everyone"
 msgstr "všichni"
 
-#: components/overlays/how-to-play-overlay.tsx:884
+#: components/overlays/how-to-play-overlay.tsx:886
 msgid "Everyone who hits is ranked by how few moves it took."
 msgstr "Každý, kdo trefí, se seřadí podle toho, na kolik tahů to zvládl."
 
@@ -1345,7 +1344,7 @@ msgstr "Skonči v termínu do třetího místa."
 msgid "Finish five runs in a row, none of them worth talking about."
 msgstr "Dohraj pět her v řadě a ani jednu, o které by se dalo mluvit."
 
-#: components/overlays/how-to-play-overlay.tsx:582
+#: components/overlays/how-to-play-overlay.tsx:584
 msgid "Finish in the top three and you get the medal for it, and the place itself pays: first takes their score again, second half of it, third a fifth — on top of the points every run already adds to your fortune. A challenge keeps no board of its own, so there is nothing to lose it to afterwards."
 msgstr "Když skončíš do třetího místa, získáš za to medaili — a samo umístění platí: první dostane své skóre znovu, druhý jeho polovinu, třetí pětinu, a to navrch k bodům, které ti každá hra do jmění přidá tak jako tak. Výzva si nedrží vlastní žebříček, takže o ni pak už nemáš jak přijít."
 
@@ -1381,7 +1380,7 @@ msgstr "PRVNÍ ZÁSAH"
 msgid "FIRST RUN"
 msgstr "PRVNÍ HRA"
 
-#: components/overlays/how-to-play-overlay.tsx:730
+#: components/overlays/how-to-play-overlay.tsx:732
 msgid "Flatten every tower and the village is yours — the walls come down, a heart comes back, up to three again, and you eat your fill."
 msgstr "Srovnej všechny věže a vesnice je tvoje — hradby padnou, jeden život se ti vrátí, zase až na tři, a najíš se dosyta."
 
@@ -1443,7 +1442,7 @@ msgstr "STATISTIKY HRY"
 msgid "GAP"
 msgstr "ODSTUP"
 
-#: components/overlays/how-to-play-overlay.tsx:667
+#: components/overlays/how-to-play-overlay.tsx:669
 msgid "Get dragged back off the first crossroad and you fall into the mouth, and the run is over."
 msgstr "Stažení z první křižovatky znamená pád do jícnu a konec hry."
 
@@ -1451,7 +1450,7 @@ msgstr "Stažení z první křižovatky znamená pád do jícnu a konec hry."
 msgid "GIVE MORE TIME"
 msgstr "PŘIDAT ČAS"
 
-#: components/overlays/challenge-card.tsx:280
+#: components/overlays/challenge-card.tsx:296
 msgid "Given more time."
 msgstr "Dostala víc času."
 
@@ -1594,11 +1593,11 @@ msgstr "TĚŽ"
 msgid "HUNDRED RUNS"
 msgstr "STO HER"
 
-#: components/overlays/how-to-play-overlay.tsx:598
+#: components/overlays/how-to-play-overlay.tsx:600
 msgid "If the same challenge comes round again it starts from nothing: a new window is a new contest, and the last one stays where it is."
 msgstr "Pokud se stejná výzva objeví znovu, začíná od nuly: nové okno je nová soutěž a to minulé zůstává, jak bylo."
 
-#: components/overlays/how-to-play-overlay.tsx:591
+#: components/overlays/how-to-play-overlay.tsx:593
 msgid "If the window closes while you are playing, the run ends there — and you are told how it finished."
 msgstr "Když se výzva zavře uprostřed hry, hra tím končí — a dozvíš se, jak dopadla."
 
@@ -1755,6 +1754,10 @@ msgstr "Slož svůj první cíl."
 #: components/overlays/advanced-options-overlay.tsx:126
 msgid "LANGUAGE"
 msgstr "JAZYK"
+
+#: components/game/best-scores-line.tsx:99
+msgid "LAST"
+msgstr "MINULE"
 
 #: components/overlays/admin-stats.tsx:301
 msgid "LAST FIVE SESSIONS"
@@ -2098,7 +2101,7 @@ msgstr "[BOARD] nikdo hráči [W] ani jednou nesebral."
 msgid "Nobody got a grip on it — [C] different players took a day of it."
 msgstr "Nikdo ho neuchopil. Různých jmen na jeho dnech: [C]."
 
-#: components/overlays/challenge-card.tsx:225
+#: components/overlays/challenge-card.tsx:241
 msgid "Nobody has played it yet."
 msgstr "Zatím ji nikdo nehrál."
 
@@ -2293,7 +2296,7 @@ msgstr "Jedno gesto může pohnout několika tlačítky"
 msgid "One line under your name, for anyone who opens your profile."
 msgstr "Jeden řádek pod tvým jménem, pro každého, kdo si otevře tvůj profil."
 
-#: components/overlays/how-to-play-overlay.tsx:893
+#: components/overlays/how-to-play-overlay.tsx:895
 msgid "One point, winner takes all — everyone else gets nothing."
 msgstr "Jeden bod, vítěz bere vše — ostatní nedostanou nic."
 
@@ -2314,8 +2317,8 @@ msgid "One run ≥ 60 min, any mode"
 msgstr "Jedna hra ≥ 60 min, libovolný režim"
 
 #: components/overlays/how-to-play-overlay.tsx:576
-msgid "One set of standings, shared by everyone playing it, and it never resets. Your best run is the one that counts."
-msgstr "Jedno pořadí pro všechny, kdo ji hrají, a nikdy se nenuluje. Počítá se tvá nejlepší hra."
+msgid "One set of standings, shared by everyone playing it, and it never resets. Your best run is the one that counts. Where the standings are a race against the clock, only a run you finish counts at all — stop early, or let the window close on you, and it is not timed."
+msgstr "Jedno pořadí pro všechny, kdo ji hrají, a nikdy se nenuluje. Počítá se tvá nejlepší hra. Kde se v pořadí závodí s časem, počítá se jen hra, kterou dohraješ — skončíš dřív nebo ti okno zavře, a čas se nezapíše."
 
 #: constants/achievements.ts:226
 msgid "ONE STROKE"
@@ -2341,7 +2344,7 @@ msgstr "Hrálo se dohromady jen [P]× a [A] vzal všechno."
 msgid "Only ever used to get your profile back. No newsletters, no offers, nothing else — ever."
 msgstr "Použijeme ho jen k vrácení profilu. Žádné newslettery, žádné nabídky, nic jiného — nikdy."
 
-#: components/overlays/how-to-play-overlay.tsx:892
+#: components/overlays/how-to-play-overlay.tsx:894
 msgid "Only the first player to land it scores."
 msgstr "Body dostane jen ten, kdo to složí první."
 
@@ -2379,7 +2382,7 @@ msgstr "NASTAVENÍ"
 msgid "OR RESTORE YOUR PROFILE"
 msgstr "NEBO SI VRAŤ PROFIL"
 
-#: components/overlays/how-to-play-overlay.tsx:736
+#: components/overlays/how-to-play-overlay.tsx:738
 msgid "Out of hearts and the run is over. That and the mouth are the only two ways one ends."
 msgstr "Když dojdou životy, hra končí. Spolu s jícnem jsou to jediné dva konce, které hra má."
 
@@ -2420,7 +2423,7 @@ msgstr "období = {periods} pro den / týden. místo = {places} pro 1. / 2. / 3.
 msgid "PHOTO FINISH"
 msgstr "FOTOFINIŠ"
 
-#: components/overlays/how-to-play-overlay.tsx:875
+#: components/overlays/how-to-play-overlay.tsx:877
 msgid "Pick “With friends” on the start screen. Create a game and share the four-digit code, or type a friend’s code to join. Two players are enough to start, and the one who created the room starts it.\n"
 "\n"
 "Everyone dials the same ten targets, one at a time, on their own grid. There are no lives — every target scores, and how it scores is the mode the host picked:"
@@ -2428,7 +2431,7 @@ msgstr "Na úvodní obrazovce zvol „S přáteli“. Založ hru a pošli ostatn
 "\n"
 "Všichni dostanou stejných deset cílů, jeden po druhém, každý na svou mřížku. Životy tu nejsou — bodují se všechny cíle a jak, to určuje mód, který vybral zakladatel:"
 
-#: components/overlays/how-to-play-overlay.tsx:609
+#: components/overlays/how-to-play-overlay.tsx:611
 msgid "Pick ARCADE on the start screen. The dial is the same dial — but the targets are not scattered any more. Two to four of them hang at the ends of ways out of the crossroad you are standing on, and the one you dial is the one you walk."
 msgstr "Na úvodní obrazovce zvol ARKÁDU. Číselník je pořád ten samý — jen cíle už nejsou rozesety po ploše. Dva až čtyři visí na koncích cest, které vedou z křižovatky, na níž stojíš, a vydáš se tou, kterou vytočíš."
 
@@ -2567,7 +2570,7 @@ msgstr "ramp(x) = x × ({floor} + {slack} × 0,5 ^ (zásahy ÷ {halfLife}))"
 msgid "Reach 25 hits in one run before losing a life."
 msgstr "Dosáhni v jedné hře 25 zásahů, než přijdeš o život."
 
-#: components/overlays/how-to-play-overlay.tsx:714
+#: components/overlays/how-to-play-overlay.tsx:716
 msgid "Reach a tower’s number by the shortest route there is and the whole tower comes down at once, however many hits it had left. Waste a move getting there and you only chip it. Reading the wall is worth more than hurrying at it."
 msgstr "Dojdi na číslo věže nejkratší cestou, jaká existuje, a celá věž se zboří naráz, ať jí zbývalo zásahů kolik chce. Promarníš po cestě jeden tah a jen ji odštípneš. Číst hradby se vyplatí víc než na ně spěchat."
 
@@ -2794,7 +2797,7 @@ msgstr "Získej 5 000 bodů v Rychlosti."
 msgid "Score rewards precision: solve each target in the fewest moves."
 msgstr "Skóre odměňuje preciznost: slož každý cíl na co nejmíň tahů."
 
-#: components/overlays/how-to-play-overlay.tsx:844
+#: components/overlays/how-to-play-overlay.tsx:846
 msgid "Scores, one ladder per mode — Accuracy and Speed ask for opposite things, so each has its own rungs to climb."
 msgstr "Skóre, pro každý mód vlastní žebřík — Přesnost a Rychlost chtějí opačné věci, takže i příčky má každá své."
 
@@ -2847,7 +2850,7 @@ msgstr "9."
 msgid "SEPTEMBER"
 msgstr "září"
 
-#: components/game/best-scores-line.tsx:82
+#: components/game/best-scores-line.tsx:97
 msgid "SESSION"
 msgstr "OKNO"
 
@@ -2883,7 +2886,7 @@ msgstr "SEDM DNÍ V ŘADĚ"
 msgid "Seven days, one name. [A] had the week from Monday and never let go."
 msgstr "Sedm dní, jedno jméno. [A] držel týden od pondělí a už ho nepustil."
 
-#: components/overlays/how-to-play-overlay.tsx:891
+#: components/overlays/how-to-play-overlay.tsx:893
 msgid "Seven seconds a target — the clock everyone races."
 msgstr "Sedm vteřin na cíl — stejný čas pro všechny."
 
@@ -2909,7 +2912,7 @@ msgstr "OD {0}"
 msgid "Sixteen keys, double time"
 msgstr "Šestnáct tlačítek, dvojnásobné tempo"
 
-#: components/overlays/how-to-play-overlay.tsx:850
+#: components/overlays/how-to-play-overlay.tsx:852
 msgid "Skill inside a single run: a long streak, the top multiplier, a stretch without losing a life."
 msgstr "Dovednost v jedné hře: dlouhá série, nejvyšší násobitel, úsek bez ztráty života."
 
@@ -2925,7 +2928,7 @@ msgstr "ZÁVĚTŘÍ"
 msgid "So you can get your profile back on another phone."
 msgstr "Ať si svůj profil vrátíš i v jiném telefonu."
 
-#: components/overlays/how-to-play-overlay.tsx:619
+#: components/overlays/how-to-play-overlay.tsx:621
 msgid "Some roads have bandits on them, and nothing says so the first time. The hero is stopped partway along and a band of them closes in from every side, each carrying a number — dial one to cut that man down. They come in off the edges of the screen, so the whole band can be read before the nearest of them arrives. Let one reach you and it costs a heart, and you are driven back to the crossroad you set off from. Clear the road and you walk on, and it may be carrying food or a heart for you."
 msgstr "Na některých cestách číhají lupiči a napoprvé to nic neprozradí. Hrdina se zastaví v půli cesty a banda se k němu stahuje ze všech stran, každý s vlastním číslem — vytoč ho a lupič padne. Přicházejí od okrajů obrazovky, takže si celou bandu přečteš ještě dřív, než k tobě dojde ten nejbližší. Když tě jeden dostihne, stojí tě to život a zahná tě zpátky na křižovatku, ze které jsi vyšel. Vyčisti cestu a půjdeš dál — a možná u sebe měli jídlo nebo život."
 
@@ -3005,7 +3008,7 @@ msgstr "SPUSTIT TUTORIÁL"
 msgid "STARTS"
 msgstr "ZAČÁTEK"
 
-#: components/overlays/how-to-play-overlay.tsx:787
+#: components/overlays/how-to-play-overlay.tsx:789
 msgid "Starving stops nothing else. The clock still runs, the dial still listens and the ways are still there — so an empty row is a reason to hurry toward walls, not a reason the run is over."
 msgstr "Hladovění nezastaví nic dalšího. Čas běží, číselník poslouchá a cesty jsou pořád na místě — prázdná řada je tedy důvod spěchat k hradbám, ne důvod, že je hra u konce."
 
@@ -3026,7 +3029,7 @@ msgstr "SESTUP NA {rungName}"
 msgid "STEP UP TO {rungName}"
 msgstr "POSUŇ SE NA {rungName}"
 
-#: components/overlays/how-to-play-overlay.tsx:856
+#: components/overlays/how-to-play-overlay.tsx:858
 msgid "Sticking with it — targets landed across every run you have ever played, and days played in a row."
 msgstr "Vytrvalost — cíle složené za všechny hry dohromady a dny odehrané v řadě."
 
@@ -3159,7 +3162,7 @@ msgstr "DESET REKORDŮ"
 msgid "TEN RUNS"
 msgstr "DESET HER"
 
-#: components/overlays/how-to-play-overlay.tsx:883
+#: components/overlays/how-to-play-overlay.tsx:885
 msgid "Ten seconds a target, the same one for everybody."
 msgstr "Deset vteřin na cíl, pro všechny stejný."
 
@@ -3207,7 +3210,7 @@ msgstr "Historické tabulky zůstaly přesně tak, jak byly."
 msgid "THE ANSWER"
 msgstr "ODPOVĚĎ"
 
-#: components/overlays/how-to-play-overlay.tsx:885
+#: components/overlays/how-to-play-overlay.tsx:887
 msgid "The best takes the most points; the last to land it takes none."
 msgstr "Nejvíc bodů bere nejlepší, a kdo cíl složí poslední, nebere nic."
 
@@ -3242,7 +3245,7 @@ msgstr "Číselník toho na první pohled řekne víc.\n"
 msgid "THE EAGLE"
 msgstr "OREL"
 
-#: components/overlays/how-to-play-overlay.tsx:768
+#: components/overlays/how-to-play-overlay.tsx:770
 msgid "The fight itself costs nothing to stand in. Dialling at towers and warriors leaves the loaves exactly as they were when the walls closed."
 msgstr "Samotný boj nic nestojí. Volání na věže a bojovníky nechá chleby přesně tak, jak byly, když se hradby zavřely."
 
@@ -3254,11 +3257,11 @@ msgstr "To není rozestup. To je podlaha a strop."
 msgid "THE GOAL"
 msgstr "CÍL HRY"
 
-#: components/overlays/how-to-play-overlay.tsx:699
+#: components/overlays/how-to-play-overlay.tsx:701
 msgid "The hero halts well short of the gate, with the walls across the top of the screen and open ground between. Every tower on them carries a number, and so does every warrior who comes out of the gate."
 msgstr "Hrdina se zastaví hodně daleko před branou, hradby se táhnou přes horní okraj obrazovky a mezi vámi je volné pole. Každá věž na nich nese číslo a nese ho i každý válečník, který z brány vyjde."
 
-#: components/overlays/how-to-play-overlay.tsx:774
+#: components/overlays/how-to-play-overlay.tsx:776
 msgid "The loaves tell you before they run out. Down to one and it turns orange; down to half of one and it turns red, which is one more careful walk and no careless ones."
 msgstr "Chleby ti dají vědět, než se dojedí. Při jednom zoranžoví, při půlce zčervenají — to je ještě na jednu opatrnou cestu a na žádnou nedbalou."
 
@@ -3266,7 +3269,7 @@ msgstr "Chleby ti dají vědět, než se dojedí. Při jednom zoranžoví, při 
 msgid "THE LONG WAY"
 msgstr "OKLIKOU"
 
-#: components/overlays/how-to-play-overlay.tsx:679
+#: components/overlays/how-to-play-overlay.tsx:681
 msgid "The map turns as you walk, to keep you pointed forward. Tap the compass in the corner if you would rather north stayed at the top of the screen — it remembers whichever you chose."
 msgstr "Mapa se za chůze otáčí, aby tvůj směr mířil vždy nahoru. Když chceš radši sever nahoře, klepni na růžici v rohu — co si vybereš, to si pamatuje."
 
@@ -3445,7 +3448,7 @@ msgstr "TISÍC ZÁSAHŮ"
 msgid "Three lives, and every score reaches the board."
 msgstr "Tři životy a každé skóre se dostane na žebříček."
 
-#: components/overlays/how-to-play-overlay.tsx:804
+#: components/overlays/how-to-play-overlay.tsx:806
 msgid "Three standings carry a mark: the all-time record on each mode’s Extreme board, and the last challenge. A mark travels with your name everywhere it is drawn — the boards, your own row, a multiplayer room — so the hardest standings say who holds them without anyone having to look them up."
 msgstr "Odznak nesou tři postavení: rekord všech dob na Extrémním žebříčku každého módu a poslední výzva. Odznak putuje s tvým jménem všude, kde se objeví — po žebříčcích, na tvém řádku, v místnosti s přáteli — takže nejtěžší postavení říkají, kdo je drží, aniž by to kdokoli musel dohledávat."
 
@@ -3477,7 +3480,7 @@ msgstr "TIPY A TRIKY"
 msgid "TO PUBLISH YOUR BESTS"
 msgstr "PRO ZVEŘEJNĚNÍ SVÝCH REKORDŮ"
 
-#: components/game/best-scores-line.tsx:77
+#: components/game/best-scores-line.tsx:92
 #: components/overlays/board-medals.tsx:20
 #: components/overlays/high-scores.tsx:34
 msgid "TODAY"
@@ -3630,7 +3633,7 @@ msgstr "ČEKÁ SE NA OSTATNÍ…"
 msgid "WALL"
 msgstr "ZEĎ"
 
-#: components/overlays/how-to-play-overlay.tsx:722
+#: components/overlays/how-to-play-overlay.tsx:724
 msgid "Warriors leave the gate one at a time, and faster the longer the fight drags on. Dial a warrior’s number and he is gone. Let one reach you and it costs a heart. There is no way out of a siege but winning it, so look at the walls before you dial that way."
 msgstr "Bojovníci vycházejí z brány po jednom, a čím déle boj trvá, tím rychleji. Navol číslo bojovníka a je pryč. Když tě některý dostihne, stojí tě to život. Z obléhání se nedá dostat jinak než vítězstvím, tak si hradby prohlédni dřív, než tu cestu zvolíš."
 
@@ -3646,7 +3649,7 @@ msgstr "Poslali jsme šest číslic na <0>{address}</0>."
 msgid "Wednesday"
 msgstr "ve středu"
 
-#: components/game/best-scores-line.tsx:78
+#: components/game/best-scores-line.tsx:93
 msgid "WEEK"
 msgstr "TÝDEN"
 
@@ -3675,7 +3678,7 @@ msgstr "CO JE VE HŘE NOVÉHO?"
 msgid "WHAT’S ON YOUR MIND?"
 msgstr "CO MÁŠ NA SRDCI?"
 
-#: components/overlays/how-to-play-overlay.tsx:661
+#: components/overlays/how-to-play-overlay.tsx:663
 msgid "When the red reaches you it drags you back one crossroad — and the ways you find there are the ones you left."
 msgstr "Až k tobě červená dojde, stáhne tě o jednu křižovatku zpět — a čekají tam tytéž cesty jako předtím."
 
@@ -3735,7 +3738,7 @@ msgstr "S tvým svolením zaznamenáme, jak hraješ — ťuknutí, švihnutí, c
 msgid "WON"
 msgstr "VYHRÁNO"
 
-#: components/game/best-scores-line.tsx:93
+#: components/game/best-scores-line.tsx:110
 #: components/overlays/admin-people.tsx:87
 #: components/overlays/player-tile.tsx:128
 #: components/overlays/tab-panel.tsx:23
@@ -3796,7 +3799,7 @@ msgstr "JSI OFFLINE"
 msgid "you@example.com"
 msgstr "ty@priklad.cz"
 
-#: components/game/best-scores-line.tsx:76
+#: components/game/best-scores-line.tsx:91
 msgid "YOUR"
 msgstr "TVŮJ"
 

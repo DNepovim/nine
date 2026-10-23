@@ -521,8 +521,20 @@ const runOver = (
   // — see `freshGame`. Measured against it, the second drilled run of a sitting began
   // already over the line and ended the instant its board first went clear. `dealt` is
   // reset by every fresh run, which is what "this run has had its nine" actually means.
-  if (drill !== null) return context.dealt >= drill && after.targets.length === 0
+  if (drill !== null) return drillDone(drill, context.dealt, after.targets)
   return after.lives <= 0
+}
+
+const drillDone = (drill: number, dealt: number, targets: readonly Target[]): boolean =>
+  dealt >= drill && targets.length === 0
+
+// Whether a drilled run went the distance: its drill dealt and its board clear. A race's
+// time means this and nothing else — a run stopped by its window shutting reaches
+// `gameOver` too, holding a clock it never finished. Read off a finished run's context,
+// where `runOver` above is asked about a press still being made.
+export const drillSpent = (context: Context): boolean => {
+  const drill = rulesOf(context).spawn.drill
+  return drill !== null && drillDone(drill, context.dealt, context.targets)
 }
 
 function applyGrid(context: Context, newGrid: Grid, now: number) {

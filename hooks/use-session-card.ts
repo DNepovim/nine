@@ -5,7 +5,12 @@ import { useFlag } from '@/hooks/use-flags'
 import { useOpenSessions } from '@/hooks/use-open-sessions'
 import { cardSession, type SessionCard } from '@/lib/challenge-session'
 import type { LeaderboardRow } from '@/lib/leaderboard'
-import { loadSessionBoard, type OpenSession } from '@/lib/session-board'
+import {
+  loadPreviousWinner,
+  loadSessionBoard,
+  type OpenSession,
+  type PreviousWinner,
+} from '@/lib/session-board'
 
 // The one session the start screen draws, or none.
 //
@@ -173,4 +178,34 @@ export function useSessionBoard(
   }, [])
 
   return { board, refresh }
+}
+
+// Who won this session's challenge the last time it was aired — see
+// `previous_session_winner`. Null while the read is out, on a first airing, and for an
+// ordinary run.
+//
+// Read again on `again`, as `useSessionBoard` is: a closed session's result does not move,
+// but a read can come back empty without meaning it — offline, or with the predecessor
+// still inside its grace — and an answer taken once would hold that for the whole session.
+// A winner already found is kept through a read that finds none.
+export function usePreviousWinner(
+  sessionId: string | null,
+  again: unknown = null,
+): PreviousWinner | null {
+  const [winner, setWinner] = useState<{ for: string; winner: PreviousWinner } | null>(
+    null,
+  )
+  useEffect(() => {
+    if (sessionId === null) return
+    const read = { stale: false }
+    void loadPreviousWinner(sessionId).then((found) => {
+      if (!read.stale && found !== null) setWinner({ for: sessionId, winner: found })
+    })
+    return () => {
+      read.stale = true
+    }
+  }, [sessionId, again])
+  // Keyed by the session it answers for, so a winner read for the last challenge run is
+  // never drawn on the next one's strip while its own read is still out.
+  return winner !== null && winner.for === sessionId ? winner.winner : null
 }

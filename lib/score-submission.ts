@@ -157,7 +157,14 @@ export async function submitScore(
   if (score <= 0) return
   // Only a clock-measured mode keeps one. Everything else — every board run, every
   // score-measured session — stores no time, which is what it has always done.
-  const timeMs = measureOf(mode) === 'time' ? elapsedMs : undefined
+  const timed = measureOf(mode) === 'time'
+  // A race posts once, at the end, or not at all. The mid-run record post has no time,
+  // and a timeless entry is judged on its score — so a slower run that scored more
+  // replaced the player's faster one, on the device and on the server, and the finish
+  // that followed carried a time nothing could compare against. A challenge keeps no
+  // `scores` board, so its first point always reads as opening one and always fired it.
+  if (timed && elapsedMs === undefined) return
+  const timeMs = timed ? elapsedMs : undefined
   const day = todayISO()
   const run = {
     mode,

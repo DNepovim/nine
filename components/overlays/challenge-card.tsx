@@ -15,6 +15,7 @@ import { mono } from '@/constants/theme'
 import { GLYPH, READOUT, TYPE } from '@/constants/typography'
 import type { SessionCard } from '@/lib/challenge-session'
 import { cn } from '@/lib/cn'
+import { formatRaceTime } from '@/lib/duration'
 import { rankMedal } from '@/lib/rank-emoji'
 import type { OpenSession } from '@/lib/session-board'
 import { darkGradientOf, dialOf, gradientOf, labelOf } from '@/modes'
@@ -87,6 +88,17 @@ export function ChallengeCard({
   // until it has loaded, which is the same bargain every other readout makes — a figure
   // in the wrong face for a frame beats a row that is not there.
   const [dsegLoaded] = useFonts({ DSEG7: DSEG7Font })
+  // What the leader is ahead on: the clock on a race, which is what its places are
+  // settled by, and the score everywhere else. Written the way the standings write it,
+  // so the card and the table under START never show one run two ways.
+  const leaderFigure =
+    session.leader === null
+      ? null
+      : session.measure === 'score'
+        ? session.leader.score
+        : session.leader.timeMs === null
+          ? '—'
+          : formatRaceTime(session.leader.timeMs)
 
   // ─── Not open yet ───────────────────────────────────────────────────────────
   //
@@ -258,7 +270,7 @@ export function ChallengeCard({
                       className={cn(READOUT.row, 'text-score')}
                       style={{ fontFamily: dsegLoaded ? 'DSEG7' : mono }}
                     >
-                      {session.leader.score}
+                      {leaderFigure}
                     </Text>
                   </Trans>
                 </Text>

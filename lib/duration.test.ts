@@ -174,7 +174,13 @@ describe('formatWindowLength', () => {
 describe('formatRaceTime', () => {
   it('gives a tenth of a second, which is what a race is decided on', () => {
     expect(formatRaceTime(11_400)).toBe('11.4″')
-    expect(formatRaceTime(9_050)).toBe('9.1″')
+    expect(formatRaceTime(9_050)).toBe('9.0″')
+  })
+
+  it('floors exactly as the stopwatch does, so a run reads the same on both', () => {
+    for (const ms of [9_050, 9_099, 23_470, 59_999]) {
+      expect(formatRaceTime(ms)).toBe(`${formatRunClock(ms)}″`)
+    }
   })
 
   it('keeps the tenth even at nought, so a column of them lines up', () => {

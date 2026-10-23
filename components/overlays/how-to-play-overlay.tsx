@@ -575,7 +575,9 @@ export function HowToPlayOverlay({
                 <Bullet color={GAME_SCALE[3]}>
                   <Trans>
                     One set of standings, shared by everyone playing it, and it never
-                    resets. Your best run is the one that counts.
+                    resets. Your best run is the one that counts. Where the standings are
+                    a race against the clock, only a run you finish counts at all — stop
+                    early, or let the window close on you, and it is not timed.
                   </Trans>
                 </Bullet>
                 <Bullet color={GAME_SCALE[3]}>

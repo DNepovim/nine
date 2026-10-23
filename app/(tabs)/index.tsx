@@ -112,7 +112,7 @@ import { useRolePreview } from '@/hooks/use-role-preview'
 import { useSavedRun } from '@/hooks/use-saved-run'
 import { useScoreDirection } from '@/hooks/use-score-direction'
 import { useScoreSubmission } from '@/hooks/use-score-submission'
-import { useSessionBoard } from '@/hooks/use-session-card'
+import { usePreviousWinner, useSessionBoard } from '@/hooks/use-session-card'
 import { useSessionPlaces } from '@/hooks/use-session-places'
 import { useSplash } from '@/hooks/use-splash'
 import { useStepUp } from '@/hooks/use-step-up'
@@ -151,12 +151,13 @@ import {
   type RunSession,
   type SavedRun,
 } from '@/lib/saved-run'
+import type { PreviousWinner } from '@/lib/session-board'
 import { STEP_UP_BOARD } from '@/lib/step-up'
 import { multiplierColor } from '@/lib/streak-badge'
 import { tipForTarget } from '@/lib/tutorial-tip'
 import { valueProgress } from '@/lib/value-progress'
 import { WELCOME_BOARD } from '@/lib/welcome'
-import { bestOn, gameMachine, type GameSend } from '@/machines/game'
+import { bestOn, drillSpent, gameMachine, type GameSend } from '@/machines/game'
 import { computePar } from '@/machines/scoring'
 import { keyControl, type LessonVoice } from '@/machines/tutorial-lesson'
 import {
@@ -501,6 +502,7 @@ const sessionBestsOf = (
   board: PeriodBoard | null,
   measure: Measure,
   userId: string | null,
+  previous: PreviousWinner | null,
 ): SessionBests | null => {
   if (id === null || closesAt === null || board === null) return null
   const timed = measure === 'time'
@@ -511,6 +513,16 @@ const sessionBestsOf = (
     holder: board.recordHolder,
     mine: board.recordIsMine,
     myBest: timed ? (mine?.time_ms ?? 0) : board.myBest,
+    // Left off rather than drawn as 0.0 where a race's winner has no time — an untimed
+    // row from an older build, which would read as a record nobody could beat.
+    last:
+      previous === null || (timed && previous.timeMs === null)
+        ? null
+        : {
+            holder: previous,
+            value: timed ? (previous.timeMs ?? 0) : previous.score,
+            mine: previous.userId === userId,
+          },
     closesAt,
   }
 }
@@ -986,6 +998,8 @@ export default function GameScreen() {
     userId,
     isPaused,
   )
+  // Who won this challenge the last time it was aired, for the strip's third cell.
+  const previousWinner = usePreviousWinner(runSession, isPaused)
   // Who holds each mode's Extreme all-time board, and who took the last challenge —
   // read wherever a name is drawn, and by the game-over screen to tell a reign from a
   // single record. The id is passed so the dev sidebar can pin the phoenix on this player.
@@ -1316,8 +1330,11 @@ export default function GameScreen() {
         // The run is over, so `elapsedMs` has stopped moving — see `stopClock`.
         // `submitScore` keeps it only where the measure is the clock; the mid-run
         // record post above sends none, a run still being played having no time to
-        // claim.
-        state.context.elapsedMs,
+        // claim. Nor does a drilled run its window shut on before the ninth target
+        // fell: only a finished race has a time, and without one a race posts nothing.
+        rules.spawn.drill === null || drillSpent(state.context)
+          ? state.context.elapsedMs
+          : undefined,
         // Then the standings again, so the table on the game-over screen has this run on
         // it. Read before the write landed, it showed the session as it was before the
         // run — empty, on a session nobody else had played yet. Asks nothing of the
@@ -1432,10 +1449,11 @@ export default function GameScreen() {
       })
     }
     if (score <= 0) return
-    // The run's own clock goes up with it. The machine folds it shut the instant
-    // `playing` is left, so this is a finished number rather than one still moving, and
-    // `submitScore` keeps it only where the measure is the clock.
-    void submitScore(mode, rules.difficulty, score, hits, runSession, elapsedMs)
+    // No time goes up with it. A run left before its drill was spent did not finish the
+    // race, and the clock it stopped on is not a time it set: one hit and END RUN posted
+    // 3.1″, which beat every run that went the distance. Without one, `submitScore`
+    // drops a race's post entirely and keeps a score-measured session's as it was.
+    void submitScore(mode, rules.difficulty, score, hits, runSession)
     void refreshBoard()
     if (isReady && !nickname) setShowNicknameModal(true)
   }
@@ -1958,6 +1976,7 @@ export default function GameScreen() {
                   runSessionBoard,
                   rules.scoring.measure,
                   userId,
+                  previousWinner,
                 )}
                 onWindowShut={handleWindowShut}
                 inRun={inRun}

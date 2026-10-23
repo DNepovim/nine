@@ -84,14 +84,32 @@ describe('recordRun', () => {
     expect(recordRun(store, timed(9000, 11000))).toBe(store)
   })
 
-  it('falls back to the score when only one of the two carries a time', () => {
-    // A run played before times existed, beside one played after. Nothing can be
-    // compared but the score, which is the only answer available.
+  it('lets a finished run replace a quicker one that was left part-way', () => {
+    // One hit and END RUN stood at 3.1″ and refused every run that went the distance.
+    const quit = entry({ sessionId: SESSION, score: 75, hits: 1, timeMs: 3100 })
+    const finished = run({ sessionId: SESSION, score: 6200, hits: 9, timeMs: 8500 })
+    expect(recordRun([quit], finished)).toEqual([entry(finished)])
+  })
+
+  it('refuses a quicker run that went less far', () => {
+    const store = [entry({ sessionId: SESSION, score: 6200, hits: 9, timeMs: 8500 })]
+    const quit = run({ sessionId: SESSION, score: 75, hits: 1, timeMs: 3100 })
+    expect(recordRun(store, quit)).toBe(store)
+  })
+
+  it('lets a timed run replace an untimed entry whatever it scored', () => {
+    // An older build's mid-run post left a score and no time; the finish that followed
+    // scored less and was never sent.
     const store = recordRun(
-      [entry({ sessionId: SESSION, score: 400 })],
-      timed(900, 99999),
+      [entry({ sessionId: SESSION, score: 6500 })],
+      timed(6200, 8500),
     )
-    expect(store).toEqual([timedEntry(900, 99999)])
+    expect(store).toEqual([timedEntry(6200, 8500)])
+  })
+
+  it('never lets an untimed run replace a timed entry', () => {
+    const store = [timedEntry(6200, 8500)]
+    expect(recordRun(store, run({ sessionId: SESSION, score: 9000 }))).toBe(store)
   })
 
   it('leaves a board run judged by its score alone', () => {

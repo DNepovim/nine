@@ -101,18 +101,28 @@ const boardKey = (entry: LocalScore): string =>
 // Whether the run just played beat what the device already holds for its slot.
 //
 // Two questions, and which one is asked is the slot's own answer rather than a caller's.
-// **If both runs carry a time, the faster wins** — that is a session measured by the
-// clock, where a run that scored less but got through quicker is plainly the better one
-// and refusing it would hide the player's own best from them. Otherwise the higher score
-// wins, which is every board and every score-measured session.
+// Where neither run carries a time — every board and every score-measured session — the
+// higher score wins. Only a race carries one, and there, in order: **a timed run beats an
+// untimed one, more hits beats fewer, then the faster time wins.**
+//
+// The untimed entry on a race is what an older build's mid-run post left behind, with a
+// score the finish may not reach and no time to set against it. And hits come before the
+// clock because a race is only a time once its drill is spent: a run left after one hit
+// stopped at 3.1″, which on the clock alone beat every run that finished.
 //
 // The same rule the server keeps, in the same words, deliberately: `prevent_session_
 // downgrade` decides this again on the way in, and the two disagreeing would mean a
 // device showing one best and the standings showing another.
-const beats = (run: { score: number; timeMs?: number }, held: LocalScore): boolean =>
-  run.timeMs !== undefined && held.timeMs !== undefined
-    ? run.timeMs < held.timeMs
-    : run.score > held.score
+const beats = (
+  run: { score: number; hits: number; timeMs?: number },
+  held: LocalScore,
+): boolean => {
+  if (run.timeMs === undefined && held.timeMs === undefined) return run.score > held.score
+  if (run.timeMs === undefined) return false
+  if (held.timeMs === undefined) return true
+  if (run.hits !== held.hits) return run.hits > held.hits
+  return run.timeMs < held.timeMs
+}
 
 export function recordRun(
   store: LocalScore[],

@@ -66,7 +66,9 @@ export function formatRunClock(ms: number): string {
 export function formatRaceTime(ms: number): string {
   const safe = Math.max(0, ms)
   if (safe >= 60_000) return formatGameTime(safe)
-  return `${(safe / 1000).toFixed(1)}${DOUBLE_PRIME}`
+  // The stopwatch's own figure, never rounded: it read 9.0 at the finish, and the
+  // standings saying 9.1 for the same run looked like a different time.
+  return `${formatRunClock(safe)}${DOUBLE_PRIME}`
 }
 
 export function formatGameTime(ms: number): string {
