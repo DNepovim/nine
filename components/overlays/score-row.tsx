@@ -166,25 +166,28 @@ export function ScoreRow({
           readout. A board of scores set in the label ink was the one place a number
           did not look like one.
 
+          Except beside a time. On a race the clock is what the places are settled on,
+          so the green moves to it, and the score steps back — smaller and dim — to
+          what it is there: what the run was worth, and not what it was ranked by.
+
           Deliberately not accented on the player's own row: the tinted background and
           the rank already say which row is theirs, and a score column that changes
           colour on one line stops reading as a column. */}
       <Text
         selectable={false}
-        className={cn(READOUT.row, measure === 'time' && SCORE_COLUMN, 'text-score')}
+        className={cn(
+          measure === 'time'
+            ? [READOUT.rowAside, SCORE_COLUMN, 'text-dim']
+            : [READOUT.row, 'text-score'],
+        )}
         style={[{ fontFamily: digitFont }, glow]}
       >
         {entry.score}
       </Text>
-      {/* The figure the board is actually placed on, where that is not the score.
-          Drawn in the label ink rather than the score green: the green means *this is
-          what the run was worth*, and a clock is not that — it is what the run took.
-          Two green columns would also leave nothing saying which one the places came
-          from. */}
       {measure === 'time' && (
         <Text
           selectable={false}
-          className={cn(READOUT.row, TIME_COLUMN, 'text-primary')}
+          className={cn(READOUT.row, TIME_COLUMN, 'text-score')}
           style={[{ fontFamily: digitFont }, glow]}
         >
           {entry.timeMs == null ? '—' : formatRaceTime(entry.timeMs)}

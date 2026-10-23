@@ -163,6 +163,9 @@ export const READOUT = {
   // A score in a leaderboard row, where the digits are a column to be compared down
   // rather than a number to be read once.
   row: 'text-[10px] tracking-[1px]',
+  // The figure beside the one a row is placed on, where a board has two — a race's
+  // score, set back behind its time so the column the places come from reads first.
+  rowAside: 'text-[8px] tracking-[1px]',
 } as const
 
 // Emoji drawn at size — a medal, a rank mark, an achievement's tick, the sign-off on the
