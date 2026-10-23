@@ -1,6 +1,6 @@
 ---
 name: ship
-description: Ship the current work — first run the `check` suite, then (default) commit on a new branch and open a GitHub PR, or (`ship prod`) commit and push straight to main, and finally offer to deploy to production. Use when finishing a piece of work and you want it committed / PR'd / shipped. Argument, `prod`, controls the mode. Last stage of the development cycle: it reads the work item's spec for the why behind the commit, and marks the item shipped.
+description: Ship the current work — first run the `check` suite and the dependency audit, then (default) commit on a new branch and open a GitHub PR, or (`ship prod`) commit and push straight to main, and finally offer to deploy to production. Use when finishing a piece of work and you want it committed / PR'd / shipped. Argument, `prod`, controls the mode. Last stage of the development cycle: it reads the work item's spec for the why behind the commit, and marks the item shipped.
 ---
 
 # Ship
@@ -59,6 +59,21 @@ once the push has actually landed.
 
 Invoke the **`check`** skill (lint, Prettier, types, Knip). It fixes what it can;
 if anything can't be made green, **stop** and report — do not ship failing checks.
+
+Then run the same dependency audit the deploy workflow gates on:
+
+```bash
+pnpm audit --audit-level high
+```
+
+`check` does not run it, and a new advisory can land overnight against code
+nobody touched — so a ship that skips it hands Step 3 a deploy that dies in
+CI. If it fails, fix it in this ship: add a `pnpm.overrides` entry in
+`package.json` raising the package to its patched version (the house way, as
+the existing entries show), run `pnpm install`, then audit again. The override
+and its lockfile change are their own `fix(deps)` commit, which the `commit`
+skill splits out. Ignoring an advisory (`auditConfig.ignoreGhsas`) is the
+user's decision, never this skill's. Only a green audit goes on.
 
 Then look at what will ship, in one call rather than several:
 
