@@ -43,7 +43,11 @@ function NewRoleModal({
   const key = toKey(draft)
 
   return (
-    <AdminDialog title={<Trans>NEW ROLE</Trans>} onDismiss={onDismiss}>
+    <AdminDialog
+      title={<Trans>NEW ROLE</Trans>}
+      onDismiss={onDismiss}
+      held={draft.trim() !== ''}
+    >
       <View>
         <TextInput
           value={draft}

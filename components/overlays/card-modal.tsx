@@ -31,10 +31,15 @@ export function CardModal({
   // The Android back button. Routed by the caller to whichever card is up, since only the
   // caller knows which that is.
   onRequestClose,
+  held = false,
   children,
 }: {
   visible: boolean
   onRequestClose: () => void
+  // Set by a caller whose field is its own rather than in a card below — the admin
+  // dialogs, which hold their drafts beside the `AdminDialog` they render. The same prop
+  // `ModalCard` takes, for the same reason; see `dialog-hold.ts`.
+  held?: boolean
   children: ReactNode
 }) {
   const hold = useDialogHold()
@@ -57,7 +62,7 @@ export function CardModal({
           className="absolute inset-0"
           accessible={false}
           onPress={() => {
-            if (hold.held.current) return
+            if (held || hold.held.current) return
             onRequestClose()
           }}
         />

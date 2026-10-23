@@ -97,6 +97,9 @@ function AnswerDialog({
     <AdminDialog
       title={again ? <Trans>REWRITE THE ANSWER</Trans> : <Trans>ANSWER</Trans>}
       onDismiss={onDismiss}
+      // Held against the answer it opened on, not against empty: reopening an answer to
+      // read it and tapping away throws nothing away.
+      held={draft !== (message.answer ?? '')}
     >
       <View>
         {/* What is being answered, above the field. The list is behind a scrim by now,

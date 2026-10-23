@@ -37,7 +37,11 @@ export function AdminExtendDialog({
   const total = minutesFrom(hours, minutes)
 
   return (
-    <AdminDialog title={<Trans>GIVE MORE TIME</Trans>} onDismiss={onDismiss}>
+    <AdminDialog
+      title={<Trans>GIVE MORE TIME</Trans>}
+      onDismiss={onDismiss}
+      held={hours !== '' || minutes !== ''}
+    >
       <View className="mb-2.5 flex-row gap-2">
         <AdminNumberField
           label={<Trans>HOURS</Trans>}

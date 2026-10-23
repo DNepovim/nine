@@ -19,15 +19,18 @@ import { cn } from '@/lib/cn'
 // What it costs is the app's dialog dress: no spectrum edge, no 5-dot close, no CLOSE
 // button under the content. None of the three is missed. A dialog on these screens is
 // answered by answering it — CONFIRM, CREATE, or picking a row — and a tap beside it is
-// the way out, which the scrim already is.
+// the way out, which the scrim already is — except while something is typed in one.
 export function AdminDialog({
   title,
   onDismiss,
+  held = false,
   children,
 }: {
   // What the dialog is asking, in the heading role a card uses for its own header.
   title: ReactNode
   onDismiss: () => void
+  // Something typed in it that a tap beside the card would throw away — see `CardModal`.
+  held?: boolean
   children: ReactNode
 }) {
   return (
@@ -37,7 +40,7 @@ export function AdminDialog({
     // one place in the app that trade is taken: the dialogs here are answered rather than
     // browsed, and what is behind them is a row whose figure has just changed, which is
     // the thing worth looking at.
-    <CardModal visible onRequestClose={onDismiss}>
+    <CardModal visible onRequestClose={onDismiss} held={held}>
       <Text selectable={false} className={cn(TYPE.heading, 'mb-2.5 text-dim')}>
         {title}
       </Text>
