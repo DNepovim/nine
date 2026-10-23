@@ -13,6 +13,8 @@ export const env = createEnv({
     // job and every dev machine run the app without sending anything.
     EXPO_PUBLIC_POSTHOG_KEY: z.string().optional(),
     EXPO_PUBLIC_POSTHOG_HOST: z.url().optional(),
+    // Which project the analytics screen links to — see lib/posthog-project.ts.
+    EXPO_PUBLIC_POSTHOG_PROJECT_ID: z.string().regex(/^\d+$/).optional(),
   },
   // Explicit mapping required — Metro statically replaces process.env.EXPO_PUBLIC_*
   // and doesn't support dynamic process.env access.
@@ -21,5 +23,6 @@ export const env = createEnv({
     EXPO_PUBLIC_SUPABASE_ANON_KEY: process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY,
     EXPO_PUBLIC_POSTHOG_KEY: process.env.EXPO_PUBLIC_POSTHOG_KEY,
     EXPO_PUBLIC_POSTHOG_HOST: process.env.EXPO_PUBLIC_POSTHOG_HOST,
+    EXPO_PUBLIC_POSTHOG_PROJECT_ID: process.env.EXPO_PUBLIC_POSTHOG_PROJECT_ID,
   },
 })

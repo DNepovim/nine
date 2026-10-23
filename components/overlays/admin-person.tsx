@@ -19,7 +19,12 @@ import {
 } from '@/lib/admin/people'
 import { listRoles, type AdminRole } from '@/lib/admin/roles'
 import { cn } from '@/lib/cn'
-import { sourceOf, toggleOverride, type FeatureSource } from '@/lib/features'
+import {
+  featureLabel,
+  sourceOf,
+  toggleOverride,
+  type FeatureSource,
+} from '@/lib/features'
 
 // What each of the six answers says on the row. The point of printing the *source*
 // rather than only the state is that "why can this person see this" is answerable here
@@ -124,7 +129,12 @@ export function AdminPerson({
     if (res.error === null) onChanged()
   }
 
-  const hasOverrides = rows.some((row) => row.override !== null)
+  // A public feature is not listed: it reaches everybody, and nothing on this screen can
+  // change that. Making it public deleted every override on it, so RESET counts the rows
+  // that are listed and those are all there are — see
+  // 20261023010000_public_beats_override.sql.
+  const shown = rows.filter((row) => row.visibility !== 'public')
+  const hasOverrides = shown.some((row) => row.override !== null)
 
   return (
     <AdminScreen
@@ -189,12 +199,11 @@ export function AdminPerson({
             { label: 'FEATURE', tone: 'name' },
             { label: 'WHERE FROM', width: 96, align: 'right' },
           ]}
-          rows={rows.map((row) => {
+          rows={shown.map((row) => {
             const source = sourceOf(row)
             // A hidden feature is nobody's to change from here — the switch for it is on
             // the FEATURES tab, and offering a tap that cannot take effect would be a
-            // lie. A public one stays tappable: revoking it for one person is a thing
-            // this screen can still do, and it is the only screen that can.
+            // lie.
             const locked = source === 'hidden'
             return {
               key: row.key,
@@ -206,7 +215,11 @@ export function AdminPerson({
                   : () => {
                       void toggle(row)
                     },
-              cells: [<AdminTick on={isOn(source)} />, row.key, SOURCE_LABEL[source]],
+              cells: [
+                <AdminTick on={isOn(source)} />,
+                featureLabel(row.key),
+                SOURCE_LABEL[source],
+              ],
             }
           })}
         />

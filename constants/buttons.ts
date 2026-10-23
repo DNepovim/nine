@@ -214,6 +214,8 @@ export type ButtonId =
   | 'admin.select_option'
   // The filter above a list: which statuses of session, which state of message.
   | 'admin.filter'
+  // A tile at the top of the analytics screen, opening the players behind its figure.
+  | 'admin.stat_tile'
   // A row of the messages list, opened to read the whole of what was written.
   | 'admin.message'
   // The two things that can be done about a message, and the press inside the dialog
@@ -230,6 +232,8 @@ export type ButtonId =
   // button that opens it, and `admin.role_new` above is the press inside it that creates
   // the role — which is what that id always reported.
   | 'admin.role_add'
+  // The analytics screen's way out to the PostHog project, for what the database cannot say.
+  | 'admin.open_posthog'
   | 'admin.back'
   | 'admin.done'
 

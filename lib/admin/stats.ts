@@ -144,3 +144,45 @@ export async function loadStats(
     error: null,
   }
 }
+
+// One profile behind the tiles at the top of the screen: whether it joined in the window,
+// and what the run tiles count for it. See `admin_stats_people` — the one read on this
+// screen that names anybody, and only when a tile is pressed.
+export type StatsPerson = {
+  userId: string
+  nickname: string | null
+  joined: boolean
+  runs: number
+  hits: number
+  elapsedMs: number
+}
+
+type StatsPersonPayload = {
+  user_id: string
+  nickname: string | null
+  joined: boolean
+  runs: number
+  hits: number
+  elapsed_ms: number
+}
+
+export async function loadStatsPeople(
+  window: StatsWindow,
+): Promise<{ people: readonly StatsPerson[] | null; error: string | null }> {
+  const { from, to } = windowDays(window)
+  const res = await supabase.rpc('admin_stats_people', { p_from: from, p_to: to })
+  noteRequest(res.error)
+  if (res.error) return { people: null, error: res.error.message }
+  const rows = (res.data as StatsPersonPayload[] | null) ?? []
+  return {
+    people: rows.map((row) => ({
+      userId: row.user_id,
+      nickname: row.nickname,
+      joined: row.joined,
+      runs: row.runs,
+      hits: row.hits,
+      elapsedMs: row.elapsed_ms,
+    })),
+    error: null,
+  }
+}

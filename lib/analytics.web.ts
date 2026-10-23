@@ -8,6 +8,7 @@ import {
 } from '@/lib/analytics-events'
 import { env } from '@/lib/env'
 import { SHARE_URL } from '@/lib/invite-message'
+import { POSTHOG_HOST } from '@/lib/posthog-project'
 
 // PostHog, on the web build — which is the build players actually get.
 //
@@ -16,10 +17,8 @@ import { SHARE_URL } from '@/lib/invite-message'
 // anything, and none of them has to know analytics exists.
 const KEY = env.EXPO_PUBLIC_POSTHOG_KEY ?? ''
 
-// EU by default. The region is fixed when the PostHog project is created and cannot be
-// moved later without a migration, so the default here is the one that keeps EU players'
-// events in the EU.
-const HOST = env.EXPO_PUBLIC_POSTHOG_HOST ?? 'https://eu.i.posthog.com'
+// Shared with the analytics screen's link to the project — see lib/posthog-project.ts.
+const HOST = POSTHOG_HOST
 
 // Only the production site reports. Previews land on nine--<id>.expo.app and dev on
 // localhost, and every run they'd send is a test run wearing a player's clothes —

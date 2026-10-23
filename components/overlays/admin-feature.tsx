@@ -19,6 +19,7 @@ import {
   type FeatureReach,
 } from '@/lib/admin/features'
 import { cn } from '@/lib/cn'
+import { featureLabel } from '@/lib/features'
 
 // The one key whose switch nobody may move, in either direction: hiding it locks every
 // admin out of the only screen that could put it back, and making it public puts the
@@ -111,7 +112,7 @@ export function AdminFeature({
             numberOfLines={1}
             className={cn(TYPE.cardTitle, 'shrink text-primary')}
           >
-            {row.key}
+            {featureLabel(row.key)}
             {locked ? ' 🔒' : ''}
           </Text>
           <VisibilityChip visibility={row.visibility} />
@@ -207,7 +208,7 @@ function Reach({
         {visibility === 'hidden' ? (
           <Trans>Nobody sees this feature, whatever a role or an override says.</Trans>
         ) : (
-          <Trans>Everybody sees this feature, except anyone it is revoked for.</Trans>
+          <Trans>Everybody sees this feature, whatever a role or an override says.</Trans>
         )}
       </Text>
     )

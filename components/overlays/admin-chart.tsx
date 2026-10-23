@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react'
 import { Text, View } from 'react-native'
 
+import { TrackedPressable } from '@/components/tracked-pressable'
 import { TYPE } from '@/constants/typography'
 import { cn } from '@/lib/cn'
 
@@ -43,6 +44,7 @@ export function StatTile({
   label,
   value,
   note,
+  onPress,
   className,
 }: {
   label: ReactNode
@@ -53,10 +55,13 @@ export function StatTile({
   // The line under the figure that says what it is to be read against: what the window
   // before came to, or what the whole is. Left off by a figure that stands alone.
   note?: ReactNode
+  // Opens the players the figure is made of. **The analytics screen's top tiles are the
+  // callers that asked for this**; a tile without it is a figure and nothing more.
+  onPress?: () => void
   className?: string
 }) {
-  return (
-    <View className={cn('flex-1 rounded-xl bg-card px-2 py-1.5', className)}>
+  const body = (
+    <>
       <Text selectable={false} numberOfLines={1} className={cn(TYPE.caption, 'text-dim')}>
         {label}
       </Text>
@@ -68,7 +73,14 @@ export function StatTile({
           {note}
         </Text>
       )}
-    </View>
+    </>
+  )
+  const box = cn('flex-1 rounded-xl bg-card px-2 py-1.5', className)
+  if (onPress === undefined) return <View className={box}>{body}</View>
+  return (
+    <TrackedPressable id="admin.stat_tile" onPress={onPress} className={box}>
+      {body}
+    </TrackedPressable>
   )
 }
 

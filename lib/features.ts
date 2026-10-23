@@ -85,6 +85,13 @@ export function toggleOverride(row: {
   return wanted === inherited ? null : wanted
 }
 
+// A feature key as the admin screens print it: capitalised, and otherwise exactly the key.
+// Every screen that names a feature prints it through this, so a key reads one way across
+// the FEATURES list, a role's stack, a person and the feature's own screen — and the rest
+// of it stays the key, which is what the code and the guards in SQL are written against.
+export const featureLabel = (key: string): string =>
+  key.charAt(0).toUpperCase() + key.slice(1)
+
 // Where a row's answer came from, which is the thing that makes the person screen
 // debuggable rather than merely editable.
 export type FeatureSource =
@@ -103,10 +110,10 @@ export function sourceOf({
   // unreachable however the stack and the override are set, and a screen that showed
   // "on, from role" for something nobody can see would be lying.
   if (visibility === 'hidden') return 'hidden'
-  // The override next, and so above public: a feature revoked for one person stays
-  // revoked when it goes out to everybody, and this row is the only place that is
-  // visible. Same order the resolve reads in.
-  if (override !== null) return override ? 'override-on' : 'override-off'
+  // Public next, and so above the override: a public feature reaches everybody, and no
+  // override takes it from anyone. Same order the resolve reads in — see
+  // 20261023010000_public_beats_override.sql.
   if (visibility === 'public') return 'public'
+  if (override !== null) return override ? 'override-on' : 'override-off'
   return inRoleStack ? 'role-on' : 'role-off'
 }

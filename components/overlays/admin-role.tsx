@@ -15,6 +15,7 @@ import {
   type AdminRole as Role,
 } from '@/lib/admin/roles'
 import { cn } from '@/lib/cn'
+import { featureLabel } from '@/lib/features'
 
 // One role: its name, who holds it, and the features in its stack. Plain on and off —
 // a stack has no third state, because the tri-state belongs to one person's overrides
@@ -139,31 +140,33 @@ export function AdminRole({
             { label: 'FEATURE', tone: 'name' },
             { width: 76, align: 'right' },
           ]}
-          rows={features.map((feature) => {
-            const on = stack.has(feature.key)
-            return {
-              key: feature.key,
-              leads: false,
-              // A hidden feature is faded: this stack decides nothing about it, and the
-              // switch that does is on the FEATURES tab. A public one is not — the stack
-              // has stopped deciding who reaches it, but it is still what the feature
-              // falls back to the day somebody makes it private again, so the tick stays
-              // worth setting.
-              faded: feature.visibility === 'hidden',
-              onPress: pending.has(feature.key)
-                ? undefined
-                : () => {
-                    void toggle(feature.key, on)
-                  },
-              cells: [
-                <AdminTick on={on} />,
-                feature.key,
-                feature.visibility === 'private' ? null : (
-                  <VisibilityChip visibility={feature.visibility} />
-                ),
-              ],
-            }
-          })}
+          // A public feature is not listed: it reaches everybody, so a role's stack decides
+          // nothing about it — and making it public cleared every tick it had, so there is
+          // nothing here to show either. See 20261023010000_public_beats_override.sql.
+          rows={features
+            .filter((feature) => feature.visibility !== 'public')
+            .map((feature) => {
+              const on = stack.has(feature.key)
+              return {
+                key: feature.key,
+                leads: false,
+                // A hidden feature is faded: this stack decides nothing about it, and the
+                // switch that does is on the FEATURES tab.
+                faded: feature.visibility === 'hidden',
+                onPress: pending.has(feature.key)
+                  ? undefined
+                  : () => {
+                      void toggle(feature.key, on)
+                    },
+                cells: [
+                  <AdminTick on={on} />,
+                  featureLabel(feature.key),
+                  feature.visibility === 'hidden' ? (
+                    <VisibilityChip visibility={feature.visibility} />
+                  ) : null,
+                ],
+              }
+            })}
         />
 
         {/* **No DELETE ROLE.** It was here, under the stack, and it was shut on every

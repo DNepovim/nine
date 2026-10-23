@@ -47,12 +47,13 @@ const COLUMNS: readonly AdminColumn[] = [
 // The name cell: a player's own colour wherever the app writes their name, and plain ink
 // for a profile that has not got one yet — there is no name there to colour, and a
 // gradient would be this screen wearing somebody else's.
-function NameCell({
+// Exported for the analytics screen's lists of players, which draw a name the same way.
+export function NameCell({
   person,
   factors,
   me,
 }: {
-  person: AdminPerson
+  person: Pick<AdminPerson, 'nickname'>
   // What this person's name is coloured by, from the list's one lookup. A player is the
   // same colour here as on a board row, and the handful of people who open this screen
   // are the ones most likely to recognise each other by it.

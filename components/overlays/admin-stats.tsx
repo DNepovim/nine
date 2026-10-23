@@ -1,18 +1,22 @@
+import type { MessageDescriptor } from '@lingui/core'
 import { msg } from '@lingui/core/macro'
 import { Trans, useLingui } from '@lingui/react/macro'
 import { useEffect, useState } from 'react'
-import { ScrollView, Text, View } from 'react-native'
+import { Linking, ScrollView, Text, View } from 'react-native'
 
 import { DayBars, MeterRow, StatTile } from '@/components/overlays/admin-chart'
 import { AdminScreen } from '@/components/overlays/admin-screen'
 import { AdminSegments } from '@/components/overlays/admin-segments'
+import { AdminStatPeople } from '@/components/overlays/admin-stat-people'
 import { AdminChip, AdminTable } from '@/components/overlays/admin-table'
 import { PrimaryButton } from '@/components/primary-button'
 import { ARCADE_INK, DIM_INK } from '@/constants/colors'
 import { TYPE } from '@/constants/typography'
+import { type StatTileKey } from '@/lib/admin/stat-people'
 import { loadStats, type AdminStats } from '@/lib/admin/stats'
 import { cn } from '@/lib/cn'
 import { formatShortDay } from '@/lib/format-date'
+import { POSTHOG_PROJECT_URL } from '@/lib/posthog-project'
 import { type StatsWindow } from '@/lib/stats-window'
 import {
   DIFFICULTIES,
@@ -32,9 +36,20 @@ import {
 //
 // **No figure on this screen names anybody.** That is a property of the function behind
 // it rather than a choice made here: it returns counts, sums and groups and has no shape
-// that could return a profile. A screen about how many people did something has no
-// business saying which.
+// that could return a profile. The one way to a name is pressing a top tile, which opens
+// the players behind it from a second function read only then — see `AdminStatPeople`.
 const TITLE = msg`ANALYTICS`
+
+// The six top tiles' labels, read by the tile and by the list it opens, so the card is
+// always headed by the word that was pressed.
+const TILE_LABEL: Record<StatTileKey, MessageDescriptor> = {
+  joined: msg`JOINED`,
+  played: msg`PLAYED`,
+  runs: msg`RUNS`,
+  minutes: msg`MINUTES`,
+  hits: msg`HITS`,
+  named: msg`NAMED`,
+}
 
 // Not translated, as the tab and status words on these screens are not: they name a
 // window on a screen whose readers are the people who write the catalog.
@@ -91,6 +106,12 @@ export function AdminStats({
   const [stats, setStats] = useState<AdminStats | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  // The tile whose players are open. One at a time.
+  const [opened, setOpened] = useState<StatTileKey | null>(null)
+  // Each top tile opens the players its figure is made of.
+  const open = (tile: StatTileKey) => () => {
+    setOpened(tile)
+  }
 
   // Read again whenever the window moves. The figures are kept while the next window is
   // fetched rather than blanked — the three windows are three answers to the same
@@ -116,7 +137,17 @@ export function AdminStats({
       error={error}
       title={t(TITLE)}
       footer={
-        <PrimaryButton id="admin.back" onPress={onBack} label={<Trans>BACK</Trans>} />
+        <View className="gap-2">
+          <PrimaryButton
+            id="admin.open_posthog"
+            tone="quiet"
+            onPress={() => {
+              void Linking.openURL(POSTHOG_PROJECT_URL)
+            }}
+            label={<Trans>OPEN IN POSTHOG</Trans>}
+          />
+          <PrimaryButton id="admin.back" onPress={onBack} label={<Trans>BACK</Trans>} />
+        </View>
       }
     >
       {/* The same row of segments every other admin list sorts by. It was a combobox
@@ -155,34 +186,40 @@ export function AdminStats({
               arrived, who played, and how much. */}
           <View className="mb-1.5 flex-row gap-1.5">
             <StatTile
-              label={<Trans>JOINED</Trans>}
+              label={t(TILE_LABEL.joined)}
+              onPress={open('joined')}
               value={String(stats.players.joined)}
               note={against(stats.players.joined, stats.players.joinedBefore, was)}
             />
             <StatTile
-              label={<Trans>PLAYED</Trans>}
+              label={t(TILE_LABEL.played)}
+              onPress={open('played')}
               value={String(stats.runs.players)}
               note={<Trans>profiles</Trans>}
             />
             <StatTile
-              label={<Trans>RUNS</Trans>}
+              label={t(TILE_LABEL.runs)}
+              onPress={open('runs')}
               value={String(stats.runs.runs)}
               note={against(stats.runs.runs, stats.runs.before, was)}
             />
           </View>
           <View className="mb-3 flex-row gap-1.5">
             <StatTile
-              label={<Trans>MINUTES</Trans>}
+              label={t(TILE_LABEL.minutes)}
+              onPress={open('minutes')}
               value={String(stats.runs.minutes)}
               note={<Trans>on the dial</Trans>}
             />
             <StatTile
-              label={<Trans>HITS</Trans>}
+              label={t(TILE_LABEL.hits)}
+              onPress={open('hits')}
               value={String(stats.runs.hits)}
               note={<Trans>targets met</Trans>}
             />
             <StatTile
-              label={<Trans>NAMED</Trans>}
+              label={t(TILE_LABEL.named)}
+              onPress={open('named')}
               value={String(stats.players.joinedNamed)}
               note={<Trans>of the joined</Trans>}
             />
@@ -340,6 +377,17 @@ export function AdminStats({
             ]}
           />
         </ScrollView>
+      )}
+
+      {opened !== null && (
+        <AdminStatPeople
+          tile={opened}
+          title={t(TILE_LABEL[opened])}
+          window={window}
+          onDismiss={() => {
+            setOpened(null)
+          }}
+        />
       )}
     </AdminScreen>
   )

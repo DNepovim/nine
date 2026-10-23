@@ -113,12 +113,11 @@ describe('sourceOf', () => {
     )
   })
 
-  it('lets a revoked override beat public', () => {
-    // The same order the resolve reads in: public beats the stack, and an override beats
-    // public. A feature taken away from one person by hand stays taken away when it goes
-    // out to everybody, and this row is the only place that is visible.
+  it('lets public beat a revoked override', () => {
+    // The same order the resolve reads in: public beats the stack and the override both.
+    // A public feature reaches everybody, and no row about one person changes that.
     expect(sourceOf({ override: false, inRoleStack: true, visibility: 'public' })).toBe(
-      'override-off',
+      'public',
     )
   })
 })
