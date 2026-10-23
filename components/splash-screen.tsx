@@ -19,6 +19,7 @@ import { LAYER } from '@/constants/layers'
 import { mono } from '@/constants/theme'
 import { useBarColor } from '@/hooks/use-bar-color'
 import { GLASS_SHADOW } from '@/lib/glass'
+import { SPLASH_TEST_ID } from '@/lib/splash-skip'
 
 // The intro — the logo fades in, then the subtitle under it. INTRO_MS is the moment
 // the last of that has landed: the one point in the sequence where the splash is
@@ -187,7 +188,12 @@ export function SplashScreen({
   }))
 
   return (
-    <Animated.View style={[styles.absolute, { zIndex: LAYER.splash }, bgStyle]}>
+    <Animated.View
+      // What the page's inline script hides on a launch that skips the splash, before
+      // the bundle has loaded — see lib/splash-skip.ts.
+      testID={SPLASH_TEST_ID}
+      style={[styles.absolute, { zIndex: LAYER.splash }, bgStyle]}
+    >
       <LinearGradient
         colors={[...SPECTRUM]}
         locations={locations}

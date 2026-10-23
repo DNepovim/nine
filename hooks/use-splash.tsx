@@ -7,10 +7,11 @@ import {
   useState,
   type ReactNode,
 } from 'react'
-import { AppState } from 'react-native'
+import { AppState, Platform } from 'react-native'
 
 import { useSavedRun } from '@/hooks/use-saved-run'
 import { cameStraightBack, noteLeaving } from '@/lib/recent-return'
+import { SKIP_SPLASH_CLASS } from '@/lib/splash-skip'
 import { consumeUpdateReload } from '@/lib/update-reload'
 
 type SplashState = {
@@ -46,6 +47,15 @@ const SplashContext = createContext<SplashState>({
 export function SplashProvider({ children }: { children: ReactNode }) {
   const [done, setDone] = useState(() => consumeUpdateReload() || cameStraightBack())
   const [exiting, setExiting] = useState(false)
+
+  // The page hid the static splash before it painted, on its own reading of the same two
+  // notes (see lib/splash-skip.ts). The decision is ours now, made above and committed by
+  // the time this runs, so the page's stand-in comes off: a splash drawn from here on is
+  // one this launch meant to play.
+  useEffect(() => {
+    if (Platform.OS !== 'web') return
+    document.documentElement.classList.remove(SKIP_SPLASH_CLASS)
+  }, [])
 
   // The other launch with no logo to play: the app is opening onto a run it was closed
   // on. The player is being handed back a game they were in the middle of, and making

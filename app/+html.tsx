@@ -2,6 +2,7 @@ import { ScrollViewStyleReset } from 'expo-router/html'
 import type { PropsWithChildren } from 'react'
 
 import { SURFACE } from '@/constants/colors'
+import { SKIP_SPLASH_CSS, SKIP_SPLASH_SCRIPT } from '@/lib/splash-skip-script'
 
 // This file is web-only and used to configure the root HTML for every
 // web page during static rendering.
@@ -44,6 +45,12 @@ export default function Root({ children }: PropsWithChildren) {
             we ever get, and it does not fire twice. Not gated on NODE_ENV:
             there is nothing here to break in dev. */}
         <script dangerouslySetInnerHTML={{ __html: installCapture }} />
+
+        {/* The static HTML always holds the splash. On an update reload or a quick
+            return the app skips it, but only once the bundle has hydrated — this hides
+            it before the first paint so it does not flash. See lib/splash-skip.ts. */}
+        <style dangerouslySetInnerHTML={{ __html: SKIP_SPLASH_CSS }} />
+        <script dangerouslySetInnerHTML={{ __html: SKIP_SPLASH_SCRIPT }} />
 
         {/* Register the Workbox service worker — only in production builds,
             where `expo export` actually generates /sw.js (it doesn't exist

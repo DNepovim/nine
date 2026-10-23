@@ -9,7 +9,10 @@
 // sessionStorage rather than localStorage: it survives a reload of this window and dies
 // with it. A note left by a swap that never finished cannot resurface days later and
 // silently skip the splash on a genuinely cold start.
-const KEY = 'nine.update-reload.v1'
+// Exported for the page's inline script (lib/splash-skip.ts), which peeks at it before
+// the bundle has loaded.
+export const UPDATE_RELOAD_KEY = 'nine.update-reload.v1'
+const KEY = UPDATE_RELOAD_KEY
 
 // Answered once per page load. Reading clears the note, so a second caller would be told
 // no — and React may call a lazy state initialiser twice, which would put the splash

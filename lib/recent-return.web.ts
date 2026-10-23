@@ -10,11 +10,15 @@
 // The window is what makes this safe to answer from, and why a timestamp is kept rather
 // than a flag. A note with no clock on it would sit in storage for days and skip the
 // splash on a genuinely cold start — the one launch the logo is actually for.
-const KEY = 'nine.left-at.v1'
+// Both exported for the page's inline script (lib/splash-skip.ts), which asks the same
+// question before the bundle has loaded.
+export const LEFT_AT_KEY = 'nine.left-at.v1'
+const KEY = LEFT_AT_KEY
 
 // Long enough to cover fetching a code out of another app, short enough that anything
 // slower is a player who put the phone down and has come back to it fresh.
-const WINDOW_MS = 90_000
+export const RETURN_WINDOW_MS = 90_000
+const WINDOW_MS = RETURN_WINDOW_MS
 
 // localStorage rather than the sessionStorage its neighbour `update-reload.web.ts` uses,
 // and for the opposite reason: that note has to die with the window, this one has to
