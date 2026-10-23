@@ -73,7 +73,8 @@ export function BestScoreCell({
   onPress,
 }: {
   label: string
-  value: number
+  // A number, or a figure already formatted — a race's cells are clocks.
+  value: number | string
   color: string
   digitFont: string
   // The player whose record this is, drawn in their own colours. Null where there is no

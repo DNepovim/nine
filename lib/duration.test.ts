@@ -190,30 +190,30 @@ describe('formatRaceTime', () => {
 })
 
 describe('formatRunClock', () => {
-  it('reads the hundredth, in the one notation the digits can draw', () => {
+  it('reads the tenth, in the one notation the digits can draw', () => {
     // A colon rather than the prime marks: DSEG7 has digits, a point and a colon and
     // nothing else, and both ends of a timed run are set in it.
-    expect(formatRunClock(9_340)).toBe('9.34')
-    expect(formatRunClock(62_340)).toBe('1:02.34')
+    expect(formatRunClock(9_340)).toBe('9.3')
+    expect(formatRunClock(62_340)).toBe('1:02.3')
   })
 
   it('truncates rather than rounds, so the clock never reads ahead of itself', () => {
-    expect(formatRunClock(9_349)).toBe('9.34')
-    expect(formatRunClock(9_999)).toBe('9.99')
+    expect(formatRunClock(9_399)).toBe('9.3')
+    expect(formatRunClock(9_999)).toBe('9.9')
   })
 
   it('never changes width as the digits move', () => {
     // The one thing a clock somebody is staring at must not do.
-    expect(formatRunClock(9_000)).toBe('9.00')
-    expect(formatRunClock(9_070)).toBe('9.07')
+    expect(formatRunClock(9_000)).toBe('9.0')
+    expect(formatRunClock(9_070)).toBe('9.0')
   })
 
   it('pads the seconds the moment there are minutes in front of them', () => {
-    expect(formatRunClock(60_000)).toBe('1:00.00')
-    expect(formatRunClock(59_990)).toBe('59.99')
+    expect(formatRunClock(60_000)).toBe('1:00.0')
+    expect(formatRunClock(59_990)).toBe('59.9')
   })
 
   it('never runs backwards', () => {
-    expect(formatRunClock(-1)).toBe('0.00')
+    expect(formatRunClock(-1)).toBe('0.0')
   })
 })

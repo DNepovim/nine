@@ -177,6 +177,7 @@ import {
   streakMultiplier,
   sumOf,
   type Difficulty,
+  type Measure,
   type Mode,
   type ModeId,
 } from '@/modes'
@@ -490,20 +491,29 @@ const subtitleFor = (
 // standings off the server. Until the read lands there is nothing honest to draw, and the
 // strip falls back to its blank height rather than showing a session whose best is a
 // guess.
+//
+// On a race the two figures are times rather than scores. The board's rows come ordered
+// by the session's **measure**, so the top row is still the record — it is only which
+// column of it the strip reads that changes.
 const sessionBestsOf = (
   id: string | null,
   closesAt: number | null,
   board: PeriodBoard | null,
-): SessionBests | null =>
-  id !== null && closesAt !== null && board !== null
-    ? {
-        best: board.record ?? 0,
-        holder: board.recordHolder,
-        mine: board.recordIsMine,
-        myBest: board.myBest,
-        closesAt,
-      }
-    : null
+  measure: Measure,
+  userId: string | null,
+): SessionBests | null => {
+  if (id === null || closesAt === null || board === null) return null
+  const timed = measure === 'time'
+  const mine = board.rows.find((row) => row.user_id === userId)
+  return {
+    measure,
+    best: timed ? (board.rows[0]?.time_ms ?? 0) : (board.record ?? 0),
+    holder: board.recordHolder,
+    mine: board.recordIsMine,
+    myBest: timed ? (mine?.time_ms ?? 0) : board.myBest,
+    closesAt,
+  }
+}
 
 // The instant a run's **session** shuts, for the two screens a stopped run lands on, or
 // null for an ordinary run.
@@ -1942,7 +1952,13 @@ export default function GameScreen() {
               Trainee included: it has no board to report, and reserves the height
               instead, so that the dial below is the same size in all of them. */}
               <BestScoresLine
-                session={sessionBestsOf(runSession, runSessionClosesAt, runSessionBoard)}
+                session={sessionBestsOf(
+                  runSession,
+                  runSessionClosesAt,
+                  runSessionBoard,
+                  rules.scoring.measure,
+                  userId,
+                )}
                 onWindowShut={handleWindowShut}
                 inRun={inRun}
                 mode={mode}

@@ -9,8 +9,8 @@ import { formatRunClock } from '@/lib/duration'
 //
 // Not every frame, and not once a second. Three decimal places moving at 60Hz is a blur
 // nobody reads — the eye cannot follow a thousandths digit at all — while a clock
-// stepping once a second is not a stopwatch. Twenty a second is the rate at which the
-// hundredths read as motion and the whole figure still reads as a number.
+// stepping once a second is not a stopwatch. Twenty a second is twice the rate the
+// tenths digit moves at, so it never lags a step behind the wall clock.
 //
 // The *value* is exact either way: it is read off the wall clock each tick rather than
 // counted up, so the figure is right to the millisecond whenever it is drawn, and a

@@ -32,7 +32,8 @@ const pad = (value: number): string => String(value).padStart(2, '0')
 
 // The run clock as the **readout** draws it, on the screen a timed run stops on.
 //
-// The same two decimals the stopwatch runs at, in the one notation the seven-segment
+// One decimal — tenths, the same grain the session board settles places on (see
+// `formatRaceTime`) — in the one notation the seven-segment
 // face can actually draw: a colon rather than the prime marks, because DSEG7 has digits,
 // a point and a colon and nothing else. That is not a compromise here — a colon is this
 // file's mark for a figure that is a *clock* rather than a measured length, which is
@@ -40,15 +41,15 @@ const pad = (value: number): string => String(value).padStart(2, '0')
 // the same reason.
 //
 // Used by both ends of a timed run: the stopwatch running in the top bar, and the
-// readout on the screen the run stops at. One figure, so a player watching 12.34 climb
-// finishes on 12.34 rather than on a differently-shaped version of it.
+// readout on the screen the run stops at. One figure, so a player watching 12.3 climb
+// finishes on 12.3 rather than on a differently-shaped version of it.
 export function formatRunClock(ms: number): string {
   const safe = Math.max(0, ms)
   const minutes = Math.floor(safe / 60_000)
   const seconds = Math.floor(safe / 1000) % 60
-  const hundredths = pad(Math.floor(safe / 10) % 100)
-  if (minutes > 0) return `${minutes}:${pad(seconds)}.${hundredths}`
-  return `${seconds}.${hundredths}`
+  const tenths = Math.floor(safe / 100) % 10
+  if (minutes > 0) return `${minutes}:${pad(seconds)}.${tenths}`
+  return `${seconds}.${tenths}`
 }
 
 // What a run took, on a **session board** measured by the clock.

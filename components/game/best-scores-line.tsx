@@ -31,8 +31,16 @@ import { useOpenProfile } from '@/hooks/use-profile-modal'
 import { announcementStyle } from '@/lib/announcement-style'
 import { RUN_SETTLE_MS, type Announcement } from '@/lib/announcements'
 import { cn } from '@/lib/cn'
+import { formatRunClock } from '@/lib/duration'
 import { nearestRecord } from '@/lib/near-record'
-import { darkGradientOf, gradientOf, isChallenge, traitsOf, type ModeId } from '@/modes'
+import {
+  darkGradientOf,
+  gradientOf,
+  isChallenge,
+  traitsOf,
+  type Measure,
+  type ModeId,
+} from '@/modes'
 import { challengeInk } from '@/modes/challenges/palette'
 
 // The four periods of a board, plus the one a **session** has instead of them. Never
@@ -42,6 +50,9 @@ type BestKey = 'you' | 'today' | 'week' | 'ever' | 'session'
 
 // What a run that belongs to a session knows about it.
 export type SessionBests = {
+  // What the two figures below are: scores, or on a race the times the standings are
+  // ordered by — in which case both are ms, and 0 still means nobody has posted one.
+  measure: Measure
   // The top score on the session board, or 0 where nobody has posted one yet — the same
   // answer an untouched board gives, and drawn the same way.
   best: number
@@ -64,7 +75,7 @@ export type SessionBests = {
 // to write. Never both, and never neither — see `secondLine`.
 type ShownBest = {
   key: BestKey
-  value: number
+  value: number | string
   mine: boolean
   holder: RecordHolder | null
   sub: string | null
@@ -410,7 +421,12 @@ export function BestScoresLine({
   const shown: ShownBest[] = revealed
     ? shownKeys.map((key) => ({
         key,
-        value: values[key] ?? 0,
+        // A race's two cells are clocks, drawn the way the stopwatch in the top bar
+        // draws the figure they will be compared against.
+        value:
+          session?.measure === 'time'
+            ? formatRunClock(values[key] ?? 0)
+            : (values[key] ?? 0),
         mine: heldByMe[key],
         profileId: profileIds[key],
         ...secondLine(key),
@@ -423,7 +439,8 @@ export function BestScoresLine({
   // Only once the run is actually chasing these numbers — mid-reveal or mid-announcement
   // is not the moment to also draw the eye toward one cell over the others.
   const nearKey =
-    inRun && revealed && pinned === null
+    // Never on a race: the bar a run is near is a score, and there the cells are times.
+    inRun && revealed && pinned === null && session?.measure !== 'time'
       ? nearestRecord(score, { you: ownBest, today, week, ever })
       : null
 
