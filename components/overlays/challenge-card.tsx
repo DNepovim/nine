@@ -106,9 +106,13 @@ export function ChallengeCard({
       <TrackedPressable
         id="menu.challenge"
         onPress={onPress}
-        // Wrapping, because the board is up to eight flaps wide once the window is more
-        // than a day out and the line has 270pt to live in.
-        className="mx-auto w-full max-w-[270px] flex-row flex-wrap items-center justify-center gap-x-1.5 gap-y-1"
+        // Stacked: the sentence, then the clock on a line of its own. It used to be one
+        // wrapping row, but the board is up to eight flaps wide once the window is more
+        // than a day out and the line has 270pt to live in — so whether the clock stayed
+        // beside the words or dropped under them hung on the name's length and the
+        // language, and the card changed shape between challenges. Always under is the
+        // one layout that never depends on either.
+        className="mx-auto w-full max-w-[270px] items-center gap-1"
       >
         {/* The clock is a `View` of flaps and cannot sit inside a `Text`, so the sentence
           stops short of it rather than wrapping it — which is also why the clock is not a
