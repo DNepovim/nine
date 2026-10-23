@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react'
 import { AppState } from 'react-native'
 
 import { type Flag } from '@/constants/features'
+import { refreshOpenSessions } from '@/hooks/use-open-sessions'
 import {
   addressProblem,
   authProblem,
@@ -18,6 +19,7 @@ import {
   wasProfileMoved,
 } from '@/lib/account-markers'
 import { reloadApp } from '@/lib/app-reload'
+import { announceBoardsMoved } from '@/lib/board-live'
 import { knownFeatures, sameFeatures } from '@/lib/features'
 import { resetLocalPlayer } from '@/lib/local-reset'
 import { sessionVerdict, type SessionVerdict } from '@/lib/session-verdict'
@@ -352,6 +354,12 @@ export function useSupabaseAuth(): AuthState {
       return { error: error.message }
     }
     setNickname(name)
+    // Every standing on screen was read with the old name joined onto it, and none of those
+    // reads listens to `profiles` — they wait on a score moving. So they are told instead:
+    // the boards, the champions and the medal line through the board channel, and the
+    // session card's leader by reading the open sessions again.
+    announceBoardsMoved()
+    refreshOpenSessions()
     return { error: null }
   }
 

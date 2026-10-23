@@ -67,6 +67,13 @@ function start(): void {
   })
 }
 
+// Tell every board it may have moved, from outside the channel. For a change that is not a
+// score but is drawn on every board all the same — the player renaming themselves, whose
+// old name would otherwise sit on each standing they hold until a score happened to move it.
+export function announceBoardsMoved(): void {
+  announce(null)
+}
+
 export function subscribeBoards(listener: BoardListener): () => void {
   listeners.add(listener)
   if (!started) start()
