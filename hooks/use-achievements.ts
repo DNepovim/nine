@@ -84,6 +84,11 @@ export type AchievementsInput = {
   batch: HitBatch
   stats: Stats
   standings: readonly BoardStanding[]
+  // Whether `standings` is an answer the server gave. Until it is, an empty list says
+  // nothing about which boards are held — see the held-board effect below.
+  standingsLoaded: boolean
+  // When each all-time board the player holds was taken, off `board_reigns`.
+  reigns: ReadonlyMap<string, string>
   crown: boolean
   crossed: readonly AnnouncementId[]
   guideRead: boolean
@@ -296,8 +301,13 @@ export function useAchievements(input: AchievementsInput): Achievements {
 
   // Watched rather than asked at the moment it matters: "held it for seven days" needs a
   // start, and the boards are the only thing that knows the player is on top of one.
+  //
+  // Only once the standings have actually come back. Before that they are an empty list,
+  // which `observeHeld` reads as every board let go — and this ran on every launch before
+  // the read landed, so each clock restarted the moment the app opened and nobody who
+  // ever closed it could reach seven days.
   useEffect(() => {
-    if (!careerLoaded) return
+    if (!careerLoaded || !input.standingsLoaded) return
     const live = inputRef.current
     const facts = worldFacts(live, tallyFor(tallyRef.current, live.runSeq), false)
     const held = SCORED_MODES.flatMap((mode) =>
@@ -307,7 +317,7 @@ export function useAchievements(input: AchievementsInput): Achievements {
     )
     const now = new Date().toISOString()
     updateCareer((current) => {
-      const next = observeHeld(current, held, now)
+      const next = observeHeld(current, held, now, live.reigns)
       // `observeHeld` rebuilds the map every time, so compare rather than trusting
       // identity — otherwise every board refresh would be a write.
       const same =
@@ -315,7 +325,7 @@ export function useAchievements(input: AchievementsInput): Achievements {
         Object.entries(next.heldSince).every(([key, at]) => current.heldSince[key] === at)
       return same ? current : next
     })
-  }, [careerLoaded, input.standings, updateCareer])
+  }, [careerLoaded, input.standingsLoaded, input.standings, input.reigns, updateCareer])
 
   // Between runs, everything is settled quietly: earned, stored, counted on the strip —
   // but never announced.

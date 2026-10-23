@@ -239,16 +239,24 @@ export const foldMultiplayer = (
 
 // Records which boards the player is holding right now.
 //
-// Boards already being held keep the moment they were first seen — that moment is the
-// whole point — and boards no longer held are dropped outright rather than kept with a
-// stale timestamp, so retaking one starts its clock from scratch.
+// A board's clock starts when the server says its reign began, where it knows: `tookAt`
+// is the player's open reigns, read off `board_reigns`. That is the truth about how long
+// a board has been held, and the only one that survives a second device, a restore, or a
+// launch that read nothing. Without it a board keeps the moment this device first saw it
+// held, and failing that it starts now.
+//
+// Boards no longer held are dropped outright rather than kept with a stale timestamp, so
+// retaking one starts its clock from scratch — which is why the caller must only ask once
+// it actually knows what is held. A list that is empty because nothing has loaded yet
+// would reset every clock, and for a long time did, on every launch.
 export function observeHeld(
   career: Career,
   held: readonly string[],
   now: string,
+  tookAt: ReadonlyMap<string, string> = new Map(),
 ): Career {
   const heldSince = Object.fromEntries(
-    held.map((key) => [key, career.heldSince[key] ?? now]),
+    held.map((key) => [key, tookAt.get(key) ?? career.heldSince[key] ?? now]),
   )
   return { ...career, heldSince }
 }

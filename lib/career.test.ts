@@ -228,6 +228,40 @@ describe('observeHeld', () => {
     const retaken = observeHeld(lost, ['accuracy:easy'], '2026-09-17T10:00:00.000Z')
     expect(retaken.heldSince['accuracy:easy']).toBe('2026-09-17T10:00:00.000Z')
   })
+
+  // The server's reign is the truth about when a hold began, so a device that only just
+  // noticed — a new phone, a restore, or a clock an early empty read had wiped — still
+  // counts the days that have passed.
+  it('starts the clock when the reign began, where the server knows', () => {
+    const next = observeHeld(
+      emptyCareer(),
+      ['accuracy:hard'],
+      '2026-10-22T10:00:00.000Z',
+      new Map([['accuracy:hard', '2026-10-07T07:33:23.178Z']]),
+    )
+    expect(heldDays(next, 'accuracy:hard', new Date('2026-10-22T10:00:00.000Z'))).toBe(15)
+  })
+
+  it('prefers the reign over what the device stamped', () => {
+    const held = career({ heldSince: { 'speed:easy': '2026-10-21T09:00:00.000Z' } })
+    const next = observeHeld(
+      held,
+      ['speed:easy'],
+      '2026-10-22T10:00:00.000Z',
+      new Map([['speed:easy', '2026-10-02T12:50:26.264Z']]),
+    )
+    expect(next.heldSince['speed:easy']).toBe('2026-10-02T12:50:26.264Z')
+  })
+
+  it('ignores a reign on a board the standings no longer hold', () => {
+    const next = observeHeld(
+      emptyCareer(),
+      [],
+      '2026-10-22T10:00:00.000Z',
+      new Map([['speed:hard', '2026-10-06T14:46:29.532Z']]),
+    )
+    expect(next.heldSince).toEqual({})
+  })
 })
 
 describe('heldDays', () => {

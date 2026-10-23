@@ -142,6 +142,29 @@ export async function fetchMyMedals(
   return { rows: (res.data as MyMedalRow[] | null) ?? [], error: null }
 }
 
+// When each board the player holds all-time was taken, keyed `mode:difficulty` the way
+// `boardKey` spells it. What HELD ACCURACY and HELD SPEED are timed from: the reign is the
+// server's record of the hold, so the seven days count from when it actually began rather
+// than from whenever this device happened to notice. Read straight off the table, which
+// is public — the profile already shows anyone's reigns.
+export async function fetchMyOpenReigns(
+  userId: string,
+): Promise<{ tookAt: Map<string, string>; error: string | null }> {
+  const res = await supabase
+    .from('board_reigns')
+    .select('mode, difficulty, took_at')
+    .eq('user_id', userId)
+    .is('lost_at', null)
+  noteRequest(res.error)
+  if (res.error) return { tookAt: new Map(), error: res.error.message }
+  const rows =
+    (res.data as { mode: string; difficulty: string; took_at: string }[] | null) ?? []
+  return {
+    tookAt: new Map(rows.map((row) => [`${row.mode}:${row.difficulty}`, row.took_at])),
+    error: null,
+  }
+}
+
 // One round trip for the whole profile modal. Four requests for one screen are four
 // answers that can disagree, and this one sits behind a tap that should feel instant.
 //

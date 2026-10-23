@@ -1062,7 +1062,7 @@ export default function GameScreen() {
   // Every board the player stands on. Read here rather than inside the intro screen,
   // which unmounts for the whole run — the achievements need it while one is going, and
   // one request answers for both.
-  const { medals, standings, loaded: medalsLoaded } = useMyMedals(userId)
+  const { medals, standings, reigns, loaded: medalsLoaded } = useMyMedals(userId)
 
   // What rivals took off that line while nobody was looking. Held here rather than in the
   // intro screen, which unmounts for the whole run: the news has to survive being shown
@@ -1192,6 +1192,8 @@ export default function GameScreen() {
     batch: hitBatch,
     stats,
     standings,
+    standingsLoaded: medalsLoaded,
+    reigns,
     // UNTOUCHABLE is both Extreme all-time boards at once — the same reign the game-over
     // screen pays out for, read from the same two ids. Deliberately not the **crown**,
     // which took the phoenix in alongside them; see `holdsBothBoards`.

@@ -4,13 +4,16 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { useLocalScores } from '@/hooks/use-local-scores'
 import type { BoardRef } from '@/lib/board-events'
 import { subscribeBoards } from '@/lib/board-live'
-import { fetchMyMedals, type MyMedalRow } from '@/lib/leaderboard'
+import { fetchMyMedals, fetchMyOpenReigns, type MyMedalRow } from '@/lib/leaderboard'
 import { MEDAL_PERIODS, toMedals, type BoardStanding, type Medal } from '@/lib/medals'
 import { DIFFICULTY_ORDER, SCORED_MODES } from '@/modes'
 
 // A run touches every board the player holds at once, and one request answers for all
 // of them. Longer than the board's own window: this line is never mid-run urgent.
 const COALESCE_MS = 800
+
+// Shared so a player with no reigns hands back the same map every render.
+const NO_REIGNS: ReadonlyMap<string, string> = new Map()
 
 const keyOf = (board: BoardRef | { mode: string; difficulty: string }): string =>
   `${board.mode}:${board.difficulty}`
@@ -45,6 +48,8 @@ const toStanding = (row: MyMedalRow): BoardStanding | null => {
 export function useMyMedals(userId: string | null): {
   medals: Medal[]
   standings: BoardStanding[]
+  // When each all-time board the player holds was taken — see `fetchMyOpenReigns`.
+  reigns: ReadonlyMap<string, string>
   loaded: boolean
 } {
   const [standings, setStandings] = useState<BoardStanding[]>([])
@@ -52,6 +57,7 @@ export function useMyMedals(userId: string | null): {
   // a player nobody has asked about both show an empty list, and anything diffing one
   // visit against the next has to tell them apart — see useLostMedals.
   const [loaded, setLoaded] = useState(false)
+  const [reigns, setReigns] = useState<ReadonlyMap<string, string>>(NO_REIGNS)
   // Bumped on every load and unmount, so a slow response for a user who has since
   // changed can tell and drop itself.
   const requestIdRef = useRef(0)
@@ -65,8 +71,18 @@ export function useMyMedals(userId: string | null): {
 
   const load = useCallback(async (id: string) => {
     const requestId = ++requestIdRef.current
-    const { rows } = await fetchMyMedals(id)
+    const [{ rows, error }, open] = await Promise.all([
+      fetchMyMedals(id),
+      fetchMyOpenReigns(id),
+    ])
     if (requestIdRef.current !== requestId) return
+    // A failed read changes nothing. It used to land as an empty answer marked loaded,
+    // which is the one thing `loaded` exists to rule out: to the medal line it was every
+    // medal gone, and to the held-board clocks it was every board let go.
+    if (error !== null) return
+    // The reigns only refine *when* a hold began; without them the clocks keep what the
+    // device already had, so a failure here keeps the last good answer and nothing more.
+    if (open.error === null) setReigns(open.tookAt)
     heldRef.current = new Set(rows.map(keyOf))
     setStandings(rows.flatMap((row) => toStanding(row) ?? []))
     setLoaded(true)
@@ -77,6 +93,7 @@ export function useMyMedals(userId: string | null): {
       requestIdRef.current++
       heldRef.current = new Set()
       setStandings([])
+      setReigns(NO_REIGNS)
       setLoaded(false)
       return
     }
@@ -105,5 +122,5 @@ export function useMyMedals(userId: string | null): {
   // The medal line wants one claim per mode; the achievements want every board the player
   // stands on, because `toMedals` keeps the *best* claim and a gold today would vanish
   // behind a bronze all-time. Both come out of the same one request.
-  return { medals: toMedals(standings), standings, loaded }
+  return { medals: toMedals(standings), standings, reigns, loaded }
 }
