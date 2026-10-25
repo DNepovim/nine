@@ -83,6 +83,29 @@ textarea {
   animation: letter-float 1.8s ease-in-out infinite;
 }
 
+/* The challenge banner's and dialog's turning edge, on web (`turning-edge.web.tsx`).
+   The gradient's angle turns, not the box: a rotated child escapes its parent's
+   rounded clip on iOS Safari. 135deg is the native half's top-left → bottom-right
+   diagonal, and 8s is its SWEEP_MS. Without @property the angle cannot interpolate
+   and the edge simply holds still, which is the right way for it to fail. */
+@property --edge-turn {
+  syntax: '<angle>';
+  inherits: false;
+  initial-value: 135deg;
+}
+@keyframes edge-turn {
+  to {
+    --edge-turn: 495deg;
+  }
+}
+.turning-edge {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(var(--edge-turn), var(--edge-from), var(--edge-to));
+  animation: edge-turn 8s linear infinite;
+}
+
 /* Landscape guard — shown on touch devices (phones/tablets) only.
    Desktop windows in landscape are left alone.
 

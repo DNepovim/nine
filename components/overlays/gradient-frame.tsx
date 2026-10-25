@@ -174,25 +174,9 @@ export function GradientFrame({
           backgroundColor: edge === undefined ? SPECTRUM[0] : edge[0],
         }}
       >
-        {/* `isolate` and `backfaceVisibility` are not decoration — they are what makes the
-          clip below actually hold.
-
-          A rotating child is promoted to its own compositing layer by the browser, and on
-          iOS Safari a promoted layer stops being clipped by an ancestor's
-          `overflow: hidden` + `border-radius`. The symptom is the whole rotating square —
-          as wide as this box's diagonal — appearing tilted across the screen, and it is
-          intermittent because promotion happens when the compositor decides rather than
-          when the code asks. Forcing this element to create a stacking context and its
-          own layer puts the clip and the rotation back in the same place.
-
-          Both are no-ops on native, where the clip was never in question. */}
         <View
-          className="w-full isolate overflow-hidden"
-          style={{
-            borderRadius: RADIUS,
-            padding: EDGE,
-            backfaceVisibility: 'hidden',
-          }}
+          className="w-full overflow-hidden"
+          style={{ borderRadius: RADIUS, padding: EDGE }}
           onLayout={(e) => {
             setWidth(e.nativeEvent.layout.width)
             setHeight(e.nativeEvent.layout.height)

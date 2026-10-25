@@ -21,9 +21,9 @@ import Animated, {
 // stops: a bright middle with the dark one at both ends. Turning keeps it the single
 // clean sweep from a to b that it is.
 //
-// A transform and not animated colour props. `useAnimatedProps` on a `LinearGradient`
-// reaches the native view but not the `div` it becomes on web, and web is what ships to
-// players; a transform is one property both understand and neither re-renders for.
+// This is the native half. On web the box does not turn at all — a rotated child escapes
+// its parent's rounded clip in Safari — and the gradient's angle moves instead; see
+// `turning-edge.web.tsx`.
 
 // One turn. The tempo `GradientFrame`'s own band has always slid at — slow on purpose,
 // since the NINE letters cycle every two seconds and an edge moving at that rate would
@@ -70,10 +70,6 @@ export function TurningEdge({
           height: span,
           left: (width - span) / 2,
           top: (height - span) / 2,
-          // Pairs with the `isolate` on the box that clips this — see the note there.
-          // This square is as wide as that box's diagonal, so an unclipped frame of it
-          // is not a cosmetic slip: it is a tilted slab across half the screen.
-          backfaceVisibility: 'hidden',
         },
         turnStyle,
       ]}
