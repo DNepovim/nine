@@ -12,8 +12,8 @@ import { defineMode } from '@/modes/types'
 // arcade was answering them from a table of its own until there was a registry to join.
 export const ARCADE = defineMode({
   id: 'arcade',
-  label: msg`ARCADE`,
-  code: msg`ARC`,
+  label: msg`ADVENTURE`,
+  code: msg`ADV`,
   // Not the teaser's "levels, bonuses, sidequests" any more. The pill is playable behind
   // a flag now, and what is behind it is the way — so the line says what a run of it
   // actually asks, and the promises wait until they are built.

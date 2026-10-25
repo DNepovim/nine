@@ -80,10 +80,10 @@ msgstr ""
 #: components/overlays/how-to-play-overlay.tsx:697
 msgid ""
 "\n"
-"Some villages have walls, and the two are drawn as two different places — an open village is a scatter of houses, a church and a hall with nothing around them, a walled one is a dark ring of wall with a tower at each corner and a pennant flying over it. Dial toward the walls and you do not walk in. You take it. Three hearts sit on the bar under ARCADE, and a siege is the fastest way to spend them. Taking a village always gives one back; clearing a road of bandits sometimes does."
+"Some villages have walls, and the two are drawn as two different places — an open village is a scatter of houses, a church and a hall with nothing around them, a walled one is a dark ring of wall with a tower at each corner and a pennant flying over it. Dial toward the walls and you do not walk in. You take it. Three hearts sit on the bar under ADVENTURE, and a siege is the fastest way to spend them. Taking a village always gives one back; clearing a road of bandits sometimes does."
 msgstr ""
 "\n"
-"Some villages have walls, and the two are drawn as two different places — an open village is a scatter of houses, a church and a hall with nothing around them, a walled one is a dark ring of wall with a tower at each corner and a pennant flying over it. Dial toward the walls and you do not walk in. You take it. Three hearts sit on the bar under ARCADE, and a siege is the fastest way to spend them. Taking a village always gives one back; clearing a road of bandits sometimes does."
+"Some villages have walls, and the two are drawn as two different places — an open village is a scatter of houses, a church and a hall with nothing around them, a walled one is a dark ring of wall with a tower at each corner and a pennant flying over it. Dial toward the walls and you do not walk in. You take it. Three hearts sit on the bar under ADVENTURE, and a siege is the fastest way to spend them. Taking a village always gives one back; clearing a road of bandits sometimes does."
 
 #: components/overlays/how-to-play-overlay.tsx:477
 msgid ""
@@ -639,6 +639,16 @@ msgstr "Address confirmed."
 msgid "ADMIN"
 msgstr "ADMIN"
 
+#: modes/definitions/arcade.ts:16
+msgid "ADV"
+msgstr "ADV"
+
+#: components/game/arcade-game.tsx:848
+#: components/overlays/how-to-play-overlay.tsx:51
+#: modes/definitions/arcade.ts:15
+msgid "ADVENTURE"
+msgstr "ADVENTURE"
+
 #: constants/achievements.ts:298
 msgid "AFTERBURNER"
 msgstr "AFTERBURNER"
@@ -740,16 +750,6 @@ msgstr "Apr"
 #: lib/prose.ts:84
 msgid "APRIL"
 msgstr "APRIL"
-
-#: modes/definitions/arcade.ts:16
-msgid "ARC"
-msgstr "ARC"
-
-#: components/game/arcade-game.tsx:848
-#: components/overlays/how-to-play-overlay.tsx:51
-#: modes/definitions/arcade.ts:15
-msgid "ARCADE"
-msgstr "ARCADE"
 
 #: components/overlays/medals-overlay.tsx:173
 msgid "ARE YOU WINNING?"
@@ -2432,8 +2432,8 @@ msgstr "Pick “With friends” on the start screen. Create a game and share the
 "Everyone dials the same ten targets, one at a time, on their own grid. There are no lives — every target scores, and how it scores is the mode the host picked:"
 
 #: components/overlays/how-to-play-overlay.tsx:611
-msgid "Pick ARCADE on the start screen. The dial is the same dial — but the targets are not scattered any more. Two to four of them hang at the ends of ways out of the crossroad you are standing on, and the one you dial is the one you walk."
-msgstr "Pick ARCADE on the start screen. The dial is the same dial — but the targets are not scattered any more. Two to four of them hang at the ends of ways out of the crossroad you are standing on, and the one you dial is the one you walk."
+msgid "Pick ADVENTURE on the start screen. The dial is the same dial — but the targets are not scattered any more. Two to four of them hang at the ends of ways out of the crossroad you are standing on, and the one you dial is the one you walk."
+msgstr "Pick ADVENTURE on the start screen. The dial is the same dial — but the targets are not scattered any more. Two to four of them hang at the ends of ways out of the crossroad you are standing on, and the one you dial is the one you walk."
 
 #: constants/achievements.ts:560
 msgid "PLACED"

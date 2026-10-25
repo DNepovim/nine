@@ -845,7 +845,7 @@ export function ArcadeGame({
         <View className="px-4 py-2">
           <RunTopBar
             accent={ARCADE_INK}
-            title={<Trans>ARCADE</Trans>}
+            title={<Trans>ADVENTURE</Trans>}
             subtitle={here?.name.toUpperCase() ?? ''}
             wordmark={ARCADE_INK}
             onPause={run.dialable ? run.pause : null}
@@ -861,7 +861,7 @@ export function ArcadeGame({
               deliberate ceiling. Here there is one tuning constant and a bar that would
               quietly stop matching the run if it were changed. */}
           {/* And the loaves, in the same row at the other end of it: the hearts on the
-              left under ARCADE, how fed the hero is on the right under the way out. The two
+              left under ADVENTURE, how fed the hero is on the right under the way out. The two
               belong in one row because they are one reading — the hearts are what is left
               to lose, and the loaves are how long before losing them starts.
 

@@ -48,7 +48,7 @@ const SECTIONS = {
   achievements: { icon: 'trophy', title: msg`ACHIEVEMENTS`, color: ACHIEVEMENT_SCALE[3] },
   // Arcade's own amber, which is the last stop of the scale and the one the pill, the
   // hero and the lit way are all drawn in. Behind the `arcade` flag, like the chapter.
-  arcade: { icon: 'git-network', title: msg`ARCADE`, color: GAME_SCALE[4] },
+  arcade: { icon: 'git-network', title: msg`ADVENTURE`, color: GAME_SCALE[4] },
   // A challenge borrows the scale's third stop rather than its own colour, which it does
   // now have — a near-black paired with a hue off the violet arc, see
   // `modes/challenges/palette.ts`. That pair cannot do this job: the near-black is the
@@ -608,7 +608,7 @@ export function HowToPlayOverlay({
             <>
               <SectionHeader section="arcade" onMeasure={measure} />
               <Body>
-                {t`Pick ARCADE on the start screen. The dial is the same dial — but the targets are not scattered any more. Two to four of them hang at the ends of ways out of the crossroad you are standing on, and the one you dial is the one you walk.`}
+                {t`Pick ADVENTURE on the start screen. The dial is the same dial — but the targets are not scattered any more. Two to four of them hang at the ends of ways out of the crossroad you are standing on, and the one you dial is the one you walk.`}
               </Body>
               <Card>
                 <Bullet color={GAME_SCALE[4]}>
@@ -694,7 +694,7 @@ export function HowToPlayOverlay({
                   from a risk worth avoiding into the thing a hungry run has to walk
                   toward. */}
               <Body>
-                {t`\nSome villages have walls, and the two are drawn as two different places — an open village is a scatter of houses, a church and a hall with nothing around them, a walled one is a dark ring of wall with a tower at each corner and a pennant flying over it. Dial toward the walls and you do not walk in. You take it. Three hearts sit on the bar under ARCADE, and a siege is the fastest way to spend them. Taking a village always gives one back; clearing a road of bandits sometimes does.`}
+                {t`\nSome villages have walls, and the two are drawn as two different places — an open village is a scatter of houses, a church and a hall with nothing around them, a walled one is a dark ring of wall with a tower at each corner and a pennant flying over it. Dial toward the walls and you do not walk in. You take it. Three hearts sit on the bar under ADVENTURE, and a siege is the fastest way to spend them. Taking a village always gives one back; clearing a road of bandits sometimes does.`}
               </Body>
               <Card>
                 <Bullet color={GAME_SCALE[4]}>

@@ -80,10 +80,10 @@ msgstr ""
 #: components/overlays/how-to-play-overlay.tsx:697
 msgid ""
 "\n"
-"Some villages have walls, and the two are drawn as two different places — an open village is a scatter of houses, a church and a hall with nothing around them, a walled one is a dark ring of wall with a tower at each corner and a pennant flying over it. Dial toward the walls and you do not walk in. You take it. Three hearts sit on the bar under ARCADE, and a siege is the fastest way to spend them. Taking a village always gives one back; clearing a road of bandits sometimes does."
+"Some villages have walls, and the two are drawn as two different places — an open village is a scatter of houses, a church and a hall with nothing around them, a walled one is a dark ring of wall with a tower at each corner and a pennant flying over it. Dial toward the walls and you do not walk in. You take it. Three hearts sit on the bar under ADVENTURE, and a siege is the fastest way to spend them. Taking a village always gives one back; clearing a road of bandits sometimes does."
 msgstr ""
 "\n"
-"Některé vesnice mají hradby a obě jsou nakreslené jako dvě různá místa — otevřená vesnice je hrstka domků, kostel a radnice a kolem nich nic, opevněná je tmavý kruh hradeb s věží v každém rohu a s praporcem nad nimi. Když zamíříš k hradbám, do vesnice nevejdeš — musíš ji dobýt. Pod nápisem ARCADE máš tři životy a obléhání je nejrychlejší způsob, jak o ně přijít. Dobytá vesnice ti jeden vždycky vrátí; vyčištěná cesta od lupičů někdy."
+"Některé vesnice mají hradby a obě jsou nakreslené jako dvě různá místa — otevřená vesnice je hrstka domků, kostel a radnice a kolem nich nic, opevněná je tmavý kruh hradeb s věží v každém rohu a s praporcem nad nimi. Když zamíříš k hradbám, do vesnice nevejdeš — musíš ji dobýt. Pod nápisem VÝPRAVA máš tři životy a obléhání je nejrychlejší způsob, jak o ně přijít. Dobytá vesnice ti jeden vždycky vrátí; vyčištěná cesta od lupičů někdy."
 
 #: components/overlays/how-to-play-overlay.tsx:477
 msgid ""
@@ -639,6 +639,16 @@ msgstr "Adresa potvrzena."
 msgid "ADMIN"
 msgstr "ADMIN"
 
+#: modes/definitions/arcade.ts:16
+msgid "ADV"
+msgstr "VÝP"
+
+#: components/game/arcade-game.tsx:848
+#: components/overlays/how-to-play-overlay.tsx:51
+#: modes/definitions/arcade.ts:15
+msgid "ADVENTURE"
+msgstr "VÝPRAVA"
+
 #: constants/achievements.ts:298
 msgid "AFTERBURNER"
 msgstr "FORSÁŽ"
@@ -740,16 +750,6 @@ msgstr "4."
 #: lib/prose.ts:84
 msgid "APRIL"
 msgstr "dubna"
-
-#: modes/definitions/arcade.ts:16
-msgid "ARC"
-msgstr "ARK"
-
-#: components/game/arcade-game.tsx:848
-#: components/overlays/how-to-play-overlay.tsx:51
-#: modes/definitions/arcade.ts:15
-msgid "ARCADE"
-msgstr "ARKÁDA"
 
 #: components/overlays/medals-overlay.tsx:173
 msgid "ARE YOU WINNING?"
@@ -2432,8 +2432,8 @@ msgstr "Na úvodní obrazovce zvol „S přáteli“. Založ hru a pošli ostatn
 "Všichni dostanou stejných deset cílů, jeden po druhém, každý na svou mřížku. Životy tu nejsou — bodují se všechny cíle a jak, to určuje mód, který vybral zakladatel:"
 
 #: components/overlays/how-to-play-overlay.tsx:611
-msgid "Pick ARCADE on the start screen. The dial is the same dial — but the targets are not scattered any more. Two to four of them hang at the ends of ways out of the crossroad you are standing on, and the one you dial is the one you walk."
-msgstr "Na úvodní obrazovce zvol ARKÁDU. Číselník je pořád ten samý — jen cíle už nejsou rozesety po ploše. Dva až čtyři visí na koncích cest, které vedou z křižovatky, na níž stojíš, a vydáš se tou, kterou vytočíš."
+msgid "Pick ADVENTURE on the start screen. The dial is the same dial — but the targets are not scattered any more. Two to four of them hang at the ends of ways out of the crossroad you are standing on, and the one you dial is the one you walk."
+msgstr "Na úvodní obrazovce zvol VÝPRAVU. Číselník je pořád ten samý — jen cíle už nejsou rozesety po ploše. Dva až čtyři visí na koncích cest, které vedou z křižovatky, na níž stojíš, a vydáš se tou, kterou vytočíš."
 
 #: constants/achievements.ts:560
 msgid "PLACED"
