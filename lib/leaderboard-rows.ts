@@ -13,6 +13,9 @@ export type DisplayRow = {
   // session score is never held back, so that row is never reached on the one board
   // that has a time.
   timeMs?: number | null
+  // How many targets the run took, for a session **measured** by hits. Undefined on the
+  // merged local row, for the reason `timeMs` above is.
+  hits?: number
   isUser: boolean
   unpublished: boolean
   // When the record was set, or null for the local row — a score that has not reached
@@ -45,6 +48,7 @@ export function displayRows(
     nickname: row.nickname,
     score: row.best_score,
     timeMs: row.time_ms,
+    hits: row.hits,
     isUser: row.user_id === userId,
     unpublished: false,
     achievedAt: row.achieved_at,

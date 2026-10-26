@@ -4,10 +4,10 @@ import { Text, View } from 'react-native'
 import { GradientText } from '@/components/gradient-text'
 import { GLYPH, TYPE } from '@/constants/typography'
 import { cn } from '@/lib/cn'
-import { formatRaceTime } from '@/lib/duration'
 import { formatShortDate } from '@/lib/format-date'
 import type { SessionPlace } from '@/lib/player-profile'
 import { rankMedal } from '@/lib/rank-emoji'
+import { sessionFigure } from '@/lib/session-figure'
 import { gradientOf, labelOf } from '@/modes'
 import { challengeInk } from '@/modes/challenges/palette'
 
@@ -30,15 +30,14 @@ import { challengeInk } from '@/modes/challenges/palette'
 // The date is when the session closed rather than when the run was played: a place is
 // settled at the close and not a moment before it.
 //
-// The figure is the session's own **measure**: its score, or on a race its time.
+// The figure is the session's own **measure**: its score, on a race its time, on a hits
+// session its hits — see `sessionFigure`.
 export function ProfilePlaceRow({ place }: { place: SessionPlace }) {
   const { t } = useLingui()
+  // Ungrouped on a score session, as this row has always printed it: the h-7 row beside
+  // the date has no room to spare for the separators the summary's larger figures get.
   const figure =
-    place.measure === 'time'
-      ? place.timeMs === null
-        ? '—'
-        : formatRaceTime(place.timeMs)
-      : String(place.score)
+    place.measure === 'score' ? String(place.score) : sessionFigure(place.measure, place)
 
   return (
     <View className="h-7 flex-row items-center gap-2">

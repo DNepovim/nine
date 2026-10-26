@@ -10,9 +10,9 @@ import { mono } from '@/constants/theme'
 import { READOUT, TYPE } from '@/constants/typography'
 import type { SessionCard } from '@/lib/challenge-session'
 import { cn } from '@/lib/cn'
-import { formatRaceTime } from '@/lib/duration'
 import { groupDigits } from '@/lib/group-digits'
 import type { OpenSession } from '@/lib/session-board'
+import { sessionFigure } from '@/lib/session-figure'
 import type { SessionSummary } from '@/lib/session-summary'
 import { darkGradientOf, gradientOf, labelOf, type ModeId } from '@/modes'
 import { challengeInk } from '@/modes/challenges/palette'
@@ -80,12 +80,7 @@ export function SummaryCard({
   const bronze = summary.places.find((place) => place.rank === 3)
   // On the podium already, so the line below would be a second telling.
   const onPodium = summary.mine.rank !== null && summary.mine.rank <= 3
-  const mine =
-    summary.measure === 'time'
-      ? summary.mine.timeMs === null
-        ? '—'
-        : formatRaceTime(summary.mine.timeMs)
-      : groupDigits(summary.mine.score)
+  const mine = sessionFigure(summary.measure, summary.mine)
 
   // Unreachable: `summaryOwed` drops a summary with no places. Guarded rather than
   // asserted, because a page is not worth a crash.

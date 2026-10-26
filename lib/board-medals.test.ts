@@ -121,37 +121,77 @@ describe('currentBoardMedals', () => {
 })
 
 describe('sessionMedal', () => {
-  const row = (best_score: number, user_id = 'them') => ({ best_score, user_id })
+  const row = (
+    best_score: number,
+    user_id = 'them',
+    hits = 5,
+    time_ms: number | null = null,
+  ) => ({
+    best_score,
+    hits,
+    time_ms,
+    user_id,
+  })
+  const scored = (score: number) => ({ score, hits: 5, timeMs: null })
 
   it('carries no period, because a session has only one set of standings', () => {
-    expect(sessionMedal([row(400), row(300)], 500, 'me')).toEqual([
+    expect(sessionMedal([row(400), row(300)], scored(500), 'score', 'me')).toEqual([
       { period: null, rank: 1 },
     ])
   })
 
   it('counts the players standing above the run', () => {
-    expect(sessionMedal([row(900), row(800)], 500, 'me')).toEqual([
+    expect(sessionMedal([row(900), row(800)], scored(500), 'score', 'me')).toEqual([
       { period: null, rank: 3 },
     ])
   })
 
   it('is nothing past third', () => {
-    expect(sessionMedal([row(900), row(800), row(700)], 500, 'me')).toEqual([])
+    expect(
+      sessionMedal([row(900), row(800), row(700)], scored(500), 'score', 'me'),
+    ).toEqual([])
   })
 
   it('is nothing when the player’s own better run is what the standings show', () => {
     // The same rule `runMedal` applies to a board: beating a score you already beat wins
     // nothing twice, and the standings are still showing the 900.
-    expect(sessionMedal([row(900, 'me')], 500, 'me')).toEqual([])
+    expect(sessionMedal([row(900, 'me')], scored(500), 'score', 'me')).toEqual([])
   })
 
   it('is gold on standings nobody else is on', () => {
-    expect(sessionMedal([], 500, 'me')).toEqual([{ period: null, rank: 1 }])
+    expect(sessionMedal([], scored(500), 'score', 'me')).toEqual([
+      { period: null, rank: 1 },
+    ])
   })
 
   it('treats a signed-out player as on nobody’s row', () => {
-    expect(sessionMedal([row(900, 'them')], 500, null)).toEqual([
+    expect(sessionMedal([row(900, 'them')], scored(500), 'score', null)).toEqual([
       { period: null, rank: 2 },
     ])
+  })
+
+  // ── Placed by the measure, not the score ──
+  //
+  // A run first on a hits session or a race can score less than the rows under it, and
+  // the medal has to say what the standings say.
+  it('places a hits session on hits, whatever the rows scored', () => {
+    const rows = [row(3000, 'them', 8), row(2000, 'other', 11)]
+    expect(
+      sessionMedal(rows, { score: 1500, hits: 12, timeMs: null }, 'hits', 'me'),
+    ).toEqual([{ period: null, rank: 1 }])
+  })
+
+  it('takes a longer run over the player’s own shorter one that scored more', () => {
+    const rows = [row(3000, 'me', 6)]
+    expect(
+      sessionMedal(rows, { score: 1000, hits: 9, timeMs: null }, 'hits', 'me'),
+    ).toEqual([{ period: null, rank: 1 }])
+  })
+
+  it('places a race on the clock', () => {
+    const rows = [row(9000, 'them', 9, 52000), row(8000, 'other', 9, 41000)]
+    expect(
+      sessionMedal(rows, { score: 400, hits: 9, timeMs: 45000 }, 'time', 'me'),
+    ).toEqual([{ period: null, rank: 2 }])
   })
 })

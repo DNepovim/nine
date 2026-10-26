@@ -1,4 +1,5 @@
 import type { MessageDescriptor } from '@lingui/core'
+import { isOneOf } from 'narrowland'
 
 import type { ClaimTier, TitleWords } from '@/lib/game-over-title'
 
@@ -106,12 +107,13 @@ export type ScoringRules = {
   headline?: Headline
 
   // What this mode's **session board** is ordered by, and so what its places are settled
-  // on: the score everywhere but a race, where it is the clock.
+  // on: the score everywhere but a race, where it is the clock, and a survival run, where
+  // it is how many targets were taken before the run ended.
   //
   // Not the **headline** beside it, and the two must not be confused. A headline is
   // which of the two *factors* a run reports — how close to the route, or how much of
   // the ring was left. A measure is which *figure of a finished run* the standings
-  // compare, and there are only two of those worth comparing.
+  // compare.
   //
   // A **board** — the mode × difficulty kind, with its periods and its reign — has no
   // measure and never will: it is always its score, and `scores` has no other column to
@@ -121,8 +123,22 @@ export type ScoringRules = {
   measure: Measure
 }
 
-// The two figures of a finished run a session board can be ordered by.
-export type Measure = 'score' | 'time'
+// The figures of a finished run a session board can be ordered by. Bounded on purpose:
+// three values a reader can hold in their head, each a column `session_scores` already
+// keeps, and the server's `challenge_sessions_measure` check names the same three.
+//
+// `hits` breaks a tie on the score, so two runs that lasted as long are told apart by
+// how well each was played — the score carries the route and the clock both.
+export const MEASURES = ['score', 'time', 'hits'] as const
+export type Measure = (typeof MEASURES)[number]
+
+// A measure as the server sends it, narrowed. The server stamps the measure on a session
+// when it is booked and this build may not know every one a later build will: read as
+// the score, which is what every screen drew for a measure it had no column for before
+// the tables keyed by it existed — and what a table indexed by an unknown key would
+// otherwise crash on.
+export const measureFrom = (wire: string): Measure =>
+  isOneOf(wire, MEASURES) ? wire : 'score'
 
 export type LivesRules = {
   // Number.POSITIVE_INFINITY = no life loss.
@@ -131,6 +147,15 @@ export type LivesRules = {
   wastefulCostsLife: boolean
   // Whether a target running out costs one.
   expiryCostsLife: boolean
+  // The accuracy a hit has to reach to keep its life, where the mode names its own
+  // rather than taking the rung's `wastefulThreshold`. Read only where
+  // `wastefulCostsLife` is on — a bar on a mode that does not spend lives that way would
+  // otherwise be a second switch for the same thing.
+  //
+  // Not called a threshold, because that word is the **difficulty**'s and this is the
+  // mode overruling it: NO SLIP plays on Easy, whose rung has no bar at all, and asks
+  // for 1 — the exact route, which `accuracyFactor` returns only at par.
+  bar?: number
 }
 
 // What a mode is *shown as*, rather than what it is scored by. Each one replaces a

@@ -29,6 +29,7 @@ const WINNER = {
   nickname: 'DONDA',
   score: 900,
   timeMs: null,
+  hits: 9,
   avgAccuracy: null,
   avgSpeed: null,
 } as const
@@ -44,7 +45,7 @@ const summary = (
   measure: 'score',
   places,
   players: places.length,
-  mine: { rank: null, score: 100, timeMs: null, difficulty: 'hard', bonus: 0 },
+  mine: { rank: null, score: 100, timeMs: null, hits: 9, difficulty: 'hard', bonus: 0 },
 })
 
 const span = (opensAt: number, closesAt: number): SessionSpan => ({ opensAt, closesAt })

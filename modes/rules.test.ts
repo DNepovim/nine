@@ -5,6 +5,7 @@ import { challengeId } from '@/modes/challenges/define'
 import { ACCURACY } from '@/modes/definitions/accuracy'
 import { allModes } from '@/modes/registry'
 import { patchRules, resolveRules } from '@/modes/rules'
+import { measureFrom } from '@/modes/types'
 
 import {
   baseClockMs,
@@ -213,6 +214,25 @@ describe('the rules each shipped mode resolves to', () => {
     expect(rules('accuracy', 'easy').lives.wasteful).toBeNull()
   })
 
+  it("takes a mode's own bar over the rung's, on every rung", () => {
+    // Easy has no bar of its own, which is exactly where a mode naming one has to win.
+    const exact = (lives: Partial<typeof ACCURACY.rules.lives>) =>
+      patchRules(ACCURACY.rules, { lives })
+    for (const rung of ['easy', 'hard', 'extreme'] as const) {
+      expect(resolveRules(exact({ bar: 1 }), 'exact', rung).lives.wasteful).toBe(1)
+    }
+    // Absent, the rung decides as it always has.
+    expect(resolveRules(exact({}), 'exact', 'hard').lives.wasteful).toBeCloseTo(0.2)
+    expect(resolveRules(exact({}), 'exact', 'easy').lives.wasteful).toBeNull()
+  })
+
+  it('reads no bar on a mode that does not spend lives on a wasteful hit', () => {
+    const stray = patchRules(ACCURACY.rules, {
+      lives: { wastefulCostsLife: false, bar: 1 },
+    })
+    expect(resolveRules(stray, 'stray', 'hard').lives.wasteful).toBeNull()
+  })
+
   it('reports the factor each mode weighs more, without being told', () => {
     // Derived from the blend rather than declared beside it, so a mode cannot score
     // four-fifths on the route and report the clock.
@@ -234,7 +254,7 @@ describe('the rules each shipped mode resolves to', () => {
   it('gives each mode the streak its own play is made of', () => {
     expect(rules('speed', 'hard').scoring.streak).toBe('fast')
     expect(rules('accuracy', 'hard').scoring.streak).toBe('optimal')
-    expect(rules('trainee', 'easy').scoring.streak).toBe('none')
+    expect(rules('trainee', 'easy').scoring.streak).toBe('doubled')
   })
 
   it('takes how many targets share the dial from the rung', () => {
@@ -407,5 +427,16 @@ describe('runLabel', () => {
   it('names the tutorial rather than the Trainee it is built out of', () => {
     expect(runLabel('trainee', runSubmode(true))).toBe(TUTORIAL_LABEL)
     expect(runLabel('trainee', runSubmode(true))).not.toBe(labelOf('trainee'))
+  })
+})
+
+describe('measureFrom', () => {
+  it('keeps a measure this build knows', () => {
+    expect(measureFrom('hits')).toBe('hits')
+    expect(measureFrom('time')).toBe('time')
+  })
+
+  it('reads one it does not as the score, rather than as a key nothing is under', () => {
+    expect(measureFrom('distance')).toBe('score')
   })
 })

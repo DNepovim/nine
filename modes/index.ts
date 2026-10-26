@@ -77,4 +77,5 @@ export {
   type StreakFacts,
   type StreakTrigger,
 } from './streak'
+export { MEASURES, measureFrom } from './types'
 export type { Headline, Measure, ShotKind, Submode } from './types'

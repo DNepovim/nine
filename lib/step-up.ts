@@ -9,9 +9,10 @@ import { type Difficulty, type ModeId } from '@/modes'
 // asked, because the screen that asks does not exist for them.
 //
 // It cannot reuse `earnedChallenge` either: that bar is a share of the run's hits landing
-// on a streak, and Trainee runs with `streak: 'none'`, so its strike count is always
-// zero. Clean hits are the signal Trainee actually produces — they are what the confetti
-// is already celebrating.
+// on a streak, and Trainee runs with `streak: 'doubled'`, which builds none — its strike
+// count is only the boards it happened to empty, which says nothing about how it played.
+// Clean hits are the signal Trainee actually produces — they are what the confetti is
+// already celebrating.
 
 // Clean hits in a row. Any hit that is not clean puts it back to nothing, so this is
 // "on a roll right now" rather than "did well at some point".

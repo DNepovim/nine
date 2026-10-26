@@ -4,8 +4,8 @@ import { Text, View } from 'react-native'
 import { GradientName } from '@/components/gradient-name'
 import {
   RANK_COLUMN,
+  RANKED_COLUMN,
   SCORE_COLUMN,
-  TIME_COLUMN,
 } from '@/components/overlays/score-columns'
 import { MarkRow } from '@/components/player-mark'
 import { TrackedPressable } from '@/components/tracked-pressable'
@@ -14,9 +14,9 @@ import { GLYPH, READOUT, TYPE } from '@/constants/typography'
 import { useOpenProfile } from '@/hooks/use-profile-modal'
 import type { PlayerMark } from '@/lib/champions'
 import { cn } from '@/lib/cn'
-import { formatRaceTime } from '@/lib/duration'
 import { rankEmoji, rankMark } from '@/lib/rank-emoji'
 import type { RankMark } from '@/lib/rank-emoji'
+import { sessionFigure } from '@/lib/session-figure'
 import { timeAgo } from '@/lib/time-ago'
 import type { Measure } from '@/modes'
 
@@ -50,6 +50,9 @@ export type ScoreEntry = {
   // What the run took, on a board **measured** by the clock. Undefined on every other
   // board, which has no time to show and no column to show it in.
   timeMs?: number | null
+  // How many targets the run took, on a session **measured** by hits. Undefined on every
+  // other board, for the reason `timeMs` is.
+  hits?: number
   isUser?: boolean
   // What the nickname is coloured by — see lib/name-gradient.ts. Null for a player the
   // counters have never seen, whose name is drawn uncoloured.
@@ -82,6 +85,7 @@ export function ScoreRow({
   const openProfile = useOpenProfile()
   // Every server row carries an id; only the local unpublished row does not.
   const profileId = isNonEmptyString(entry.userId) ? entry.userId : null
+  const ranked = RANKED_COLUMN[measure]
   const highlight = entry.isUser === true
   const glow = halo ? ON_GOLD_LABEL_SHADOW : null
   const accentStyle = highlight ? { color: accentColor } : undefined
@@ -176,21 +180,25 @@ export function ScoreRow({
       <Text
         selectable={false}
         className={cn(
-          measure === 'time'
-            ? [READOUT.rowAside, SCORE_COLUMN, 'text-dim']
-            : [READOUT.row, 'text-score'],
+          ranked === null
+            ? [READOUT.row, 'text-score']
+            : [READOUT.rowAside, SCORE_COLUMN, 'text-dim'],
         )}
         style={[{ fontFamily: digitFont }, glow]}
       >
         {entry.score}
       </Text>
-      {measure === 'time' && (
+      {ranked !== null && (
         <Text
           selectable={false}
-          className={cn(READOUT.row, TIME_COLUMN, 'text-score')}
+          className={cn(READOUT.row, ranked.width, 'text-score')}
           style={[{ fontFamily: digitFont }, glow]}
         >
-          {entry.timeMs == null ? '—' : formatRaceTime(entry.timeMs)}
+          {sessionFigure(measure, {
+            score: entry.score,
+            timeMs: entry.timeMs ?? null,
+            hits: entry.hits ?? 0,
+          })}
         </Text>
       )}
     </TrackedPressable>

@@ -1,7 +1,8 @@
 // What extends a mode's streak. `optimal` and `fast` are chains of decisions — every
 // matching hit either builds them or breaks them — where `clear` depends on the spawn
 // timing cooperating, so most hits leave it untouched.
-export type StreakTrigger = 'optimal' | 'fast' | 'clear' | 'whole' | 'spread' | 'none'
+export type StreakTrigger =
+  'optimal' | 'fast' | 'clear' | 'whole' | 'spread' | 'doubled' | 'none'
 
 // A hit counts as fast when this much of the target's ring is still full.
 export const FAST_HIT_THRESHOLD = 0.6
@@ -47,6 +48,12 @@ export const STREAK_TRIGGERED = {
   // constrained pass over the whole range on every spawn, which is far more than a streak
   // fact may cost.
   spread: ({ anyHit, allSpread }) => anyHit && allSpread,
+  // Not a streak at all: a hit that empties the board is worth double, and nothing
+  // builds, breaks or carries from one hit to the next — see `applyGrid` in
+  // machines/game.ts, which is where the doubling is. The rule Trainee has always had,
+  // kept under its own name so that `none` can mean none.
+  doubled: () => false,
+  // Nothing. No hit is ever worth more than its own blend, and the run counts no strikes.
   none: () => false,
 } as const satisfies Record<StreakTrigger, (facts: StreakFacts) => boolean>
 
@@ -59,6 +66,7 @@ export const STREAK_BROKEN = {
   clear: () => false,
   whole: ({ anyHit }) => anyHit,
   spread: ({ anyHit }) => anyHit,
+  doubled: () => false,
   none: () => false,
 } as const satisfies Record<StreakTrigger, (facts: StreakFacts) => boolean>
 

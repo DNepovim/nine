@@ -40,6 +40,7 @@ declare
   closed_keys  uuid := '5e551011-0000-0000-0000-000000000003';
   closed_grid  uuid := '5e551011-0000-0000-0000-000000000004';
   closed_habit uuid := '5e551011-0000-0000-0000-000000000005';
+  closed_slip  uuid := '5e551011-0000-0000-0000-000000000006';
   live   uuid := '5e551011-0000-0000-0000-000000000001';
   teased uuid := '5e551011-0000-0000-0000-000000000002';
   n_admin int;
@@ -112,7 +113,8 @@ begin
   -- What fills the CHALLENGES list on a profile: a place counts only once its window
   -- and the grace after it have shut, so these sit days back rather than hours. Three
   -- challenges so the names wear three colours, and HABIT among them because it is the
-  -- race — its column is a time, which is the other half of what the row prints.
+  -- race — its column is a time, which is the other half of what the row prints. NO SLIP
+  -- is the fourth, ranked on hits, so the third kind of figure has a row too.
   --
   -- ACE_9 takes all three metals, one per session, so a single profile shows the whole
   -- row; SPEEDY and NOVA come away with a mixture. Each is a day long and none overlap,
@@ -120,7 +122,8 @@ begin
   insert into public.challenge_sessions (id, mode_id, opens_at, closes_at, measure) values
     (closed_keys,  'challenge/four-keys',    now() - interval '3 days',  now() - interval '2 days',  'score'),
     (closed_grid,  'challenge/four-by-four', now() - interval '6 days',  now() - interval '5 days',  'score'),
-    (closed_habit, 'challenge/habit',        now() - interval '10 days', now() - interval '9 days',  'time')
+    (closed_habit, 'challenge/habit',        now() - interval '10 days', now() - interval '9 days',  'time'),
+    (closed_slip,  'challenge/no-slip',      now() - interval '13 days', now() - interval '12 days', 'hits')
   on conflict (id) do update
     set opens_at = excluded.opens_at, closes_at = excluded.closes_at, measure = excluded.measure;
 
@@ -137,7 +140,13 @@ begin
     (closed_habit, u3, 1610,  9, 38400, 'hard', now() - interval '9 days 6 hours'),
     (closed_habit, u6, 1590,  9, 41250, 'hard', now() - interval '9 days 3 hours'),
     (closed_habit, u1, 1570,  9, 44900, 'hard', now() - interval '9 days 8 hours'),
-    (closed_habit, u5, 1400,  9, 52300, 'hard', now() - interval '9 days 1 hour')
+    (closed_habit, u5, 1400,  9, 52300, 'hard', now() - interval '9 days 1 hour'),
+    -- NO SLIP, ranked on hits: SPEEDY and ACE_9 level on 17 and told apart by the score,
+    -- NOVA with the biggest score of the three and still last, having slipped sooner.
+    (closed_slip,  u3, 1590, 17, null,  'easy', now() - interval '12 days 5 hours'),
+    (closed_slip,  u1, 1520, 17, null,  'easy', now() - interval '12 days 8 hours'),
+    (closed_slip,  u5, 1710, 12, null,  'easy', now() - interval '12 days 2 hours'),
+    (closed_slip,  u2,  610,  6, null,  'easy', now() - interval '12 days 9 hours')
   on conflict (session_id, user_id) do nothing;
 
   -- ── Messages in every state the MESSAGES screen tells apart ─────────────────
@@ -212,7 +221,7 @@ begin
 
   select count(*) into n_admin from public.profiles where role is not null;
 
-  raise notice 'dev-fixtures: % features reachable, % profiles with a role, 1 live session + 1 teaser + 3 closed, 7 messages',
+  raise notice 'dev-fixtures: % features reachable, % profiles with a role, 1 live session + 1 teaser + 4 closed, 7 messages',
     (select count(*) from public.features where visibility <> 'hidden'), n_admin;
   raise notice 'dev-fixtures: new sign-ins get a DEV_ nickname and admin automatically';
 end

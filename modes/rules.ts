@@ -40,7 +40,9 @@ const BASE_TARGET_RULES: TargetRules = {
   scoring: {
     weights: { acc: 0.5, spd: 0.5 },
     base: SCORE_BASE,
-    streak: 'none',
+    // Trainee's board-clear doubling, which every mode that names no streak of its own
+    // inherits. Not `none`, which builds nothing at all — a mode wanting that says so.
+    streak: 'doubled',
     measure: 'score',
   },
   lives: { count: 3, wastefulCostsLife: false, expiryCostsLife: true },
@@ -124,9 +126,13 @@ export type RunRules = {
 const favoured = (weights: { acc: number; spd: number }): Headline =>
   weights.spd > weights.acc ? 'spd' : 'acc'
 
+// The bar is the mode's where it names one and the rung's where it does not, and neither
+// where the mode does not spend lives on a wasteful hit at all.
 const livesOf = (lives: LivesRules, difficulty: Difficulty): RunRules['lives'] => ({
   count: lives.count,
-  wasteful: lives.wastefulCostsLife ? DIFFICULTIES[difficulty].wastefulThreshold : null,
+  wasteful: lives.wastefulCostsLife
+    ? (lives.bar ?? DIFFICULTIES[difficulty].wastefulThreshold)
+    : null,
   expiryCosts: lives.expiryCostsLife,
 })
 

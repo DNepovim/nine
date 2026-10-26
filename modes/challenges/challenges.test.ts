@@ -433,8 +433,10 @@ describe('glimpse', () => {
     // have recoloured every challenge after it.
     // The order itself is what is pinned: a colour is derived from the index, so checking a
     // colour against its own index passes whatever the order is.
+    // The whole order, so an entry inserted rather than appended anywhere fails here.
+    // Appending one means adding it to the end of this list too.
     expect(CHALLENGES.map((mode) => mode.id)).toEqual(
-      ['four-keys', 'four-by-four', 'habit', 'glimpse'].map(challengeId),
+      ['four-keys', 'four-by-four', 'habit', 'glimpse', 'no-slip'].map(challengeId),
     )
     expect(GLIMPSE?.gradient).toEqual(challengeGradient(3))
   })
@@ -544,5 +546,26 @@ describe('what a challenge is scored and spent by unless it says otherwise', () 
       acc: 0.85,
       spd: 0.15,
     })
+  })
+})
+
+describe('NO SLIP', () => {
+  const rules = runRules(challengeId('no-slip'), 'hard')
+
+  it('is Accuracy on Easy, with one heart that only a slip can spend', () => {
+    expect(rules.difficulty).toBe('easy')
+    expect(rules.lives).toEqual({ count: 1, wasteful: 1, expiryCosts: false })
+  })
+
+  it('wears the colour of the fifth place in the catalog', () => {
+    const NO_SLIP = CHALLENGES.find((mode) => mode.id === challengeId('no-slip'))
+    expect(NO_SLIP?.gradient).toEqual(challengeGradient(4))
+  })
+
+  it('builds no streak, draws no shot, and is ranked by hits', () => {
+    expect(rules.scoring.streak).toBe('none')
+    expect(rules.scoring.measure).toBe('hits')
+    expect(measureOf(challengeId('no-slip'))).toBe('hits')
+    expect(rules.scoring.weights).toEqual({ acc: 0.85, spd: 0.15 })
   })
 })

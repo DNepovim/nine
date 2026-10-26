@@ -3,7 +3,7 @@ import { isOneOf } from 'narrowland'
 import { noteRequest } from '@/lib/connectivity'
 import type { SessionSummary, SummaryPlace } from '@/lib/session-summary'
 import { supabase } from '@/lib/supabase'
-import type { Difficulty, Measure } from '@/modes'
+import { measureFrom, type Difficulty } from '@/modes'
 
 // The read behind a **summary**: every closed session this player scored on since a given
 // instant, with its podium and their own figure on it.
@@ -25,6 +25,8 @@ type PlaceRow = {
   nickname: string
   score: number
   timeMs: number | null
+  // Absent from a server older than the hits measure, which read as none.
+  hits?: number
   avgAcc: number | null
   avgSpd: number | null
 }
@@ -33,13 +35,15 @@ type SummaryRow = {
   id: string
   mode_id: string
   closes_at: string
-  measure: Measure
+  // A string on the wire — see `measureFrom`.
+  measure: string
   players: number
   places: readonly PlaceRow[]
   mine: {
     rank: number | null
     score: number
     timeMs: number | null
+    hits?: number
     difficulty: Difficulty
     bonus: number
   }
@@ -58,6 +62,7 @@ const placeOf = (row: PlaceRow): SummaryPlace | null =>
         nickname: row.nickname,
         score: row.score,
         timeMs: row.timeMs,
+        hits: row.hits ?? 0,
         avgAccuracy: row.avgAcc,
         avgSpeed: row.avgSpd,
       }
@@ -80,10 +85,10 @@ export async function loadSessionSummaries(
       sessionId: row.id,
       modeId: row.mode_id,
       closesAt: new Date(row.closes_at).getTime(),
-      measure: row.measure,
+      measure: measureFrom(row.measure),
       places: row.places.map(placeOf).filter((place) => place !== null),
       players: row.players,
-      mine: row.mine,
+      mine: { ...row.mine, hits: row.mine.hits ?? 0 },
     })),
     error: null,
   }

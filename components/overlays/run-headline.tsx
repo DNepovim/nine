@@ -4,7 +4,7 @@ import type { RunScore } from '@/components/overlays/run-screen'
 import { READOUT } from '@/constants/typography'
 import { cn } from '@/lib/cn'
 import { formatRunClock } from '@/lib/duration'
-import { measureOf, scoreInkOf, type ModeId } from '@/modes'
+import { measureOf, scoreInkOf, type Measure, type ModeId } from '@/modes'
 
 // The run's score, under a headline that is not it.
 //
@@ -30,6 +30,15 @@ function RunScoreUnder({ score }: { score: number }) {
   )
 }
 
+// What a run measured by something other than its score leads with.
+const LEAD = {
+  time: ({ gameTimeMs }) => formatRunClock(gameTimeMs),
+  hits: ({ hits }) => hits,
+} as const satisfies Record<
+  Exclude<Measure, 'score'>,
+  (run: { hits: number; gameTimeMs: number }) => number | string
+>
+
 // What a run screen leads with, and what it puts under that.
 //
 // One answer for both screens that stop a run — the pause and the game over — because
@@ -41,23 +50,30 @@ function RunScoreUnder({ score }: { score: number }) {
 // and is still what the fortune counts. Every other run leads with its score, which is
 // the only figure it has, and puts nothing under it.
 //
+// **A hits run leads with its hits**, for the same reason: NO SLIP is placed on how many
+// targets the run took, the slip included, and the score goes under it as it does under
+// a clock.
+//
 // Here beside the component rather than in `lib/`: it returns a node, so it is not the
 // pure kind of helper `lib/` holds, and it is the props of the thing in this file.
 export function runHeadline({
   mode,
   score,
+  hits,
   gameTimeMs,
   glow,
 }: {
   mode: ModeId
   score: number
+  hits: number
   gameTimeMs: number
   glow?: string
 }): RunScore {
   const color = scoreInkOf(mode)
-  if (measureOf(mode) !== 'time') return { value: score, color, glow }
+  const measure = measureOf(mode)
+  if (measure === 'score') return { value: score, color, glow }
   return {
-    value: formatRunClock(gameTimeMs),
+    value: LEAD[measure]({ hits, gameTimeMs }),
     color,
     glow,
     under: <RunScoreUnder score={score} />,

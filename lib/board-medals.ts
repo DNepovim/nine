@@ -1,5 +1,7 @@
 import { PERIODS, type Period } from '@/lib/announcements'
 import { medalRank } from '@/lib/medals'
+import { runBeats, type SessionFigures } from '@/lib/session-order'
+import type { Measure } from '@/modes'
 
 // A place the run earned on one period of a board — or, with no period, on a **session**,
 // which has exactly one set of standings and so nothing to distinguish them from.
@@ -9,6 +11,9 @@ import { medalRank } from '@/lib/medals'
 // `Period` would have put it in every table keyed by period — the board tabs, the medal
 // collapse, the reigns — none of which has anything to say about it.
 export type BoardMedal = { period: Period | null; rank: 1 | 2 | 3 }
+
+// Where a run lands on the podium, or null for off it.
+type Place = 1 | 2 | 3 | null
 
 // One row of a board, as the medal count sees it.
 export type BoardRow = { score: number; isMine: boolean }
@@ -26,10 +31,26 @@ export type BoardRow = { score: number; isMine: boolean }
 //
 // `rows` is the board's top five, which is all a podium needs: anything past third is no
 // medal either way.
-export function runMedal(score: number, rows: readonly BoardRow[]): 1 | 2 | 3 | null {
-  // An older, better run of the player's own is what the board is showing.
-  if (rows.some((row) => row.isMine && row.score > score)) return null
-  const ahead = rows.filter((row) => !row.isMine && row.score > score).length
+export function runMedal(score: number, rows: readonly BoardRow[]): Place {
+  return placeAmong(
+    rows.map((row) => ({ isMine: row.isMine, above: row.score > score })),
+    score,
+  )
+}
+
+// The rule itself, for any standings, given which rows stand above the run: on a board the
+// higher score, on a session whatever its **measure** orders by. One copy, so the board
+// and the session cannot drift apart on it.
+//
+// `score` is asked separately because a run with nothing on it takes no medal however it
+// is ranked — see `medalRank`.
+function placeAmong(
+  rows: readonly { isMine: boolean; above: boolean }[],
+  score: number,
+): Place {
+  // An older, better run of the player's own is what the standings are showing.
+  if (rows.some((row) => row.isMine && row.above)) return null
+  const ahead = rows.filter((row) => !row.isMine && row.above).length
   return medalRank(ahead + 1, score)
 }
 
@@ -94,20 +115,34 @@ export function currentBoardMedals(
 // alongside the board case, and empty rather than null for no medal, which is the same
 // shape `boardMedals` returns when a run earned nothing.
 //
-// Reuses `runMedal`, which is the whole reason this is three lines: the rule for whether
-// a run's score is what the standings now show, and whether that lands on the podium, is
-// not different because the standings happen to be a session's.
+// The rule is `runMedal`'s — the run has to be what the standings now show, and that
+// row has to land on the podium — asked by the session's **measure** rather than by the
+// score: a race is placed by its clock and a NO SLIP session by its hits, so a run first
+// on either can score less than the rows below it. See `runBeats`, which the device also
+// keeps its own best by, so the medal and the row it is about never disagree.
+//
+// A run with nothing on it — no point and no hit — takes no medal, as on a board.
 export function sessionMedal(
-  rows: readonly { best_score: number; user_id: string }[],
-  score: number,
+  rows: readonly {
+    best_score: number
+    hits: number
+    time_ms?: number | null
+    user_id: string
+  }[],
+  run: SessionFigures,
+  measure: Measure,
   userId: string | null,
 ): BoardMedal[] {
-  const rank = runMedal(
-    score,
+  const rank = placeAmong(
     rows.map((row) => ({
-      score: row.best_score,
       isMine: userId !== null && row.user_id === userId,
+      above: runBeats(
+        measure,
+        { score: row.best_score, hits: row.hits, timeMs: row.time_ms ?? null },
+        run,
+      ),
     })),
+    run.score,
   )
   return rank === null ? [] : [{ period: null, rank }]
 }

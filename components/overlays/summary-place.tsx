@@ -3,9 +3,8 @@ import { Text, View } from 'react-native'
 import { GradientName } from '@/components/gradient-name'
 import { GLYPH, READOUT, TYPE } from '@/constants/typography'
 import { cn } from '@/lib/cn'
-import { formatRaceTime } from '@/lib/duration'
-import { groupDigits } from '@/lib/group-digits'
 import { rankMedal } from '@/lib/rank-emoji'
+import { sessionFigure } from '@/lib/session-figure'
 import type { SummaryPlace } from '@/lib/session-summary'
 import type { Measure } from '@/modes'
 
@@ -61,12 +60,7 @@ export function SummaryPlaceRow({
   digitFont: string
 }) {
   const type = SIZES[size]
-  const figure =
-    measure === 'time'
-      ? place.timeMs === null
-        ? '—'
-        : formatRaceTime(place.timeMs)
-      : groupDigits(place.score)
+  const figure = sessionFigure(measure, place)
 
   return (
     <View className="items-center gap-0.5">

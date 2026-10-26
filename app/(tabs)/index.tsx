@@ -15,6 +15,7 @@ import { BestScoresLine, type SessionBests } from '@/components/game/best-scores
 import { Confetti } from '@/components/game/confetti'
 import { Dial } from '@/components/game/dial'
 import { AXIS_STRIP } from '@/components/game/dial-axes'
+import { DigitStrip } from '@/components/game/digit-strip'
 import { FloatingLifeLoss } from '@/components/game/floating-life-loss'
 import { FloatingPoints } from '@/components/game/floating-points'
 import { FloatingStat } from '@/components/game/floating-stat'
@@ -135,12 +136,12 @@ import {
   type Leaders,
   type Period,
 } from '@/lib/announcements'
-import { currentBoardMedals, sessionMedal } from '@/lib/board-medals'
+import { currentBoardMedals, sessionMedal, type BoardMedal } from '@/lib/board-medals'
 import { holdsBothBoards, recordScreen, type RecordScreen } from '@/lib/champions'
 import { cn } from '@/lib/cn'
 import { drillFor } from '@/lib/drill'
 import { gameSnapshot } from '@/lib/feedback-state'
-import { leaderOf } from '@/lib/leaderboard'
+import { leaderOf, type LeaderboardRow } from '@/lib/leaderboard'
 import { runChallenge } from '@/lib/next-challenge'
 import { heldPeriods, medalPeriods } from '@/lib/record-medals'
 import { newRunId } from '@/lib/run-id'
@@ -152,12 +153,13 @@ import {
   type SavedRun,
 } from '@/lib/saved-run'
 import type { PreviousWinner } from '@/lib/session-board'
+import type { SessionFigures } from '@/lib/session-order'
 import { STEP_UP_BOARD } from '@/lib/step-up'
 import { multiplierColor } from '@/lib/streak-badge'
 import { tipForTarget } from '@/lib/tutorial-tip'
 import { valueProgress } from '@/lib/value-progress'
 import { WELCOME_BOARD } from '@/lib/welcome'
-import { bestOn, drillSpent, gameMachine, type GameSend } from '@/machines/game'
+import { bestOn, claimedTime, gameMachine, type GameSend } from '@/machines/game'
 import { computePar } from '@/machines/scoring'
 import { keyControl, type LessonVoice } from '@/machines/tutorial-lesson'
 import {
@@ -493,9 +495,23 @@ const subtitleFor = (
 // strip falls back to its blank height rather than showing a session whose best is a
 // guess.
 //
-// On a race the two figures are times rather than scores. The board's rows come ordered
-// by the session's **measure**, so the top row is still the record — it is only which
-// column of it the strip reads that changes.
+// On a race the two figures are times rather than scores, and on a hits session they are
+// hits. The board's rows come ordered by the session's **measure**, so the top row is
+// still the record — it is only which column of it the strip reads that changes.
+//
+// The figure each measure other than the score reads off a run. The score is read off
+// the board itself, which already knows the record and the player's own best.
+const RANKED_OF = {
+  time: (run) => run.timeMs ?? 0,
+  hits: (run) => run.hits,
+} as const satisfies Record<Exclude<Measure, 'score'>, (run: SessionFigures) => number>
+
+const figuresOf = (row: LeaderboardRow): SessionFigures => ({
+  score: row.best_score,
+  hits: row.hits,
+  timeMs: row.time_ms ?? null,
+})
+
 const sessionBestsOf = (
   id: string | null,
   closesAt: number | null,
@@ -505,22 +521,25 @@ const sessionBestsOf = (
   previous: PreviousWinner | null,
 ): SessionBests | null => {
   if (id === null || closesAt === null || board === null) return null
-  const timed = measure === 'time'
   const mine = board.rows.find((row) => row.user_id === userId)
+  const top = board.rows[0]
+  const ranked = measure === 'score' ? null : RANKED_OF[measure]
+  const figure = (row: LeaderboardRow | undefined) =>
+    row === undefined || ranked === null ? 0 : ranked(figuresOf(row))
   return {
     measure,
-    best: timed ? (board.rows[0]?.time_ms ?? 0) : (board.record ?? 0),
+    best: ranked === null ? (board.record ?? 0) : figure(top),
     holder: board.recordHolder,
     mine: board.recordIsMine,
-    myBest: timed ? (mine?.time_ms ?? 0) : board.myBest,
+    myBest: ranked === null ? board.myBest : figure(mine),
     // Left off rather than drawn as 0.0 where a race's winner has no time — an untimed
     // row from an older build, which would read as a record nobody could beat.
     last:
-      previous === null || (timed && previous.timeMs === null)
+      previous === null || (measure === 'time' && previous.timeMs === null)
         ? null
         : {
             holder: previous,
-            value: timed ? (previous.timeMs ?? 0) : previous.score,
+            value: ranked === null ? previous.score : ranked(previous),
             mine: previous.userId === userId,
           },
     closesAt,
@@ -554,6 +573,19 @@ const restoredSessionOf = (
   id: saved.session?.id ?? null,
   closesAt: saved.session?.closesAt ?? null,
 })
+
+// Where a finished run came on its session, as a medal — asked once, at game over, of the
+// board already held for the score bar, and handed to both the title and the screen
+// under it so the two cannot answer differently. Empty for an ordinary run, and for a
+// session run still being played, which the caller says by passing no session.
+const runSessionMedalsOf = (
+  session: string | null,
+  board: PeriodBoard | null,
+  figures: SessionFigures,
+  measure: Measure,
+  userId: string | null,
+): BoardMedal[] =>
+  session === null ? [] : sessionMedal(board?.rows ?? [], figures, measure, userId)
 
 export default function GameScreen() {
   const { t } = useLingui()
@@ -594,6 +626,13 @@ export default function GameScreen() {
   const submode = runSubmode(tutorial)
   // The dial this run is played on. `board` on this screen is already the leaderboard.
   const dial = rules.dial
+  // What this run is placed on its session's standings by — the medal on the game-over
+  // screen and the title above it both ask, and both have to ask what the write posts.
+  const runFigures = {
+    score: state.context.score,
+    hits: state.context.hits,
+    timeMs: claimedTime(state.context, rules),
+  }
 
   const isPlaying = state.matches('playing')
   const isMenu = state.matches('menu')
@@ -998,6 +1037,13 @@ export default function GameScreen() {
     userId,
     isPaused,
   )
+  const runSessionMedals = runSessionMedalsOf(
+    isGameOver ? runSession : null,
+    runSessionBoard,
+    runFigures,
+    rules.scoring.measure,
+    userId,
+  )
   // Who won this challenge the last time it was aired, for the strip's third cell.
   const previousWinner = usePreviousWinner(runSession, isPaused)
   // Who holds each mode's Extreme all-time board, and who took the last challenge —
@@ -1332,9 +1378,7 @@ export default function GameScreen() {
         // record post above sends none, a run still being played having no time to
         // claim. Nor does a drilled run its window shut on before the ninth target
         // fell: only a finished race has a time, and without one a race posts nothing.
-        rules.spawn.drill === null || drillSpent(state.context)
-          ? state.context.elapsedMs
-          : undefined,
+        claimedTime(state.context, rules) ?? undefined,
         // Then the standings again, so the table on the game-over screen has this run on
         // it. Read before the write landed, it showed the session as it was before the
         // run — empty, on a session nobody else had played yet. Asks nothing of the
@@ -2097,9 +2141,11 @@ export default function GameScreen() {
                   {/* Center: the figure the run is judged by.
                       
                       A race is judged by its clock, so that is what stands here — the
-                      same number the standings will place it on, running. Every other
-                      scored run is judged by a factor and shows the average of it.
-                      Nothing stands here on a mode with neither. */}
+                      same number the standings will place it on, running. A hits run is
+                      judged by how many targets it has taken, and shows that count: its
+                      average accuracy could only ever read 100%, a slip being the end of
+                      it. Every other scored run is judged by a factor and shows the
+                      average of it. Nothing stands here on a mode with neither. */}
                   {rules.scoring.measure === 'time' && (
                     <RunStopwatch
                       elapsedMs={state.context.elapsedMs}
@@ -2108,19 +2154,13 @@ export default function GameScreen() {
                     />
                   )}
 
-                  {rules.scoring.measure !== 'time' && isOneOf(mode, SCORED_MODES) && (
+                  {rules.scoring.measure === 'hits' && (
+                    <DigitStrip text={String(hits)} direction={1} />
+                  )}
+
+                  {rules.scoring.measure === 'score' && isOneOf(mode, SCORED_MODES) && (
                     <View style={{ alignItems: 'center' }}>
-                      <View style={{ flexDirection: 'row' }}>
-                        {`${avgStat}%`.split('').map((digit, i, arr) => (
-                          <ScoreDigit
-                            key={arr.length - 1 - i}
-                            digit={digit}
-                            direction={avgDirection.current}
-                            progress={0}
-                            size={16}
-                          />
-                        ))}
-                      </View>
+                      <DigitStrip text={`${avgStat}%`} direction={avgDirection.current} />
                       {floatStats.map((f) => (
                         <FloatingStat
                           key={f.id}
@@ -2496,15 +2536,11 @@ export default function GameScreen() {
               sessionBoard={runSessionBoard}
               sessionClosesAt={sessionClockOf(runSession, runSessionClosesAt)}
               windowShut={windowShut}
-              // Where this run came on its session, for the title. Read from the board
-              // already held for the score bar rather than fetched again — see
-              // `runSessionBoard`. The overlay below works its own medal out from the
-              // same standings; this one is needed a layer higher, because the title is
-              // decided here and flies up before that screen exists.
-              sessionRank={
-                sessionMedal(runSessionBoard?.rows ?? [], state.context.score, userId)[0]
-                  ?.rank ?? null
-              }
+              // Where this run came on its session — see `runSessionMedals`. The rank is
+              // needed a layer higher than the medal, because the title is decided here
+              // and flies up before the screen under it exists.
+              sessionMedals={runSessionMedals}
+              sessionRank={runSessionMedals[0]?.rank ?? null}
               phase={dyingPhase}
               overlayStyle={overlayStyle}
               titleStyle={titleStyle}

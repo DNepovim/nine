@@ -2,7 +2,7 @@ import { isNetworkFailure, noteRequest } from '@/lib/connectivity'
 import type { LeaderboardRow } from '@/lib/leaderboard'
 import type { ServerError } from '@/lib/refusal'
 import { supabase } from '@/lib/supabase'
-import type { Measure } from '@/modes'
+import { measureFrom, type Measure } from '@/modes'
 
 // The player's half of a **session board**: the one card the start screen draws, one
 // session's standings in full, and the write.
@@ -35,6 +35,9 @@ export type OpenSession = {
     // What the leader's run took, where this session is **measured** by the clock.
     // Null on a score-measured session, which has no time to show.
     timeMs: number | null
+    // How many targets the leader's run took — the figure a session **measured** by
+    // hits is ordered on, and carried on every session because the server always has it.
+    hits: number
     avgAccuracy: number | null
     avgSpeed: number | null
   } | null
@@ -50,10 +53,13 @@ type OpenSessionRow = {
   opens_at: string
   closes_at: string
   extended_at: string | null
-  measure: Measure
+  // A string on the wire: a later build's measure may arrive here — see `measureFrom`.
+  measure: string
   leader_name: string | null
   leader_score: number | null
   leader_time: number | null
+  // Null only from a server older than the hits measure, which read as none.
+  leader_hits: number | null
   leader_acc: number | null
   leader_spd: number | null
 }
@@ -76,7 +82,7 @@ export async function loadOpenSessions(): Promise<{
       opensAt: atMs(row.opens_at),
       closesAt: atMs(row.closes_at),
       extendedAt: row.extended_at === null ? null : atMs(row.extended_at),
-      measure: row.measure,
+      measure: measureFrom(row.measure),
       leader:
         row.leader_name === null || row.leader_score === null
           ? null
@@ -84,6 +90,7 @@ export async function loadOpenSessions(): Promise<{
               nickname: row.leader_name,
               score: row.leader_score,
               timeMs: row.leader_time,
+              hits: row.leader_hits ?? 0,
               // Kept nullable rather than defaulted to zero: a nought is a real average
               // a real player can have, and `nameColors` already treats the absence as
               // no saturation. Defaulting here would have made "never counted" and
@@ -120,6 +127,8 @@ export type PreviousWinner = {
   score: number
   // Set on a race, which is won on the clock; null everywhere else.
   timeMs: number | null
+  // What a session **measured** by hits was won on.
+  hits: number
   avgAccuracy: number | null
   avgSpeed: number | null
 }
@@ -129,6 +138,7 @@ type PreviousWinnerRow = {
   nickname: string
   best_score: number
   time_ms: number | null
+  hits: number | null
   avg_acc: number | null
   avg_spd: number | null
 }
@@ -145,6 +155,7 @@ export async function loadPreviousWinner(
     nickname: row.nickname,
     score: row.best_score,
     timeMs: row.time_ms,
+    hits: row.hits ?? 0,
     avgAccuracy: row.avg_acc,
     avgSpeed: row.avg_spd,
   }

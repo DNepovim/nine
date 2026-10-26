@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
+import { challengeId } from '@/modes'
+
 import {
   bestFor,
   bestPending,
@@ -56,16 +58,34 @@ describe('recordRun', () => {
     expect(recordRun(store, run({ score: 900 }))).toBe(store)
   })
 
+  // ── A session measured by hits ──
+  //
+  // NO SLIP: a run is as good as it was long, so more hits wins whatever it scored, and
+  // two runs as long are told apart by the score. Asked of the mode's measure, since an
+  // entry on a hits session carries no time to tell it from a score one.
+  it('keeps the longer run on a hits session, whatever it scored', () => {
+    const NO_SLIP = challengeId('no-slip')
+    const on = (over: Partial<LocalScore>) =>
+      run({ mode: NO_SLIP, sessionId: 's', ...over })
+    const held = [
+      { ...on({ score: 500, hits: 7 }), status: 'pending' as const, attempts: 0 },
+    ]
+    expect(recordRun(held, on({ score: 2000, hits: 5 }))).toBe(held)
+    expect(recordRun(held, on({ score: 100, hits: 9 }))[0]?.hits).toBe(9)
+    expect(recordRun(held, on({ score: 800, hits: 7 }))[0]?.score).toBe(800)
+    expect(recordRun(held, on({ score: 400, hits: 7 }))).toBe(held)
+  })
+
   // ── A session measured by the clock ──
   //
   // The device has to keep the better row by the same rule the server does, or a player
   // sees one best on their own phone and another on the standings. The rule: if both
-  // runs carry a time, the faster wins; otherwise the higher score does.
+  // runs carry a time, the faster wins; otherwise the higher score does. Asked of the
+  // slot's measure, so these are HABIT runs: a time on any other mode means nothing.
   const SESSION = 'a-session-id'
-  const timed = (score: number, timeMs: number) =>
-    run({ sessionId: SESSION, score, timeMs })
-  const timedEntry = (score: number, timeMs: number) =>
-    entry({ sessionId: SESSION, score, timeMs })
+  const RACE = { mode: challengeId('habit'), sessionId: SESSION }
+  const timed = (score: number, timeMs: number) => run({ ...RACE, score, timeMs })
+  const timedEntry = (score: number, timeMs: number) => entry({ ...RACE, score, timeMs })
 
   it('keeps the faster run on a timed slot even when it scored less', () => {
     // The case the shared no-downgrade rule got wrong: a better run, refused for
@@ -86,30 +106,27 @@ describe('recordRun', () => {
 
   it('lets a finished run replace a quicker one that was left part-way', () => {
     // One hit and END RUN stood at 3.1″ and refused every run that went the distance.
-    const quit = entry({ sessionId: SESSION, score: 75, hits: 1, timeMs: 3100 })
-    const finished = run({ sessionId: SESSION, score: 6200, hits: 9, timeMs: 8500 })
+    const quit = entry({ ...RACE, score: 75, hits: 1, timeMs: 3100 })
+    const finished = run({ ...RACE, score: 6200, hits: 9, timeMs: 8500 })
     expect(recordRun([quit], finished)).toEqual([entry(finished)])
   })
 
   it('refuses a quicker run that went less far', () => {
-    const store = [entry({ sessionId: SESSION, score: 6200, hits: 9, timeMs: 8500 })]
-    const quit = run({ sessionId: SESSION, score: 75, hits: 1, timeMs: 3100 })
+    const store = [entry({ ...RACE, score: 6200, hits: 9, timeMs: 8500 })]
+    const quit = run({ ...RACE, score: 75, hits: 1, timeMs: 3100 })
     expect(recordRun(store, quit)).toBe(store)
   })
 
   it('lets a timed run replace an untimed entry whatever it scored', () => {
     // An older build's mid-run post left a score and no time; the finish that followed
     // scored less and was never sent.
-    const store = recordRun(
-      [entry({ sessionId: SESSION, score: 6500 })],
-      timed(6200, 8500),
-    )
+    const store = recordRun([entry({ ...RACE, score: 6500 })], timed(6200, 8500))
     expect(store).toEqual([timedEntry(6200, 8500)])
   })
 
   it('never lets an untimed run replace a timed entry', () => {
     const store = [timedEntry(6200, 8500)]
-    expect(recordRun(store, run({ sessionId: SESSION, score: 9000 }))).toBe(store)
+    expect(recordRun(store, run({ ...RACE, score: 9000 }))).toBe(store)
   })
 
   it('leaves a board run judged by its score alone', () => {

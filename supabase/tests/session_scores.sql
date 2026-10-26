@@ -393,6 +393,84 @@ begin
 end;
 $$;
 
+-- ─── Measured by hits ────────────────────────────────────────────────────────
+--
+-- NO SLIP's standings: the run that lasted longer leads whatever it scored, and two runs
+-- that lasted as long are told apart by the score. The keep-better rule has to follow,
+-- or a long run's row would be replaced by a short one that happened to score more.
+do $$
+declare
+  v_a    uuid;
+  v_b    uuid;
+  v_c    uuid;
+  v_hits uuid;
+  v_rank bigint;
+begin
+  select id into v_a from profiles order by id limit 1;
+  select id into v_b from profiles where id <> v_a order by id limit 1;
+  select id into v_c from profiles where id not in (v_a, v_b) order by id limit 1;
+  update profiles set nickname = 'SLIP_A' where id = v_a;
+  update profiles set nickname = 'SLIP_B' where id = v_b;
+  update profiles set nickname = 'SLIP_C' where id = v_c;
+
+  insert into challenge_sessions (mode_id, opens_at, closes_at, measure)
+  values ('challenge/no-slip', now() - interval '1 hour', now() + interval '1 hour', 'hits')
+  returning id into v_hits;
+
+  -- ── Ordered by hits, then the score ──
+  perform set_config('request.jwt.claims', json_build_object('sub', v_a)::text, true);
+  perform submit_session_score(v_hits, 500, 7, 'easy', now());
+  perform set_config('request.jwt.claims', json_build_object('sub', v_b)::text, true);
+  perform submit_session_score(v_hits, 900, 5, 'easy', now());
+  perform set_config('request.jwt.claims', json_build_object('sub', v_c)::text, true);
+  perform submit_session_score(v_hits, 600, 7, 'easy', now());
+
+  select rank into v_rank from session_board(v_hits) where user_id = v_c;
+  assert v_rank = 1, 'equal hits should go to the higher score';
+  select rank into v_rank from session_board(v_hits) where user_id = v_a;
+  assert v_rank = 2, 'more hits should beat a higher score';
+  select rank into v_rank from session_board(v_hits) where user_id = v_b;
+  assert v_rank = 3, 'fewer hits should place last whatever they scored';
+  assert (select leader_name from open_sessions_with_leaders() where id = v_hits)
+         = 'SLIP_C',
+    'the card should name the player with the most hits';
+  assert (select leader_hits from open_sessions_with_leaders() where id = v_hits) = 7,
+    'the card should carry the leader''s hits';
+
+  -- ── Keeping the better row ──
+  -- A shorter run scoring more is refused; the whole row stays.
+  perform set_config('request.jwt.claims', json_build_object('sub', v_a)::text, true);
+  perform submit_session_score(v_hits, 2000, 5, 'easy', now());
+  assert (select hits from session_scores where session_id = v_hits and user_id = v_a) = 7,
+    'a run with fewer hits should not replace one with more, whatever it scored';
+  assert (select best_score from session_scores
+           where session_id = v_hits and user_id = v_a) = 500,
+    'the refused run should have left the whole row alone';
+
+  -- As long, scoring more, replaces it.
+  perform submit_session_score(v_hits, 800, 7, 'easy', now());
+  assert (select best_score from session_scores
+           where session_id = v_hits and user_id = v_a) = 800,
+    'an equally long run scoring more should replace the held row';
+
+  -- As long, scoring less, does not.
+  perform submit_session_score(v_hits, 100, 7, 'easy', now());
+  assert (select best_score from session_scores
+           where session_id = v_hits and user_id = v_a) = 800,
+    'an equally long run scoring less should be refused';
+
+  -- Longer, scoring less, does.
+  perform submit_session_score(v_hits, 300, 9, 'easy', now());
+  assert (select hits from session_scores where session_id = v_hits and user_id = v_a) = 9,
+    'a run with more hits should replace the held row even when it scored less';
+
+  raise notice 'session_scores.sql: measured by hits OK';
+
+  delete from challenge_sessions where id = v_hits;
+  update profiles set nickname = null where id in (v_a, v_b, v_c);
+end;
+$$;
+
 -- ─── The summary a closed session leaves behind ──────────────────────────────
 --
 -- `my_session_summaries` answers for one caller and no other, which is the whole of its

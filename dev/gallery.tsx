@@ -325,6 +325,7 @@ const gameOver = (
       nickname="DONDA"
       score={run.score}
       hits={run.hits}
+      sessionMedals={[]}
       gameTimeMs={RUN.gameTimeMs}
       strikes={run.strikes}
       record={record}
@@ -456,6 +457,7 @@ const SUMMARY_PLACES = [
     nickname: 'DONDA',
     score: 18400,
     timeMs: 9400,
+    hits: 9,
     avgAccuracy: 92,
     avgSpeed: 71,
   },
@@ -464,6 +466,7 @@ const SUMMARY_PLACES = [
     nickname: 'MARGOT',
     score: 15120,
     timeMs: 11200,
+    hits: 9,
     avgAccuracy: 64,
     avgSpeed: 88,
   },
@@ -472,6 +475,7 @@ const SUMMARY_PLACES = [
     nickname: 'KRISTYNA',
     score: 12050,
     timeMs: 12900,
+    hits: 9,
     avgAccuracy: 41,
     avgSpeed: 55,
   },
@@ -480,15 +484,29 @@ const SUMMARY_PLACES = [
 const SUMMARY_CASES = {
   WON: {
     places: 3,
-    mine: { rank: 1, score: 18400, timeMs: 9400, difficulty: 'hard', bonus: 18400 },
+    mine: {
+      rank: 1,
+      score: 18400,
+      timeMs: 9400,
+      hits: 9,
+      difficulty: 'hard',
+      bonus: 18400,
+    },
   },
   SILVER: {
     places: 3,
-    mine: { rank: 2, score: 15120, timeMs: 11200, difficulty: 'hard', bonus: 7560 },
+    mine: {
+      rank: 2,
+      score: 15120,
+      timeMs: 11200,
+      hits: 9,
+      difficulty: 'hard',
+      bonus: 7560,
+    },
   },
   'OFF THE PODIUM': {
     places: 3,
-    mine: { rank: 11, score: 4300, timeMs: 24100, difficulty: 'hard', bonus: 0 },
+    mine: { rank: 11, score: 4300, timeMs: 24100, hits: 9, difficulty: 'hard', bonus: 0 },
   },
   // A reader with no nickname: kept off the standings they played in, so no place of
   // their own and only their figure to print. The podium above them is still a podium —
@@ -496,7 +514,14 @@ const SUMMARY_CASES = {
   // variant for one. See the empty-podium rule in `summaryOwed`.
   'NO NICKNAME': {
     places: 3,
-    mine: { rank: null, score: 4300, timeMs: 24100, difficulty: 'hard', bonus: 0 },
+    mine: {
+      rank: null,
+      score: 4300,
+      timeMs: 24100,
+      hits: 9,
+      difficulty: 'hard',
+      bonus: 0,
+    },
   },
 } as const satisfies Record<string, { places: number; mine: SessionSummary['mine'] }>
 

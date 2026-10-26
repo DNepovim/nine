@@ -528,13 +528,23 @@ const runOver = (
 const drillDone = (drill: number, dealt: number, targets: readonly Target[]): boolean =>
   dealt >= drill && targets.length === 0
 
-// Whether a drilled run went the distance: its drill dealt and its board clear. A race's
-// time means this and nothing else — a run stopped by its window shutting reaches
-// `gameOver` too, holding a clock it never finished. Read off a finished run's context,
-// where `runOver` above is asked about a press still being made.
-export const drillSpent = (context: Context): boolean => {
-  const drill = rulesOf(context).spawn.drill
-  return drill !== null && drillDone(drill, context.dealt, context.targets)
+// The time a finished run claims on its session's standings, or null for one that claims
+// none: every run but a race, and a race that did not go the distance — a drilled run its
+// window shut on before the last target fell reaches `gameOver` too, holding a clock it
+// never finished. Read off a finished run's context, where `runOver` above is asked about
+// a press still being made.
+//
+// Read by the write that posts the run and by the medal it is told it took, so the two
+// cannot disagree about whether it was timed. `rules` is the run's own, which the screen
+// already holds; resolved here when the caller has none to hand.
+export const claimedTime = (
+  context: Context,
+  rules: RunRules = rulesOf(context),
+): number | null => {
+  if (rules.scoring.measure !== 'time') return null
+  const drill = rules.spawn.drill
+  if (drill !== null && !drillDone(drill, context.dealt, context.targets)) return null
+  return context.elapsedMs
 }
 
 function applyGrid(context: Context, newGrid: Grid, now: number) {
@@ -593,8 +603,9 @@ function applyGrid(context: Context, newGrid: Grid, now: number) {
   const triggered = STREAK_TRIGGERED[trigger](streakFacts)
   let streak = context.streak
   let multiplier = 1
-  if (trigger === 'none') {
-    multiplier = clearedBoard ? 2 : 1 // legacy trainee behavior
+  if (trigger === 'doubled') {
+    // Trainee's rule, and no streak: the board emptied is worth double, and that is all.
+    multiplier = clearedBoard ? 2 : 1
   } else if (triggered) {
     streak = context.streak + 1
     multiplier = streakMultiplier(streak)
@@ -604,12 +615,13 @@ function applyGrid(context: Context, newGrid: Grid, now: number) {
 
   const addedScore = Math.round(rawScore * multiplier)
 
-  // In a mode whose lives work that way, a hit scoring under the rung's bar (tightest
-  // on Easy, loosest on Extreme — see DIFFICULTIES) costs a life; `rules.lives.wasteful`
-  // is null in a mode where a hit never costs one. Computed once here rather than
-  // re-checked below, so the hit blamed for it and the decrement it causes can never
-  // name a different one. `findIndex` rather than `some` because the UI needs to know
-  // *which* hit to attach the reason to, not just that one did.
+  // In a mode whose lives work that way, a hit scoring under the bar costs a life — the
+  // rung's (none on Easy, loosening towards Extreme — see DIFFICULTIES) unless the mode
+  // names its own, as NO SLIP does; `rules.lives.wasteful` is null in a mode where a hit
+  // never costs one. Computed once here rather than re-checked below, so the hit blamed
+  // for it and the decrement it causes can never name a different one. `findIndex`
+  // rather than `some` because the UI needs to know *which* hit to attach the reason to,
+  // not just that one did.
   const bar = rules.lives.wasteful
   const wastefulIndex = bar === null ? -1 : perTarget.findIndex((p) => p.accFactor < bar)
   const costsLife = anyHit && wastefulIndex !== -1

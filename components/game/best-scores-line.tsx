@@ -453,9 +453,15 @@ export function BestScoresLine({
   const openable = leaving ? undefined : pinned?.achievement
   // Only once the run is actually chasing these numbers — mid-reveal or mid-announcement
   // is not the moment to also draw the eye toward one cell over the others.
+  //
+  // Only where the cells are scores. A race's cells are clocks, and a hits session's are
+  // counts too small for a fraction of them to be a nudge — under twenty hits, the 5% a
+  // nudge allows is less than one. Neither has a live figure worth chasing.
   const nearKey =
-    // Never on a race: the bar a run is near is a score, and there the cells are times.
-    inRun && revealed && pinned === null && session?.measure !== 'time'
+    inRun &&
+    revealed &&
+    pinned === null &&
+    (session === null || session.measure === 'score')
       ? nearestRecord(score, { you: ownBest, today, week, ever })
       : null
 

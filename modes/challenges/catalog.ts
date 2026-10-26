@@ -353,6 +353,65 @@ const GLIMPSE: ChallengeSpec = {
   },
 }
 
+// NO SLIP: the exact route, every time, or the run is over.
+//
+// Its one thing is the **bar**: a hit has to be on the cheapest route to keep the only
+// heart, so the first hit that is not ends the run there. Everything else is Accuracy as a
+// player already knows it — the nine dial, the ring, the arrivals closing in — on Easy,
+// the rung with the longest clock, because the clock is not what this one is about.
+//
+// Everything else follows from that:
+//
+//   - **One heart, spent only by a slip.** `bar: 1` asks for the exact route, which is
+//     the one place `accuracyFactor` returns 1, and overrules Easy, whose rung asks for
+//     nothing. A target left to run out falls and costs nothing: a run ended by the clock
+//     would be a run ended by something other than a slip.
+//   - **Ordered by hits.** A run here is as good as it was long, so the session board
+//     counts every target the run took — the slip among them, since it still took its
+//     target, and every run but one cut short by the window ends on exactly one — and
+//     breaks a tie on the score. `measure: 'hits'`, drawn the way HABIT draws its time.
+//   - **No streak.** Every hit that is not a slip is already an exact one, so a rule
+//     about exact hits would build on every hit there is and say nothing; and with one
+//     heart, a broken chain on top of a lost run would be two punishments for one slip.
+//     No shot either, since a shot is the streak made visible.
+const NO_SLIP: ChallengeSpec = {
+  slug: 'no-slip',
+  label: msg`NO SLIP`,
+  // Its own, as HABIT's is: a profile row reading ACC would file it under a board it is
+  // not.
+  code: msg`NSL`,
+  description: msg`One slip and it's over.`,
+  shot: null,
+  // Every line about slipping and the exact route. Only the tiers this one reaches: the
+  // session standing through `board` and `medal`, and `cold`. `strong` is earned by a
+  // run's streaks, and this run has none, so a line for it would never be read.
+  claims: {
+    board: [
+      ['SURE', 'HAND'],
+      ['NO', 'SLIP'],
+      ['CLEAN', 'LINE'],
+    ],
+    medal: [
+      ['NEAR', 'CLEAN'],
+      ['ONE', 'SLIP'],
+    ],
+    cold: [
+      ['EARLY', 'SLIP'],
+      ['TOO', 'SOON'],
+    ],
+  },
+  base: ACCURACY,
+  from: Date.UTC(2026, 9, 26),
+  until: Date.UTC(2026, 9, 26) + DAY,
+  rules: {
+    // Easy, pinned: 22 000 × Easy's 1.45 ≈ 31.9 s a target, so a slip is a choice about
+    // the route and never a guess against the ring.
+    fixedDifficulty: 'easy',
+    scoring: { streak: 'none', measure: 'hits' },
+    lives: { count: 1, wastefulCostsLife: true, expiryCostsLife: false, bar: 1 },
+  },
+}
+
 // Mapped rather than listed, and that is what gives each challenge its colour: `.map`
 // hands `defineChallenge` the spec's own index, which is what the pair is derived from.
 // The list is append-only — see the note at the top of this file — so an index is a
@@ -362,4 +421,5 @@ export const CHALLENGES: readonly ModeDefinition[] = [
   FOUR_BY_FOUR,
   HABIT,
   GLIMPSE,
+  NO_SLIP,
 ].map((spec, index) => defineChallenge(spec, index))

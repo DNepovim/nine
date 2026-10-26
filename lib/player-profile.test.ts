@@ -703,6 +703,7 @@ describe('shapePlaces', () => {
     rank: 1,
     best_score: 3120,
     time_ms: null,
+    hits: 24,
     ...over,
   })
 
@@ -716,8 +717,17 @@ describe('shapePlaces', () => {
         rank: 1,
         score: 3120,
         timeMs: null,
+        hits: 24,
       },
     ])
+  })
+
+  it('keeps a hits session, and its hits', () => {
+    expect(shapePlaces([row({ measure: 'hits', hits: 17 })])[0]?.hits).toBe(17)
+  })
+
+  it('reads a row from a server older than the hits measure as none', () => {
+    expect(shapePlaces([row({ hits: undefined })])[0]?.hits).toBe(0)
   })
 
   it('carries a race’s time', () => {

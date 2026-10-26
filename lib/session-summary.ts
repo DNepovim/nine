@@ -24,6 +24,9 @@ export type SummaryPlace = {
   // What the run took, where the session is **measured** by the clock. Null on a
   // score-measured session, which has no time to show.
   timeMs: number | null
+  // How many targets the run took — the figure a session **measured** by hits is settled
+  // on. Always there, since the server keeps it on every row.
+  hits: number
   // Nullable for the reason every other name in the app is: a player the counters have
   // never seen has no saturation, and `nameColors` draws them uncoloured. A nought here
   // would make "never counted" and "counted, and bad at it" the same colour.
@@ -49,6 +52,7 @@ export type SessionSummary = {
     rank: number | null
     score: number
     timeMs: number | null
+    hits: number
     // The rung the run was played at. Kept because the page says which rung the figures
     // beside it were set on, not because it prices anything — pricing is the server's.
     difficulty: Difficulty

@@ -180,6 +180,7 @@ export function TabPanel({
             nickname: row.nickname,
             score: row.score,
             timeMs: row.timeMs,
+            hits: row.hits,
             isUser: row.isUser,
             note: row.unpublished ? note : undefined,
             achievedAt: row.achievedAt ?? undefined,
@@ -212,6 +213,8 @@ export function TabPanel({
               marks: playerMarks(userId, champions),
               nickname,
               score: data.myBest,
+              // The figure a hits session ranks this row on — `MyRankRow` carries it.
+              hits: myRank.hits,
               isUser: true,
               note: data.unpublished === null ? undefined : note,
               ...myFactors(userId),

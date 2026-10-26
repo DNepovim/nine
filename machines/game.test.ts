@@ -3,7 +3,7 @@ import { createActor } from 'xstate'
 
 import { TUTORIAL_OPENING_TARGET, TUTORIAL_TARGETS } from '@/constants/tutorial'
 import { tutorialBoardEntry } from '@/lib/tutorial-board'
-import { bestOn, gameMachine } from '@/machines/game'
+import { bestOn, claimedTime, gameMachine } from '@/machines/game'
 import { cleanHitReason } from '@/machines/scoring'
 import { baseClockMs, challengeId, type Grid } from '@/modes'
 
@@ -62,6 +62,14 @@ describe('a drilled run', () => {
     return actor
   }
 
+  it('claims no time for a race its window shut on before the drill was spent', () => {
+    const actor = drilled()
+    actor.send({ type: 'ADD_TARGET', value: 3, at: 0 })
+    actor.send({ type: 'EXPIRE', now: 4000 })
+    expect(actor.getSnapshot().value).toBe('gameOver')
+    expect(claimedTime(actor.getSnapshot().context)).toBeNull()
+  })
+
   it('plays on while any of the drill is still standing', () => {
     const actor = drilled()
     // Two dealt, one hit: the board is not clear, so the run is not over — even though
@@ -99,6 +107,9 @@ describe('a drilled run', () => {
     dialTo(actor, 1)
     expect(actor.getSnapshot().context.targets).toHaveLength(0)
     expect(actor.getSnapshot().value).toBe('gameOver')
+    // A race that went the distance claims its clock.
+    const { context } = actor.getSnapshot()
+    expect(claimedTime(context)).toBe(context.elapsedMs)
   })
 
   it('counts its arrivals from nought again on every run', () => {
@@ -1274,5 +1285,87 @@ describe('a window shutting under a live run', () => {
     over.send({ type: 'EXPIRE', now: 9000 })
     expect(over.getSnapshot().value).toBe('gameOver')
     expect(over.getSnapshot().context.elapsedMs).toBe(settled)
+  })
+})
+
+describe('NO SLIP', () => {
+  const NO_SLIP = challengeId('no-slip')
+
+  const started = () => {
+    const actor = createActor(gameMachine)
+    actor.start()
+    actor.send({ type: 'SET_MODE', mode: NO_SLIP })
+    actor.send({ type: 'START', now: 0, runId: nextRunId() })
+    return actor
+  }
+
+  it('plays on through exact hits and ends on the first that is not', () => {
+    const actor = started()
+    // Par 1 on the bottom-right key, taken in one press: exact, so the heart stays.
+    actor.send({ type: 'ADD_TARGET', value: 9, at: 0 })
+    actor.send({ type: 'PRESS', index: 8, delta: 1, now: 0 })
+    expect(actor.getSnapshot().value).toBe('playing')
+    expect(actor.getSnapshot().context.lives).toBe(1)
+
+    // 11 from 9 is one press on the 2 key. Taken the long way round — up and back on
+    // the 1 key first — it is three, which is a slip, and a slip on the only heart is
+    // the end of the run.
+    actor.send({ type: 'ADD_TARGET', value: 11, at: 0 })
+    actor.send({ type: 'PRESS', index: 0, delta: 1, now: 0 })
+    actor.send({ type: 'PRESS', index: 0, delta: -1, now: 0 })
+    actor.send({ type: 'PRESS', index: 1, delta: 1, now: 0 })
+    const snap = actor.getSnapshot()
+    expect(snap.value).toBe('gameOver')
+    expect(snap.context.lives).toBe(0)
+    expect(snap.context.hits).toBe(2)
+  })
+
+  it('doubles nothing and counts no strike, a board-clearing hit included', () => {
+    const actor = started()
+    // One target, taken exactly: the board is empty after it, which Trainee's rule would
+    // have doubled and counted as a strike.
+    actor.send({ type: 'ADD_TARGET', value: 9, at: 0 })
+    actor.send({ type: 'PRESS', index: 8, delta: 1, now: 0 })
+    const { context } = actor.getSnapshot()
+    expect(context.targets).toHaveLength(0)
+    expect(context.strikes).toBe(0)
+    expect(context.hitBatch.hits[0]?.multiplier).toBe(1)
+  })
+
+  it('lets a target run out without spending the heart', () => {
+    const actor = started()
+    actor.send({ type: 'ADD_TARGET', value: 9, at: 0 })
+    const id = actor.getSnapshot().context.targets[0]?.id ?? 0
+    actor.send({ type: 'TARGET_EXPIRED', id, now: 0 })
+    expect(actor.getSnapshot().value).toBe('playing')
+    expect(actor.getSnapshot().context.lives).toBe(1)
+  })
+})
+
+describe("Trainee's doubled rule", () => {
+  it('doubles a hit that empties the board and counts it as a strike, building no streak', () => {
+    const actor = start('trainee')
+    actor.send({ type: 'ADD_TARGET', value: 9, at: 0 })
+    actor.send({ type: 'PRESS', index: 8, delta: 1, now: 0 })
+    const { context } = actor.getSnapshot()
+    expect(context.hitBatch.hits[0]?.multiplier).toBe(2)
+    expect(context.strikes).toBe(1)
+    expect(context.streak).toBe(0)
+  })
+
+  it('leaves a hit that does not empty the board alone', () => {
+    const actor = start('trainee')
+    actor.send({ type: 'ADD_TARGET', value: 9, at: 0 })
+    actor.send({ type: 'ADD_TARGET', value: 40, at: 0 })
+    actor.send({ type: 'PRESS', index: 8, delta: 1, now: 0 })
+    expect(actor.getSnapshot().context.hitBatch.hits[0]?.multiplier).toBe(1)
+  })
+})
+
+describe('claimedTime', () => {
+  it('is nothing for a run whose standings are not a race', () => {
+    const actor = start('accuracy')
+    actor.send({ type: 'EXPIRE', now: 4000 })
+    expect(claimedTime(actor.getSnapshot().context)).toBeNull()
   })
 })

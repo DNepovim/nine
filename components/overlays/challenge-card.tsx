@@ -18,7 +18,7 @@ import { cn } from '@/lib/cn'
 import { formatRaceTime } from '@/lib/duration'
 import { rankMedal } from '@/lib/rank-emoji'
 import type { OpenSession } from '@/lib/session-board'
-import { darkGradientOf, dialOf, gradientOf, labelOf } from '@/modes'
+import { darkGradientOf, dialOf, gradientOf, labelOf, type Measure } from '@/modes'
 import { challengeInk } from '@/modes/challenges/palette'
 
 // A challenge that is on, or about to be — the first row of the ALONE panel, above the
@@ -36,6 +36,18 @@ import { challengeInk } from '@/modes/challenges/palette'
 // **Teaser** — the name and the time until it opens, then its one-line description,
 // because there is no leader yet and saying so would waste the line that is meant to
 // make somebody want to come back.
+
+// What the leader is ahead on, per **measure**: the score, the clock on a race, the
+// targets taken on a hits session — written the way the standings write each, so the
+// card and the table under START never show one run two ways.
+const LEADER_FIGURE = {
+  score: (leader) => leader.score,
+  time: (leader) => (leader.timeMs === null ? '—' : formatRaceTime(leader.timeMs)),
+  hits: (leader) => leader.hits,
+} as const satisfies Record<
+  Measure,
+  (leader: NonNullable<OpenSession['leader']>) => number | string
+>
 
 export function ChallengeCard({
   card,
@@ -88,17 +100,9 @@ export function ChallengeCard({
   // until it has loaded, which is the same bargain every other readout makes — a figure
   // in the wrong face for a frame beats a row that is not there.
   const [dsegLoaded] = useFonts({ DSEG7: DSEG7Font })
-  // What the leader is ahead on: the clock on a race, which is what its places are
-  // settled by, and the score everywhere else. Written the way the standings write it,
-  // so the card and the table under START never show one run two ways.
+  // What the leader is ahead on — see `LEADER_FIGURE`.
   const leaderFigure =
-    session.leader === null
-      ? null
-      : session.measure === 'score'
-        ? session.leader.score
-        : session.leader.timeMs === null
-          ? '—'
-          : formatRaceTime(session.leader.timeMs)
+    session.leader === null ? null : LEADER_FIGURE[session.measure](session.leader)
 
   // ─── Not open yet ───────────────────────────────────────────────────────────
   //

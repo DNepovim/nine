@@ -163,11 +163,16 @@ What exists, and what each is made of:
 | `fast`    | every hit with most of the ring left   | any lesser hit |
 | `whole`   | every key on the dial moved on the way | any lesser hit |
 | `clear`   | the board emptied                      | **nothing**    |
+| `doubled` | — (a board-emptying hit is worth ×2)   | —              |
 | `none`    | —                                      | —              |
+
+`doubled` is Trainee's rule and the base rules' default: no streak, but a hit that
+empties the board counts double and as a strike. `none` is the one that builds nothing at
+all — a challenge that wants no multiplier says `none`, as NO SLIP does.
 
 **Do not leave a challenge on `clear` by accident.** It is the legacy board-clear rule
 and `STREAK_BROKEN.clear` is `false`, so nothing the player does can break it — the
-most forgiving of the five, inherited from whichever base mode was picked.
+most forgiving of the triggers that build a streak, inherited from whichever base mode was picked.
 
 **Unspecified?** This is the one most worth proposing properly, because it is what the
 challenge feels like to play. Derive two or three from the idea: what does this

@@ -7,6 +7,7 @@ import { type DyingPhase } from '@/hooks/use-dying-sequence'
 import type { AchievementStore } from '@/lib/achievement-store'
 import type { AchievementFacts, Award } from '@/lib/achievements'
 import type { Period } from '@/lib/announcements'
+import type { BoardMedal } from '@/lib/board-medals'
 import type { RecordScreen } from '@/lib/champions'
 import { gameOverTitle } from '@/lib/game-over-title'
 import { modeById, SCORED_MODES, type Difficulty, type ModeId } from '@/modes'
@@ -49,6 +50,7 @@ export function GameOverSequence({
   sessionBoard,
   sessionClosesAt,
   sessionRank,
+  sessionMedals,
   windowShut,
   onPlayAgain,
   onChallenge,
@@ -93,6 +95,9 @@ export function GameOverSequence({
   // run and for a session whose board has not been read yet — the title falls back to
   // what the run itself was worth, which is what it did before sessions existed.
   sessionRank: 1 | 2 | 3 | null
+  // The run's place on its session, as the screen under the title draws it — empty off
+  // a session. Worked out once by the game screen; see `runSessionMedals`.
+  sessionMedals: readonly BoardMedal[]
   // Whether the run ended because its **session**'s window shut rather than on its own
   // terms. Reaches the title first — it outranks every claim about how the run went — and
   // the overlay second, where it quiets PLAY AGAIN and withholds the dare.
@@ -144,6 +149,7 @@ export function GameOverSequence({
           nickname={nickname}
           score={score}
           hits={hits}
+          sessionMedals={sessionMedals}
           gameTimeMs={gameTimeMs}
           strikes={strikes}
           record={medals[0] ?? null}

@@ -21,6 +21,7 @@ import {
 import {
   DIFFICULTIES,
   DIFFICULTY_ORDER,
+  MEASURES,
   modeById,
   SCORED_MODES,
   type Difficulty,
@@ -132,8 +133,8 @@ export type PlayerProfile = {
 
 // One podium a player took on a **session board**: which challenge, when its window shut,
 // where they came, and the figure they came there with. The figure is the session's own
-// **measure** — a score, or on a race the time — so `measure` says which of the two to
-// print, and the other is never read.
+// **measure** — a score, on a race the time, on a hits session the hits — so `measure`
+// says which to print, and the others are never read.
 export type SessionPlace = {
   sessionId: string
   modeId: string
@@ -142,6 +143,7 @@ export type SessionPlace = {
   rank: 1 | 2 | 3
   score: number
   timeMs: number | null
+  hits: number
 }
 
 // What `player_session_places` sends, row for row.
@@ -153,10 +155,11 @@ export type SessionPlaceRow = {
   rank: number
   best_score: number
   time_ms: number | null
+  // Absent from a server older than the hits measure.
+  hits?: number
 }
 
 const PLACES = [1, 2, 3] as const
-const MEASURES = ['score', 'time'] as const
 
 // The wire rows as places, dropping what this build cannot draw: a challenge it has never
 // heard of has no name or colour to print (the list would read GAME), and a rank off the
@@ -175,6 +178,7 @@ export const shapePlaces = (rows: readonly SessionPlaceRow[]): SessionPlace[] =>
             rank: row.rank,
             score: row.best_score,
             timeMs: row.time_ms,
+            hits: row.hits ?? 0,
           },
         ]
       : [],

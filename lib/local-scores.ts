@@ -3,7 +3,8 @@ import { isEmptyArray } from 'narrowland'
 
 import { LOCAL_SCORES_KEY } from '@/constants/storage'
 import { qualifiesForTab, type LeaderboardTab } from '@/lib/leaderboard-period'
-import { type Difficulty, type ModeId } from '@/modes'
+import { runBeats } from '@/lib/session-order'
+import { measureOf, type Difficulty, type ModeId } from '@/modes'
 
 // Every run the device remembers, whether or not the server has it.
 //
@@ -100,29 +101,25 @@ const boardKey = (entry: LocalScore): string =>
 // holds the old number and has not been told about this one.
 // Whether the run just played beat what the device already holds for its slot.
 //
-// Two questions, and which one is asked is the slot's own answer rather than a caller's.
-// Where neither run carries a time — every board and every score-measured session — the
-// higher score wins. Only a race carries one, and there, in order: **a timed run beats an
-// untimed one, more hits beats fewer, then the faster time wins.**
+// Asked of the slot's **measure** — see `runBeats`, which is the one place the device
+// writes down how a session's standings are ordered. Every board and every
+// score-measured session goes by the score; a race by finishing, then hits, then the
+// clock; a NO SLIP session by hits, then the score.
 //
 // The untimed entry on a race is what an older build's mid-run post left behind, with a
-// score the finish may not reach and no time to set against it. And hits come before the
-// clock because a race is only a time once its drill is spent: a run left after one hit
-// stopped at 3.1″, which on the clock alone beat every run that finished.
-//
-// The same rule the server keeps, in the same words, deliberately: `prevent_session_
-// downgrade` decides this again on the way in, and the two disagreeing would mean a
-// device showing one best and the standings showing another.
+// score the finish may not reach and no time to set against it — which is why a race
+// puts a finished run first. And hits come before the clock because a race is only a
+// time once its drill is spent: a run left after one hit stopped at 3.1″, which on the
+// clock alone beat every run that finished.
 const beats = (
-  run: { score: number; hits: number; timeMs?: number },
+  run: { mode: ModeId; score: number; hits: number; timeMs?: number },
   held: LocalScore,
-): boolean => {
-  if (run.timeMs === undefined && held.timeMs === undefined) return run.score > held.score
-  if (run.timeMs === undefined) return false
-  if (held.timeMs === undefined) return true
-  if (run.hits !== held.hits) return run.hits > held.hits
-  return run.timeMs < held.timeMs
-}
+): boolean =>
+  runBeats(
+    measureOf(run.mode),
+    { score: run.score, hits: run.hits, timeMs: run.timeMs ?? null },
+    { score: held.score, hits: held.hits, timeMs: held.timeMs ?? null },
+  )
 
 export function recordRun(
   store: LocalScore[],

@@ -26,6 +26,9 @@ const STRIKE_LINES = {
   clear: msg`Leave the board empty — clear every target standing on it.`,
   whole: msg`Move every key on the dial on the way to the target.`,
   spread: msg`Move at least one key in every row of the dial.`,
+  // No streak, but still something a multiplier is given for, so still a line: no
+  // challenge asks for it today, and one that did would otherwise double hits unexplained.
+  doubled: msg`The hit that leaves the board empty counts double.`,
   none: null,
 } as const satisfies Record<StreakTrigger, MessageDescriptor | null>
 

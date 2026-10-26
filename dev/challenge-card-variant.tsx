@@ -51,6 +51,7 @@ const sessionFor = (which: ChallengeCase, now: number): OpenSession => {
           score: 184220,
           // Every card here is score-measured, so none of them has a time to show.
           timeMs: null,
+          hits: 9,
           avgAccuracy: 94,
           avgSpeed: 91,
         },
@@ -86,6 +87,7 @@ const sessionFor = (which: ChallengeCase, now: number): OpenSession => {
           nickname: 'Mia',
           score: 98430,
           timeMs: null,
+          hits: 9,
           avgAccuracy: 96,
           avgSpeed: 42,
         },
@@ -108,6 +110,7 @@ const sessionFor = (which: ChallengeCase, now: number): OpenSession => {
           nickname: 'nobody',
           score: 0,
           timeMs: null,
+          hits: 9,
           avgAccuracy: null,
           avgSpeed: null,
         },

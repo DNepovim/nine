@@ -1,4 +1,6 @@
-import { Trans } from '@lingui/react/macro'
+import type { MessageDescriptor } from '@lingui/core'
+import { msg } from '@lingui/core/macro'
+import { Trans, useLingui } from '@lingui/react/macro'
 import { Text, View, type StyleProp, type TextStyle } from 'react-native'
 
 import { TYPE } from '@/constants/typography'
@@ -44,7 +46,20 @@ export const RANK_COLUMN = 'w-9 text-center'
 // Both right-aligned, which is the rule the SCORE header already states: a column of
 // numbers is read down its last digit.
 export const SCORE_COLUMN = 'w-14 text-right'
-export const TIME_COLUMN = 'w-12 text-right'
+const TIME_COLUMN = 'w-12 text-right'
+
+// The column a board is ranked on, where that is not the score — and so whether the
+// score steps back into `SCORE_COLUMN` beside it. A race ranks on the clock, a hits
+// session on the targets a run took, and both are drawn the same way: the score dimmed
+// and fixed-width, the ranked figure after it in the score's own green. Hits take the
+// clock's width: a run long enough to need more than three digits has not been played.
+//
+// The width and the word together, so a measure cannot name one without the other.
+export const RANKED_COLUMN = {
+  score: null,
+  time: { width: TIME_COLUMN, label: msg`TIME` },
+  hits: { width: TIME_COLUMN, label: msg`HITS` },
+} as const satisfies Record<Measure, { width: string; label: MessageDescriptor } | null>
 
 export function ScoreColumns({
   glow,
@@ -62,10 +77,13 @@ export function ScoreColumns({
   width?: number
   // What the board under these is ordered by. A timed board carries both figures — the
   // score the run was worth and the clock it is placed on — so it gets a fourth column,
-  // and both figures take a width of their own to line up under it.
+  // and both figures take a width of their own to line up under it. A hits board is
+  // drawn the same way, with the hits where the clock would be.
   measure?: Measure
   className?: string
 }) {
+  const { t } = useLingui()
+  const ranked = RANKED_COLUMN[measure]
   return (
     <View className={cn('mb-1 flex-row px-2', className)} style={{ width }}>
       <Text
@@ -90,20 +108,20 @@ export function ScoreColumns({
         selectable={false}
         className={cn(
           TYPE.caption,
-          measure === 'time' && SCORE_COLUMN,
+          ranked !== null && SCORE_COLUMN,
           'text-right text-dim',
         )}
         style={glow}
       >
         <Trans>SCORE</Trans>
       </Text>
-      {measure === 'time' && (
+      {ranked !== null && (
         <Text
           selectable={false}
-          className={cn(TYPE.caption, TIME_COLUMN, 'text-dim')}
+          className={cn(TYPE.caption, ranked.width, 'text-dim')}
           style={glow}
         >
-          <Trans>TIME</Trans>
+          {t(ranked.label)}
         </Text>
       )}
     </View>

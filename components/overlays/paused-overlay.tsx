@@ -156,7 +156,9 @@ export function PausedOverlay({
         // run's own numbers still do, so they are what the screen leads with instead.
         // An unscored run leads with neither figure; see `runHeadline` for which of
         // the two a scored one leads with.
-        score={traits.scored ? runHeadline({ mode: gameMode, score, gameTimeMs }) : null}
+        score={
+          traits.scored ? runHeadline({ mode: gameMode, score, hits, gameTimeMs }) : null
+        }
         // Above the run's own numbers, where the game-over screen puts them too: a medal
         // is what the run is worth to everyone else, and the stats under it are what it
         // was worth to the player. A mode that reaches no board has nothing to stand on.

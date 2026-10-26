@@ -25,7 +25,7 @@ import { useBoardContext, type PeriodBoard } from '@/hooks/use-board'
 import type { AchievementStore } from '@/lib/achievement-store'
 import type { AchievementFacts, Award } from '@/lib/achievements'
 import type { Period } from '@/lib/announcements'
-import { currentBoardMedals, sessionMedal } from '@/lib/board-medals'
+import { currentBoardMedals, type BoardMedal } from '@/lib/board-medals'
 import type { RecordScreen } from '@/lib/champions'
 import { cn } from '@/lib/cn'
 import type { TitleWords } from '@/lib/game-over-title'
@@ -139,6 +139,7 @@ export function GameOverOverlay({
   nickname,
   score,
   hits,
+  sessionMedals,
   gameTimeMs,
   strikes,
   record,
@@ -166,6 +167,9 @@ export function GameOverOverlay({
   nickname: string | null
   score: number
   hits: number
+  // The run's place on its session — see `runSessionMedals` on the game screen, which
+  // works it out once for this screen and the title above it alike.
+  sessionMedals: readonly BoardMedal[]
   gameTimeMs: number
   // How many of those hits landed on a streak — the challenge is offered on it, and the
   // run stats report it.
@@ -272,9 +276,7 @@ export function GameOverOverlay({
   // challenge played outside a session — dealt from the challenge lab — has neither, and
   // both halves of this answer nothing for it.
   const medals =
-    sessionId !== null
-      ? sessionMedal(sessionBoard?.rows ?? [], score, userId)
-      : currentBoardMedals(board, score, userId)
+    sessionId !== null ? sessionMedals : currentBoardMedals(board, score, userId)
 
   return (
     <RunScreen
@@ -345,6 +347,7 @@ export function GameOverOverlay({
       score={runHeadline({
         mode: gameMode,
         score,
+        hits,
         gameTimeMs,
         glow: painted ? WHITE_GLOW : undefined,
       })}
