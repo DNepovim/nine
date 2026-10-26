@@ -1,8 +1,8 @@
 # No slip
 
 Slug: no-slip
-Stage: review
-Next: /ship no-slip
+Stage: shipped
+Next: /deploy (03657c5, the three hearts, is on main and not live)
 Track: full
 Branch: feat/no-slip
 Started: 2026-10-26

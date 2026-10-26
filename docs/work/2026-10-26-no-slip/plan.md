@@ -305,3 +305,12 @@ runs out costs one, as on every mode that spends them; a slip takes **every hear
 - GLIMPSE: asked to arrive at Accuracy Hard's pace. Its resolved rules already are (16.5 s
   ring, a third of it between arrivals, pinned Hard); nothing changed, pending what the
   user saw.
+
+## Shipped
+
+- `f444793` on main, deployed to production (run 40405420975, success). Migration
+  `20261026000000` pushed first.
+- `03657c5` (three hearts, a slip takes them all) on main, **not deployed**.
+- GLIMPSE measured locally after the user found its arrivals slow: targets at 0 / 5.6 /
+  11.2 s, which is Accuracy Hard's third of a 16.5 s ring. A full board (three) waits
+  for one to go, which is where it can feel slow. No change made.
