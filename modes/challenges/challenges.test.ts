@@ -552,9 +552,14 @@ describe('what a challenge is scored and spent by unless it says otherwise', () 
 describe('NO SLIP', () => {
   const rules = runRules(challengeId('no-slip'), 'hard')
 
-  it('is Accuracy on Easy, with one heart that only a slip can spend', () => {
+  it('is Accuracy on Easy, with three hearts for the clock and none for a slip', () => {
     expect(rules.difficulty).toBe('easy')
-    expect(rules.lives).toEqual({ count: 1, wasteful: 1, expiryCosts: false })
+    expect(rules.lives).toEqual({
+      count: 3,
+      wasteful: 1,
+      wastefulTakesAll: true,
+      expiryCosts: true,
+    })
   })
 
   it('wears the colour of the fifth place in the catalog', () => {

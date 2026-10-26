@@ -440,3 +440,15 @@ describe('measureFrom', () => {
     expect(measureFrom('distance')).toBe('score')
   })
 })
+
+describe('a slip that takes every heart', () => {
+  it('is off unless a mode that spends lives on a wasteful hit asks for it', () => {
+    const lives = (patch: Partial<typeof ACCURACY.rules.lives>) =>
+      resolveRules(patchRules(ACCURACY.rules, { lives: patch }), 'x', 'hard').lives
+    expect(lives({}).wastefulTakesAll).toBe(false)
+    expect(lives({ wastefulTakesAll: true }).wastefulTakesAll).toBe(true)
+    expect(
+      lives({ wastefulCostsLife: false, wastefulTakesAll: true }).wastefulTakesAll,
+    ).toBe(false)
+  })
+})

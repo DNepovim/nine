@@ -156,6 +156,11 @@ export type LivesRules = {
   // mode overruling it: NO SLIP plays on Easy, whose rung has no bar at all, and asks
   // for 1 — the exact route, which `accuracyFactor` returns only at par.
   bar?: number
+  // Whether a hit under the bar takes every heart left rather than one. Read only where
+  // `wastefulCostsLife` is on, like `bar`. NO SLIP's: a run there has its hearts for the
+  // clock — a target lost costs one, as anywhere — and none to spare for a slip, which
+  // ends the run however many are left.
+  wastefulTakesAll?: boolean
 }
 
 // What a mode is *shown as*, rather than what it is scored by. Each one replaces a

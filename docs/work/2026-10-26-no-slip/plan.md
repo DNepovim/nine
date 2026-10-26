@@ -287,3 +287,21 @@ build's question for the advisor.
 
 Local state left for review: the live NO SLIP session `5e55911a-…0002` (closes about three hours from
 now) and the dev profile's 221 / 3 row on it.
+
+## After shipping — hearts (2026-10-26)
+
+Requested by the user after `f444793`: NO SLIP starts with **three hearts**; a target that
+runs out costs one, as on every mode that spends them; a slip takes **every heart left**.
+
+- New lives rule `wastefulTakesAll` (`LivesRules`, resolved on `RunRules['lives']`, read
+  only under `wastefulCostsLife` like `bar`). `applyGrid` costs `context.lives` instead
+  of 1 when it is on. Every other mode resolves it `false`.
+- Catalog: `count: 3`, `expiryCostsLife: true`, `wastefulTakesAll: true`.
+- Tests: `rules.test.ts` (the rule's default and its guard), `challenges.test.ts` (NO
+  SLIP's lives), `game.test.ts` (three hearts kept through exact hits, one lost to an
+  expiry, all lost to a slip).
+- This also closes review's "patience is rewarded" point: waiting out a target now costs a
+  heart.
+- GLIMPSE: asked to arrive at Accuracy Hard's pace. Its resolved rules already are (16.5 s
+  ring, a third of it between arrivals, pinned Hard); nothing changed, pending what the
+  user saw.

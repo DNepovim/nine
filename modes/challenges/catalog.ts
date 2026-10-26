@@ -355,24 +355,25 @@ const GLIMPSE: ChallengeSpec = {
 
 // NO SLIP: the exact route, every time, or the run is over.
 //
-// Its one thing is the **bar**: a hit has to be on the cheapest route to keep the only
-// heart, so the first hit that is not ends the run there. Everything else is Accuracy as a
+// Its one thing is the **bar**: a hit has to be on the cheapest route, and the first hit
+// that is not ends the run there, however many hearts are left. Everything else is Accuracy as a
 // player already knows it — the nine dial, the ring, the arrivals closing in — on Easy,
 // the rung with the longest clock, because the clock is not what this one is about.
 //
 // Everything else follows from that:
 //
-//   - **One heart, spent only by a slip.** `bar: 1` asks for the exact route, which is
-//     the one place `accuracyFactor` returns 1, and overrules Easy, whose rung asks for
-//     nothing. A target left to run out falls and costs nothing: a run ended by the clock
-//     would be a run ended by something other than a slip.
+//   - **Three hearts, for the clock alone.** A target left to run out costs one, as on
+//     every mode that spends them, so a run cannot wait out the hard targets for free. A
+//     slip takes all of them (`wastefulTakesAll`): `bar: 1` asks for the exact route, the
+//     one place `accuracyFactor` returns 1, and overrules Easy, whose rung asks for
+//     nothing.
 //   - **Ordered by hits.** A run here is as good as it was long, so the session board
 //     counts every target the run took — the slip among them, since it still took its
 //     target, and every run but one cut short by the window ends on exactly one — and
 //     breaks a tie on the score. `measure: 'hits'`, drawn the way HABIT draws its time.
 //   - **No streak.** Every hit that is not a slip is already an exact one, so a rule
-//     about exact hits would build on every hit there is and say nothing; and with one
-//     heart, a broken chain on top of a lost run would be two punishments for one slip.
+//     about exact hits would build on every hit there is and say nothing; and a slip
+//     already ends the run, so a broken chain on top would be two punishments for one.
 //     No shot either, since a shot is the streak made visible.
 const NO_SLIP: ChallengeSpec = {
   slug: 'no-slip',
@@ -408,7 +409,13 @@ const NO_SLIP: ChallengeSpec = {
     // the route and never a guess against the ring.
     fixedDifficulty: 'easy',
     scoring: { streak: 'none', measure: 'hits' },
-    lives: { count: 1, wastefulCostsLife: true, expiryCostsLife: false, bar: 1 },
+    lives: {
+      count: 3,
+      wastefulCostsLife: true,
+      expiryCostsLife: true,
+      bar: 1,
+      wastefulTakesAll: true,
+    },
   },
 }
 

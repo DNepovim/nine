@@ -700,7 +700,9 @@ function applyGrid(context: Context, newGrid: Grid, now: number) {
     ? { seq: context.hitBatch.seq + 1, hits: hitInfos }
     : context.hitBatch
 
-  const newLives = costsLife ? Math.max(0, context.lives - 1) : context.lives
+  // One heart, or every heart left where the mode says a slip ends the run outright.
+  const lifeCost = rules.lives.wastefulTakesAll ? context.lives : 1
+  const newLives = costsLife ? Math.max(0, context.lives - lifeCost) : context.lives
 
   return {
     grid: newGrid,

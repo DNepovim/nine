@@ -1305,10 +1305,10 @@ describe('NO SLIP', () => {
     actor.send({ type: 'ADD_TARGET', value: 9, at: 0 })
     actor.send({ type: 'PRESS', index: 8, delta: 1, now: 0 })
     expect(actor.getSnapshot().value).toBe('playing')
-    expect(actor.getSnapshot().context.lives).toBe(1)
+    expect(actor.getSnapshot().context.lives).toBe(3)
 
     // 11 from 9 is one press on the 2 key. Taken the long way round — up and back on
-    // the 1 key first — it is three, which is a slip, and a slip on the only heart is
+    // the 1 key first — it is three, which is a slip, and a slip takes every heart left:
     // the end of the run.
     actor.send({ type: 'ADD_TARGET', value: 11, at: 0 })
     actor.send({ type: 'PRESS', index: 0, delta: 1, now: 0 })
@@ -1332,13 +1332,25 @@ describe('NO SLIP', () => {
     expect(context.hitBatch.hits[0]?.multiplier).toBe(1)
   })
 
-  it('lets a target run out without spending the heart', () => {
+  it('lets a target run out for one heart, as any mode that spends them', () => {
     const actor = started()
     actor.send({ type: 'ADD_TARGET', value: 9, at: 0 })
     const id = actor.getSnapshot().context.targets[0]?.id ?? 0
     actor.send({ type: 'TARGET_EXPIRED', id, now: 0 })
     expect(actor.getSnapshot().value).toBe('playing')
-    expect(actor.getSnapshot().context.lives).toBe(1)
+    expect(actor.getSnapshot().context.lives).toBe(2)
+  })
+
+  it('takes every heart left on a slip, however many there are', () => {
+    const actor = started()
+    // A wasted press, then the target: two steps against par 1.
+    actor.send({ type: 'ADD_TARGET', value: 9, at: 0 })
+    actor.send({ type: 'PRESS', index: 0, delta: 1, now: 0 })
+    actor.send({ type: 'PRESS', index: 0, delta: -1, now: 0 })
+    actor.send({ type: 'PRESS', index: 8, delta: 1, now: 0 })
+    const snap = actor.getSnapshot()
+    expect(snap.context.lives).toBe(0)
+    expect(snap.value).toBe('gameOver')
   })
 })
 

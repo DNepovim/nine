@@ -116,6 +116,8 @@ export type RunRules = {
     // The accuracy a hit has to beat to not cost a life, or null where a hit never costs
     // one — a mode that does not spend lives that way, or a rung with no bar.
     wasteful: number | null
+    // Whether a hit under that bar takes every heart left rather than one.
+    wastefulTakesAll: boolean
     expiryCosts: boolean
   }
   capabilities: Capabilities
@@ -133,6 +135,7 @@ const livesOf = (lives: LivesRules, difficulty: Difficulty): RunRules['lives'] =
   wasteful: lives.wastefulCostsLife
     ? (lives.bar ?? DIFFICULTIES[difficulty].wastefulThreshold)
     : null,
+  wastefulTakesAll: lives.wastefulCostsLife && lives.wastefulTakesAll === true,
   expiryCosts: lives.expiryCostsLife,
 })
 
