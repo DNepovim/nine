@@ -58,6 +58,10 @@ Spec: docs/work/2026-10-25-glimpse/spec.md
 
 ## Review
 
+**Shipped 2026-10-26:** `b07fb8c` committed straight to `main` (no PR) and deployed to production
+by run https://github.com/DNepovim/nine/actions/runs/40345610980 (checks, audit and EAS all green).
+No players see GLIMPSE until a session is booked on the admin screen's CHALLENGES tab.
+
 _(2026-10-26, second pass, after tasks 8–12 and their verify.)_ **Clean. Ready to ship.**
 
 `/code-review high` raised 8 issues, triaged:

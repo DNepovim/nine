@@ -1,8 +1,8 @@
 # Glimpse
 
 Slug: glimpse
-Stage: review
-Next: /ship glimpse
+Stage: shipped
+Next: —
 Track: full
 Branch: feat/glimpse
 Started: 2026-10-25
