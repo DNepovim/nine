@@ -66,6 +66,21 @@ type SpawnRules = {
   // It is also what ends the run: a drilled run is over when its drill is spent and the
   // board is clear, where every other mode plays until its lives are.
   drill: number | null
+  // How long a target's number shows once its card has come in, in ms, before it fades
+  // out — or null for a number that stays for the card's whole life.
+  //
+  // The **glimpse**. Here rather than in a group of its own because it is part of how a
+  // target arrives: seen once, then held in the player's head while the route is planned.
+  // It stops while the run is paused, as the ring does. The number comes back the moment
+  // the card starts to leave — hit, lost, or swept off at the end of the run — so the exit
+  // still shows what it was.
+  //
+  // What stays is the disc's band tint, though only as much of it as the ring leaves
+  // uncovered: a sliver when the target arrives, growing as the clock runs down.
+  //
+  // Drawing only. The machine deals, hits and expires a target exactly as it always has,
+  // and the rung does not scale it — the figure here is the figure on screen.
+  glimpse: number | null
 }
 
 // Which of the two factors a run reports as its headline: the figure that floats off a

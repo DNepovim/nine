@@ -14,7 +14,7 @@ import Svg, { Circle } from 'react-native-svg'
 import { scheduleOnRN } from 'react-native-worklets'
 
 import { APP_BLUE, APP_RED, PIE_INK, TARGET_BAND_TRACK } from '@/constants/colors'
-import { PIE_SIZE } from '@/constants/game'
+import { GLIMPSE_FADE_MS, PIE_SIZE } from '@/constants/game'
 import { cn } from '@/lib/cn'
 import { targetBand } from '@/lib/target-band'
 import type { TargetExit } from '@/types/game'
@@ -58,6 +58,8 @@ export function PieCountdown({
   startProgress = 1,
   clocked = true,
   settles = false,
+  glimpse = null,
+  revealed = false,
 }: {
   value: number
   // The highest sum the board being played reaches, which is what the band tint is
@@ -91,6 +93,19 @@ export function PieCountdown({
   //
   // The dimming that follows is the card's, not the pie's: see `spent` on `TargetCard`.
   settles?: boolean
+  // How long the number is held once the pie is drawn before it fades out, in ms — what
+  // is left of the run's **glimpse**, see `glimpseLeft` — or null for a number that never
+  // hides. Nought draws the pie already hidden: a card put back mid-clock has had its
+  // glimpse.
+  //
+  // Only the numeral goes. The disc keeps its band tint and the ring keeps running, so
+  // the board still says where a target is, roughly how high, and how long it has left.
+  glimpse?: number | null
+  // The card is on its way out — hit, lost, or swept off by the end of the run. A
+  // glimpsed number comes back for it, so however a card goes it shows what it was.
+  // Separate from `exit` because the end of a run is not an exit: those cards shrink
+  // away without one, and their numbers are owed all the same.
+  revealed?: boolean
 }) {
   const scale = size / PIE_SIZE
   const radius = size / 4
@@ -104,6 +119,12 @@ export function PieCountdown({
   const numberSquash = useSharedValue(1)
   // 0 = the clock's own colours, 1 = the red disc a lost target turns into.
   const failColor = useSharedValue(0)
+  // The numeral alone, so a glimpse never has to touch the swell, the squash or the
+  // colour the exits drive.
+  const numberOpacity = useSharedValue(glimpse === 0 ? 0 : 1)
+  // What is left of the glimpse, in ms — run down like `progress`, so it stops where it
+  // stands when the run pauses and goes on from there.
+  const glimpseHeld = useSharedValue(glimpse ?? 0)
   const failed = exit === 'failed'
   // A clock has to be both running and there in the first place.
   const running = active && clocked
@@ -135,6 +156,47 @@ export function PieCountdown({
       },
     )
   }, [running])
+
+  // The glimpse, run the way the clock is run: down while the card is live, held where it
+  // stands while it is not. A pause is the case that asks for it — the glimpse is the one
+  // look the player gets, and a pause just after an arrival would otherwise spend it behind
+  // the pause screen, where nobody can see anything. Pausing costs nothing and gives
+  // nothing, here as on the ring.
+  //
+  // Keyed on `active` rather than `running`: a glimpse is about the card being on screen,
+  // not about whether it has a clock. And nothing is scheduled without one, so a mode
+  // that hides no number pays for none of this.
+  useEffect(() => {
+    if (glimpse === null || glimpse === 0) return
+    if (!active) {
+      cancelAnimation(glimpseHeld)
+      return
+    }
+    if (glimpseHeld.value <= 0) return
+    glimpseHeld.value = withTiming(
+      0,
+      { duration: glimpseHeld.value, easing: Easing.linear },
+      (finished) => {
+        if (!finished) return
+        numberOpacity.value = withTiming(0, {
+          duration: GLIMPSE_FADE_MS,
+          easing: Easing.in(Easing.quad),
+        })
+      },
+    )
+  }, [active])
+
+  // Whatever was hidden comes back to be seen leaving. The hold is cancelled first, so a
+  // card taken inside its glimpse never has a fade land after this and blank it on the
+  // way out — and assigning the opacity a new animation replaces one already in flight.
+  useEffect(() => {
+    if (!revealed || glimpse === null) return
+    cancelAnimation(glimpseHeld)
+    numberOpacity.value = withTiming(1, {
+      duration: GLIMPSE_FADE_MS,
+      easing: Easing.out(Easing.quad),
+    })
+  }, [revealed])
 
   // The two exits are the same length and opposite in every other way. A hit lets the
   // number out of the ring that was timing it; a loss buries it in one — the clock's
@@ -215,6 +277,7 @@ export function PieCountdown({
   // Squashed on its own axis rather than through `scale`, so the press reads as the
   // number being flattened where it stands and not as the whole thing shrinking.
   const numberStyle = useAnimatedStyle(() => ({
+    opacity: numberOpacity.value,
     transform: [
       { scaleX: numberScale.value },
       { scaleY: numberScale.value * numberSquash.value },

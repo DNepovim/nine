@@ -20,6 +20,7 @@ import { useSessionBoard } from '@/hooks/use-session-card'
 import { useViewport } from '@/hooks/use-viewport'
 import { spanStatus, type SessionCard } from '@/lib/challenge-session'
 import { cn } from '@/lib/cn'
+import { labelRows } from '@/lib/label-rows'
 import type { OpenSession } from '@/lib/session-board'
 import { strikeRuleOf } from '@/lib/strike-rule'
 import {
@@ -41,18 +42,14 @@ import { challengeInk } from '@/modes/challenges/palette'
 // the opposite of that. It is an invitation.
 const NOBODY_YET = msg`— NOBODY HAS SCORED HERE —`
 
-// A challenge's name as the rows the wordmark draws it in: one word per row.
+// A challenge's name is drawn a word per row — see `labelRows`.
 //
 // The letters are a pinned 56px — the glass pane's whole geometry is measured down from
 // it — so a name is not something that can simply be set smaller to fit. FOUR KEYS on one
 // row ran off both edges of the dialog, and its space came out as an empty cell between
 // them. A word per row is the answer that keeps every letter full size, and it is how the
-// game-over title has always worked: two words, two rows.
-//
-// Collapses runs of whitespace and drops the empties, so a name typed with two spaces
-// does not produce a blank row.
-const nameRows = (label: string): string[] =>
-  label.split(/\s+/).filter((word) => word.length > 0)
+// game-over title has always worked: two words, two rows. A word too long for one row
+// says where it breaks with a soft hyphen of its own.
 
 // The challenge, in full: what it is, what it asks, where everyone stands, and the way
 // in. The card on the intro is the teaser; this is the thing it was teasing.
@@ -138,7 +135,7 @@ export function ChallengeModal({
             the loudest thing in the dialog, which is right — it is the one thing the
             player opened it to see. */}
           <View className="mb-3 w-full items-center">
-            <GameOverTitle gameMode={modeId} words={nameRows(t(labelOf(modeId)))} />
+            <GameOverTitle gameMode={modeId} words={labelRows(t(labelOf(modeId)))} />
           </View>
 
           {/* Held to the board's own width, so it breaks on the same column the standings

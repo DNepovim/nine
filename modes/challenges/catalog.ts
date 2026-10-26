@@ -292,10 +292,74 @@ const HABIT: ChallengeSpec = {
   },
 }
 
+// GLIMPSE: every number is shown once, and then it is yours to remember.
+//
+// Its one thing is the **glimpse** — `spawn.glimpse`, a target's number on its card for
+// half a second after it arrives and then gone. Everything else is Accuracy on Hard as a
+// player already knows it: the nine dial, the 16.5 s ring, arrivals closing in, three on
+// the board at once, three hearts. The memory is the strange part, so nothing else is.
+//
+// What the player keeps is the disc's band tint — a sliver of it under a fresh ring, more
+// as the ring drains — so a hidden 247 can still be read back as two hundred and something
+// by the time the player needs reminding. The number comes back as the card leaves — hit,
+// lost, or swept off at the end — so a player always learns what a target was, and a heart
+// lost to one they forgot says so.
+//
+// Nothing here about scoring or lives, because a challenge's defaults are already right
+// for it: the Accuracy blend and its `optimal` streak — an exact route on a number you can
+// no longer see is the thing worth multiplying — and no life for a wasteful hit, which is
+// a punishment for misremembering on top of the points it already cost.
+const GLIMPSE: ChallengeSpec = {
+  slug: 'glimpse',
+  // There is a **soft hyphen** (U+00AD) between the M and the P, invisible in an editor
+  // and on every screen that draws the name on one line. The challenge dialog draws a name
+  // a word per row at a pinned size, and seven letters is wider than its card — so the
+  // name says where it breaks: GLIM over PSE. See lib/label-rows.ts.
+  label: msg`GLIM­PSE`,
+  description: msg`One look, then from memory.`,
+  // No `shot`: Accuracy's sniper, inherited. A single held beam is a chain of exact
+  // routes made visible, which is what the streak here is made of.
+  //
+  // Every line about seeing and holding on to what was seen, as four-keys' are about
+  // its keys. No board tier can be about a board, because there is none.
+  claims: {
+    board: [
+      ['SAW', 'IT'],
+      ['KEPT', 'SIGHT'],
+      ['SHARP', 'EYE'],
+    ],
+    medal: [
+      ['NEAR', 'SIGHT'],
+      ['HALF', 'SEEN'],
+    ],
+    strong: [
+      ['GOOD', 'EYE'],
+      ['HELD', 'IT'],
+    ],
+    cold: [
+      ['GONE', 'BLANK'],
+      ['LOST', 'SIGHT'],
+    ],
+  },
+  base: ACCURACY,
+  from: Date.UTC(2026, 9, 24),
+  until: Date.UTC(2026, 9, 24) + DAY,
+  rules: {
+    // Hard, as every challenge so far: the rung that counts for itself, and one session
+    // board cannot hold three clocks at once.
+    fixedDifficulty: 'hard',
+    // Half a second, unscaled by the rung — the figure here is the figure on screen.
+    spawn: { glimpse: 500 },
+  },
+}
+
 // Mapped rather than listed, and that is what gives each challenge its colour: `.map`
 // hands `defineChallenge` the spec's own index, which is what the pair is derived from.
 // The list is append-only — see the note at the top of this file — so an index is a
 // permanent fact about a challenge and its colour never moves.
-export const CHALLENGES: readonly ModeDefinition[] = [FOUR_KEYS, FOUR_BY_FOUR, HABIT].map(
-  (spec, index) => defineChallenge(spec, index),
-)
+export const CHALLENGES: readonly ModeDefinition[] = [
+  FOUR_KEYS,
+  FOUR_BY_FOUR,
+  HABIT,
+  GLIMPSE,
+].map((spec, index) => defineChallenge(spec, index))

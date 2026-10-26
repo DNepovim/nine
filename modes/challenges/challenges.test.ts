@@ -29,7 +29,14 @@ const EVERYTHING = defineChallenge({
     dial: defineDial({ id: 'two-by-four', rows: 2, cols: 4, digits: 6 }),
     fixedDifficulty: 'extreme',
     clock: { base: 9000, ramps: 'spawn', playerSet: true, countsDown: false },
-    spawn: { share: 0.5, cap: 4000, maxTargets: 6, cadence: false, reach: 40 },
+    spawn: {
+      share: 0.5,
+      cap: 4000,
+      maxTargets: 6,
+      cadence: false,
+      reach: 40,
+      glimpse: 250,
+    },
     scoring: { weights: { acc: 1, spd: 0 }, base: 250, streak: 'clear', headline: 'acc' },
     lives: { count: 1, wastefulCostsLife: true, expiryCostsLife: false },
     capabilities: { scored: false, coached: true, keyHints: true },
@@ -98,6 +105,7 @@ describe('defineChallenge', () => {
       // Not in the patch, so the base's own answer: this challenge rolls its targets
       // like every mode but a drilled one.
       drill: null,
+      glimpse: 250,
     })
     expect(rules.scoring.base).toBe(250)
     expect(rules.scoring.streak).toBe('clear')
@@ -376,6 +384,59 @@ describe('habit', () => {
 
   it('draws its strike as the route it walked', () => {
     expect(HABIT?.shot).toBe('chain')
+  })
+})
+
+describe('glimpse', () => {
+  const GLIMPSE = CHALLENGES.find((mode) => mode.id === challengeId('glimpse'))
+
+  it('shows each number for half a second, whatever rung is asked for', () => {
+    for (const difficulty of DIFFICULTY_ORDER) {
+      const rules = runRules(challengeId('glimpse'), difficulty)
+      expect(rules.spawn.glimpse).toBe(500)
+      expect(rules.difficulty).toBe('hard')
+      expect(rules.usesDifficulty).toBe(false)
+    }
+  })
+
+  it('is Accuracy on Hard in everything but the glimpse', () => {
+    const rules = runRules(challengeId('glimpse'), 'easy')
+    expect(rules.spawn.maxTargets).toBe(3)
+    expect(rules.clock.base).toBe(16500)
+    expect(rules.clock.ramps).toBe('spawn')
+    expect(rules.scoring.streak).toBe('optimal')
+    expect(rules.scoring.weights).toEqual({ acc: 0.85, spd: 0.15 })
+    expect(rules.capabilities.board).toBe(false)
+  })
+
+  it('spends a heart on a target lost and none on a wasteful hit', () => {
+    const rules = runRules(challengeId('glimpse'), 'easy')
+    expect(rules.lives.count).toBe(3)
+    expect(rules.lives.wasteful).toBeNull()
+    expect(rules.lives.expiryCosts).toBe(true)
+  })
+
+  it('fires Accuracy’s sniper and names its own claims for every tier it can reach', () => {
+    expect(GLIMPSE?.shot).toBe('sniper')
+    // The tiers, not the words: the copy is the catalog's to change, and a test that
+    // restated it would fail on every rewording and on nothing else.
+    expect(Object.keys(GLIMPSE?.claims ?? {})).toEqual([
+      'board',
+      'medal',
+      'strong',
+      'cold',
+    ])
+  })
+
+  it('is appended, so no challenge before it changes colour', () => {
+    // A challenge's colour is its index. Inserted anywhere but the end, GLIMPSE would
+    // have recoloured every challenge after it.
+    // The order itself is what is pinned: a colour is derived from the index, so checking a
+    // colour against its own index passes whatever the order is.
+    expect(CHALLENGES.map((mode) => mode.id)).toEqual(
+      ['four-keys', 'four-by-four', 'habit', 'glimpse'].map(challengeId),
+    )
+    expect(GLIMPSE?.gradient).toEqual(challengeGradient(3))
   })
 })
 

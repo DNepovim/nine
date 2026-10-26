@@ -562,7 +562,7 @@ msgstr "Nad {fastBand}: čas + {fastBonus} × (čas − {fastBand}) ÷ (1 − {f
 msgid "ACC"
 msgstr "PŘES"
 
-#: components/overlays/challenge-modal.tsx:286
+#: components/overlays/challenge-modal.tsx:292
 msgid "ACCEPT"
 msgstr "PŘIJMOUT"
 
@@ -919,7 +919,7 @@ msgstr "Navazuj zásahy na sebe — série násobí body ×2 → ×4 → ×8. P�
 
 #: components/overlays/admin-session.tsx:192
 #: components/overlays/challenge-card.tsx:182
-#: components/overlays/challenge-modal.tsx:127
+#: components/overlays/challenge-modal.tsx:133
 #: modes/challenges/define.ts:84
 msgid "CHALLENGE"
 msgstr "VÝZVA"
@@ -983,7 +983,7 @@ msgid "clock = time left ÷ ring"
 msgstr "čas = zbývající čas ÷ kruh"
 
 #: components/overlays/admin-stat-people.tsx:119
-#: components/overlays/challenge-modal.tsx:301
+#: components/overlays/challenge-modal.tsx:307
 #: components/overlays/compare-overlay.tsx:318
 #: components/overlays/email-code-modal.tsx:528
 #: components/overlays/modal-card.tsx:266
@@ -999,7 +999,7 @@ msgstr "UKONČIT PŘEDČASNĚ"
 msgid "CLOSE THIS CHALLENGE NOW?"
 msgstr "UKONČIT TUTO VÝZVU TEĎ?"
 
-#: components/overlays/challenge-modal.tsx:174
+#: components/overlays/challenge-modal.tsx:180
 msgid "CLOSES IN"
 msgstr "ZAVÍRÁ ZA"
 
@@ -1048,7 +1048,7 @@ msgstr "ZNALEC"
 msgid "CONTINUE"
 msgstr "POKRAČOVAT"
 
-#: app/(tabs)/index.tsx:2468
+#: app/(tabs)/index.tsx:2472
 msgid "Continue the tutorial"
 msgstr "Pokračovat v tutoriálu"
 
@@ -1457,6 +1457,10 @@ msgstr "Dostala víc času."
 #: constants/dial-hints.ts:26
 msgid "GIVING NOW"
 msgstr "DÁVÁ TEĎ"
+
+#: modes/challenges/catalog.ts:317
+msgid "GLIM­PSE"
+msgstr "ZÁ­BLESK"
 
 #: constants/achievements.ts:661
 msgid "GOOD SPORT"
@@ -2296,6 +2300,10 @@ msgstr "Jedno gesto může pohnout několika tlačítky"
 msgid "One line under your name, for anyone who opens your profile."
 msgstr "Jeden řádek pod tvým jménem, pro každého, kdo si otevře tvůj profil."
 
+#: modes/challenges/catalog.ts:318
+msgid "One look, then from memory."
+msgstr "Jeden pohled, pak zpaměti."
+
 #: components/overlays/how-to-play-overlay.tsx:895
 msgid "One point, winner takes all — everyone else gets nothing."
 msgstr "Jeden bod, vítěz bere vše — ostatní nedostanou nic."
@@ -2364,7 +2372,7 @@ msgstr "OTEVŘÍT V POSTHOGU"
 msgid "Open the How to Play guide."
 msgstr "Otevři návod Jak hrát."
 
-#: components/overlays/challenge-modal.tsx:209
+#: components/overlays/challenge-modal.tsx:215
 msgid "OPENS IN"
 msgstr "ZAČÍNÁ ZA"
 
@@ -3039,7 +3047,7 @@ msgstr "Série — dokonalé tahy za sebou násobí body ×2 → ×4 → ×8. St
 
 #: components/game/arcade-strike.tsx:77
 #: components/overlays/admin-knowledge.tsx:273
-#: components/overlays/challenge-modal.tsx:223
+#: components/overlays/challenge-modal.tsx:229
 msgid "STRIKE"
 msgstr "SÉRIE"
 

@@ -1,6 +1,7 @@
 import type { StyleProp, TextStyle } from 'react-native'
 import { Text } from 'react-native'
 
+import { SOFT_HYPHEN } from '@/lib/label-rows'
 import { lerpColor } from '@/modes'
 
 // A run of text drawn in a gradient, a character at a time.
@@ -18,6 +19,11 @@ import { lerpColor } from '@/modes'
 // `Array.from` and not a spread or `.split('')`: it steps code points, so a word carrying
 // an emoji or a combining mark keeps its characters whole instead of having a surrogate
 // pair torn in half and its halves coloured separately.
+//
+// A **soft hyphen** is not a letter and is dropped before the walk. A challenge's name may
+// carry one to say where it breaks (see lib/label-rows.ts); left in, it would take a colour
+// step of its own and every letter after it would land a step further along the ramp than
+// a name without one.
 export function GradientText({
   text,
   from,
@@ -39,7 +45,7 @@ export function GradientText({
   style?: StyleProp<TextStyle>
   numberOfLines?: number
 }) {
-  const letters = Array.from(text)
+  const letters = Array.from(text).filter((char) => char !== SOFT_HYPHEN)
   // A one-character word has no distance to travel, so it wears the opening stop whole
   // rather than dividing by zero and rendering as NaN.
   const last = Math.max(1, letters.length - 1)

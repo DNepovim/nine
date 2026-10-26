@@ -12,3 +12,14 @@ export const CROSSING_SHARE = 0.35
 // Target card / countdown pie geometry (the card footprint is the pie itself).
 export const PIE_SIZE = 80
 export const CARD_GAP = 10
+
+// How long a target card takes to come in — it fades up from nothing and springs from
+// six-tenths of its size. A number is not readable until this is over, so a **glimpse**
+// is counted from here rather than from the mount.
+export const CARD_ENTER_MS = 180
+
+// How long a glimpsed number takes to go, and to come back when its card leaves.
+// Short, because the glimpse itself is the half second the player was promised: the fade
+// is the edge of it rather than more of it. Also the least of a glimpse worth showing —
+// a card left with less than this would only flash its number to fade it again.
+export const GLIMPSE_FADE_MS = 150

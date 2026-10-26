@@ -2256,6 +2256,10 @@ export default function GameScreen() {
                         // does the same for a reason of its own — one clock per run,
                         // and here it is the stopwatch.
                         clocked={rules.clock.countsDown}
+                        // How long a number shows before it fades — the **glimpse**,
+                        // null for a number that never hides. Read off the rules, so the
+                        // card never learns which mode is asking.
+                        glimpse={rules.spawn.glimpse}
                         onExpire={() => {
                           send({ type: 'TARGET_EXPIRED', id: target.id, now: Date.now() })
                         }}

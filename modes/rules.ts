@@ -35,6 +35,7 @@ const BASE_TARGET_RULES: TargetRules = {
     cadence: true,
     reach: null,
     drill: null,
+    glimpse: null,
   },
   scoring: {
     weights: { acc: 0.5, spd: 0.5 },
@@ -103,6 +104,7 @@ export type RunRules = {
     cadence: boolean
     reach: number | null
     drill: number | null
+    glimpse: number | null
   }
   // The mode's scoring with its headline filled in, so no reader has to work out which
   // factor a mode is about.
@@ -160,6 +162,7 @@ export function resolveRules(
       cadence: patched.spawn.cadence,
       reach: patched.spawn.reach,
       drill: patched.spawn.drill,
+      glimpse: patched.spawn.glimpse,
     },
     scoring: {
       ...patched.scoring,

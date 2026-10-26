@@ -1,8 +1,10 @@
 import { describe, expect, it } from 'vitest'
 
 import { TUTORIAL_LABEL } from '@/constants/tutorial'
+import { challengeId } from '@/modes/challenges/define'
 import { ACCURACY } from '@/modes/definitions/accuracy'
-import { patchRules } from '@/modes/rules'
+import { allModes } from '@/modes/registry'
+import { patchRules, resolveRules } from '@/modes/rules'
 
 import {
   baseClockMs,
@@ -276,6 +278,30 @@ describe('the drill and the measure', () => {
     // spawn, which is the whole contract `patchRules` exists for.
     expect(patched.spawn.share).toBe(ACCURACY.rules.spawn.share)
     expect(patched.scoring.weights).toEqual(ACCURACY.rules.scoring.weights)
+  })
+})
+
+describe('the glimpse', () => {
+  it('leaves every number on its card unless a mode says otherwise', () => {
+    // Null is the default that keeps every card drawn as it always was. Walked over the
+    // registry rather than a list, so a mode added later that sets a glimpse by mistake
+    // fails here instead of slipping past a list nobody updated.
+    const hiding = allModes()
+      .filter((mode) => mode.engine === 'targets')
+      .filter((mode) => runRules(mode.id, 'hard').spawn.glimpse !== null)
+      .map((mode) => mode.id)
+    expect(hiding).toEqual([challengeId('glimpse')])
+    expect(runRules('trainee', 'easy', true).spawn.glimpse).toBeNull()
+  })
+
+  it('carries a patch’s glimpse through to the run and keeps the rest of the spawn', () => {
+    const run = resolveRules(
+      patchRules(ACCURACY.rules, { spawn: { glimpse: 300 } }),
+      'accuracy',
+      'hard',
+    )
+    const plain = runRules('accuracy', 'hard')
+    expect(run.spawn).toEqual({ ...plain.spawn, glimpse: 300 })
   })
 })
 

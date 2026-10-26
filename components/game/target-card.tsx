@@ -10,7 +10,9 @@ import Animated, {
 import { scheduleOnRN } from 'react-native-worklets'
 
 import { PieCountdown, TARGET_EXIT_MS } from '@/components/game/pie-countdown'
+import { CARD_ENTER_MS } from '@/constants/game'
 import { mono } from '@/constants/theme'
+import { glimpseLeft } from '@/lib/target-clock'
 import type { DisplayTarget } from '@/types/game'
 
 // How far a taken card is held back once it has settled.
@@ -32,6 +34,7 @@ export function TargetCard({
   frozen = false,
   clocked = true,
   spent = false,
+  glimpse = null,
   onExpire,
   onExitComplete,
 }: {
@@ -67,6 +70,11 @@ export function TargetCard({
   // A settled card is out of the run either way: the machine dropped it the moment it
   // was taken, so nothing here can be hit twice. What stays is the drawing.
   spent?: boolean
+  // The run's **glimpse**: how long a target's number shows once it arrives, or null for
+  // one that never hides. Handed to the pie as whatever of it is still left — a card put
+  // back from storage long after its target arrived has had its glimpse, and must not
+  // show its number a second time. See `glimpseLeft`.
+  glimpse?: number | null
   onExpire: () => void
   onExitComplete: () => void
 }) {
@@ -75,7 +83,7 @@ export function TargetCard({
 
   useEffect(() => {
     scale.value = withSpring(1, { damping: 14, stiffness: 200 })
-    opacity.value = withTiming(1, { duration: 180 })
+    opacity.value = withTiming(1, { duration: CARD_ENTER_MS })
   }, [])
 
   useEffect(() => {
@@ -109,6 +117,10 @@ export function TargetCard({
     )
   }, [target.exit, dying])
 
+  // On its way out — hit, lost, or swept off by the end of the run. Named once because the
+  // pie reads it twice: its clock stops for it, and a glimpsed number comes back for it.
+  const leaving = target.exit !== null || dying
+
   const animStyle = useAnimatedStyle(() => ({
     transform: [{ scale: scale.value }],
     opacity: opacity.value,
@@ -130,8 +142,10 @@ export function TargetCard({
         size={size}
         backgroundColor={color}
         settles={spent}
+        glimpse={glimpseLeft(glimpse, target.startProgress, target.duration)}
+        revealed={leaving}
         value={target.value}
-        active={target.exit === null && !dying && !frozen}
+        active={!leaving && !frozen}
         clocked={clocked}
         duration={duration}
         startProgress={target.startProgress}

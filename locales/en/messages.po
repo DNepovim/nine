@@ -562,7 +562,7 @@ msgstr "Above {fastBand}: clock + {fastBonus} × (clock − {fastBand}) ÷ (1 �
 msgid "ACC"
 msgstr "ACC"
 
-#: components/overlays/challenge-modal.tsx:286
+#: components/overlays/challenge-modal.tsx:292
 msgid "ACCEPT"
 msgstr "ACCEPT"
 
@@ -919,7 +919,7 @@ msgstr "Chain your hits — a streak multiplies your points ×2 → ×4 → ×8.
 
 #: components/overlays/admin-session.tsx:192
 #: components/overlays/challenge-card.tsx:182
-#: components/overlays/challenge-modal.tsx:127
+#: components/overlays/challenge-modal.tsx:133
 #: modes/challenges/define.ts:84
 msgid "CHALLENGE"
 msgstr "CHALLENGE"
@@ -983,7 +983,7 @@ msgid "clock = time left ÷ ring"
 msgstr "clock = time left ÷ ring"
 
 #: components/overlays/admin-stat-people.tsx:119
-#: components/overlays/challenge-modal.tsx:301
+#: components/overlays/challenge-modal.tsx:307
 #: components/overlays/compare-overlay.tsx:318
 #: components/overlays/email-code-modal.tsx:528
 #: components/overlays/modal-card.tsx:266
@@ -999,7 +999,7 @@ msgstr "CLOSE EARLY"
 msgid "CLOSE THIS CHALLENGE NOW?"
 msgstr "CLOSE THIS CHALLENGE NOW?"
 
-#: components/overlays/challenge-modal.tsx:174
+#: components/overlays/challenge-modal.tsx:180
 msgid "CLOSES IN"
 msgstr "CLOSES IN"
 
@@ -1048,7 +1048,7 @@ msgstr "CONNOISSEUR"
 msgid "CONTINUE"
 msgstr "CONTINUE"
 
-#: app/(tabs)/index.tsx:2468
+#: app/(tabs)/index.tsx:2472
 msgid "Continue the tutorial"
 msgstr "Continue the tutorial"
 
@@ -1457,6 +1457,10 @@ msgstr "Given more time."
 #: constants/dial-hints.ts:26
 msgid "GIVING NOW"
 msgstr "GIVING NOW"
+
+#: modes/challenges/catalog.ts:317
+msgid "GLIM­PSE"
+msgstr "GLIM­PSE"
 
 #: constants/achievements.ts:661
 msgid "GOOD SPORT"
@@ -2296,6 +2300,10 @@ msgstr "One gesture can move several keys"
 msgid "One line under your name, for anyone who opens your profile."
 msgstr "One line under your name, for anyone who opens your profile."
 
+#: modes/challenges/catalog.ts:318
+msgid "One look, then from memory."
+msgstr "One look, then from memory."
+
 #: components/overlays/how-to-play-overlay.tsx:895
 msgid "One point, winner takes all — everyone else gets nothing."
 msgstr "One point, winner takes all — everyone else gets nothing."
@@ -2364,7 +2372,7 @@ msgstr "OPEN IN POSTHOG"
 msgid "Open the How to Play guide."
 msgstr "Open the How to Play guide."
 
-#: components/overlays/challenge-modal.tsx:209
+#: components/overlays/challenge-modal.tsx:215
 msgid "OPENS IN"
 msgstr "OPENS IN"
 
@@ -3039,7 +3047,7 @@ msgstr "Streak — consecutive perfect plays multiply your points ×2 → ×4 �
 
 #: components/game/arcade-strike.tsx:77
 #: components/overlays/admin-knowledge.tsx:273
-#: components/overlays/challenge-modal.tsx:223
+#: components/overlays/challenge-modal.tsx:229
 msgid "STRIKE"
 msgstr "STRIKE"
 
