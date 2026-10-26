@@ -18,7 +18,7 @@ spec written off a shape without opening the files is a spec whose file list is 
 - **Writing the code.** Not even a correct line of it. Snippets in a spec are for
   _shapes_ — a type, a row of a value map — never an implementation.
 - **Re-opening the shape.** The appetite is fixed. If the contract cannot fit it, say
-  so and cut scope against the **Out** list with the user, rather than quietly
+  so and cut scope against the **Out** list (advisor first, then the user), rather than quietly
   producing a week of spec for an evening's appetite.
 
 ## Step 1 — The domain words
@@ -132,10 +132,13 @@ Then set `Stage: spec` and `Next: /build <slug>`.
 
 ## Step 8 — Put the contract up
 
-`AskUserQuestion` before handing off: the acceptance criteria are what the work will
-be judged against, and a criterion the user disagrees with is cheapest to fix now.
-Offer accept / change the criteria / cut scope.
+Put it to the **`sdlc-advisor`** before handing off: the acceptance criteria are what
+the work will be judged against, and a criterion the user would disagree with is
+cheapest to fix now. Offer accept / change the criteria / cut scope. The advisor
+accepts criteria that follow from the shape; it escalates the ones that decide
+something the shape left open, and only those go to the user.
 
 ## Hand off
 
-`Next: /build <slug>` — works the plan task by task against these criteria.
+`Next: /build <slug>`, then invoke **`build`** — it works the plan task by task
+against these criteria.

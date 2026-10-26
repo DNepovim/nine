@@ -32,7 +32,8 @@ If you cannot write that line, the brainstorm wasn't finished. Say so and offer
 
 ## Step 2 — The appetite
 
-Ask the user, with `AskUserQuestion`, in the units they actually work in:
+Ask — the **`sdlc-advisor`** first, the user only if it escalates — in the units the
+user actually works in:
 
 - **An evening** — one sitting, one branch, no new concepts.
 - **A day or two** — a new screen or a real mechanic, still inside what exists.
@@ -75,7 +76,9 @@ Three lists, and the second two are the ones that make this stage worth doing.
 
 ## Step 5 — The track
 
-`AskUserQuestion`, with a recommendation based on what Steps 3 and 4 turned up:
+Ask (advisor first), with a recommendation based on what Steps 3 and 4 turned up.
+Send it in the same advisor call as the appetite when Step 3 already shows the
+answer — one round trip, not two:
 
 - **Small** — shape → **`build`** → **`verify`** → **`ship`**. No `spec.md` contract
   section and no `plan.md`; the tasks and the acceptance criteria go straight into
@@ -101,6 +104,8 @@ Header: `Stage: shape`, `Track:` as decided, `Branch: <type>/<slug>`, and `Next:
 command below.
 
 ## Hand off
+
+Write `Next:`, then invoke that skill:
 
 - **Full track** — `Next: /spec <slug>` — turns this into the contract the build is
   held to.

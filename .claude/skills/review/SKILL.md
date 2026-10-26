@@ -31,7 +31,7 @@ them blind:
 - **A real defect in this work** — fix it, or hand it back to **`build`** if it is a
   task's worth.
 - **A pre-existing problem the diff merely touched** — note it, leave it. It is its own
-  work item, and the user decides whether to open one.
+  work item; list it in the write-up rather than stopping to ask.
 - **Something the spec decided deliberately** — say so and keep the spec's choice. A
   review finding is not senior to a decision somebody made on purpose.
 
@@ -80,6 +80,9 @@ is the one that pays off — it is where the next `brainstorm` starts.
 - **Clean** — `Next: /ship <slug>`.
 
 ## Hand off
+
+Write `Next:`, then invoke that skill — **`build`** when something reopened (counted
+as going backwards, per the protocol), otherwise **`ship`**:
 
 `Next: /ship <slug>` — checks, the news entry, the commit, the branch or `main`, and
 the deploy offer. `ship` reads this item's spec for the _why_ behind the commit and

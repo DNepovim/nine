@@ -84,11 +84,13 @@ criterion that contradicts another. This is normal and it is not yours to absorb
 - **A detail the spec didn't settle** (a variable name, which helper, where a constant
   lives) — decide it, note the decision in the task's tick, keep going.
 - **A difference the acceptance criteria would notice** — stop. Say what the spec
-  says, what the code requires, and what you propose. `AskUserQuestion`: amend the
-  spec (recommended — it keeps `verify` honest), build it the spec's way anyway, or
-  cut the task. Amending means editing `spec.md`, not just the plan.
+  says, what the code requires, and what you propose, and put it to the
+  **`sdlc-advisor`**: amend the spec (recommended — it keeps `verify` honest), build
+  it the spec's way anyway, or cut the task. The user hears of it only if the
+  advisor escalates. Amending means editing `spec.md`, not just the plan.
 - **The shape doesn't hold** — the appetite is blown, a rabbit hole turned out to be
-  real. Stop and say so. That is a decision for **`shape`**, not a longer build.
+  real. Stop building and put it to the advisor. That is a decision for **`shape`**,
+  not a longer build — and blowing the appetite is one the advisor hands the user.
 
 ## Step N — Close the build
 
@@ -111,5 +113,8 @@ why, any decision taken at a fork, anything left deliberately undone. Set
 
 ## Hand off
 
-`Next: /verify <slug>` — runs the check suite, walks the criteria one by one, and
-drives the app for anything the player can see.
+`Next: /verify <slug>`, then invoke **`verify`** — it runs the check suite, walks
+the criteria one by one, and drives the app for anything the player can see.
+
+When this build was reopened by `verify` or `review`, the hand-off is the same: back
+to **`verify`**, never straight to `review` or `ship`.

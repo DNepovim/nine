@@ -119,7 +119,7 @@ An achievement's colour is the green nothing else uses (`ACHIEVEMENT_SCALE`), an
 
 ## Development cycle
 
-Work worth a document goes through seven stages, one skill each, and none of them moves on its own — each stops at its own edge and names the command that follows:
+Work worth a document goes through seven stages, one skill each, and they **chain**: each one finishes by invoking the next, backwards included (a failed `verify` runs `build`, which runs `verify` again). A question a stage would ask goes first to the **`sdlc-advisor`** agent (`.claude/agents/sdlc-advisor.md`), which answers it from the spec, this file, memory and the repo — the user is stopped only for what it hands back, and always for production writes and the deploy:
 
 ```
 brainstorm → shape → spec → build → verify → review → ship

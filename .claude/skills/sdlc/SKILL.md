@@ -19,7 +19,12 @@ because the state is on disk:
 | ship        | **`ship`**       | Commit, PR or `main`, and the deploy offer. |
 
 Read `.claude/skills/sdlc/PROTOCOL.md` — it owns the work-item format, the loading
-rule, the order guard and the hand-off, and every skill above obeys it.
+rule, the order guard, the advisor and the hand-off, and every skill above obeys it.
+
+The stages **chain**: each invokes the next when it finishes, and puts its questions
+to the **`sdlc-advisor`** agent (`.claude/agents/sdlc-advisor.md`) before the user. A
+piece of work started at any stage runs through to `ship` and stops for the user only
+where the advisor says the decision is theirs — and at the deploy offer.
 
 ## `/sdlc` — the status board
 
@@ -39,13 +44,14 @@ Nothing else. Do not start work from the board; name the command and stop.
 ## `/sdlc <slug>` — one item
 
 Load it per the protocol, summarise where it stands in a few lines, and name the one
-command that moves it. If its stage is `verify` or `review` and the last section
+command that moves it. This one is a question, not a start: name the command and
+stop, unless the user also said to carry on. If its stage is `verify` or `review` and the last section
 records failures, say that the next command goes **backwards** and why.
 
 ## `/sdlc <a description of something to do>`
 
-The dispatcher. Judge what the input actually is and hand off — don't do the stage
-here:
+The dispatcher. Judge what the input actually is and invoke that skill — don't do
+the stage here, and don't stop to name it; from there the chain runs on its own:
 
 | The input is…                                                                              | Hand off to                             |
 | ------------------------------------------------------------------------------------------ | --------------------------------------- |

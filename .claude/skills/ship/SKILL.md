@@ -32,8 +32,8 @@ An item whose `Next:` is `/ship <slug>` — or the slug the user named — is th
 Read its `spec.md` (the problem, the shape) and its `plan.md` (what was built, what
 `verify` found, what `review` left). Say in one line which item you are shipping.
 
-If its `Stage:` is not `review`, the work skipped a stage. `AskUserQuestion`: run the
-missing stage first (recommended), or ship anyway. Unverified work can be shipped —
+If its `Stage:` is not `review`, the work skipped a stage. Ask — the **`sdlc-advisor`**
+first, per the protocol: run the missing stage first (recommended), or ship anyway. Unverified work can be shipped —
 it just must not be shipped _silently_.
 
 No folder, no problem: work that never entered the cycle ships from the diff, exactly
@@ -51,6 +51,12 @@ Do the cheap reads first (`git status supabase/migrations/ supabase/config.toml`
 the diff) so the questions you ask are the ones that actually apply: a tree with
 no migration files, no config change and nothing player-visible collapses to a
 single question, or none at all in `prod` mode.
+
+That one batch goes to the **`sdlc-advisor`** first (`.claude/skills/sdlc/PROTOCOL.md`,
+Asking), whether or not this work came through the cycle. It settles the
+branch-or-main choice and the announcement — the draft's copy included — from the
+spec and the repo's habits; it always hands back a migration or config push, since
+both write to production. Only what it escalates reaches the user, in one call.
 
 The deploy offer in Step 3 is the exception and stays separate — it is only valid
 once the push has actually landed.
@@ -239,7 +245,8 @@ If the commit fails (a hook, nothing to commit), stop here — nothing to push.
 
 ## Step 3 — Offer to deploy (both modes)
 
-Ask with **`AskUserQuestion`**:
+Ask with **`AskUserQuestion`** — directly, not through the advisor: deploying is the
+user's alone. This is where an automatic chain ends.
 
 - **"Deploy to production"** — invoke the **`deploy`** skill, which re-states
   what will ship and confirms again before triggering anything.

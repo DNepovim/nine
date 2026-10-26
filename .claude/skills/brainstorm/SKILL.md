@@ -13,8 +13,9 @@ Read `.claude/skills/sdlc/PROTOCOL.md` first.
 
 ## Not this skill's job
 
-- **Deciding.** You produce the menu; the user orders. A brainstorm that arrives at
-  one answer did design work in the dark.
+- **Deciding.** You produce the menu; the user orders — or the advisor does, when the
+  user's own words already pick one. A brainstorm that arrives at one answer by
+  itself did design work in the dark.
 - **Designing.** No file lists, no types, no component names. A direction is one or
   two sentences a player could understand.
 - **Code.** Not one line, not a sketch, not "I tried it to see".
@@ -56,7 +57,8 @@ rules, a leaderboard's comparability, the tutorial's one-thing-at-a-time cadence
 ## Step 3 — Put them up
 
 Present the directions as a short list in the message — this is a stage the user
-reads, not a document they file. Then `AskUserQuestion` with the three or four
+reads, not a document they file. Then the choice — through the **`sdlc-advisor`**
+first, per the protocol's Asking rule — with the three or four
 strongest as options, each description carrying the appetite and the risk, so the
 choice is made against the cost and not against the name.
 
@@ -83,5 +85,5 @@ decided, `Next: /shape <slug>` — then:
 
 ## Hand off
 
-`Next: /shape <slug>` — fixes the appetite and the boundary, and decides whether this
-needs a spec at all.
+`Next: /shape <slug>`, then invoke **`shape`** — it fixes the appetite and the
+boundary, and decides whether this needs a spec at all.

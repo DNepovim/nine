@@ -84,11 +84,20 @@ how many criteria passed, which failed, which were skipped and why.
   also writes the code it is judging. A one-line typo is the only reasonable
   exception, and say that you took it.
 - **All PASS** — `Stage: verify`, `Next: /review <slug>`.
-- **A criterion that turned out to be wrong**, rather than unmet — `AskUserQuestion`.
+- **A criterion that turned out to be wrong**, rather than unmet — the **`sdlc-advisor`**
+  first.
   Amending `spec.md` is legitimate; deleting a criterion because the code does
   something else is not, and the difference is whether the _player_ is better off.
 
 ## Hand off
 
-- **Failures** — `Next: /build <slug>` — the log says which criteria reopen.
+Write `Next:`, then invoke that skill:
+
+- **Failures** — `Next: /build <slug>` — the log says which criteria reopen. This is
+  the backwards hand-off the protocol counts: on the item's third time back, the
+  advisor decides whether to carry on.
 - **Clean** — `Next: /review <slug>` — the quality pass, then `ship`.
+
+Driving the app goes through the **`run`** skill. If the only way to drive it is
+Claude-in-Chrome, that needs the user's agreement — ask for it once, at the start of
+Step 2, together with anything else escalated, rather than mid-walk.
