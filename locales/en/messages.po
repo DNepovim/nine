@@ -356,7 +356,7 @@ msgstr "{owed} owed an answer"
 
 #. placeholder {0}: fortuneOf(score, difficulty)
 #. placeholder {0}: groupDigits(summary.mine.bonus)
-#: components/overlays/game-over-overlay.tsx:378
+#: components/overlays/game-over-overlay.tsx:376
 #: components/overlays/summary-card.tsx:182
 msgid "+{0} TO YOUR FORTUNE"
 msgstr "+{0} TO YOUR FORTUNE"
@@ -1048,7 +1048,7 @@ msgstr "CONNOISSEUR"
 msgid "CONTINUE"
 msgstr "CONTINUE"
 
-#: app/(tabs)/index.tsx:2500
+#: app/(tabs)/index.tsx:2512
 msgid "Continue the tutorial"
 msgstr "Continue the tutorial"
 
@@ -2086,7 +2086,7 @@ msgstr "No sessions have been planned."
 msgid "No sessions planned yet."
 msgstr "No sessions planned yet."
 
-#: modes/challenges/catalog.ts:379
+#: modes/challenges/catalog.ts:380
 msgid "NO SLIP"
 msgstr "NO SLIP"
 
@@ -2241,7 +2241,7 @@ msgstr "Nov"
 msgid "NOVEMBER"
 msgstr "NOVEMBER"
 
-#: modes/challenges/catalog.ts:382
+#: modes/challenges/catalog.ts:383
 msgid "NSL"
 msgstr "NSL"
 
@@ -2337,7 +2337,7 @@ msgstr "One run ≥ 60 min, any mode"
 msgid "One set of standings, shared by everyone playing it, and it never resets. Your best run is the one that counts. Where the standings are a race against the clock, only a run you finish counts at all — stop early, or let the window close on you, and it is not timed."
 msgstr "One set of standings, shared by everyone playing it, and it never resets. Your best run is the one that counts. Where the standings are a race against the clock, only a run you finish counts at all — stop early, or let the window close on you, and it is not timed."
 
-#: modes/challenges/catalog.ts:383
+#: modes/challenges/catalog.ts:384
 msgid "One slip and it's over."
 msgstr "One slip and it's over."
 
@@ -2478,7 +2478,7 @@ msgid "Play a Hard board."
 msgstr "Play a Hard board."
 
 #: components/game/arcade-over.tsx:68
-#: components/overlays/game-over-overlay.tsx:437
+#: components/overlays/game-over-overlay.tsx:435
 #: components/overlays/multiplayer-game-over.tsx:188
 msgid "PLAY AGAIN"
 msgstr "PLAY AGAIN"
@@ -2822,6 +2822,10 @@ msgstr "Score rewards precision: solve each target in the fewest moves."
 msgid "Scores, one ladder per mode — Accuracy and Speed ask for opposite things, so each has its own rungs to climb."
 msgstr "Scores, one ladder per mode — Accuracy and Speed ask for opposite things, so each has its own rungs to climb."
 
+#: modes/challenges/catalog.ts:449
+msgid "SDW"
+msgstr "SDW"
+
 #: lib/compare-lines.ts:70
 msgid "Second, for now."
 msgstr "Second, for now."
@@ -2923,6 +2927,10 @@ msgstr "SHOW LESS"
 #: components/overlays/advanced-options-overlay.tsx:98
 msgid "SHOW SUM IN BUTTONS"
 msgstr "SHOW SUM IN BUTTONS"
+
+#: modes/challenges/catalog.ts:446
+msgid "SIDE­WAYS"
+msgstr "SIDE­WAYS"
 
 #. placeholder {0}: date(from)
 #: components/overlays/profile-reign-row.tsx:85
@@ -3242,6 +3250,10 @@ msgstr "The clock keeps tightening as your run goes on, less and less each time.
 #: components/overlays/title-mark.tsx:94
 msgid "THE CROWN"
 msgstr "THE CROWN"
+
+#: modes/challenges/catalog.ts:450
+msgid "The dial has fallen on its side."
+msgstr "The dial has fallen on its side."
 
 #: constants/tips.ts:18
 msgid "The dial maxes out at 324, every button on 9. Worth remembering — it places a target in the range the moment you read it."

@@ -419,6 +419,73 @@ const NO_SLIP: ChallengeSpec = {
   },
 }
 
+// SIDEWAYS: Accuracy Hard on a dial that has fallen on its side.
+//
+// Its one thing is the **orientation** — the nine dial turned a quarter counter-clockwise,
+// as if the phone were held landscape. A player who knows the dial by feel has the ×9
+// under the thumb and up for more; here both are somewhere else. Everything else is
+// Accuracy Hard as they already know it — the 16.5 s ring, three hearts, the `optimal`
+// streak and its sniper shot — so the only thing to relearn is the dial.
+//
+// The turn is all of it at once, because a dial that turned only its digits, or only its
+// swipes, would be a puzzle rather than a dial lying down:
+//
+//   - **The weights turn with it.** The ×9 that sat bottom-right is top-right now, the
+//     ×1 bottom-left — given here in screen order, as every dial's are. The 1 is still
+//     on it, so every target in 0 … 324 is still answerable.
+//   - **The digits lie on their side**, and **the swipes turn with them**: left raises a
+//     key, right lowers it, up fills it, down empties it, and a tap still raises it — see
+//     `orientMove`.
+//
+// Par counts presses, not directions, so a route is scored exactly as upright.
+const SIDEWAYS: ChallengeSpec = {
+  slug: 'sideways',
+  // A **soft hyphen** (U+00AD) between the E and the W, invisible on a line wide enough
+  // for the word: eight letters is wider than the challenge dialog's row, which GLIMPSE
+  // found at seven. It breaks SIDE over WAYS. See lib/label-rows.ts.
+  label: msg`SIDE­WAYS`,
+  // Its own, as HABIT's and NO SLIP's are: a profile row reading ACC would file it under
+  // a board it is not.
+  code: msg`SDW`,
+  description: msg`The dial has fallen on its side.`,
+  // No `shot`: Accuracy's sniper, inherited — the streak is Accuracy's own.
+  //
+  // Every line about lying down and turning, since that is the one thing that changed.
+  claims: {
+    board: [
+      ['LAID', 'LOW'],
+      ['SIDE', 'WON'],
+      ['TURN', 'KEPT'],
+    ],
+    medal: [
+      ['NEAR', 'LEVEL'],
+      ['SIDE', 'STEP'],
+    ],
+    strong: [
+      ['GOOD', 'TURN'],
+      ['SURE', 'SIDE'],
+    ],
+    cold: [
+      ['TIPPED', 'OVER'],
+      ['ALL', 'ASKEW'],
+    ],
+  },
+  base: ACCURACY,
+  from: Date.UTC(2026, 9, 27),
+  until: Date.UTC(2026, 9, 27) + DAY,
+  rules: {
+    // Hard, as every challenge built on Accuracy so far.
+    fixedDifficulty: 'hard',
+    dial: defineDial({
+      id: 'sideways',
+      rows: 3,
+      cols: 3,
+      weights: [3, 6, 9, 2, 4, 6, 1, 2, 3],
+      orientation: 'sideways',
+    }),
+  },
+}
+
 // Mapped rather than listed, and that is what gives each challenge its colour: `.map`
 // hands `defineChallenge` the spec's own index, which is what the pair is derived from.
 // The list is append-only — see the note at the top of this file — so an index is a
@@ -429,4 +496,5 @@ export const CHALLENGES: readonly ModeDefinition[] = [
   HABIT,
   GLIMPSE,
   NO_SLIP,
+  SIDEWAYS,
 ].map((spec, index) => defineChallenge(spec, index))

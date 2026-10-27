@@ -356,7 +356,7 @@ msgstr "{owed} čeká na odpověď"
 
 #. placeholder {0}: fortuneOf(score, difficulty)
 #. placeholder {0}: groupDigits(summary.mine.bonus)
-#: components/overlays/game-over-overlay.tsx:378
+#: components/overlays/game-over-overlay.tsx:376
 #: components/overlays/summary-card.tsx:182
 msgid "+{0} TO YOUR FORTUNE"
 msgstr "+{0} K TVÉMU JMĚNÍ"
@@ -1048,7 +1048,7 @@ msgstr "ZNALEC"
 msgid "CONTINUE"
 msgstr "POKRAČOVAT"
 
-#: app/(tabs)/index.tsx:2500
+#: app/(tabs)/index.tsx:2512
 msgid "Continue the tutorial"
 msgstr "Pokračovat v tutoriálu"
 
@@ -2086,7 +2086,7 @@ msgstr "Zatím není naplánovaný žádný termín."
 msgid "No sessions planned yet."
 msgstr "Zatím není naplánovaný žádný termín."
 
-#: modes/challenges/catalog.ts:379
+#: modes/challenges/catalog.ts:380
 msgid "NO SLIP"
 msgstr "BEZ CHYBY"
 
@@ -2241,7 +2241,7 @@ msgstr "11."
 msgid "NOVEMBER"
 msgstr "listopadu"
 
-#: modes/challenges/catalog.ts:382
+#: modes/challenges/catalog.ts:383
 msgid "NSL"
 msgstr "BCH"
 
@@ -2337,7 +2337,7 @@ msgstr "Jedna hra ≥ 60 min, libovolný režim"
 msgid "One set of standings, shared by everyone playing it, and it never resets. Your best run is the one that counts. Where the standings are a race against the clock, only a run you finish counts at all — stop early, or let the window close on you, and it is not timed."
 msgstr "Jedno pořadí pro všechny, kdo ji hrají, a nikdy se nenuluje. Počítá se tvá nejlepší hra. Kde se v pořadí závodí s časem, počítá se jen hra, kterou dohraješ — skončíš dřív nebo ti okno zavře, a čas se nezapíše."
 
-#: modes/challenges/catalog.ts:383
+#: modes/challenges/catalog.ts:384
 msgid "One slip and it's over."
 msgstr "Jedno zaváhání a je konec."
 
@@ -2478,7 +2478,7 @@ msgid "Play a Hard board."
 msgstr "Zahraj si Těžký žebříček."
 
 #: components/game/arcade-over.tsx:68
-#: components/overlays/game-over-overlay.tsx:437
+#: components/overlays/game-over-overlay.tsx:435
 #: components/overlays/multiplayer-game-over.tsx:188
 msgid "PLAY AGAIN"
 msgstr "HRÁT ZNOVU"
@@ -2822,6 +2822,10 @@ msgstr "Skóre odměňuje preciznost: slož každý cíl na co nejmíň tahů."
 msgid "Scores, one ladder per mode — Accuracy and Speed ask for opposite things, so each has its own rungs to climb."
 msgstr "Skóre, pro každý mód vlastní žebřík — Přesnost a Rychlost chtějí opačné věci, takže i příčky má každá své."
 
+#: modes/challenges/catalog.ts:449
+msgid "SDW"
+msgstr "BOK"
+
 #: lib/compare-lines.ts:70
 msgid "Second, for now."
 msgstr "Zatím na druhém místě."
@@ -2923,6 +2927,10 @@ msgstr "ZOBRAZIT MÉNĚ"
 #: components/overlays/advanced-options-overlay.tsx:98
 msgid "SHOW SUM IN BUTTONS"
 msgstr "ZOBRAZIT SOUČET V TLAČÍTKÁCH"
+
+#: modes/challenges/catalog.ts:446
+msgid "SIDE­WAYS"
+msgstr "NA BOK"
 
 #. placeholder {0}: date(from)
 #: components/overlays/profile-reign-row.tsx:85
@@ -3242,6 +3250,10 @@ msgstr "Čas se s postupující hrou zkracuje, pokaždé o něco míň."
 #: components/overlays/title-mark.tsx:94
 msgid "THE CROWN"
 msgstr "KORUNA"
+
+#: modes/challenges/catalog.ts:450
+msgid "The dial has fallen on its side."
+msgstr "Číselník spadl na bok."
 
 #: constants/tips.ts:18
 msgid "The dial maxes out at 324, every button on 9. Worth remembering — it places a target in the range the moment you read it."

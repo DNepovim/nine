@@ -31,6 +31,7 @@ import {
   type DialMove,
 } from '@/lib/dial-gesture'
 import type { DialControl } from '@/machines/tutorial-lesson'
+import type { DialOrientation } from '@/modes'
 
 // The badges' ring, constant regardless of mode or theme — a mode-coloured border
 // tied it to whichever pair a button happened to be animating through, which read
@@ -115,12 +116,32 @@ const HINT_LABEL = {
   (value: number, weight: number, top: number) => string
 >
 
+// How a key's flip is drawn, by the dial's orientation: how far the digit is turned, and
+// which screen axis the pill's bounce runs along. The flip itself — the digit's lift and
+// the bounce — is keyed by the dial's own move, so on a sideways dial both have to be
+// turned with the dial or the digit would fly one way and the key jump another.
+//
+// Only these two. The squash follows the thumb on the screen, and the halo, the shadow and
+// the badges belong to screen corners — turn the whole key and all of them turn with it.
+const FLIP_FRAME = {
+  // Nothing turned and the bounce on its own axis — an upright key carries no transform it
+  // does not use.
+  upright: { turn: [], bounce: 'y' },
+  // A quarter turn counter-clockwise: the digit's lift along its own vertical lands on
+  // screen-x, so the bounce goes there too — the dial's up is screen-left.
+  sideways: { turn: [{ rotate: '-90deg' }], bounce: 'x' },
+} as const satisfies Record<
+  DialOrientation,
+  { turn: readonly { rotate: string }[]; bounce: 'x' | 'y' }
+>
+
 export function DialButton({
   index,
   value,
   size,
   weight,
   digits,
+  orientation,
   showSum,
   trainee,
   bigHints = false,
@@ -143,6 +164,8 @@ export function DialButton({
   weight: number
   // How many values the key takes, counted from zero: 10 is the digits 0–9.
   digits: number
+  // Which way up the dial is drawn — see `FLIP_FRAME`.
+  orientation: DialOrientation
   showSum: boolean
   trainee: boolean
   // Whether the corner numbers are the lesson or a reference — see the two sets of badge
@@ -180,7 +203,9 @@ export function DialButton({
   onSet: (value: number, sweep: boolean) => void
 }) {
   const scale = useSharedValue(1)
-  const translateY = useSharedValue(0)
+  // The pill's bounce on a flip, along whichever screen axis the dial's vertical lies on.
+  const bounce = useSharedValue(0)
+  const frame = FLIP_FRAME[orientation]
   const numTranslateY = useSharedValue(0)
   const numOpacity = useSharedValue(1)
   const numScale = useSharedValue(1)
@@ -234,7 +259,7 @@ export function DialButton({
   // The digit leaves the way the finger sent it and comes back from the other side.
   const animateFlip = (dir: 1 | -1) => {
     'worklet'
-    translateY.value = withSequence(
+    bounce.value = withSequence(
       withTiming(dir * 7, { duration: 100 }),
       withSpring(0, { damping: 18, stiffness: 120, mass: 0.8 }),
     )
@@ -294,7 +319,10 @@ export function DialButton({
   )
 
   const btnStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: scale.value }, { translateY: translateY.value }],
+    transform: [
+      { scale: scale.value },
+      frame.bounce === 'x' ? { translateX: bounce.value } : { translateY: bounce.value },
+    ],
     backgroundColor: interpolateColor(
       rampProgress.value,
       [0, 1],
@@ -311,7 +339,12 @@ export function DialButton({
   const fireStyle = useAnimatedStyle(() => ({ opacity: FIRE_WASH * (heat?.value ?? 0) }))
 
   const numStyle = useAnimatedStyle(() => ({
-    transform: [{ translateY: numTranslateY.value }, { scale: numScale.value }],
+    // Turned before it lifts, so the lift runs along the turned digit's own vertical.
+    transform: [
+      ...frame.turn,
+      { translateY: numTranslateY.value },
+      { scale: numScale.value },
+    ],
     opacity: numOpacity.value,
   }))
 

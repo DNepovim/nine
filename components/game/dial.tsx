@@ -18,6 +18,7 @@ import {
   liftMove,
   nextValue,
   NO_COMMAND,
+  orientMove,
   travelled,
   type DialCommand,
   type DialMove,
@@ -190,9 +191,16 @@ export function Dial({
     held.value = values
   }, [values])
 
+  // `move` arrives as the finger made it on the screen, and is turned into the dial's
+  // own here and nowhere earlier — see `orientMove`. The tutorial's controls are read
+  // after it, which upright changes nothing about.
   const commit = (cell: number, move: DialMove, lift: boolean) => {
     'worklet'
-    const taken = allowedMove(live[cell] ?? 'full', move, lift)
+    const taken = allowedMove(
+      live[cell] ?? 'full',
+      orientMove(dial.orientation, move),
+      lift,
+    )
     if (taken === null) return
     // A second key, where one gesture may only move one. Refused here rather than at the
     // end of the gesture, so a drag that is not allowed simply leaves the keys it crosses
@@ -311,6 +319,7 @@ export function Dial({
                 size={metrics.button}
                 weight={weightAt(dial, index)}
                 digits={dial.digits}
+                orientation={dial.orientation}
                 showSum={showSum}
                 trainee={trainee}
                 bigHints={bigHints}

@@ -7,6 +7,7 @@ import {
   exitMove,
   liftMove,
   nextValue,
+  orientMove,
   travelled,
   type DialMove,
 } from '@/lib/dial-gesture'
@@ -250,5 +251,22 @@ describe('a swipe across the bottom row', () => {
     walk(8, lift)
 
     expect(values).toEqual([0, 0, 0, 0, 0, 0, 9, 9, 6])
+  })
+})
+
+describe('orientMove', () => {
+  const MOVES: readonly DialMove[] = ['up', 'down', 'left', 'right', 'tap']
+
+  it('reads every move as it was made on an upright dial', () => {
+    for (const move of MOVES) expect(orientMove('upright', move)).toBe(move)
+  })
+
+  it('reads each screen move in the frame of a dial turned a quarter counter-clockwise', () => {
+    // The dial's +1 lies towards screen-left, its ceiling towards screen-up.
+    expect(orientMove('sideways', 'left')).toBe('up')
+    expect(orientMove('sideways', 'right')).toBe('down')
+    expect(orientMove('sideways', 'up')).toBe('right')
+    expect(orientMove('sideways', 'down')).toBe('left')
+    expect(orientMove('sideways', 'tap')).toBe('tap')
   })
 })

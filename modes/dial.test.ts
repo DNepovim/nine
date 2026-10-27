@@ -23,6 +23,13 @@ describe('the nine dial', () => {
     expect(NINE_DIAL.maxSum).toBe(324)
   })
 
+  it('stands upright unless a dial says otherwise', () => {
+    expect(defineDial({ id: 'plain', rows: 2, cols: 2 }).orientation).toBe('upright')
+    expect(
+      defineDial({ id: 'laid', rows: 3, cols: 3, orientation: 'sideways' }).orientation,
+    ).toBe('sideways')
+  })
+
   it('derives a weight from row order × column order', () => {
     expect(weightAt(NINE_DIAL, 0)).toBe(1)
     expect(weightAt(NINE_DIAL, 4)).toBe(4)

@@ -23,7 +23,21 @@ export type DialSpec = {
   // The highest sum the dial reaches, which is the top of every target range on it.
   // Derived rather than given, so it can never disagree with the weights above it.
   maxSum: number
+  // Which way up the dial is drawn and read — see `DialOrientation`.
+  orientation: DialOrientation
 }
+
+// Which way up a dial is drawn and read. `sideways` is a quarter turn counter-clockwise,
+// as if the phone were held landscape: each key's digit lies on its side, and a swipe is
+// read in the dial's own frame, so the dial's up — the +1 — points at screen-left.
+//
+// The weights are not turned by this. They are the dial's own, row-major in screen
+// order like every dial's, so a sideways dial names the weights it lies with — the turn
+// is how it is drawn and read, and what a key is worth is still just its weight.
+//
+// Two values rather than an angle: nothing asks for clockwise or a half turn, and an
+// angle is a question every reader of it would have to answer.
+export type DialOrientation = 'upright' | 'sideways'
 
 // One position of the dial: every key's digit, row-major.
 //
@@ -48,12 +62,14 @@ export function defineDial({
   cols,
   weights,
   digits = 10,
+  orientation = 'upright',
 }: {
   id: string
   rows: number
   cols: number
   weights?: readonly number[]
   digits?: number
+  orientation?: DialOrientation
 }): DialSpec {
   const cells = rows * cols
   const spread = weights ?? Array.from({ length: cells }, byPosition(cols))
@@ -65,6 +81,7 @@ export function defineDial({
     weights: spread,
     digits,
     maxSum: spread.reduce((sum, weight) => sum + weight * top, 0),
+    orientation,
   }
 }
 

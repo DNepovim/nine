@@ -436,7 +436,9 @@ describe('glimpse', () => {
     // The whole order, so an entry inserted rather than appended anywhere fails here.
     // Appending one means adding it to the end of this list too.
     expect(CHALLENGES.map((mode) => mode.id)).toEqual(
-      ['four-keys', 'four-by-four', 'habit', 'glimpse', 'no-slip'].map(challengeId),
+      ['four-keys', 'four-by-four', 'habit', 'glimpse', 'no-slip', 'sideways'].map(
+        challengeId,
+      ),
     )
     expect(GLIMPSE?.gradient).toEqual(challengeGradient(3))
   })
@@ -572,5 +574,29 @@ describe('NO SLIP', () => {
     expect(rules.scoring.measure).toBe('hits')
     expect(measureOf(challengeId('no-slip'))).toBe('hits')
     expect(rules.scoring.weights).toEqual({ acc: 0.85, spd: 0.15 })
+  })
+})
+
+describe('SIDEWAYS', () => {
+  const rules = runRules(challengeId('sideways'), 'easy')
+  const accuracyHard = runRules('accuracy', 'hard')
+
+  it('is Accuracy Hard on a dial lying on its side', () => {
+    expect(rules.difficulty).toBe('hard')
+    expect([...rules.dial.weights]).toEqual([3, 6, 9, 2, 4, 6, 1, 2, 3])
+    expect(rules.dial.orientation).toBe('sideways')
+    expect(rules.dial.maxSum).toBe(324)
+    expect(rules.clock).toEqual(accuracyHard.clock)
+    expect(rules.spawn).toEqual(accuracyHard.spawn)
+    expect(rules.scoring.streak).toBe('optimal')
+    expect(rules.scoring.weights).toEqual({ acc: 0.85, spd: 0.15 })
+    expect(rules.lives.count).toBe(3)
+  })
+
+  it('is the only dial in the catalog that is not upright', () => {
+    const turned = CHALLENGES.filter(
+      (mode) => mode.engine === 'targets' && mode.rules.dial.orientation !== 'upright',
+    ).map((mode) => mode.id)
+    expect(turned).toEqual([challengeId('sideways')])
   })
 })

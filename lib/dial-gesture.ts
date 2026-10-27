@@ -1,6 +1,7 @@
 import { CROSSING_SHARE, SWIPE_THRESHOLD } from '@/constants/game'
 import type { DialMetrics } from '@/lib/dial-metrics'
 import type { DialControl } from '@/machines/tutorial-lesson'
+import type { DialOrientation } from '@/modes'
 
 // What one key was asked to do. Four of them are the sides a finger can leave a key
 // through; the fifth is the finger lifting where it landed.
@@ -60,7 +61,8 @@ export function exitMove(
   return dy < 0 ? 'up' : 'down'
 }
 
-// Where each move points, as a unit vector in the dial's own space. `tap` points
+// Where each move points, as a unit vector on the screen, as the finger made it — before
+// `orientMove` reads it in the dial's frame. `tap` points
 // nowhere: it is the finger staying put, not a side a key can be left by.
 const MOVE_DIRECTION = {
   up: { x: 0, y: -1 },
@@ -116,6 +118,25 @@ export function liftMove(
   if (dy < -bar) return 'up'
   if (dy > bar) return 'down'
   return crossed ? null : 'tap'
+}
+
+// The move a key was given in the dial's own frame, from the one the finger made on the
+// screen. Everything the pan measures — which side a key was left by, how far the finger
+// travelled across it, whether a lift was a swipe — is measured on the screen, because
+// that is where the finger is; only what the move *means* belongs to the dial, so this is
+// asked once, at the point a move is applied, and nowhere before it.
+//
+// Sideways is a quarter turn counter-clockwise: the dial's up — the +1 — lies towards
+// screen-left, its right — the ceiling — towards screen-up, and so round. A tap has no
+// direction to turn.
+const ORIENTED = {
+  upright: { up: 'up', down: 'down', left: 'left', right: 'right', tap: 'tap' },
+  sideways: { left: 'up', right: 'down', up: 'right', down: 'left', tap: 'tap' },
+} as const satisfies Record<DialOrientation, Record<DialMove, DialMove>>
+
+export function orientMove(orientation: DialOrientation, move: DialMove): DialMove {
+  'worklet'
+  return ORIENTED[orientation][move]
 }
 
 // What a key actually does with a move, given what the lesson is letting it take.

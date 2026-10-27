@@ -24,6 +24,7 @@ export {
   sumOf,
   weightAt,
   weightRows,
+  type DialOrientation,
   type DialSpec,
   type Grid,
 } from './dial'
