@@ -310,7 +310,7 @@ runs out costs one, as on every mode that spends them; a slip takes **every hear
 
 - `f444793` on main, deployed to production (run 40405420975, success). Migration
   `20261026000000` pushed first.
-- `03657c5` (three hearts, a slip takes them all) on main, **not deployed**.
+- `03657c5` (three hearts, a slip takes them all), deployed with `882012c` (run 40410571726, success).
 - GLIMPSE measured locally after the user found its arrivals slow: targets at 0 / 5.6 /
   11.2 s, which is Accuracy Hard's third of a 16.5 s ring. A full board (three) waits
   for one to go, which is where it can feel slow. No change made.
