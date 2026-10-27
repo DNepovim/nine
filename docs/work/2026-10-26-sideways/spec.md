@@ -1,8 +1,8 @@
 # Sideways
 
 Slug: sideways
-Stage: review
-Next: /ship sideways
+Stage: shipped
+Next: —
 Track: full
 Branch: feat/sideways
 Started: 2026-10-26

@@ -79,6 +79,8 @@ chapter names no dial.
   every screen-frame piece turns with it. That is the prerequisite for a sideways
   Trainee or a coached sideways challenge.
 
+Shipped: `370dc8c` on main, deployed to production (run 40478214863, success). No migration.
+
 ## Verification log
 
 **Verdict (2026-10-26): 11 of 11 PASS, 0 FAIL, 0 SKIPPED.** Native (iOS/Android) was not driven:
