@@ -16,6 +16,16 @@ const exitFor = (value: number, hits: readonly HitInfo[]): TargetExit => {
   return hit !== undefined && !hit.costLife ? 'hit' : 'failed'
 }
 
+// How a departed card leaves: its exit, and — when a hit took it — the number the hit took
+// it at, which a **drifting** card shows on its way out.
+const departure = (
+  value: number,
+  hits: readonly HitInfo[],
+): { exit: TargetExit; takenAt: number | undefined } => ({
+  exit: exitFor(value, hits),
+  takenAt: hits.find((h) => h.value === value)?.shown,
+})
+
 // Where a drilled run's cards stand on a canvas of this size, and how big they are, or
 // null for a run that places its own. Memoising it would be the wrong trade: it is a few
 // hundred arithmetic steps, it is asked only when a card arrives or the board is
@@ -122,11 +132,15 @@ export function useDisplayedTargets({
       const updated = standing.map((t) => {
         if (t.exit !== null) return t
         const current = live.get(t.id)
-        if (current === undefined) return { ...t, exit: exitFor(t.value, hits) }
-        // The one field of a live target that can be rewritten under it: Trainee's
-        // timeout slider moves everything on the board onto the new clock, and a
-        // display copy made at spawn would still be drawing the old one.
-        return current.duration === t.duration ? t : { ...t, duration: current.duration }
+        if (current === undefined) return { ...t, ...departure(t.value, hits) }
+        // The two fields of a live target that can be rewritten under it. Trainee's
+        // timeout slider moves everything on the board onto the new clock, and RESUME
+        // moves `spawnedAt` on by the time the run spent paused — a display copy made at
+        // spawn would still be drawing the old clock, and a **drifting** card reading its
+        // number off the old `spawnedAt` would jump ahead by the whole pause.
+        return current.duration === t.duration && current.spawnedAt === t.spawnedAt
+          ? t
+          : { ...t, duration: current.duration, spawnedAt: current.spawnedAt }
       })
       const displayedIds = new Set(standing.map((t) => t.id))
       const placed = [...updated]

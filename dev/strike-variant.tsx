@@ -46,6 +46,7 @@ const hitOn = (value: number, bonus: boolean): HitInfo => ({
   par: 4,
   refGrid: BLANK_GRID,
   value,
+  shown: value,
   costLife: false,
 })
 

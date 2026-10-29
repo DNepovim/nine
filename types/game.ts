@@ -14,6 +14,9 @@ export type TargetExit = 'hit' | 'failed'
 // lib/target-clock.ts.
 export type DisplayTarget = Target & {
   exit: TargetExit | null
+  // The number a hit took it at, once it has been taken — what a **drifting** card shows as
+  // it leaves, since by then its own clock has stopped and may have stopped a step early.
+  takenAt?: number
   position: Position
   startProgress: number
 }

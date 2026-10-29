@@ -15,6 +15,7 @@ const target = (over: Partial<Target> = {}): Target => ({
   refGrid: [0, 0, 0, 0, 0, 0, 0, 0, 0],
   par: 3,
   userSteps: 0,
+  drift: 0,
   ...over,
 })
 

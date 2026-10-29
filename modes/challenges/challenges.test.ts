@@ -36,6 +36,7 @@ const EVERYTHING = defineChallenge({
       cadence: false,
       reach: 40,
       glimpse: 250,
+      drift: 750,
     },
     scoring: { weights: { acc: 1, spd: 0 }, base: 250, streak: 'clear', headline: 'acc' },
     lives: { count: 1, wastefulCostsLife: true, expiryCostsLife: false },
@@ -106,6 +107,7 @@ describe('defineChallenge', () => {
       // like every mode but a drilled one.
       drill: null,
       glimpse: 250,
+      drift: 750,
     })
     expect(rules.scoring.base).toBe(250)
     expect(rules.scoring.streak).toBe('clear')
@@ -436,9 +438,16 @@ describe('glimpse', () => {
     // The whole order, so an entry inserted rather than appended anywhere fails here.
     // Appending one means adding it to the end of this list too.
     expect(CHALLENGES.map((mode) => mode.id)).toEqual(
-      ['four-keys', 'four-by-four', 'habit', 'glimpse', 'no-slip', 'sideways'].map(
-        challengeId,
-      ),
+      [
+        'four-keys',
+        'four-by-four',
+        'habit',
+        'glimpse',
+        'no-slip',
+        'sideways',
+        'drift',
+        'one-key',
+      ].map(challengeId),
     )
     expect(GLIMPSE?.gradient).toEqual(challengeGradient(3))
   })
@@ -598,5 +607,31 @@ describe('SIDEWAYS', () => {
       (mode) => mode.engine === 'targets' && mode.rules.dial.orientation !== 'upright',
     ).map((mode) => mode.id)
     expect(turned).toEqual([challengeId('sideways')])
+  })
+})
+
+describe('DRIFT', () => {
+  const rules = runRules(challengeId('drift'), 'easy')
+  const accuracyHard = runRules('accuracy', 'hard')
+
+  it('is Accuracy Hard whose numbers drift a step a second', () => {
+    expect(rules.difficulty).toBe('hard')
+    expect(rules.dial.id).toBe('nine')
+    expect(rules.spawn.drift).toBe(1000)
+    expect(rules.clock).toEqual(accuracyHard.clock)
+    expect(rules.lives.count).toBe(3)
+  })
+
+  it('is scored on speed alone, and strikes on a target caught before it moved', () => {
+    expect(rules.scoring.weights).toEqual({ acc: 0, spd: 1 })
+    expect(rules.scoring.headline).toBe('spd')
+    expect(rules.scoring.streak).toBe('fresh')
+  })
+
+  it('is the only mode whose numbers move', () => {
+    const drifting = CHALLENGES.filter(
+      (mode) => mode.engine === 'targets' && mode.rules.spawn.drift !== null,
+    ).map((mode) => mode.id)
+    expect(drifting).toEqual([challengeId('drift')])
   })
 })

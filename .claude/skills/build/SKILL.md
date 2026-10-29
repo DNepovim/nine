@@ -8,8 +8,10 @@ description: Implement a specced work item task by task — `/build <slug>`, "bu
 The decisions are made. This stage writes the code the spec describes and **nothing
 else** — the judgement here is about how, never about what.
 
-Read `.claude/skills/sdlc/PROTOCOL.md`, load the item, read `spec.md` in full and
-`plan.md` for the ticks. Say which task you are starting on before you start it; a
+Read `.claude/skills/sdlc/PROTOCOL.md`, load the item — `spec.md`'s **## Contract**,
+**## Acceptance criteria** and **## Tests** (on the small track, its **## Tasks** and
+criteria), and `plan.md`'s **## Tasks** for the ticks. On a build reopened by
+`verify` or `review`, add the latest log or review section, and only that. Say which task you are starting on before you start it; a
 resumed build must show the user it picked up where the last one stopped.
 
 Then read the **`code-guide`** skill — functional TypeScript, no `any`, no `as`, no

@@ -7,6 +7,7 @@ import {
   isOneOf,
 } from 'narrowland'
 
+import type { Heading } from '@/lib/target-drift'
 import type { RestoredRun } from '@/machines/game'
 import {
   cellCount,
@@ -47,6 +48,10 @@ type SavedTarget = {
   refGrid: Grid
   par: number
   userSteps: number
+  // Which way its number drifts — written only for a target that drifts, so every run put
+  // away before drift existed, and every run of a mode that has none, reads as still. The
+  // key stays where it is for the reason `seq` gave: absent means what it always meant.
+  drift?: Heading
   // Where the card was sitting on the board. Not the machine's business — placement
   // belongs to the display list (hooks/use-displayed-targets.ts) — so it is handed in
   // rather than read off the run, and null for a target that arrived in the very frame
@@ -185,6 +190,7 @@ const parseTarget = (value: unknown, keys: number): SavedTarget | null => {
     refGrid,
     par,
     userSteps,
+    ...(value.drift === 1 || value.drift === -1 ? { drift: value.drift } : {}),
     // A spot that would not parse costs the target its place on the board and nothing
     // else: it is put back somewhere clear instead. Losing the whole run over it would
     // be trading the game for the furniture.
@@ -262,6 +268,7 @@ export function toSavedRun(
       refGrid: target.refGrid,
       par: target.par,
       userSteps: target.userSteps,
+      ...(target.drift === 0 ? {} : { drift: target.drift }),
       position: positions.get(target.id) ?? null,
     })),
   }
@@ -388,6 +395,7 @@ export function restoreRun(saved: SavedRun, now: number, freshId: string): Resto
       refGrid: target.refGrid,
       par: target.par,
       userSteps: target.userSteps,
+      drift: target.drift ?? 0,
     })),
   }
 }

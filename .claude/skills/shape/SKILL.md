@@ -87,9 +87,14 @@ answer — one round trip, not two:
 - **Full** — the seven stages. Recommend it when the work introduces a domain word,
   changes the schema, touches scoring or the rules, or spans more than one screen.
 
-Being wrong here is cheap in one direction only: a small-track item can be promoted
-later by running **`spec`** on it; a full-track item nobody specced is just an
-unspecced item. When it is genuinely borderline, go full.
+When it is genuinely borderline, go **small**: a small-track item can be promoted
+later by running **`spec`** on it the moment the build finds something new, and the
+full track costs a contract, a plan and a review pass that a borderline item rarely
+earns.
+
+A new **challenge** is small by default: the **`challenge`** skill already owns its
+decisions, and its catalog entry is the contract. Go full only when it needs a new
+rule on `RunRules` or a schema change.
 
 ## Step 6 — Write it
 

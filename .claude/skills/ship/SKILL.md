@@ -52,11 +52,12 @@ the diff) so the questions you ask are the ones that actually apply: a tree with
 no migration files, no config change and nothing player-visible collapses to a
 single question, or none at all in `prod` mode.
 
-That one batch goes to the **`sdlc-advisor`** first (`.claude/skills/sdlc/PROTOCOL.md`,
-Asking), whether or not this work came through the cycle. It settles the
-branch-or-main choice and the announcement — the draft's copy included — from the
-spec and the repo's habits; it always hands back a migration or config push, since
-both write to production. Only what it escalates reaches the user, in one call.
+Sort that batch per the protocol's Asking rule (`.claude/skills/sdlc/PROTOCOL.md`).
+A migration or config push writes to production, so it goes **straight to the user**,
+with no advisor. Settle the branch-or-main choice and the announcement yourself from
+the spec and the repo's habits (`git log --oneline -15` shows how recent items
+landed). Spawn the advisor only if those really don't settle it. Whatever is left
+reaches the user in one call.
 
 The deploy offer in Step 3 is the exception and stays separate — it is only valid
 once the push has actually landed.
@@ -65,6 +66,10 @@ once the push has actually landed.
 
 Invoke the **`check`** skill (lint, Prettier, types, Knip). It fixes what it can;
 if anything can't be made green, **stop** and report — do not ship failing checks.
+
+This is the cycle's last full `check`, and normally its only one after `verify`.
+When `verify` ran it in this same session and nothing has changed since (no edits in
+`review`, no announcement added), you can skip it — say so in one line.
 
 Then run the same dependency audit the deploy workflow gates on:
 

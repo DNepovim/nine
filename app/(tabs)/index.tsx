@@ -83,6 +83,7 @@ import { SUM_ROW_HEIGHT } from '@/hooks/use-dial-metrics'
 import { useDisplayOptions } from '@/hooks/use-display-options'
 import { useDisplayScore } from '@/hooks/use-display-score'
 import { useDisplayedTargets } from '@/hooks/use-displayed-targets'
+import { useDriftTicks } from '@/hooks/use-drift-ticks'
 import { useDyingSequence } from '@/hooks/use-dying-sequence'
 import { useFeedbackAnswered } from '@/hooks/use-feedback-answered'
 import { useFeedbackReplies } from '@/hooks/use-feedback-replies'
@@ -1519,6 +1520,9 @@ export default function GameScreen() {
     [drill === null, drill?.count, mode],
   )
 
+  // A drifting number arriving on the dialled sum is a hit — see `TICK`.
+  useDriftTicks({ isPlaying, targets, step: rules.spawn.drift, send })
+
   useTargetSpawner({
     isPlaying,
     targetCount: targets.length,
@@ -1534,7 +1538,7 @@ export default function GameScreen() {
     hits,
     playerClockMs: state.context.playerClockMs,
     currentSum: sum,
-    takenValues: targets.map((t) => t.value),
+    standing: targets,
     send,
   })
   const { floats, removeFloat } = useFloatingPoints(hitBatch)
@@ -2300,6 +2304,7 @@ export default function GameScreen() {
                         // null for a number that never hides. Read off the rules, so the
                         // card never learns which mode is asking.
                         glimpse={rules.spawn.glimpse}
+                        driftStep={rules.spawn.drift}
                         onExpire={() => {
                           send({ type: 'TARGET_EXPIRED', id: target.id, now: Date.now() })
                         }}

@@ -16,6 +16,7 @@ const facts = (over: Partial<StreakFacts> = {}): StreakFacts => ({
   allFast: false,
   allWhole: false,
   allSpread: false,
+  allFresh: false,
   clearedBoard: false,
   ...over,
 })
@@ -143,5 +144,18 @@ describe('the every-row streak', () => {
   it('is broken by a hit that did not, which is what makes it a chain', () => {
     expect(STREAK_BROKEN.spread(facts({ anyHit: true }))).toBe(true)
     expect(STREAK_BROKEN.spread(facts())).toBe(false)
+  })
+})
+
+describe('fresh', () => {
+  it('builds on a batch that was all fresh, and breaks on any other hit', () => {
+    expect(STREAK_TRIGGERED.fresh(facts({ anyHit: true, allFresh: true }))).toBe(true)
+    expect(STREAK_TRIGGERED.fresh(facts({ anyHit: true, allFresh: false }))).toBe(false)
+    expect(STREAK_BROKEN.fresh(facts({ anyHit: true }))).toBe(true)
+  })
+
+  it('does nothing without a hit', () => {
+    expect(STREAK_TRIGGERED.fresh(facts({ allFresh: true }))).toBe(false)
+    expect(STREAK_BROKEN.fresh(facts())).toBe(false)
   })
 })

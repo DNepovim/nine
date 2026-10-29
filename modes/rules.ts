@@ -36,6 +36,7 @@ const BASE_TARGET_RULES: TargetRules = {
     reach: null,
     drill: null,
     glimpse: null,
+    drift: null,
   },
   scoring: {
     weights: { acc: 0.5, spd: 0.5 },
@@ -107,6 +108,7 @@ export type RunRules = {
     reach: number | null
     drill: number | null
     glimpse: number | null
+    drift: number | null
   }
   // The mode's scoring with its headline filled in, so no reader has to work out which
   // factor a mode is about.
@@ -172,6 +174,7 @@ export function resolveRules(
       reach: patched.spawn.reach,
       drill: patched.spawn.drill,
       glimpse: patched.spawn.glimpse,
+      drift: patched.spawn.drift,
     },
     scoring: {
       ...patched.scoring,
@@ -188,6 +191,17 @@ export const rampedTimeout = (rules: RunRules, hits: number): number =>
   rules.clock.ramps === 'clock'
     ? Math.round(decayed(rules.clock.base, hits))
     : rules.clock.base
+
+// The clock a target is dealt with: the player's own where the mode lets them set it,
+// the ramp's at this many hits everywhere else. One function, because two readers have to
+// agree on it to the millisecond — the machine stores it on the target, and the spawner
+// sizes a **drifting** target's range by it before the target exists; a range sized for a
+// shorter ring lets a target drift off the dial.
+export const targetDuration = (
+  rules: RunRules,
+  hits: number,
+  playerClockMs: number,
+): number => (rules.clock.playerSet ? playerClockMs : rampedTimeout(rules, hits))
 
 // How long the engine waits before dealing the next target.
 //

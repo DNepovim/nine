@@ -24,13 +24,15 @@ spec written off a shape without opening the files is a spec whose file list is 
 ## Step 1 — The domain words
 
 Do this first, because every other section is written in them. `CLAUDE.md`'s tables
-are law: a **run**, a **board**, the **grid**, the **dial**, the **rules**, a
+are law, and **`docs/domain.md`** holds each word's full definition — read the rows
+for the words this work touches: a **run**, a **board**, the **grid**, the **dial**, the **rules**, a
 **record** vs a **medal** vs an **achievement**, the **fortune**.
 
 - **Words this work uses** — list them, and if one is being used loosely, pick the
   right one now.
 - **Words this work introduces** — each needs a one-line definition, the identifier it
-  lives under, and a note that `CLAUDE.md`'s table gains a row. A concept that ships
+  lives under, and a note that `docs/domain.md` gains a row and `CLAUDE.md` its
+  one-liner. A concept that ships
   without a word ends up with three.
 - **Collisions** — this repo has real ones (`admin` the room host vs `admin` the role;
   `Challenge` the dare vs a **challenge** the mode). If the new word is near one, say

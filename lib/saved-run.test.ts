@@ -32,6 +32,7 @@ const target = (over: Partial<Target> = {}): Target => ({
   refGrid: GRID,
   par: 4,
   userSteps: 1,
+  drift: 0,
   ...over,
 })
 
@@ -160,6 +161,22 @@ describe('restoreRun', () => {
     expect(put).toBeDefined()
     if (put === undefined) return
     expect(put.duration - (1_000_000 - put.spawnedAt)).toBe(4_000)
+  })
+
+  it('brings a drifting target back drifting the same way', () => {
+    const run = snapshot({ targets: [target({ drift: -1 })] })
+    const parsed = parseSavedRun(roundTrip(toSavedRun(run, SPOTS, 5_000)))
+    expect(parsed).not.toBeNull()
+    if (parsed === null) return
+    expect(restoreRun(parsed, 1_000_000, 'fresh').targets[0]?.drift).toBe(-1)
+  })
+
+  it('reads a target stored without a drift as one that holds still', () => {
+    const parsed = parseSavedRun(roundTrip(toSavedRun(snapshot(), SPOTS, 5_000)))
+    expect(parsed).not.toBeNull()
+    if (parsed === null) return
+    expect(parsed.targets[0]?.drift).toBeUndefined()
+    expect(restoreRun(parsed, 1_000_000, 'fresh').targets[0]?.drift).toBe(0)
   })
 
   it('fills infinite lives back in from the mode', () => {

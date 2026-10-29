@@ -12,6 +12,7 @@ import { scheduleOnRN } from 'react-native-worklets'
 import { PieCountdown, TARGET_EXIT_MS } from '@/components/game/pie-countdown'
 import { CARD_ENTER_MS } from '@/constants/game'
 import { mono } from '@/constants/theme'
+import { useDriftedValue } from '@/hooks/use-drifted-value'
 import { glimpseLeft } from '@/lib/target-clock'
 import type { DisplayTarget } from '@/types/game'
 
@@ -35,6 +36,7 @@ export function TargetCard({
   clocked = true,
   spent = false,
   glimpse = null,
+  driftStep = null,
   onExpire,
   onExitComplete,
 }: {
@@ -75,6 +77,9 @@ export function TargetCard({
   // back from storage long after its target arrived has had its glimpse, and must not
   // show its number a second time. See `glimpseLeft`.
   glimpse?: number | null
+  // The run's **drift** step in ms, or null where numbers hold still. Which way this card
+  // drifts is the target's own; see `drift` on `Target`.
+  driftStep?: number | null
   onExpire: () => void
   onExitComplete: () => void
 }) {
@@ -126,6 +131,12 @@ export function TargetCard({
     opacity: opacity.value,
   }))
 
+  // The number now, on a **drifting** run; the number it arrived as everywhere else.
+  // Held while the run is paused and as the card leaves, so a hit card shows what it was
+  // taken at.
+  const reading = useDriftedValue(target, driftStep, !leaving && !frozen)
+  const shown = target.takenAt ?? reading
+
   return (
     <Animated.View
       style={[
@@ -144,7 +155,8 @@ export function TargetCard({
         settles={spent}
         glimpse={glimpseLeft(glimpse, target.startProgress, target.duration)}
         revealed={leaving}
-        value={target.value}
+        value={shown}
+        drift={target.drift}
         active={!leaving && !frozen}
         clocked={clocked}
         duration={duration}

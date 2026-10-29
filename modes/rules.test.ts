@@ -452,3 +452,12 @@ describe('a slip that takes every heart', () => {
     ).toBe(false)
   })
 })
+
+describe('the drift', () => {
+  it('holds every number still on every mode but a drifting challenge', () => {
+    for (const mode of allModes()) {
+      if (mode.engine !== 'targets' || mode.id === challengeId('drift')) continue
+      expect(resolveRules(mode.rules, mode.id, 'hard').spawn.drift).toBeNull()
+    }
+  })
+})

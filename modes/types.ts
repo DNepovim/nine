@@ -82,6 +82,14 @@ type SpawnRules = {
   // Drawing only. The machine deals, hits and expires a target exactly as it always has,
   // and the rung does not scale it — the figure here is the figure on screen.
   glimpse: number | null
+  // How often a standing target's number moves by one, in ms — or null for numbers that
+  // hold still, which is every mode but DRIFT.
+  //
+  // The **drift**. This half says how often; the target's own `drift` says which way, and
+  // is fixed when it is dealt. A target's number at a moment is `driftedValue`
+  // (lib/target-drift.ts), and that is what the hit, the card and the spawner all read.
+  // Not scaled by the rung, like the glimpse: the figure here is the step on screen.
+  drift: number | null
 }
 
 // Which of the two factors a run reports as its headline: the figure that floats off a

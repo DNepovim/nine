@@ -1048,7 +1048,7 @@ msgstr "ZNALEC"
 msgid "CONTINUE"
 msgstr "POKRAČOVAT"
 
-#: app/(tabs)/index.tsx:2512
+#: app/(tabs)/index.tsx:2517
 msgid "Continue the tutorial"
 msgstr "Pokračovat v tutoriálu"
 
@@ -1121,6 +1121,14 @@ msgstr "HOTOVO"
 #: components/overlays/advanced-options-overlay.tsx:108
 msgid "DRAG ACROSS KEYS"
 msgstr "TAH PŘES TLAČÍTKA"
+
+#: modes/challenges/catalog.ts:512
+msgid "DRF"
+msgstr "UNÁ"
+
+#: modes/challenges/catalog.ts:509
+msgid "DRIFT"
+msgstr "UNÁ­ŠENÍ"
 
 #: components/overlays/nickname-modal.tsx:106
 msgid "e.g. ACE_9"
@@ -1201,6 +1209,10 @@ msgstr "Oba sloupce se kloní k tobě. Soupeř tu nedrží vůbec nic."
 #: lib/recap-lines.ts:80
 msgid "Every day was [A]’s except [D]. [B] got exactly one, and made it count."
 msgstr "Každý den patřil hráči [A], kromě jednoho: [D] si ho vzal [B], a nenechal si ho ujít."
+
+#: modes/challenges/catalog.ts:513
+msgid "Every number drifts. Catch it before it moves."
+msgstr "Každé číslo se posouvá. Chyť ho, než se pohne."
 
 #: lib/compare-lines.ts:48
 msgid "Every row you lose here, you lost first on a board."
@@ -1714,6 +1726,10 @@ msgstr "Udrž jednu hru v běhu celou hodinu."
 #: constants/achievements.ts:420
 msgid "Keep a single run going for ten minutes."
 msgstr "Udrž jednu hru v běhu deset minut."
+
+#: modes/challenges/catalog.ts:568
+msgid "KEY"
+msgstr "TLA"
 
 #: machines/tutorial-lesson.ts:308
 msgid "KEY = ROW × COLUMN × DIGIT"
@@ -2304,6 +2320,14 @@ msgstr "Jedna tabulka se tomu vymkla: [BOARD] zůstala celou dobu hráči [W]."
 #: components/overlays/advanced-options-overlay.tsx:109
 msgid "One gesture can move several keys"
 msgstr "Jedno gesto může pohnout několika tlačítky"
+
+#: modes/challenges/catalog.ts:565
+msgid "ONE KEY"
+msgstr "JEDNO TLAČÍTKO"
+
+#: modes/challenges/catalog.ts:569
+msgid "One key, one second."
+msgstr "Jedno tlačítko, jedna sekunda."
 
 #: components/overlays/motto-modal.tsx:85
 msgid "One line under your name, for anyone who opens your profile."
@@ -3109,6 +3133,10 @@ msgstr "ŠVIHNUTÍM VPRAVO HO VYTOČÍŠ NA DEVÍTKU"
 msgid "Swipe to 0 or 9 to reset a button in a single gesture instead of tapping through."
 msgstr "Švihnutím na 0 nebo 9 vynuluješ tlačítko jediným gestem místo proťukávání."
 
+#: lib/strike-rule.ts:29
+msgid "Take every target before its number has moved."
+msgstr "Sejmi každý cíl dřív, než se jeho číslo pohne."
+
 #: lib/strike-rule.ts:24
 msgid "Take every target in the fewest moves it can be done in."
 msgstr "Slož každý cíl na nejmenší možný počet tahů."
@@ -3294,7 +3322,7 @@ msgstr "CÍL HRY"
 msgid "The hero halts well short of the gate, with the walls across the top of the screen and open ground between. Every tower on them carries a number, and so does every warrior who comes out of the gate."
 msgstr "Hrdina se zastaví hodně daleko před branou, hradby se táhnou přes horní okraj obrazovky a mezi vámi je volné pole. Každá věž na nich nese číslo a nese ho i každý válečník, který z brány vyjde."
 
-#: lib/strike-rule.ts:31
+#: lib/strike-rule.ts:32
 msgid "The hit that leaves the board empty counts double."
 msgstr "Zásah, který nechá mřížku prázdnou, se počítá dvakrát."
 

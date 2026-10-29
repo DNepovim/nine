@@ -1,4 +1,5 @@
-import type { DialSpec } from '@/modes'
+import { driftRange, type Heading } from '@/lib/target-drift'
+import type { DialSpec, RunRules } from '@/modes'
 
 // Which values a spawning target may take. The whole range the dial reaches in most
 // modes; a mode that sets a `reach` narrows it to a stretch either side of the number
@@ -23,6 +24,23 @@ export const rangeAround = (
   min: Math.max(0, value - reach),
   max: Math.min(dial.maxSum, value + reach),
 })
+
+// The values a new target may arrive as.
+//
+// A **drifting** target is kept far enough from the end it drifts towards to stay on the
+// dial for the whole of its ring. A mode with a `reach` keeps every target within that
+// much of the sum standing on the dial — which, just after a hit, is the number just
+// cleared. Every other mode draws from the whole range the board can be dialled to.
+export function rangeFor(
+  rules: RunRules,
+  sum: number,
+  drifting: { drift: Heading; ring: number; step: number } | null,
+): TargetRange {
+  if (drifting !== null)
+    return driftRange(rules.dial, drifting.drift, drifting.ring, drifting.step)
+  if (rules.spawn.reach !== null) return rangeAround(rules.dial, sum, rules.spawn.reach)
+  return fullRange(rules.dial)
+}
 
 // The value a spawning target gets: the roll's own pick, or the nearest free number to
 // it inside the range.

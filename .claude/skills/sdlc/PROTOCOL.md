@@ -64,8 +64,12 @@ Started: 2026-10-07
 grep -H '^Stage:\|^Next:\|^Track:' docs/work/*/spec.md 2>/dev/null
 ```
 
-- **A slug was given** — read that folder's `spec.md` in full, and `plan.md` too from
-  `build` onward.
+- **A slug was given** — read that folder's header, then **only the sections this
+  stage uses** (each skill names them; `grep -n '^## ' spec.md plan.md` finds them).
+  Read a file in full only where the skill says so.
+- **Already loaded this session** — when the previous stage of the chain ran in this
+  same conversation, the item is in context. Don't re-read it; re-read only what that
+  stage wrote.
 - **No slug** — take the items whose `Stage` is the one this skill consumes. Exactly
   one, use it. More than one, `AskUserQuestion` (through the advisor — see Asking).
   None, say so and name the stage that would produce one.
@@ -91,28 +95,39 @@ produces the wrong feature.
 
 ## Asking — the advisor first
 
-The cycle runs on its own, and the user is asked as little as possible. So **every
+The cycle runs on its own, and the user is asked as little as possible. **Every
 `AskUserQuestion` a cycle skill names** — the order guard, the appetite, the track,
-the contract, a spec that turned out wrong, ship's questions — first goes to the
-**`sdlc-advisor`** agent, not to the user:
+the contract, a spec that turned out wrong, ship's questions — is first judged
+against the rules in `.claude/agents/sdlc-advisor.md`. Spawning that agent is the
+expensive route: it starts cold and re-reads the item. So, in this order:
 
-1. Gather every question the stage has at this point into **one** advisor call.
-2. Spawn it with the Agent tool, `subagent_type: "sdlc-advisor"`. The prompt carries
-   the item's folder path, each question with its options and your recommendation,
-   and what you found that raised it — the advisor starts cold and reads the spec
-   itself, so give it the finding, not the whole conversation.
-3. Wait for its reply. Do not carry on with the work it is deciding meanwhile.
-4. For each answer:
-   - **`DECIDED`** — act on it, and record it where the decision belongs (the spec's
-     section, the task's tick, the build notes) as `decided by advisor: <why>`, so
-     the user can see later what was decided without them.
-   - **`ASK USER`** — now `AskUserQuestion`, using the advisor's sharpened question
-     and options. Ask every escalated question of the stage in that one call.
+1. **On the advisor's "always" list** (deploy, any production write — `db:push`,
+   `config:push` — Chrome, an ignored advisory, a rule CLAUDE.md reserves for the
+   user) — straight to `AskUserQuestion`. No agent: its answer is fixed.
+2. **Settled inline** — when the item is already in your context, apply the
+   advisor's "answer it yourself" rules yourself. Your recommendation with nothing
+   written against it, a detail of _how_, or a cheap and visible mistake: decide it.
+3. **Spawn the advisor** (`subagent_type: "sdlc-advisor"`) only when neither settles
+   it — a product direction the spec might already answer, a history question. Gather
+   every such question of the stage into **one** call, with the folder path, each
+   question's options and your recommendation, and the finding that raised it. Wait
+   for the reply.
 
-Do not skip the advisor because a question "obviously" needs the user — it holds the
-list of what always does, and checking costs less than a needless stop. The one
-exception is the **`deploy`** skill, which is outside the cycle and whose gate is the
-user's alone.
+Record a decision taken in 2 or 3 where it belongs (the spec's section, the task's
+tick, the build notes) as `decided by advisor: <why>`, so the user can see later what
+was decided without them. Everything that ends up the user's goes in **one**
+`AskUserQuestion` per stage.
+
+## Keep the files short
+
+Every later stage and every advisor pays to read what an earlier stage wrote. So:
+
+- **Rounds collapse.** When a stage goes round again (a second verification log, a
+  second set of build notes), first boil the previous round down to a few lines — what
+  failed, what fixed it — and put the new round under that, rather than appending a
+  whole second copy.
+- **No restating.** A section points to the one above it ("per Shape") instead of
+  repeating it. Evidence in a log is a line, not a transcript.
 
 ## The hand-off (every skill ends this way)
 

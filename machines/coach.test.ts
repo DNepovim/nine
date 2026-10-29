@@ -41,6 +41,7 @@ const target = (over: Partial<Target> & { value: number }): Target => ({
   refGrid: ZEROS,
   par: 1,
   userSteps: 0,
+  drift: 0,
   ...over,
 })
 

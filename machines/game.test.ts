@@ -913,6 +913,7 @@ describe('restoring a run the app was closed on', () => {
         refGrid: [0, 0, 0, 0, 0, 0, 0, 0, 0] as Grid,
         par: 3,
         userSteps: 1,
+        drift: 0 as const,
       },
     ],
     nextTargetId: 12,
@@ -1379,5 +1380,123 @@ describe('claimedTime', () => {
     const actor = start('accuracy')
     actor.send({ type: 'EXPIRE', now: 4000 })
     expect(claimedTime(actor.getSnapshot().context)).toBeNull()
+  })
+})
+
+describe('DRIFT', () => {
+  const DRIFT = challengeId('drift')
+
+  const started = () => {
+    const actor = createActor(gameMachine)
+    actor.start()
+    actor.send({ type: 'SET_MODE', mode: DRIFT })
+    actor.send({ type: 'START', now: 0, runId: nextRunId() })
+    return actor
+  }
+
+  // The 1 key, pressed up `times` times at `now`: the sum climbs one at a time.
+  const pressUp = (actor: ReturnType<typeof started>, times: number, now: number) => {
+    for (let press = 0; press < times; press++) {
+      actor.send({ type: 'PRESS', index: 0, delta: 1, now })
+    }
+  }
+
+  it('hits the number a target shows at the press, not the one it arrived as', () => {
+    const actor = started()
+    actor.send({ type: 'ADD_TARGET', value: 3, at: 0, drift: 1 })
+    // Two seconds on it reads 5. Dialling through 3 on the way does not take it.
+    pressUp(actor, 3, 2000)
+    expect(actor.getSnapshot().context.targets).toHaveLength(1)
+    pressUp(actor, 2, 2000)
+    expect(actor.getSnapshot().context.targets).toHaveLength(0)
+    expect(actor.getSnapshot().context.hits).toBe(1)
+  })
+
+  it('drifts the other way just as well', () => {
+    const actor = started()
+    actor.send({ type: 'ADD_TARGET', value: 9, at: 0, drift: -1 })
+    pressUp(actor, 6, 3000)
+    expect(actor.getSnapshot().context.hits).toBe(1)
+  })
+
+  it('builds the streak on a hit in the first second and breaks it on a later one', () => {
+    const actor = started()
+    actor.send({ type: 'ADD_TARGET', value: 2, at: 0, drift: 1 })
+    pressUp(actor, 2, 500)
+    expect(actor.getSnapshot().context.streak).toBe(1)
+    expect(actor.getSnapshot().context.strikes).toBe(1)
+    // A second target, taken after it has moved: the chain goes.
+    actor.send({ type: 'ADD_TARGET', value: 4, at: 1000, drift: 1 })
+    pressUp(actor, 3, 2500)
+    expect(actor.getSnapshot().context.hits).toBe(2)
+    expect(actor.getSnapshot().context.streak).toBe(0)
+  })
+
+  // 12 in two presses, by way of 9 — past nothing a target arriving at 10 reads.
+  const dialTwelve = (actor: ReturnType<typeof started>) => {
+    actor.send({ type: 'PRESS', index: 8, delta: 1, now: 100 })
+    actor.send({ type: 'PRESS', index: 2, delta: 1, now: 100 })
+  }
+
+  it('takes a target the moment it drifts onto the sum already dialled', () => {
+    const actor = started()
+    actor.send({ type: 'ADD_TARGET', value: 10, at: 0, drift: 1 })
+    dialTwelve(actor) // the sum is 12, by way of 9; the target still reads 10
+    expect(actor.getSnapshot().context.targets).toHaveLength(1)
+    // At two seconds it reads 12, which is what the dial already says.
+    actor.send({ type: 'TICK', now: 2000 })
+    const { context } = actor.getSnapshot()
+    expect(context.targets).toHaveLength(0)
+    expect(context.hits).toBe(1)
+    // Caught on its way, not before it moved: no strike.
+    expect(context.strikes).toBe(0)
+  })
+
+  it('leaves a target whose ring has run out to its expiry, even on the sum', () => {
+    const actor = started()
+    // Falling from 29 it reads 12 at 17 s — half a second after its 16.5 s ring is out.
+    actor.send({ type: 'ADD_TARGET', value: 29, at: 0, drift: -1 })
+    dialTwelve(actor)
+    expect(actor.getSnapshot().context.targets[0]?.duration).toBe(16_500)
+    actor.send({ type: 'TICK', now: 17_000 })
+    expect(actor.getSnapshot().context.hits).toBe(0)
+  })
+
+  it('leaves the run alone on a tick that lands on nothing', () => {
+    const actor = started()
+    actor.send({ type: 'ADD_TARGET', value: 50, at: 0, drift: 1 })
+    dialTwelve(actor)
+    const before = actor.getSnapshot().context
+    expect(before.targets).toHaveLength(1)
+    actor.send({ type: 'TICK', now: 2000 })
+    const after = actor.getSnapshot().context
+    expect(after.targets).toEqual(before.targets)
+    expect(after.hitBatch).toBe(before.hitBatch)
+  })
+
+  it('counts no press for a tick', () => {
+    const actor = started()
+    actor.send({ type: 'ADD_TARGET', value: 10, at: 0, drift: 1 })
+    actor.send({ type: 'ADD_TARGET', value: 50, at: 0, drift: 1 })
+    dialTwelve(actor)
+    const steps = actor
+      .getSnapshot()
+      .context.targets.find((t) => t.value === 50)?.userSteps
+    actor.send({ type: 'TICK', now: 2000 })
+    // The other target's reference is reset by the hit, as a press's would be.
+    expect(
+      actor.getSnapshot().context.targets.find((t) => t.value === 50)?.userSteps,
+    ).toBe(0)
+    expect(steps).toBe(2)
+  })
+
+  it('scores two hits with the same time left the same, however long the route', () => {
+    const quick = started()
+    quick.send({ type: 'ADD_TARGET', value: 9, at: 0, drift: 1 })
+    quick.send({ type: 'PRESS', index: 8, delta: 1, now: 500 }) // one press on the 9 key
+    const roundabout = started()
+    roundabout.send({ type: 'ADD_TARGET', value: 9, at: 0, drift: 1 })
+    pressUp(roundabout, 9, 500) // nine presses on the 1 key
+    expect(quick.getSnapshot().context.score).toBe(roundabout.getSnapshot().context.score)
   })
 })

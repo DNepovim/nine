@@ -2,7 +2,7 @@
 // matching hit either builds them or breaks them — where `clear` depends on the spawn
 // timing cooperating, so most hits leave it untouched.
 export type StreakTrigger =
-  'optimal' | 'fast' | 'clear' | 'whole' | 'spread' | 'doubled' | 'none'
+  'optimal' | 'fast' | 'clear' | 'whole' | 'spread' | 'fresh' | 'doubled' | 'none'
 
 // A hit counts as fast when this much of the target's ring is still full.
 export const FAST_HIT_THRESHOLD = 0.6
@@ -14,6 +14,9 @@ export type StreakFacts = {
   allFast: boolean
   allWhole: boolean
   allSpread: boolean
+  // Every target the batch took still showed the number it arrived with — see `isFresh`.
+  // False wherever nothing drifts.
+  allFresh: boolean
   clearedBoard: boolean
 }
 
@@ -48,6 +51,11 @@ export const STREAK_TRIGGERED = {
   // constrained pass over the whole range on every spawn, which is far more than a streak
   // fact may cost.
   spread: ({ anyHit, allSpread }) => anyHit && allSpread,
+  // A target taken before its number moved — DRIFT's rule. A chain of decisions like
+  // `fast`, and close kin of it: both are about the clock, but `fast` asks for most of the
+  // ring still full and this asks for the number the target arrived as, which on a drift
+  // of one second is a much smaller window than any ring.
+  fresh: ({ anyHit, allFresh }) => anyHit && allFresh,
   // Not a streak at all: a hit that empties the board is worth double, and nothing
   // builds, breaks or carries from one hit to the next — see `applyGrid` in
   // machines/game.ts, which is where the doubling is. The rule Trainee has always had,
@@ -66,6 +74,7 @@ export const STREAK_BROKEN = {
   clear: () => false,
   whole: ({ anyHit }) => anyHit,
   spread: ({ anyHit }) => anyHit,
+  fresh: ({ anyHit }) => anyHit,
   doubled: () => false,
   none: () => false,
 } as const satisfies Record<StreakTrigger, (facts: StreakFacts) => boolean>

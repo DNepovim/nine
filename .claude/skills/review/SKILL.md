@@ -1,6 +1,6 @@
 ---
 name: review
-description: The quality pass before shipping — `/review <slug>`, "review this", "code review before I ship". Runs the built-in `/code-review` and `simplify` over the work, then the house pass this repo cares about: domain language, no mode branching outside modes/, extracted strings, How to Play currency. Sixth stage of the development cycle; hands to ship.
+description: The quality pass before shipping — `/review <slug>`, "review this", "code review before I ship". Runs the built-in `/code-review` over the work, then the house pass this repo cares about: domain language, no mode branching outside modes/, extracted strings, How to Play currency. Sixth stage of the development cycle; hands to ship.
 ---
 
 # Review
@@ -9,21 +9,27 @@ description: The quality pass before shipping — `/review <slug>`, "review this
 code this repo wants to keep. Different question, different findings, and it comes
 second on purpose: reviewing code whose behaviour is still wrong wastes both passes.
 
-Read `.claude/skills/sdlc/PROTOCOL.md`, load the item, and read the spec's
-**## Review focus** — the three to five things written down while the design was still
+Read `.claude/skills/sdlc/PROTOCOL.md`, load the item — the spec's **## Review
+focus**, and the plan's **## Build notes** and the verdict line of its verification
+log, nothing else. Start with the **## Review focus** — the three to five things written down while the design was still
 in someone's head. Those are the findings most worth confirming, and the ones a
 generic review is least likely to see.
 
 ```bash
 git status --short
-git diff
+git diff --stat
 ```
+
+`/code-review` reads the full diff itself. Open individual files only where the house
+pass needs them.
 
 ## Step 1 — The built-in review
 
-Invoke **`/code-review high`** over the current diff. It finds correctness bugs and
-reuse/simplification/efficiency cleanups, and it is better at that than a prose
-checklist. Let it run; don't duplicate it by hand.
+Invoke **`/code-review`** over the current diff, at **`medium`** when the diff is
+under ~300 changed lines (`git diff --shortstat`) and **`high`** above that or when
+it touches the schema, scoring or the rules. It finds correctness bugs **and**
+reuse/simplification/efficiency cleanups, so it is the only automated pass this stage
+runs. Let it run; don't duplicate it by hand.
 
 Then take its findings and **triage them against this item**, rather than applying
 them blind:
@@ -49,22 +55,22 @@ not a quick fix in the review.
 What `/code-review` has no way to know. Each of these is a rule this repo states
 somewhere and pays for when it is broken:
 
-| Check               | What to look for                                                                                                                                                                                                     |
-| ------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Domain language** | Identifiers, comments and copy use `CLAUDE.md`'s words — **run**, **board**, **grid**, **dial**, **fortune**, **record** vs **medal** vs **achievement**. A new word the spec named has its row in the table.        |
-| **Mode branching**  | Nothing outside `modes/` reads a mode's name. A `mode === 'trainee'` in a screen is a missing **capability** or a missing rule.                                                                                      |
-| **Value maps**      | No ternary chain or `switch` selecting a value from a known set. `as const satisfies Record<Union, V>`, so adding a member breaks the build instead of a screen.                                                     |
-| **Strings**         | Every player-visible string is in the catalogs, with Czech. `pnpm i18n:verify` is the gate, but read the Czech too — an extracted-but-English string passes the gate.                                                |
-| **How to Play**     | If the diff touched controls, targets, timers, modes, difficulty, scoring, streaks or lives, is `how-to-play-overlay.tsx` still true? This is the check `CLAUDE.md` asks for at the end of every task; it ends here. |
-| **Design**          | Colours, type and motion from the **`design-guide`** scales, both themes, contrast held.                                                                                                                             |
-| **Comments**        | They explain _why_. A comment restating the line above it is noise; a removed explanation of a decision is a loss.                                                                                                   |
-| **Tests**           | Pure functions in `lib/` and machine helpers have colocated tests covering the edges, not only the happy path.                                                                                                       |
+| Check               | What to look for                                                                                                                                                                                                                                      |
+| ------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Domain language** | Identifiers, comments and copy use `CLAUDE.md`'s words — **run**, **board**, **grid**, **dial**, **fortune**, **record** vs **medal** vs **achievement**. A new word the spec named has its row in `docs/domain.md` and its one-liner in `CLAUDE.md`. |
+| **Mode branching**  | Nothing outside `modes/` reads a mode's name. A `mode === 'trainee'` in a screen is a missing **capability** or a missing rule.                                                                                                                       |
+| **Value maps**      | No ternary chain or `switch` selecting a value from a known set. `as const satisfies Record<Union, V>`, so adding a member breaks the build instead of a screen.                                                                                      |
+| **Strings**         | Every player-visible string is in the catalogs, with Czech. `pnpm i18n:verify` is the gate, but read the Czech too — an extracted-but-English string passes the gate.                                                                                 |
+| **How to Play**     | If the diff touched controls, targets, timers, modes, difficulty, scoring, streaks or lives, is `how-to-play-overlay.tsx` still true? This is the check `CLAUDE.md` asks for at the end of every task; it ends here.                                  |
+| **Design**          | Colours, type and motion from the **`design-guide`** scales, both themes, contrast held.                                                                                                                                                              |
+| **Comments**        | They explain _why_. A comment restating the line above it is noise; a removed explanation of a decision is a loss.                                                                                                                                    |
+| **Tests**           | Pure functions in `lib/` and machine helpers have colocated tests covering the edges, not only the happy path.                                                                                                                                        |
 
-## Step 4 — Simplify
+## Step 4 — Re-check, only if you changed code
 
-Invoke the **`simplify`** skill over the diff: reuse, altitude, dead scaffolding, the
-abstraction built for a second caller that never arrived. Then re-run **`check`** —
-simplification breaks types more often than anything else in this cycle.
+`/code-review` already covered simplification, so there is no separate `simplify` pass.
+If Steps 1–3 changed any code, run `pnpm typecheck` and the tests of the files you
+touched. Leave the full **`check`** to `ship`.
 
 ## Step 5 — Write it up and hand off
 

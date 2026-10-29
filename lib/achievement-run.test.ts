@@ -89,6 +89,7 @@ const hit = (steps: number, par: number): HitInfo => ({
   par,
   refGrid: [0, 0, 0, 0, 0, 0, 0, 0, 0],
   value: 12,
+  shown: 12,
   costLife: false,
 })
 

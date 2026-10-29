@@ -20,14 +20,19 @@ its recommendation, and what the stage found that led to it.
 Before deciding, read what the user has already said, in this order — it is where
 their answer usually already is:
 
-1. The work item's `spec.md` (and `plan.md` if it exists) — the problem, the
-   direction they picked, the appetite, the In / Out lists, any amendments.
-2. `CLAUDE.md` — the domain words and the Rules. A rule there is the user's answer
-   given in advance.
+1. The work item's `spec.md` — its header and the sections the question touches
+   (`grep -n '^## '` first): the problem, the direction they picked, the appetite,
+   the In / Out lists, any amendments. Open `plan.md` only when the question is about
+   the build, a verification or a review.
+2. `CLAUDE.md` — already in your context; do not read it again. A rule there is the
+   user's answer given in advance.
 3. The memory index at `~/.claude-personal/projects/-Users-dominik-projects-nine-main/memory/MEMORY.md`
    and any memory it points to that bears on the question.
 4. The repo itself — `git log --oneline -30` for how this kind of thing has been
    shipped before, and the code the question is about.
+
+Stop reading as soon as something settles it. You are the cheaper route only if you
+are quick.
 
 ## Answer it yourself when
 

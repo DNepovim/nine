@@ -486,6 +486,122 @@ const SIDEWAYS: ChallengeSpec = {
   },
 }
 
+// DRIFT: Accuracy Hard, where no number holds still.
+//
+// Its one thing is the **drift** — every target's number moves by one each second, up or
+// down, the way the arrow on its card says, for as long as it stands. A player aims at
+// where it is going, not where it was, and the number that counts is the one it shows at
+// the press. Everything else is Accuracy Hard: the nine dial, the 16.5 s ring, three
+// hearts, arrivals closing in.
+//
+// Everything that is not the dial follows from the moving number:
+//
+//   - **Scored on speed alone.** A route to a number that has since moved is a route to
+//     the wrong number, so how few presses it took means nothing here — `{ acc: 0,
+//     spd: 1 }`, which makes speed the headline. The author's call, and the honest one.
+//   - **The strike is `fresh`**: a target taken before its number has moved at all, in its
+//     first second. Any later hit breaks the chain — catching it early is the whole skill.
+//   - **The shot is `burst`**, Speed's: the fast hit made visible.
+//   - **Nothing drifts off the dial.** A rising target arrives low enough, a falling one
+//     high enough, to stay on it for its whole ring — see `driftRange`.
+const DRIFT: ChallengeSpec = {
+  slug: 'drift',
+  label: msg`DRIFT`,
+  // Its own, as every challenge since HABIT's: a profile row reading ACC would file it
+  // under a board it is not.
+  code: msg`DRF`,
+  description: msg`Every number drifts. Catch it before it moves.`,
+  shot: 'burst',
+  // Every line about catching a number before it gets away.
+  claims: {
+    board: [
+      ['QUICK', 'DRAW'],
+      ['CAUGHT', 'EARLY'],
+      ['HELD', 'STILL'],
+    ],
+    medal: [
+      ['NEAR', 'CATCH'],
+      ['LATE', 'GRAB'],
+    ],
+    strong: [
+      ['FIRST', 'LOOK'],
+      ['SNAP', 'SHOT'],
+    ],
+    cold: [
+      ['DRIFTED', 'OFF'],
+      ['ALL', 'ADRIFT'],
+    ],
+  },
+  base: ACCURACY,
+  from: Date.UTC(2026, 9, 28),
+  until: Date.UTC(2026, 9, 28) + DAY,
+  rules: {
+    fixedDifficulty: 'hard',
+    // One step a second, unscaled by the rung — the figure here is the step on screen.
+    spawn: { drift: 1000 },
+    scoring: { weights: { acc: 0, spd: 1 }, streak: 'fresh' },
+  },
+}
+
+// ONE KEY: Accuracy Hard on a dial of a single key, with a second to answer each target.
+//
+// Its one thing is the **key** — one, worth ×1, so every target is a digit from 0 to 9 and
+// the sum row is the key itself. With nothing to choose between, the clock is what makes
+// it a contest, and the two only work together: a single key on a 16.5 s ring is a
+// formality, and a one-second ring on the nine is a guess.
+//
+//   - **A one-second ring, one target at a time.** `maxTargets: 1`, so every hit clears
+//     the board and the next target is dealt at once — the run is a rhythm, not a board.
+//   - **The route still matters.** A tap raises the key, a swipe right fills it and a
+//     swipe left empties it, so an 8 is two presses (right, down) or eight taps. The
+//     `optimal` streak builds on the short one, which is the one that takes thinking and
+//     the clock leaves least time for.
+//   - **A slow route costs nothing**, a challenge's default; a target let run out costs
+//     one of three hearts, and that is how a run ends.
+//
+// The 1 is the whole dial, so every target in 0 … 9 is answerable.
+const ONE_KEY: ChallengeSpec = {
+  slug: 'one-key',
+  label: msg`ONE KEY`,
+  // Its own, as every challenge since HABIT's: a profile row reading ACC would file it
+  // under a board it is not.
+  code: msg`KEY`,
+  description: msg`One key, one second.`,
+  // No `shot`: Accuracy's sniper, inherited — the streak is Accuracy's own. Its 420 ms
+  // beam outlives the moment the next target arrives, which the author chose knowingly.
+  //
+  // Every line about the one key and the one second.
+  claims: {
+    board: [
+      ['ONE', 'KEY'],
+      ['LONE', 'KEY'],
+      ['SOLE', 'KEY'],
+    ],
+    medal: [
+      ['NEAR', 'ONE'],
+      ['ONE', 'SHY'],
+    ],
+    strong: [
+      ['QUICK', 'KEY'],
+      ['SURE', 'KEY'],
+    ],
+    cold: [
+      ['TOO', 'SLOW'],
+      ['KEY', 'LOST'],
+    ],
+  },
+  base: ACCURACY,
+  from: Date.UTC(2026, 9, 29),
+  until: Date.UTC(2026, 9, 29) + DAY,
+  rules: {
+    fixedDifficulty: 'hard',
+    dial: defineDial({ id: 'one-key', rows: 1, cols: 1, weights: [1] }),
+    // 1333 × Hard's 0.75 rounds to exactly 1000 ms — the figure here is what the ring is.
+    clock: { base: 1333 },
+    spawn: { maxTargets: 1 },
+  },
+}
+
 // Mapped rather than listed, and that is what gives each challenge its colour: `.map`
 // hands `defineChallenge` the spec's own index, which is what the pair is derived from.
 // The list is append-only — see the note at the top of this file — so an index is a
@@ -497,4 +613,6 @@ export const CHALLENGES: readonly ModeDefinition[] = [
   GLIMPSE,
   NO_SLIP,
   SIDEWAYS,
+  DRIFT,
+  ONE_KEY,
 ].map((spec, index) => defineChallenge(spec, index))

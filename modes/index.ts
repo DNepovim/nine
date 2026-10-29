@@ -69,7 +69,7 @@ export {
   type ModeId,
   type ScoredMode,
 } from './registry'
-export { rampedTimeout, spawnInterval, type RunRules } from './rules'
+export { rampedTimeout, spawnInterval, targetDuration, type RunRules } from './rules'
 export {
   FAST_HIT_THRESHOLD,
   STREAK_BROKEN,

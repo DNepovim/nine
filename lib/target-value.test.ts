@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest'
 
 import { TUTORIAL_TARGET_REACH } from '@/constants/tutorial'
-import { fullRange, pickTargetValue, rangeAround } from '@/lib/target-value'
-import { NINE_DIAL } from '@/modes'
+import { fullRange, pickTargetValue, rangeAround, rangeFor } from '@/lib/target-value'
+import { challengeId, NINE_DIAL, runRules } from '@/modes'
 
 describe('rangeAround', () => {
   it('reaches the same distance either side', () => {
@@ -62,5 +62,21 @@ describe('pickTargetValue', () => {
   it('gives the roll back when every value in the range is taken', () => {
     const range = { min: 10, max: 12 }
     expect(pickTargetValue({ roll: 0, taken: [10, 11, 12], range })).toBe(10)
+  })
+})
+
+describe('rangeFor', () => {
+  const accuracy = runRules('accuracy', 'hard')
+
+  it('draws from the whole dial on a mode with no reach and no drift', () => {
+    expect(rangeFor(accuracy, 50, null)).toEqual({ min: 0, max: NINE_DIAL.maxSum })
+  })
+
+  it('keeps a drifting target clear of the end it drifts towards', () => {
+    const drift = runRules(challengeId('drift'), 'hard')
+    expect(rangeFor(drift, 50, { drift: 1, ring: 16_500, step: 1000 })).toEqual({
+      min: 0,
+      max: 307,
+    })
   })
 })

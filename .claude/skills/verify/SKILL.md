@@ -101,3 +101,9 @@ Write `Next:`, then invoke that skill:
 Driving the app goes through the **`run`** skill. If the only way to drive it is
 Claude-in-Chrome, that needs the user's agreement — ask for it once, at the start of
 Step 2, together with anything else escalated, rather than mid-walk.
+
+**One app session for all of it.** Settle every criterion that a test, `runRules` or
+a query can answer first. Then launch the app **once** and walk every
+player-visible criterion in that session, in an order that reuses the state the last
+one left. Take a screenshot only where the evidence is visual, and don't relaunch
+between criteria.

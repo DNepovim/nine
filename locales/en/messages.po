@@ -1048,7 +1048,7 @@ msgstr "CONNOISSEUR"
 msgid "CONTINUE"
 msgstr "CONTINUE"
 
-#: app/(tabs)/index.tsx:2512
+#: app/(tabs)/index.tsx:2517
 msgid "Continue the tutorial"
 msgstr "Continue the tutorial"
 
@@ -1121,6 +1121,14 @@ msgstr "DONE"
 #: components/overlays/advanced-options-overlay.tsx:108
 msgid "DRAG ACROSS KEYS"
 msgstr "DRAG ACROSS KEYS"
+
+#: modes/challenges/catalog.ts:512
+msgid "DRF"
+msgstr "DRF"
+
+#: modes/challenges/catalog.ts:509
+msgid "DRIFT"
+msgstr "DRIFT"
 
 #: components/overlays/nickname-modal.tsx:106
 msgid "e.g. ACE_9"
@@ -1201,6 +1209,10 @@ msgstr "Every column leans your way. There is nothing here they hold."
 #: lib/recap-lines.ts:80
 msgid "Every day was [A]’s except [D]. [B] got exactly one, and made it count."
 msgstr "Every day was [A]’s except [D]. [B] got exactly one, and made it count."
+
+#: modes/challenges/catalog.ts:513
+msgid "Every number drifts. Catch it before it moves."
+msgstr "Every number drifts. Catch it before it moves."
 
 #: lib/compare-lines.ts:48
 msgid "Every row you lose here, you lost first on a board."
@@ -1714,6 +1726,10 @@ msgstr "Keep a single run going for a whole hour."
 #: constants/achievements.ts:420
 msgid "Keep a single run going for ten minutes."
 msgstr "Keep a single run going for ten minutes."
+
+#: modes/challenges/catalog.ts:568
+msgid "KEY"
+msgstr "KEY"
 
 #: machines/tutorial-lesson.ts:308
 msgid "KEY = ROW × COLUMN × DIGIT"
@@ -2304,6 +2320,14 @@ msgstr "One board did not go along with it: [BOARD] stayed [W]’s throughout."
 #: components/overlays/advanced-options-overlay.tsx:109
 msgid "One gesture can move several keys"
 msgstr "One gesture can move several keys"
+
+#: modes/challenges/catalog.ts:565
+msgid "ONE KEY"
+msgstr "ONE KEY"
+
+#: modes/challenges/catalog.ts:569
+msgid "One key, one second."
+msgstr "One key, one second."
 
 #: components/overlays/motto-modal.tsx:85
 msgid "One line under your name, for anyone who opens your profile."
@@ -3109,6 +3133,10 @@ msgstr "SWIPE RIGHT TO FILL A KEY"
 msgid "Swipe to 0 or 9 to reset a button in a single gesture instead of tapping through."
 msgstr "Swipe to 0 or 9 to reset a button in a single gesture instead of tapping through."
 
+#: lib/strike-rule.ts:29
+msgid "Take every target before its number has moved."
+msgstr "Take every target before its number has moved."
+
 #: lib/strike-rule.ts:24
 msgid "Take every target in the fewest moves it can be done in."
 msgstr "Take every target in the fewest moves it can be done in."
@@ -3294,7 +3322,7 @@ msgstr "THE GOAL"
 msgid "The hero halts well short of the gate, with the walls across the top of the screen and open ground between. Every tower on them carries a number, and so does every warrior who comes out of the gate."
 msgstr "The hero halts well short of the gate, with the walls across the top of the screen and open ground between. Every tower on them carries a number, and so does every warrior who comes out of the gate."
 
-#: lib/strike-rule.ts:31
+#: lib/strike-rule.ts:32
 msgid "The hit that leaves the board empty counts double."
 msgstr "The hit that leaves the board empty counts double."
 

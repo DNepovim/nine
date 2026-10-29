@@ -2,6 +2,7 @@ import { isNonEmptyArray } from 'narrowland'
 import { assign, createMachine } from 'xstate'
 
 import { TUTORIAL_TARGETS } from '@/constants/tutorial'
+import { driftedValue, isFresh, type Drift, type Heading } from '@/lib/target-drift'
 import { tutorialBoardEntry } from '@/lib/tutorial-board'
 import {
   emptyGrid,
@@ -10,7 +11,6 @@ import {
   FAST_HIT_THRESHOLD,
   NINE_DIAL,
   pressGrid,
-  rampedTimeout,
   runRules,
   runSubmode,
   setGrid,
@@ -18,6 +18,7 @@ import {
   STREAK_TRIGGERED,
   streakMultiplier,
   sumOf,
+  targetDuration,
   traitsOf,
   TUTORIAL,
   type DialSpec,
@@ -65,6 +66,10 @@ export type Target = {
   refGrid: Grid // dial snapshot at the reference moment
   par: number // optimal steps from refGrid to value (fixed at reference time)
   userSteps: number // button changes since the reference moment
+  // Which way its number **drifts**: up, down, or not at all — 0 on every mode but one
+  // whose rules name a `spawn.drift`. Fixed when the target is dealt. `value` above stays
+  // the number it arrived as; the number now is `driftedValue`.
+  drift: Drift
 }
 
 export type DifficultyStats = {
@@ -121,6 +126,9 @@ export type HitInfo = {
   // debrief actually shows it — the coach calls computeRoute on these.
   refGrid: Grid
   value: number
+  // The number it read when it was taken — `value` on every run but a **drifting** one,
+  // where it is wherever the number had got to. What the card shows as it leaves.
+  shown: number
   // Whether this is the hit that just cost a life — Accuracy's wasteful-hit rule
   // (DIFFICULTIES[difficulty].wastefulThreshold). One life is lost per batch no
   // matter how many hits in it crossed the bar, so at most one hit in a batch ever
@@ -176,6 +184,8 @@ const openingTargets = (
     refGrid: opening.grid,
     par: computePar(rules.dial, opening.grid, opening.target),
     userSteps: 0,
+    // The tutorial's own target, which no drifting mode deals.
+    drift: 0,
   },
 ]
 
@@ -317,7 +327,10 @@ type Event =
   | { type: 'RESTORE'; run: RestoredRun; now: number }
   | { type: 'PRESS'; index: number; delta: 1 | -1; now: number }
   | { type: 'SET_CELL'; index: number; value: number; now: number }
-  | { type: 'ADD_TARGET'; value: number; at: number }
+  // `drift` is the dealt target's direction, left out for a target that holds still.
+  | { type: 'ADD_TARGET'; value: number; at: number; drift?: Heading }
+  // A **drifting** number has just moved: whatever now reads the sum on the dial is taken.
+  | { type: 'TICK'; now: number }
   // Puts a tutorial back on a board the player has already played — the stepper's one
   // event. `board` is the hit count being returned to, counted from nought, so it is the
   // same index that addresses TUTORIAL_TARGETS and LESSON_AFTER_HIT.
@@ -475,6 +488,7 @@ const streakFactsOf = (
     par: number
     spdFactor: number
     refGrid: Grid
+    fresh: boolean
   }[],
   // The dial the run is played on, for the two facts that are about its shape rather than
   // about the numbers a hit came to.
@@ -492,6 +506,7 @@ const streakFactsOf = (
     // `userSteps` are counted over too.
     allWhole: anyHit && perTarget.every((t) => everyKeyMoved(t.refGrid, newGrid)),
     allSpread: anyHit && perTarget.every((t) => everyRowMoved(dial, t.refGrid, newGrid)),
+    allFresh: anyHit && perTarget.every((t) => t.fresh),
     clearedBoard,
   }
 }
@@ -528,6 +543,18 @@ const runOver = (
 const drillDone = (drill: number, dealt: number, targets: readonly Target[]): boolean =>
   dealt >= drill && targets.length === 0
 
+// Whether a **drift** has just brought some target onto the sum already dialled. Asked by
+// `TICK` before it does anything, so a tick that lands on nothing leaves the run exactly
+// as it was — no hit batch, no reference reset, nothing for the screen to react to.
+const driftLanded = (context: Context, now: number): boolean => {
+  const rules = rulesOf(context)
+  const sum = sumOf(rules.dial, context.grid)
+  return context.targets.some(
+    (t) =>
+      driftedValue(t, now, rules.spawn.drift) === sum && now - t.spawnedAt < t.duration,
+  )
+}
+
 // The time a finished run claims on its session's standings, or null for one that claims
 // none: every run but a race, and a race that did not go the distance — a drilled run its
 // window shut on before the last target fell reaches `gameOver` too, holding a clock it
@@ -547,11 +574,21 @@ export const claimedTime = (
   return context.elapsedMs
 }
 
-function applyGrid(context: Context, newGrid: Grid, now: number) {
+// `press` is 1 for a key changing the grid and 0 for a **drift** landing a target on the
+// sum already dialled — see `TICK` — which takes it without a move being made.
+function applyGrid(context: Context, newGrid: Grid, now: number, press: 0 | 1 = 1) {
   const rules = rulesOf(context)
   const newSum = sumOf(rules.dial, newGrid)
-  const matched = context.targets.filter((t) => t.value === newSum)
-  const remaining = context.targets.filter((t) => t.value !== newSum)
+  // The number each target shows at this press — its own `value` unless the run drifts.
+  const shown = (t: Target) => driftedValue(t, now, rules.spawn.drift)
+  // One pass, so each target's number is read once per press.
+  const matched: Target[] = []
+  const remaining: Target[] = []
+  // A drift landing a target (`press` 0) takes only one with clock left: a ring that has run
+  // out is the expiry's to settle, however its message is still on its way.
+  const takes = (t: Target) =>
+    shown(t) === newSum && (press === 1 || now - t.spawnedAt < t.duration)
+  for (const t of context.targets) (takes(t) ? matched : remaining).push(t)
   const anyHit = isNonEmptyArray(matched)
   const clearedBoard = anyHit && remaining.length === 0
 
@@ -567,10 +604,12 @@ function applyGrid(context: Context, newGrid: Grid, now: number) {
     par: number
     refGrid: Grid
     value: number
+    shown: number
+    fresh: boolean
   }[] = []
 
   for (const t of matched) {
-    const userSteps = t.userSteps + 1
+    const userSteps = t.userSteps + press
     const timeLeft = clockLeft(t, rules, now)
     const progress = t.duration > 0 ? Math.min(1, Math.max(0, timeLeft / t.duration)) : 0
     const pts = computeHitPoints({
@@ -594,7 +633,12 @@ function applyGrid(context: Context, newGrid: Grid, now: number) {
       steps: userSteps,
       par: t.par,
       refGrid: t.refGrid,
+      // The number it arrived as, not the one it was taken at: this is how the board finds
+      // the card a hit belongs to — its exit and the shot's aim both match on it — and a
+      // drifting card is still known by the number it arrived as.
       value: t.value,
+      shown: shown(t),
+      fresh: isFresh(t, now, rules.spawn.drift),
     })
   }
 
@@ -637,6 +681,7 @@ function applyGrid(context: Context, newGrid: Grid, now: number) {
     par: p.par,
     refGrid: p.refGrid,
     value: p.value,
+    shown: p.shown,
     costLife: costsLife && i === wastefulIndex,
   }))
 
@@ -657,7 +702,7 @@ function applyGrid(context: Context, newGrid: Grid, now: number) {
           par: computePar(rules.dial, newGrid, t.value),
           userSteps: 0,
         }
-      : { ...t, userSteps: t.userSteps + 1 },
+      : { ...t, userSteps: t.userSteps + press },
   )
 
   const newAccSum = context.accSum + accAdded
@@ -887,6 +932,53 @@ export const gameMachine = createMachine({
             }) => pauseClock(context, event.now),
           ),
         },
+        // A drifting number arriving on the dialled sum is a hit like a press would be,
+        // counted without a press — the target was caught where it was going. Ends the run
+        // where a press would, though a hit that costs no heart rarely does.
+        TICK: [
+          {
+            guard: ({
+              context,
+              event,
+            }: {
+              context: Context
+              event: Extract<Event, { type: 'TICK' }>
+            }) =>
+              driftLanded(context, event.now) &&
+              runOver(context, applyGrid(context, context.grid, event.now, 0)),
+            target: 'gameOver',
+            actions: assign(
+              ({
+                context,
+                event,
+              }: {
+                context: Context
+                event: Extract<Event, { type: 'TICK' }>
+              }) => ({
+                ...applyGrid(context, context.grid, event.now, 0),
+                ...stopClock(context, event.now),
+              }),
+            ),
+          },
+          {
+            guard: ({
+              context,
+              event,
+            }: {
+              context: Context
+              event: Extract<Event, { type: 'TICK' }>
+            }) => driftLanded(context, event.now),
+            actions: assign(
+              ({
+                context,
+                event,
+              }: {
+                context: Context
+                event: Extract<Event, { type: 'TICK' }>
+              }) => applyGrid(context, context.grid, event.now, 0),
+            ),
+          },
+        ],
         PRESS: [
           {
             guard: ({
@@ -1080,13 +1172,12 @@ export const gameMachine = createMachine({
                     seq: context.dealt,
                     value: event.value,
                     spawnedAt: event.at,
-                    duration: rules.clock.playerSet
-                      ? context.playerClockMs
-                      : rampedTimeout(rules, context.hits),
+                    duration: targetDuration(rules, context.hits, context.playerClockMs),
                     refAt: event.at,
                     refGrid: context.grid,
                     par: computePar(rules.dial, context.grid, event.value),
                     userSteps: 0,
+                    drift: event.drift ?? 0,
                   },
                 ],
                 nextTargetId: context.nextTargetId + 1,
@@ -1151,6 +1242,7 @@ export const gameMachine = createMachine({
                     refGrid: grid,
                     par: computePar(rules.dial, grid, value),
                     userSteps: 0,
+                    drift: 0,
                   },
                 ],
                 nextTargetId: context.nextTargetId + 1,

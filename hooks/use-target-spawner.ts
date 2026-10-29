@@ -1,14 +1,13 @@
 import { useCallback, useEffect, useRef } from 'react'
 
 import { drillValues } from '@/lib/drill'
-import {
-  fullRange,
-  pickTargetValue,
-  rangeAround,
-  type TargetRange,
-} from '@/lib/target-value'
-import type { GameSend } from '@/machines/game'
-import { spawnInterval, type RunRules, type Submode } from '@/modes'
+import { driftedValue, driftPath, type Heading } from '@/lib/target-drift'
+import { pickTargetValue, rangeFor } from '@/lib/target-value'
+import type { GameSend, Target } from '@/machines/game'
+import { spawnInterval, targetDuration, type RunRules, type Submode } from '@/modes'
+
+// Up or down, evenly — which way a **drifting** target's number goes.
+const coin = (): Heading => (Math.random() < 0.5 ? 1 : -1)
 
 // Deals targets while a run is playing: the first one at once, then one every
 // `spawnInterval`; clearing the board deals the next right away and restarts the cadence.
@@ -27,7 +26,7 @@ export function useTargetSpawner({
   hits,
   playerClockMs,
   currentSum,
-  takenValues,
+  standing,
   send,
 }: {
   isPlaying: boolean
@@ -57,7 +56,11 @@ export function useTargetSpawner({
   // player's — see `clock.playerSet`.
   playerClockMs: number
   currentSum: number
-  takenValues: number[]
+  // The targets on the board. Handed whole rather than as their numbers, because on a
+  // **drifting** run a number is only true at a moment — what this keeps clear of is the
+  // number each one shows at the instant a new one is dealt, which a list taken at the
+  // last render would already have left behind.
+  standing: readonly Target[]
   send: GameSend
 }) {
   const spawnTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -67,17 +70,17 @@ export function useTargetSpawner({
   const drilled = drill !== null
 
   // Latest exclusions, read at spawn time without re-creating the interval.
-  const excludeRef = useRef<{ sum: number; values: number[] }>({
+  const excludeRef = useRef<{ sum: number; standing: readonly Target[] }>({
     sum: currentSum,
-    values: takenValues,
+    standing,
   })
-  excludeRef.current = { sum: currentSum, values: takenValues }
+  excludeRef.current = { sum: currentSum, standing }
 
   // Read at spawn time for the same reason: `spawnTarget` is the callback the cadence
   // and the respawn both hold, and depending on either of these would rebuild both on a
   // change that only matters when a target is actually being dealt.
-  const runRef = useRef({ rules, submode, hits, dealt, drill })
-  runRef.current = { rules, submode, hits, dealt, drill }
+  const runRef = useRef({ rules, submode, hits, dealt, drill, player: playerClockMs })
+  runRef.current = { rules, submode, hits, dealt, drill, player: playerClockMs }
 
   // Latest cadence, likewise read when a spawn fires rather than when the wait is
   // armed. See startCadence for why that matters.
@@ -90,13 +93,14 @@ export function useTargetSpawner({
   intervalRef.current = spawnEvery
 
   const spawnTarget = useCallback(() => {
-    const { sum, values } = excludeRef.current
+    const { sum, standing: board } = excludeRef.current
     const {
       rules: live,
       submode: part,
       hits: landed,
       dealt: out,
       drill: list,
+      player,
     } = runRef.current
     // A **drill**: the session's own nine, dealt in order and then no more.
     //
@@ -122,21 +126,41 @@ export function useTargetSpawner({
       send({ type: 'ADD_TARGET', value: scripted, at: Date.now() })
       return
     }
-    // A mode with a `reach` keeps every target within that much of the sum standing on
-    // the dial — which, just after a hit, is the number just cleared. Every other mode
-    // draws from the whole range the board can be dialled to.
-    const range: TargetRange =
-      live.spawn.reach === null
-        ? fullRange(live.dial)
-        : rangeAround(live.dial, sum, live.spawn.reach)
-    // Never spawn a target that's already the dialled sum, or a duplicate of a
-    // target already on the board.
+    const at = Date.now()
+    // A **drifting** run deals each target a way to go, up or down by a coin, and a range
+    // that keeps it on the dial for the whole of the ring it is about to be given — the
+    // same ring `ADD_TARGET` will hand it, read off the same rules and hits. Null on every
+    // run whose numbers hold still, which skips all of it.
+    const step = live.spawn.drift
+    const drifting =
+      step === null
+        ? null
+        : { drift: coin(), ring: targetDuration(live, landed, player), step }
+    // Never spawn a target that's already the dialled sum, or a duplicate of a target
+    // already on the board — as each one reads now, which on a drifting run is not the
+    // number it arrived as. Nor one that arrived as this number either: the board knows a
+    // card by the number it arrived as — a hit's exit and a shot's aim both find it that
+    // way — so two cards sharing one would leave the board guessing which was taken.
+    // Nor one whose path would carry it onto the sum standing on the dial before its ring
+    // runs out: it would be taken there without a key being touched.
+    const taken =
+      drifting === null
+        ? [sum]
+        : driftPath(sum, drifting.drift, drifting.ring, drifting.step)
+    for (const t of board) {
+      taken.push(t.value)
+      if (t.drift !== 0) taken.push(driftedValue(t, at, step))
+    }
     const value = pickTargetValue({
       roll: Math.random(),
-      taken: [sum, ...values],
-      range,
+      taken,
+      range: rangeFor(live, sum, drifting),
     })
-    send({ type: 'ADD_TARGET', value, at: Date.now() })
+    send(
+      drifting === null
+        ? { type: 'ADD_TARGET', value, at }
+        : { type: 'ADD_TARGET', value, at, drift: drifting.drift },
+    )
   }, [send])
 
   // A self-rescheduling chain rather than setInterval, because an interval's period
