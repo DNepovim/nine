@@ -58,6 +58,7 @@ import { MultiplayerWaiting } from '@/components/overlays/multiplayer-waiting'
 import { NewsArchiveOverlay } from '@/components/overlays/news-archive-overlay'
 import { NICKNAME_TITLE, NicknameModal } from '@/components/overlays/nickname-modal'
 import { PausedOverlay } from '@/components/overlays/paused-overlay'
+import { RatingOverlay } from '@/components/overlays/rating-overlay'
 import { ReplayConsentOverlay } from '@/components/overlays/replay-consent-overlay'
 import { StepUpOverlay } from '@/components/overlays/step-up-overlay'
 import { TutorialDoneModal } from '@/components/overlays/tutorial-done-modal'
@@ -1013,6 +1014,11 @@ export default function GameScreen() {
   // Below `useSupabaseAuth`, which it reads: the winnings half of the deck is per player,
   // and there is nothing to ask the server for until there is a player to ask about.
   const whatsNew = usePopupDeck(userId, runSession, shownFeatures)
+  // Whether the launch popup *or the rating that follows it* is up. Everything that waits
+  // its turn behind the popup — the email ask, the install prompt, the session-recording
+  // ask — waits behind the rating too: it is the popup's last word, opened only once the
+  // popup has gone, and a prompt landing in the gap between the two would stack on it.
+  const launchPopupUp = whatsNew.visible || whatsNew.rating.asking !== null
 
   const { submit: submitScore } = useScoreSubmission(userId, nickname, isReady)
 
@@ -1871,7 +1877,7 @@ export default function GameScreen() {
       repliesReady: feedbackReplies.ready,
       hasReply: feedbackReplies.reply !== null,
       newsReady: whatsNew.ready,
-      newsVisible: whatsNew.visible,
+      newsVisible: launchPopupUp,
       installing: installPrompt.target !== 'none',
       consentVisible: replayConsent.visible,
     }),
@@ -2898,6 +2904,22 @@ export default function GameScreen() {
                 />
               )}
 
+            {/* ── Rating — how was the session the summary just told. Mounted once the
+            popup has unmounted rather than alongside it, so its card rises after the
+            popup's has gone instead of over it. `asking` is only ever set by closing a
+            popup that carried a summary — see `told` in use-session-summaries.ts. ── */}
+            {onIntro &&
+              feedbackReplies.ready &&
+              feedbackReplies.reply === null &&
+              !whatsNew.visible &&
+              whatsNew.rating.asking !== null && (
+                <RatingOverlay
+                  summary={whatsNew.rating.asking}
+                  onSend={whatsNew.rating.send}
+                  onDismiss={whatsNew.rating.done}
+                />
+              )}
+
             {/* ── Install prompt — web only, and only once the news has had its turn.
             Every launch until the player installs: closing it lasts the session.
 
@@ -2909,7 +2931,7 @@ export default function GameScreen() {
               feedbackReplies.ready &&
               feedbackReplies.reply === null &&
               whatsNew.ready &&
-              !whatsNew.visible &&
+              !launchPopupUp &&
               installPrompt.target !== 'none' && (
                 <InstallOverlay
                   target={installPrompt.target}
@@ -2930,7 +2952,7 @@ export default function GameScreen() {
               feedbackReplies.ready &&
               feedbackReplies.reply === null &&
               whatsNew.ready &&
-              !whatsNew.visible &&
+              !launchPopupUp &&
               installPrompt.target === 'none' &&
               replayConsent.visible && (
                 <ReplayConsentOverlay

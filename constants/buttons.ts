@@ -83,6 +83,11 @@ export type ButtonId =
   // are not one funnel.
   | 'news.accept'
 
+  // ── Rating — the dialog after a session's summary ──
+  | 'rating.key'
+  | 'rating.send'
+  | 'rating.dismiss'
+
   // ── Achievements and medals ──
   | 'achievements.earned'
   | 'achievements.progress_row'

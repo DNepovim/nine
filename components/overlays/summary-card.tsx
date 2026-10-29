@@ -1,10 +1,10 @@
-import { Plural, Trans, useLingui } from '@lingui/react/macro'
+import { Plural, Trans } from '@lingui/react/macro'
 import { useFonts } from 'expo-font'
 import { Text, View } from 'react-native'
 
 import DSEG7Font from '@/assets/fonts/DSEG7Classic-Bold.ttf'
-import { GradientText } from '@/components/gradient-text'
 import { ChallengeCountdown } from '@/components/overlays/challenge-countdown'
+import { ChallengeName } from '@/components/overlays/challenge-name'
 import { SummaryPlaceRow } from '@/components/overlays/summary-place'
 import { mono } from '@/constants/theme'
 import { READOUT, TYPE } from '@/constants/typography'
@@ -14,8 +14,7 @@ import { groupDigits } from '@/lib/group-digits'
 import type { OpenSession } from '@/lib/session-board'
 import { sessionFigure } from '@/lib/session-figure'
 import type { SessionSummary } from '@/lib/session-summary'
-import { darkGradientOf, gradientOf, labelOf, type ModeId } from '@/modes'
-import { challengeInk } from '@/modes/challenges/palette'
+import { darkGradientOf } from '@/modes'
 
 // What one closed **session** came to, as a page of the launch popup.
 //
@@ -34,29 +33,6 @@ import { challengeInk } from '@/modes/challenges/palette'
 // **Never drawn with an empty podium.** A summary nobody is on is filtered out by
 // `summaryOwed` before it ever reaches a card, so there is no bare-medal state to design
 // around — see the note there.
-
-// A challenge's name in its own colours, which is the one treatment both names on this
-// page share — the contest that has just ended, and the one offered next.
-//
-// `challengeInk` is what makes that safe: a challenge's bright stop is tuned to *be* a
-// colour rather than to carry text, and this walks it down until it can. The same pair
-// the challenge card draws its own name from, so one challenge is one colour wherever it
-// is written.
-//
-// Module level, because it is a component and a nested one would remount on every render
-// of the page around it.
-function ChallengeName({ modeId, className }: { modeId: ModeId; className: string }) {
-  const { t } = useLingui()
-  const [from, to] = gradientOf(modeId)
-  return (
-    <GradientText
-      text={t(labelOf(modeId))}
-      from={challengeInk(from)}
-      to={challengeInk(to)}
-      className={className}
-    />
-  )
-}
 
 export function SummaryCard({
   summary,

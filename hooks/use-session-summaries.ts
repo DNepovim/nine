@@ -60,10 +60,24 @@ export function useSessionSummaries(
   invite: SessionCard<OpenSession>
   ready: boolean
   dismiss: () => void
+  told: SessionSummary | null
+  take: () => void
 } {
   const sessions = useOpenSessions(canSee)
   const [summary, setSummary] = useState<SessionSummary | null>(null)
   const [ready, setReady] = useState(false)
+  // The summary the player has just been told, kept past its own dismissal for the one
+  // thing that follows it: the **rating** dialog, which asks about that very session and
+  // needs to know which. Set only by `dismiss`, so it means "the player has read it and
+  // closed it" — a summary forced up from the dev sidebar counts too, which is how the
+  // dialog is tested — and emptied by `take` once the rating has had its turn.
+  const [told, setTold] = useState<SessionSummary | null>(null)
+
+  // A different player on this device has nothing to rate on the last one's behalf: the
+  // server would refuse it anyway, as the rating of a session that player never scored on.
+  useEffect(() => {
+    setTold(null)
+  }, [userId])
 
   // Where the marker goes once this has been dismissed — the newest close of everything
   // the read returned, which is **not** the close of the page being shown when the newest
@@ -219,6 +233,13 @@ export function useSessionSummaries(
   }, [runSessionId, canSee, summary, ask])
 
   const dismiss = useCallback(() => {
+    // A deck dismissed with no summary on it — news or winnings alone — tells nothing,
+    // and leaves whatever was told before it where it was.
+    //
+    // The first summary told keeps the question. A second can only arrive while the rating
+    // is still waiting — a session shutting under the open dialog — and it has been told
+    // once like any other; the rating is about the one the player closed first.
+    if (summary !== null) setTold((current) => current ?? summary)
     setSummary(null)
     const marker = pendingMarker.current
     pendingMarker.current = null
@@ -227,6 +248,10 @@ export function useSessionSummaries(
       // Storage went away between the read and here. The summary has been seen and will
       // be offered once more; one repeat beats losing the marker's meaning.
     })
+  }, [summary])
+
+  const take = useCallback(() => {
+    setTold(null)
   }, [])
 
   return {
@@ -234,6 +259,8 @@ export function useSessionSummaries(
     invite,
     ready,
     dismiss,
+    told,
+    take,
   }
 }
 

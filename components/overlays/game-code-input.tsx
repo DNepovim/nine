@@ -95,7 +95,14 @@ export function GameCodeInput({
       ) : (
         <View className="h-7" />
       )}
-      <CodeKeyboard value={value} onChange={onChange} accentColors={accentColors} />
+      <CodeKeyboard
+        id="join_room.key"
+        onKey={(key) => {
+          // A room code is four digits; a fifth press is ignored rather than wrapping.
+          if (value.length < 4) onChange(value + String(key))
+        }}
+        accentColors={accentColors}
+      />
     </View>
   )
 }

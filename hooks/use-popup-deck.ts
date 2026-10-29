@@ -1,6 +1,7 @@
 import { useCallback, useMemo } from 'react'
 
 import type { Flag } from '@/constants/features'
+import { useSessionRating } from '@/hooks/use-session-rating'
 import { useSessionSummaries } from '@/hooks/use-session-summaries'
 import { useWeeklyRecap } from '@/hooks/use-weekly-recap'
 import { useWhatsNew } from '@/hooks/use-whats-new'
@@ -37,6 +38,10 @@ export function usePopupDeck(
   const winnings = useWinnings(userId)
   const recap = useWeeklyRecap(features.has('recap'))
   const summaries = useSessionSummaries(userId, runSessionId, features.has('challenges'))
+  // Not a page of the deck: the **rating** is its own dialog, opened once this one has gone,
+  // about the summary the player has just closed. Here rather than beside the deck because
+  // the summary hook is what knows which session that was.
+  const rating = useSessionRating(summaries.told, summaries.take, features.has('ratings'))
 
   const cards = useMemo<PopupCard[]>(
     () => [
@@ -101,5 +106,6 @@ export function usePopupDeck(
     ready: news.ready && winnings.ready && recap.ready && summaries.ready,
     dismiss,
     accept: winnings.accept,
+    rating,
   }
 }

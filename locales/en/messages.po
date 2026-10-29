@@ -308,7 +308,7 @@ msgid "[W] took the all-time [BOARD] record on [D], and still has it."
 msgstr "[W] took the all-time [BOARD] record on [D], and still has it."
 
 #. placeholder {0}: summary.players
-#: components/overlays/summary-card.tsx:101
+#: components/overlays/summary-card.tsx:77
 msgid "{0, plural, one {# PLAYER} other {# PLAYERS}}"
 msgstr "{0, plural, one {# PLAYER} other {# PLAYERS}}"
 
@@ -357,7 +357,7 @@ msgstr "{owed} owed an answer"
 #. placeholder {0}: fortuneOf(score, difficulty)
 #. placeholder {0}: groupDigits(summary.mine.bonus)
 #: components/overlays/game-over-overlay.tsx:376
-#: components/overlays/summary-card.tsx:182
+#: components/overlays/summary-card.tsx:158
 msgid "+{0} TO YOUR FORTUNE"
 msgstr "+{0} TO YOUR FORTUNE"
 
@@ -413,6 +413,10 @@ msgstr "🦅 The eagle is Speed at its hardest, for the dive rather than the sea
 msgid "🦉 The owl is Accuracy at its hardest. That board rewards the exact route, and the owl is the eye that finds it."
 msgstr "🦉 The owl is Accuracy at its hardest. That board rewards the exact route, and the owl is the eye that finds it."
 
+#: components/overlays/rating-overlay.tsx:69
+msgid "1 = NOT FOR ME"
+msgstr "1 = NOT FOR ME"
+
 #: components/overlays/admin-knowledge.tsx:310
 msgid "3 lives; −1 per expired target"
 msgstr "3 lives; −1 per expired target"
@@ -420,6 +424,10 @@ msgstr "3 lives; −1 per expired target"
 #: components/overlays/admin-knowledge.tsx:150
 msgid "5 finished Accuracy or Speed runs in a row, each under {POOR_RUN_SCORE}"
 msgstr "5 finished Accuracy or Speed runs in a row, each under {POOR_RUN_SCORE}"
+
+#: components/overlays/rating-overlay.tsx:72
+msgid "9 = MORE OF THIS"
+msgstr "9 = MORE OF THIS"
 
 #: components/overlays/admin-knowledge.tsx:255
 msgid "a / s: Accuracy {accBlend}, Speed {spdBlend}."
@@ -714,7 +722,7 @@ msgstr "An owl can hear a mouse under half a metre of snow. You are the more exa
 msgid "ANALYTICS"
 msgstr "ANALYTICS"
 
-#: components/overlays/summary-card.tsx:195
+#: components/overlays/summary-card.tsx:171
 msgid "ANOTHER CHALLENGE IS ON ITS WAY"
 msgstr "ANOTHER CHALLENGE IS ON ITS WAY"
 
@@ -799,8 +807,8 @@ msgstr "AVG SPD"
 #: components/overlays/admin-access.tsx:117
 #: components/overlays/admin-knowledge.tsx:349
 #: components/overlays/admin-messages.tsx:376
-#: components/overlays/admin-session.tsx:185
-#: components/overlays/admin-sessions.tsx:179
+#: components/overlays/admin-session.tsx:189
+#: components/overlays/admin-sessions.tsx:184
 #: components/overlays/admin-stats.tsx:149
 #: components/overlays/whats-new-overlay.tsx:107
 msgid "BACK"
@@ -897,7 +905,7 @@ msgstr "CAN WE LOOK UNDER YOUR THUMBS?"
 msgid "CANCEL"
 msgstr "CANCEL"
 
-#: components/overlays/admin-session.tsx:178
+#: components/overlays/admin-session.tsx:182
 msgid "CANCEL SESSION"
 msgstr "CANCEL SESSION"
 
@@ -917,7 +925,7 @@ msgstr "CEILING"
 msgid "Chain your hits — a streak multiplies your points ×2 → ×4 → ×8. Accuracy counts optimal routes, Speed counts hits with most of the ring left."
 msgstr "Chain your hits — a streak multiplies your points ×2 → ×4 → ×8. Accuracy counts optimal routes, Speed counts hits with most of the ring left."
 
-#: components/overlays/admin-session.tsx:192
+#: components/overlays/admin-session.tsx:196
 #: components/overlays/challenge-card.tsx:186
 #: components/overlays/challenge-modal.tsx:124
 #: modes/challenges/define.ts:84
@@ -986,16 +994,16 @@ msgstr "clock = time left ÷ ring"
 #: components/overlays/challenge-modal.tsx:298
 #: components/overlays/compare-overlay.tsx:318
 #: components/overlays/email-code-modal.tsx:528
-#: components/overlays/modal-card.tsx:266
+#: components/overlays/modal-card.tsx:267
 msgid "CLOSE"
 msgstr "CLOSE"
 
-#: components/overlays/admin-session.tsx:161
-#: components/overlays/admin-session.tsx:282
+#: components/overlays/admin-session.tsx:165
+#: components/overlays/admin-session.tsx:286
 msgid "CLOSE EARLY"
 msgstr "CLOSE EARLY"
 
-#: components/overlays/admin-session.tsx:262
+#: components/overlays/admin-session.tsx:266
 msgid "CLOSE THIS CHALLENGE NOW?"
 msgstr "CLOSE THIS CHALLENGE NOW?"
 
@@ -1048,7 +1056,7 @@ msgstr "CONNOISSEUR"
 msgid "CONTINUE"
 msgstr "CONTINUE"
 
-#: app/(tabs)/index.tsx:2517
+#: app/(tabs)/index.tsx:2525
 msgid "Continue the tutorial"
 msgstr "Continue the tutorial"
 
@@ -1167,8 +1175,8 @@ msgstr "END RUN"
 msgid "END TUTORIAL"
 msgstr "END TUTORIAL"
 
-#: components/overlays/admin-session.tsx:219
-#: components/overlays/admin-session.tsx:234
+#: components/overlays/admin-session.tsx:223
+#: components/overlays/admin-session.tsx:238
 msgid "ENDS"
 msgstr "ENDS"
 
@@ -1209,6 +1217,10 @@ msgstr "Every column leans your way. There is nothing here they hold."
 #: lib/recap-lines.ts:80
 msgid "Every day was [A]’s except [D]. [B] got exactly one, and made it count."
 msgstr "Every day was [A]’s except [D]. [B] got exactly one, and made it count."
+
+#: modes/challenges/catalog.ts:628
+msgid "Every hit scrambles the dial."
+msgstr "Every hit scrambles the dial."
 
 #: modes/challenges/catalog.ts:513
 msgid "Every number drifts. Catch it before it moves."
@@ -1258,7 +1270,7 @@ msgstr "EVERYTHING THAT’S CHANGED"
 msgid "EXT"
 msgstr "EXT"
 
-#: components/overlays/admin-session.tsx:152
+#: components/overlays/admin-session.tsx:156
 msgid "EXTEND"
 msgstr "EXTEND"
 
@@ -1602,6 +1614,10 @@ msgstr "How far can you go?"
 msgid "HOW TO PLAY"
 msgstr "HOW TO PLAY"
 
+#: components/overlays/rating-overlay.tsx:54
+msgid "HOW WAS THIS ONE?"
+msgstr "HOW WAS THIS ONE?"
+
 #: modes/difficulty.ts:54
 msgid "HRD"
 msgstr "HRD"
@@ -1914,6 +1930,10 @@ msgstr "MINUTES"
 msgid "Miss a session's top three by a single point, or a tenth of a second."
 msgstr "Miss a session's top three by a single point, or a tenth of a second."
 
+#: modes/challenges/catalog.ts:627
+msgid "MIX"
+msgstr "MIX"
+
 #: components/overlays/how-to-play-overlay.tsx:44
 msgid "MODES"
 msgstr "MODES"
@@ -1984,7 +2004,7 @@ msgstr "NEW ROLE"
 msgid "NEXT"
 msgstr "NEXT"
 
-#: components/overlays/summary-card.tsx:200
+#: components/overlays/summary-card.tsx:176
 msgid "NEXT UP"
 msgstr "NEXT UP"
 
@@ -2042,7 +2062,7 @@ msgstr "No features in the database."
 msgid "No figures. See the error above."
 msgstr "No figures. See the error above."
 
-#: components/overlays/admin-sessions.tsx:220
+#: components/overlays/admin-sessions.tsx:225
 msgid "No filters are on."
 msgstr "No filters are on."
 
@@ -2098,7 +2118,7 @@ msgstr "NO SESSION YET"
 msgid "No sessions have been planned."
 msgstr "No sessions have been planned."
 
-#: components/overlays/admin-sessions.tsx:222
+#: components/overlays/admin-sessions.tsx:227
 msgid "No sessions planned yet."
 msgstr "No sessions planned yet."
 
@@ -2184,6 +2204,7 @@ msgid "Not much happened. [A] took [N] of the [P] days anyone turned up for."
 msgstr "Not much happened. [A] took [N] of the [P] days anyone turned up for."
 
 #: components/game/step-up-toast.tsx:115
+#: components/overlays/rating-overlay.tsx:92
 #: components/overlays/tutorial-done-modal.tsx:114
 #: components/overlays/tutorial-offer-modal.tsx:95
 msgid "NOT NOW"
@@ -2225,7 +2246,7 @@ msgstr "Nothing all-time moved. Every record standing on Monday was still standi
 msgid "Nothing announced yet."
 msgstr "Nothing announced yet."
 
-#: components/overlays/admin-sessions.tsx:224
+#: components/overlays/admin-sessions.tsx:229
 msgid "Nothing in these states."
 msgstr "Nothing in these states."
 
@@ -2297,7 +2318,7 @@ msgstr "On [DATE] you took third on [B] with [S]"
 msgid "On Hard and Extreme, waste too many moves on a hit and you lose a life — the bar is 20% accuracy on Hard, 15% on Extreme. Easy never takes one for it."
 msgstr "On Hard and Extreme, waste too many moves on a hit and you lose a life — the bar is 20% accuracy on Hard, 15% on Extreme. Easy never takes one for it."
 
-#: components/overlays/summary-card.tsx:200
+#: components/overlays/summary-card.tsx:176
 msgid "ON NOW"
 msgstr "ON NOW"
 
@@ -2484,7 +2505,7 @@ msgstr "Pick ADVENTURE on the start screen. The dial is the same dial — but th
 msgid "PLACED"
 msgstr "PLACED"
 
-#: components/overlays/admin-sessions.tsx:173
+#: components/overlays/admin-sessions.tsx:178
 msgid "PLAN SESSION"
 msgstr "PLAN SESSION"
 
@@ -2780,7 +2801,7 @@ msgstr "Satiety"
 msgid "Saturday"
 msgstr "Saturday"
 
-#: components/overlays/admin-session.tsx:139
+#: components/overlays/admin-session.tsx:143
 #: components/overlays/motto-modal.tsx:156
 msgid "SAVE"
 msgstr "SAVE"
@@ -2846,6 +2867,10 @@ msgstr "Score rewards precision: solve each target in the fewest moves."
 msgid "Scores, one ladder per mode — Accuracy and Speed ask for opposite things, so each has its own rungs to climb."
 msgstr "Scores, one ladder per mode — Accuracy and Speed ask for opposite things, so each has its own rungs to climb."
 
+#: modes/challenges/catalog.ts:624
+msgid "SCRAMBLE"
+msgstr "SCRAMBLE"
+
 #: modes/challenges/catalog.ts:449
 msgid "SDW"
 msgstr "SDW"
@@ -2867,6 +2892,7 @@ msgid "See the better way"
 msgstr "See the better way"
 
 #: components/overlays/admin-messages.tsx:151
+#: components/overlays/rating-overlay.tsx:80
 msgid "SEND"
 msgstr "SEND"
 
@@ -3056,8 +3082,8 @@ msgstr "START GAME"
 msgid "START TUTORIAL"
 msgstr "START TUTORIAL"
 
-#: components/overlays/admin-session.tsx:218
-#: components/overlays/admin-session.tsx:227
+#: components/overlays/admin-session.tsx:222
+#: components/overlays/admin-session.tsx:231
 msgid "STARTS"
 msgstr "STARTS"
 
@@ -3360,7 +3386,7 @@ msgstr "The rules are its own. The keys, the clock, the scoring, how many lives 
 msgid "The same nine, every run. Be quick."
 msgstr "The same nine, every run. Be quick."
 
-#: components/overlays/admin-session.tsx:268
+#: components/overlays/admin-session.tsx:272
 msgid "The standings stay exactly as they are and the places settle now. This cannot be undone — running it again is a new session, with a board of its own."
 msgstr "The standings stay exactly as they are and the places settle now. This cannot be undone — running it again is a new session, with a board of its own."
 
@@ -3400,7 +3426,7 @@ msgstr "The week was [A]’s outright — every day of it, and not one of them c
 msgid "The week went everywhere. [A] took the most of it with [N] days, which was not many."
 msgstr "The week went everywhere. [A] took the most of it with [N] days, which was not many."
 
-#: components/overlays/summary-card.tsx:94
+#: components/overlays/summary-card.tsx:70
 msgid "THE WINDOW HAS CLOSED"
 msgstr "THE WINDOW HAS CLOSED"
 
@@ -3831,7 +3857,7 @@ msgid "You are winning, which is not the same as having won."
 msgstr "You are winning, which is not the same as having won."
 
 #. placeholder {0}: summary.mine.rank
-#: components/overlays/summary-card.tsx:155
+#: components/overlays/summary-card.tsx:131
 msgid "YOU CAME {0}"
 msgstr "YOU CAME {0}"
 
@@ -3884,7 +3910,7 @@ msgstr "Your name appears on the leaderboard."
 msgid "Your profile could not be loaded."
 msgstr "Your profile could not be loaded."
 
-#: components/overlays/summary-card.tsx:153
+#: components/overlays/summary-card.tsx:129
 msgid "YOUR SCORE"
 msgstr "YOUR SCORE"
 

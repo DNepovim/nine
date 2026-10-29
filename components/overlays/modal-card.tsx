@@ -106,7 +106,8 @@ export function ModalCard({
   // challenge banner on the intro, which wears that challenge's own pair on its edge, and
   // a dialog arriving in the app's four stops read as a different object from the row that
   // had just been pressed. Every other dialog keeps the spectrum: a dialog is the app
-  // speaking, and only this one is about a single mode.
+  // speaking, and only this one is about a single mode — this one and the **rating**,
+  // which asks about one session of one challenge and wears that challenge's pair too.
   edge?: readonly [string, string]
   children: (close: () => void) => ReactNode
 }) {
