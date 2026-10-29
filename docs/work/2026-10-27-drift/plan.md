@@ -184,6 +184,8 @@ clock.
 number. That would retire `HitInfo.value` as a key, the spawner's arrival-value
 exclusion and the explaining comments.
 
+Shipped: `4dab5fc` on main, **not deployed** (user: not now). The drift domain row sits uncommitted in `CLAUDE.md` and `docs/domain.md`, for the user to commit.
+
 ## Verification log
 
 **Fourth pass (2026-10-29, after the user's AC 6 amendment): 12 of 12 PASS.** `pnpm check`

@@ -1,8 +1,8 @@
 # Drift
 
 Slug: drift
-Stage: review
-Next: /ship drift
+Stage: shipped
+Next: /deploy (4dab5fc is on main, not live)
 Track: full
 Branch: feat/drift
 Started: 2026-10-27
