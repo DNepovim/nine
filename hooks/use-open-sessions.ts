@@ -25,8 +25,9 @@ const NOTHING: readonly OpenSession[] = []
 
 // The launch's one read, kept so a second consumer joins it rather than repeating it.
 //
-// Reset by two things only: the planner writing a session, and the player renaming
-// themselves, whose name the leader may be (`refreshOpenSessions`). A
+// Reset by three things only: the planner writing a session, the player renaming
+// themselves, whose name the leader may be, and a session run being posted, whose score
+// the leader may now be (`refreshOpenSessions`). A
 // failed read otherwise resolves to no sessions and stays that way for the launch — there
 // is no retry, because the app is restarted often enough that a retry loop would buy very
 // little for the requests it would spend.

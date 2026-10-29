@@ -4,6 +4,7 @@ import { AppState } from 'react-native'
 
 import { useLocalScores } from '@/hooks/use-local-scores'
 import { useOnline } from '@/hooks/use-online'
+import { refreshOpenSessions } from '@/hooks/use-open-sessions'
 import { pendingOf } from '@/lib/local-scores'
 import { flushRunTotals } from '@/lib/run-submission'
 import { flushPendingScores, submitScore } from '@/lib/score-submission'
@@ -81,7 +82,9 @@ export function useScoreSubmission(
       elapsedMs?: number,
     ): Promise<void> =>
       // Handed back so a caller that draws the standings can read them again once the
-      // write has landed — see the session board at game over.
+      // write has landed — see the session board at game over. A session run also moves
+      // the leader the intro's card prints, so that read is thrown away too: otherwise a
+      // new best reached the card only on the next launch.
       submitScore(
         userId,
         nickname,
@@ -91,7 +94,9 @@ export function useScoreSubmission(
         hits,
         sessionId,
         elapsedMs,
-      ).then(() => undefined),
+      ).then(() => {
+        if (sessionId !== null) refreshOpenSessions()
+      }),
     [userId, nickname],
   )
 
