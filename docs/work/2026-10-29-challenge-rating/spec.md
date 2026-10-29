@@ -1,8 +1,8 @@
 # Challenge rating
 
 Slug: challenge-rating
-Stage: review
-Next: /ship challenge-rating
+Stage: shipped
+Next: /deploy (push session_ratings first, then make `ratings` private)
 Track: full
 Branch: feat/challenge-rating
 Started: 2026-10-29

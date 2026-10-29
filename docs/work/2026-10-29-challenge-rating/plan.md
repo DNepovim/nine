@@ -137,3 +137,5 @@ Play untouched, `TYPE` roles in the new dialog.
 
 **Note:** the other session's commit `b28f225` swept this item's **rating** rows in
 `CLAUDE.md` and `docs/domain.md` onto `main`.
+
+Shipped: `8e0daba` on `main` (with `038c524`, the audit ignore). Pushed, not deployed, and the migration not pushed.
