@@ -1,5 +1,5 @@
 import { useEffect } from 'react'
-import { Text, View } from 'react-native'
+import { View } from 'react-native'
 import Animated, {
   cancelAnimation,
   Easing,
@@ -15,10 +15,8 @@ import { scheduleOnRN } from 'react-native-worklets'
 
 import { APP_BLUE, APP_RED, PIE_INK, TARGET_BAND_TRACK } from '@/constants/colors'
 import { GLIMPSE_FADE_MS, PIE_SIZE } from '@/constants/game'
-import { GLYPH } from '@/constants/typography'
 import { cn } from '@/lib/cn'
 import { targetBand } from '@/lib/target-band'
-import type { Drift, Heading } from '@/lib/target-drift'
 import type { TargetExit } from '@/types/game'
 
 const AnimatedCircle = Animated.createAnimatedComponent(Circle)
@@ -42,16 +40,6 @@ const HIT_NUMBER_SCALE = 1.7
 const FAIL_COLOR_MS = 100
 const FAIL_SQUASH = 0.06
 
-// The mark a drifting target wears, and where it sits: at the very edge of the disc, on
-// the side the number is heading — the top for a rising number, the bottom for a falling
-// one. Small and pressed to the rim so it clears the digits, which fill the disc's middle
-// at two digits; and inside the card's own box, so placing cards never has to know it is
-// there. (Hung outside the disc, it was drawn over a neighbour and over the sum row.)
-const DRIFT_ARROW = {
-  1: { glyph: '▲', place: 'top-[2%]' },
-  [-1]: { glyph: '▼', place: 'bottom-[2%]' },
-} as const satisfies Record<Heading, { glyph: string; place: string }>
-
 const fontSizeForDigits = (value: number, scale: number): number => {
   const digits = String(value).length
   const base = digits >= 3 ? 36 : digits === 2 ? 50 : 58
@@ -72,7 +60,6 @@ export function PieCountdown({
   settles = false,
   glimpse = null,
   revealed = false,
-  drift = 0,
 }: {
   value: number
   // The highest sum the board being played reaches, which is what the band tint is
@@ -119,10 +106,6 @@ export function PieCountdown({
   // Separate from `exit` because the end of a run is not an exit: those cards shrink
   // away without one, and their numbers are owed all the same.
   revealed?: boolean
-  // Which way this target's number **drifts**, for the mark that says so — `0` for one that
-  // holds still, which draws none. The number itself is `value`, already drifted by the
-  // card (see `useDriftedValue`), so the band tint follows it like everything else here.
-  drift?: Drift
 }) {
   const scale = size / PIE_SIZE
   const radius = size / 4
@@ -367,18 +350,6 @@ export function PieCountdown({
           {value}
         </Animated.Text>
       </Animated.View>
-      {/* Which way a drifting number is going, on the side it is going to: a mark to aim
-          by, read before the number has moved at all. */}
-      {drift !== 0 && (
-        <View
-          pointerEvents="none"
-          className={cn('absolute inset-x-0 items-center', DRIFT_ARROW[drift].place)}
-        >
-          <Text selectable={false} className={cn(GLYPH['2xs'], 'text-pie')}>
-            {DRIFT_ARROW[drift].glyph}
-          </Text>
-        </View>
-      )}
     </View>
   )
 }

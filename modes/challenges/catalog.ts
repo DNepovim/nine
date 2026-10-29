@@ -489,7 +489,7 @@ const SIDEWAYS: ChallengeSpec = {
 // DRIFT: Accuracy Hard, where no number holds still.
 //
 // Its one thing is the **drift** — every target's number moves by one each second, up or
-// down, the way the arrow on its card says, for as long as it stands. A player aims at
+// down, for as long as it stands. A player aims at
 // where it is going, not where it was, and the number that counts is the one it shows at
 // the press. Everything else is Accuracy Hard: the nine dial, the 16.5 s ring, three
 // hearts, arrivals closing in.

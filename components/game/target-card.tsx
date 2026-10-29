@@ -156,7 +156,6 @@ export function TargetCard({
         glimpse={glimpseLeft(glimpse, target.startProgress, target.duration)}
         revealed={leaving}
         value={shown}
-        drift={target.drift}
         active={!leaving && !frozen}
         clocked={clocked}
         duration={duration}
