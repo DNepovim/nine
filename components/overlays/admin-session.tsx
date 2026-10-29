@@ -45,10 +45,14 @@ const TITLE = msg`CHALLENGES`
 
 export function AdminSession({
   session,
+  lastClosesAt,
   onChanged,
   onBack,
 }: {
   session: Session | null
+  // When the latest booked session closes, or null with none — where a new one's start
+  // is prefilled from. Unused when editing.
+  lastClosesAt: number | null
   onChanged: () => void
   // Where BACK, SAVE and CANCEL SESSION all end up. A session is opened from the list
   // and finished with on the list — closing the whole admin screen from here would take
@@ -56,12 +60,12 @@ export function AdminSession({
   onBack: () => void
 }) {
   const { t } = useLingui()
-  // Tomorrow at noon through the day after at noon, for a new one. Read once on mount:
+  // The first noon after the last booking, for a new one — see `defaultSpan`. Read once on mount:
   // the default is a function of *when the form was opened*, and recomputing it per
   // render would move the fields under the admin at midnight.
   const [span, setSpan] = useState<SessionSpan>(() =>
     session === null
-      ? defaultSpan(Date.now())
+      ? defaultSpan(Date.now(), lastClosesAt)
       : { opensAt: session.opensAt, closesAt: session.closesAt },
   )
   const [modeId, setModeId] = useState<string | null>(session?.modeId ?? null)

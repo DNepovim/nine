@@ -33,7 +33,7 @@ const noon = (year: number, month: number, day: number): number =>
   new Date(year, month - 1, day, 12).getTime()
 
 describe('defaultSpan', () => {
-  it('opens tomorrow at noon and closes the day after at noon', () => {
+  it('opens tomorrow at noon and closes the day after at noon with nothing booked', () => {
     inZone('Europe/Prague')
     const span = defaultSpan(new Date(2026, 5, 10, 9, 17).getTime())
     expect(span.opensAt).toBe(noon(2026, 6, 11))
@@ -68,6 +68,30 @@ describe('defaultSpan', () => {
     // And back again on 25 October 2026.
     const span = defaultSpan(new Date(2026, 9, 23, 8, 0).getTime())
     expect(span.closesAt - span.opensAt).toBe(25 * HOUR)
+  })
+})
+
+describe('defaultSpan after a booking', () => {
+  it('opens at the noon the last session closes on, end to end', () => {
+    inZone('Europe/Prague')
+    const span = defaultSpan(new Date(2026, 5, 10, 9, 0).getTime(), noon(2026, 6, 14))
+    expect(span.opensAt).toBe(noon(2026, 6, 14))
+    expect(span.closesAt).toBe(noon(2026, 6, 15))
+  })
+
+  it('opens at the next noon when the last session closes past one', () => {
+    inZone('Europe/Prague')
+    const span = defaultSpan(
+      new Date(2026, 5, 10, 9, 0).getTime(),
+      new Date(2026, 5, 14, 18, 30).getTime(),
+    )
+    expect(span.opensAt).toBe(noon(2026, 6, 15))
+  })
+
+  it('falls back to tomorrow at noon when every booking has closed', () => {
+    inZone('Europe/Prague')
+    const span = defaultSpan(new Date(2026, 5, 10, 9, 0).getTime(), noon(2026, 6, 8))
+    expect(span.opensAt).toBe(noon(2026, 6, 11))
   })
 })
 

@@ -488,6 +488,7 @@ $$;
 do $$
 declare
   v_id   uuid;
+  v_user uuid;
   v_next challenge_sessions%rowtype;
 begin
   delete from challenge_sessions;
@@ -495,10 +496,11 @@ begin
   assert plan_next_challenge_session('2026-11-03 12:00+00') is null,
     'with nothing ever booked there is no pool, so nothing should be booked';
 
-  -- Two challenges have run; four-keys was the last, closing at noon Prague on the 3rd
-  -- (11:00 UTC, the clocks having gone back on 25 October).
+  -- Three challenges have run; habit longest ago, four-keys last, closing at noon Prague
+  -- on the 3rd (11:00 UTC, the clocks having gone back on 25 October).
   insert into challenge_sessions (mode_id, opens_at, closes_at, measure) values
-    ('challenge/habit',     '2026-10-30 11:00+00', '2026-10-31 11:00+00', 'time'),
+    ('challenge/habit',     '2026-10-28 11:00+00', '2026-10-29 11:00+00', 'time'),
+    ('challenge/drift',     '2026-10-30 11:00+00', '2026-10-31 11:00+00', 'score'),
     ('challenge/four-keys', '2026-11-02 11:00+00', '2026-11-03 11:00+00', 'score');
 
   -- While one is live, it is planned.
@@ -509,23 +511,40 @@ begin
   assert v_id is not null, 'with nothing live or to come, a session should be booked';
   select * into v_next from challenge_sessions where id = v_id;
 
-  assert v_next.opens_at = '2026-11-05 11:00+00',
-    format('should open at noon Prague two days after the last close, got %s', v_next.opens_at);
+  assert v_next.opens_at = '2026-11-04 11:00+00',
+    format('should open at the next noon Prague after the last close, got %s', v_next.opens_at);
   assert v_next.closes_at - v_next.opens_at = interval '24 hours',
     'should run for twenty-four hours';
   assert v_next.mode_id = 'challenge/habit',
-    'should not repeat the challenge that just ran while another is in the pool';
+    'should pick the challenge that has gone longest without a session';
   assert v_next.measure = 'time', 'should carry the measure the challenge was booked with';
   assert v_next.created_by is null, 'nobody planned it, and the row should say so';
 
   assert plan_next_challenge_session('2026-11-03 11:10+00') is null,
     'the session just booked is planned, so a second run should book nothing';
 
-  -- A close long past: two days after it is behind us, so the next noon to come.
+  -- Run exactly at the close: that noon is not behind us, so it opens end to end.
+  delete from challenge_sessions where id = v_id;
+  v_id := plan_next_challenge_session('2026-11-03 11:00+00');
+  assert (select opens_at from challenge_sessions where id = v_id) = '2026-11-03 11:00+00',
+    'a run at the instant of a noon close should open the next session at that noon';
+
+  -- A close long past: the next noon to come, counted from the run, not the close.
   delete from challenge_sessions where id = v_id;
   v_id := plan_next_challenge_session('2026-11-20 09:00+00');
   assert (select opens_at from challenge_sessions where id = v_id) = '2026-11-20 11:00+00',
     'a stale close should fall forward to the next noon in Prague';
+
+  -- Once anything has been played, a challenge nobody played in sixty days is out of the
+  -- pool — habit is the oldest, but only drift and four-keys have scores.
+  delete from challenge_sessions where id = v_id;
+  select id into v_user from profiles order by id limit 1;
+  insert into session_scores (session_id, user_id, best_score, hits, difficulty, updated_at)
+  select id, v_user, 100, 1, 'easy', now()
+    from challenge_sessions where mode_id in ('challenge/drift', 'challenge/four-keys');
+  v_id := plan_next_challenge_session('2026-11-03 11:05+00');
+  assert (select mode_id from challenge_sessions where id = v_id) = 'challenge/drift',
+    'a challenge unplayed in sixty days should drop out while others are played';
 
   raise notice 'challenge_sessions.sql: next session booked on its own OK';
 end;

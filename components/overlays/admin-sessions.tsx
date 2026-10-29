@@ -101,6 +101,11 @@ export function AdminSessions({ onBack }: { onBack: () => void }) {
     return (
       <AdminSession
         session={editing === 'new' ? null : editing}
+        lastClosesAt={
+          editing === 'new' && rows.length > 0
+            ? rows.reduce((latest, row) => Math.max(latest, row.closesAt), 0)
+            : null
+        }
         onChanged={() => {
           setEpoch((n) => n + 1)
           // The intro's card reads its sessions once a launch; a booking is the one

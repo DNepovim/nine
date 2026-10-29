@@ -34,22 +34,40 @@ export const STATUS_LABEL = {
 // and the day a challenge is "on" should be a day a player recognises as one.
 const DEFAULT_HOUR = 12
 
-// What PLAN SESSION opens on: tomorrow at noon, through the day after at noon.
+// What PLAN SESSION opens on: the first noon at or after the last session booked closes,
+// through the noon after that — so a new booking queues up behind what is already
+// planned instead of colliding with it. With nothing booked ahead of `now`, it is
+// tomorrow at noon.
+//
+// "At or after", not "after": windows are half-open, so one opening at the instant the
+// last one closes meets it end to end without overlapping, which is the point of a noon
+// close.
 //
 // Built out of wall-clock noon twice over rather than as "noon plus twenty-four hours",
 // and that distinction is the point. Across a daylight-saving boundary these two noons
 // are 23 or 25 hours apart — which is what two noons *are*, and what was asked for. A
 // dragged start behaves differently on purpose; see `withOpensAt`.
-export function defaultSpan(now: number): SessionSpan {
-  const today = new Date(now)
-  const noonOn = (dayOffset: number): number =>
+export function defaultSpan(
+  now: number,
+  lastClosesAt: number | null = null,
+): SessionSpan {
+  const noonAfter = (day: Date, dayOffset: number): number =>
     new Date(
-      today.getFullYear(),
-      today.getMonth(),
-      today.getDate() + dayOffset,
+      day.getFullYear(),
+      day.getMonth(),
+      day.getDate() + dayOffset,
       DEFAULT_HOUR,
     ).getTime()
-  return { opensAt: noonOn(1), closesAt: noonOn(2) }
+  if (lastClosesAt === null || lastClosesAt <= now) {
+    const today = new Date(now)
+    return { opensAt: noonAfter(today, 1), closesAt: noonAfter(today, 2) }
+  }
+  const closeDay = new Date(lastClosesAt)
+  const opensAt =
+    noonAfter(closeDay, 0) >= lastClosesAt
+      ? noonAfter(closeDay, 0)
+      : noonAfter(closeDay, 1)
+  return { opensAt, closesAt: noonAfter(new Date(opensAt), 1) }
 }
 
 // The start moved, the span kept.
