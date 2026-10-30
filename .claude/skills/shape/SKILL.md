@@ -59,8 +59,10 @@ now than after the code exists:
 - **Is this a mode's business or the engine's?** Nothing outside `modes/` branches on
   a mode's name. If the work wants to behave differently per mode, it is a rule or a
   capability on `RunRules` — say which, roughly.
-- **Does it need a flag?** Anything a player should not see yet is a `constants/features.ts`
-  entry and a floor. Decide the floor here (`nobody` while it is off the app).
+- **Flags are the user's call, never this skill's.** Do not put work behind a
+  `constants/features.ts` key unless the user has asked for a flag on it in so many
+  words. Work ships to whoever reaches the screen it lives on. If you think a flag would
+  help, say so in one line in the shape and leave it out — the user adds one by asking.
 
 ## Step 4 — The boundary
 

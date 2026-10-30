@@ -65,12 +65,12 @@ or whether the push has to go first.
 Four questions this repo punishes you for answering late. Answer all four, even when
 the answer is "none" — a visible "none" is what stops `review` re-deriving it.
 
-| Gate            | The question                                                                                                               |
-| --------------- | -------------------------------------------------------------------------------------------------------------------------- |
-| **Copy / i18n** | Every player-visible string, listed. All of them go through Lingui and get Czech; an unextracted string renders its id.    |
-| **How to Play** | Does this touch controls, targets, timers, modes, difficulty, scoring, streaks or lives? If yes, name the section to edit. |
-| **Flag**        | Is it behind a `constants/features.ts` key, and at what floor? `nobody` while it is off the app entirely.                  |
-| **Buttons**     | Any new pressable needs a `ButtonId` in `constants/buttons.ts` before `TrackedPressable` can use it.                       |
+| Gate            | The question                                                                                                                    |
+| --------------- | ------------------------------------------------------------------------------------------------------------------------------- |
+| **Copy / i18n** | Every player-visible string, listed. All of them go through Lingui and get Czech; an unextracted string renders its id.         |
+| **How to Play** | Does this touch controls, targets, timers, modes, difficulty, scoring, streaks or lives? If yes, name the section to edit.      |
+| **Flag**        | None, unless the user asked for one. Never add a `constants/features.ts` key on your own; if they asked, name it and its floor. |
+| **Buttons**     | Any new pressable needs a `ButtonId` in `constants/buttons.ts` before `TrackedPressable` can use it.                            |
 
 ## Step 5 — Acceptance criteria
 
