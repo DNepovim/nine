@@ -41,7 +41,7 @@ export function usePopupDeck(
   // Not a page of the deck: the **rating** is its own dialog, opened once this one has gone,
   // about the summary the player has just closed. Here rather than beside the deck because
   // the summary hook is what knows which session that was.
-  const rating = useSessionRating(summaries.told, summaries.take, features.has('ratings'))
+  const rating = useSessionRating(summaries.told, summaries.take)
 
   const cards = useMemo<PopupCard[]>(
     () => [

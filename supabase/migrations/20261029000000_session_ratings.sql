@@ -58,16 +58,3 @@ $$;
 
 revoke all on function public.rate_session(uuid, int) from public, anon;
 grant execute on function public.rate_session(uuid, int) to authenticated;
-
--- The feature, hidden: the `nobody` floor while it is off the app. Seeded into the three
--- stacks the challenge lab and Czech sit in, so making it private is the whole of turning
--- it on for testers.
-insert into features (key, note, visibility) values
-  ('ratings',
-   'The dialog after a session''s summary that asks the player to rate the challenge 1 to 9. Needs `challenges` too: without it no summary is ever told, so nothing is ever asked.',
-   'hidden');
-
-insert into role_features (role_key, feature_key) values
-  ('tester',    'ratings'),
-  ('developer', 'ratings'),
-  ('admin',     'ratings');

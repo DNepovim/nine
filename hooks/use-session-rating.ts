@@ -1,4 +1,4 @@
-import { useCallback, useEffect } from 'react'
+import { useCallback } from 'react'
 
 import type { Rating } from '@/lib/session-rating'
 import { rateSession } from '@/lib/session-ratings'
@@ -14,22 +14,14 @@ import type { SessionSummary } from '@/lib/session-summary'
 export function useSessionRating(
   told: SessionSummary | null,
   take: () => void,
-  // Whether this player reaches **ratings**. Handed in for the reason `useSessionSummaries`
-  // is handed `canSee`: the provider is not above the hook that calls this.
-  canRate: boolean,
 ): {
   asking: SessionSummary | null
   send: (rating: Rating) => void
   done: () => void
 } {
-  const asking = canRate ? told : null
-
-  // Told while this player could not be asked — a role preview without the feature — is
-  // let go rather than kept: otherwise ending the preview would put up a rating for a
-  // session closed long before, with nothing on screen to say why.
-  useEffect(() => {
-    if (!canRate && told !== null) take()
-  }, [canRate, told, take])
+  // No gate of its own: whoever is told a summary is asked about it, and only a player
+  // who reaches **challenges** is ever told one.
+  const asking = told
 
   // Fire and forget. The dialog closes on the press whether or not the write lands — see
   // `rateSession` — so there is nothing here to wait for.

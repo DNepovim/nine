@@ -38,10 +38,6 @@ export const FLAGS = [
   // says what last week on the boards came to. Gates the read as well as the card — a
   // player who cannot be shown it has no business asking the server about it.
   'recap',
-  // The rating: the dialog after a session's summary that asks the player how the
-  // challenge was, 1 to 9 on a keypad. Needs `challenges` as well — without it no summary
-  // is ever told, so there is never anything to ask about.
-  'ratings',
   // Czech: the LANGUAGE row in options, and so the only door to any language but
   // English. Without the feature the app is in English and stays there — a locale
   // stored by a build that reached this one is kept, not cleared, so granting it again
