@@ -1,5 +1,5 @@
 import { msg } from '@lingui/core/macro'
-import { Trans, useLingui } from '@lingui/react/macro'
+import { Plural, Trans, useLingui } from '@lingui/react/macro'
 import { useEffect, useState } from 'react'
 import { ScrollView, Text, View } from 'react-native'
 
@@ -9,6 +9,7 @@ import { AdminTable, type AdminTableRow } from '@/components/overlays/admin-tabl
 import { DialMark } from '@/components/overlays/dial-mark'
 import { PrimaryButton } from '@/components/primary-button'
 import { TYPE } from '@/constants/typography'
+import { listChallengeRatings, type ChallengeRating } from '@/lib/admin/ratings'
 import { listSessions, type AdminSession } from '@/lib/admin/sessions'
 import { spanStatus, type SpanStatus } from '@/lib/challenge-session'
 import { cn } from '@/lib/cn'
@@ -49,6 +50,21 @@ function SessionLine({ session, now }: { session: AdminSession | null; now: numb
   return <Trans>LAST SESSION WAS {closed}</Trans>
 }
 
+// What players made of the challenge, over every session of it — the figure an admin
+// reads when deciding whether it comes back. Nothing at all for a challenge nobody has
+// rated, and nothing for a tester, whose read of it is refused: a line saying "no
+// ratings" would be wrong for the second and noise for the first.
+function RatingLine({ rating }: { rating: ChallengeRating }) {
+  const average = rating.average.toFixed(1)
+  return (
+    <>
+      <Trans>RATED {average}</Trans>
+      {' · '}
+      <Plural value={rating.ratings} one="# RATING" other="# RATINGS" />
+    </>
+  )
+}
+
 // The planner's row in the shape the challenge dialog reads. What the planner does not
 // carry is filled with what a dialog cannot tell apart: no leader (the dialog reads the
 // standings themselves), and the measure the challenge's rules give.
@@ -87,6 +103,7 @@ export function DevOverlay({
   const { t } = useLingui()
   const [openedAt] = useState(() => Date.now())
   const [sessions, setSessions] = useState<readonly AdminSession[]>([])
+  const [ratings, setRatings] = useState<ReadonlyMap<string, ChallengeRating>>(new Map())
 
   // Read once on open, and failures are swallowed on purpose: the sessions are extra
   // information about a list that is already complete without them. A tester who cannot
@@ -96,17 +113,22 @@ export function DevOverlay({
       const res = await listSessions()
       setSessions(res.rows)
     })()
+    // The same bargain for the ratings, which only an admin is given at all.
+    void (async () => {
+      setRatings(await listChallengeRatings())
+    })()
   }, [])
 
   // One row per challenge, in the planner's own table without its date column: the
-  // name in its own colours with what it is and where its session stands under it,
-  // and nothing beside it. Pressing a row deals the challenge.
+  // name in its own colours with what it is, where its session stands and — for an admin
+  // — what players made of it under it, and nothing beside it. Pressing a row deals the challenge.
   const rows: readonly AdminTableRow[] = CHALLENGES.map((mode) => {
     const shown = shownSession(
       sessions.filter((session) => session.modeId === mode.id),
       openedAt,
     )
     const dial = dialOf(mode.id)
+    const rating = ratings.get(mode.id)
     return {
       key: mode.id,
       cells: [
@@ -132,6 +154,11 @@ export function DevOverlay({
             <Text selectable={false} className={cn(TYPE.hint, 'text-dim')}>
               <SessionLine session={shown} now={openedAt} />
             </Text>
+            {rating !== undefined && (
+              <Text selectable={false} className={cn(TYPE.hint, 'text-dim')}>
+                <RatingLine rating={rating} />
+              </Text>
+            )}
           </View>
         </View>,
       ],

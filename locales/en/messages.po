@@ -312,6 +312,11 @@ msgstr "[W] took the all-time [BOARD] record on [D], and still has it."
 msgid "{0, plural, one {# PLAYER} other {# PLAYERS}}"
 msgstr "{0, plural, one {# PLAYER} other {# PLAYERS}}"
 
+#. placeholder {0}: rating.ratings
+#: components/overlays/dev-overlay.tsx:63
+msgid "{0, plural, one {# RATING} other {# RATINGS}}"
+msgstr "{0, plural, one {# RATING} other {# RATINGS}}"
+
 #. placeholder {0}: Math.floor(joinedMonths / MONTHS_IN_YEAR)
 #: components/overlays/player-profile-overlay.tsx:327
 msgid "{0, plural, one {joined a year ago} other {joined # years ago}}"
@@ -2631,6 +2636,10 @@ msgstr "Put the first score on a session board."
 #: components/overlays/admin-knowledge.tsx:285
 msgid "ramp(x) = x × ({floor} + {slack} × 0.5 ^ (hits ÷ {halfLife}))"
 msgstr "ramp(x) = x × ({floor} + {slack} × 0.5 ^ (hits ÷ {halfLife}))"
+
+#: components/overlays/dev-overlay.tsx:61
+msgid "RATED {average}"
+msgstr "RATED {average}"
 
 #: constants/achievements.ts:346
 msgid "Reach 25 hits in one run before losing a life."
