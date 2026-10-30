@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 
 import { ACHIEVEMENT_SCALE, GOLD_SCALE, PRIMARY_INK } from '@/constants/colors'
 import { allModes } from '@/modes'
-import { MULTIPLAYER_GRADIENT } from '@/modes/palette'
+import { getDifficultyColor, meterInkOf, MULTIPLAYER_GRADIENT } from '@/modes/palette'
 
 import { CHALLENGES } from './catalog'
 import {
@@ -327,5 +327,26 @@ describe('the tints a drilled challenge draws its targets on', () => {
 
   it('answers for a drill of one without dividing by nothing', () => {
     expect(challengeTints(challengeHue(0), 1)).toHaveLength(1)
+  })
+})
+
+describe('the meter ink', () => {
+  // The analytics breakdown draws a bar per mode × rung. A challenge's gradient starts on
+  // the shared near-black, so its easy rung must not be the bar's colour.
+  it('never draws a challenge in the near-black, at any rung', () => {
+    for (const { id } of CHALLENGES) {
+      for (const rung of ['easy', 'hard', 'extreme'] as const) {
+        expect(meterInkOf(id, rung)).not.toBe(PRIMARY_INK)
+      }
+    }
+  })
+
+  it('tells two challenges apart', () => {
+    const inks = new Set(CHALLENGES.map(({ id }) => meterInkOf(id, 'easy')))
+    expect(inks.size).toBe(CHALLENGES.length)
+  })
+
+  it("draws a board's rung where the selectors do", () => {
+    expect(meterInkOf('accuracy', 'hard')).toBe(getDifficultyColor('accuracy', 'hard'))
   })
 })

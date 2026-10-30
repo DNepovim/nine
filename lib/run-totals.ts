@@ -1,7 +1,8 @@
 import AsyncStorage from '@react-native-async-storage/async-storage'
+import { isOneOf } from 'narrowland'
 
 import { RUN_TOTALS_KEY } from '@/constants/storage'
-import { type Difficulty, type ScoredMode } from '@/modes'
+import { SCORED_MODES, type Difficulty, type ModeId, type ScoredMode } from '@/modes'
 
 // Runs whose lifetime counters have not reached the server yet.
 //
@@ -14,9 +15,8 @@ import { type Difficulty, type ScoredMode } from '@/modes'
 // `runId` is what lets a run be posted more than once without being counted more than
 // once: it is minted when the run is dealt, put away with it, and the server holds the
 // run's figures against it — see lib/run-id.ts, machines/game.ts and `record_run`.
-export type PendingRun = {
+type RunFigures = {
   runId: string
-  mode: ScoredMode
   difficulty: Difficulty
   score: number
   hits: number
@@ -31,6 +31,37 @@ export type PendingRun = {
   // never describe different sets of runs; only the last post closes the run on the
   // server, and nothing may be posted under the same name after it.
   final: boolean
+}
+
+// Which of two kinds of run this is, and the type is what keeps them apart. A board run
+// goes to `record_run`, which moves the board's lifetime counters. A run played in a
+// **session** goes to `record_session_run`, which leaves a receipt for the analytics and
+// touches nothing else — its score belongs to the session, and reaches the fortune from
+// there. It carries no mode: the server reads the challenge off the session, so a
+// receipt can never disagree with the session it names.
+type RunKind = { sessionId: null; mode: ScoredMode } | { sessionId: string }
+
+// One run as it is posted.
+export type RunPost = RunFigures & RunKind
+
+// Which of the two a run is posted as, or null for a run that is counted nowhere — a
+// Trainee run, and a challenge run that lost its session on the way back from storage
+// (see `runSession` in app/(tabs)/index.tsx). The second must stay null rather than fall
+// through to a board: a challenge's figures have no board to go to.
+//
+// A board first, though no mode is both: a challenge is a mode of its own and never one
+// of the scored ones.
+export function runKindOf(
+  mode: ModeId,
+  difficulty: Difficulty,
+  sessionId: string | null,
+): (RunKind & { difficulty: Difficulty }) | null {
+  if (isOneOf(mode, SCORED_MODES)) return { sessionId: null, mode, difficulty }
+  if (sessionId !== null) return { sessionId, difficulty }
+  return null
+}
+
+export type PendingRun = RunPost & {
   // When this entry was written, which is not when the run ended: a run still being
   // played posts several times. What the pruning below measures age against, and what
   // tells a drained entry from the one that replaced it while it was draining.
@@ -40,12 +71,37 @@ export type PendingRun = {
 // The same run as a queue written by an earlier build has it. A device updating
 // mid-queue is the ordinary case, not an edge one — the runs it is still holding were
 // written by the build before this. Everything an older build wrote was written at game
-// over and under a name of its own, which is `final` with nothing else to follow it.
-type StoredRun = Omit<PendingRun, 'elapsedMs' | 'final' | 'postedAt'> & {
+// over and under a name of its own, which is `final` with nothing else to follow it; and
+// every one of them was a board run, since nothing else was queued before a session run
+// was, which is a `sessionId` it never wrote.
+type StoredRun = Omit<RunFigures, 'elapsedMs' | 'final'> & {
   elapsedMs?: number
   final?: boolean
   postedAt?: string
   endedAt?: string
+} & ({ sessionId?: null; mode: ScoredMode } | { sessionId: string })
+
+// A stored entry as this build reads it. A run queued before this build knew to time it
+// lands with a length of zero, which is the truth about what was recorded rather than a
+// guess dressed as a measurement. An entry with no stamp at all — neither field, so
+// neither this build nor the one before it wrote it — is left to the pruning, which is
+// the safe way round: a queue entry nothing can date is one nothing can be trusted to
+// stop retrying.
+export function fromStored(run: StoredRun): PendingRun {
+  const figures = {
+    runId: run.runId,
+    difficulty: run.difficulty,
+    score: run.score,
+    hits: run.hits,
+    accSum: run.accSum,
+    spdSum: run.spdSum,
+    elapsedMs: run.elapsedMs ?? 0,
+    final: run.final ?? true,
+    postedAt: run.postedAt ?? run.endedAt ?? new Date(0).toISOString(),
+  }
+  return 'mode' in run
+    ? { ...figures, sessionId: null, mode: run.mode }
+    : { ...figures, sessionId: run.sessionId }
 }
 
 // What the queue is bounded by. A device that plays without ever reaching the server —
@@ -88,17 +144,7 @@ export async function readRunTotals(): Promise<PendingRun[]> {
   try {
     const raw = await AsyncStorage.getItem(RUN_TOTALS_KEY)
     if (raw === null) return []
-    // A run queued before this build knew to time it lands with a length of zero, which
-    // is the truth about what was recorded rather than a guess dressed as a measurement.
-    // An entry with no stamp at all — neither field, so neither this build nor the one
-    // before it wrote it — is left to the pruning, which is the safe way round: a queue
-    // entry nothing can date is one nothing can be trusted to stop retrying.
-    return (JSON.parse(raw) as StoredRun[]).map((run) => ({
-      ...run,
-      elapsedMs: run.elapsedMs ?? 0,
-      final: run.final ?? true,
-      postedAt: run.postedAt ?? run.endedAt ?? new Date(0).toISOString(),
-    }))
+    return (JSON.parse(raw) as StoredRun[]).map(fromStored)
   } catch {
     return []
   }

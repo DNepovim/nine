@@ -75,3 +75,13 @@ export function getDifficultyColor(id: ModeId, difficulty: Difficulty): string {
 // that re-bind `--color-score`: both belong to board records.
 export const scoreInkOf = (id: ModeId): string =>
   isChallenge(id) ? challengeInk(gradientOf(id)[1]) : gradientOf(id)[0]
+
+// What a mode × rung is drawn in on a meter — the bars on the analytics screen.
+//
+// A board's rung is a position on its gradient, as the selectors draw it. A challenge's
+// gradient starts on the near-black every challenge shares, so its easy rung would be a
+// bar in the colour text is drawn in, and two challenges would be one colour. It takes
+// the shade `scoreInkOf` gives it instead: its own hue, whatever the rung — the label
+// beside the bar names the rung.
+export const meterInkOf = (id: ModeId, difficulty: Difficulty): string =>
+  isChallenge(id) ? scoreInkOf(id) : getDifficultyColor(id, difficulty)

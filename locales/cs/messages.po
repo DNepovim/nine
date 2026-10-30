@@ -2782,9 +2782,9 @@ msgstr "HRY"
 msgid "RUNS A DAY"
 msgstr "HRY PO DNECH"
 
-#: components/overlays/admin-stats.tsx:263
-msgid "RUNS BY BOARD"
-msgstr "HRY PODLE TABULKY"
+#: components/overlays/admin-stats.tsx:265
+msgid "RUNS BY MODE"
+msgstr "HRY PODLE MÓDU"
 
 #: components/overlays/arcade-teaser.tsx:136
 msgid "Same dial, new adventures. Set out on the path of multiplication and conquest."

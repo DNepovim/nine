@@ -9,15 +9,16 @@ import {
   sentKey,
   writeRunTotals,
   type PendingRun,
+  type RunPost,
 } from '@/lib/run-totals'
 import { supabase } from '@/lib/supabase'
-import { type Difficulty, type ScoredMode } from '@/modes'
 
 // How the server answered. `refused` is the one that matters: the run was rejected for a
 // reason that was not the connection, so asking again will be rejected again.
 type Sent = 'counted' | 'offline' | 'refused'
 
-// One run, as its lifetime counters stand.
+// One run, as its lifetime counters stand — or, for a run played in a session, as its
+// receipt stands.
 //
 // Sent wherever `submitScore` is sent — on every board record as it happens, again at
 // game over, again from END RUN — because the two describe one run and a profile whose
@@ -26,24 +27,39 @@ type Sent = 'counted' | 'offline' | 'refused'
 // and moves the totals by the difference, so a second post of the same run adds nothing
 // and a later one adds only what the run gained in between.
 async function sendRun(run: PendingRun): Promise<Sent> {
-  const { error } = await supabase.rpc('record_run', {
-    p_run_id: run.runId,
-    p_mode: run.mode,
-    p_difficulty: run.difficulty,
-    p_score: run.score,
-    p_hits: run.hits,
-    p_acc_sum: run.accSum,
-    p_spd_sum: run.spdSum,
-    p_elapsed_ms: run.elapsedMs,
-    p_final: run.final,
-  })
+  const { error } =
+    run.sessionId === null
+      ? await supabase.rpc('record_run', {
+          p_run_id: run.runId,
+          p_mode: run.mode,
+          p_difficulty: run.difficulty,
+          p_score: run.score,
+          p_hits: run.hits,
+          p_acc_sum: run.accSum,
+          p_spd_sum: run.spdSum,
+          p_elapsed_ms: run.elapsedMs,
+          p_final: run.final,
+        })
+      : // A session run's receipt, and nothing else: no mode, because the server reads
+        // the challenge off the session, and no factor sums, because those are a
+        // board's figures. See `record_session_run`.
+        await supabase.rpc('record_session_run', {
+          p_run_id: run.runId,
+          p_session_id: run.sessionId,
+          p_difficulty: run.difficulty,
+          p_score: run.score,
+          p_hits: run.hits,
+          p_elapsed_ms: run.elapsedMs,
+          p_final: run.final,
+        })
   noteRequest(error)
   if (error === null) return 'counted'
   if (isNetworkFailure(error.message)) return 'offline'
   // The server rejecting a run it should have counted is invisible to the player and
   // never expected, which is exactly what error logging is for.
   reportRefusal('run', error, {
-    mode: run.mode,
+    mode: run.sessionId === null ? run.mode : null,
+    session: run.sessionId,
     difficulty: run.difficulty,
     score: run.score,
     hits: run.hits,
@@ -59,20 +75,7 @@ async function sendRun(run: PendingRun): Promise<Sent> {
 //
 // Called more than once for a run that posts before it is over, and the queue keeps only
 // the latest — see `queueRun`.
-export async function countRun(
-  userId: string | null,
-  run: {
-    runId: string
-    mode: ScoredMode
-    difficulty: Difficulty
-    score: number
-    hits: number
-    accSum: number
-    spdSum: number
-    elapsedMs: number
-    final: boolean
-  },
-): Promise<void> {
+export async function countRun(userId: string | null, run: RunPost): Promise<void> {
   const pending: PendingRun = { ...run, postedAt: new Date().toISOString() }
   const store = await readRunTotals()
   await writeRunTotals(queueRun(store, pending))

@@ -1,8 +1,8 @@
 # Ratings in the challenge lab
 
 Slug: lab-ratings
-Stage: verify
-Next: /ship lab-ratings
+Stage: shipped
+Next: /deploy (after pushing the migrations)
 Track: small
 Branch: feat/lab-ratings
 Started: 2026-10-30
@@ -90,3 +90,5 @@ feeding ratings to the automatic planner; who rated what (never shown, by design
 | 3   | Admin-only read                   | PASS   | `session_ratings.sql`: a non-admin and `anon` are refused; an admin gets one row per rated challenge with the right count and average                                                     |
 | 4   | Tester sees the lab as before     | PASS   | Same walk with the role set to `tester`: every row, no rating lines, no page errors                                                                                                       |
 | 5   | Checks green                      | PASS   | Types, Knip, 2,099 tests, `i18n:verify` and Prettier on this item's files. `pnpm check` itself stops on Prettier for another session's `docs/work/2026-10-29-challenge-analytics/plan.md` |
+
+Shipped: `c3506fe` on `main`. Pushed, not deployed, and the migration not pushed.

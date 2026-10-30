@@ -39,6 +39,7 @@ export {
   getDifficultyColor,
   gradientOf,
   lerpColor,
+  meterInkOf,
   MULTIPLAYER_GRADIENT,
   scoreInkOf,
 } from './palette'

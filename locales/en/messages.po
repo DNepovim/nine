@@ -2782,9 +2782,9 @@ msgstr "RUNS"
 msgid "RUNS A DAY"
 msgstr "RUNS A DAY"
 
-#: components/overlays/admin-stats.tsx:263
-msgid "RUNS BY BOARD"
-msgstr "RUNS BY BOARD"
+#: components/overlays/admin-stats.tsx:265
+msgid "RUNS BY MODE"
+msgstr "RUNS BY MODE"
 
 #: components/overlays/arcade-teaser.tsx:136
 msgid "Same dial, new adventures. Set out on the path of multiplication and conquest."

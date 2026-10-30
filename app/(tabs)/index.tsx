@@ -148,6 +148,7 @@ import { runChallenge } from '@/lib/next-challenge'
 import { heldPeriods, medalPeriods } from '@/lib/record-medals'
 import { newRunId } from '@/lib/run-id'
 import { countRun } from '@/lib/run-submission'
+import { runKindOf } from '@/lib/run-totals'
 import {
   restoreRun,
   savedPositions,
@@ -1196,11 +1197,14 @@ export default function GameScreen() {
       // `elapsedMs` is short by the stretch being played right now — the machine only
       // banks it on leaving `playing` — which costs nothing, because the server keeps
       // the highest figure a run has ever posted and the last post carries the lot.
-      if (isOneOf(mode, SCORED_MODES)) {
+      //
+      // A session run posts its receipt here too, beside its session score — see
+      // `runKindOf`.
+      const counted = runKindOf(mode, rules.difficulty, runSession)
+      if (counted !== null) {
         void countRun(userId, {
+          ...counted,
           runId,
-          mode,
-          difficulty,
           score: state.context.score,
           hits: state.context.hits,
           accSum: state.context.accSum,
@@ -1418,18 +1422,21 @@ export default function GameScreen() {
   // after game over, and only the first of them is the run. A repeat would be harmless —
   // the server would find the run already closed and do nothing — but it is a round trip
   // to be told so.
+  //
+  // A run played in a session closes its receipt the same way, which is what puts a
+  // challenge run on the analytics screen — see `runKindOf`.
   const countedRunRef = useRef(false)
   useEffect(() => {
     if (!isGameOver) {
       countedRunRef.current = false
       return
     }
-    if (countedRunRef.current || !isOneOf(mode, SCORED_MODES)) return
+    const counted = runKindOf(mode, rules.difficulty, runSession)
+    if (countedRunRef.current || counted === null) return
     countedRunRef.current = true
     void countRun(userId, {
+      ...counted,
       runId,
-      mode,
-      difficulty,
       score: state.context.score,
       hits,
       accSum,
@@ -1440,7 +1447,8 @@ export default function GameScreen() {
   }, [
     isGameOver,
     mode,
-    difficulty,
+    rules.difficulty,
+    runSession,
     state.context.score,
     hits,
     accSum,
@@ -1482,15 +1490,16 @@ export default function GameScreen() {
     // Counted before the score guard below: a run that scored nothing is still a run
     // the player played, and "how many runs" is not "how many went well".
     //
-    // Board runs only. `countRun` writes `player_totals`, which is keyed by mode ×
-    // difficulty — a board — and takes a `ScoredMode` to say so. A challenge's figures
-    // belong to the session it was played in and reach the player's fortune from there.
-    if (onBoard && !countedRunRef.current) {
+    // A board run moves `player_totals`, which is keyed by mode × difficulty — a board.
+    // A session run leaves only a receipt, for the analytics: its figures belong to the
+    // session it was played in and reach the player's fortune from there. `runKindOf`
+    // tells the two apart, and the type keeps the second away from the first's counters.
+    const counted = runKindOf(mode, rules.difficulty, runSession)
+    if (counted !== null && !countedRunRef.current) {
       countedRunRef.current = true
       void countRun(userId, {
+        ...counted,
         runId,
-        mode,
-        difficulty,
         score,
         hits,
         accSum,

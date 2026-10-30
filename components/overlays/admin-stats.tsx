@@ -18,21 +18,15 @@ import { cn } from '@/lib/cn'
 import { formatShortDay } from '@/lib/format-date'
 import { POSTHOG_PROJECT_URL } from '@/lib/posthog-project'
 import { type StatsWindow } from '@/lib/stats-window'
-import {
-  DIFFICULTIES,
-  getDifficultyColor,
-  isModeId,
-  labelOf,
-  type Difficulty,
-} from '@/modes'
+import { DIFFICULTIES, isModeId, labelOf, meterInkOf, type Difficulty } from '@/modes'
 
 // How the app is doing: the third door off the admin hub, and the only one that reads
 // without writing anything.
 //
 // Everything here was already in the database and nothing was asking it. The screen is
 // one call — see `admin_stats` — drawn as four blocks, in the order somebody actually
-// wants them: what this window came to, how the fortnight went, which boards it was
-// played on, and what each challenge drew.
+// wants them: what this window came to, how the fortnight went, which modes it was
+// played on — boards and challenges both — and what each challenge drew.
 //
 // **No figure on this screen names anybody.** That is a property of the function behind
 // it rather than a choice made here: it returns counts, sums and groups and has no shape
@@ -254,13 +248,15 @@ export function AdminStats({
             </View>
           </View>
 
-          {/* ── Which board ──
-              Mode and rung together, because that pairing is what this app calls a board.
-              Each bar wears that board's own colour — the hue says which mode and the
-              shade says which rung, exactly as the selectors on the intro do — and the
-              name on the bar is what actually identifies it. See `MeterRow`. */}
+          {/* ── Which mode ──
+              Mode and rung together. For Accuracy and Speed that pairing is what this app
+              calls a board; a challenge is not one — its runs belong to a session — which
+              is why the heading says mode since challenge runs were counted here. Each bar
+              wears its mode's own colour — the hue says which mode and the shade says
+              which rung, exactly as the selectors on the intro do — and the name on the
+              bar is what actually identifies it. See `MeterRow`. */}
           <Text selectable={false} className={cn(TYPE.caption, 'mb-1.5 text-dim')}>
-            <Trans>RUNS BY BOARD</Trans>
+            <Trans>RUNS BY MODE</Trans>
           </Text>
           <View className="mb-3 rounded-xl bg-card px-2.5 pb-1 pt-2.5">
             {stats.boards.length === 0 ? (
@@ -286,7 +282,7 @@ export function AdminStats({
                     // a row the server holds and the code does not, the same case the
                     // sessions list draws in red. Dim, rather than a hue borrowed from a
                     // mode it is not.
-                    color={known ? getDifficultyColor(board.mode, rung) : DIM_INK}
+                    color={known ? meterInkOf(board.mode, rung) : DIM_INK}
                   />
                 )
               })
