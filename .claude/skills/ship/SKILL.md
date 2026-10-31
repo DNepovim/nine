@@ -176,9 +176,13 @@ If yes, draft the entry and show it for confirmation **before writing the file**
 - `accent` — a colour from the app's mode spectrum (`#4C7EFF`, `#7273D2`,
   `#c36282`, `#E5534B`, `#FF8C00`).
 - `title` — a few words, sentence case; it is upper-cased in the UI.
-- `body` — markdown, and **brief**: two or three sentences whose job is to make a
-  player want to try it. Say what they can now do and why that is good, then
-  stop.
+- `body` — markdown, and **brief**: one to three short sentences, about thirty
+  words at most. Say what the player can now do, then stop.
+  - No preamble ("X now does Y"), no reassurance ("your score still counts"), no
+    comparison with how it used to work, no dashes leading into an aside. If a
+    sentence is not telling the player what to do or what they get, cut it.
+  - Read it back and cut it again. The popup is glanced at on the way into a
+    run; anything longer than the title can carry in a breath is a changelog.
   - Leave out the specifics — colours, timings, thresholds, counts, file names,
     commit types, anything about how it was built. A player is not reading a
     changelog.
