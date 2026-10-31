@@ -85,7 +85,6 @@ export type ButtonId =
 
   // ── Rating — the dialog after a session's summary ──
   | 'rating.key'
-  | 'rating.send'
   | 'rating.dismiss'
 
   // ── Achievements and medals ──

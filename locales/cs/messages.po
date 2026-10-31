@@ -422,10 +422,6 @@ msgstr "🦅 Orel je Rychlost v nejtěžší podobě — za střemhlavý let, ne
 msgid "🦉 The owl is Accuracy at its hardest. That board rewards the exact route, and the owl is the eye that finds it."
 msgstr "🦉 Sova je Přesnost v nejtěžší podobě. Ten žebříček odměňuje přesně vedenou cestu a sova je to oko, které ji najde."
 
-#: components/overlays/rating-overlay.tsx:69
-msgid "1 = NOT FOR ME"
-msgstr "1 = NIC PRO MĚ"
-
 #: components/overlays/admin-knowledge.tsx:310
 msgid "3 lives; −1 per expired target"
 msgstr "3 životy; −1 za každý cíl, kterému vypršel čas"
@@ -433,10 +429,6 @@ msgstr "3 životy; −1 za každý cíl, kterému vypršel čas"
 #: components/overlays/admin-knowledge.tsx:150
 msgid "5 finished Accuracy or Speed runs in a row, each under {POOR_RUN_SCORE}"
 msgstr "5 dokončených her Přesnosti nebo Rychlosti po sobě, každá pod {POOR_RUN_SCORE}"
-
-#: components/overlays/rating-overlay.tsx:72
-msgid "9 = MORE OF THIS"
-msgstr "9 = CHCI VÍC"
 
 #: components/overlays/admin-knowledge.tsx:255
 msgid "a / s: Accuracy {accBlend}, Speed {spdBlend}."
@@ -1223,10 +1215,6 @@ msgstr "Každé tlačítko končí na devítinásobku své váhy: 81 u 9×, 9 u 
 msgid "EVERY CHALLENGE, ANY WINDOW — NO BOARD KEPT"
 msgstr "KAŽDÁ VÝZVA, KDYKOLI — BEZ ŽEBŘÍČKU"
 
-#: modes/challenges/catalog.ts:628
-msgid "Every hit scrambles the dial."
-msgstr "Každý zásah zamíchá číselník."
-
 #: lib/compare-lines.ts:35
 msgid "Every column leans your way. There is nothing here they hold."
 msgstr "Oba sloupce se kloní k tobě. Soupeř tu nedrží vůbec nic."
@@ -1234,6 +1222,10 @@ msgstr "Oba sloupce se kloní k tobě. Soupeř tu nedrží vůbec nic."
 #: lib/recap-lines.ts:80
 msgid "Every day was [A]’s except [D]. [B] got exactly one, and made it count."
 msgstr "Každý den patřil hráči [A], kromě jednoho: [D] si ho vzal [B], a nenechal si ho ujít."
+
+#: modes/challenges/catalog.ts:628
+msgid "Every hit scrambles the dial."
+msgstr "Každý zásah zamíchá číselník."
 
 #: modes/challenges/catalog.ts:513
 msgid "Every number drifts. Catch it before it moves."
@@ -1455,10 +1447,6 @@ msgstr "ČTYŘI TLAČÍTKA"
 msgid "Four keys, doubled speed"
 msgstr "Čtyři tlačítka, dvojnásobná rychlost"
 
-#: components/overlays/install-overlay.tsx:43
-msgid "Full screen, no browser bar, and it keeps working offline."
-msgstr "Celá obrazovka, žádná lišta prohlížeče a funguje i offline."
-
 #: lib/recap-lines.ts:190
 msgid "Friday"
 msgstr "v pátek"
@@ -1466,6 +1454,10 @@ msgstr "v pátek"
 #: constants/achievements.ts:525
 msgid "FULL HOUSE"
 msgstr "PLNÝ DŮM"
+
+#: components/overlays/install-overlay.tsx:43
+msgid "Full screen, no browser bar, and it keeps working offline."
+msgstr "Celá obrazovka, žádná lišta prohlížeče a funguje i offline."
 
 #: modes/registry.ts:133
 msgid "GAME"
@@ -1508,13 +1500,6 @@ msgid "GOOD SPORT"
 msgstr "FAIR PLAY"
 
 #: machines/tutorial-lesson.ts:302
-#: components/overlays/install-overlay.tsx:21
-#: components/overlays/install-overlay.tsx:22
-#: components/overlays/install-overlay.tsx:23
-#: components/overlays/install-overlay.tsx:24
-#: components/overlays/install-overlay.tsx:25
-#: components/overlays/install-overlay.tsx:26
-#: components/overlays/install-overlay.tsx:27
 msgid "GOOD. THE NEXT ONE IS YOURS"
 msgstr "DOBŘE. DALŠÍ JE NA TOBĚ"
 
@@ -1523,6 +1508,13 @@ msgid "GOOSE EGG"
 msgstr "ČISTÁ NULA"
 
 #: components/overlays/feedback-reply-overlay.tsx:110
+#: components/overlays/install-overlay.tsx:21
+#: components/overlays/install-overlay.tsx:22
+#: components/overlays/install-overlay.tsx:23
+#: components/overlays/install-overlay.tsx:24
+#: components/overlays/install-overlay.tsx:25
+#: components/overlays/install-overlay.tsx:26
+#: components/overlays/install-overlay.tsx:27
 msgid "GOT IT"
 msgstr "ROZUMÍM"
 
@@ -1628,6 +1620,10 @@ msgstr "HODINY"
 msgid "HOW DID IT END?"
 msgstr "JAK TO DOPADLO?"
 
+#: components/overlays/rating-overlay.tsx:77
+msgid "HOW DO YOU LIKE THE CHALLENGE?"
+msgstr "JAK SE TI VÝZVA LÍBÍ?"
+
 #: components/game/arcade-dawn.tsx:127
 #: components/overlays/arcade-teaser.tsx:147
 msgid "How far can you go?"
@@ -1637,10 +1633,6 @@ msgstr "Jak daleko to dotáhneš?"
 #: components/overlays/menu-overlay.tsx:711
 msgid "HOW TO PLAY"
 msgstr "JAK HRÁT"
-
-#: components/overlays/rating-overlay.tsx:54
-msgid "HOW WAS THIS ONE?"
-msgstr "JAK SE TI LÍBILA?"
 
 #: modes/difficulty.ts:54
 msgid "HRD"
@@ -1955,13 +1947,13 @@ msgstr "MINUTY"
 msgid "Miss a session's top three by a single point, or a tenth of a second."
 msgstr "Mine tě třetí místo v termínu o jediný bod nebo o desetinu sekundy."
 
-#: components/overlays/how-to-play-overlay.tsx:44
-msgid "MODES"
-msgstr "MÓDY"
-
 #: modes/challenges/catalog.ts:627
 msgid "MIX"
 msgstr "MIX"
+
+#: components/overlays/how-to-play-overlay.tsx:44
+msgid "MODES"
+msgstr "MÓDY"
 
 #: lib/recap-lines.ts:186
 msgid "Monday"
@@ -2229,7 +2221,7 @@ msgid "Not much happened. [A] took [N] of the [P] days anyone turned up for."
 msgstr "Nic moc se nedělo. Hrálo se jen [P]× a [N] z toho patřilo hráči [A]."
 
 #: components/game/step-up-toast.tsx:115
-#: components/overlays/rating-overlay.tsx:92
+#: components/overlays/rating-overlay.tsx:100
 #: components/overlays/tutorial-done-modal.tsx:114
 #: components/overlays/tutorial-offer-modal.tsx:95
 msgid "NOT NOW"
@@ -2447,14 +2439,6 @@ msgstr "Otevři denní žebříček prvním skóre."
 msgid "Open a session on an easier difficulty. The first run is a warm-up, and the weights come back slower than you remember them."
 msgstr "Začínej na lehčí obtížnosti. První hra je rozehřívací a váhy se ti vybaví pomaleji, než si pamatuješ."
 
-#: components/overlays/install-overlay.tsx:69
-msgid "Open your browser's menu"
-msgstr "Otevři nabídku prohlížeče"
-
-#: components/overlays/install-overlay.tsx:64
-msgid "Open your browser's Share menu"
-msgstr "Otevři v prohlížeči nabídku Sdílet"
-
 #: components/overlays/admin-stats.tsx:141
 msgid "OPEN IN POSTHOG"
 msgstr "OTEVŘÍT V POSTHOGU"
@@ -2462,6 +2446,14 @@ msgstr "OTEVŘÍT V POSTHOGU"
 #: constants/achievements.ts:185
 msgid "Open the How to Play guide."
 msgstr "Otevři návod Jak hrát."
+
+#: components/overlays/install-overlay.tsx:69
+msgid "Open your browser's menu"
+msgstr "Otevři nabídku prohlížeče"
+
+#: components/overlays/install-overlay.tsx:64
+msgid "Open your browser's Share menu"
+msgstr "Otevři v prohlížeči nabídku Sdílet"
 
 #: components/overlays/challenge-modal.tsx:206
 msgid "OPENS IN"
@@ -2908,6 +2900,10 @@ msgstr "Skóre odměňuje preciznost: slož každý cíl na co nejmíň tahů."
 msgid "Scores, one ladder per mode — Accuracy and Speed ask for opposite things, so each has its own rungs to climb."
 msgstr "Skóre, pro každý mód vlastní žebřík — Přesnost a Rychlost chtějí opačné věci, takže i příčky má každá své."
 
+#: modes/challenges/catalog.ts:624
+msgid "SCRAM­BLE"
+msgstr "ZAMÍ­CHÁNO"
+
 #: modes/challenges/catalog.ts:449
 msgid "SDW"
 msgstr "BOK"
@@ -2920,10 +2916,6 @@ msgstr "Zatím na druhém místě."
 msgid "Secrets"
 msgstr "Tajné"
 
-#: modes/challenges/catalog.ts:624
-msgid "SCRAM­BLE"
-msgstr "ZAMÍ­CHÁNO"
-
 #: components/overlays/admin-knowledge.tsx:47
 msgid "SECRETS"
 msgstr "TAJNÉ"
@@ -2933,7 +2925,6 @@ msgid "See the better way"
 msgstr "Podívej se na lepší cestu"
 
 #: components/overlays/admin-messages.tsx:151
-#: components/overlays/rating-overlay.tsx:80
 msgid "SEND"
 msgstr "ODESLAT"
 
@@ -3241,6 +3232,15 @@ msgstr "SEBRÁNO"
 #: components/overlays/medals-overlay.tsx:125
 msgid "TAKEN BY <0/>"
 msgstr "SEBRÁNO: <0/>"
+
+#: components/overlays/medals-overlay.tsx:210
+msgid "TAKEN IN THE LAST {HISTORY_DAYS} DAYS"
+msgstr "SEBRÁNO ZA POSLEDNÍCH {HISTORY_DAYS} DNÍ"
+
+#: constants/news.ts:68
+msgid "Tap any name — on a board, in a room, on the winners line — and their profile opens: the mark they carry, what they have played, the medals they hold and the records they once held. A name on a leaderboard is a player now, not a row."
+msgstr "Ťukni na kterékoliv jméno — na žebříčku, v místnosti, na řádku vítězů — a otevře se jeho profil: odznak, který nosí, co všechno odehrál, medaile, které právě drží, i rekordy, které kdy držel. Jméno na žebříčku už není řádek, ale hráč."
+
 #: components/overlays/install-overlay.tsx:62
 msgid "Tap Share in the toolbar"
 msgstr "Klepni na Sdílet v liště"
@@ -3252,15 +3252,6 @@ msgstr "Klepni na Sdílet vedle adresního řádku"
 #: components/overlays/install-overlay.tsx:66
 msgid "Tap the ⋮ menu next to the address bar"
 msgstr "Klepni na nabídku ⋮ vedle adresního řádku"
-
-
-#: components/overlays/medals-overlay.tsx:210
-msgid "TAKEN IN THE LAST {HISTORY_DAYS} DAYS"
-msgstr "SEBRÁNO ZA POSLEDNÍCH {HISTORY_DAYS} DNÍ"
-
-#: constants/news.ts:68
-msgid "Tap any name — on a board, in a room, on the winners line — and their profile opens: the mark they carry, what they have played, the medals they hold and the records they once held. A name on a leaderboard is a player now, not a row."
-msgstr "Ťukni na kterékoliv jméno — na žebříčku, v místnosti, na řádku vítězů — a otevře se jeho profil: odznak, který nosí, co všechno odehrál, medaile, které právě drží, i rekordy, které kdy držel. Jméno na žebříčku už není řádek, ale hráč."
 
 #: machines/tutorial-lesson.ts:301
 msgid "TAP THE GLOWING KEY"
@@ -3534,14 +3525,6 @@ msgstr "Tahle tabulka patří soupeři. Ty jsi na ní host."
 #: constants/news.ts:90
 msgid "Things you keep"
 msgstr "Co ti zůstane"
-#: components/overlays/install-overlay.tsx:53
-msgid "This app can't add to your home screen. Open nine in Chrome and you can. Full screen, no browser bar, and it keeps working offline."
-msgstr "Tahle aplikace neumí přidat hru na plochu. Otevři nine v Chromu a půjde to. Celá obrazovka, žádná lišta prohlížeče a funguje i offline."
-
-#: components/overlays/install-overlay.tsx:52
-msgid "This app can't add to your home screen. Open nine in Safari and you can. Full screen, no browser bar, and it keeps working offline."
-msgstr "Tahle aplikace neumí přidat hru na plochu. Otevři nine v Safari a půjde to. Celá obrazovka, žádná lišta prohlížeče a funguje i offline."
-
 
 #: constants/tips.ts:25
 msgid "Think in horizontal swipes before you tap. Left sends a button to 0, right to 9, and each is one move however far it travels — a big gap is often two swipes and a tap."
@@ -3550,6 +3533,14 @@ msgstr "Mysli ve vodorovných švihnutích: doleva pošle tlačítko na nulu, do
 #: components/overlays/email-code-modal.tsx:492
 msgid "This address already has a profile — almost certainly yours. The code brings it here."
 msgstr "Na téhle adrese už profil je — skoro určitě tvůj. Kód ho přenese sem."
+
+#: components/overlays/install-overlay.tsx:53
+msgid "This app can't add to your home screen. Open nine in Chrome and you can. Full screen, no browser bar, and it keeps working offline."
+msgstr "Tahle aplikace neumí přidat hru na plochu. Otevři nine v Chromu a půjde to. Celá obrazovka, žádná lišta prohlížeče a funguje i offline."
+
+#: components/overlays/install-overlay.tsx:52
+msgid "This app can't add to your home screen. Open nine in Safari and you can. Full screen, no browser bar, and it keeps working offline."
+msgstr "Tahle aplikace neumí přidat hru na plochu. Otevři nine v Safari a půjde to. Celá obrazovka, žádná lišta prohlížeče a funguje i offline."
 
 #: constants/news.ts:175
 msgid "This is how Nine will tell you what changed.\n"

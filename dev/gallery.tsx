@@ -9,6 +9,7 @@ import { GameOverOverlay } from '@/components/overlays/game-over-overlay'
 import { HowToPlayOverlay } from '@/components/overlays/how-to-play-overlay'
 import { MenuOverlay } from '@/components/overlays/menu-overlay'
 import { PausedOverlay } from '@/components/overlays/paused-overlay'
+import { RatingOverlay } from '@/components/overlays/rating-overlay'
 import { StepUpOverlay } from '@/components/overlays/step-up-overlay'
 import { TutorialDoneModal } from '@/components/overlays/tutorial-done-modal'
 import { WhatsNewOverlay } from '@/components/overlays/whats-new-overlay'
@@ -565,6 +566,31 @@ const summary = (
   ),
 })
 
+// The **rating** dialog for one challenge, as it rises after that challenge's summary. One
+// variant per challenge rather than one in all, because the keypad wears each challenge's
+// own pair and the chosen key its full strength — a pale pair and a saturated one are the
+// two ends worth comparing. SEND only closes: a mock that wrote a row would put a rating
+// on the dev profile for a session called "dev", which the server refuses anyway.
+const rating = (slug: string): Variant => ({
+  key: `rating-${slug}`,
+  label: slug.toUpperCase().replace(/-/g, ' '),
+  render: (close) => (
+    <RatingOverlay
+      summary={{
+        sessionId: 'dev',
+        modeId: challengeId(slug),
+        closesAt: 0,
+        measure: 'score',
+        places: SUMMARY_PLACES.slice(0, 3),
+        players: 23,
+        mine: SUMMARY_CASES.WON.mine,
+      }}
+      onSend={() => {}}
+      onDismiss={close}
+    />
+  ),
+})
+
 // The winnings card, as the launch popup would show it. Built from awards rather than from
 // blocks directly, so what the gallery draws has been through the same grouping and
 // ordering the real thing uses — a fixture that skipped that could not show a sorting bug.
@@ -1084,6 +1110,12 @@ const SCREENS: Section[] = [
         run: requestSummary,
       } satisfies Action,
     ],
+  },
+  {
+    // The dialog after a session's summary. FOUR KEYS is the pale pair, ONE KEY and
+    // DRIFT the saturated ones; press a key to see the chosen state, 😣 and 😍 included.
+    title: 'RATING',
+    items: [rating('four-keys'), rating('drift'), rating('one-key'), rating('habit')],
   },
   {
     // Read down the column: from one player taking everything to nobody taking anything.

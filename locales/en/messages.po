@@ -422,10 +422,6 @@ msgstr "🦅 The eagle is Speed at its hardest, for the dive rather than the sea
 msgid "🦉 The owl is Accuracy at its hardest. That board rewards the exact route, and the owl is the eye that finds it."
 msgstr "🦉 The owl is Accuracy at its hardest. That board rewards the exact route, and the owl is the eye that finds it."
 
-#: components/overlays/rating-overlay.tsx:69
-msgid "1 = NOT FOR ME"
-msgstr "1 = NOT FOR ME"
-
 #: components/overlays/admin-knowledge.tsx:310
 msgid "3 lives; −1 per expired target"
 msgstr "3 lives; −1 per expired target"
@@ -433,10 +429,6 @@ msgstr "3 lives; −1 per expired target"
 #: components/overlays/admin-knowledge.tsx:150
 msgid "5 finished Accuracy or Speed runs in a row, each under {POOR_RUN_SCORE}"
 msgstr "5 finished Accuracy or Speed runs in a row, each under {POOR_RUN_SCORE}"
-
-#: components/overlays/rating-overlay.tsx:72
-msgid "9 = MORE OF THIS"
-msgstr "9 = MORE OF THIS"
 
 #: components/overlays/admin-knowledge.tsx:255
 msgid "a / s: Accuracy {accBlend}, Speed {spdBlend}."
@@ -1223,10 +1215,6 @@ msgstr "Every button tops out at nine times its weight: 81 on the 9×, 9 on a 1�
 msgid "EVERY CHALLENGE, ANY WINDOW — NO BOARD KEPT"
 msgstr "EVERY CHALLENGE, ANY WINDOW — NO BOARD KEPT"
 
-#: modes/challenges/catalog.ts:628
-msgid "Every hit scrambles the dial."
-msgstr "Every hit scrambles the dial."
-
 #: lib/compare-lines.ts:35
 msgid "Every column leans your way. There is nothing here they hold."
 msgstr "Every column leans your way. There is nothing here they hold."
@@ -1234,6 +1222,10 @@ msgstr "Every column leans your way. There is nothing here they hold."
 #: lib/recap-lines.ts:80
 msgid "Every day was [A]’s except [D]. [B] got exactly one, and made it count."
 msgstr "Every day was [A]’s except [D]. [B] got exactly one, and made it count."
+
+#: modes/challenges/catalog.ts:628
+msgid "Every hit scrambles the dial."
+msgstr "Every hit scrambles the dial."
 
 #: modes/challenges/catalog.ts:513
 msgid "Every number drifts. Catch it before it moves."
@@ -1455,10 +1447,6 @@ msgstr "FOUR KEYS"
 msgid "Four keys, doubled speed"
 msgstr "Four keys, doubled speed"
 
-#: components/overlays/install-overlay.tsx:43
-msgid "Full screen, no browser bar, and it keeps working offline."
-msgstr "Full screen, no browser bar, and it keeps working offline."
-
 #: lib/recap-lines.ts:190
 msgid "Friday"
 msgstr "Friday"
@@ -1466,6 +1454,10 @@ msgstr "Friday"
 #: constants/achievements.ts:525
 msgid "FULL HOUSE"
 msgstr "FULL HOUSE"
+
+#: components/overlays/install-overlay.tsx:43
+msgid "Full screen, no browser bar, and it keeps working offline."
+msgstr "Full screen, no browser bar, and it keeps working offline."
 
 #: modes/registry.ts:133
 msgid "GAME"
@@ -1508,13 +1500,6 @@ msgid "GOOD SPORT"
 msgstr "GOOD SPORT"
 
 #: machines/tutorial-lesson.ts:302
-#: components/overlays/install-overlay.tsx:21
-#: components/overlays/install-overlay.tsx:22
-#: components/overlays/install-overlay.tsx:23
-#: components/overlays/install-overlay.tsx:24
-#: components/overlays/install-overlay.tsx:25
-#: components/overlays/install-overlay.tsx:26
-#: components/overlays/install-overlay.tsx:27
 msgid "GOOD. THE NEXT ONE IS YOURS"
 msgstr "GOOD. THE NEXT ONE IS YOURS"
 
@@ -1523,6 +1508,13 @@ msgid "GOOSE EGG"
 msgstr "GOOSE EGG"
 
 #: components/overlays/feedback-reply-overlay.tsx:110
+#: components/overlays/install-overlay.tsx:21
+#: components/overlays/install-overlay.tsx:22
+#: components/overlays/install-overlay.tsx:23
+#: components/overlays/install-overlay.tsx:24
+#: components/overlays/install-overlay.tsx:25
+#: components/overlays/install-overlay.tsx:26
+#: components/overlays/install-overlay.tsx:27
 msgid "GOT IT"
 msgstr "GOT IT"
 
@@ -1628,6 +1620,10 @@ msgstr "HOURS"
 msgid "HOW DID IT END?"
 msgstr "HOW DID IT END?"
 
+#: components/overlays/rating-overlay.tsx:77
+msgid "HOW DO YOU LIKE THE CHALLENGE?"
+msgstr "HOW DO YOU LIKE THE CHALLENGE?"
+
 #: components/game/arcade-dawn.tsx:127
 #: components/overlays/arcade-teaser.tsx:147
 msgid "How far can you go?"
@@ -1637,10 +1633,6 @@ msgstr "How far can you go?"
 #: components/overlays/menu-overlay.tsx:711
 msgid "HOW TO PLAY"
 msgstr "HOW TO PLAY"
-
-#: components/overlays/rating-overlay.tsx:54
-msgid "HOW WAS THIS ONE?"
-msgstr "HOW WAS THIS ONE?"
 
 #: modes/difficulty.ts:54
 msgid "HRD"
@@ -1955,13 +1947,13 @@ msgstr "MINUTES"
 msgid "Miss a session's top three by a single point, or a tenth of a second."
 msgstr "Miss a session's top three by a single point, or a tenth of a second."
 
-#: components/overlays/how-to-play-overlay.tsx:44
-msgid "MODES"
-msgstr "MODES"
-
 #: modes/challenges/catalog.ts:627
 msgid "MIX"
 msgstr "MIX"
+
+#: components/overlays/how-to-play-overlay.tsx:44
+msgid "MODES"
+msgstr "MODES"
 
 #: lib/recap-lines.ts:186
 msgid "Monday"
@@ -2229,7 +2221,7 @@ msgid "Not much happened. [A] took [N] of the [P] days anyone turned up for."
 msgstr "Not much happened. [A] took [N] of the [P] days anyone turned up for."
 
 #: components/game/step-up-toast.tsx:115
-#: components/overlays/rating-overlay.tsx:92
+#: components/overlays/rating-overlay.tsx:100
 #: components/overlays/tutorial-done-modal.tsx:114
 #: components/overlays/tutorial-offer-modal.tsx:95
 msgid "NOT NOW"
@@ -2447,14 +2439,6 @@ msgstr "Open a day's board with the first score on it."
 msgid "Open a session on an easier difficulty. The first run is a warm-up, and the weights come back slower than you remember them."
 msgstr "Open a session on an easier difficulty. The first run is a warm-up, and the weights come back slower than you remember them."
 
-#: components/overlays/install-overlay.tsx:69
-msgid "Open your browser's menu"
-msgstr "Open your browser's menu"
-
-#: components/overlays/install-overlay.tsx:64
-msgid "Open your browser's Share menu"
-msgstr "Open your browser's Share menu"
-
 #: components/overlays/admin-stats.tsx:141
 msgid "OPEN IN POSTHOG"
 msgstr "OPEN IN POSTHOG"
@@ -2462,6 +2446,14 @@ msgstr "OPEN IN POSTHOG"
 #: constants/achievements.ts:185
 msgid "Open the How to Play guide."
 msgstr "Open the How to Play guide."
+
+#: components/overlays/install-overlay.tsx:69
+msgid "Open your browser's menu"
+msgstr "Open your browser's menu"
+
+#: components/overlays/install-overlay.tsx:64
+msgid "Open your browser's Share menu"
+msgstr "Open your browser's Share menu"
 
 #: components/overlays/challenge-modal.tsx:206
 msgid "OPENS IN"
@@ -2908,6 +2900,10 @@ msgstr "Score rewards precision: solve each target in the fewest moves."
 msgid "Scores, one ladder per mode — Accuracy and Speed ask for opposite things, so each has its own rungs to climb."
 msgstr "Scores, one ladder per mode — Accuracy and Speed ask for opposite things, so each has its own rungs to climb."
 
+#: modes/challenges/catalog.ts:624
+msgid "SCRAM­BLE"
+msgstr "SCRAM­BLE"
+
 #: modes/challenges/catalog.ts:449
 msgid "SDW"
 msgstr "SDW"
@@ -2920,10 +2916,6 @@ msgstr "Second, for now."
 msgid "Secrets"
 msgstr "Secrets"
 
-#: modes/challenges/catalog.ts:624
-msgid "SCRAM­BLE"
-msgstr "SCRAM­BLE"
-
 #: components/overlays/admin-knowledge.tsx:47
 msgid "SECRETS"
 msgstr "SECRETS"
@@ -2933,7 +2925,6 @@ msgid "See the better way"
 msgstr "See the better way"
 
 #: components/overlays/admin-messages.tsx:151
-#: components/overlays/rating-overlay.tsx:80
 msgid "SEND"
 msgstr "SEND"
 
@@ -3241,6 +3232,15 @@ msgstr "TAKEN"
 #: components/overlays/medals-overlay.tsx:125
 msgid "TAKEN BY <0/>"
 msgstr "TAKEN BY <0/>"
+
+#: components/overlays/medals-overlay.tsx:210
+msgid "TAKEN IN THE LAST {HISTORY_DAYS} DAYS"
+msgstr "TAKEN IN THE LAST {HISTORY_DAYS} DAYS"
+
+#: constants/news.ts:68
+msgid "Tap any name — on a board, in a room, on the winners line — and their profile opens: the mark they carry, what they have played, the medals they hold and the records they once held. A name on a leaderboard is a player now, not a row."
+msgstr "Tap any name — on a board, in a room, on the winners line — and their profile opens: the mark they carry, what they have played, the medals they hold and the records they once held. A name on a leaderboard is a player now, not a row."
+
 #: components/overlays/install-overlay.tsx:62
 msgid "Tap Share in the toolbar"
 msgstr "Tap Share in the toolbar"
@@ -3252,15 +3252,6 @@ msgstr "Tap Share next to the address bar"
 #: components/overlays/install-overlay.tsx:66
 msgid "Tap the ⋮ menu next to the address bar"
 msgstr "Tap the ⋮ menu next to the address bar"
-
-
-#: components/overlays/medals-overlay.tsx:210
-msgid "TAKEN IN THE LAST {HISTORY_DAYS} DAYS"
-msgstr "TAKEN IN THE LAST {HISTORY_DAYS} DAYS"
-
-#: constants/news.ts:68
-msgid "Tap any name — on a board, in a room, on the winners line — and their profile opens: the mark they carry, what they have played, the medals they hold and the records they once held. A name on a leaderboard is a player now, not a row."
-msgstr "Tap any name — on a board, in a room, on the winners line — and their profile opens: the mark they carry, what they have played, the medals they hold and the records they once held. A name on a leaderboard is a player now, not a row."
 
 #: machines/tutorial-lesson.ts:301
 msgid "TAP THE GLOWING KEY"
@@ -3534,14 +3525,6 @@ msgstr "They own this table. You are a guest on it."
 #: constants/news.ts:90
 msgid "Things you keep"
 msgstr "Things you keep"
-#: components/overlays/install-overlay.tsx:53
-msgid "This app can't add to your home screen. Open nine in Chrome and you can. Full screen, no browser bar, and it keeps working offline."
-msgstr "This app can't add to your home screen. Open nine in Chrome and you can. Full screen, no browser bar, and it keeps working offline."
-
-#: components/overlays/install-overlay.tsx:52
-msgid "This app can't add to your home screen. Open nine in Safari and you can. Full screen, no browser bar, and it keeps working offline."
-msgstr "This app can't add to your home screen. Open nine in Safari and you can. Full screen, no browser bar, and it keeps working offline."
-
 
 #: constants/tips.ts:25
 msgid "Think in horizontal swipes before you tap. Left sends a button to 0, right to 9, and each is one move however far it travels — a big gap is often two swipes and a tap."
@@ -3550,6 +3533,14 @@ msgstr "Think in horizontal swipes before you tap. Left sends a button to 0, rig
 #: components/overlays/email-code-modal.tsx:492
 msgid "This address already has a profile — almost certainly yours. The code brings it here."
 msgstr "This address already has a profile — almost certainly yours. The code brings it here."
+
+#: components/overlays/install-overlay.tsx:53
+msgid "This app can't add to your home screen. Open nine in Chrome and you can. Full screen, no browser bar, and it keeps working offline."
+msgstr "This app can't add to your home screen. Open nine in Chrome and you can. Full screen, no browser bar, and it keeps working offline."
+
+#: components/overlays/install-overlay.tsx:52
+msgid "This app can't add to your home screen. Open nine in Safari and you can. Full screen, no browser bar, and it keeps working offline."
+msgstr "This app can't add to your home screen. Open nine in Safari and you can. Full screen, no browser bar, and it keeps working offline."
 
 #: constants/news.ts:175
 msgid "This is how Nine will tell you what changed.\n"
