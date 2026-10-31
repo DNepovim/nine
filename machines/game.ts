@@ -932,6 +932,21 @@ export const gameMachine = createMachine({
             }) => pauseClock(context, event.now),
           ),
         },
+        // Holding the targets area restarts without a pause in between — the same fresh
+        // run the pause screen's RESTART deals. The caller submits the abandoned score
+        // first, as it does there.
+        RESTART: {
+          target: 'playing',
+          actions: assign(
+            ({
+              context,
+              event,
+            }: {
+              context: Context
+              event: Extract<Event, { type: 'RESTART' }>
+            }) => freshGame(context, event.now, context.tutorial, event.runId),
+          ),
+        },
         // A drifting number arriving on the dialled sum is a hit like a press would be,
         // counted without a press — the target was caught where it was going. Ends the run
         // where a press would, though a hit that costs no heart rarely does.

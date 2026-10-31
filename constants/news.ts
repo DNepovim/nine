@@ -9,6 +9,19 @@ import type { Release } from '@/types/news'
 // different announcement or players who already saw the old one will miss it.
 export const RELEASES: Release[] = [
   {
+    date: '2026-10-31',
+    items: [
+      {
+        id: 'targets-shortcuts',
+        icon: 'finger-print',
+        // The blue the last controls announcement wore — see dial-drag below.
+        accent: '#4C7EFF',
+        title: msg`Pause without reaching`,
+        body: msg`Double-tap where the targets appear to pause. Hold there for three seconds to start the run over.`,
+      },
+    ],
+  },
+  {
     date: '2026-10-16',
     items: [
       {

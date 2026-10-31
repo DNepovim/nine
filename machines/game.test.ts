@@ -551,6 +551,18 @@ describe('run stat accumulators', () => {
     expect(context.bestAcc).toBe(0)
     expect(context.bestSpd).toBe(0)
   })
+
+  it('restarts straight from a live run, without a pause', () => {
+    const actor = start('accuracy')
+    actor.send({ type: 'ADD_TARGET', value: 9, at: 0 })
+    actor.send({ type: 'PRESS', index: 8, delta: 1, now: 0 })
+    actor.send({ type: 'RESTART', now: 200, runId: nextRunId() })
+    const snapshot = actor.getSnapshot()
+    expect(snapshot.value).toBe('playing')
+    expect(snapshot.context.score).toBe(0)
+    expect(snapshot.context.hits).toBe(0)
+    expect(snapshot.context.targets).toHaveLength(0)
+  })
 })
 
 describe('hit batch reports the route', () => {

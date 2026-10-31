@@ -34,6 +34,7 @@ export type AnalyticsEvents = {
       | 'challenge'
       | 'session'
       | 'restart'
+      | 'hold'
       | 'welcome'
       | 'guide'
       | 'dev'
@@ -48,7 +49,14 @@ export type AnalyticsEvents = {
   run_paused: {
     mode: ModeId
     difficulty: Difficulty
-    source: 'button' | 'focus_lost' | 'best_scores' | 'achievement' | 'step_up' | 'dev'
+    source:
+      | 'button'
+      | 'double_tap'
+      | 'focus_lost'
+      | 'best_scores'
+      | 'achievement'
+      | 'step_up'
+      | 'dev'
     score: number
     hits: number
     strikes: number
@@ -62,7 +70,8 @@ export type AnalyticsEvents = {
     difficulty: Difficulty
     away_ms: number
   }
-  // A run the player ended rather than lost — END RUN or RESTART from the pause screen.
+  // A run the player ended rather than lost — END RUN or RESTART from the pause screen,
+  // or a hold on the targets area, which reports as a restart.
   // Distinct from `run_finished`, which is the run reaching its own end: between them
   // they close every run exactly once, so "runs abandoned" is answerable at all.
   run_ended: {

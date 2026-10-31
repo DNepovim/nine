@@ -90,12 +90,16 @@ msgid ""
 "\n"
 "Tap to count up — 9 wraps back to 0 — swipe down to step back one, and swipe left or right to jump straight to 0 or 9.\n"
 "\n"
-"You can keep going without lifting your finger. Drag across the dial and each button takes the direction you leave it by, so one sweep right along a row sets all three to 9. Change your mind on a button and only the way you leave it counts, and a button only answers to a finger that really crosses it — so brushing the edge of its neighbour on the way past costs you nothing. If you would rather one gesture only ever moved the button it started on, turn off “Drag across keys” under Options. Tip: turn on “Show sum in buttons” under Options to see each button’s live contribution."
+"You can keep going without lifting your finger. Drag across the dial and each button takes the direction you leave it by, so one sweep right along a row sets all three to 9. Change your mind on a button and only the way you leave it counts, and a button only answers to a finger that really crosses it — so brushing the edge of its neighbour on the way past costs you nothing. If you would rather one gesture only ever moved the button it started on, turn off “Drag across keys” under Options. Tip: turn on “Show sum in buttons” under Options to see each button’s live contribution.\n"
+"\n"
+"The space above the dial, where targets appear, has two shortcuts of its own: tap it twice to pause, or hold it for three seconds to restart the run on the same board."
 msgstr ""
 "\n"
 "Tap to count up — 9 wraps back to 0 — swipe down to step back one, and swipe left or right to jump straight to 0 or 9.\n"
 "\n"
-"You can keep going without lifting your finger. Drag across the dial and each button takes the direction you leave it by, so one sweep right along a row sets all three to 9. Change your mind on a button and only the way you leave it counts, and a button only answers to a finger that really crosses it — so brushing the edge of its neighbour on the way past costs you nothing. If you would rather one gesture only ever moved the button it started on, turn off “Drag across keys” under Options. Tip: turn on “Show sum in buttons” under Options to see each button’s live contribution."
+"You can keep going without lifting your finger. Drag across the dial and each button takes the direction you leave it by, so one sweep right along a row sets all three to 9. Change your mind on a button and only the way you leave it counts, and a button only answers to a finger that really crosses it — so brushing the edge of its neighbour on the way past costs you nothing. If you would rather one gesture only ever moved the button it started on, turn off “Drag across keys” under Options. Tip: turn on “Show sum in buttons” under Options to see each button’s live contribution.\n"
+"\n"
+"The space above the dial, where targets appear, has two shortcuts of its own: tap it twice to pause, or hold it for three seconds to restart the run on the same board."
 
 #: components/overlays/how-to-play-overlay.tsx:757
 msgid ""
@@ -454,7 +458,7 @@ msgstr "A coach line says when a move was wasted, and what a hit cost."
 msgid "A code is six digits."
 msgstr "A code is six digits."
 
-#: constants/news.ts:149
+#: constants/news.ts:162
 msgid "A fresh face"
 msgstr "A fresh face"
 
@@ -494,7 +498,7 @@ msgstr "A quiet week, and [A] had all [P] days of it to themselves."
 msgid "A quiet week. Only [P] days saw a board taken at all, and [A] took [N] of them."
 msgstr "A quiet week. Only [P] days saw a board taken at all, and [A] took [N] of them."
 
-#: constants/news.ts:78
+#: constants/news.ts:91
 msgid "A record is only ever lent — someone takes it back eventually. Achievements are the other kind: achieved once and yours for good, measured against nobody but yourself. Some are waiting where you would not think to look."
 msgstr "A record is only ever lent — someone takes it back eventually. Achievements are the other kind: achieved once and yours for good, measured against nobody but yourself. Some are waiting where you would not think to look."
 
@@ -526,7 +530,7 @@ msgstr "A slow hit breaks the streak; let a target run out and you lose a life."
 msgid "A stack of them nobody is told about until they happen."
 msgstr "A stack of them nobody is told about until they happen."
 
-#: constants/news.ts:185
+#: constants/news.ts:198
 msgid "A thin line above the game now shows your best on this board next to today's, this week's and the all-time high.\n"
 "\n"
 "It stays out of the way for the first few seconds of a run."
@@ -611,7 +615,7 @@ msgstr "Achievements are the other kind. Nothing can take one back: they are ach
 "\n"
 "There are dozens, and they ask for all sorts of things."
 
-#: components/overlays/admin-stats.tsx:351
+#: components/overlays/admin-stats.tsx:347
 msgid "Achievements unlocked"
 msgstr "Achievements unlocked"
 
@@ -631,7 +635,7 @@ msgstr "ADD TO HOME SCREEN"
 msgid "ADD YOUR EMAIL"
 msgstr "ADD YOUR EMAIL"
 
-#: constants/news.ts:31
+#: constants/news.ts:44
 msgid "Add your email and a lost phone stops meaning a lost career. New device, fresh install, cleared browser — type that address and your name, your scores and your medals come back to you. We only ever use it for that, and we send nothing else."
 msgstr "Add your email and a lost phone stops meaning a lost career. New device, fresh install, cleared browser — type that address and your name, your scores and your medals come back to you. We only ever use it for that, and we send nothing else."
 
@@ -690,7 +694,7 @@ msgstr "ALL THREE"
 msgid "ALLOW"
 msgstr "ALLOW"
 
-#: components/overlays/admin-stats.tsx:325
+#: components/overlays/admin-stats.tsx:321
 msgid "ALSO IN THIS WINDOW"
 msgstr "ALSO IN THIS WINDOW"
 
@@ -723,7 +727,7 @@ msgid "An owl can hear a mouse under half a metre of snow. You are the more exac
 msgstr "An owl can hear a mouse under half a metre of snow. You are the more exact one — Extreme Accuracy's all-time record is yours."
 
 #: components/overlays/admin-overlay.tsx:341
-#: components/overlays/admin-stats.tsx:41
+#: components/overlays/admin-stats.tsx:35
 msgid "ANALYTICS"
 msgstr "ANALYTICS"
 
@@ -814,7 +818,7 @@ msgstr "AVG SPD"
 #: components/overlays/admin-messages.tsx:376
 #: components/overlays/admin-session.tsx:189
 #: components/overlays/admin-sessions.tsx:184
-#: components/overlays/admin-stats.tsx:149
+#: components/overlays/admin-stats.tsx:143
 #: components/overlays/whats-new-overlay.tsx:107
 msgid "BACK"
 msgstr "BACK"
@@ -831,7 +835,7 @@ msgstr "Barely a week — [P] days played. [A] had [N] of those to themselves."
 msgid "Barely a week — [P] days, and all of them [A]’s."
 msgstr "Barely a week — [P] days, and all of them [A]’s."
 
-#: constants/news.ts:138
+#: constants/news.ts:151
 msgid "Beat a record and the game makes a fuss about it."
 msgstr "Beat a record and the game makes a fuss about it."
 
@@ -857,7 +861,7 @@ msgstr "BEST"
 msgid "best = the player's best run of the session. Paid 10 minutes after the close, automatically."
 msgstr "best = the player's best run of the session. Paid 10 minutes after the close, automatically."
 
-#: constants/news.ts:184
+#: constants/news.ts:197
 msgid "Best scores, up top"
 msgstr "Best scores, up top"
 
@@ -874,7 +878,7 @@ msgstr "BOARD"
 msgid "BOARDS"
 msgstr "BOARDS"
 
-#: components/overlays/admin-stats.tsx:359
+#: components/overlays/admin-stats.tsx:355
 msgid "Boards taken over"
 msgstr "Boards taken over"
 
@@ -955,7 +959,7 @@ msgid "CHALLENGES\n"
 msgstr "CHALLENGES\n"
 "LAB"
 
-#: components/overlays/dev-overlay.tsx:74
+#: components/overlays/dev-overlay.tsx:90
 msgid "CHALLENGES LAB"
 msgstr "CHALLENGES LAB"
 
@@ -1061,7 +1065,7 @@ msgstr "CONNOISSEUR"
 msgid "CONTINUE"
 msgstr "CONTINUE"
 
-#: app/(tabs)/index.tsx:2525
+#: app/(tabs)/index.tsx:2556
 msgid "Continue the tutorial"
 msgstr "Continue the tutorial"
 
@@ -1126,10 +1130,14 @@ msgstr "Do something nobody thought to ask for."
 #: components/overlays/admin-overlay.tsx:318
 #: components/overlays/admin-person.tsx:187
 #: components/overlays/admin-role.tsx:123
-#: components/overlays/dev-overlay.tsx:152
+#: components/overlays/dev-overlay.tsx:179
 #: components/overlays/news-archive-overlay.tsx:43
 msgid "DONE"
 msgstr "DONE"
+
+#: constants/news.ts:20
+msgid "Double-tap where the targets appear to pause. Hold there for three seconds to start the run over."
+msgstr "Double-tap where the targets appear to pause. Hold there for three seconds to start the run over."
 
 #: components/overlays/advanced-options-overlay.tsx:108
 msgid "DRAG ACROSS KEYS"
@@ -1211,7 +1219,7 @@ msgstr "EVER"
 msgid "Every button tops out at nine times its weight: 81 on the 9×, 9 on a 1×. Knowing the ceilings is what tells you which button can close a gap, and in how few moves."
 msgstr "Every button tops out at nine times its weight: 81 on the 9×, 9 on a 1×. Knowing the ceilings is what tells you which button can close a gap, and in how few moves."
 
-#: components/overlays/dev-overlay.tsx:157
+#: components/overlays/dev-overlay.tsx:184
 msgid "EVERY CHALLENGE, ANY WINDOW — NO BOARD KEPT"
 msgstr "EVERY CHALLENGE, ANY WINDOW — NO BOARD KEPT"
 
@@ -1223,10 +1231,6 @@ msgstr "Every column leans your way. There is nothing here they hold."
 msgid "Every day was [A]’s except [D]. [B] got exactly one, and made it count."
 msgstr "Every day was [A]’s except [D]. [B] got exactly one, and made it count."
 
-#: modes/challenges/catalog.ts:628
-msgid "Every hit scrambles the dial."
-msgstr "Every hit scrambles the dial."
-
 #: modes/challenges/catalog.ts:513
 msgid "Every number drifts. Catch it before it moves."
 msgstr "Every number drifts. Catch it before it moves."
@@ -1235,7 +1239,7 @@ msgstr "Every number drifts. Catch it before it moves."
 msgid "Every row you lose here, you lost first on a board."
 msgstr "Every row you lose here, you lost first on a board."
 
-#: constants/news.ts:19
+#: constants/news.ts:32
 msgid "Every so often a challenge appears at the top of the start screen: a game of Nine with the rules changed, on for a while and then gone. Everyone plays the same one, and finishing in the top three wins a medal nothing can take back."
 msgstr "Every so often a challenge appears at the top of the start screen: a game of Nine with the rules changed, on for a while and then gone. Everyone plays the same one, and finishing in the top three wins a medal nothing can take back."
 
@@ -1560,7 +1564,7 @@ msgid "Hit while most of the ring is left to build your combo streak."
 msgstr "Hit while most of the ring is left to build your combo streak."
 
 #: components/game/trainee-stats.tsx:64
-#: components/overlays/admin-stats.tsx:50
+#: components/overlays/admin-stats.tsx:44
 #: components/overlays/compare-stat-row.tsx:21
 #: components/overlays/player-profile-overlay.tsx:400
 #: components/overlays/score-columns.tsx:61
@@ -1716,7 +1720,7 @@ msgstr "JOIN WITH CODE"
 msgid "joined"
 msgstr "joined"
 
-#: components/overlays/admin-stats.tsx:46
+#: components/overlays/admin-stats.tsx:40
 msgid "JOINED"
 msgstr "JOINED"
 
@@ -1801,11 +1805,11 @@ msgstr "LANGUAGE"
 msgid "LAST"
 msgstr "LAST"
 
-#: components/overlays/admin-stats.tsx:301
+#: components/overlays/admin-stats.tsx:297
 msgid "LAST FIVE SESSIONS"
 msgstr "LAST FIVE SESSIONS"
 
-#: components/overlays/dev-overlay.tsx:49
+#: components/overlays/dev-overlay.tsx:50
 msgid "LAST SESSION WAS {closed}"
 msgstr "LAST SESSION WAS {closed}"
 
@@ -1881,7 +1885,7 @@ msgstr "Mar"
 msgid "MARCH"
 msgstr "MARCH"
 
-#: constants/news.ts:101
+#: constants/news.ts:114
 msgid "Marks for the hardest boards"
 msgstr "Marks for the hardest boards"
 
@@ -1922,22 +1926,18 @@ msgstr "MENU"
 msgid "MESSAGES"
 msgstr "MESSAGES"
 
-#: components/overlays/admin-stats.tsx:333
+#: components/overlays/admin-stats.tsx:329
 msgid "Messages sent in"
 msgstr "Messages sent in"
 
 #: components/overlays/admin-extend-dialog.tsx:52
-#: components/overlays/admin-stats.tsx:49
+#: components/overlays/admin-stats.tsx:43
 msgid "MINUTES"
 msgstr "MINUTES"
 
 #: constants/achievements.ts:690
 msgid "Miss a session's top three by a single point, or a tenth of a second."
 msgstr "Miss a session's top three by a single point, or a tenth of a second."
-
-#: modes/challenges/catalog.ts:627
-msgid "MIX"
-msgstr "MIX"
 
 #: components/overlays/how-to-play-overlay.tsx:44
 msgid "MODES"
@@ -1955,7 +1955,7 @@ msgstr "More of this is theirs. Not much more."
 msgid "More of this is yours than theirs. Not all of it."
 msgstr "More of this is yours than theirs. Not all of it."
 
-#: constants/news.ts:63
+#: constants/news.ts:76
 msgid "More to find"
 msgstr "More to find"
 
@@ -1980,15 +1980,15 @@ msgstr "MULTIPLAYER"
 msgid "My best at Nine is {bestScore} — {board}. Think you can beat it?"
 msgstr "My best at Nine is {bestScore} — {board}. Think you can beat it?"
 
-#: components/overlays/admin-stats.tsx:51
+#: components/overlays/admin-stats.tsx:45
 msgid "NAMED"
 msgstr "NAMED"
 
-#: constants/news.ts:30
+#: constants/news.ts:43
 msgid "Never lose your scores"
 msgstr "Never lose your scores"
 
-#: constants/news.ts:161
+#: constants/news.ts:174
 msgid "Never miss an update"
 msgstr "Never miss an update"
 
@@ -2025,7 +2025,7 @@ msgstr "NIGHT SHIFT"
 msgid "Nine buttons, one number to hit. Come take a run at it."
 msgstr "Nine buttons, one number to hit. Come take a run at it."
 
-#: constants/news.ts:150
+#: constants/news.ts:163
 msgid "Nine has a new look, and it goes all the way down.\n"
 "\n"
 "- The icon now carries the same **blue-to-red spectrum** as the splash\n"
@@ -2043,7 +2043,7 @@ msgstr "Nine has a new look, and it goes all the way down.\n"
 msgid "NINE NINE NINE"
 msgstr "NINE NINE NINE"
 
-#: components/overlays/dev-overlay.tsx:164
+#: components/overlays/dev-overlay.tsx:191
 msgid "No challenges have been written yet."
 msgstr "No challenges have been written yet."
 
@@ -2063,7 +2063,7 @@ msgstr "No connection — nothing was sent."
 msgid "No features in the database."
 msgstr "No features in the database."
 
-#: components/overlays/admin-stats.tsx:179
+#: components/overlays/admin-stats.tsx:173
 msgid "No figures. See the error above."
 msgstr "No figures. See the error above."
 
@@ -2107,7 +2107,7 @@ msgstr "No roles yet."
 msgid "No runs counted yet."
 msgstr "No runs counted yet."
 
-#: components/overlays/admin-stats.tsx:268
+#: components/overlays/admin-stats.tsx:264
 msgid "No runs in this window."
 msgstr "No runs in this window."
 
@@ -2115,11 +2115,11 @@ msgstr "No runs in this window."
 msgid "No runs, no records, no argument. Yet."
 msgstr "No runs, no records, no argument. Yet."
 
-#: components/overlays/dev-overlay.tsx:38
+#: components/overlays/dev-overlay.tsx:39
 msgid "NO SESSION YET"
 msgstr "NO SESSION YET"
 
-#: components/overlays/admin-stats.tsx:318
+#: components/overlays/admin-stats.tsx:314
 msgid "No sessions have been planned."
 msgstr "No sessions have been planned."
 
@@ -2223,7 +2223,7 @@ msgstr "NOT PUBLISHED"
 msgid "NOT SYNCED"
 msgstr "NOT SYNCED"
 
-#: constants/news.ts:18
+#: constants/news.ts:31
 msgid "Not the same game twice"
 msgstr "Not the same game twice"
 
@@ -2299,11 +2299,11 @@ msgstr "Oct"
 msgid "OCTOBER"
 msgstr "OCTOBER"
 
-#: components/overlays/admin-stats.tsx:224
+#: components/overlays/admin-stats.tsx:218
 msgid "of the joined"
 msgstr "of the joined"
 
-#: components/overlays/admin-stats.tsx:369
+#: components/overlays/admin-stats.tsx:365
 msgid "Of them, named"
 msgstr "Of them, named"
 
@@ -2331,7 +2331,7 @@ msgstr "ON NOW"
 msgid "ON THE BOARD"
 msgstr "ON THE BOARD"
 
-#: components/overlays/admin-stats.tsx:212
+#: components/overlays/admin-stats.tsx:206
 msgid "on the dial"
 msgstr "on the dial"
 
@@ -2395,7 +2395,7 @@ msgstr "One slip and it's over."
 msgid "ONE STROKE"
 msgstr "ONE STROKE"
 
-#: constants/news.ts:42
+#: constants/news.ts:55
 msgid "One sweep, three keys"
 msgstr "One sweep, three keys"
 
@@ -2427,7 +2427,7 @@ msgstr "Open a day's board with the first score on it."
 msgid "Open a session on an easier difficulty. The first run is a warm-up, and the weights come back slower than you remember them."
 msgstr "Open a session on an easier difficulty. The first run is a warm-up, and the weights come back slower than you remember them."
 
-#: components/overlays/admin-stats.tsx:147
+#: components/overlays/admin-stats.tsx:141
 msgid "OPEN IN POSTHOG"
 msgstr "OPEN IN POSTHOG"
 
@@ -2458,7 +2458,7 @@ msgid "Out of hearts and the run is over. That and the mouth are the only two wa
 msgstr "Out of hearts and the run is over. That and the mouth are the only two ways one ends."
 
 #: components/overlays/admin-messages.tsx:267
-#: components/overlays/admin-stats.tsx:70
+#: components/overlays/admin-stats.tsx:64
 msgid "OWED"
 msgstr "OWED"
 
@@ -2470,7 +2470,11 @@ msgstr "PALINDROME"
 msgid "PASTE FROM CLIPBOARD"
 msgstr "PASTE FROM CLIPBOARD"
 
-#: components/overlays/admin-stats.tsx:238
+#: constants/news.ts:19
+msgid "Pause without reaching"
+msgstr "Pause without reaching"
+
+#: components/overlays/admin-stats.tsx:232
 msgid "peak"
 msgstr "peak"
 
@@ -2569,7 +2573,7 @@ msgstr "Play with two hands, a thumb to each side of the grid. Reaching across f
 msgid "played"
 msgstr "played"
 
-#: components/overlays/admin-stats.tsx:47
+#: components/overlays/admin-stats.tsx:41
 msgid "PLAYED"
 msgstr "PLAYED"
 
@@ -2609,11 +2613,11 @@ msgstr "private"
 msgid "PROFILE"
 msgstr "PROFILE"
 
-#: components/overlays/admin-stats.tsx:198
+#: components/overlays/admin-stats.tsx:192
 msgid "profiles"
 msgstr "profiles"
 
-#: components/overlays/admin-stats.tsx:364
+#: components/overlays/admin-stats.tsx:360
 msgid "Profiles, all time"
 msgstr "Profiles, all time"
 
@@ -2657,7 +2661,7 @@ msgstr "Reach the ×8 multiplier."
 msgid "REACH THIS NUMBER"
 msgstr "REACH THIS NUMBER"
 
-#: components/overlays/admin-stats.tsx:173
+#: components/overlays/admin-stats.tsx:167
 msgid "Reading…"
 msgstr "Reading…"
 
@@ -2669,7 +2673,7 @@ msgstr "READY"
 msgid "Ready to play for real?"
 msgstr "Ready to play for real?"
 
-#: constants/news.ts:137
+#: constants/news.ts:150
 msgid "Records, celebrated"
 msgstr "Records, celebrated"
 
@@ -2739,7 +2743,7 @@ msgstr "ROOM FOR TWO"
 msgid "ROOM LEFT"
 msgstr "ROOM LEFT"
 
-#: components/overlays/admin-stats.tsx:355
+#: components/overlays/admin-stats.tsx:351
 msgid "Rooms created"
 msgstr "Rooms created"
 
@@ -2771,18 +2775,18 @@ msgstr "Run finished on 1 April, phone calendar"
 msgid "runs"
 msgstr "runs"
 
-#: components/overlays/admin-stats.tsx:48
+#: components/overlays/admin-stats.tsx:42
 #: components/overlays/compare-stat-row.tsx:20
 #: components/overlays/player-profile-overlay.tsx:395
 #: components/overlays/player-profile-overlay.tsx:498
 msgid "RUNS"
 msgstr "RUNS"
 
-#: components/overlays/admin-stats.tsx:235
+#: components/overlays/admin-stats.tsx:229
 msgid "RUNS A DAY"
 msgstr "RUNS A DAY"
 
-#: components/overlays/admin-stats.tsx:265
+#: components/overlays/admin-stats.tsx:259
 msgid "RUNS BY MODE"
 msgstr "RUNS BY MODE"
 
@@ -2876,10 +2880,6 @@ msgstr "Score rewards precision: solve each target in the fewest moves."
 msgid "Scores, one ladder per mode — Accuracy and Speed ask for opposite things, so each has its own rungs to climb."
 msgstr "Scores, one ladder per mode — Accuracy and Speed ask for opposite things, so each has its own rungs to climb."
 
-#: modes/challenges/catalog.ts:624
-msgid "SCRAMBLE"
-msgstr "SCRAMBLE"
-
 #: modes/challenges/catalog.ts:449
 msgid "SDW"
 msgstr "SDW"
@@ -2896,7 +2896,7 @@ msgstr "Secrets"
 msgid "SECRETS"
 msgstr "SECRETS"
 
-#: constants/news.ts:113
+#: constants/news.ts:126
 msgid "See the better way"
 msgstr "See the better way"
 
@@ -2942,11 +2942,11 @@ msgstr "SESSION"
 msgid "SESSION BONUS"
 msgstr "SESSION BONUS"
 
-#: components/overlays/dev-overlay.tsx:42
+#: components/overlays/dev-overlay.tsx:43
 msgid "SESSION IS LIVE UNTIL {until}"
 msgstr "SESSION IS LIVE UNTIL {until}"
 
-#: components/overlays/dev-overlay.tsx:46
+#: components/overlays/dev-overlay.tsx:47
 msgid "SESSION IS PLANNED FOR {opens}"
 msgstr "SESSION IS PLANNED FOR {opens}"
 
@@ -3046,15 +3046,15 @@ msgstr "SPEED"
 msgid "Speed — how much time was left on the ring. Land it with most of the ring intact and it pays a bonus on top."
 msgstr "Speed — how much time was left on the ring. Land it with most of the ring intact and it pays a bonus on top."
 
-#: constants/news.ts:200
+#: constants/news.ts:213
 msgid "Speed combos, rebuilt"
 msgstr "Speed combos, rebuilt"
 
-#: constants/news.ts:193
+#: constants/news.ts:206
 msgid "Speed eases off"
 msgstr "Speed eases off"
 
-#: constants/news.ts:194
+#: constants/news.ts:207
 msgid "Speed mode was brutal. Now it is merely fast — about half again as long on every target."
 msgstr "Speed mode was brutal. Now it is merely fast — about half again as long on every target."
 
@@ -3074,7 +3074,7 @@ msgstr "Speed: ring = ramp(ring), gap = ring ÷ 3. Accuracy: ring fixed, gap = r
 msgid "Spend half an hour in Trainee without leaving."
 msgstr "Spend half an hour in Trainee without leaving."
 
-#: constants/news.ts:172
+#: constants/news.ts:185
 msgid "Spot your nines"
 msgstr "Spot your nines"
 
@@ -3184,11 +3184,11 @@ msgstr "Take every target while most of its ring is still full."
 msgid "Take first place on a board."
 msgstr "Take first place on a board."
 
-#: constants/news.ts:102
+#: constants/news.ts:115
 msgid "Take the all-time record on a mode’s Extreme board and you carry its mark beside your name everywhere — an owl for Accuracy, an eagle for Speed, a crown for both. Take one and the game over screen celebrates it properly."
 msgstr "Take the all-time record on a mode’s Extreme board and you carry its mark beside your name everywhere — an owl for Accuracy, an eagle for Speed, a crown for both. Take one and the game over screen celebrates it properly."
 
-#: constants/news.ts:114
+#: constants/news.ts:127
 msgid "Take the long road to a target and Trainee now shows you the short one — the keys that would have done it, in the order to press them."
 msgstr "Take the long road to a target and Trainee now shows you the short one — the keys that would have done it, in the order to press them."
 
@@ -3214,7 +3214,7 @@ msgstr "TAKEN BY <0/>"
 msgid "TAKEN IN THE LAST {HISTORY_DAYS} DAYS"
 msgstr "TAKEN IN THE LAST {HISTORY_DAYS} DAYS"
 
-#: constants/news.ts:55
+#: constants/news.ts:68
 msgid "Tap any name — on a board, in a room, on the winners line — and their profile opens: the mark they carry, what they have played, the medals they hold and the records they once held. A name on a leaderboard is a player now, not a row."
 msgstr "Tap any name — on a board, in a room, on the winners line — and their profile opens: the mark they carry, what they have played, the medals they hold and the records they once held. A name on a leaderboard is a player now, not a row."
 
@@ -3234,11 +3234,11 @@ msgstr "TARGETS & THE CLOCK"
 msgid "Targets arrive faster the longer you last, but each still gets its full ring."
 msgstr "Targets arrive faster the longer you last, but each still gets its full ring."
 
-#: components/overlays/admin-stats.tsx:218
+#: components/overlays/admin-stats.tsx:212
 msgid "targets met"
 msgstr "targets met"
 
-#: constants/news.ts:89
+#: constants/news.ts:102
 msgid "Tell me what you think"
 msgstr "Tell me what you think"
 
@@ -3322,7 +3322,7 @@ msgstr "The dial has fallen on its side."
 msgid "The dial maxes out at 324, every button on 9. Worth remembering — it places a target in the range the moment you read it."
 msgstr "The dial maxes out at 324, every button on 9. Worth remembering — it places a target in the range the moment you read it."
 
-#: constants/news.ts:173
+#: constants/news.ts:186
 msgid "The dial tells you more at a glance.\n"
 "\n"
 "- Buttons still brighten as you dial higher\n"
@@ -3439,11 +3439,11 @@ msgstr "The week went everywhere. [A] took the most of it with [N] days, which w
 msgid "THE WINDOW HAS CLOSED"
 msgstr "THE WINDOW HAS CLOSED"
 
-#: constants/news.ts:64
+#: constants/news.ts:77
 msgid "There are a dozen more achievements to stumble into now — a couple for the very best runs, and rather more for the runs that went nowhere at all. Profiles count them too, so you can see how many someone else has found."
 msgstr "There are a dozen more achievements to stumble into now — a couple for the very best runs, and rather more for the runs that went nowhere at all. Profiles count them too, so you can see how many someone else has found."
 
-#: constants/news.ts:90
+#: constants/news.ts:103
 msgid "There is a little FEEDBACK tab tucked into the bottom-right corner, on every screen except a live run. Anything goes — what broke, what annoyed you, what you wish the game did. It lands straight with the person who makes Nine, and it is read."
 msgstr "There is a little FEEDBACK tab tucked into the bottom-right corner, on every screen except a live run. Anything goes — what broke, what annoyed you, what you wish the game did. It lands straight with the person who makes Nine, and it is read."
 
@@ -3487,7 +3487,7 @@ msgstr "They lead. Nothing about that is permanent."
 msgid "They own this table. You are a guest on it."
 msgstr "They own this table. You are a guest on it."
 
-#: constants/news.ts:77
+#: constants/news.ts:90
 msgid "Things you keep"
 msgstr "Things you keep"
 
@@ -3499,7 +3499,7 @@ msgstr "Think in horizontal swipes before you tap. Left sends a button to 0, rig
 msgid "This address already has a profile — almost certainly yours. The code brings it here."
 msgstr "This address already has a profile — almost certainly yours. The code brings it here."
 
-#: constants/news.ts:162
+#: constants/news.ts:175
 msgid "This is how Nine will tell you what changed.\n"
 "\n"
 "- New things show up here next time you open the app\n"
@@ -3617,7 +3617,7 @@ msgstr "TOUCH GRASS"
 msgid "TRAINEE"
 msgstr "TRAINEE"
 
-#: constants/news.ts:125
+#: constants/news.ts:138
 msgid "Trainee coaches you"
 msgstr "Trainee coaches you"
 
@@ -3625,7 +3625,7 @@ msgstr "Trainee coaches you"
 msgid "Trainee has the longest clock in the game and no lives to lose — use it to learn how the weights behave before chasing scores."
 msgstr "Trainee has the longest clock in the game and no lives to lose — use it to learn how the weights behave before chasing scores."
 
-#: constants/news.ts:126
+#: constants/news.ts:139
 msgid "Trainee now says when a move went to waste, and what a hit cost."
 msgstr "Trainee now says when a move went to waste, and what a hit cost."
 
@@ -3737,7 +3737,7 @@ msgstr "WALL"
 msgid "Warriors leave the gate one at a time, and faster the longer the fight drags on. Dial a warrior’s number and he is gone. Let one reach you and it costs a heart. There is no way out of a siege but winning it, so look at the walls before you dial that way."
 msgstr "Warriors leave the gate one at a time, and faster the longer the fight drags on. Dial a warrior’s number and he is gone. Let one reach you and it costs a heart. There is no way out of a siege but winning it, so look at the walls before you dial that way."
 
-#: components/overlays/admin-stats.tsx:69
+#: components/overlays/admin-stats.tsx:63
 msgid "was"
 msgstr "was"
 
@@ -3798,7 +3798,7 @@ msgstr "WHO IS BETTER?"
 msgid "WHO IS IT?"
 msgstr "WHO IS IT?"
 
-#: constants/news.ts:54
+#: constants/news.ts:67
 msgid "Who is that, anyway"
 msgstr "Who is that, anyway"
 
@@ -3903,7 +3903,7 @@ msgstr "you@example.com"
 msgid "YOUR"
 msgstr "YOUR"
 
-#: constants/news.ts:43
+#: constants/news.ts:56
 msgid "Your finger no longer has to come off the glass. Drag across the dial and every button you pass through takes the direction you left it by — one sweep along a row is three keys set."
 msgstr "Your finger no longer has to come off the glass. Drag across the dial and every button you pass through takes the direction you left it by — one sweep along a row is three keys set."
 
@@ -3923,7 +3923,7 @@ msgstr "Your profile could not be loaded."
 msgid "YOUR SCORE"
 msgstr "YOUR SCORE"
 
-#: constants/news.ts:201
+#: constants/news.ts:214
 msgid "Your Speed combo now grows on every quick hit instead of waiting for a clear board — but a slow one breaks it.\n"
 "\n"
 "Land a target with most of its ring still full and it pays extra."

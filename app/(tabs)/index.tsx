@@ -5,6 +5,7 @@ import { useFonts } from 'expo-font'
 import { isNotNull, isOneOf } from 'narrowland'
 import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { AppState, Text, View, type LayoutChangeEvent } from 'react-native'
+import { GestureDetector } from 'react-native-gesture-handler'
 import Animated from 'react-native-reanimated'
 
 import DSEG7Font from '@/assets/fonts/DSEG7Classic-Bold.ttf'
@@ -122,6 +123,7 @@ import { useStepUp } from '@/hooks/use-step-up'
 import { useStrikeShots, type ShotAim } from '@/hooks/use-strike-shots'
 import { useSupabaseAuth } from '@/hooks/use-supabase-auth'
 import { useTargetSpawner } from '@/hooks/use-target-spawner'
+import { useTargetsShortcuts } from '@/hooks/use-targets-shortcuts'
 import { useTaughtOffer } from '@/hooks/use-taught-offer'
 import { useTraineeCoach } from '@/hooks/use-trainee-coach'
 import { useTutorialLesson } from '@/hooks/use-tutorial-lesson'
@@ -1466,8 +1468,11 @@ export default function GameScreen() {
     // walked out of is still a run that ended, and the question this answers — how many
     // runs are abandoned rather than played out — is not a question about leaderboards.
     //
-    // `elapsedMs` needs no correction here the way it does in `pauseRun`: both callers
-    // reach this from the pause screen, so the machine has already banked the stretch.
+    // The pause screen's callers find the stretch already banked, with `playingSince`
+    // cleared; a hold on the targets area ends a run that is still being played, so its
+    // open stretch is added by hand the way the machine's `stopClock` would.
+    const now = Date.now()
+    const ranMs = elapsedMs + now - (state.context.playingSince ?? now)
     track('run_ended', {
       mode,
       difficulty,
@@ -1475,7 +1480,7 @@ export default function GameScreen() {
       score: state.context.score,
       hits: state.context.hits,
       strikes,
-      elapsed_ms: elapsedMs,
+      elapsed_ms: ranMs,
       accuracy: avgAccuracy,
       speed: avgSpeed,
       max_streak: maxStreak,
@@ -1504,7 +1509,7 @@ export default function GameScreen() {
         hits,
         accSum,
         spdSum,
-        elapsedMs,
+        elapsedMs: ranMs,
         final: true,
       })
     }
@@ -1517,6 +1522,19 @@ export default function GameScreen() {
     void refreshBoard()
     if (isReady && !nickname) setShowNicknameModal(true)
   }
+
+  const targetsShortcuts = useTargetsShortcuts({
+    playing: isPlaying,
+    tutorial,
+    onPause: () => {
+      pauseRun('double_tap')
+    },
+    onRestart: () => {
+      endRunEarly('restart')
+      send({ type: 'RESTART', now: Date.now(), runId: newRunId() })
+      track('run_started', { mode, difficulty, from: 'hold' })
+    },
+  })
 
   // The dial sum drives the score above the dial; the machine's composite score
   // drives the digital HUD readout.
@@ -2270,103 +2288,109 @@ export default function GameScreen() {
 
                   {/* The canvas the targets actually spawn into. It carries the measurement,
                   so its bounds are whatever is left after the readout above. */}
-                  <View
-                    ref={targetsAreaRef}
-                    className="flex-1"
-                    onLayout={(event) => {
-                      onContainerLayout(event)
-                      noteBoardRect(event)
-                    }}
-                  >
-                    {boardTargets.map((target) => (
-                      <TargetCard
-                        maxValue={dial.maxSum}
-                        key={target.id}
-                        target={target}
-                        // The clock this target spawned with, so a ring never retargets
-                        // mid-flight when Speed's timeout tightens.
-                        duration={target.duration}
-                        par={
-                          rules.capabilities.coached && showPar
-                            ? computePar(dial, grid, target.value)
-                            : undefined
-                        }
-                        dying={isGameOver}
-                        frozen={isPaused}
-                        // Nine cards have to stand on this board at once in a drilled
-                        // run, and nine at `PIE_SIZE` do not fit a phone — so each is
-                        // given its own size, and they differ from one another on
-                        // purpose. Undefined everywhere else, which is the size every
-                        // other mode draws.
-                        size={drillCards?.[target.seq]?.size}
-                        // A drilled board keeps its taken cards. The nine are a picture
-                        // the player is learning, and one vanishing on every hit would
-                        // leave nothing to have learnt by the ninth.
-                        spent={drill !== null}
-                        // And its own colour, out of this challenge's own family. A
-                        // fixed nine is learnt as a picture, and a colour is read before
-                        // a number is — where the band tint every other mode wears says
-                        // which hundred a target is in, which on a drill the player
-                        // already knows.
-                        color={drillTints?.[target.seq]}
-                        // Whether this target has a clock to run down at all. Read off
-                        // the rules rather than off the submode: the tutorial is the
-                        // one that patches `countsDown` off today, and a drilled run
-                        // does the same for a reason of its own — one clock per run,
-                        // and here it is the stopwatch.
-                        clocked={rules.clock.countsDown}
-                        // How long a number shows before it fades — the **glimpse**,
-                        // null for a number that never hides. Read off the rules, so the
-                        // card never learns which mode is asking.
-                        glimpse={rules.spawn.glimpse}
-                        driftStep={rules.spawn.drift}
-                        onExpire={() => {
-                          send({ type: 'TARGET_EXPIRED', id: target.id, now: Date.now() })
-                        }}
-                        onExitComplete={() => {
-                          removeDisplayed(target.id)
-                        }}
-                      />
-                    ))}
-                    {/* The lesson's two pointing cards. The first goes beside the target,
+                  <GestureDetector gesture={targetsShortcuts}>
+                    <View
+                      ref={targetsAreaRef}
+                      className="flex-1"
+                      onLayout={(event) => {
+                        onContainerLayout(event)
+                        noteBoardRect(event)
+                      }}
+                    >
+                      {boardTargets.map((target) => (
+                        <TargetCard
+                          maxValue={dial.maxSum}
+                          key={target.id}
+                          target={target}
+                          // The clock this target spawned with, so a ring never retargets
+                          // mid-flight when Speed's timeout tightens.
+                          duration={target.duration}
+                          par={
+                            rules.capabilities.coached && showPar
+                              ? computePar(dial, grid, target.value)
+                              : undefined
+                          }
+                          dying={isGameOver}
+                          frozen={isPaused}
+                          // Nine cards have to stand on this board at once in a drilled
+                          // run, and nine at `PIE_SIZE` do not fit a phone — so each is
+                          // given its own size, and they differ from one another on
+                          // purpose. Undefined everywhere else, which is the size every
+                          // other mode draws.
+                          size={drillCards?.[target.seq]?.size}
+                          // A drilled board keeps its taken cards. The nine are a picture
+                          // the player is learning, and one vanishing on every hit would
+                          // leave nothing to have learnt by the ninth.
+                          spent={drill !== null}
+                          // And its own colour, out of this challenge's own family. A
+                          // fixed nine is learnt as a picture, and a colour is read before
+                          // a number is — where the band tint every other mode wears says
+                          // which hundred a target is in, which on a drill the player
+                          // already knows.
+                          color={drillTints?.[target.seq]}
+                          // Whether this target has a clock to run down at all. Read off
+                          // the rules rather than off the submode: the tutorial is the
+                          // one that patches `countsDown` off today, and a drilled run
+                          // does the same for a reason of its own — one clock per run,
+                          // and here it is the stopwatch.
+                          clocked={rules.clock.countsDown}
+                          // How long a number shows before it fades — the **glimpse**,
+                          // null for a number that never hides. Read off the rules, so the
+                          // card never learns which mode is asking.
+                          glimpse={rules.spawn.glimpse}
+                          driftStep={rules.spawn.drift}
+                          onExpire={() => {
+                            send({
+                              type: 'TARGET_EXPIRED',
+                              id: target.id,
+                              now: Date.now(),
+                            })
+                          }}
+                          onExitComplete={() => {
+                            removeDisplayed(target.id)
+                          }}
+                        />
+                      ))}
+                      {/* The lesson's two pointing cards. The first goes beside the target,
                     above or below it as the canvas allows — see lib/tutorial-tip.ts. The
                     second goes at the foot of the canvas with its beak turned down at the
                     sum row directly beneath, which is the one thing on the screen whose
                     place never moves. */}
-                    {/* Placed on the card itself rather than on a wrapper around it: the
+                      {/* Placed on the card itself rather than on a wrapper around it: the
                     card is the view being mounted and unmounted, so it has to be the one
                     carrying the position its exit animation plays out from. */}
-                    {lesson.voice === 'targetTip' &&
-                      lesson.line !== null &&
-                      tip !== null && (
-                        <TutorialCard
-                          text={t(lesson.line)}
-                          beak={tip.beak}
-                          anchorX={tip.beakAt}
-                          style={{
-                            position: 'absolute',
-                            left: 0,
-                            right: 0,
-                            top: tip.top,
-                          }}
-                        />
-                      )}
-                    {/* The lesson's first word, set in the middle of the board with
+                      {lesson.voice === 'targetTip' &&
+                        lesson.line !== null &&
+                        tip !== null && (
+                          <TutorialCard
+                            text={t(lesson.line)}
+                            beak={tip.beak}
+                            anchorX={tip.beakAt}
+                            style={{
+                              position: 'absolute',
+                              left: 0,
+                              right: 0,
+                              top: tip.top,
+                            }}
+                          />
+                        )}
+                      {/* The lesson's first word, set in the middle of the board with
                     nothing else on it: what this run is, and that none of it counts. No
                     card around it, because a card is something said about something else
                     on the screen and there is nothing else on the screen yet — see
                     components/game/tutorial-intro.tsx. */}
-                    {lesson.voice === 'opening' && lesson.line !== null && (
-                      <TutorialIntro text={t(lesson.line)} />
-                    )}
-                    {lesson.voice === 'sumTip' && lesson.line !== null && (
-                      <TutorialCard
-                        text={t(lesson.line)}
-                        beak="down"
-                        style={{ position: 'absolute', left: 0, right: 0, bottom: 8 }}
-                      />
-                    )}
-                  </View>
+                      {lesson.voice === 'opening' && lesson.line !== null && (
+                        <TutorialIntro text={t(lesson.line)} />
+                      )}
+                      {lesson.voice === 'sumTip' && lesson.line !== null && (
+                        <TutorialCard
+                          text={t(lesson.line)}
+                          beak="down"
+                          style={{ position: 'absolute', left: 0, right: 0, bottom: 8 }}
+                        />
+                      )}
+                    </View>
+                  </GestureDetector>
                 </View>
 
                 {/* ── Score above dial ── */}
