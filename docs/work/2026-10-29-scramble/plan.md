@@ -44,6 +44,8 @@ Spec: docs/work/2026-10-29-scramble/spec.md
 
 ## Review
 
+**Shipped:** 834232d on `main`, deployed 2026-10-31 (run 41247838852).
+
 **Round 2: clean.** Findings 1, 3, 4 and 6 are fixed as built in round 3. The arrival
 skips only while the key's own flip is in the air, so `settle()` still runs and
 `inFlight` drains. `interrupted` is set only with a finger down on a scrambling dial and

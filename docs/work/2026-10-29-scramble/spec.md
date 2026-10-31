@@ -1,8 +1,8 @@
 # Scramble
 
 Slug: scramble
-Stage: review
-Next: /ship scramble
+Stage: shipped
+Next: — (AC 14 still wants a device check: fast drag through the hitting key, then lift)
 Track: full
 Skipped: shape
 Branch: feat/scramble
