@@ -602,6 +602,66 @@ const ONE_KEY: ChallengeSpec = {
   },
 }
 
+// SCRAMBLE: Accuracy Hard, and every hit **scrambles** the dial.
+//
+// Its one thing is the dial the player did not set. Everywhere else a hit leaves the keys
+// where the route to it put them, so the next route starts from a position the player just
+// built and already knows. Here every key jumps to a digit it was not showing, so each
+// target is read cold, from a dial nobody chose — and the route to it worked out again.
+//
+//   - **Everything else is Accuracy Hard**: the 16.5 s ring, the `optimal` streak, three
+//     hearts, and a hit under Hard's 0.2 bar costing one. Two strange things at once would
+//     be two challenges.
+//   - **Never a free hit.** A scramble whose sum is a number still standing is drawn
+//     again — see lib/scramble.ts — so every target taken is one the player dialled.
+//   - **Par moves with it.** The targets left standing are measured from the scrambled
+//     grid, which is where the route to them now starts.
+//
+// Its own dial id rather than the nine's, though the keys are the nine's: a run put away
+// on a dial that scrambles is never restored onto one that holds still.
+const SCRAMBLE: ChallengeSpec = {
+  slug: 'scramble',
+  label: msg`SCRAM­BLE`,
+  // Its own, as every challenge since HABIT's: a profile row reading ACC would file it
+  // under a board it is not.
+  code: msg`MIX`,
+  description: msg`Every hit scrambles the dial.`,
+  // No `shot`: Accuracy's sniper, inherited — the streak is Accuracy's own, a chain of
+  // exact routes, and a beam is what one of those looks like.
+  //
+  // Every line about reading a dial that moved without you.
+  claims: {
+    board: [
+      ['ALL', 'NEW'],
+      ['FAST', 'EYES'],
+      ['READ', 'IT'],
+    ],
+    medal: [
+      ['NEAR', 'READ'],
+      ['KEEN', 'EYES'],
+    ],
+    strong: [
+      ['GOOD', 'READ'],
+      ['CALM', 'KEYS'],
+    ],
+    cold: [
+      ['DIAL', 'LOST'],
+      ['NO', 'HOLD'],
+    ],
+  },
+  base: ACCURACY,
+  from: Date.UTC(2026, 9, 29),
+  until: Date.UTC(2026, 9, 29) + DAY,
+  rules: {
+    fixedDifficulty: 'hard',
+    dial: defineDial({ id: 'scramble', rows: 3, cols: 3, scramble: true }),
+    // Accuracy's own, said again because a challenge's default turns it off: a wasted
+    // route costs a heart here, as it does on Accuracy Hard. The author asked for it — a
+    // scramble is no excuse for the long way round, and the bar is the rung's, 0.2.
+    lives: { wastefulCostsLife: true },
+  },
+}
+
 // Mapped rather than listed, and that is what gives each challenge its colour: `.map`
 // hands `defineChallenge` the spec's own index, which is what the pair is derived from.
 // The list is append-only — see the note at the top of this file — so an index is a
@@ -615,4 +675,5 @@ export const CHALLENGES: readonly ModeDefinition[] = [
   SIDEWAYS,
   DRIFT,
   ONE_KEY,
+  SCRAMBLE,
 ].map((spec, index) => defineChallenge(spec, index))

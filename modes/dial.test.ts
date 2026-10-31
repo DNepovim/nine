@@ -30,6 +30,14 @@ describe('the nine dial', () => {
     ).toBe('sideways')
   })
 
+  it('holds still on a hit unless a dial says it scrambles', () => {
+    expect(NINE_DIAL.scramble).toBe(false)
+    expect(defineDial({ id: 'plain', rows: 2, cols: 2 }).scramble).toBe(false)
+    expect(defineDial({ id: 'mixed', rows: 3, cols: 3, scramble: true }).scramble).toBe(
+      true,
+    )
+  })
+
   it('derives a weight from row order × column order', () => {
     expect(weightAt(NINE_DIAL, 0)).toBe(1)
     expect(weightAt(NINE_DIAL, 4)).toBe(4)

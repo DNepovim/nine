@@ -1,5 +1,5 @@
 import { LinearGradient } from 'expo-linear-gradient'
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
 import Animated, {
   Easing,
   interpolateColor,
@@ -154,6 +154,7 @@ export function DialButton({
   control = 'full',
   hinted = false,
   heat = null,
+  scrambles = 0,
   onDelta,
   onSet,
 }: {
@@ -199,6 +200,10 @@ export function DialButton({
   // colours with it and cools back to its own. Null for every mode whose shot is not a
   // flame.
   heat?: SharedValue<number> | null
+  // How many times a hit has **scrambled** the dial this run — see `Dial`. A change of
+  // value that arrives with a new count is the dial moving on its own rather than a press,
+  // and this key flips its new digit in. Nought on every dial that holds still.
+  scrambles?: number
   onDelta: (delta: 1 | -1, sweep: boolean) => void
   onSet: (value: number, sweep: boolean) => void
 }) {
@@ -273,6 +278,37 @@ export function DialButton({
       numOpacity.value = withTiming(1, { duration: 130 })
     })
   }
+
+  // A **scramble**: the digit has already changed under the key, so there is no flight to
+  // be owed across and nothing to send — only the new digit arriving, from below when it
+  // rose and from above when it fell, the way a swipe would have brought it in.
+  const animateArrival = (dir: 1 | -1) => {
+    'worklet'
+    bounce.value = withSequence(
+      withTiming(dir * 7, { duration: 100 }),
+      withSpring(0, { damping: 18, stiffness: 120, mass: 0.8 }),
+    )
+    numOpacity.value = 0
+    numTranslateY.value = dir * -18
+    numTranslateY.value = withSpring(0, { damping: 22, stiffness: 160 })
+    numOpacity.value = withTiming(1, { duration: 130 })
+  }
+
+  // What this key last showed, and under which scramble — so a value arriving with a new
+  // count can be told from one the player's own press brought, which has had its flip.
+  //
+  // A key with a flip still in the air is left to finish it. The flip comes back in with
+  // whatever digit the key shows by then, which is the scrambled one, and its own callback
+  // is what sends the press it owes: an arrival drawn over it would cancel that callback,
+  // and the press would never reach the machine.
+  const seen = useRef({ value, scrambles })
+  useEffect(() => {
+    const was = seen.current
+    seen.current = { value, scrambles }
+    if (scrambles === was.scrambles || value === was.value) return
+    if (owed.value !== null) return
+    animateArrival(value > was.value ? 1 : -1)
+  }, [value, scrambles])
 
   const animateTap = () => {
     'worklet'

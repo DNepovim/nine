@@ -2,6 +2,8 @@ import { isNonEmptyArray } from 'narrowland'
 import { assign, createMachine } from 'xstate'
 
 import { TUTORIAL_TARGETS } from '@/constants/tutorial'
+import { idSeed, seeded } from '@/lib/rng'
+import { scrambleGrid } from '@/lib/scramble'
 import { driftedValue, isFresh, type Drift, type Heading } from '@/lib/target-drift'
 import { tutorialBoardEntry } from '@/lib/tutorial-board'
 import {
@@ -574,6 +576,28 @@ export const claimedTime = (
   return context.elapsedMs
 }
 
+// Where the dial stands once a press is over: the grid the player dialled, everywhere but
+// after a hit on a dial that **scrambles** — where the hit throws every key onto a digit
+// it was not showing.
+// Called after the hit has been scored, streaked and checked against the bar, all of which
+// are about the route the player actually took to it.
+//
+// Seeded on the run and the hit count the hit leaves behind, because the machine reads no
+// randomness: the same run scrambles the same way every time it reaches the same hit, which
+// is what lets a restored run and a test agree with what was played. `standing` is the
+// survivors' numbers as they show now, which it keeps clear of, so a scramble is never a
+// hit nobody dialled; `before` is the dial ahead of this press, so the key it moved never
+// lands back where it started.
+const settledGrid = (
+  dial: DialSpec,
+  dialled: Grid,
+  anyHit: boolean,
+  { before, standing, seed }: { before: Grid; standing: readonly number[]; seed: string },
+): Grid =>
+  anyHit && dial.scramble
+    ? scrambleGrid(dial, dialled, standing, seeded(idSeed(seed)), before)
+    : dialled
+
 // `press` is 1 for a key changing the grid and 0 for a **drift** landing a target on the
 // sum already dialled — see `TICK` — which takes it without a move being made.
 function applyGrid(context: Context, newGrid: Grid, now: number, press: 0 | 1 = 1) {
@@ -691,15 +715,22 @@ function applyGrid(context: Context, newGrid: Grid, now: number, press: 0 | 1 = 
   const strikes = context.strikes + (multiplier > 1 ? matched.length : 0)
   const score = context.score + addedScore
 
-  // Surviving targets: a hit resets their reference (and par) to now; otherwise
+  const grid = settledGrid(rules.dial, newGrid, anyHit, {
+    before: context.grid,
+    standing: remaining.map(shown),
+    seed: `scramble:${context.runId}:${hits}`,
+  })
+
+  // Surviving targets: a hit resets their reference (and par) to now — to the scrambled
+  // grid where there is one, since that is where the route to them now starts; otherwise
   // this press is just one more step toward them.
   const targets = remaining.map((t) =>
     anyHit
       ? {
           ...t,
           refAt: now,
-          refGrid: newGrid,
-          par: computePar(rules.dial, newGrid, t.value),
+          refGrid: grid,
+          par: computePar(rules.dial, grid, t.value),
           userSteps: 0,
         }
       : { ...t, userSteps: t.userSteps + press },
@@ -750,7 +781,7 @@ function applyGrid(context: Context, newGrid: Grid, now: number, press: 0 | 1 = 
   const newLives = costsLife ? Math.max(0, context.lives - lifeCost) : context.lives
 
   return {
-    grid: newGrid,
+    grid,
     targets,
     hits,
     score,

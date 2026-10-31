@@ -2511,6 +2511,8 @@ export default function GameScreen() {
                   // every run that is not a live tutorial.
                   drag={drag && lesson.drag}
                   flame={flame}
+                  // On a dial that scrambles, every hit is a scramble — see `Dial`.
+                  hitSeq={hitBatch.seq}
                   peakFrom={darkGradientOf(mode)[0]}
                   peakTo={darkGradientOf(mode)[1]}
                   onDelta={(index, delta, sweep) => {

@@ -70,6 +70,7 @@ export function Dial({
   hand = null,
   drag = true,
   flame = null,
+  hitSeq = 0,
   onDelta,
   onSet,
   onSweep,
@@ -108,6 +109,12 @@ export function Dial({
   // How many strikes have set every key alight — the `flame` shot, see `DialFlames`. Null
   // for every mode whose shot is drawn over the board instead.
   flame?: number | null
+  // A count that goes up on every press that takes a target — the run's `hitBatch.seq`,
+  // which is a press count rather than a target count and is not reset between runs. Read
+  // only on a dial that **scrambles** (see lib/scramble.ts), where every such press is a
+  // scramble: each key flips its new digit in, and a gesture it lands in is over. Left at
+  // nought by every caller whose dial holds still.
+  hitSeq?: number
   // `sweep` is whether this change is part of a drag — see `DialCommand`.
   onDelta: (index: number, delta: 1 | -1, sweep: boolean) => void
   onSet: (index: number, value: number, sweep: boolean) => void
@@ -180,14 +187,37 @@ export function Dial({
     inFlight.value = 0
   }, [dial.id])
 
-  // Where the copy is put right again — the only thing that ever changes the grid from
-  // outside the dial is a new run starting, and this is how the pan hears about it.
+  // A grid that arrived while the copy could not take it — see below — kept until the
+  // gesture it arrived during is over.
+  const owedGrid = useSharedValue<readonly number[] | null>(null)
+
+  // Whether a **scramble** has landed under the gesture now in progress. The rest of that
+  // gesture is then ignored, up to the finger lifting: a drag is planned against the digits
+  // the keys showed when it began, and once they have all moved it has nothing left to
+  // mean. Its moves would also be read against the copy above, which cannot take the
+  // scrambled grid until the finger is up — see the effect below.
+  const interrupted = useSharedValue(false)
+  useEffect(() => {
+    if (dial.scramble && active.value !== null) interrupted.value = true
+  }, [hitSeq])
+
+  // Where the copy is put right again — the two things that change the grid from outside
+  // the dial are a new run starting and a hit **scrambling** it, and this is how the pan
+  // hears about either.
   //
   // Not at the start of each gesture, which is the tempting place and the wrong one: a
   // finger can come back down inside the beat a previous change is still travelling in,
   // and re-reading the render there would undo it.
+  //
+  // A scramble can land while a finger is still down — a drag that takes a target on its
+  // way through — and nothing after it need change the grid again, so a render this skips
+  // is kept for the gesture's end rather than dropped.
   useEffect(() => {
-    if (active.value !== null || inFlight.value > 0) return
+    if (active.value !== null || inFlight.value > 0) {
+      owedGrid.value = values
+      return
+    }
+    owedGrid.value = null
     held.value = values
   }, [values])
 
@@ -196,6 +226,7 @@ export function Dial({
   // after it, which upright changes nothing about.
   const commit = (cell: number, move: DialMove, lift: boolean) => {
     'worklet'
+    if (interrupted.value) return
     const taken = allowedMove(
       live[cell] ?? 'full',
       orientMove(dial.orientation, move),
@@ -247,6 +278,7 @@ export function Dial({
     .onBegin((e) => {
       'worklet'
       crossed.value = false
+      interrupted.value = false
       lastCommit.value = NONE
       swept.value = false
       landed.value = cellAt(e.x, e.y, metrics, dial)
@@ -287,6 +319,13 @@ export function Dial({
       'worklet'
       active.value = null
       pressed.value = NONE
+      // The grid a scramble left while the finger was down. Only with nothing in flight:
+      // a change still travelling will render the grid again once it lands, and that
+      // render is the one to take.
+      const owed = owedGrid.value
+      if (owed === null || inFlight.value > 0) return
+      owedGrid.value = null
+      held.value = owed
     })
 
   return (
@@ -327,6 +366,7 @@ export function Dial({
                 control={live[index] ?? 'full'}
                 hinted={liveKey === index}
                 heat={flame === null ? null : burn.heat}
+                scrambles={dial.scramble ? hitSeq : 0}
                 peakFrom={peakFrom}
                 peakTo={peakTo}
                 commands={commands}

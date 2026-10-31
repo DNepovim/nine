@@ -4,8 +4,8 @@ import { createActor } from 'xstate'
 import { TUTORIAL_OPENING_TARGET, TUTORIAL_TARGETS } from '@/constants/tutorial'
 import { tutorialBoardEntry } from '@/lib/tutorial-board'
 import { bestOn, claimedTime, gameMachine } from '@/machines/game'
-import { cleanHitReason } from '@/machines/scoring'
-import { baseClockMs, challengeId, type Grid } from '@/modes'
+import { cleanHitReason, computePar } from '@/machines/scoring'
+import { baseClockMs, challengeId, NINE_DIAL, sumOf, type Grid } from '@/modes'
 
 // A name per run, because START and RESTART each deal a new one. Nothing here reads it —
 // it belongs to the lifetime counters outside the machine — so a legible one will do.
@@ -1510,5 +1510,99 @@ describe('DRIFT', () => {
     roundabout.send({ type: 'ADD_TARGET', value: 9, at: 0, drift: 1 })
     pressUp(roundabout, 9, 500) // nine presses on the 1 key
     expect(quick.getSnapshot().context.score).toBe(roundabout.getSnapshot().context.score)
+  })
+})
+
+describe('SCRAMBLE', () => {
+  const SCRAMBLE = challengeId('scramble')
+
+  const started = (runId = nextRunId()) => {
+    const actor = createActor(gameMachine)
+    actor.start()
+    actor.send({ type: 'SET_MODE', mode: SCRAMBLE })
+    actor.send({ type: 'START', now: 0, runId })
+    return actor
+  }
+
+  // The grid a par-1 hit on 9 leaves behind before any scramble: the ×9 key raised once.
+  const DIALLED: Grid = [0, 0, 0, 0, 0, 0, 0, 0, 1]
+
+  it('moves every key on a hit, onto a sum no standing target shows', () => {
+    const actor = started()
+    actor.send({ type: 'ADD_TARGET', value: 9, at: 0 })
+    actor.send({ type: 'ADD_TARGET', value: 50, at: 0 })
+    actor.send({ type: 'PRESS', index: 8, delta: 1, now: 0 })
+    const { grid, targets, hits } = actor.getSnapshot().context
+    expect(hits).toBe(1)
+    expect(grid.every((value, i) => value !== DIALLED[i])).toBe(true)
+    // Nor back where the press found it: the ×9 key went 0 → 1 to make the hit.
+    expect(grid[8]).not.toBe(0)
+    expect(sumOf(NINE_DIAL, grid)).not.toBe(50)
+    expect(targets).toHaveLength(1)
+  })
+
+  it('measures the targets left standing from the scrambled grid', () => {
+    const actor = started()
+    actor.send({ type: 'ADD_TARGET', value: 9, at: 0 })
+    actor.send({ type: 'ADD_TARGET', value: 50, at: 0 })
+    actor.send({ type: 'PRESS', index: 8, delta: 1, now: 0 })
+    const { grid, targets } = actor.getSnapshot().context
+    const [survivor] = targets
+    expect(survivor?.refGrid).toEqual(grid)
+    expect(survivor?.par).toBe(computePar(NINE_DIAL, grid, 50))
+    expect(survivor?.userSteps).toBe(0)
+  })
+
+  it('scores, streaks and checks the bar on the route the player dialled', () => {
+    // A fixed name, so the scramble is a fixed one too: it leaves the ×1 key under 9, where
+    // raising it adds one rather than wrapping to nought.
+    const actor = started('scramble-wasted')
+    // Par 1, taken in one press: exact, so the streak builds and the heart stays — though
+    // the dial it was taken on is gone by the time the press is over.
+    actor.send({ type: 'ADD_TARGET', value: 9, at: 0 })
+    actor.send({ type: 'PRESS', index: 8, delta: 1, now: 0 })
+    const exact = actor.getSnapshot().context
+    expect(exact.streak).toBe(1)
+    expect(exact.lives).toBe(3)
+    expect(exact.hitBatch.hits[0]?.refGrid).toEqual([0, 0, 0, 0, 0, 0, 0, 0, 0])
+    expect(exact.grid[0]).toBeLessThan(9)
+
+    // Wasted: up and down twice on the ×9 key, then the target one press away on the ×1
+    // key — five steps against par 1 is under Hard's bar, so a heart goes, scramble or not.
+    const target = sumOf(NINE_DIAL, exact.grid) + 1
+    actor.send({ type: 'ADD_TARGET', value: target, at: 0 })
+    actor.send({ type: 'PRESS', index: 8, delta: 1, now: 0 })
+    actor.send({ type: 'PRESS', index: 8, delta: -1, now: 0 })
+    actor.send({ type: 'PRESS', index: 8, delta: 1, now: 0 })
+    actor.send({ type: 'PRESS', index: 8, delta: -1, now: 0 })
+    actor.send({ type: 'PRESS', index: 0, delta: 1, now: 0 })
+    const wasted = actor.getSnapshot().context
+    expect(wasted.hits).toBe(2)
+    expect(wasted.streak).toBe(0)
+    expect(wasted.lives).toBe(2)
+  })
+
+  it('leaves the dial exactly as pressed on a press that hits nothing', () => {
+    const actor = started()
+    actor.send({ type: 'ADD_TARGET', value: 9, at: 0 })
+    actor.send({ type: 'PRESS', index: 0, delta: 1, now: 0 })
+    expect(actor.getSnapshot().context.grid).toEqual([1, 0, 0, 0, 0, 0, 0, 0, 0])
+  })
+
+  it('scrambles the same run the same way every time', () => {
+    const play = () => {
+      const actor = started('the-same-run')
+      actor.send({ type: 'ADD_TARGET', value: 9, at: 0 })
+      actor.send({ type: 'PRESS', index: 8, delta: 1, now: 0 })
+      return actor.getSnapshot().context.grid
+    }
+    expect(play()).toEqual(play())
+  })
+
+  it('does nothing of the kind on a dial that holds still', () => {
+    const actor = start('accuracy')
+    actor.send({ type: 'ADD_TARGET', value: 9, at: 0 })
+    actor.send({ type: 'PRESS', index: 8, delta: 1, now: 0 })
+    expect(actor.getSnapshot().context.grid).toEqual(DIALLED)
   })
 })

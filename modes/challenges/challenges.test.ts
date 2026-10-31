@@ -447,9 +447,34 @@ describe('glimpse', () => {
         'sideways',
         'drift',
         'one-key',
+        'scramble',
       ].map(challengeId),
     )
     expect(GLIMPSE?.gradient).toEqual(challengeGradient(3))
+  })
+})
+
+describe('scramble', () => {
+  it('is Accuracy Hard on the nine keys, on a dial that scrambles', () => {
+    const rules = runRules(challengeId('scramble'), 'hard')
+    expect(rules.dial.scramble).toBe(true)
+    expect([rules.dial.rows, rules.dial.cols]).toEqual([3, 3])
+    expect([...rules.dial.weights]).toEqual([1, 2, 3, 2, 4, 6, 3, 6, 9])
+    expect(rules.scoring.streak).toBe('optimal')
+    expect(rules.scoring.weights).toEqual({ acc: 0.85, spd: 0.15 })
+    expect(rules.lives.count).toBe(3)
+    // A wasted route costs a heart at Hard's own bar — said on the entry, since a
+    // challenge's default is that it costs none.
+    expect(rules.lives.wasteful).toBeCloseTo(0.2)
+    expect(rules.capabilities.board).toBe(false)
+  })
+
+  it('is the only dial in the catalog that scrambles', () => {
+    expect(
+      CHALLENGES.filter((mode) => runRules(mode.id, 'hard').dial.scramble).map(
+        (mode) => mode.id,
+      ),
+    ).toEqual([challengeId('scramble')])
   })
 })
 

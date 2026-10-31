@@ -25,6 +25,14 @@ export type DialSpec = {
   maxSum: number
   // Which way up the dial is drawn and read — see `DialOrientation`.
   orientation: DialOrientation
+  // Whether every hit **scrambles** the dial: each key jumps to a digit it was not showing,
+  // and the sum lands on no target still standing — see lib/scramble.ts. False on every
+  // dial but SCRAMBLE's, so a hit everywhere else leaves the keys where the player put them.
+  //
+  // On the dial rather than in a rules group of its own because it is how this dial
+  // behaves, as `orientation` is how it is drawn — and both reach the machine, the scoring
+  // and the dial component through `rules.dial` with nothing new to carry them.
+  scramble: boolean
 }
 
 // Which way up a dial is drawn and read. `sideways` is a quarter turn counter-clockwise,
@@ -63,6 +71,7 @@ export function defineDial({
   weights,
   digits = 10,
   orientation = 'upright',
+  scramble = false,
 }: {
   id: string
   rows: number
@@ -70,6 +79,7 @@ export function defineDial({
   weights?: readonly number[]
   digits?: number
   orientation?: DialOrientation
+  scramble?: boolean
 }): DialSpec {
   const cells = rows * cols
   const spread = weights ?? Array.from({ length: cells }, byPosition(cols))
@@ -82,6 +92,7 @@ export function defineDial({
     digits,
     maxSum: spread.reduce((sum, weight) => sum + weight * top, 0),
     orientation,
+    scramble,
   }
 }
 

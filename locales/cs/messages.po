@@ -1,6 +1,6 @@
 msgid ""
 msgstr ""
-"POT-Creation-Date: 2026-09-16 16:58+0200\n"
+"POT-Creation-Date: 2026-10-31 21:57+0100\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -1065,7 +1065,7 @@ msgstr "ZNALEC"
 msgid "CONTINUE"
 msgstr "POKRAČOVAT"
 
-#: app/(tabs)/index.tsx:2556
+#: app/(tabs)/index.tsx:2558
 msgid "Continue the tutorial"
 msgstr "Pokračovat v tutoriálu"
 
@@ -1222,6 +1222,10 @@ msgstr "Každé tlačítko končí na devítinásobku své váhy: 81 u 9×, 9 u 
 #: components/overlays/dev-overlay.tsx:184
 msgid "EVERY CHALLENGE, ANY WINDOW — NO BOARD KEPT"
 msgstr "KAŽDÁ VÝZVA, KDYKOLI — BEZ ŽEBŘÍČKU"
+
+#: modes/challenges/catalog.ts:628
+msgid "Every hit scrambles the dial."
+msgstr "Každý zásah zamíchá číselník."
 
 #: lib/compare-lines.ts:35
 msgid "Every column leans your way. There is nothing here they hold."
@@ -1942,6 +1946,10 @@ msgstr "Mine tě třetí místo v termínu o jediný bod nebo o desetinu sekundy
 #: components/overlays/how-to-play-overlay.tsx:44
 msgid "MODES"
 msgstr "MÓDY"
+
+#: modes/challenges/catalog.ts:627
+msgid "MIX"
+msgstr "MIX"
 
 #: lib/recap-lines.ts:186
 msgid "Monday"
@@ -2891,6 +2899,10 @@ msgstr "Zatím na druhém místě."
 #: components/overlays/admin-overlay.tsx:440
 msgid "Secrets"
 msgstr "Tajné"
+
+#: modes/challenges/catalog.ts:624
+msgid "SCRAM­BLE"
+msgstr "ZAMÍ­CHÁNO"
 
 #: components/overlays/admin-knowledge.tsx:47
 msgid "SECRETS"

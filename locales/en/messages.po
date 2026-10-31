@@ -1065,7 +1065,7 @@ msgstr "CONNOISSEUR"
 msgid "CONTINUE"
 msgstr "CONTINUE"
 
-#: app/(tabs)/index.tsx:2556
+#: app/(tabs)/index.tsx:2558
 msgid "Continue the tutorial"
 msgstr "Continue the tutorial"
 
@@ -1222,6 +1222,10 @@ msgstr "Every button tops out at nine times its weight: 81 on the 9×, 9 on a 1�
 #: components/overlays/dev-overlay.tsx:184
 msgid "EVERY CHALLENGE, ANY WINDOW — NO BOARD KEPT"
 msgstr "EVERY CHALLENGE, ANY WINDOW — NO BOARD KEPT"
+
+#: modes/challenges/catalog.ts:628
+msgid "Every hit scrambles the dial."
+msgstr "Every hit scrambles the dial."
 
 #: lib/compare-lines.ts:35
 msgid "Every column leans your way. There is nothing here they hold."
@@ -1942,6 +1946,10 @@ msgstr "Miss a session's top three by a single point, or a tenth of a second."
 #: components/overlays/how-to-play-overlay.tsx:44
 msgid "MODES"
 msgstr "MODES"
+
+#: modes/challenges/catalog.ts:627
+msgid "MIX"
+msgstr "MIX"
 
 #: lib/recap-lines.ts:186
 msgid "Monday"
@@ -2891,6 +2899,10 @@ msgstr "Second, for now."
 #: components/overlays/admin-overlay.tsx:440
 msgid "Secrets"
 msgstr "Secrets"
+
+#: modes/challenges/catalog.ts:624
+msgid "SCRAM­BLE"
+msgstr "SCRAM­BLE"
 
 #: components/overlays/admin-knowledge.tsx:47
 msgid "SECRETS"
