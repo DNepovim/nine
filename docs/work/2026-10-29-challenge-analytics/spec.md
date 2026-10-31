@@ -1,8 +1,8 @@
 # Challenge runs in the analytics
 
 Slug: challenge-analytics
-Stage: review
-Next: /ship challenge-analytics
+Stage: shipped
+Next: /deploy
 Track: full
 Branch: feat/challenge-analytics
 Started: 2026-10-29

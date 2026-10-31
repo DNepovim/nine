@@ -82,3 +82,5 @@ read off the session (asserted).
 **Worth its own item later:** receipts stamped with play time rather than arrival;
 runs-per-session in the sessions block (receipts now carry `session_id`); one board
 predicate (`traitsOf`) shared by the run screen and the server.
+
+Shipped in `65fff5d` on `main` — committed by a concurrent session sharing the index, under its message "docs(work): mark lab-ratings shipped"; left as is by choice, no history rewrite. Migration `20261029020000` pushed to production before it. Not deployed.
