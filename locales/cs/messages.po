@@ -627,7 +627,7 @@ msgstr "PŘIDAT MOTTO"
 msgid "ADD NICKNAME"
 msgstr "PŘIDAT PŘEZDÍVKU"
 
-#: components/overlays/install-overlay.tsx:101
+#: components/overlays/install-overlay.tsx:119
 msgid "ADD TO HOME SCREEN"
 msgstr "PŘIDAT NA PLOCHU"
 
@@ -979,7 +979,7 @@ msgstr "ZMĚNIT E-MAIL"
 msgid "CHANGE YOUR EMAIL"
 msgstr "ZMĚŇ SI E-MAIL"
 
-#: components/overlays/install-steps.tsx:25
+#: components/overlays/install-steps.tsx:32
 msgid "Choose Add to Home Screen"
 msgstr "Zvol Přidat na plochu"
 
@@ -1455,6 +1455,10 @@ msgstr "ČTYŘI TLAČÍTKA"
 msgid "Four keys, doubled speed"
 msgstr "Čtyři tlačítka, dvojnásobná rychlost"
 
+#: components/overlays/install-overlay.tsx:43
+msgid "Full screen, no browser bar, and it keeps working offline."
+msgstr "Celá obrazovka, žádná lišta prohlížeče a funguje i offline."
+
 #: lib/recap-lines.ts:190
 msgid "Friday"
 msgstr "v pátek"
@@ -1504,6 +1508,13 @@ msgid "GOOD SPORT"
 msgstr "FAIR PLAY"
 
 #: machines/tutorial-lesson.ts:302
+#: components/overlays/install-overlay.tsx:21
+#: components/overlays/install-overlay.tsx:22
+#: components/overlays/install-overlay.tsx:23
+#: components/overlays/install-overlay.tsx:24
+#: components/overlays/install-overlay.tsx:25
+#: components/overlays/install-overlay.tsx:26
+#: components/overlays/install-overlay.tsx:27
 msgid "GOOD. THE NEXT ONE IS YOURS"
 msgstr "DOBŘE. DALŠÍ JE NA TOBĚ"
 
@@ -1679,7 +1690,8 @@ msgstr "V týdnu od [DATE] byla tvoje [B] se skóre [S]"
 msgid "In the week of [DATE] you took third on [B] with [S]"
 msgstr "V týdnu od [DATE] ti patřilo třetí místo — [B] se skóre [S]"
 
-#: components/overlays/install-overlay.tsx:85
+#: components/overlays/install-overlay.tsx:20
+#: components/overlays/install-overlay.tsx:103
 msgid "INSTALL"
 msgstr "NAINSTALOVAT"
 
@@ -2434,6 +2446,14 @@ msgstr "Otevři denní žebříček prvním skóre."
 #: constants/tips.ts:20
 msgid "Open a session on an easier difficulty. The first run is a warm-up, and the weights come back slower than you remember them."
 msgstr "Začínej na lehčí obtížnosti. První hra je rozehřívací a váhy se ti vybaví pomaleji, než si pamatuješ."
+
+#: components/overlays/install-overlay.tsx:69
+msgid "Open your browser's menu"
+msgstr "Otevři nabídku prohlížeče"
+
+#: components/overlays/install-overlay.tsx:64
+msgid "Open your browser's Share menu"
+msgstr "Otevři v prohlížeči nabídku Sdílet"
 
 #: components/overlays/admin-stats.tsx:141
 msgid "OPEN IN POSTHOG"
@@ -3221,6 +3241,18 @@ msgstr "SEBRÁNO"
 #: components/overlays/medals-overlay.tsx:125
 msgid "TAKEN BY <0/>"
 msgstr "SEBRÁNO: <0/>"
+#: components/overlays/install-overlay.tsx:62
+msgid "Tap Share in the toolbar"
+msgstr "Klepni na Sdílet v liště"
+
+#: components/overlays/install-overlay.tsx:63
+msgid "Tap Share next to the address bar"
+msgstr "Klepni na Sdílet vedle adresního řádku"
+
+#: components/overlays/install-overlay.tsx:66
+msgid "Tap the ⋮ menu next to the address bar"
+msgstr "Klepni na nabídku ⋮ vedle adresního řádku"
+
 
 #: components/overlays/medals-overlay.tsx:210
 msgid "TAKEN IN THE LAST {HISTORY_DAYS} DAYS"
@@ -3502,6 +3534,14 @@ msgstr "Tahle tabulka patří soupeři. Ty jsi na ní host."
 #: constants/news.ts:90
 msgid "Things you keep"
 msgstr "Co ti zůstane"
+#: components/overlays/install-overlay.tsx:53
+msgid "This app can't add to your home screen. Open nine in Chrome and you can. Full screen, no browser bar, and it keeps working offline."
+msgstr "Tahle aplikace neumí přidat hru na plochu. Otevři nine v Chromu a půjde to. Celá obrazovka, žádná lišta prohlížeče a funguje i offline."
+
+#: components/overlays/install-overlay.tsx:52
+msgid "This app can't add to your home screen. Open nine in Safari and you can. Full screen, no browser bar, and it keeps working offline."
+msgstr "Tahle aplikace neumí přidat hru na plochu. Otevři nine v Safari a půjde to. Celá obrazovka, žádná lišta prohlížeče a funguje i offline."
+
 
 #: constants/tips.ts:25
 msgid "Think in horizontal swipes before you tap. Left sends a button to 0, right to 9, and each is one move however far it travels — a big gap is often two swipes and a tap."

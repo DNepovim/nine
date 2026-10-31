@@ -23,6 +23,14 @@ const ANDROID_CHROME =
 const ANDROID_FIREFOX =
   'Mozilla/5.0 (Android 14; Mobile; rv:120.0) Gecko/120.0 Firefox/120.0'
 
+const ANDROID_SAMSUNG =
+  'Mozilla/5.0 (Linux; Android 14; SM-S911B) AppleWebKit/537.36 (KHTML, like Gecko) SamsungBrowser/23.0 Chrome/115.0.0.0 Mobile Safari/537.36'
+
+const UNKNOWN_MOBILE = 'Mozilla/5.0 (Mobile; rv:48.0) Gecko/48.0 Firefox/48.0 KAIOS/2.5'
+
+const DESKTOP_FIREFOX =
+  'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:120.0) Gecko/20100101 Firefox/120.0'
+
 const DESKTOP_CHROME =
   'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
 
@@ -65,8 +73,8 @@ describe('resolveInstallTarget', () => {
     expect(resolveInstallTarget(env({ hasPrompt: true, uaMobile: true }))).toBe('prompt')
   })
 
-  it('stays quiet on Android until the install event arrives', () => {
-    expect(resolveInstallTarget(env({ uaMobile: true }))).toBe('none')
+  it('walks Android Chrome through its menu until the install event arrives', () => {
+    expect(resolveInstallTarget(env({ uaMobile: true }))).toBe('android-menu')
   })
 
   it('stays quiet on desktop Chromium even though it can install', () => {
@@ -141,8 +149,22 @@ describe('resolveInstallTarget', () => {
 
   it('never tells a real Chrome tab to open Chrome while its event is pending', () => {
     expect(resolveInstallTarget(env({ uaMobile: true, userAgent: ANDROID_CHROME }))).toBe(
-      'none',
+      'android-menu',
     )
+  })
+
+  it('names no location in Samsung Internet, whose menu is not ⋮', () => {
+    expect(
+      resolveInstallTarget(env({ uaMobile: true, userAgent: ANDROID_SAMSUNG })),
+    ).toBe('mobile-other')
+  })
+
+  it('names no location in an unknown phone browser', () => {
+    expect(resolveInstallTarget(env({ userAgent: UNKNOWN_MOBILE }))).toBe('mobile-other')
+  })
+
+  it('stays quiet on desktop Firefox, which has no home screen', () => {
+    expect(resolveInstallTarget(env({ userAgent: DESKTOP_FIREFOX }))).toBe('none')
   })
 
   it('prefers the install button over a redirect when both could match', () => {
@@ -153,7 +175,13 @@ describe('resolveInstallTarget', () => {
     ).toBe('prompt')
   })
 
-  it('stays quiet in a browser that offers neither route', () => {
-    expect(resolveInstallTarget(env({ userAgent: ANDROID_FIREFOX }))).toBe('none')
+  it('walks Firefox on Android through its menu, which fires no install event', () => {
+    expect(resolveInstallTarget(env({ userAgent: ANDROID_FIREFOX }))).toBe('android-menu')
+  })
+
+  it('stays quiet in an installed Firefox web app', () => {
+    expect(
+      resolveInstallTarget(env({ standalone: true, userAgent: ANDROID_FIREFOX })),
+    ).toBe('none')
   })
 })

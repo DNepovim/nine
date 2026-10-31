@@ -1,5 +1,7 @@
 import { Ionicons } from '@expo/vector-icons'
-import { Trans } from '@lingui/react/macro'
+import type { MessageDescriptor } from '@lingui/core'
+import { msg } from '@lingui/core/macro'
+import { Trans, useLingui } from '@lingui/react/macro'
 import { useEffect } from 'react'
 import { Text, View } from 'react-native'
 
@@ -15,51 +17,66 @@ import type { InstallableTarget } from '@/types/install'
 type IoniconName = keyof typeof Ionicons.glyphMap
 
 const CTA_LABEL = {
-  prompt: 'INSTALL',
-  'ios-safari': 'GOT IT',
-  'ios-chrome': 'GOT IT',
-  'ios-other': 'GOT IT',
-  'open-in-safari': 'GOT IT',
-  'open-in-chrome': 'GOT IT',
-} as const satisfies Record<InstallableTarget, string>
+  prompt: msg`INSTALL`,
+  'ios-safari': msg`GOT IT`,
+  'ios-chrome': msg`GOT IT`,
+  'ios-other': msg`GOT IT`,
+  'android-menu': msg`GOT IT`,
+  'mobile-other': msg`GOT IT`,
+  'open-in-safari': msg`GOT IT`,
+  'open-in-chrome': msg`GOT IT`,
+} as const satisfies Record<InstallableTarget, MessageDescriptor>
 
 const CTA_ICON = {
   prompt: 'download-outline',
   'ios-safari': 'checkmark',
   'ios-chrome': 'checkmark',
   'ios-other': 'checkmark',
+  'android-menu': 'checkmark',
+  'mobile-other': 'checkmark',
   'open-in-safari': 'checkmark',
   'open-in-chrome': 'checkmark',
 } as const satisfies Record<InstallableTarget, IoniconName>
 
 // The install paths sell the result; the redirects have to explain the obstacle
 // first, because the player can't act on anything until they move.
-const PITCH = 'Full screen, no browser bar, and it keeps working offline.'
+const PITCH = msg`Full screen, no browser bar, and it keeps working offline.`
 
 const BODY = {
   prompt: PITCH,
   'ios-safari': PITCH,
   'ios-chrome': PITCH,
   'ios-other': PITCH,
-  'open-in-safari': `This app can't add to your home screen. Open nine in Safari and you can. ${PITCH}`,
-  'open-in-chrome': `This app can't add to your home screen. Open nine in Chrome and you can. ${PITCH}`,
-} as const satisfies Record<InstallableTarget, string>
+  'android-menu': PITCH,
+  'mobile-other': PITCH,
+  'open-in-safari': msg`This app can't add to your home screen. Open nine in Safari and you can. Full screen, no browser bar, and it keeps working offline.`,
+  'open-in-chrome': msg`This app can't add to your home screen. Open nine in Chrome and you can. Full screen, no browser bar, and it keeps working offline.`,
+} as const satisfies Record<InstallableTarget, MessageDescriptor>
 
-// Where each browser keeps its Share button. `null` means this target shows no
-// steps at all — the map doubles as the "are there steps?" decision, so adding a
-// target forces an answer rather than silently falling through to none.
+// Where each browser keeps the button that leads to Add to Home Screen: Share on
+// iOS, a menu everywhere else. `null` means this target shows no steps at all — the
+// map doubles as the "are there steps?" decision, so adding a target forces an
+// answer rather than silently falling through to none.
 const STEP_ONE = {
   prompt: null,
-  'ios-safari': 'Tap Share in the toolbar',
-  'ios-chrome': 'Tap Share next to the address bar',
-  'ios-other': "Open your browser's Share menu",
+  'ios-safari': { label: msg`Tap Share in the toolbar`, glyph: 'share-outline' },
+  'ios-chrome': { label: msg`Tap Share next to the address bar`, glyph: 'share-outline' },
+  'ios-other': { label: msg`Open your browser's Share menu`, glyph: 'share-outline' },
+  'android-menu': {
+    label: msg`Tap the ⋮ menu next to the address bar`,
+    glyph: 'ellipsis-vertical',
+  },
+  'mobile-other': { label: msg`Open your browser's menu`, glyph: 'menu' },
   'open-in-safari': null,
   'open-in-chrome': null,
-} as const satisfies Record<InstallableTarget, string | null>
+} as const satisfies Record<
+  InstallableTarget,
+  { label: MessageDescriptor; glyph: IoniconName } | null
+>
 
 // Offers the home screen to a player who arrived in a mobile browser. Two
-// bodies: a real install button where the browser gives us one, Safari's manual
-// steps where it doesn't. `InstallableTarget` excludes 'none', so this can't be
+// bodies: a real install button where the browser gives us one, the browser's
+// manual steps where it doesn't. `InstallableTarget` excludes 'none', so this can't be
 // rendered with nothing to say.
 export function InstallOverlay({
   target,
@@ -70,6 +87,7 @@ export function InstallOverlay({
   onInstall: () => void
   onDismiss: () => void
 }) {
+  const { t } = useLingui()
   const stepOne = STEP_ONE[target]
 
   // Once per actual appearance, not once per time the target resolves: the two mount
@@ -105,11 +123,13 @@ export function InstallOverlay({
               selectable={false}
               className={cn(TYPE.prose, 'mt-2 text-center text-dim')}
             >
-              {BODY[target]}
+              {t(BODY[target])}
             </Text>
           </View>
 
-          {stepOne !== null && <InstallSteps stepOne={stepOne} />}
+          {stepOne !== null && (
+            <InstallSteps stepOne={t(stepOne.label)} glyph={stepOne.glyph} />
+          )}
 
           <View className="mt-4 flex-row items-center justify-center">
             <PrimaryButton
@@ -121,7 +141,7 @@ export function InstallOverlay({
                 if (target === 'prompt') onInstall()
                 else close()
               }}
-              label={CTA_LABEL[target]}
+              label={t(CTA_LABEL[target])}
               icon={<Ionicons name={CTA_ICON[target]} size={14} color="#d8d2f4" />}
             />
           </View>

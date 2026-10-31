@@ -627,7 +627,7 @@ msgstr "ADD MOTTO"
 msgid "ADD NICKNAME"
 msgstr "ADD NICKNAME"
 
-#: components/overlays/install-overlay.tsx:101
+#: components/overlays/install-overlay.tsx:119
 msgid "ADD TO HOME SCREEN"
 msgstr "ADD TO HOME SCREEN"
 
@@ -979,7 +979,7 @@ msgstr "CHANGE EMAIL"
 msgid "CHANGE YOUR EMAIL"
 msgstr "CHANGE YOUR EMAIL"
 
-#: components/overlays/install-steps.tsx:25
+#: components/overlays/install-steps.tsx:32
 msgid "Choose Add to Home Screen"
 msgstr "Choose Add to Home Screen"
 
@@ -1455,6 +1455,10 @@ msgstr "FOUR KEYS"
 msgid "Four keys, doubled speed"
 msgstr "Four keys, doubled speed"
 
+#: components/overlays/install-overlay.tsx:43
+msgid "Full screen, no browser bar, and it keeps working offline."
+msgstr "Full screen, no browser bar, and it keeps working offline."
+
 #: lib/recap-lines.ts:190
 msgid "Friday"
 msgstr "Friday"
@@ -1504,6 +1508,13 @@ msgid "GOOD SPORT"
 msgstr "GOOD SPORT"
 
 #: machines/tutorial-lesson.ts:302
+#: components/overlays/install-overlay.tsx:21
+#: components/overlays/install-overlay.tsx:22
+#: components/overlays/install-overlay.tsx:23
+#: components/overlays/install-overlay.tsx:24
+#: components/overlays/install-overlay.tsx:25
+#: components/overlays/install-overlay.tsx:26
+#: components/overlays/install-overlay.tsx:27
 msgid "GOOD. THE NEXT ONE IS YOURS"
 msgstr "GOOD. THE NEXT ONE IS YOURS"
 
@@ -1679,7 +1690,8 @@ msgstr "In the week of [DATE] you took [B] with [S]"
 msgid "In the week of [DATE] you took third on [B] with [S]"
 msgstr "In the week of [DATE] you took third on [B] with [S]"
 
-#: components/overlays/install-overlay.tsx:85
+#: components/overlays/install-overlay.tsx:20
+#: components/overlays/install-overlay.tsx:103
 msgid "INSTALL"
 msgstr "INSTALL"
 
@@ -2434,6 +2446,14 @@ msgstr "Open a day's board with the first score on it."
 #: constants/tips.ts:20
 msgid "Open a session on an easier difficulty. The first run is a warm-up, and the weights come back slower than you remember them."
 msgstr "Open a session on an easier difficulty. The first run is a warm-up, and the weights come back slower than you remember them."
+
+#: components/overlays/install-overlay.tsx:69
+msgid "Open your browser's menu"
+msgstr "Open your browser's menu"
+
+#: components/overlays/install-overlay.tsx:64
+msgid "Open your browser's Share menu"
+msgstr "Open your browser's Share menu"
 
 #: components/overlays/admin-stats.tsx:141
 msgid "OPEN IN POSTHOG"
@@ -3221,6 +3241,18 @@ msgstr "TAKEN"
 #: components/overlays/medals-overlay.tsx:125
 msgid "TAKEN BY <0/>"
 msgstr "TAKEN BY <0/>"
+#: components/overlays/install-overlay.tsx:62
+msgid "Tap Share in the toolbar"
+msgstr "Tap Share in the toolbar"
+
+#: components/overlays/install-overlay.tsx:63
+msgid "Tap Share next to the address bar"
+msgstr "Tap Share next to the address bar"
+
+#: components/overlays/install-overlay.tsx:66
+msgid "Tap the ⋮ menu next to the address bar"
+msgstr "Tap the ⋮ menu next to the address bar"
+
 
 #: components/overlays/medals-overlay.tsx:210
 msgid "TAKEN IN THE LAST {HISTORY_DAYS} DAYS"
@@ -3502,6 +3534,14 @@ msgstr "They own this table. You are a guest on it."
 #: constants/news.ts:90
 msgid "Things you keep"
 msgstr "Things you keep"
+#: components/overlays/install-overlay.tsx:53
+msgid "This app can't add to your home screen. Open nine in Chrome and you can. Full screen, no browser bar, and it keeps working offline."
+msgstr "This app can't add to your home screen. Open nine in Chrome and you can. Full screen, no browser bar, and it keeps working offline."
+
+#: components/overlays/install-overlay.tsx:52
+msgid "This app can't add to your home screen. Open nine in Safari and you can. Full screen, no browser bar, and it keeps working offline."
+msgstr "This app can't add to your home screen. Open nine in Safari and you can. Full screen, no browser bar, and it keeps working offline."
+
 
 #: constants/tips.ts:25
 msgid "Think in horizontal swipes before you tap. Left sends a button to 0, right to 9, and each is one move however far it travels — a big gap is often two swipes and a tap."

@@ -7,19 +7,26 @@ import { APP_VIOLET } from '@/constants/colors'
 
 const GLYPH = 18
 
-// iOS has no install API, so this is the whole iOS half of the feature: the two
-// taps a player makes for themselves. Isolated in its own file because it
-// describes someone else's UI, and someone else's UI changes.
+// Most mobile browsers have no install API, so this is the whole manual
+// half of the feature: the two taps a player makes for themselves. Isolated in
+// its own file because it describes someone else's UI, and someone else's UI
+// changes.
 //
-// Only the first step varies — every iOS browser ends at the same share sheet,
-// they just keep the Share button in different places, so the caller supplies
-// that line and this owns the rest.
-export function InstallSteps({ stepOne }: { stepOne: string }) {
+// Only the first step varies — every one of these browsers ends at an item called
+// Add to Home Screen, they just keep the way to it in different places (Share on
+// iOS, a menu elsewhere), so the caller supplies that line and its glyph and
+// this owns the rest.
+export function InstallSteps({
+  stepOne,
+  glyph,
+}: {
+  stepOne: string
+  glyph: keyof typeof Ionicons.glyphMap
+}) {
   return (
     <View className="mt-4 gap-2">
       <InstallStep step={1} label={stepOne}>
-        {/* Ionicons' share-outline is the iOS share glyph. */}
-        <Ionicons name="share-outline" size={GLYPH} color={APP_VIOLET} />
+        <Ionicons name={glyph} size={GLYPH} color={APP_VIOLET} />
       </InstallStep>
 
       <InstallStep step={2} label={<Trans>Choose Add to Home Screen</Trans>}>
