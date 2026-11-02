@@ -177,15 +177,17 @@ export async function fetchPlayerProfile(
   userId: string,
 ): Promise<{ profile: PlayerProfile | null; error: string | null }> {
   const today = todayISO()
-  // Both at once: the places are their own RPC (see `places` on `PlayerProfile`), and a
-  // second round trip after the first would be a profile that draws, then grows a section.
-  const [res, placesRes] = await Promise.all([
+  // All at once: the places and the last run are their own RPCs (see `places` and
+  // `lastRunAt` on `PlayerProfile`), and a second round trip after the first would be a
+  // profile that draws, then grows a section.
+  const [res, placesRes, lastRunRes] = await Promise.all([
     supabase.rpc('player_profile', {
       p_user_id: userId,
       p_today: today,
       p_week_since: weekStart(today),
     }),
     supabase.rpc('player_session_places', { p_user_id: userId }),
+    supabase.rpc('player_last_run', { p_user_id: userId }),
   ])
   noteRequest(res.error)
   if (res.error) return { profile: null, error: res.error.message }
@@ -200,7 +202,12 @@ export async function fetchPlayerProfile(
     placesRes.error === null
       ? shapePlaces((placesRes.data as SessionPlaceRow[] | null) ?? [])
       : []
-  return { profile: { ...shapeProfile(raw), places }, error: null }
+  // Same for the last run: a missing answer leaves the line off, never the profile.
+  const lastRunAt =
+    lastRunRes.error === null && typeof lastRunRes.data === 'string'
+      ? lastRunRes.data
+      : null
+  return { profile: { ...shapeProfile(raw), places, lastRunAt }, error: null }
 }
 
 // Every podium place this player is owed for: the windows that closed after the day their

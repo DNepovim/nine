@@ -134,6 +134,11 @@ export const TYPE = {
   // count beside it. Takes its colour from the case — dim normally, red on a refusal.
   hint: 'font-mono text-[9px] font-bold tracking-[0.5px]',
 
+  // The app's footnote to a name: how long a player has been at it and when they last
+  // played, under the motto on their profile. A hint's size at a lighter weight, so a
+  // line that is context rather than content does not read as loud as the name above it.
+  footnote: 'font-mono text-[9px] font-medium tracking-[0.5px]',
+
   // Running text: a paragraph in a dialog, a guide step, an announcement body. Leading is
   // part of the role here — prose is the one place in the app with more than one line of
   // the same thing, so the gap between those lines is as much the style as the size is.

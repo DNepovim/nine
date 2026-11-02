@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
 import {
+  daysSince,
   formatDayTime,
   formatReleaseDate,
   formatShortDate,
@@ -90,5 +91,32 @@ describe('formatDayTime', () => {
 
   it('returns nothing at all for something that is not an instant', () => {
     expect(formatDayTime(Number.NaN)).toBe('')
+  })
+})
+
+describe('daysSince', () => {
+  const at = (y: number, m: number, d: number, h = 12, min = 0) =>
+    new Date(y, m - 1, d, h, min)
+
+  it('is nought for earlier today', () => {
+    expect(daysSince(at(2026, 11, 2, 8).toISOString(), at(2026, 11, 2, 20))).toBe(0)
+  })
+
+  it('counts calendar days, not 24-hour blocks', () => {
+    expect(daysSince(at(2026, 11, 1, 23, 50).toISOString(), at(2026, 11, 2, 0, 10))).toBe(
+      1,
+    )
+  })
+
+  it('counts across a month end', () => {
+    expect(daysSince(at(2026, 10, 28).toISOString(), at(2026, 11, 2))).toBe(5)
+  })
+
+  it('reads a future instant as today', () => {
+    expect(daysSince(at(2026, 11, 3).toISOString(), at(2026, 11, 2))).toBe(0)
+  })
+
+  it('is null for anything that is not an instant', () => {
+    expect(daysSince('soon', at(2026, 11, 2))).toBeNull()
   })
 })

@@ -129,6 +129,10 @@ export type PlayerProfile = {
   // `fetchPlayerProfile` rather than by `shapeProfile`, and is empty against a server
   // that predates it.
   places: SessionPlace[]
+  // When they last played anything — a board run or a challenge run — as an instant.
+  // Null for a player with no runs, and against a server that predates `player_last_run`.
+  // Filled in by `fetchPlayerProfile` beside `places`, for the same reason.
+  lastRunAt: string | null
 }
 
 // One podium a player took on a **session board**: which challenge, when its window shut,
@@ -548,8 +552,9 @@ export function shapeProfile(raw: PlayerProfileResponse): PlayerProfile {
         ? [{ difficulty: row.difficulty, scoreSum: row.scoreSum }]
         : [],
     ),
-    // Not on this wire — see `places` on the type.
+    // Not on this wire — see `places` and `lastRunAt` on the type.
     places: [],
+    lastRunAt: null,
   }
 }
 
@@ -602,4 +607,5 @@ export const EMPTY_PROFILE: PlayerProfile = {
   winnings: [],
   sessions: [],
   places: [],
+  lastRunAt: null,
 }

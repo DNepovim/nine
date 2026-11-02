@@ -38,7 +38,7 @@ import { playerMarks } from '@/lib/champions'
 import { cn } from '@/lib/cn'
 import { compactText } from '@/lib/compact-number'
 import { formatCareerTime } from '@/lib/duration'
-import { monthsSince } from '@/lib/format-date'
+import { daysSince, formatShortDate, monthsSince } from '@/lib/format-date'
 import { saveMotto } from '@/lib/leaderboard'
 import { NO_FACTORS } from '@/lib/name-gradient'
 import {
@@ -75,6 +75,10 @@ const MARK_SIZE = 30
 // Past this many months the line counts years instead. A profile two years old that said
 // "joined 24 months ago" would be asking the reader to do the division.
 const MONTHS_IN_YEAR = 12
+
+// Past this many days the last-run line names the day instead. "6 days ago" is still a
+// glance; "23 days ago" is a sum, and the date answers it directly.
+const DAYS_IN_WEEK = 7
 
 // What each mode is judged on — the second line of both of its factor columns, the
 // average and the best alike.
@@ -217,7 +221,13 @@ export function PlayerProfileOverlay({
   // Read once when the modal opens rather than on every render. The answer changes once
   // a month, so nothing is lost by freezing it, and a clock read mid-render is a value
   // the compiler is free to take at a different moment than you meant.
-  const [joinedMonths] = useState(() => monthsSince(JOINED_ON, new Date()))
+  const [openedAt] = useState(() => new Date())
+  const [joinedMonths] = useState(() => monthsSince(JOINED_ON, openedAt))
+  // Against the same frozen moment, but worked out on render: the last run arrives with
+  // the profile, after the modal has opened.
+  const lastRunDays =
+    profile?.lastRunAt == null ? null : daysSince(profile.lastRunAt, openedAt)
+  const lastRunDay = profile?.lastRunAt == null ? '' : formatShortDate(profile.lastRunAt)
 
   // The header asks the question the card answers, rather than labelling it: a PLAYER
   // label over the nickname only said what the line below it already said. Two
@@ -310,27 +320,52 @@ export function PlayerProfileOverlay({
                 Sized under the motto rather than beside it. The motto is the line the
                 player chose; this one is the app's footnote to the name, and the two
                 sitting at the same weight would read as two mottos. */}
-              {profile !== null && joinedMonths !== null && (
-                <Text
-                  selectable={false}
-                  className={cn(TYPE.hint, 'text-center text-dim')}
-                >
-                  {joinedMonths < 1 ? (
-                    <Trans>joined this month</Trans>
-                  ) : joinedMonths < MONTHS_IN_YEAR ? (
-                    <Plural
-                      value={joinedMonths}
-                      one="joined a month ago"
-                      other="joined # months ago"
-                    />
-                  ) : (
-                    <Plural
-                      value={Math.floor(joinedMonths / MONTHS_IN_YEAR)}
-                      one="joined a year ago"
-                      other="joined # years ago"
-                    />
+              {profile !== null && (
+                <View className="gap-1">
+                  {joinedMonths !== null && (
+                    <Text
+                      selectable={false}
+                      className={cn(TYPE.footnote, 'text-center text-dim')}
+                    >
+                      {joinedMonths < 1 ? (
+                        <Trans>joined this month</Trans>
+                      ) : joinedMonths < MONTHS_IN_YEAR ? (
+                        <Plural
+                          value={joinedMonths}
+                          one="joined a month ago"
+                          other="joined # months ago"
+                        />
+                      ) : (
+                        <Plural
+                          value={Math.floor(joinedMonths / MONTHS_IN_YEAR)}
+                          one="joined a year ago"
+                          other="joined # years ago"
+                        />
+                      )}
+                    </Text>
                   )}
-                </Text>
+                  {/* When they last played, under how long they have been at it — the
+                    other half of the same question, whether this is someone who is still
+                    here. Relative for the first week, then the day itself. Left off for a
+                    player with no runs rather than saying "never", which a profile with a
+                    name on a board cannot honestly be. */}
+                  {lastRunDays !== null && (
+                    <Text
+                      selectable={false}
+                      className={cn(TYPE.footnote, 'text-center text-dim')}
+                    >
+                      {lastRunDays === 0 ? (
+                        <Trans>last played today</Trans>
+                      ) : lastRunDays === 1 ? (
+                        <Trans>last played yesterday</Trans>
+                      ) : lastRunDays < DAYS_IN_WEEK ? (
+                        <Plural value={lastRunDays} other="last played # days ago" />
+                      ) : (
+                        <Trans>last played on {lastRunDay}</Trans>
+                      )}
+                    </Text>
+                  )}
+                </View>
               )}
               {/* Under the name, the way the intro screen puts it under the title — same
                 component, same one-per-mode reduction, so a player's medals read the

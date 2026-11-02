@@ -121,3 +121,18 @@ export function dayAndMonth(ms: number): { day: string; month: string } {
   if (Number.isNaN(at.getTime())) return { day: '', month: '' }
   return { day: String(at.getDate()), month: SHORT_MONTHS[at.getMonth()] ?? '' }
 }
+
+// Whole calendar days between an instant and now, on the reader's own clock, or null if
+// the instant is not one. Calendar days rather than 24-hour blocks: a run at 23:50 is
+// "yesterday" ten minutes later, which is how the player remembers it.
+//
+// Takes an instant, so `Date` can be trusted with it — see `formatShortDate`. An instant
+// in the future (a device clock behind the server's) reads as today.
+export function daysSince(iso: string, now: Date): number | null {
+  const at = new Date(iso)
+  if (Number.isNaN(at.getTime())) return null
+  const then = new Date(at.getFullYear(), at.getMonth(), at.getDate())
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+  // Rounded rather than floored: a day either side of a DST change is 23 or 25 hours.
+  return Math.max(0, Math.round((today.getTime() - then.getTime()) / 86_400_000))
+}
