@@ -93,6 +93,7 @@ import { useFeedbackReplies } from '@/hooks/use-feedback-replies'
 import { FlagsProvider } from '@/hooks/use-flags'
 import { useFloatingPoints } from '@/hooks/use-floating-points'
 import { useFloatingStat } from '@/hooks/use-floating-stat'
+import { useHeldSum } from '@/hooks/use-held-sum'
 import { useHitCelebration } from '@/hooks/use-hit-celebration'
 import { useHowToPlay } from '@/hooks/use-how-to-play'
 import { useInstall } from '@/hooks/use-install'
@@ -1540,7 +1541,16 @@ export default function GameScreen() {
   // The dial sum drives the score above the dial; the machine's composite score
   // drives the digital HUD readout.
   const sum = sumOf(dial, grid)
-  const direction = useScoreDirection(sum)
+  // What the sum row shows, which is `sum` on every dial but a **freezing** one: there it
+  // is the sum the last hit left, taken again only when a hit lands or a run starts — the
+  // run's id changes on START, RESTART and RESTORE alike. The row's digits, their flip and
+  // their tint all read it, so none of them gives the real sum away. Everything else —
+  // the spawner above all — reads the real one.
+  const shownSum = useHeldSum(sum, {
+    freeze: dial.freeze,
+    key: `${runId}:${hitBatch.seq}`,
+  })
+  const direction = useScoreDirection(shownSum)
   const displayScore = useDisplayScore(state.context.score)
 
   // The **drill** this run deals from, where it has one — see `drillFor`.
@@ -2432,14 +2442,14 @@ export default function GameScreen() {
                       out of the ring collapsing above. */}
                     <HitSync seq={hitBatch.seq}>
                       <View className="flex-row">
-                        {String(sum)
+                        {String(shownSum)
                           .split('')
                           .map((digit, i, arr) => (
                             <ScoreDigit
                               key={arr.length - 1 - i}
                               digit={digit}
                               direction={direction}
-                              progress={valueProgress(sum, dial.maxSum)}
+                              progress={valueProgress(shownSum, dial.maxSum)}
                             />
                           ))}
                       </View>

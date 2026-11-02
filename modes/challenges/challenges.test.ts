@@ -4,9 +4,9 @@ import { describe, expect, it } from 'vitest'
 import { parTable } from '@/machines/scoring'
 import { ACCURACY } from '@/modes/definitions/accuracy'
 import { SPEED } from '@/modes/definitions/speed'
-import { defineDial, emptyGrid } from '@/modes/dial'
+import { defineDial, emptyGrid, NINE_DIAL } from '@/modes/dial'
 import { DIFFICULTY_ORDER } from '@/modes/difficulty'
-import { measureOf, rulesFor, runRules } from '@/modes/registry'
+import { allModes, measureOf, rulesFor, runRules } from '@/modes/registry'
 import { rampedTimeout, resolveRules, spawnInterval } from '@/modes/rules'
 
 import { CHALLENGES } from './catalog'
@@ -448,6 +448,7 @@ describe('glimpse', () => {
         'drift',
         'one-key',
         'scramble',
+        'freeze',
       ].map(challengeId),
     )
     expect(GLIMPSE?.gradient).toEqual(challengeGradient(3))
@@ -475,6 +476,48 @@ describe('scramble', () => {
         (mode) => mode.id,
       ),
     ).toEqual([challengeId('scramble')])
+  })
+})
+
+describe('freeze', () => {
+  it('is Accuracy Hard on the nine keys, on a dial that freezes', () => {
+    const rules = runRules(challengeId('freeze'), 'easy')
+    expect(rules.difficulty).toBe('hard')
+    expect(rules.usesDifficulty).toBe(false)
+    expect(rules.dial.id).toBe('freeze')
+    expect(rules.dial.freeze).toBe(true)
+    expect(rules.dial.scramble).toBe(false)
+    expect(rules.dial.weights).toEqual(NINE_DIAL.weights)
+    expect(rules.clock.base).toBe(16500)
+    expect(rules.scoring.streak).toBe('optimal')
+    expect(rules.scoring.weights).toEqual({ acc: 0.85, spd: 0.15 })
+    expect(rules.lives.count).toBe(3)
+    expect(rules.lives.wasteful).toBeNull()
+    expect(rules.capabilities.board).toBe(false)
+  })
+
+  it('fires a sniper and claims the cold', () => {
+    const freeze = CHALLENGES.find((mode) => mode.id === challengeId('freeze'))
+    expect(freeze?.shot).toBe('sniper')
+    expect(freeze?.claims?.board).toEqual([
+      ['STILL', 'SUM'],
+      ['HELD', 'COLD'],
+      ['ICE', 'CLEAR'],
+    ])
+    expect(freeze?.claims?.cold).toEqual([
+      ['FROZE', 'UP'],
+      ['THIN', 'ICE'],
+    ])
+    expect(CHALLENGES.at(-1)?.id).toBe(challengeId('freeze'))
+  })
+
+  it('is the only mode whose dial freezes', () => {
+    expect(
+      allModes()
+        .filter((mode) => mode.engine === 'targets')
+        .filter((mode) => runRules(mode.id, 'hard').dial.freeze)
+        .map((mode) => mode.id),
+    ).toEqual([challengeId('freeze')])
   })
 })
 

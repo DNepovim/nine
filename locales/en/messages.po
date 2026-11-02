@@ -1451,9 +1451,17 @@ msgstr "FOUR KEYS"
 msgid "Four keys, doubled speed"
 msgstr "Four keys, doubled speed"
 
+#: modes/challenges/catalog.ts:685
+msgid "FREEZE"
+msgstr "FREEZE"
+
 #: lib/recap-lines.ts:190
 msgid "Friday"
 msgstr "Friday"
+
+#: modes/challenges/catalog.ts:688
+msgid "FRZ"
+msgstr "FRZ"
 
 #: constants/achievements.ts:525
 msgid "FULL HOUSE"
@@ -3441,6 +3449,10 @@ msgstr "The same nine, every run. Be quick."
 #: components/overlays/admin-session.tsx:272
 msgid "The standings stay exactly as they are and the places settle now. This cannot be undone — running it again is a new session, with a board of its own."
 msgstr "The standings stay exactly as they are and the places settle now. This cannot be undone — running it again is a new session, with a board of its own."
+
+#: modes/challenges/catalog.ts:689
+msgid "The sum only moves when you hit."
+msgstr "The sum only moves when you hit."
 
 #: lib/compare-lines.ts:90
 msgid "The table has no opinion. You will have to settle it on the dial."

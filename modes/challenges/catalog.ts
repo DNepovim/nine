@@ -662,6 +662,62 @@ const SCRAMBLE: ChallengeSpec = {
   },
 }
 
+// FREEZE: Accuracy Hard, where the sum row only moves when a hit lands.
+//
+// Its one thing is the **freeze**. Everywhere else the number under the board follows
+// every press, so a player can feel their way to a target by watching it climb. Here it
+// holds the sum the last hit left — the opening grid's, at the start of a run — while the
+// keys move and show their digits as always. The dial is added up in the player's head,
+// and the row jumps to the new sum only when the real one meets a target.
+//
+//   - **Everything else is Accuracy Hard**: the nine keys, the 16.5 s ring, three hearts,
+//     a wasteful hit costing none. Two strange things at once would be two challenges.
+//   - **The key readout is the player's.** The Options toggle that prints value × weight on
+//     each key still works here, as everywhere. The author's call: it is a setting, and
+//     the sum it would add up to is still not on screen.
+//   - **The streak is `optimal`**, a challenge's default, and its sniper is Accuracy's: the
+//     exact route is the one worked out in the head rather than found by watching.
+//
+// Its own dial id rather than the nine's, as SCRAMBLE's: two dials that behave differently
+// never share a name.
+const FREEZE: ChallengeSpec = {
+  slug: 'freeze',
+  label: msg`FREEZE`,
+  // Its own, as every challenge since HABIT's: a profile row reading ACC would file it
+  // under a board it is not.
+  code: msg`FRZ`,
+  description: msg`The sum only moves when you hit.`,
+  // No `shot`: Accuracy's sniper, inherited — the streak is Accuracy's own.
+  //
+  // Every line about the cold, the stillness and keeping a cool head.
+  claims: {
+    board: [
+      ['STILL', 'SUM'],
+      ['HELD', 'COLD'],
+      ['ICE', 'CLEAR'],
+    ],
+    medal: [
+      ['NEAR', 'THAW'],
+      ['HALF', 'FROZE'],
+    ],
+    strong: [
+      ['COOL', 'HEAD'],
+      ['GOOD', 'ICE'],
+    ],
+    cold: [
+      ['FROZE', 'UP'],
+      ['THIN', 'ICE'],
+    ],
+  },
+  base: ACCURACY,
+  from: Date.UTC(2026, 10, 1),
+  until: Date.UTC(2026, 10, 1) + DAY,
+  rules: {
+    fixedDifficulty: 'hard',
+    dial: defineDial({ id: 'freeze', rows: 3, cols: 3, freeze: true }),
+  },
+}
+
 // Mapped rather than listed, and that is what gives each challenge its colour: `.map`
 // hands `defineChallenge` the spec's own index, which is what the pair is derived from.
 // The list is append-only — see the note at the top of this file — so an index is a
@@ -676,4 +732,5 @@ export const CHALLENGES: readonly ModeDefinition[] = [
   DRIFT,
   ONE_KEY,
   SCRAMBLE,
+  FREEZE,
 ].map((spec, index) => defineChallenge(spec, index))

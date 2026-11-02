@@ -1451,9 +1451,17 @@ msgstr "ČTYŘI TLAČÍTKA"
 msgid "Four keys, doubled speed"
 msgstr "Čtyři tlačítka, dvojnásobná rychlost"
 
+#: modes/challenges/catalog.ts:685
+msgid "FREEZE"
+msgstr "MRÁZ"
+
 #: lib/recap-lines.ts:190
 msgid "Friday"
 msgstr "v pátek"
+
+#: modes/challenges/catalog.ts:688
+msgid "FRZ"
+msgstr "MRZ"
 
 #: constants/achievements.ts:525
 msgid "FULL HOUSE"
@@ -3441,6 +3449,10 @@ msgstr "Pořád stejná devítka. Buď rychlý."
 #: components/overlays/admin-session.tsx:272
 msgid "The standings stay exactly as they are and the places settle now. This cannot be undone — running it again is a new session, with a board of its own."
 msgstr "Pořadí zůstane přesně takové, jaké je, a umístění se teď uzavřou. Nejde to vzít zpět — spustit ji znovu znamená nový termín s vlastním pořadím."
+
+#: modes/challenges/catalog.ts:689
+msgid "The sum only moves when you hit."
+msgstr "Součet se pohne, jen když trefíš."
 
 #: lib/compare-lines.ts:90
 msgid "The table has no opinion. You will have to settle it on the dial."

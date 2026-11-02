@@ -33,6 +33,13 @@ export type DialSpec = {
   // behaves, as `orientation` is how it is drawn — and both reach the machine, the scoring
   // and the dial component through `rules.dial` with nothing new to carry them.
   scramble: boolean
+  // Whether the sum row under the board **freezes**: it holds the sum the dial stood at
+  // after the last hit, and moves only when the next one lands — see hooks/use-held-sum.ts.
+  // False on every dial but FREEZE's, so the row everywhere else follows every press.
+  //
+  // Drawing only. The hit, par and the spawner all read the real sum; this says what the
+  // row shows, which is why it sits beside `orientation` rather than in a rules group.
+  freeze: boolean
 }
 
 // Which way up a dial is drawn and read. `sideways` is a quarter turn counter-clockwise,
@@ -72,6 +79,7 @@ export function defineDial({
   digits = 10,
   orientation = 'upright',
   scramble = false,
+  freeze = false,
 }: {
   id: string
   rows: number
@@ -80,6 +88,7 @@ export function defineDial({
   digits?: number
   orientation?: DialOrientation
   scramble?: boolean
+  freeze?: boolean
 }): DialSpec {
   const cells = rows * cols
   const spread = weights ?? Array.from({ length: cells }, byPosition(cols))
@@ -93,6 +102,7 @@ export function defineDial({
     maxSum: spread.reduce((sum, weight) => sum + weight * top, 0),
     orientation,
     scramble,
+    freeze,
   }
 }
 

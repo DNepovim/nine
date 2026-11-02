@@ -38,6 +38,12 @@ describe('the nine dial', () => {
     )
   })
 
+  it('draws a live sum unless a dial says it freezes', () => {
+    expect(NINE_DIAL.freeze).toBe(false)
+    expect(defineDial({ id: 'plain', rows: 2, cols: 2 }).freeze).toBe(false)
+    expect(defineDial({ id: 'held', rows: 3, cols: 3, freeze: true }).freeze).toBe(true)
+  })
+
   it('derives a weight from row order × column order', () => {
     expect(weightAt(NINE_DIAL, 0)).toBe(1)
     expect(weightAt(NINE_DIAL, 4)).toBe(4)
