@@ -1,6 +1,7 @@
 import { useEffect, useState, type ReactNode } from 'react'
 import Animated, { FadeIn, FadeOut } from 'react-native-reanimated'
 
+import { SurfaceWash } from '@/components/surface-wash'
 import { LAYER } from '@/constants/layers'
 
 const ENTER_MS = 200
@@ -82,6 +83,7 @@ export function ScreenLayer({
       style={{ zIndex: settled ? LAYER.screen : LAYER.arrivingScreen }}
       className={`absolute inset-0 bg-surface ${className}`}
     >
+      <SurfaceWash />
       {children}
     </Animated.View>
   )

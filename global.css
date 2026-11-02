@@ -8,7 +8,7 @@
    `userInterfaceStyle` in app.json pins the platform to it, so nothing underneath
    renders against a scheme these tokens do not describe. */
 @theme {
-  --color-surface: #f3efe9; /* screen background */
+  --color-surface: #f5f0f6; /* screen background — the splash spectrum, washed out */
   --color-card: #e8e4dc; /* raised cards, pills, toggle track */
   --color-strong: #1c1928; /* primary buttons / active pills */
   --color-elevated: #fdfcfa; /* empty hearts, toggle knob */
@@ -124,7 +124,7 @@ textarea {
     position: fixed;
     inset: 0;
     z-index: 9998;
-    background-color: var(--color-surface, #f3efe9);
+    background-color: var(--color-surface, #f5f0f6);
   }
   html::after {
     content: '';

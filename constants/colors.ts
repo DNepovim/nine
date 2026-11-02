@@ -4,7 +4,12 @@ import type { TargetBand } from '@/types/game'
 
 // The screen background. Anything that needs to hide what is behind it — the
 // announcement sweep, a curtain — paints in this.
-export const SURFACE = '#F3EFE9'
+export const SURFACE = '#F5F0F6'
+
+// The splash spectrum washed out to a background: each stop of SPECTRUM about 9% of the
+// way from white, run the same corner to corner. SURFACE is roughly its average, so a
+// knockout painted in SURFACE still sits on it without a seam you can find.
+export const SURFACE_WASH = ['#EFF3FF', '#F2F2FB', '#FAF1F4', '#FDF0EF'] as const
 
 export const APP_BLUE = '#4C7EFF'
 export const APP_RED = '#E5534B'

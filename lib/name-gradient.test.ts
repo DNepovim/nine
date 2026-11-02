@@ -139,7 +139,7 @@ describe('nameStops', () => {
   it('clears 4.5:1 on both surfaces at every saturation', () => {
     for (const average of [null, 0, 25, 50, 75, 100, 140]) {
       for (const stop of nameStops({ avgAccuracy: average, avgSpeed: average })) {
-        for (const ground of ['#f3efe9', '#e8e4dc']) {
+        for (const ground of ['#f5f0f6', '#e8e4dc']) {
           expect(contrast(stop, ground)).toBeGreaterThanOrEqual(4.5)
         }
       }

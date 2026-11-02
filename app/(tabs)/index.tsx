@@ -67,6 +67,7 @@ import { TutorialOfferModal } from '@/components/overlays/tutorial-offer-modal'
 import { WhatsNewOverlay } from '@/components/overlays/whats-new-overlay'
 import { RolePreviewBadge } from '@/components/role-preview-badge'
 import { Screen } from '@/components/screen'
+import { SurfaceWash } from '@/components/surface-wash'
 import { TrackedPressable } from '@/components/tracked-pressable'
 import type { AchievementId } from '@/constants/achievements'
 import { PRIMARY_INK } from '@/constants/colors'
@@ -1983,6 +1984,9 @@ export default function GameScreen() {
           }}
         >
           <BoardProvider value={board}>
+            {/* First of all, so the game and everything over it paints on the wash. */}
+            <SurfaceWash />
+
             {/* The celebration sits before the Screen so it paints behind the game's own UI.
             Keyed on the announcement so each one plays from the start, and so escalating
             through two records in a run swaps the effect rather than reusing it. */}
