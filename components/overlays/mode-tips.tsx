@@ -116,6 +116,9 @@ export function ModeTips() {
   // unreachable — it is here because the index type cannot say so.
   const { t } = useLingui()
   const tip = tips[index] ?? TIPS[0]
+  // Numbered by place in the whole list, not in this visit's hand, so a tip keeps its
+  // number from one visit to the next. Two digits, since the list runs past nine.
+  const number = String(TIPS.indexOf(tip) + 1).padStart(2, '0')
 
   const measure = useCallback((height: number) => {
     setBodyHeight((current) => (height > current ? height : current))
@@ -192,7 +195,11 @@ export function ModeTips() {
   return (
     <View className="mb-8 w-full max-w-3xs self-center">
       <GestureDetector gesture={swipe}>
-        <LegendBox legend={<Trans>TIP</Trans>} color={TINT} className="px-4 pb-5 pt-4">
+        <LegendBox
+          legend={<Trans>TIP #{number}</Trans>}
+          color={TINT}
+          className="px-4 pb-5 pt-4"
+        >
           {/* overflow-hidden keeps the departing tip inside the card rather than
               letting it drift out over the border. */}
           <View className="overflow-hidden" style={{ height: bodyHeight }}>

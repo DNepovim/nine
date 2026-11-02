@@ -369,7 +369,7 @@ msgstr "{owed} owed an answer"
 
 #. placeholder {0}: fortuneOf(score, difficulty)
 #. placeholder {0}: groupDigits(summary.mine.bonus)
-#: components/overlays/game-over-overlay.tsx:376
+#: components/overlays/game-over-overlay.tsx:370
 #: components/overlays/summary-card.tsx:158
 msgid "+{0} TO YOUR FORTUNE"
 msgstr "+{0} TO YOUR FORTUNE"
@@ -1004,7 +1004,7 @@ msgstr "clock = time left ÷ ring"
 #: components/overlays/compare-overlay.tsx:318
 #: components/overlays/email-code-modal.tsx:528
 #: components/overlays/modal-card.tsx:267
-#: components/overlays/share-modal.tsx:103
+#: components/overlays/share-modal.tsx:125
 msgid "CLOSE"
 msgstr "CLOSE"
 
@@ -1625,7 +1625,7 @@ msgid "HOLDING"
 msgstr "HOLDING"
 
 #: components/game/arcade-over.tsx:72
-#: components/overlays/game-over-overlay.tsx:128
+#: components/overlays/game-over-overlay.tsx:127
 msgid "HOME"
 msgstr "HOME"
 
@@ -2585,7 +2585,7 @@ msgid "Play a Hard board."
 msgstr "Play a Hard board."
 
 #: components/game/arcade-over.tsx:68
-#: components/overlays/game-over-overlay.tsx:435
+#: components/overlays/game-over-overlay.tsx:429
 #: components/overlays/multiplayer-game-over.tsx:188
 msgid "PLAY AGAIN"
 msgstr "PLAY AGAIN"
@@ -2961,7 +2961,7 @@ msgstr "See the better way"
 msgid "SEND"
 msgstr "SEND"
 
-#: components/overlays/share-modal.tsx:94
+#: components/overlays/share-modal.tsx:116
 msgid "SEND A LINK"
 msgstr "SEND A LINK"
 
@@ -3039,7 +3039,7 @@ msgstr "Seven seconds a target — the clock everyone races."
 msgid "SHARE"
 msgstr "SHARE"
 
-#: components/overlays/share-modal.tsx:52
+#: components/overlays/share-modal.tsx:62
 msgid "SHARE NINE"
 msgstr "SHARE NINE"
 
@@ -3173,11 +3173,11 @@ msgstr "STEADY HAND"
 msgid "Step {0}"
 msgstr "Step {0}"
 
-#: components/overlays/game-over-overlay.tsx:93
+#: components/overlays/game-over-overlay.tsx:92
 msgid "STEP DOWN TO {rungName}"
 msgstr "STEP DOWN TO {rungName}"
 
-#: components/overlays/game-over-overlay.tsx:91
+#: components/overlays/game-over-overlay.tsx:90
 msgid "STEP UP TO {rungName}"
 msgstr "STEP UP TO {rungName}"
 
@@ -3656,9 +3656,9 @@ msgstr "TIME"
 msgid "TIME PER TARGET"
 msgstr "TIME PER TARGET"
 
-#: components/overlays/mode-tips.tsx:195
-msgid "TIP"
-msgstr "TIP"
+#: components/overlays/mode-tips.tsx:198
+msgid "TIP #{number}"
+msgstr "TIP #{number}"
 
 #: components/overlays/how-to-play-overlay.tsx:60
 msgid "TIPS & TRICKS"
@@ -3722,7 +3722,7 @@ msgid "TRN"
 msgstr "TRN"
 
 #: components/game/step-up-toast.tsx:102
-#: components/overlays/game-over-overlay.tsx:95
+#: components/overlays/game-over-overlay.tsx:94
 #: components/overlays/tutorial-done-modal.tsx:101
 msgid "TRY {modeName}"
 msgstr "TRY {modeName}"
