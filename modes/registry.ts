@@ -14,6 +14,7 @@ import { resolveRules, type RunRules } from './rules'
 import type {
   Capabilities,
   Headline,
+  MarkKind,
   Measure,
   ModeDefinition,
   ModeEngine,
@@ -186,6 +187,9 @@ export const descriptionOf = (id: ModeId): MessageDescriptor =>
 // than a parameter because the one caller — the challenge card's mark, which draws the
 // dial's own shape — has no difficulty to hand and should not have to invent one.
 export const dialOf = (id: ModeId): DialSpec | null => rulesFor(id, 'hard')?.dial ?? null
+
+// The drawing a challenge wears beside its name, or null for one content with its dial.
+export const markOf = (id: ModeId): MarkKind | null => modeById(id)?.mark ?? null
 
 // The clock a target gets at the start of a run of this mode, difficulty applied — what
 // the slider on the pause screen takes its bounds from, and the figure a mode's own entry

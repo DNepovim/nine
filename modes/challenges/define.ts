@@ -11,6 +11,7 @@ import { ACCURACY } from '@/modes/definitions/accuracy'
 import { patchRules } from '@/modes/rules'
 import {
   defineMode,
+  type MarkKind,
   type ModeDefinition,
   type RulesPatch,
   type ShotKind,
@@ -70,6 +71,10 @@ export type ChallengeSpec = {
   // `ModeDefinition`. Left out by a challenge content with the app's own words.
   claims?: Partial<Record<ClaimTier, readonly TitleWords[]>>
   shot?: ShotKind | null
+  // The drawing beside its name. Left out, the challenge wears its own dial as dots —
+  // which says nothing once two challenges share a dial, so every one in the catalog
+  // names one.
+  mark?: MarkKind
 }
 
 // What a challenge *is*, for the screens that have to say so beside the name of one.
@@ -161,6 +166,7 @@ export function defineChallenge(spec: ChallengeSpec, index = 0): ModeDefinition 
       spec.darkGradient ?? challengeDarkPairFor(spec.hue ?? challengeHue(index)),
     shot: spec.shot === undefined ? spec.base.shot : spec.shot,
     claims: spec.claims,
+    mark: spec.mark,
     window: { from: spec.from, until: spec.until },
     engine: 'targets',
     // Three layers, and the order is the whole of their meaning: the base mode, then

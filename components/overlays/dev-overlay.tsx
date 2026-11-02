@@ -6,7 +6,7 @@ import { ScrollView, Text, View } from 'react-native'
 import { AdminScreen } from '@/components/overlays/admin-screen'
 import { ChallengeTitle } from '@/components/overlays/admin-session-cells'
 import { AdminTable, type AdminTableRow } from '@/components/overlays/admin-table'
-import { DialMark } from '@/components/overlays/dial-mark'
+import { ChallengeMark } from '@/components/overlays/challenge-mark'
 import { PrimaryButton } from '@/components/primary-button'
 import { TYPE } from '@/constants/typography'
 import { listChallengeRatings, type ChallengeRating } from '@/lib/admin/ratings'
@@ -15,7 +15,7 @@ import { spanStatus, type SpanStatus } from '@/lib/challenge-session'
 import { cn } from '@/lib/cn'
 import { formatDayTime } from '@/lib/format-date'
 import type { OpenSession } from '@/lib/session-board'
-import { dialOf, gradientOf, measureOf } from '@/modes'
+import { gradientOf, measureOf } from '@/modes'
 import { CHALLENGES } from '@/modes/challenges/catalog'
 import { challengeInk } from '@/modes/challenges/palette'
 
@@ -127,7 +127,6 @@ export function DevOverlay({
       sessions.filter((session) => session.modeId === mode.id),
       openedAt,
     )
-    const dial = dialOf(mode.id)
     const rating = ratings.get(mode.id)
     return {
       key: mode.id,
@@ -135,17 +134,15 @@ export function DevOverlay({
         // Padded here rather than in `AdminTable`, whose rows every admin list shares:
         // three lines to a row read as one block without air above and below them.
         //
-        // The mark beside it is the one the intro's card wears — the challenge's own dial
-        // as dots, in the bright end of its pair — so a tester recognises the row by the
-        // same thing a player recognises the card by.
+        // The mark beside it is the one the intro's card wears, in the bright end of its
+        // pair — so a tester recognises the row by the same thing a player recognises the
+        // card by.
         <View className="flex-row items-center gap-3 py-3">
-          {dial !== null && (
-            <DialMark
-              dial={dial}
-              color={challengeInk(gradientOf(mode.id)[1])}
-              size={LAB_MARK_SIZE}
-            />
-          )}
+          <ChallengeMark
+            modeId={mode.id}
+            color={challengeInk(gradientOf(mode.id)[1])}
+            size={LAB_MARK_SIZE}
+          />
           <View className="flex-1">
             <ChallengeTitle modeId={mode.id} />
             <Text selectable={false} className={cn(TYPE.hint, 'mt-0.5 text-dim')}>

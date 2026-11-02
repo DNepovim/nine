@@ -67,9 +67,9 @@ Three rules for the proposals themselves:
   needs a dial on screen. Put the cost in the option's description, not in a note
   afterwards.
 
-**Say when there is nothing to ask.** The colour and the mark are decided by things the
-author has already chosen, and a question about them is a question with one answer. Tell
-the author what they are getting and move on — see sections 1 and 2.
+**Say when there is nothing to ask.** The colour is decided by the challenge's place in
+the catalog, and a question about it is a question with one answer. Tell the author what
+they are getting and move on — see section 1. The mark is the one exception: propose one.
 
 The defaults below are what a proposal falls back to when nothing about the idea points
 anywhere. A challenge that takes every default is still a perfectly good challenge.
@@ -78,7 +78,10 @@ anywhere. A challenge that takes every default is still a perfectly good challen
 
 A challenge wears a near-black shared by every challenge plus a hue of its own,
 generated from its place in the catalog — so **the default is to ask nothing and
-write nothing.** See `modes/challenges/palette.ts`.
+write nothing.** See `modes/challenges/palette.ts`. The hue is the next entry in
+`SEQUENCE` there; when the catalog reaches the end of it, append a hue to the list from
+whichever free window has the most room (the test names the windows) rather than letting
+the golden-ratio fallback pack another one into violet.
 
 Ask only when the author wants a particular colour. Then it is a **hue in degrees**
 on the spec (`hue: TURQUOISE`), never a pair of hexes: the near-black, the two
@@ -87,7 +90,7 @@ built the same way as a generated one.
 
 **Check the hue against `palette.test.ts`'s collision rule before promising it.** Every
 hue in the app already means something — the mode chain, gold for a record held, green
-for an achievement kept, teal for multiplayer — and the generated arc refuses all of
+for an achievement kept, teal for multiplayer — and the generated sequence refuses all of
 them. A named hue must clear them by the same margin, and the test holds it to that.
 
 Say what a hue costs if it is a light one. Turquoise's bright stop is about 1.7:1 on
@@ -97,12 +100,16 @@ not an exception, but the author should know before they pick.
 
 ### 2. The mark
 
-Drawn from the challenge's own dial — `rows × cols` dots, by `DialMark`. **There is
-nothing to ask and nothing to author**: four keys is four dots, and a challenge on the
-standard nine gets nine.
+A small drawing of the one thing the challenge is about — `mark` on the spec, naming a
+`MarkKind`, drawn by `ChallengeMark` (`components/overlays/challenge-mark.tsx`). Every
+challenge in the catalog names one: left out, the mark falls back to the dial as dots,
+and nine keys is what nearly every challenge is played on, so the dots tell nothing
+apart.
 
-Mention it so the author knows the mark is already decided by the dial they pick in
-the next question, rather than wondering where to put an icon.
+Propose an existing drawing if one fits the idea; otherwise propose a new one — one
+entry in `MarkKind` and one in `GLYPHS`, on the 24-unit square, one ink with a pale wash
+under the shapes. Check it at 20pt beside the others in the Challenges Lab: it has to
+read as itself, not as a neighbour.
 
 ### 3. The dial
 

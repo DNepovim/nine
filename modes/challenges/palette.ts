@@ -25,37 +25,45 @@ import { PRIMARY_INK } from '@/constants/colors'
 // title comes out in the app's own text colour and needs no separate ink beside the
 // scale the way gold and the achievement green both do.
 
-// The arc the second stop is drawn from: violet through to magenta.
+// The hues the second stop is drawn from, in catalog order.
 //
-// Not an arbitrary window. Every other hue in the app already means something — blue,
-// indigo, pink, red and amber are the mode chain, 43° is the gold of a record you hold,
-// 96–136° the green of an achievement you keep, 175° the teal of multiplayer — and a
-// challenge wearing one of those would be saying two things at once. This is the one
-// wide run nothing else owns, with about fourteen degrees of clearance from indigo below
-// it and from pink above.
-const ARC_FROM = 255
-const ARC_WIDTH = 75
+// Not an arbitrary list. Every other hue in the app already means something — blue,
+// indigo, pink, red and amber are the mode chain, 27–45° is the gold of a record you hold,
+// 96–141° the green of an achievement you keep, 175° the teal of multiplayer — and a
+// challenge wearing one of those would be saying two things at once. What is left is four
+// windows: yellow to lime (55–86°), jade (151–165°), sky (200–213°) and violet to rose
+// (252–328°). `palette.test.ts` holds every entry clear of the rest by more than 10°.
+//
+// It used to be the violet window alone, stepped by the golden ratio — which kept every
+// challenge out of everybody else's colour and put ten of them within 75° of each other,
+// so the second stop that is meant to tell one challenge from the next was seven degrees
+// of magenta from its neighbour. Now the list jumps between windows, so two challenges
+// next to each other in the catalog are never two shades of one colour, and the violet
+// window is spent at 14° steps rather than 7.
+//
+// Keyed on the **index**, which is what makes it stable: the catalog is append-only by
+// design — "nothing is deleted from it" — so an index is a permanent fact about a
+// challenge. Append to this list to give a new challenge its own place; the catalog grows
+// past it onto the golden-ratio walk below rather than repeating a colour.
+const SEQUENCE = [253, 155, 295, 58, 267, 323, 80, 309, 281, 205] as const
 
-// Where in the arc a challenge lands, by its position in the catalog.
-//
-// The golden ratio rather than an even division, because the number of challenges is not
-// known in advance: dividing the arc by however many there are today would move every
-// existing colour the moment a new one is written. Stepping by an irrational fraction
-// instead puts each new challenge in the largest gap left by the ones before it — four
-// challenges sit about 18° apart, eight about 7°, and nothing ever has to move.
-//
-// Keyed on the **index** rather than on a hash of the slug, which is what makes it
-// stable: the catalog is append-only by design — "nothing is deleted from it" — so an
-// index is a permanent fact about a challenge. A hash would have been stable too, but it
-// packs far worse: hashing eight plausible slugs put two of them 1.5° apart, which is one
-// colour wearing two names.
+// Where a challenge past the end of `SEQUENCE` lands: the violet window, the widest of
+// the four, stepped by the golden ratio so each one falls in the largest gap left.
+const ARC_FROM = 255
+const ARC_WIDTH = 70
 const PHI = 0.618033988749895
 
 export const challengeHue = (index: number): number =>
-  ARC_FROM + ((index * PHI) % 1) * ARC_WIDTH
+  SEQUENCE[index] ?? ARC_FROM + (((index - SEQUENCE.length) * PHI) % 1) * ARC_WIDTH
 
-// The arc's own bounds, for the test that holds this to the hues the app has spoken for.
-export const CHALLENGE_ARC = { from: ARC_FROM, to: ARC_FROM + ARC_WIDTH } as const
+// The windows a generated hue may land in, for the test that holds this to the hues the
+// app has not spoken for.
+export const CHALLENGE_WINDOWS = [
+  { from: 55, to: 86 },
+  { from: 151, to: 165 },
+  { from: 200, to: 213 },
+  { from: 252, to: 328 },
+] as const
 
 // One hue at one lightness, as a hex stop.
 //
@@ -130,7 +138,7 @@ const BRIGHT = { saturation: 0.62, lightness: 0.58 }
 
 // The pair a button wears, dark enough to carry white text. Measured: white on the
 // darkest of these is about 11.5:1 and on the lightest about 14.8:1, across the whole
-// arc — see `palette.test.ts`, which holds the floor rather than trusting the numbers.
+// sequence — see `palette.test.ts`, which holds the floor rather than trusting the numbers.
 const DARK = { saturation: 0.58, lightness: 0.24 }
 
 // The pair for one hue. What a challenge naming its own colour goes through, so it names
@@ -157,7 +165,7 @@ export const challengeDarkGradient = (index: number): readonly [string, string] 
 
 // Turquoise at its blue end, which `four-keys` wears.
 //
-// Outside the generated arc, and deliberately — a challenge may name a hue the sequence
+// Outside the generated sequence, and deliberately — a challenge may name a hue the sequence
 // would never reach.
 //
 // **190° and not 174°**, which is where this started. The greener turquoise sat one
@@ -168,7 +176,7 @@ export const challengeDarkGradient = (index: number): readonly [string, string] 
 // of clearance rather than one, and 32° from trainee's blue on the other side, which is
 // about as much room as there is between the two.
 //
-// The generated arc still refuses this whole neighbourhood and `palette.test.ts` holds it
+// The generated sequence still keeps out of this neighbourhood and `palette.test.ts` holds it
 // to that. An override is a decision somebody made, which is a different thing from a
 // sequence wandering in.
 //
@@ -188,9 +196,9 @@ export const TURQUOISE = 190
 // shade that carries a word on a near-white card. Reaching into the gradient for a text
 // colour is the mistake all three of these exist to stop.
 //
-// The arc makes this unavoidable rather than merely tidy. The bright stop on the card's
-// white is about 5.3:1 at the arc's violet end and about 3.4:1 at its magenta end,
-// because magenta is a lighter hue at the same lightness — so a name drawn in the raw
+// The sequence makes this unavoidable rather than merely tidy. The bright stop on the card's
+// white is about 5.3:1 at violet, about 3.4:1 at magenta and far less at yellow or lime,
+// because those are lighter hues at the same lightness — so a name drawn in the raw
 // stop would be comfortably readable for one challenge and under the bar for the next,
 // with nothing in the code to say which. This is the same hue at whatever lightness
 // clears 4.5:1 on both grounds, which comes out near 5.1:1 for every challenge.

@@ -42,6 +42,7 @@ const FOUR_KEYS: ChallengeSpec = {
   slug: 'four-keys',
   label: msg`FOUR KEYS`,
   description: msg`Four keys, doubled speed`,
+  mark: 'boltKeys',
   // Turquoise at its blue end, rather than the violet its place in the catalog works out
   // to. The arc never reaches this hue on its own — see `TURQUOISE`, which also records
   // what naming it costs: its bright stop is too pale to carry a word, so the edge and
@@ -135,9 +136,10 @@ const FOUR_BY_FOUR: ChallengeSpec = {
   slug: 'four-by-four',
   label: msg`FOUR BY FOUR`,
   description: msg`Sixteen keys, double time`,
+  mark: 'crossGrid',
   // Nothing named here, so the hue is whatever this entry's place in the catalog works
-  // out to — see `challengeHue`. Index 1 lands around 301°, a violet-magenta well clear
-  // of four-keys' turquoise and of every hue the app has spoken for.
+  // out to — see `challengeHue`. Index 1 lands on 155°, a jade well clear of four-keys'
+  // turquoise and of every hue the app has spoken for.
   //
   // Nothing is drawn when a hit lands, either. A shot is the streak made visible and the
   // streak below is about the whole dial, so the honest shot would be a beam per row —
@@ -250,6 +252,7 @@ const HABIT: ChallengeSpec = {
   // a profile reading ACC would file this under the board it is not.
   code: msg`HBT`,
   description: msg`The same nine, every run. Be quick.`,
+  mark: 'route',
   // The streak the challenge is about, and the one rule that rewards knowing the board:
   // the fewest moves is also the fewest presses, so a player who has learnt a route is
   // faster *and* on the multiplier, where a player mashing is neither.
@@ -317,6 +320,7 @@ const GLIMPSE: ChallengeSpec = {
   // name says where it breaks: GLIM over PSE. See lib/label-rows.ts.
   label: msg`GLIM­PSE`,
   description: msg`One look, then from memory.`,
+  mark: 'closedEye',
   // No `shot`: Accuracy's sniper, inherited. A single held beam is a chain of exact
   // routes made visible, which is what the streak here is made of.
   //
@@ -382,6 +386,7 @@ const NO_SLIP: ChallengeSpec = {
   // not.
   code: msg`NSL`,
   description: msg`One slip and it's over.`,
+  mark: 'crackedHeart',
   shot: null,
   // Every line about slipping and the exact route. Only the tiers this one reaches: the
   // session standing through `board` and `medal`, and `cold`. `strong` is earned by a
@@ -448,6 +453,7 @@ const SIDEWAYS: ChallengeSpec = {
   // a board it is not.
   code: msg`SDW`,
   description: msg`The dial has fallen on its side.`,
+  mark: 'turnedDial',
   // No `shot`: Accuracy's sniper, inherited — the streak is Accuracy's own.
   //
   // Every line about lying down and turning, since that is the one thing that changed.
@@ -511,6 +517,7 @@ const DRIFT: ChallengeSpec = {
   // under a board it is not.
   code: msg`DRF`,
   description: msg`Every number drifts. Catch it before it moves.`,
+  mark: 'drift',
   shot: 'burst',
   // Every line about catching a number before it gets away.
   claims: {
@@ -567,6 +574,7 @@ const ONE_KEY: ChallengeSpec = {
   // under a board it is not.
   code: msg`KEY`,
   description: msg`One key, one second.`,
+  mark: 'stopwatchKey',
   // No `shot`: Accuracy's sniper, inherited — the streak is Accuracy's own. Its 420 ms
   // beam outlives the moment the next target arrives, which the author chose knowingly.
   //
@@ -626,6 +634,7 @@ const SCRAMBLE: ChallengeSpec = {
   // under a board it is not.
   code: msg`MIX`,
   description: msg`Every hit scrambles the dial.`,
+  mark: 'shuffle',
   // No `shot`: Accuracy's sniper, inherited — the streak is Accuracy's own, a chain of
   // exact routes, and a beam is what one of those looks like.
   //
@@ -687,6 +696,7 @@ const FREEZE: ChallengeSpec = {
   // under a board it is not.
   code: msg`FRZ`,
   description: msg`The sum only moves when you hit.`,
+  mark: 'snowflake',
   // No `shot`: Accuracy's sniper, inherited — the streak is Accuracy's own.
   //
   // Every line about the cold, the stillness and keeping a cool head.

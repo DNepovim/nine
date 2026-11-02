@@ -270,6 +270,21 @@ export type Submode = {
 // from the sum row, as the two above always do.
 export type ShotKind = 'sniper' | 'burst' | 'flame' | 'chain'
 
+// What a challenge wears beside its name — one drawing each, in
+// `components/overlays/challenge-mark.tsx`. Named for what is drawn rather than for the
+// challenge, so a later challenge about the same thing may wear the same one.
+export type MarkKind =
+  | 'boltKeys'
+  | 'crossGrid'
+  | 'route'
+  | 'closedEye'
+  | 'crackedHeart'
+  | 'turnedDial'
+  | 'drift'
+  | 'stopwatchKey'
+  | 'shuffle'
+  | 'snowflake'
+
 // What every mode says about itself, whichever engine runs it.
 type ModeIdentity = {
   id: string
@@ -301,6 +316,9 @@ type ModeIdentity = {
   // session standing rather than through a board. A tier it does not name falls through
   // to the app's pool.
   claims?: Partial<Record<ClaimTier, readonly TitleWords[]>>
+  // A challenge's mark. Undefined on every permanent mode, and on a challenge content to
+  // wear its own dial drawn as dots instead.
+  mark?: MarkKind
   window: ModeWindow | null
 }
 

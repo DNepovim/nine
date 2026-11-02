@@ -8,7 +8,7 @@ import DSEG7Font from '@/assets/fonts/DSEG7Classic-Bold.ttf'
 import { GradientName } from '@/components/gradient-name'
 import { GradientText } from '@/components/gradient-text'
 import { ChallengeCountdown } from '@/components/overlays/challenge-countdown'
-import { DialMark } from '@/components/overlays/dial-mark'
+import { ChallengeMark } from '@/components/overlays/challenge-mark'
 import { GradientFrame } from '@/components/overlays/gradient-frame'
 import { TrackedPressable } from '@/components/tracked-pressable'
 import { mono } from '@/constants/theme'
@@ -18,7 +18,7 @@ import { cn } from '@/lib/cn'
 import { formatRaceTime } from '@/lib/duration'
 import { rankMedal } from '@/lib/rank-emoji'
 import type { OpenSession } from '@/lib/session-board'
-import { darkGradientOf, dialOf, gradientOf, labelOf, type Measure } from '@/modes'
+import { darkGradientOf, gradientOf, labelOf, type Measure } from '@/modes'
 import { challengeInk } from '@/modes/challenges/palette'
 
 // A challenge that is on, or about to be — the first row of the ALONE panel, above the
@@ -88,10 +88,6 @@ export function ChallengeCard({
   // toward black for exactly this reason.
   const inkFrom = challengeInk(gradientOf(session.modeId)[0])
   const ink = challengeInk(gradientOf(session.modeId)[1])
-  // The dial this challenge is played on, drawn as its mark. Null for a session naming a
-  // mode this build does not have — which `useSessionCard` already filters out before a
-  // card is made, so the fallback is for the type rather than for a case that happens.
-  const dial = dialOf(session.modeId)
   // The height of the words, so the mark can stand the same. Measured rather than
   // computed from the two roles' line heights: those are the type scale's business, and a
   // sum of them here would be a third place that has to be edited when either moves.
@@ -210,17 +206,16 @@ export function ChallengeCard({
         edge={gradientOf(session.modeId)}
       >
         <View className="flex-row items-center gap-2.5">
-          {/* The mark: this challenge's own dial, drawn as dots, as tall as the words
-            beside it. It replaced a bolt every challenge shared, which marked the
-            *category* on a card whose own edge already says CHALLENGE — so it said the one
-            thing the card did not need twice, and said nothing about which challenge this
-            is. Four keys is four dots.
+          {/* The mark: a drawing of what this challenge is about, as tall as the words
+            beside it — see `ChallengeMark`. It replaced a bolt every challenge shared,
+            which marked the *category* on a card whose own edge already says CHALLENGE,
+            and then the dial drawn as dots, which nine challenges on nine keys shared.
 
             Held back until the words have been measured. One frame with no mark is not
             worth animating around: the card is itself arriving, and the row it lands in
             reserves no space for it either way. */}
-          {dial !== null && textHeight > 0 && (
-            <DialMark dial={dial} color={ink} size={textHeight} />
+          {textHeight > 0 && (
+            <ChallengeMark modeId={session.modeId} color={ink} size={textHeight} />
           )}
 
           {/* The words: what the challenge is called, and the one line about it. All the

@@ -6,7 +6,7 @@ import { getDifficultyColor, meterInkOf, MULTIPLAYER_GRADIENT } from '@/modes/pa
 
 import { CHALLENGES } from './catalog'
 import {
-  CHALLENGE_ARC,
+  CHALLENGE_WINDOWS,
   challengeDarkGradient,
   challengeDarkPairFor,
   challengeGradient,
@@ -65,12 +65,14 @@ const apart = (a: number, b: number): number => {
 // was shaped around; the arc has to behave for at least that many.
 const MANY = [...Array(24).keys()]
 
-describe('the arc a challenge hue is drawn from', () => {
-  it('stays inside its own window, however many challenges there are', () => {
+describe('the hues a challenge is drawn from', () => {
+  it('stays inside a window nothing else owns, however many challenges there are', () => {
     for (const i of MANY) {
       const hue = challengeHue(i)
-      expect(hue, `index ${i}`).toBeGreaterThanOrEqual(CHALLENGE_ARC.from)
-      expect(hue, `index ${i}`).toBeLessThan(CHALLENGE_ARC.to)
+      expect(
+        CHALLENGE_WINDOWS.some((w) => hue >= w.from && hue < w.to),
+        `index ${i} (${Math.round(hue)}deg)`,
+      ).toBe(true)
     }
   })
 
@@ -102,16 +104,16 @@ describe('the arc a challenge hue is drawn from', () => {
   })
 
   it('spreads the early challenges furthest apart', () => {
-    // The golden-ratio step's reason for being: each new challenge lands in the largest
-    // gap left by the ones before it, so the catalog is legible long before it is full.
+    // The sequence's reason for being: the first few challenges sit in different windows
+    // altogether, and the whole first ten are still more than a dozen degrees apart.
     const gapAt = (n: number): number => {
       const hues = [...Array(n).keys()].map(challengeHue).sort((a, b) => a - b)
       return Math.min(...hues.slice(1).map((h, i) => h - (hues[i] ?? 0)))
     }
-    expect(gapAt(4)).toBeGreaterThan(15)
-    expect(gapAt(8)).toBeGreaterThan(6)
+    expect(gapAt(4)).toBeGreaterThan(40)
+    expect(gapAt(10)).toBeGreaterThan(12)
     // Monotonic: more challenges never means more room.
-    expect(gapAt(8)).toBeLessThanOrEqual(gapAt(4))
+    expect(gapAt(10)).toBeLessThanOrEqual(gapAt(4))
   })
 
   it('gives a challenge the same colour every time it is asked', () => {
@@ -232,11 +234,10 @@ describe('a challenge that names its own hue', () => {
     expect(hueOf(ctaBright)).toBeCloseTo(TURQUOISE, 0)
   })
 
-  it('leaves the generated arc alone', () => {
+  it('leaves the generated sequence alone', () => {
     // An override is somebody's decision; the sequence must not wander into the same
-    // neighbourhood on its own. The arc still refuses this whole region — the collision
-    // test further up holds it.
-    expect(TURQUOISE).toBeLessThan(CHALLENGE_ARC.from)
+    // neighbourhood on its own.
+    for (const i of MANY) expect(apart(challengeHue(i), TURQUOISE)).toBeGreaterThan(10)
   })
 
   it('keeps its distance from the two hues either side of it', () => {

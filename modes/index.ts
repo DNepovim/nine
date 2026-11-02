@@ -55,6 +55,7 @@ export {
   isMode,
   isModeId,
   labelOf,
+  markOf,
   measureOf,
   MODE_ORDER,
   modeById,
@@ -80,4 +81,4 @@ export {
   type StreakTrigger,
 } from './streak'
 export { MEASURES, measureFrom } from './types'
-export type { Headline, Measure, ShotKind, Submode } from './types'
+export type { Headline, MarkKind, Measure, ShotKind, Submode } from './types'
