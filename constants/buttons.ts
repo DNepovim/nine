@@ -175,6 +175,8 @@ export type ButtonId =
   // The system sheet, one press past the QR code. Read against `menu.board` — the press
   // that opened the dialog — it says how many invites a code alone was enough for.
   | 'share.system'
+  // The address under the code, opened in the browser.
+  | 'share.link'
 
   // ── Dev and admin ──
   | 'dev.run'
