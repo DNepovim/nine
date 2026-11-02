@@ -1059,7 +1059,7 @@ export default function GameScreen() {
   // Who holds each mode's Extreme all-time board, and who took the last challenge —
   // read wherever a name is drawn, and by the game-over screen to tell a reign from a
   // single record. The id is passed so the dev sidebar can pin the phoenix on this player.
-  const champions = useChampions(userId)
+  const champions = useChampions(userId, shownFeatures.has('challenges'))
   const refreshBoard = board.refresh
   const bestToday = board.today.record
   const bestWeek = board.week.record

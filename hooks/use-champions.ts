@@ -7,6 +7,7 @@ import {
   useState,
 } from 'react'
 
+import { useOpenSessions } from '@/hooks/use-open-sessions'
 import { usePhoenixWorn } from '@/hooks/use-phoenix-request'
 import { subscribeBoards } from '@/lib/board-live'
 import {
@@ -24,6 +25,12 @@ import { SCORED_MODES } from '@/modes'
 // `daily_scores` and the rollup's write to `scores` — since this mark is never
 // mid-run urgent.
 const COALESCE_MS = 800
+
+// How long after a session's window shuts before its winner is asked for: the server's
+// `session_score_grace()`, which `last_session_winner` waits out before it names anyone,
+// plus the couple of seconds `useSessionSummaries` gives the two clocks to converge. Asked
+// any earlier, the answer is still the previous winner.
+const SESSION_SETTLE_MS = 10 * 60 * 1000 + 2000
 
 // Who holds each mode's Extreme all-time board.
 //
@@ -44,8 +51,20 @@ const COALESCE_MS = 800
 // no such gap — the event *is* the write landing — and it covers the two things the
 // game-over hook never could: a rival taking a board while we watch, and a
 // reconnection after time asleep.
-export function useChampions(userId: string | null): Champions {
+//
+// The phoenix is the one mark no write moves. A session is won by its window shutting,
+// not by a score landing, so nothing comes down the board channel when it changes hands —
+// the winner and everyone watching went on seeing the last winner's phoenix until the next
+// launch. It is woken instead, once per session still open, the same way the summary is.
+export function useChampions(
+  userId: string | null,
+  // Whether this player reaches challenges — given rather than asked for, for the reason
+  // `useOpenSessions` explains. One who does not still gets the phoenix moved on the next
+  // launch or return to the foreground.
+  canSeeSessions: boolean,
+): Champions {
   const [champions, setChampions] = useState<Champions>(NO_CHAMPIONS)
+  const sessions = useOpenSessions(canSeeSessions)
   // Bumped on every load and unmount, so a slow response cannot land after a newer one.
   const requestIdRef = useRef(0)
 
@@ -99,6 +118,23 @@ export function useChampions(userId: string | null): Champions {
       unsubscribe()
     }
   }, [load])
+
+  useEffect(() => {
+    const now = Date.now()
+    const timers = sessions
+      .filter((session) => session.closesAt > now)
+      .map((session) =>
+        setTimeout(
+          () => {
+            void load()
+          },
+          session.closesAt - now + SESSION_SETTLE_MS,
+        ),
+      )
+    return () => {
+      for (const timer of timers) clearTimeout(timer)
+    }
+  }, [sessions, load])
 
   // The dev sidebar's phoenix, laid over the server's answer.
   //
