@@ -106,6 +106,7 @@ export type ButtonId =
   | 'profile.publish_scores'
   | 'profile.try_again'
   | 'profile.show_more'
+  | 'profile.fortune'
   | 'nickname.save'
   | 'nickname.skip'
   | 'motto.save'

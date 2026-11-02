@@ -1,8 +1,12 @@
 import { Text, View } from 'react-native'
 
-import { READOUT } from '@/constants/typography'
+import { TipBubble, useSelfClosing } from '@/components/overlays/tip-bubble'
+import { TrackedPressable } from '@/components/tracked-pressable'
+import { FORTUNE_INK } from '@/constants/colors'
+import { READOUT, TYPE } from '@/constants/typography'
 import { cn } from '@/lib/cn'
 import { compactNumber } from '@/lib/compact-number'
+import { groupDigits } from '@/lib/group-digits'
 
 // The player's fortune, on one line under their name — everything they have ever scored,
 // weighted by the difficulty it was scored on.
@@ -15,7 +19,9 @@ import { compactNumber } from '@/lib/compact-number'
 // The seven-segment face every score in the app wears, at headline size — and shortened,
 // because a career total runs into the millions and the full figure would either wrap or
 // shrink until it stopped reading as a headline. The exact, unweighted numbers live in
-// the per-board table below.
+// the per-board table below — and in the bubble a tap on the figure opens, which gives
+// the fortune itself to the point. Only when it was shortened: a figure under a thousand
+// is already exact, and a bubble repeating it would answer a question nobody asked.
 //
 // The suffix is set in mono beside the digits rather than with them: DSEG7 draws digits
 // from seven segments and has no letter to make a `k` out of.
@@ -37,23 +43,54 @@ export function ProfileScore({
   digitFont: string
 }) {
   const { value, suffix } = compactNumber(score)
+  const [open, setOpen] = useSelfClosing<true>()
+  const exact = groupDigits(score)
 
   return (
-    <View className="flex-row items-baseline justify-center gap-1 py-2">
-      <Text
-        selectable={false}
-        className={cn(READOUT.scoreLarge, 'text-fortune')}
-        style={{ fontFamily: digitFont }}
+    // Lifted over the stat row drawn after it, and full width so the bubble has the
+    // card's width to open into — see `TipBubble`.
+    <View className="z-50 w-full items-center py-2">
+      <TrackedPressable
+        id="profile.fortune"
+        disabled={suffix === ''}
+        onPress={() => {
+          setOpen((up) => (up === null ? true : null))
+        }}
+        hitSlop={12}
+        accessibilityRole="button"
+        accessibilityLabel={exact}
+        className="flex-row items-baseline justify-center gap-1"
       >
-        {value}
-      </Text>
-      {suffix !== '' && (
         <Text
           selectable={false}
-          className="font-mono text-[18px] font-black tracking-[1px] text-fortune"
+          className={cn(READOUT.scoreLarge, 'text-fortune')}
+          style={{ fontFamily: digitFont }}
         >
-          {suffix}
+          {value}
         </Text>
+        {suffix !== '' && (
+          <Text
+            selectable={false}
+            className="font-mono text-[18px] font-black tracking-[1px] text-fortune"
+          >
+            {suffix}
+          </Text>
+        )}
+      </TrackedPressable>
+
+      {open !== null && (
+        <TipBubble
+          id="profile.fortune"
+          top="100%"
+          tint={FORTUNE_INK}
+          onClose={() => {
+            setOpen(null)
+          }}
+        >
+          <Text selectable={false} className={cn(TYPE.figureLarge, 'text-fortune')}>
+            {exact}
+          </Text>
+        </TipBubble>
       )}
     </View>
   )

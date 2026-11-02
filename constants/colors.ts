@@ -59,6 +59,10 @@ export const DIM_INK = '#4E4A43'
 // weight, well under the contrast a word needs.
 export const MUTED_INK = '#D4D0C8'
 
+// The `--color-fortune` token as JavaScript, for the bubble under the profile's fortune,
+// whose border takes its colour as a style rather than as a class.
+export const FORTUNE_INK = '#a82a22'
+
 // The `--color-primary` token as JavaScript, and the same bargain as the two above: a
 // framed digit takes its colour as a prop, because the box around it is already computing
 // one. Primary text, so it is the darkest ink the app owns — identical to `--color-strong`,
