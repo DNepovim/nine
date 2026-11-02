@@ -179,7 +179,7 @@ two shades of it — the same bargain `GOLD_SCALE` and `GOLD_INK` strike.
 
 | Mode     | From      | To        |
 | -------- | --------- | --------- |
-| trainee  | `#4C7EFF` | `#2E54B9` |
+| trainee  | `#4C7EFF` | `#1F3F9A` |
 | accuracy | `#7273D2` | `#c36282` |
 | speed    | `#c36282` | `#E5534B` |
 | arcade   | `#E5534B` | `#FF8C00` |
@@ -197,7 +197,7 @@ trainee the same exception.
 
 | Mode     | From      | To        |
 | -------- | --------- | --------- |
-| trainee  | `#102972` | `#0B1C4C` |
+| trainee  | `#1A3A9C` | `#081438` |
 | accuracy | `#27255a` | `#501b2e` |
 | speed    | `#501b2e` | `#620b0c` |
 | arcade   | `#620b0c` | `#7A3800` |

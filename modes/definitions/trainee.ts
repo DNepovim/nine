@@ -14,14 +14,14 @@ export const TRAINEE = defineMode({
   // Two shades of one blue, where every other mode's pair is a step along the spectrum.
   // Trainee used to end on the violet accuracy starts from, which is what made practice
   // read as half an accuracy run — the one mode whose own colour was borrowed from the
-  // mode after it. So the second shade is `APP_BLUE` taken halfway to the navy the pair
+  // mode after it. So the second shade is `APP_BLUE` taken most of the way to the navy the pair
   // below is already built on: a colour the app owns rather than a new hue, and far
   // enough down to still read as a gradient on the focused pill.
   //
   // It is the one mode that does not hand its end stop to the next one — accuracy still
   // chains into speed and speed into arcade. `rules.test.ts` holds both halves of that.
-  gradient: ['#4C7EFF', '#2E54B9'],
-  darkGradient: ['#102972', '#0B1C4C'],
+  gradient: ['#4C7EFF', '#1F3F9A'],
+  darkGradient: ['#1A3A9C', '#081438'],
   // Nothing is fired. Practice's streak is the legacy board-clear rule rather than a
   // chain of decisions, and the sum's answering ring is the whole event there.
   shot: null,
