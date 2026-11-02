@@ -857,6 +857,10 @@ msgstr "best = the player's best run of the session. Paid 10 minutes after the c
 msgid "Best scores, up top"
 msgstr "Best scores, up top"
 
+#: components/phone-frame.web.tsx:121
+msgid "BETTER ON YOUR PHONE"
+msgstr "BETTER ON YOUR PHONE"
+
 #: constants/achievements.ts:360
 msgid "BLUR"
 msgstr "BLUR"
@@ -2050,6 +2054,10 @@ msgstr "Nine has a new look, and it goes all the way down.\n"
 "- Matching artwork on your home screen, browser tab and app switcher\n"
 "\n"
 "Same game underneath. It just looks like itself now."
+
+#: components/phone-frame.web.tsx:124
+msgid "Nine is made for a thumb, not a mouse. Open it on your phone and add it to your home screen — it plays like an app."
+msgstr "Nine is made for a thumb, not a mouse. Open it on your phone and add it to your home screen — it plays like an app."
 
 #: constants/achievements.ts:654
 msgid "NINE NINE NINE"

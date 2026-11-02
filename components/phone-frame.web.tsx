@@ -1,7 +1,10 @@
-import { useState, type ReactNode } from 'react'
-import { Image, useWindowDimensions, View } from 'react-native'
+import { Trans } from '@lingui/react/macro'
+import { useEffect, useState, type ReactNode } from 'react'
+import { Image, Text, useWindowDimensions, View } from 'react-native'
 
+import { GLYPH, TYPE } from '@/constants/typography'
 import { ViewportProvider } from '@/hooks/use-viewport'
+import { cn } from '@/lib/cn'
 import { isDesktopViewport } from '@/lib/desktop'
 
 // A game built for a phone, stretched to a 27-inch browser, is a dial the size of a
@@ -18,6 +21,12 @@ const ASPECT = 0.48 // width ÷ height
 const MAX_HEIGHT = 900
 const GUTTER = 48
 const BEZEL = 10
+
+// The note on the desk beside the phone, asking to be played on a real one. It only
+// appears where the desk has room for it beside the frame — squeezed in, it would crowd
+// the phone it is pointing away from.
+const HINT_WIDTH = 200
+const HINT_GAP = 40
 
 // The desk the phone lies on: a photograph, blurred and faded almost to a wash.
 //
@@ -48,6 +57,8 @@ export function PhoneFrame({ children }: { children: ReactNode }) {
     (windowWidth - GUTTER) / ASPECT,
   )
   const width = height * ASPECT
+  const frameWidth = width + BEZEL * 2
+  const hintFits = (windowWidth - frameWidth) / 2 >= HINT_WIDTH + HINT_GAP * 2
 
   return (
     <View className="flex-1 items-center justify-center bg-card">
@@ -77,6 +88,49 @@ export function PhoneFrame({ children }: { children: ReactNode }) {
           </ViewportProvider>
         </View>
       </View>
+      {hintFits && (
+        // Anchored to the centre and pushed out past the frame's half, so it sits beside
+        // the phone whatever else shares the row (the dev gallery column).
+        <View
+          className="absolute"
+          style={{
+            left: '50%',
+            marginLeft: frameWidth / 2 + HINT_GAP,
+            width: HINT_WIDTH,
+          }}
+        >
+          <PlayOnPhoneHint />
+        </View>
+      )}
+    </View>
+  )
+}
+
+function PlayOnPhoneHint() {
+  // Read after mount: the static export renders without a window, and the address is
+  // only a convenience — the note reads fine for the instant before it arrives.
+  const [host, setHost] = useState<string | null>(null)
+  useEffect(() => {
+    setHost(window.location.host)
+  }, [])
+
+  return (
+    <View className="gap-3">
+      <Text className={GLYPH['3xl']}>📱</Text>
+      <Text className={cn(TYPE.cardTitleSm, 'text-primary')}>
+        <Trans>BETTER ON YOUR PHONE</Trans>
+      </Text>
+      <Text className={cn(TYPE.proseSm, 'text-dim')}>
+        <Trans>
+          Nine is made for a thumb, not a mouse. Open it on your phone and add it to your
+          home screen — it plays like an app.
+        </Trans>
+      </Text>
+      {host !== null && (
+        <Text selectable className={cn(TYPE.value, 'text-primary')}>
+          {host}
+        </Text>
+      )}
     </View>
   )
 }

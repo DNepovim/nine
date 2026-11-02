@@ -857,6 +857,10 @@ msgstr "nejlepší = nejlepší hra hráče v termínu. Připíše se samo 10 mi
 msgid "Best scores, up top"
 msgstr "Nejlepší skóre nahoře"
 
+#: components/phone-frame.web.tsx:121
+msgid "BETTER ON YOUR PHONE"
+msgstr "LEPŠÍ NA TELEFONU"
+
 #: constants/achievements.ts:360
 msgid "BLUR"
 msgstr "ROZMAZANĚ"
@@ -2050,6 +2054,10 @@ msgstr "Nine má nový vzhled, a to skrz naskrz.\n"
 "- Sladěná grafika na ploše, v panelu prohlížeče i v přepínači aplikací\n"
 "\n"
 "Pod tím je to pořád stejná hra. Jen teď vypadá sama jako sebe."
+
+#: components/phone-frame.web.tsx:124
+msgid "Nine is made for a thumb, not a mouse. Open it on your phone and add it to your home screen — it plays like an app."
+msgstr "Nine je dělaná pro palec, ne pro myš. Otevři ji v telefonu a přidej si ji na plochu — hraje se jako aplikace."
 
 #: constants/achievements.ts:654
 msgid "NINE NINE NINE"
