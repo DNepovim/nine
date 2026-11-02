@@ -10,9 +10,10 @@ import Animated, {
 import { Confetti } from '@/components/game/confetti'
 import { Fireworks } from '@/components/game/fireworks'
 import { Hyperspace } from '@/components/game/hyperspace'
-import { GOLD_SCALE, PALE_GOLD } from '@/constants/colors'
+import { GOLD_SCALE, PALE_GOLD, SURFACE_WASH } from '@/constants/colors'
 import type { Period } from '@/lib/announcements'
 import type { RecordScreen } from '@/lib/champions'
+import { mixHex } from '@/lib/mix-hex'
 import { darkGradientOf, gradientOf, type ModeId } from '@/modes'
 
 // Mounted inside Screen, which pads its children — and Yoga lays absolute children out
@@ -38,7 +39,33 @@ const GOLD_FADE_MS = 900
 // difference from an ordinary game over without pretending to be a coronation.
 // Low, because this screen keeps the ordinary inks: the tint has to read as a change of
 // mood without dropping dim text onto a mid-tone.
-const WASH_ALPHA = '4D'
+const WASH_ALPHA = 0x4d
+
+// The two corners of the wash a screen lays down, or null for the plain one. A reign
+// takes the gold the announcement bar wears. A mode's own record takes the mode's
+// colours, at full strength for Extreme and tinted for anything easier.
+function washOf(screen: RecordScreen, gameMode: ModeId) {
+  const alpha = WASH_ALPHA.toString(16)
+  const [from, to] = gradientOf(gameMode)
+  const [darkFrom, darkTo] = darkGradientOf(gameMode)
+  return screen === 'crown'
+    ? ([GOLD_SCALE[1], GOLD_SCALE[0]] as const)
+    : screen === 'bird'
+      ? ([darkFrom, darkTo] as const)
+      : screen === 'wash'
+        ? ([`${from}${alpha}`, `${to}${alpha}`] as const)
+        : null
+}
+
+// The colour the system bar wears over this screen: the wash's top-left corner, since the
+// bar is a band across the top of that same gradient. The tinted screen's corner carries
+// an alpha the theme-color tag has nowhere to put, so it is flattened over the top-left
+// of the spectrum the tint lies on — the same colour the eye sees through it there.
+export function barColorOf(screen: RecordScreen, gameMode: ModeId): string | null {
+  if (screen === 'wash')
+    return mixHex(SURFACE_WASH[0], gradientOf(gameMode)[0], WASH_ALPHA / 0xff)
+  return washOf(screen, gameMode)?.[0] ?? null
+}
 
 // The same effect the announcement played mid-run, so a record celebrates the same way
 // wherever the player meets it — the day's confetti, the week's fireworks, the jump to
@@ -98,18 +125,7 @@ export function RecordBackdrop({
 
   const goldStyle = useAnimatedStyle(() => ({ opacity: goldIn.value }))
 
-  // A reign takes the gold the announcement bar wears. A mode's own record takes the
-  // mode's colours, at full strength for Extreme and tinted for anything easier.
-  const [from, to] = gradientOf(gameMode)
-  const [darkFrom, darkTo] = darkGradientOf(gameMode)
-  const wash =
-    screen === 'crown'
-      ? ([GOLD_SCALE[1], GOLD_SCALE[0]] as const)
-      : screen === 'bird'
-        ? ([darkFrom, darkTo] as const)
-        : screen === 'wash'
-          ? ([`${from}${WASH_ALPHA}`, `${to}${WASH_ALPHA}`] as const)
-          : null
+  const wash = washOf(screen, gameMode)
 
   // Particles have to survive their own background: the gold scale on gold and the mode
   // scale on the mode's own colours would each vanish, so anything that paints the
