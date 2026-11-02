@@ -49,7 +49,7 @@ const SENTENCES = {
 const CYCLE_MS = 2000
 const FADE_MS = 200
 
-// One line, always — matching the `leading-[15px]` the sentence is set in.
+// One line at least — matching the `leading-[15px]` the sentence is set in.
 //
 // The slot is held open whether or not there is anything to say, and whether or not the
 // answer has come back yet. It used to collapse to nothing, on the reasoning that a board
@@ -132,16 +132,15 @@ export function RecentWinners({
     // board — but the stripe is an aside about the board below it rather than another
     // control, and at the shared gap it sat closer to the switchers above than it
     // belonged. Half a gap more (12px) is what separates it from them.
-    <View className="mt-1 w-full max-w-3xs self-center" style={{ height: LINE_HEIGHT }}>
+    <View className="mt-1 w-full self-center" style={{ minHeight: LINE_HEIGHT }}>
       {line !== undefined && (
         <Animated.View style={fadeStyle}>
-          {/* One line rather than two: the slot above is one line, and a sentence that
-              wrapped would grow past it — the same jump by another route. Only a long
-              nickname on the longest of the three sentences comes close, and an aside
-              that trails off reads better than a board that hops. */}
+          {/* Wraps rather than trailing off: a long nickname on the longest of the three
+              sentences used to end in an ellipsis, which cut off the very thing the line
+              is there to say. The slot grows a line for it — the panel's full width keeps
+              that to the longest names. */}
           <Text
             selectable={false}
-            numberOfLines={1}
             className={cn(TYPE.value, 'text-center leading-[15px] text-dim')}
           >
             {SENTENCES[line.window]({
