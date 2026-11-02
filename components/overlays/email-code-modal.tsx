@@ -195,6 +195,9 @@ export function EmailCodeModal({
   // Echoed back under the title, and in bold: it is the one thing on this card the player
   // has to check, because a mistyped address is the likeliest reason nothing arrived.
   address,
+  // Whether the profile already has a confirmed address. Names the way back to the field:
+  // a player giving their first one is adding it, not changing it.
+  hasEmail,
   // When the code that brought this card up was sent, or null when none was — which is
   // the case for a player reopening this days later off the intro's confirm line. Null
   // means the resend button is live immediately, because there is nothing to wait out.
@@ -212,6 +215,7 @@ export function EmailCodeModal({
 }: {
   branch: EmailBranch
   address: string
+  hasEmail: boolean
   sentAt: number | null
   done: boolean
   onConfirm: (code: string) => Promise<{ error: EmailProblem | null }>
@@ -597,7 +601,7 @@ export function EmailCodeModal({
           <View className="flex-row items-center gap-1">
             <Ionicons name="mail-outline" size={10} color={DIM_INK} />
             <Text selectable={false} className={cn(TYPE.quietAction, 'text-dim')}>
-              <Trans>CHANGE EMAIL</Trans>
+              {hasEmail ? <Trans>CHANGE EMAIL</Trans> : <Trans>ADD EMAIL</Trans>}
             </Text>
           </View>
         </TrackedPressable>

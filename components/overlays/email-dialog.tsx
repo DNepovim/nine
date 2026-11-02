@@ -49,6 +49,7 @@ export function EmailDialog({ flow }: { flow: AccountEmailFlow }) {
           <EmailCodeModal
             branch={card.branch}
             address={card.address}
+            hasEmail={flow.hasEmail}
             sentAt={card.sentAt}
             done={card.done ?? false}
             onConfirm={flow.confirm}

@@ -65,6 +65,9 @@ type Account = {
 
 export type AccountEmailFlow = {
   card: EmailCard | null
+  // Whether this profile already has a confirmed address — what the code card's way back
+  // to the field calls itself: ADD EMAIL before there is one, CHANGE EMAIL after.
+  hasEmail: boolean
   // The one door. The invitation after a nickname, the row on the player's own profile,
   // the one-time ask and the moved line all land here, and none of them has to know which
   // of the two things the player is about to do — nor does the player.
@@ -265,5 +268,15 @@ export function useAccountEmail({
     return res
   }
 
-  return { card, open, openPendingConfirm, send, resend, confirm, editAddress, dismiss }
+  return {
+    card,
+    hasEmail: account.email !== null,
+    open,
+    openPendingConfirm,
+    send,
+    resend,
+    confirm,
+    editAddress,
+    dismiss,
+  }
 }

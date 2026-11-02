@@ -207,7 +207,11 @@ export function useSupabaseAuth(): AuthState {
           held = found.features
           // Read off the stored session rather than asked for: every change to either of
           // these passes through this hook, which updates the state as it goes.
-          setEmail(session?.user.email ?? null)
+          // Empty is not an address: an anonymous account carries `email: ''`, and read
+          // as one it had the profile offer CHANGE YOUR EMAIL to a player who had never
+          // given one. Same guard as the pending address below.
+          const given = session?.user.email
+          setEmail(isNonEmptyString(given) ? given : null)
           // `isNonEmptyString` rather than `?? null`, because the column this comes off is
           // emptied rather than nulled: GoTrue sets `email_change` back to `''` once a
           // change lands, and `'' ?? null` is `''` — a pending address that is not one.

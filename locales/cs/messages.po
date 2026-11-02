@@ -474,15 +474,15 @@ msgstr "Pěkný náskok. Z téhle pozice se už náskoky ztrácely."
 msgid "a name, in capitals"
 msgstr "jméno, velkými písmeny"
 
-#: components/overlays/title-mark.tsx:89
+#: components/overlays/title-mark.tsx:72
 msgid "A phoenix burns down and comes back. This player took the last challenge, and the mark is theirs until somebody takes the next one."
 msgstr "Fénix shoří a vrátí se. Tento hráč vyhrál poslední výzvu a odznak je jeho, dokud někdo nevyhraje další."
 
-#: components/overlays/title-mark.tsx:88
+#: components/overlays/title-mark.tsx:71
 msgid "A phoenix burns down and comes back. You took the last challenge, and the mark is yours until somebody takes the next one."
 msgstr "Fénix shoří a vrátí se. Vyhrál jsi poslední výzvu a odznak je tvůj, dokud někdo nevyhraje další."
 
-#: components/overlays/email-code-modal.tsx:512
+#: components/overlays/email-code-modal.tsx:516
 msgid "A profile lives on one device. Restoring it here takes it off the phone it is on now — and anything played on this phone under another name stays behind."
 msgstr "Profil patří vždycky jen jednomu zařízení. Když si ho vrátíš sem, zmizí z telefonu, kde je teď — a co se tady odehrálo pod jiným jménem, zůstane za tebou."
 
@@ -615,6 +615,10 @@ msgstr "Úspěchy jsou ten druhý druh. Nikdo ti je nevezme: dosáhneš jich jed
 msgid "Achievements unlocked"
 msgstr "Odemčené úspěchy"
 
+#: components/overlays/email-code-modal.tsx:604
+msgid "ADD EMAIL"
+msgstr "PŘIDAT E-MAIL"
+
 #: components/overlays/profile-motto.tsx:44
 msgid "ADD MOTTO"
 msgstr "PŘIDAT MOTTO"
@@ -698,11 +702,11 @@ msgstr "DÁL V TOMTO OBDOBÍ"
 msgid "An admin answered their feedback"
 msgstr "Admin odpověděl na jejich zpětnou vazbu"
 
-#: components/overlays/title-mark.tsx:79
+#: components/overlays/title-mark.tsx:62
 msgid "An eagle dives at 240 km/h. This player is the quicker one — Extreme Speed's all-time record is theirs."
 msgstr "Orel se snáší rychlostí 240 km/h. Tento hráč je rychlejší — drží rekord všech dob na Extrémní Rychlosti."
 
-#: components/overlays/title-mark.tsx:78
+#: components/overlays/title-mark.tsx:61
 msgid "An eagle dives at 240 km/h. You are the quicker one — Extreme Speed's all-time record is yours."
 msgstr "Orel se snáší rychlostí 240 km/h. Ty jsi rychlejší — rekord všech dob na Extrémní Rychlosti je tvůj."
 
@@ -714,11 +718,11 @@ msgstr "Prázdná tabulka. Někdo musí začít."
 msgid "An ordinary player"
 msgstr "Běžný hráč"
 
-#: components/overlays/title-mark.tsx:73
+#: components/overlays/title-mark.tsx:56
 msgid "An owl can hear a mouse under half a metre of snow. This player is the more exact one — Extreme Accuracy's all-time record is theirs."
 msgstr "Sova uslyší myš pod půl metrem sněhu. Tento hráč je přesnější — drží rekord všech dob na Extrémní Přesnosti."
 
-#: components/overlays/title-mark.tsx:72
+#: components/overlays/title-mark.tsx:55
 msgid "An owl can hear a mouse under half a metre of snow. You are the more exact one — Extreme Accuracy's all-time record is yours."
 msgstr "Sova uslyší myš pod půl metrem sněhu. Ty jsi přesnější — rekord všech dob na Extrémní Přesnosti je tvůj."
 
@@ -971,7 +975,7 @@ msgstr "PLÁNOVAČ VÝZEV"
 msgid "CHAMPIONS"
 msgstr "ŠAMPIONI"
 
-#: components/overlays/email-code-modal.tsx:600
+#: components/overlays/email-code-modal.tsx:604
 msgid "CHANGE EMAIL"
 msgstr "ZMĚNIT E-MAIL"
 
@@ -1002,7 +1006,7 @@ msgstr "čas = zbývající čas ÷ kruh"
 #: components/overlays/admin-stat-people.tsx:119
 #: components/overlays/challenge-modal.tsx:298
 #: components/overlays/compare-overlay.tsx:318
-#: components/overlays/email-code-modal.tsx:528
+#: components/overlays/email-code-modal.tsx:532
 #: components/overlays/modal-card.tsx:267
 #: components/overlays/share-modal.tsx:125
 msgid "CLOSE"
@@ -2734,11 +2738,11 @@ msgstr "Rekordy se slaví"
 msgid "REMOVE"
 msgstr "SMAZAT"
 
-#: components/overlays/email-code-modal.tsx:580
+#: components/overlays/email-code-modal.tsx:584
 msgid "RESEND CODE"
 msgstr "POSLAT ZNOVU"
 
-#: components/overlays/email-code-modal.tsx:578
+#: components/overlays/email-code-modal.tsx:582
 msgid "RESEND IN {waiting}S"
 msgstr "ZNOVU ZA {waiting}S"
 
@@ -2981,7 +2985,7 @@ msgstr "Pošli zpětnou vazbu a přijde ti na ni odpověď."
 msgid "Sending again — the player sees this reply once more."
 msgstr "Odesíláš znovu — hráč uvidí tuhle odpověď ještě jednou."
 
-#: components/overlays/email-code-modal.tsx:576
+#: components/overlays/email-code-modal.tsx:580
 #: components/overlays/email-modal.tsx:150
 msgid "SENDING…"
 msgstr "POSÍLÁM…"
@@ -3386,7 +3390,7 @@ msgstr "Nejvíc bodů bere nejlepší, a kdo cíl složí poslední, nebere nic.
 msgid "The clock keeps tightening as your run goes on, less and less each time."
 msgstr "Čas se s postupující hrou zkracuje, pokaždé o něco míň."
 
-#: components/overlays/title-mark.tsx:94
+#: components/overlays/title-mark.tsx:77
 msgid "THE CROWN"
 msgstr "KORUNA"
 
@@ -3412,7 +3416,7 @@ msgstr "Číselník toho na první pohled řekne víc.\n"
 "\n"
 "Žádné mhouření na horní konec škály uprostřed hry."
 
-#: components/overlays/title-mark.tsx:77
+#: components/overlays/title-mark.tsx:60
 #: constants/achievements.ts:461
 msgid "THE EAGLE"
 msgstr "OREL"
@@ -3449,17 +3453,17 @@ msgstr "OKLIKOU"
 msgid "The map turns as you walk, to keep you pointed forward. Tap the compass in the corner if you would rather north stayed at the top of the screen — it remembers whichever you chose."
 msgstr "Mapa se za chůze otáčí, aby tvůj směr mířil vždy nahoru. Když chceš radši sever nahoře, klepni na růžici v rohu — co si vybereš, to si pamatuje."
 
-#: components/overlays/title-mark.tsx:71
+#: components/overlays/title-mark.tsx:54
 #: constants/achievements.ts:455
 msgid "THE OWL"
 msgstr "SOVA"
 
-#: components/overlays/title-mark.tsx:95
-#: components/overlays/title-mark.tsx:96
+#: components/overlays/title-mark.tsx:78
+#: components/overlays/title-mark.tsx:79
 msgid "The owl's ear, the eagle's dive and the phoenix's return — all three at once, and the birds give way to the crown."
 msgstr "Sovino ucho, orlí střemhlavý let a návrat fénixe — všechny tři najednou, a ptáci ustoupí koruně."
 
-#: components/overlays/title-mark.tsx:87
+#: components/overlays/title-mark.tsx:70
 msgid "THE PHOENIX"
 msgstr "FÉNIX"
 
@@ -3535,7 +3539,7 @@ msgstr "Před tebou je dlouhý výstup a soupeř stojí na jeho vrcholu."
 msgid "They are ahead, but the gap has a bottom to it."
 msgstr "Soupeř vede, ale ta propast má dno."
 
-#: components/overlays/email-code-modal.tsx:450
+#: components/overlays/email-code-modal.tsx:454
 msgid "They are good for ten minutes."
 msgstr "Platí deset minut."
 
@@ -3575,7 +3579,7 @@ msgstr "Co ti zůstane"
 msgid "Think in horizontal swipes before you tap. Left sends a button to 0, right to 9, and each is one move however far it travels — a big gap is often two swipes and a tap."
 msgstr "Mysli ve vodorovných švihnutích: doleva pošle tlačítko na nulu, doprava na devítku, a každé je jeden tah. Velkou mezeru tak zavřeš dvěma švihnutími a ťuknutím."
 
-#: components/overlays/email-code-modal.tsx:492
+#: components/overlays/email-code-modal.tsx:496
 msgid "This address already has a profile — almost certainly yours. The code brings it here."
 msgstr "Na téhle adrese už profil je — skoro určitě tvůj. Kód ho přenese sem."
 
@@ -3656,7 +3660,7 @@ msgstr "ČAS"
 msgid "TIME PER TARGET"
 msgstr "ČAS NA CÍL"
 
-#: components/overlays/mode-tips.tsx:198
+#: components/overlays/mode-tips.tsx:199
 msgid "TIP #{number}"
 msgstr "TIP #{number}"
 
@@ -3829,7 +3833,7 @@ msgstr "Bojovníci vycházejí z brány po jednom, a čím déle boj trvá, tím
 msgid "was"
 msgstr "bylo"
 
-#: components/overlays/email-code-modal.tsx:444
+#: components/overlays/email-code-modal.tsx:448
 msgid "We sent six digits to <0>{address}</0>."
 msgstr "Poslali jsme šest číslic na <0>{address}</0>."
 
