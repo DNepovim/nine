@@ -1664,33 +1664,49 @@ export default function GameScreen() {
 
   const boardTargets = drawnTargets(lesson.voice, displayedTargets)
 
-  // Where the board sits inside the effect layer over it, taken from the same layout
-  // event that sizes it for target placement. A shot needs the board's origin as well
-  // as its size: a target's position is measured from the board, and the sum row the
-  // shot leaves from is measured from the box holding both.
-  const boardRect = useRef({ x: 0, y: 0, width: 0, height: 0 })
-  const noteBoardRect = (event: LayoutChangeEvent) => {
-    const { x, y, width, height } = event.nativeEvent.layout
-    boardRect.current = { x, y, width, height }
+  // Where the board and the sum row sit inside the effect layer over them. A shot needs
+  // the board's origin as well as its size: a target's position is measured from the
+  // board, and the sum row the shot leaves from is measured from the box holding both.
+  //
+  // Only the board's size comes from its own layout event. Its origin is read off the
+  // sum row, which follows it directly: on web a layout event's x/y are measured from
+  // the view's DOM parent, and the board's parent is the `display: contents` wrapper
+  // its GestureDetector draws — a box with no place of its own, so the board came back
+  // measured from the page and every shot landed a top bar's height too low, under the
+  // dial. The sum row is a plain child of the box the shot layer covers.
+  const boardSize = useRef({ width: 0, height: 0 })
+  const noteBoardSize = (event: LayoutChangeEvent) => {
+    const { width, height } = event.nativeEvent.layout
+    boardSize.current = { width, height }
+  }
+  const sumRowRect = useRef({ x: 0, y: 0, width: 0 })
+  const noteSumRowRect = (event: LayoutChangeEvent) => {
+    const { x, y, width } = event.nativeEvent.layout
+    sumRowRect.current = { x, y, width }
   }
 
   // Where a strike fires from and what it is aimed at. The muzzle is the middle of the
-  // sum row, which follows the board directly, so its centre is the board's own bottom
-  // edge plus half the row the layout reserves — no second measurement needed.
+  // sum row; the board sits on top of that row, as wide as it, so its origin is the
+  // row's top edge less the board's height.
   // How wide the card for this target is drawn — the drill's own answer where there is
   // one, and the size every other mode draws otherwise.
   const sizeOfCard = (seq: number): number => drillCards?.[seq]?.size ?? PIE_SIZE
 
   const aimShot = (value: number): ShotAim | null => {
-    const board = boardRect.current
-    if (board.width === 0) return null
+    const size = boardSize.current
+    const row = sumRowRect.current
+    if (size.width === 0 || row.width === 0) return null
+    const board = {
+      x: row.x + (row.width - size.width) / 2,
+      y: row.y - size.height,
+    }
     // Live targets never share a value, so the hit carrying this one names one card.
     const target = displayedTargets.find((entry) => entry.value === value)
     if (target === undefined) return null
     return {
       from: {
-        x: board.x + board.width / 2,
-        y: board.y + board.height + SUM_ROW_HEIGHT / 2,
+        x: row.x + row.width / 2,
+        y: row.y + SUM_ROW_HEIGHT / 2,
       },
       to: {
         // The middle of this card, which is not the middle of every card: a drilled run
@@ -1699,6 +1715,9 @@ export default function GameScreen() {
         y: board.y + target.position.y + sizeOfCard(target.seq) / 2,
       },
       radius: sizeOfCard(target.seq) / 2,
+      // A hit is the sum landing on the target's value, so this is the number standing
+      // in the sum row as the shot leaves it.
+      sumDigits: String(value).length,
     }
   }
 
@@ -2298,7 +2317,7 @@ export default function GameScreen() {
                       className="flex-1"
                       onLayout={(event) => {
                         onContainerLayout(event)
-                        noteBoardRect(event)
+                        noteBoardSize(event)
                       }}
                     >
                       {boardTargets.map((target) => (
@@ -2404,6 +2423,7 @@ export default function GameScreen() {
                 <View
                   className="items-center justify-center"
                   style={{ height: SUM_ROW_HEIGHT }}
+                  onLayout={noteSumRowRect}
                 >
                   {/* Dimmed under the lesson's first word, which is the only thing on the
                     board while it is up — see components/game/sum-hush.tsx. */}
@@ -2472,6 +2492,7 @@ export default function GameScreen() {
                       toX={shot.to.x}
                       toY={shot.to.y}
                       radius={shot.radius}
+                      sumDigits={shot.sumDigits}
                       rounds={shot.rounds}
                       onDone={() => {
                         removeShot(shot.id)

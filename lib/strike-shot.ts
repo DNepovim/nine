@@ -1,15 +1,45 @@
+import { SUM_DIGIT_SIZE, SUM_DIGIT_TRACKING } from '@/constants/game'
+
 export type Point = { x: number; y: number }
 
 // What a strike fires is the mode's own answer now — `shot` on its definition, so a
 // challenge inherits the shot of the mode it is based on. See modes/types.ts.
 
-// The beam touches neither end. It starts clear of the digits it is fired from — the
-// sum stands 42pt tall, so this is half of that and a little air — and stops short of
-// the target's rim rather than landing on it. A line drawn hard into both ends read as
-// a tether between two things; one with air at each end reads as a shot crossing the
-// gap between them.
-export const BEAM_START_GAP = 28
+// How far above the sum row's middle the tops of its digits stand. A monospaced digit's
+// ink is about three quarters of its size and sits a little low in its line box, so its
+// top is ~0.38 of the size above the row's centre — 16pt at the sum's 42.
+//
+// A sniper fires from here rather than from the row's centre. Fired from the centre with
+// a fixed gap, the beam only cleared the digits when it went straight up: aimed at a
+// target out to the side, it started beside the number, level with its middle.
+export const SUM_TOP = Math.round(SUM_DIGIT_SIZE * 0.38)
+
+// How wide one of the sum's digits stands: a monospaced advance is 0.6 of the size, and
+// the tracking goes after every digit.
+const SUM_DIGIT_ADVANCE = SUM_DIGIT_SIZE * 0.6 + SUM_DIGIT_TRACKING
+
+// The beam touches neither end. It starts a little air clear of the digits it is fired
+// from, and stops short of the target's rim rather than landing on it. A line drawn
+// hard into both ends read as a tether between two things; one with air at each end
+// reads as a shot crossing the gap between them.
+const BEAM_START_GAP = 4
 export const BEAM_END_CLEARANCE = 8
+
+// How far along its ray a sniper's beam starts, from the top centre of a sum `digits`
+// long. Whichever comes first: the beam rising `BEAM_START_GAP` above the digits' tops,
+// or passing `BEAM_START_GAP` beyond the side of the number. Straight up that is the gap
+// itself; aimed nearly level it is the number's half-width, so a shallow beam leaves
+// from beside a three-digit sum rather than skimming across the tops of its digits.
+// `angle` is the ray's, in degrees with +Y downwards, as `shotLine` gives it.
+export function sniperStartGap(angle: number, digits: number): number {
+  const radians = (angle * Math.PI) / 180
+  const across = Math.abs(Math.cos(radians))
+  const rise = -Math.sin(radians)
+  const side = (digits * SUM_DIGIT_ADVANCE) / 2 + BEAM_START_GAP
+  const pastSide = across > 0 ? side / across : Number.POSITIVE_INFINITY
+  const aboveTop = rise > 0 ? BEAM_START_GAP / rise : Number.POSITIVE_INFINITY
+  return Math.min(pastSide, aboveTop)
+}
 
 // What is left when a target is so close to the sum row that the two gaps would eat the
 // whole distance. Better a short beam held in the middle of the run than a bar drawn

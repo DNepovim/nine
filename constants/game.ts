@@ -9,6 +9,13 @@ export const SWIPE_THRESHOLD = 20
 // `crossReach` in lib/dial-gesture.ts for what is being measured.
 export const CROSSING_SHARE = 0.35
 
+// The live sum over the dial: its digits' size and the air between them. Here rather than
+// only on ScoreDigit because a strike is aimed off the digits' outline — see
+// lib/strike-shot.ts — and a beam aimed off a copy of these would drift from the number
+// the moment either changed.
+export const SUM_DIGIT_SIZE = 42
+export const SUM_DIGIT_TRACKING = 2
+
 // Target card / countdown pie geometry (the card footprint is the pie itself).
 export const PIE_SIZE = 80
 export const CARD_GAP = 10

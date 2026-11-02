@@ -15,6 +15,9 @@ export type ShotAim = {
   // inset by half of some other card's width stops short of its target or lands inside
   // it.
   radius: number
+  // How many digits the sum stands at when the shot leaves it — a sniper starts clear of
+  // the number's outline, and that outline is as wide as the number is long.
+  sumDigits: number
 }
 
 // A shot in flight. Its geometry is fixed the instant it is fired rather than read each
@@ -29,6 +32,8 @@ export type Shot = {
   // Half the card it was aimed at, fixed with the rest of the geometry the instant the
   // shot was fired.
   radius: number
+  // The sum's length the instant it was fired — see ShotAim.
+  sumDigits: number
   // Which rounds of the press's one burst this shot fires — see shareRounds.
   rounds: number[]
 }
@@ -109,6 +114,7 @@ export function useStrikeShots({
           from,
           to: aimed.to,
           radius: aimed.radius,
+          sumDigits: aimed.sumDigits,
         },
       ]
     })

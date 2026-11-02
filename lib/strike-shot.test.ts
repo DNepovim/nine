@@ -8,6 +8,7 @@ import {
   insetLine,
   shareRounds,
   shotLine,
+  sniperStartGap,
 } from './strike-shot'
 
 const MUZZLE = { x: 100, y: 300 }
@@ -116,6 +117,35 @@ describe('insetLine', () => {
   it('never draws a bar backwards', () => {
     for (const ray of [0, 5, 40, 76, 77, 300]) {
       expect(insetLine(ray, 28, 48).length).toBeGreaterThanOrEqual(0)
+    }
+  })
+})
+
+describe('sniperStartGap', () => {
+  it('is the plain gap for a beam fired straight up', () => {
+    expect(sniperStartGap(-90, 3)).toBeCloseTo(4)
+  })
+
+  it('clears the side of the number for a beam fired level', () => {
+    // A three-digit sum is about 82pt wide, so a level beam starts past its half-width.
+    expect(sniperStartGap(0, 3)).toBeGreaterThan(41)
+    expect(sniperStartGap(180, 3)).toBeGreaterThan(41)
+  })
+
+  it('starts further out the wider the number is, for a shallow beam', () => {
+    expect(sniperStartGap(-10, 3)).toBeGreaterThan(sniperStartGap(-10, 1))
+  })
+
+  it('never starts the beam inside the gap above the digits', () => {
+    for (const angle of [-170, -135, -100, -90, -60, -20]) {
+      for (const digits of [1, 2, 3]) {
+        const gap = sniperStartGap(angle, digits)
+        const radians = (angle * Math.PI) / 180
+        const risen = -Math.sin(radians) * gap
+        const out = Math.abs(Math.cos(radians)) * gap
+        // Either clear above the tops, or clear past the side — one of the two holds.
+        expect(risen >= 4 - 1e-9 || out >= (digits * 27.2) / 2 + 4 - 1e-9).toBe(true)
+      }
     }
   })
 })

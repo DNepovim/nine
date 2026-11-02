@@ -10,13 +10,14 @@ import Animated, {
 } from 'react-native-reanimated'
 
 import { SCORE_COLORS } from '@/constants/colors'
+import { SUM_DIGIT_SIZE, SUM_DIGIT_TRACKING } from '@/constants/game'
 import { mono } from '@/constants/theme'
 
 export function ScoreDigit({
   digit,
   direction,
   progress,
-  size = 42,
+  size = SUM_DIGIT_SIZE,
 }: {
   digit: string
   direction: 1 | -1
@@ -71,7 +72,7 @@ export function ScoreDigit({
           fontSize: size,
           fontWeight: '700',
           fontFamily: mono,
-          letterSpacing: 2,
+          letterSpacing: SUM_DIGIT_TRACKING,
         },
         animStyle,
       ]}

@@ -94,6 +94,7 @@ export function StrikeVariant({
         y: board.y + target.at.y + PIE_SIZE / 2,
       },
       radius: PIE_SIZE / 2,
+      sumDigits: String(value).length,
     }
   }
 
@@ -196,6 +197,7 @@ export function StrikeVariant({
               toX={shot.to.x}
               toY={shot.to.y}
               radius={shot.radius}
+              sumDigits={shot.sumDigits}
               rounds={shot.rounds}
               onDone={() => {
                 removeShot(shot.id)

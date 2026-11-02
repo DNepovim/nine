@@ -6,12 +6,13 @@ import { StrikeBeam } from '@/components/game/strike-beam'
 import type { Shot } from '@/hooks/use-strike-shots'
 import {
   BEAM_END_CLEARANCE,
-  BEAM_START_GAP,
   BURST_MS,
   burstRounds,
   insetLine,
   shotLine,
   SNIPER_MS,
+  sniperStartGap,
+  SUM_TOP,
 } from '@/lib/strike-shot'
 
 type Kind = Shot['kind']
@@ -28,18 +29,6 @@ const SHOT_MS = {
   chain: SNIPER_MS,
 } as const satisfies Record<Kind, number>
 
-// How far a beam of each kind starts from its muzzle.
-//
-// A sniper leaves the sum row and has to clear the digits standing there. A chain leaves
-// the card it took last, so it clears that card's rim exactly as it clears the rim it is aimed at —
-// which makes the start gap the one value this map cannot hold, since it depends on how
-// big the card is. `-1` asks for the radius; see the call below.
-const RIM = -1
-const START_GAP = {
-  sniper: BEAM_START_GAP,
-  chain: RIM,
-} as const satisfies Record<Exclude<Kind, 'burst'>, number>
-
 // One strike's shot, from the sum row to the target it took. Positions the anchor both
 // kinds of line are laid out from — every line inside runs along +X from here — and
 // owns the shot's lifetime, so the lines themselves only have to draw.
@@ -50,6 +39,7 @@ export function StrikeShot({
   toX,
   toY,
   radius,
+  sumDigits,
   rounds,
   onDone,
 }: {
@@ -60,6 +50,8 @@ export function StrikeShot({
   toY: number
   // Half the target's footprint — how wide a burst may spread across its face.
   radius: number
+  // How many digits the sum stood at when the shot was fired, for a sniper's start gap.
+  sumDigits: number
   // Which rounds of the press's one burst this target gets. Empty for a sniper, which
   // fires one beam and nothing else.
   rounds: readonly number[]
@@ -72,27 +64,30 @@ export function StrikeShot({
     }
   }, [])
 
-  const from = { x: fromX, y: fromY }
+  // A sniper leaves from the top centre of the sum rather than the row's middle — see
+  // SUM_TOP. The other kinds keep the row's middle: a burst's rounds start a tenth of
+  // the way out already, and a chain leaves the card it took last.
+  const from = { x: fromX, y: kind === 'sniper' ? fromY - SUM_TOP : fromY }
   const to = { x: toX, y: toY }
+  const ray = shotLine(from, to)
+  const endGap = radius + BEAM_END_CLEARANCE
+  // How far the beam starts from its muzzle. A sniper clears the sum's digits, by a
+  // distance that turns on the beam's angle and the number's width — see
+  // sniperStartGap. A chain leaves the card it took last, so it clears that card's rim
+  // exactly as it clears the rim it is aimed at. The first chain beam of a run has no
+  // previous card and leaves the sum row's middle instead, a card's radius out — further
+  // than a sniper starts, and only ever once a run.
+  const startGap = kind === 'sniper' ? sniperStartGap(ray.angle, sumDigits) : endGap
 
   return (
-    <View pointerEvents="none" style={{ position: 'absolute', left: fromX, top: fromY }}>
+    <View
+      pointerEvents="none"
+      style={{ position: 'absolute', left: from.x, top: from.y }}
+    >
       {kind !== 'burst' ? (
         // The beam is aimed at the target's middle but drawn short of it at both ends:
         // clear of the digits it leaves, and clear of the rim it is aimed at.
-        <StrikeBeam
-          angle={shotLine(from, to).angle}
-          {...insetLine(
-            shotLine(from, to).length,
-            // See `START_GAP`: a sniper clears the sum's digits, a chain clears the rim
-            // of the card it came from. The
-            // first chain beam of a run has no previous card and leaves the sum row
-            // instead — eight points further out than a sniper would, which is not a
-            // difference anybody can see.
-            START_GAP[kind] === RIM ? radius + BEAM_END_CLEARANCE : START_GAP[kind],
-            radius + BEAM_END_CLEARANCE,
-          )}
-        />
+        <StrikeBeam angle={ray.angle} {...insetLine(ray.length, startGap, endGap)} />
       ) : (
         burstRounds(from, to, radius, rounds).map((round) => (
           <BurstRound
