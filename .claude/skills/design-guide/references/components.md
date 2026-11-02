@@ -37,6 +37,7 @@ In every case the fix was one component with slots, not a tidier copy.
 | Loading                  | `overlays/skeleton.tsx`, `skeleton-row.tsx`                    |
 | Page indicator           | `page-dots.tsx`, `page-dot.tsx`                                |
 | Markdown copy            | `markdown-text.tsx`, `markdown-block.tsx`, `markdown-span.tsx` |
+| A tooltip under a tap    | `overlays/tip-bubble.tsx` — `TipBubble` + `useSelfClosing`     |
 | **A player's nickname**  | **`gradient-name.tsx` — `GradientName`. Always. See below.**   |
 
 ### A nickname is never flat ink

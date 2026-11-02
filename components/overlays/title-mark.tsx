@@ -2,10 +2,9 @@ import type { MessageDescriptor } from '@lingui/core'
 import { msg } from '@lingui/core/macro'
 import { useLingui } from '@lingui/react/macro'
 import { isNonEmptyArray } from 'narrowland'
-import { useEffect, useState } from 'react'
 import { Text, View } from 'react-native'
-import Animated, { FadeIn, FadeOut } from 'react-native-reanimated'
 
+import { TipBubble, useSelfClosing } from '@/components/overlays/tip-bubble'
 import { MarkGlyph } from '@/components/player-mark'
 import { TrackedPressable } from '@/components/tracked-pressable'
 import { GAME_SCALE } from '@/constants/colors'
@@ -29,28 +28,12 @@ const LEADING = 4
 // bubble gives the difference up rather than hanging off the card.
 const BUBBLE_WIDTH = 264
 
-// The caret over the bubble, drawn as a rotated square whose upper half sticks out past
-// the card's edge. React Native has no border-triangle worth the arithmetic, and a square
-// on its corner is the same shape once the card covers the bottom of it.
-const CARET = 10
-
 // Air between the mark and the caret's tip — small, and bounded by the greeting rather
 // than chosen for looks. The line under the mark starts 4px below it, so a wider gap
 // leaves the top of that line showing above the card, which reads as a half-drawn row
 // rather than as a line something is covering. The caret's own half reaches back up out
 // of the card, so the mark still has room around it.
 const GAP = 4
-
-// It closes itself. Nothing here is acted on, and a tooltip left open over the title
-// after the player has moved on to picking a mode is just something in the way.
-const HOLD_MS = 6000
-
-const shadow = {
-  shadowColor: '#000',
-  shadowOpacity: 0.3,
-  shadowOffset: { width: 0, height: 6 },
-  shadowRadius: 12,
-}
 
 // What each mark says, in two voices — the reader's own mark over the intro's title, and
 // somebody else's over the name on their profile. Same fact, same brag, and only the
@@ -153,17 +136,7 @@ export function TitleMark({
   // *Which* mark is explaining itself, rather than whether one is. A player wearing both
   // an owl and a phoenix has two different questions to ask, and a boolean could only
   // answer the first one tapped.
-  const [open, setOpen] = useState<PlayerMark | null>(null)
-
-  useEffect(() => {
-    if (open === null) return
-    const id = setTimeout(() => {
-      setOpen(null)
-    }, HOLD_MS)
-    return () => {
-      clearTimeout(id)
-    }
-  }, [open])
+  const [open, setOpen] = useSelfClosing<PlayerMark>()
 
   // After the hooks, never before them: a player wearing nothing draws nothing, and the
   // callers that used to guard this themselves no longer have to.
@@ -210,64 +183,30 @@ export function TitleMark({
       </View>
 
       {copy !== null && (
-        <Animated.View
-          entering={FadeIn.duration(160)}
-          exiting={FadeOut.duration(140)}
-          className="absolute items-center"
-          // Its own width, given up where there is less room than that: the intro has
-          // the whole screen to open into and gets the full bubble, while inside the
-          // profile card on a small phone the second half takes over and the bubble comes
-          // in to the card's own width. A percentage rather than a measurement, so
-          // neither place has to know the other's numbers — it reads against this box,
-          // which is why the box is full width.
-          style={{
-            top: size + LEADING + GAP,
-            width: BUBBLE_WIDTH,
-            maxWidth: '100%',
+        // Its own width, given up where there is less room than that: the intro has the
+        // whole screen to open into and gets the full bubble, while inside the profile
+        // card on a small phone the bubble comes in to the card's own width.
+        <TipBubble
+          id="title.secondary"
+          top={size + LEADING + GAP}
+          width={BUBBLE_WIDTH}
+          tint={copy.tint}
+          caretShift={caretShift}
+          onClose={() => {
+            setOpen(null)
           }}
         >
-          {/* Any tap closes it. There is nothing in here to act on, so an X to aim at
-              would be a control standing between the player and the screen. */}
-          <TrackedPressable
-            id="title.secondary"
-            onPress={() => {
-              setOpen(null)
-            }}
+          <Text
+            selectable={false}
+            className={cn(TYPE.quietAction, 'mb-1')}
+            style={{ color: copy.tint }}
           >
-            <View
-              className="rounded-2xl bg-card px-3.5 py-2.5"
-              style={{ ...shadow, borderWidth: 1, borderColor: `${copy.tint}55` }}
-            >
-              <Text
-                selectable={false}
-                className={cn(TYPE.quietAction, 'mb-1')}
-                style={{ color: copy.tint }}
-              >
-                {t(copy.title)}
-              </Text>
-              <Text selectable={false} className={cn(TYPE.proseSm, 'text-dim')}>
-                {t(mine ? copy.mine : copy.theirs)}
-              </Text>
-            </View>
-            {/* Pulled up by half its side so the card's edge cuts it in two, and
-                centred by hand rather than by `self-center`: an absolute child is out of
-                the card's flow, and alignment has nothing left to act on. The two borders
-                it wears are the two the rotation leaves facing the mark. */}
-            <View
-              className="absolute rotate-45 bg-card"
-              style={{
-                width: CARET,
-                height: CARET,
-                top: -CARET / 2,
-                left: '50%',
-                marginLeft: -CARET / 2 + caretShift,
-                borderLeftWidth: 1,
-                borderTopWidth: 1,
-                borderColor: `${copy.tint}55`,
-              }}
-            />
-          </TrackedPressable>
-        </Animated.View>
+            {t(copy.title)}
+          </Text>
+          <Text selectable={false} className={cn(TYPE.proseSm, 'text-dim')}>
+            {t(mine ? copy.mine : copy.theirs)}
+          </Text>
+        </TipBubble>
       )}
     </View>
   )
