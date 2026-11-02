@@ -271,6 +271,7 @@ const intro = (
           // Nothing to open: the gallery renders this to be looked at, and the dialog
           // behind the card belongs to the screen above it rather than to this panel.
           onOpenChallenge={() => undefined}
+          onShare={() => undefined}
           bestScore={RUN.score}
           medals={medals}
           lostMedals={lostMedals}

@@ -644,7 +644,7 @@ msgid "Address confirmed."
 msgstr "Address confirmed."
 
 #: components/overlays/admin-overlay.tsx:60
-#: components/overlays/menu-overlay.tsx:735
+#: components/overlays/menu-overlay.tsx:734
 msgid "ADMIN"
 msgstr "ADMIN"
 
@@ -1000,6 +1000,7 @@ msgstr "clock = time left ÷ ring"
 #: components/overlays/compare-overlay.tsx:318
 #: components/overlays/email-code-modal.tsx:528
 #: components/overlays/modal-card.tsx:267
+#: components/overlays/share-modal.tsx:103
 msgid "CLOSE"
 msgstr "CLOSE"
 
@@ -1047,7 +1048,7 @@ msgstr "CONFIRMED"
 msgid "CONFIRMING…"
 msgstr "CONFIRMING…"
 
-#: components/overlays/menu-overlay.tsx:579
+#: components/overlays/menu-overlay.tsx:584
 msgid "CONNECT TO THE INTERNET TO PLAY WITH FRIENDS"
 msgstr "CONNECT TO THE INTERNET TO PLAY WITH FRIENDS"
 
@@ -1061,7 +1062,7 @@ msgstr "CONNOISSEUR"
 msgid "CONTINUE"
 msgstr "CONTINUE"
 
-#: app/(tabs)/index.tsx:2558
+#: app/(tabs)/index.tsx:2596
 msgid "Continue the tutorial"
 msgstr "Continue the tutorial"
 
@@ -1073,7 +1074,7 @@ msgstr "CONTROLS"
 msgid "CREATE"
 msgstr "CREATE"
 
-#: components/overlays/menu-overlay.tsx:543
+#: components/overlays/menu-overlay.tsx:548
 msgid "CREATE ROOM"
 msgstr "CREATE ROOM"
 
@@ -1098,7 +1099,7 @@ msgstr "Dec"
 msgid "DECEMBER"
 msgstr "DECEMBER"
 
-#: components/overlays/menu-overlay.tsx:720
+#: components/overlays/menu-overlay.tsx:719
 msgid "DEV"
 msgstr "DEV"
 
@@ -1642,7 +1643,7 @@ msgid "How far can you go?"
 msgstr "How far can you go?"
 
 #: components/overlays/how-to-play-overlay.tsx:435
-#: components/overlays/menu-overlay.tsx:711
+#: components/overlays/menu-overlay.tsx:710
 msgid "HOW TO PLAY"
 msgstr "HOW TO PLAY"
 
@@ -1728,7 +1729,7 @@ msgid "JANUARY"
 msgstr "JANUARY"
 
 #: components/overlays/join-room-overlay.tsx:75
-#: components/overlays/menu-overlay.tsx:562
+#: components/overlays/menu-overlay.tsx:567
 msgid "JOIN ROOM"
 msgstr "JOIN ROOM"
 
@@ -2000,7 +2001,7 @@ msgstr "Move more than one key in a single swipe."
 msgid "MULTIPLAYER"
 msgstr "MULTIPLAYER"
 
-#: components/overlays/menu-overlay.tsx:646
+#: components/overlays/menu-overlay.tsx:651
 msgid "My best at Nine is {bestScore} — {board}. Think you can beat it?"
 msgstr "My best at Nine is {bestScore} — {board}. Think you can beat it?"
 
@@ -2045,7 +2046,7 @@ msgstr "NICK"
 msgid "NIGHT SHIFT"
 msgstr "NIGHT SHIFT"
 
-#: components/overlays/menu-overlay.tsx:647
+#: components/overlays/menu-overlay.tsx:652
 msgid "Nine buttons, one number to hit. Come take a run at it."
 msgstr "Nine buttons, one number to hit. Come take a run at it."
 
@@ -2480,7 +2481,7 @@ msgid "OPTIMAL PATH"
 msgstr "OPTIMAL PATH"
 
 #: components/overlays/advanced-options-overlay.tsx:85
-#: components/overlays/menu-overlay.tsx:631
+#: components/overlays/menu-overlay.tsx:636
 #: components/overlays/paused-overlay.tsx:286
 msgid "OPTIONS"
 msgstr "OPTIONS"
@@ -2577,7 +2578,7 @@ msgstr "PLAY AGAIN"
 msgid "Play five runs with friends and win none of them."
 msgstr "Play five runs with friends and win none of them."
 
-#: components/overlays/menu-overlay.tsx:616
+#: components/overlays/menu-overlay.tsx:621
 msgid "PLAY GAME"
 msgstr "PLAY GAME"
 
@@ -2645,7 +2646,7 @@ msgstr "PREVIEW AS"
 msgid "private"
 msgstr "private"
 
-#: components/overlays/menu-overlay.tsx:685
+#: components/overlays/menu-overlay.tsx:684
 msgid "PROFILE"
 msgstr "PROFILE"
 
@@ -2944,6 +2945,10 @@ msgstr "See the better way"
 msgid "SEND"
 msgstr "SEND"
 
+#: components/overlays/share-modal.tsx:94
+msgid "SEND A LINK"
+msgstr "SEND A LINK"
+
 #: components/overlays/admin-messages.tsx:151
 msgid "SEND AGAIN"
 msgstr "SEND AGAIN"
@@ -3013,10 +3018,14 @@ msgstr "Seven days, one name. [A] had the week from Monday and never let go."
 msgid "Seven seconds a target — the clock everyone races."
 msgstr "Seven seconds a target — the clock everyone races."
 
-#: components/overlays/menu-overlay.tsx:661
+#: components/overlays/menu-overlay.tsx:660
 #: components/overlays/multiplayer-waiting.tsx:120
 msgid "SHARE"
 msgstr "SHARE"
+
+#: components/overlays/share-modal.tsx:52
+msgid "SHARE NINE"
+msgstr "SHARE NINE"
 
 #: components/overlays/show-more.tsx:36
 msgid "SHOW LESS"
@@ -3953,7 +3962,7 @@ msgstr "You lead by the width of one row."
 msgid "You took the room and left them the door."
 msgstr "You took the room and left them the door."
 
-#: components/overlays/menu-overlay.tsx:573
+#: components/overlays/menu-overlay.tsx:578
 #: components/overlays/offline-notice.tsx:17
 msgid "YOU'RE OFFLINE"
 msgstr "YOU'RE OFFLINE"

@@ -644,7 +644,7 @@ msgid "Address confirmed."
 msgstr "Adresa potvrzena."
 
 #: components/overlays/admin-overlay.tsx:60
-#: components/overlays/menu-overlay.tsx:735
+#: components/overlays/menu-overlay.tsx:734
 msgid "ADMIN"
 msgstr "ADMIN"
 
@@ -1000,6 +1000,7 @@ msgstr "čas = zbývající čas ÷ kruh"
 #: components/overlays/compare-overlay.tsx:318
 #: components/overlays/email-code-modal.tsx:528
 #: components/overlays/modal-card.tsx:267
+#: components/overlays/share-modal.tsx:103
 msgid "CLOSE"
 msgstr "ZAVŘÍT"
 
@@ -1047,7 +1048,7 @@ msgstr "POTVRZENO"
 msgid "CONFIRMING…"
 msgstr "POTVRZUJI…"
 
-#: components/overlays/menu-overlay.tsx:579
+#: components/overlays/menu-overlay.tsx:584
 msgid "CONNECT TO THE INTERNET TO PLAY WITH FRIENDS"
 msgstr "PŘIPOJ SE K INTERNETU A HRAJ S PŘÁTELI"
 
@@ -1061,7 +1062,7 @@ msgstr "ZNALEC"
 msgid "CONTINUE"
 msgstr "POKRAČOVAT"
 
-#: app/(tabs)/index.tsx:2558
+#: app/(tabs)/index.tsx:2596
 msgid "Continue the tutorial"
 msgstr "Pokračovat v tutoriálu"
 
@@ -1073,7 +1074,7 @@ msgstr "OVLÁDÁNÍ"
 msgid "CREATE"
 msgstr "VYTVOŘIT"
 
-#: components/overlays/menu-overlay.tsx:543
+#: components/overlays/menu-overlay.tsx:548
 msgid "CREATE ROOM"
 msgstr "VYTVOŘIT HRU"
 
@@ -1098,7 +1099,7 @@ msgstr "12."
 msgid "DECEMBER"
 msgstr "prosince"
 
-#: components/overlays/menu-overlay.tsx:720
+#: components/overlays/menu-overlay.tsx:719
 msgid "DEV"
 msgstr "DEV"
 
@@ -1642,7 +1643,7 @@ msgid "How far can you go?"
 msgstr "Jak daleko to dotáhneš?"
 
 #: components/overlays/how-to-play-overlay.tsx:435
-#: components/overlays/menu-overlay.tsx:711
+#: components/overlays/menu-overlay.tsx:710
 msgid "HOW TO PLAY"
 msgstr "JAK HRÁT"
 
@@ -1728,7 +1729,7 @@ msgid "JANUARY"
 msgstr "ledna"
 
 #: components/overlays/join-room-overlay.tsx:75
-#: components/overlays/menu-overlay.tsx:562
+#: components/overlays/menu-overlay.tsx:567
 msgid "JOIN ROOM"
 msgstr "PŘIPOJIT SE"
 
@@ -2000,7 +2001,7 @@ msgstr "Pohni víc než jedním tlačítkem jediným švihnutím."
 msgid "MULTIPLAYER"
 msgstr "VÍCE HRÁČŮ"
 
-#: components/overlays/menu-overlay.tsx:646
+#: components/overlays/menu-overlay.tsx:651
 msgid "My best at Nine is {bestScore} — {board}. Think you can beat it?"
 msgstr "Moje maximum v Nine je {bestScore} — {board}. Myslíš, že to překonáš?"
 
@@ -2045,7 +2046,7 @@ msgstr "NICK"
 msgid "NIGHT SHIFT"
 msgstr "NOČNÍ SMĚNA"
 
-#: components/overlays/menu-overlay.tsx:647
+#: components/overlays/menu-overlay.tsx:652
 msgid "Nine buttons, one number to hit. Come take a run at it."
 msgstr "Devět tlačítek, jedno číslo k trefení. Pojď si to zkusit."
 
@@ -2480,7 +2481,7 @@ msgid "OPTIMAL PATH"
 msgstr "NEJLEPŠÍ CESTA"
 
 #: components/overlays/advanced-options-overlay.tsx:85
-#: components/overlays/menu-overlay.tsx:631
+#: components/overlays/menu-overlay.tsx:636
 #: components/overlays/paused-overlay.tsx:286
 msgid "OPTIONS"
 msgstr "NASTAVENÍ"
@@ -2577,7 +2578,7 @@ msgstr "HRÁT ZNOVU"
 msgid "Play five runs with friends and win none of them."
 msgstr "Zahraj si pět her s přáteli a ani jednu nevyhraj."
 
-#: components/overlays/menu-overlay.tsx:616
+#: components/overlays/menu-overlay.tsx:621
 msgid "PLAY GAME"
 msgstr "HRÁT"
 
@@ -2645,7 +2646,7 @@ msgstr "NÁHLED JAKO"
 msgid "private"
 msgstr "soukromých"
 
-#: components/overlays/menu-overlay.tsx:685
+#: components/overlays/menu-overlay.tsx:684
 msgid "PROFILE"
 msgstr "PROFIL"
 
@@ -2944,6 +2945,10 @@ msgstr "Podívej se na lepší cestu"
 msgid "SEND"
 msgstr "ODESLAT"
 
+#: components/overlays/share-modal.tsx:94
+msgid "SEND A LINK"
+msgstr "POSLAT ODKAZ"
+
 #: components/overlays/admin-messages.tsx:151
 msgid "SEND AGAIN"
 msgstr "ODESLAT ZNOVU"
@@ -3013,10 +3018,14 @@ msgstr "Sedm dní, jedno jméno. [A] držel týden od pondělí a už ho nepusti
 msgid "Seven seconds a target — the clock everyone races."
 msgstr "Sedm vteřin na cíl — stejný čas pro všechny."
 
-#: components/overlays/menu-overlay.tsx:661
+#: components/overlays/menu-overlay.tsx:660
 #: components/overlays/multiplayer-waiting.tsx:120
 msgid "SHARE"
 msgstr "SDÍLET"
+
+#: components/overlays/share-modal.tsx:52
+msgid "SHARE NINE"
+msgstr "SDÍLET NINE"
 
 #: components/overlays/show-more.tsx:36
 msgid "SHOW LESS"
@@ -3953,7 +3962,7 @@ msgstr "Vedeš o šířku jednoho řádku."
 msgid "You took the room and left them the door."
 msgstr "Bereš si celou místnost a soupeři necháváš dveře."
 
-#: components/overlays/menu-overlay.tsx:573
+#: components/overlays/menu-overlay.tsx:578
 #: components/overlays/offline-notice.tsx:17
 msgid "YOU'RE OFFLINE"
 msgstr "JSI OFFLINE"

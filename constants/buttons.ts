@@ -171,6 +171,11 @@ export type ButtonId =
   | 'challenge.dismiss'
   | 'challenge.board'
 
+  // ── Share, the dialog behind the intro's SHARE ──
+  // The system sheet, one press past the QR code. Read against `menu.board` — the press
+  // that opened the dialog — it says how many invites a code alone was enough for.
+  | 'share.system'
+
   // ── Dev and admin ──
   | 'dev.run'
   | 'dev.done'

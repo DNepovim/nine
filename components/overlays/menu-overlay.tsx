@@ -3,7 +3,7 @@ import { Trans, useLingui } from '@lingui/react/macro'
 import { LinearGradient } from 'expo-linear-gradient'
 import { isNonEmptyString, isOneOf } from 'narrowland'
 import { useEffect, useMemo, useState } from 'react'
-import { Platform, Share, Text, View } from 'react-native'
+import { Text, View } from 'react-native'
 import Animated, {
   Easing,
   useAnimatedStyle,
@@ -33,7 +33,7 @@ import { useViewport } from '@/hooks/use-viewport'
 import type { SessionCard } from '@/lib/challenge-session'
 import { playerMarks } from '@/lib/champions'
 import { cn } from '@/lib/cn'
-import { boardName, SHARE_URL, shouldBoast } from '@/lib/invite-message'
+import { boardName, shouldBoast } from '@/lib/invite-message'
 import type { Medal } from '@/lib/medals'
 import type { OpenSession } from '@/lib/session-board'
 import {
@@ -121,6 +121,7 @@ export function MenuOverlay({
   onCreateRoom,
   onOpenJoinRoom,
   onOpenChallenge,
+  onShare,
   onOpenDev,
   onOpenAdmin,
 }: {
@@ -196,6 +197,10 @@ export function MenuOverlay({
   // Pressed on the challenge card. The dialog behind it belongs to the screen above —
   // a ModalCard mounted in this panel would scrim the panel rather than the app.
   onOpenChallenge: (card: NonNullable<SessionCard<OpenSession>>) => void
+  // Pressed on SHARE, with the sentence the invite would carry — written here, where
+  // the board and the best are known. The dialog lives above, for the same reason the
+  // challenge one does.
+  onShare: (invite: string) => void
   onOpenDev: () => void
   onOpenAdmin: () => void
 }) {
@@ -645,13 +650,7 @@ export function MenuOverlay({
                   const invite = shouldBoast(gameMode, bestScore)
                     ? t`My best at Nine is ${bestScore} — ${board}. Think you can beat it?`
                     : t`Nine buttons, one number to hit. Come take a run at it.`
-                  // iOS takes the link as its own item, so the sheet can offer it to
-                  // AirDrop and Copy Link; Android ignores `url` and needs it inline.
-                  void Share.share(
-                    Platform.OS === 'ios'
-                      ? { message: invite, url: SHARE_URL }
-                      : { message: `${invite}\n\n${SHARE_URL}` },
-                  )
+                  onShare(invite)
                 }}
                 hitSlop={10}
               >

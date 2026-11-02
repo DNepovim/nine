@@ -61,6 +61,7 @@ import { NICKNAME_TITLE, NicknameModal } from '@/components/overlays/nickname-mo
 import { PausedOverlay } from '@/components/overlays/paused-overlay'
 import { RatingOverlay } from '@/components/overlays/rating-overlay'
 import { ReplayConsentOverlay } from '@/components/overlays/replay-consent-overlay'
+import { ShareModal } from '@/components/overlays/share-modal'
 import { StepUpOverlay } from '@/components/overlays/step-up-overlay'
 import { TutorialDoneModal } from '@/components/overlays/tutorial-done-modal'
 import { TutorialOfferModal } from '@/components/overlays/tutorial-offer-modal'
@@ -786,6 +787,8 @@ export default function GameScreen() {
   // than in `menu-overlay.tsx`: a `ModalCard` mounted inside the paging panel would
   // scrim the panel rather than the screen.
   const [challengeCard, setChallengeCard] = useState<ChallengeModalCard>()
+  // The invite SHARE on the intro would send, while its dialog is up.
+  const [shareInvite, setShareInvite] = useState<string>()
   // Which **session** the live run belongs to, or null for an ordinary run.
   //
   // Beside the run rather than on the machine's context. A session is not a rule — the
@@ -2860,6 +2863,16 @@ export default function GameScreen() {
               />
             )}
 
+            {/* ── The intro's SHARE: the address as a QR code, the system sheet behind it ── */}
+            {shareInvite !== undefined && (
+              <ShareModal
+                invite={shareInvite}
+                onDismiss={() => {
+                  setShareInvite(undefined)
+                }}
+              />
+            )}
+
             {/* ── A challenge, in full: what it asks, who leads, and the way in. After the
                 dev screen, which opens it too and has to stay under it. ── */}
             {challengeCard !== undefined && (
@@ -3108,6 +3121,7 @@ export default function GameScreen() {
                   setMenuOverlay('joinRoom')
                 }}
                 onOpenChallenge={setChallengeCard}
+                onShare={setShareInvite}
                 onOpenDev={() => {
                   setMenuOverlay('dev')
                 }}
