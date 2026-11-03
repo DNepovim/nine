@@ -13,7 +13,7 @@ import { ScoreColumns } from '@/components/overlays/score-columns'
 import { TabPanel } from '@/components/overlays/tab-panel'
 import { PrimaryButton } from '@/components/primary-button'
 import { TrackedPressable } from '@/components/tracked-pressable'
-import { DIM_INK, ON_STRONG_INK } from '@/constants/colors'
+import { DIM_INK, PRIMARY_INK } from '@/constants/colors'
 import { mono } from '@/constants/theme'
 import { TYPE } from '@/constants/typography'
 import { useSessionBoard } from '@/hooks/use-session-card'
@@ -281,7 +281,10 @@ export function ChallengeModal({
                   onStart(modeId, card.state === 'lab' ? null : card.session.id)
                 }}
                 label={<Trans>ACCEPT</Trans>}
-                icon={<Ionicons name="rocket-outline" size={14} color={ON_STRONG_INK} />}
+                // From black whatever the challenge's own pair starts on: BINARY's is its
+                // blue twice over, and this button still runs from black into that blue.
+                gradient={[PRIMARY_INK, gradientOf(modeId)[1]]}
+                icon={<Ionicons name="rocket-outline" size={14} color="#FFFFFF" />}
               />
             )}
 

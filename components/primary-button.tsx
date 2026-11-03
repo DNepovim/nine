@@ -1,3 +1,4 @@
+import { LinearGradient } from 'expo-linear-gradient'
 import type { ReactNode } from 'react'
 import type { PressableProps, StyleProp, ViewStyle } from 'react-native'
 import { Text } from 'react-native'
@@ -37,6 +38,7 @@ export function PrimaryButton({
   icon,
   variant = 'full',
   tone = 'strong',
+  gradient,
   disabled = false,
   hitSlop,
   className,
@@ -68,6 +70,12 @@ export function PrimaryButton({
   // exists to stop. Red is the app's refusal ink, which every error message on these
   // screens already wears.
   tone?: 'strong' | 'quiet' | 'danger'
+  // A `strong` button dressed in a mode's own colours rather than the app's fill, asked for
+  // by the challenge dialog: ACCEPT is that challenge's button, black running into its
+  // colour. The label goes white, because the far stop can be as light as GLIMPSE's yellow
+  // and the usual ink falls to about 2:1 there. Stops from the mode, never a colour chosen
+  // at the call site.
+  gradient?: readonly [string, string]
   disabled?: boolean
   // Asked for by the dev screen's RUN, back when it was `compact` and sat in a tight row
   // of challenge rows — small enough that the touch target wanted to be bigger than the
@@ -97,15 +105,28 @@ export function PrimaryButton({
         // an icon to a button that already looked like it had one.
         icon !== undefined && label !== undefined && 'flex-row gap-2 px-6',
         label === undefined && 'px-3.5',
+        gradient !== undefined && 'overflow-hidden',
         disabled && 'opacity-40',
         className,
       )}
       style={style}
     >
+      {/* Absolute, so the label and the icon keep the button's own padding and row. */}
+      {gradient !== undefined && (
+        <LinearGradient
+          colors={[...gradient]}
+          start={{ x: 0, y: 0.5 }}
+          end={{ x: 1, y: 0.5 }}
+          className="absolute inset-0"
+        />
+      )}
       {label !== undefined && (
         <Text
           selectable={false}
-          className={cn(compact ? TYPE.buttonSm : TYPE.button, TONE[tone].ink)}
+          className={cn(
+            compact ? TYPE.buttonSm : TYPE.button,
+            gradient === undefined ? TONE[tone].ink : 'text-white',
+          )}
         >
           {label}
         </Text>
