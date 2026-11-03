@@ -18,12 +18,13 @@ export type AdminMessage = {
   id: string
   // Who wrote it, for the one thing the screen needs it for: a nickname goes through
   // `GradientName`, which colours it by that player's own lifetime averages and is fed by
-  // id. Null is a message whose author has removed their profile — the same state as a
-  // null nickname, and the reason both are nullable rather than one of them.
+  // id. Null only if the profile row was deleted by hand in the database — the app has no
+  // way to remove one, but `feedback.user_id` is `on delete set null`, so the row would
+  // outlive it.
   authorId: string | null
-  // Null is a message whose author has since removed their profile. The row outlives the
-  // player deliberately — see the `on delete set null` on `feedback.user_id` — so this is
-  // a real state rather than a missing join.
+  // Null is almost always a player who never picked one: every player gets an anonymous
+  // profile on first launch, and naming it is optional. Not a removed profile — that is a
+  // null `authorId`.
   nickname: string | null
   message: string
   mode: string

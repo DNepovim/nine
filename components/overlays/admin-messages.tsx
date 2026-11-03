@@ -252,7 +252,11 @@ export function AdminMessages({
         <View className="flex-row items-center gap-1.5">
           {message.nickname === null ? (
             <Text selectable={false} className={cn(TYPE.prose, 'shrink text-dim')}>
-              <Trans>(profile removed)</Trans>
+              {message.authorId === null ? (
+                <Trans>(profile removed)</Trans>
+              ) : (
+                <Trans>(no nickname)</Trans>
+              )}
             </Text>
           ) : (
             <GradientName
