@@ -4,6 +4,7 @@ import { Gesture, GestureDetector } from 'react-native-gesture-handler'
 import { useSharedValue } from 'react-native-reanimated'
 import { scheduleOnRN } from 'react-native-worklets'
 
+import { Arrival, DIAL_ORDER } from '@/components/game/arrival'
 import { DialAxes } from '@/components/game/dial-axes'
 import { DialButton } from '@/components/game/dial-button'
 import { DialFlames, useBurn } from '@/components/game/dial-flames'
@@ -357,35 +358,42 @@ export function Dial({
             className="flex-row flex-wrap"
           >
             {cellsOf(dial).map((index) => (
-              <DialButton
+              // The keys come in as a wave down the diagonals, on the game screen's
+              // entrance — see components/game/arrival.tsx.
+              <Arrival
                 key={index}
-                index={index}
-                value={values[index] ?? 0}
-                size={metrics.button}
-                weight={weightAt(dial, index)}
-                digits={dial.digits}
-                orientation={dial.orientation}
-                showSum={showSum}
-                trainee={trainee}
-                bigHints={bigHints}
-                corners={corners}
-                control={live[index] ?? 'full'}
-                hinted={liveKey === index}
-                heat={flame === null ? null : burn.heat}
-                scrambles={dial.scramble ? hitSeq : 0}
-                dark={dial.blackout && opened}
-                peakFrom={peakFrom}
-                peakTo={peakTo}
-                commands={commands}
-                pressed={pressed}
-                inFlight={inFlight}
-                onDelta={(delta, sweep) => {
-                  onDelta(index, delta, sweep)
-                }}
-                onSet={(value, sweep) => {
-                  onSet(index, value, sweep)
-                }}
-              />
+                order={DIAL_ORDER + Math.floor(index / dial.cols) + (index % dial.cols)}
+                from="below"
+              >
+                <DialButton
+                  index={index}
+                  value={values[index] ?? 0}
+                  size={metrics.button}
+                  weight={weightAt(dial, index)}
+                  digits={dial.digits}
+                  orientation={dial.orientation}
+                  showSum={showSum}
+                  trainee={trainee}
+                  bigHints={bigHints}
+                  corners={corners}
+                  control={live[index] ?? 'full'}
+                  hinted={liveKey === index}
+                  heat={flame === null ? null : burn.heat}
+                  scrambles={dial.scramble ? hitSeq : 0}
+                  dark={dial.blackout && opened}
+                  peakFrom={peakFrom}
+                  peakTo={peakTo}
+                  commands={commands}
+                  pressed={pressed}
+                  inFlight={inFlight}
+                  onDelta={(delta, sweep) => {
+                    onDelta(index, delta, sweep)
+                  }}
+                  onSet={(value, sweep) => {
+                    onSet(index, value, sweep)
+                  }}
+                />
+              </Arrival>
             ))}
           </View>
         </GestureDetector>

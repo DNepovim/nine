@@ -13,6 +13,7 @@ import DSEG7Font from '@/assets/fonts/DSEG7Classic-Bold.ttf'
 import { FeedbackBookmark } from '@/components/feedback-bookmark'
 import { AnnouncementEffect } from '@/components/game/announcement-effect'
 import { ArcadeGame } from '@/components/game/arcade-game'
+import { Arrival, ArrivalStage } from '@/components/game/arrival'
 import { BestScoresLine, type SessionBests } from '@/components/game/best-scores-line'
 import { Confetti } from '@/components/game/confetti'
 import { Dial } from '@/components/game/dial'
@@ -2094,75 +2095,80 @@ export default function GameScreen() {
             <SchemeProvider kind={opening.scheme}>
               {/* What the opening left behind, under everything the run draws. */}
               {opening.remains !== null && <OpeningRemains kind={opening.remains} />}
-              <Screen>
-                {/* Row 0 — board bests, a hairline above the top bar. In every mode,
+              {/* Each time a run leaves the intro, the screen comes in a piece at a time
+              — see components/game/arrival.tsx. */}
+              <ArrivalStage arrived={!isMenu}>
+                <Screen>
+                  {/* Row 0 — board bests, a hairline above the top bar. In every mode,
               Trainee included: it has no board to report, and reserves the height
               instead, so that the dial below is the same size in all of them. */}
-                <BestScoresLine
-                  session={sessionBestsOf(
-                    runSession,
-                    runSessionClosesAt,
-                    runSessionBoard,
-                    rules.scoring.measure,
-                    userId,
-                    previousWinner,
-                  )}
-                  onWindowShut={handleWindowShut}
-                  inRun={inRun}
-                  mode={mode}
-                  announcement={announcement}
-                  onOpenAchievement={(id) => {
-                    pauseRun('achievement')
-                    setAskedAchievement(id)
-                  }}
-                  onPause={() => {
-                    pauseRun('best_scores')
-                  }}
-                  viewerId={userId}
-                  score={state.context.score}
-                  yourBest={bestOn(stats, mode, difficulty).score}
-                  loaded={board.loaded}
-                  todayIsMine={board.today.recordIsMine}
-                  weekIsMine={board.week.recordIsMine}
-                  everIsMine={board.forever.recordIsMine}
-                  todayHolder={board.today.recordHolder}
-                  weekHolder={board.week.recordHolder}
-                  everHolder={board.forever.recordHolder}
-                  today={bestToday}
-                  week={bestWeek}
-                  ever={bestEver}
-                />
-                {/* A step up in the stack, which only ever matters during the tutorial: the
+                  <Arrival order={0} from="above">
+                    <BestScoresLine
+                      session={sessionBestsOf(
+                        runSession,
+                        runSessionClosesAt,
+                        runSessionBoard,
+                        rules.scoring.measure,
+                        userId,
+                        previousWinner,
+                      )}
+                      onWindowShut={handleWindowShut}
+                      inRun={inRun}
+                      mode={mode}
+                      announcement={announcement}
+                      onOpenAchievement={(id) => {
+                        pauseRun('achievement')
+                        setAskedAchievement(id)
+                      }}
+                      onPause={() => {
+                        pauseRun('best_scores')
+                      }}
+                      viewerId={userId}
+                      score={state.context.score}
+                      yourBest={bestOn(stats, mode, difficulty).score}
+                      loaded={board.loaded}
+                      todayIsMine={board.today.recordIsMine}
+                      weekIsMine={board.week.recordIsMine}
+                      everIsMine={board.forever.recordIsMine}
+                      todayHolder={board.today.recordHolder}
+                      weekHolder={board.week.recordHolder}
+                      everHolder={board.forever.recordHolder}
+                      today={bestToday}
+                      week={bestWeek}
+                      ever={bestEver}
+                    />
+                  </Arrival>
+                  {/* A step up in the stack, which only ever matters during the tutorial: the
                   card's tap-through is the last child of this screen and covers everything
                   under this band, so without the lift MENU would be unreachable for as
                   long as a card was up. Harmless everywhere else — nothing else here
                   overlaps the bar. */}
-                <View className="mb-3" style={{ zIndex: 1 }}>
-                  {/* Row 1 — the same bar every run is played under. NINE is tinted by
+                  <View className="mb-3" style={{ zIndex: 1 }}>
+                    {/* Row 1 — the same bar every run is played under. NINE is tinted by
                     the rung here; the pause button shows only while a run is actually
                     going, since the screen it opens is a full overlay that covers this
                     slot rather than needing a button of its own on top. */}
-                  <View className="mb-1">
-                    <RunTopBar
-                      accent={runAccent}
-                      title={t(runLabel(mode, submode))}
-                      subtitle={
-                        runSubtitle === null ? null : t(runSubtitle).toLowerCase()
-                      }
-                      wordmark={wordmarkFor(mode, difficulty)}
-                      onPause={
-                        isPlaying
-                          ? () => {
-                              pauseRun('button')
-                            }
-                          : null
-                      }
-                    />
-                  </View>
+                    <View className="mb-1">
+                      <RunTopBar
+                        accent={runAccent}
+                        title={t(runLabel(mode, submode))}
+                        subtitle={
+                          runSubtitle === null ? null : t(runSubtitle).toLowerCase()
+                        }
+                        wordmark={wordmarkFor(mode, difficulty)}
+                        onPause={
+                          isPlaying
+                            ? () => {
+                                pauseRun('button')
+                              }
+                            : null
+                        }
+                      />
+                    </View>
 
-                  {/* Row 2 — hearts · center stat or the lesson's steps · score cluster */}
-                  <View className="mt-1.5 flex-row items-center">
-                    {/* Hearts — one per life the mode actually gives, and a mode that
+                    {/* Row 2 — hearts · center stat or the lesson's steps · score cluster */}
+                    <View className="mt-1.5 flex-row items-center">
+                      {/* Hearts — one per life the mode actually gives, and a mode that
                     spends none shows none.
 
                     **As many as the mode gives, not three.** This drew a fixed `[0, 1, 2]`
@@ -2177,28 +2183,36 @@ export default function GameScreen() {
                     Drawing the real count fixes it at the source: the extra heart is
                     unmounted rather than emptied, and an unmount animates nothing. Losing
                     a life mid-run still flips a mounted heart and still plays. */}
-                    <View className="relative flex-1 flex-row gap-1">
-                      {rules.lives.count !== Number.POSITIVE_INFINITY &&
-                        Array.from({ length: rules.lives.count }, (_, i) => (
-                          <HeartIcon key={i} filled={i < lives} emptyColor={'#FDFCFA'} />
-                        ))}
-                      {/* Says why, the moment a hit rather than an expiry is what took the
+                      <Arrival
+                        order={4}
+                        from="above"
+                        className="relative flex-1 flex-row gap-1"
+                      >
+                        {rules.lives.count !== Number.POSITIVE_INFINITY &&
+                          Array.from({ length: rules.lives.count }, (_, i) => (
+                            <HeartIcon
+                              key={i}
+                              filled={i < lives}
+                              emptyColor={'#FDFCFA'}
+                            />
+                          ))}
+                        {/* Says why, the moment a hit rather than an expiry is what took the
                       heart — Accuracy's wasteful-hit rule is invisible otherwise.
                       Shares the points floats' lifecycle: same `floats` list, same
                       removal, just a second element for the rare entry that costLife. */}
-                      {floats
-                        .filter((f) => f.costLife)
-                        .map((f) => (
-                          <FloatingLifeLoss
-                            key={f.id}
-                            onDone={() => {
-                              removeFloat(f.id)
-                            }}
-                          />
-                        ))}
-                    </View>
+                        {floats
+                          .filter((f) => f.costLife)
+                          .map((f) => (
+                            <FloatingLifeLoss
+                              key={f.id}
+                              onDone={() => {
+                                removeFloat(f.id)
+                              }}
+                            />
+                          ))}
+                      </Arrival>
 
-                    {/* Where the player is in the lesson, in the slot a scored run keeps its
+                      {/* Where the player is in the lesson, in the slot a scored run keeps its
                       score bar in — which a tutorial draws nothing of: no hearts, since its
                       lives never run out, no accuracy, and no score. So the row is empty in
                       a lesson, and this is the one place on the screen that both belongs to
@@ -2213,19 +2227,20 @@ export default function GameScreen() {
                       tap-through takes the whole viewport under this band, so a press here
                       is a press meant for the card. `onTapThrough` is non-null exactly at
                       those steps. */}
-                    {tutorial && (
-                      <TutorialStepper
-                        current={hits}
-                        furthest={furthestStep}
-                        live={lesson.onTapThrough === null}
-                        onGo={(board) => {
-                          send({ type: 'REWIND', board, now: Date.now() })
-                          setRewindSeq((seq) => seq + 1)
-                        }}
-                      />
-                    )}
+                      <Arrival order={5} from="above">
+                        {tutorial && (
+                          <TutorialStepper
+                            current={hits}
+                            furthest={furthestStep}
+                            live={lesson.onTapThrough === null}
+                            onGo={(board) => {
+                              send({ type: 'REWIND', board, now: Date.now() })
+                              setRewindSeq((seq) => seq + 1)
+                            }}
+                          />
+                        )}
 
-                    {/* Center: the figure the run is judged by.
+                        {/* Center: the figure the run is judged by.
                       
                       A race is judged by its clock, so that is what stands here — the
                       same number the standings will place it on, running. A hits run is
@@ -2233,85 +2248,91 @@ export default function GameScreen() {
                       average accuracy could only ever read 100%, a slip being the end of
                       it. Every other scored run is judged by a factor and shows the
                       average of it. Nothing stands here on a mode with neither. */}
-                    {rules.scoring.measure === 'time' && (
-                      <RunStopwatch
-                        elapsedMs={state.context.elapsedMs}
-                        playingSince={state.context.playingSince}
-                        digitFont={digitFont}
-                      />
-                    )}
-
-                    {rules.scoring.measure === 'hits' && (
-                      <DigitStrip text={String(hits)} direction={1} />
-                    )}
-
-                    {rules.scoring.measure === 'score' && isOneOf(mode, SCORED_MODES) && (
-                      <View style={{ alignItems: 'center' }}>
-                        <DigitStrip
-                          text={`${avgStat}%`}
-                          direction={avgDirection.current}
-                        />
-                        {floatStats.map((f) => (
-                          <FloatingStat
-                            key={f.id}
-                            value={f.value}
-                            progress={f.progress}
-                            onDone={() => {
-                              removeFloatStat(f.id)
-                            }}
+                        {rules.scoring.measure === 'time' && (
+                          <RunStopwatch
+                            elapsedMs={state.context.elapsedMs}
+                            playingSince={state.context.playingSince}
+                            digitFont={digitFont}
                           />
-                        ))}
-                      </View>
-                    )}
+                        )}
 
-                    {/* Score cluster: digital readout + streak multiplier badge.
+                        {rules.scoring.measure === 'hits' && (
+                          <DigitStrip text={String(hits)} direction={1} />
+                        )}
+
+                        {rules.scoring.measure === 'score' &&
+                          isOneOf(mode, SCORED_MODES) && (
+                            <View style={{ alignItems: 'center' }}>
+                              <DigitStrip
+                                text={`${avgStat}%`}
+                                direction={avgDirection.current}
+                              />
+                              {floatStats.map((f) => (
+                                <FloatingStat
+                                  key={f.id}
+                                  value={f.value}
+                                  progress={f.progress}
+                                  onDone={() => {
+                                    removeFloatStat(f.id)
+                                  }}
+                                />
+                              ))}
+                            </View>
+                          )}
+                      </Arrival>
+
+                      {/* Score cluster: digital readout + streak multiplier badge.
                   Hidden in a mode that keeps no board — practice is not a scored run. */}
-                    <View className="flex-1 relative items-end">
-                      {rules.capabilities.scored && (
-                        <>
-                          <View className="flex-row items-baseline gap-1.5">
-                            <Text
-                              selectable={false}
-                              className={cn(READOUT.best, 'text-score')}
-                              style={{ fontFamily: digitFont }}
-                            >
-                              {displayScore}
-                            </Text>
-                            {streak > 0 && (
+                      <Arrival
+                        order={6}
+                        from="above"
+                        className="flex-1 relative items-end"
+                      >
+                        {rules.capabilities.scored && (
+                          <>
+                            <View className="flex-row items-baseline gap-1.5">
                               <Text
                                 selectable={false}
-                                className={TYPE.buttonSm}
-                                style={{ color: multiplierColor(currentMultiplier) }}
+                                className={cn(READOUT.best, 'text-score')}
+                                style={{ fontFamily: digitFont }}
                               >
-                                {`×${currentMultiplier}`}
+                                {displayScore}
                               </Text>
-                            )}
-                          </View>
-                          {floats.map((f) => (
-                            <FloatingPoints
-                              key={f.id}
-                              points={f.points}
-                              progress={f.progress}
-                              multiplier={f.multiplier}
-                              onDone={() => {
-                                removeFloat(f.id)
-                              }}
-                            />
-                          ))}
-                        </>
-                      )}
+                              {streak > 0 && (
+                                <Text
+                                  selectable={false}
+                                  className={TYPE.buttonSm}
+                                  style={{ color: multiplierColor(currentMultiplier) }}
+                                >
+                                  {`×${currentMultiplier}`}
+                                </Text>
+                              )}
+                            </View>
+                            {floats.map((f) => (
+                              <FloatingPoints
+                                key={f.id}
+                                points={f.points}
+                                progress={f.progress}
+                                multiplier={f.multiplier}
+                                onDone={() => {
+                                  removeFloat(f.id)
+                                }}
+                              />
+                            ))}
+                          </>
+                        )}
+                      </Arrival>
                     </View>
                   </View>
-                </View>
 
-                {/* The board and the sum row in one box, because a strike's shot crosses
+                  {/* The board and the sum row in one box, because a strike's shot crosses
                 between them: the layer at the end of it is absolute over both, and this
                 is the only space where the muzzle and the target it is aimed at are
                 measured from the same origin. */}
-                <View className="flex-1">
-                  {/* Target numbers */}
                   <View className="flex-1">
-                    {/* Trainee's readout — how many targets they have cleared and how the press
+                    {/* Target numbers */}
+                    <View className="flex-1">
+                      {/* Trainee's readout — how many targets they have cleared and how the press
                   they just made actually went, which is what a learner wants and a score
                   cannot tell them.
 
@@ -2326,158 +2347,165 @@ export default function GameScreen() {
                   that has barely started, and the line under them coaches a press the
                   player has not been told how to make yet — the teaching there is the
                   tooltips still to come, and this would be talking over them. */}
-                    {rules.capabilities.coached && (
-                      <TraineeStats
-                        hits={hits}
-                        batch={hitBatch}
-                        praise={celebration.message ?? coach.line}
-                        showStats={showStats}
-                        showRoute={showRoute}
-                        route={coach.route}
-                        routeStart={coach.routeStart}
-                        routeTarget={coach.routeTarget}
-                      />
-                    )}
+                      {rules.capabilities.coached && (
+                        <TraineeStats
+                          hits={hits}
+                          batch={hitBatch}
+                          praise={celebration.message ?? coach.line}
+                          showStats={showStats}
+                          showRoute={showRoute}
+                          route={coach.route}
+                          routeStart={coach.routeStart}
+                          routeTarget={coach.routeTarget}
+                        />
+                      )}
 
-                    {/* The canvas the targets actually spawn into. It carries the measurement,
+                      {/* The canvas the targets actually spawn into. It carries the measurement,
                   so its bounds are whatever is left after the readout above. */}
-                    <GestureDetector gesture={targetsShortcuts}>
-                      <View
-                        ref={targetsAreaRef}
-                        className="flex-1"
-                        onLayout={(event) => {
-                          onContainerLayout(event)
-                          noteBoardSize(event)
-                        }}
-                      >
-                        {boardTargets.map((target) => (
-                          <TargetCard
-                            maxValue={dial.maxSum}
-                            key={target.id}
-                            target={target}
-                            // The clock this target spawned with, so a ring never retargets
-                            // mid-flight when Speed's timeout tightens.
-                            duration={target.duration}
-                            par={
-                              rules.capabilities.coached && showPar
-                                ? computePar(dial, grid, target.value)
-                                : undefined
-                            }
-                            dying={isGameOver}
-                            frozen={isPaused}
-                            // Nine cards have to stand on this board at once in a drilled
-                            // run, and nine at `PIE_SIZE` do not fit a phone — so each is
-                            // given its own size, and they differ from one another on
-                            // purpose. Undefined everywhere else, which is the size every
-                            // other mode draws.
-                            size={drillCards?.[target.seq]?.size}
-                            // A drilled board keeps its taken cards. The nine are a picture
-                            // the player is learning, and one vanishing on every hit would
-                            // leave nothing to have learnt by the ninth.
-                            spent={drill !== null}
-                            // And its own colour, out of this challenge's own family. A
-                            // fixed nine is learnt as a picture, and a colour is read before
-                            // a number is — where the band tint every other mode wears says
-                            // which hundred a target is in, which on a drill the player
-                            // already knows.
-                            color={drillTints?.[target.seq]}
-                            // Whether this target has a clock to run down at all. Read off
-                            // the rules rather than off the submode: the tutorial is the
-                            // one that patches `countsDown` off today, and a drilled run
-                            // does the same for a reason of its own — one clock per run,
-                            // and here it is the stopwatch.
-                            clocked={rules.clock.countsDown}
-                            // How long a number shows before it fades — the **glimpse**,
-                            // null for a number that never hides. Read off the rules, so the
-                            // card never learns which mode is asking.
-                            glimpse={rules.spawn.glimpse}
-                            driftStep={rules.spawn.drift}
-                            onExpire={() => {
-                              send({
-                                type: 'TARGET_EXPIRED',
-                                id: target.id,
-                                now: Date.now(),
-                              })
-                            }}
-                            onExitComplete={() => {
-                              removeDisplayed(target.id)
-                            }}
-                          />
-                        ))}
-                        {/* The lesson's two pointing cards. The first goes beside the target,
+                      <GestureDetector gesture={targetsShortcuts}>
+                        <View
+                          ref={targetsAreaRef}
+                          className="flex-1"
+                          onLayout={(event) => {
+                            onContainerLayout(event)
+                            noteBoardSize(event)
+                          }}
+                        >
+                          {boardTargets.map((target) => (
+                            <TargetCard
+                              maxValue={dial.maxSum}
+                              key={target.id}
+                              target={target}
+                              // The clock this target spawned with, so a ring never retargets
+                              // mid-flight when Speed's timeout tightens.
+                              duration={target.duration}
+                              par={
+                                rules.capabilities.coached && showPar
+                                  ? computePar(dial, grid, target.value)
+                                  : undefined
+                              }
+                              dying={isGameOver}
+                              frozen={isPaused}
+                              // Nine cards have to stand on this board at once in a drilled
+                              // run, and nine at `PIE_SIZE` do not fit a phone — so each is
+                              // given its own size, and they differ from one another on
+                              // purpose. Undefined everywhere else, which is the size every
+                              // other mode draws.
+                              size={drillCards?.[target.seq]?.size}
+                              // A drilled board keeps its taken cards. The nine are a picture
+                              // the player is learning, and one vanishing on every hit would
+                              // leave nothing to have learnt by the ninth.
+                              spent={drill !== null}
+                              // And its own colour, out of this challenge's own family. A
+                              // fixed nine is learnt as a picture, and a colour is read before
+                              // a number is — where the band tint every other mode wears says
+                              // which hundred a target is in, which on a drill the player
+                              // already knows.
+                              color={drillTints?.[target.seq]}
+                              // Whether this target has a clock to run down at all. Read off
+                              // the rules rather than off the submode: the tutorial is the
+                              // one that patches `countsDown` off today, and a drilled run
+                              // does the same for a reason of its own — one clock per run,
+                              // and here it is the stopwatch.
+                              clocked={rules.clock.countsDown}
+                              // How long a number shows before it fades — the **glimpse**,
+                              // null for a number that never hides. Read off the rules, so the
+                              // card never learns which mode is asking.
+                              glimpse={rules.spawn.glimpse}
+                              driftStep={rules.spawn.drift}
+                              onExpire={() => {
+                                send({
+                                  type: 'TARGET_EXPIRED',
+                                  id: target.id,
+                                  now: Date.now(),
+                                })
+                              }}
+                              onExitComplete={() => {
+                                removeDisplayed(target.id)
+                              }}
+                            />
+                          ))}
+                          {/* The lesson's two pointing cards. The first goes beside the target,
                     above or below it as the canvas allows — see lib/tutorial-tip.ts. The
                     second goes at the foot of the canvas with its beak turned down at the
                     sum row directly beneath, which is the one thing on the screen whose
                     place never moves. */}
-                        {/* Placed on the card itself rather than on a wrapper around it: the
+                          {/* Placed on the card itself rather than on a wrapper around it: the
                     card is the view being mounted and unmounted, so it has to be the one
                     carrying the position its exit animation plays out from. */}
-                        {lesson.voice === 'targetTip' &&
-                          lesson.line !== null &&
-                          tip !== null && (
-                            <TutorialCard
-                              text={t(lesson.line)}
-                              beak={tip.beak}
-                              anchorX={tip.beakAt}
-                              style={{
-                                position: 'absolute',
-                                left: 0,
-                                right: 0,
-                                top: tip.top,
-                              }}
-                            />
-                          )}
-                        {/* The lesson's first word, set in the middle of the board with
+                          {lesson.voice === 'targetTip' &&
+                            lesson.line !== null &&
+                            tip !== null && (
+                              <TutorialCard
+                                text={t(lesson.line)}
+                                beak={tip.beak}
+                                anchorX={tip.beakAt}
+                                style={{
+                                  position: 'absolute',
+                                  left: 0,
+                                  right: 0,
+                                  top: tip.top,
+                                }}
+                              />
+                            )}
+                          {/* The lesson's first word, set in the middle of the board with
                     nothing else on it: what this run is, and that none of it counts. No
                     card around it, because a card is something said about something else
                     on the screen and there is nothing else on the screen yet — see
                     components/game/tutorial-intro.tsx. */}
-                        {lesson.voice === 'opening' && lesson.line !== null && (
-                          <TutorialIntro text={t(lesson.line)} />
-                        )}
-                        {lesson.voice === 'sumTip' && lesson.line !== null && (
-                          <TutorialCard
-                            text={t(lesson.line)}
-                            beak="down"
-                            style={{ position: 'absolute', left: 0, right: 0, bottom: 8 }}
-                          />
-                        )}
-                      </View>
-                    </GestureDetector>
-                  </View>
+                          {lesson.voice === 'opening' && lesson.line !== null && (
+                            <TutorialIntro text={t(lesson.line)} />
+                          )}
+                          {lesson.voice === 'sumTip' && lesson.line !== null && (
+                            <TutorialCard
+                              text={t(lesson.line)}
+                              beak="down"
+                              style={{
+                                position: 'absolute',
+                                left: 0,
+                                right: 0,
+                                bottom: 8,
+                              }}
+                            />
+                          )}
+                        </View>
+                      </GestureDetector>
+                    </View>
 
-                  {/* ── Score above dial ── */}
-                  {/* A reserved slot rather than whatever the digits need, so the dial sits at
+                    {/* ── Score above dial ── */}
+                    {/* A reserved slot rather than whatever the digits need, so the dial sits at
                   the same height whether the sum is 0 or 324 — and the same height a lesson
                   puts it at, since DialStage reserves this too. */}
-                  <View
-                    className="items-center justify-center"
-                    style={{ height: SUM_ROW_HEIGHT }}
-                    onLayout={noteSumRowRect}
-                  >
-                    {/* Dimmed under the lesson's first word, which is the only thing on the
+                    <View
+                      className="items-center justify-center"
+                      style={{ height: SUM_ROW_HEIGHT }}
+                      onLayout={noteSumRowRect}
+                    >
+                      {/* Dimmed under the lesson's first word, which is the only thing on the
                     board while it is up — see components/game/sum-hush.tsx. */}
-                    <SumHush hushed={lesson.voice === 'opening'}>
-                      {/* The sum's half of a hit — it swells as the target's number swells
+                      <Arrival order={7} from="below">
+                        <SumHush hushed={lesson.voice === 'opening'}>
+                          {/* The sum's half of a hit — it swells as the target's number swells
                       out of the ring collapsing above. */}
-                      <HitSync seq={hitBatch.seq}>
-                        <View className="flex-row">
-                          {String(shownSum)
-                            .split('')
-                            .map((digit, i, arr) => (
-                              <ScoreDigit
-                                key={arr.length - 1 - i}
-                                digit={digit}
-                                direction={direction}
-                                progress={valueProgress(shownSum, dial.maxSum)}
-                              />
-                            ))}
-                        </View>
-                      </HitSync>
-                    </SumHush>
-                  </View>
+                          <HitSync seq={hitBatch.seq}>
+                            <View className="flex-row">
+                              {String(shownSum)
+                                .split('')
+                                .map((digit, i, arr) => (
+                                  <ScoreDigit
+                                    key={arr.length - 1 - i}
+                                    digit={digit}
+                                    direction={direction}
+                                    progress={valueProgress(shownSum, dial.maxSum)}
+                                  />
+                                ))}
+                            </View>
+                          </HitSync>
+                        </SumHush>
+                      </Arrival>
+                    </View>
 
-                  {/* The band the tutorial talks in: between the sum and the dial, held open
+                    {/* The band the tutorial talks in: between the sum and the dial, held open
                   for the whole run rather than appearing with the words.
 
                   It was above the board once, in the slot Trainee's readout takes. Down
@@ -2497,105 +2525,108 @@ export default function GameScreen() {
                   up out of the dial's box into this band — see components/game/dial-axes.tsx.
                   Reserved rather than shared, so a banner and a `1×` are never in the same
                   place. */}
-                  {tutorial && (
-                    <View
-                      className="justify-center px-1"
-                      style={{
-                        height: TUTORIAL_BANNER_HEIGHT + AXIS_STRIP,
-                        paddingBottom: AXIS_STRIP,
-                      }}
-                    >
-                      {lesson.voice === 'banner' && lesson.line !== null && (
-                        <TutorialCard text={t(lesson.line)} beak="none" />
-                      )}
-                    </View>
-                  )}
-
-                  {/* ── Strike shots ── */}
-                  <View
-                    pointerEvents="none"
-                    className="absolute inset-0 overflow-visible"
-                  >
-                    {shots.map((shot) => (
-                      <StrikeShot
-                        key={shot.id}
-                        kind={shot.kind}
-                        fromX={shot.from.x}
-                        fromY={shot.from.y}
-                        toX={shot.to.x}
-                        toY={shot.to.y}
-                        radius={shot.radius}
-                        sumDigits={shot.sumDigits}
-                        rounds={shot.rounds}
-                        onDone={() => {
-                          removeShot(shot.id)
+                    {tutorial && (
+                      <View
+                        className="justify-center px-1"
+                        style={{
+                          height: TUTORIAL_BANNER_HEIGHT + AXIS_STRIP,
+                          paddingBottom: AXIS_STRIP,
                         }}
-                      />
-                    ))}
-                  </View>
-                </View>
+                      >
+                        {lesson.voice === 'banner' && lesson.line !== null && (
+                          <TutorialCard text={t(lesson.line)} beak="none" />
+                        )}
+                      </View>
+                    )}
 
-                {/* ── Dial pad ── */}
-                {/* Its own content's height, not a share of what is left. Splitting the
+                    {/* ── Strike shots ── */}
+                    <View
+                      pointerEvents="none"
+                      className="absolute inset-0 overflow-visible"
+                    >
+                      {shots.map((shot) => (
+                        <StrikeShot
+                          key={shot.id}
+                          kind={shot.kind}
+                          fromX={shot.from.x}
+                          fromY={shot.from.y}
+                          toX={shot.to.x}
+                          toY={shot.to.y}
+                          radius={shot.radius}
+                          sumDigits={shot.sumDigits}
+                          rounds={shot.rounds}
+                          onDone={() => {
+                            removeShot(shot.id)
+                          }}
+                        />
+                      ))}
+                    </View>
+                  </View>
+
+                  {/* ── Dial pad ── */}
+                  {/* Its own content's height, not a share of what is left. Splitting the
                 remainder with the targets area is what cropped the bottom row on a short
                 screen: the dial's size comes from the width now, so half the leftover
                 height is not a number it can be asked to fit inside. The targets area
                 above takes the slack instead. */}
-                <View>
-                  <Dial
-                    dial={dial}
-                    values={grid.flat()}
-                    opened={opening.opened}
-                    showSum={showSum && !tutorial}
-                    trainee={rules.capabilities.keyHints}
-                    // The tutorial prints the weight and nothing else, whatever the player
-                    // has since chosen for practice: it is the one number a key cannot be
-                    // worked out without, and every other corner is a lesson that has not
-                    // been given yet.
-                    corners={tutorial ? DEFAULT_DIAL_CORNERS : corners}
-                    // What each key will take, and which one is being asked for. `full`
-                    // everywhere in every run but a guided tutorial route.
-                    controls={dialControls}
-                    liveKey={lesson.liveKey}
-                    // The lesson's own dial: its corner numbers drawn large, because in a
-                    // lesson they are the thing being taught rather than a reference beside a
-                    // game; the row and column multipliers up once the lesson has explained
-                    // them; and whichever gesture it is currently asking for, mimed over the
-                    // keys until the player makes it.
-                    bigHints={tutorial}
-                    axes={lesson.axes}
-                    hand={lesson.hand}
-                    // Both halves of the answer: the player's own setting, and the lesson's
-                    // — which takes the drag away until it has taught it, and says yes in
-                    // every run that is not a live tutorial.
-                    drag={drag && lesson.drag}
-                    flame={flame}
-                    // On a dial that scrambles, every hit is a scramble — see `Dial`.
-                    hitSeq={hitBatch.seq}
-                    peakFrom={darkGradientOf(mode)[0]}
-                    peakTo={darkGradientOf(mode)[1]}
-                    onDelta={(index, delta, sweep) => {
-                      coach.notePress(index, delta)
-                      lesson.notePress(delta)
-                      sendDialed({ type: 'PRESS', index, delta, now: Date.now() }, sweep)
-                    }}
-                    onSet={(index, cellValue, sweep) => {
-                      coach.noteSet(index, cellValue)
-                      lesson.noteSet(cellValue)
-                      sendDialed(
-                        { type: 'SET_CELL', index, value: cellValue, now: Date.now() },
-                        sweep,
-                      )
-                    }}
-                    onSweep={() => {
-                      lesson.noteSweep()
-                      setSweptIn((held) => ({ ...held, gesture: state.context.runSeq }))
-                    }}
-                  />
-                </View>
+                  <View>
+                    <Dial
+                      dial={dial}
+                      values={grid.flat()}
+                      opened={opening.opened}
+                      showSum={showSum && !tutorial}
+                      trainee={rules.capabilities.keyHints}
+                      // The tutorial prints the weight and nothing else, whatever the player
+                      // has since chosen for practice: it is the one number a key cannot be
+                      // worked out without, and every other corner is a lesson that has not
+                      // been given yet.
+                      corners={tutorial ? DEFAULT_DIAL_CORNERS : corners}
+                      // What each key will take, and which one is being asked for. `full`
+                      // everywhere in every run but a guided tutorial route.
+                      controls={dialControls}
+                      liveKey={lesson.liveKey}
+                      // The lesson's own dial: its corner numbers drawn large, because in a
+                      // lesson they are the thing being taught rather than a reference beside a
+                      // game; the row and column multipliers up once the lesson has explained
+                      // them; and whichever gesture it is currently asking for, mimed over the
+                      // keys until the player makes it.
+                      bigHints={tutorial}
+                      axes={lesson.axes}
+                      hand={lesson.hand}
+                      // Both halves of the answer: the player's own setting, and the lesson's
+                      // — which takes the drag away until it has taught it, and says yes in
+                      // every run that is not a live tutorial.
+                      drag={drag && lesson.drag}
+                      flame={flame}
+                      // On a dial that scrambles, every hit is a scramble — see `Dial`.
+                      hitSeq={hitBatch.seq}
+                      peakFrom={darkGradientOf(mode)[0]}
+                      peakTo={darkGradientOf(mode)[1]}
+                      onDelta={(index, delta, sweep) => {
+                        coach.notePress(index, delta)
+                        lesson.notePress(delta)
+                        sendDialed(
+                          { type: 'PRESS', index, delta, now: Date.now() },
+                          sweep,
+                        )
+                      }}
+                      onSet={(index, cellValue, sweep) => {
+                        coach.noteSet(index, cellValue)
+                        lesson.noteSet(cellValue)
+                        sendDialed(
+                          { type: 'SET_CELL', index, value: cellValue, now: Date.now() },
+                          sweep,
+                        )
+                      }}
+                      onSweep={() => {
+                        lesson.noteSweep()
+                        setSweptIn((held) => ({ ...held, gesture: state.context.runSeq }))
+                      }}
+                    />
+                  </View>
 
-                {/* ── Tap-through for the lesson's two pointing cards ── */}
-                {/* A card asking to be read holds the dial shut, and this is the other half
+                  {/* ── Tap-through for the lesson's two pointing cards ── */}
+                  {/* A card asking to be read holds the dial shut, and this is the other half
                 of that: a tap anywhere is how the player says they have read it, rather
                 than waiting out a clock they cannot see. Mounted only while a card is up,
                 so nothing catches a press that belongs to the game. Every key is already
@@ -2609,15 +2640,16 @@ export default function GameScreen() {
                 one thing this card must not become. The negative insets cancel the
                 screen's own padding, so what is left under the bar is covered to the
                 edges. */}
-                {lesson.onTapThrough !== null && (
-                  <TrackedPressable
-                    id="tutorial.tap_through"
-                    onPress={lesson.onTapThrough}
-                    className="absolute -bottom-2 -left-4 -right-4 top-0"
-                    accessibilityLabel={t`Continue the tutorial`}
-                  />
-                )}
-              </Screen>
+                  {lesson.onTapThrough !== null && (
+                    <TrackedPressable
+                      id="tutorial.tap_through"
+                      onPress={lesson.onTapThrough}
+                      className="absolute -bottom-2 -left-4 -right-4 top-0"
+                      accessibilityLabel={t`Continue the tutorial`}
+                    />
+                  )}
+                </Screen>
+              </ArrivalStage>
 
               {/* ── The opening, over the held run ── */}
               {/* Drawn only while the run is **ready**. The switch turns the screen under it

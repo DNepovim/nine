@@ -2,6 +2,7 @@ import type { ReactNode } from 'react'
 import { Text, View } from 'react-native'
 import Animated, { FadeIn, FadeOut } from 'react-native-reanimated'
 
+import { Arrival } from '@/components/game/arrival'
 import { PauseButton } from '@/components/game/pause-button'
 import { TYPE } from '@/constants/typography'
 import { useLegible } from '@/hooks/use-scheme'
@@ -41,7 +42,7 @@ export function RunTopBar({
   const mark = onScheme(wordmark)
   return (
     <View className="flex-row items-center">
-      <View className="flex-1">
+      <Arrival order={1} from="above" className="flex-1">
         <Text selectable={false} className={TYPE.button} style={{ color: shown }}>
           {title}
         </Text>
@@ -56,29 +57,35 @@ export function RunTopBar({
             {subtitle}
           </Text>
         )}
-      </View>
+      </Arrival>
       {/* The game's name, the one string that is the same in every language. The tracking
           is added after every letter, the E included, so the word sits in a box 8px wider
           than itself on the right. Matching that on the left is what actually centres the
           letters between the two flex-1 columns; without it they hang 4px to the left. */}
-      <Text
-        selectable={false}
-        className="pl-[8px] font-mono text-[24px] font-black tracking-[8px]"
-        style={{ color: mark }}
-      >
-        NINE
-      </Text>
+      <Arrival order={2} from="above">
+        <Text
+          selectable={false}
+          className="pl-[8px] font-mono text-[24px] font-black tracking-[8px]"
+          style={{ color: mark }}
+        >
+          NINE
+        </Text>
+      </Arrival>
       {/* The way out, balancing the title block on the left. The column keeps its width
           whether the button is there or not, so nothing else in the row moves — and the
           button fades rather than blinking, because in some runs it comes and goes
           between beats. */}
-      <View className="flex-1 flex-row items-center justify-end">
+      <Arrival
+        order={3}
+        from="above"
+        className="flex-1 flex-row items-center justify-end"
+      >
         {onPause !== null && (
           <Animated.View entering={FadeIn.duration(160)} exiting={FadeOut.duration(160)}>
             <PauseButton color={shown} onPress={onPause} />
           </Animated.View>
         )}
-      </View>
+      </Arrival>
     </View>
   )
 }
