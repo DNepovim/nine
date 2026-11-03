@@ -95,3 +95,5 @@ admin answer field in `admin-messages.tsx` is a third copy of the text area, in 
 another session is editing right now.
 
 Later, its own items: #6 and #7 above.
+
+Shipped: `77e5ee5` (+ `24af9b1` ordering fix) on main, 2026-11-03. Migration not pushed, not deployed.

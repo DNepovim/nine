@@ -1,8 +1,8 @@
 # A rating with words, and a challenge's own page in the lab
 
 Slug: rating-remark
-Stage: review
-Next: /ship rating-remark
+Stage: shipped
+Next: /deploy (push both migrations first)
 Track: full
 Branch: feat/rating-remark
 Started: 2026-11-03
