@@ -22,17 +22,13 @@ import { sessionFigure } from '@/lib/session-figure'
 import { gradientOf } from '@/modes'
 import { challengeInk } from '@/modes/challenges/palette'
 
-// The lab's **challenge page**: one challenge, and what an admin deciding whether it comes
-// back wants in one place — what players made of it, what they said, and how often it has
-// run and how many came. Opened from the lab's row, which used to deal a run straight
-// away; PLAY here is that run now, one tap further in.
-//
-// A tester reaches it too, and sees the half that is public: the sessions. The rating and
-// the remarks are admin reads the server refuses them, and the page leaves both out
-// rather than saying there are none.
+// The gallery's **challenge page**: one challenge, and what an admin deciding whether it
+// comes back wants in one place — what players made of it, what they said, and how often
+// it has run and how many came. Opened from its tile on the CHALLENGES screen's GALLERY;
+// PLAY deals a run of it, for whoever holds `challengeLab`.
 
-// The mark beside the name in the heading: larger than a lab row's, since here it is the
-// screen's own title.
+// The mark beside the name in the heading: larger than a gallery tile's, since here it is
+// the screen's own title.
 const MARK_SIZE = 32
 
 function RemarkBlock({ remark }: { remark: ChallengeRemark }) {
@@ -61,7 +57,8 @@ export function ChallengePage({
   // The figure the lab has already read for every challenge, so the page does not ask
   // again. Undefined for one nobody rated, and for a tester.
   rating: ChallengeRating | undefined
-  onPlay: () => void
+  // Absent for an admin without `challengeLab`, who is shown the page and no PLAY.
+  onPlay?: () => void
   onBack: () => void
 }) {
   const [remarks, setRemarks] = useState<{ remarks: ChallengeRemark[]; shown: boolean }>({
@@ -122,7 +119,9 @@ export function ChallengePage({
       }
       footer={
         <View className="gap-2">
-          <PrimaryButton id="dev.run" onPress={onPlay} label={<Trans>PLAY</Trans>} />
+          {onPlay !== undefined && (
+            <PrimaryButton id="dev.run" onPress={onPlay} label={<Trans>PLAY</Trans>} />
+          )}
           <PrimaryButton
             id="admin.back"
             tone="quiet"

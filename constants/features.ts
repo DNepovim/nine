@@ -26,8 +26,7 @@ export const FLAGS = [
   // window, with no board kept for it. What a tester testing a new challenge holds.
   //
   // Called `dev` until the planner arrived, which named the door rather than the thing
-  // behind it — and the door is about to hold more than one. `DEV_FEATURES` below is what
-  // the link itself now asks.
+  // behind it. Reached from the admin hub; the intro's DEV link is gone.
   'challengeLab',
   // What a player sees of challenges: the card on the start screen that says one is on,
   // the dialog behind it with the standings, and the chapter of How to Play that explains
@@ -57,9 +56,3 @@ export const FLAGS = [
 ] as const
 
 export type Flag = (typeof FLAGS)[number]
-
-// The features reached through the DEV link on the intro, rather than the one that used
-// to be it. The link appears for anybody holding any of them, and the screen behind it
-// shows the sections they hold — so a second entry here is the whole of what it takes to
-// put a second thing in there without widening who can see the first.
-export const DEV_FEATURES = ['challengeLab'] as const satisfies readonly Flag[]

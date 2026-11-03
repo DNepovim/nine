@@ -1,8 +1,10 @@
-import type { ReactNode } from 'react'
+import { Ionicons } from '@expo/vector-icons'
+import type { ComponentProps, ReactNode } from 'react'
 import { Text, View } from 'react-native'
 
 import { TrackedPressable } from '@/components/tracked-pressable'
 import type { ButtonId } from '@/constants/buttons'
+import { DIM_INK, PRIMARY_INK } from '@/constants/colors'
 import { TYPE } from '@/constants/typography'
 import { cn } from '@/lib/cn'
 
@@ -25,7 +27,13 @@ export function AdminSegments<T>({
   className,
 }: {
   id: ButtonId
-  options: readonly { value: T; label: ReactNode }[]
+  // `icon` before the label, in the label's own ink. The CHALLENGES screen's GALLERY and
+  // PLANNER asked for it.
+  options: readonly {
+    value: T
+    label: ReactNode
+    icon?: ComponentProps<typeof Ionicons>['name']
+  }[]
   value: T
   onSelect: (value: T) => void
   // Placement only — a margin. Never the shape.
@@ -45,10 +53,17 @@ export function AdminSegments<T>({
               onSelect(option.value)
             }}
             className={cn(
-              'h-8 flex-1 items-center justify-center rounded-lg',
+              'h-8 flex-1 flex-row items-center justify-center gap-1.5 rounded-lg',
               active && 'bg-surface',
             )}
           >
+            {option.icon !== undefined && (
+              <Ionicons
+                name={option.icon}
+                size={13}
+                color={active ? PRIMARY_INK : DIM_INK}
+              />
+            )}
             <Text
               selectable={false}
               numberOfLines={1}

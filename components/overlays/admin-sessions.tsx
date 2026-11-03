@@ -1,7 +1,7 @@
 import { msg } from '@lingui/core/macro'
 import { Trans, useLingui } from '@lingui/react/macro'
 import { isEmptyArray } from 'narrowland'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, type ReactNode } from 'react'
 import { ScrollView, Text, View } from 'react-native'
 
 import { AdminPills } from '@/components/overlays/admin-pills'
@@ -10,7 +10,6 @@ import { AdminSession } from '@/components/overlays/admin-session'
 import {
   ChallengeTitle,
   QueueMoves,
-  StatusChip,
   WhenBlock,
 } from '@/components/overlays/admin-session-cells'
 import { AdminTable, type AdminTableRow } from '@/components/overlays/admin-table'
@@ -24,7 +23,7 @@ import {
   type AdminSession as Session,
 } from '@/lib/admin/sessions'
 import {
-  pastCountByMode,
+  pastRunsByMode,
   queueOrder,
   shownByStatus,
   spanStatus,
@@ -64,16 +63,23 @@ const FILTERS: readonly SpanStatus[] = ['live', 'upcoming', 'expired']
 // a press away and is not what somebody opening this screen came to see.
 const LIT_ON_ARRIVAL: readonly SpanStatus[] = ['live', 'upcoming']
 
-// Not translated, the way `STATUS_LABEL` beside it is not: these name the state of a
-// database row on a screen whose readers are the people who write the catalog. Shorter
-// than the chips they filter, because four of them share one row.
+// Not translated: these name the state of a database row on a screen whose readers are
+// the people who write the catalog.
 const FILTER_LABEL = {
   live: 'LIVE',
   upcoming: 'PLANNED',
   expired: 'PAST',
 } as const satisfies Record<SpanStatus, string>
 
-export function AdminSessions({ onBack }: { onBack: () => void }) {
+export function AdminSessions({
+  tabs,
+  onBack,
+}: {
+  // The CHALLENGES screen's GALLERY / PLANNER row, drawn over the filters: the planner is
+  // one tab of that screen, and owns its own footer and form.
+  tabs: ReactNode
+  onBack: () => void
+}) {
   const { t } = useLingui()
   const [rows, setRows] = useState<Session[]>([])
   const [loading, setLoading] = useState(true)
@@ -95,9 +101,9 @@ export function AdminSessions({ onBack }: { onBack: () => void }) {
   // But it is re-seeded with `epoch`, and that is new. CLOSE EARLY and EXTEND let this
   // screen change a window's status from inside itself, which nothing here could do
   // before. Frozen at mount, a session closed early reloads with `closes_at` already
-  // behind us and still reads `live` against the old clock — keeping its LIVE chip and
-  // its dot, still counting under the LIVE filter, and offering EXTEND on a form whose
-  // writes the server now refuses. The clock has to move when the rows do.
+  // behind us and still reads `live` against the old clock — keeping its dot,
+  // still counting under the LIVE filter, and offering EXTEND on a form whose writes the
+  // server now refuses. The clock has to move when the rows do.
   const [openedAt, setOpenedAt] = useState(() => Date.now())
 
   // One read, shared by the load below and by a step in the queue. `shown` is an error the
@@ -142,7 +148,8 @@ export function AdminSessions({ onBack }: { onBack: () => void }) {
     return (
       <AdminSession
         session={editing === 'new' ? null : editing}
-        pastCounts={pastCountByMode(rows, openedAt)}
+        pastRuns={pastRunsByMode(rows, openedAt)}
+        now={openedAt}
         onChanged={changed}
         onBack={() => {
           setEditing(null)
@@ -151,7 +158,7 @@ export function AdminSessions({ onBack }: { onBack: () => void }) {
     )
   }
 
-  // One pass for all three chips rather than one pass each. The list is tens of rows, so
+  // One pass for all three pills rather than one pass each. The list is tens of rows, so
   // this is not about the clock — it is that `spanStatus` was being asked the same
   // question about the same row three times on every render, which reads as though the
   // three counts were three different questions.
@@ -190,14 +197,13 @@ export function AdminSessions({ onBack }: { onBack: () => void }) {
       // ran — but it is not what a reader scanning this list is looking for.
       faded: status === 'expired',
       cells: [
-        <WhenBlock at={session.opensAt} />,
+        <WhenBlock at={session.opensAt} live={status === 'live'} />,
         <View>
           <ChallengeTitle modeId={session.modeId} />
           <Text selectable={false} className={cn(TYPE.hint, 'mt-0.5 text-dim')}>
             {formatWindowLength(session.closesAt - session.opensAt)}
           </Text>
         </View>,
-        <StatusChip status={status} />,
         status === 'upcoming' ? (
           <QueueMoves
             busy={moving}
@@ -221,6 +227,9 @@ export function AdminSessions({ onBack }: { onBack: () => void }) {
       onPress: () => {
         setEditing(session)
       },
+      // No chevron: the planner's rows are all doors, and the lane is worth more to the
+      // name than a mark every row would wear.
+      leads: false,
     }
   })
 
@@ -246,6 +255,7 @@ export function AdminSessions({ onBack }: { onBack: () => void }) {
         </View>
       }
     >
+      {tabs}
       <AdminPills
         id="admin.filter"
         className="mb-2.5"
@@ -272,11 +282,11 @@ export function AdminSessions({ onBack }: { onBack: () => void }) {
           rowId="admin.session"
           loading={loading}
           columns={[
-            { width: 36 },
+            // The live dot's lane and the date beside it.
+            { width: 47 },
             { label: 'CHALLENGE', tone: 'name' },
-            { width: 72, align: 'right' },
-            // The queue's two steps, on a planned row only.
-            { width: 60, align: 'right' },
+            // The queue's two steps, stacked, on a planned row only.
+            { width: 40, align: 'right' },
           ]}
           rows={tableRows}
           empty={

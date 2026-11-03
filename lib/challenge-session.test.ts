@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 
 import {
   cardSession,
-  pastCountByMode,
+  pastRunsByMode,
   queueOrder,
   shownByStatus,
   spanStatus,
@@ -147,29 +147,34 @@ describe('queueOrder', () => {
   })
 })
 
-describe('pastCountByMode', () => {
+describe('pastRunsByMode', () => {
   const NOW = Date.parse('2026-06-10T12:00:00Z')
   const H = 3600_000
-  const past = (modeId: string) => ({
+  const past = (modeId: string, closedHoursAgo = 2) => ({
     modeId,
-    opensAt: NOW - 3 * H,
-    closesAt: NOW - 2 * H,
+    opensAt: NOW - (closedHoursAgo + 1) * H,
+    closesAt: NOW - closedHoursAgo * H,
   })
 
   it('counts closed sessions per challenge', () => {
-    const counts = pastCountByMode([past('a'), past('a'), past('b')], NOW)
-    expect(counts.get('a')).toBe(2)
-    expect(counts.get('b')).toBe(1)
+    const runs = pastRunsByMode([past('a'), past('a'), past('b')], NOW)
+    expect(runs.get('a')?.count).toBe(2)
+    expect(runs.get('b')?.count).toBe(1)
+  })
+
+  it('keeps when the latest closed session ended, in any order', () => {
+    const runs = pastRunsByMode([past('a', 5), past('a', 2), past('a', 9)], NOW)
+    expect(runs.get('a')?.lastClosedAt).toBe(NOW - 2 * H)
   })
 
   it('does not count a live or queued session, and leaves an unrun challenge absent', () => {
-    const counts = pastCountByMode(
+    const runs = pastRunsByMode(
       [
         { modeId: 'a', opensAt: NOW - H, closesAt: NOW + H },
         { modeId: 'b', opensAt: NOW + H, closesAt: NOW + 2 * H },
       ],
       NOW,
     )
-    expect(counts.size).toBe(0)
+    expect(runs.size).toBe(0)
   })
 })

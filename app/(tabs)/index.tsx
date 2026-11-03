@@ -43,7 +43,6 @@ import {
   ChallengeModal,
   type ChallengeModalCard,
 } from '@/components/overlays/challenge-modal'
-import { DevOverlay } from '@/components/overlays/dev-overlay'
 import { FeedbackOverlay } from '@/components/overlays/feedback-overlay'
 import { FeedbackReplyOverlay } from '@/components/overlays/feedback-reply-overlay'
 import { GameOverSequence } from '@/components/overlays/game-over-sequence'
@@ -242,8 +241,7 @@ const RESUME_DELAY_MS = 500
 // The menu-level overlays, one open at a time. 'none' means the screen under them —
 // the intro or the pause screen — is what shows. Feedback is not here: it is a
 // dialog over whatever is showing, not a screen of its own.
-type MenuOverlayName =
-  'none' | 'advanced' | 'howToPlay' | 'news' | 'joinRoom' | 'dev' | 'admin'
+type MenuOverlayName = 'none' | 'advanced' | 'howToPlay' | 'news' | 'joinRoom' | 'admin'
 
 // Which of them are dialogs rather than screens. Options and the guide are cards over
 // whatever asked for them, so the screen underneath has to stay drawn: a scrim over
@@ -311,7 +309,6 @@ const OVERLAY_SCREENS = {
   howToPlay: 'how_to_play',
   news: 'news',
   joinRoom: 'join_room',
-  dev: 'dev',
   admin: 'admin',
 } as const satisfies Record<
   Exclude<MenuOverlayName, 'none'>,
@@ -782,7 +779,6 @@ export default function GameScreen() {
   const [menuOverlay, setMenuOverlay] = useState<MenuOverlayName>('none')
   // Whether the challenge lab was opened from the admin hub, so closing it goes back
   // there rather than all the way out to the intro.
-  const [labFromAdmin, setLabFromAdmin] = useState(false)
   // The challenge card the player pressed, and the dialog it opened. Held here rather
   // than in `menu-overlay.tsx`: a `ModalCard` mounted inside the paging panel would
   // scrim the panel rather than the screen.
@@ -2850,15 +2846,23 @@ export default function GameScreen() {
               />
             )}
 
-            {/* ── Dev — every challenge ever written, playable on demand ── */}
-            {menuOverlay === 'dev' && (
-              <DevOverlay
+            {/* ── Admin — who holds a role, and a search to hand one out. Before the
+                challenge dialog, which its CHALLENGES gallery opens and which has to draw
+                over it. ── */}
+            {menuOverlay === 'admin' && (
+              <AdminOverlay
+                viewerId={userId}
+                onPreview={(role, label) => {
+                  rolePreview.start(role, label)
+                  // And out of the way. The point of a preview is the app underneath it,
+                  // and the screen that started it is about to lose the link that drew it.
+                  setMenuOverlay('none')
+                }}
                 onOpenChallenge={(modeId, session) => {
                   setChallengeCard({ state: 'lab', modeId, session })
                 }}
                 onClose={() => {
-                  setMenuOverlay(labFromAdmin ? 'admin' : 'none')
-                  setLabFromAdmin(false)
+                  setMenuOverlay('none')
                 }}
               />
             )}
@@ -2874,7 +2878,7 @@ export default function GameScreen() {
             )}
 
             {/* ── A challenge, in full: what it asks, who leads, and the way in. After the
-                dev screen, which opens it too and has to stay under it. ── */}
+                admin screen, whose gallery opens it too and has to stay under it. ── */}
             {challengeCard !== undefined && (
               <ChallengeModal
                 card={challengeCard}
@@ -2890,7 +2894,6 @@ export default function GameScreen() {
                     send({ type: 'START', now: Date.now(), runId: newRunId() })
                     setChallengeCard(undefined)
                     setMenuOverlay('none')
-                    setLabFromAdmin(false)
                     track('run_started', { mode: modeId, difficulty, from: 'dev' })
                     return
                   }
@@ -2913,26 +2916,6 @@ export default function GameScreen() {
                 }}
                 onDismiss={() => {
                   setChallengeCard(undefined)
-                }}
-              />
-            )}
-
-            {/* ── Admin — who holds a role, and a search to hand one out ── */}
-            {menuOverlay === 'admin' && (
-              <AdminOverlay
-                viewerId={userId}
-                onPreview={(role, label) => {
-                  rolePreview.start(role, label)
-                  // And out of the way. The point of a preview is the app underneath it,
-                  // and the screen that started it is about to lose the link that drew it.
-                  setMenuOverlay('none')
-                }}
-                onOpenLab={() => {
-                  setLabFromAdmin(true)
-                  setMenuOverlay('dev')
-                }}
-                onClose={() => {
-                  setMenuOverlay('none')
                 }}
               />
             )}
@@ -3123,9 +3106,6 @@ export default function GameScreen() {
                 }}
                 onOpenChallenge={setChallengeCard}
                 onShare={setShareInvite}
-                onOpenDev={() => {
-                  setMenuOverlay('dev')
-                }}
                 onOpenAdmin={() => {
                   setMenuOverlay('admin')
                 }}

@@ -59,6 +59,10 @@ export const DIM_INK = '#4E4A43'
 // weight, well under the contrast a word needs.
 export const MUTED_INK = '#D4D0C8'
 
+// `--color-card`, for the one place it has to be a hex: the challenge gallery's tiles,
+// whose gradient ends on the plain tile colour.
+export const CARD_INK = '#E8E4DC'
+
 // The `--color-fortune` token as JavaScript, for the bubble under the profile's fortune,
 // whose border takes its colour as a style rather than as a class.
 export const FORTUNE_INK = '#a82a22'
@@ -193,6 +197,11 @@ export const VISIBILITY_INK = {
   private: '#B45309',
   public: '#15803D',
 } as const
+
+// The still green dot on a challenge with a session in the queue, beside the red
+// `LiveDot` of one on now. The public-visibility green, not `ACHIEVEMENT_SCALE`, which is
+// kept for what a player keeps.
+export const PLANNED_INK = VISIBILITY_INK.public
 
 // The label on a filled visibility chip.
 export const VISIBILITY_ON_INK = '#FDFCFA'

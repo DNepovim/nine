@@ -1,4 +1,5 @@
 import { useEffect } from 'react'
+import { View } from 'react-native'
 import Animated, {
   Easing,
   useAnimatedStyle,
@@ -7,25 +8,33 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated'
 
-import { APP_RED } from '@/constants/colors'
+import { APP_RED, PLANNED_INK } from '@/constants/colors'
 
-// The mark beside LIVE: a red dot, breathing.
+// The mark beside a live session: a red dot, breathing.
 //
-// The one thing on the sessions list that is **happening rather than recorded**. Every
-// other row is a plan or a record, and a word alone does not tell those apart from the
-// row that is in front of players this minute — a reader scanning the list sees three
-// chips and has to read all three. A dot that moves is read before any of them.
+// The one thing on the challenge screens that is **happening rather than recorded**.
+// Every other row is a plan or a record, and a word alone does not tell those apart from
+// the one that is in front of players this minute. A dot that moves is read before
+// anything else on the row.
 //
-// Opacity and not scale: a dot that grows moves the chip's text a fraction of a pixel
-// with it on each frame, and the label beside a 5px mark is the thing that must not
-// shimmer. Slow, and never to nothing — the house rule for a pulse, the same one
-// `SkeletonPulse` keeps for the same reason: a mark that blinks out reads as a fault,
-// where one that breathes reads as something running.
+// Opacity and not scale: a dot that grows moves the date a fraction of a pixel with it
+// on each frame, and the figure beside a 5px mark is the thing that must not shimmer.
+// Slow, and never to nothing — the house rule for a pulse, the same one `SkeletonPulse`
+// keeps for the same reason: a mark that blinks out reads as a fault, where one that
+// breathes reads as something running.
 const SIZE = 5
 const BREATH_MS = 900
 const BREATH_TO = 0.25
 
-export function LiveDot() {
+const dot = (size: number, color: string) => ({
+  width: size,
+  height: size,
+  borderRadius: size / 2,
+  backgroundColor: color,
+})
+
+// `size` for the gallery's tiles, whose corner holds a dot larger than a table row's.
+export function LiveDot({ size = SIZE }: { size?: number }) {
   const breath = useSharedValue(1)
   const style = useAnimatedStyle(() => ({ opacity: breath.value }))
 
@@ -37,17 +46,11 @@ export function LiveDot() {
     )
   }, [breath])
 
-  return (
-    <Animated.View
-      style={[
-        {
-          width: SIZE,
-          height: SIZE,
-          borderRadius: SIZE / 2,
-          backgroundColor: APP_RED,
-        },
-        style,
-      ]}
-    />
-  )
+  return <Animated.View style={[dot(size, APP_RED), style]} />
+}
+
+// Its still twin: a challenge with a session in the queue. Still, because nothing is
+// running yet — a second pulse would make the one that matters harder to find.
+export function PlannedDot({ size = SIZE }: { size?: number }) {
+  return <View style={dot(size, PLANNED_INK)} />
 }

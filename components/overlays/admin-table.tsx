@@ -89,7 +89,6 @@ export function AdminChip({
   label,
   tone = 'quiet',
   hue,
-  icon,
   className,
 }: {
   label: ReactNode
@@ -100,9 +99,6 @@ export function AdminChip({
   // A solid fill in this colour instead of a tone, labelled in `VISIBILITY_ON_INK`. The
   // one caller is a feature's visibility, which is told by hue — see `VISIBILITY_INK`.
   hue?: string
-  // Drawn before the label, inside the chip. The one caller is the LIVE chip on the
-  // sessions list, whose mark is a dot that pulses — see `LiveDot`.
-  icon?: ReactNode
   className?: string
 }) {
   const box = {
@@ -126,7 +122,6 @@ export function AdminChip({
       )}
       style={hue === undefined ? undefined : { backgroundColor: hue, borderColor: hue }}
     >
-      {icon}
       <Text
         selectable={false}
         className={cn(TYPE.rowLabel, hue === undefined && ink)}

@@ -41,10 +41,11 @@ const UNITS = [
 // ahead of the server must not produce "in 3 seconds" on a record that already exists.
 const JUST_NOW = 'now'
 
-// `at` is an ISO timestamp from the server; `now` is passed in rather than read, so
-// this stays pure and a test can pin the clock.
-export function timeAgo(at: string, now: number): string | null {
-  const then = Date.parse(at)
+// `at` is an ISO timestamp from the server, or epoch milliseconds — the challenge picker
+// has a session's `closesAt` already parsed. `now` is passed in rather than read, so this
+// stays pure and a test can pin the clock.
+export function timeAgo(at: string | number, now: number): string | null {
+  const then = typeof at === 'number' ? at : Date.parse(at)
   if (Number.isNaN(then)) return null
 
   const gap = now - then

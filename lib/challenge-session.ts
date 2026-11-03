@@ -19,15 +19,6 @@ export type SessionSpan = {
 // states, whether the span came from the catalog or from a row.
 export type SpanStatus = 'upcoming' | 'live' | 'expired'
 
-// Not translated, and not an oversight — the same reason the admin screen's tab pills
-// are not. These name the state of a database row on a screen whose readers are the
-// people who write the catalog, and they sit beside challenge ids and raw timestamps.
-export const STATUS_LABEL = {
-  live: 'LIVE',
-  upcoming: 'UPCOMING',
-  expired: 'EXPIRED',
-} as const satisfies Record<SpanStatus, string>
-
 // Where a span stands against a moment.
 //
 // Half-open, matching `isOpenMode`'s `>= from && < until`: a session is live from the
@@ -121,18 +112,23 @@ export const queueOrder = <T extends SessionSpan>(
     return status === 'expired' ? b.opensAt - a.opensAt : a.opensAt - b.opensAt
   })
 
-// How many sessions of each challenge have **closed** — the figure the challenge picker
-// puts beside each name, because how often one has already run is what an admin choosing
-// the next is choosing by. Live and queued ones are not counted: one that has not finished
-// has not run. A challenge with none is simply absent; the caller reads it as nought.
-export const pastCountByMode = (
+// How many sessions of each challenge have **closed**, and when the latest of them did —
+// the two figures the challenge picker puts beside each name, because how often and how
+// lately one has run is what an admin choosing the next is choosing by. Live and queued
+// ones are not counted: one that has not finished has not run. A challenge with none is
+// simply absent; the caller reads it as never run.
+export type PastRuns = { count: number; lastClosedAt: number }
+
+export const pastRunsByMode = (
   sessions: readonly (SessionSpan & { modeId: string })[],
   now: number,
-): ReadonlyMap<string, number> =>
+): ReadonlyMap<string, PastRuns> =>
   sessions
     .filter((session) => spanStatus(session, now) === 'expired')
-    .reduce(
-      (counts, session) =>
-        counts.set(session.modeId, (counts.get(session.modeId) ?? 0) + 1),
-      new Map<string, number>(),
-    )
+    .reduce((runs, session) => {
+      const was = runs.get(session.modeId)
+      return runs.set(session.modeId, {
+        count: (was?.count ?? 0) + 1,
+        lastClosedAt: Math.max(was?.lastClosedAt ?? 0, session.closesAt),
+      })
+    }, new Map<string, PastRuns>())

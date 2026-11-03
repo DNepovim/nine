@@ -293,7 +293,6 @@ const intro = (
           onHowToPlay={close}
           onCreateRoom={close}
           onOpenJoinRoom={close}
-          onOpenDev={close}
           onOpenAdmin={close}
         />
       </ChampionsProvider>

@@ -19,11 +19,10 @@ import { Screen } from '@/components/screen'
 import { TrackedPressable } from '@/components/tracked-pressable'
 import type { AchievementId } from '@/constants/achievements'
 import { DIM_INK } from '@/constants/colors'
-import { DEV_FEATURES } from '@/constants/features'
 import { TYPE } from '@/constants/typography'
 import { useChampionsContext } from '@/hooks/use-champions'
 import { useFeedbackOwed } from '@/hooks/use-feedback-owed'
-import { useAnyFlag, useFlag } from '@/hooks/use-flags'
+import { useFlag } from '@/hooks/use-flags'
 import type { LostMedalNews } from '@/hooks/use-lost-medals'
 import { useOnline } from '@/hooks/use-online'
 import { EMPTY_IDS, usePlayerFactors } from '@/hooks/use-player-factors'
@@ -122,7 +121,6 @@ export function MenuOverlay({
   onOpenJoinRoom,
   onOpenChallenge,
   onShare,
-  onOpenDev,
   onOpenAdmin,
 }: {
   gameMode: ModeId
@@ -191,9 +189,6 @@ export function MenuOverlay({
   onCreateRoom: () => void
   // The code entry itself lives on its own screen now — this just opens it.
   onOpenJoinRoom: () => void
-  // The dev and admin screens, each its own door behind its own flag — see
-  // constants/features.ts. Always passed, since whether either is shown at all is decided
-  // below rather than by the caller.
   // Pressed on the challenge card. The dialog behind it belongs to the screen above —
   // a ModalCard mounted in this panel would scrim the panel rather than the app.
   onOpenChallenge: (card: NonNullable<SessionCard<OpenSession>>) => void
@@ -201,7 +196,6 @@ export function MenuOverlay({
   // the board and the best are known. The dialog lives above, for the same reason the
   // challenge one does.
   onShare: (invite: string) => void
-  onOpenDev: () => void
   onOpenAdmin: () => void
 }) {
   const { t } = useLingui()
@@ -221,9 +215,6 @@ export function MenuOverlay({
   const openProfile = useOpenProfile()
   const showMultiplayer = useFlag('multiplayer')
   const showArcade = useFlag('arcade')
-  // Any dev feature, not one key: the screen behind DEV holds a section per feature, so
-  // the link belongs to whoever holds any of them. See DEV_FEATURES.
-  const showDev = useAnyFlag(DEV_FEATURES)
   // Held in a const so the press handler below closes over a narrowed value rather than
   // re-reading something it cannot narrow.
   // `reckon` goes down to the card, which hands it to its own clock: a teaser that runs
@@ -689,19 +680,14 @@ export function MenuOverlay({
             </View>
 
             {/* A second row, under the one every player reads. HOW TO PLAY leads it and the
-              role links follow: the guide is not one of the three things the row above
+              admin link follows: the guide is not one of the three things the row above
               offers — those are about this screen, and it is about the game — and a row
               of its own is what stops the first one wrapping on a narrow phone now that
               it carries four.
 
-              DEV and ADMIN are not for the player this screen otherwise addresses, and
-              each asks for its own feature — see constants/features.ts.
-
-              ADMIN used to be drawn inside DEV, which quietly undid the protection the
-              database puts on the `admin` key: `dev` revoked for one person took the
-              admin screen away with it, and the way back in was the screen that had just
-              gone. A door that cannot be switched off cannot be nested inside one that
-              can. */}
+              ADMIN is not for the player this screen otherwise addresses, and asks for
+              its own feature — see constants/features.ts. The challenges lab, which had
+              a DEV link of its own here, is reached from the admin hub. */}
             <View className="flex-row flex-wrap items-center justify-center gap-x-5 gap-y-2">
               <TrackedPressable id="menu.how_to_play" onPress={onHowToPlay} hitSlop={10}>
                 <View className="flex-row items-center gap-1">
@@ -711,16 +697,6 @@ export function MenuOverlay({
                   </Text>
                 </View>
               </TrackedPressable>
-              {showDev && (
-                <TrackedPressable id="menu.dev" onPress={onOpenDev} hitSlop={10}>
-                  <View className="flex-row items-center gap-1">
-                    <Ionicons name="code-slash-outline" size={10} color={DIM_INK} />
-                    <Text selectable={false} className={cn(TYPE.quietAction, 'text-dim')}>
-                      <Trans>DEV</Trans>
-                    </Text>
-                  </View>
-                </TrackedPressable>
-              )}
               {showAdmin && (
                 <TrackedPressable id="menu.admin" onPress={onOpenAdmin} hitSlop={10}>
                   {/* `relative`, for the badge: messages players sent in that nobody has

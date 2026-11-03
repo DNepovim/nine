@@ -20,9 +20,10 @@ import {
   planSession,
   type AdminSession as Session,
 } from '@/lib/admin/sessions'
-import { spanStatus } from '@/lib/challenge-session'
+import { spanStatus, type PastRuns } from '@/lib/challenge-session'
 import { cn } from '@/lib/cn'
 import { formatDayTime } from '@/lib/format-date'
+import { timeAgo } from '@/lib/time-ago'
 import { gradientOf } from '@/modes'
 import { CHALLENGES } from '@/modes/challenges/catalog'
 import { challengeInk } from '@/modes/challenges/palette'
@@ -46,14 +47,19 @@ const MARK_SIZE = 20
 
 export function AdminSession({
   session,
-  pastCounts,
+  pastRuns,
+  now,
   onChanged,
   onBack,
 }: {
   session: Session | null
-  // How many sessions of each challenge have closed, by registry id — read off the rows
-  // the list already loaded, so the field's figures cost no read of their own.
-  pastCounts: ReadonlyMap<string, number>
+  // How many sessions of each challenge have closed and when the last one did, by
+  // registry id — read off the rows the list already loaded, so the field's figures cost
+  // no read of their own.
+  pastRuns: ReadonlyMap<string, PastRuns>
+  // The list's own clock, which the runs above were read against — so "1 mth ago" is
+  // measured from the same moment that decided the session had closed.
+  now: number
   onChanged: () => void
   // Where BACK, SAVE and CANCEL SESSION all end up. A session is opened from the list
   // and finished with on the list — closing the whole admin screen from here would take
@@ -206,8 +212,8 @@ export function AdminSession({
             the one thing nobody needs to plan.
 
             Each with its mark and its own colours, which is how a player knows it on the
-            card, and how many times it has already run — the figure an admin choosing
-            the next one is choosing by. */}
+            card, how many times it has already run and how long ago it last did — the
+            figures an admin choosing the next one is choosing by. */}
         <AdminSelect
           title={<Trans>CHALLENGE</Trans>}
           // A booking for a challenge this build does not carry names it by its id, the
@@ -218,7 +224,8 @@ export function AdminSession({
           disabled={busy || readOnly}
           options={CHALLENGES.map((challenge) => {
             // Sessions, not runs: a run is one game, and this counts closed sessions.
-            const sessions = pastCounts.get(challenge.id) ?? 0
+            const runs = pastRuns.get(challenge.id)
+            const sessions = runs?.count ?? 0
             return {
               value: challenge.id,
               icon: (
@@ -229,6 +236,10 @@ export function AdminSession({
                 />
               ),
               label: <ChallengeTitle modeId={challenge.id} className={TYPE.buttonSm} />,
+              note:
+                runs === undefined
+                  ? undefined
+                  : (timeAgo(runs.lastClosedAt, now) ?? undefined),
               detail: <Plural value={sessions} one="# SESSION" other="# SESSIONS" />,
             }
           })}

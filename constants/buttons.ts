@@ -25,7 +25,6 @@ export type ButtonId =
   | 'menu.profile'
   | 'menu.create_room'
   | 'menu.join_room'
-  | 'menu.dev'
   | 'menu.admin'
 
   // ── Game screen ──
@@ -183,10 +182,8 @@ export type ButtonId =
   | 'share.link'
 
   // ── Dev and admin ──
-  // A lab row, which opens the challenge's page; PLAY on that page deals the run.
-  | 'dev.challenge'
+  // PLAY on a challenge's page, which deals the run.
   | 'dev.run'
-  | 'dev.done'
   | 'admin.tab'
   | 'admin.find'
   | 'admin.person'
@@ -208,6 +205,10 @@ export type ButtonId =
   // affordance in the funnel for a question nobody is asking. The challenge field is
   // `admin.select` now, the same dropdown every admin screen opens.
   | 'admin.section'
+  // A tile on the CHALLENGES gallery, which opens that challenge's page, and the
+  // GALLERY / PLANNER tabs over it.
+  | 'admin.challenge'
+  | 'admin.challenges_tab'
   | 'admin.session'
   | 'admin.session_new'
   | 'admin.session_save'
