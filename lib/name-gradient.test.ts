@@ -39,29 +39,30 @@ describe('saturationFor', () => {
     expect(saturationFor(0)).toBe(0)
   })
 
-  it('keeps the whole bottom half grey', () => {
-    // The floor. Everything up to and including a middling average is plain grey, so
-    // "coloured at all" already means better than half rather than merely present.
-    for (const average of [1, 20, 40, 49, 50]) {
+  it('keeps the bottom of the range grey', () => {
+    // The floor. Everything up to and including 30% is plain grey, so "coloured at all"
+    // still means the player has shown the boards something.
+    for (const average of [1, 10, 20, 29, 30]) {
       expect(saturationFor(average)).toBe(0)
     }
   })
 
-  it('climbs slowly out of the floor and quickly into the hue', () => {
-    // The curve, stated as the shape rather than as four magic numbers: every step up
-    // the top half is bigger than the one below it, which is what makes the difference
-    // between a very good player and a merely good one the visible one.
-    const steps = [50, 60, 70, 80, 90, 100].map(saturationFor)
+  it('climbs quickly out of the floor and keeps rising to the hue', () => {
+    // The curve, stated as the shape: every step up is positive, and each is smaller
+    // than the one below it, so colour arrives early rather than only at the very top.
+    const steps = [30, 40, 50, 60, 70, 80, 90, 100].map(saturationFor)
     const gaps = steps.slice(1).map((value, index) => value - (steps[index] ?? 0))
     for (const [index, gap] of gaps.entries()) {
-      expect(gap).toBeGreaterThan(gaps[index - 1] ?? 0)
+      expect(gap).toBeGreaterThan(0)
+      if (index > 0) expect(gap).toBeLessThan(gaps[index - 1] ?? 0)
     }
   })
 
-  it('spends less than a fifth of the colour by three quarters', () => {
-    // The concrete claim the curve is tuned to: a 75% average is still nearly grey.
-    expect(saturationFor(75)).toBeLessThan(0.2)
-    expect(saturationFor(75)).toBeGreaterThan(0)
+  it('colours a 70% player well past half', () => {
+    // The concrete claim the curve is tuned to: an ordinary good average is plainly
+    // coloured, not a tint nobody can tell from grey.
+    expect(saturationFor(70)).toBeGreaterThan(0.6)
+    expect(saturationFor(70)).toBeLessThan(1)
   })
 
   it('holds at full past 100', () => {

@@ -6,10 +6,10 @@ import { lerpColor } from '@/modes'
 // The name runs across a two-stop gradient, one character per step, the way the intro
 // screen draws NINE. What is new is where the two stops come from: the front of the name
 // is Accuracy's hue and the back is Speed's, and each end keeps only as much of its
-// colour as the player's lifetime average in that factor earns — nothing below half, and
-// then a curve that spends most of its colour near the top. So a name says two things at
-// a glance — an exact player's front end is vivid, a fast player's back end is, and
-// anyone short of good on a factor wears that end of their name in grey.
+// colour as the player's lifetime average in that factor earns — nothing below 30%, and
+// then a curve that spends its colour early. So a name says two things at a glance — an
+// exact player's front end is coloured, a fast player's back end is, and only a player
+// with almost nothing on a factor wears that end of their name in grey.
 //
 // This reverses a decision `ProfileName` used to carry, which said a name should stay
 // mode-neutral because "a player is not a mode". That held while the only thing a colour
@@ -50,21 +50,19 @@ const FULL_AVERAGE = 100
 
 // Where colour starts at all. Everything at or below this is drawn in plain grey.
 //
-// The bottom half of the range was the least useful half: a 30% player and a 45% player
-// wore two faint tints nobody could tell apart, and the pair of them were close enough
-// to a 60% player's to make the whole ramp read as "everyone is slightly coloured". Grey
-// is the honest answer for the bottom half — it says *not yet* rather than saying
-// something indistinguishable from good.
-const COLOUR_FLOOR = 50
+// Low enough that an ordinary player is already coloured. The floor used to sit at half,
+// with a steep curve above it, and between them only the very top of the boards wore a
+// name anyone could tell from grey — a 70% player read as uncoloured. Grey is kept for
+// the bottom of the range, where it says *not yet*.
+const COLOUR_FLOOR = 30
 
-// How the remaining half of the range spends its colour.
+// How the range above the floor spends its colour.
 //
-// Not linearly. A curve above 1 keeps the early steps small and lets the late ones run,
-// so the gap between an 85% player and a 95% one — the one worth seeing — is wider than
-// the gap between 55% and 65%, which is not. At 2.5, a 75% average carries under a fifth
-// of its hue and the colour only really arrives in the last stretch, which is the point:
-// a vivid name means genuinely good, not merely present.
-const RAMP_CURVE = 2.5
+// A curve below 1 eases out: the first steps off the floor carry the most colour, so a
+// name is visibly tinted soon after it leaves grey, and the top keeps climbing toward
+// the full hue. At 0.75, a 50% average carries about two fifths of its hue and a 70%
+// average about two thirds — plainly coloured, and still short of a perfect career.
+const RAMP_CURVE = 0.75
 
 // How much of its hue an end of the name keeps, from its factor's lifetime average.
 //
