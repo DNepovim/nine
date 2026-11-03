@@ -139,6 +139,10 @@ whole run instead of fading. An opening may now leave **remains** (`REMAINS` and
 layout the scene uses, so the hand-over is not a jump). Shown while the run plays, is
 paused or is over, never on the intro. Seen on web on a restored BLACKOUT run.
 
+**Shipped:** `f7accbe` on `main`, pushed; not deployed. Still to check on a phone
+before a deploy: the haptic at the click, the status bar on the dark screen, and the
+opening reached from a session card.
+
 **Worth its own item later:**
 
 - **Openings for the shipped challenges**, now that the mechanism exists (a mirror

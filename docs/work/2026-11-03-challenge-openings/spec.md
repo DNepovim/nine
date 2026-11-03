@@ -1,8 +1,8 @@
 # Challenge openings and schemes
 
 Slug: challenge-openings
-Stage: review
-Next: /ship challenge-openings
+Stage: shipped
+Next: /deploy
 Track: full
 Branch: feat/challenge-openings
 Started: 2026-11-03
