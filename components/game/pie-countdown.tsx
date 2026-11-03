@@ -15,11 +15,15 @@ import { scheduleOnRN } from 'react-native-worklets'
 
 import { APP_BLUE, APP_RED, PIE_INK, TARGET_BAND_TRACK } from '@/constants/colors'
 import { GLIMPSE_FADE_MS, PIE_SIZE } from '@/constants/game'
+import { useScheme } from '@/hooks/use-scheme'
 import { cn } from '@/lib/cn'
 import { targetBand } from '@/lib/target-band'
 import type { TargetExit } from '@/types/game'
 
 const AnimatedCircle = Animated.createAnimatedComponent(Circle)
+
+// How thick the clock's arc is under a monochrome scheme.
+const THIN_STROKE = 4
 
 // The arc never covers the whole circle, so a sliver of the band-tinted track shows
 // even on a freshly spawned target. Without this the band cue would grow from nothing
@@ -108,8 +112,14 @@ export function PieCountdown({
   revealed?: boolean
 }) {
   const scale = size / PIE_SIZE
-  const radius = size / 4
-  const stroke = size / 2
+  // Under a **monochrome** scheme the disc is drawn the way a DOS screen would draw it: its
+  // ground, a thin outline, and the clock as a thin arc round the edge rather than a
+  // wedge, so the number sits on the ground and reads in the scheme's one ink. A filled
+  // wedge in that ink would swallow the number drawn in it.
+  const { mono, ground } = useScheme().inks
+  const thin = mono !== null
+  const stroke = thin ? THIN_STROKE : size / 2
+  const radius = thin ? size / 2 - THIN_STROKE / 2 : size / 4
   const circumference = 2 * Math.PI * radius
 
   const progress = useSharedValue(startProgress) // 1 = full, 0 = empty
@@ -129,7 +139,17 @@ export function PieCountdown({
   // A clock has to be both running and there in the first place.
   const running = active && clocked
   // The multiplayer hit-flash owns the track while it lasts, so the band yields to it.
-  const trackColor = backgroundColor ?? TARGET_BAND_TRACK[targetBand(value, maxValue)]
+  const trackColor =
+    mono === null
+      ? (backgroundColor ?? TARGET_BAND_TRACK[targetBand(value, maxValue)])
+      : ground
+  // What is left of the clock, what has gone, and a lost target's disc and numeral. Under
+  // a monochrome scheme the time gone is simply the ground showing through, and a lost
+  // target inverts: the disc in the ink, the numeral in the ground.
+  const leftInk = mono ?? APP_BLUE
+  const goneInk = mono === null ? APP_RED : ground
+  const lostDisc = mono ?? APP_RED
+  const lostNumeral = mono === null ? '#FFFFFF' : ground
 
   // One effect for starting, stopping and starting again, because they are the same
   // thing: the clock always runs from wherever the arc currently stands.
@@ -266,7 +286,7 @@ export function PieCountdown({
   // Only taken over once the target is lost — until then the `pie` token paints the
   // numeral, so a screen that retints the token still gets its way.
   const numberColorStyle = useAnimatedStyle(() => ({
-    color: interpolateColor(failColor.value, [0, 1], [PIE_INK, '#FFFFFF']),
+    color: interpolateColor(failColor.value, [0, 1], [PIE_INK, lostNumeral]),
   }))
 
   const ringStyle = useAnimatedStyle(() => ({
@@ -297,7 +317,7 @@ export function PieCountdown({
             r={radius}
             stroke={trackColor}
             strokeWidth={stroke}
-            fill="none"
+            fill={thin ? ground : 'none'}
           />
           {/* The clock itself, over the band-tinted track: what is left of it in blue,
               what has gone in red. Both are the countdown, so a target with no clock
@@ -308,7 +328,7 @@ export function PieCountdown({
                 cx={cx}
                 cy={cy}
                 r={radius}
-                stroke={APP_BLUE}
+                stroke={leftInk}
                 strokeWidth={stroke}
                 fill="none"
                 strokeDasharray={circumference}
@@ -319,7 +339,7 @@ export function PieCountdown({
                 cx={cx}
                 cy={cy}
                 r={radius}
-                stroke={APP_RED}
+                stroke={goneInk}
                 strokeWidth={stroke}
                 fill="none"
                 strokeDasharray={circumference}
@@ -328,10 +348,22 @@ export function PieCountdown({
               />
             </>
           )}
+          {/* The disc's edge under a monochrome scheme, which the thin arc runs round.
+              Last, so the time gone never rubs it out. */}
+          {thin && (
+            <Circle
+              cx={cx}
+              cy={cy}
+              r={radius}
+              stroke={mono}
+              strokeWidth={1}
+              fill="none"
+            />
+          )}
         </Svg>
         <Animated.View
           className="absolute inset-0 rounded-full"
-          style={[{ backgroundColor: APP_RED }, failDiscStyle]}
+          style={[{ backgroundColor: lostDisc }, failDiscStyle]}
         />
       </Animated.View>
       <Animated.View

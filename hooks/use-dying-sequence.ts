@@ -147,6 +147,7 @@ export function useDyingSequence({
     flashStyle,
     titleStyle,
     overlayStyle,
+    overlayOpacity,
     targetsAreaRef,
     setOverlayTitleY,
   }

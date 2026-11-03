@@ -1,8 +1,16 @@
 import { useEffect } from 'react'
 import { View } from 'react-native'
-import { Easing, useSharedValue, withRepeat, withTiming } from 'react-native-reanimated'
+import {
+  Easing,
+  useDerivedValue,
+  useSharedValue,
+  withRepeat,
+  withTiming,
+  type SharedValue,
+} from 'react-native-reanimated'
 
 import type { TitleWords } from '@/lib/game-over-title'
+import { mixHex } from '@/lib/mix-hex'
 import { gradientOf, lerpColor, type ModeId } from '@/modes'
 
 import { AnimatedLetter } from './animated-letter'
@@ -24,6 +32,7 @@ export function GameOverTitle({
   gameMode,
   words,
   shadow = false,
+  arriving,
 }: {
   // Arcade too, which the game machine never runs but which has a gradient of its own
   // and an end worth naming. See components/game/arcade-over.tsx. A challenge id as
@@ -34,6 +43,11 @@ export function GameOverTitle({
   words: TitleWords | readonly string[]
   // The all-time screen puts these letters on gold with a celebration behind them.
   shadow?: boolean
+  // For the copy that flies up over a game screen under another **scheme**, where the
+  // mode's own colours may be the colour of the ground: BINARY's blue on its blue screen.
+  // The letters start in the scheme's ink and reach the mode's gradient as `progress` runs
+  // nought to one, so they land as the copy they hand over to.
+  arriving?: { ink: string; progress: SharedValue<number> }
 }) {
   const rows = words.map((word) => Array.from(word))
   // Counted rather than declared, so a row of any length ramps across its whole self.
@@ -50,8 +64,17 @@ export function GameOverTitle({
     [0],
   )
   const gradPhase = useSharedValue(0)
-  const gradStartSv = useSharedValue<string>(gradientOf(gameMode)[0])
-  const gradEndSv = useSharedValue<string>(gradientOf(gameMode)[1])
+  const [gradFrom, gradTo] = gradientOf(gameMode)
+  const gradStartSv = useDerivedValue(() =>
+    arriving === undefined
+      ? gradFrom
+      : mixHex(arriving.ink, gradFrom, arriving.progress.value),
+  )
+  const gradEndSv = useDerivedValue(() =>
+    arriving === undefined
+      ? gradTo
+      : mixHex(arriving.ink, gradTo, arriving.progress.value),
+  )
 
   useEffect(() => {
     gradPhase.value = withRepeat(

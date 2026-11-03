@@ -1,4 +1,4 @@
-import { PRIMARY_INK } from '@/constants/colors'
+import { DOS_BLUE, PRIMARY_INK } from '@/constants/colors'
 import { contrastRatio } from '@/lib/contrast'
 
 // What a challenge is painted in.
@@ -48,7 +48,7 @@ import { contrastRatio } from '@/lib/contrast'
 // past it onto the golden-ratio walk below rather than repeating a colour.
 //
 // The eleventh and twelfth, 69° and 258°, go unworn, as the first does under four-keys'
-// turquoise: BINARY is grey (`GREY_PAIR`) and MIRROR names `LIGHT_BLUE`. The slots are
+// turquoise: BINARY is DOS blue (`DOS_PAIR`) and MIRROR names `LIGHT_BLUE`. The slots are
 // kept because a hue is keyed on the index, so the challenge after them still lands on
 // an entry of its own rather than on the golden-ratio walk.
 const SEQUENCE = [253, 155, 295, 58, 267, 323, 80, 309, 281, 205, 69, 258] as const
@@ -161,23 +161,12 @@ export const challengeDarkPairFor = (hue: number): readonly [string, string] => 
   stop(hue, DARK.saturation, DARK.lightness),
 ]
 
-// The pair for no hue at all: the same two lightnesses with the saturation taken out, so
-// a grey challenge is still built the way a coloured one is — the shared near-black,
-// then the bright stop for the card and the dark one for the button. BINARY wears it.
-//
-// A pair rather than a hue, because a hue is meaningless without saturation: there is
-// no degree on the wheel that means grey. `challengeInk` needs nothing new for it — a
-// stop with no saturation walks down to a darker grey, the same way a hue walks down to
-// a darker shade of itself.
-export const GREY_PAIR: readonly [string, string] = [
-  PRIMARY_INK,
-  stop(0, 0, BRIGHT.lightness),
-]
-
-export const GREY_DARK_PAIR: readonly [string, string] = [
-  PRIMARY_INK,
-  stop(0, 0, DARK.lightness),
-]
+// The pair for an MS-DOS screen: its blue, and nothing beside it — BINARY wears it, asked
+// for by the author, on a run played in the `dos` scheme. A pair rather than a `hue`,
+// because the palette's saturation and lightness would make some other blue of it, and
+// this is a specific colour people remember. Both stops the same, for card and button
+// alike. `challengeInk` hands it back untouched: it clears the floor on both grounds.
+export const DOS_PAIR: readonly [string, string] = [DOS_BLUE, DOS_BLUE]
 
 // The pair for black: the near-black every challenge starts on, then true black. No hue
 // and, to the eye, no gradient — BLACKOUT wears it, asked for by the author, on a dial

@@ -6,7 +6,7 @@ import { defineDial } from '@/modes/dial'
 import type { ModeDefinition } from '@/modes/types'
 
 import { defineChallenge, type ChallengeSpec } from './define'
-import { BLACK_PAIR, GREY_DARK_PAIR, GREY_PAIR, LIGHT_BLUE, TURQUOISE } from './palette'
+import { BLACK_PAIR, DOS_PAIR, LIGHT_BLUE, TURQUOISE } from './palette'
 
 // Every challenge the app has ever carried, each with the window it ran in.
 //
@@ -747,17 +747,22 @@ const FREEZE: ChallengeSpec = {
 // The 1 key is on it, so every target is answerable.
 const BINARY: ChallengeSpec = {
   slug: 'binary',
-  label: msg`BINARY`,
+  // The soft hyphen says where the dialog's wordmark breaks it: BINA over RY.
+  label: msg`BINA­RY`,
   // Its own, as every challenge since HABIT's: a profile row reading ACC would file it
   // under a board it is not.
   code: msg`BIN`,
   description: msg`Eight keys, each on or off.`,
   mark: 'computer',
-  // Grey, asked for by the author: the colour of an old machine's case, and the one
-  // challenge that wears no hue at all. A pair rather than a `hue`, because no degree on
-  // the wheel is grey — see `GREY_PAIR`.
-  gradient: GREY_PAIR,
-  darkGradient: GREY_DARK_PAIR,
+  // An MS-DOS machine, asked for by the author: its blue on the card, and the whole play
+  // area a terminal in nothing but that blue and white, typing the command that starts the
+  // run and then taking each target as a new line with a bar for its timeout. See
+  // `DOS_PAIR`, `OpeningKind`, `SchemeKind` and `TargetForm`.
+  opening: 'terminal',
+  scheme: 'dos',
+  targetForm: 'lines',
+  gradient: DOS_PAIR,
+  darkGradient: DOS_PAIR,
   shot: null,
   // Every line about bits and bytes. Only the tiers this one reaches: the session
   // standing through `board` and `medal`, and `cold` — `strong` is earned by streaks,

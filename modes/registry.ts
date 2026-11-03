@@ -21,6 +21,7 @@ import type {
   OpeningKind,
   SchemeKind,
   Submode,
+  TargetForm,
 } from './types'
 
 // Every mode the app knows, and the one place that knows how many there are.
@@ -202,6 +203,18 @@ export const markOf = (id: ModeId): MarkKind | null => modeById(id)?.mark ?? nul
 // The scene a run of this mode opens with, or null for none. Whether a run actually plays
 // it is `RunRules.opens`, which also asks whether a submode is in force.
 export const openingOf = (id: ModeId): OpeningKind | null => modeById(id)?.opening ?? null
+
+// Whether an opening begins in the day colours and turns the screen over to the mode's
+// **scheme** partway, or is in that scheme from its first frame. The bulb has to be seen
+// lit before it goes out; a terminal is simply there.
+export const OPENING_STARTS_LIT = {
+  lightsOut: true,
+  terminal: false,
+} as const satisfies Record<OpeningKind, boolean>
+
+// How this mode's targets are drawn: its own form, or `discs`.
+export const targetFormOf = (id: ModeId): TargetForm =>
+  modeById(id)?.targetForm ?? 'discs'
 
 // The colours this mode's game screen is played under: its own scheme, or `day`.
 export const schemeOf = (id: ModeId): SchemeKind => modeById(id)?.scheme ?? 'day'

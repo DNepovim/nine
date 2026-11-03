@@ -10,6 +10,7 @@ import Animated, {
 
 import { APP_BLUE, APP_RED } from '@/constants/colors'
 import { mono } from '@/constants/theme'
+import { useLegible } from '@/hooks/use-scheme'
 
 export function FloatingStat({
   value,
@@ -41,7 +42,8 @@ export function FloatingStat({
     opacity: op.value,
   }))
 
-  const color = interpolateColor(progress, [0, 1], [APP_RED, APP_BLUE])
+  const legible = useLegible()
+  const color = legible(interpolateColor(progress, [0, 1], [APP_RED, APP_BLUE]))
 
   return (
     <Animated.Text

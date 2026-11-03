@@ -166,7 +166,7 @@ msgstr "— NOT ONE FAST ENOUGH THIS WEEK —"
 msgid "— NOTHING HAS OUTRUN THIS YET —"
 msgstr "— NOTHING HAS OUTRUN THIS YET —"
 
-#: components/game/best-scores-line.tsx:628
+#: components/game/best-scores-line.tsx:636
 msgid "— OFFLINE —"
 msgstr "— OFFLINE —"
 
@@ -861,7 +861,7 @@ msgstr "Behind by a hair. That is nothing."
 msgid "Behind, and within reach — two boards would do it."
 msgstr "Behind, and within reach — two boards would do it."
 
-#: components/game/best-scores-line.tsx:106
+#: components/game/best-scores-line.tsx:107
 #: components/overlays/player-profile-overlay.tsx:536
 #: components/overlays/player-profile-overlay.tsx:550
 msgid "BEST"
@@ -879,19 +879,19 @@ msgstr "Best scores, up top"
 msgid "BETTER ON YOUR PHONE"
 msgstr "BETTER ON YOUR PHONE"
 
-#: modes/challenges/catalog.ts:753
+#: modes/challenges/catalog.ts:754
 msgid "BIN"
 msgstr "BIN"
 
-#: modes/challenges/catalog.ts:750
-msgid "BINARY"
-msgstr "BINARY"
+#: modes/challenges/catalog.ts:751
+msgid "BINA­RY"
+msgstr "BINA­RY"
 
-#: modes/challenges/catalog.ts:883
+#: modes/challenges/catalog.ts:888
 msgid "BLACK­OUT"
 msgstr "BLACK­OUT"
 
-#: modes/challenges/catalog.ts:886
+#: modes/challenges/catalog.ts:891
 msgid "BLK"
 msgstr "BLK"
 
@@ -968,11 +968,11 @@ msgstr "Chain your hits — a streak multiplies your points ×2 → ×4 → ×8.
 #: components/overlays/admin-session.tsx:218
 #: components/overlays/challenge-card.tsx:182
 #: components/overlays/challenge-modal.tsx:124
-#: modes/challenges/define.ts:89
+#: modes/challenges/define.ts:99
 msgid "CHALLENGE"
 msgstr "CHALLENGE"
 
-#: components/game/best-scores-line.tsx:590
+#: components/game/best-scores-line.tsx:598
 #: components/overlays/session-closes.tsx:42
 msgid "CHALLENGE CLOSES IN"
 msgstr "CHALLENGE CLOSES IN"
@@ -1023,7 +1023,7 @@ msgid "clock = time left ÷ ring"
 msgstr "clock = time left ÷ ring"
 
 #: components/overlays/admin-stat-people.tsx:119
-#: components/overlays/challenge-modal.tsx:298
+#: components/overlays/challenge-modal.tsx:301
 #: components/overlays/compare-overlay.tsx:318
 #: components/overlays/email-code-modal.tsx:532
 #: components/overlays/modal-card.tsx:267
@@ -1089,7 +1089,7 @@ msgstr "CONNOISSEUR"
 msgid "CONTINUE"
 msgstr "CONTINUE"
 
-#: app/(tabs)/index.tsx:2592
+#: app/(tabs)/index.tsx:2820
 msgid "Continue the tutorial"
 msgstr "Continue the tutorial"
 
@@ -1194,7 +1194,7 @@ msgstr "EASY"
 msgid "Eat the last of them and the empty row starts to pulse: you are starving, and a heart goes every five seconds until you eat."
 msgstr "Eat the last of them and the empty row starts to pulse: you are starving, and a heart goes every five seconds until you eat."
 
-#: modes/challenges/catalog.ts:754
+#: modes/challenges/catalog.ts:755
 msgid "Eight keys, each on or off."
 msgstr "Eight keys, each on or off."
 
@@ -1231,7 +1231,7 @@ msgstr "ETERNAL STUDENT"
 msgid "Even. Perfectly, annoyingly even."
 msgstr "Even. Perfectly, annoyingly even."
 
-#: components/game/best-scores-line.tsx:94
+#: components/game/best-scores-line.tsx:95
 #: components/overlays/board-medals.tsx:18
 #: components/overlays/high-scores.tsx:36
 msgid "EVER"
@@ -1253,7 +1253,7 @@ msgstr "Every day was [A]’s except [D]. [B] got exactly one, and made it count
 msgid "Every hit scrambles the dial."
 msgstr "Every hit scrambles the dial."
 
-#: modes/challenges/catalog.ts:819
+#: modes/challenges/catalog.ts:824
 msgid "Every move works backwards."
 msgstr "Every move works backwards."
 
@@ -1497,7 +1497,7 @@ msgstr "FULL HOUSE"
 msgid "Full screen, no browser bar, and it keeps working offline."
 msgstr "Full screen, no browser bar, and it keeps working offline."
 
-#: modes/registry.ts:134
+#: modes/registry.ts:143
 msgid "GAME"
 msgstr "GAME"
 
@@ -1847,7 +1847,7 @@ msgstr "Land your first target."
 msgid "LANGUAGE"
 msgstr "LANGUAGE"
 
-#: components/game/best-scores-line.tsx:99
+#: components/game/best-scores-line.tsx:100
 msgid "LAST"
 msgstr "LAST"
 
@@ -1993,11 +1993,11 @@ msgstr "Messages sent in"
 msgid "MINUTES"
 msgstr "MINUTES"
 
-#: modes/challenges/catalog.ts:818
+#: modes/challenges/catalog.ts:823
 msgid "MIR"
 msgstr "MIR"
 
-#: modes/challenges/catalog.ts:815
+#: modes/challenges/catalog.ts:820
 msgid "MIRROR"
 msgstr "MIRROR"
 
@@ -3065,7 +3065,7 @@ msgstr "Sep"
 msgid "SEPTEMBER"
 msgstr "SEPTEMBER"
 
-#: components/game/best-scores-line.tsx:97
+#: components/game/best-scores-line.tsx:98
 msgid "SESSION"
 msgstr "SESSION"
 
@@ -3140,7 +3140,7 @@ msgstr "Skill inside a single run: a long streak, the top multiplier, a stretch 
 msgid "SKIP"
 msgstr "SKIP"
 
-#: components/game/opening-layer.tsx:61
+#: components/game/opening-layer.tsx:76
 msgid "Skip to the run"
 msgstr "Skip to the run"
 
@@ -3508,7 +3508,7 @@ msgstr "The hero halts well short of the gate, with the walls across the top of 
 msgid "The hit that leaves the board empty counts double."
 msgstr "The hit that leaves the board empty counts double."
 
-#: modes/challenges/catalog.ts:887
+#: modes/challenges/catalog.ts:892
 msgid "The keys go dark. Count in your head."
 msgstr "The keys go dark. Count in your head."
 
@@ -3743,7 +3743,7 @@ msgstr "TIPS & TRICKS"
 msgid "TO PUBLISH YOUR BESTS"
 msgstr "TO PUBLISH YOUR BESTS"
 
-#: components/game/best-scores-line.tsx:92
+#: components/game/best-scores-line.tsx:93
 #: components/overlays/board-medals.tsx:20
 #: components/overlays/high-scores.tsx:34
 msgid "TODAY"
@@ -3912,7 +3912,7 @@ msgstr "We sent six digits to <0>{address}</0>."
 msgid "Wednesday"
 msgstr "Wednesday"
 
-#: components/game/best-scores-line.tsx:93
+#: components/game/best-scores-line.tsx:94
 msgid "WEEK"
 msgstr "WEEK"
 
@@ -4005,7 +4005,7 @@ msgstr "With your OK, we'll record a replay of how you play — taps, swipes, wh
 msgid "WON"
 msgstr "WON"
 
-#: components/game/best-scores-line.tsx:110
+#: components/game/best-scores-line.tsx:111
 #: components/overlays/admin-people.tsx:87
 #: components/overlays/player-tile.tsx:128
 #: components/overlays/tab-panel.tsx:23
@@ -4066,7 +4066,7 @@ msgstr "YOU'RE OFFLINE"
 msgid "you@example.com"
 msgstr "you@example.com"
 
-#: components/game/best-scores-line.tsx:91
+#: components/game/best-scores-line.tsx:92
 msgid "YOUR"
 msgstr "YOUR"
 

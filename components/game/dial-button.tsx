@@ -218,7 +218,13 @@ export function DialButton({
   onDelta: (delta: 1 | -1, sweep: boolean) => void
   onSet: (value: number, sweep: boolean) => void
 }) {
-  const { keyRim } = useScheme().inks
+  // The scheme may draw the keys its own way — `dos` inverts them — and the rim is what
+  // keeps a key that matches its ground visible as a key.
+  const { keyRim, keys } = useScheme().inks
+  const palette = keys ?? DIAL_COLORS
+  const peak = keys?.peak ?? [peakFrom, peakTo]
+  const rimmed = dark || keys !== null
+  const keyRadius = keys?.radius ?? 999
   const scale = useSharedValue(1)
   // The pill's bounce on a flip, along whichever screen axis the dial's vertical lies on.
   const bounce = useSharedValue(0)
@@ -374,7 +380,7 @@ export function DialButton({
     ],
     backgroundColor: dark
       ? PRIMARY_INK
-      : interpolateColor(rampProgress.value, [0, 1], [DIAL_COLORS.low, DIAL_COLORS.high]),
+      : interpolateColor(rampProgress.value, [0, 1], [palette.low, palette.high]),
   }))
 
   // The CTA gradient crossfades in over the ramp — every tint change, including
@@ -397,11 +403,7 @@ export function DialButton({
 
   // The digit warms to pale red over the dark 9 gradient.
   const digitStyle = useAnimatedStyle(() => ({
-    color: interpolateColor(
-      peakProgress.value,
-      [0, 1],
-      [DIAL_COLORS.text, DIAL_COLORS.peakText],
-    ),
+    color: interpolateColor(peakProgress.value, [0, 1], [palette.text, palette.peakText]),
   }))
 
   // The pill fills its box, so its radius is simply half of it. There used to be 10pt
@@ -444,7 +446,7 @@ export function DialButton({
         style={[
           {
             flex: 1,
-            borderRadius: 999,
+            borderRadius: keyRadius,
             justifyContent: 'center' as const,
             alignItems: 'center' as const,
             shadowColor: '#1C1928',
@@ -453,7 +455,9 @@ export function DialButton({
             shadowRadius: 10,
             // A black key on a dark screen is no key at all: the scheme's rim draws its
             // edge. Transparent on day, where a black key stands out on its own.
-            ...(dark && { borderWidth: 1.5, borderColor: keyRim }),
+            ...(rimmed && { borderWidth: 1.5, borderColor: keyRim }),
+            // The shadow is a third colour on a scheme that draws its own keys.
+            ...(keys !== null && { shadowOpacity: 0, borderBottomWidth: keys.foot }),
           },
           btnStyle,
         ]}
@@ -469,10 +473,10 @@ export function DialButton({
             ]}
           >
             <LinearGradient
-              colors={[peakFrom, peakTo]}
+              colors={[peak[0], peak[1]]}
               start={{ x: 0, y: 0.5 }}
               end={{ x: 1, y: 0.5 }}
-              style={{ flex: 1, borderRadius: 999 }}
+              style={{ flex: 1, borderRadius: keyRadius }}
             />
           </Animated.View>
         )}
@@ -490,7 +494,7 @@ export function DialButton({
               colors={[STRIKE_COLORS.cool, STRIKE_COLORS.hot]}
               start={{ x: 0.5, y: 0 }}
               end={{ x: 0.5, y: 1 }}
-              style={{ flex: 1, borderRadius: 999 }}
+              style={{ flex: 1, borderRadius: keyRadius }}
             />
           </Animated.View>
         )}

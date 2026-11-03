@@ -9,6 +9,7 @@ import Animated, {
 
 import { APP_RED } from '@/constants/colors'
 import { mono } from '@/constants/theme'
+import { useLegible } from '@/hooks/use-scheme'
 
 // Says why a heart just went in Accuracy — the only mode where a hit itself can cost
 // a life, via the same wasteful-hit rule the debrief line names in Trainee. A
@@ -42,6 +43,8 @@ export function FloatingLifeLoss({ onDone }: { onDone: () => void }) {
     opacity: op.value,
   }))
 
+  const legible = useLegible()
+
   return (
     <Animated.Text
       selectable={false}
@@ -54,7 +57,7 @@ export function FloatingLifeLoss({ onDone }: { onDone: () => void }) {
           fontWeight: '800',
           fontSize: 9,
           letterSpacing: 1,
-          color: APP_RED,
+          color: legible(APP_RED),
         },
         style,
       ]}

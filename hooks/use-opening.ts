@@ -1,8 +1,9 @@
 import { useState } from 'react'
 import type { StateValue } from 'xstate'
 
-import { SCHEMES } from '@/constants/colors'
+import { APP_RED, SCHEMES } from '@/constants/colors'
 import {
+  OPENING_STARTS_LIT,
   openingOf,
   schemeOf,
   type ModeId,
@@ -40,6 +41,8 @@ export function useOpening({
   // The opening whose **remains** stay behind the run once its scene is over — playing,
   // paused, and under game over — or null on the intro and while the scene itself plays.
   remains: OpeningKind | null
+  // Whether the run is held **ready**.
+  held: boolean
   take: OpeningTake
   // Whether the dial may draw itself as its scheme has it — false only while an opening
   // is still playing with the lights on. See `opened` on `Dial`.
@@ -52,6 +55,9 @@ export function useOpening({
   // keeps the feedback tab off a scene that is about to become a live run — see
   // `showFeedbackBookmark`.
   inPlay: boolean
+  // What the screen flashes when a life goes: the app's red, or a **monochrome** scheme's
+  // one ink.
+  flash: string
   onSwitch: () => void
 } {
   const name = typeof state === 'string' ? state : ''
@@ -66,17 +72,23 @@ export function useOpening({
       setSwitched(false)
     }
   }
-  const lightsOn = name === 'menu' || (held && !switched)
+  const kind = openingOf(mode)
+  // An opening that starts in the mode's scheme has no moment with the lights on, which is
+  // also what spares a retry a frame of the day colours flashing through it.
+  const startsLit = kind !== null && OPENING_STARTS_LIT[kind]
+  const lightsOn = name === 'menu' || (held && !switched && startsLit)
   const scheme = lightsOn ? 'day' : schemeOf(mode)
   const onScreen = held || name === 'playing'
   return {
-    layer: held ? openingOf(mode) : null,
-    remains: held || name === 'menu' ? null : openingOf(mode),
+    layer: held ? kind : null,
+    remains: held || name === 'menu' ? null : kind,
+    held,
     take,
     opened: !held || switched,
     scheme,
     statusBar: onScreen ? SCHEMES[scheme].inks.statusBar : 'dark',
     inPlay: onScreen,
+    flash: SCHEMES[scheme].inks.mono ?? APP_RED,
     onSwitch: () => {
       setSwitched(true)
     },

@@ -1,4 +1,4 @@
-import { AntDesign } from '@expo/vector-icons'
+import { AntDesign, Ionicons } from '@expo/vector-icons'
 import { useEffect, useRef } from 'react'
 import Animated, {
   Easing,
@@ -9,6 +9,8 @@ import Animated, {
   withSpring,
   withTiming,
 } from 'react-native-reanimated'
+
+import { useScheme } from '@/hooks/use-scheme'
 
 // A heart, filled or spent.
 //
@@ -40,19 +42,31 @@ export function HeartIcon({
     prevFilled.current = filled
   }, [filled, fillOp, scale])
 
+  // Under a **monochrome** scheme a full heart and an empty one are the same colour, so
+  // the difference is the shape: filled, or only its outline.
+  const { mono } = useScheme().inks
+
   const scaleStyle = useAnimatedStyle(() => ({ transform: [{ scale: scale.value }] }))
   const fillStyle = useAnimatedStyle(() => ({ opacity: fillOp.value }))
 
   return (
     <Animated.View style={scaleStyle}>
-      <AntDesign name="heart" size={22} color={emptyColor} />
+      {mono === null ? (
+        <AntDesign name="heart" size={22} color={emptyColor} />
+      ) : (
+        <Ionicons name="heart-outline" size={22} color={mono} />
+      )}
       <Animated.View
         style={[
           { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 },
           fillStyle,
         ]}
       >
-        <AntDesign name="heart" size={22} color="#E5534B" />
+        {mono === null ? (
+          <AntDesign name="heart" size={22} color="#E5534B" />
+        ) : (
+          <Ionicons name="heart" size={22} color={mono} />
+        )}
       </Animated.View>
     </Animated.View>
   )

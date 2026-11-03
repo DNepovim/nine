@@ -6,6 +6,7 @@ import Animated, {
   useSharedValue,
   withDelay,
   withTiming,
+  type DerivedValue,
   type SharedValue,
 } from 'react-native-reanimated'
 
@@ -160,8 +161,8 @@ export function AnimatedLetter({
   mode: TitleMode
   delay: number
   letterIndex: number
-  gradStart: SharedValue<string>
-  gradEnd: SharedValue<string>
+  gradStart: DerivedValue<string>
+  gradEnd: DerivedValue<string>
   gradPhase: SharedValue<number>
   // Set on the gold game-over screen, where a celebration plays behind the letters.
   shadow?: boolean

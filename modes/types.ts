@@ -297,7 +297,7 @@ export type MarkKind =
 //
 // While it plays the run is **ready**: dealt, holding no target, its clock not started.
 // See the `ready` state in `machines/game.ts`.
-export type OpeningKind = 'lightsOut'
+export type OpeningKind = 'lightsOut' | 'terminal'
 
 // How much of an opening plays. `full` for a run started from the intro, `short` for one
 // dealt again — PLAY AGAIN, or RESTART from the pause screen — so twenty retries are not
@@ -311,7 +311,14 @@ export type OpeningTake = 'full' | 'short'
 // Not the app's `@theme`, which stays one light scheme with no switch; not a design-guide
 // colour scale; not a system dark mode. Only the game screen wears it, and the overlays
 // over it keep their own.
-export type SchemeKind = 'day' | 'dark'
+export type SchemeKind = 'day' | 'dark' | 'dos'
+
+// How a run's targets are drawn — its **target form**. `discs` stand wherever they were
+// dealt, each with a ring running down, and are every mode's unless it names another; `lines`
+// are lines of a terminal, each with a bar. Drawn by `TARGET_FORMS` in
+// `components/game/target-forms.tsx`. Drawing only: a hit is decided by the sum, an expiry by
+// the clock, and both are the same in every form.
+export type TargetForm = 'discs' | 'lines'
 
 // What every mode says about itself, whichever engine runs it.
 type ModeIdentity = {
@@ -352,6 +359,8 @@ type ModeIdentity = {
   opening?: OpeningKind
   // The colours its game screen is played under; undefined is `day`. See `SchemeKind`.
   scheme?: SchemeKind
+  // How its targets are drawn; undefined is `discs`. See `TargetForm`.
+  targetForm?: TargetForm
   window: ModeWindow | null
 }
 

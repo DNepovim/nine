@@ -59,6 +59,7 @@ export {
   measureOf,
   MODE_ORDER,
   modeById,
+  OPENING_STARTS_LIT,
   openingOf,
   openModes,
   rulesFor,
@@ -68,6 +69,7 @@ export {
   schemeOf,
   SCORED_MODES,
   startingLives,
+  targetFormOf,
   traitsOf,
   type Mode,
   type ModeId,
@@ -92,4 +94,5 @@ export type {
   SchemeKind,
   ShotKind,
   Submode,
+  TargetForm,
 } from './types'

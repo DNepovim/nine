@@ -1,6 +1,7 @@
 import { msg } from '@lingui/core/macro'
 import { describe, expect, it } from 'vitest'
 
+import { DOS_BLUE } from '@/constants/colors'
 import { parTable } from '@/machines/scoring'
 import { ACCURACY } from '@/modes/definitions/accuracy'
 import { SPEED } from '@/modes/definitions/speed'
@@ -13,6 +14,7 @@ import {
   rulesFor,
   runRules,
   schemeOf,
+  targetFormOf,
 } from '@/modes/registry'
 import { rampedTimeout, resolveRules, spawnInterval } from '@/modes/rules'
 
@@ -556,6 +558,17 @@ describe('binary', () => {
     for (let sum = 0; sum <= 255; sum++) expect(table[sum], `${sum}`).toBe(ones(sum))
   })
 
+  it('opens on a terminal, plays in DOS colours, and wears DOS blue', () => {
+    const id = challengeId('binary')
+    expect(openingOf(id)).toBe('terminal')
+    expect(schemeOf(id)).toBe('dos')
+    expect(targetFormOf(id)).toBe('lines')
+    expect(runRules(id, 'hard').opens).toBe(true)
+    const binary = CHALLENGES.find((mode) => mode.id === id)
+    expect(binary?.gradient).toEqual([DOS_BLUE, DOS_BLUE])
+    expect(binary?.darkGradient).toEqual([DOS_BLUE, DOS_BLUE])
+  })
+
   it('wears its own mark and fires nothing', () => {
     const binary = CHALLENGES.find((mode) => mode.id === challengeId('binary'))
     expect(binary?.mark).toBe('computer')
@@ -630,23 +643,25 @@ describe('blackout', () => {
     expect(runRules(id, 'hard').opens).toBe(true)
   })
 
-  it('is the only mode that opens, and never under the tutorial', () => {
+  it('are the only modes that open, and never under the tutorial', () => {
     // Every rung of every mode, so a permanent mode cannot pick up an opening by way of
     // a difficulty, and every one of them with the tutorial applied, which never opens.
     const opening = allModes()
       .filter((mode) => mode.engine === 'targets')
       .filter((mode) => DIFFICULTY_ORDER.some((rung) => runRules(mode.id, rung).opens))
       .map((mode) => mode.id)
-    expect(opening).toEqual([challengeId('blackout')])
+    expect(opening).toEqual([challengeId('binary'), challengeId('blackout')])
     for (const mode of allModes()) {
       expect(runRules(mode.id, 'hard', true).opens, mode.id).toBe(false)
     }
   })
 
   it('leaves every other mode without an opening, in day colours', () => {
-    for (const mode of allModes().filter((m) => m.id !== challengeId('blackout'))) {
+    const dressed = [challengeId('binary'), challengeId('blackout')]
+    for (const mode of allModes().filter((m) => !dressed.includes(m.id))) {
       expect(openingOf(mode.id), mode.id).toBeNull()
       expect(schemeOf(mode.id), mode.id).toBe('day')
+      expect(targetFormOf(mode.id), mode.id).toBe('discs')
     }
   })
 

@@ -12,6 +12,7 @@ import Animated, {
 
 import { APP_BLUE, APP_RED } from '@/constants/colors'
 import { mono } from '@/constants/theme'
+import { useLegible } from '@/hooks/use-scheme'
 import { multiplierColor } from '@/lib/streak-badge'
 
 export function FloatingPoints({
@@ -56,7 +57,8 @@ export function FloatingPoints({
     transform: [{ translateY: ty.value }, { scale: sc.value }],
     opacity: op.value,
   }))
-  const color = interpolateColor(progress, [0, 1], [APP_RED, APP_BLUE])
+  const legible = useLegible()
+  const color = legible(interpolateColor(progress, [0, 1], [APP_RED, APP_BLUE]))
 
   return (
     <Animated.View
@@ -86,7 +88,7 @@ export function FloatingPoints({
             fontFamily: mono,
             fontWeight: '900',
             fontSize: 11,
-            color: multiplierColor(multiplier),
+            color: legible(multiplierColor(multiplier)),
           }}
         >
           ×{multiplier}

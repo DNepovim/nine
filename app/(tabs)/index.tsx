@@ -32,7 +32,7 @@ import { ScoreDigit } from '@/components/game/score-digit'
 import { StepUpToast } from '@/components/game/step-up-toast'
 import { StrikeShot } from '@/components/game/strike-shot'
 import { SumHush } from '@/components/game/sum-hush'
-import { TargetCard } from '@/components/game/target-card'
+import { TARGET_FORMS } from '@/components/game/target-forms'
 import { TraineeStats } from '@/components/game/trainee-stats'
 import { TutorialCard } from '@/components/game/tutorial-card'
 import { TutorialIntro } from '@/components/game/tutorial-intro'
@@ -199,6 +199,7 @@ import {
   SCORED_MODES,
   streakMultiplier,
   sumOf,
+  targetFormOf,
   type Difficulty,
   type Measure,
   type Mode,
@@ -724,6 +725,7 @@ export default function GameScreen() {
   // and `ready` in machines/game.ts. A held run is not `inRun`: nothing is being played
   // yet, so nothing is saved, celebrated or raced against.
   const opening = useOpening({ state: state.value, mode })
+  const { Board: TargetBoard, Card: TargetView } = TARGET_FORMS[targetFormOf(mode)]
 
   // The one way a pause is asked for, so that every caller has to say what stopped the
   // run and the event below can tell a tap from a phone call. The reporting half is here
@@ -1882,6 +1884,7 @@ export default function GameScreen() {
     flashStyle,
     titleStyle,
     overlayStyle,
+    overlayOpacity,
     targetsAreaRef,
     setOverlayTitleY,
   } = useDyingSequence({ isGameOver, lives })
@@ -2187,7 +2190,7 @@ export default function GameScreen() {
             {/* In the run's **scheme**; the overlays after it keep their own. */}
             <SchemeProvider kind={opening.scheme}>
               {/* What the opening left behind, under everything the run draws. */}
-              {opening.remains !== null && <OpeningRemains kind={opening.remains} />}
+              <OpeningRemains kind={opening.remains} />
               {/* Each time a run leaves the intro, the screen comes in a piece at a time
               — see components/game/arrival.tsx. */}
               <ArrivalStage arrived={!isMenu}>
@@ -2464,60 +2467,68 @@ export default function GameScreen() {
                             noteBoardSize(event)
                           }}
                         >
-                          {boardTargets.map((target) => (
-                            <TargetCard
-                              maxValue={dial.maxSum}
-                              key={target.id}
-                              target={target}
-                              // The clock this target spawned with, so a ring never retargets
-                              // mid-flight when Speed's timeout tightens.
-                              duration={target.duration}
-                              par={
-                                rules.capabilities.coached && showPar
-                                  ? computePar(dial, grid, target.value)
-                                  : undefined
-                              }
-                              dying={isGameOver}
-                              frozen={isPaused}
-                              // Nine cards have to stand on this board at once in a drilled
-                              // run, and nine at `PIE_SIZE` do not fit a phone — so each is
-                              // given its own size, and they differ from one another on
-                              // purpose. Undefined everywhere else, which is the size every
-                              // other mode draws.
-                              size={drillCards?.[target.seq]?.size}
-                              // A drilled board keeps its taken cards. The nine are a picture
-                              // the player is learning, and one vanishing on every hit would
-                              // leave nothing to have learnt by the ninth.
-                              spent={drill !== null}
-                              // And its own colour, out of this challenge's own family. A
-                              // fixed nine is learnt as a picture, and a colour is read before
-                              // a number is — where the band tint every other mode wears says
-                              // which hundred a target is in, which on a drill the player
-                              // already knows.
-                              color={drillTints?.[target.seq]}
-                              // Whether this target has a clock to run down at all. Read off
-                              // the rules rather than off the submode: the tutorial is the
-                              // one that patches `countsDown` off today, and a drilled run
-                              // does the same for a reason of its own — one clock per run,
-                              // and here it is the stopwatch.
-                              clocked={rules.clock.countsDown}
-                              // How long a number shows before it fades — the **glimpse**,
-                              // null for a number that never hides. Read off the rules, so the
-                              // card never learns which mode is asking.
-                              glimpse={rules.spawn.glimpse}
-                              driftStep={rules.spawn.drift}
-                              onExpire={() => {
-                                send({
-                                  type: 'TARGET_EXPIRED',
-                                  id: target.id,
-                                  now: Date.now(),
-                                })
-                              }}
-                              onExitComplete={() => {
-                                removeDisplayed(target.id)
-                              }}
-                            />
-                          ))}
+                          {/* The targets in the mode's **target form**: discs where they were
+                              dealt, or a terminal's lines. */}
+                          <TargetBoard
+                            runId={runId}
+                            take={opening.take}
+                            held={opening.held}
+                          >
+                            {boardTargets.map((target) => (
+                              <TargetView
+                                maxValue={dial.maxSum}
+                                key={target.id}
+                                target={target}
+                                // The clock this target spawned with, so a ring never retargets
+                                // mid-flight when Speed's timeout tightens.
+                                duration={target.duration}
+                                par={
+                                  rules.capabilities.coached && showPar
+                                    ? computePar(dial, grid, target.value)
+                                    : undefined
+                                }
+                                dying={isGameOver}
+                                frozen={isPaused}
+                                // Nine cards have to stand on this board at once in a drilled
+                                // run, and nine at `PIE_SIZE` do not fit a phone — so each is
+                                // given its own size, and they differ from one another on
+                                // purpose. Undefined everywhere else, which is the size every
+                                // other mode draws.
+                                size={drillCards?.[target.seq]?.size}
+                                // A drilled board keeps its taken cards. The nine are a picture
+                                // the player is learning, and one vanishing on every hit would
+                                // leave nothing to have learnt by the ninth.
+                                spent={drill !== null}
+                                // And its own colour, out of this challenge's own family. A
+                                // fixed nine is learnt as a picture, and a colour is read before
+                                // a number is — where the band tint every other mode wears says
+                                // which hundred a target is in, which on a drill the player
+                                // already knows.
+                                color={drillTints?.[target.seq]}
+                                // Whether this target has a clock to run down at all. Read off
+                                // the rules rather than off the submode: the tutorial is the
+                                // one that patches `countsDown` off today, and a drilled run
+                                // does the same for a reason of its own — one clock per run,
+                                // and here it is the stopwatch.
+                                clocked={rules.clock.countsDown}
+                                // How long a number shows before it fades — the **glimpse**,
+                                // null for a number that never hides. Read off the rules, so the
+                                // card never learns which mode is asking.
+                                glimpse={rules.spawn.glimpse}
+                                driftStep={rules.spawn.drift}
+                                onExpire={() => {
+                                  send({
+                                    type: 'TARGET_EXPIRED',
+                                    id: target.id,
+                                    now: Date.now(),
+                                  })
+                                }}
+                                onExitComplete={() => {
+                                  removeDisplayed(target.id)
+                                }}
+                              />
+                            ))}
+                          </TargetBoard>
                           {/* The lesson's two pointing cards. The first goes beside the target,
                     above or below it as the canvas allows — see lib/tutorial-tip.ts. The
                     second goes at the foot of the canvas with its beak turned down at the
@@ -2771,7 +2782,7 @@ export default function GameScreen() {
                   left: 0,
                   right: 0,
                   bottom: 0,
-                  backgroundColor: '#E5534B',
+                  backgroundColor: opening.flash,
                 },
                 flashStyle,
               ]}
@@ -2790,6 +2801,8 @@ export default function GameScreen() {
               sessionRank={runSessionMedals[0]?.rank ?? null}
               phase={dyingPhase}
               overlayStyle={overlayStyle}
+              overlayOpacity={overlayOpacity}
+              scheme={opening.scheme}
               titleStyle={titleStyle}
               onTitleLayout={setOverlayTitleY}
               gameMode={mode}

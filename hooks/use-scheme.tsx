@@ -43,10 +43,14 @@ export const useScheme = (): SchemeValue => useContext(SchemeContext)
 // for the app's own light screen, and on it they are drawn exactly as given. Under another
 // scheme each is kept only where it still reads (`readableOn`), and is the scheme's text
 // ink where it does not: BLACKOUT's black name and black session cell on its dark screen.
+//
+// A **monochrome** scheme answers its one ink for every colour, readable or not: `dos`
+// draws nothing in any colour but its own two.
 export function useLegible(): (color: string) => string {
   const scheme = useScheme()
-  return (color) =>
-    scheme === SCHEMES.day
-      ? color
-      : readableOn(color, scheme.inks.ground, scheme.inks.ink)
+  const { mono, ground, ink } = scheme.inks
+  return (color) => {
+    if (mono !== null) return mono
+    return scheme === SCHEMES.day ? color : readableOn(color, ground, ink)
+  }
 }

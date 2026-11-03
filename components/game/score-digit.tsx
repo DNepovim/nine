@@ -32,7 +32,8 @@ export function ScoreDigit({
   // The calm end of the ramp is the screen's text colour, which the **scheme** decides:
   // the app's near-black on day, its parchment on dark. Read once per scheme, as a plain
   // string the worklet below closes over.
-  const settled = useScheme().inks.score
+  const { score: settled, mono: monoInk } = useScheme().inks
+  const low = monoInk ?? SCORE_COLORS.low
 
   // Animate the tint as the sum changes.
   useEffect(() => {
@@ -62,7 +63,7 @@ export function ScoreDigit({
   const animStyle = useAnimatedStyle(() => ({
     transform: [{ translateY: translateY.value }],
     opacity: opacity.value,
-    color: interpolateColor(colorProgress.value, [0, 1], [settled, SCORE_COLORS.low]),
+    color: interpolateColor(colorProgress.value, [0, 1], [settled, low]),
   }))
 
   return (

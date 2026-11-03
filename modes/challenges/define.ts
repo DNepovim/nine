@@ -17,6 +17,7 @@ import {
   type RulesPatch,
   type SchemeKind,
   type ShotKind,
+  type TargetForm,
   type TargetRules,
 } from '@/modes/types'
 
@@ -82,6 +83,8 @@ export type ChallengeSpec = {
   // which is every one before BLACKOUT.
   opening?: OpeningKind
   scheme?: SchemeKind
+  // How its targets are drawn — see `TargetForm`.
+  targetForm?: TargetForm
 }
 
 // What a challenge *is*, for the screens that have to say so beside the name of one.
@@ -176,6 +179,7 @@ export function defineChallenge(spec: ChallengeSpec, index = 0): ModeDefinition 
     mark: spec.mark,
     opening: spec.opening,
     scheme: spec.scheme,
+    targetForm: spec.targetForm,
     window: { from: spec.from, until: spec.until },
     engine: 'targets',
     // Three layers, and the order is the whole of their meaning: the base mode, then

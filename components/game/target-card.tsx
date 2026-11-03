@@ -13,6 +13,7 @@ import { PieCountdown, TARGET_EXIT_MS } from '@/components/game/pie-countdown'
 import { CARD_ENTER_MS } from '@/constants/game'
 import { mono } from '@/constants/theme'
 import { useDriftedValue } from '@/hooks/use-drifted-value'
+import { useLegible, useScheme } from '@/hooks/use-scheme'
 import { glimpseLeft } from '@/lib/target-clock'
 import type { DisplayTarget } from '@/types/game'
 
@@ -83,6 +84,9 @@ export function TargetCard({
   onExpire: () => void
   onExitComplete: () => void
 }) {
+  // The par badge in a **monochrome** scheme: the ink as its fill, the ground as its figure.
+  const legible = useLegible()
+  const { mono: monoInk, ground } = useScheme().inks
   const scale = useSharedValue(0.6)
   const opacity = useSharedValue(0)
 
@@ -169,7 +173,7 @@ export function TargetCard({
             position: 'absolute',
             bottom: 4,
             right: 4,
-            backgroundColor: '#6B7280',
+            backgroundColor: legible('#6B7280'),
             borderRadius: 999,
             paddingHorizontal: 6,
             paddingVertical: 3,
@@ -181,7 +185,7 @@ export function TargetCard({
               fontFamily: mono,
               fontSize: 13,
               fontWeight: '700',
-              color: '#FFFFFF',
+              color: monoInk === null ? '#FFFFFF' : ground,
             }}
           >
             {par}

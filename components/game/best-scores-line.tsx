@@ -28,7 +28,7 @@ import { TYPE } from '@/constants/typography'
 import type { RecordHolder } from '@/hooks/use-board'
 import { useOnline } from '@/hooks/use-online'
 import { useOpenProfile } from '@/hooks/use-profile-modal'
-import { useLegible } from '@/hooks/use-scheme'
+import { useLegible, useScheme } from '@/hooks/use-scheme'
 import { announcementStyle } from '@/lib/announcement-style'
 import { RUN_SETTLE_MS, type Announcement } from '@/lib/announcements'
 import { cn } from '@/lib/cn'
@@ -476,6 +476,11 @@ export function BestScoresLine({
   // reference sits in an arrow function, which it has to assume might be called later.
   // A challenge's ink is tuned for the light screen; on a dark **scheme** it may not read.
   const legible = useLegible()
+  // The session countdown's flaps. A **monochrome** scheme has one colour to paint them in.
+  const { mono: monoInk } = useScheme().inks
+  const countdownGradient = (
+    pair: readonly [string, string],
+  ): readonly [string, string] => (monoInk === null ? pair : [monoInk, monoInk])
   const cells = shown.map(({ key, value, mine, holder, sub, profileId }) => (
     <BestScoreCell
       key={key}
@@ -486,7 +491,7 @@ export function BestScoresLine({
       holder={holder}
       sub={sub}
       mine={mine}
-      mineColor={GOLD_INK}
+      mineColor={legible(GOLD_INK)}
       pulsing={key === nearKey}
       // The run stops first. A profile is a card to read, and reading it while the
       // targets keep coming is losing a run to a tap.
@@ -604,9 +609,9 @@ export function BestScoresLine({
                   as a gradient that happens to be warm. */}
               <ChallengeCountdown
                 until={session.closesAt}
-                gradient={
-                  shutAt === session.closesAt ? SHUT_GRADIENT : darkGradientOf(mode)
-                }
+                gradient={countdownGradient(
+                  shutAt === session.closesAt ? SHUT_GRADIENT : darkGradientOf(mode),
+                )}
                 // An inline closure on purpose: `ChallengeCountdown` holds this in a ref
                 // and syncs it, precisely so a caller rebuilding it each render does not
                 // tear its interval down. That is what lets this capture the window it

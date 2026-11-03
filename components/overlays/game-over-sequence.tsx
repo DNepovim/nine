@@ -1,7 +1,8 @@
 import { isOneOf } from 'narrowland'
 import { type StyleProp, type ViewStyle } from 'react-native'
-import Animated, { type AnimatedStyle } from 'react-native-reanimated'
+import Animated, { type AnimatedStyle, type SharedValue } from 'react-native-reanimated'
 
+import { SCHEMES } from '@/constants/colors'
 import type { PeriodBoard } from '@/hooks/use-board'
 import { type DyingPhase } from '@/hooks/use-dying-sequence'
 import type { AchievementStore } from '@/lib/achievement-store'
@@ -10,7 +11,13 @@ import type { Period } from '@/lib/announcements'
 import type { BoardMedal } from '@/lib/board-medals'
 import type { RecordScreen } from '@/lib/champions'
 import { gameOverTitle } from '@/lib/game-over-title'
-import { modeById, SCORED_MODES, type Difficulty, type ModeId } from '@/modes'
+import {
+  modeById,
+  SCORED_MODES,
+  type Difficulty,
+  type ModeId,
+  type SchemeKind,
+} from '@/modes'
 
 import { GameOverOverlay } from './game-over-overlay'
 import { GameOverTitle } from './game-over-title'
@@ -26,6 +33,8 @@ const FILL_CENTER: ViewStyle = { ...FILL, alignItems: 'center', justifyContent: 
 export function GameOverSequence({
   phase,
   overlayStyle,
+  overlayOpacity,
+  scheme,
   titleStyle,
   onTitleLayout,
   gameMode,
@@ -58,6 +67,11 @@ export function GameOverSequence({
 }: {
   phase: DyingPhase
   overlayStyle: StyleProp<AnimatedStyle<ViewStyle>>
+  // How far the overlay has faded in, which is also how far the flying title has turned
+  // from the game screen's ink to the screen it is landing on.
+  overlayOpacity: SharedValue<number>
+  // The **scheme** the run was played under, and so what the title first appears over.
+  scheme: SchemeKind
   titleStyle: StyleProp<AnimatedStyle<ViewStyle>>
   onTitleLayout: (centerY: number) => void
   gameMode: ModeId
@@ -183,6 +197,11 @@ export function GameOverSequence({
             gameMode={gameMode}
             words={words}
             shadow={screen === 'crown' || screen === 'bird'}
+            arriving={
+              scheme === 'day'
+                ? undefined
+                : { ink: SCHEMES[scheme].inks.ink, progress: overlayOpacity }
+            }
           />
         </Animated.View>
       )}

@@ -3,6 +3,7 @@ import { useRef, type ComponentType } from 'react'
 import { View } from 'react-native'
 
 import { LightsOut, LightsOutRemains } from '@/components/game/openings/lights-out'
+import { Terminal } from '@/components/game/openings/terminal'
 import { TrackedPressable } from '@/components/tracked-pressable'
 import { LAYER } from '@/constants/layers'
 import type { OpeningKind, OpeningTake } from '@/modes'
@@ -20,19 +21,19 @@ export type OpeningSceneProps = {
 // a new `OpeningKind` cannot ship without something to play.
 const OPENINGS = {
   lightsOut: LightsOut,
+  terminal: Terminal,
 } as const satisfies Record<OpeningKind, ComponentType<OpeningSceneProps>>
 
-// What each opening leaves behind for the run that follows it — its **remains** — or null
-// for a scene that leaves nothing. Drawn by `OpeningRemains` behind the game, for as long
-// as the run lasts.
-// Typed as the record rather than narrowed to its entries, so a kind whose scene leaves
-// nothing is a `null` here and the check below means something.
+// What each opening leaves on the game screen for the run once its scene is over — its
+// **remains** — or null for one that leaves nothing. Drawn behind everything the run draws.
+// Typed as the record rather than narrowed to its entries, so the null means something.
 const REMAINS: Record<OpeningKind, ComponentType | null> = {
   lightsOut: LightsOutRemains,
+  terminal: null,
 }
 
-export function OpeningRemains({ kind }: { kind: OpeningKind }) {
-  const Remains = REMAINS[kind]
+export function OpeningRemains({ kind }: { kind: OpeningKind | null }) {
+  const Remains = kind === null ? null : REMAINS[kind]
   return Remains === null ? null : <Remains />
 }
 

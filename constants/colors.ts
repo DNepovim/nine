@@ -338,6 +338,11 @@ export const PALE_GOLD = ['#FFF6DC', '#FFFFFF', '#FFE8A3', '#FFEFC2'] as const
 
 // ─── Schemes ─────────────────────────────────────────────────────────────────
 
+// The two colours of an MS-DOS screen: the blue of its background and the white of its
+// text. The `dos` scheme and BINARY's card are made of these and nothing else.
+export const DOS_BLUE = '#0000AA'
+export const DOS_WHITE = '#FFFFFF'
+
 // The colours the game screen is played under for a run — its **scheme** (`SchemeKind` in
 // modes/types.ts). Applied the way the painted game-over screens above re-bind theirs:
 // `vars()` over the game screen's subtree, so every class on it re-inks itself, plus the
@@ -364,6 +369,26 @@ type SchemeInks = {
   // The gradient the screen is painted on — `SurfaceWash`'s stops. A hex gradient rather
   // than a token, so it is one of the inks.
   wash: readonly string[]
+  // A **monochrome** scheme's one ink, or null. Set, every colour a game component
+  // computes in JS — a heart, a countdown ring, a floating point, a best-score cell — is
+  // drawn in it instead, through `useLegible`; nothing on the screen keeps an accent of
+  // its own. `dos` is the one that sets it.
+  mono: string | null
+  // The keys, where the scheme draws them its own way rather than in `DIAL_COLORS` and the
+  // mode's gradient: the ramp's two ends, the digit, the digit on a key at its top, and the
+  // pair a key at its top is filled with. Its shape too, since a scheme's keys need not be
+  // the dial's discs: the corner's radius, and how much thicker the rim is along the foot,
+  // which is what makes a flat rounded square read as a key standing on a keyboard. Null to
+  // keep the dial's own.
+  keys: {
+    low: string
+    high: string
+    text: string
+    peakText: string
+    peak: readonly [string, string]
+    radius: number
+    foot: number
+  } | null
 }
 
 type Scheme = {
@@ -385,6 +410,8 @@ export const SCHEMES = {
       ground: SURFACE,
       ink: SCORE_COLORS.high,
       wash: SURFACE_WASH,
+      mono: null,
+      keys: null,
     },
   },
   dark: {
@@ -412,6 +439,48 @@ export const SCHEMES = {
       // The day wash's four stops, carried down to the dark surface with the same faint
       // cool-to-warm drift across the screen.
       wash: ['#0E0D17', '#110F19', '#15101A', '#171119'],
+      mono: null,
+      keys: null,
+    },
+  },
+  // `dos` — an MS-DOS screen: its blue and white, and nothing else, BINARY's.
+  //
+  // **Monochrome**: every token is one of the two, and `mono` makes every colour computed
+  // in JS white too. The keys invert, the way a DOS selection does: an unlit key is the
+  // blue with a white rim and a white digit, a lit one is white with a blue digit.
+  dos: {
+    tokens: {
+      '--color-surface': DOS_BLUE,
+      '--color-card': DOS_BLUE,
+      '--color-elevated': DOS_BLUE,
+      '--color-muted': DOS_WHITE,
+      '--color-dim': DOS_WHITE,
+      '--color-primary': DOS_WHITE,
+      '--color-strong': DOS_WHITE,
+      '--color-on-strong': DOS_BLUE,
+      '--color-score': DOS_WHITE,
+      '--color-fortune': DOS_WHITE,
+      '--color-dial': DOS_WHITE,
+      '--color-factor': DOS_WHITE,
+      '--color-pie': DOS_WHITE,
+    },
+    inks: {
+      score: DOS_WHITE,
+      keyRim: DOS_WHITE,
+      statusBar: 'light',
+      ground: DOS_BLUE,
+      ink: DOS_WHITE,
+      wash: [DOS_BLUE, DOS_BLUE],
+      mono: DOS_WHITE,
+      keys: {
+        low: DOS_BLUE,
+        high: DOS_BLUE,
+        text: DOS_WHITE,
+        peakText: DOS_BLUE,
+        peak: [DOS_WHITE, DOS_WHITE],
+        radius: 12,
+        foot: 4,
+      },
     },
   },
 } as const satisfies Record<SchemeKind, Scheme>
