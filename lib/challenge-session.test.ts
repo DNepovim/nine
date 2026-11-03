@@ -1,144 +1,13 @@
-import { afterEach, describe, expect, it } from 'vitest'
+import { describe, expect, it } from 'vitest'
 
 import {
   cardSession,
-  defaultSpan,
-  isValidSpan,
+  pastCountByMode,
+  queueOrder,
   shownByStatus,
   spanStatus,
-  withClosesAt,
-  withOpensAt,
   type SpanStatus,
 } from '@/lib/challenge-session'
-
-const HOUR = 3600_000
-
-// `defaultSpan` is built out of local wall-clock noon, so the zone the suite happens to
-// run in decides the answer — and CI runs in UTC while a laptop does not. Pinned per
-// test rather than globally: one of these tests is *about* a daylight-saving boundary
-// and needs a zone that has one, and the rest want a zone that does not get in the way.
-//
-// Node re-reads `process.env.TZ` on the next `Date` operation, so assigning it mid-run
-// is enough; nothing has to be reloaded.
-const original = process.env.TZ
-const inZone = (tz: string) => {
-  process.env.TZ = tz
-}
-afterEach(() => {
-  process.env.TZ = original
-})
-
-// Local noon on a given date, as an instant, read the same way `defaultSpan` builds one.
-const noon = (year: number, month: number, day: number): number =>
-  new Date(year, month - 1, day, 12).getTime()
-
-describe('defaultSpan', () => {
-  it('opens tomorrow at noon and closes the day after at noon with nothing booked', () => {
-    inZone('Europe/Prague')
-    const span = defaultSpan(new Date(2026, 5, 10, 9, 17).getTime())
-    expect(span.opensAt).toBe(noon(2026, 6, 11))
-    expect(span.closesAt).toBe(noon(2026, 6, 12))
-  })
-
-  it('counts tomorrow from the local day, not from the next 24 hours', () => {
-    inZone('Europe/Prague')
-    // Nine minutes to midnight. "Tomorrow" is the 11th, which is under an hour away —
-    // a span measured forward from `now` would have landed on the 12th.
-    const span = defaultSpan(new Date(2026, 5, 10, 23, 51).getTime())
-    expect(span.opensAt).toBe(noon(2026, 6, 11))
-  })
-
-  it('rolls over the month and the year', () => {
-    inZone('Europe/Prague')
-    const span = defaultSpan(new Date(2026, 11, 31, 18, 0).getTime())
-    expect(span.opensAt).toBe(noon(2027, 1, 1))
-    expect(span.closesAt).toBe(noon(2027, 1, 2))
-  })
-
-  it('is two wall-clock noons, so it is 23 hours across a spring-forward', () => {
-    inZone('Europe/Prague')
-    // Prague puts the clocks forward on 29 March 2026. Noon on the 28th to noon on the
-    // 29th is 23 hours, and that is the right answer: the admin asked for two noons.
-    const span = defaultSpan(new Date(2026, 2, 27, 8, 0).getTime())
-    expect(span.closesAt - span.opensAt).toBe(23 * HOUR)
-  })
-
-  it('is 25 hours across a fall-back, for the same reason', () => {
-    inZone('Europe/Prague')
-    // And back again on 25 October 2026.
-    const span = defaultSpan(new Date(2026, 9, 23, 8, 0).getTime())
-    expect(span.closesAt - span.opensAt).toBe(25 * HOUR)
-  })
-})
-
-describe('defaultSpan after a booking', () => {
-  it('opens at the noon the last session closes on, end to end', () => {
-    inZone('Europe/Prague')
-    const span = defaultSpan(new Date(2026, 5, 10, 9, 0).getTime(), noon(2026, 6, 14))
-    expect(span.opensAt).toBe(noon(2026, 6, 14))
-    expect(span.closesAt).toBe(noon(2026, 6, 15))
-  })
-
-  it('opens at the next noon when the last session closes past one', () => {
-    inZone('Europe/Prague')
-    const span = defaultSpan(
-      new Date(2026, 5, 10, 9, 0).getTime(),
-      new Date(2026, 5, 14, 18, 30).getTime(),
-    )
-    expect(span.opensAt).toBe(noon(2026, 6, 15))
-  })
-
-  it('falls back to tomorrow at noon when every booking has closed', () => {
-    inZone('Europe/Prague')
-    const span = defaultSpan(new Date(2026, 5, 10, 9, 0).getTime(), noon(2026, 6, 8))
-    expect(span.opensAt).toBe(noon(2026, 6, 11))
-  })
-})
-
-describe('withOpensAt', () => {
-  it('moves the end by exactly what the start moved', () => {
-    const span = { opensAt: 1000, closesAt: 5000 }
-    expect(withOpensAt(span, 3500)).toStrictEqual({ opensAt: 3500, closesAt: 7500 })
-  })
-
-  it('keeps the span when the start moves backwards', () => {
-    const span = { opensAt: 1000, closesAt: 5000 }
-    expect(withOpensAt(span, 0).closesAt).toBe(4000)
-  })
-
-  it('holds the duration rather than the wall clock across a spring-forward', () => {
-    inZone('Europe/Prague')
-    // Two noons on either side of a boundary the span does *not* cross: 24 hours.
-    const span = defaultSpan(new Date(2026, 5, 10, 9, 0).getTime())
-    expect(span.closesAt - span.opensAt).toBe(24 * HOUR)
-    // Dragged onto the boundary. `defaultSpan` would have produced 23 hours here; a
-    // move keeps the 24 the admin already set, and so lands at 13:00 rather than noon.
-    const moved = withOpensAt(span, noon(2026, 3, 28))
-    expect(moved.closesAt - moved.opensAt).toBe(24 * HOUR)
-    expect(moved.closesAt).not.toBe(noon(2026, 3, 29))
-  })
-})
-
-describe('withClosesAt', () => {
-  it('moves the end alone', () => {
-    const span = { opensAt: 1000, closesAt: 5000 }
-    expect(withClosesAt(span, 9000)).toStrictEqual({ opensAt: 1000, closesAt: 9000 })
-  })
-})
-
-describe('isValidSpan', () => {
-  it('accepts a span that closes after it opens', () => {
-    expect(isValidSpan({ opensAt: 1000, closesAt: 1001 })).toBe(true)
-  })
-
-  it('refuses a span that closes when it opens', () => {
-    expect(isValidSpan({ opensAt: 1000, closesAt: 1000 })).toBe(false)
-  })
-
-  it('refuses an inverted span', () => {
-    expect(isValidSpan({ opensAt: 5000, closesAt: 1000 })).toBe(false)
-  })
-})
 
 describe('spanStatus', () => {
   const span = { opensAt: 1000, closesAt: 5000 }
@@ -245,9 +114,62 @@ describe('shownByStatus', () => {
   })
 
   it('keeps the order it was handed rather than grouping by status', () => {
-    // The planner orders by start date, newest first, and filtering must not regroup it.
+    // The planner orders the rows with `queueOrder` first, and filtering must not regroup it.
     expect(
       shownByStatus([expired, live, upcoming], new Set(['live', 'expired']), NOW),
     ).toEqual([expired, live])
+  })
+})
+
+describe('queueOrder', () => {
+  const NOW = Date.parse('2026-06-10T12:00:00Z')
+  const H = 3600_000
+  const live = { opensAt: NOW - H, closesAt: NOW + H }
+  const next = { opensAt: NOW + 2 * H, closesAt: NOW + 3 * H }
+  const later = { opensAt: NOW + 4 * H, closesAt: NOW + 5 * H }
+  const lastWeek = { opensAt: NOW - 7 * 24 * H, closesAt: NOW - 6 * 24 * H }
+  const yesterday = { opensAt: NOW - 2 * 24 * H, closesAt: NOW - 24 * H }
+
+  it('puts live first, the queue earliest first, and the past newest first', () => {
+    expect(queueOrder([lastWeek, later, yesterday, live, next], NOW)).toEqual([
+      live,
+      next,
+      later,
+      yesterday,
+      lastWeek,
+    ])
+  })
+
+  it('leaves what it was handed alone', () => {
+    const given = [later, next]
+    queueOrder(given, NOW)
+    expect(given).toEqual([later, next])
+  })
+})
+
+describe('pastCountByMode', () => {
+  const NOW = Date.parse('2026-06-10T12:00:00Z')
+  const H = 3600_000
+  const past = (modeId: string) => ({
+    modeId,
+    opensAt: NOW - 3 * H,
+    closesAt: NOW - 2 * H,
+  })
+
+  it('counts closed sessions per challenge', () => {
+    const counts = pastCountByMode([past('a'), past('a'), past('b')], NOW)
+    expect(counts.get('a')).toBe(2)
+    expect(counts.get('b')).toBe(1)
+  })
+
+  it('does not count a live or queued session, and leaves an unrun challenge absent', () => {
+    const counts = pastCountByMode(
+      [
+        { modeId: 'a', opensAt: NOW - H, closesAt: NOW + H },
+        { modeId: 'b', opensAt: NOW + H, closesAt: NOW + 2 * H },
+      ],
+      NOW,
+    )
+    expect(counts.size).toBe(0)
   })
 })

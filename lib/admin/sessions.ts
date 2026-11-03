@@ -1,14 +1,13 @@
-import type { SessionSpan } from '@/lib/challenge-session'
 import { noteRequest } from '@/lib/connectivity'
 import { supabase } from '@/lib/supabase'
 import { measureOf, modeById } from '@/modes'
 
 // The sessions half, beside features.ts and roles.ts: when a challenge is on.
 //
-// One read and five writes. The read is a plain select rather than a sixth RPC —
+// One read and six writes. The read is a plain select rather than another RPC —
 // there are no counts to resolve the way `feature_stats` has, the rows are public, and
 // the start screen will want exactly this select in the phase that puts a challenge in
-// front of a player. The writes are RPCs because the admin guard and the no-overlap rule
+// front of a player. The writes are RPCs because the admin guard and the queue's timing
 // have to be the server's promise and not the client's.
 
 export type AdminSession = {
@@ -48,9 +47,9 @@ type SessionRow = {
 // line works in ms since the epoch, which is what every other clock in the app uses.
 const atMs = (iso: string): number => new Date(iso).getTime()
 
-// Newest start first, which is the order the planner draws and the order a reader wants:
-// what is on now and what is coming are at the top, and what already ran falls away
-// below. Ordered by the server so the index does the work.
+// Newest start first, ordered by the server so the index does the work. Not the order the
+// planner draws: it puts the queue earliest first between the live row and the past —
+// see `queueOrder` — and does that on the client, over rows it already holds.
 export async function listSessions(): Promise<{
   rows: AdminSession[]
   error: string | null
@@ -75,14 +74,6 @@ export async function listSessions(): Promise<{
   }
 }
 
-// `toISOString` on the way out, which is UTC — and correct, because a span is a pair of
-// instants. The admin picked them on their own clock and the column stores the moment;
-// the zone they were typed in is not part of what was booked.
-const spanArgs = (span: SessionSpan) => ({
-  p_opens_at: new Date(span.opensAt).toISOString(),
-  p_closes_at: new Date(span.closesAt).toISOString(),
-})
-
 // What a session is **measured** by, taken from the challenge rather than asked for.
 //
 // A measure is a fact about the challenge — a race is a race whenever it is aired — so
@@ -92,36 +83,44 @@ const spanArgs = (span: SessionSpan) => ({
 // out in the wrong order.
 const measureArg = (modeId: string) => ({ p_measure: measureOf(modeId) })
 
-export async function planSession(
-  modeId: string,
-  span: SessionSpan,
-): Promise<{ error: string | null }> {
+// To the end of the **queue**. No span: the server times every queued session onto its
+// noon, so all the planner says is which challenge comes next.
+export async function planSession(modeId: string): Promise<{ error: string | null }> {
   const res = await supabase.rpc('plan_challenge_session', {
     p_mode_id: modeId,
-    ...spanArgs(span),
     ...measureArg(modeId),
   })
   noteRequest(res.error)
   return { error: res.error?.message ?? null }
 }
 
-// The challenge as well as the span. A session is one editable row rather than a booking
-// that has to be torn up to be corrected — and the server re-checks the overlap against
-// the mode handed in here, not the one it has stored.
+// Re-points a booking at another challenge — the one thing about a session the planner
+// still edits, now that the queue owns its times.
 export async function editSession(
   id: string,
   modeId: string,
-  span: SessionSpan,
 ): Promise<{ error: string | null }> {
   const res = await supabase.rpc('edit_challenge_session', {
     p_id: id,
     p_mode_id: modeId,
-    ...spanArgs(span),
     // Re-pointing a booking at another challenge re-measures it. Only reachable while
     // nobody has scored — the server refuses a challenge change after that — so a
     // session's measure cannot move once it means something.
     ...measureArg(modeId),
   })
+  noteRequest(res.error)
+  return { error: res.error?.message ?? null }
+}
+
+// One place earlier (-1) or later (1) in the queue. The server swaps it with its
+// neighbour's slot and refuses a row that has opened since the list was read.
+export type QueueStep = -1 | 1
+
+export async function moveSession(
+  id: string,
+  delta: QueueStep,
+): Promise<{ error: string | null }> {
+  const res = await supabase.rpc('move_challenge_session', { p_id: id, p_delta: delta })
   noteRequest(res.error)
   return { error: res.error?.message ?? null }
 }

@@ -1,9 +1,13 @@
+import { Ionicons } from '@expo/vector-icons'
+import { msg } from '@lingui/core/macro'
 import { Trans, useLingui } from '@lingui/react/macro'
 import { Text, View } from 'react-native'
 
 import { GradientText } from '@/components/gradient-text'
 import { AdminChip } from '@/components/overlays/admin-table'
 import { LiveDot } from '@/components/overlays/live-dot'
+import { TrackedPressable } from '@/components/tracked-pressable'
+import { DIM_INK } from '@/constants/colors'
 import { TYPE } from '@/constants/typography'
 import { STATUS_LABEL, type SpanStatus } from '@/lib/challenge-session'
 import { cn } from '@/lib/cn'
@@ -68,16 +72,20 @@ export function WhenBlock({ at }: { at: number }) {
 // A challenge this build has never heard of is drawn as what it is — the raw id and NOT
 // IN THIS BUILD — because `labelOf` would answer GAME for it, and a list of sessions all
 // called GAME is worse than useless.
-export function ChallengeTitle({ modeId }: { modeId: string }) {
+export function ChallengeTitle({
+  modeId,
+  className = TYPE.cardTitleSm,
+}: {
+  modeId: string
+  // The type role, for a caller that draws the name smaller than a list row does — the
+  // session form's challenge dropdown, whose rows and closed field are a button's height.
+  className?: string
+}) {
   const { t } = useLingui()
   if (modeById(modeId) === null) {
     return (
       <>
-        <Text
-          selectable={false}
-          numberOfLines={1}
-          className={cn(TYPE.cardTitleSm, 'text-dim')}
-        >
+        <Text selectable={false} numberOfLines={1} className={cn(className, 'text-dim')}>
           {modeId}
         </Text>
         <Text selectable={false} className={cn(TYPE.hint, 'text-red-500')}>
@@ -92,7 +100,63 @@ export function ChallengeTitle({ modeId }: { modeId: string }) {
       from={challengeInk(gradientOf(modeId)[0])}
       to={challengeInk(gradientOf(modeId)[1])}
       numberOfLines={1}
-      className={TYPE.cardTitleSm}
+      className={className}
     />
+  )
+}
+
+const MOVE_UP = msg`MOVE UP`
+const MOVE_DOWN = msg`MOVE DOWN`
+
+// One place earlier or later in the **queue**, on a planned row. Either is null at the
+// end it cannot go past, and that end draws an empty lane rather than a dimmed arrow — a
+// step that is never available is not a step that is temporarily off.
+//
+// Inside the row's own press target, which opens the form; the arrows take their own taps
+// first, the way a feature row's visibility button does. Busy is a no-op inside the press
+// rather than `disabled`: a disabled pressable gives the touch up, and it lands on the row
+// underneath, which opens the form instead of ignoring the tap. 40px tall, the height these
+// screens give anything a thumb aims at; 28px wide, because two of them share a lane.
+export function QueueMoves({
+  onUp,
+  onDown,
+  busy,
+}: {
+  onUp: (() => void) | null
+  onDown: (() => void) | null
+  busy: boolean
+}) {
+  const { t } = useLingui()
+  return (
+    <View className="flex-row justify-end gap-1">
+      {onUp === null ? (
+        <View className="h-10 w-7" />
+      ) : (
+        <TrackedPressable
+          id="admin.session_move_up"
+          accessibilityLabel={t(MOVE_UP)}
+          onPress={() => {
+            if (!busy) onUp()
+          }}
+          className={cn('h-10 w-7 items-center justify-center', busy && 'opacity-40')}
+        >
+          <Ionicons name="chevron-up" size={16} color={DIM_INK} />
+        </TrackedPressable>
+      )}
+      {onDown === null ? (
+        <View className="h-10 w-7" />
+      ) : (
+        <TrackedPressable
+          id="admin.session_move_down"
+          accessibilityLabel={t(MOVE_DOWN)}
+          onPress={() => {
+            if (!busy) onDown()
+          }}
+          className={cn('h-10 w-7 items-center justify-center', busy && 'opacity-40')}
+        >
+          <Ionicons name="chevron-down" size={16} color={DIM_INK} />
+        </TrackedPressable>
+      )}
+    </View>
   )
 }

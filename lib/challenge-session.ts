@@ -2,13 +2,12 @@
 // end. The admin's booking, and the whole of the arithmetic behind the planner screen.
 //
 // Instants are `number` throughout, ms since the epoch, which is the unit every other
-// clock in this app runs on. The two edges convert: the picker hands back a `Date`, and
-// the database holds `timestamptz`. Nothing in between knows about either.
+// clock in this app runs on. The database holds `timestamptz` and `listSessions` converts
+// at the edge; nothing in here knows about it.
 //
-// Deliberately no React and no Supabase here. The planner's one genuinely subtle fact —
-// that the default pair and a dragged start follow *different* rules across a
-// daylight-saving boundary — is a thing a test can pin, and this is the file it is
-// pinned in.
+// Deliberately no React and no Supabase here. When a session opens is not worked out
+// here at all any more: the server times the **queue** onto its noons (see
+// 20261103000000_session_queue.sql), and the planner only orders and counts the rows.
 
 export type SessionSpan = {
   opensAt: number
@@ -28,72 +27,6 @@ export const STATUS_LABEL = {
   upcoming: 'UPCOMING',
   expired: 'EXPIRED',
 } as const satisfies Record<SpanStatus, string>
-
-// The hour a session opens and closes on by default. Noon rather than midnight: a
-// window that turns over in the middle of the night turns over while nobody is playing,
-// and the day a challenge is "on" should be a day a player recognises as one.
-const DEFAULT_HOUR = 12
-
-// What PLAN SESSION opens on: the first noon at or after the last session booked closes,
-// through the noon after that — so a new booking queues up behind what is already
-// planned instead of colliding with it. With nothing booked ahead of `now`, it is
-// tomorrow at noon.
-//
-// "At or after", not "after": windows are half-open, so one opening at the instant the
-// last one closes meets it end to end without overlapping, which is the point of a noon
-// close.
-//
-// Built out of wall-clock noon twice over rather than as "noon plus twenty-four hours",
-// and that distinction is the point. Across a daylight-saving boundary these two noons
-// are 23 or 25 hours apart — which is what two noons *are*, and what was asked for. A
-// dragged start behaves differently on purpose; see `withOpensAt`.
-export function defaultSpan(
-  now: number,
-  lastClosesAt: number | null = null,
-): SessionSpan {
-  const noonAfter = (day: Date, dayOffset: number): number =>
-    new Date(
-      day.getFullYear(),
-      day.getMonth(),
-      day.getDate() + dayOffset,
-      DEFAULT_HOUR,
-    ).getTime()
-  if (lastClosesAt === null || lastClosesAt <= now) {
-    const today = new Date(now)
-    return { opensAt: noonAfter(today, 1), closesAt: noonAfter(today, 2) }
-  }
-  const closeDay = new Date(lastClosesAt)
-  const opensAt =
-    noonAfter(closeDay, 0) >= lastClosesAt
-      ? noonAfter(closeDay, 0)
-      : noonAfter(closeDay, 1)
-  return { opensAt, closesAt: noonAfter(new Date(opensAt), 1) }
-}
-
-// The start moved, the span kept.
-//
-// What is held steady is the duration in **milliseconds**, not the wall-clock end — so a
-// session dragged across a daylight-saving boundary stays the twenty-four hours it was
-// rather than staying noon-to-noon. The admin set a length; moving when it begins is not
-// a request to change how long it runs.
-export const withOpensAt = (span: SessionSpan, opensAt: number): SessionSpan => ({
-  opensAt,
-  closesAt: opensAt + (span.closesAt - span.opensAt),
-})
-
-// The end moved, and nothing else. The one direction that does not drag its partner: an
-// admin changing the end *is* asking for a different length, which is the whole reason
-// the field is there.
-export const withClosesAt = (span: SessionSpan, closesAt: number): SessionSpan => ({
-  opensAt: span.opensAt,
-  closesAt,
-})
-
-// Whether this is a span at all. A session that closes when it opens is not a short
-// session, it is a session nobody can play — and the database refuses it too, with a
-// check constraint, because this answer has to hold against a caller that is not the
-// planner screen.
-export const isValidSpan = (span: SessionSpan): boolean => span.closesAt > span.opensAt
 
 // Where a span stands against a moment.
 //
@@ -164,3 +97,42 @@ export const shownByStatus = <T extends SessionSpan>(
   enabled: ReadonlySet<SpanStatus>,
   now: number,
 ): T[] => sessions.filter((session) => enabled.has(spanStatus(session, now)))
+
+// The planner's order: what is on now, then the **queue** in the order it will open, then
+// what already ran, newest first.
+//
+// The queue reads earliest first because that is the order it runs in and the order its
+// MOVE UP / MOVE DOWN mean anything in — a queue drawn newest-first would put "up" at the
+// bottom. The past keeps the newest-first the whole list used to have, so last week sits
+// right under the queue and last month falls away below.
+const STATUS_RANK = { live: 0, upcoming: 1, expired: 2 } as const satisfies Record<
+  SpanStatus,
+  number
+>
+
+export const queueOrder = <T extends SessionSpan>(
+  sessions: readonly T[],
+  now: number,
+): T[] =>
+  sessions.toSorted((a, b) => {
+    const status = spanStatus(a, now)
+    const rank = STATUS_RANK[status] - STATUS_RANK[spanStatus(b, now)]
+    if (rank !== 0) return rank
+    return status === 'expired' ? b.opensAt - a.opensAt : a.opensAt - b.opensAt
+  })
+
+// How many sessions of each challenge have **closed** — the figure the challenge picker
+// puts beside each name, because how often one has already run is what an admin choosing
+// the next is choosing by. Live and queued ones are not counted: one that has not finished
+// has not run. A challenge with none is simply absent; the caller reads it as nought.
+export const pastCountByMode = (
+  sessions: readonly (SessionSpan & { modeId: string })[],
+  now: number,
+): ReadonlyMap<string, number> =>
+  sessions
+    .filter((session) => spanStatus(session, now) === 'expired')
+    .reduce(
+      (counts, session) =>
+        counts.set(session.modeId, (counts.get(session.modeId) ?? 0) + 1),
+      new Map<string, number>(),
+    )

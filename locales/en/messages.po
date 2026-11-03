@@ -206,12 +206,13 @@ msgstr ", [B] with [S]"
 msgid "???"
 msgstr "???"
 
+#: components/overlays/admin-messages.tsx:258
 #: components/overlays/admin-people.tsx:76
 #: components/overlays/admin-person.tsx:154
 msgid "(no nickname)"
 msgstr "(no nickname)"
 
-#: components/overlays/admin-messages.tsx:255
+#: components/overlays/admin-messages.tsx:256
 msgid "(profile removed)"
 msgstr "(profile removed)"
 
@@ -366,6 +367,10 @@ msgstr "{lastRunDays, plural, other {last played # days ago}}"
 #: components/overlays/admin-overlay.tsx:423
 msgid "{owed} owed an answer"
 msgstr "{owed} owed an answer"
+
+#: components/overlays/admin-session.tsx:230
+msgid "{sessions, plural, one {# SESSION} other {# SESSIONS}}"
+msgstr "{sessions, plural, one {# SESSION} other {# SESSIONS}}"
 
 #. placeholder {0}: fortuneOf(score, difficulty)
 #. placeholder {0}: groupDigits(summary.mine.bonus)
@@ -736,7 +741,7 @@ msgid "ANOTHER CHALLENGE IS ON ITS WAY"
 msgstr "ANOTHER CHALLENGE IS ON ITS WAY"
 
 #: components/overlays/admin-messages.tsx:98
-#: components/overlays/admin-messages.tsx:335
+#: components/overlays/admin-messages.tsx:339
 msgid "ANSWER"
 msgstr "ANSWER"
 
@@ -772,7 +777,7 @@ msgstr "APRIL"
 msgid "ARE YOU WINNING?"
 msgstr "ARE YOU WINNING?"
 
-#: components/overlays/admin-messages.tsx:272
+#: components/overlays/admin-messages.tsx:276
 msgid "ASIDE"
 msgstr "ASIDE"
 
@@ -815,9 +820,9 @@ msgstr "AVG SPD"
 #: components/game/arcade-over.tsx:49
 #: components/overlays/admin-access.tsx:117
 #: components/overlays/admin-knowledge.tsx:349
-#: components/overlays/admin-messages.tsx:376
-#: components/overlays/admin-session.tsx:189
-#: components/overlays/admin-sessions.tsx:184
+#: components/overlays/admin-messages.tsx:380
+#: components/overlays/admin-session.tsx:194
+#: components/overlays/admin-sessions.tsx:242
 #: components/overlays/admin-stats.tsx:143
 #: components/overlays/whats-new-overlay.tsx:107
 msgid "BACK"
@@ -869,13 +874,13 @@ msgstr "Best scores, up top"
 msgid "BETTER ON YOUR PHONE"
 msgstr "BETTER ON YOUR PHONE"
 
-#: modes/challenges/catalog.ts:750
-msgid "BINARY"
-msgstr "BINARY"
-
 #: modes/challenges/catalog.ts:753
 msgid "BIN"
 msgstr "BIN"
+
+#: modes/challenges/catalog.ts:750
+msgid "BINARY"
+msgstr "BINARY"
 
 #: constants/achievements.ts:360
 msgid "BLUR"
@@ -926,7 +931,7 @@ msgstr "CAN WE LOOK UNDER YOUR THUMBS?"
 msgid "CANCEL"
 msgstr "CANCEL"
 
-#: components/overlays/admin-session.tsx:182
+#: components/overlays/admin-session.tsx:185
 msgid "CANCEL SESSION"
 msgstr "CANCEL SESSION"
 
@@ -946,7 +951,8 @@ msgstr "CEILING"
 msgid "Chain your hits — a streak multiplies your points ×2 → ×4 → ×8. Accuracy counts optimal routes, Speed counts hits with most of the ring left."
 msgstr "Chain your hits — a streak multiplies your points ×2 → ×4 → ×8. Accuracy counts optimal routes, Speed counts hits with most of the ring left."
 
-#: components/overlays/admin-session.tsx:196
+#: components/overlays/admin-session.tsx:201
+#: components/overlays/admin-session.tsx:212
 #: components/overlays/challenge-card.tsx:182
 #: components/overlays/challenge-modal.tsx:124
 #: modes/challenges/define.ts:89
@@ -958,8 +964,8 @@ msgstr "CHALLENGE"
 msgid "CHALLENGE CLOSES IN"
 msgstr "CHALLENGE CLOSES IN"
 
-#: components/overlays/admin-session.tsx:44
-#: components/overlays/admin-sessions.tsx:39
+#: components/overlays/admin-session.tsx:41
+#: components/overlays/admin-sessions.tsx:51
 #: components/overlays/how-to-play-overlay.tsx:58
 #: components/overlays/player-profile-overlay.tsx:622
 msgid "CHALLENGES"
@@ -991,6 +997,10 @@ msgstr "CHANGE EMAIL"
 msgid "CHANGE YOUR EMAIL"
 msgstr "CHANGE YOUR EMAIL"
 
+#: components/overlays/admin-session.tsx:213
+msgid "CHOOSE A CHALLENGE"
+msgstr "CHOOSE A CHALLENGE"
+
 #: components/overlays/install-steps.tsx:32
 msgid "Choose Add to Home Screen"
 msgstr "Choose Add to Home Screen"
@@ -1020,12 +1030,12 @@ msgstr "clock = time left ÷ ring"
 msgid "CLOSE"
 msgstr "CLOSE"
 
-#: components/overlays/admin-session.tsx:165
-#: components/overlays/admin-session.tsx:286
+#: components/overlays/admin-session.tsx:161
+#: components/overlays/admin-session.tsx:282
 msgid "CLOSE EARLY"
 msgstr "CLOSE EARLY"
 
-#: components/overlays/admin-session.tsx:266
+#: components/overlays/admin-session.tsx:262
 msgid "CLOSE THIS CHALLENGE NOW?"
 msgstr "CLOSE THIS CHALLENGE NOW?"
 
@@ -1205,8 +1215,7 @@ msgstr "END RUN"
 msgid "END TUTORIAL"
 msgstr "END TUTORIAL"
 
-#: components/overlays/admin-session.tsx:223
-#: components/overlays/admin-session.tsx:238
+#: components/overlays/admin-session.tsx:242
 msgid "ENDS"
 msgstr "ENDS"
 
@@ -1300,7 +1309,7 @@ msgstr "EVERYTHING THAT’S CHANGED"
 msgid "EXT"
 msgstr "EXT"
 
-#: components/overlays/admin-session.tsx:156
+#: components/overlays/admin-session.tsx:152
 msgid "EXTEND"
 msgstr "EXTEND"
 
@@ -1699,7 +1708,7 @@ msgstr "IN AND OUT"
 msgid "In Speed, go for whichever target sits closest to the current sum — fewer moves means more of the ring left, and the ring is what feeds your combo."
 msgstr "In Speed, go for whichever target sits closest to the current sum — fewer moves means more of the ring left, and the ring is what feeds your combo."
 
-#: components/overlays/admin-messages.tsx:276
+#: components/overlays/admin-messages.tsx:280
 msgid "IN THE POST"
 msgstr "IN THE POST"
 
@@ -2020,6 +2029,10 @@ msgstr "More to find"
 msgid "Move at least one key in every row of the dial."
 msgstr "Move at least one key in every row of the dial."
 
+#: components/overlays/admin-session-cells.tsx:109
+msgid "MOVE DOWN"
+msgstr "MOVE DOWN"
+
 #: lib/strike-rule.ts:27
 msgid "Move every key on the dial on the way to the target."
 msgstr "Move every key on the dial on the way to the target."
@@ -2027,6 +2040,10 @@ msgstr "Move every key on the dial on the way to the target."
 #: constants/achievements.ts:221
 msgid "Move more than one key in a single swipe."
 msgstr "Move more than one key in a single swipe."
+
+#: components/overlays/admin-session-cells.tsx:108
+msgid "MOVE UP"
+msgstr "MOVE UP"
 
 #: components/game/multiplayer-game.tsx:164
 #: components/overlays/how-to-play-overlay.tsx:59
@@ -2128,7 +2145,7 @@ msgstr "No features in the database."
 msgid "No figures. See the error above."
 msgstr "No figures. See the error above."
 
-#: components/overlays/admin-sessions.tsx:225
+#: components/overlays/admin-sessions.tsx:285
 msgid "No filters are on."
 msgstr "No filters are on."
 
@@ -2144,7 +2161,7 @@ msgstr "No lives, no rush."
 msgid "No lives, no speed-up, no strike. A hit that clears the board ×2."
 msgstr "No lives, no speed-up, no strike. A hit that clears the board ×2."
 
-#: components/overlays/admin-messages.tsx:406
+#: components/overlays/admin-messages.tsx:410
 msgid "No messages."
 msgstr "No messages."
 
@@ -2184,7 +2201,7 @@ msgstr "NO SESSION YET"
 msgid "No sessions have been planned."
 msgstr "No sessions have been planned."
 
-#: components/overlays/admin-sessions.tsx:227
+#: components/overlays/admin-sessions.tsx:287
 msgid "No sessions planned yet."
 msgstr "No sessions planned yet."
 
@@ -2261,7 +2278,7 @@ msgstr "Not everywhere, though. [W] held [BOARD] every day of the week."
 msgid "not in this build"
 msgstr "not in this build"
 
-#: components/overlays/admin-session-cells.tsx:84
+#: components/overlays/admin-session-cells.tsx:92
 msgid "NOT IN THIS BUILD"
 msgstr "NOT IN THIS BUILD"
 
@@ -2312,11 +2329,11 @@ msgstr "Nothing all-time moved. Every record standing on Monday was still standi
 msgid "Nothing announced yet."
 msgstr "Nothing announced yet."
 
-#: components/overlays/admin-sessions.tsx:229
+#: components/overlays/admin-sessions.tsx:289
 msgid "Nothing in these states."
 msgstr "Nothing in these states."
 
-#: components/overlays/admin-messages.tsx:404
+#: components/overlays/admin-messages.tsx:408
 msgid "Nothing is waiting for an answer."
 msgstr "Nothing is waiting for an answer."
 
@@ -2526,7 +2543,7 @@ msgstr "OR RESTORE YOUR PROFILE"
 msgid "Out of hearts and the run is over. That and the mouth are the only two ways one ends."
 msgstr "Out of hearts and the run is over. That and the mouth are the only two ways one ends."
 
-#: components/overlays/admin-messages.tsx:267
+#: components/overlays/admin-messages.tsx:271
 #: components/overlays/admin-stats.tsx:64
 msgid "OWED"
 msgstr "OWED"
@@ -2583,7 +2600,7 @@ msgstr "Pick ADVENTURE on the start screen. The dial is the same dial — but th
 msgid "PLACED"
 msgstr "PLACED"
 
-#: components/overlays/admin-sessions.tsx:178
+#: components/overlays/admin-sessions.tsx:236
 msgid "PLAN SESSION"
 msgstr "PLAN SESSION"
 
@@ -2698,7 +2715,7 @@ msgstr "public"
 msgid "Pure practice — no lives, no score, and a relaxed clock."
 msgstr "Pure practice — no lives, no score, and a relaxed clock."
 
-#: components/overlays/admin-messages.tsx:356
+#: components/overlays/admin-messages.tsx:360
 msgid "PUT BACK"
 msgstr "PUT BACK"
 
@@ -2750,6 +2767,10 @@ msgstr "Records, celebrated"
 msgid "REMOVE"
 msgstr "REMOVE"
 
+#: components/overlays/admin-session.tsx:183
+msgid "REMOVE FROM QUEUE"
+msgstr "REMOVE FROM QUEUE"
+
 #: components/overlays/email-code-modal.tsx:584
 msgid "RESEND CODE"
 msgstr "RESEND CODE"
@@ -2774,7 +2795,7 @@ msgstr "RESTORING…"
 msgid "RESULTS"
 msgstr "RESULTS"
 
-#: components/overlays/admin-messages.tsx:337
+#: components/overlays/admin-messages.tsx:341
 msgid "REWRITE"
 msgstr "REWRITE"
 
@@ -2883,7 +2904,7 @@ msgstr "Satiety"
 msgid "Saturday"
 msgstr "Saturday"
 
-#: components/overlays/admin-session.tsx:143
+#: components/overlays/admin-session.tsx:139
 #: components/overlays/motto-modal.tsx:156
 msgid "SAVE"
 msgstr "SAVE"
@@ -3030,7 +3051,7 @@ msgstr "SESSION IS PLANNED FOR {opens}"
 msgid "SESSION RECORDING"
 msgstr "SESSION RECORDING"
 
-#: components/overlays/admin-messages.tsx:358
+#: components/overlays/admin-messages.tsx:362
 msgid "SET ASIDE"
 msgstr "SET ASIDE"
 
@@ -3171,8 +3192,7 @@ msgstr "START GAME"
 msgid "START TUTORIAL"
 msgstr "START TUTORIAL"
 
-#: components/overlays/admin-session.tsx:222
-#: components/overlays/admin-session.tsx:231
+#: components/overlays/admin-session.tsx:241
 msgid "STARTS"
 msgstr "STARTS"
 
@@ -3390,7 +3410,7 @@ msgstr "That is longer than {MOTTO_MAX} characters."
 msgid "The all-time boards were left exactly as they were found."
 msgstr "The all-time boards were left exactly as they were found."
 
-#: components/overlays/admin-messages.tsx:313
+#: components/overlays/admin-messages.tsx:317
 msgid "THE ANSWER"
 msgstr "THE ANSWER"
 
@@ -3487,7 +3507,7 @@ msgstr "The rules are its own. The keys, the clock, the scoring, how many lives 
 msgid "The same nine, every run. Be quick."
 msgstr "The same nine, every run. Be quick."
 
-#: components/overlays/admin-session.tsx:272
+#: components/overlays/admin-session.tsx:268
 msgid "The standings stay exactly as they are and the places settle now. This cannot be undone — running it again is a new session, with a board of its own."
 msgstr "The standings stay exactly as they are and the places settle now. This cannot be undone — running it again is a new session, with a board of its own."
 

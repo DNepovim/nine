@@ -199,16 +199,17 @@ export type ButtonId =
   | 'admin.visibility_option'
   | 'admin.visibility_confirm'
   // The hub's three buttons, and the planner behind the second of them. `admin.section`
-  // is every hub button and `admin.session_when` both date-time fields: the breakdown
-  // is by screen, and a second id per pair would split one affordance in the funnel for
-  // a question nobody is asking.
+  // is every hub button: the breakdown is by screen, and an id per button would split one
+  // affordance in the funnel for a question nobody is asking. The challenge field is
+  // `admin.select` now, the same dropdown every admin screen opens.
   | 'admin.section'
   | 'admin.session'
   | 'admin.session_new'
   | 'admin.session_save'
   | 'admin.session_cancel'
-  | 'admin.session_challenge'
-  | 'admin.session_when'
+  // One place earlier or later in the queue, on a planned row of the list.
+  | 'admin.session_move_up'
+  | 'admin.session_move_down'
   // The two acts a live window allows, and the confirmations in front of them. Separate
   // from `admin.session_cancel`, which deletes a booking: closing early settles the
   // standings of a session that is running, and the two sit one above the other on the

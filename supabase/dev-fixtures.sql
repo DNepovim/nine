@@ -43,6 +43,8 @@ declare
   closed_slip  uuid := '5e551011-0000-0000-0000-000000000006';
   live   uuid := '5e551011-0000-0000-0000-000000000001';
   teased uuid := '5e551011-0000-0000-0000-000000000002';
+  queued_grid  uuid := '5e551011-0000-0000-0000-000000000007';
+  queued_slip  uuid := '5e551011-0000-0000-0000-000000000008';
   n_admin int;
 begin
   if not public.is_local_stack() then
@@ -97,6 +99,16 @@ begin
     (teased, 'challenge/four-keys', now() + interval '1 day',   now() + interval '2 days')
   on conflict (id) do update
     set opens_at = excluded.opens_at, closes_at = excluded.closes_at;
+
+  -- Two more behind the teased one, so the planner's queue has a first row, a middle and a
+  -- last — the three ways its MOVE UP / MOVE DOWN are drawn. The times are placeholders in
+  -- the right order; the re-pack lays all three onto the cadence.
+  insert into public.challenge_sessions (id, mode_id, opens_at, closes_at, measure) values
+    (queued_grid, 'challenge/four-by-four', now() + interval '3 days', now() + interval '4 days', 'score'),
+    (queued_slip, 'challenge/no-slip',      now() + interval '5 days', now() + interval '6 days', 'hits')
+  on conflict (id) do update
+    set opens_at = excluded.opens_at, closes_at = excluded.closes_at, measure = excluded.measure;
+  perform public.repack_challenge_queue();
 
   -- A board on the live one, so the card has a leader to name and the modal is not drawn
   -- in its empty state. `do nothing` rather than `do update`: `session_scores` carries a

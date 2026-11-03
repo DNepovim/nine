@@ -1,14 +1,15 @@
 import { msg } from '@lingui/core/macro'
-import { Trans, useLingui } from '@lingui/react/macro'
+import { Plural, Trans, useLingui } from '@lingui/react/macro'
 import { useState } from 'react'
 import { ScrollView, Text, View } from 'react-native'
 
-import { DateTimeField } from '@/components/date-time-field'
 import { AdminDialog } from '@/components/overlays/admin-dialog'
 import { AdminExtendDialog } from '@/components/overlays/admin-extend-dialog'
-import { AdminPills } from '@/components/overlays/admin-pills'
 import { AdminScreen } from '@/components/overlays/admin-screen'
+import { AdminSelect } from '@/components/overlays/admin-select'
+import { ChallengeTitle } from '@/components/overlays/admin-session-cells'
 import { WhenRow } from '@/components/overlays/admin-when-row'
+import { ChallengeMark } from '@/components/overlays/challenge-mark'
 import { PrimaryButton } from '@/components/primary-button'
 import { TYPE } from '@/constants/typography'
 import {
@@ -19,17 +20,12 @@ import {
   planSession,
   type AdminSession as Session,
 } from '@/lib/admin/sessions'
-import {
-  defaultSpan,
-  isValidSpan,
-  spanStatus,
-  withClosesAt,
-  withOpensAt,
-  type SessionSpan,
-} from '@/lib/challenge-session'
+import { spanStatus } from '@/lib/challenge-session'
 import { cn } from '@/lib/cn'
 import { formatDayTime } from '@/lib/format-date'
+import { gradientOf } from '@/modes'
 import { CHALLENGES } from '@/modes/challenges/catalog'
+import { challengeInk } from '@/modes/challenges/palette'
 
 // Which window is open over the form, if any. Both are confirmations rather than
 // questions with more than one answer, and neither is a screen — see `AdminDialog`.
@@ -38,21 +34,26 @@ type Asking = 'close' | 'extend' | null
 // One session, being planned or being corrected — and one form for both, because they
 // differ only in whether there is a row behind it. `session` null is a new one.
 //
-// The span lives here rather than in the two fields. That is what lets the start move
-// the end: a field holding its own draft could only ever report its own value, and the
-// rule that the span is preserved when the start is dragged is a fact about the pair.
+// There is no span on this form any more. The server times the **queue** onto its noons
+// (20261103000000_session_queue.sql), so a new session is a challenge put at the end of
+// it and an existing one shows when it runs without offering to move it — its place in
+// the queue is changed from the list, a step at a time.
 const TITLE = msg`CHALLENGES`
+
+// The mark beside each name in the challenge field, at the size the field's one line
+// holds without growing.
+const MARK_SIZE = 20
 
 export function AdminSession({
   session,
-  lastClosesAt,
+  pastCounts,
   onChanged,
   onBack,
 }: {
   session: Session | null
-  // When the latest booked session closes, or null with none — where a new one's start
-  // is prefilled from. Unused when editing.
-  lastClosesAt: number | null
+  // How many sessions of each challenge have closed, by registry id — read off the rows
+  // the list already loaded, so the field's figures cost no read of their own.
+  pastCounts: ReadonlyMap<string, number>
   onChanged: () => void
   // Where BACK, SAVE and CANCEL SESSION all end up. A session is opened from the list
   // and finished with on the list — closing the whole admin screen from here would take
@@ -60,14 +61,6 @@ export function AdminSession({
   onBack: () => void
 }) {
   const { t } = useLingui()
-  // The first noon after the last booking, for a new one — see `defaultSpan`. Read once on mount:
-  // the default is a function of *when the form was opened*, and recomputing it per
-  // render would move the fields under the admin at midnight.
-  const [span, setSpan] = useState<SessionSpan>(() =>
-    session === null
-      ? defaultSpan(Date.now(), lastClosesAt)
-      : { opensAt: session.opensAt, closesAt: session.closesAt },
-  )
   const [modeId, setModeId] = useState<string | null>(session?.modeId ?? null)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -79,7 +72,8 @@ export function AdminSession({
 
   // Whether a running window's two acts are on offer. About the clock, not the board:
   // EXTEND and CLOSE EARLY are things you do to a window that is open right now.
-  const live = session !== null && spanStatus(session, openedAt) === 'live'
+  const status = session === null ? null : spanStatus(session, openedAt)
+  const live = status === 'live'
 
   // Whether the form may still rewrite this session. About the **board**, not the clock,
   // and it has to be: the server refuses a challenge or a span change once anybody has
@@ -88,19 +82,22 @@ export function AdminSession({
   // locked on liveness would shut the door the server leaves open.
   const locked = session !== null && session.played > 0
 
-  const valid = isValidSpan(span)
-  // The challenge is the one thing a session cannot be saved without. The span always
-  // has an answer — it opens on one — so SAVE is shut only for an end that is not after
-  // its start, and for a session nobody has said which challenge it is for.
-  const canSave = valid && modeId !== null && !busy
+  // Whether the challenge is still the form's to change. Not once anybody has scored, and
+  // not once the session is over either, played or not: a past row is the record of what
+  // ran, and re-pointing it would rewrite the run counts beside every challenge and the
+  // auto-planner's idea of which one has gone longest without. Deleting an unplayed past
+  // row stays on offer — that is `locked`'s, below — because taking a mistake away is not
+  // rewriting history.
+  const readOnly = locked || status === 'expired'
+
+  // The challenge is the one thing left to say, so it is the one thing SAVE waits for.
+  const canSave = modeId !== null && !busy
 
   const save = async () => {
     if (modeId === null) return
     setBusy(true)
     const res =
-      session === null
-        ? await planSession(modeId, span)
-        : await editSession(session.id, modeId, span)
+      session === null ? await planSession(modeId) : await editSession(session.id, modeId)
     setBusy(false)
     if (res.error !== null) {
       setError(res.error)
@@ -131,9 +128,8 @@ export function AdminSession({
       error={error}
       footer={
         <View className="gap-2">
-          {/* Nothing worth saving once anybody has scored: the server refuses both the
-              challenge and the span. */}
-          {!locked && (
+          {/* Nothing worth saving once the challenge is not the form's to change. */}
+          {!readOnly && (
             <PrimaryButton
               id="admin.session_save"
               onPress={() => {
@@ -170,7 +166,10 @@ export function AdminSession({
               who booked the wrong thing can take it away, and a guard stopping them would
               be preserving the mistake instead. What it no longer offers is deleting a
               **board**: the server refuses a row anybody has scored on, live or not, and
-              a live row outright. Closing early is what a running window gets instead. */}
+              a live row outright. Closing early is what a running window gets instead.
+
+              Named for what it does to a queued row — the ones behind it move up a slot —
+              and for what it is to one that already ran. The same RPC either way. */}
           {session !== null && !live && !locked && (
             <PrimaryButton
               id="admin.session_cancel"
@@ -179,7 +178,13 @@ export function AdminSession({
                 void write(() => cancelSession(session.id))
               }}
               disabled={busy}
-              label={<Trans>CANCEL SESSION</Trans>}
+              label={
+                status === 'upcoming' ? (
+                  <Trans>REMOVE FROM QUEUE</Trans>
+                ) : (
+                  <Trans>CANCEL SESSION</Trans>
+                )
+              }
             />
           )}
           <PrimaryButton
@@ -198,52 +203,45 @@ export function AdminSession({
         {/* Every challenge ever written, not only the ones whose compiled window happens
             to be open — the whole point of a session is that when a challenge is on stops
             being a build-time fact, so a picker filtered by the old windows would offer
-            the one thing nobody needs to plan. */}
-        <AdminPills
-          id="admin.session_challenge"
+            the one thing nobody needs to plan.
+
+            Each with its mark and its own colours, which is how a player knows it on the
+            card, and how many times it has already run — the figure an admin choosing
+            the next one is choosing by. */}
+        <AdminSelect
+          title={<Trans>CHALLENGE</Trans>}
+          // A booking for a challenge this build does not carry names it by its id, the
+          // way the list does, rather than claiming nothing is chosen.
+          placeholder={modeId ?? <Trans>CHOOSE A CHALLENGE</Trans>}
           value={modeId}
           onSelect={setModeId}
-          // A challenge cannot change once anybody has scored — `busy` is what this
-          // control has for "do not answer".
-          busy={busy || locked}
-          options={CHALLENGES.map((challenge) => ({
-            value: challenge.id,
-            label: t(challenge.label),
-          }))}
+          disabled={busy || readOnly}
+          options={CHALLENGES.map((challenge) => {
+            // Sessions, not runs: a run is one game, and this counts closed sessions.
+            const sessions = pastCounts.get(challenge.id) ?? 0
+            return {
+              value: challenge.id,
+              icon: (
+                <ChallengeMark
+                  modeId={challenge.id}
+                  color={challengeInk(gradientOf(challenge.id)[1])}
+                  size={MARK_SIZE}
+                />
+              ),
+              label: <ChallengeTitle modeId={challenge.id} className={TYPE.buttonSm} />,
+              detail: <Plural value={sessions} one="# SESSION" other="# SESSIONS" />,
+            }
+          })}
         />
 
-        {/* A played session's span is drawn rather than offered. Read-only rows rather
-            than pickers that refuse on tap: the fields are the clearest place to say that
-            this window is no longer the form's to move, and discovering it by tapping is
-            worse than being told. If it is also live, EXTEND is in the footer and is the
-            one way the end still moves. */}
-        {locked ? (
+        {/* When it runs, stated rather than offered: the queue sets it. A new session has
+            no row yet and so no time to state — it lands at the end of the queue, and the
+            list it returns to shows where. If it is live, EXTEND in the footer is the one
+            way the end still moves. */}
+        {session !== null && (
           <View className="mt-4 gap-2">
-            <WhenRow label={<Trans>STARTS</Trans>} at={formatDayTime(span.opensAt)} />
-            <WhenRow label={<Trans>ENDS</Trans>} at={formatDayTime(span.closesAt)} />
-          </View>
-        ) : (
-          <View className="mt-4">
-            {/* Moving the start takes the end with it, keeping the length the admin set —
-                so booking the same window a day later is one change rather than two. The
-                end moves alone, because changing it *is* asking for a different length. */}
-            <DateTimeField
-              label={<Trans>STARTS</Trans>}
-              value={span.opensAt}
-              onChange={(next) => {
-                setSpan((current) => withOpensAt(current, next))
-              }}
-            />
-            <DateTimeField
-              label={<Trans>ENDS</Trans>}
-              value={span.closesAt}
-              // Only the end is marked. The pair is what is wrong, but the end is the half
-              // the admin has to move to fix it — the start is whatever they meant it to be.
-              invalid={!valid}
-              onChange={(next) => {
-                setSpan((current) => withClosesAt(current, next))
-              }}
-            />
+            <WhenRow label={<Trans>STARTS</Trans>} at={formatDayTime(session.opensAt)} />
+            <WhenRow label={<Trans>ENDS</Trans>} at={formatDayTime(session.closesAt)} />
           </View>
         )}
       </ScrollView>

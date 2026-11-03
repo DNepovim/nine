@@ -6,9 +6,8 @@ import { cn } from '@/lib/cn'
 
 // One instant, stated rather than offered.
 //
-// What the session form draws in place of a `DateTimeField` once a window is live: the
-// same label, the same figure, and no way in. A picker that refused on tap would say the
-// same thing a beat later and only to somebody who tried.
+// What the session form draws for when a session runs. There was a picker here once; the
+// **queue** sets the times now, so the form states them and offers no way in.
 export function WhenRow({ label, at }: { label: ReactNode; at: string }) {
   return (
     <View className="h-10 flex-row items-center justify-between">

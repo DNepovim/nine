@@ -9,6 +9,7 @@ import { AdminScreen } from '@/components/overlays/admin-screen'
 import { AdminSession } from '@/components/overlays/admin-session'
 import {
   ChallengeTitle,
+  QueueMoves,
   StatusChip,
   WhenBlock,
 } from '@/components/overlays/admin-session-cells'
@@ -16,8 +17,19 @@ import { AdminTable, type AdminTableRow } from '@/components/overlays/admin-tabl
 import { PrimaryButton } from '@/components/primary-button'
 import { TYPE } from '@/constants/typography'
 import { refreshOpenSessions } from '@/hooks/use-open-sessions'
-import { listSessions, type AdminSession as Session } from '@/lib/admin/sessions'
-import { shownByStatus, spanStatus, type SpanStatus } from '@/lib/challenge-session'
+import {
+  listSessions,
+  moveSession,
+  type QueueStep,
+  type AdminSession as Session,
+} from '@/lib/admin/sessions'
+import {
+  pastCountByMode,
+  queueOrder,
+  shownByStatus,
+  spanStatus,
+  type SpanStatus,
+} from '@/lib/challenge-session'
 import { cn } from '@/lib/cn'
 import { formatWindowLength } from '@/lib/duration'
 
@@ -66,6 +78,9 @@ export function AdminSessions({ onBack }: { onBack: () => void }) {
   const [rows, setRows] = useState<Session[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  // A step in the queue is in flight. Every arrow waits on it, not only the pressed one:
+  // a second tap lands on a list whose order the first is about to change.
+  const [moving, setMoving] = useState(false)
   const [editing, setEditing] = useState<Editing>(null)
   const [lit, setLit] = useState<ReadonlySet<SpanStatus>>(() => new Set(LIT_ON_ARRIVAL))
 
@@ -85,33 +100,50 @@ export function AdminSessions({ onBack }: { onBack: () => void }) {
   // writes the server now refuses. The clock has to move when the rows do.
   const [openedAt, setOpenedAt] = useState(() => Date.now())
 
+  // One read, shared by the load below and by a step in the queue. `shown` is an error the
+  // caller already has — a refused step — which a good read must not wipe. A failed read
+  // keeps the rows on screen rather than blanking the planner for a write that landed.
+  const load = async (shown: string | null = null) => {
+    const res = await listSessions()
+    setOpenedAt(Date.now())
+    if (res.error === null) setRows(res.rows)
+    setError(shown ?? res.error)
+    setLoading(false)
+  }
+
   useEffect(() => {
-    void (async () => {
-      const res = await listSessions()
-      setOpenedAt(Date.now())
-      setRows(res.rows)
-      setError(res.error)
-      setLoading(false)
-    })()
+    void load()
     // `epoch` bumps after the form's writes as well. Only the first read has nothing to
     // draw, and `loading` is never set back to true, so a save does not blank the list.
   }, [epoch])
+
+  // After any write: read the list again, and tell the intro's card, which reads its
+  // sessions once a launch — a booking, and now a step in the queue, are the things that
+  // have to reach it without one.
+  const changed = () => {
+    setEpoch((n) => n + 1)
+    refreshOpenSessions()
+  }
+
+  // A step reads the list itself rather than bumping `epoch`, for two reasons the effect
+  // cannot serve. A refused step's error ("no longer in the queue") has to survive the
+  // good read after it. And `moving` has to stay up until the new order is drawn: arrows
+  // that come back over the old order invite a second tap aimed at a row that has
+  // already moved.
+  const move = async (id: string, delta: QueueStep) => {
+    setMoving(true)
+    const step = await moveSession(id, delta)
+    await load(step.error)
+    setMoving(false)
+    refreshOpenSessions()
+  }
 
   if (editing !== null) {
     return (
       <AdminSession
         session={editing === 'new' ? null : editing}
-        lastClosesAt={
-          editing === 'new' && rows.length > 0
-            ? rows.reduce((latest, row) => Math.max(latest, row.closesAt), 0)
-            : null
-        }
-        onChanged={() => {
-          setEpoch((n) => n + 1)
-          // The intro's card reads its sessions once a launch; a booking is the one
-          // thing that has to reach it without one.
-          refreshOpenSessions()
-        }}
+        pastCounts={pastCountByMode(rows, openedAt)}
+        onChanged={changed}
         onBack={() => {
           setEditing(null)
         }}
@@ -131,7 +163,16 @@ export function AdminSessions({ onBack }: { onBack: () => void }) {
     { live: 0, upcoming: 0, expired: 0 },
   )
 
-  const shown = shownByStatus(rows, lit, openedAt)
+  // Live, then the queue in the order it runs, then the past newest first — see
+  // `queueOrder`. The server hands the rows back newest first, which is the right order
+  // for everything but the queue, and the queue is what this screen is now for.
+  const ordered = queueOrder(rows, openedAt)
+  const shown = shownByStatus(ordered, lit, openedAt)
+  // The queue's own ends, which have no step past them. Read off every row rather than the
+  // shown ones: a filter hiding nothing in the queue still leaves its ends where they are.
+  const queue = ordered.filter((session) => spanStatus(session, openedAt) === 'upcoming')
+  const firstQueued = queue[0]?.id
+  const lastQueued = queue.at(-1)?.id
 
   // One planned session per row: which challenge, when it opens, how long it runs, and
   // where that span stands against now.
@@ -157,6 +198,25 @@ export function AdminSessions({ onBack }: { onBack: () => void }) {
           </Text>
         </View>,
         <StatusChip status={status} />,
+        status === 'upcoming' ? (
+          <QueueMoves
+            busy={moving}
+            onUp={
+              session.id === firstQueued
+                ? null
+                : () => {
+                    void move(session.id, -1)
+                  }
+            }
+            onDown={
+              session.id === lastQueued
+                ? null
+                : () => {
+                    void move(session.id, 1)
+                  }
+            }
+          />
+        ) : null,
       ],
       onPress: () => {
         setEditing(session)
@@ -215,6 +275,8 @@ export function AdminSessions({ onBack }: { onBack: () => void }) {
             { width: 36 },
             { label: 'CHALLENGE', tone: 'name' },
             { width: 72, align: 'right' },
+            // The queue's two steps, on a planned row only.
+            { width: 60, align: 'right' },
           ]}
           rows={tableRows}
           empty={

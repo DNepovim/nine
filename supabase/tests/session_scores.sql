@@ -236,8 +236,7 @@ begin
   perform set_config('request.jwt.claims', json_build_object('sub', v_admin)::text, true);
 
   -- Untouched: the challenge may still be corrected.
-  perform edit_challenge_session(v_s, 'challenge/edit-you', now() - interval '1 hour',
-                                 now() + interval '1 hour');
+  perform edit_challenge_session(v_s, 'challenge/edit-you');
   assert (select mode_id from challenge_sessions where id = v_s) = 'challenge/edit-you',
     'an unplayed session should still be re-pointable';
 
@@ -246,8 +245,7 @@ begin
   perform submit_session_score(v_s, 700, 5, 'hard', now());
   perform set_config('request.jwt.claims', json_build_object('sub', v_admin)::text, true);
   begin
-    perform edit_challenge_session(v_s, 'challenge/somewhere-else',
-                                   now() - interval '1 hour', now() + interval '1 hour');
+    perform edit_challenge_session(v_s, 'challenge/somewhere-else');
     assert false, 'changing the challenge of a played session should have been refused';
   exception when others then
     assert sqlerrm like '%cannot change challenge%', 'wrong error: ' || sqlerrm;
@@ -255,25 +253,11 @@ begin
   assert (select mode_id from challenge_sessions where id = v_s) = 'challenge/edit-you',
     'the refused edit should have left the session alone';
 
-  -- And the span no longer moves either, which changed on 2026-10-16: this used to be
-  -- the ordinary reason to open the form, and the assertion below used to be its mirror
-  -- image. A board is a contest people have run in, so moving the window afterwards
-  -- changes what they were playing — EXTEND is the one way a played window still moves,
-  -- and it only ever adds time to the end. See 20261016020000_session_controls.sql.
-  begin
-    perform edit_challenge_session(v_s, 'challenge/edit-you', now() - interval '2 hours',
-                                   now() + interval '3 hours');
-    assert false, 'moving a played session''s span should have been refused';
-  exception when others then
-    assert sqlerrm like '%window cannot be moved%', 'wrong error: ' || sqlerrm;
-  end;
-  assert (select closes_at from challenge_sessions where id = v_s) < now() + interval '2 hours',
-    'the refused edit should have left the span alone';
-
-  -- An identical save is still a no-op rather than a refusal: the guard is about a
+  -- There is no span to move any more — the queue times every session, see
+  -- 20261103000000_session_queue.sql — so what is left of the old span assertions is
+  -- that an identical save is still a no-op rather than a refusal: the guard is about a
   -- rewrite, not about the form being opened.
-  perform edit_challenge_session(v_s, 'challenge/edit-you', now() - interval '1 hour',
-                                 now() + interval '1 hour');
+  perform edit_challenge_session(v_s, 'challenge/edit-you');
 
   raise notice 'session_scores.sql: the edit guard OK';
 

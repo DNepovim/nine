@@ -75,44 +75,36 @@ begin
   perform set_config('request.jwt.claims', json_build_object('sub', v_admin)::text, true);
 
   -- ── An admin may plan, edit and cancel ──────────────────────────────────────
-  v_id := plan_challenge_session(
-    'challenge/four-keys', '2026-12-01 12:00+00', '2026-12-02 12:00+00');
+  -- Planning takes a challenge and nothing else: the queue says when.
+  delete from challenge_sessions;
+  v_id := plan_challenge_session('challenge/four-keys');
   assert (select count(*) from challenge_sessions where id = v_id) = 1,
     'an admin should be able to plan a session';
-
-  -- The challenge as well as the span: a session is one editable row.
-  perform edit_challenge_session(
-    v_id, 'challenge/other', '2026-12-03 12:00+00', '2026-12-04 12:00+00');
-  assert (select mode_id from challenge_sessions where id = v_id) = 'challenge/other',
-    'editing should move the session onto the new challenge';
   assert (select opens_at from challenge_sessions where id = v_id)
-         = '2026-12-03 12:00+00'::timestamptz,
-    'editing should move the start';
+         = prague_noon_at_or_after(now()),
+    'the first session into an empty queue should open at the next noon';
 
-  -- ── Planning a clash is refused ─────────────────────────────────────────────
+  -- Editing re-points the challenge and leaves the times where the queue put them.
+  declare
+    v_opens timestamptz := (select opens_at from challenge_sessions where id = v_id);
   begin
-    perform plan_challenge_session(
-      'challenge/other', '2026-12-03 18:00+00', '2026-12-05 12:00+00');
-    assert false, 'planning over an existing session of the same challenge should fail';
-  exception when others then
-    assert sqlerrm like '%already booked%', 'wrong error: ' || sqlerrm;
+    perform edit_challenge_session(v_id, 'challenge/other');
+    assert (select mode_id from challenge_sessions where id = v_id) = 'challenge/other',
+      'editing should move the session onto the new challenge';
+    assert (select opens_at from challenge_sessions where id = v_id) = v_opens,
+      'editing should leave the start alone';
   end;
 
-  -- ── And so is editing *onto* one ────────────────────────────────────────────
-  -- The check runs against the new mode_id, not the stored one. A version that read the
-  -- stored one would let this through, which is the whole reason the parameter is there.
+  -- ── The same challenge twice is two airings, not a clash ────────────────────
   declare
     v_second uuid;
   begin
-    v_second := plan_challenge_session(
-      'challenge/four-keys', '2026-12-10 12:00+00', '2026-12-11 12:00+00');
-    begin
-      perform edit_challenge_session(
-        v_second, 'challenge/other', '2026-12-03 18:00+00', '2026-12-04 06:00+00');
-      assert false, 'editing onto an already booked challenge should fail';
-    exception when others then
-      assert sqlerrm like '%already booked%', 'wrong error: ' || sqlerrm;
-    end;
+    v_second := plan_challenge_session('challenge/other');
+    assert (select opens_at from challenge_sessions where id = v_second)
+           = ((((select opens_at from challenge_sessions where id = v_id)
+                 at time zone 'Europe/Prague')::date + 2) + time '12:00')
+             at time zone 'Europe/Prague',
+      'a second booking should join the queue two noons later';
     perform cancel_challenge_session(v_second);
   end;
 
@@ -120,8 +112,15 @@ begin
   declare
     v_past uuid;
   begin
-    v_past := plan_challenge_session(
-      'challenge/gone', '2020-01-01 12:00+00', '2020-01-02 12:00+00');
+    insert into challenge_sessions (mode_id, opens_at, closes_at)
+    values ('challenge/gone', '2020-01-01 12:00+00', '2020-01-02 12:00+00')
+    returning id into v_past;
+    begin
+      perform edit_challenge_session(v_past, 'challenge/other');
+      assert false, 're-pointing a closed session should have been refused';
+    exception when raise_exception then
+      assert sqlerrm like '%has closed%', format('refused for the wrong reason: %s', sqlerrm);
+    end;
     perform cancel_challenge_session(v_past);
     assert (select count(*) from challenge_sessions where id = v_past) = 0,
       'an expired session should still be cancellable';
@@ -135,18 +134,22 @@ begin
   perform set_config('request.jwt.claims', json_build_object('sub', v_plain)::text, true);
 
   begin
-    perform plan_challenge_session(
-      'challenge/four-keys', '2026-12-01 12:00+00', '2026-12-02 12:00+00');
+    perform plan_challenge_session('challenge/four-keys');
     assert false, 'a non-admin should not be able to plan a session';
   exception when others then
     assert sqlerrm like '%not an admin%', 'wrong error: ' || sqlerrm;
   end;
 
   begin
-    perform edit_challenge_session(
-      gen_random_uuid(), 'challenge/four-keys',
-      '2026-12-01 12:00+00', '2026-12-02 12:00+00');
+    perform edit_challenge_session(gen_random_uuid(), 'challenge/four-keys');
     assert false, 'a non-admin should not be able to edit a session';
+  exception when others then
+    assert sqlerrm like '%not an admin%', 'wrong error: ' || sqlerrm;
+  end;
+
+  begin
+    perform move_challenge_session(gen_random_uuid(), 1);
+    assert false, 'a non-admin should not be able to move a session';
   exception when others then
     assert sqlerrm like '%not an admin%', 'wrong error: ' || sqlerrm;
   end;
@@ -299,35 +302,8 @@ begin
   values ('challenge/four-keys', now() - interval '1 hour', now() + interval '1 hour')
   returning id into v_live;
 
-  -- ── A live session nobody has played is still the form's to correct ─────────
-  --
-  -- The guard is about the board, not the clock. supabase/tests/session_scores.sql has
-  -- asserted the challenge half of this since the day boards arrived; this is the span
-  -- half, and it is here because a first draft of this work keyed the lock on liveness
-  -- and silently took both away.
-  perform edit_challenge_session(
-    v_live, 'challenge/four-keys', now() - interval '2 hours', now() + interval '4 hours');
-  assert (select closes_at from challenge_sessions where id = v_live)
-         > now() + interval '3 hours',
-    'a live session nobody has played should still be editable';
-
-  -- ── Once it has a board, the span is refused too ────────────────────────────
   insert into session_scores (session_id, user_id, best_score, hits, difficulty, updated_at)
   values (v_live, v_admin, 4242, 9, 'hard', now());
-
-  begin
-    perform edit_challenge_session(
-      v_live, 'challenge/four-keys', now() - interval '2 hours', now() + interval '9 hours');
-    assert false, 'moving a played session''s window should have been refused';
-  exception when raise_exception then
-    assert sqlerrm like '%window cannot be moved%',
-      format('refused for the wrong reason: %s', sqlerrm);
-  end;
-
-  -- An edit that changes nothing is a no-op rather than an error: the guard is about a
-  -- rewrite, and refusing an identical save would make SAVE raise on an untouched screen.
-  perform edit_challenge_session(
-    v_live, 'challenge/four-keys', now() - interval '2 hours', now() + interval '4 hours');
 
   -- ── Deleting is the asymmetry: a live session goes nowhere even unplayed ────
   --
@@ -422,21 +398,13 @@ begin
   update profiles set role = 'admin' where id = v_admin;
   perform set_config('request.jwt.claims', json_build_object('sub', v_admin)::text, true);
 
-  -- An extension that would run into the next booking of the same challenge is refused,
-  -- by the same rule planning and editing answer to. Without this the overlap rule has a
-  -- door it never sees.
+  -- An extension that would run into the queue pushes the queue rather than being
+  -- refused: the queue is the server's to time, so it moves out of the way.
+  delete from challenge_sessions;
   insert into challenge_sessions (mode_id, opens_at, closes_at)
   values ('challenge/four-keys', now() - interval '1 hour', now() + interval '1 hour')
   returning id into v_a;
-  insert into challenge_sessions (mode_id, opens_at, closes_at)
-  values ('challenge/four-keys', now() + interval '2 hours', now() + interval '3 hours');
-
-  begin
-    perform extend_challenge_session(v_a, 120);
-    assert false, 'an extension overlapping the next booking should have been refused';
-  exception when raise_exception then
-    assert sqlerrm like '%already booked%', format('refused for the wrong reason: %s', sqlerrm);
-  end;
+  perform plan_challenge_session('challenge/four-keys');
 
   -- Nought and below are refused before anything is read.
   begin
@@ -446,38 +414,136 @@ begin
     assert sqlerrm like '%must be positive%', format('refused for the wrong reason: %s', sqlerrm);
   end;
 
-  -- One that fits is taken, to the minute, and leaves the mark the card reads.
+  -- Any length is taken, to the minute, and leaves the mark the card reads.
   select closes_at into v_closes from challenge_sessions where id = v_a;
-  perform extend_challenge_session(v_a, 30);
+  perform extend_challenge_session(v_a, 3 * 24 * 60);
   assert (select closes_at from challenge_sessions where id = v_a)
-         = v_closes + interval '30 minutes',
-    'an extension that fits should move the end by exactly what was asked';
+         = v_closes + interval '3 days',
+    'an extension should move the end by exactly what was asked';
   assert (select extended_at from challenge_sessions where id = v_a) is not null,
     'an extended session should carry the mark the card reads';
+  assert (select opens_at from challenge_sessions where opens_at > now())
+         >= v_closes + interval '3 days' + interval '23 hours',
+    'the queued session should have been pushed past the extended end and a day of rest';
 
-  -- ── …and loses it when the end is rewritten by hand ─────────────────────────
-  --
-  -- The mark is what the card reads to tell players the window was given more time. An
-  -- admin who extends, thinks better of it and edits the end back would otherwise leave
-  -- the card saying so for a window that was not.
-  perform edit_challenge_session(v_a, 'challenge/four-keys',
-                                 (select opens_at from challenge_sessions where id = v_a),
-                                 v_closes);
-  assert (select extended_at from challenge_sessions where id = v_a) is null,
-    'editing the end by hand should clear the extended mark';
-
-  -- An edit that leaves the end alone keeps it: the mark is about the end, not about the
-  -- form having been opened.
-  perform extend_challenge_session(v_a, 30);
-  perform edit_challenge_session(v_a, 'challenge/four-keys',
-                                 (select opens_at from challenge_sessions where id = v_a),
-                                 (select closes_at from challenge_sessions where id = v_a));
-  assert (select extended_at from challenge_sessions where id = v_a) is not null,
-    'an edit that does not move the end should keep the extended mark';
-
+  delete from challenge_sessions;
   update profiles set role = v_was where id = v_admin;
 
   raise notice 'challenge_sessions.sql: extend guards OK';
+end;
+$$;
+
+-- ── The queue ─────────────────────────────────────────────────────────────────
+--
+-- The slot arithmetic against pinned instants, then the queue writes against `now()`,
+-- since plan, move and cancel take no clock of their own. Every expected time is worked
+-- out from the first slot rather than written as a literal, so the block holds whatever
+-- day the suite runs on.
+do $$
+declare
+  v_admin uuid;
+  v_was   text;
+  v_live  uuid;
+  v_a     uuid;
+  v_b     uuid;
+  v_c     uuid;
+  v_slot0 timestamptz;
+begin
+  -- ── The slot ────────────────────────────────────────────────────────────────
+  -- Noon to noon, a day of rest, noon again: opened on the 2nd, the next is the 4th.
+  assert challenge_queue_slot('2026-11-03 11:00+00', '2026-11-03 11:05+00')
+         = '2026-11-04 11:00+00', 'a noon close should rest a day and open the next noon';
+  -- Autumn: opened at noon CEST on the 24th, twenty-four literal hours close it at 11:00
+  -- CET. It must still open on the 26th, not slip to the 27th.
+  assert challenge_queue_slot('2026-10-25 10:00+00', '2026-10-25 10:05+00')
+         = '2026-10-26 11:00+00', 'an autumn daylight-saving close should keep the cadence';
+  -- Spring: the close lands at 13:00 CEST. Twenty-four hours of rest would skip a noon.
+  assert challenge_queue_slot('2027-03-28 11:00+00', '2027-03-28 11:05+00')
+         = '2027-03-29 10:00+00', 'a spring daylight-saving close should keep the cadence';
+  -- An extension of more than the hour of tolerance pushes it a day.
+  assert challenge_queue_slot('2026-11-03 13:00+00', '2026-11-03 13:05+00')
+         = '2026-11-05 11:00+00', 'an end past the tolerance should push to the noon after';
+  -- A close long past falls forward to the next noon to come, and so does no close at all.
+  assert challenge_queue_slot('2026-01-01 11:00+00', '2026-11-03 13:00+00')
+         = '2026-11-04 11:00+00', 'a stale end should fall forward to the next noon';
+  assert challenge_queue_slot(null, '2026-11-03 09:00+00') = '2026-11-03 11:00+00',
+    'with nothing ever opened the first slot is the next noon';
+
+  -- ── The writes ──────────────────────────────────────────────────────────────
+  select id, role into v_admin, v_was from profiles order by id limit 1;
+  update profiles set role = 'admin' where id = v_admin;
+  perform set_config('request.jwt.claims', json_build_object('sub', v_admin)::text, true);
+  delete from challenge_sessions;
+
+  insert into challenge_sessions (mode_id, opens_at, closes_at)
+  values ('challenge/live', now() - interval '1 hour', now() + interval '23 hours')
+  returning id into v_live;
+  v_slot0 := challenge_queue_slot(now() + interval '23 hours', now());
+
+  v_a := plan_challenge_session('challenge/a');
+  v_b := plan_challenge_session('challenge/b');
+  v_c := plan_challenge_session('challenge/c');
+
+  -- Each a slot after the one before, noon to noon.
+  assert (select opens_at from challenge_sessions where id = v_a) = v_slot0,
+    'the first into the queue should take the first slot';
+  assert (select opens_at from challenge_sessions where id = v_c)
+         = (((v_slot0 at time zone 'Europe/Prague')::date + 4) + time '12:00')
+           at time zone 'Europe/Prague',
+    'the third should be two slots after the first';
+  assert (select closes_at - opens_at from challenge_sessions where id = v_c)
+         = interval '24 hours', 'a queued session runs twenty-four hours';
+
+  -- Up swaps it with the one before; the times stay on the cadence.
+  perform move_challenge_session(v_c, -1);
+  assert array(select mode_id from challenge_sessions where opens_at > now() order by opens_at)
+         = array['challenge/a', 'challenge/c', 'challenge/b'],
+    'moving up should swap a row with the one before it';
+  -- At either end there is nowhere to go.
+  perform move_challenge_session(v_a, -1);
+  perform move_challenge_session(v_b, 1);
+  assert array(select mode_id from challenge_sessions where opens_at > now() order by opens_at)
+         = array['challenge/a', 'challenge/c', 'challenge/b'],
+    'moving past either end should change nothing';
+
+  -- Removing one closes the gap behind it.
+  perform cancel_challenge_session(v_a);
+  assert (select opens_at from challenge_sessions where id = v_c) = v_slot0,
+    'removing the first should move the next into its slot';
+
+  -- A row that has opened is not the queue's to move.
+  begin
+    perform move_challenge_session(v_live, 1);
+    assert false, 'moving a session that has opened should have been refused';
+  exception when raise_exception then
+    assert sqlerrm like '%no longer in the queue%',
+      format('refused for the wrong reason: %s', sqlerrm);
+  end;
+
+  -- Extending past the rest pushes the queue; closing early afterwards must not pull it
+  -- back. The anchor falls back to the original twenty-four hours, but the queue is
+  -- floored at where it already starts.
+  perform extend_challenge_session(v_live, 2 * 24 * 60);
+  declare
+    v_pushed timestamptz := (select opens_at from challenge_sessions where id = v_c);
+  begin
+    assert v_pushed > v_slot0, 'a long extension should push the queue';
+    perform close_challenge_session_early(v_live);
+    assert (select opens_at from challenge_sessions where id = v_c) = v_pushed,
+      'closing early after an extension should leave the queue where it was pushed';
+
+    -- Deleting the closed, unplayed session takes the anchor away entirely. The queue
+    -- still stays put: only a queued row hands its slot on.
+    perform cancel_challenge_session(v_live);
+    assert (select opens_at from challenge_sessions where id = v_c) = v_pushed,
+      'deleting an opened session should not pull the queue forward';
+  end;
+
+  delete from challenge_sessions;
+  perform set_config('request.jwt.claims', null, true);
+  update profiles set role = v_was where id = v_admin;
+
+  raise notice 'challenge_sessions.sql: the queue OK';
 end;
 $$;
 
@@ -512,7 +578,7 @@ begin
   select * into v_next from challenge_sessions where id = v_id;
 
   assert v_next.opens_at = '2026-11-04 11:00+00',
-    format('should open at the next noon Prague after the last close, got %s', v_next.opens_at);
+    format('should open at the noon after a day of rest, got %s', v_next.opens_at);
   assert v_next.closes_at - v_next.opens_at = interval '24 hours',
     'should run for twenty-four hours';
   assert v_next.mode_id = 'challenge/habit',
@@ -523,11 +589,11 @@ begin
   assert plan_next_challenge_session('2026-11-03 11:10+00') is null,
     'the session just booked is planned, so a second run should book nothing';
 
-  -- Run exactly at the close: that noon is not behind us, so it opens end to end.
+  -- Run exactly at the close: still a day of rest before it, not end to end.
   delete from challenge_sessions where id = v_id;
   v_id := plan_next_challenge_session('2026-11-03 11:00+00');
-  assert (select opens_at from challenge_sessions where id = v_id) = '2026-11-03 11:00+00',
-    'a run at the instant of a noon close should open the next session at that noon';
+  assert (select opens_at from challenge_sessions where id = v_id) = '2026-11-04 11:00+00',
+    'a run at the instant of a noon close should still rest a day';
 
   -- A close long past: the next noon to come, counted from the run, not the close.
   delete from challenge_sessions where id = v_id;

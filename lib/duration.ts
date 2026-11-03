@@ -183,14 +183,12 @@ export function formatCountdown(ms: number): string {
 // into the form. Past two days the hours stop being interesting and the days start:
 // nobody books a four-day window and then counts its hours.
 //
-// Minutes never appear. A window is planned in whole hours from a form that opens on noon
-// to noon, and a session showing 23ʰ59′ would be reporting the rounding of the clock that
+// Minutes never appear. A queued window is timed noon to noon by the server, and a session showing 23ʰ59′ would be reporting the rounding of the clock that
 // drew it rather than anything anybody chose. The one figure that counts minutes here is
 // the countdown, which is a different thing: time left, not length.
 //
 // Floors, as everything in this file does, and clamps at nought — a span whose end is not
-// after its start is a form in the middle of being filled in, which `isValidSpan` is what
-// refuses.
+// after its start is one the database's own check refuses, so nought is only ever a guard.
 export function formatWindowLength(ms: number): string {
   const hours = Math.floor(Math.max(0, ms) / 3_600_000)
   if (hours < 48) return `${hours}${HOUR_MARK}`
