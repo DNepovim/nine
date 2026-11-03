@@ -49,6 +49,13 @@ export type DialSpec = {
   // the dial's frame, then the mirror reverses what it means there. The digits are drawn
   // upright and par is unchanged, since a route costs the same presses either way.
   mirror: boolean
+  // Whether the keys are **blacked out**: every key drawn the same flat black with
+  // nothing on it — no digit, no tint, no peak — so the sum row is the only thing the
+  // dial says about itself. False on every dial but BLACKOUT's.
+  //
+  // Drawing only, as `freeze` is: the hit, par and the spawner all read the real digits,
+  // and a press still bounces the key so the player knows it landed.
+  blackout: boolean
 }
 
 // Which way up a dial is drawn and read. `sideways` is a quarter turn counter-clockwise,
@@ -90,6 +97,7 @@ export function defineDial({
   scramble = false,
   freeze = false,
   mirror = false,
+  blackout = false,
 }: {
   id: string
   rows: number
@@ -100,6 +108,7 @@ export function defineDial({
   scramble?: boolean
   freeze?: boolean
   mirror?: boolean
+  blackout?: boolean
 }): DialSpec {
   const cells = rows * cols
   const spread = weights ?? Array.from({ length: cells }, byPosition(cols))
@@ -115,6 +124,7 @@ export function defineDial({
     scramble,
     freeze,
     mirror,
+    blackout,
   }
 }
 

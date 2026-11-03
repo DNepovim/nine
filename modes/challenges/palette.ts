@@ -178,6 +178,18 @@ export const GREY_DARK_PAIR: readonly [string, string] = [
   stop(0, 0, DARK.lightness),
 ]
 
+// The pair for black: the near-black every challenge starts on, then true black. No hue
+// and, to the eye, no gradient — BLACKOUT wears it, asked for by the author, on a dial
+// whose keys are black too. Both pairs are the same, so the card's edge and its button
+// are black.
+//
+// True black for the second stop rather than the near-black again, and not for looks:
+// that stop is what a challenge's score and its analytics bar are drawn in
+// (`scoreInkOf`, `meterInkOf`), and drawn in the app's own text ink they would read as a
+// figure switched off rather than a colour. `challengeInk` hands it back untouched, since
+// black already clears the floor on both grounds.
+export const BLACK_PAIR: readonly [string, string] = [PRIMARY_INK, '#000000']
+
 export const challengeGradient = (index: number): readonly [string, string] =>
   challengePairFor(challengeHue(index))
 

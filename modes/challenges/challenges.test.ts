@@ -11,7 +11,7 @@ import { rampedTimeout, resolveRules, spawnInterval } from '@/modes/rules'
 
 import { CHALLENGES } from './catalog'
 import { challengeId, defineChallenge, isOpenMode } from './define'
-import { challengeDarkGradient, challengeGradient } from './palette'
+import { BLACK_PAIR, challengeDarkGradient, challengeGradient } from './palette'
 
 const DAY = 24 * 3600_000
 const OPENS = Date.UTC(2027, 0, 1)
@@ -451,6 +451,7 @@ describe('glimpse', () => {
         'freeze',
         'binary',
         'mirror',
+        'blackout',
       ].map(challengeId),
     )
     expect(GLIMPSE?.gradient).toEqual(challengeGradient(3))
@@ -577,11 +578,10 @@ describe('mirror', () => {
     expect(rules.capabilities.board).toBe(false)
   })
 
-  it('fires a sniper, wears its own mark, and is the latest in the catalog', () => {
+  it('fires a sniper and wears its own mark', () => {
     const mirror = CHALLENGES.find((mode) => mode.id === challengeId('mirror'))
     expect(mirror?.shot).toBe('sniper')
     expect(mirror?.mark).toBe('mirror')
-    expect(CHALLENGES.at(-1)?.id).toBe(challengeId('mirror'))
   })
 
   it('is the only mode whose dial mirrors', () => {
@@ -591,6 +591,38 @@ describe('mirror', () => {
         .filter((mode) => runRules(mode.id, 'hard').dial.mirror)
         .map((mode) => mode.id),
     ).toEqual([challengeId('mirror')])
+  })
+})
+
+describe('blackout', () => {
+  it('is Accuracy Hard on the nine keys, blacked out, with no streak', () => {
+    const rules = runRules(challengeId('blackout'), 'easy')
+    expect(rules.difficulty).toBe('hard')
+    expect(rules.usesDifficulty).toBe(false)
+    expect(rules.dial.id).toBe('blackout')
+    expect(rules.dial.blackout).toBe(true)
+    expect(rules.dial.weights).toEqual(NINE_DIAL.weights)
+    expect(rules.clock.base).toBe(16500)
+    expect(rules.scoring.streak).toBe('none')
+    expect(rules.capabilities.board).toBe(false)
+  })
+
+  it('is black all through, fires nothing, and is the latest in the catalog', () => {
+    const blackout = CHALLENGES.find((mode) => mode.id === challengeId('blackout'))
+    expect(blackout?.shot).toBeNull()
+    expect(blackout?.mark).toBe('bulb')
+    expect(blackout?.gradient).toEqual(BLACK_PAIR)
+    expect(blackout?.darkGradient).toEqual(blackout?.gradient)
+    expect(CHALLENGES.at(-1)?.id).toBe(challengeId('blackout'))
+  })
+
+  it('is the only mode whose dial is blacked out', () => {
+    expect(
+      allModes()
+        .filter((mode) => mode.engine === 'targets')
+        .filter((mode) => runRules(mode.id, 'hard').dial.blackout)
+        .map((mode) => mode.id),
+    ).toEqual([challengeId('blackout')])
   })
 })
 

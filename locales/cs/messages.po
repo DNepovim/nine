@@ -890,6 +890,14 @@ msgstr "BIN"
 msgid "BINARY"
 msgstr "DVOJKOVĚ"
 
+#: modes/challenges/catalog.ts:883
+msgid "BLACK­OUT"
+msgstr "TMA"
+
+#: modes/challenges/catalog.ts:886
+msgid "BLK"
+msgstr "TMA"
+
 #: constants/achievements.ts:360
 msgid "BLUR"
 msgstr "ROZMAZANĚ"
@@ -3519,6 +3527,10 @@ msgstr "Hrdina se zastaví hodně daleko před branou, hradby se táhnou přes h
 #: lib/strike-rule.ts:32
 msgid "The hit that leaves the board empty counts double."
 msgstr "Zásah, který nechá mřížku prázdnou, se počítá dvakrát."
+
+#: modes/challenges/catalog.ts:887
+msgid "The keys go dark. Count in your head."
+msgstr "Klávesy zhasnou. Počítej v hlavě."
 
 #: components/overlays/how-to-play-overlay.tsx:776
 msgid "The loaves tell you before they run out. Down to one and it turns orange; down to half of one and it turns red, which is one more careful walk and no careless ones."

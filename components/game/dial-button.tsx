@@ -15,7 +15,7 @@ import { scheduleOnRN } from 'react-native-worklets'
 
 import { DialBadge } from '@/components/game/dial-badge'
 import { DialPulse } from '@/components/game/dial-pulse'
-import { DIAL_COLORS, GRAYSCALE, STRIKE_COLORS } from '@/constants/colors'
+import { DIAL_COLORS, GRAYSCALE, PRIMARY_INK, STRIKE_COLORS } from '@/constants/colors'
 import {
   DEFAULT_DIAL_CORNERS,
   DIAL_CORNERS,
@@ -159,6 +159,7 @@ export function DialButton({
   hinted = false,
   heat = null,
   scrambles = 0,
+  dark = false,
   onDelta,
   onSet,
 }: {
@@ -208,6 +209,11 @@ export function DialButton({
   // value that arrives with a new count is the dial moving on its own rather than a press,
   // and this key flips its new digit in. Nought on every dial that holds still.
   scrambles?: number
+  // Whether the dial is **blacked out** — see `DialSpec.blackout`. The key is drawn flat
+  // black with no digit, tint or peak on it, so nothing on it says where it stands; the
+  // press, the bounce and the flight still run, unseen, so the timing of a press is the
+  // same as on any other dial.
+  dark?: boolean
   onDelta: (delta: 1 | -1, sweep: boolean) => void
   onSet: (value: number, sweep: boolean) => void
 }) {
@@ -364,11 +370,9 @@ export function DialButton({
       { scale: scale.value },
       frame.bounce === 'x' ? { translateX: bounce.value } : { translateY: bounce.value },
     ],
-    backgroundColor: interpolateColor(
-      rampProgress.value,
-      [0, 1],
-      [DIAL_COLORS.low, DIAL_COLORS.high],
-    ),
+    backgroundColor: dark
+      ? PRIMARY_INK
+      : interpolateColor(rampProgress.value, [0, 1], [DIAL_COLORS.low, DIAL_COLORS.high]),
   }))
 
   // The CTA gradient crossfades in over the ramp — every tint change, including
@@ -451,20 +455,22 @@ export function DialButton({
       >
         {/* Rounded on its own rather than clipped by the pill — `overflow:
               hidden` on the parent would clip away the button's shadow too. */}
-        <Animated.View
-          pointerEvents="none"
-          style={[
-            { position: 'absolute', top: 0, right: 0, bottom: 0, left: 0 },
-            peakStyle,
-          ]}
-        >
-          <LinearGradient
-            colors={[peakFrom, peakTo]}
-            start={{ x: 0, y: 0.5 }}
-            end={{ x: 1, y: 0.5 }}
-            style={{ flex: 1, borderRadius: 999 }}
-          />
-        </Animated.View>
+        {!dark && (
+          <Animated.View
+            pointerEvents="none"
+            style={[
+              { position: 'absolute', top: 0, right: 0, bottom: 0, left: 0 },
+              peakStyle,
+            ]}
+          >
+            <LinearGradient
+              colors={[peakFrom, peakTo]}
+              start={{ x: 0, y: 0.5 }}
+              end={{ x: 1, y: 0.5 }}
+              style={{ flex: 1, borderRadius: 999 }}
+            />
+          </Animated.View>
+        )}
         {/* The key turning hot under a strike: red at the crown, gold at the base where a
               fire burns hottest. Over the fill and under the digit, like the peak above. */}
         {heat !== null && (
@@ -483,21 +489,23 @@ export function DialButton({
             />
           </Animated.View>
         )}
-        <Animated.Text
-          selectable={false}
-          style={[
-            {
-              fontSize: 30,
-              fontFamily: mono,
-              fontWeight: '500' as const,
-              includeFontPadding: false,
-            },
-            digitStyle,
-            numStyle,
-          ]}
-        >
-          {showSum ? value * weight : value}
-        </Animated.Text>
+        {!dark && (
+          <Animated.Text
+            selectable={false}
+            style={[
+              {
+                fontSize: 30,
+                fontFamily: mono,
+                fontWeight: '500' as const,
+                includeFontPadding: false,
+              },
+              digitStyle,
+              numStyle,
+            ]}
+          >
+            {showSum ? value * weight : value}
+          </Animated.Text>
+        )}
       </Animated.View>
 
       {/* The corner numbers, as facts pinned to the pill's rim rather than stacked

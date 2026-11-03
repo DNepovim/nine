@@ -368,6 +368,7 @@ export function Dial({
                 hinted={liveKey === index}
                 heat={flame === null ? null : burn.heat}
                 scrambles={dial.scramble ? hitSeq : 0}
+                dark={dial.blackout}
                 peakFrom={peakFrom}
                 peakTo={peakTo}
                 commands={commands}

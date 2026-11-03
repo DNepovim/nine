@@ -6,7 +6,7 @@ import { defineDial } from '@/modes/dial'
 import type { ModeDefinition } from '@/modes/types'
 
 import { defineChallenge, type ChallengeSpec } from './define'
-import { GREY_DARK_PAIR, GREY_PAIR, LIGHT_BLUE, TURQUOISE } from './palette'
+import { BLACK_PAIR, GREY_DARK_PAIR, GREY_PAIR, LIGHT_BLUE, TURQUOISE } from './palette'
 
 // Every challenge the app has ever carried, each with the window it ran in.
 //
@@ -860,6 +860,63 @@ const MIRROR: ChallengeSpec = {
   },
 }
 
+// BLACKOUT: Accuracy Hard on a dial whose keys have gone dark.
+//
+// Its one thing is the **dial nobody can see**. Every key is drawn flat black with
+// nothing on it — no digit, and no tint either, since the tint alone would give each
+// digit away — so the sum row is the only thing the dial says about itself. The player
+// keeps nine digits in their head and works every route from memory.
+//
+//   - **Everything else is Accuracy Hard**: the nine dial and its weights, the 16.5 s
+//     ring, three hearts.
+//   - **No streak**, the author's call: the dark dial is the whole of the challenge. No
+//     shot either, since a shot is the streak made visible.
+//   - **Black, not a hue** — the card, the button and the keys are all the one ink. See
+//     `BLACK_PAIR`.
+//
+// Its own dial id rather than the nine's, as SCRAMBLE's: two dials that behave
+// differently never share a name.
+const BLACKOUT: ChallengeSpec = {
+  slug: 'blackout',
+  // A **soft hyphen** (U+00AD) between the K and the O, as SIDEWAYS has: eight letters is
+  // wider than the challenge dialog's row. It breaks BLACK over OUT.
+  label: msg`BLACK­OUT`,
+  // Its own, as every challenge since HABIT's: a profile row reading ACC would file it
+  // under a board it is not.
+  code: msg`BLK`,
+  description: msg`The keys go dark. Count in your head.`,
+  mark: 'bulb',
+  gradient: BLACK_PAIR,
+  darkGradient: BLACK_PAIR,
+  shot: null,
+  // Every line about the dark. Only the tiers this one reaches: the session standing
+  // through `board` and `medal`, and `cold` — `strong` is earned by streaks, and this
+  // run has none.
+  claims: {
+    board: [
+      ['LIGHTS', 'OUT'],
+      ['DARK', 'WON'],
+      ['NIGHT', 'EYES'],
+    ],
+    medal: [
+      ['NEAR', 'DAWN'],
+      ['DIM', 'LIGHT'],
+    ],
+    cold: [
+      ['LOST', 'DARK'],
+      ['NO', 'LIGHT'],
+    ],
+  },
+  base: ACCURACY,
+  from: Date.UTC(2026, 10, 5),
+  until: Date.UTC(2026, 10, 5) + DAY,
+  rules: {
+    fixedDifficulty: 'hard',
+    dial: defineDial({ id: 'blackout', rows: 3, cols: 3, blackout: true }),
+    scoring: { streak: 'none' },
+  },
+}
+
 // Mapped rather than listed, and that is what gives each challenge its colour: `.map`
 // hands `defineChallenge` the spec's own index, which is what the pair is derived from.
 // The list is append-only — see the note at the top of this file — so an index is a
@@ -877,4 +934,5 @@ export const CHALLENGES: readonly ModeDefinition[] = [
   FREEZE,
   BINARY,
   MIRROR,
+  BLACKOUT,
 ].map((spec, index) => defineChallenge(spec, index))

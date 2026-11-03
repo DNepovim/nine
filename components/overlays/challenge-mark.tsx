@@ -60,6 +60,11 @@ const TRACKS = [
   'M5 22.5 C11 22.5 14 16.5 17.5 14 C19.3 12.7 21 12.2 23 12.2',
 ] as const
 
+// BLACKOUT's bulb: the glass, narrowing to the neck the base screws into.
+const BULB =
+  'M12 2.2 C7.7 2.2 5 5.4 5 9.2 C5 11.8 6.3 13.4 7.7 14.8 C8.6 15.7 9 16.5 9 17.6 ' +
+  'H15 C15 16.5 15.4 15.7 16.3 14.8 C17.7 13.4 19 11.8 19 9.2 C19 5.4 16.3 2.2 12 2.2 Z'
+
 // FOUR KEYS' bolt, drawn twice: once as its own halo, once filled on top of it.
 const BOLT = 'M15 1.5 L5.5 13.6 H11 L9 22.5 L18.5 10.2 H13 Z'
 
@@ -277,6 +282,21 @@ const GLYPHS: Record<MarkKind, (color: string) => ReactNode> = {
         />
         <Path d="M20 8.6 H16 L18.4 15.4" {...line(color)} strokeWidth={1.8} />
       </G>
+    </>
+  ),
+
+  // BLACKOUT — the light is off: a bulb with no rays round it, its filament gone cold
+  // and faint inside the glass, and the screw base under it.
+  bulb: (color) => (
+    <>
+      <Path d={BULB} {...line(color)} fill={color} fillOpacity={WASH / 2} />
+      <Path
+        d="M10 17.4 V13.4 L11 11.8 L12 13.4 L13 11.8 L14 13.4 V17.4"
+        {...line(color)}
+        strokeWidth={1.2}
+        strokeOpacity={0.45}
+      />
+      <Path d="M9.2 19.6 H14.8 M10 21.8 H14" {...line(color)} />
     </>
   ),
 }
