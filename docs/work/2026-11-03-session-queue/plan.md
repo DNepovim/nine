@@ -146,3 +146,5 @@ itself.
 
 Later, its own items: #3 above; `features.sql:175` already red; `pnpm lint` reads
 `.claude/worktrees/`.
+
+Shipped: `1e37c54` on main, 2026-11-03. Migration not pushed, not deployed.

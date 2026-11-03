@@ -1,8 +1,8 @@
 # The session queue
 
 Slug: session-queue
-Stage: review
-Next: /ship session-queue
+Stage: shipped
+Next: /deploy (push the migration first)
 Track: full
 Branch: feat/session-queue
 Started: 2026-11-03
