@@ -2999,6 +2999,7 @@ export default function GameScreen() {
                 <RatingOverlay
                   summary={whatsNew.rating.asking}
                   onSend={whatsNew.rating.send}
+                  onRemark={whatsNew.rating.remark}
                   onDismiss={whatsNew.rating.done}
                 />
               )}

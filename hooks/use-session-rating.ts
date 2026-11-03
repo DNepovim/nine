@@ -1,7 +1,7 @@
 import { useCallback } from 'react'
 
 import type { Rating } from '@/lib/session-rating'
-import { rateSession } from '@/lib/session-ratings'
+import { rateSession, remarkSession } from '@/lib/session-ratings'
 import type { SessionSummary } from '@/lib/session-summary'
 
 // The **rating** owed after a **summary**: which session to ask about, and the two ways
@@ -17,6 +17,8 @@ export function useSessionRating(
 ): {
   asking: SessionSummary | null
   send: (rating: Rating) => void
+  // The **remark**: the rating's written half, from the dialog's second step.
+  remark: (text: string) => void
   done: () => void
 } {
   // No gate of its own: whoever is told a summary is asked about it, and only a player
@@ -33,5 +35,14 @@ export function useSessionRating(
     [asking],
   )
 
-  return { asking, send, done: take }
+  // Fire and forget, for the reason `send` is.
+  const remark = useCallback(
+    (text: string) => {
+      if (asking === null) return
+      void remarkSession(asking.sessionId, text)
+    },
+    [asking],
+  )
+
+  return { asking, send, remark, done: take }
 }

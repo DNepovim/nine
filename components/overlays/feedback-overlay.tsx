@@ -2,11 +2,11 @@ import { Ionicons } from '@expo/vector-icons'
 import { Trans, useLingui } from '@lingui/react/macro'
 import { isNonEmptyString, isOneOf } from 'narrowland'
 import { useState } from 'react'
-import { Platform, Text, TextInput } from 'react-native'
+import { Text } from 'react-native'
 
 import { ModalCard } from '@/components/overlays/modal-card'
+import { TextArea } from '@/components/overlays/text-area'
 import { PrimaryButton } from '@/components/primary-button'
-import { DIM_INK } from '@/constants/colors'
 import { TYPE } from '@/constants/typography'
 import { useLocale } from '@/hooks/use-locale'
 import { cn } from '@/lib/cn'
@@ -152,23 +152,13 @@ export function FeedbackOverlay({
                 )}
               </Text>
 
-              <TextInput
+              <TextArea
                 value={message}
-                onChangeText={setMessage}
-                multiline
+                onChange={setMessage}
                 editable={status !== 'sending'}
                 maxLength={MAX_FEEDBACK_LENGTH}
                 placeholder={t`Type here`}
-                placeholderTextColor={DIM_INK}
-                className="mb-4 h-32 w-full rounded-2xl border border-muted bg-card p-3 font-mono leading-[18px] text-primary"
-                // Mobile Safari zooms the whole page in on focus for any input under
-                // 16px — the one web quirk with no CSS opt-out, only a bigger font.
-                // Native has no such behaviour, so it keeps the smaller size the rest
-                // of the sheet uses.
-                style={{
-                  textAlignVertical: 'top',
-                  fontSize: Platform.OS === 'web' ? 16 : 12,
-                }}
+                className="mb-4"
               />
 
               {failureLine !== null && (

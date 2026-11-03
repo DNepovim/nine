@@ -82,6 +82,7 @@ third exception wants the same treatment — measured, and commented where it is
 | A slider                  | `overlays/value-slider.tsx`                                                          |
 | A mode / difficulty cell  | `overlays/mode-selector.tsx`, `difficulty-selector.tsx`                              |
 | One of many, as a list    | `overlays/admin-select.tsx` — `AdminSelect`; `icon`/`detail` for rich options        |
+| A few lines of free text  | `overlays/text-area.tsx` — `TextArea`; TELL US and the remark                        |
 
 ### A link button carries an icon and no underline
 

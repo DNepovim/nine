@@ -85,6 +85,9 @@ export type ButtonId =
 
   // ── Rating — the dialog after a session's summary ──
   | 'rating.key'
+  // Step one's way to the words without a figure, and step two's SEND.
+  | 'rating.skip'
+  | 'rating.send'
   | 'rating.dismiss'
 
   // ── Achievements and medals ──
@@ -179,6 +182,8 @@ export type ButtonId =
   // The address under the code, opened in the browser.
   | 'share.link'
 
+  // A lab row, which opens the challenge's page; PLAY on that page deals the run.
+  | 'dev.challenge'
   // ── Dev and admin ──
   | 'dev.run'
   | 'dev.done'

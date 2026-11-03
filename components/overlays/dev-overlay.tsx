@@ -1,5 +1,5 @@
 import { msg } from '@lingui/core/macro'
-import { Plural, Trans, useLingui } from '@lingui/react/macro'
+import { Trans, useLingui } from '@lingui/react/macro'
 import { useEffect, useState } from 'react'
 import { ScrollView, Text, View } from 'react-native'
 
@@ -7,6 +7,8 @@ import { AdminScreen } from '@/components/overlays/admin-screen'
 import { ChallengeTitle } from '@/components/overlays/admin-session-cells'
 import { AdminTable, type AdminTableRow } from '@/components/overlays/admin-table'
 import { ChallengeMark } from '@/components/overlays/challenge-mark'
+import { ChallengePage } from '@/components/overlays/challenge-page'
+import { RatingLine } from '@/components/overlays/rating-line'
 import { PrimaryButton } from '@/components/primary-button'
 import { TYPE } from '@/constants/typography'
 import { listChallengeRatings, type ChallengeRating } from '@/lib/admin/ratings'
@@ -50,21 +52,6 @@ function SessionLine({ session, now }: { session: AdminSession | null; now: numb
   return <Trans>LAST SESSION WAS {closed}</Trans>
 }
 
-// What players made of the challenge, over every session of it — the figure an admin
-// reads when deciding whether it comes back. Nothing at all for a challenge nobody has
-// rated, and nothing for a tester, whose read of it is refused: a line saying "no
-// ratings" would be wrong for the second and noise for the first.
-function RatingLine({ rating }: { rating: ChallengeRating }) {
-  const average = rating.average.toFixed(1)
-  return (
-    <>
-      <Trans>RATED {average}</Trans>
-      {' · '}
-      <Plural value={rating.ratings} one="# RATING" other="# RATINGS" />
-    </>
-  )
-}
-
 // The planner's row in the shape the challenge dialog reads. What the planner does not
 // carry is filled with what a dialog cannot tell apart: no leader (the dialog reads the
 // standings themselves), and the measure the challenge's rules give.
@@ -84,9 +71,8 @@ const asOpenSession = (session: AdminSession): OpenSession => ({
 // anywhere here: a challenge is outside `SCORED_MODES`, so the run this starts submits
 // nothing — see lib/score-submission.ts.
 //
-// Behind the `challengeLab` feature, which is the key `dev` became: the link that opens
-// this screen now appears for anybody holding any dev feature, of which this is the
-// first. See `DEV_FEATURES` in constants/features.ts.
+// Behind the `challengeLab` feature, which is the key `dev` became. Opened from the
+// admin hub — the intro no longer has a DEV link.
 const TITLE = msg`CHALLENGES LAB`
 
 // The square each row's mark is drawn in: about the height of the name and the first line
@@ -104,6 +90,10 @@ export function DevOverlay({
   const [openedAt] = useState(() => Date.now())
   const [sessions, setSessions] = useState<readonly AdminSession[]>([])
   const [ratings, setRatings] = useState<ReadonlyMap<string, ChallengeRating>>(new Map())
+  // The challenge whose page is open over the list, if any. State here rather than a
+  // screen of its own, the way the planner holds its form: the page is reached from this
+  // list and BACK returns to it.
+  const [page, setPage] = useState<string | null>(null)
 
   // Read once on open, and failures are swallowed on purpose: the sessions are extra
   // information about a list that is already complete without them. A tester who cannot
@@ -119,14 +109,36 @@ export function DevOverlay({
     })()
   }, [])
 
-  // One row per challenge, in the planner's own table without its date column: the
-  // name in its own colours with what it is, where its session stands and — for an admin
-  // — what players made of it under it, and nothing beside it. Pressing a row deals the challenge.
-  const rows: readonly AdminTableRow[] = CHALLENGES.map((mode) => {
-    const shown = shownSession(
-      sessions.filter((session) => session.modeId === mode.id),
+  // The session PLAY hands the run dialog — what pressing the row handed it before the
+  // page sat in between, so the dialog still knows the live session.
+  const shownFor = (modeId: string) =>
+    shownSession(
+      sessions.filter((session) => session.modeId === modeId),
       openedAt,
     )
+
+  if (page !== null) {
+    return (
+      <ChallengePage
+        modeId={page}
+        rating={ratings.get(page)}
+        onPlay={() => {
+          const shown = shownFor(page)
+          onOpenChallenge(page, shown === null ? null : asOpenSession(shown))
+        }}
+        onBack={() => {
+          setPage(null)
+        }}
+      />
+    )
+  }
+
+  // One row per challenge, in the planner's own table without its date column: the
+  // name in its own colours with what it is, where its session stands and — for an admin
+  // — what players made of it under it, and nothing beside it. Pressing a row opens the
+  // challenge's page.
+  const rows: readonly AdminTableRow[] = CHALLENGES.map((mode) => {
+    const shown = shownFor(mode.id)
     const rating = ratings.get(mode.id)
     return {
       key: mode.id,
@@ -159,8 +171,9 @@ export function DevOverlay({
           </View>
         </View>,
       ],
+      // Opens the challenge's page. Dealing the run is PLAY on it now.
       onPress: () => {
-        onOpenChallenge(mode.id, shown === null ? null : asOpenSession(shown))
+        setPage(mode.id)
       },
     }
   })
@@ -182,7 +195,7 @@ export function DevOverlay({
       </Text>
       <ScrollView showsVerticalScrollIndicator={false}>
         <AdminTable
-          rowId="dev.run"
+          rowId="dev.challenge"
           columns={[{ label: 'CHALLENGE', tone: 'name' }]}
           rows={rows}
           empty={<Trans>No challenges have been written yet.</Trans>}

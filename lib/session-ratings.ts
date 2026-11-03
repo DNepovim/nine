@@ -19,3 +19,19 @@ export async function rateSession(
   noteRequest(res.error)
   return { error: res.error ? res.error.message : null }
 }
+
+// Writes the **remark** — the rating's written half — onto the same row. The same guards
+// on the server, and the same bargain here: fire and forget, because the dialog closes on
+// SEND whether or not it lands. Touches the words only, so a figure sent a moment
+// earlier and perhaps still in flight is never overwritten — see `remark_session`.
+export async function remarkSession(
+  sessionId: string,
+  remark: string,
+): Promise<{ error: string | null }> {
+  const res = await supabase.rpc('remark_session', {
+    p_session: sessionId,
+    p_remark: remark,
+  })
+  noteRequest(res.error)
+  return { error: res.error ? res.error.message : null }
+}

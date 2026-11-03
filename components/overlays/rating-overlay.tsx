@@ -1,5 +1,5 @@
-import { Trans } from '@lingui/react/macro'
-import { useRef } from 'react'
+import { Trans, useLingui } from '@lingui/react/macro'
+import { useRef, useState } from 'react'
 import { Text, View } from 'react-native'
 import { interpolateColor } from 'react-native-reanimated'
 
@@ -7,9 +7,12 @@ import { LinkButton } from '@/components/link-button'
 import { ChallengeName } from '@/components/overlays/challenge-name'
 import { CodeKeyboard, type KeyPaint } from '@/components/overlays/code-keyboard'
 import { ModalCard } from '@/components/overlays/modal-card'
+import { TextArea } from '@/components/overlays/text-area'
+import { PrimaryButton } from '@/components/primary-button'
 import { DIAL_COLORS } from '@/constants/colors'
 import { TYPE } from '@/constants/typography'
 import { cn } from '@/lib/cn'
+import { MAX_REMARK_LENGTH, remarkOf } from '@/lib/remark'
 import { isRating, type Rating } from '@/lib/session-rating'
 import type { SessionSummary } from '@/lib/session-summary'
 import { darkGradientOf, gradientOf } from '@/modes'
@@ -49,59 +52,136 @@ const dialPaint =
 // Its own dialog rather than a last page of the launch popup, because the popup is
 // dismissed as a whole and every page on it is "shown" the moment it opens — a question
 // on a page somebody skipped past with the dots would have been asked without being seen.
+//
+// Two steps in one card. The key still answers on the press and the figure is written
+// then — the one-tap question stays one tap — but the card turns to ANYTHING TO ADD?
+// instead of closing, for the **remark**: the rating's written half. NOT NOW there keeps
+// the figure and goes. SKIP on the first step reaches the words without a figure, for a
+// player with something to say and no number for it; NOT NOW on the first step still
+// writes nothing at all.
+//
+// One card rather than a second dialog after the first, so there is one scrim and no
+// entrance replayed in the middle of an answer — the arrangement `EmailDialog` makes for
+// its two cards. `avoidKeyboard` throughout, since the second step has a field.
+type Step = 'figure' | 'words'
+
 export function RatingOverlay({
   summary,
   onSend,
+  onRemark,
   onDismiss,
 }: {
   summary: SessionSummary
   onSend: (rating: Rating) => void
-  // Called once the card has gone, however it went — a key, NOT NOW or the header close.
+  onRemark: (text: string) => void
+  // Called once the card has gone, however it went — SEND, either NOT NOW or the header
+  // close.
   onDismiss: () => void
 }) {
-  // Whether a key has already answered. The card stays pressable for the length of its
-  // exit, and a second tap there would write twice — the second time perhaps another key.
+  // `t` rather than <Trans>: a placeholder takes a string, not a node.
+  const { t } = useLingui()
+  const [step, setStep] = useState<Step>('figure')
+  const [words, setWords] = useState('')
+  // Whether a key has already answered. A second tap during the turn to step two would
+  // write twice — the second time perhaps another key.
   const sent = useRef(false)
+  // The same for SEND, which the card stays pressable for through its exit.
+  const remarked = useRef(false)
+  const remark = remarkOf(words)
 
   return (
     <ModalCard
       edge={gradientOf(summary.modeId)}
       closeButton={false}
+      avoidKeyboard
+      // A tap beside the card must not throw away words already typed.
+      held={remark !== null}
       onDismiss={onDismiss}
     >
-      {(close) => (
-        <View className="items-center">
-          {/* The question first and the challenge under it: the name says which contest,
+      {(close) =>
+        step === 'words' ? (
+          <View className="items-center">
+            <Text selectable={false} className={cn(TYPE.cardTitle, 'text-center')}>
+              <Trans>ANYTHING TO ADD?</Trans>
+            </Text>
+            <ChallengeName
+              modeId={summary.modeId}
+              className={cn(TYPE.screenTitle, 'mt-2 mb-4')}
+            />
+            <TextArea
+              value={words}
+              onChange={setWords}
+              maxLength={MAX_REMARK_LENGTH}
+              placeholder={t`What made it good or bad?`}
+              className="mb-4"
+            />
+            {/* Stretched: the card centres its column for the question and the keypad, and a
+                primary button inside that shrinks to its label instead of spanning the
+                card as every dialog's does. */}
+            <View className="self-stretch">
+              <PrimaryButton
+                id="rating.send"
+                disabled={remark === null}
+                onPress={() => {
+                  if (remark === null || remarked.current) return
+                  remarked.current = true
+                  onRemark(remark)
+                  close()
+                }}
+                label={<Trans>SEND</Trans>}
+              />
+            </View>
+            <LinkButton
+              id="rating.dismiss"
+              className="mt-5"
+              icon="close-outline"
+              label={<Trans>NOT NOW</Trans>}
+              onPress={close}
+            />
+          </View>
+        ) : (
+          <View className="items-center">
+            {/* The question first and the challenge under it: the name says which contest,
               but what the card is for is the question. */}
-          <Text selectable={false} className={cn(TYPE.cardTitle, 'text-center')}>
-            <Trans>HOW DO YOU LIKE THE CHALLENGE?</Trans>
-          </Text>
-          <ChallengeName
-            modeId={summary.modeId}
-            className={cn(TYPE.screenTitle, 'mt-2')}
-          />
+            <Text selectable={false} className={cn(TYPE.cardTitle, 'text-center')}>
+              <Trans>HOW DO YOU LIKE THE CHALLENGE?</Trans>
+            </Text>
+            <ChallengeName
+              modeId={summary.modeId}
+              className={cn(TYPE.screenTitle, 'mt-2')}
+            />
 
-          <CodeKeyboard
-            id="rating.key"
-            keyPaint={dialPaint(summary.modeId)}
-            faces={ENDS}
-            onKey={(key) => {
-              if (!isRating(key) || sent.current) return
-              sent.current = true
-              onSend(key)
-              close()
-            }}
-          />
+            <CodeKeyboard
+              id="rating.key"
+              keyPaint={dialPaint(summary.modeId)}
+              faces={ENDS}
+              onKey={(key) => {
+                if (!isRating(key) || sent.current) return
+                sent.current = true
+                onSend(key)
+                setStep('words')
+              }}
+            />
 
-          <LinkButton
-            id="rating.dismiss"
-            className="mt-5"
-            icon="close-outline"
-            label={<Trans>NOT NOW</Trans>}
-            onPress={close}
-          />
-        </View>
-      )}
+            <View className="mt-5 flex-row gap-6">
+              <LinkButton
+                id="rating.dismiss"
+                icon="close-outline"
+                label={<Trans>NOT NOW</Trans>}
+                onPress={close}
+              />
+              <LinkButton
+                id="rating.skip"
+                icon="arrow-forward-outline"
+                label={<Trans>SKIP</Trans>}
+                onPress={() => {
+                  setStep('words')
+                }}
+              />
+            </View>
+          </View>
+        )
+      }
     </ModalCard>
   )
 }

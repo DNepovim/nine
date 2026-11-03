@@ -312,13 +312,15 @@ msgstr "[W] owned [MODE] — every day of it, on every difficulty that got playe
 msgid "[W] took the all-time [BOARD] record on [D], and still has it."
 msgstr "[W] took the all-time [BOARD] record on [D], and still has it."
 
+#. placeholder {0}: session.players
 #. placeholder {0}: summary.players
+#: components/overlays/challenge-page.tsx:104
 #: components/overlays/summary-card.tsx:77
 msgid "{0, plural, one {# PLAYER} other {# PLAYERS}}"
 msgstr "{0, plural, one {# PLAYER} other {# PLAYERS}}"
 
 #. placeholder {0}: rating.ratings
-#: components/overlays/dev-overlay.tsx:63
+#: components/overlays/rating-line.tsx:17
 msgid "{0, plural, one {# RATING} other {# RATINGS}}"
 msgstr "{0, plural, one {# RATING} other {# RATINGS}}"
 
@@ -368,7 +370,8 @@ msgstr "{lastRunDays, plural, other {last played # days ago}}"
 msgid "{owed} owed an answer"
 msgstr "{owed} owed an answer"
 
-#: components/overlays/admin-session.tsx:230
+#: components/overlays/admin-session.tsx:232
+#: components/overlays/challenge-page.tsx:144
 msgid "{sessions, plural, one {# SESSION} other {# SESSIONS}}"
 msgstr "{sessions, plural, one {# SESSION} other {# SESSIONS}}"
 
@@ -765,6 +768,10 @@ msgstr "Anything at all — what broke, what annoyed you, what you wish it did. 
 msgid "Anything at all — what broke, what annoyed you, what you wish it did. The mode, difficulty and score you are on go with it."
 msgstr "Anything at all — what broke, what annoyed you, what you wish it did. The mode, difficulty and score you are on go with it."
 
+#: components/overlays/rating-overlay.tsx:105
+msgid "ANYTHING TO ADD?"
+msgstr "ANYTHING TO ADD?"
+
 #: lib/prose.ts:109
 msgid "Apr"
 msgstr "Apr"
@@ -822,8 +829,9 @@ msgstr "AVG SPD"
 #: components/overlays/admin-knowledge.tsx:349
 #: components/overlays/admin-messages.tsx:380
 #: components/overlays/admin-session.tsx:194
-#: components/overlays/admin-sessions.tsx:242
+#: components/overlays/admin-sessions.tsx:244
 #: components/overlays/admin-stats.tsx:143
+#: components/overlays/challenge-page.tsx:130
 #: components/overlays/whats-new-overlay.tsx:107
 msgid "BACK"
 msgstr "BACK"
@@ -977,7 +985,7 @@ msgid "CHALLENGES\n"
 msgstr "CHALLENGES\n"
 "LAB"
 
-#: components/overlays/dev-overlay.tsx:90
+#: components/overlays/dev-overlay.tsx:76
 msgid "CHALLENGES LAB"
 msgstr "CHALLENGES LAB"
 
@@ -997,7 +1005,7 @@ msgstr "CHANGE EMAIL"
 msgid "CHANGE YOUR EMAIL"
 msgstr "CHANGE YOUR EMAIL"
 
-#: components/overlays/admin-session.tsx:213
+#: components/overlays/admin-session.tsx:215
 msgid "CHOOSE A CHALLENGE"
 msgstr "CHOOSE A CHALLENGE"
 
@@ -1031,11 +1039,11 @@ msgid "CLOSE"
 msgstr "CLOSE"
 
 #: components/overlays/admin-session.tsx:161
-#: components/overlays/admin-session.tsx:282
+#: components/overlays/admin-session.tsx:284
 msgid "CLOSE EARLY"
 msgstr "CLOSE EARLY"
 
-#: components/overlays/admin-session.tsx:262
+#: components/overlays/admin-session.tsx:264
 msgid "CLOSE THIS CHALLENGE NOW?"
 msgstr "CLOSE THIS CHALLENGE NOW?"
 
@@ -1153,7 +1161,7 @@ msgstr "Do something nobody thought to ask for."
 #: components/overlays/admin-overlay.tsx:318
 #: components/overlays/admin-person.tsx:187
 #: components/overlays/admin-role.tsx:123
-#: components/overlays/dev-overlay.tsx:176
+#: components/overlays/dev-overlay.tsx:189
 #: components/overlays/news-archive-overlay.tsx:43
 msgid "DONE"
 msgstr "DONE"
@@ -1215,7 +1223,7 @@ msgstr "END RUN"
 msgid "END TUTORIAL"
 msgstr "END TUTORIAL"
 
-#: components/overlays/admin-session.tsx:242
+#: components/overlays/admin-session.tsx:244
 msgid "ENDS"
 msgstr "ENDS"
 
@@ -1245,7 +1253,7 @@ msgstr "EVER"
 msgid "Every button tops out at nine times its weight: 81 on the 9×, 9 on a 1×. Knowing the ceilings is what tells you which button can close a gap, and in how few moves."
 msgstr "Every button tops out at nine times its weight: 81 on the 9×, 9 on a 1×. Knowing the ceilings is what tells you which button can close a gap, and in how few moves."
 
-#: components/overlays/dev-overlay.tsx:181
+#: components/overlays/dev-overlay.tsx:194
 msgid "EVERY CHALLENGE, ANY WINDOW — NO BOARD KEPT"
 msgstr "EVERY CHALLENGE, ANY WINDOW — NO BOARD KEPT"
 
@@ -1261,7 +1269,7 @@ msgstr "Every day was [A]’s except [D]. [B] got exactly one, and made it count
 msgid "Every hit scrambles the dial."
 msgstr "Every hit scrambles the dial."
 
-#: modes/challenges/catalog.ts:818
+#: modes/challenges/catalog.ts:819
 msgid "Every move works backwards."
 msgstr "Every move works backwards."
 
@@ -1666,7 +1674,7 @@ msgstr "HOURS"
 msgid "HOW DID IT END?"
 msgstr "HOW DID IT END?"
 
-#: components/overlays/rating-overlay.tsx:77
+#: components/overlays/rating-overlay.tsx:147
 msgid "HOW DO YOU LIKE THE CHALLENGE?"
 msgstr "HOW DO YOU LIKE THE CHALLENGE?"
 
@@ -1875,7 +1883,7 @@ msgstr "last played today"
 msgid "last played yesterday"
 msgstr "last played yesterday"
 
-#: components/overlays/dev-overlay.tsx:50
+#: components/overlays/dev-overlay.tsx:52
 msgid "LAST SESSION WAS {closed}"
 msgstr "LAST SESSION WAS {closed}"
 
@@ -2001,11 +2009,11 @@ msgstr "Messages sent in"
 msgid "MINUTES"
 msgstr "MINUTES"
 
-#: modes/challenges/catalog.ts:817
+#: modes/challenges/catalog.ts:818
 msgid "MIR"
 msgstr "MIR"
 
-#: modes/challenges/catalog.ts:814
+#: modes/challenges/catalog.ts:815
 msgid "MIRROR"
 msgstr "MIRROR"
 
@@ -2133,7 +2141,7 @@ msgstr "Nine is made for a thumb, not a mouse. Open it on your phone and add it 
 msgid "NINE NINE NINE"
 msgstr "NINE NINE NINE"
 
-#: components/overlays/dev-overlay.tsx:188
+#: components/overlays/dev-overlay.tsx:201
 msgid "No challenges have been written yet."
 msgstr "No challenges have been written yet."
 
@@ -2157,7 +2165,7 @@ msgstr "No features in the database."
 msgid "No figures. See the error above."
 msgstr "No figures. See the error above."
 
-#: components/overlays/admin-sessions.tsx:285
+#: components/overlays/admin-sessions.tsx:287
 msgid "No filters are on."
 msgstr "No filters are on."
 
@@ -2180,6 +2188,10 @@ msgstr "No messages."
 #: lib/recap-lines.ts:138
 msgid "No records fell. They rarely do."
 msgstr "No records fell. They rarely do."
+
+#: components/overlays/challenge-page.tsx:156
+msgid "No remarks yet."
+msgstr "No remarks yet."
 
 #: components/role-preview-badge.tsx:55
 msgid "NO ROLE"
@@ -2205,7 +2217,7 @@ msgstr "No runs in this window."
 msgid "No runs, no records, no argument. Yet."
 msgstr "No runs, no records, no argument. Yet."
 
-#: components/overlays/dev-overlay.tsx:39
+#: components/overlays/dev-overlay.tsx:41
 msgid "NO SESSION YET"
 msgstr "NO SESSION YET"
 
@@ -2213,9 +2225,13 @@ msgstr "NO SESSION YET"
 msgid "No sessions have been planned."
 msgstr "No sessions have been planned."
 
-#: components/overlays/admin-sessions.tsx:287
+#: components/overlays/admin-sessions.tsx:289
 msgid "No sessions planned yet."
 msgstr "No sessions planned yet."
+
+#: components/overlays/challenge-page.tsx:182
+msgid "No sessions yet."
+msgstr "No sessions yet."
 
 #: modes/challenges/catalog.ts:384
 msgid "NO SLIP"
@@ -2261,6 +2277,10 @@ msgstr "Nobody in this window."
 msgid "Nobody owned this one. [A] led on [N] days, and [N] was enough to lead."
 msgstr "Nobody owned this one. [A] led on [N] days, and [N] was enough to lead."
 
+#: components/overlays/challenge-page.tsx:98
+msgid "NOBODY PLAYED"
+msgstr "NOBODY PLAYED"
+
 #: lib/recap-lines.ts:56
 msgid "Nobody played last week. The boards are exactly where you left them."
 msgstr "Nobody played last week. The boards are exactly where you left them."
@@ -2299,7 +2319,8 @@ msgid "Not much happened. [A] took [N] of the [P] days anyone turned up for."
 msgstr "Not much happened. [A] took [N] of the [P] days anyone turned up for."
 
 #: components/game/step-up-toast.tsx:115
-#: components/overlays/rating-overlay.tsx:100
+#: components/overlays/rating-overlay.tsx:138
+#: components/overlays/rating-overlay.tsx:170
 #: components/overlays/tutorial-done-modal.tsx:114
 #: components/overlays/tutorial-offer-modal.tsx:95
 msgid "NOT NOW"
@@ -2341,7 +2362,7 @@ msgstr "Nothing all-time moved. Every record standing on Monday was still standi
 msgid "Nothing announced yet."
 msgstr "Nothing announced yet."
 
-#: components/overlays/admin-sessions.tsx:289
+#: components/overlays/admin-sessions.tsx:291
 msgid "Nothing in these states."
 msgstr "Nothing in these states."
 
@@ -2612,7 +2633,7 @@ msgstr "Pick ADVENTURE on the start screen. The dial is the same dial — but th
 msgid "PLACED"
 msgstr "PLACED"
 
-#: components/overlays/admin-sessions.tsx:236
+#: components/overlays/admin-sessions.tsx:238
 msgid "PLAN SESSION"
 msgstr "PLAN SESSION"
 
@@ -2620,6 +2641,10 @@ msgstr "PLAN SESSION"
 #: components/overlays/admin-overlay.tsx:268
 msgid "planned"
 msgstr "planned"
+
+#: components/overlays/challenge-page.tsx:125
+msgid "PLAY"
+msgstr "PLAY"
 
 #: constants/achievements.ts:526
 msgid "Play a full room — four players, the most one holds."
@@ -2739,7 +2764,7 @@ msgstr "Put the first score on a session board."
 msgid "ramp(x) = x × ({floor} + {slack} × 0.5 ^ (hits ÷ {halfLife}))"
 msgstr "ramp(x) = x × ({floor} + {slack} × 0.5 ^ (hits ÷ {halfLife}))"
 
-#: components/overlays/dev-overlay.tsx:61
+#: components/overlays/rating-line.tsx:15
 msgid "RATED {average}"
 msgstr "RATED {average}"
 
@@ -2774,6 +2799,10 @@ msgstr "Ready to play for real?"
 #: constants/news.ts:150
 msgid "Records, celebrated"
 msgstr "Records, celebrated"
+
+#: components/overlays/challenge-page.tsx:152
+msgid "REMARKS"
+msgstr "REMARKS"
 
 #: components/overlays/motto-modal.tsx:155
 msgid "REMOVE"
@@ -3007,6 +3036,7 @@ msgid "See the better way"
 msgstr "See the better way"
 
 #: components/overlays/admin-messages.tsx:151
+#: components/overlays/rating-overlay.tsx:131
 msgid "SEND"
 msgstr "SEND"
 
@@ -3051,17 +3081,21 @@ msgstr "SESSION"
 msgid "SESSION BONUS"
 msgstr "SESSION BONUS"
 
-#: components/overlays/dev-overlay.tsx:43
+#: components/overlays/dev-overlay.tsx:45
 msgid "SESSION IS LIVE UNTIL {until}"
 msgstr "SESSION IS LIVE UNTIL {until}"
 
-#: components/overlays/dev-overlay.tsx:47
+#: components/overlays/dev-overlay.tsx:49
 msgid "SESSION IS PLANNED FOR {opens}"
 msgstr "SESSION IS PLANNED FOR {opens}"
 
 #: components/overlays/advanced-options-overlay.tsx:115
 msgid "SESSION RECORDING"
 msgstr "SESSION RECORDING"
+
+#: components/overlays/challenge-page.tsx:170
+msgid "SESSIONS"
+msgstr "SESSIONS"
 
 #: components/overlays/admin-messages.tsx:362
 msgid "SET ASIDE"
@@ -3118,6 +3152,7 @@ msgid "Skill inside a single run: a long streak, the top multiplier, a stretch w
 msgstr "Skill inside a single run: a long streak, the top multiplier, a stretch without losing a life."
 
 #: components/overlays/nickname-modal.tsx:142
+#: components/overlays/rating-overlay.tsx:176
 msgid "SKIP"
 msgstr "SKIP"
 
@@ -3204,7 +3239,7 @@ msgstr "START GAME"
 msgid "START TUTORIAL"
 msgstr "START TUTORIAL"
 
-#: components/overlays/admin-session.tsx:241
+#: components/overlays/admin-session.tsx:243
 msgid "STARTS"
 msgstr "STARTS"
 
@@ -3519,7 +3554,7 @@ msgstr "The rules are its own. The keys, the clock, the scoring, how many lives 
 msgid "The same nine, every run. Be quick."
 msgstr "The same nine, every run. Be quick."
 
-#: components/overlays/admin-session.tsx:268
+#: components/overlays/admin-session.tsx:270
 msgid "The standings stay exactly as they are and the places settle now. This cannot be undone — running it again is a new session, with a board of its own."
 msgstr "The standings stay exactly as they are and the places settle now. This cannot be undone — running it again is a new session, with a board of its own."
 
@@ -3817,7 +3852,7 @@ msgstr "TWO IN A ROW"
 msgid "Two names all week: [A] took [N] days, [B] the other [M]."
 msgstr "Two names all week: [A] took [N] days, [B] the other [M]."
 
-#: components/overlays/feedback-overlay.tsx:161
+#: components/overlays/feedback-overlay.tsx:160
 msgid "Type here"
 msgstr "Type here"
 
@@ -3900,6 +3935,10 @@ msgstr "WEIGHT = ROW ORDER × COLUMN ORDER"
 #: components/overlays/popup-card-view.tsx:52
 msgid "WHAT DID YOU PULL OFF?"
 msgstr "WHAT DID YOU PULL OFF?"
+
+#: components/overlays/rating-overlay.tsx:115
+msgid "What made it good or bad?"
+msgstr "What made it good or bad?"
 
 #: components/overlays/advanced-options-overlay.tsx:139
 #: components/overlays/news-archive-overlay.tsx:20

@@ -161,6 +161,17 @@ begin
     (closed_slip,  u2,  610,  6, null,  'easy', now() - interval '12 days 9 hours')
   on conflict (session_id, user_id) do nothing;
 
+  -- What the players made of FOUR KEYS and NO SLIP, so the lab's challenge page has the
+  -- three kinds of answer to draw: a figure with a **remark**, a figure alone, and words
+  -- with no figure. Back to these values on every run.
+  insert into public.session_ratings (session_id, user_id, rating, remark) values
+    (closed_keys, u1, 8,    'Two keys at once finally clicked for me. More of this.'),
+    (closed_keys, u3, 3,    null),
+    (closed_keys, u5, null, 'The weights confused me until the second run.'),
+    (closed_slip, u1, 6,    'One slip and out is harsh, but fair.')
+  on conflict (session_id, user_id) do update
+    set rating = excluded.rating, remark = excluded.remark;
+
   -- ── Messages in every state the MESSAGES screen tells apart ─────────────────
   -- Without these the screen opens on *Nothing is waiting for an answer* and every chip,
   -- filter and button on it goes unseen. One row per state the screen draws differently:
