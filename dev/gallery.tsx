@@ -586,8 +586,8 @@ const rating = (slug: string): Variant => ({
         players: 23,
         mine: SUMMARY_CASES.WON.mine,
       }}
-      onRemark={() => {}}
       onSend={() => {}}
+      onRemark={() => {}}
       onDismiss={close}
     />
   ),
