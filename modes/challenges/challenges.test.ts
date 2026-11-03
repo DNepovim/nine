@@ -449,6 +449,7 @@ describe('glimpse', () => {
         'one-key',
         'scramble',
         'freeze',
+        'binary',
       ].map(challengeId),
     )
     expect(GLIMPSE?.gradient).toEqual(challengeGradient(3))
@@ -508,7 +509,6 @@ describe('freeze', () => {
       ['FROZE', 'UP'],
       ['THIN', 'ICE'],
     ])
-    expect(CHALLENGES.at(-1)?.id).toBe(challengeId('freeze'))
   })
 
   it('is the only mode whose dial freezes', () => {
@@ -518,6 +518,45 @@ describe('freeze', () => {
         .filter((mode) => runRules(mode.id, 'hard').dial.freeze)
         .map((mode) => mode.id),
     ).toEqual([challengeId('freeze')])
+  })
+})
+
+describe('binary', () => {
+  it('is Accuracy Hard on eight keys that are each on or off', () => {
+    const rules = runRules(challengeId('binary'), 'easy')
+    expect(rules.difficulty).toBe('hard')
+    expect(rules.usesDifficulty).toBe(false)
+    expect(rules.dial.id).toBe('binary')
+    expect([rules.dial.rows, rules.dial.cols]).toEqual([2, 4])
+    expect(rules.dial.digits).toBe(2)
+    expect(rules.dial.weights).toEqual([1, 2, 4, 8, 16, 32, 64, 128])
+    expect(rules.dial.maxSum).toBe(255)
+    // 16 000 × Hard's 0.75: a twelve-second ring.
+    expect(rampedTimeout(rules, 0)).toBe(12000)
+    expect(rules.scoring.streak).toBe('none')
+    expect(rules.lives.count).toBe(3)
+    expect(rules.capabilities.board).toBe(false)
+  })
+
+  it('reaches every number in its range, each in as many presses as it has ones', () => {
+    // The challenge's whole premise: from a cleared dial, a target's par is the count of
+    // its set bits, because each one is a single tap and nothing else needs touching.
+    const { dial } = runRules(challengeId('binary'), 'hard')
+    const table = parTable(dial, emptyGrid(dial))
+    const ones = (n: number): number => n.toString(2).replaceAll('0', '').length
+    for (let sum = 0; sum <= 255; sum++) expect(table[sum], `${sum}`).toBe(ones(sum))
+  })
+
+  it('wears its own mark, fires nothing, and is the latest in the catalog', () => {
+    const binary = CHALLENGES.find((mode) => mode.id === challengeId('binary'))
+    expect(binary?.mark).toBe('computer')
+    expect(binary?.shot).toBeNull()
+    expect(binary?.claims?.board).toEqual([
+      ['ALL', 'ONES'],
+      ['TOP', 'BYTE'],
+      ['FULL', 'BYTE'],
+    ])
+    expect(CHALLENGES.at(-1)?.id).toBe(challengeId('binary'))
   })
 })
 

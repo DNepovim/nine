@@ -6,7 +6,7 @@ import { defineDial } from '@/modes/dial'
 import type { ModeDefinition } from '@/modes/types'
 
 import { defineChallenge, type ChallengeSpec } from './define'
-import { TURQUOISE } from './palette'
+import { GREY_DARK_PAIR, GREY_PAIR, TURQUOISE } from './palette'
 
 // Every challenge the app has ever carried, each with the window it ran in.
 //
@@ -728,6 +728,73 @@ const FREEZE: ChallengeSpec = {
   },
 }
 
+// BINARY: Accuracy Hard on eight keys that are each only on or off.
+//
+// Its one thing is **reading a number as bits**. Every key takes 0 or 1 (`digits: 2`) and
+// the weights are the powers of two, so every target in 0 … 255 has exactly one answer,
+// and that answer is the target written in binary. A tap flips a bit; a swipe right sets
+// it and a swipe left clears it, both a single press on a key with two values.
+//
+//   - **Least significant first.** 1 2 4 8 on the top row, 16 32 64 128 under it — small
+//     weights top-left, as on every other dial, chosen by the author over the written
+//     order of a byte.
+//   - **A 12 s ring, Hard pinned.** A route is at most eight presses, so the time is for
+//     the conversion rather than the fingers; pinned so the session board is one board.
+//   - **No streak.** Par is touching exactly the bits that differ, and on a 0/1 dial a
+//     correct conversion is nearly always par, so a rule about exact hits would build on
+//     almost every hit. No shot either, since a shot is the streak made visible.
+//
+// The 1 key is on it, so every target is answerable.
+const BINARY: ChallengeSpec = {
+  slug: 'binary',
+  label: msg`BINARY`,
+  // Its own, as every challenge since HABIT's: a profile row reading ACC would file it
+  // under a board it is not.
+  code: msg`BIN`,
+  description: msg`Eight keys, each on or off.`,
+  mark: 'computer',
+  // Grey, asked for by the author: the colour of an old machine's case, and the one
+  // challenge that wears no hue at all. A pair rather than a `hue`, because no degree on
+  // the wheel is grey — see `GREY_PAIR`.
+  gradient: GREY_PAIR,
+  darkGradient: GREY_DARK_PAIR,
+  shot: null,
+  // Every line about bits and bytes. Only the tiers this one reaches: the session
+  // standing through `board` and `medal`, and `cold` — `strong` is earned by streaks,
+  // and this run has none.
+  claims: {
+    board: [
+      ['ALL', 'ONES'],
+      ['TOP', 'BYTE'],
+      ['FULL', 'BYTE'],
+    ],
+    medal: [
+      ['NEAR', 'BYTE'],
+      ['HALF', 'BYTE'],
+    ],
+    cold: [
+      ['ZERO', 'BITS'],
+      ['BIT', 'ROT'],
+    ],
+  },
+  base: ACCURACY,
+  from: Date.UTC(2026, 10, 3),
+  until: Date.UTC(2026, 10, 3) + DAY,
+  rules: {
+    fixedDifficulty: 'hard',
+    dial: defineDial({
+      id: 'binary',
+      rows: 2,
+      cols: 4,
+      weights: [1, 2, 4, 8, 16, 32, 64, 128],
+      digits: 2,
+    }),
+    // 16 000 × Hard's 0.75 is 12 000 ms — the figure here is what the ring is.
+    clock: { base: 16000 },
+    scoring: { streak: 'none' },
+  },
+}
+
 // Mapped rather than listed, and that is what gives each challenge its colour: `.map`
 // hands `defineChallenge` the spec's own index, which is what the pair is derived from.
 // The list is append-only — see the note at the top of this file — so an index is a
@@ -743,4 +810,5 @@ export const CHALLENGES: readonly ModeDefinition[] = [
   ONE_KEY,
   SCRAMBLE,
   FREEZE,
+  BINARY,
 ].map((spec, index) => defineChallenge(spec, index))

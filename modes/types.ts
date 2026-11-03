@@ -284,6 +284,7 @@ export type MarkKind =
   | 'stopwatchKey'
   | 'shuffle'
   | 'snowflake'
+  | 'computer'
 
 // What every mode says about itself, whichever engine runs it.
 type ModeIdentity = {

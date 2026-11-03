@@ -237,6 +237,29 @@ const GLYPHS: Record<MarkKind, (color: string) => ReactNode> = {
       <Circle cx={12} cy={12} r={2.2} fill={color} />
     </>
   ),
+
+  // BINARY — an old computer: a boxy monitor on a short neck, its screen lit and a
+  // cursor waiting on it, and the keyboard in front.
+  computer: (color) => (
+    <>
+      <Path
+        d={box(2.5, 1.8, 19, 14.4, 2.4)}
+        {...line(color)}
+        fill={color}
+        fillOpacity={WASH}
+      />
+      <Path d={box(5.2, 4.4, 13.6, 9.2, 1.4)} fill={color} />
+      {/* The cursor, cut out of the screen in the ground colour. */}
+      <Path d={box(7.4, 9.4, 2.6, 2.6, 0.3)} fill={SURFACE} />
+      <Path d="M10 16.2 V18.6 M14 16.2 V18.6" {...line(color)} />
+      <Path
+        d={box(3.5, 18.6, 17, 3.6, 1.2)}
+        {...line(color)}
+        fill={color}
+        fillOpacity={WASH}
+      />
+    </>
+  ),
 }
 
 export function ChallengeMark({

@@ -39,8 +39,12 @@ import type { DialOrientation } from '@/modes'
 // surfaces without competing with the digit it is labelling.
 const BADGE_BORDER_COLOR = GRAYSCALE[3]
 
-// Values 0..8 ride the low → high tint ramp; 9 is the mode's CTA gradient.
-const RAMP_MAX = 8
+// Every value below a key's top rides the low → high tint ramp; the top is the mode's CTA
+// gradient. The top is the dial's to say — 9 on every ten-digit dial, 1 on BINARY's —
+// so a key that only counts to one is lit by its 1 rather than left a pale step short
+// of a 9 it can never reach.
+const rampOf = (value: number, top: number): number =>
+  top > 1 ? Math.min(value, top - 1) / (top - 1) : 0
 const TINT_TIMING = { duration: 260, easing: Easing.out(Easing.quad) }
 
 // How far a key dims while the tutorial has it shut, and how long it takes either way.
@@ -214,8 +218,9 @@ export function DialButton({
   const numTranslateY = useSharedValue(0)
   const numOpacity = useSharedValue(1)
   const numScale = useSharedValue(1)
-  const rampProgress = useSharedValue(Math.min(value, RAMP_MAX) / RAMP_MAX)
-  const peakProgress = useSharedValue(value === 9 ? 1 : 0)
+  const top = digits - 1
+  const rampProgress = useSharedValue(rampOf(value, top))
+  const peakProgress = useSharedValue(value === top ? 1 : 0)
   // Starts where the key already stands rather than at full: a key that is dead on its
   // first render — every key but one, the moment a tutorial's guided route begins — should
   // be dim from the first frame, not fade down into it.
@@ -228,13 +233,13 @@ export function DialButton({
 
   // Animate the button tint whenever its value changes.
   useEffect(() => {
-    // At 9 the gradient covers the pill, so the ramp underneath holds its
+    // At the top the gradient covers the pill, so the ramp underneath holds its
     // previous color: animating it up to `high` would flash a lighter blue
     // through the fading-in gradient — visible when swiping right from a low
     // value straight to 9.
-    if (value !== 9) rampProgress.value = withTiming(value / RAMP_MAX, TINT_TIMING)
-    peakProgress.value = withTiming(value === 9 ? 1 : 0, TINT_TIMING)
-  }, [value])
+    if (value !== top) rampProgress.value = withTiming(rampOf(value, top), TINT_TIMING)
+    peakProgress.value = withTiming(value === top ? 1 : 0, TINT_TIMING)
+  }, [value, top])
 
   // What this key owes the machine: a change whose digit has flown out but not yet flown
   // back in. The event is sent on the way back, so the digit and the sum above the dial

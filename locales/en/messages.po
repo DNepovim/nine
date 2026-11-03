@@ -869,6 +869,14 @@ msgstr "Best scores, up top"
 msgid "BETTER ON YOUR PHONE"
 msgstr "BETTER ON YOUR PHONE"
 
+#: modes/challenges/catalog.ts:750
+msgid "BINARY"
+msgstr "BINARY"
+
+#: modes/challenges/catalog.ts:753
+msgid "BIN"
+msgstr "BIN"
+
 #: constants/achievements.ts:360
 msgid "BLUR"
 msgstr "BLUR"
@@ -1179,6 +1187,10 @@ msgstr "EASY"
 #: components/overlays/how-to-play-overlay.tsx:783
 msgid "Eat the last of them and the empty row starts to pulse: you are starving, and a heart goes every five seconds until you eat."
 msgstr "Eat the last of them and the empty row starts to pulse: you are starving, and a heart goes every five seconds until you eat."
+
+#: modes/challenges/catalog.ts:754
+msgid "Eight keys, each on or off."
+msgstr "Eight keys, each on or off."
 
 #: machines/tutorial-lesson.ts:319
 msgid "EMPTY THE ROW IN ONE DRAG"

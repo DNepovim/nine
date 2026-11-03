@@ -45,7 +45,11 @@ import { PRIMARY_INK } from '@/constants/colors'
 // design — "nothing is deleted from it" — so an index is a permanent fact about a
 // challenge. Append to this list to give a new challenge its own place; the catalog grows
 // past it onto the golden-ratio walk below rather than repeating a colour.
-const SEQUENCE = [253, 155, 295, 58, 267, 323, 80, 309, 281, 205] as const
+//
+// The eleventh, 69°, is BINARY's place and goes unworn, as the first does under
+// four-keys' turquoise: BINARY is grey (`GREY_PAIR`), but the slot is kept so the
+// challenge after it lands on its own entry rather than on the golden-ratio walk.
+const SEQUENCE = [253, 155, 295, 58, 267, 323, 80, 309, 281, 205, 69] as const
 
 // Where a challenge past the end of `SEQUENCE` lands: the violet window, the widest of
 // the four, stepped by the golden ratio so each one falls in the largest gap left.
@@ -153,6 +157,24 @@ export const challengePairFor = (hue: number): readonly [string, string] => [
 export const challengeDarkPairFor = (hue: number): readonly [string, string] => [
   PRIMARY_INK,
   stop(hue, DARK.saturation, DARK.lightness),
+]
+
+// The pair for no hue at all: the same two lightnesses with the saturation taken out, so
+// a grey challenge is still built the way a coloured one is — the shared near-black,
+// then the bright stop for the card and the dark one for the button. BINARY wears it.
+//
+// A pair rather than a hue, because a hue is meaningless without saturation: there is
+// no degree on the wheel that means grey. `challengeInk` needs nothing new for it — a
+// stop with no saturation walks down to a darker grey, the same way a hue walks down to
+// a darker shade of itself.
+export const GREY_PAIR: readonly [string, string] = [
+  PRIMARY_INK,
+  stop(0, 0, BRIGHT.lightness),
+]
+
+export const GREY_DARK_PAIR: readonly [string, string] = [
+  PRIMARY_INK,
+  stop(0, 0, DARK.lightness),
 ]
 
 export const challengeGradient = (index: number): readonly [string, string] =>
