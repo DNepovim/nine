@@ -3,6 +3,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import type { PeriodBoard } from '@/hooks/use-board'
 import { useFlag } from '@/hooks/use-flags'
 import { useOpenSessions } from '@/hooks/use-open-sessions'
+import { subscribeSessions } from '@/lib/board-live'
 import { cardSession, type SessionCard } from '@/lib/challenge-session'
 import type { LeaderboardRow } from '@/lib/leaderboard'
 import {
@@ -176,6 +177,17 @@ export function useSessionBoard(
   const refresh = useCallback(() => {
     setAsked((n) => n + 1)
   }, [])
+
+  // Live, while there is a session to watch: another player's run moving these standings
+  // is what tells a run in progress it has lost the lead (`useSessionRival`). Only this
+  // session's events re-read it — and null, which is a reconnection saying anything may
+  // have moved. Every other session's writes pass by.
+  useEffect(() => {
+    if (sessionId === null) return
+    return subscribeSessions((moved) => {
+      if (moved === null || moved === sessionId) refresh()
+    })
+  }, [sessionId, refresh])
 
   return { board, refresh }
 }

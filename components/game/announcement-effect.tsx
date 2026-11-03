@@ -46,6 +46,12 @@ const EFFECTS = {
   // screen. The podium gets its moment on the summary, where it belongs.
   sessionWon: () => null,
   sessionTaken: () => null,
+
+  // The session being played now plays what its board counterparts play: a personal
+  // best's confetti, the week's fireworks for the lead, the jump backwards for losing it.
+  sessionBest: (colors) => <Confetti colors={colors} />,
+  sessionFirst: (colors) => <Fireworks colors={colors} />,
+  sessionLost: (colors) => <Implosion colors={colors} />,
 } as const satisfies Record<
   AnnouncementId,
   (colors: readonly [string, ...string[]]) => ReactElement | null

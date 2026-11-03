@@ -12,7 +12,7 @@ import {
   queueAnnouncement,
   type Waiting,
 } from '@/lib/announcement-queue'
-import { IDLE, stepRun, type RunPhase } from '@/lib/announcement-run'
+import { IDLE, stepRun, type RunPhase, type SessionRun } from '@/lib/announcement-run'
 import {
   ANNOUNCEMENT_IDS,
   ANNOUNCEMENT_MS,
@@ -54,6 +54,7 @@ export function useAnnouncements({
   everBest,
   todayEmpty,
   weekEmpty,
+  session,
   rival,
   achievements,
   onAchievementAnnounced,
@@ -74,6 +75,11 @@ export function useAnnouncements({
   // read is never mistaken for an empty one.
   todayEmpty: boolean
   weekEmpty: boolean
+  // A **session** run's targets and figures, or null for an ordinary run. When set, the
+  // board numbers above are frozen but never asked — see `RunPhase.session`. `targets`
+  // must keep its identity between renders that did not change it; the figures are read
+  // field by field, so a fresh object each render costs nothing.
+  session: SessionRun | null
   // What another player just did, if anything. Always yields to your own records.
   rival: RivalAnnouncement | null
   // Achievements earned but not yet announced, oldest first. Unlike a rival's news these
@@ -125,6 +131,14 @@ export function useAnnouncements({
     freeAtRef.current = 0
   }, [inRun])
 
+  // Taken apart so the effect below keys on what changed rather than on an object the
+  // screen builds afresh every render.
+  const sessionTargets = session?.targets ?? null
+  const sessionScore = session?.figures.score ?? 0
+  const sessionHits = session?.figures.hits ?? 0
+  const sessionTimeMs = session?.figures.timeMs ?? null
+  const sessionUserId = session?.userId ?? null
+
   useEffect(() => {
     const started = phaseRef.current.started
     const step = stepRun(phaseRef.current, {
@@ -139,6 +153,14 @@ export function useAnnouncements({
         todayEmpty,
         weekEmpty,
       },
+      session:
+        sessionTargets === null
+          ? null
+          : {
+              targets: sessionTargets,
+              figures: { score: sessionScore, hits: sessionHits, timeMs: sessionTimeMs },
+              userId: sessionUserId,
+            },
     })
     phaseRef.current = step.phase
 
@@ -169,6 +191,11 @@ export function useAnnouncements({
     everBest,
     todayEmpty,
     weekEmpty,
+    sessionTargets,
+    sessionScore,
+    sessionHits,
+    sessionTimeMs,
+    sessionUserId,
   ])
 
   // The ladder, in one place: your own record beats an achievement, which beats a rival.

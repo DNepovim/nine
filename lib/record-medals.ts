@@ -35,6 +35,11 @@ const MEDAL_PERIOD = {
   // session's place is reckoned, with `period: null`, and this map is about boards.
   sessionWon: null,
   sessionTaken: null,
+  // The session being played now: not a board, so no period — and the place a run ends
+  // on is `sessionMedal`'s to reckon at game over, as it is for the two above.
+  sessionBest: null,
+  sessionFirst: null,
+  sessionLost: null,
 } as const satisfies Record<AnnouncementId, Period | null>
 
 // The boards this run took, biggest first — PERIODS drives the order, so two ids naming

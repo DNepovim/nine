@@ -218,7 +218,7 @@ describe('message pools', () => {
 
   it('gives every rival announcement a name to say', () => {
     const rivalIds = IDS.filter((id) => id.endsWith('Raised') || id.endsWith('Lost'))
-    expect(rivalIds).toHaveLength(6)
+    expect(rivalIds).toHaveLength(7)
     for (const id of rivalIds) {
       for (const message of messagePool(id)) {
         expect(message).toContain('{name}')

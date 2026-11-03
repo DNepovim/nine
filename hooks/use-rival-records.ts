@@ -5,9 +5,17 @@ import { type Difficulty, type ModeId } from '@/modes'
 
 // A busy board could otherwise hold the announcement bar for a whole run, five seconds
 // at a time. One rival announcement per this window; the rest pass silently.
-const THROTTLE_MS = 15000
+export const RIVAL_THROTTLE_MS = 15000
 
 export type RivalAnnouncement = { id: AnnouncementId; name: string; seq: number }
+
+// One count for every rival watcher, so the bar — which tells one piece of news from the
+// next by `seq` — never mistakes the session's first for the boards' first.
+let lastSeq = 0
+export const nextRivalSeq = (): number => {
+  lastSeq += 1
+  return lastSeq
+}
 
 // Announces what other players do to the board while a run is in progress.
 //
@@ -31,7 +39,6 @@ export function useRivalRecords({
   const [current, setCurrent] = useState<RivalAnnouncement | null>(null)
   const previousRef = useRef<Leaders | null>(null)
   const lastAtRef = useRef(0)
-  const seqRef = useRef(0)
 
   // Reset the baseline whenever a run starts or the board changes, so the first load of
   // a board is never mistaken for a rival overtaking someone.
@@ -50,10 +57,9 @@ export function useRivalRecords({
     if (change === null) return
 
     const now = Date.now()
-    if (now - lastAtRef.current < THROTTLE_MS) return
+    if (now - lastAtRef.current < RIVAL_THROTTLE_MS) return
     lastAtRef.current = now
-    seqRef.current += 1
-    setCurrent({ ...change, seq: seqRef.current })
+    setCurrent({ ...change, seq: nextRivalSeq() })
   }, [inRun, leaders, userId])
 
   return current

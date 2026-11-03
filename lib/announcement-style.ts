@@ -43,6 +43,13 @@ const ANNOUNCEMENT_SCALE = {
   // same event whoever it went to.
   sessionWon: 'cta',
   sessionTaken: 'cta',
+  // The session being played now. Its own best wears the game's colours, as a personal
+  // best does. The lead wears gold, and this is the one place a session earns it: gold
+  // means a record you *currently hold*, and a lead mid-window is exactly that — held, and
+  // losable until the window shuts. Losing it drains to gray like every other `*Lost`.
+  sessionBest: 'game',
+  sessionFirst: 'gold',
+  sessionLost: 'gray',
 } as const satisfies Record<AnnouncementId, Scale>
 
 export type AnnouncementStyle = {

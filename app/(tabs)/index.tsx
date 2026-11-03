@@ -100,6 +100,7 @@ import { useHeldSum } from '@/hooks/use-held-sum'
 import { useHitCelebration } from '@/hooks/use-hit-celebration'
 import { useHowToPlay } from '@/hooks/use-how-to-play'
 import { useInstall } from '@/hooks/use-install'
+import { useLocalScores } from '@/hooks/use-local-scores'
 import { LocaleGate } from '@/hooks/use-locale'
 import { useLostMedals } from '@/hooks/use-lost-medals'
 import { useMedalHistory } from '@/hooks/use-medal-history'
@@ -117,8 +118,8 @@ import { usePersistedStats } from '@/hooks/use-persisted-stats'
 import { usePopupDeck } from '@/hooks/use-popup-deck'
 import { PlayerProfileProvider } from '@/hooks/use-profile-modal'
 import { useReplayConsent } from '@/hooks/use-replay-consent'
-import { useRivalRecords } from '@/hooks/use-rival-records'
 import { useRolePreview } from '@/hooks/use-role-preview'
+import { useRunRival } from '@/hooks/use-run-rival'
 import { useSavedRun } from '@/hooks/use-saved-run'
 import { SchemeProvider } from '@/hooks/use-scheme'
 import { useScoreDirection } from '@/hooks/use-score-direction'
@@ -140,6 +141,7 @@ import { idsOf, latestAchievement } from '@/lib/achievement-store'
 import { achievementCard } from '@/lib/achievements'
 import { identify, setAdminOptOut, track } from '@/lib/analytics'
 import type { AnalyticsEvents } from '@/lib/analytics-events'
+import type { SessionRun } from '@/lib/announcement-run'
 import {
   barFor,
   isOpenable,
@@ -153,6 +155,7 @@ import { cn } from '@/lib/cn'
 import { drillFor } from '@/lib/drill'
 import { gameSnapshot } from '@/lib/feedback-state'
 import { leaderOf, type LeaderboardRow } from '@/lib/leaderboard'
+import type { LocalScore } from '@/lib/local-scores'
 import { runChallenge } from '@/lib/next-challenge'
 import { heldPeriods, medalPeriods } from '@/lib/record-medals'
 import { newRunId } from '@/lib/run-id'
@@ -164,6 +167,11 @@ import {
   type RunSession,
   type SavedRun,
 } from '@/lib/saved-run'
+import {
+  deviceBestOf,
+  sessionTargetsOf,
+  type SessionTargets,
+} from '@/lib/session-announcements'
 import type { PreviousWinner } from '@/lib/session-board'
 import type { SessionFigures } from '@/lib/session-order'
 import { STEP_UP_BOARD } from '@/lib/step-up'
@@ -323,9 +331,25 @@ const OVERLAY_SCREENS = {
 // A record measured against a board that cannot be trusted — offline, reading
 // whatever it last managed to load — is not a record worth telling the player
 // about, so nothing freezes until both the board and the connection are good.
-function announcementsReady(boardLoaded: boolean, online: boolean): boolean {
-  return boardLoaded && online
+//
+// A session run waits for its session board instead: the board it would otherwise wait
+// for is the challenge mode's own, which is empty and says nothing true.
+function announcementsReady(
+  runSession: string | null,
+  boardLoaded: boolean,
+  sessionTargets: SessionTargets | null,
+  online: boolean,
+): boolean {
+  const loaded = runSession === null ? boardLoaded : sessionTargets !== null
+  return loaded && online
 }
+
+// What the bar measures a session run by, or null for an ordinary run.
+const sessionRunOf = (
+  targets: SessionTargets | null,
+  figures: SessionFigures,
+  userId: string | null,
+): SessionRun | null => (targets === null ? null : { targets, figures, userId })
 
 // The run as the machine holds it, for a message written from the pause screen — see
 // lib/feedback-state.ts. Nothing from the intro or the game over screen: neither has a
@@ -596,6 +620,53 @@ const runSessionMedalsOf = (
   userId: string | null,
 ): BoardMedal[] =>
   session === null ? [] : sessionMedal(board?.rows ?? [], figures, measure, userId)
+
+// A session run's targets, once its standings have been read.
+const sessionTargetsFor = (
+  runSession: string | null,
+  board: PeriodBoard | null,
+  measure: Measure,
+  userId: string | null,
+  localScores: LocalScore[],
+): SessionTargets | null =>
+  runSession === null || board === null
+    ? null
+    : sessionTargetsOf({
+        measure,
+        rows: board.rows,
+        empty: board.empty,
+        userId,
+        device: deviceBestOf(localScores, runSession, measure),
+      })
+
+// What the bar measures an ordinary run against on the boards — or, on a session run,
+// nothing at all. A challenge keeps no board, and the leaderboard its mode id reads is
+// empty, so asking it would have every challenge run told it had opened today's. Zeroed
+// rather than merely left unasked, so nothing could be crossed even if it were.
+const NO_BOARD_TARGETS = {
+  storedBest: 0,
+  todayBest: null,
+  weekBest: null,
+  everBest: null,
+  todayEmpty: false,
+  weekEmpty: false,
+} as const
+
+function boardTargetsOf(
+  runSession: string | null,
+  storedBest: number,
+  board: Record<'today' | 'week' | 'forever', PeriodBoard>,
+) {
+  if (runSession !== null) return NO_BOARD_TARGETS
+  return {
+    storedBest,
+    todayBest: barFor(board.today.record, board.today.myBest),
+    weekBest: barFor(board.week.record, board.week.myBest),
+    everBest: barFor(board.forever.record, board.forever.myBest),
+    todayEmpty: isOpenable(board.today.empty, board.today.myBest),
+    weekEmpty: isOpenable(board.week.empty, board.week.myBest),
+  }
+}
 
 export default function GameScreen() {
   const { t } = useLingui()
@@ -1087,7 +1158,25 @@ export default function GameScreen() {
   )
 
   const inRun = isPlaying || isPaused
-  const rival = useRivalRecords({ inRun, mode, difficulty, userId, leaders })
+  const rival = useRunRival({
+    inRun,
+    runSession,
+    mode,
+    difficulty,
+    userId,
+    leaders,
+    sessionBoard: runSessionBoard,
+  })
+  // What a session run is measured against on the bar: the session board, by the
+  // session's **measure**, with the player's own row reconciled against what the device
+  // holds for the session. Null on an ordinary run, and while the standings are still
+  // being read — `ready` below waits for them, so a null here is never frozen.
+  const localScores = useLocalScores()
+  const measure = rules.scoring.measure
+  const sessionTargets = useMemo(
+    () => sessionTargetsFor(runSession, runSessionBoard, measure, userId, localScores),
+    [runSession, runSessionBoard, measure, userId, localScores],
+  )
   const celebration = useHitCelebration(inRun, rules.capabilities.coached, hitBatch)
 
   // Trainee's invitation to a scored board. Offered only to a player who has never
@@ -1174,18 +1263,22 @@ export default function GameScreen() {
     // see announcementsReady. A run that started first gets its targets the moment
     // they land, and the score already reached is measured against them — which is
     // what a run begun on a cold start used to lose entirely.
-    ready: announcementsReady(board.loaded, online),
+    ready: announcementsReady(runSession, board.loaded, sessionTargets, online),
     score: state.context.score,
     // Measured against everything the app knows the player has scored here, not the
     // device's memory alone — the boards outlive a reinstall, a second device and a
     // hydrate that threw, and they are on this same screen. Trainee's entry stays at
     // zero on both sides, so this needs no special case to stay quiet there.
-    storedBest: personalBar(bestOn(stats, mode, difficulty).score, board.forever.myBest),
-    todayBest: barFor(bestToday, board.today.myBest),
-    weekBest: barFor(bestWeek, board.week.myBest),
-    everBest: barFor(bestEver, board.forever.myBest),
-    todayEmpty: isOpenable(board.today.empty, board.today.myBest),
-    weekEmpty: isOpenable(board.week.empty, board.week.myBest),
+    //
+    // None of it on a session run — see `boardTargetsOf`.
+    ...boardTargetsOf(
+      runSession,
+      personalBar(bestOn(stats, mode, difficulty).score, board.forever.myBest),
+      board,
+    ),
+    // The run's place on its session board, by the session's measure. `runFigures` is the
+    // same three numbers game over places the run by, so the bar and the medal agree.
+    session: sessionRunOf(sessionTargets, runFigures, userId),
     rival,
     achievements: achievementQueue.queue,
     onAchievementAnnounced: achievementQueue.announced,

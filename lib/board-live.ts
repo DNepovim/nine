@@ -1,7 +1,7 @@
 import { REALTIME_SUBSCRIBE_STATES } from '@supabase/supabase-js'
 import { AppState } from 'react-native'
 
-import { boardOf, type BoardRef } from '@/lib/board-events'
+import { boardOf, sessionOf, type BoardRef } from '@/lib/board-events'
 import { supabase } from '@/lib/supabase'
 
 // One live connection to the boards, for the whole app and every screen on it.
@@ -20,6 +20,14 @@ export type BoardListener = (moved: BoardRef | null) => void
 
 const listeners = new Set<BoardListener>()
 
+// The same, for **session boards**: told which session moved, or null for "anything may
+// have". Kept apart from the board listeners rather than folded into `BoardRef`, because
+// none of the four of those cares about a session and every one of them would otherwise
+// have had to learn to ignore one. Same channel, though — one connection is the point.
+export type SessionListener = (sessionId: string | null) => void
+
+const sessionListeners = new Set<SessionListener>()
+
 // Opened on the first subscription and kept for the life of the JS context. Ref-counting
 // it down to zero would tear the channel out and rebuild it on every remount, since a
 // React cleanup runs before the effect replacing it.
@@ -30,6 +38,17 @@ let everSubscribed = false
 
 const announce = (moved: BoardRef | null): void => {
   for (const listener of listeners) listener(moved)
+}
+
+const announceSession = (sessionId: string | null): void => {
+  for (const listener of sessionListeners) listener(sessionId)
+}
+
+// A reconnection or a return to the foreground: every board and every session may have
+// moved while nobody was listening.
+const announceAll = (): void => {
+  announce(null)
+  announceSession(null)
 }
 
 function start(): void {
@@ -54,16 +73,26 @@ function start(): void {
         announce(boardOf(payload))
       },
     )
+    // Needs migration 20261103020000_session_scores_realtime.sql. Against a database
+    // without it this listens to nothing, and a session board simply moves on pause as
+    // it always did.
+    .on(
+      'postgres_changes',
+      { event: '*', schema: 'public', table: 'session_scores' },
+      (payload) => {
+        announceSession(sessionOf(payload))
+      },
+    )
     .subscribe((status) => {
       if (status !== REALTIME_SUBSCRIBE_STATES.SUBSCRIBED) return
-      if (everSubscribed) announce(null)
+      if (everSubscribed) announceAll()
       everSubscribed = true
     })
 
   // A phone that spent the last hour asleep has missed every event in it, and Realtime
   // gives no backlog. Coming back to the foreground is the only notice we get.
   AppState.addEventListener('change', (state) => {
-    if (state === 'active') announce(null)
+    if (state === 'active') announceAll()
   })
 }
 
@@ -71,7 +100,7 @@ function start(): void {
 // score but is drawn on every board all the same — the player renaming themselves, whose
 // old name would otherwise sit on each standing they hold until a score happened to move it.
 export function announceBoardsMoved(): void {
-  announce(null)
+  announceAll()
 }
 
 export function subscribeBoards(listener: BoardListener): () => void {
@@ -79,5 +108,13 @@ export function subscribeBoards(listener: BoardListener): () => void {
   if (!started) start()
   return () => {
     listeners.delete(listener)
+  }
+}
+
+export function subscribeSessions(listener: SessionListener): () => void {
+  sessionListeners.add(listener)
+  if (!started) start()
+  return () => {
+    sessionListeners.delete(listener)
   }
 }

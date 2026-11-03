@@ -15,6 +15,11 @@ import type { AchievementId } from '@/constants/achievements'
 // are the only lines here that report a thing being *settled* rather than a thing being
 // crossed, which is why they say "took" where everything else says "leads".
 //
+// Three more are about the session being played *now*, on its **session board** and by
+// its **measure** rather than by score: `sessionBest` is your own row there passed,
+// `sessionFirst` the lead taken (or an empty session opened), `sessionLost` the lead
+// taken from you. See lib/session-announcements.ts, which is what decides them.
+//
 // The array is the source of truth and the type derives from it, so the id list can
 // never drift out of sync with the union — and ANNOUNCEMENT_MESSAGES below `satisfies`
 // a Record over that union, which makes an id without a message a compile error.
@@ -34,6 +39,9 @@ export const ANNOUNCEMENT_IDS = [
   'achievement',
   'sessionWon',
   'sessionTaken',
+  'sessionBest',
+  'sessionFirst',
+  'sessionLost',
 ] as const
 
 export type AnnouncementId = (typeof ANNOUNCEMENT_IDS)[number]
@@ -214,6 +222,32 @@ const ANNOUNCEMENT_MESSAGES = {
     '{name} took the challenge',
     'The challenge went to {name}',
     'Challenge over: {name} won',
+  ],
+
+  // The session being played *now* — not to be confused with the two above, which
+  // report one that has already shut. These are measured on the session board by its
+  // **measure**, so "best" may be a run longer rather than higher.
+  //
+  // `sessionFirst` covers both taking the lead and opening an empty session: a session
+  // has one set of standings, and an empty one with your run on it is one you lead. So
+  // the lines say you are ahead rather than that you overtook anybody.
+  //
+  // `sessionLost` is a real `*Lost`: the lead was the player's, and someone has it now.
+  // That is what separates it from `sessionTaken`, which most of its readers never held.
+  sessionBest: [
+    'Your best on this challenge',
+    'A better you, on the challenge',
+    'You beat your best',
+  ],
+  sessionFirst: [
+    'You lead the challenge',
+    'Top of the challenge',
+    'Nobody is ahead of you',
+  ],
+  sessionLost: [
+    '{name} took the lead from you',
+    '{name} passed you',
+    'Challenge: {name} leads now',
   ],
 } as const satisfies Record<AnnouncementId, readonly [string, ...string[]]>
 

@@ -1,7 +1,14 @@
 import { describe, expect, it } from 'vitest'
 
-import { IDLE, stepRun, type RunInput, type RunPhase } from './announcement-run'
+import {
+  IDLE,
+  stepRun,
+  type RunInput,
+  type RunPhase,
+  type SessionRun,
+} from './announcement-run'
 import type { RecordTargets } from './announcements'
+import type { SessionTargets } from './session-announcements'
 
 const targets = (over: Partial<RecordTargets> = {}): RecordTargets => ({
   record: 1000,
@@ -18,6 +25,7 @@ const input = (over: Partial<RunInput> = {}): RunInput => ({
   ready: true,
   score: 0,
   targets: targets(),
+  session: null,
   ...over,
 })
 
@@ -158,5 +166,53 @@ describe('stepRun — between runs', () => {
     const first = play([input({ score: 2500 }), input({ inRun: false, score: 2500 })])
     const second = play([input({ score: 2500 })], first.phase)
     expect(second.announced).toEqual(['today'])
+  })
+})
+
+describe('stepRun — a session run', () => {
+  const sessionTargets: SessionTargets = {
+    measure: 'score',
+    mine: { score: 100, hits: 0, timeMs: null },
+    leader: { score: 200, hits: 0, timeMs: null, userId: 'rival', nickname: 'R' },
+    empty: false,
+  }
+  const session = (score: number, over: Partial<SessionTargets> = {}): SessionRun => ({
+    targets: { ...sessionTargets, ...over },
+    figures: { score, hits: 0, timeMs: null },
+    userId: 'me',
+  })
+  // The challenge mode's own leaderboard is empty and the device's stats hold a best for
+  // it: both would announce, if a session run asked the board targets at all.
+  const boardLooksOpen = targets({ record: 1, todayEmpty: true, weekEmpty: true })
+
+  it('asks the session, never the board', () => {
+    const result = play(
+      [150, 250].map((score) =>
+        input({ score, targets: boardLooksOpen, session: session(score) }),
+      ),
+    )
+    expect(result.announced).toEqual(['sessionBest', 'sessionFirst'])
+  })
+
+  it('freezes nothing until the session board has answered', () => {
+    const result = play([
+      input({ ready: false, score: 250, session: session(250) }),
+      input({ ready: true, score: 250, session: session(250) }),
+    ])
+    expect(result.announced).toEqual([null, 'sessionFirst'])
+  })
+
+  it('keeps the leader it froze when the board moves under the run', () => {
+    const result = play([
+      input({ score: 0, session: session(0) }),
+      input({ score: 250, session: session(250, { leader: null, empty: true }) }),
+      input({ score: 250, session: session(250) }),
+    ])
+    expect(result.announced).toEqual([null, 'sessionFirst', null])
+  })
+
+  it('publishes on taking the lead, not on its own best', () => {
+    expect(play([input({ score: 150, session: session(150) })]).published).toBe(0)
+    expect(play([input({ score: 250, session: session(250) })]).published).toBe(1)
   })
 })

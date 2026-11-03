@@ -6,7 +6,7 @@ import { darkGradientOf } from '@/modes'
 import { announcementStyle } from './announcement-style'
 import { ANNOUNCEMENT_IDS } from './announcements'
 
-const LOST = ['todayLost', 'weekLost', 'everLost'] as const
+const LOST = ['todayLost', 'weekLost', 'everLost', 'sessionLost'] as const
 const RAISED = ['todayRaised', 'weekRaised', 'everRaised'] as const
 
 describe('announcementStyle', () => {
