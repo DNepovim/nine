@@ -40,6 +40,15 @@ export type DialSpec = {
   // Drawing only. The hit, par and the spawner all read the real sum; this says what the
   // row shows, which is why it sits beside `orientation` rather than in a rules group.
   freeze: boolean
+  // Whether every gesture is **mirrored**: a tap and a swipe up lower a key, a swipe down
+  // raises it, a swipe right empties it and a swipe left fills it — see `mirrorMove`.
+  // False on every dial but MIRROR's.
+  //
+  // Beside `orientation` because the two are the same kind of thing — how a move made on
+  // the screen is read on the dial — and they compose: orientation turns the move into
+  // the dial's frame, then the mirror reverses what it means there. The digits are drawn
+  // upright and par is unchanged, since a route costs the same presses either way.
+  mirror: boolean
 }
 
 // Which way up a dial is drawn and read. `sideways` is a quarter turn counter-clockwise,
@@ -80,6 +89,7 @@ export function defineDial({
   orientation = 'upright',
   scramble = false,
   freeze = false,
+  mirror = false,
 }: {
   id: string
   rows: number
@@ -89,6 +99,7 @@ export function defineDial({
   orientation?: DialOrientation
   scramble?: boolean
   freeze?: boolean
+  mirror?: boolean
 }): DialSpec {
   const cells = rows * cols
   const spread = weights ?? Array.from({ length: cells }, byPosition(cols))
@@ -103,6 +114,7 @@ export function defineDial({
     orientation,
     scramble,
     freeze,
+    mirror,
   }
 }
 

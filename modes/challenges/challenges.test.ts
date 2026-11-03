@@ -450,6 +450,7 @@ describe('glimpse', () => {
         'scramble',
         'freeze',
         'binary',
+        'mirror',
       ].map(challengeId),
     )
     expect(GLIMPSE?.gradient).toEqual(challengeGradient(3))
@@ -547,7 +548,7 @@ describe('binary', () => {
     for (let sum = 0; sum <= 255; sum++) expect(table[sum], `${sum}`).toBe(ones(sum))
   })
 
-  it('wears its own mark, fires nothing, and is the latest in the catalog', () => {
+  it('wears its own mark and fires nothing', () => {
     const binary = CHALLENGES.find((mode) => mode.id === challengeId('binary'))
     expect(binary?.mark).toBe('computer')
     expect(binary?.shot).toBeNull()
@@ -556,7 +557,40 @@ describe('binary', () => {
       ['TOP', 'BYTE'],
       ['FULL', 'BYTE'],
     ])
-    expect(CHALLENGES.at(-1)?.id).toBe(challengeId('binary'))
+  })
+})
+
+describe('mirror', () => {
+  it('is Accuracy Hard on the nine keys, on a dial that mirrors every move', () => {
+    const rules = runRules(challengeId('mirror'), 'easy')
+    expect(rules.difficulty).toBe('hard')
+    expect(rules.usesDifficulty).toBe(false)
+    expect(rules.dial.id).toBe('mirror')
+    expect(rules.dial.mirror).toBe(true)
+    expect(rules.dial.orientation).toBe('upright')
+    // The nine's weights reflected corner to corner: the ×9 top-left, the ×1 bottom-right.
+    expect(rules.dial.weights).toEqual([...NINE_DIAL.weights].reverse())
+    expect(rules.dial.weights[0]).toBe(9)
+    expect(rules.dial.maxSum).toBe(NINE_DIAL.maxSum)
+    expect(rules.clock.base).toBe(16500)
+    expect(rules.scoring.streak).toBe('optimal')
+    expect(rules.capabilities.board).toBe(false)
+  })
+
+  it('fires a sniper, wears its own mark, and is the latest in the catalog', () => {
+    const mirror = CHALLENGES.find((mode) => mode.id === challengeId('mirror'))
+    expect(mirror?.shot).toBe('sniper')
+    expect(mirror?.mark).toBe('mirror')
+    expect(CHALLENGES.at(-1)?.id).toBe(challengeId('mirror'))
+  })
+
+  it('is the only mode whose dial mirrors', () => {
+    expect(
+      allModes()
+        .filter((mode) => mode.engine === 'targets')
+        .filter((mode) => runRules(mode.id, 'hard').dial.mirror)
+        .map((mode) => mode.id),
+    ).toEqual([challengeId('mirror')])
   })
 })
 

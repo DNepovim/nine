@@ -139,6 +139,25 @@ export function orientMove(orientation: DialOrientation, move: DialMove): DialMo
   return ORIENTED[orientation][move]
 }
 
+// The move a key takes on a **mirrored** dial, from the one read in the dial's frame:
+// every gesture means its opposite. A tap — the +1 everywhere else — lowers the key with
+// a swipe down's -1, a swipe down raises it, and the two ends of the range swap sides.
+//
+// Asked after `orientMove`, so a dial that was both turned and mirrored would reverse the
+// meaning of a move already read in its own frame.
+const MIRRORED = {
+  up: 'down',
+  tap: 'down',
+  down: 'up',
+  left: 'right',
+  right: 'left',
+} as const satisfies Record<DialMove, DialMove>
+
+export function mirrorMove(mirror: boolean, move: DialMove): DialMove {
+  'worklet'
+  return mirror ? MIRRORED[move] : move
+}
+
 // What a key actually does with a move, given what the lesson is letting it take.
 //
 // A shut key takes nothing, whether the finger lifts on it or only passes over. A

@@ -6,7 +6,7 @@ import { defineDial } from '@/modes/dial'
 import type { ModeDefinition } from '@/modes/types'
 
 import { defineChallenge, type ChallengeSpec } from './define'
-import { GREY_DARK_PAIR, GREY_PAIR, TURQUOISE } from './palette'
+import { GREY_DARK_PAIR, GREY_PAIR, LIGHT_BLUE, TURQUOISE } from './palette'
 
 // Every challenge the app has ever carried, each with the window it ran in.
 //
@@ -795,6 +795,71 @@ const BINARY: ChallengeSpec = {
   },
 }
 
+// MIRROR: Accuracy Hard, and every gesture means its opposite.
+//
+// Its one thing is the **reflection**. The dial is the nine seen in a mirror: its weights
+// reflected corner to corner, so the ×9 sits top-left and the ×1 bottom-right, and every
+// move on it is reversed — a tap and a swipe up lower a key, a swipe down raises it, a
+// swipe right empties it and a swipe left fills it. A player who knows the dial by feel
+// has every habit pointing the wrong way.
+//
+//   - **Everything else is Accuracy Hard**, as SIDEWAYS, the other challenge about the
+//     hands: the 16.5 s ring, three hearts, the `optimal` streak and its sniper shot.
+//   - **Par is unchanged.** A route costs the same presses whichever way each one is
+//     made, so the streak builds on exactly the short route muscle memory gets wrong.
+//
+// Its own dial id rather than the nine's, as SCRAMBLE's: two dials that behave
+// differently never share a name.
+const MIRROR: ChallengeSpec = {
+  slug: 'mirror',
+  label: msg`MIRROR`,
+  // Its own, as every challenge since HABIT's: a profile row reading ACC would file it
+  // under a board it is not.
+  code: msg`MIR`,
+  description: msg`Every move works backwards.`,
+  mark: 'mirror',
+  // Glass-blue, asked for by the author — see `LIGHT_BLUE`.
+  hue: LIGHT_BLUE,
+  // No `shot`: Accuracy's sniper, inherited — the streak is Accuracy's own.
+  //
+  // Every line about reflections and reversal.
+  claims: {
+    board: [
+      ['WON', 'BACKWARDS'],
+      ['TRUE', 'IMAGE'],
+      ['FLIP', 'SIDE'],
+    ],
+    medal: [
+      ['NEAR', 'IMAGE'],
+      ['HALF', 'TURNED'],
+    ],
+    strong: [
+      ['SHARP', 'IMAGE'],
+      ['GOOD', 'GLASS'],
+    ],
+    cold: [
+      ['WRONG', 'WAY'],
+      ['CRACKED', 'GLASS'],
+    ],
+  },
+  base: ACCURACY,
+  from: Date.UTC(2026, 10, 4),
+  until: Date.UTC(2026, 10, 4) + DAY,
+  rules: {
+    fixedDifficulty: 'hard',
+    dial: defineDial({
+      id: 'mirror',
+      rows: 3,
+      cols: 3,
+      // The nine's weights reflected corner to corner, in screen order: the ×9 top-left,
+      // the ×1 bottom-right. Still row × column, counted from the other corner, and the
+      // 1 is still on it, so every target in 0 … 324 is answerable.
+      weights: [9, 6, 3, 6, 4, 2, 3, 2, 1],
+      mirror: true,
+    }),
+  },
+}
+
 // Mapped rather than listed, and that is what gives each challenge its colour: `.map`
 // hands `defineChallenge` the spec's own index, which is what the pair is derived from.
 // The list is append-only — see the note at the top of this file — so an index is a
@@ -811,4 +876,5 @@ export const CHALLENGES: readonly ModeDefinition[] = [
   SCRAMBLE,
   FREEZE,
   BINARY,
+  MIRROR,
 ].map((spec, index) => defineChallenge(spec, index))

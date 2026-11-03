@@ -260,6 +260,25 @@ const GLYPHS: Record<MarkKind, (color: string) => ReactNode> = {
       />
     </>
   ),
+
+  // MIRROR — a key with a 7 on it, and its reflection across the glass: the same key
+  // turned the other way, fainter, the way a reflection is.
+  mirror: (color) => (
+    <>
+      <Path d={box(1.5, 5, 9, 14, 2)} {...line(color)} fill={color} fillOpacity={WASH} />
+      <Path d="M4 8.6 H8 L5.6 15.4" {...line(color)} strokeWidth={1.8} />
+      <Path d="M12 2.5 V21.5" {...line(color)} strokeWidth={1} strokeDasharray="1.4 2" />
+      <G opacity={0.5}>
+        <Path
+          d={box(13.5, 5, 9, 14, 2)}
+          {...line(color)}
+          fill={color}
+          fillOpacity={WASH}
+        />
+        <Path d="M20 8.6 H16 L18.4 15.4" {...line(color)} strokeWidth={1.8} />
+      </G>
+    </>
+  ),
 }
 
 export function ChallengeMark({

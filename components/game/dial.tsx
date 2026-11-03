@@ -16,6 +16,7 @@ import {
   crossReach,
   exitMove,
   liftMove,
+  mirrorMove,
   nextValue,
   NO_COMMAND,
   orientMove,
@@ -222,14 +223,14 @@ export function Dial({
   }, [values])
 
   // `move` arrives as the finger made it on the screen, and is turned into the dial's
-  // own here and nowhere earlier — see `orientMove`. The tutorial's controls are read
-  // after it, which upright changes nothing about.
+  // own here and nowhere earlier — see `orientMove`, then `mirrorMove`. The tutorial's
+  // controls are read after both, which an upright, unmirrored dial changes nothing about.
   const commit = (cell: number, move: DialMove, lift: boolean) => {
     'worklet'
     if (interrupted.value) return
     const taken = allowedMove(
       live[cell] ?? 'full',
-      orientMove(dial.orientation, move),
+      mirrorMove(dial.mirror, orientMove(dial.orientation, move)),
       lift,
     )
     if (taken === null) return

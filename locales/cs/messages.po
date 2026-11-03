@@ -1261,6 +1261,10 @@ msgstr "Každý den patřil hráči [A], kromě jednoho: [D] si ho vzal [B], a n
 msgid "Every hit scrambles the dial."
 msgstr "Každý zásah zamíchá číselník."
 
+#: modes/challenges/catalog.ts:818
+msgid "Every move works backwards."
+msgstr "Každý pohyb funguje obráceně."
+
 #: modes/challenges/catalog.ts:519
 msgid "Every number drifts. Catch it before it moves."
 msgstr "Každé číslo se posouvá. Chyť ho, než se pohne."
@@ -1996,6 +2000,14 @@ msgstr "Zprávy od hráčů"
 #: components/overlays/admin-stats.tsx:43
 msgid "MINUTES"
 msgstr "MINUTY"
+
+#: modes/challenges/catalog.ts:817
+msgid "MIR"
+msgstr "ZRC"
+
+#: modes/challenges/catalog.ts:814
+msgid "MIRROR"
+msgstr "ZRCADLO"
 
 #: constants/achievements.ts:690
 msgid "Miss a session's top three by a single point, or a tenth of a second."

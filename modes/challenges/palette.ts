@@ -46,10 +46,11 @@ import { PRIMARY_INK } from '@/constants/colors'
 // challenge. Append to this list to give a new challenge its own place; the catalog grows
 // past it onto the golden-ratio walk below rather than repeating a colour.
 //
-// The eleventh, 69°, is BINARY's place and goes unworn, as the first does under
-// four-keys' turquoise: BINARY is grey (`GREY_PAIR`), but the slot is kept so the
-// challenge after it lands on its own entry rather than on the golden-ratio walk.
-const SEQUENCE = [253, 155, 295, 58, 267, 323, 80, 309, 281, 205, 69] as const
+// The eleventh and twelfth, 69° and 258°, go unworn, as the first does under four-keys'
+// turquoise: BINARY is grey (`GREY_PAIR`) and MIRROR names `LIGHT_BLUE`. The slots are
+// kept because a hue is keyed on the index, so the challenge after them still lands on
+// an entry of its own rather than on the golden-ratio walk.
+const SEQUENCE = [253, 155, 295, 58, 267, 323, 80, 309, 281, 205, 69, 258] as const
 
 // Where a challenge past the end of `SEQUENCE` lands: the violet window, the widest of
 // the four, stepped by the golden ratio so each one falls in the largest gap left.
@@ -209,6 +210,14 @@ export const challengeDarkGradient = (index: number): readonly [string, string] 
 // `GOLD_SCALE` fills, `GOLD_INK` writes, because `#FFD166` is 1.26:1 on the surface — so
 // it is the system working rather than an exception to it.
 export const TURQUOISE = 190
+
+// Light blue, which `mirror` wears — the colour of glass, asked for by the author.
+//
+// Inside the sky window, ten degrees on from turquoise and five short of FREEZE's 205,
+// so the three read as one family of cool blues. That is the cost, written down: they
+// are told apart by their marks, not their colours, and two of them on the intro on the
+// same day would look like siblings.
+export const LIGHT_BLUE = 200
 
 // The challenge's own colour as **text**.
 //

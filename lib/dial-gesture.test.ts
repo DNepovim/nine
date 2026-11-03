@@ -6,6 +6,8 @@ import {
   crossReach,
   exitMove,
   liftMove,
+  mirrorMove,
+  MOVE_EFFECT,
   nextValue,
   orientMove,
   travelled,
@@ -251,6 +253,24 @@ describe('a swipe across the bottom row', () => {
     walk(8, lift)
 
     expect(values).toEqual([0, 0, 0, 0, 0, 0, 9, 9, 6])
+  })
+})
+
+describe('mirrorMove', () => {
+  const MOVES: readonly DialMove[] = ['up', 'down', 'left', 'right', 'tap']
+
+  it('reads every move as it was made on a dial that does not mirror', () => {
+    for (const move of MOVES) expect(mirrorMove(false, move)).toBe(move)
+  })
+
+  it('reverses what every move does on a mirrored dial', () => {
+    // A tap and a swipe up lower the key, a swipe down raises it, and the two ends of the
+    // range swap sides: right empties, left fills.
+    expect(MOVE_EFFECT[mirrorMove(true, 'tap')].step).toBe(-1)
+    expect(MOVE_EFFECT[mirrorMove(true, 'up')].step).toBe(-1)
+    expect(MOVE_EFFECT[mirrorMove(true, 'down')].step).toBe(1)
+    expect(MOVE_EFFECT[mirrorMove(true, 'right')].set).toBe('floor')
+    expect(MOVE_EFFECT[mirrorMove(true, 'left')].set).toBe('ceiling')
   })
 })
 

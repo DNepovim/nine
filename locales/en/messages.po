@@ -1261,6 +1261,10 @@ msgstr "Every day was [A]’s except [D]. [B] got exactly one, and made it count
 msgid "Every hit scrambles the dial."
 msgstr "Every hit scrambles the dial."
 
+#: modes/challenges/catalog.ts:818
+msgid "Every move works backwards."
+msgstr "Every move works backwards."
+
 #: modes/challenges/catalog.ts:519
 msgid "Every number drifts. Catch it before it moves."
 msgstr "Every number drifts. Catch it before it moves."
@@ -1996,6 +2000,14 @@ msgstr "Messages sent in"
 #: components/overlays/admin-stats.tsx:43
 msgid "MINUTES"
 msgstr "MINUTES"
+
+#: modes/challenges/catalog.ts:817
+msgid "MIR"
+msgstr "MIR"
+
+#: modes/challenges/catalog.ts:814
+msgid "MIRROR"
+msgstr "MIRROR"
 
 #: constants/achievements.ts:690
 msgid "Miss a session's top three by a single point, or a tenth of a second."

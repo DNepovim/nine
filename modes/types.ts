@@ -285,6 +285,7 @@ export type MarkKind =
   | 'shuffle'
   | 'snowflake'
   | 'computer'
+  | 'mirror'
 
 // What every mode says about itself, whichever engine runs it.
 type ModeIdentity = {
