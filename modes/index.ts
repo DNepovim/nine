@@ -59,11 +59,13 @@ export {
   measureOf,
   MODE_ORDER,
   modeById,
+  openingOf,
   openModes,
   rulesFor,
   runLabel,
   runRules,
   runSubmode,
+  schemeOf,
   SCORED_MODES,
   startingLives,
   traitsOf,
@@ -81,4 +83,13 @@ export {
   type StreakTrigger,
 } from './streak'
 export { MEASURES, measureFrom } from './types'
-export type { Headline, MarkKind, Measure, ShotKind, Submode } from './types'
+export type {
+  Headline,
+  MarkKind,
+  Measure,
+  OpeningKind,
+  OpeningTake,
+  SchemeKind,
+  ShotKind,
+  Submode,
+} from './types'

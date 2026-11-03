@@ -72,6 +72,7 @@ export function Dial({
   drag = true,
   flame = null,
   hitSeq = 0,
+  opened = true,
   onDelta,
   onSet,
   onSweep,
@@ -116,6 +117,10 @@ export function Dial({
   // scramble: each key flips its new digit in, and a gesture it lands in is over. Left at
   // nought by every caller whose dial holds still.
   hitSeq?: number
+  // Whether the run's **opening** has reached its switch. False only while one is still
+  // playing with the lights on; true for every run without one. A dial that is blacked
+  // out (`DialSpec.blackout`) shows its digits until then, so the scene can take them away.
+  opened?: boolean
   // `sweep` is whether this change is part of a drag — see `DialCommand`.
   onDelta: (index: number, delta: 1 | -1, sweep: boolean) => void
   onSet: (index: number, value: number, sweep: boolean) => void
@@ -368,7 +373,7 @@ export function Dial({
                 hinted={liveKey === index}
                 heat={flame === null ? null : burn.heat}
                 scrambles={dial.scramble ? hitSeq : 0}
-                dark={dial.blackout}
+                dark={dial.blackout && opened}
                 peakFrom={peakFrom}
                 peakTo={peakTo}
                 commands={commands}

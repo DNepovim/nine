@@ -6,7 +6,14 @@ import { ACCURACY } from '@/modes/definitions/accuracy'
 import { SPEED } from '@/modes/definitions/speed'
 import { defineDial, emptyGrid, NINE_DIAL } from '@/modes/dial'
 import { DIFFICULTY_ORDER } from '@/modes/difficulty'
-import { allModes, measureOf, rulesFor, runRules } from '@/modes/registry'
+import {
+  allModes,
+  measureOf,
+  openingOf,
+  rulesFor,
+  runRules,
+  schemeOf,
+} from '@/modes/registry'
 import { rampedTimeout, resolveRules, spawnInterval } from '@/modes/rules'
 
 import { CHALLENGES } from './catalog'
@@ -614,6 +621,33 @@ describe('blackout', () => {
     expect(blackout?.gradient).toEqual(BLACK_PAIR)
     expect(blackout?.darkGradient).toEqual(blackout?.gradient)
     expect(CHALLENGES.at(-1)?.id).toBe(challengeId('blackout'))
+  })
+
+  it('opens with the lights going out, and plays dark', () => {
+    const id = challengeId('blackout')
+    expect(openingOf(id)).toBe('lightsOut')
+    expect(schemeOf(id)).toBe('dark')
+    expect(runRules(id, 'hard').opens).toBe(true)
+  })
+
+  it('is the only mode that opens, and never under the tutorial', () => {
+    // Every rung of every mode, so a permanent mode cannot pick up an opening by way of
+    // a difficulty, and every one of them with the tutorial applied, which never opens.
+    const opening = allModes()
+      .filter((mode) => mode.engine === 'targets')
+      .filter((mode) => DIFFICULTY_ORDER.some((rung) => runRules(mode.id, rung).opens))
+      .map((mode) => mode.id)
+    expect(opening).toEqual([challengeId('blackout')])
+    for (const mode of allModes()) {
+      expect(runRules(mode.id, 'hard', true).opens, mode.id).toBe(false)
+    }
+  })
+
+  it('leaves every other mode without an opening, in day colours', () => {
+    for (const mode of allModes().filter((m) => m.id !== challengeId('blackout'))) {
+      expect(openingOf(mode.id), mode.id).toBeNull()
+      expect(schemeOf(mode.id), mode.id).toBe('day')
+    }
   })
 
   it('is the only mode whose dial is blacked out', () => {

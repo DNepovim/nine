@@ -26,6 +26,12 @@ export function usePauseOnBlur(playing: boolean, onPause: () => void): void {
 
   useEffect(() => {
     if (!playing) return
+    // A run can start playing while the app is already away — a run held for its
+    // **opening** is started by the scene's own timer, which a backgrounded tab or an
+    // Android app may still fire. The change that would have paused it happened before
+    // this listener existed, so it is asked for here: a run that starts unwatched is
+    // paused the moment it starts, and the player comes back to the pause screen.
+    if (AppState.currentState !== 'active') pauseRef.current()
     const subscription = AppState.addEventListener('change', (next) => {
       if (next !== 'active') pauseRef.current()
     })

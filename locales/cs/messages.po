@@ -3140,6 +3140,10 @@ msgstr "Dovednost v jedné hře: dlouhá série, nejvyšší násobitel, úsek b
 msgid "SKIP"
 msgstr "PŘESKOČIT"
 
+#: components/game/opening-layer.tsx:61
+msgid "Skip to the run"
+msgstr "Přeskočit rovnou do hry"
+
 #: constants/achievements.ts:290
 msgid "SLIPSTREAM"
 msgstr "ZÁVĚTŘÍ"

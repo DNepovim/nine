@@ -362,8 +362,8 @@ describe('the tutorial submode', () => {
 
   it('opens on a dial of its own with a target already standing', () => {
     const submode = runSubmode(true)
-    expect(submode?.opening?.target).toBe(submode?.script?.(0))
-    expect(submode?.opening?.grid.length).toBe(practice.dial.rows * practice.dial.cols)
+    expect(submode?.setup?.target).toBe(submode?.script?.(0))
+    expect(submode?.setup?.grid.length).toBe(practice.dial.rows * practice.dial.cols)
   })
 })
 

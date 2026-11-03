@@ -237,17 +237,20 @@ export type Submode = {
   id: string
   label: MessageDescriptor
   patch: RulesPatch
-  // The dial position a run of it opens on, with `target` already standing there, or null to
-  // open on an empty dial for the spawner to fill. A lesson needs one: a dial of zeros
-  // is the one position where every key looks alike and nothing on it has happened yet,
-  // so there is nothing to point at.
-  opening: { grid: Grid; target: number } | null
+  // The **setup**: the dial position a run of it starts on, with `target` already standing
+  // there, or null to start on an empty dial for the spawner to fill. A lesson needs one:
+  // a dial of zeros is the one position where every key looks alike and nothing on it has
+  // happened yet, so there is nothing to point at.
+  //
+  // Not an **opening**, which is a scene a mode plays before its run (`ModeDefinition`).
+  // This was called `opening` until that word was taken for the scene.
+  setup: { grid: Grid; target: number } | null
   // The targets a run of it deals itself, by how many have gone down so far, or null
   // once the script has run out and the spawner takes over. Null throughout for a
   // submode that deals none.
   //
   // The engine asks the submode rather than asking whether it is the tutorial, which is
-  // what it used to do — a scripted opening and a scripted run are things a submode may
+  // what it used to do — a scripted setup and a scripted run are things a submode may
   // have, not things the tutorial is.
   script: ((hits: number) => number | null) | null
 }
@@ -288,6 +291,28 @@ export type MarkKind =
   | 'mirror'
   | 'bulb'
 
+// The scene a mode plays on the game screen before its run's first target — its
+// **opening** — drawn by `OPENINGS` in `components/game/opening-layer.tsx`. Named for the
+// scene rather than for the challenge, so a later challenge may play the same one.
+//
+// While it plays the run is **ready**: dealt, holding no target, its clock not started.
+// See the `ready` state in `machines/game.ts`.
+export type OpeningKind = 'lightsOut'
+
+// How much of an opening plays. `full` for a run started from the intro, `short` for one
+// dealt again — PLAY AGAIN, or RESTART from the pause screen — so twenty retries are not
+// twenty whole scenes. Decided by the screen from how the run was dealt.
+export type OpeningTake = 'full' | 'short'
+
+// The colours the game screen is played under for a run — its **scheme**. `day` is the
+// app's own and every mode's unless it names another; the values are in `SCHEMES`
+// (`constants/colors.ts`).
+//
+// Not the app's `@theme`, which stays one light scheme with no switch; not a design-guide
+// colour scale; not a system dark mode. Only the game screen wears it, and the overlays
+// over it keep their own.
+export type SchemeKind = 'day' | 'dark'
+
 // What every mode says about itself, whichever engine runs it.
 type ModeIdentity = {
   id: string
@@ -322,6 +347,11 @@ type ModeIdentity = {
   // A challenge's mark. Undefined on every permanent mode, and on a challenge content to
   // wear its own dial drawn as dots instead.
   mark?: MarkKind
+  // The scene played before a run of it, or undefined for none — every mode but a
+  // challenge that names one. See `OpeningKind`.
+  opening?: OpeningKind
+  // The colours its game screen is played under; undefined is `day`. See `SchemeKind`.
+  scheme?: SchemeKind
   window: ModeWindow | null
 }
 

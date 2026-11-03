@@ -3140,6 +3140,10 @@ msgstr "Skill inside a single run: a long streak, the top multiplier, a stretch 
 msgid "SKIP"
 msgstr "SKIP"
 
+#: components/game/opening-layer.tsx:61
+msgid "Skip to the run"
+msgstr "Skip to the run"
+
 #: constants/achievements.ts:290
 msgid "SLIPSTREAM"
 msgstr "SLIPSTREAM"

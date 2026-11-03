@@ -1,4 +1,5 @@
 import { PRIMARY_INK } from '@/constants/colors'
+import { contrastRatio } from '@/lib/contrast'
 
 // What a challenge is painted in.
 //
@@ -260,23 +261,6 @@ const INK_FLOOR = 4.5
 const CARD = '#FDFCFA'
 const SURFACE = '#F3EFE9'
 
-const luminance = (hex: string): number => {
-  const channels = [1, 3, 5].map((at) => {
-    const c = parseInt(hex.slice(at, at + 2), 16) / 255
-    return c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4
-  })
-  return (
-    0.2126 * (channels[0] ?? 0) +
-    0.7152 * (channels[1] ?? 0) +
-    0.0722 * (channels[2] ?? 0)
-  )
-}
-
-const contrast = (a: string, b: string): number => {
-  const [high, low] = [luminance(a), luminance(b)].sort((x, y) => y - x)
-  return ((high ?? 0) + 0.05) / ((low ?? 0) + 0.05)
-}
-
 // A hex back to the hue and saturation it was built from, so the ink can be the same
 // colour at a different lightness rather than the same colour mixed with black — which
 // would drag every hue towards the same muddy middle on its way down.
@@ -313,8 +297,8 @@ export function challengeInk(brightStop: string): string {
   // is a colour nobody asked for in place of one that was already right — and the card
   // would be drawing a hair off the hue on its own edge.
   if (
-    contrast(brightStop, CARD) >= INK_FLOOR &&
-    contrast(brightStop, SURFACE) >= INK_FLOOR
+    contrastRatio(brightStop, CARD) >= INK_FLOOR &&
+    contrastRatio(brightStop, SURFACE) >= INK_FLOOR
   ) {
     return brightStop
   }
@@ -323,8 +307,8 @@ export function challengeInk(brightStop: string): string {
   for (let lightness = 0.58; lightness > 0.08; lightness -= 0.005) {
     const candidate = stop(hue, saturation, lightness)
     if (
-      contrast(candidate, CARD) >= INK_FLOOR &&
-      contrast(candidate, SURFACE) >= INK_FLOOR
+      contrastRatio(candidate, CARD) >= INK_FLOOR &&
+      contrastRatio(candidate, SURFACE) >= INK_FLOOR
     ) {
       return candidate
     }

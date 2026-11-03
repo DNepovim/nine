@@ -1,3 +1,4 @@
+import type { SchemeKind } from '@/modes/types'
 import type { TargetBand } from '@/types/game'
 
 // Brand + value-tint palettes shared across the game UI.
@@ -334,3 +335,99 @@ export const MODE_SCREEN_TOKENS = {
 // itself would disappear into its own background, so this is the pale end of it plus
 // white — decoration is allowed to sit lighter than text.
 export const PALE_GOLD = ['#FFF6DC', '#FFFFFF', '#FFE8A3', '#FFEFC2'] as const
+
+// ─── Schemes ─────────────────────────────────────────────────────────────────
+
+// The colours the game screen is played under for a run — its **scheme** (`SchemeKind` in
+// modes/types.ts). Applied the way the painted game-over screens above re-bind theirs:
+// `vars()` over the game screen's subtree, so every class on it re-inks itself, plus the
+// few inks a component computes in JS and so cannot reach through a class.
+//
+// `day` re-binds nothing. Its tokens are the app's own `@theme`, read where they live
+// rather than copied here, so the two can never disagree.
+type SchemeToken = keyof typeof GOLD_SCREEN_TOKENS | '--color-fortune'
+
+type SchemeInks = {
+  // The top of the score readout's ramp — `SCORE_COLORS.high` on day, which is the text
+  // colour and would vanish on a dark ground.
+  score: string
+  // The line round a key drawn black (`DialSpec.blackout`), so a black key on a dark
+  // screen is still a key. Transparent on day, where nothing draws one.
+  keyRim: string
+  // The status bar's icons over this scheme: dark on day, light on dark.
+  statusBar: 'dark' | 'light'
+  // The screen's ground and the text drawn on it, for a colour computed in JS that has to
+  // be checked against the scheme rather than re-bound by it — a mode's own accent in the
+  // top bar, which `readableOn` keeps where it reads and swaps for `ink` where it does not.
+  ground: string
+  ink: string
+  // The gradient the screen is painted on — `SurfaceWash`'s stops. A hex gradient rather
+  // than a token, so it is one of the inks.
+  wash: readonly string[]
+}
+
+type Scheme = {
+  tokens: Partial<Record<SchemeToken, string>>
+  inks: SchemeInks
+}
+
+// `dark` — a near-black of the app's own violet cast, the screen's text in the parchment
+// it is usually drawn on. The keys and the target discs keep their light faces, so the
+// inks drawn on *them* (`--color-dial`, `--color-pie`) stay dark: only what sits on the
+// screen itself turns over.
+export const SCHEMES = {
+  day: {
+    tokens: {},
+    inks: {
+      score: SCORE_COLORS.high,
+      keyRim: 'transparent',
+      statusBar: 'dark',
+      ground: SURFACE,
+      ink: SCORE_COLORS.high,
+      wash: SURFACE_WASH,
+    },
+  },
+  dark: {
+    tokens: {
+      '--color-surface': '#110F18',
+      '--color-card': '#1F1C2A',
+      '--color-elevated': '#2A2638',
+      '--color-muted': '#3A3648',
+      '--color-dim': '#B8B3C7',
+      '--color-primary': '#F3EFE9',
+      '--color-strong': '#F3EFE9',
+      '--color-on-strong': '#1C1928',
+      '--color-score': '#5BD27D',
+      '--color-fortune': '#FF8A80',
+      '--color-dial': '#1C1928',
+      '--color-factor': '#9A96A8',
+      '--color-pie': '#171421',
+    },
+    inks: {
+      score: '#F3EFE9',
+      keyRim: 'rgba(243, 239, 233, 0.28)',
+      statusBar: 'light',
+      ground: '#110F18',
+      ink: '#F3EFE9',
+      // The day wash's four stops, carried down to the dark surface with the same faint
+      // cool-to-warm drift across the screen.
+      wash: ['#0E0D17', '#110F19', '#15101A', '#171119'],
+    },
+  },
+} as const satisfies Record<SchemeKind, Scheme>
+
+// The bulb in BLACKOUT's **opening** (`components/game/openings/lights-out.tsx`).
+//
+// A warm, pale lamp-light rather than any of the app's golds: `GOLD_SCALE` means a record
+// held, and a bulb wearing it would be the scene claiming something it is not. Lit, the
+// glass is the colour of the light it gives; out, it is the dark scheme's own card, so
+// the dead bulb sits in the room it has just made dark.
+export const LIGHTS_OUT = {
+  glass: '#FFF1C9',
+  glow: 'rgba(255, 236, 184, 0.55)',
+  filament: '#F2A541',
+  deadGlass: SCHEMES.dark.tokens['--color-card'],
+  // The cord, the socket and the outline: the app's own ink, which reads on the light
+  // screen the scene opens on and, at the rim, against the dark one it leaves.
+  line: DIM_INK,
+} as const

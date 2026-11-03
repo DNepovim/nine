@@ -165,12 +165,12 @@ const hydrateStats = (current: Stats, stored: Partial<Stats>): Stats => {
   return merged
 }
 
-// The target a run opens holding, for a submode that opens on one. Dealt here rather
+// The target a run starts holding, for a submode whose **setup** has one. Dealt here rather
 // than by the spawner because the spawner rolls a value, and a lesson's first target is
 // not a roll.
-const openingTargets = (
+const setupTargets = (
   rules: RunRules,
-  opening: NonNullable<Submode['opening']>,
+  setup: NonNullable<Submode['setup']>,
   id: number,
   duration: number,
   now: number,
@@ -179,12 +179,12 @@ const openingTargets = (
     id,
     // The first target of the run, dealt before the spawner has run at all.
     seq: 0,
-    value: opening.target,
+    value: setup.target,
     spawnedAt: now,
     duration,
     refAt: now,
-    refGrid: opening.grid,
-    par: computePar(rules.dial, opening.grid, opening.target),
+    refGrid: setup.grid,
+    par: computePar(rules.dial, setup.grid, setup.target),
     userSteps: 0,
     // The tutorial's own target, which no drifting mode deals.
     drift: 0,
@@ -312,6 +312,8 @@ type Event =
   | { type: 'PAUSE'; now: number }
   | { type: 'RESUME'; now: number }
   | { type: 'RESTART'; now: number; runId: string }
+  // The opening has ended (or was skipped): a **ready** run starts its clock now.
+  | { type: 'BEGIN'; now: number }
   // The run's **session** window has shut. Ends the run where it stands, which is the one
   // way into game over that is not about the run at all: the player did nothing wrong and
   // nothing ran out on the board — the contest simply stopped accepting scores.
@@ -361,9 +363,9 @@ const freshGame = (context: Context, now: number, tutorial: boolean, runId: stri
   // does, because a dial of zeros is the one position where every key looks alike and
   // nothing on it has happened yet. Every other run opens on zeros with an empty board
   // for the spawner to fill.
-  const opening = runSubmode(tutorial)?.opening ?? null
+  const setup = runSubmode(tutorial)?.setup ?? null
   return {
-    grid: opening?.grid ?? emptyGrid(rules.dial),
+    grid: setup?.grid ?? emptyGrid(rules.dial),
     tutorial,
     hits: 0,
     score: 0,
@@ -376,22 +378,16 @@ const freshGame = (context: Context, now: number, tutorial: boolean, runId: stri
     bestAcc: 0,
     bestSpd: 0,
     targets:
-      opening === null
+      setup === null
         ? ([] as Target[])
-        : openingTargets(
-            rules,
-            opening,
-            context.nextTargetId,
-            context.playerClockMs,
-            now,
-          ),
+        : setupTargets(rules, setup, context.nextTargetId, context.playerClockMs, now),
     // Cleared off the board, but the counter keeps climbing for the same reason the hit
     // batch's seq does: the UI keys a target's animations on its id, and a restart from a
     // pause leaves the last run's targets still animating off. An id dealt twice would
     // read to the display list as the departing target, not the arriving one. A submode
     // that opens holding a target spends one on it.
-    nextTargetId: context.nextTargetId + (opening === null ? 0 : 1),
-    dealt: opening === null ? 0 : 1,
+    nextTargetId: context.nextTargetId + (setup === null ? 0 : 1),
+    dealt: setup === null ? 0 : 1,
     hitBatch: { seq: context.hitBatch.seq, hits: [] as HitInfo[] },
     elapsedMs: 0,
     playingSince: now,
@@ -400,6 +396,20 @@ const freshGame = (context: Context, now: number, tutorial: boolean, runId: stri
     runId,
   }
 }
+
+// Whether the run about to be dealt **opens** — plays its mode's opening while held
+// **ready**. Asked of the fresh run's rules, so the tutorial (a submode) never does, and
+// asked of the context as the dealing event leaves it, so a SET_MODE sent just before
+// START is the mode that answers.
+const opensFresh = (context: Context, tutorial: boolean): boolean =>
+  rulesOf({ ...context, tutorial }).opens
+
+// A fresh run held **ready**: everything `freshGame` deals, with the clock not started.
+// `playingSince` is null exactly as it is outside `playing`, and BEGIN sets it.
+const dealHeld = (context: Context, now: number, tutorial: boolean, runId: string) => ({
+  ...freshGame(context, now, tutorial, runId),
+  playingSince: null,
+})
 
 // Folds the run's current active stretch into `elapsedMs` and clears `playingSince`,
 // which is what every exit from `playing` needs to do to the clock. `playingSince` is
@@ -900,18 +910,39 @@ export const gameMachine = createMachine({
             }),
           ),
         },
-        START: {
-          target: 'playing',
-          actions: assign(
-            ({
+        START: [
+          {
+            guard: ({
               context,
               event,
             }: {
               context: Context
               event: Extract<Event, { type: 'START' }>
-            }) => freshGame(context, event.now, event.tutorial === true, event.runId),
-          ),
-        },
+            }) => opensFresh(context, event.tutorial === true),
+            target: 'ready',
+            actions: assign(
+              ({
+                context,
+                event,
+              }: {
+                context: Context
+                event: Extract<Event, { type: 'START' }>
+              }) => dealHeld(context, event.now, event.tutorial === true, event.runId),
+            ),
+          },
+          {
+            target: 'playing',
+            actions: assign(
+              ({
+                context,
+                event,
+              }: {
+                context: Context
+                event: Extract<Event, { type: 'START' }>
+              }) => freshGame(context, event.now, event.tutorial === true, event.runId),
+            ),
+          },
+        ],
         SET_MODE: {
           actions: assign(
             ({ event }: { event: Extract<Event, { type: 'SET_MODE' }> }) => ({
@@ -926,6 +957,29 @@ export const gameMachine = createMachine({
             }),
           ),
         },
+      },
+    },
+    // A run dealt and held while its mode's **opening** plays: the board is fresh, no
+    // target stands and the clock has not started. Not a pause — there is nothing to
+    // resume, and the pause screen is never drawn over it.
+    //
+    // Only two ways out. BEGIN, sent by the screen when the scene ends or is skipped,
+    // starts the clock from that moment, so the first target is dealt into a run whose
+    // ring starts full. MENU, for a screen that leaves before the scene is over.
+    //
+    // Everything else is ignored by not being handled: a press, a tick or an expiry has no
+    // run in play to land on, and the spawner deals nothing outside `playing`. EXPIRE
+    // included — a session window shutting mid-scene is caught by `playing` once BEGIN
+    // lands, where the strip's countdown is on screen to say why.
+    ready: {
+      on: {
+        BEGIN: {
+          target: 'playing',
+          actions: assign(({ event }: { event: Extract<Event, { type: 'BEGIN' }> }) => ({
+            playingSince: event.now,
+          })),
+        },
+        MENU: { target: 'menu' },
       },
     },
     playing: {
@@ -966,18 +1020,36 @@ export const gameMachine = createMachine({
         // Holding the targets area restarts without a pause in between — the same fresh
         // run the pause screen's RESTART deals. The caller submits the abandoned score
         // first, as it does there.
-        RESTART: {
-          target: 'playing',
-          actions: assign(
-            ({
-              context,
-              event,
-            }: {
-              context: Context
-              event: Extract<Event, { type: 'RESTART' }>
-            }) => freshGame(context, event.now, context.tutorial, event.runId),
-          ),
-        },
+        // Into **ready** for a mode that opens, straight into play for every other — see
+        // `dealHeld`. The same two branches START takes.
+        RESTART: [
+          {
+            guard: ({ context }: { context: Context }) =>
+              opensFresh(context, context.tutorial),
+            target: 'ready',
+            actions: assign(
+              ({
+                context,
+                event,
+              }: {
+                context: Context
+                event: Extract<Event, { type: 'RESTART' }>
+              }) => dealHeld(context, event.now, context.tutorial, event.runId),
+            ),
+          },
+          {
+            target: 'playing',
+            actions: assign(
+              ({
+                context,
+                event,
+              }: {
+                context: Context
+                event: Extract<Event, { type: 'RESTART' }>
+              }) => freshGame(context, event.now, context.tutorial, event.runId),
+            ),
+          },
+        ],
         // A drifting number arriving on the dialled sum is a hit like a press would be,
         // counted without a press — the target was caught where it was going. Ends the run
         // where a press would, though a hit that costs no heart rarely does.
@@ -1266,7 +1338,7 @@ export const gameMachine = createMachine({
               const rules = rulesOf(context)
               const submode = TUTORIAL
               const grid = tutorialBoardEntry(event.board)
-              const value = submode.script?.(event.board) ?? submode.opening?.target ?? 0
+              const value = submode.script?.(event.board) ?? submode.setup?.target ?? 0
               return {
                 hits: event.board,
                 grid,
@@ -1326,18 +1398,36 @@ export const gameMachine = createMachine({
         // discarded is still live. Its score is submitted by the caller before either
         // fires, so leaving early still counts for the leaderboard.
         MENU: { target: 'menu' },
-        RESTART: {
-          target: 'playing',
-          actions: assign(
-            ({
-              context,
-              event,
-            }: {
-              context: Context
-              event: Extract<Event, { type: 'RESTART' }>
-            }) => freshGame(context, event.now, context.tutorial, event.runId),
-          ),
-        },
+        // Into **ready** for a mode that opens, straight into play for every other — see
+        // `dealHeld`. The same two branches START takes.
+        RESTART: [
+          {
+            guard: ({ context }: { context: Context }) =>
+              opensFresh(context, context.tutorial),
+            target: 'ready',
+            actions: assign(
+              ({
+                context,
+                event,
+              }: {
+                context: Context
+                event: Extract<Event, { type: 'RESTART' }>
+              }) => dealHeld(context, event.now, context.tutorial, event.runId),
+            ),
+          },
+          {
+            target: 'playing',
+            actions: assign(
+              ({
+                context,
+                event,
+              }: {
+                context: Context
+                event: Extract<Event, { type: 'RESTART' }>
+              }) => freshGame(context, event.now, context.tutorial, event.runId),
+            ),
+          },
+        ],
         // EXPIRE is deliberately not handled here, though `playing` handles it. A paused
         // run is already not being played, and ending it from underneath would take the
         // pause screen away while the player is reading it, to tell them about a window
@@ -1370,18 +1460,36 @@ export const gameMachine = createMachine({
             }),
           ),
         },
-        RESTART: {
-          target: 'playing',
-          actions: assign(
-            ({
-              context,
-              event,
-            }: {
-              context: Context
-              event: Extract<Event, { type: 'RESTART' }>
-            }) => freshGame(context, event.now, context.tutorial, event.runId),
-          ),
-        },
+        // Into **ready** for a mode that opens, straight into play for every other — see
+        // `dealHeld`. The same two branches START takes.
+        RESTART: [
+          {
+            guard: ({ context }: { context: Context }) =>
+              opensFresh(context, context.tutorial),
+            target: 'ready',
+            actions: assign(
+              ({
+                context,
+                event,
+              }: {
+                context: Context
+                event: Extract<Event, { type: 'RESTART' }>
+              }) => dealHeld(context, event.now, context.tutorial, event.runId),
+            ),
+          },
+          {
+            target: 'playing',
+            actions: assign(
+              ({
+                context,
+                event,
+              }: {
+                context: Context
+                event: Extract<Event, { type: 'RESTART' }>
+              }) => freshGame(context, event.now, context.tutorial, event.runId),
+            ),
+          },
+        ],
       },
     },
   },

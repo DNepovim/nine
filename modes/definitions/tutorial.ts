@@ -41,6 +41,6 @@ export const TUTORIAL: Submode = {
     },
     capabilities: { coached: false, keyHints: true },
   },
-  opening: { grid: TUTORIAL_OPENING_GRID, target: TUTORIAL_OPENING_TARGET },
+  setup: { grid: TUTORIAL_OPENING_GRID, target: TUTORIAL_OPENING_TARGET },
   script: scriptedTarget,
 }

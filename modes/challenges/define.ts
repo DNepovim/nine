@@ -13,7 +13,9 @@ import {
   defineMode,
   type MarkKind,
   type ModeDefinition,
+  type OpeningKind,
   type RulesPatch,
+  type SchemeKind,
   type ShotKind,
   type TargetRules,
 } from '@/modes/types'
@@ -75,6 +77,11 @@ export type ChallengeSpec = {
   // which says nothing once two challenges share a dial, so every one in the catalog
   // names one.
   mark?: MarkKind
+  // The scene a run of it opens with, and the colours its game screen is played under —
+  // see `OpeningKind` and `SchemeKind`. Both left out by a challenge that needs neither,
+  // which is every one before BLACKOUT.
+  opening?: OpeningKind
+  scheme?: SchemeKind
 }
 
 // What a challenge *is*, for the screens that have to say so beside the name of one.
@@ -167,6 +174,8 @@ export function defineChallenge(spec: ChallengeSpec, index = 0): ModeDefinition 
     shot: spec.shot === undefined ? spec.base.shot : spec.shot,
     claims: spec.claims,
     mark: spec.mark,
+    opening: spec.opening,
+    scheme: spec.scheme,
     window: { from: spec.from, until: spec.until },
     engine: 'targets',
     // Three layers, and the order is the whole of their meaning: the base mode, then

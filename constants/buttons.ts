@@ -42,6 +42,10 @@ export type ButtonId =
   | 'title.press'
   | 'title.secondary'
 
+  // ── Opening ──
+  // A tap anywhere over a mode's opening, ending the scene and starting the run.
+  | 'opening.skip'
+
   // ── Tutorial ──
   | 'tutorial.tap_through'
   | 'tutorial.step'

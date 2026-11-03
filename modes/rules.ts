@@ -123,6 +123,11 @@ export type RunRules = {
     expiryCosts: boolean
   }
   capabilities: Capabilities
+  // Whether a run of it **opens** — plays its mode's opening first, held **ready** until
+  // the scene ends. True only for a mode that names an opening and only with no submode
+  // applied: the tutorial is its own lesson and never opens. The machine reads this and
+  // nothing else, so it deals into `ready` without knowing what the scene is.
+  opens: boolean
 }
 
 // Which factor a blend favours, which is the headline unless the mode says otherwise. A
@@ -151,6 +156,9 @@ export function resolveRules(
   mode: string,
   difficulty: Difficulty,
   submode: Submode | null = null,
+  // Whether the mode names an opening. A parameter rather than a field on `TargetRules`
+  // because the opening is identity, like the shot, and a rules patch cannot reach it.
+  opening = false,
 ): RunRules {
   const patched = submode === null ? rules : patchRules(rules, submode.patch)
   const rung = patched.fixedDifficulty ?? difficulty
@@ -182,6 +190,7 @@ export function resolveRules(
     },
     lives: livesOf(patched.lives, rung),
     capabilities: patched.capabilities,
+    opens: opening && submode === null,
   }
 }
 

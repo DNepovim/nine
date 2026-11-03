@@ -4,6 +4,7 @@ import Animated, { FadeIn, FadeOut } from 'react-native-reanimated'
 
 import { PauseButton } from '@/components/game/pause-button'
 import { TYPE } from '@/constants/typography'
+import { useLegible } from '@/hooks/use-scheme'
 import { cn } from '@/lib/cn'
 
 // The row every live run is played under: what the run is on the left, the game's name in
@@ -33,10 +34,15 @@ export function RunTopBar({
   // paused, over, or mid-movement with no beat to freeze.
   onPause?: (() => void) | null
 }) {
+  // Both colours are tuned for the app's light screen; see `useLegible` for a run played
+  // under another scheme.
+  const onScheme = useLegible()
+  const shown = onScheme(accent)
+  const mark = onScheme(wordmark)
   return (
     <View className="flex-row items-center">
       <View className="flex-1">
-        <Text selectable={false} className={TYPE.button} style={{ color: accent }}>
+        <Text selectable={false} className={TYPE.button} style={{ color: shown }}>
           {title}
         </Text>
         {/* Clipped rather than wrapped: a second line here would push the whole row
@@ -58,7 +64,7 @@ export function RunTopBar({
       <Text
         selectable={false}
         className="pl-[8px] font-mono text-[24px] font-black tracking-[8px]"
-        style={{ color: wordmark }}
+        style={{ color: mark }}
       >
         NINE
       </Text>
@@ -69,7 +75,7 @@ export function RunTopBar({
       <View className="flex-1 flex-row items-center justify-end">
         {onPause !== null && (
           <Animated.View entering={FadeIn.duration(160)} exiting={FadeOut.duration(160)}>
-            <PauseButton color={accent} onPress={onPause} />
+            <PauseButton color={shown} onPress={onPause} />
           </Animated.View>
         )}
       </View>

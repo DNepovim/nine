@@ -24,6 +24,7 @@ import {
 } from '@/constants/dial-hints'
 import { mono } from '@/constants/theme'
 import { LESSON_DIM, LESSON_DIM_MS } from '@/constants/tutorial'
+import { useScheme } from '@/hooks/use-scheme'
 import {
   MOVE_EFFECT,
   NO_COMMAND,
@@ -217,6 +218,7 @@ export function DialButton({
   onDelta: (delta: 1 | -1, sweep: boolean) => void
   onSet: (value: number, sweep: boolean) => void
 }) {
+  const { keyRim } = useScheme().inks
   const scale = useSharedValue(1)
   // The pill's bounce on a flip, along whichever screen axis the dial's vertical lies on.
   const bounce = useSharedValue(0)
@@ -449,6 +451,9 @@ export function DialButton({
             shadowOpacity: 0.13,
             shadowOffset: { width: 0, height: 6 },
             shadowRadius: 10,
+            // A black key on a dark screen is no key at all: the scheme's rim draws its
+            // edge. Transparent on day, where a black key stands out on its own.
+            ...(dark && { borderWidth: 1.5, borderColor: keyRim }),
           },
           btnStyle,
         ]}

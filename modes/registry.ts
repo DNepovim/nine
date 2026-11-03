@@ -18,6 +18,8 @@ import type {
   Measure,
   ModeDefinition,
   ModeEngine,
+  OpeningKind,
+  SchemeKind,
   Submode,
 } from './types'
 
@@ -101,7 +103,13 @@ export function rulesFor(
 ): RunRules | null {
   const mode = modeById(id)
   if (mode?.engine !== 'targets') return null
-  return resolveRules(mode.rules, mode.id, difficulty, submode)
+  return resolveRules(
+    mode.rules,
+    mode.id,
+    difficulty,
+    submode,
+    mode.opening !== undefined,
+  )
 }
 
 // Whether a mode is a **challenge** — one that is on the app for a window and then is
@@ -190,6 +198,13 @@ export const dialOf = (id: ModeId): DialSpec | null => rulesFor(id, 'hard')?.dia
 
 // The drawing a challenge wears beside its name, or null for one content with its dial.
 export const markOf = (id: ModeId): MarkKind | null => modeById(id)?.mark ?? null
+
+// The scene a run of this mode opens with, or null for none. Whether a run actually plays
+// it is `RunRules.opens`, which also asks whether a submode is in force.
+export const openingOf = (id: ModeId): OpeningKind | null => modeById(id)?.opening ?? null
+
+// The colours this mode's game screen is played under: its own scheme, or `day`.
+export const schemeOf = (id: ModeId): SchemeKind => modeById(id)?.scheme ?? 'day'
 
 // The clock a target gets at the start of a run of this mode, difficulty applied — what
 // the slider on the pause screen takes its bounds from, and the figure a mode's own entry

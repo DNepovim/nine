@@ -1606,3 +1606,75 @@ describe('SCRAMBLE', () => {
     expect(actor.getSnapshot().context.grid).toEqual(DIALLED)
   })
 })
+
+describe('a run that opens', () => {
+  // BLACKOUT is the one mode with an opening: its runs are dealt **ready** and held there
+  // until the screen says the scene is over.
+  const BLACKOUT = challengeId('blackout')
+
+  const dealt = () => {
+    const actor = createActor(gameMachine)
+    actor.start()
+    actor.send({ type: 'SET_MODE', mode: BLACKOUT })
+    actor.send({ type: 'START', now: 1000, runId: nextRunId() })
+    return actor
+  }
+
+  it('is dealt ready, holding no target, its clock not started', () => {
+    const snapshot = dealt().getSnapshot()
+    expect(snapshot.value).toBe('ready')
+    expect(snapshot.context.targets).toEqual([])
+    expect(snapshot.context.playingSince).toBeNull()
+    expect(snapshot.context.elapsedMs).toBe(0)
+  })
+
+  it('starts its clock on BEGIN, from that moment', () => {
+    const actor = dealt()
+    actor.send({ type: 'BEGIN', now: 3500 })
+    expect(actor.getSnapshot().value).toBe('playing')
+    expect(actor.getSnapshot().context.playingSince).toBe(3500)
+  })
+
+  it('ignores everything but BEGIN and MENU while ready', () => {
+    const actor = dealt()
+    const before = actor.getSnapshot().context
+    actor.send({ type: 'PRESS', index: 0, delta: 1, now: 1100 })
+    actor.send({ type: 'TICK', now: 1200 })
+    actor.send({ type: 'TARGET_EXPIRED', id: 0, now: 1300 })
+    actor.send({ type: 'PAUSE', now: 1400 })
+    actor.send({ type: 'EXPIRE', now: 1500 })
+    expect(actor.getSnapshot().value).toBe('ready')
+    expect(actor.getSnapshot().context).toEqual(before)
+    actor.send({ type: 'MENU' })
+    expect(actor.getSnapshot().value).toBe('menu')
+  })
+
+  it('is dealt ready again by a RESTART from play, from a pause and from game over', () => {
+    const actor = dealt()
+    actor.send({ type: 'BEGIN', now: 2000 })
+    actor.send({ type: 'RESTART', now: 2100, runId: nextRunId() })
+    expect(actor.getSnapshot().value).toBe('ready')
+
+    actor.send({ type: 'BEGIN', now: 2200 })
+    actor.send({ type: 'PAUSE', now: 2300 })
+    actor.send({ type: 'RESTART', now: 2400, runId: nextRunId() })
+    expect(actor.getSnapshot().value).toBe('ready')
+
+    actor.send({ type: 'BEGIN', now: 2500 })
+    actor.send({ type: 'EXPIRE', now: 2600 })
+    expect(actor.getSnapshot().value).toBe('gameOver')
+    actor.send({ type: 'RESTART', now: 2700, runId: nextRunId() })
+    expect(actor.getSnapshot().value).toBe('ready')
+    expect(actor.getSnapshot().context.playingSince).toBeNull()
+  })
+
+  it('never holds a run of a mode with no opening, or the tutorial', () => {
+    expect(start('accuracy').getSnapshot().value).toBe('playing')
+
+    const tutorial = createActor(gameMachine)
+    tutorial.start()
+    tutorial.send({ type: 'SET_MODE', mode: BLACKOUT })
+    tutorial.send({ type: 'START', now: 0, runId: nextRunId(), tutorial: true })
+    expect(tutorial.getSnapshot().value).toBe('playing')
+  })
+})

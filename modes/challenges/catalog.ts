@@ -886,6 +886,10 @@ const BLACKOUT: ChallengeSpec = {
   code: msg`BLK`,
   description: msg`The keys go dark. Count in your head.`,
   mark: 'bulb',
+  // The lights going out before every run: the bulb on its cord, pulled, clicking off —
+  // and the game screen played dark from that click. See `OpeningKind` and `SchemeKind`.
+  opening: 'lightsOut',
+  scheme: 'dark',
   gradient: BLACK_PAIR,
   darkGradient: BLACK_PAIR,
   shot: null,

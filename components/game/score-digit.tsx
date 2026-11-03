@@ -12,6 +12,7 @@ import Animated, {
 import { SCORE_COLORS } from '@/constants/colors'
 import { SUM_DIGIT_SIZE, SUM_DIGIT_TRACKING } from '@/constants/game'
 import { mono } from '@/constants/theme'
+import { useScheme } from '@/hooks/use-scheme'
 
 export function ScoreDigit({
   digit,
@@ -28,6 +29,10 @@ export function ScoreDigit({
   const translateY = useSharedValue(0)
   const opacity = useSharedValue(1)
   const colorProgress = useSharedValue(progress)
+  // The calm end of the ramp is the screen's text colour, which the **scheme** decides:
+  // the app's near-black on day, its parchment on dark. Read once per scheme, as a plain
+  // string the worklet below closes over.
+  const settled = useScheme().inks.score
 
   // Animate the tint as the sum changes.
   useEffect(() => {
@@ -57,11 +62,7 @@ export function ScoreDigit({
   const animStyle = useAnimatedStyle(() => ({
     transform: [{ translateY: translateY.value }],
     opacity: opacity.value,
-    color: interpolateColor(
-      colorProgress.value,
-      [0, 1],
-      [SCORE_COLORS.high, SCORE_COLORS.low],
-    ),
+    color: interpolateColor(colorProgress.value, [0, 1], [settled, SCORE_COLORS.low]),
   }))
 
   return (

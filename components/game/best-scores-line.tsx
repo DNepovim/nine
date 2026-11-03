@@ -28,6 +28,7 @@ import { TYPE } from '@/constants/typography'
 import type { RecordHolder } from '@/hooks/use-board'
 import { useOnline } from '@/hooks/use-online'
 import { useOpenProfile } from '@/hooks/use-profile-modal'
+import { useLegible } from '@/hooks/use-scheme'
 import { announcementStyle } from '@/lib/announcement-style'
 import { RUN_SETTLE_MS, type Announcement } from '@/lib/announcements'
 import { cn } from '@/lib/cn'
@@ -473,12 +474,14 @@ export function BestScoresLine({
   // a `const` declared below this would be read inside its own dead zone — a
   // `ReferenceError` on every frame of the game screen. The compiler allows it: the
   // reference sits in an arrow function, which it has to assume might be called later.
+  // A challenge's ink is tuned for the light screen; on a dark **scheme** it may not read.
+  const legible = useLegible()
   const cells = shown.map(({ key, value, mine, holder, sub, profileId }) => (
     <BestScoreCell
       key={key}
       label={t(BEST_LABELS[key])}
       value={value}
-      color={cellColor(key, mode)}
+      color={legible(cellColor(key, mode))}
       digitFont={digitFont}
       holder={holder}
       sub={sub}
