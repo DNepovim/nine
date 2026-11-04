@@ -1,3 +1,4 @@
+import { LinearGradient } from 'expo-linear-gradient'
 import type { ReactNode } from 'react'
 import { Text, View } from 'react-native'
 
@@ -43,6 +44,7 @@ function AdminTitle({ title }: { title: string }) {
 export function AdminScreen({
   title,
   heading,
+  wash,
   error = null,
   footer,
   children,
@@ -53,6 +55,9 @@ export function AdminScreen({
   // player's nickname or an editable field rather than a word. Exactly one of this and
   // `title` is passed.
   heading?: ReactNode
+  // A diagonal gradient over the whole screen, top-left to bottom-right. The challenge
+  // page's caller asked for it: it is wearing the colour of the tile that opened it.
+  wash?: readonly [string, string]
   // Whatever the server last refused, reported in one place on every screen: under the
   // heading and above the content, which is where a reader looks after pressing something
   // that did not happen.
@@ -63,6 +68,15 @@ export function AdminScreen({
 }) {
   return (
     <ScreenLayer className="px-4 pb-4 pt-12">
+      {wash !== undefined && (
+        <LinearGradient
+          colors={[...wash]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          pointerEvents="none"
+          className="absolute inset-0"
+        />
+      )}
       {title !== undefined && <AdminTitle title={title} />}
       {heading}
       {error !== null && (

@@ -314,7 +314,7 @@ msgstr "[W] vzal [D] historický rekord [BOARD] a pořád ho má."
 
 #. placeholder {0}: session.players
 #. placeholder {0}: summary.players
-#: components/overlays/challenge-page.tsx:101
+#: components/overlays/challenge-page.tsx:102
 #: components/overlays/summary-card.tsx:77
 msgid "{0, plural, one {# PLAYER} other {# PLAYERS}}"
 msgstr "{0, plural, one {# HRÁČ} few {# HRÁČI} many {# HRÁČE} other {# HRÁČŮ}}"
@@ -334,7 +334,7 @@ msgstr "{0, plural, one {členem už rok} few {členem už # roky} other {člene
 msgid "{0} without a nickname"
 msgstr "{0} bez přezdívky"
 
-#: components/overlays/admin-challenges.tsx:199
+#: components/overlays/admin-challenges.tsx:193
 msgid "{count, plural, one {# session} other {# sessions}}"
 msgstr "{count, plural, one {# termín} few {# termíny} many {# termínu} other {# termínů}}"
 
@@ -371,7 +371,7 @@ msgid "{owed} owed an answer"
 msgstr "{owed} čeká na odpověď"
 
 #: components/overlays/admin-session.tsx:243
-#: components/overlays/challenge-page.tsx:143
+#: components/overlays/challenge-page.tsx:145
 msgid "{sessions, plural, one {# SESSION} other {# SESSIONS}}"
 msgstr "{sessions, plural, one {# TERMÍN} few {# TERMÍNY} many {# TERMÍNU} other {# TERMÍNŮ}}"
 
@@ -822,13 +822,13 @@ msgstr "PRŮM RYCH"
 
 #: components/game/arcade-over.tsx:49
 #: components/overlays/admin-access.tsx:117
-#: components/overlays/admin-challenges.tsx:223
+#: components/overlays/admin-challenges.tsx:217
 #: components/overlays/admin-knowledge.tsx:349
 #: components/overlays/admin-messages.tsx:380
 #: components/overlays/admin-session.tsx:200
 #: components/overlays/admin-sessions.tsx:253
 #: components/overlays/admin-stats.tsx:143
-#: components/overlays/challenge-page.tsx:129
+#: components/overlays/challenge-page.tsx:131
 #: components/overlays/whats-new-overlay.tsx:107
 msgid "BACK"
 msgstr "ZPĚT"
@@ -977,7 +977,7 @@ msgstr "VÝZVA"
 msgid "CHALLENGE CLOSES IN"
 msgstr "VÝZVA SE ZAVÍRÁ ZA"
 
-#: components/overlays/admin-challenges.tsx:43
+#: components/overlays/admin-challenges.tsx:42
 #: components/overlays/admin-overlay.tsx:243
 #: components/overlays/admin-session.tsx:42
 #: components/overlays/admin-sessions.tsx:50
@@ -1089,7 +1089,7 @@ msgstr "ZNALEC"
 msgid "CONTINUE"
 msgstr "POKRAČOVAT"
 
-#: app/(tabs)/index.tsx:2804
+#: app/(tabs)/index.tsx:2835
 msgid "Continue the tutorial"
 msgstr "Pokračovat v tutoriálu"
 
@@ -1285,7 +1285,7 @@ msgstr "Tuto funkci vidí každý, bez ohledu na roli i výjimku."
 msgid "Everybody, role or no role."
 msgstr "Všichni, s rolí i bez ní."
 
-#: components/overlays/admin-features.tsx:58
+#: components/overlays/admin-features.tsx:63
 msgid "everyone"
 msgstr "všichni"
 
@@ -1851,7 +1851,7 @@ msgstr "JAZYK"
 msgid "LAST"
 msgstr "MINULE"
 
-#: components/overlays/admin-challenges.tsx:197
+#: components/overlays/admin-challenges.tsx:191
 msgid "Last {ago}"
 msgstr "Naposledy {ago}"
 
@@ -2070,7 +2070,7 @@ msgstr "O skóre už nepřijdeš"
 msgid "Never miss an update"
 msgstr "Neuteče ti žádná novinka"
 
-#: components/overlays/admin-challenges.tsx:195
+#: components/overlays/admin-challenges.tsx:189
 msgid "Never run"
 msgstr "Zatím nikdy"
 
@@ -2091,7 +2091,7 @@ msgstr "NOVÁ ROLE"
 msgid "NEXT"
 msgstr "DALŠÍ"
 
-#: components/overlays/admin-challenges.tsx:193
+#: components/overlays/admin-challenges.tsx:187
 msgid "Next {opens}"
 msgstr "Další {opens}"
 
@@ -2145,7 +2145,7 @@ msgstr "Bez připojení — přezdívku si můžeš zabrat jen online."
 msgid "No connection — nothing was sent."
 msgstr "Bez připojení — nic jsme neposlali."
 
-#: components/overlays/admin-features.tsx:93
+#: components/overlays/admin-features.tsx:88
 msgid "No features in the database."
 msgstr "V databázi nejsou žádné funkce."
 
@@ -2177,7 +2177,7 @@ msgstr "Žádné zprávy."
 msgid "No records fell. They rarely do."
 msgstr "Nepadl žádný rekord. Ono se to stává málokdy."
 
-#: components/overlays/challenge-page.tsx:155
+#: components/overlays/challenge-page.tsx:157
 msgid "No remarks yet."
 msgstr "Zatím žádné poznámky."
 
@@ -2213,7 +2213,7 @@ msgstr "Zatím není naplánovaný žádný termín."
 msgid "No sessions planned yet."
 msgstr "Zatím není naplánovaný žádný termín."
 
-#: components/overlays/challenge-page.tsx:181
+#: components/overlays/challenge-page.tsx:183
 msgid "No sessions yet."
 msgstr "Zatím žádné termíny."
 
@@ -2261,7 +2261,7 @@ msgstr "V tomto období nikdo."
 msgid "Nobody owned this one. [A] led on [N] days, and [N] was enough to lead."
 msgstr "Tenhle nikomu nepatřil. [A] vedl [N]× a [N]× stačilo na vedení."
 
-#: components/overlays/challenge-page.tsx:95
+#: components/overlays/challenge-page.tsx:96
 msgid "NOBODY PLAYED"
 msgstr "NIKDO NEHRÁL"
 
@@ -2290,7 +2290,6 @@ msgid "Not everywhere, though. [W] held [BOARD] every day of the week."
 msgstr "Ne ale všude. [W] držel [BOARD] každý den v týdnu."
 
 #: components/overlays/admin-feature.tsx:135
-#: components/overlays/admin-features.tsx:73
 msgid "not in this build"
 msgstr "není v tomto buildu"
 
@@ -2314,7 +2313,7 @@ msgstr "TEĎ NE"
 msgid "NOT PUBLISHED"
 msgstr "NEZVEŘEJNĚNO"
 
-#: components/overlays/admin-challenges.tsx:201
+#: components/overlays/admin-challenges.tsx:195
 msgid "Not rated"
 msgstr "Bez hodnocení"
 
@@ -2589,6 +2588,11 @@ msgstr "maximum"
 msgid "PEOPLE"
 msgstr "LIDÉ"
 
+#. placeholder {0}: row.personCount
+#: components/overlays/admin-features.tsx:66
+msgid "people {0}"
+msgstr "lidé {0}"
+
 #: constants/achievements.ts:367
 msgid "PERFECT ROUTE"
 msgstr "DOKONALÁ CESTA"
@@ -2630,7 +2634,7 @@ msgstr "NAPLÁNOVAT TERMÍN"
 msgid "planned"
 msgstr "naplánováno"
 
-#: components/overlays/challenge-page.tsx:123
+#: components/overlays/challenge-page.tsx:125
 msgid "PLAY"
 msgstr "HRÁT"
 
@@ -2752,7 +2756,7 @@ msgstr "Zapiš do výsledků termínu první skóre."
 msgid "ramp(x) = x × ({floor} + {slack} × 0.5 ^ (hits ÷ {halfLife}))"
 msgstr "ramp(x) = x × ({floor} + {slack} × 0,5 ^ (zásahy ÷ {halfLife}))"
 
-#: components/overlays/admin-challenges.tsx:203
+#: components/overlays/admin-challenges.tsx:197
 msgid "Rated {average}"
 msgstr "Hodnocení {average}"
 
@@ -2792,7 +2796,7 @@ msgstr "Jdeme na opravdovou hru?"
 msgid "Records, celebrated"
 msgstr "Rekordy se slaví"
 
-#: components/overlays/challenge-page.tsx:151
+#: components/overlays/challenge-page.tsx:153
 msgid "REMARKS"
 msgstr "POZNÁMKY"
 
@@ -2853,10 +2857,9 @@ msgid "ROLES"
 msgstr "ROLE"
 
 #. placeholder {0}: row.roleCount
-#. placeholder {1}: row.personCount
-#: components/overlays/admin-features.tsx:62
-msgid "roles {0} · people {1}"
-msgstr "role {0} · lidé {1}"
+#: components/overlays/admin-features.tsx:65
+msgid "roles {0}"
+msgstr "role {0}"
 
 #: constants/achievements.ts:508
 msgid "ROOM FOR TWO"
@@ -3077,7 +3080,7 @@ msgstr "BONUS ZA TERMÍN"
 msgid "SESSION RECORDING"
 msgstr "ZÁZNAM HRANÍ"
 
-#: components/overlays/challenge-page.tsx:169
+#: components/overlays/challenge-page.tsx:171
 msgid "SESSIONS"
 msgstr "TERMÍNY"
 
@@ -3140,7 +3143,7 @@ msgstr "Dovednost v jedné hře: dlouhá série, nejvyšší násobitel, úsek b
 msgid "SKIP"
 msgstr "PŘESKOČIT"
 
-#: components/game/opening-layer.tsx:150
+#: components/game/opening-layer.tsx:121
 msgid "Skip to the run"
 msgstr "Přeskočit rovnou do hry"
 

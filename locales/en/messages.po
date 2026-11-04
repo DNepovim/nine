@@ -314,7 +314,7 @@ msgstr "[W] took the all-time [BOARD] record on [D], and still has it."
 
 #. placeholder {0}: session.players
 #. placeholder {0}: summary.players
-#: components/overlays/challenge-page.tsx:101
+#: components/overlays/challenge-page.tsx:102
 #: components/overlays/summary-card.tsx:77
 msgid "{0, plural, one {# PLAYER} other {# PLAYERS}}"
 msgstr "{0, plural, one {# PLAYER} other {# PLAYERS}}"
@@ -334,7 +334,7 @@ msgstr "{0, plural, one {joined a year ago} other {joined # years ago}}"
 msgid "{0} without a nickname"
 msgstr "{0} without a nickname"
 
-#: components/overlays/admin-challenges.tsx:199
+#: components/overlays/admin-challenges.tsx:193
 msgid "{count, plural, one {# session} other {# sessions}}"
 msgstr "{count, plural, one {# session} other {# sessions}}"
 
@@ -371,7 +371,7 @@ msgid "{owed} owed an answer"
 msgstr "{owed} owed an answer"
 
 #: components/overlays/admin-session.tsx:243
-#: components/overlays/challenge-page.tsx:143
+#: components/overlays/challenge-page.tsx:145
 msgid "{sessions, plural, one {# SESSION} other {# SESSIONS}}"
 msgstr "{sessions, plural, one {# SESSION} other {# SESSIONS}}"
 
@@ -822,13 +822,13 @@ msgstr "AVG SPD"
 
 #: components/game/arcade-over.tsx:49
 #: components/overlays/admin-access.tsx:117
-#: components/overlays/admin-challenges.tsx:223
+#: components/overlays/admin-challenges.tsx:217
 #: components/overlays/admin-knowledge.tsx:349
 #: components/overlays/admin-messages.tsx:380
 #: components/overlays/admin-session.tsx:200
 #: components/overlays/admin-sessions.tsx:253
 #: components/overlays/admin-stats.tsx:143
-#: components/overlays/challenge-page.tsx:129
+#: components/overlays/challenge-page.tsx:131
 #: components/overlays/whats-new-overlay.tsx:107
 msgid "BACK"
 msgstr "BACK"
@@ -977,7 +977,7 @@ msgstr "CHALLENGE"
 msgid "CHALLENGE CLOSES IN"
 msgstr "CHALLENGE CLOSES IN"
 
-#: components/overlays/admin-challenges.tsx:43
+#: components/overlays/admin-challenges.tsx:42
 #: components/overlays/admin-overlay.tsx:243
 #: components/overlays/admin-session.tsx:42
 #: components/overlays/admin-sessions.tsx:50
@@ -1089,7 +1089,7 @@ msgstr "CONNOISSEUR"
 msgid "CONTINUE"
 msgstr "CONTINUE"
 
-#: app/(tabs)/index.tsx:2804
+#: app/(tabs)/index.tsx:2835
 msgid "Continue the tutorial"
 msgstr "Continue the tutorial"
 
@@ -1285,7 +1285,7 @@ msgstr "Everybody sees this feature, whatever a role or an override says."
 msgid "Everybody, role or no role."
 msgstr "Everybody, role or no role."
 
-#: components/overlays/admin-features.tsx:58
+#: components/overlays/admin-features.tsx:63
 msgid "everyone"
 msgstr "everyone"
 
@@ -1851,7 +1851,7 @@ msgstr "LANGUAGE"
 msgid "LAST"
 msgstr "LAST"
 
-#: components/overlays/admin-challenges.tsx:197
+#: components/overlays/admin-challenges.tsx:191
 msgid "Last {ago}"
 msgstr "Last {ago}"
 
@@ -2070,7 +2070,7 @@ msgstr "Never lose your scores"
 msgid "Never miss an update"
 msgstr "Never miss an update"
 
-#: components/overlays/admin-challenges.tsx:195
+#: components/overlays/admin-challenges.tsx:189
 msgid "Never run"
 msgstr "Never run"
 
@@ -2091,7 +2091,7 @@ msgstr "NEW ROLE"
 msgid "NEXT"
 msgstr "NEXT"
 
-#: components/overlays/admin-challenges.tsx:193
+#: components/overlays/admin-challenges.tsx:187
 msgid "Next {opens}"
 msgstr "Next {opens}"
 
@@ -2145,7 +2145,7 @@ msgstr "No connection — a nickname can only be claimed online."
 msgid "No connection — nothing was sent."
 msgstr "No connection — nothing was sent."
 
-#: components/overlays/admin-features.tsx:93
+#: components/overlays/admin-features.tsx:88
 msgid "No features in the database."
 msgstr "No features in the database."
 
@@ -2177,7 +2177,7 @@ msgstr "No messages."
 msgid "No records fell. They rarely do."
 msgstr "No records fell. They rarely do."
 
-#: components/overlays/challenge-page.tsx:155
+#: components/overlays/challenge-page.tsx:157
 msgid "No remarks yet."
 msgstr "No remarks yet."
 
@@ -2213,7 +2213,7 @@ msgstr "No sessions have been planned."
 msgid "No sessions planned yet."
 msgstr "No sessions planned yet."
 
-#: components/overlays/challenge-page.tsx:181
+#: components/overlays/challenge-page.tsx:183
 msgid "No sessions yet."
 msgstr "No sessions yet."
 
@@ -2261,7 +2261,7 @@ msgstr "Nobody in this window."
 msgid "Nobody owned this one. [A] led on [N] days, and [N] was enough to lead."
 msgstr "Nobody owned this one. [A] led on [N] days, and [N] was enough to lead."
 
-#: components/overlays/challenge-page.tsx:95
+#: components/overlays/challenge-page.tsx:96
 msgid "NOBODY PLAYED"
 msgstr "NOBODY PLAYED"
 
@@ -2290,7 +2290,6 @@ msgid "Not everywhere, though. [W] held [BOARD] every day of the week."
 msgstr "Not everywhere, though. [W] held [BOARD] every day of the week."
 
 #: components/overlays/admin-feature.tsx:135
-#: components/overlays/admin-features.tsx:73
 msgid "not in this build"
 msgstr "not in this build"
 
@@ -2314,7 +2313,7 @@ msgstr "NOT NOW"
 msgid "NOT PUBLISHED"
 msgstr "NOT PUBLISHED"
 
-#: components/overlays/admin-challenges.tsx:201
+#: components/overlays/admin-challenges.tsx:195
 msgid "Not rated"
 msgstr "Not rated"
 
@@ -2589,6 +2588,11 @@ msgstr "peak"
 msgid "PEOPLE"
 msgstr "PEOPLE"
 
+#. placeholder {0}: row.personCount
+#: components/overlays/admin-features.tsx:66
+msgid "people {0}"
+msgstr "people {0}"
+
 #: constants/achievements.ts:367
 msgid "PERFECT ROUTE"
 msgstr "PERFECT ROUTE"
@@ -2630,7 +2634,7 @@ msgstr "PLAN SESSION"
 msgid "planned"
 msgstr "planned"
 
-#: components/overlays/challenge-page.tsx:123
+#: components/overlays/challenge-page.tsx:125
 msgid "PLAY"
 msgstr "PLAY"
 
@@ -2752,7 +2756,7 @@ msgstr "Put the first score on a session board."
 msgid "ramp(x) = x × ({floor} + {slack} × 0.5 ^ (hits ÷ {halfLife}))"
 msgstr "ramp(x) = x × ({floor} + {slack} × 0.5 ^ (hits ÷ {halfLife}))"
 
-#: components/overlays/admin-challenges.tsx:203
+#: components/overlays/admin-challenges.tsx:197
 msgid "Rated {average}"
 msgstr "Rated {average}"
 
@@ -2792,7 +2796,7 @@ msgstr "Ready to play for real?"
 msgid "Records, celebrated"
 msgstr "Records, celebrated"
 
-#: components/overlays/challenge-page.tsx:151
+#: components/overlays/challenge-page.tsx:153
 msgid "REMARKS"
 msgstr "REMARKS"
 
@@ -2853,10 +2857,9 @@ msgid "ROLES"
 msgstr "ROLES"
 
 #. placeholder {0}: row.roleCount
-#. placeholder {1}: row.personCount
-#: components/overlays/admin-features.tsx:62
-msgid "roles {0} · people {1}"
-msgstr "roles {0} · people {1}"
+#: components/overlays/admin-features.tsx:65
+msgid "roles {0}"
+msgstr "roles {0}"
 
 #: constants/achievements.ts:508
 msgid "ROOM FOR TWO"
@@ -3077,7 +3080,7 @@ msgstr "SESSION BONUS"
 msgid "SESSION RECORDING"
 msgstr "SESSION RECORDING"
 
-#: components/overlays/challenge-page.tsx:169
+#: components/overlays/challenge-page.tsx:171
 msgid "SESSIONS"
 msgstr "SESSIONS"
 
@@ -3140,7 +3143,7 @@ msgstr "Skill inside a single run: a long streak, the top multiplier, a stretch 
 msgid "SKIP"
 msgstr "SKIP"
 
-#: components/game/opening-layer.tsx:150
+#: components/game/opening-layer.tsx:121
 msgid "Skip to the run"
 msgstr "Skip to the run"
 

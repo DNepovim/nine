@@ -3,14 +3,14 @@ import { useEffect, useState } from 'react'
 import { ScrollView, Text, View } from 'react-native'
 
 import { PROTECTED_FEATURE } from '@/components/overlays/admin-feature'
-import { AdminTable, type AdminTableRow } from '@/components/overlays/admin-table'
+import { Note, Tile, TileGrid } from '@/components/overlays/admin-tile'
 import { VisibilityChip } from '@/components/overlays/admin-visibility-picker'
 import { TYPE } from '@/constants/typography'
 import { listFeatures, type AdminFeature } from '@/lib/admin/features'
 import { cn } from '@/lib/cn'
 import { featureLabel } from '@/lib/features'
 
-// Every feature, as a list of doors. The switch and the note were edited in place here;
+// Every feature, as a grid of tiles like the hub's and the challenge gallery's. The switch and the note were edited in place here;
 // both moved to the feature's own screen, where the roles and people it reaches are
 // listed under them. What stays is what the list is scanned for: which ones are out how
 // far, in a hue per position, and roughly how many people each reaches — under the name
@@ -39,43 +39,41 @@ export function AdminFeatures({
     })()
   }, [epoch])
 
-  const tableRows: readonly AdminTableRow[] = rows.map((row) => ({
-    key: row.key,
-    onPress: () => {
-      onOpenFeature(row)
-    },
-    cells: [`${featureLabel(row.key)}${row.key === PROTECTED_FEATURE ? ' 🔒' : ''}`],
-    note: (
-      <View className="gap-1">
-        <View className="flex-row items-center gap-2">
-          <VisibilityChip visibility={row.visibility} />
+  const tiles = rows.map((row) => (
+    <Tile
+      key={row.key}
+      id="admin.feature"
+      label={`${featureLabel(row.key)}${row.key === PROTECTED_FEATURE ? ' 🔒' : ''}`}
+      // A row the database holds and this build does not: a key left behind by a
+      // migration, or a device older than the server. Shown rather than hidden —
+      // unseen configuration is how it goes stale.
+      corner={row.inBuild ? undefined : <Text className={TYPE.hint}>⚠</Text>}
+      note={
+        <View className="gap-1">
+          <View className="flex-row">
+            <VisibilityChip visibility={row.visibility} />
+          </View>
           {/* Roles granting it, then people who actually reach it — the second counts
               overrides in. A public feature has no such pair: it reaches a population
               that grows with every player who opens the app, and the stack beside it has
               stopped deciding anything. */}
-          <Text selectable={false} className={cn(TYPE.value, 'text-dim')}>
-            {row.visibility === 'public' ? (
-              <Trans>everyone</Trans>
-            ) : (
-              // Label before figure, so one role and five people read without a
-              // plural form to get wrong.
-              <Trans>
-                roles {row.roleCount} · people {row.personCount}
-              </Trans>
-            )}
-          </Text>
+          <Note
+            lines={
+              row.visibility === 'public'
+                ? [<Trans key="all">everyone</Trans>]
+                : [
+                    <Trans key="roles">roles {row.roleCount}</Trans>,
+                    <Trans key="people">people {row.personCount}</Trans>,
+                  ]
+            }
+          />
         </View>
-        {!row.inBuild && (
-          <Text selectable={false} className={cn(TYPE.hint, 'text-red-500')}>
-            {/* A row the database holds and this build does not: a key left behind by a
-                migration, or a device older than the server. Shown rather than hidden —
-                unseen configuration is how it goes stale. */}
-            ⚠ <Trans>not in this build</Trans>
-          </Text>
-        )}
-      </View>
-    ),
-  }))
+      }
+      onPress={() => {
+        onOpenFeature(row)
+      }}
+    />
+  ))
 
   return (
     <View className="flex-1">
@@ -85,13 +83,13 @@ export function AdminFeatures({
         </Text>
       )}
       <ScrollView showsVerticalScrollIndicator={false}>
-        <AdminTable
-          rowId="admin.feature"
-          loading={loading}
-          columns={[{ label: 'FEATURE', tone: 'name' }]}
-          rows={tableRows}
-          empty={<Trans>No features in the database.</Trans>}
-        />
+        {!loading && rows.length === 0 ? (
+          <Text selectable={false} className={cn(TYPE.value, 'text-dim')}>
+            <Trans>No features in the database.</Trans>
+          </Text>
+        ) : (
+          <TileGrid tiles={tiles} />
+        )}
       </ScrollView>
     </View>
   )

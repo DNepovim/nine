@@ -7,12 +7,11 @@ import { AdminScreen } from '@/components/overlays/admin-screen'
 import { AdminSegments } from '@/components/overlays/admin-segments'
 import { ChallengeTitle } from '@/components/overlays/admin-session-cells'
 import { AdminSessions } from '@/components/overlays/admin-sessions'
-import { Note, Tile, TileGrid } from '@/components/overlays/admin-tile'
+import { Note, Tile, TileGrid, washOf } from '@/components/overlays/admin-tile'
 import { ChallengeMark } from '@/components/overlays/challenge-mark'
 import { ChallengePage } from '@/components/overlays/challenge-page'
 import { LiveDot, PlannedDot } from '@/components/overlays/live-dot'
 import { PrimaryButton } from '@/components/primary-button'
-import { CARD_INK } from '@/constants/colors'
 import { useFlag } from '@/hooks/use-flags'
 import { listChallengeRatings, type ChallengeRating } from '@/lib/admin/ratings'
 import { listSessions, type AdminSession } from '@/lib/admin/sessions'
@@ -20,7 +19,7 @@ import { pastRunsByMode, spanStatus, type SpanStatus } from '@/lib/challenge-ses
 import { dayAndMonth } from '@/lib/format-date'
 import type { OpenSession } from '@/lib/session-board'
 import { timeAgo } from '@/lib/time-ago'
-import { gradientOf, lerpColor, measureOf } from '@/modes'
+import { gradientOf, measureOf } from '@/modes'
 import { CHALLENGES } from '@/modes/challenges/catalog'
 import { challengeInk } from '@/modes/challenges/palette'
 
@@ -45,11 +44,6 @@ const TITLE = msg`CHALLENGES`
 // The mark in a tile's corner where the hub draws its icon: the hub's icon size, so the
 // two grids sit on the same line.
 const MARK_SIZE = 22
-
-// How far a tile's opening shade sits from the challenge's own bright stop towards the
-// card: far enough that the dim lines on it keep their contrast, near enough that the
-// colour is still the challenge's.
-const WASH_TOWARDS_CARD = 0.65
 
 // The status dot in a tile's other corner — larger than a table row's, since a tile is
 // read from further off.
@@ -169,7 +163,7 @@ export function AdminChallenges({
       <Tile
         key={mode.id}
         id="admin.challenge"
-        wash={[lerpColor(gradientOf(mode.id)[1], CARD_INK, WASH_TOWARDS_CARD), CARD_INK]}
+        wash={washOf(mode.id)}
         mark={
           <ChallengeMark
             modeId={mode.id}

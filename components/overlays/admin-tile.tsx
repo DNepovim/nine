@@ -6,33 +6,40 @@ import { Text, View } from 'react-native'
 import { UnreadDot } from '@/components/overlays/unread-dot'
 import { TrackedPressable } from '@/components/tracked-pressable'
 import type { ButtonId } from '@/constants/buttons'
-import { MUTED_INK } from '@/constants/colors'
+import { CARD_INK, MUTED_INK } from '@/constants/colors'
 import { TYPE } from '@/constants/typography'
 import { cn } from '@/lib/cn'
+import { gradientOf, lerpColor } from '@/modes'
 
 // The admin hub's tile, and the challenge gallery's — one square so the two grids read
 // as one. Lifted out of `admin-overlay.tsx` when the gallery asked for the same shape.
 
-// Tiles two to a row, in the order they were listed.
-const pairs = <T,>(items: readonly T[]): T[][] =>
-  items.reduce<T[][]>((rows, item, index) => {
-    if (index % 2 === 0) rows.push([item])
-    else rows[rows.length - 1]?.push(item)
-    return rows
-  }, [])
+// How far a challenge's opening shade sits from its own bright stop towards the card: far
+// enough that the dim lines on it keep their contrast, near enough that the colour is
+// still the challenge's.
+const WASH_TOWARDS_CARD = 0.65
 
-// A grid of tiles, two to a row. A lone last tile keeps its width by sharing the row with
-// an empty square of the same shape.
+// A challenge's wash: a pale shade of its colour settling into the card colour. The
+// gallery's tile wears it, and so does the page that tile opens — the page is the tile
+// opened out, so it is the same ground.
+export const washOf = (modeId: string): readonly [string, string] => [
+  lerpColor(gradientOf(modeId)[1], CARD_INK, WASH_TOWARDS_CARD),
+  CARD_INK,
+]
+
+// A grid of tiles, two to a row, in the order they were listed.
+//
+// One wrapping row rather than a row per pair: every tile sits in a cell that is half the
+// width, so a lone last tile is half the width too, with nothing beside it to be measured
+// against. React Native has no `display: grid`, and this is the nearest thing to one. The
+// cell's padding is the gap, and the negative margin takes the outer half of it back off
+// so the grid lines up with the edge of the screen.
 export function TileGrid({ tiles }: { tiles: readonly ReactNode[] }) {
   return (
-    <View className="gap-2.5">
-      {pairs(tiles).map((row, index) => (
-        <View key={index} className="flex-row gap-2.5">
-          {row}
-          {/* Sized as a tile is, not just `flex-1`: an empty view beside a square one
-              does not split the row evenly, and the lone tile came out wider than the
-              tiles above it. */}
-          {row.length === 1 && <View className="aspect-square flex-1" />}
+    <View className="-m-[5px] flex-row flex-wrap">
+      {tiles.map((tile, index) => (
+        <View key={index} className="w-1/2 p-[5px]">
+          {tile}
         </View>
       ))}
     </View>
@@ -94,7 +101,7 @@ export function Tile({
       // `aspect-square` rather than a height: the tiles are half the screen wide less the
       // gap, and a fixed height would be wrong on every display but the one it was typed
       // on.
-      className="relative aspect-square flex-1 justify-between overflow-hidden rounded-2xl bg-card p-3"
+      className="relative aspect-square w-full justify-between overflow-hidden rounded-2xl bg-card p-3"
     >
       {wash !== undefined && (
         <LinearGradient

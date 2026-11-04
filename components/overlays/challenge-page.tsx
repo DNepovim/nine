@@ -5,6 +5,7 @@ import { ScrollView, Text, View } from 'react-native'
 import { AdminScreen } from '@/components/overlays/admin-screen'
 import { ChallengeTitle, WhenBlock } from '@/components/overlays/admin-session-cells'
 import { AdminTable, type AdminTableRow } from '@/components/overlays/admin-table'
+import { washOf } from '@/components/overlays/admin-tile'
 import { ChallengeMark } from '@/components/overlays/challenge-mark'
 import { RatingLine } from '@/components/overlays/rating-line'
 import { PrimaryButton } from '@/components/primary-button'
@@ -107,6 +108,7 @@ export function ChallengePage({
 
   return (
     <AdminScreen
+      wash={washOf(modeId)}
       heading={
         <View className="flex-row items-center gap-3">
           <ChallengeMark
