@@ -24,7 +24,7 @@ import { traitsOf, type Difficulty, type ModeId } from '@/modes'
 // One submit writes to `scores` and `daily_scores` at once, so every score arrives as
 // two events. Long enough to answer both with a single fetch, short enough that a board
 // still reads as live.
-const COALESCE_MS = 300
+export const COALESCE_MS = 300
 
 const TABS = ['today', 'week', 'forever'] as const satisfies readonly [
   LeaderboardTab,

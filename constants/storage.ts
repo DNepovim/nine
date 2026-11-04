@@ -85,6 +85,11 @@ export const RUN_KEY = 'nine.run.v1'
 // used to ask the same question of a hands-on walkthrough that opened from the same
 // screen. See lib/how-to-play.ts.
 export const HOW_TO_PLAY_KEY = 'nine.how-to-play.v1'
+// The last **session** whose dialog the launch opened by itself, by id. One id rather than
+// a list: only one session is ever live at a time, so a new one is simply a different id —
+// and that is the whole test for whether this player has been shown it. Local, like the
+// markers above: a reinstall shows the live session once more, which costs one dialog.
+export const SEEN_SESSION_KEY = 'nine.seen-session.v1'
 // Whether an answer to this player's feedback has ever reached them — set when they
 // dismiss the reply dialog. The one thing that reads it is the HEARD BACK achievement,
 // and it has to be stored because the question cannot be asked again: a reply is marked

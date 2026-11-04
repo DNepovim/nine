@@ -131,6 +131,7 @@ import { useSavedRun } from '@/hooks/use-saved-run'
 import { SchemeProvider } from '@/hooks/use-scheme'
 import { useScoreDirection } from '@/hooks/use-score-direction'
 import { useScoreSubmission } from '@/hooks/use-score-submission'
+import { useSessionAsk } from '@/hooks/use-session-ask'
 import { usePreviousWinner, useSessionBoard } from '@/hooks/use-session-card'
 import { useSessionPlaces } from '@/hooks/use-session-places'
 import { useSplash } from '@/hooks/use-splash'
@@ -457,6 +458,7 @@ function mayAskForEmail({
   newsVisible,
   installing,
   consentVisible,
+  challengeUp,
 }: {
   splashDone: boolean
   onIntro: boolean
@@ -468,8 +470,42 @@ function mayAskForEmail({
   newsVisible: boolean
   installing: boolean
   consentVisible: boolean
+  // A challenge's dialog, open or owed by the launch — see `useSessionAsk`.
+  challengeUp: boolean
 }): boolean {
   if (!splashDone || !onIntro || titleDialogOpen || nicknameOpen) return false
+  if (!repliesReady || hasReply) return false
+  if (!newsReady || newsVisible) return false
+  return !installing && !consentVisible && !challengeUp
+}
+
+// Whether the launch may open a live challenge's dialog by itself — see `useSessionAsk`.
+//
+// The same queue the email ask reads, one place ahead of it: the reply, the popup and its
+// rating, the install prompt and the recording ask all go first, and the email ask waits
+// on this. Never over a dialog already up, the player's own or the email ask's.
+function mayOpenSessionAsk({
+  splashDone,
+  onIntro,
+  otherDialogUp,
+  repliesReady,
+  hasReply,
+  newsReady,
+  newsVisible,
+  installing,
+  consentVisible,
+}: {
+  splashDone: boolean
+  onIntro: boolean
+  otherDialogUp: boolean
+  repliesReady: boolean
+  hasReply: boolean
+  newsReady: boolean
+  newsVisible: boolean
+  installing: boolean
+  consentVisible: boolean
+}): boolean {
+  if (!splashDone || !onIntro || otherDialogUp) return false
   if (!repliesReady || hasReply) return false
   if (!newsReady || newsVisible) return false
   return !installing && !consentVisible
@@ -654,7 +690,10 @@ const runSessionMedalsOf = (
 ): BoardMedal[] =>
   session === null ? [] : sessionMedal(board?.rows ?? [], figures, measure, userId)
 
-// A session run's targets, once its standings have been read.
+// A session run's targets, once its standings have been read. A read that failed is not
+// one: its empty rows would freeze as "nobody leads, and we can't say it's empty", and a
+// frozen target is never replaced, so the run would go the whole way in silence. Null
+// waits for the next good read, and `stepRun` catches up on the score reached by then.
 const sessionTargetsFor = (
   runSession: string | null,
   board: PeriodBoard | null,
@@ -662,7 +701,7 @@ const sessionTargetsFor = (
   userId: string | null,
   localScores: LocalScore[],
 ): SessionTargets | null =>
-  runSession === null || board === null
+  runSession === null || board?.error !== null
     ? null
     : sessionTargetsOf({
         measure,
@@ -1139,6 +1178,10 @@ export default function GameScreen() {
   // popup has gone, and a prompt landing in the gap between the two would stack on it.
   const launchPopupUp = whatsNew.visible || whatsNew.rating.asking !== null
 
+  // A live session this player has not been shown, opened over the intro once the launch
+  // asks ahead of it have had their turn — see the effect below `accountEmail`.
+  const sessionAsk = useSessionAsk(shownFeatures.has('challenges'))
+
   const { submit: submitScore } = useScoreSubmission(userId, nickname, isReady)
 
   // Answers to messages the player sent, asked for once the session is known. Shown on
@@ -1192,6 +1235,7 @@ export default function GameScreen() {
   )
 
   const inRun = isPlaying || isPaused
+  const measure = rules.scoring.measure
   const rival = useRunRival({
     inRun,
     runSession,
@@ -1200,13 +1244,15 @@ export default function GameScreen() {
     userId,
     leaders,
     sessionBoard: runSessionBoard,
+    measure,
+    figures: runFigures,
+    runSeq: state.context.runSeq,
   })
   // What a session run is measured against on the bar: the session board, by the
   // session's **measure**, with the player's own row reconciled against what the device
   // holds for the session. Null on an ordinary run, and while the standings are still
   // being read — `ready` below waits for them, so a null here is never frozen.
   const localScores = useLocalScores()
-  const measure = rules.scoring.measure
   const sessionTargets = useMemo(
     () => sessionTargetsFor(runSession, runSessionBoard, measure, userId, localScores),
     [runSession, runSessionBoard, measure, userId, localScores],
@@ -1299,6 +1345,7 @@ export default function GameScreen() {
     // what a run begun on a cold start used to lose entirely.
     ready: announcementsReady(runSession, board.loaded, sessionTargets, online),
     score: state.context.score,
+    runSeq: state.context.runSeq,
     // Measured against everything the app knows the player has scored here, not the
     // device's memory alone — the boards outlive a reinstall, a second device and a
     // hydrate that threw, and they are on this same screen. Trainee's entry stays at
@@ -2081,8 +2128,36 @@ export default function GameScreen() {
       newsVisible: launchPopupUp,
       installing: installPrompt.target !== 'none',
       consentVisible: replayConsent.visible,
+      challengeUp: sessionAsk.owed !== null || challengeCard !== undefined,
     }),
   })
+
+  // A challenge gone live since this player last looked, opened for them the first time
+  // they reach the intro while it runs and nothing else is asking — see `mayOpenSessionAsk`.
+  const owedSession = sessionAsk.owed
+  const markSessionSeen = sessionAsk.seen
+  const mayOpenSession = mayOpenSessionAsk({
+    splashDone,
+    onIntro,
+    otherDialogUp:
+      titleDialog !== 'none' ||
+      showNicknameModal ||
+      challengeCard !== undefined ||
+      accountEmail.card !== null,
+    repliesReady: feedbackReplies.ready,
+    hasReply: feedbackReplies.reply !== null,
+    newsReady: whatsNew.ready,
+    newsVisible: launchPopupUp,
+    installing: installPrompt.target !== 'none',
+    consentVisible: replayConsent.visible,
+  })
+  useEffect(() => {
+    if (owedSession === null || !mayOpenSession) return
+    // Seen as it opens rather than as it closes: closing the app on it is still having
+    // been shown it, and a dialog that waits to be answered comes back every launch.
+    markSessionSeen(owedSession.session.id)
+    setChallengeCard(owedSession)
+  }, [owedSession, mayOpenSession, markSessionSeen])
 
   const accountNotice = accountNoticeFor({ moved, pendingEmail })
 
@@ -2123,12 +2198,12 @@ export default function GameScreen() {
     if (!updateReady || !onIntro || showNicknameModal) return
     // The intro is still underneath these two, but a reload while the player is reading
     // the catalogue is the same lost place as a reload over any other open thing.
-    if (titleDialog !== 'none') return
+    if (titleDialog !== 'none' || challengeCard !== undefined) return
     const timer = setTimeout(applyUpdate, UPDATE_SETTLE_MS)
     return () => {
       clearTimeout(timer)
     }
-  }, [updateReady, applyUpdate, onIntro, showNicknameModal, titleDialog])
+  }, [updateReady, applyUpdate, onIntro, showNicknameModal, titleDialog, challengeCard])
 
   return (
     // Outermost, because what a player may be shown decides whether a door is drawn at
@@ -3254,6 +3329,7 @@ export default function GameScreen() {
               feedbackReplies.reply === null &&
               whatsNew.ready &&
               !launchPopupUp &&
+              challengeCard === undefined &&
               installPrompt.target !== 'none' && (
                 <InstallOverlay
                   target={installPrompt.target}
@@ -3275,6 +3351,7 @@ export default function GameScreen() {
               feedbackReplies.reply === null &&
               whatsNew.ready &&
               !launchPopupUp &&
+              challengeCard === undefined &&
               installPrompt.target === 'none' &&
               replayConsent.visible && (
                 <ReplayConsentOverlay
@@ -3359,7 +3436,10 @@ export default function GameScreen() {
                 onOpenJoinRoom={() => {
                   setMenuOverlay('joinRoom')
                 }}
-                onOpenChallenge={setChallengeCard}
+                onOpenChallenge={(card) => {
+                  if (card.state === 'live') markSessionSeen(card.session.id)
+                  setChallengeCard(card)
+                }}
                 onShare={setShareInvite}
                 onOpenAdmin={() => {
                   setMenuOverlay('admin')

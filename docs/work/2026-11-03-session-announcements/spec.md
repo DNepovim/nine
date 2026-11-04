@@ -1,8 +1,8 @@
 # Session announcements
 
 Slug: session-announcements
-Stage: build
-Next: /verify session-announcements
+Stage: review
+Next: /ship session-announcements
 Track: full
 Branch: feat/session-announcements
 Started: 2026-11-03
@@ -58,7 +58,7 @@ Areas:
   attributing a row to a session.
 - **Schema**: one migration that adds `session_scores` to `supabase_realtime`, with
   replica identity full. The user pushes it to prod (see memory: migrations aren't applied by CI).
-- **Copy**: new lines extracted and translated into Czech. They have to fit
+- **Copy**: new lines follow the bar, plain English for now (the user's call at spec; see the gate below). Originally: extracted and translated into Czech. They have to fit
   `MAX_MESSAGE_LENGTH` (40) with a name in them.
 - **Mode or engine?** Neither branches on a name. The bar asks `runSession` and
   `rules.scoring.measure`, both already on the screen.
@@ -70,7 +70,7 @@ Areas:
 - Beat your best on the session (score and hits measures).
 - Took first place on the session (score and hits measures), posting mid-run.
 - Someone took your first place (all three measures), named, live via Realtime.
-- Message pools in English and Czech, an effect and a style per id.
+- Message pools in English, as the bar's are, plus an effect and a style per id.
 
 **Out**
 
@@ -172,9 +172,12 @@ type SessionTargets = {
   `todayFirst`. `ready` = session board non-null && online.
 - **Realtime:** `subscribeSessions` hears the row's `session_id` (narrowed to a string,
   else null). A reconnect or foreground calls every session listener with null, as boards do.
-- **Schema:** one migration and no shipped rows change. The code runs against the old
-  schema: no events arrive, so `sessionLost` stays silent, and the pause re-read still
-  works. The push can follow the app. The user does it (production write).
+- **Schema:** one migration and no shipped rows change. `session_scores` listens on its
+  **own channel**, because Realtime rejects a channel's bindings as a whole when one table
+  is outside the publication: on a shared channel, no board event arrives either (measured
+  locally in review). So the code runs against the old schema: no session events arrive,
+  `sessionLost` stays silent, the boards stay live and the pause re-read still works. The
+  push can follow the app. The user does it (production write).
 - **Storage:** none new. The device-held best is read from the existing local-scores
   store by `sessionId`.
 
@@ -226,6 +229,22 @@ all three `null`.
     `announcements`, `announcement-run` and `rival-records` tests pass unchanged except
     for counts that grew.
 12. `pnpm check` is green.
+13. With `session_scores` outside the publication, a `scores` write still reaches the
+    boards' channel, and the session channel's failure stays on that channel.
+14. A rival passing the player's **posted** row while the live run is still ahead of the
+    rival announces nothing. If the rival later beats the live run, `sessionLost` fires
+    then, once.
+15. `sessionFirst` needs the player's own row not already past the leader: a device best
+    above a stale leader isn't a new lead, and passing it is only `sessionBest`, and a session reading empty with a device best isn't
+    opened again.
+16. A session board whose read failed freezes nothing (`sessionTargetsFor` gives null); the
+    next good read freezes and catches up on the score already reached.
+17. A burst of `session_scores` events for the session causes one re-read per coalesce
+    window, not one per event.
+18. RESTART on a session run (no pass through idle) drops the frozen session targets and
+    the fired list, so the new run can announce and post again. The abandoned run counts as the
+    player's own row from that moment, so nothing below it reads as a new best. An
+    ordinary run's restart behaves as before.
 
 ## Tests
 

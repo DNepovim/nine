@@ -48,6 +48,7 @@ export function useAnnouncements({
   inRun,
   ready,
   score,
+  runSeq,
   storedBest,
   todayBest,
   weekBest,
@@ -66,6 +67,8 @@ export function useAnnouncements({
   // a single announcement — the first run after a cold start, every time.
   ready: boolean
   score: number
+  // Which run this is; see `RunInput.runSeq`.
+  runSeq: number
   storedBest: number
   todayBest: number | null
   weekBest: number | null
@@ -140,11 +143,12 @@ export function useAnnouncements({
   const sessionUserId = session?.userId ?? null
 
   useEffect(() => {
-    const started = phaseRef.current.started
+    const before = phaseRef.current
     const step = stepRun(phaseRef.current, {
       inRun,
       ready,
       score,
+      runSeq,
       targets: {
         record: storedBest,
         today: todayBest,
@@ -171,7 +175,9 @@ export function useAnnouncements({
     }
     // Cleared as the run's targets are frozen rather than as the last run ended: the
     // game-over screen is still reading last run's medals while it is on screen.
-    if (step.phase.started && !started) setTaken([])
+    if (step.phase.started && (!before.started || before.runSeq !== step.phase.runSeq)) {
+      setTaken([])
+    }
     if (step.announce === null) return
 
     setTaken([...step.phase.fired])
@@ -184,6 +190,7 @@ export function useAnnouncements({
   }, [
     inRun,
     ready,
+    runSeq,
     score,
     storedBest,
     todayBest,

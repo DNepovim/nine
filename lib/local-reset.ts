@@ -23,6 +23,7 @@ import {
   RUN_TOTALS_KEY,
   SEEN_NEWS_KEY,
   SEEN_RECAP_KEY,
+  SEEN_SESSION_KEY,
   SEEN_STANDINGS_KEY,
   SEEN_SUMMARY_KEY,
   STATS_KEY,
@@ -105,6 +106,9 @@ export const KEPT_KEYS = [
   // release notes and last week's recap at somebody who has read both.
   SEEN_NEWS_KEY,
   SEEN_RECAP_KEY,
+  // Which live session's dialog this device opened by itself. A session is the same
+  // session for whoever holds the phone, so clearing it would only show it twice.
+  SEEN_SESSION_KEY,
   // The one that would be actively harmful to clear: without it the next launch drops
   // into the opening tutorial, which is not what a player who just got their career back
   // is asking for.

@@ -11,7 +11,8 @@ import { supabase } from '@/lib/supabase'
 // moment the boards do. So there is one subscription, covering every board rather than
 // the one being played, and it is never torn down: a channel that came and went with
 // the active mode × difficulty meant every switch cost a reconnection, and it left the
-// medal line, which spans all six boards, watching only one of them.
+// medal line, which spans all six boards, watching only one of them. Session boards get
+// a channel of their own over the same socket, for the reason given in `start`.
 //
 // Listeners are told *which* board moved so each can decide whether it cares. Null means
 // we cannot say — a reconnection, or a row we could not attribute — and the honest
@@ -23,18 +24,19 @@ const listeners = new Set<BoardListener>()
 // The same, for **session boards**: told which session moved, or null for "anything may
 // have". Kept apart from the board listeners rather than folded into `BoardRef`, because
 // none of the four of those cares about a session and every one of them would otherwise
-// have had to learn to ignore one. Same channel, though — one connection is the point.
+// have had to learn to ignore one.
 export type SessionListener = (sessionId: string | null) => void
 
 const sessionListeners = new Set<SessionListener>()
 
 // Opened on the first subscription and kept for the life of the JS context. Ref-counting
-// it down to zero would tear the channel out and rebuild it on every remount, since a
+// them down to zero would tear the channels out and rebuild it on every remount, since a
 // React cleanup runs before the effect replacing it.
 let started = false
-// A first SUBSCRIBED is the connection opening, and the callers have just fetched. Every
+// One per channel. A first SUBSCRIBED is the connection opening, and the callers have just fetched. Every
 // later one is a reconnection, and the gap it closes could hide anything.
 let everSubscribed = false
+let everSubscribedSessions = false
 
 const announce = (moved: BoardRef | null): void => {
   for (const listener of listeners) listener(moved)
@@ -73,9 +75,19 @@ function start(): void {
         announce(boardOf(payload))
       },
     )
-    // Needs migration 20261103020000_session_scores_realtime.sql. Against a database
-    // without it this listens to nothing, and a session board simply moves on pause as
-    // it always did.
+    .subscribe((status) => {
+      if (status !== REALTIME_SUBSCRIBE_STATES.SUBSCRIBED) return
+      if (everSubscribed) announce(null)
+      everSubscribed = true
+    })
+
+  // A channel of its own, over the same socket. Needs migration
+  // 20261103020000_session_scores_realtime.sql, and that is why it is apart: Realtime
+  // refuses a channel's bindings together when one table is outside the publication, so
+  // on the boards' channel a database without the migration would have silenced every
+  // board too. Here it costs only this: a session board moves on pause, as it always did.
+  supabase
+    .channel(`sessions:${Math.random().toString(36).slice(2)}`)
     .on(
       'postgres_changes',
       { event: '*', schema: 'public', table: 'session_scores' },
@@ -85,8 +97,8 @@ function start(): void {
     )
     .subscribe((status) => {
       if (status !== REALTIME_SUBSCRIBE_STATES.SUBSCRIBED) return
-      if (everSubscribed) announceAll()
-      everSubscribed = true
+      if (everSubscribedSessions) announceSession(null)
+      everSubscribedSessions = true
     })
 
   // A phone that spent the last hour asleep has missed every event in it, and Realtime

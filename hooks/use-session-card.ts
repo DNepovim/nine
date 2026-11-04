@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 
-import type { PeriodBoard } from '@/hooks/use-board'
+import { COALESCE_MS, type PeriodBoard } from '@/hooks/use-board'
 import { useFlag } from '@/hooks/use-flags'
 import { useOpenSessions } from '@/hooks/use-open-sessions'
 import { subscribeSessions } from '@/lib/board-live'
@@ -182,11 +182,22 @@ export function useSessionBoard(
   // is what tells a run in progress it has lost the lead (`useSessionRival`). Only this
   // session's events re-read it — and null, which is a reconnection saying anything may
   // have moved. Every other session's writes pass by.
+  //
+  // Coalesced as `useBoard` does, and it matters more here: a refresh marks the read in
+  // flight stale, so events arriving faster than a round trip would mean no read ever
+  // lands, and the news of a lost lead along with it.
   useEffect(() => {
     if (sessionId === null) return
-    return subscribeSessions((moved) => {
-      if (moved === null || moved === sessionId) refresh()
+    let coalesce: ReturnType<typeof setTimeout> | undefined
+    const unsubscribe = subscribeSessions((moved) => {
+      if (moved !== null && moved !== sessionId) return
+      clearTimeout(coalesce)
+      coalesce = setTimeout(refresh, COALESCE_MS)
     })
+    return () => {
+      clearTimeout(coalesce)
+      unsubscribe()
+    }
   }, [sessionId, refresh])
 
   return { board, refresh }

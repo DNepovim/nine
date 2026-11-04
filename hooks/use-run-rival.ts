@@ -2,7 +2,8 @@ import type { PeriodBoard } from '@/hooks/use-board'
 import { useRivalRecords, type RivalAnnouncement } from '@/hooks/use-rival-records'
 import { useSessionRival } from '@/hooks/use-session-rival'
 import type { Leaders } from '@/lib/announcements'
-import type { Difficulty, ModeId } from '@/modes'
+import type { SessionFigures } from '@/lib/session-order'
+import type { Difficulty, Measure, ModeId } from '@/modes'
 
 // The rival news for the run being played, from whichever standings it is played on.
 //
@@ -18,6 +19,9 @@ export function useRunRival({
   userId,
   leaders,
   sessionBoard,
+  measure,
+  figures,
+  runSeq,
 }: {
   inRun: boolean
   runSession: string | null
@@ -26,6 +30,9 @@ export function useRunRival({
   userId: string | null
   leaders: Leaders
   sessionBoard: PeriodBoard | null
+  measure: Measure
+  figures: SessionFigures
+  runSeq: number
 }): RivalAnnouncement | null {
   const boardRival = useRivalRecords({
     inRun: inRun && runSession === null,
@@ -39,6 +46,9 @@ export function useRunRival({
     sessionId: runSession,
     userId,
     rows: sessionBoard?.rows ?? null,
+    measure,
+    run: figures,
+    runSeq,
   })
   return sessionRival ?? boardRival
 }

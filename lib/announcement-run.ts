@@ -4,7 +4,12 @@ import {
   type AnnouncementId,
   type RecordTargets,
 } from '@/lib/announcements'
-import { crossedSession, type SessionTargets } from '@/lib/session-announcements'
+import {
+  abandonedBest,
+  crossedSession,
+  ownRowOf,
+  type SessionTargets,
+} from '@/lib/session-announcements'
 import type { SessionFigures } from '@/lib/session-order'
 
 // What a run is measured against, and what it has already been told.
@@ -27,6 +32,13 @@ export type RunPhase = {
   // Everything already crossed this run, so a record announces once however many hits
   // land past it.
   fired: readonly AnnouncementId[]
+  // The run these were frozen for — see `stepRun`.
+  runSeq: number
+  // How far a session run has got, so a restart can say what it abandoned.
+  reached: SessionFigures | null
+  // What the run before this one left behind, waiting to count towards the next freeze.
+  // Null except between a session restart and the freeze that follows it.
+  abandoned: SessionFigures | null
 }
 
 // What a session run is measured by, live: the targets to freeze, and the run's own
@@ -43,6 +55,9 @@ export type RunInput = {
   // Whether the board numbers are worth freezing yet.
   ready: boolean
   score: number
+  // Which run this is. A restart can go straight from one to the next without `inRun`
+  // ever falling, so that alone can't say a new one began.
+  runSeq: number
   // The live targets. Copied into the phase only at the moment of freezing; ignored
   // entirely once the run is under way.
   targets: RecordTargets
@@ -73,15 +88,21 @@ export const IDLE: RunPhase = {
   targets: NO_TARGETS,
   session: null,
   fired: [],
+  runSeq: 0,
+  reached: null,
+  abandoned: null,
 }
 
 const QUIET = { announce: null, publish: false } as const
 
-// What the run has crossed against whichever targets it froze.
-const crossedOf = (phase: RunPhase, input: RunInput): AnnouncementId[] =>
-  phase.session === null || input.session === null
-    ? crossedRecords(input.score, phase.targets)
-    : crossedSession(input.session.figures, phase.session, input.session.userId)
+// What the run has crossed against whichever targets it froze. A session run with no live
+// figures this render crosses nothing: its board targets are neutral, and falling back on
+// them would only stay quiet for as long as they do.
+function crossedOf(phase: RunPhase, input: RunInput): AnnouncementId[] {
+  if (phase.session === null) return crossedRecords(input.score, phase.targets)
+  if (input.session === null) return []
+  return crossedSession(input.session.figures, phase.session, input.session.userId)
+}
 
 // Measures a run against the frozen targets and folds in what it crossed.
 function evaluate(phase: RunPhase, input: RunInput): RunStep {
@@ -102,10 +123,39 @@ function evaluate(phase: RunPhase, input: RunInput): RunStep {
   }
 }
 
+// The phase to go on from: this one, or on a session restart a clean one carrying what
+// the abandoned run left behind.
+function restartedFrom(phase: RunPhase, input: RunInput): RunPhase {
+  if (phase.session === null || phase.runSeq === input.runSeq) return phase
+  return {
+    ...IDLE,
+    abandoned: abandonedBest(phase.session.measure, phase.session.mine, phase.reached),
+  }
+}
+
+const reaching = (phase: RunPhase, input: RunInput): RunPhase =>
+  phase.session === null || input.session === null
+    ? phase
+    : { ...phase, reached: input.session.figures }
+
+const frozenSession = (
+  targets: SessionTargets | null,
+  abandoned: SessionFigures | null,
+): SessionTargets | null =>
+  targets === null
+    ? null
+    : { ...targets, mine: ownRowOf(targets.measure, targets.mine, abandoned) }
+
 // One step of a run's announcements.
 //
 // The rules, in order:
 //   - not in a run       → back to idle, ready for the next one
+//   - a session restarted→ back to idle too. Its frozen leader predates the abandoned
+//                          run's post, and a `fired` carried over would keep the new run
+//                          from taking the lead out loud or posting it. What the abandoned
+//                          run reached counts as the player's own row: its post has not
+//                          landed yet. An ordinary run restarting keeps its phase, as it
+//                          always has
 //   - not ready yet      → freeze nothing. Freezing nulls is what made a run begun
 //                          before the boards loaded go the whole way in silence
 //   - ready, not started → freeze now, then measure the score *already reached*, so a
@@ -115,14 +165,17 @@ function evaluate(phase: RunPhase, input: RunInput): RunStep {
 //                          one being chased
 export function stepRun(phase: RunPhase, input: RunInput): RunStep {
   if (!input.inRun) return { phase: IDLE, ...QUIET }
-  if (phase.started) return evaluate(phase, input)
-  if (!input.ready) return { phase, ...QUIET }
+  const from = restartedFrom(phase, input)
+  if (from.started) return evaluate(reaching(from, input), input)
+  if (!input.ready) return { phase: from, ...QUIET }
   return evaluate(
     {
+      ...IDLE,
       started: true,
       targets: input.targets,
-      session: input.session?.targets ?? null,
-      fired: [],
+      session: frozenSession(input.session?.targets ?? null, from.abandoned),
+      runSeq: input.runSeq,
+      reached: input.session?.figures ?? null,
     },
     input,
   )

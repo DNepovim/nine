@@ -4,8 +4,10 @@ import type { LeaderboardRow } from '@/lib/leaderboard'
 import type { LocalScore } from '@/lib/local-scores'
 
 import {
+  abandonedBest,
   crossedSession,
   deviceBestOf,
+  leadKept,
   ownRowOf,
   sessionRivalChange,
   sessionTargetsOf,
@@ -55,6 +57,20 @@ describe('crossedSession on a score session', () => {
   it('never takes the lead from the player themselves', () => {
     const t = targets({ mine: run(200), leader: leader(ME, 200) })
     expect(crossedSession(run(300), t, ME)).toEqual(['sessionBest'])
+  })
+})
+
+describe("crossedSession against the player's own row", () => {
+  it('does not take a lead again from a leader the device best already passed', () => {
+    const stale = targets({ mine: run(300), leader: leader(RIVAL, 200) })
+    expect(crossedSession(run(250), stale, ME)).toEqual([])
+    expect(crossedSession(run(350), stale, ME)).toEqual(['sessionBest'])
+  })
+
+  it('does not open again a session reading empty under a held best', () => {
+    const invisible = targets({ mine: run(100), empty: true })
+    expect(crossedSession(run(50), invisible, ME)).toEqual([])
+    expect(crossedSession(run(150), invisible, ME)).toEqual(['sessionBest'])
   })
 })
 
@@ -117,6 +133,25 @@ describe('ownRowOf', () => {
   })
 })
 
+describe('abandonedBest', () => {
+  it('takes the better of the row held and how far the run got', () => {
+    expect(abandonedBest('score', run(145), run(312))).toEqual(run(312))
+    expect(abandonedBest('score', run(500), run(312))).toEqual(run(500))
+    expect(abandonedBest('score', null, run(312))).toEqual(run(312))
+  })
+
+  it('takes nothing from a run with no figure on the measure', () => {
+    expect(abandonedBest('score', run(145), run(0))).toEqual(run(145))
+    expect(abandonedBest('score', null, run(0))).toBeNull()
+    expect(abandonedBest('hits', null, run(50, 0))).toBeNull()
+    expect(abandonedBest('time', null, run(500, 9))).toBeNull()
+  })
+
+  it('takes nothing when the run reported nothing', () => {
+    expect(abandonedBest('score', run(145), null)).toEqual(run(145))
+  })
+})
+
 describe('deviceBestOf', () => {
   const entry = (sessionId: string | undefined, score: number, hits = 0): LocalScore => ({
     mode: 'accuracy',
@@ -165,6 +200,38 @@ describe('sessionTargetsOf', () => {
     })
     expect(t.leader?.userId).toBe(RIVAL)
     expect(t.mine?.score).toBe(100)
+  })
+})
+
+describe('leadKept', () => {
+  const was = leader(ME, 100)
+
+  it('holds while the live run is still ahead of the rival who passed its row', () => {
+    expect(leadKept(was, leader(RIVAL, 200), ME, 'score', run(500))).toBe(true)
+  })
+
+  it('lets go once the rival passes the run, or draws level with it', () => {
+    expect(leadKept(was, leader(RIVAL, 600), ME, 'score', run(500))).toBe(false)
+    expect(leadKept(was, leader(RIVAL, 500), ME, 'score', run(500))).toBe(false)
+  })
+
+  it('asks by the measure', () => {
+    expect(leadKept(was, leader(RIVAL, 900, 5), ME, 'hits', run(100, 6))).toBe(true)
+    expect(leadKept(was, leader(RIVAL, 100, 6), ME, 'hits', run(900, 5))).toBe(false)
+  })
+
+  it('gives a live race up to a finished rival, having no time of its own yet', () => {
+    expect(leadKept(was, leader(RIVAL, 100, 9, 50_000), ME, 'time', run(900, 9))).toBe(
+      false,
+    )
+  })
+
+  it("has nothing to keep unless the lead was the player's and has left", () => {
+    expect(leadKept(leader('x', 1), leader(RIVAL, 2), ME, 'score', run(500))).toBe(false)
+    expect(leadKept(was, leader(ME, 200), ME, 'score', run(500))).toBe(false)
+    expect(leadKept(null, leader(RIVAL, 2), ME, 'score', run(500))).toBe(false)
+    expect(leadKept(was, null, ME, 'score', run(500))).toBe(false)
+    expect(leadKept(was, leader(RIVAL, 2), null, 'score', run(500))).toBe(false)
   })
 })
 

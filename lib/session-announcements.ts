@@ -110,6 +110,22 @@ const HAS_FIGURE = {
   time: (run) => run.timeMs !== null,
 } as const satisfies Record<Measure, (run: SessionFigures) => boolean>
 
+// What a run being abandoned leaves as the player's own row, for the run replacing it.
+//
+// A restart posts the abandoned run and deals the next in the same moment, so the write
+// is still on its way when the new run freezes, and neither the board nor the device has
+// it yet. Asking only those two told the new run it had beaten a best the last one had
+// already passed. A run that scored nothing leaves no row: counting it would make the
+// first hit of the next one a best, and stop an empty session from being opened.
+export function abandonedBest(
+  measure: Measure,
+  mine: SessionFigures | null,
+  reached: SessionFigures | null,
+): SessionFigures | null {
+  if (reached === null || !HAS_FIGURE[measure](reached)) return mine
+  return ownRowOf(measure, mine, reached)
+}
+
 // Every session line this run has crossed, biggest first.
 //
 // **Nothing on a race.** A run only has a time once its drill is spent, and that is the
@@ -119,6 +135,12 @@ const HAS_FIGURE = {
 //
 // The lead is never taken from yourself: a player already first only has their own best
 // to pass, and passing it is `sessionBest`.
+//
+// And never when your own row is already past the leader. The standings lag the device,
+// and list nobody without a nickname, so a player's best can stand above a leader the
+// standings still show, or on a session they still report as empty. Asking the standings
+// alone told every run of such a player that it had just taken a lead their first run
+// already held. Passing that row is `sessionBest`, nothing more.
 export function crossedSession(
   run: SessionFigures,
   targets: SessionTargets,
@@ -127,14 +149,36 @@ export function crossedSession(
   const { measure, mine, leader, empty } = targets
   if (measure === 'time') return []
   const leading = leader !== null && myUserId !== null && leader.userId === myUserId
+  const best = mine !== null && runBeats(measure, run, mine)
   const first =
     !leading &&
-    (leader === null ? empty && HAS_FIGURE[measure](run) : runBeats(measure, run, leader))
-  const best = mine !== null && runBeats(measure, run, mine)
+    (leader === null
+      ? empty && mine === null && HAS_FIGURE[measure](run)
+      : runBeats(measure, run, leader) &&
+        (mine === null || !runBeats(measure, mine, leader)))
   const crossed: AnnouncementId[] = []
   if (first) crossed.push('sessionFirst')
   if (best) crossed.push('sessionBest')
   return crossed
+}
+
+// Whether a lead the session board says has gone is still the player's in fact.
+//
+// The board holds what was **posted**, and a run posts when it takes the lead and again
+// at game over — so a leader still playing is ahead of their own row, and a rival passing
+// that row has passed nothing. Told "{name} took the lead" there, the player would be
+// reading a lie they can see is one. The caller keeps its baseline on the player while
+// this holds, so the rival going past the run itself is still news when it happens.
+export function leadKept(
+  before: SessionLeader | null,
+  after: SessionLeader | null,
+  myUserId: string | null,
+  measure: Measure,
+  run: SessionFigures,
+): boolean {
+  if (myUserId === null || before === null || after === null) return false
+  if (before.userId !== myUserId || after.userId === myUserId) return false
+  return runBeats(measure, run, after)
 }
 
 // Whether another player just took the lead from this one, comparing two snapshots of

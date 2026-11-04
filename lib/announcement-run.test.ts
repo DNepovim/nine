@@ -24,6 +24,7 @@ const input = (over: Partial<RunInput> = {}): RunInput => ({
   inRun: true,
   ready: true,
   score: 0,
+  runSeq: 1,
   targets: targets(),
   session: null,
   ...over,
@@ -169,6 +170,17 @@ describe('stepRun — between runs', () => {
   })
 })
 
+describe('stepRun — restarting an ordinary run', () => {
+  it('keeps its phase, as it always has', () => {
+    const result = play([
+      input({ score: 1500 }),
+      input({ score: 0, runSeq: 2 }),
+      input({ score: 1500, runSeq: 2 }),
+    ])
+    expect(result.announced).toEqual(['record', null, null])
+  })
+})
+
 describe('stepRun — a session run', () => {
   const sessionTargets: SessionTargets = {
     measure: 'score',
@@ -176,6 +188,13 @@ describe('stepRun — a session run', () => {
     leader: { score: 200, hits: 0, timeMs: null, userId: 'rival', nickname: 'R' },
     empty: false,
   }
+  const rivalAt = (score: number) => ({
+    score,
+    hits: 0,
+    timeMs: null,
+    userId: 'rival',
+    nickname: 'R',
+  })
   const session = (score: number, over: Partial<SessionTargets> = {}): SessionRun => ({
     targets: { ...sessionTargets, ...over },
     figures: { score, hits: 0, timeMs: null },
@@ -209,6 +228,61 @@ describe('stepRun — a session run', () => {
       input({ score: 250, session: session(250) }),
     ])
     expect(result.announced).toEqual([null, 'sessionFirst', null])
+  })
+
+  it('starts over when a restart goes straight to the next run', () => {
+    const result = play([
+      input({ score: 250, session: session(250) }),
+      input({ score: 0, runSeq: 2, session: session(0, { leader: rivalAt(280) }) }),
+      input({ score: 300, runSeq: 2, session: session(300) }),
+    ])
+    expect(result.announced).toEqual(['sessionFirst', null, 'sessionFirst'])
+    expect(result.published).toBe(2)
+  })
+
+  it('counts the abandoned run as its best, before its post has landed', () => {
+    const result = play([
+      input({ score: 312, session: session(312, { leader: null }) }),
+      input({ score: 0, runSeq: 2, session: session(0, { leader: null }) }),
+      input({ score: 155, runSeq: 2, session: session(155, { leader: null }) }),
+      input({ score: 320, runSeq: 2, session: session(320, { leader: null }) }),
+    ])
+    expect(result.announced).toEqual(['sessionBest', null, null, 'sessionBest'])
+  })
+
+  it('remembers the abandoned run through a restart that has to wait for its board', () => {
+    const result = play([
+      input({ score: 312, session: session(312, { leader: null }) }),
+      input({ score: 0, runSeq: 2, ready: false, session: null }),
+      input({ score: 155, runSeq: 2, session: session(155, { leader: null }) }),
+    ])
+    expect(result.announced).toEqual(['sessionBest', null, null])
+  })
+
+  it('takes nothing from an abandoned run that scored nothing', () => {
+    const open = { mine: null, leader: null, empty: true }
+    const result = play([
+      input({ score: 0, session: session(0, open) }),
+      input({ score: 0, runSeq: 2, session: session(0, open) }),
+      input({ score: 10, runSeq: 2, session: session(10, open) }),
+    ])
+    expect(result.announced).toEqual([null, null, 'sessionFirst'])
+  })
+
+  it('freezes nothing for a restarted run until its board has answered', () => {
+    const step = stepRun(
+      stepRun(IDLE, input({ score: 250, session: session(250) })).phase,
+      input({ score: 0, runSeq: 2, ready: false, session: session(0) }),
+    )
+    expect(step.phase.started).toBe(false)
+  })
+
+  it('crosses nothing on a render with no live figures', () => {
+    const result = play([
+      input({ score: 0, session: session(0) }),
+      input({ score: 5000, session: null }),
+    ])
+    expect(result.announced).toEqual([null, null])
   })
 
   it('publishes on taking the lead, not on its own best', () => {
