@@ -32,15 +32,20 @@ const LAST_ORDER = DIAL_ORDER + 4
 const END_MS = LAST_ORDER * STAGGER_MS + SETTLE_MS
 
 const ArrivalClock = createContext<SharedValue<number> | null>(null)
+// Whether everything above the dial comes in as one piece, rather than a piece at a time.
+const TopAtOnce = createContext(false)
 
 // Holds the clock. `arrived` false parks every piece out of sight, which is free while the
 // intro covers the screen; turning it true plays the entrance. A screen that mounts already
 // arrived — a run restored on launch — is simply there.
 export function ArrivalStage({
   arrived,
+  topAtOnce = false,
   children,
 }: {
   arrived: boolean
+  // Asked for by a run in a mirror, whose rows above the dial are meant to read as one thing.
+  topAtOnce?: boolean
   children: ReactNode
 }) {
   const reduced = useReducedMotion()
@@ -54,7 +59,11 @@ export function ArrivalStage({
       ? END_MS
       : withTiming(END_MS, { duration: END_MS, easing: Easing.linear })
   }, [arrived, reduced, clock])
-  return <ArrivalClock value={clock}>{children}</ArrivalClock>
+  return (
+    <ArrivalClock value={clock}>
+      <TopAtOnce value={topAtOnce}>{children}</TopAtOnce>
+    </ArrivalClock>
+  )
 }
 
 // One piece of the entrance. `from` is the side it comes in from: the top of the screen
@@ -74,10 +83,11 @@ export function Arrival({
   children: ReactNode
 }) {
   const clock = use(ArrivalClock)
+  const together = use(TopAtOnce) && order < DIAL_ORDER
   const sign = from === 'above' ? -1 : 1
   const animated = useAnimatedStyle(() => {
     if (clock === null) return {}
-    const start = Math.min(order, LAST_ORDER) * STAGGER_MS
+    const start = together ? 0 : Math.min(order, LAST_ORDER) * STAGGER_MS
     const local = Math.min(Math.max((clock.value - start) / SETTLE_MS, 0), 1)
     // Ease-out cubic: quick to leave, slow to land.
     const eased = 1 - (1 - local) ** 3

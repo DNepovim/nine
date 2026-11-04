@@ -21,6 +21,7 @@ export function RunTopBar({
   subtitle = null,
   wordmark,
   onPause = null,
+  mirrored = false,
 }: {
   // The run's own colour: the title takes it, and so does the pause button.
   accent: string
@@ -34,6 +35,9 @@ export function RunTopBar({
   // The way to stop, or null where there is nothing to stop — a run that is already
   // paused, over, or mid-movement with no beat to freeze.
   onPause?: (() => void) | null
+  // Whether the row is drawn back to front, on a **mirrored** dial. Its presses go with it, so
+  // the pause button works where it is drawn.
+  mirrored?: boolean
 }) {
   // Both colours are tuned for the app's light screen; see `useLegible` for a run played
   // under another scheme, which may also draw this whole row in one ink of its own.
@@ -42,7 +46,10 @@ export function RunTopBar({
   const shown = bar ?? onScheme(accent)
   const mark = bar ?? onScheme(wordmark)
   return (
-    <View className="flex-row items-center">
+    <View
+      className="flex-row items-center"
+      style={mirrored ? { transform: [{ scaleX: -1 }] } : undefined}
+    >
       <Arrival order={1} from="above" className="flex-1">
         <Text selectable={false} className={TYPE.button} style={{ color: shown }}>
           {title}

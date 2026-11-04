@@ -400,6 +400,25 @@ type Scheme = {
   inks: SchemeInks
 }
 
+const GLASS_TOKENS = {
+  '--color-surface': '#D9E6EE',
+  '--color-card': '#C9DAE5',
+  '--color-elevated': '#F2F8FB',
+  '--color-muted': '#B3C8D5',
+  '--color-dim': '#3F5666',
+  '--color-primary': '#1B2F3D',
+  '--color-strong': '#1B2F3D',
+  '--color-on-strong': '#E6F2F9',
+  '--color-score': '#1F6A92',
+  '--color-fortune': '#8F2219',
+  '--color-dial': '#1B2F3D',
+  '--color-factor': '#5E7585',
+  '--color-pie': '#171421',
+}
+
+// The one blue everything above the dial wears under `glass` — see `glassBar` in `SCHEMES`.
+const GLASS_BAR = '#1F6A92'
+
 // `dark` — a near-black of the app's own violet cast, the screen's text in the parchment
 // it is usually drawn on. The keys and the target discs keep their light faces, so the
 // inks drawn on *them* (`--color-dial`, `--color-pie`) stay dark: only what sits on the
@@ -491,7 +510,71 @@ export const SCHEMES = {
       },
     },
   },
+  // `glass` — a mirror: pale silver-blue, its ink a dark slate of the same blue, and frosted
+  // keys with a bright rim, warming to the deep blue of the glass's edge at their top.
+  glass: {
+    tokens: GLASS_TOKENS,
+    inks: {
+      score: '#1F6A92',
+      keyRim: 'rgba(255, 255, 255, 0.9)',
+      statusBar: 'dark',
+      ground: '#D9E6EE',
+      ink: '#1B2F3D',
+      wash: ['#D3E2EB', '#D9E6EE', '#DFEAF1', '#D6E4EC'],
+      mono: null,
+      bar: null,
+      keys: {
+        low: '#F2F8FB',
+        high: '#8DB4CC',
+        text: '#1B2F3D',
+        peakText: '#E6F2F9',
+        peak: ['#1B2F3D', '#2F7FA8'],
+        radius: 999,
+        foot: 1.5,
+      },
+    },
+  },
+  // `glassBar` — the rows above a `glass` dial: the same glass, **monochrome** in its blue, so
+  // the name, NINE, the hearts, the figures and the bests are one colour. Worn from the first
+  // frame of the run rather than from the opening's switch; see `OPENING_BAR_WAITS`.
+  glassBar: {
+    tokens: {
+      ...GLASS_TOKENS,
+      '--color-dim': GLASS_BAR,
+      '--color-primary': GLASS_BAR,
+      '--color-strong': GLASS_BAR,
+      '--color-score': GLASS_BAR,
+      '--color-fortune': GLASS_BAR,
+      '--color-factor': GLASS_BAR,
+    },
+    inks: {
+      score: GLASS_BAR,
+      keyRim: 'transparent',
+      statusBar: 'dark',
+      ground: '#D9E6EE',
+      ink: GLASS_BAR,
+      wash: ['#D3E2EB', '#D9E6EE', '#DFEAF1', '#D6E4EC'],
+      mono: GLASS_BAR,
+      bar: GLASS_BAR,
+      keys: null,
+    },
+  },
 } as const satisfies Record<SchemeKind, Scheme>
+
+// The edge of the glass in MIRROR's **opening** (`components/game/openings/passing-edge.tsx`),
+// and the fog and shine it leaves. The shine fades to its own colour at nothing rather than to
+// `transparent`, which is black at nothing and would draw a grey edge on the way.
+export const MIRROR_GLASS = {
+  edge: '#FFFFFF',
+  edgeGlow: 'rgba(255, 255, 255, 0.7)',
+  glass: SCHEMES.glass.inks.ground,
+  fog: '#EEF4F8',
+  shine: 'rgba(255, 255, 255, 0.34)',
+  shineClear: 'rgba(255, 255, 255, 0)',
+  // A crack in the glass: a bright line, with a dark edge to lift it off anything pale.
+  crack: 'rgba(255, 255, 255, 0.95)',
+  crackShadow: 'rgba(27, 47, 61, 0.45)',
+} as const
 
 // The bulb in BLACKOUT's **opening** (`components/game/openings/lights-out.tsx`).
 //

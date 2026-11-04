@@ -206,10 +206,31 @@ export const openingOf = (id: ModeId): OpeningKind | null => modeById(id)?.openi
 
 // Whether an opening begins in the day colours and turns the screen over to the mode's
 // **scheme** partway, or is in that scheme from its first frame. The bulb has to be seen
-// lit before it goes out; a terminal is simply there.
+// lit before it goes out, and the screen seen plain before a mirror's edge passes over it; a terminal is simply there.
 export const OPENING_STARTS_LIT = {
   lightsOut: true,
   terminal: false,
+  passingEdge: true,
+} as const satisfies Record<OpeningKind, boolean>
+
+// What the rows above the dial wear under each **scheme**: the same one, except that `glass`
+// has them all in one blue.
+export const SCHEME_BAR = {
+  day: 'day',
+  dark: 'dark',
+  dos: 'dos',
+  glass: 'glassBar',
+  glassBar: 'glassBar',
+} as const satisfies Record<SchemeKind, SchemeKind>
+
+// Whether those rows, the keys and the sum wait for the opening's switch to turn over, or are in
+// the scheme from the run's first frame. A dark screen's parchment and black keys would give the
+// switch away on the lit one the bulb hangs in; a mirror's edge passes over a screen whose keys
+// and rows are already glass, so only the ground behind them changes.
+export const OPENING_BAR_WAITS = {
+  lightsOut: true,
+  terminal: true,
+  passingEdge: false,
 } as const satisfies Record<OpeningKind, boolean>
 
 // How this mode's targets are drawn: its own form, or `discs`.

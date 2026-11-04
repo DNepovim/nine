@@ -1,7 +1,7 @@
 import { useEffect } from 'react'
 import { View } from 'react-native'
 import { Gesture, GestureDetector } from 'react-native-gesture-handler'
-import { useSharedValue } from 'react-native-reanimated'
+import { useSharedValue, type SharedValue } from 'react-native-reanimated'
 import { scheduleOnRN } from 'react-native-worklets'
 
 import { Arrival, DIAL_ORDER } from '@/components/game/arrival'
@@ -11,6 +11,7 @@ import { DialFlames, useBurn } from '@/components/game/dial-flames'
 import { GestureHint } from '@/components/game/gesture-hint'
 import { DEFAULT_DIAL_CORNERS, type DialCorners } from '@/constants/dial-hints'
 import { useDialMetrics } from '@/hooks/use-dial-metrics'
+import { useViewport } from '@/hooks/use-viewport'
 import {
   allowedMove,
   cellAt,
@@ -57,6 +58,25 @@ const NONE = -1
 //
 // Every key it changes is one press to the machine, exactly as if it had been swiped on
 // its own, so a run scored the long way is scored the same way here.
+// How far down the screen the middle of the dial stands, near enough for an edge sweeping past.
+const DIAL_MIDDLE = 0.72
+
+// Where a key stands along the diagonal an opening's edge sweeps, nought at the top-left corner
+// and one at the bottom-right: the average of how far across and how far down it is.
+const sweepPlaceOf = (
+  index: number,
+  dial: DialSpec,
+  metrics: { button: number; gap: number },
+  screen: { width: number; height: number },
+): number => {
+  const pitch = metrics.button + metrics.gap
+  const across =
+    0.5 + (((index % dial.cols) - (dial.cols - 1) / 2) * pitch) / screen.width
+  const row = Math.floor(index / dial.cols)
+  const down = DIAL_MIDDLE + ((row - (dial.rows - 1) / 2) * pitch) / screen.height
+  return (across + down) / 2
+}
+
 export function Dial({
   dial,
   values,
@@ -74,6 +94,7 @@ export function Dial({
   flame = null,
   hitSeq = 0,
   opened = true,
+  sweep = null,
   onDelta,
   onSet,
   onSweep,
@@ -122,6 +143,9 @@ export function Dial({
   // playing with the lights on; true for every run without one. A dial that is blacked
   // out (`DialSpec.blackout`) shows its digits until then, so the scene can take them away.
   opened?: boolean
+  // How far an opening's edge has swept the screen, for a **mirrored** dial's keys to turn
+  // over as it reaches them. Null for every caller with no such scene: they stand turned.
+  sweep?: SharedValue<number> | null
   // `sweep` is whether this change is part of a drag — see `DialCommand`.
   onDelta: (index: number, delta: 1 | -1, sweep: boolean) => void
   onSet: (index: number, value: number, sweep: boolean) => void
@@ -132,6 +156,7 @@ export function Dial({
   onSweep?: () => void
 }) {
   const metrics = useDialMetrics(dial)
+  const viewport = useViewport()
   const burn = useBurn(flame)
   const live = controls ?? allLive(dial)
 
@@ -381,6 +406,9 @@ export function Dial({
                   heat={flame === null ? null : burn.heat}
                   scrambles={dial.scramble ? hitSeq : 0}
                   dark={dial.blackout && opened}
+                  mirrored={dial.mirror}
+                  sweep={sweep}
+                  sweepAt={sweepPlaceOf(index, dial, metrics, viewport)}
                   peakFrom={peakFrom}
                   peakTo={peakTo}
                   commands={commands}

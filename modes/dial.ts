@@ -46,8 +46,8 @@ export type DialSpec = {
   //
   // Beside `orientation` because the two are the same kind of thing — how a move made on
   // the screen is read on the dial — and they compose: orientation turns the move into
-  // the dial's frame, then the mirror reverses what it means there. The digits are drawn
-  // upright and par is unchanged, since a route costs the same presses either way.
+  // the dial's frame, then the mirror reverses what it means there. The digits on the keys are
+  // drawn back to front, and par is unchanged, since a route costs the same presses either way.
   mirror: boolean
   // Whether the keys are **blacked out**: every key drawn the same flat black with
   // nothing on it — no digit, no tint, no peak — so the sum row is the only thing the

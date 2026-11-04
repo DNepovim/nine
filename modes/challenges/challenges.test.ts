@@ -588,6 +588,8 @@ describe('mirror', () => {
     expect(rules.usesDifficulty).toBe(false)
     expect(rules.dial.id).toBe('mirror')
     expect(rules.dial.mirror).toBe(true)
+    expect(openingOf(challengeId('mirror'))).toBe('passingEdge')
+    expect(schemeOf(challengeId('mirror'))).toBe('glass')
     expect(rules.dial.orientation).toBe('upright')
     // The nine's weights reflected corner to corner: the ×9 top-left, the ×1 bottom-right.
     expect(rules.dial.weights).toEqual([...NINE_DIAL.weights].reverse())
@@ -651,14 +653,22 @@ describe('blackout', () => {
       .filter((mode) => mode.engine === 'targets')
       .filter((mode) => DIFFICULTY_ORDER.some((rung) => runRules(mode.id, rung).opens))
       .map((mode) => mode.id)
-    expect(opening).toEqual([challengeId('binary'), challengeId('blackout')])
+    expect(opening).toEqual([
+      challengeId('binary'),
+      challengeId('mirror'),
+      challengeId('blackout'),
+    ])
     for (const mode of allModes()) {
       expect(runRules(mode.id, 'hard', true).opens, mode.id).toBe(false)
     }
   })
 
   it('leaves every other mode without an opening, in day colours', () => {
-    const dressed = [challengeId('binary'), challengeId('blackout')]
+    const dressed = [
+      challengeId('binary'),
+      challengeId('blackout'),
+      challengeId('mirror'),
+    ]
     for (const mode of allModes().filter((m) => !dressed.includes(m.id))) {
       expect(openingOf(mode.id), mode.id).toBeNull()
       expect(schemeOf(mode.id), mode.id).toBe('day')

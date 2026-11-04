@@ -887,11 +887,11 @@ msgstr "BIN"
 msgid "BINA­RY"
 msgstr "DVOJ­KOVĚ"
 
-#: modes/challenges/catalog.ts:888
+#: modes/challenges/catalog.ts:894
 msgid "BLACK­OUT"
 msgstr "TMA"
 
-#: modes/challenges/catalog.ts:891
+#: modes/challenges/catalog.ts:897
 msgid "BLK"
 msgstr "TMA"
 
@@ -1089,7 +1089,7 @@ msgstr "ZNALEC"
 msgid "CONTINUE"
 msgstr "POKRAČOVAT"
 
-#: app/(tabs)/index.tsx:2820
+#: app/(tabs)/index.tsx:2804
 msgid "Continue the tutorial"
 msgstr "Pokračovat v tutoriálu"
 
@@ -1253,7 +1253,7 @@ msgstr "Každý den patřil hráči [A], kromě jednoho: [D] si ho vzal [B], a n
 msgid "Every hit scrambles the dial."
 msgstr "Každý zásah zamíchá číselník."
 
-#: modes/challenges/catalog.ts:824
+#: modes/challenges/catalog.ts:825
 msgid "Every move works backwards."
 msgstr "Každý pohyb funguje obráceně."
 
@@ -1993,13 +1993,13 @@ msgstr "Zprávy od hráčů"
 msgid "MINUTES"
 msgstr "MINUTY"
 
-#: modes/challenges/catalog.ts:823
+#: modes/challenges/catalog.ts:824
 msgid "MIR"
 msgstr "ZRC"
 
-#: modes/challenges/catalog.ts:820
-msgid "MIRROR"
-msgstr "ZRCADLO"
+#: modes/challenges/catalog.ts:821
+msgid "MIR­ROR"
+msgstr "ZRCA­DLO"
 
 #: constants/achievements.ts:690
 msgid "Miss a session's top three by a single point, or a tenth of a second."
@@ -3140,7 +3140,7 @@ msgstr "Dovednost v jedné hře: dlouhá série, nejvyšší násobitel, úsek b
 msgid "SKIP"
 msgstr "PŘESKOČIT"
 
-#: components/game/opening-layer.tsx:76
+#: components/game/opening-layer.tsx:150
 msgid "Skip to the run"
 msgstr "Přeskočit rovnou do hry"
 
@@ -3508,7 +3508,7 @@ msgstr "Hrdina se zastaví hodně daleko před branou, hradby se táhnou přes h
 msgid "The hit that leaves the board empty counts double."
 msgstr "Zásah, který nechá mřížku prázdnou, se počítá dvakrát."
 
-#: modes/challenges/catalog.ts:892
+#: modes/challenges/catalog.ts:898
 msgid "The keys go dark. Count in your head."
 msgstr "Klávesy zhasnou. Počítej v hlavě."
 

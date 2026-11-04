@@ -31,6 +31,7 @@ import {
   type DialCommand,
   type DialMove,
 } from '@/lib/dial-gesture'
+import { keySpinDegrees } from '@/lib/key-spin'
 import type { DialControl } from '@/machines/tutorial-lesson'
 import type { DialOrientation } from '@/modes'
 
@@ -58,6 +59,9 @@ const TINT_TIMING = { duration: 260, easing: Easing.out(Easing.quad) }
 const DIM = LESSON_DIM
 const DIM_UP = { duration: LESSON_DIM_MS, easing: Easing.out(Easing.quad) }
 const DIM_DOWN = { duration: LESSON_DIM_MS, easing: Easing.in(Easing.quad) }
+
+// How close the eye is as a **mirrored** key turns over: near enough to see it swing.
+const TURN_PERSPECTIVE = 500
 
 // How far a key warms under a strike's flame — see `heat`. Short of the full colour, so the
 // key still reads as itself turning hot rather than as a different key.
@@ -161,6 +165,9 @@ export function DialButton({
   heat = null,
   scrambles = 0,
   dark = false,
+  mirrored = false,
+  sweep = null,
+  sweepAt = 0,
   onDelta,
   onSet,
 }: {
@@ -215,6 +222,13 @@ export function DialButton({
   // press, the bounce and the flight still run, unseen, so the timing of a press is the
   // same as on any other dial.
   dark?: boolean
+  // Whether the key stands turned round its upright, which draws its digit back to front, as
+  // in a mirror — see `DialSpec.mirror`. It gets there as an opening's edge reaches it: `sweep`
+  // is how far the edge has come and `sweepAt` where this key stands. With no `sweep` it
+  // simply stands turned.
+  mirrored?: boolean
+  sweep?: SharedValue<number> | null
+  sweepAt?: number
   onDelta: (delta: 1 | -1, sweep: boolean) => void
   onSet: (value: number, sweep: boolean) => void
 }) {
@@ -389,6 +403,17 @@ export function DialButton({
 
   const liveStyle = useAnimatedStyle(() => ({ opacity: live.value }))
 
+  const turnStyle = useAnimatedStyle(() =>
+    mirrored
+      ? {
+          transform: [
+            { perspective: TURN_PERSPECTIVE },
+            { rotateY: `${keySpinDegrees(sweep?.value ?? 1, sweepAt)}deg` },
+          ],
+        }
+      : {},
+  )
+
   const fireStyle = useAnimatedStyle(() => ({ opacity: FIRE_WASH * (heat?.value ?? 0) }))
 
   const numStyle = useAnimatedStyle(() => ({
@@ -438,7 +463,7 @@ export function DialButton({
     // No gesture of its own: nine separate pans could each only ever hear the key the
     // finger landed on, and a drag across the dial has to be heard by all of them. The
     // one pan that is lives on the square above — components/game/dial.tsx.
-    <Animated.View style={[{ width: size, height: size }, liveStyle]}>
+    <Animated.View style={[{ width: size, height: size }, liveStyle, turnStyle]}>
       {/* Outside the pill, so it is drawn over the surface between keys rather than
             over a fill this blue would disappear into. */}
       {hinted && <DialPulse />}

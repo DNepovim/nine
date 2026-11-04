@@ -29,6 +29,18 @@ describe('the schemes', () => {
     expect(new Set(dark)).toEqual(new Set(THEME_TOKENS))
   })
 
+  it('draws glassBar in one blue wherever it writes', () => {
+    const { mono, bar, score, ink } = SCHEMES.glassBar.inks
+    expect(new Set([mono, bar, score, ink]).size).toBe(1)
+    expect(SCHEMES.glassBar.tokens['--color-dim']).toBe(mono)
+    expect(SCHEMES.glassBar.tokens['--color-primary']).toBe(mono)
+    expect(SCHEMES.glassBar.tokens['--color-score']).toBe(mono)
+  })
+
+  it('has glass answer for every token too', () => {
+    expect(new Set(Object.keys(SCHEMES.glass.tokens))).toEqual(new Set(THEME_TOKENS))
+  })
+
   it('has dos answer for every token too', () => {
     expect(new Set(Object.keys(SCHEMES.dos.tokens))).toEqual(new Set(THEME_TOKENS))
   })

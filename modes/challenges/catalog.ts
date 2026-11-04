@@ -817,7 +817,8 @@ const BINARY: ChallengeSpec = {
 // differently never share a name.
 const MIRROR: ChallengeSpec = {
   slug: 'mirror',
-  label: msg`MIRROR`,
+  // The soft hyphen says where the dialog's wordmark breaks it: MIR over ROR.
+  label: msg`MIR­ROR`,
   // Its own, as every challenge since HABIT's: a profile row reading ACC would file it
   // under a board it is not.
   code: msg`MIR`,
@@ -825,6 +826,11 @@ const MIRROR: ChallengeSpec = {
   mark: 'mirror',
   // Glass-blue, asked for by the author — see `LIGHT_BLUE`.
   hue: LIGHT_BLUE,
+  // A mirror's edge passing over the screen before every run: each key it reaches spins and
+  // lands back to front, and the screen behind it is glass. The run is played in the glass.
+  // See `OpeningKind` and `SchemeKind`.
+  opening: 'passingEdge',
+  scheme: 'glass',
   // No `shot`: Accuracy's sniper, inherited — the streak is Accuracy's own.
   //
   // Every line about reflections and reversal.

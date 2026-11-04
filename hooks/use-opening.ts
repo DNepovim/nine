@@ -4,8 +4,10 @@ import type { StateValue } from 'xstate'
 
 import { APP_RED, SCHEMES } from '@/constants/colors'
 import {
+  OPENING_BAR_WAITS,
   OPENING_STARTS_LIT,
   openingOf,
+  SCHEME_BAR,
   schemeOf,
   type ModeId,
   type OpeningKind,
@@ -61,6 +63,13 @@ export function useOpening({
   // is still playing with the lights on. See `opened` on `Dial`.
   opened: boolean
   scheme: SchemeKind
+  // The scheme the rows above the dial wear, and the one ink it draws them in if it has one, for
+  // what is coloured up in the screen rather than under the provider. See `OPENING_BAR_WAITS`.
+  barScheme: SchemeKind
+  barInk: string | null
+  // The scheme the keys and the sum wear, held the same way, so a mirror's keys are glass from
+  // the first frame rather than changing as the edge goes.
+  dialScheme: SchemeKind
   // The phone's own icons. They follow the game screen only while it is what is on
   // screen: the pause and game over screens over it are drawn light.
   statusBar: 'dark' | 'light'
@@ -76,8 +85,12 @@ export function useOpening({
   peeking: boolean
   peek: () => void
   // How the remains are being pulled: held here because they are drawn behind the run and
-  // felt above it, by two components. See `OpeningPull`.
+  // felt above it, by two components. See `OpeningOver`.
   pull: { tug: SharedValue<number>; wave: SharedValue<number> }
+  // How far an edge has swept the screen, nought to one, held here because the scene moves it
+  // and the dial and the sheet under the run read it. One when nothing is sweeping, so a dial
+  // that turns with it stands as it ends, a restored run included.
+  sweep: SharedValue<number>
 } {
   const name = typeof state === 'string' ? state : ''
   const held = name === 'ready'
@@ -101,6 +114,7 @@ export function useOpening({
   )
   const tug = useSharedValue(0)
   const wave = useSharedValue(1)
+  const sweep = useSharedValue(1)
   const kind = openingOf(mode)
   // An opening that starts in the mode's scheme has no moment with the lights on, which is
   // also what spares a retry a frame of the day colours flashing through it.
@@ -109,6 +123,9 @@ export function useOpening({
   const peeked = peeking && name === 'playing'
   const lightsOn = name === 'menu' || (held && !switched && startsLit) || peeked
   const scheme = lightsOn ? 'day' : schemeOf(mode)
+  const barWaits = kind !== null && OPENING_BAR_WAITS[kind]
+  const dialScheme = lightsOn && barWaits ? 'day' : schemeOf(mode)
+  const barScheme = SCHEME_BAR[dialScheme]
   const onScreen = held || name === 'playing'
   return {
     layer: held ? kind : null,
@@ -117,6 +134,9 @@ export function useOpening({
     take,
     opened: !peeked && (!held || switched),
     scheme,
+    barScheme,
+    barInk: SCHEMES[barScheme].inks.mono,
+    dialScheme,
     statusBar: onScreen ? SCHEMES[scheme].inks.statusBar : 'dark',
     inPlay: onScreen,
     flash: SCHEMES[scheme].inks.mono ?? APP_RED,
@@ -132,5 +152,6 @@ export function useOpening({
       }, PEEK_MS)
     },
     pull: { tug, wave },
+    sweep,
   }
 }
