@@ -1,8 +1,8 @@
 # Session announcements
 
 Slug: session-announcements
-Stage: review
-Next: /ship session-announcements
+Stage: shipped
+Next: /deploy
 Track: full
 Branch: feat/session-announcements
 Started: 2026-11-03

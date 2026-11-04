@@ -150,3 +150,7 @@ to Play is unaffected: no controls, scoring or rules changed.
   read at all. `useBoard` has the same shape, and the session traffic to cause it doesn't exist
   yet.
 - Small duplication: the two reconnect flags and the coalesce block.
+
+## Shipped
+
+d2d3056 on `main`.
