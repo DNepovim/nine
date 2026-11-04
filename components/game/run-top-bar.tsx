@@ -5,7 +5,7 @@ import Animated, { FadeIn, FadeOut } from 'react-native-reanimated'
 import { Arrival } from '@/components/game/arrival'
 import { PauseButton } from '@/components/game/pause-button'
 import { TYPE } from '@/constants/typography'
-import { useLegible } from '@/hooks/use-scheme'
+import { useLegible, useScheme } from '@/hooks/use-scheme'
 import { cn } from '@/lib/cn'
 
 // The row every live run is played under: what the run is on the left, the game's name in
@@ -36,10 +36,11 @@ export function RunTopBar({
   onPause?: (() => void) | null
 }) {
   // Both colours are tuned for the app's light screen; see `useLegible` for a run played
-  // under another scheme.
+  // under another scheme, which may also draw this whole row in one ink of its own.
   const onScheme = useLegible()
-  const shown = onScheme(accent)
-  const mark = onScheme(wordmark)
+  const { bar } = useScheme().inks
+  const shown = bar ?? onScheme(accent)
+  const mark = bar ?? onScheme(wordmark)
   return (
     <View className="flex-row items-center">
       <Arrival order={1} from="above" className="flex-1">

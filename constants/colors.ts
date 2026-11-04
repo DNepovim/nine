@@ -374,6 +374,10 @@ type SchemeInks = {
   // drawn in it instead, through `useLegible`; nothing on the screen keeps an accent of
   // its own. `dos` is the one that sets it.
   mono: string | null
+  // The one ink everything in the game's top bar is drawn in, where the scheme has one: the
+  // run's name, NINE and the pause button, which would otherwise wear the mode's colours.
+  // Null to leave them theirs.
+  bar: string | null
   // The keys, where the scheme draws them its own way rather than in `DIAL_COLORS` and the
   // mode's gradient: the ramp's two ends, the digit, the digit on a key at its top, and the
   // pair a key at its top is filled with. Its shape too, since a scheme's keys need not be
@@ -411,6 +415,7 @@ export const SCHEMES = {
       ink: SCORE_COLORS.high,
       wash: SURFACE_WASH,
       mono: null,
+      bar: null,
       keys: null,
     },
   },
@@ -440,6 +445,8 @@ export const SCHEMES = {
       // cool-to-warm drift across the screen.
       wash: ['#0E0D17', '#110F19', '#15101A', '#171119'],
       mono: null,
+      // The same grey as `--color-dim` above, which the word under the run's name wears.
+      bar: '#B8B3C7',
       keys: null,
     },
   },
@@ -472,6 +479,7 @@ export const SCHEMES = {
       ink: DOS_WHITE,
       wash: [DOS_BLUE, DOS_BLUE],
       mono: DOS_WHITE,
+      bar: DOS_WHITE,
       keys: {
         low: DOS_BLUE,
         high: DOS_BLUE,
@@ -499,4 +507,11 @@ export const LIGHTS_OUT = {
   // The cord, the socket and the outline: the app's own ink, which reads on the light
   // screen the scene opens on and, at the rim, against the dark one it leaves.
   line: DIM_INK,
+  // The flashlight's light on the wall as its battery goes: the bulb's own warm white, then
+  // orange, then a red still bright enough to read the number by. And the number written
+  // there, which is the app's ink: dark paint, seen only where the light falls.
+  beam: '#FFF1C9',
+  beamLow: '#FFA63D',
+  beamOut: '#FF5A36',
+  paint: PRIMARY_INK,
 } as const

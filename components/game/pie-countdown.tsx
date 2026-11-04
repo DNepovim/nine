@@ -44,7 +44,7 @@ const HIT_NUMBER_SCALE = 1.7
 const FAIL_COLOR_MS = 100
 const FAIL_SQUASH = 0.06
 
-const fontSizeForDigits = (value: number, scale: number): number => {
+export const fontSizeForDigits = (value: number, scale: number): number => {
   const digits = String(value).length
   const base = digits >= 3 ? 36 : digits === 2 ? 50 : 58
   return Math.round(base * scale)

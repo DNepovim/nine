@@ -2,10 +2,15 @@ import { useLingui } from '@lingui/react/macro'
 import { useRef, type ComponentType } from 'react'
 import { View } from 'react-native'
 
-import { LightsOut, LightsOutRemains } from '@/components/game/openings/lights-out'
+import {
+  LightsOut,
+  LightsOutPull,
+  LightsOutRemains,
+} from '@/components/game/openings/lights-out'
 import { Terminal } from '@/components/game/openings/terminal'
 import { TrackedPressable } from '@/components/tracked-pressable'
 import { LAYER } from '@/constants/layers'
+import type { useOpening } from '@/hooks/use-opening'
 import type { OpeningKind, OpeningTake } from '@/modes'
 
 // What every opening is handed. The scene owns its own timing and says two things back:
@@ -24,17 +29,49 @@ const OPENINGS = {
   terminal: Terminal,
 } as const satisfies Record<OpeningKind, ComponentType<OpeningSceneProps>>
 
+type Pull = ReturnType<typeof useOpening>['pull']
+
 // What each opening leaves on the game screen for the run once its scene is over — its
-// **remains** — or null for one that leaves nothing. Drawn behind everything the run draws.
-// Typed as the record rather than narrowed to its entries, so the null means something.
-const REMAINS: Record<OpeningKind, ComponentType | null> = {
-  lightsOut: LightsOutRemains,
+// **remains** — or null for one that leaves nothing. The drawing goes behind everything the
+// run draws; `Pull` is how a finger reaches it, above all of that. Typed as the record rather
+// than narrowed to its entries, so the null means something.
+const REMAINS: Record<
+  OpeningKind,
+  {
+    Drawing: ComponentType<{ lit: boolean; pull: Pull }>
+    Pull: ComponentType<{ pull: Pull; onPeek: () => void }>
+  } | null
+> = {
+  lightsOut: { Drawing: LightsOutRemains, Pull: LightsOutPull },
   terminal: null,
 }
 
-export function OpeningRemains({ kind }: { kind: OpeningKind | null }) {
-  const Remains = kind === null ? null : REMAINS[kind]
-  return Remains === null ? null : <Remains />
+const remainsOf = (kind: OpeningKind | null) => (kind === null ? null : REMAINS[kind])
+
+export function OpeningRemains({
+  kind,
+  lit,
+  pull,
+}: {
+  kind: OpeningKind | null
+  lit: boolean
+  pull: Pull
+}) {
+  const Drawing = remainsOf(kind)?.Drawing
+  return Drawing === undefined ? null : <Drawing lit={lit} pull={pull} />
+}
+
+export function OpeningPull({
+  kind,
+  pull,
+  onPeek,
+}: {
+  kind: OpeningKind | null
+  pull: Pull
+  onPeek: () => void
+}) {
+  const Reach = remainsOf(kind)?.Pull
+  return Reach === undefined ? null : <Reach pull={pull} onPeek={onPeek} />
 }
 
 // A mode's **opening**, over the game screen while its run is held **ready**.

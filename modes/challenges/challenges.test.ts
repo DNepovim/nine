@@ -640,6 +640,7 @@ describe('blackout', () => {
     const id = challengeId('blackout')
     expect(openingOf(id)).toBe('lightsOut')
     expect(schemeOf(id)).toBe('dark')
+    expect(targetFormOf(id)).toBe('flashlit')
     expect(runRules(id, 'hard').opens).toBe(true)
   })
 

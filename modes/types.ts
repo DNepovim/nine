@@ -315,10 +315,11 @@ export type SchemeKind = 'day' | 'dark' | 'dos'
 
 // How a run's targets are drawn — its **target form**. `discs` stand wherever they were
 // dealt, each with a ring running down, and are every mode's unless it names another; `lines`
-// are lines of a terminal, each with a bar. Drawn by `TARGET_FORMS` in
+// are lines of a terminal, each with a bar; `flashlit` are numbers on a dark wall in a
+// flashlight's beam, which reddens and closes in as the clock runs down. Drawn by `TARGET_FORMS` in
 // `components/game/target-forms.tsx`. Drawing only: a hit is decided by the sum, an expiry by
 // the clock, and both are the same in every form.
-export type TargetForm = 'discs' | 'lines'
+export type TargetForm = 'discs' | 'lines' | 'flashlit'
 
 // What every mode says about itself, whichever engine runs it.
 type ModeIdentity = {

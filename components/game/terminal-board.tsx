@@ -8,8 +8,6 @@ import {
 } from 'react'
 import { Text, View } from 'react-native'
 import Animated, {
-  cancelAnimation,
-  Easing,
   useAnimatedStyle,
   useSharedValue,
   withRepeat,
@@ -17,13 +15,13 @@ import Animated, {
   withTiming,
   type SharedValue,
 } from 'react-native-reanimated'
-import { scheduleOnRN } from 'react-native-worklets'
 
 import { TARGET_EXIT_MS } from '@/components/game/pie-countdown'
 import type { TargetCard } from '@/components/game/target-card'
 import { DOS_BLUE, DOS_WHITE } from '@/constants/colors'
 import { TYPE } from '@/constants/typography'
 import { useDriftedValue } from '@/hooks/use-drifted-value'
+import { useTargetClock } from '@/hooks/use-target-clock'
 import {
   BAR_CELLS,
   commandLine,
@@ -126,27 +124,16 @@ export function TerminalTarget({
   onExitComplete,
 }: ComponentProps<typeof TargetCard>) {
   const log = useContext(LogContext)
-  const progress = useSharedValue(target.startProgress)
   const leaving = target.exit !== null || dying
-  const running = !leaving && !frozen && clocked
   const reading = useDriftedValue(target, driftStep, !leaving && !frozen)
   const shown = target.takenAt ?? reading
 
-  // The same clock the disc runs: down from wherever it stands, so a pause costs nothing and
-  // gives nothing, and cancelled reports not-finished, so a frozen target does not expire.
-  useEffect(() => {
-    if (!running) {
-      cancelAnimation(progress)
-      return
-    }
-    progress.value = withTiming(
-      0,
-      { duration: duration * progress.value, easing: Easing.linear },
-      (finished) => {
-        if (finished) scheduleOnRN(onExpire)
-      },
-    )
-  }, [running])
+  const progress = useTargetClock({
+    startProgress: target.startProgress,
+    duration,
+    running: !leaving && !frozen && clocked,
+    onExpire,
+  })
 
   // Gone: a beat showing how it ended, then into the history and off the board.
   useEffect(() => {

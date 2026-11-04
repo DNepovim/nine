@@ -1,4 +1,5 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
+import { useSharedValue, type SharedValue } from 'react-native-reanimated'
 import type { StateValue } from 'xstate'
 
 import { APP_RED, SCHEMES } from '@/constants/colors'
@@ -12,6 +13,10 @@ import {
   type SchemeKind,
 } from '@/modes'
 
+// How long a **peek** keeps the lights on. Long enough to catch a key or two and nowhere
+// near long enough to read the whole dial.
+const PEEK_MS = 200
+
 // The game screen's half of a mode's **opening**: whether the run is held **ready** for
 // one, how much of it plays, whether it has reached its switch, and so which **scheme**
 // the screen is drawn in. The machine's half is the `ready` state itself.
@@ -23,8 +28,16 @@ import {
 // again from a pause or game over plays the `short` one, so twenty retries are not twenty
 // whole scenes.
 //
+// Every run starts with the lights on, a retry included, for however long its take gives them.
+//
+// A **peek** is the lights coming on again mid-run: the player pulling what an opening left
+// behind (`LightsOutPull`), for `PEEK_MS`. Everything about it runs through the same two
+// answers the switch does, the scheme and `opened`, so the screen and the dial simply are as
+// they were before the switch, and nothing else has to hear of it.
+//
 // The scheme is `day` behind the intro, which covers the game screen, and while an
-// opening has not yet reached its switch — the lights are still on. It is the mode's own
+// opening's full take has not yet reached its switch — the lights are still on. It is the
+// mode's own
 // everywhere else, a restored run included, which comes back already switched.
 export function useOpening({
   state,
@@ -59,6 +72,12 @@ export function useOpening({
   // one ink.
   flash: string
   onSwitch: () => void
+  // The lights on again for a moment, mid-run. See `PEEK_MS`.
+  peeking: boolean
+  peek: () => void
+  // How the remains are being pulled: held here because they are drawn behind the run and
+  // felt above it, by two components. See `OpeningPull`.
+  pull: { tug: SharedValue<number>; wave: SharedValue<number> }
 } {
   const name = typeof state === 'string' ? state : ''
   const held = name === 'ready'
@@ -72,11 +91,23 @@ export function useOpening({
       setSwitched(false)
     }
   }
+  const [peeking, setPeeking] = useState(false)
+  const peekTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  useEffect(
+    () => () => {
+      if (peekTimer.current !== null) clearTimeout(peekTimer.current)
+    },
+    [],
+  )
+  const tug = useSharedValue(0)
+  const wave = useSharedValue(1)
   const kind = openingOf(mode)
   // An opening that starts in the mode's scheme has no moment with the lights on, which is
   // also what spares a retry a frame of the day colours flashing through it.
   const startsLit = kind !== null && OPENING_STARTS_LIT[kind]
-  const lightsOn = name === 'menu' || (held && !switched && startsLit)
+  // Only in play: a pull that lands as a run ends must not light the screen under game over.
+  const peeked = peeking && name === 'playing'
+  const lightsOn = name === 'menu' || (held && !switched && startsLit) || peeked
   const scheme = lightsOn ? 'day' : schemeOf(mode)
   const onScreen = held || name === 'playing'
   return {
@@ -84,7 +115,7 @@ export function useOpening({
     remains: held || name === 'menu' ? null : kind,
     held,
     take,
-    opened: !held || switched,
+    opened: !peeked && (!held || switched),
     scheme,
     statusBar: onScreen ? SCHEMES[scheme].inks.statusBar : 'dark',
     inPlay: onScreen,
@@ -92,5 +123,14 @@ export function useOpening({
     onSwitch: () => {
       setSwitched(true)
     },
+    peeking: peeked,
+    peek: () => {
+      if (peekTimer.current !== null) clearTimeout(peekTimer.current)
+      setPeeking(true)
+      peekTimer.current = setTimeout(() => {
+        setPeeking(false)
+      }, PEEK_MS)
+    },
+    pull: { tug, wave },
   }
 }

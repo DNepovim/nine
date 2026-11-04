@@ -25,7 +25,11 @@ import { FloatingStat } from '@/components/game/floating-stat'
 import { HeartIcon } from '@/components/game/heart-icon'
 import { HitSync } from '@/components/game/hit-sync'
 import { MultiplayerGame } from '@/components/game/multiplayer-game'
-import { OpeningLayer, OpeningRemains } from '@/components/game/opening-layer'
+import {
+  OpeningLayer,
+  OpeningPull,
+  OpeningRemains,
+} from '@/components/game/opening-layer'
 import { RunStopwatch } from '@/components/game/run-stopwatch'
 import { RunTopBar } from '@/components/game/run-top-bar'
 import { ScoreDigit } from '@/components/game/score-digit'
@@ -2190,7 +2194,11 @@ export default function GameScreen() {
             {/* In the run's **scheme**; the overlays after it keep their own. */}
             <SchemeProvider kind={opening.scheme}>
               {/* What the opening left behind, under everything the run draws. */}
-              <OpeningRemains kind={opening.remains} />
+              <OpeningRemains
+                kind={opening.remains}
+                lit={opening.peeking}
+                pull={opening.pull}
+              />
               {/* Each time a run leaves the intro, the screen comes in a piece at a time
               — see components/game/arrival.tsx. */}
               <ArrivalStage arrived={!isMenu}>
@@ -2754,6 +2762,13 @@ export default function GameScreen() {
                   )}
                 </Screen>
               </ArrivalStage>
+
+              {/* The remains, for a finger — see `OpeningPull`. */}
+              <OpeningPull
+                kind={opening.remains}
+                pull={opening.pull}
+                onPeek={opening.peek}
+              />
 
               {/* ── The opening, over the held run ── */}
               {/* Drawn only while the run is **ready**. The switch turns the screen under it

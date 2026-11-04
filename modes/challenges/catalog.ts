@@ -895,6 +895,9 @@ const BLACKOUT: ChallengeSpec = {
   // and the game screen played dark from that click. See `OpeningKind` and `SchemeKind`.
   opening: 'lightsOut',
   scheme: 'dark',
+  // In the dark room, each target is a number on the wall with a flashlight on it, and the
+  // light reddening and closing in is its clock. See `TargetForm`.
+  targetForm: 'flashlit',
   gradient: BLACK_PAIR,
   darkGradient: BLACK_PAIR,
   shot: null,
