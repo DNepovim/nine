@@ -88,6 +88,7 @@ import { useAccountEmail } from '@/hooks/use-account-email'
 import { useAchievementQueue, useAchievements } from '@/hooks/use-achievements'
 import { useAnnouncements } from '@/hooks/use-announcements'
 import { useAppUpdate } from '@/hooks/use-app-update'
+import { useBarColor } from '@/hooks/use-bar-color'
 import { BoardProvider, useBoard, type PeriodBoard } from '@/hooks/use-board'
 import { ChampionsProvider, useChampions } from '@/hooks/use-champions'
 import { SUM_ROW_HEIGHT } from '@/hooks/use-dial-metrics'
@@ -95,7 +96,7 @@ import { useDisplayOptions } from '@/hooks/use-display-options'
 import { useDisplayScore } from '@/hooks/use-display-score'
 import { useDisplayedTargets } from '@/hooks/use-displayed-targets'
 import { useDriftTicks } from '@/hooks/use-drift-ticks'
-import { useDyingSequence } from '@/hooks/use-dying-sequence'
+import { useDyingSequence, type DyingPhase } from '@/hooks/use-dying-sequence'
 import { useFeedbackAnswered } from '@/hooks/use-feedback-answered'
 import { useFeedbackReplies } from '@/hooks/use-feedback-replies'
 import { FlagsProvider } from '@/hooks/use-flags'
@@ -487,6 +488,16 @@ const drawnTargets = (
   voice: LessonVoice,
   placed: readonly DisplayTarget[],
 ): readonly DisplayTarget[] => (voice === 'opening' ? [] : placed)
+
+// The phone's bar, in the colour of the run's **scheme** for as long as that is what fills the
+// screen: through play, and on through the last-life cinematic, which runs over the game screen
+// until the game-over screen has landed. The screens over a run are drawn light, so they leave
+// the bar to the app.
+const systemBarOf = (
+  color: string | null,
+  inPlay: boolean,
+  dying: DyingPhase,
+): string | null => (inPlay || dying === 'dying' || dying === 'blend' ? color : null)
 
 // What the pause button does, or null where it is not drawn. It stands through a held run's
 // opening too, so the top bar is whole from the first frame: a tap there is the opening's skip,
@@ -1909,6 +1920,7 @@ export default function GameScreen() {
     targetsAreaRef,
     setOverlayTitleY,
   } = useDyingSequence({ isGameOver, lives })
+  useBarColor(systemBarOf(opening.systemBar, opening.inPlay, dyingPhase))
   const lostMarks = useLostMarks({
     runId,
     targets: boardTargets,

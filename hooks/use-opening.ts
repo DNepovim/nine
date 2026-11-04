@@ -70,6 +70,9 @@ export function useOpening({
   // The scheme the keys and the sum wear, held the same way, so a mirror's keys are glass from
   // the first frame rather than changing as the edge goes.
   dialScheme: SchemeKind
+  // What the phone paints its own bar in over this scheme's ground, or null to leave it the
+  // app's. See `useBarColor`, and `systemBarOf` on the game screen for when it applies.
+  systemBar: string | null
   // The phone's own icons. They follow the game screen only while it is what is on
   // screen: the pause and game over screens over it are drawn light.
   statusBar: 'dark' | 'light'
@@ -137,6 +140,7 @@ export function useOpening({
     barScheme,
     barInk: SCHEMES[barScheme].inks.mono,
     dialScheme,
+    systemBar: scheme === 'day' ? null : SCHEMES[scheme].inks.ground,
     statusBar: onScreen ? SCHEMES[scheme].inks.statusBar : 'dark',
     inPlay: onScreen,
     flash: SCHEMES[scheme].inks.mono ?? APP_RED,
