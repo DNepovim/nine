@@ -1529,10 +1529,6 @@ msgstr "Dostala víc času."
 msgid "GIVING NOW"
 msgstr "DÁVÁ TEĎ"
 
-#: modes/challenges/catalog.ts:321
-msgid "GLIM­PSE"
-msgstr "ZÁ­BLESK"
-
 #: constants/achievements.ts:661
 msgid "GOOD SPORT"
 msgstr "FAIR PLAY"
@@ -3270,6 +3266,14 @@ msgid "STRIKE"
 msgstr "SÉRIE"
 
 #: lib/run-stats.ts:66
+#: modes/challenges/catalog.ts:324
+msgid "STM"
+msgstr "BOU"
+
+#: modes/challenges/catalog.ts:321
+msgid "STORM"
+msgstr "BOUŘE"
+
 #: lib/run-stats.ts:93
 msgid "STRIKES"
 msgstr "V SÉRII"

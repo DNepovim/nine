@@ -211,6 +211,8 @@ export const OPENING_STARTS_LIT = {
   lightsOut: true,
   terminal: false,
   passingEdge: true,
+  // The rain is already falling on the first frame; the flash is the scene.
+  stormFront: false,
 } as const satisfies Record<OpeningKind, boolean>
 
 // What the rows above the dial wear under each **scheme**: the same one, except that `glass`
@@ -218,6 +220,8 @@ export const OPENING_STARTS_LIT = {
 export const SCHEME_BAR = {
   day: 'day',
   dark: 'dark',
+  storm: 'stormBar',
+  stormBar: 'stormBar',
   dos: 'dos',
   glass: 'glassBar',
   glassBar: 'glassBar',
@@ -231,6 +235,7 @@ export const OPENING_BAR_WAITS = {
   lightsOut: true,
   terminal: true,
   passingEdge: false,
+  stormFront: false,
 } as const satisfies Record<OpeningKind, boolean>
 
 // How this mode's targets are drawn: its own form, or `discs`.

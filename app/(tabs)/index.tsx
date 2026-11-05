@@ -2316,6 +2316,8 @@ export default function GameScreen() {
                 <Screen>
                   {/* Every row above the dial, in the scheme those rows wear. */}
                   <SchemeProvider kind={opening.barScheme}>
+                running={isPlaying}
+                runId={state.context.runId}
                     {/* Row 0 — board bests, a hairline above the top bar. In every mode,
               Trainee included: it has no board to report, and reserves the height
               instead, so that the dial below is the same size in all of them. */}

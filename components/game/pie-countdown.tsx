@@ -116,7 +116,9 @@ export function PieCountdown({
   // ground, a thin outline, and the clock as a thin arc round the edge rather than a
   // wedge, so the number sits on the ground and reads in the scheme's one ink. A filled
   // wedge in that ink would swallow the number drawn in it.
-  const { mono, ground } = useScheme().inks
+  // `hit` is the ink a taken number turns to as it leaves the ring: on a screen whose ground is
+  // dark, the disc's own dark ink would leave it standing unseen on the ground it flies out onto.
+  const { mono, ground, hit: hitInk } = useScheme().inks
   const thin = mono !== null
   const stroke = thin ? THIN_STROKE : size / 2
   const radius = thin ? size / 2 - THIN_STROKE / 2 : size / 4
@@ -129,6 +131,8 @@ export function PieCountdown({
   const numberSquash = useSharedValue(1)
   // 0 = the clock's own colours, 1 = the red disc a lost target turns into.
   const failColor = useSharedValue(0)
+  // 0 = the disc's ink, 1 = the scheme's `hit` ink, for a number taken.
+  const hitColor = useSharedValue(0)
   // The numeral alone, so a glimpse never has to touch the swell, the squash or the
   // colour the exits drive.
   const numberOpacity = useSharedValue(glimpse === 0 ? 0 : 1)
@@ -224,6 +228,12 @@ export function PieCountdown({
   useEffect(() => {
     if (exit === null) return
     if (exit === 'hit') {
+      if (hitInk !== null) {
+        hitColor.value = withTiming(1, {
+          duration: TARGET_EXIT_MS / 2,
+          easing: Easing.out(Easing.quad),
+        })
+      }
       // A card that settles keeps its disc: collapsing it would throw away the one
       // thing a drilled board is read by. A card that leaves collapses as it always
       // has — the ring going in is what makes the number come out.
@@ -287,6 +297,10 @@ export function PieCountdown({
   // numeral, so a screen that retints the token still gets its way.
   const numberColorStyle = useAnimatedStyle(() => ({
     color: interpolateColor(failColor.value, [0, 1], [PIE_INK, lostNumeral]),
+  }))
+
+  const numberHitStyle = useAnimatedStyle(() => ({
+    color: interpolateColor(hitColor.value, [0, 1], [PIE_INK, hitInk ?? PIE_INK]),
   }))
 
   const ringStyle = useAnimatedStyle(() => ({
@@ -373,10 +387,14 @@ export function PieCountdown({
         <Animated.Text
           selectable={false}
           numberOfLines={1}
-          className={cn('font-mono font-extrabold', !failed && 'text-pie')}
+          className={cn(
+            'font-mono font-extrabold',
+            !failed && hitInk === null && 'text-pie',
+          )}
           style={[
             { fontSize: fontSizeForDigits(value, scale), includeFontPadding: false },
             failed && numberColorStyle,
+            !failed && hitInk !== null && numberHitStyle,
           ]}
         >
           {value}

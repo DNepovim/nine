@@ -378,6 +378,9 @@ type SchemeInks = {
   // run's name, NINE and the pause button, which would otherwise wear the mode's colours.
   // Null to leave them theirs.
   bar: string | null
+  // The ink a target's number turns to as a hit lets it out of its disc, or null to keep the
+  // disc's own. Set where the ground is dark enough to lose the disc's dark numeral.
+  hit: string | null
   // The keys, where the scheme draws them its own way rather than in `DIAL_COLORS` and the
   // mode's gradient: the ramp's two ends, the digit, the digit on a key at its top, and the
   // pair a key at its top is filled with. Its shape too, since a scheme's keys need not be
@@ -419,6 +422,25 @@ const GLASS_TOKENS = {
 // The one blue everything above the dial wears under `glass` — see `glassBar` in `SCHEMES`.
 const GLASS_BAR = '#1F6A92'
 
+// The storm's tokens, shared with `stormBar`, and the one ink everything above its dial wears.
+const STORM_TOKENS = {
+  '--color-surface': '#0A1428',
+  '--color-card': '#12213D',
+  '--color-elevated': '#1B2D50',
+  '--color-muted': '#2A3F66',
+  '--color-dim': '#A9BCDD',
+  '--color-primary': '#EAF2FF',
+  '--color-strong': '#EAF2FF',
+  '--color-on-strong': '#0A1428',
+  '--color-score': '#5BD27D',
+  '--color-fortune': '#FF8A80',
+  '--color-dial': '#101C33',
+  '--color-factor': '#8FA3C7',
+  '--color-pie': '#0E1A30',
+}
+
+const STORM_BAR = '#A9BCDD'
+
 // `dark` — a near-black of the app's own violet cast, the screen's text in the parchment
 // it is usually drawn on. The keys and the target discs keep their light faces, so the
 // inks drawn on *them* (`--color-dial`, `--color-pie`) stay dark: only what sits on the
@@ -435,6 +457,7 @@ export const SCHEMES = {
       wash: SURFACE_WASH,
       mono: null,
       bar: null,
+      hit: null,
       keys: null,
     },
   },
@@ -466,6 +489,54 @@ export const SCHEMES = {
       mono: null,
       // The same grey as `--color-dim` above, which the word under the run's name wears.
       bar: '#B8B3C7',
+      hit: null,
+      keys: null,
+    },
+  },
+  // `storm` — GLIMPSE's night: a deep navy of rain-heavy cloud, the text in a cold white.
+  // Like `dark`, the keys and target discs keep their light faces, so the inks drawn on
+  // *them* stay dark and only what sits on the screen itself turns over.
+  storm: {
+    tokens: STORM_TOKENS,
+    inks: {
+      score: '#EAF2FF',
+      keyRim: 'rgba(234, 242, 255, 0.28)',
+      statusBar: 'light',
+      ground: '#0A1428',
+      ink: '#EAF2FF',
+      // Cloud-dark at the top, a little lighter where the rain gathers at the foot.
+      wash: ['#08101F', '#0A1428', '#0C1830', '#0E1B36'],
+      mono: null,
+      bar: STORM_BAR,
+      // The bolt's own colour (`STORM.bolt`, defined below this table), so a hit number is the
+      // flash it was struck by.
+      hit: '#FFF7B8',
+      keys: null,
+    },
+  },
+  // `stormBar` — the rows above a `storm` dial: **monochrome** in the cold blue-white the name and
+  // NINE already wear, so the hearts, the score and the multiplier match them. Worn from the first
+  // frame of the run; see `OPENING_BAR_WAITS`.
+  stormBar: {
+    tokens: {
+      ...STORM_TOKENS,
+      '--color-dim': STORM_BAR,
+      '--color-primary': STORM_BAR,
+      '--color-strong': STORM_BAR,
+      '--color-score': STORM_BAR,
+      '--color-fortune': STORM_BAR,
+      '--color-factor': STORM_BAR,
+    },
+    inks: {
+      score: STORM_BAR,
+      keyRim: 'transparent',
+      statusBar: 'light',
+      ground: '#0A1428',
+      ink: STORM_BAR,
+      wash: ['#08101F', '#0A1428', '#0C1830', '#0E1B36'],
+      mono: STORM_BAR,
+      bar: STORM_BAR,
+      hit: null,
       keys: null,
     },
   },
@@ -499,6 +570,7 @@ export const SCHEMES = {
       wash: [DOS_BLUE, DOS_BLUE],
       mono: DOS_WHITE,
       bar: DOS_WHITE,
+      hit: null,
       keys: {
         low: DOS_BLUE,
         high: DOS_BLUE,
@@ -523,6 +595,7 @@ export const SCHEMES = {
       wash: ['#D3E2EB', '#D9E6EE', '#DFEAF1', '#D6E4EC'],
       mono: null,
       bar: null,
+      hit: null,
       keys: {
         low: '#F2F8FB',
         high: '#8DB4CC',
@@ -556,6 +629,7 @@ export const SCHEMES = {
       wash: ['#D3E2EB', '#D9E6EE', '#DFEAF1', '#D6E4EC'],
       mono: GLASS_BAR,
       bar: GLASS_BAR,
+      hit: null,
       keys: null,
     },
   },
@@ -597,4 +671,22 @@ export const LIGHTS_OUT = {
   beamLow: '#FFA63D',
   beamOut: '#FF5A36',
   paint: PRIMARY_INK,
+} as const
+
+// GLIMPSE's storm (`components/game/openings/storm-front.tsx`, `struck-target.tsx`).
+//
+// Rain is the cold blue of the sky it falls from. Lightning is a light yellow with a deeper yellow edge, and
+// is never any of the app's golds: gold is a record held, and a bolt wearing it would be
+// the scene claiming something it is not.
+export const STORM = {
+  rain: 'rgba(170, 200, 255, 0.5)',
+  bolt: '#FFF7B8',
+  boltEdge: '#FFE45C',
+  glow: 'rgba(255, 243, 160, 0.85)',
+  veil: '#FFF6B8',
+  // The flood behind the dial: the back wave dimmer and the front one a little brighter,
+  // both translucent so the navy and the rain read through.
+  waterBack: 'rgba(36, 92, 168, 0.55)',
+  water: 'rgba(58, 128, 214, 0.5)',
+  splash: 'rgba(200, 224, 255, 0.9)',
 } as const

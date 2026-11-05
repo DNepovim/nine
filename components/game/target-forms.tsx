@@ -1,6 +1,7 @@
 import type { ComponentProps, ComponentType, ReactNode } from 'react'
 
 import { FlashlitTarget } from '@/components/game/flashlit-target'
+import { StruckTarget } from '@/components/game/struck-target'
 import { TargetCard } from '@/components/game/target-card'
 import { TerminalBoard, TerminalTarget } from '@/components/game/terminal-board'
 import type { OpeningTake, TargetForm } from '@/modes'
@@ -17,7 +18,7 @@ type BoardProps = {
   children: ReactNode
 }
 
-// Discs and flashlit numbers stand wherever they were dealt, with nothing around them.
+// Discs, struck discs and flashlit numbers stand wherever they were dealt, with nothing around them.
 function DealtBoard({ children }: BoardProps) {
   return <>{children}</>
 }
@@ -25,6 +26,7 @@ function DealtBoard({ children }: BoardProps) {
 export const TARGET_FORMS = {
   discs: { Board: DealtBoard, Card: TargetCard },
   flashlit: { Board: DealtBoard, Card: FlashlitTarget },
+  struck: { Board: DealtBoard, Card: StruckTarget },
   lines: { Board: TerminalBoard, Card: TerminalTarget },
 } as const satisfies Record<
   TargetForm,

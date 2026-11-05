@@ -14,6 +14,11 @@ import {
   PassingEdgeRemains,
   PassingEdgeUnder,
 } from '@/components/game/openings/passing-edge'
+import {
+  StormFront,
+  StormRemains,
+  StormUnder,
+} from '@/components/game/openings/storm-front'
 import { Terminal } from '@/components/game/openings/terminal'
 import { TrackedPressable } from '@/components/tracked-pressable'
 import { LAYER } from '@/constants/layers'
@@ -38,6 +43,7 @@ const OPENINGS = {
   lightsOut: LightsOut,
   terminal: Terminal,
   passingEdge: PassingEdge,
+  stormFront: StormFront,
 } as const satisfies Record<OpeningKind, ComponentType<OpeningSceneProps>>
 
 type Pull = ReturnType<typeof useOpening>['pull']
@@ -58,13 +64,19 @@ type OverProps = {
 const REMAINS: Record<
   OpeningKind,
   {
-    Drawing: ComponentType<{ lit: boolean; pull: Pull }>
+    Drawing: ComponentType<{
+      lit: boolean
+      pull: Pull
+      running: boolean
+      runId: string
+    }>
     Over: ComponentType<OverProps> | null
   } | null
 > = {
   lightsOut: { Drawing: LightsOutRemains, Over: LightsOutPull },
   terminal: null,
   passingEdge: { Drawing: PassingEdgeRemains, Over: MirrorDamage },
+  stormFront: { Drawing: StormRemains, Over: null },
 }
 
 const remainsOf = (kind: OpeningKind | null) => (kind === null ? null : REMAINS[kind])
@@ -73,13 +85,21 @@ export function OpeningRemains({
   kind,
   lit,
   pull,
+  running,
+  runId,
 }: {
   kind: OpeningKind | null
   lit: boolean
   pull: Pull
+  // Whether the run is being played this moment, and which run it is — for the remains that
+  // change over the run, as the storm's water rises.
+  running: boolean
+  runId: string
 }) {
   const Drawing = remainsOf(kind)?.Drawing
-  return Drawing === undefined ? null : <Drawing lit={lit} pull={pull} />
+  return Drawing === undefined ? null : (
+    <Drawing lit={lit} pull={pull} running={running} runId={runId} />
+  )
 }
 
 // What a scene needs under the run while it plays, for the one kind that draws anything there.
@@ -87,6 +107,7 @@ const UNDER: Record<OpeningKind, ComponentType<{ sweep: SharedValue<number> }> |
   lightsOut: null,
   terminal: null,
   passingEdge: PassingEdgeUnder,
+  stormFront: StormUnder,
 }
 
 export function OpeningUnder({

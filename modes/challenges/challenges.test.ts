@@ -20,7 +20,12 @@ import { rampedTimeout, resolveRules, spawnInterval } from '@/modes/rules'
 
 import { CHALLENGES } from './catalog'
 import { challengeId, defineChallenge, isOpenMode } from './define'
-import { BLACK_PAIR, challengeDarkGradient, challengeGradient } from './palette'
+import {
+  BLACK_PAIR,
+  challengeDarkGradient,
+  challengeGradient,
+  STORM_PAIR,
+} from './palette'
 
 const DAY = 24 * 3600_000
 const OPENS = Date.UTC(2027, 0, 1)
@@ -410,6 +415,13 @@ describe('glimpse', () => {
     }
   })
 
+  it('is played in a storm, each target struck by lightning', () => {
+    const id = challengeId('glimpse')
+    expect(openingOf(id)).toBe('stormFront')
+    expect(schemeOf(id)).toBe('storm')
+    expect(targetFormOf(id)).toBe('struck')
+  })
+
   it('is Accuracy on Hard in everything but the glimpse', () => {
     const rules = runRules(challengeId('glimpse'), 'easy')
     expect(rules.spawn.maxTargets).toBe(3)
@@ -463,7 +475,7 @@ describe('glimpse', () => {
         'blackout',
       ].map(challengeId),
     )
-    expect(GLIMPSE?.gradient).toEqual(challengeGradient(3))
+    expect(GLIMPSE?.gradient).toEqual(STORM_PAIR)
   })
 })
 
@@ -654,6 +666,7 @@ describe('blackout', () => {
       .filter((mode) => DIFFICULTY_ORDER.some((rung) => runRules(mode.id, rung).opens))
       .map((mode) => mode.id)
     expect(opening).toEqual([
+      challengeId('glimpse'),
       challengeId('binary'),
       challengeId('mirror'),
       challengeId('blackout'),
@@ -665,6 +678,7 @@ describe('blackout', () => {
 
   it('leaves every other mode without an opening, in day colours', () => {
     const dressed = [
+      challengeId('glimpse'),
       challengeId('binary'),
       challengeId('blackout'),
       challengeId('mirror'),

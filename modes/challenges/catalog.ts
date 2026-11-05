@@ -6,7 +6,7 @@ import { defineDial } from '@/modes/dial'
 import type { ModeDefinition } from '@/modes/types'
 
 import { defineChallenge, type ChallengeSpec } from './define'
-import { BLACK_PAIR, DOS_PAIR, LIGHT_BLUE, TURQUOISE } from './palette'
+import { BLACK_PAIR, DOS_PAIR, LIGHT_BLUE, STORM_PAIR, TURQUOISE } from './palette'
 
 // Every challenge the app has ever carried, each with the window it ran in.
 //
@@ -308,19 +308,30 @@ const HABIT: ChallengeSpec = {
 // lost, or swept off at the end — so a player always learns what a target was, and a heart
 // lost to one they forgot says so.
 //
+// It is played in a storm: a dark blue night with rain falling behind the dial, and the
+// half second is how long a target stands before lightning strikes it and the number goes
+// out. The strike is drawing only — the glimpse is the same half second it always was.
+//
 // Nothing here about scoring or lives, because a challenge's defaults are already right
 // for it: the Accuracy blend and its `optimal` streak — an exact route on a number you can
 // no longer see is the thing worth multiplying — and no life for a wasteful hit, which is
 // a punishment for misremembering on top of the points it already cost.
 const GLIMPSE: ChallengeSpec = {
   slug: 'glimpse',
-  // There is a **soft hyphen** (U+00AD) between the M and the P, invisible in an editor
-  // and on every screen that draws the name on one line. The challenge dialog draws a name
-  // a word per row at a pinned size, and seven letters is wider than its card — so the
-  // name says where it breaks: GLIM over PSE. See lib/label-rows.ts.
-  label: msg`GLIM­PSE`,
+  label: msg`STORM`,
+  // Its own, as every challenge since HABIT's: the slug is still `glimpse`, which would give a
+  // profile row the wrong word.
+  code: msg`STM`,
   description: msg`One look, then from memory.`,
-  mark: 'closedEye',
+  mark: 'stormCloud',
+  // A night storm: the rain already falling when the run is dealt, a bolt splitting the sky
+  // to open it, and a bolt on every target that puts its number out. See `OpeningKind`,
+  // `SchemeKind` and `TargetForm`.
+  opening: 'stormFront',
+  scheme: 'storm',
+  targetForm: 'struck',
+  gradient: STORM_PAIR,
+  darkGradient: STORM_PAIR,
   // No `shot`: Accuracy's sniper, inherited. A single held beam is a chain of exact
   // routes made visible, which is what the streak here is made of.
   //
@@ -328,20 +339,20 @@ const GLIMPSE: ChallengeSpec = {
   // its keys. No board tier can be about a board, because there is none.
   claims: {
     board: [
-      ['SAW', 'IT'],
-      ['KEPT', 'SIGHT'],
-      ['SHARP', 'EYE'],
+      ['SAW', 'FLASH'],
+      ['STORM', 'EYE'],
+      ['CLEAR', 'SKY'],
     ],
     medal: [
-      ['NEAR', 'SIGHT'],
+      ['CLOSE', 'CALL'],
       ['HALF', 'SEEN'],
     ],
     strong: [
-      ['GOOD', 'EYE'],
+      ['STORM', 'PROOF'],
       ['HELD', 'IT'],
     ],
     cold: [
-      ['GONE', 'BLANK'],
+      ['STRUCK', 'BLANK'],
       ['LOST', 'SIGHT'],
     ],
   },

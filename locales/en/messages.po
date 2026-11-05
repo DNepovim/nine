@@ -1529,10 +1529,6 @@ msgstr "Given more time."
 msgid "GIVING NOW"
 msgstr "GIVING NOW"
 
-#: modes/challenges/catalog.ts:321
-msgid "GLIM­PSE"
-msgstr "GLIM­PSE"
-
 #: constants/achievements.ts:661
 msgid "GOOD SPORT"
 msgstr "GOOD SPORT"
@@ -3270,6 +3266,14 @@ msgid "STRIKE"
 msgstr "STRIKE"
 
 #: lib/run-stats.ts:66
+#: modes/challenges/catalog.ts:324
+msgid "STM"
+msgstr "STM"
+
+#: modes/challenges/catalog.ts:321
+msgid "STORM"
+msgstr "STORM"
+
 #: lib/run-stats.ts:93
 msgid "STRIKES"
 msgstr "STRIKES"

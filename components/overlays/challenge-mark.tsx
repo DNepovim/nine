@@ -150,6 +150,22 @@ const GLYPHS: Record<MarkKind, (color: string) => ReactNode> = {
     </>
   ),
 
+  // STORM — a rain cloud with a bolt dropping out of its base.
+  stormCloud: (color) => (
+    <>
+      <Path
+        d="M7.5 15 C4.9 15 3.2 13.2 3.2 11.1 C3.2 9.1 4.8 7.6 6.8 7.5 C7.5 5 9.6 3.5 12.2 3.5 C14.9 3.5 17 5.3 17.4 7.8 C19.6 8 21 9.5 21 11.3 C21 13.4 19.3 15 17.2 15 Z"
+        {...line(color)}
+        fill={color}
+        fillOpacity={WASH}
+      />
+      <Path
+        d="M13.2 13.4 L9.6 18.4 H12.2 L10.6 22.6 L15.2 16.6 H12.6 L14 13.4 Z"
+        fill={color}
+      />
+    </>
+  ),
+
   // NO SLIP — the one life, and the crack one slip would put through it.
   crackedHeart: (color) => (
     <>

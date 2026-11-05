@@ -281,6 +281,7 @@ export type MarkKind =
   | 'crossGrid'
   | 'route'
   | 'closedEye'
+  | 'stormCloud'
   | 'crackedHeart'
   | 'turnedDial'
   | 'drift'
@@ -297,7 +298,7 @@ export type MarkKind =
 //
 // While it plays the run is **ready**: dealt, holding no target, its clock not started.
 // See the `ready` state in `machines/game.ts`.
-export type OpeningKind = 'lightsOut' | 'terminal' | 'passingEdge'
+export type OpeningKind = 'lightsOut' | 'terminal' | 'passingEdge' | 'stormFront'
 
 // How much of an opening plays. `full` for a run started from the intro, `short` for one
 // dealt again — PLAY AGAIN, or RESTART from the pause screen — so twenty retries are not
@@ -311,15 +312,17 @@ export type OpeningTake = 'full' | 'short'
 // Not the app's `@theme`, which stays one light scheme with no switch; not a design-guide
 // colour scale; not a system dark mode. Only the game screen wears it, and the overlays
 // over it keep their own.
-export type SchemeKind = 'day' | 'dark' | 'dos' | 'glass' | 'glassBar'
+export type SchemeKind =
+  'day' | 'dark' | 'storm' | 'stormBar' | 'dos' | 'glass' | 'glassBar'
 
 // How a run's targets are drawn — its **target form**. `discs` stand wherever they were
 // dealt, each with a ring running down, and are every mode's unless it names another; `lines`
 // are lines of a terminal, each with a bar; `flashlit` are numbers on a dark wall in a
-// flashlight's beam, which reddens and closes in as the clock runs down. Drawn by `TARGET_FORMS` in
+// flashlight's beam, which reddens and closes in as the clock runs down; `struck` are discs
+// a bolt of lightning hits when their glimpse is over, putting the number out. Drawn by `TARGET_FORMS` in
 // `components/game/target-forms.tsx`. Drawing only: a hit is decided by the sum, an expiry by
 // the clock, and both are the same in every form.
-export type TargetForm = 'discs' | 'lines' | 'flashlit'
+export type TargetForm = 'discs' | 'lines' | 'flashlit' | 'struck'
 
 // What every mode says about itself, whichever engine runs it.
 type ModeIdentity = {

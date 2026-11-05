@@ -180,6 +180,14 @@ export const DOS_PAIR: readonly [string, string] = [DOS_BLUE, DOS_BLUE]
 // black already clears the floor on both grounds.
 export const BLACK_PAIR: readonly [string, string] = [PRIMARY_INK, '#000000']
 
+// The pair for a night storm: a deep navy and a dark royal blue. GLIMPSE wears it, asked for by
+// the author, on a run played in the `storm` scheme. A pair rather than a `hue` because the
+// palette's saturation and lightness would make a bright blue of it, and the point is the
+// depth of the night. Both pairs the same, so the card's edge and its button are one blue;
+// the second stop clears the floor on white by a wide margin, as the score and meter ink
+// it becomes (`scoreInkOf`, `meterInkOf`) need.
+export const STORM_PAIR: readonly [string, string] = ['#0F1F45', '#1B3A8A']
+
 export const challengeGradient = (index: number): readonly [string, string] =>
   challengePairFor(challengeHue(index))
 
