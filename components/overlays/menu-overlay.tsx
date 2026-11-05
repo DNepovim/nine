@@ -35,6 +35,7 @@ import { cn } from '@/lib/cn'
 import { boardName, shouldBoast } from '@/lib/invite-message'
 import type { Medal } from '@/lib/medals'
 import type { OpenSession } from '@/lib/session-board'
+import type { VoteOption } from '@/lib/session-ratings'
 import {
   ARCADE_TEASER,
   DARK_MULTIPLAYER_GRADIENT,
@@ -120,6 +121,9 @@ export function MenuOverlay({
   onCreateRoom,
   onOpenJoinRoom,
   onOpenChallenge,
+  nextVote,
+  onOpenVote,
+  onOpenVoteResults,
   onShare,
   onOpenAdmin,
 }: {
@@ -192,6 +196,12 @@ export function MenuOverlay({
   // Pressed on the challenge card. The dialog behind it belongs to the screen above —
   // a ModalCard mounted in this panel would scrim the panel rather than the app.
   onOpenChallenge: (card: NonNullable<SessionCard<OpenSession>>) => void
+  // **The vote** on the next two challenges, empty where there is none, and the link that
+  // opens its dialog — which belongs to the screen above, like the challenge one.
+  nextVote: readonly VoteOption[]
+  onOpenVote: () => void
+  // For a player who has voted: the pie of where it stands.
+  onOpenVoteResults: () => void
   // Pressed on SHARE, with the sentence the invite would carry — written here, where
   // the board and the best are known. The dialog lives above, for the same reason the
   // challenge one does.
@@ -448,6 +458,11 @@ export function MenuOverlay({
                   <ChallengeCard
                     card={challenge}
                     onArrive={reckonChallenge}
+                    vote={{
+                      options: nextVote,
+                      onOpen: onOpenVote,
+                      onOpenResults: onOpenVoteResults,
+                    }}
                     onPress={() => {
                       onOpenChallenge(challenge)
                     }}

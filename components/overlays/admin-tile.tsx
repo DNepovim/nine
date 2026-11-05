@@ -71,6 +71,7 @@ export function Tile({
   unread = 0,
   corner,
   wash,
+  backdrop,
   onPress,
 }: {
   id?: ButtonId
@@ -92,6 +93,10 @@ export function Tile({
   // card. The gallery's caller asked for it: each challenge's tile starts in a pale shade
   // of its own colour and settles into the card colour every other tile wears.
   wash?: readonly [string, string]
+  // Drawn over the wash and under the content, filling the tile. The vote card asked for it:
+  // its chosen tile fades a solid fill in, which `wash` — colours, not a node — cannot
+  // animate. Nothing in the admin screens passes one.
+  backdrop?: ReactNode
   onPress: () => void
 }) {
   return (
@@ -112,6 +117,7 @@ export function Tile({
           className="absolute inset-0"
         />
       )}
+      {backdrop}
       <View className="gap-2">
         <View className="flex-row items-start justify-between">
           {mark ??

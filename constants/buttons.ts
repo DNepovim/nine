@@ -93,6 +93,15 @@ export type ButtonId =
   | 'rating.skip'
   | 'rating.send'
 
+  // ── The vote — which of the next two challenges opens first ──
+  // `vote.option` is a challenge pressed; `vote.dismiss` is NOT NOW / CLOSE on the card,
+  // whether it stands in the rating dialog or in its own; `vote.open` is the intro's link.
+  | 'vote.option'
+  | 'vote.dismiss'
+  | 'vote.open'
+  // The intro's line for a player who has voted, opening the pie of the standings.
+  | 'vote.results'
+
   // ── Achievements and medals ──
   | 'achievements.earned'
   | 'achievements.progress_row'
@@ -168,6 +177,9 @@ export type ButtonId =
   // ── Replay consent ──
   | 'replay_consent.allow'
   | 'replay_consent.decline'
+  // Turning it off again from OPTIONS asks first.
+  | 'replay_withdraw.confirm'
+  | 'replay_withdraw.keep'
 
   // ── Challenges, as a player meets them ──
   // The card on the start screen, and the dialog behind it. `challenge.board` is the

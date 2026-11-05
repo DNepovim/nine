@@ -18,6 +18,7 @@ import { cn } from '@/lib/cn'
 import { formatRaceTime } from '@/lib/duration'
 import { rankMedal } from '@/lib/rank-emoji'
 import type { OpenSession } from '@/lib/session-board'
+import type { VoteOption } from '@/lib/session-ratings'
 import { darkGradientOf, gradientOf, labelOf, type Measure } from '@/modes'
 import { challengeInk } from '@/modes/challenges/palette'
 
@@ -53,6 +54,7 @@ export function ChallengeCard({
   card,
   onPress,
   onArrive,
+  vote,
 }: {
   card: NonNullable<SessionCard<OpenSession>>
   onPress: () => void
@@ -61,6 +63,14 @@ export function ChallengeCard({
   // which card to draw is `cardSession`'s answer, and this is only the news that the
   // answer has changed.
   onArrive?: () => void
+  // **The vote** between the queue's next two challenges, drawn on the teaser only: the
+  // sentence asks for a vote or says which way the player voted, and either opens a dialog.
+  // Asked for by the intro, which is the only place a teaser stands.
+  vote?: {
+    options: readonly VoteOption[]
+    onOpen: () => void
+    onOpenResults: () => void
+  }
 }) {
   const { t } = useLingui()
   const { state, session } = card
@@ -114,6 +124,51 @@ export function ChallengeCard({
   // Still pressable, and to the same dialog. There is a board to read and a description
   // to find there even before it opens — only its START is dead.
   if (state === 'teaser') {
+    // Two options and the teaser is one of them: the next is one or the other, and the
+    // clock is the same either way — the first slot is fixed, only who fills it is not.
+    const [one, other] = vote?.options ?? []
+    const choice =
+      one !== undefined && other !== undefined && vote !== undefined
+        ? { one, other, ...vote }
+        : null
+    if (
+      choice !== null &&
+      (session.id === choice.one.sessionId || session.id === choice.other.sessionId)
+    ) {
+      const mine = choice.options.find((option) => option.mine)
+      return (
+        // One press target for the sentence and the clock under it, as the plain teaser is.
+        // A player who has voted is told which they voted for and taken to the standings;
+        // one who has not is asked, and taken to the vote.
+        <TrackedPressable
+          id={mine === undefined ? 'vote.open' : 'vote.results'}
+          onPress={mine === undefined ? choice.onOpen : choice.onOpenResults}
+          className="mx-auto w-full max-w-[270px] items-center gap-1"
+        >
+          <Text selectable={false} className={cn(TYPE.value, 'text-center text-dim')}>
+            {mine === undefined ? (
+              <Trans>Vote for the next challenge</Trans>
+            ) : (
+              <Trans>
+                You voted for{' '}
+                <GradientText
+                  text={t(labelOf(mine.modeId))}
+                  from={challengeInk(gradientOf(mine.modeId)[0])}
+                  to={challengeInk(gradientOf(mine.modeId)[1])}
+                />{' '}
+                challenge
+              </Trans>
+            )}
+          </Text>
+          <ChallengeCountdown
+            until={card.session.opensAt}
+            gradient={darkGradientOf(session.modeId)}
+            flip
+            onArrive={onArrive}
+          />
+        </TrackedPressable>
+      )
+    }
     return (
       <TrackedPressable
         id="menu.challenge"

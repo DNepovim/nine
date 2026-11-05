@@ -8,6 +8,8 @@ import { FeedbackReplyOverlay } from '@/components/overlays/feedback-reply-overl
 import { GameOverOverlay } from '@/components/overlays/game-over-overlay'
 import { HowToPlayOverlay } from '@/components/overlays/how-to-play-overlay'
 import { MenuOverlay } from '@/components/overlays/menu-overlay'
+import { NextVoteDialog } from '@/components/overlays/next-vote-dialog'
+import { NextVoteResultsDialog } from '@/components/overlays/next-vote-results-dialog'
 import { PausedOverlay } from '@/components/overlays/paused-overlay'
 import { RatingOverlay } from '@/components/overlays/rating-overlay'
 import { StepUpOverlay } from '@/components/overlays/step-up-overlay'
@@ -271,6 +273,9 @@ const intro = (
           // Nothing to open: the gallery renders this to be looked at, and the dialog
           // behind the card belongs to the screen above it rather than to this panel.
           onOpenChallenge={() => undefined}
+          nextVote={[]}
+          onOpenVote={() => undefined}
+          onOpenVoteResults={() => undefined}
           onShare={() => undefined}
           bestScore={RUN.score}
           medals={medals}
@@ -587,10 +592,56 @@ const rating = (slug: string): Variant => ({
       }}
       onSend={() => {}}
       onRemark={() => {}}
+      options={VOTE_PAIR}
+      onVote={() => {}}
       onDismiss={close}
     />
   ),
 })
+
+// The vote, as the intro's link opens it. Counts are held in state so a press shows the
+// tally turning on and the pick moving, which is the whole of what the dialog does. The
+// rating variants above carry the same pair, to reach the third step.
+const VOTE_PAIR = [
+  { sessionId: 'a', modeId: challengeId('drift'), votes: 14, mine: false },
+  { sessionId: 'b', modeId: challengeId('one-key'), votes: 9, mine: false },
+]
+
+function VoteDemo({ close }: { close: () => void }) {
+  const [options, setOptions] = useState(VOTE_PAIR)
+  return (
+    <NextVoteDialog
+      options={options}
+      onVote={(id) => {
+        setOptions(
+          VOTE_PAIR.map((o) => ({
+            ...o,
+            mine: o.sessionId === id,
+            votes: o.votes + (o.sessionId === id ? 1 : 0),
+          })),
+        )
+      }}
+      onDismiss={close}
+    />
+  )
+}
+
+const voteResults: Variant = {
+  key: 'vote-results',
+  label: 'VOTE RESULTS',
+  render: (close) => (
+    <NextVoteResultsDialog
+      options={VOTE_PAIR.map((o, i) => ({ ...o, mine: i === 0 }))}
+      onDismiss={close}
+    />
+  ),
+}
+
+const vote: Variant = {
+  key: 'vote',
+  label: 'VOTE',
+  render: (close) => <VoteDemo close={close} />,
+}
 
 // The winnings card, as the launch popup would show it. Built from awards rather than from
 // blocks directly, so what the gallery draws has been through the same grouping and
@@ -1116,7 +1167,14 @@ const SCREENS: Section[] = [
     // The dialog after a session's summary. FOUR KEYS is the pale pair, ONE KEY and
     // DRIFT the saturated ones; press a key to see the chosen state, 😣 and 😍 included.
     title: 'RATING',
-    items: [rating('four-keys'), rating('drift'), rating('one-key'), rating('habit')],
+    items: [
+      rating('four-keys'),
+      rating('drift'),
+      rating('one-key'),
+      rating('habit'),
+      vote,
+      voteResults,
+    ],
   },
   {
     // Read down the column: from one player taking everything to nobody taking anything.

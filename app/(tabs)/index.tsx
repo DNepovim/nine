@@ -64,6 +64,8 @@ import { MultiplayerGameOver } from '@/components/overlays/multiplayer-game-over
 import { MultiplayerMenu } from '@/components/overlays/multiplayer-menu'
 import { MultiplayerWaiting } from '@/components/overlays/multiplayer-waiting'
 import { NewsArchiveOverlay } from '@/components/overlays/news-archive-overlay'
+import { NextVoteDialog } from '@/components/overlays/next-vote-dialog'
+import { NextVoteResultsDialog } from '@/components/overlays/next-vote-results-dialog'
 import { NICKNAME_TITLE, NicknameModal } from '@/components/overlays/nickname-modal'
 import { PausedOverlay } from '@/components/overlays/paused-overlay'
 import { RatingOverlay } from '@/components/overlays/rating-overlay'
@@ -114,6 +116,7 @@ import { useMedalHistory } from '@/hooks/use-medal-history'
 import { useMultiplayerGame } from '@/hooks/use-multiplayer-game'
 import { useMultiplayerRoom } from '@/hooks/use-multiplayer-room'
 import { useMyMedals } from '@/hooks/use-my-medals'
+import { useNextVote } from '@/hooks/use-next-vote'
 import { useOnline } from '@/hooks/use-online'
 import { useOpening } from '@/hooks/use-opening'
 import { usePauseOnBlur } from '@/hooks/use-pause-on-blur'
@@ -1172,6 +1175,12 @@ export default function GameScreen() {
   // Below `useSupabaseAuth`, which it reads: the winnings half of the deck is per player,
   // and there is nothing to ask the server for until there is a player to ask about.
   const whatsNew = usePopupDeck(userId, runSession, shownFeatures)
+  // **The vote** on which of the next two challenges opens first. Lifted to the screen
+  // because two things read it that share no parent: the rating dialog's third step and the
+  // intro's link, whose dialog is opened here for the scrim's sake.
+  const nextVote = useNextVote(shownFeatures.has('challenges') && userId !== null)
+  const [voteOpen, setVoteOpen] = useState(false)
+  const [voteResultsOpen, setVoteResultsOpen] = useState(false)
   // Whether the launch popup *or the rating that follows it* is up. Everything that waits
   // its turn behind the popup — the email ask, the install prompt, the session-recording
   // ask — waits behind the rating too: it is the popup's last word, opened only once the
@@ -2309,6 +2318,10 @@ export default function GameScreen() {
                 kind={opening.remains}
                 lit={opening.peeking}
                 pull={opening.pull}
+                running={isPlaying}
+                runId={state.context.runId}
+                grid={state.context.grid}
+                figures={{ accuracy: avgAccuracy, speed: avgSpeed, streak, hits, lives }}
               />
               {/* Each time a run leaves the intro, the screen comes in a piece at a time
               — see components/game/arrival.tsx. */}
@@ -2316,8 +2329,6 @@ export default function GameScreen() {
                 <Screen>
                   {/* Every row above the dial, in the scheme those rows wear. */}
                   <SchemeProvider kind={opening.barScheme}>
-                running={isPlaying}
-                runId={state.context.runId}
                     {/* Row 0 — board bests, a hairline above the top bar. In every mode,
               Trainee included: it has no board to report, and reserves the height
               instead, so that the dial below is the same size in all of them. */}
@@ -3209,6 +3220,26 @@ export default function GameScreen() {
               />
             )}
 
+            {/* ── The vote, from the link on the intro. Under the challenge dialog, which
+                a player can open from the same card. ── */}
+            {voteResultsOpen && (
+              <NextVoteResultsDialog
+                options={nextVote.options}
+                onDismiss={() => {
+                  setVoteResultsOpen(false)
+                }}
+              />
+            )}
+            {voteOpen && (
+              <NextVoteDialog
+                options={nextVote.options}
+                onVote={nextVote.vote}
+                onDismiss={() => {
+                  setVoteOpen(false)
+                }}
+              />
+            )}
+
             {/* ── A challenge, in full: what it asks, who leads, and the way in. After the
                 admin screen, whose gallery opens it too and has to stay under it. ── */}
             {challengeCard !== undefined && (
@@ -3315,6 +3346,8 @@ export default function GameScreen() {
                   summary={whatsNew.rating.asking}
                   onSend={whatsNew.rating.send}
                   onRemark={whatsNew.rating.remark}
+                  options={nextVote.options}
+                  onVote={nextVote.vote}
                   onDismiss={whatsNew.rating.done}
                 />
               )}
@@ -3441,6 +3474,13 @@ export default function GameScreen() {
                 onOpenChallenge={(card) => {
                   if (card.state === 'live') markSessionSeen(card.session.id)
                   setChallengeCard(card)
+                }}
+                nextVote={nextVote.options}
+                onOpenVote={() => {
+                  setVoteOpen(true)
+                }}
+                onOpenVoteResults={() => {
+                  setVoteResultsOpen(true)
                 }}
                 onShare={setShareInvite}
                 onOpenAdmin={() => {

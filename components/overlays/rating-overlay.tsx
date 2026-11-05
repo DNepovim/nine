@@ -7,6 +7,7 @@ import { LinkButton } from '@/components/link-button'
 import { ChallengeName } from '@/components/overlays/challenge-name'
 import { CodeKeyboard, type KeyPaint } from '@/components/overlays/code-keyboard'
 import { ModalCard } from '@/components/overlays/modal-card'
+import { NextVote, NextVoteTitle, useVoteView } from '@/components/overlays/next-vote'
 import { TextArea } from '@/components/overlays/text-area'
 import { PrimaryButton } from '@/components/primary-button'
 import { DIAL_COLORS } from '@/constants/colors'
@@ -14,6 +15,7 @@ import { TYPE } from '@/constants/typography'
 import { cn } from '@/lib/cn'
 import { MAX_REMARK_LENGTH, remarkOf } from '@/lib/remark'
 import { isRating, type Rating } from '@/lib/session-rating'
+import type { VoteOption } from '@/lib/session-ratings'
 import type { SessionSummary } from '@/lib/session-summary'
 import { darkGradientOf, gradientOf } from '@/modes'
 
@@ -60,20 +62,31 @@ const dialPaint =
 // player with something to say and no number for it; NOT NOW on the first step still
 // writes nothing at all.
 //
+// A third step, **the vote**, for whoever gets that far: which of the next two challenges
+// should open first. It follows the words whether they were sent or put off, and it is
+// left out where the queue has no pair to offer. It is the same body the intro's link
+// opens in a dialog of its own — see `NextVote`.
+//
 // One card rather than a second dialog after the first, so there is one scrim and no
 // entrance replayed in the middle of an answer — the arrangement `EmailDialog` makes for
 // its two cards. `avoidKeyboard` throughout, since the second step has a field.
-type Step = 'figure' | 'words'
+type Step = 'figure' | 'words' | 'vote'
 
 export function RatingOverlay({
   summary,
   onSend,
   onRemark,
+  options,
+  onVote,
   onDismiss,
 }: {
   summary: SessionSummary
   onSend: (rating: Rating) => void
   onRemark: (text: string) => void
+  // The two challenges up for the vote, empty where there is no choice. Passed in rather
+  // than read here so the dialog stays a picture of what it is given.
+  options: readonly VoteOption[]
+  onVote: (sessionId: string) => void
   // Called once the card has gone, however it went — SEND, either NOT NOW or the header
   // close.
   onDismiss: () => void
@@ -88,18 +101,42 @@ export function RatingOverlay({
   // The same for SEND, which the card stays pressable for through its exit.
   const remarked = useRef(false)
   const remark = remarkOf(words)
+  const view = useVoteView(options)
+  // After the words: the vote where there is one to take, else the end.
+  const afterWords = (close: () => void) => {
+    if (options.length === 2) setStep('vote')
+    else close()
+  }
 
   return (
     <ModalCard
       edge={gradientOf(summary.modeId)}
       closeButton={false}
+      title={step === 'vote' ? <NextVoteTitle settled={view.settled} /> : undefined}
       avoidKeyboard
       // A tap beside the card must not throw away words already typed.
       held={remark !== null}
       onDismiss={onDismiss}
     >
       {(close) =>
-        step === 'words' ? (
+        step === 'vote' ? (
+          <View className="items-center">
+            <NextVote options={options} onVote={onVote} onClose={close} view={view} />
+            <LinkButton
+              id="vote.dismiss"
+              className="mt-5"
+              icon="close-outline"
+              label={
+                options.some((option) => option.mine) ? (
+                  <Trans>DONE</Trans>
+                ) : (
+                  <Trans>NOT NOW</Trans>
+                )
+              }
+              onPress={close}
+            />
+          </View>
+        ) : step === 'words' ? (
           <View className="items-center">
             <Text selectable={false} className={cn(TYPE.cardTitle, 'text-center')}>
               <Trans>ANYTHING TO ADD?</Trans>
@@ -126,7 +163,7 @@ export function RatingOverlay({
                   if (remark === null || remarked.current) return
                   remarked.current = true
                   onRemark(remark)
-                  close()
+                  afterWords(close)
                 }}
                 label={<Trans>SEND</Trans>}
               />
@@ -136,7 +173,9 @@ export function RatingOverlay({
               className="mt-5"
               icon="close-outline"
               label={<Trans>NOT NOW</Trans>}
-              onPress={close}
+              onPress={() => {
+                afterWords(close)
+              }}
             />
           </View>
         ) : (

@@ -35,3 +35,44 @@ export async function remarkSession(
   noteRequest(res.error)
   return { error: res.error ? res.error.message : null }
 }
+
+// ─── The vote ────────────────────────────────────────────────────────────────
+
+// One of the two challenges up for **the vote**: the first two of the queue. `votes` is
+// every player's, `mine` says whether the caller's own vote is on this one.
+export type VoteOption = {
+  sessionId: string
+  modeId: string
+  votes: number
+  mine: boolean
+}
+
+type VoteOptionRow = {
+  session_id: string
+  mode_id: string
+  votes: number
+  mine: boolean
+}
+
+// The two options, in the order they open — an empty list when there is no choice to make,
+// which is also what a failed read answers: a vote not offered is better than one offered
+// and then refused.
+export async function loadVoteOptions(): Promise<VoteOption[]> {
+  const res = await supabase.rpc('next_vote_options')
+  noteRequest(res.error)
+  return ((res.data as VoteOptionRow[] | null) ?? []).map((row) => ({
+    sessionId: row.session_id,
+    modeId: row.mode_id,
+    votes: row.votes,
+    mine: row.mine,
+  }))
+}
+
+// Casts the vote, or moves it. The error is handed back for the caller to keep the dialog on
+// the choice; the counts come from a fresh `loadVoteOptions` afterwards, because the server
+// has the other players' votes and this side has not.
+export async function voteNext(sessionId: string): Promise<{ error: string | null }> {
+  const res = await supabase.rpc('vote_next', { p_session: sessionId })
+  noteRequest(res.error)
+  return { error: res.error ? res.error.message : null }
+}
