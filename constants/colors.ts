@@ -381,6 +381,9 @@ type SchemeInks = {
   // The ink a target's number turns to as a hit lets it out of its disc, or null to keep the
   // disc's own. Set where the ground is dark enough to lose the disc's dark numeral.
   hit: string | null
+  // A neon corona drawn round the text and icons of the game's top bar and the sum, or null for
+  // none: the colour of the glow, which is the light the scheme burns.
+  glow: string | null
   // The keys, where the scheme draws them its own way rather than in `DIAL_COLORS` and the
   // mode's gradient: the ramp's two ends, the digit, the digit on a key at its top, and the
   // pair a key at its top is filled with. Its shape too, since a scheme's keys need not be
@@ -395,6 +398,10 @@ type SchemeInks = {
     peak: readonly [string, string]
     radius: number
     foot: number
+    // Whether the keys are drawn as the reels of a slot machine: a cylinder of cream with the
+    // digits either side of the one showing peeking in at its top and foot, and a blur of
+    // digits as it spins. See `ReelFace`.
+    reel?: boolean
   } | null
 }
 
@@ -480,6 +487,46 @@ const MONITOR_TOKENS = {
 
 const MONITOR_BAR = '#6DEBA0'
 
+// ONE KEY's sky, shared with `skyBar`: a light blue day, the text in a deep navy, and the one
+// ink everything above its dial wears.
+const SKY_TOKENS = {
+  '--color-surface': '#CDE9FA',
+  '--color-card': '#E3F3FC',
+  '--color-elevated': '#FFFFFF',
+  '--color-muted': '#A9D2EC',
+  '--color-dim': '#3E6C8F',
+  '--color-primary': '#10304F',
+  '--color-strong': '#10304F',
+  '--color-on-strong': '#E8F5FD',
+  '--color-score': '#1B6FB8',
+  '--color-fortune': '#C0392B',
+  '--color-dial': '#10304F',
+  '--color-factor': '#5B84A3',
+  '--color-pie': '#171421',
+}
+
+const SKY_BAR = '#12507F'
+
+// SCRAMBLE's casino, shared with `casinoBar`: red velvet gone nearly black, the text in gold, and
+// the one ink everything above its dial wears.
+const CASINO_TOKENS = {
+  '--color-surface': '#2A0A0F',
+  '--color-card': '#3A1218',
+  '--color-elevated': '#4A1A22',
+  '--color-muted': '#6B2A33',
+  '--color-dim': '#E6C77A',
+  '--color-primary': '#FFE29A',
+  '--color-strong': '#FFE29A',
+  '--color-on-strong': '#2A0A0F',
+  '--color-score': '#FFD36B',
+  '--color-fortune': '#FF8A7A',
+  '--color-dial': '#2A0A0F',
+  '--color-factor': '#C9A25A',
+  '--color-pie': '#171421',
+}
+
+const CASINO_BAR = '#F6D27A'
+
 // `dark` — a near-black of the app's own violet cast, the screen's text in the parchment
 // it is usually drawn on. The keys and the target discs keep their light faces, so the
 // inks drawn on *them* (`--color-dial`, `--color-pie`) stay dark: only what sits on the
@@ -497,6 +544,7 @@ export const SCHEMES = {
       mono: null,
       bar: null,
       hit: null,
+      glow: null,
       keys: null,
     },
   },
@@ -529,6 +577,7 @@ export const SCHEMES = {
       // The same grey as `--color-dim` above, which the word under the run's name wears.
       bar: '#B8B3C7',
       hit: null,
+      glow: null,
       keys: null,
     },
   },
@@ -550,6 +599,7 @@ export const SCHEMES = {
       // The bolt's own colour (`STORM.bolt`, defined below this table), so a hit number is the
       // flash it was struck by.
       hit: '#FFF7B8',
+      glow: null,
       keys: null,
     },
   },
@@ -576,6 +626,7 @@ export const SCHEMES = {
       mono: STORM_BAR,
       bar: STORM_BAR,
       hit: null,
+      glow: null,
       keys: null,
     },
   },
@@ -594,6 +645,7 @@ export const SCHEMES = {
       mono: null,
       bar: null,
       hit: null,
+      glow: null,
       keys: {
         low: '#F7FCFF',
         high: '#A6D4E6',
@@ -628,6 +680,7 @@ export const SCHEMES = {
       mono: FROST_BAR,
       bar: FROST_BAR,
       hit: null,
+      glow: null,
       keys: null,
     },
   },
@@ -648,6 +701,7 @@ export const SCHEMES = {
       // The trace's own green (`MONITOR.line`, defined below this table), so a hit number is
       // the line it was drawn by.
       hit: '#5CFFA0',
+      glow: null,
       // Round keys in the trace's green: clear at nought, filling to solid by nine, which
       // then lights to the bright green with a dark digit. The rim is what a clear key is.
       keys: {
@@ -683,6 +737,115 @@ export const SCHEMES = {
       mono: MONITOR_BAR,
       bar: MONITOR_BAR,
       hit: null,
+      glow: null,
+      keys: null,
+    },
+  },
+  // `sky` — ONE KEY's little plane: a light blue day, deeper at the top and paling to the
+  // horizon. The one key is a white disc with a navy digit that fills to a bright
+  // blue as it climbs to nine.
+  sky: {
+    tokens: SKY_TOKENS,
+    inks: {
+      score: '#1B6FB8',
+      keyRim: 'rgba(255, 255, 255, 0.95)',
+      statusBar: 'dark',
+      ground: '#CDE9FA',
+      ink: '#10304F',
+      wash: ['#B4DDF6', '#CDE9FA', '#DDF0FB', '#E8F6FD'],
+      mono: null,
+      bar: null,
+      hit: null,
+      glow: null,
+      keys: {
+        low: '#FFFFFF',
+        high: '#A9D2EC',
+        text: '#10304F',
+        peakText: '#FFFFFF',
+        peak: ['#1E6FD9', '#4DA3FF'],
+        radius: 999,
+        foot: 3,
+      },
+    },
+  },
+  // `skyBar` — the rows above a `sky` dial: **monochrome** in the deep blue the name and NINE
+  // already wear. Worn from the first frame of the run; see `OPENING_BAR_WAITS`.
+  skyBar: {
+    tokens: {
+      ...SKY_TOKENS,
+      '--color-dim': SKY_BAR,
+      '--color-primary': SKY_BAR,
+      '--color-strong': SKY_BAR,
+      '--color-score': SKY_BAR,
+      '--color-fortune': SKY_BAR,
+      '--color-factor': SKY_BAR,
+    },
+    inks: {
+      score: SKY_BAR,
+      keyRim: 'transparent',
+      statusBar: 'dark',
+      ground: '#CDE9FA',
+      ink: SKY_BAR,
+      wash: ['#B4DDF6', '#CDE9FA', '#DDF0FB', '#E8F6FD'],
+      mono: SKY_BAR,
+      bar: SKY_BAR,
+      hit: null,
+      glow: null,
+      keys: null,
+    },
+  },
+  // `casino` — SCRAMBLE's slot machine: red velvet, the text in gold. The keys are the reels'
+  // windows: cream cylinders with a red digit, lighting to gold at nine, and the target discs
+  // keep their light faces, so the ink on them stays dark.
+  casino: {
+    tokens: CASINO_TOKENS,
+    inks: {
+      score: '#FFD36B',
+      keyRim: 'rgba(255, 214, 102, 0.9)',
+      statusBar: 'light',
+      ground: '#2A0A0F',
+      ink: '#FFE29A',
+      wash: ['#220709', '#2A0A0F', '#330D13', '#2C0A10'],
+      mono: null,
+      bar: CASINO_BAR,
+      // The gold of the bulbs, so a number leaving its disc is drawn in the light it came from.
+      hit: '#FFE29A',
+      glow: 'rgba(255, 214, 102, 0.95)',
+      keys: {
+        low: '#FBF6E6',
+        high: '#FBF6E6',
+        text: '#D2232A',
+        peakText: '#D2232A',
+        peak: ['#FFE27A', '#FFC93C'],
+        radius: 14,
+        foot: 4,
+        reel: true,
+      },
+    },
+  },
+  // `casinoBar` — the rows above a `casino` dial: **monochrome** in the gold the name and NINE
+  // already wear. Worn from the first frame of the run; see `OPENING_BAR_WAITS`.
+  casinoBar: {
+    tokens: {
+      ...CASINO_TOKENS,
+      '--color-dim': CASINO_BAR,
+      '--color-primary': CASINO_BAR,
+      '--color-strong': CASINO_BAR,
+      '--color-score': CASINO_BAR,
+      '--color-fortune': CASINO_BAR,
+      '--color-factor': CASINO_BAR,
+    },
+    inks: {
+      score: CASINO_BAR,
+      keyRim: 'transparent',
+      statusBar: 'light',
+      ground: '#2A0A0F',
+      ink: CASINO_BAR,
+      wash: ['#220709', '#2A0A0F', '#330D13', '#2C0A10'],
+      mono: CASINO_BAR,
+      bar: CASINO_BAR,
+      hit: null,
+      glow: 'rgba(255, 214, 102, 0.95)',
       keys: null,
     },
   },
@@ -717,6 +880,7 @@ export const SCHEMES = {
       mono: DOS_WHITE,
       bar: DOS_WHITE,
       hit: null,
+      glow: null,
       keys: {
         low: DOS_BLUE,
         high: DOS_BLUE,
@@ -742,6 +906,7 @@ export const SCHEMES = {
       mono: null,
       bar: null,
       hit: null,
+      glow: null,
       keys: {
         low: '#F2F8FB',
         high: '#8DB4CC',
@@ -776,6 +941,7 @@ export const SCHEMES = {
       mono: GLASS_BAR,
       bar: GLASS_BAR,
       hit: null,
+      glow: null,
       keys: null,
     },
   },
@@ -858,4 +1024,47 @@ export const MONITOR = {
   glow: 'rgba(92, 255, 160, 0.28)',
   grid: 'rgba(92, 255, 160, 0.07)',
   shock: '#F2FFF8',
+} as const
+
+// ONE KEY's sky (`components/game/openings/takeoff.tsx`): the plane, the clouds, the ground,
+// and the fire when the plane meets it.
+export const SKY = {
+  cloud: 'rgba(255, 255, 255, 0.92)',
+  grass: '#5DB85A',
+  grassEdge: '#3F8F47',
+  soil: '#8A5A33',
+  body: '#E8473B',
+  wing: '#B5291F',
+  glass: '#BFE6FA',
+  trim: '#FFFFFF',
+  dark: '#2B2B33',
+  fire: '#FFB020',
+  flame: '#FF5A1F',
+  smoke: 'rgba(58, 58, 66, 0.75)',
+  // What stands on the ground.
+  trunk: '#7A4A28',
+  leaf: '#3E9B4A',
+  leafDark: '#2F7D3A',
+  wall: '#F4E2C0',
+  roof: '#C0392B',
+  cow: '#FFFFFF',
+  spot: '#2B2B33',
+} as const
+
+// SCRAMBLE's casino (`components/game/openings/lever-pull.tsx`): the marquee's bulbs, the lever,
+// and the coins a win throws up.
+export const CASINO = {
+  bulb: '#FFD76A',
+  bulbGlow: 'rgba(255, 215, 106, 0.35)',
+  rod: '#C9A25A',
+  knob: '#E5322D',
+  knobRim: '#FFB3A8',
+  bulbOff: '#5A2A1E',
+  bulbRim: '#8A5A2B',
+  shade: 'rgba(70, 52, 24, 0.55)',
+  digitEdge: '#3A0E12',
+  digitRed: '#D2232A',
+  coin: '#F6C445',
+  coinEdge: '#B8860B',
+  flash: '#FFF3C4',
 } as const

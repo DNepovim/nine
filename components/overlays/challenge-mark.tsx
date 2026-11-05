@@ -43,9 +43,7 @@ const box = (x: number, y: number, w: number, h: number, r: number): string =>
   `A${r} ${r} 0 0 1 ${x + w - r} ${y + h} H${x + r} A${r} ${r} 0 0 1 ${x} ${y + h - r} ` +
   `V${y + r} A${r} ${r} 0 0 1 ${x + r} ${y} Z`
 
-// Twelve angles round a clock face, for the two drawings that are built by turning one
-// stroke about the centre.
-const TWELVE = Array.from({ length: 12 }, (_, i) => i * 30)
+// Six angles round a centre, for the drawing that is built by turning one stroke about it.
 const SIX = Array.from({ length: 6 }, (_, i) => i * 60)
 
 // FOUR BY FOUR's sixteen keys, row by row: four shades scattered by hand so no row,
@@ -206,39 +204,43 @@ const GLYPHS: Record<MarkKind, (color: string) => ReactNode> = {
     </>
   ),
 
-  // ONE KEY — one key inside the second it has, the first quarter of it gone.
-  stopwatchKey: (color) => (
+  // ONE KEY — the little plane the run is flown with, from the side.
+  plane: (color) => (
     <>
-      {TWELVE.map((angle, i) => (
-        <G key={angle} transform={`rotate(${angle} 12 12)`}>
-          <Path
-            d={i % 3 === 0 ? 'M12 1.2 V4' : 'M12 1.4 V3.2'}
-            {...line(color)}
-            strokeOpacity={i < 3 ? 1 : 0.35}
-          />
-        </G>
-      ))}
-      <Path d={box(7, 7, 10, 10, 2.4)} {...line(color)} fill={color} fillOpacity={WASH} />
-      <Path d={box(9.2, 8.8, 5.6, 5, 1.2)} fill={color} fillOpacity={0.6} />
-    </>
-  ),
-
-  // SCRAMBLE — two lanes crossing, and the sparks a hit throws the dial into.
-  shuffle: (color) => (
-    <>
-      <Path d="M2.5 7 H6.5 C11 7 13 17 17.5 17 H21" {...line(color)} />
-      <Path d="M2.5 17 H6.5 C11 17 13 7 17.5 7 H21" {...line(color)} />
       <Path
-        d="M18.4 4.2 L21.4 7 L18.4 9.8 M18.4 14.2 L21.4 17 L18.4 19.8"
+        d="M5 12.4 L2.6 6.4 L6 7 L8.2 11.4 Z"
         {...line(color)}
+        fill={color}
+        fillOpacity={WASH}
       />
       <Path
-        d="M12 1 L13 2.5 L12 4 L11 2.5 Z M12 20 L13 21.5 L12 23 L11 21.5 Z"
+        d="M3.4 13.2 C3.4 11.2 7 10.3 12 10.3 C16.6 10.3 19.2 11.2 19.2 13.2 C19.2 15 16.6 16.1 12 16.1 C7 16.1 3.4 15 3.4 13.2 Z"
+        {...line(color)}
         fill={color}
+        fillOpacity={WASH}
       />
+      <Path d="M10.4 15.4 L8.6 20 L13.6 20 L15.4 15.4" {...line(color)} />
+      <Path d="M14 11 C14.6 9.9 16.2 9.9 16.8 11" {...line(color)} />
+      <Path d="M21 8.6 V17.6" {...line(color)} />
     </>
   ),
 
+  // SCRAMBLE — a slot machine: three reels in a window, and the lever at its side.
+  slotMachine: (color) => (
+    <>
+      <Path
+        d={box(2.5, 4, 15.5, 16.5, 2.6)}
+        {...line(color)}
+        fill={color}
+        fillOpacity={WASH}
+      />
+      <Path d={box(5, 8, 10.5, 6.4, 1.2)} {...line(color)} />
+      <Path d="M8.5 8 V14.4 M12 8 V14.4" {...line(color)} />
+      <Path d="M5.5 17.2 H14.5" {...line(color)} />
+      <Path d="M21 11 V5.6" {...line(color)} />
+      <Circle cx={21} cy={4.2} r={1.7} fill={color} />
+    </>
+  ),
   // FREEZE — the sum held still: a six-armed flake, each arm branched twice.
   snowflake: (color) => (
     <>

@@ -6,6 +6,8 @@ import Animated, {
   useAnimatedReaction,
   useAnimatedStyle,
   useSharedValue,
+  withDelay,
+  withRepeat,
   withSequence,
   withSpring,
   withTiming,
@@ -15,6 +17,7 @@ import { scheduleOnRN } from 'react-native-worklets'
 
 import { DialBadge } from '@/components/game/dial-badge'
 import { DialPulse } from '@/components/game/dial-pulse'
+import { ReelFace } from '@/components/game/reel-face'
 import { DIAL_COLORS, GRAYSCALE, PRIMARY_INK, STRIKE_COLORS } from '@/constants/colors'
 import {
   DEFAULT_DIAL_CORNERS,
@@ -59,6 +62,14 @@ const TINT_TIMING = { duration: 260, easing: Easing.out(Easing.quad) }
 const DIM = LESSON_DIM
 const DIM_UP = { duration: LESSON_DIM_MS, easing: Easing.out(Easing.quad) }
 const DIM_DOWN = { duration: LESSON_DIM_MS, easing: Easing.in(Easing.quad) }
+
+// How far a digit comes from as a scrambled dial's key stops, and how long each key waits for the
+// one before it: a row of reels coming to rest.
+const REEL_DROP = 40
+const REEL_STAGGER_MS = 70
+// How long a reel's blur runs before it stops, and how long one lap of it takes.
+const REEL_SPIN_MS = 450
+const REEL_LAP_MS = 180
 
 // How close the eye is as a **mirrored** key turns over: near enough to see it swing.
 const TURN_PERSPECTIVE = 500
@@ -166,6 +177,7 @@ export function DialButton({
   scrambles = 0,
   dark = false,
   mirrored = false,
+  digitSize = 30,
   sweep = null,
   sweepAt = 0,
   onDelta,
@@ -227,6 +239,9 @@ export function DialButton({
   // is how far the edge has come and `sweepAt` where this key stands. With no `sweep` it
   // simply stands turned.
   mirrored?: boolean
+  // How big the digit is drawn, where a dial wants it other than the nine's: a dial of one key
+  // has the whole of the room to itself, and a digit that small would be lost on it.
+  digitSize?: number
   sweep?: SharedValue<number> | null
   sweepAt?: number
   onDelta: (delta: 1 | -1, sweep: boolean) => void
@@ -239,6 +254,7 @@ export function DialButton({
   const peak = keys?.peak ?? [peakFrom, peakTo]
   const rimmed = dark || keys !== null
   const keyRadius = keys?.radius ?? 999
+  const reel = keys !== null && 'reel' in keys && keys.reel
   const scale = useSharedValue(1)
   // The pill's bounce on a flip, along whichever screen axis the dial's vertical lies on.
   const bounce = useSharedValue(0)
@@ -246,6 +262,9 @@ export function DialButton({
   const numTranslateY = useSharedValue(0)
   const numOpacity = useSharedValue(1)
   const numScale = useSharedValue(1)
+  // Whether this key is a reel and it is spinning, and how far round a lap of its blur it has got.
+  const reelSpin = useSharedValue(0)
+  const reelStrip = useSharedValue(0)
   const top = digits - 1
   const rampProgress = useSharedValue(rampOf(value, top))
   const peakProgress = useSharedValue(value === top ? 1 : 0)
@@ -314,17 +333,34 @@ export function DialButton({
 
   // A **scramble**: the digit has already changed under the key, so there is no flight to
   // be owed across and nothing to send — only the new digit arriving, from below when it
-  // rose and from above when it fell, the way a swipe would have brought it in.
+  // rose and from above when it fell, the way a swipe would have brought it in. It arrives like
+  // a reel stopping: from further off, and each key a beat after the one before it, so the dial
+  // comes to rest key by key rather than all at once.
   const animateArrival = (dir: 1 | -1) => {
     'worklet'
-    bounce.value = withSequence(
-      withTiming(dir * 7, { duration: 100 }),
-      withSpring(0, { damping: 18, stiffness: 120, mass: 0.8 }),
+    const wait = index * REEL_STAGGER_MS
+    // A reel spins — a blur of digits — until it stops on the digit; any other key drops it in.
+    const stop = reel ? wait + REEL_SPIN_MS : wait
+    if (reel) {
+      reelSpin.value = 1
+      reelStrip.value = 0
+      reelStrip.value = withRepeat(
+        withTiming(1, { duration: REEL_LAP_MS, easing: Easing.linear }),
+        Math.ceil(stop / REEL_LAP_MS) + 1,
+      )
+      reelSpin.value = withDelay(stop, withTiming(0, { duration: 90 }))
+    }
+    bounce.value = withDelay(
+      stop,
+      withSequence(
+        withTiming(dir * 7, { duration: 100 }),
+        withSpring(0, { damping: 18, stiffness: 120, mass: 0.8 }),
+      ),
     )
     numOpacity.value = 0
-    numTranslateY.value = dir * -18
-    numTranslateY.value = withSpring(0, { damping: 22, stiffness: 160 })
-    numOpacity.value = withTiming(1, { duration: 130 })
+    numTranslateY.value = dir * -REEL_DROP
+    numTranslateY.value = withDelay(stop, withSpring(0, { damping: 22, stiffness: 160 }))
+    numOpacity.value = withDelay(stop, withTiming(1, { duration: 130 }))
   }
 
   // What this key last showed, and under which scramble — so a value arriving with a new
@@ -523,12 +559,23 @@ export function DialButton({
             />
           </Animated.View>
         )}
-        {!dark && (
+        {reel && !dark && (
+          <ReelFace
+            value={value}
+            digits={digits}
+            size={size}
+            radius={keyRadius}
+            spin={reelSpin}
+            strip={reelStrip}
+            scrambles={scrambles}
+          />
+        )}
+        {!dark && !reel && (
           <Animated.Text
             selectable={false}
             style={[
               {
-                fontSize: 30,
+                fontSize: digitSize,
                 fontFamily: mono,
                 fontWeight: '500' as const,
                 includeFontPadding: false,

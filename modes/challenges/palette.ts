@@ -192,6 +192,14 @@ export const STORM_PAIR: readonly [string, string] = ['#0F1F45', '#1B3A8A']
 // second clears the floor on white as the score and meter ink it becomes need.
 export const MONITOR_PAIR: readonly [string, string] = ['#0E5A35', '#12834B']
 
+// ONE KEY's sky blue, in two stops: a day sky deepened enough that the second clears the floor
+// on white as the score and meter ink it becomes need.
+export const SKY_PAIR: readonly [string, string] = ['#2F7FC1', '#1B6FB8']
+
+// SCRAMBLE's casino gold, in two stops: the bulbs' amber deepened enough that the second clears
+// the floor on white as the score and meter ink it becomes need.
+export const CASINO_PAIR: readonly [string, string] = ['#6B4300', '#A8700A']
+
 export const challengeGradient = (index: number): readonly [string, string] =>
   challengePairFor(challengeHue(index))
 

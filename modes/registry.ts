@@ -217,6 +217,10 @@ export const OPENING_STARTS_LIT = {
   frostCreep: true,
   // The monitor is on, flat, from the first frame; the shock is the scene.
   defibrillator: false,
+  // The sky is there from the first frame; the plane flying in is the scene.
+  takeoff: false,
+  // The casino is lit from the first frame; the lever is the scene.
+  leverPull: false,
 } as const satisfies Record<OpeningKind, boolean>
 
 // What the rows above the dial wear under each **scheme**: the same one, except that `glass`
@@ -230,6 +234,10 @@ export const SCHEME_BAR = {
   frostBar: 'frostBar',
   monitor: 'monitorBar',
   monitorBar: 'monitorBar',
+  sky: 'skyBar',
+  skyBar: 'skyBar',
+  casino: 'casinoBar',
+  casinoBar: 'casinoBar',
   dos: 'dos',
   glass: 'glassBar',
   glassBar: 'glassBar',
@@ -247,6 +255,8 @@ export const OPENING_BAR_WAITS = {
   // The keys and rows are plain under the frost's edge, and turn with the screen.
   frostCreep: true,
   defibrillator: false,
+  takeoff: false,
+  leverPull: false,
 } as const satisfies Record<OpeningKind, boolean>
 
 // Whether an opening's remains show the run's figures themselves, so the stat the top bar keeps
@@ -259,6 +269,8 @@ const OPENING_SHOWS_FIGURES = {
   stormFront: false,
   frostCreep: false,
   defibrillator: true,
+  takeoff: false,
+  leverPull: false,
 } as const satisfies Record<OpeningKind, boolean>
 
 export const showsFigures = (id: ModeId): boolean => {

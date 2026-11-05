@@ -1369,6 +1369,20 @@ describe('NO SLIP', () => {
   })
 })
 
+describe('CRASH', () => {
+  it('ends a run in play with every life gone, whatever it had', () => {
+    const actor = createActor(gameMachine)
+    actor.start()
+    actor.send({ type: 'SET_MODE', mode: challengeId('one-key') })
+    actor.send({ type: 'START', now: 0, runId: nextRunId() })
+    actor.send({ type: 'BEGIN', now: 0 })
+    expect(actor.getSnapshot().context.lives).toBe(3)
+    actor.send({ type: 'CRASH', now: 500 })
+    expect(actor.getSnapshot().value).toBe('gameOver')
+    expect(actor.getSnapshot().context.lives).toBe(0)
+  })
+})
+
 describe("Trainee's doubled rule", () => {
   it('doubles a hit that empties the board and counts it as a strike, building no streak', () => {
     const actor = start('trainee')
@@ -1523,8 +1537,43 @@ describe('SCRAMBLE', () => {
     actor.start()
     actor.send({ type: 'SET_MODE', mode: SCRAMBLE })
     actor.send({ type: 'START', now: 0, runId })
+    // It opens with a scene, so the run is held until the scene is over.
+    actor.send({ type: 'BEGIN', now: 0 })
     return actor
   }
+
+  it('shuffles the dial by hand, keeping clear of the standing targets and re-measuring them', () => {
+    const actor = started()
+    actor.send({ type: 'ADD_TARGET', value: 40, at: 0 })
+    actor.send({ type: 'SHUFFLE', now: 100 })
+    const { context } = actor.getSnapshot()
+    expect(context.grid.every((digit) => digit !== 0)).toBe(true)
+    expect(sumOf(NINE_DIAL, context.grid)).not.toBe(40)
+    expect(context.targets[0]?.refGrid).toEqual(context.grid)
+    expect(context.targets[0]?.userSteps).toBe(0)
+    expect(context.hits).toBe(0)
+  })
+
+  it('lets an opening shuffle the dial before the run begins', () => {
+    const actor = createActor(gameMachine)
+    actor.start()
+    actor.send({ type: 'SET_MODE', mode: SCRAMBLE })
+    actor.send({ type: 'START', now: 0, runId: nextRunId() })
+    expect(actor.getSnapshot().value).toBe('ready')
+    actor.send({ type: 'SHUFFLE', now: 100 })
+    expect(actor.getSnapshot().value).toBe('ready')
+    expect(actor.getSnapshot().context.grid.every((digit) => digit !== 0)).toBe(true)
+  })
+
+  it('ignores a shuffle on a dial that does not scramble', () => {
+    const actor = createActor(gameMachine)
+    actor.start()
+    actor.send({ type: 'SET_MODE', mode: 'accuracy' })
+    actor.send({ type: 'START', now: 0, runId: nextRunId() })
+    const before = actor.getSnapshot().context.grid
+    actor.send({ type: 'SHUFFLE', now: 100 })
+    expect(actor.getSnapshot().context.grid).toEqual(before)
+  })
 
   // The grid a par-1 hit on 9 leaves behind before any scramble: the ×9 key raised once.
   const DIALLED: Grid = [0, 0, 0, 0, 0, 0, 0, 0, 1]

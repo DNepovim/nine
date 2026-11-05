@@ -8,9 +8,11 @@ import type { ModeDefinition } from '@/modes/types'
 import { defineChallenge, type ChallengeSpec } from './define'
 import {
   BLACK_PAIR,
+  CASINO_PAIR,
   DOS_PAIR,
   LIGHT_BLUE,
   MONITOR_PAIR,
+  SKY_PAIR,
   STORM_PAIR,
   TURQUOISE,
 } from './palette'
@@ -590,9 +592,15 @@ const DRIFT: ChallengeSpec = {
 //     `optimal` streak builds on the short one, which is the one that takes thinking and
 //     the clock leaves least time for.
 //   - **A slow route costs nothing**, a challenge's default; a target let run out costs
-//     one of three hearts, and that is how a run ends.
+//     one of three hearts.
 //
-// The 1 is the whole dial, so every target in 0 … 9 is answerable.
+// The 1 is the whole dial, so every target in 0 … 9 is answerable. It has no sum row, since the
+// sum is the key.
+//
+// And it is a little plane, as in the arcade games: it falls, every press of the key lifts it,
+// and one that meets the ground explodes and ends the run, whatever hearts are left. That is
+// what makes a quick hand the point — the plane is drawn behind the run by its opening's
+// remains, and the machine hears of it only as a crash.
 const ONE_KEY: ChallengeSpec = {
   slug: 'one-key',
   label: msg`ONE KEY`,
@@ -600,7 +608,13 @@ const ONE_KEY: ChallengeSpec = {
   // under a board it is not.
   code: msg`KEY`,
   description: msg`One key, one second.`,
-  mark: 'stopwatchKey',
+  mark: 'plane',
+  // A little plane in a light-blue sky: it flies in from the left to open the run, then falls,
+  // and each press of the key lifts it. See `OpeningKind` and `SchemeKind`.
+  opening: 'takeoff',
+  scheme: 'sky',
+  gradient: SKY_PAIR,
+  darkGradient: SKY_PAIR,
   // No `shot`: Accuracy's sniper, inherited — the streak is Accuracy's own. Its 420 ms
   // beam outlives the moment the next target arrives, which the author chose knowingly.
   //
@@ -629,7 +643,7 @@ const ONE_KEY: ChallengeSpec = {
   until: Date.UTC(2026, 9, 29) + DAY,
   rules: {
     fixedDifficulty: 'hard',
-    dial: defineDial({ id: 'one-key', rows: 1, cols: 1, weights: [1] }),
+    dial: defineDial({ id: 'one-key', rows: 1, cols: 1, weights: [1], hidesSum: true }),
     // 1333 × Hard's 0.75 rounds to exactly 1000 ms — the figure here is what the ring is.
     clock: { base: 1333 },
     spawn: { maxTargets: 1 },
@@ -655,14 +669,22 @@ const ONE_KEY: ChallengeSpec = {
 // on a dial that scrambles is never restored onto one that holds still.
 const SCRAMBLE: ChallengeSpec = {
   slug: 'scramble',
-  label: msg`SCRAM­BLE`,
+  label: msg`REELS`,
   // Its own, as every challenge since HABIT's: a profile row reading ACC would file it
   // under a board it is not.
-  code: msg`MIX`,
-  description: msg`Every hit scrambles the dial.`,
-  mark: 'shuffle',
-  // No `shot`: Accuracy's sniper, inherited — the streak is Accuracy's own, a chain of
-  // exact routes, and a beam is what one of those looks like.
+  code: msg`RLS`,
+  description: msg`Every hit spins the dial.`,
+  mark: 'slotMachine',
+  // A slot machine: a lever pulled and the reels stopping to open the run, bulbs chasing round the
+  // screen after it, and every scramble landing key by key like reels coming to rest. See
+  // `OpeningKind` and `SchemeKind`.
+  opening: 'leverPull',
+  scheme: 'casino',
+  gradient: CASINO_PAIR,
+  darkGradient: CASINO_PAIR,
+  // No `shot`: the sniper's beam Accuracy gives a streak is taken off, so a streak here is
+  // told by the multiplier and the marquee's lights and nothing else.
+  shot: null,
   //
   // Every line about reading a dial that moved without you.
   claims: {

@@ -323,6 +323,13 @@ type Event =
   // never heard of a session and does not learn about one here; it is told that this run
   // is over, in the same words a last life would use.
   | { type: 'EXPIRE'; now: number }
+  // The run has ended by something drawn behind it, not by anything on the board: a plane
+  // flown into the ground. Takes every life and ends the run where it stands, whatever it had
+  // left. Sent by an opening's remains, which the machine knows nothing of.
+  | { type: 'CRASH'; now: number }
+  // The player has pulled a lever that **shuffles** the dial: every key onto a digit it was not
+  // showing, as a hit does on a dial that scrambles, with no hit. Ignored on any other dial.
+  | { type: 'SHUFFLE'; now: number }
   | { type: 'MENU' }
   | { type: 'SET_MODE'; mode: ModeId }
   | { type: 'SET_DIFFICULTY'; difficulty: Difficulty }
@@ -607,6 +614,31 @@ const settledGrid = (
   anyHit && dial.scramble
     ? scrambleGrid(dial, dialled, standing, seeded(idSeed(seed)), before)
     : dialled
+
+// The dial and the standing targets after the player has **shuffled** it: every key moved as a
+// scramble moves it, kept clear of the numbers the targets show, and every target measured from
+// where the dial now stands. Seeded on the run and the moment, as a hit's scramble is on the run
+// and the hit, so the same pull is the same shuffle on a replay.
+function shuffled(context: Context, now: number) {
+  const rules = rulesOf(context)
+  const standing = context.targets.map((t) => driftedValue(t, now, rules.spawn.drift))
+  const grid = scrambleGrid(
+    rules.dial,
+    context.grid,
+    standing,
+    seeded(idSeed(`shuffle:${context.runId}:${now}`)),
+  )
+  return {
+    grid,
+    targets: context.targets.map((t) => ({
+      ...t,
+      refAt: now,
+      refGrid: grid,
+      par: computePar(rules.dial, grid, t.value),
+      userSteps: 0,
+    })),
+  }
+}
 
 // `press` is 1 for a key changing the grid and 0 for a **drift** landing a target on the
 // sum already dialled — see `TICK` — which takes it without a move being made.
@@ -979,6 +1011,20 @@ export const gameMachine = createMachine({
             playingSince: event.now,
           })),
         },
+        // An opening may shuffle the dial before the run starts, so it begins on the digits the
+        // reels stopped on. No targets stand yet, so only the keys move.
+        SHUFFLE: {
+          guard: ({ context }: { context: Context }) => rulesOf(context).dial.scramble,
+          actions: assign(
+            ({
+              context,
+              event,
+            }: {
+              context: Context
+              event: Extract<Event, { type: 'SHUFFLE' }>
+            }) => shuffled(context, event.now),
+          ),
+        },
         MENU: { target: 'menu' },
       },
     },
@@ -1003,6 +1049,30 @@ export const gameMachine = createMachine({
               context: Context
               event: Extract<Event, { type: 'EXPIRE' }>
             }) => stopClock(context, event.now),
+          ),
+        },
+        CRASH: {
+          target: 'gameOver',
+          actions: assign(
+            ({
+              context,
+              event,
+            }: {
+              context: Context
+              event: Extract<Event, { type: 'CRASH' }>
+            }) => ({ ...stopClock(context, event.now), lives: 0 }),
+          ),
+        },
+        SHUFFLE: {
+          guard: ({ context }: { context: Context }) => rulesOf(context).dial.scramble,
+          actions: assign(
+            ({
+              context,
+              event,
+            }: {
+              context: Context
+              event: Extract<Event, { type: 'SHUFFLE' }>
+            }) => shuffled(context, event.now),
           ),
         },
         PAUSE: {

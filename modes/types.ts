@@ -285,8 +285,8 @@ export type MarkKind =
   | 'ecgPeak'
   | 'turnedDial'
   | 'drift'
-  | 'stopwatchKey'
-  | 'shuffle'
+  | 'plane'
+  | 'slotMachine'
   | 'snowflake'
   | 'computer'
   | 'mirror'
@@ -299,7 +299,14 @@ export type MarkKind =
 // While it plays the run is **ready**: dealt, holding no target, its clock not started.
 // See the `ready` state in `machines/game.ts`.
 export type OpeningKind =
-  'lightsOut' | 'terminal' | 'passingEdge' | 'stormFront' | 'frostCreep' | 'defibrillator'
+  | 'lightsOut'
+  | 'terminal'
+  | 'passingEdge'
+  | 'stormFront'
+  | 'frostCreep'
+  | 'defibrillator'
+  | 'takeoff'
+  | 'leverPull'
 
 // How much of an opening plays. `full` for a run started from the intro, `short` for one
 // dealt again — PLAY AGAIN, or RESTART from the pause screen — so twenty retries are not
@@ -322,6 +329,10 @@ export type SchemeKind =
   | 'frostBar'
   | 'monitor'
   | 'monitorBar'
+  | 'sky'
+  | 'skyBar'
+  | 'casino'
+  | 'casinoBar'
   | 'dos'
   | 'glass'
   | 'glassBar'

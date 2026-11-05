@@ -5,7 +5,7 @@ import Animated, { FadeIn, FadeOut } from 'react-native-reanimated'
 import { Arrival } from '@/components/game/arrival'
 import { PauseButton } from '@/components/game/pause-button'
 import { TYPE } from '@/constants/typography'
-import { useLegible, useScheme } from '@/hooks/use-scheme'
+import { useGlow, useLegible, useScheme } from '@/hooks/use-scheme'
 import { cn } from '@/lib/cn'
 
 // The row every live run is played under: what the run is on the left, the game's name in
@@ -45,13 +45,14 @@ export function RunTopBar({
   const { bar } = useScheme().inks
   const shown = bar ?? onScheme(accent)
   const mark = bar ?? onScheme(wordmark)
+  const glow = useGlow()
   return (
     <View
       className="flex-row items-center"
       style={mirrored ? { transform: [{ scaleX: -1 }] } : undefined}
     >
       <Arrival order={1} from="above" className="flex-1">
-        <Text selectable={false} className={TYPE.button} style={{ color: shown }}>
+        <Text selectable={false} className={TYPE.button} style={[{ color: shown }, glow]}>
           {title}
         </Text>
         {/* Clipped rather than wrapped: a second line here would push the whole row
@@ -74,7 +75,7 @@ export function RunTopBar({
         <Text
           selectable={false}
           className="pl-[8px] font-mono text-[24px] font-black tracking-[8px]"
-          style={{ color: mark }}
+          style={[{ color: mark }, glow]}
         >
           NINE
         </Text>

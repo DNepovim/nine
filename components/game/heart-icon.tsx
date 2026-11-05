@@ -10,7 +10,7 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated'
 
-import { useScheme } from '@/hooks/use-scheme'
+import { useGlow, useScheme } from '@/hooks/use-scheme'
 
 // A heart, filled or spent.
 //
@@ -45,6 +45,7 @@ export function HeartIcon({
   // Under a **monochrome** scheme a full heart and an empty one are the same colour, so
   // the difference is the shape: filled, or only its outline.
   const { mono } = useScheme().inks
+  const glow = useGlow()
 
   const scaleStyle = useAnimatedStyle(() => ({ transform: [{ scale: scale.value }] }))
   const fillStyle = useAnimatedStyle(() => ({ opacity: fillOp.value }))
@@ -54,7 +55,7 @@ export function HeartIcon({
       {mono === null ? (
         <AntDesign name="heart" size={22} color={emptyColor} />
       ) : (
-        <Ionicons name="heart-outline" size={22} color={mono} />
+        <Ionicons name="heart-outline" size={22} color={mono} style={glow} />
       )}
       <Animated.View
         style={[
@@ -65,7 +66,7 @@ export function HeartIcon({
         {mono === null ? (
           <AntDesign name="heart" size={22} color="#E5534B" />
         ) : (
-          <Ionicons name="heart" size={22} color={mono} />
+          <Ionicons name="heart" size={22} color={mono} style={glow} />
         )}
       </Animated.View>
     </Animated.View>

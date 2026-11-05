@@ -39,6 +39,9 @@ const noCommands = (dial: DialSpec): readonly DialCommand[] =>
 // No key under the thumb.
 const NONE = -1
 
+// How big a digit is drawn on a dial of one key, which has the whole of the room to itself.
+const SOLE_DIGIT = 84
+
 // The keys the dial lays out, and the single pan that reads all of them.
 //
 // One gesture rather than one each, because a pan only ever reports to the view the
@@ -398,6 +401,7 @@ export function Dial({
                   digits={dial.digits}
                   orientation={dial.orientation}
                   showSum={showSum}
+                  digitSize={cellsOf(dial).length === 1 ? SOLE_DIGIT : undefined}
                   trainee={trainee}
                   bigHints={bigHints}
                   corners={corners}

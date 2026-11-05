@@ -884,19 +884,19 @@ msgstr "Nejlepší skóre nahoře"
 msgid "BETTER ON YOUR PHONE"
 msgstr "LEPŠÍ NA TELEFONU"
 
-#: modes/challenges/catalog.ts:778
+#: modes/challenges/catalog.ts:810
 msgid "BIN"
 msgstr "BIN"
 
-#: modes/challenges/catalog.ts:775
+#: modes/challenges/catalog.ts:807
 msgid "BINA­RY"
 msgstr "DVOJ­KOVĚ"
 
-#: modes/challenges/catalog.ts:918
+#: modes/challenges/catalog.ts:950
 msgid "BLACK­OUT"
 msgstr "TMA"
 
-#: modes/challenges/catalog.ts:921
+#: modes/challenges/catalog.ts:953
 msgid "BLK"
 msgstr "TMA"
 
@@ -1096,7 +1096,7 @@ msgstr "ZNALEC"
 msgid "CONTINUE"
 msgstr "POKRAČOVAT"
 
-#: app/(tabs)/index.tsx:2902
+#: app/(tabs)/index.tsx:2927
 msgid "Continue the tutorial"
 msgstr "Pokračovat v tutoriálu"
 
@@ -1170,11 +1170,11 @@ msgstr "Dvakrát ťukni tam, kde se objevují cíle, a hra se pozastaví. Podrž
 msgid "DRAG ACROSS KEYS"
 msgstr "TAH PŘES TLAČÍTKA"
 
-#: modes/challenges/catalog.ts:534
+#: modes/challenges/catalog.ts:546
 msgid "DRF"
 msgstr "UNÁ"
 
-#: modes/challenges/catalog.ts:531
+#: modes/challenges/catalog.ts:543
 msgid "DRIFT"
 msgstr "UNÁ­ŠENÍ"
 
@@ -1202,7 +1202,7 @@ msgstr "LEHKÁ"
 msgid "Eat the last of them and the empty row starts to pulse: you are starving, and a heart goes every five seconds until you eat."
 msgstr "Dojež i poslední a prázdná řada začne pulzovat: hladovíš a každých pět sekund přijdeš o život, dokud se nenajíš."
 
-#: modes/challenges/catalog.ts:779
+#: modes/challenges/catalog.ts:811
 msgid "Eight keys, each on or off."
 msgstr "Osm kláves, každá zapnutá, nebo vypnutá."
 
@@ -1257,15 +1257,15 @@ msgstr "Oba sloupce se kloní k tobě. Soupeř tu nedrží vůbec nic."
 msgid "Every day was [A]’s except [D]. [B] got exactly one, and made it count."
 msgstr "Každý den patřil hráči [A], kromě jednoho: [D] si ho vzal [B], a nenechal si ho ujít."
 
-#: modes/challenges/catalog.ts:652
-msgid "Every hit scrambles the dial."
-msgstr "Každý zásah zamíchá číselník."
+#: modes/challenges/catalog.ts:676
+msgid "Every hit spins the dial."
+msgstr "Každý zásah roztočí číselník."
 
-#: modes/challenges/catalog.ts:849
+#: modes/challenges/catalog.ts:881
 msgid "Every move works backwards."
 msgstr "Každý pohyb funguje obráceně."
 
-#: modes/challenges/catalog.ts:535
+#: modes/challenges/catalog.ts:547
 msgid "Every number drifts. Catch it before it moves."
 msgstr "Každé číslo se posouvá. Chyť ho, než se pohne."
 
@@ -1473,19 +1473,19 @@ msgstr "JMĚNÍ"
 msgid "Forward a step"
 msgstr "O krok vpřed"
 
-#: modes/challenges/catalog.ts:137
+#: modes/challenges/catalog.ts:146
 msgid "FOUR BY FOUR"
 msgstr "ČTYŘI NA ČTYŘI"
 
-#: modes/challenges/catalog.ts:43
+#: modes/challenges/catalog.ts:52
 msgid "FOUR KEYS"
 msgstr "ČTYŘI TLAČÍTKA"
 
-#: modes/challenges/catalog.ts:44
+#: modes/challenges/catalog.ts:53
 msgid "Four keys, doubled speed"
 msgstr "Čtyři tlačítka, dvojnásobná rychlost"
 
-#: modes/challenges/catalog.ts:714
+#: modes/challenges/catalog.ts:746
 msgid "FREEZE"
 msgstr "MRÁZ"
 
@@ -1493,7 +1493,7 @@ msgstr "MRÁZ"
 msgid "Friday"
 msgstr "v pátek"
 
-#: modes/challenges/catalog.ts:717
+#: modes/challenges/catalog.ts:749
 msgid "FRZ"
 msgstr "MRZ"
 
@@ -1564,7 +1564,7 @@ msgstr "ROZUMÍM"
 msgid "GRADUATE"
 msgstr "ABSOLVENT"
 
-#: modes/challenges/catalog.ts:249
+#: modes/challenges/catalog.ts:258
 msgid "HABIT"
 msgstr "NÁVYK"
 
@@ -1576,7 +1576,7 @@ msgstr "TĚŽKÁ"
 msgid "HAT TRICK"
 msgstr "HATTRICK"
 
-#: modes/challenges/catalog.ts:253
+#: modes/challenges/catalog.ts:262
 msgid "HBT"
 msgstr "NVK"
 
@@ -1806,7 +1806,7 @@ msgstr "Udrž jednu hru v běhu deset minut."
 msgid "KEEP RECORDING"
 msgstr "PONECHAT ZÁZNAM"
 
-#: modes/challenges/catalog.ts:591
+#: modes/challenges/catalog.ts:609
 msgid "KEY"
 msgstr "TLA"
 
@@ -2001,21 +2001,17 @@ msgstr "Zprávy od hráčů"
 msgid "MINUTES"
 msgstr "MINUTY"
 
-#: modes/challenges/catalog.ts:848
+#: modes/challenges/catalog.ts:880
 msgid "MIR"
 msgstr "ZRC"
 
-#: modes/challenges/catalog.ts:845
+#: modes/challenges/catalog.ts:877
 msgid "MIR­ROR"
 msgstr "ZRCA­DLO"
 
 #: constants/achievements.ts:690
 msgid "Miss a session's top three by a single point, or a tenth of a second."
 msgstr "Mine tě třetí místo v termínu o jediný bod nebo o desetinu sekundy."
-
-#: modes/challenges/catalog.ts:651
-msgid "MIX"
-msgstr "MIX"
 
 #: components/overlays/how-to-play-overlay.tsx:44
 msgid "MODES"
@@ -2225,7 +2221,7 @@ msgstr "Zatím není naplánovaný žádný termín."
 msgid "No sessions yet."
 msgstr "Zatím žádné termíny."
 
-#: modes/challenges/catalog.ts:395
+#: modes/challenges/catalog.ts:404
 msgid "NO SLIP"
 msgstr "BEZ CHYBY"
 
@@ -2390,7 +2386,7 @@ msgstr "11."
 msgid "NOVEMBER"
 msgstr "listopadu"
 
-#: modes/challenges/catalog.ts:398
+#: modes/challenges/catalog.ts:407
 msgid "NSL"
 msgstr "BCH"
 
@@ -2454,11 +2450,11 @@ msgstr "Jedna tabulka se tomu vymkla: [BOARD] zůstala celou dobu hráči [W]."
 msgid "One gesture can move several keys"
 msgstr "Jedno gesto může pohnout několika tlačítky"
 
-#: modes/challenges/catalog.ts:588
+#: modes/challenges/catalog.ts:606
 msgid "ONE KEY"
 msgstr "JEDNO TLAČÍTKO"
 
-#: modes/challenges/catalog.ts:592
+#: modes/challenges/catalog.ts:610
 msgid "One key, one second."
 msgstr "Jedno tlačítko, jedna sekunda."
 
@@ -2466,7 +2462,7 @@ msgstr "Jedno tlačítko, jedna sekunda."
 msgid "One line under your name, for anyone who opens your profile."
 msgstr "Jeden řádek pod tvým jménem, pro každého, kdo si otevře tvůj profil."
 
-#: modes/challenges/catalog.ts:325
+#: modes/challenges/catalog.ts:334
 msgid "One look, then from memory."
 msgstr "Jeden pohled, pak zpaměti."
 
@@ -2494,7 +2490,7 @@ msgstr "Jedna hra ≥ 60 min, libovolný režim"
 msgid "One set of standings, shared by everyone playing it, and it never resets. Your best run is the one that counts. Where the standings are a race against the clock, only a run you finish counts at all — stop early, or let the window close on you, and it is not timed."
 msgstr "Jedno pořadí pro všechny, kdo ji hrají, a nikdy se nenuluje. Počítá se tvá nejlepší hra. Kde se v pořadí závodí s časem, počítá se jen hra, kterou dohraješ — skončíš dřív nebo ti okno zavře, a čas se nezapíše."
 
-#: modes/challenges/catalog.ts:399
+#: modes/challenges/catalog.ts:408
 msgid "One slip and it's over."
 msgstr "Jedno zaváhání a je konec."
 
@@ -2805,6 +2801,10 @@ msgstr "Jdeme na opravdovou hru?"
 msgid "Records, celebrated"
 msgstr "Rekordy se slaví"
 
+#: modes/challenges/catalog.ts:672
+msgid "REELS"
+msgstr "VÁLCE"
+
 #: components/overlays/challenge-page.tsx:153
 msgid "REMARKS"
 msgstr "POZNÁMKY"
@@ -2856,6 +2856,10 @@ msgstr "KRUH"
 #: components/overlays/admin-knowledge.tsx:322
 msgid "ring {traineeRing} (player-set), gap = min(ring ÷ 3, {traineeGap})"
 msgstr "kruh {traineeRing} (nastaví hráč), odstup = min(kruh ÷ 3, {traineeGap})"
+
+#: modes/challenges/catalog.ts:675
+msgid "RLS"
+msgstr "VÁL"
 
 #: components/overlays/admin-person.tsx:166
 msgid "ROLE"
@@ -3015,11 +3019,7 @@ msgstr "Skóre odměňuje preciznost: slož každý cíl na co nejmíň tahů."
 msgid "Scores, one ladder per mode — Accuracy and Speed ask for opposite things, so each has its own rungs to climb."
 msgstr "Skóre, pro každý mód vlastní žebřík — Přesnost a Rychlost chtějí opačné věci, takže i příčky má každá své."
 
-#: modes/challenges/catalog.ts:648
-msgid "SCRAM­BLE"
-msgstr "ZAMÍ­CHÁNO"
-
-#: modes/challenges/catalog.ts:470
+#: modes/challenges/catalog.ts:482
 msgid "SDW"
 msgstr "BOK"
 
@@ -3130,7 +3130,7 @@ msgstr "ZOBRAZIT MÉNĚ"
 msgid "SHOW SUM IN BUTTONS"
 msgstr "ZOBRAZIT SOUČET V TLAČÍTKÁCH"
 
-#: modes/challenges/catalog.ts:467
+#: modes/challenges/catalog.ts:479
 msgid "SIDE­WAYS"
 msgstr "NA BOK"
 
@@ -3139,7 +3139,7 @@ msgstr "NA BOK"
 msgid "SINCE {0}"
 msgstr "OD {0}"
 
-#: modes/challenges/catalog.ts:138
+#: modes/challenges/catalog.ts:147
 msgid "Sixteen keys, double time"
 msgstr "Šestnáct tlačítek, dvojnásobné tempo"
 
@@ -3152,7 +3152,7 @@ msgstr "Dovednost v jedné hře: dlouhá série, nejvyšší násobitel, úsek b
 msgid "SKIP"
 msgstr "PŘESKOČIT"
 
-#: components/game/opening-layer.tsx:187
+#: components/game/opening-layer.tsx:270
 msgid "Skip to the run"
 msgstr "Přeskočit rovnou do hry"
 
@@ -3268,7 +3268,7 @@ msgstr "POSUŇ SE NA {rungName}"
 msgid "Sticking with it — targets landed across every run you have ever played, and days played in a row."
 msgstr "Vytrvalost — cíle složené za všechny hry dohromady a dny odehrané v řadě."
 
-#: modes/challenges/catalog.ts:324
+#: modes/challenges/catalog.ts:333
 msgid "STM"
 msgstr "BOU"
 
@@ -3280,7 +3280,7 @@ msgstr "ZASTAVIT ZÁZNAM"
 msgid "Stop session recording?"
 msgstr "Zastavit nahrávání relací?"
 
-#: modes/challenges/catalog.ts:321
+#: modes/challenges/catalog.ts:330
 msgid "STORM"
 msgstr "BOUŘE"
 
@@ -3489,7 +3489,7 @@ msgstr "Čas se s postupující hrou zkracuje, pokaždé o něco míň."
 msgid "THE CROWN"
 msgstr "KORUNA"
 
-#: modes/challenges/catalog.ts:471
+#: modes/challenges/catalog.ts:483
 msgid "The dial has fallen on its side."
 msgstr "Číselník spadl na bok."
 
@@ -3536,7 +3536,7 @@ msgstr "Hrdina se zastaví hodně daleko před branou, hradby se táhnou přes h
 msgid "The hit that leaves the board empty counts double."
 msgstr "Zásah, který nechá mřížku prázdnou, se počítá dvakrát."
 
-#: modes/challenges/catalog.ts:922
+#: modes/challenges/catalog.ts:954
 msgid "The keys go dark. Count in your head."
 msgstr "Klávesy zhasnou. Počítej v hlavě."
 
@@ -3570,7 +3570,7 @@ msgstr "FÉNIX"
 msgid "The rules are its own. The keys, the clock, the scoring, how many lives you get — any of it may be different, and the card says what before you start. Unless it says otherwise, it scores like Accuracy: the fewest moves build your streak, and a wasted move never costs a heart."
 msgstr "Pravidla má vlastní. Klávesy, čas, bodování i počet životů — cokoli z toho může být jinak, a karta to řekne, než začneš. Pokud neřekne jinak, boduje se jako Přesnost: sérii staví co nejmenší počet tahů a zbytečný tah tě nikdy nestojí život."
 
-#: modes/challenges/catalog.ts:254
+#: modes/challenges/catalog.ts:263
 msgid "The same nine, every run. Be quick."
 msgstr "Pořád stejná devítka. Buď rychlý."
 
@@ -3578,7 +3578,7 @@ msgstr "Pořád stejná devítka. Buď rychlý."
 msgid "The standings stay exactly as they are and the places settle now. This cannot be undone — running it again is a new session, with a board of its own."
 msgstr "Pořadí zůstane přesně takové, jaké je, a umístění se teď uzavřou. Nejde to vzít zpět — spustit ji znovu znamená nový termín s vlastním pořadím."
 
-#: modes/challenges/catalog.ts:718
+#: modes/challenges/catalog.ts:750
 msgid "The sum only moves when you hit."
 msgstr "Součet se pohne, jen když trefíš."
 

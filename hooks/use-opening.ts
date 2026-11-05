@@ -4,16 +4,24 @@ import type { StateValue } from 'xstate'
 
 import { APP_RED, SCHEMES } from '@/constants/colors'
 import {
+  isChallenge,
   OPENING_BAR_WAITS,
   OPENING_STARTS_LIT,
   openingOf,
   SCHEME_BAR,
   schemeOf,
+  scoreInkOf,
   type ModeId,
   type OpeningKind,
   type OpeningTake,
   type SchemeKind,
 } from '@/modes'
+
+// The one ink a challenge's top bar is worn in where its scheme gives the bar none: the
+// challenge's own colour. Null for a run that is not a challenge's, and for a scheme whose
+// bar is one ink already.
+const barTintOf = (mode: ModeId, barScheme: SchemeKind): string | null =>
+  isChallenge(mode) && SCHEMES[barScheme].inks.mono === null ? scoreInkOf(mode) : null
 
 // How long a **peek** keeps the lights on. Long enough to catch a key or two and nowhere
 // near long enough to read the whole dial.
@@ -66,6 +74,10 @@ export function useOpening({
   // The scheme the rows above the dial wear, and the one ink it draws them in if it has one, for
   // what is coloured up in the screen rather than under the provider. See `OPENING_BAR_WAITS`.
   barScheme: SchemeKind
+  // The one ink to wear the rows above the dial in where their scheme has none: a challenge's
+  // own colour, so every challenge's top bar is one colour. Null where the scheme is
+  // monochrome already, or the run is not a challenge's.
+  barTint: string | null
   barInk: string | null
   // The scheme the keys and the sum wear, held the same way, so a mirror's keys are glass from
   // the first frame rather than changing as the edge goes.
@@ -94,6 +106,9 @@ export function useOpening({
   // and the dial and the sheet under the run read it. One when nothing is sweeping, so a dial
   // that turns with it stands as it ends, a restored run included.
   sweep: SharedValue<number>
+  // How lit the rows above the dial are, nought to one, held here because a scene darkens them
+  // and lights them again and the screen draws them. One whenever no scene is doing that.
+  barLight: SharedValue<number>
 } {
   const name = typeof state === 'string' ? state : ''
   const held = name === 'ready'
@@ -118,6 +133,7 @@ export function useOpening({
   const tug = useSharedValue(0)
   const wave = useSharedValue(1)
   const sweep = useSharedValue(1)
+  const barLight = useSharedValue(1)
   const kind = openingOf(mode)
   // An opening that starts in the mode's scheme has no moment with the lights on, which is
   // also what spares a retry a frame of the day colours flashing through it.
@@ -129,6 +145,7 @@ export function useOpening({
   const barWaits = kind !== null && OPENING_BAR_WAITS[kind]
   const dialScheme = lightsOn && barWaits ? 'day' : schemeOf(mode)
   const barScheme = SCHEME_BAR[dialScheme]
+  const barTint = barTintOf(mode, barScheme)
   const onScreen = held || name === 'playing'
   return {
     layer: held ? kind : null,
@@ -138,7 +155,8 @@ export function useOpening({
     opened: !peeked && (!held || switched),
     scheme,
     barScheme,
-    barInk: SCHEMES[barScheme].inks.mono,
+    barTint,
+    barInk: SCHEMES[barScheme].inks.mono ?? barTint,
     dialScheme,
     systemBar: scheme === 'day' ? null : SCHEMES[scheme].inks.ground,
     statusBar: onScreen ? SCHEMES[scheme].inks.statusBar : 'dark',
@@ -157,5 +175,6 @@ export function useOpening({
     },
     pull: { tug, wave },
     sweep,
+    barLight,
   }
 }

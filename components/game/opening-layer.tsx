@@ -15,6 +15,12 @@ import {
   FrostUnder,
 } from '@/components/game/openings/frost-creep'
 import {
+  CasinoRemains,
+  LeverOver,
+  LeverPull,
+  lightsOutLeft,
+} from '@/components/game/openings/lever-pull'
+import {
   LightsOut,
   LightsOutPull,
   LightsOutRemains,
@@ -30,6 +36,13 @@ import {
   StormRemains,
   StormUnder,
 } from '@/components/game/openings/storm-front'
+import {
+  crashFireLeft,
+  PlaneOver,
+  SkyRemains,
+  SkyUnder,
+  Takeoff,
+} from '@/components/game/openings/takeoff'
 import { Terminal } from '@/components/game/openings/terminal'
 import { TrackedPressable } from '@/components/tracked-pressable'
 import { LAYER } from '@/constants/layers'
@@ -45,6 +58,11 @@ export type OpeningSceneProps = {
   take: OpeningTake
   // How far an edge has swept the screen, for a scene that draws one; see `useOpening`.
   sweep: SharedValue<number>
+  // How lit the rows above the dial are, nought to one, for a scene that darkens them and lights
+  // them again; see `useOpening`.
+  barLight: SharedValue<number>
+  // Shuffles the dial under the scene, for one that does.
+  onShuffle: () => void
   onSwitch: () => void
   onDone: () => void
 }
@@ -58,6 +76,8 @@ const OPENINGS = {
   stormFront: StormFront,
   frostCreep: FrostCreep,
   defibrillator: Defibrillator,
+  takeoff: Takeoff,
+  leverPull: LeverPull,
 } as const satisfies Record<OpeningKind, ComponentType<OpeningSceneProps>>
 
 type Pull = ReturnType<typeof useOpening>['pull']
@@ -69,6 +89,16 @@ type OverProps = {
   livesLeft: number
   // Where the run's lost targets stood, in the window's measure.
   lostAt: readonly Position[]
+  // Whether the run is being played, which run it is and the dial as it stands (a new value for
+  // every press), for the remains that fly with the player's hand — and `onEnd`, which ends the
+  // run from there, as a plane meeting the ground does.
+  running: boolean
+  finished: boolean
+  runId: string
+  grid: unknown
+  onEnd: () => void
+  // Shuffles the dial, for the remains that hand the player a way to.
+  onShuffle: () => void
 }
 
 // What each opening leaves on the game screen for the run once its scene is over — its
@@ -82,6 +112,7 @@ const REMAINS: Record<
       lit: boolean
       pull: Pull
       running: boolean
+      finished: boolean
       runId: string
       grid: unknown
       figures: RunFigures
@@ -95,6 +126,8 @@ const REMAINS: Record<
   stormFront: { Drawing: StormRemains, Over: null },
   frostCreep: { Drawing: FrostRemains, Over: null },
   defibrillator: { Drawing: DefibrillatorRemains, Over: null },
+  takeoff: { Drawing: SkyRemains, Over: PlaneOver },
+  leverPull: { Drawing: CasinoRemains, Over: LeverOver },
 }
 
 // How long, in ms, what a kind's remains are still doing needs once a run ends — or null for a
@@ -107,6 +140,8 @@ const HOLDS: Record<OpeningKind, (() => number) | null> = {
   stormFront: null,
   frostCreep: null,
   defibrillator: beatsClearIn,
+  takeoff: crashFireLeft,
+  leverPull: lightsOutLeft,
 }
 
 export const remainsHoldOf = (kind: OpeningKind | null) =>
@@ -119,6 +154,7 @@ export function OpeningRemains({
   lit,
   pull,
   running,
+  finished,
   runId,
   grid,
   figures,
@@ -129,6 +165,8 @@ export function OpeningRemains({
   // Whether the run is being played this moment, and which run it is — for the remains that
   // change over the run, as the storm's water rises.
   running: boolean
+  // The run is over, for the remains that have something to do about it.
+  finished: boolean
   runId: string
   // The dial as it stands, which is a new value for every press — for the remains that answer
   // to the player's hand, as NO SLIP's monitor beats.
@@ -142,6 +180,7 @@ export function OpeningRemains({
       lit={lit}
       pull={pull}
       running={running}
+      finished={finished}
       runId={runId}
       grid={grid}
       figures={figures}
@@ -157,6 +196,8 @@ const UNDER: Record<OpeningKind, ComponentType<{ sweep: SharedValue<number> }> |
   stormFront: StormUnder,
   frostCreep: FrostUnder,
   defibrillator: DefibrillatorUnder,
+  takeoff: SkyUnder,
+  leverPull: null,
 }
 
 export function OpeningUnder({
@@ -193,6 +234,8 @@ export function OpeningLayer({
   kind,
   take,
   sweep,
+  barLight,
+  onShuffle,
   onSwitch,
   onDone,
 }: {
@@ -212,7 +255,14 @@ export function OpeningLayer({
       style={{ zIndex: LAYER.screen }}
       pointerEvents="box-none"
     >
-      <Scene take={take} sweep={sweep} onSwitch={onSwitch} onDone={finish} />
+      <Scene
+        take={take}
+        sweep={sweep}
+        barLight={barLight}
+        onShuffle={onShuffle}
+        onSwitch={onSwitch}
+        onDone={finish}
+      />
       <TrackedPressable
         id="opening.skip"
         onPress={finish}

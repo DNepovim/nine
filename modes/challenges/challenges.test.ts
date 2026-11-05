@@ -504,6 +504,32 @@ describe('scramble', () => {
   })
 })
 
+describe('scramble', () => {
+  it('is played at a slot machine, opened by a pulled lever', () => {
+    const id = challengeId('scramble')
+    expect(openingOf(id)).toBe('leverPull')
+    expect(schemeOf(id)).toBe('casino')
+  })
+})
+
+describe('one key', () => {
+  it('is a little plane in a light-blue sky, on a dial with no sum row', () => {
+    const id = challengeId('one-key')
+    expect(openingOf(id)).toBe('takeoff')
+    expect(schemeOf(id)).toBe('sky')
+    expect(runRules(id, 'hard').dial.hidesSum).toBe(true)
+  })
+
+  it('is the only dial that hides its sum', () => {
+    expect(
+      allModes()
+        .filter((mode) => mode.engine === 'targets')
+        .filter((mode) => runRules(mode.id, 'hard').dial.hidesSum)
+        .map((mode) => mode.id),
+    ).toEqual([challengeId('one-key')])
+  })
+})
+
 describe('no slip', () => {
   it('is played on a heart monitor, opened by a shock', () => {
     const id = challengeId('no-slip')
@@ -685,6 +711,8 @@ describe('blackout', () => {
     expect(opening).toEqual([
       challengeId('glimpse'),
       challengeId('no-slip'),
+      challengeId('one-key'),
+      challengeId('scramble'),
       challengeId('freeze'),
       challengeId('binary'),
       challengeId('mirror'),
@@ -699,6 +727,8 @@ describe('blackout', () => {
     const dressed = [
       challengeId('glimpse'),
       challengeId('no-slip'),
+      challengeId('one-key'),
+      challengeId('scramble'),
       challengeId('freeze'),
       challengeId('binary'),
       challengeId('blackout'),

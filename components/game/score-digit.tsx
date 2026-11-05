@@ -12,7 +12,7 @@ import Animated, {
 import { SCORE_COLORS } from '@/constants/colors'
 import { SUM_DIGIT_SIZE, SUM_DIGIT_TRACKING } from '@/constants/game'
 import { mono } from '@/constants/theme'
-import { useScheme } from '@/hooks/use-scheme'
+import { useGlow, useScheme } from '@/hooks/use-scheme'
 
 export function ScoreDigit({
   digit,
@@ -60,6 +60,7 @@ export function ScoreDigit({
     )
   }, [digit])
 
+  const glow = useGlow()
   const animStyle = useAnimatedStyle(() => ({
     transform: [{ translateY: translateY.value }],
     opacity: opacity.value,
@@ -76,6 +77,7 @@ export function ScoreDigit({
           fontFamily: mono,
           letterSpacing: SUM_DIGIT_TRACKING,
         },
+        glow,
         animStyle,
       ]}
     >
