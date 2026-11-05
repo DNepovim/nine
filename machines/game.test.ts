@@ -1309,6 +1309,8 @@ describe('NO SLIP', () => {
     actor.start()
     actor.send({ type: 'SET_MODE', mode: NO_SLIP })
     actor.send({ type: 'START', now: 0, runId: nextRunId() })
+    // It opens with a scene, so the run is held until the scene is over.
+    actor.send({ type: 'BEGIN', now: 0 })
     return actor
   }
 

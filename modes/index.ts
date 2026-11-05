@@ -63,6 +63,7 @@ export {
   OPENING_STARTS_LIT,
   SCHEME_BAR,
   openingOf,
+  showsFigures,
   openModes,
   rulesFor,
   runLabel,

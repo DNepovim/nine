@@ -6,7 +6,14 @@ import { defineDial } from '@/modes/dial'
 import type { ModeDefinition } from '@/modes/types'
 
 import { defineChallenge, type ChallengeSpec } from './define'
-import { BLACK_PAIR, DOS_PAIR, LIGHT_BLUE, STORM_PAIR, TURQUOISE } from './palette'
+import {
+  BLACK_PAIR,
+  DOS_PAIR,
+  LIGHT_BLUE,
+  MONITOR_PAIR,
+  STORM_PAIR,
+  TURQUOISE,
+} from './palette'
 
 // Every challenge the app has ever carried, each with the window it ran in.
 //
@@ -397,7 +404,15 @@ const NO_SLIP: ChallengeSpec = {
   // not.
   code: msg`NSL`,
   description: msg`One slip and it's over.`,
-  mark: 'crackedHeart',
+  mark: 'ecgPeak',
+  // A heart monitor: a flat line shocked back to life to open the run, then a beat on it for
+  // every press, and every target beating like a heart. See
+  // `OpeningKind` and `SchemeKind`.
+  opening: 'defibrillator',
+  scheme: 'monitor',
+  targetForm: 'beating',
+  gradient: MONITOR_PAIR,
+  darkGradient: MONITOR_PAIR,
   shot: null,
   // Every line about slipping and the exact route. Only the tiers this one reaches: the
   // session standing through `board` and `medal`, and `cold`. `strong` is earned by a

@@ -282,7 +282,7 @@ export type MarkKind =
   | 'route'
   | 'closedEye'
   | 'stormCloud'
-  | 'crackedHeart'
+  | 'ecgPeak'
   | 'turnedDial'
   | 'drift'
   | 'stopwatchKey'
@@ -299,7 +299,7 @@ export type MarkKind =
 // While it plays the run is **ready**: dealt, holding no target, its clock not started.
 // See the `ready` state in `machines/game.ts`.
 export type OpeningKind =
-  'lightsOut' | 'terminal' | 'passingEdge' | 'stormFront' | 'frostCreep'
+  'lightsOut' | 'terminal' | 'passingEdge' | 'stormFront' | 'frostCreep' | 'defibrillator'
 
 // How much of an opening plays. `full` for a run started from the intro, `short` for one
 // dealt again — PLAY AGAIN, or RESTART from the pause screen — so twenty retries are not
@@ -320,6 +320,8 @@ export type SchemeKind =
   | 'stormBar'
   | 'frost'
   | 'frostBar'
+  | 'monitor'
+  | 'monitorBar'
   | 'dos'
   | 'glass'
   | 'glassBar'
@@ -328,10 +330,10 @@ export type SchemeKind =
 // dealt, each with a ring running down, and are every mode's unless it names another; `lines`
 // are lines of a terminal, each with a bar; `flashlit` are numbers on a dark wall in a
 // flashlight's beam, which reddens and closes in as the clock runs down; `struck` are discs
-// a bolt of lightning hits when their glimpse is over, putting the number out. Drawn by `TARGET_FORMS` in
+// a bolt of lightning hits when their glimpse is over, putting the number out; `beating` are discs that pulse like a heart. Drawn by `TARGET_FORMS` in
 // `components/game/target-forms.tsx`. Drawing only: a hit is decided by the sum, an expiry by
 // the clock, and both are the same in every form.
-export type TargetForm = 'discs' | 'lines' | 'flashlit' | 'struck'
+export type TargetForm = 'discs' | 'lines' | 'flashlit' | 'struck' | 'beating'
 
 // What every mode says about itself, whichever engine runs it.
 type ModeIdentity = {

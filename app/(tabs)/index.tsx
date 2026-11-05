@@ -30,6 +30,7 @@ import {
   OpeningOver,
   OpeningRemains,
   OpeningUnder,
+  remainsHoldOf,
 } from '@/components/game/opening-layer'
 import { RunStopwatch } from '@/components/game/run-stopwatch'
 import { RunTopBar } from '@/components/game/run-top-bar'
@@ -208,6 +209,7 @@ import {
   runRules,
   runSubmode,
   SCORED_MODES,
+  showsFigures,
   streakMultiplier,
   sumOf,
   targetFormOf,
@@ -536,7 +538,8 @@ const systemBarOf = (
   color: string | null,
   inPlay: boolean,
   dying: DyingPhase,
-): string | null => (inPlay || dying === 'dying' || dying === 'blend' ? color : null)
+): string | null =>
+  inPlay || dying === 'waiting' || dying === 'dying' || dying === 'blend' ? color : null
 
 // What the pause button does, or null where it is not drawn. It stands through a held run's
 // opening too, so the top bar is whole from the first frame: a tap there is the opening's skip,
@@ -1975,7 +1978,7 @@ export default function GameScreen() {
     overlayOpacity,
     targetsAreaRef,
     setOverlayTitleY,
-  } = useDyingSequence({ isGameOver, lives })
+  } = useDyingSequence({ isGameOver, lives, hold: remainsHoldOf(opening.remains) })
   useBarColor(systemBarOf(opening.systemBar, opening.inPlay, dyingPhase))
   const lostMarks = useLostMarks({
     runId,
@@ -2478,7 +2481,7 @@ export default function GameScreen() {
                       average accuracy could only ever read 100%, a slip being the end of
                       it. Every other scored run is judged by a factor and shows the
                       average of it. Nothing stands here on a mode with neither. */}
-                          {rules.scoring.measure === 'time' && (
+                          {!showsFigures(mode) && rules.scoring.measure === 'time' && (
                             <RunStopwatch
                               elapsedMs={state.context.elapsedMs}
                               playingSince={state.context.playingSince}
@@ -2486,11 +2489,12 @@ export default function GameScreen() {
                             />
                           )}
 
-                          {rules.scoring.measure === 'hits' && (
+                          {!showsFigures(mode) && rules.scoring.measure === 'hits' && (
                             <DigitStrip text={String(hits)} direction={1} />
                           )}
 
-                          {rules.scoring.measure === 'score' &&
+                          {!showsFigures(mode) &&
+                            rules.scoring.measure === 'score' &&
                             isOneOf(mode, SCORED_MODES) && (
                               <View style={{ alignItems: 'center' }}>
                                 <DigitStrip
@@ -2626,7 +2630,7 @@ export default function GameScreen() {
                                     ? computePar(dial, grid, target.value)
                                     : undefined
                                 }
-                                dying={isGameOver}
+                                dying={isGameOver && dyingPhase !== 'waiting'}
                                 frozen={isPaused}
                                 // Nine cards have to stand on this board at once in a drilled
                                 // run, and nine at `PIE_SIZE` do not fit a phone — so each is

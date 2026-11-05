@@ -4,6 +4,12 @@ import { View } from 'react-native'
 import type { SharedValue } from 'react-native-reanimated'
 
 import {
+  beatsClearIn,
+  Defibrillator,
+  DefibrillatorRemains,
+  DefibrillatorUnder,
+} from '@/components/game/openings/defibrillator'
+import {
   FrostCreep,
   FrostRemains,
   FrostUnder,
@@ -28,6 +34,7 @@ import { Terminal } from '@/components/game/openings/terminal'
 import { TrackedPressable } from '@/components/tracked-pressable'
 import { LAYER } from '@/constants/layers'
 import type { useOpening } from '@/hooks/use-opening'
+import type { RunFigures } from '@/lib/vitals'
 import type { OpeningKind, OpeningTake } from '@/modes'
 import type { Position } from '@/types/game'
 
@@ -50,6 +57,7 @@ const OPENINGS = {
   passingEdge: PassingEdge,
   stormFront: StormFront,
   frostCreep: FrostCreep,
+  defibrillator: Defibrillator,
 } as const satisfies Record<OpeningKind, ComponentType<OpeningSceneProps>>
 
 type Pull = ReturnType<typeof useOpening>['pull']
@@ -75,6 +83,8 @@ const REMAINS: Record<
       pull: Pull
       running: boolean
       runId: string
+      grid: unknown
+      figures: RunFigures
     }>
     Over: ComponentType<OverProps> | null
   } | null
@@ -84,7 +94,23 @@ const REMAINS: Record<
   passingEdge: { Drawing: PassingEdgeRemains, Over: MirrorDamage },
   stormFront: { Drawing: StormRemains, Over: null },
   frostCreep: { Drawing: FrostRemains, Over: null },
+  defibrillator: { Drawing: DefibrillatorRemains, Over: null },
 }
+
+// How long, in ms, what a kind's remains are still doing needs once a run ends — or null for a
+// kind whose remains have nothing to wait for. The last-life cinematic holds off until it has
+// run out: NO SLIP's last beat crosses the monitor and leaves a flat line.
+const HOLDS: Record<OpeningKind, (() => number) | null> = {
+  lightsOut: null,
+  terminal: null,
+  passingEdge: null,
+  stormFront: null,
+  frostCreep: null,
+  defibrillator: beatsClearIn,
+}
+
+export const remainsHoldOf = (kind: OpeningKind | null) =>
+  kind === null ? null : HOLDS[kind]
 
 const remainsOf = (kind: OpeningKind | null) => (kind === null ? null : REMAINS[kind])
 
@@ -94,6 +120,8 @@ export function OpeningRemains({
   pull,
   running,
   runId,
+  grid,
+  figures,
 }: {
   kind: OpeningKind | null
   lit: boolean
@@ -102,10 +130,22 @@ export function OpeningRemains({
   // change over the run, as the storm's water rises.
   running: boolean
   runId: string
+  // The dial as it stands, which is a new value for every press — for the remains that answer
+  // to the player's hand, as NO SLIP's monitor beats.
+  grid: unknown
+  // How the run is going, for the remains that read it, as NO SLIP's monitor does.
+  figures: RunFigures
 }) {
   const Drawing = remainsOf(kind)?.Drawing
   return Drawing === undefined ? null : (
-    <Drawing lit={lit} pull={pull} running={running} runId={runId} />
+    <Drawing
+      lit={lit}
+      pull={pull}
+      running={running}
+      runId={runId}
+      grid={grid}
+      figures={figures}
+    />
   )
 }
 
@@ -116,6 +156,7 @@ const UNDER: Record<OpeningKind, ComponentType<{ sweep: SharedValue<number> }> |
   passingEdge: PassingEdgeUnder,
   stormFront: StormUnder,
   frostCreep: FrostUnder,
+  defibrillator: DefibrillatorUnder,
 }
 
 export function OpeningUnder({

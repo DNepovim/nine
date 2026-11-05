@@ -166,17 +166,12 @@ const GLYPHS: Record<MarkKind, (color: string) => ReactNode> = {
     </>
   ),
 
-  // NO SLIP — the one life, and the crack one slip would put through it.
-  crackedHeart: (color) => (
-    <>
-      <Path
-        d="M12 20.5 C12 20.5 3 15 3 8.8 C3 6 5.1 4 7.6 4 C9.4 4 11 5 12 6.6 C13 5 14.6 4 16.4 4 C18.9 4 21 6 21 8.8 C21 15 12 20.5 12 20.5 Z"
-        {...line(color)}
-        fill={color}
-        fillOpacity={WASH}
-      />
-      <Path d="M12 6.6 L10.4 10.2 L13.4 12.6 L11 15.8 L12.3 18.6" {...line(color)} />
-    </>
+  // NO SLIP — a heart monitor's trace, level and then one peak.
+  ecgPeak: (color) => (
+    <Path
+      d="M2 13 H7 L9 10 L11 15.5 L13.3 3.5 L15.6 20.5 L17.4 13 H22"
+      {...line(color)}
+    />
   ),
 
   // SIDEWAYS — the dial on its side, and the turn that put it there.

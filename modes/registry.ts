@@ -215,6 +215,8 @@ export const OPENING_STARTS_LIT = {
   stormFront: false,
   // The frost comes down a screen that is plain until it reaches the foot.
   frostCreep: true,
+  // The monitor is on, flat, from the first frame; the shock is the scene.
+  defibrillator: false,
 } as const satisfies Record<OpeningKind, boolean>
 
 // What the rows above the dial wear under each **scheme**: the same one, except that `glass`
@@ -226,6 +228,8 @@ export const SCHEME_BAR = {
   stormBar: 'stormBar',
   frost: 'frostBar',
   frostBar: 'frostBar',
+  monitor: 'monitorBar',
+  monitorBar: 'monitorBar',
   dos: 'dos',
   glass: 'glassBar',
   glassBar: 'glassBar',
@@ -242,7 +246,25 @@ export const OPENING_BAR_WAITS = {
   stormFront: false,
   // The keys and rows are plain under the frost's edge, and turn with the screen.
   frostCreep: true,
+  defibrillator: false,
 } as const satisfies Record<OpeningKind, boolean>
+
+// Whether an opening's remains show the run's figures themselves, so the stat the top bar keeps
+// under the logo — a count, a clock, an average — is left out. A heart monitor reads the
+// patient's vitals off the run; a second readout of the same would only crowd it.
+const OPENING_SHOWS_FIGURES = {
+  lightsOut: false,
+  terminal: false,
+  passingEdge: false,
+  stormFront: false,
+  frostCreep: false,
+  defibrillator: true,
+} as const satisfies Record<OpeningKind, boolean>
+
+export const showsFigures = (id: ModeId): boolean => {
+  const kind = openingOf(id)
+  return kind !== null && OPENING_SHOWS_FIGURES[kind]
+}
 
 // How this mode's targets are drawn: its own form, or `discs`.
 export const targetFormOf = (id: ModeId): TargetForm =>

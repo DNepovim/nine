@@ -24,6 +24,7 @@ import {
   BLACK_PAIR,
   challengeDarkGradient,
   challengeGradient,
+  MONITOR_PAIR,
   STORM_PAIR,
 } from './palette'
 
@@ -503,6 +504,15 @@ describe('scramble', () => {
   })
 })
 
+describe('no slip', () => {
+  it('is played on a heart monitor, opened by a shock', () => {
+    const id = challengeId('no-slip')
+    expect(openingOf(id)).toBe('defibrillator')
+    expect(schemeOf(id)).toBe('monitor')
+    expect(targetFormOf(id)).toBe('beating')
+  })
+})
+
 describe('freeze', () => {
   it('is played on a frozen lake, under falling snow', () => {
     const id = challengeId('freeze')
@@ -674,6 +684,7 @@ describe('blackout', () => {
       .map((mode) => mode.id)
     expect(opening).toEqual([
       challengeId('glimpse'),
+      challengeId('no-slip'),
       challengeId('freeze'),
       challengeId('binary'),
       challengeId('mirror'),
@@ -687,6 +698,7 @@ describe('blackout', () => {
   it('leaves every other mode without an opening, in day colours', () => {
     const dressed = [
       challengeId('glimpse'),
+      challengeId('no-slip'),
       challengeId('freeze'),
       challengeId('binary'),
       challengeId('blackout'),
@@ -829,9 +841,9 @@ describe('NO SLIP', () => {
     })
   })
 
-  it('wears the colour of the fifth place in the catalog', () => {
+  it("wears the heart monitor's green", () => {
     const NO_SLIP = CHALLENGES.find((mode) => mode.id === challengeId('no-slip'))
-    expect(NO_SLIP?.gradient).toEqual(challengeGradient(4))
+    expect(NO_SLIP?.gradient).toEqual(MONITOR_PAIR)
   })
 
   it('builds no streak, draws no shot, and is ranked by hits', () => {

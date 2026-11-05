@@ -188,6 +188,10 @@ export const BLACK_PAIR: readonly [string, string] = [PRIMARY_INK, '#000000']
 // it becomes (`scoreInkOf`, `meterInkOf`) need.
 export const STORM_PAIR: readonly [string, string] = ['#0F1F45', '#1B3A8A']
 
+// NO SLIP's heart-monitor green, in two stops: the trace's own hue, deepened enough that the
+// second clears the floor on white as the score and meter ink it becomes need.
+export const MONITOR_PAIR: readonly [string, string] = ['#0E5A35', '#12834B']
+
 export const challengeGradient = (index: number): readonly [string, string] =>
   challengePairFor(challengeHue(index))
 

@@ -120,7 +120,7 @@ export function GameOverSequence({
   onChallenge: (mode: ModeId, difficulty: Difficulty) => void
   onMenu: () => void
 }) {
-  if (phase === 'idle') return null
+  if (phase === 'idle' || phase === 'waiting') return null
   const revealed = phase === 'done'
   // One title for both copies: the flying one and the one it hands off to must read
   // the same, or the words would change under the player mid-flight.

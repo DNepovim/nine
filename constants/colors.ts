@@ -460,6 +460,26 @@ const FROST_TOKENS = {
 
 const FROST_BAR = '#1E6F8C'
 
+// NO SLIP's heart monitor, shared with `monitorBar`: a screen gone black-green, the text in
+// the phosphor green of a trace, and the one ink everything above its dial wears.
+const MONITOR_TOKENS = {
+  '--color-surface': '#04100B',
+  '--color-card': '#0A1B13',
+  '--color-elevated': '#10261B',
+  '--color-muted': '#1F4A35',
+  '--color-dim': '#7FD9A6',
+  '--color-primary': '#7DFFB4',
+  '--color-strong': '#7DFFB4',
+  '--color-on-strong': '#04100B',
+  '--color-score': '#7DFFB4',
+  '--color-fortune': '#FF6B6B',
+  '--color-dial': '#7DFFB4',
+  '--color-factor': '#4FB883',
+  '--color-pie': '#171421',
+}
+
+const MONITOR_BAR = '#6DEBA0'
+
 // `dark` — a near-black of the app's own violet cast, the screen's text in the parchment
 // it is usually drawn on. The keys and the target discs keep their light faces, so the
 // inks drawn on *them* (`--color-dial`, `--color-pie`) stay dark: only what sits on the
@@ -607,6 +627,61 @@ export const SCHEMES = {
       wash: ['#E3F3FA', '#EAF6FB', '#F0F9FD', '#E6F4FA'],
       mono: FROST_BAR,
       bar: FROST_BAR,
+      hit: null,
+      keys: null,
+    },
+  },
+  // `monitor` — NO SLIP's heart monitor: near-black with a green cast, the text in the green of
+  // a trace. The keys are green rings; the target discs keep their light faces, so the ink on
+  // them stays dark.
+  monitor: {
+    tokens: MONITOR_TOKENS,
+    inks: {
+      score: '#7DFFB4',
+      keyRim: 'rgba(125, 255, 180, 0.85)',
+      statusBar: 'light',
+      ground: '#04100B',
+      ink: '#7DFFB4',
+      wash: ['#030D09', '#04100B', '#051410', '#04110C'],
+      mono: null,
+      bar: MONITOR_BAR,
+      // The trace's own green (`MONITOR.line`, defined below this table), so a hit number is
+      // the line it was drawn by.
+      hit: '#5CFFA0',
+      // Round keys in the trace's green: clear at nought, filling to solid by nine, which
+      // then lights to the bright green with a dark digit. The rim is what a clear key is.
+      keys: {
+        low: 'rgba(23, 121, 74, 0)',
+        high: '#17794A',
+        text: '#7DFFB4',
+        peakText: '#04100B',
+        peak: ['#4FE090', '#9BFFC8'],
+        radius: 999,
+        foot: 1.5,
+      },
+    },
+  },
+  // `monitorBar` — the rows above a `monitor` dial: **monochrome** in the green the name and
+  // NINE already wear. Worn from the first frame of the run; see `OPENING_BAR_WAITS`.
+  monitorBar: {
+    tokens: {
+      ...MONITOR_TOKENS,
+      '--color-dim': MONITOR_BAR,
+      '--color-primary': MONITOR_BAR,
+      '--color-strong': MONITOR_BAR,
+      '--color-score': MONITOR_BAR,
+      '--color-fortune': MONITOR_BAR,
+      '--color-factor': MONITOR_BAR,
+    },
+    inks: {
+      score: MONITOR_BAR,
+      keyRim: 'transparent',
+      statusBar: 'light',
+      ground: '#04100B',
+      ink: MONITOR_BAR,
+      wash: ['#030D09', '#04100B', '#051410', '#04110C'],
+      mono: MONITOR_BAR,
+      bar: MONITOR_BAR,
       hit: null,
       keys: null,
     },
@@ -773,4 +848,14 @@ export const FROST = {
   driftBack: '#D4EAF4',
   drift: '#FFFFFF',
   driftEdge: '#A9D3E6',
+} as const
+
+// NO SLIP's heart monitor (`components/game/openings/defibrillator.tsx`): the trace is a bright
+// phosphor green with a wider, fainter glow of the same under it; the paper grid is barely
+// there; the shock is a white flash.
+export const MONITOR = {
+  line: '#5CFFA0',
+  glow: 'rgba(92, 255, 160, 0.28)',
+  grid: 'rgba(92, 255, 160, 0.07)',
+  shock: '#F2FFF8',
 } as const

@@ -6,7 +6,7 @@
 
 // A small, fast, seeded generator (mulberry32): nought up to one, the same run of them for
 // the same seed.
-function seeded(seed: number): () => number {
+export function seeded(seed: number): () => number {
   let state = seed >>> 0
   return () => {
     state = (state + 0x6d2b79f5) >>> 0
