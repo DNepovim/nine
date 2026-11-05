@@ -504,6 +504,13 @@ describe('scramble', () => {
 })
 
 describe('freeze', () => {
+  it('is played on a frozen lake, under falling snow', () => {
+    const id = challengeId('freeze')
+    expect(openingOf(id)).toBe('frostCreep')
+    expect(schemeOf(id)).toBe('frost')
+    expect(targetFormOf(id)).toBe('discs')
+  })
+
   it('is Accuracy Hard on the nine keys, on a dial that freezes', () => {
     const rules = runRules(challengeId('freeze'), 'easy')
     expect(rules.difficulty).toBe('hard')
@@ -667,6 +674,7 @@ describe('blackout', () => {
       .map((mode) => mode.id)
     expect(opening).toEqual([
       challengeId('glimpse'),
+      challengeId('freeze'),
       challengeId('binary'),
       challengeId('mirror'),
       challengeId('blackout'),
@@ -679,6 +687,7 @@ describe('blackout', () => {
   it('leaves every other mode without an opening, in day colours', () => {
     const dressed = [
       challengeId('glimpse'),
+      challengeId('freeze'),
       challengeId('binary'),
       challengeId('blackout'),
       challengeId('mirror'),

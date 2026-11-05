@@ -298,7 +298,8 @@ export type MarkKind =
 //
 // While it plays the run is **ready**: dealt, holding no target, its clock not started.
 // See the `ready` state in `machines/game.ts`.
-export type OpeningKind = 'lightsOut' | 'terminal' | 'passingEdge' | 'stormFront'
+export type OpeningKind =
+  'lightsOut' | 'terminal' | 'passingEdge' | 'stormFront' | 'frostCreep'
 
 // How much of an opening plays. `full` for a run started from the intro, `short` for one
 // dealt again — PLAY AGAIN, or RESTART from the pause screen — so twenty retries are not
@@ -313,7 +314,15 @@ export type OpeningTake = 'full' | 'short'
 // colour scale; not a system dark mode. Only the game screen wears it, and the overlays
 // over it keep their own.
 export type SchemeKind =
-  'day' | 'dark' | 'storm' | 'stormBar' | 'dos' | 'glass' | 'glassBar'
+  | 'day'
+  | 'dark'
+  | 'storm'
+  | 'stormBar'
+  | 'frost'
+  | 'frostBar'
+  | 'dos'
+  | 'glass'
+  | 'glassBar'
 
 // How a run's targets are drawn — its **target form**. `discs` stand wherever they were
 // dealt, each with a ring running down, and are every mode's unless it names another; `lines`

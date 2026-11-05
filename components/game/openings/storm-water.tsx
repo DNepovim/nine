@@ -1,7 +1,6 @@
 import { useEffect, useMemo } from 'react'
 import { View } from 'react-native'
 import Animated, {
-  cancelAnimation,
   Easing,
   useAnimatedStyle,
   useSharedValue,
@@ -13,6 +12,7 @@ import Animated, {
 import Svg, { Path } from 'react-native-svg'
 
 import { STORM } from '@/constants/colors'
+import { useRisingLevel } from '@/hooks/use-rising-level'
 import { useTilt } from '@/hooks/use-tilt'
 import { useViewport } from '@/hooks/use-viewport'
 import { splashSpots, type Splash } from '@/lib/storm'
@@ -154,30 +154,12 @@ function SplashAt({ spot, width }: { spot: Splash; width: number }) {
 export function StormWater({ running, runId }: { running: boolean; runId: string }) {
   const { width, height } = useViewport()
   const tilt = useTilt()
-  const level = useSharedValue(START_LEVEL)
-
-  // A new run starts from the foot again.
-  useEffect(() => {
-    cancelAnimation(level)
-    level.value = START_LEVEL
-  }, [runId])
-
-  // Up while the run is played; held where it stands otherwise. The remaining time is the
-  // remaining share of the climb, so a pause costs the water nothing and gives it nothing.
-  useEffect(() => {
-    if (!running) {
-      cancelAnimation(level)
-      return
-    }
-    const left = (TOP_LEVEL - level.value) / (TOP_LEVEL - START_LEVEL)
-    // The wait is only for a run that has not begun to rise: the water already up does not
-    // wait again after a pause.
-    const wait = level.value <= START_LEVEL ? RISE_DELAY_MS : 0
-    level.value = withDelay(
-      wait,
-      withTiming(TOP_LEVEL, { duration: RISE_MS * left, easing: Easing.linear }),
-    )
-  }, [running, runId])
+  const level = useRisingLevel(running, runId, {
+    from: START_LEVEL,
+    to: TOP_LEVEL,
+    delayMs: RISE_DELAY_MS,
+    ms: RISE_MS,
+  })
 
   // Wide enough to cover the screen from any angle the surface can be turned to.
   const reach = Math.hypot(width, height)

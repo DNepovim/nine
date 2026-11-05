@@ -441,6 +441,25 @@ const STORM_TOKENS = {
 
 const STORM_BAR = '#A9BCDD'
 
+// FREEZE's tokens, shared with `frostBar`, and the one ink everything above its dial wears.
+const FROST_TOKENS = {
+  '--color-surface': '#EAF6FB',
+  '--color-card': '#DCEEF6',
+  '--color-elevated': '#FFFFFF',
+  '--color-muted': '#BFDCEA',
+  '--color-dim': '#3C6577',
+  '--color-primary': '#0F3347',
+  '--color-strong': '#0F3347',
+  '--color-on-strong': '#EAF6FB',
+  '--color-score': '#0E7C9A',
+  '--color-fortune': '#B03A2E',
+  '--color-dial': '#0F3347',
+  '--color-factor': '#5E8799',
+  '--color-pie': '#171421',
+}
+
+const FROST_BAR = '#1E6F8C'
+
 // `dark` — a near-black of the app's own violet cast, the screen's text in the parchment
 // it is usually drawn on. The keys and the target discs keep their light faces, so the
 // inks drawn on *them* (`--color-dial`, `--color-pie`) stay dark: only what sits on the
@@ -536,6 +555,58 @@ export const SCHEMES = {
       wash: ['#08101F', '#0A1428', '#0C1830', '#0E1B36'],
       mono: STORM_BAR,
       bar: STORM_BAR,
+      hit: null,
+      keys: null,
+    },
+  },
+  // `frost` — FREEZE's lake: a white-cyan of new ice, the text in a deep cold teal. The keys
+  // are blocks of ice: pale and rounded, warming to a deep water-blue at their top. Paler and
+  // whiter than `glass`, MIRROR's silver-blue, so the two never pass for each other.
+  frost: {
+    tokens: FROST_TOKENS,
+    inks: {
+      score: '#0E7C9A',
+      keyRim: 'rgba(255, 255, 255, 0.95)',
+      statusBar: 'dark',
+      ground: '#EAF6FB',
+      ink: '#0F3347',
+      wash: ['#E3F3FA', '#EAF6FB', '#F0F9FD', '#E6F4FA'],
+      mono: null,
+      bar: null,
+      hit: null,
+      keys: {
+        low: '#F7FCFF',
+        high: '#A6D4E6',
+        text: '#0F3347',
+        peakText: '#EAF6FB',
+        peak: ['#0F3347', '#1E8FB3'],
+        radius: 14,
+        foot: 3,
+      },
+    },
+  },
+  // `frostBar` — the rows above a `frost` dial: **monochrome** in the deep water-blue, so the
+  // name, NINE, the hearts, the figures and the bests are one colour. Worn from the first
+  // frame of the run; see `OPENING_BAR_WAITS`.
+  frostBar: {
+    tokens: {
+      ...FROST_TOKENS,
+      '--color-dim': FROST_BAR,
+      '--color-primary': FROST_BAR,
+      '--color-strong': FROST_BAR,
+      '--color-score': FROST_BAR,
+      '--color-fortune': FROST_BAR,
+      '--color-factor': FROST_BAR,
+    },
+    inks: {
+      score: FROST_BAR,
+      keyRim: 'transparent',
+      statusBar: 'dark',
+      ground: '#EAF6FB',
+      ink: FROST_BAR,
+      wash: ['#E3F3FA', '#EAF6FB', '#F0F9FD', '#E6F4FA'],
+      mono: FROST_BAR,
+      bar: FROST_BAR,
       hit: null,
       keys: null,
     },
@@ -689,4 +760,17 @@ export const STORM = {
   waterBack: 'rgba(36, 92, 168, 0.55)',
   water: 'rgba(58, 128, 214, 0.5)',
   splash: 'rgba(200, 224, 255, 0.9)',
+} as const
+
+// FREEZE's snow globe (`components/game/openings/frost-creep.tsx`, `snow.tsx`). Ice is white
+// at its edge and a cold cyan in its body; snow is white with a cold edge, so a flake reads
+// on the pale ground too.
+export const FROST = {
+  rim: '#F4FBFF',
+  body: '#BFE6F5',
+  flake: '#FFFFFF',
+  flakeEdge: '#9CCBE0',
+  driftBack: '#D4EAF4',
+  drift: '#FFFFFF',
+  driftEdge: '#A9D3E6',
 } as const

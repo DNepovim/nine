@@ -4,6 +4,11 @@ import { View } from 'react-native'
 import type { SharedValue } from 'react-native-reanimated'
 
 import {
+  FrostCreep,
+  FrostRemains,
+  FrostUnder,
+} from '@/components/game/openings/frost-creep'
+import {
   LightsOut,
   LightsOutPull,
   LightsOutRemains,
@@ -44,6 +49,7 @@ const OPENINGS = {
   terminal: Terminal,
   passingEdge: PassingEdge,
   stormFront: StormFront,
+  frostCreep: FrostCreep,
 } as const satisfies Record<OpeningKind, ComponentType<OpeningSceneProps>>
 
 type Pull = ReturnType<typeof useOpening>['pull']
@@ -77,6 +83,7 @@ const REMAINS: Record<
   terminal: null,
   passingEdge: { Drawing: PassingEdgeRemains, Over: MirrorDamage },
   stormFront: { Drawing: StormRemains, Over: null },
+  frostCreep: { Drawing: FrostRemains, Over: null },
 }
 
 const remainsOf = (kind: OpeningKind | null) => (kind === null ? null : REMAINS[kind])
@@ -108,6 +115,7 @@ const UNDER: Record<OpeningKind, ComponentType<{ sweep: SharedValue<number> }> |
   terminal: null,
   passingEdge: PassingEdgeUnder,
   stormFront: StormUnder,
+  frostCreep: FrostUnder,
 }
 
 export function OpeningUnder({

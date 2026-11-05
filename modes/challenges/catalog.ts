@@ -698,6 +698,10 @@ const SCRAMBLE: ChallengeSpec = {
 //   - **The streak is `optimal`**, a challenge's default, and its sniper is Accuracy's: the
 //     exact route is the one worked out in the head rather than found by watching.
 //
+// It is played in a snow globe: frost at the screen's edges and snow falling through the run,
+// settling into a drift along the foot that grows with it, and thrown up again by a shake of the
+// phone. Drawing only — the freeze is the dial's, as it always was.
+//
 // Its own dial id rather than the nine's, as SCRAMBLE's: two dials that behave differently
 // never share a name.
 const FREEZE: ChallengeSpec = {
@@ -708,6 +712,10 @@ const FREEZE: ChallengeSpec = {
   code: msg`FRZ`,
   description: msg`The sum only moves when you hit.`,
   mark: 'snowflake',
+  // A cold snap: frost comes down the plain screen to open the run and stays at its edges,
+  // with snow falling over it. See `OpeningKind` and `SchemeKind`.
+  opening: 'frostCreep',
+  scheme: 'frost',
   // No `shot`: Accuracy's sniper, inherited — the streak is Accuracy's own.
   //
   // Every line about the cold, the stillness and keeping a cool head.

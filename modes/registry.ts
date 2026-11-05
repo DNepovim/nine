@@ -213,6 +213,8 @@ export const OPENING_STARTS_LIT = {
   passingEdge: true,
   // The rain is already falling on the first frame; the flash is the scene.
   stormFront: false,
+  // The frost comes down a screen that is plain until it reaches the foot.
+  frostCreep: true,
 } as const satisfies Record<OpeningKind, boolean>
 
 // What the rows above the dial wear under each **scheme**: the same one, except that `glass`
@@ -222,6 +224,8 @@ export const SCHEME_BAR = {
   dark: 'dark',
   storm: 'stormBar',
   stormBar: 'stormBar',
+  frost: 'frostBar',
+  frostBar: 'frostBar',
   dos: 'dos',
   glass: 'glassBar',
   glassBar: 'glassBar',
@@ -236,6 +240,8 @@ export const OPENING_BAR_WAITS = {
   terminal: true,
   passingEdge: false,
   stormFront: false,
+  // The keys and rows are plain under the frost's edge, and turn with the screen.
+  frostCreep: true,
 } as const satisfies Record<OpeningKind, boolean>
 
 // How this mode's targets are drawn: its own form, or `discs`.
