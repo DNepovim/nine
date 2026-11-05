@@ -6,6 +6,7 @@ import {
   useRef,
   useState,
 } from 'react'
+import { AppState } from 'react-native'
 
 import { useOpenSessions } from '@/hooks/use-open-sessions'
 import { usePhoenixWorn } from '@/hooks/use-phoenix-request'
@@ -119,11 +120,19 @@ export function useChampions(
     }
   }, [load])
 
+  // One settle timer per session, kept for as long as the hook lives. Keyed by id and
+  // never cancelled when the session leaves `sessions`: the list holds only sessions still
+  // open, so a refresh landing between a close and its settle (a last score posted in the
+  // grace, a rename) drops the session — and a timer owned by the list would be dropped
+  // with it, leaving the previous winner's mark on the screen until the next launch.
+  const settleTimers = useRef(new Map<string, ReturnType<typeof setTimeout>>())
+
   useEffect(() => {
     const now = Date.now()
-    const timers = sessions
-      .filter((session) => session.closesAt > now)
-      .map((session) =>
+    for (const session of sessions) {
+      if (session.closesAt <= now || settleTimers.current.has(session.id)) continue
+      settleTimers.current.set(
+        session.id,
         setTimeout(
           () => {
             void load()
@@ -131,10 +140,27 @@ export function useChampions(
           session.closesAt - now + SESSION_SETTLE_MS,
         ),
       )
-    return () => {
-      for (const timer of timers) clearTimeout(timer)
     }
   }, [sessions, load])
+
+  useEffect(() => {
+    const timers = settleTimers.current
+    return () => {
+      for (const timer of timers.values()) clearTimeout(timer)
+      timers.clear()
+    }
+  }, [])
+
+  // Back from the background, ask again: a phone asleep through a close or a rival's
+  // record runs no timers and hears no channel.
+  useEffect(() => {
+    const subscription = AppState.addEventListener('change', (next) => {
+      if (next === 'active') void load()
+    })
+    return () => {
+      subscription.remove()
+    }
+  }, [load])
 
   // The dev sidebar's phoenix, laid over the server's answer.
   //
