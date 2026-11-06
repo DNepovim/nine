@@ -467,7 +467,7 @@ msgstr "A coach line says when a move was wasted, and what a hit cost."
 msgid "A code is six digits."
 msgstr "A code is six digits."
 
-#: constants/news.ts:162
+#: constants/news.ts:181
 msgid "A fresh face"
 msgstr "A fresh face"
 
@@ -507,7 +507,7 @@ msgstr "A quiet week, and [A] had all [P] days of it to themselves."
 msgid "A quiet week. Only [P] days saw a board taken at all, and [A] took [N] of them."
 msgstr "A quiet week. Only [P] days saw a board taken at all, and [A] took [N] of them."
 
-#: constants/news.ts:91
+#: constants/news.ts:110
 msgid "A record is only ever lent — someone takes it back eventually. Achievements are the other kind: achieved once and yours for good, measured against nobody but yourself. Some are waiting where you would not think to look."
 msgstr "A record is only ever lent — someone takes it back eventually. Achievements are the other kind: achieved once and yours for good, measured against nobody but yourself. Some are waiting where you would not think to look."
 
@@ -539,7 +539,7 @@ msgstr "A slow hit breaks the streak; let a target run out and you lose a life."
 msgid "A stack of them nobody is told about until they happen."
 msgstr "A stack of them nobody is told about until they happen."
 
-#: constants/news.ts:198
+#: constants/news.ts:217
 msgid "A thin line above the game now shows your best on this board next to today's, this week's and the all-time high.\n"
 "\n"
 "It stays out of the way for the first few seconds of a run."
@@ -648,7 +648,7 @@ msgstr "ADD TO HOME SCREEN"
 msgid "ADD YOUR EMAIL"
 msgstr "ADD YOUR EMAIL"
 
-#: constants/news.ts:44
+#: constants/news.ts:63
 msgid "Add your email and a lost phone stops meaning a lost career. New device, fresh install, cleared browser — type that address and your name, your scores and your medals come back to you. We only ever use it for that, and we send nothing else."
 msgstr "Add your email and a lost phone stops meaning a lost career. New device, fresh install, cleared browser — type that address and your name, your scores and your medals come back to you. We only ever use it for that, and we send nothing else."
 
@@ -850,7 +850,7 @@ msgstr "Barely a week — [P] days played. [A] had [N] of those to themselves."
 msgid "Barely a week — [P] days, and all of them [A]’s."
 msgstr "Barely a week — [P] days, and all of them [A]’s."
 
-#: constants/news.ts:151
+#: constants/news.ts:170
 msgid "Beat a record and the game makes a fuss about it."
 msgstr "Beat a record and the game makes a fuss about it."
 
@@ -876,7 +876,7 @@ msgstr "BEST"
 msgid "best = the player's best run of the session. Paid 10 minutes after the close, automatically."
 msgstr "best = the player's best run of the session. Paid 10 minutes after the close, automatically."
 
-#: constants/news.ts:197
+#: constants/news.ts:216
 msgid "Best scores, up top"
 msgstr "Best scores, up top"
 
@@ -928,6 +928,10 @@ msgstr "BOTTOM LEFT"
 #: constants/dial-hints.ts:75
 msgid "BOTTOM RIGHT"
 msgstr "BOTTOM RIGHT"
+
+#: constants/news.ts:18
+msgid "Brand new challenges"
+msgstr "Brand new challenges"
 
 #: components/overlays/admin-knowledge.tsx:276
 msgid "Builds: Accuracy presses = par; Speed clock ≥ {fastHit}. Breaks: a hit that does not, or any target expiring."
@@ -990,6 +994,10 @@ msgstr "CHALLENGE CLOSES IN"
 #: components/overlays/player-profile-overlay.tsx:622
 msgid "CHALLENGES"
 msgstr "CHALLENGES"
+
+#: constants/news.ts:19
+msgid "Challenges now play in worlds of their own: a thunderstorm, falling snow, a heart monitor, an old terminal. Look for the newest one at the top of the start screen."
+msgstr "Challenges now play in worlds of their own: a thunderstorm, falling snow, a heart monitor, an old terminal. Look for the newest one at the top of the start screen."
 
 #: components/overlays/how-to-play-overlay.tsx:45
 msgid "CHAMPIONS"
@@ -1162,7 +1170,7 @@ msgstr "Do something nobody thought to ask for."
 msgid "DONE"
 msgstr "DONE"
 
-#: constants/news.ts:20
+#: constants/news.ts:39
 msgid "Double-tap where the targets appear to pause. Hold there for three seconds to start the run over."
 msgstr "Double-tap where the targets appear to pause. Hold there for three seconds to start the run over."
 
@@ -1273,7 +1281,7 @@ msgstr "Every number drifts. Catch it before it moves."
 msgid "Every row you lose here, you lost first on a board."
 msgstr "Every row you lose here, you lost first on a board."
 
-#: constants/news.ts:32
+#: constants/news.ts:51
 msgid "Every so often a challenge appears at the top of the start screen: a game of Nine with the rules changed, on for a while and then gone. Everyone plays the same one, and finishing in the top three wins a medal nothing can take back."
 msgstr "Every so often a challenge appears at the top of the start screen: a game of Nine with the rules changed, on for a while and then gone. Everyone plays the same one, and finishing in the top three wins a medal nothing can take back."
 
@@ -1951,7 +1959,7 @@ msgstr "Mar"
 msgid "MARCH"
 msgstr "MARCH"
 
-#: constants/news.ts:114
+#: constants/news.ts:133
 msgid "Marks for the hardest boards"
 msgstr "Marks for the hardest boards"
 
@@ -2029,7 +2037,7 @@ msgstr "More of this is theirs. Not much more."
 msgid "More of this is yours than theirs. Not all of it."
 msgstr "More of this is yours than theirs. Not all of it."
 
-#: constants/news.ts:76
+#: constants/news.ts:95
 msgid "More to find"
 msgstr "More to find"
 
@@ -2066,11 +2074,11 @@ msgstr "My best at Nine is {bestScore} — {board}. Think you can beat it?"
 msgid "NAMED"
 msgstr "NAMED"
 
-#: constants/news.ts:43
+#: constants/news.ts:62
 msgid "Never lose your scores"
 msgstr "Never lose your scores"
 
-#: constants/news.ts:174
+#: constants/news.ts:193
 msgid "Never miss an update"
 msgstr "Never miss an update"
 
@@ -2115,7 +2123,7 @@ msgstr "NIGHT SHIFT"
 msgid "Nine buttons, one number to hit. Come take a run at it."
 msgstr "Nine buttons, one number to hit. Come take a run at it."
 
-#: constants/news.ts:163
+#: constants/news.ts:182
 msgid "Nine has a new look, and it goes all the way down.\n"
 "\n"
 "- The icon now carries the same **blue-to-red spectrum** as the splash\n"
@@ -2326,7 +2334,7 @@ msgstr "Not rated"
 msgid "NOT SYNCED"
 msgstr "NOT SYNCED"
 
-#: constants/news.ts:31
+#: constants/news.ts:50
 msgid "Not the same game twice"
 msgstr "Not the same game twice"
 
@@ -2498,7 +2506,7 @@ msgstr "One slip and it's over."
 msgid "ONE STROKE"
 msgstr "ONE STROKE"
 
-#: constants/news.ts:55
+#: constants/news.ts:74
 msgid "One sweep, three keys"
 msgstr "One sweep, three keys"
 
@@ -2581,7 +2589,7 @@ msgstr "PALINDROME"
 msgid "PASTE FROM CLIPBOARD"
 msgstr "PASTE FROM CLIPBOARD"
 
-#: constants/news.ts:19
+#: constants/news.ts:38
 msgid "Pause without reaching"
 msgstr "Pause without reaching"
 
@@ -2797,7 +2805,7 @@ msgstr "READY"
 msgid "Ready to play for real?"
 msgstr "Ready to play for real?"
 
-#: constants/news.ts:150
+#: constants/news.ts:169
 msgid "Records, celebrated"
 msgstr "Records, celebrated"
 
@@ -3035,7 +3043,7 @@ msgstr "Secrets"
 msgid "SECRETS"
 msgstr "SECRETS"
 
-#: constants/news.ts:126
+#: constants/news.ts:145
 msgid "See the better way"
 msgstr "See the better way"
 
@@ -3194,15 +3202,15 @@ msgstr "SPEED"
 msgid "Speed — how much time was left on the ring. Land it with most of the ring intact and it pays a bonus on top."
 msgstr "Speed — how much time was left on the ring. Land it with most of the ring intact and it pays a bonus on top."
 
-#: constants/news.ts:213
+#: constants/news.ts:232
 msgid "Speed combos, rebuilt"
 msgstr "Speed combos, rebuilt"
 
-#: constants/news.ts:206
+#: constants/news.ts:225
 msgid "Speed eases off"
 msgstr "Speed eases off"
 
-#: constants/news.ts:207
+#: constants/news.ts:226
 msgid "Speed mode was brutal. Now it is merely fast — about half again as long on every target."
 msgstr "Speed mode was brutal. Now it is merely fast — about half again as long on every target."
 
@@ -3222,7 +3230,7 @@ msgstr "Speed: ring = ramp(ring), gap = ring ÷ 3. Accuracy: ring fixed, gap = r
 msgid "Spend half an hour in Trainee without leaving."
 msgstr "Spend half an hour in Trainee without leaving."
 
-#: constants/news.ts:185
+#: constants/news.ts:204
 msgid "Spot your nines"
 msgstr "Spot your nines"
 
@@ -3347,11 +3355,11 @@ msgstr "Take every target while most of its ring is still full."
 msgid "Take first place on a board."
 msgstr "Take first place on a board."
 
-#: constants/news.ts:115
+#: constants/news.ts:134
 msgid "Take the all-time record on a mode’s Extreme board and you carry its mark beside your name everywhere — an owl for Accuracy, an eagle for Speed, a crown for both. Take one and the game over screen celebrates it properly."
 msgstr "Take the all-time record on a mode’s Extreme board and you carry its mark beside your name everywhere — an owl for Accuracy, an eagle for Speed, a crown for both. Take one and the game over screen celebrates it properly."
 
-#: constants/news.ts:127
+#: constants/news.ts:146
 msgid "Take the long road to a target and Trainee now shows you the short one — the keys that would have done it, in the order to press them."
 msgstr "Take the long road to a target and Trainee now shows you the short one — the keys that would have done it, in the order to press them."
 
@@ -3377,7 +3385,7 @@ msgstr "TAKEN BY <0/>"
 msgid "TAKEN IN THE LAST {HISTORY_DAYS} DAYS"
 msgstr "TAKEN IN THE LAST {HISTORY_DAYS} DAYS"
 
-#: constants/news.ts:68
+#: constants/news.ts:87
 msgid "Tap any name — on a board, in a room, on the winners line — and their profile opens: the mark they carry, what they have played, the medals they hold and the records they once held. A name on a leaderboard is a player now, not a row."
 msgstr "Tap any name — on a board, in a room, on the winners line — and their profile opens: the mark they carry, what they have played, the medals they hold and the records they once held. A name on a leaderboard is a player now, not a row."
 
@@ -3413,7 +3421,7 @@ msgstr "Targets arrive faster the longer you last, but each still gets its full 
 msgid "targets met"
 msgstr "targets met"
 
-#: constants/news.ts:102
+#: constants/news.ts:121
 msgid "Tell me what you think"
 msgstr "Tell me what you think"
 
@@ -3497,7 +3505,7 @@ msgstr "The dial has fallen on its side."
 msgid "The dial maxes out at 324, every button on 9. Worth remembering — it places a target in the range the moment you read it."
 msgstr "The dial maxes out at 324, every button on 9. Worth remembering — it places a target in the range the moment you read it."
 
-#: constants/news.ts:186
+#: constants/news.ts:205
 msgid "The dial tells you more at a glance.\n"
 "\n"
 "- Buttons still brighten as you dial higher\n"
@@ -3626,11 +3634,11 @@ msgstr "The week went everywhere. [A] took the most of it with [N] days, which w
 msgid "THE WINDOW HAS CLOSED"
 msgstr "THE WINDOW HAS CLOSED"
 
-#: constants/news.ts:77
+#: constants/news.ts:96
 msgid "There are a dozen more achievements to stumble into now — a couple for the very best runs, and rather more for the runs that went nowhere at all. Profiles count them too, so you can see how many someone else has found."
 msgstr "There are a dozen more achievements to stumble into now — a couple for the very best runs, and rather more for the runs that went nowhere at all. Profiles count them too, so you can see how many someone else has found."
 
-#: constants/news.ts:103
+#: constants/news.ts:122
 msgid "There is a little FEEDBACK tab tucked into the bottom-right corner, on every screen except a live run. Anything goes — what broke, what annoyed you, what you wish the game did. It lands straight with the person who makes Nine, and it is read."
 msgstr "There is a little FEEDBACK tab tucked into the bottom-right corner, on every screen except a live run. Anything goes — what broke, what annoyed you, what you wish the game did. It lands straight with the person who makes Nine, and it is read."
 
@@ -3674,7 +3682,7 @@ msgstr "They lead. Nothing about that is permanent."
 msgid "They own this table. You are a guest on it."
 msgstr "They own this table. You are a guest on it."
 
-#: constants/news.ts:90
+#: constants/news.ts:109
 msgid "Things you keep"
 msgstr "Things you keep"
 
@@ -3694,7 +3702,7 @@ msgstr "This app can't add to your home screen. Open nine in Chrome and you can.
 msgid "This app can't add to your home screen. Open nine in Safari and you can. Full screen, no browser bar, and it keeps working offline."
 msgstr "This app can't add to your home screen. Open nine in Safari and you can. Full screen, no browser bar, and it keeps working offline."
 
-#: constants/news.ts:175
+#: constants/news.ts:194
 msgid "This is how Nine will tell you what changed.\n"
 "\n"
 "- New things show up here next time you open the app\n"
@@ -3812,7 +3820,7 @@ msgstr "TOUCH GRASS"
 msgid "TRAINEE"
 msgstr "TRAINEE"
 
-#: constants/news.ts:138
+#: constants/news.ts:157
 msgid "Trainee coaches you"
 msgstr "Trainee coaches you"
 
@@ -3820,7 +3828,7 @@ msgstr "Trainee coaches you"
 msgid "Trainee has the longest clock in the game and no lives to lose — use it to learn how the weights behave before chasing scores."
 msgstr "Trainee has the longest clock in the game and no lives to lose — use it to learn how the weights behave before chasing scores."
 
-#: constants/news.ts:139
+#: constants/news.ts:158
 msgid "Trainee now says when a move went to waste, and what a hit cost."
 msgstr "Trainee now says when a move went to waste, and what a hit cost."
 
@@ -3985,6 +3993,10 @@ msgstr "WHAT’S ON YOUR MIND?"
 msgid "When the red reaches you it drags you back one crossroad — and the ways you find there are the ones you left."
 msgstr "When the red reaches you it drags you back one crossroad — and the ways you find there are the ones you left."
 
+#: constants/news.ts:26
+msgid "When two challenges are waiting, vote for the one you want to open first. Find the vote after rating a challenge, or on the start screen."
+msgstr "When two challenges are waiting, vote for the one you want to open first. Find the vote after rating a challenge, or on the start screen."
+
 #: components/overlays/email-dialog.tsx:16
 msgid "WHERE CAN WE REACH YOU?"
 msgstr "WHERE CAN WE REACH YOU?"
@@ -4005,7 +4017,7 @@ msgstr "WHO IS BETTER?"
 msgid "WHO IS IT?"
 msgstr "WHO IS IT?"
 
-#: constants/news.ts:67
+#: constants/news.ts:86
 msgid "Who is that, anyway"
 msgstr "Who is that, anyway"
 
@@ -4097,6 +4109,10 @@ msgstr "You have the better of this, and they know it."
 msgid "You lead by the width of one row."
 msgstr "You lead by the width of one row."
 
+#: constants/news.ts:25
+msgid "You pick the next one"
+msgstr "You pick the next one"
+
 #: lib/compare-lines.ts:33
 msgid "You took the room and left them the door."
 msgstr "You took the room and left them the door."
@@ -4122,7 +4138,7 @@ msgstr "YOUR"
 msgid "YOUR CHOICE"
 msgstr "YOUR CHOICE"
 
-#: constants/news.ts:56
+#: constants/news.ts:75
 msgid "Your finger no longer has to come off the glass. Drag across the dial and every button you pass through takes the direction you left it by — one sweep along a row is three keys set."
 msgstr "Your finger no longer has to come off the glass. Drag across the dial and every button you pass through takes the direction you left it by — one sweep along a row is three keys set."
 
@@ -4142,7 +4158,7 @@ msgstr "Your profile could not be loaded."
 msgid "YOUR SCORE"
 msgstr "YOUR SCORE"
 
-#: constants/news.ts:214
+#: constants/news.ts:233
 msgid "Your Speed combo now grows on every quick hit instead of waiting for a clear board — but a slow one breaks it.\n"
 "\n"
 "Land a target with most of its ring still full and it pays extra."

@@ -9,6 +9,25 @@ import type { Release } from '@/types/news'
 // different announcement or players who already saw the old one will miss it.
 export const RELEASES: Release[] = [
   {
+    date: '2026-11-06',
+    items: [
+      {
+        id: 'challenges-new-worlds',
+        icon: 'sparkles',
+        accent: '#FF8C00',
+        title: msg`Brand new challenges`,
+        body: msg`Challenges now play in worlds of their own: a thunderstorm, falling snow, a heart monitor, an old terminal. Look for the newest one at the top of the start screen.`,
+      },
+      {
+        id: 'challenge-vote',
+        icon: 'thumbs-up-outline',
+        accent: '#4C7EFF',
+        title: msg`You pick the next one`,
+        body: msg`When two challenges are waiting, vote for the one you want to open first. Find the vote after rating a challenge, or on the start screen.`,
+      },
+    ],
+  },
+  {
     date: '2026-10-31',
     items: [
       {
