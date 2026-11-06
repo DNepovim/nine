@@ -33,16 +33,24 @@ import { cn } from '@/lib/cn'
 // look like five products, and it put the brightest thing on the screen furthest from
 // whatever the reader came to change. The colour that is left on these screens is on the
 // challenge names in the sessions list, where the hue is what the row is recognised by.
-function AdminTitle({ title }: { title: string }) {
-  return (
+function AdminTitle({ title, action }: { title: string; action?: ReactNode }) {
+  const text = (
     <Text selectable={false} className={cn(TYPE.screenTitle, 'mb-3 text-primary')}>
       {title}
     </Text>
+  )
+  if (action === undefined) return text
+  return (
+    <View className="flex-row items-start justify-between gap-3">
+      {text}
+      <View className="pt-2">{action}</View>
+    </View>
   )
 }
 
 export function AdminScreen({
   title,
+  action,
   heading,
   wash,
   error = null,
@@ -51,6 +59,9 @@ export function AdminScreen({
 }: {
   // The screen's own name, already translated.
   title?: string
+  // A control at the right end of the title row — the analytics screen's REFRESH. Only
+  // beside a `title`; a screen with a `heading` of its own lays that out itself.
+  action?: ReactNode
   // A heading a detail screen builds for itself, where what names the screen is a
   // player's nickname or an editable field rather than a word. Exactly one of this and
   // `title` is passed.
@@ -77,7 +88,7 @@ export function AdminScreen({
           className="absolute inset-0"
         />
       )}
-      {title !== undefined && <AdminTitle title={title} />}
+      {title !== undefined && <AdminTitle title={title} action={action} />}
       {heading}
       {error !== null && (
         <Text selectable={false} className={cn(TYPE.value, 'mb-2 text-red-500')}>

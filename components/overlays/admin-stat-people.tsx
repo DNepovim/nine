@@ -11,6 +11,7 @@ import { EMPTY_IDS, usePlayerFactors } from '@/hooks/use-player-factors'
 import { linesFor, type StatTileKey } from '@/lib/admin/stat-people'
 import { loadStatsPeople, type StatsPerson } from '@/lib/admin/stats'
 import { cn } from '@/lib/cn'
+import { formatShortDay } from '@/lib/format-date'
 import { type StatsWindow } from '@/lib/stats-window'
 
 // The figure column's caption, by what the rows carry. Not translated, as no column label
@@ -23,6 +24,21 @@ const FIGURE_LABEL: Record<StatTileKey, string> = {
   minutes: 'MIN',
   hits: 'HITS',
 }
+
+// The date columns' captions, by tile, one per day the list shows — see `TILES` in
+// `lib/admin/stat-people`. Not translated, like the others.
+const DATE_LABELS: Record<StatTileKey, readonly string[]> = {
+  joined: ['JOINED'],
+  named: ['JOINED', 'NAMED'],
+  played: ['LAST RUN'],
+  runs: ['LAST RUN'],
+  minutes: ['LAST RUN'],
+  hits: ['LAST RUN'],
+}
+
+// A day as the list prints it, or a dash where it was never kept.
+const dayOf = (iso: string | null | undefined): string =>
+  iso === null || iso === undefined ? '—' : formatShortDay(iso)
 
 // A row's figure as it is printed. Minutes keep one decimal: a list of short runs rounded
 // to whole minutes reads as a column of noughts under a tile that says four. The tile is
@@ -80,6 +96,11 @@ export function AdminStatPeople({
 
   const columns: readonly AdminColumn[] = [
     { label: 'PLAYER', tone: 'name' },
+    ...DATE_LABELS[tile].map((label): AdminColumn => ({
+      label,
+      width: 58,
+      align: 'right',
+    })),
     { label: FIGURE_LABEL[tile], width: 56, align: 'right', tone: 'figure' },
   ]
 
@@ -103,6 +124,9 @@ export function AdminStatPeople({
                 </Text>
               ) : (
                 <NameCell person={line} factors={factorsOf(line.userId)} me={false} />
+              ),
+              ...DATE_LABELS[tile].map((_, i) =>
+                line.userId === null ? '' : dayOf(line.dates[i]),
               ),
               figureOf(tile, line.figure),
             ],

@@ -4,6 +4,7 @@ import { Trans, useLingui } from '@lingui/react/macro'
 import { useEffect, useState } from 'react'
 import { Linking, ScrollView, Text, View } from 'react-native'
 
+import { LinkButton } from '@/components/link-button'
 import { DayBars, MeterRow, StatTile } from '@/components/overlays/admin-chart'
 import { AdminScreen } from '@/components/overlays/admin-screen'
 import { AdminSegments } from '@/components/overlays/admin-segments'
@@ -99,6 +100,9 @@ export function AdminStats({
   const [window, setWindow] = useState<StatsWindow>('today')
   const [stats, setStats] = useState<AdminStats | null>(null)
   const [loading, setLoading] = useState(true)
+  // Bumped by REFRESH to read the same window again; `refreshing` is the read in flight.
+  const [reads, setReads] = useState(0)
+  const [refreshing, setRefreshing] = useState(false)
   const [error, setError] = useState<string | null>(null)
   // The tile whose players are open. One at a time.
   const [opened, setOpened] = useState<StatTileKey | null>(null)
@@ -116,8 +120,9 @@ export function AdminStats({
       if (res.stats !== null) setStats(res.stats)
       setError(res.error)
       setLoading(false)
+      setRefreshing(false)
     })()
-  }, [window])
+  }, [window, reads])
 
   const peak =
     stats === null ? 0 : stats.series.reduce((high, day) => Math.max(high, day.runs), 0)
@@ -130,6 +135,18 @@ export function AdminStats({
     <AdminScreen
       error={error}
       title={t(TITLE)}
+      action={
+        <LinkButton
+          id="admin.refresh"
+          icon="refresh-outline"
+          label={<Trans>REFRESH</Trans>}
+          disabled={refreshing}
+          onPress={() => {
+            setRefreshing(true)
+            setReads((n) => n + 1)
+          }}
+        />
+      }
       footer={
         <View className="gap-2">
           <PrimaryButton

@@ -155,6 +155,11 @@ export type StatsPerson = {
   runs: number
   hits: number
   elapsedMs: number
+  // Bare Prague days ('2026-11-06'). `namedOn` is null for a profile named before the day
+  // was kept, `lastPlayedOn` for one with no run in the window.
+  joinedOn: string
+  namedOn: string | null
+  lastPlayedOn: string | null
 }
 
 type StatsPersonPayload = {
@@ -164,6 +169,9 @@ type StatsPersonPayload = {
   runs: number
   hits: number
   elapsed_ms: number
+  joined_on: string
+  named_on: string | null
+  last_played_on: string | null
 }
 
 export async function loadStatsPeople(
@@ -182,6 +190,9 @@ export async function loadStatsPeople(
       runs: row.runs,
       hits: row.hits,
       elapsedMs: row.elapsed_ms,
+      joinedOn: row.joined_on,
+      namedOn: row.named_on,
+      lastPlayedOn: row.last_played_on,
     })),
     error: null,
   }

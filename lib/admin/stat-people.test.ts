@@ -10,6 +10,9 @@ const person = (over: Partial<StatsPerson>): StatsPerson => ({
   runs: 0,
   hits: 0,
   elapsedMs: 0,
+  joinedOn: '2026-11-01',
+  namedOn: null,
+  lastPlayedOn: null,
   ...over,
 })
 
@@ -21,6 +24,9 @@ const people: StatsPerson[] = [
     runs: 2,
     hits: 30,
     elapsedMs: 90_000,
+    joinedOn: '2026-11-02',
+    namedOn: '2026-11-03',
+    lastPlayedOn: '2026-11-05',
   }),
   person({ userId: 'b', nickname: 'BO', runs: 5, hits: 10, elapsedMs: 30_000 }),
   person({ userId: 'c', joined: true }),
@@ -30,9 +36,19 @@ const people: StatsPerson[] = [
 describe('linesFor', () => {
   it('lists who joined, carrying their runs, with the unnamed folded in last', () => {
     expect(linesFor('joined', people)).toEqual([
-      { userId: 'a', nickname: 'ADA', count: 1, figure: 2 },
-      { userId: null, nickname: null, count: 2, figure: 1 },
+      { userId: 'a', nickname: 'ADA', count: 1, figure: 2, dates: ['2026-11-02'] },
+      { userId: null, nickname: null, count: 2, figure: 1, dates: [] },
     ])
+  })
+
+  it('shows when they joined and when they named themselves on NAMED', () => {
+    expect(linesFor('named', people)[0]?.dates).toEqual(['2026-11-02', '2026-11-03'])
+  })
+
+  it('shows the last day played on the run tiles', () => {
+    expect(linesFor('played', people).find((line) => line.userId === 'a')?.dates).toEqual(
+      ['2026-11-05'],
+    )
   })
 
   it('counts only the named among the joined on NAMED', () => {
