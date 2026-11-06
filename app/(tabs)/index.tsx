@@ -3379,7 +3379,7 @@ export default function GameScreen() {
                   summary={whatsNew.rating.asking}
                   onSend={whatsNew.rating.send}
                   onRemark={whatsNew.rating.remark}
-                  options={nextVote.options}
+                  options={nextVote.options.filter((option) => option.canVote)}
                   onVote={nextVote.vote}
                   onDismiss={whatsNew.rating.done}
                 />

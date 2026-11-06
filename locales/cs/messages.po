@@ -325,7 +325,7 @@ msgid "{0, plural, one {# RATING} other {# RATINGS}}"
 msgstr "{0, plural, one {# HODNOCENÍ} few {# HODNOCENÍ} many {# HODNOCENÍ} other {# HODNOCENÍ}}"
 
 #. placeholder {0}: option.votes
-#: components/overlays/next-vote-results-dialog.tsx:55
+#: components/overlays/next-vote-results-dialog.tsx:56
 msgid "{0, plural, one {# VOTE} other {# VOTES}}"
 msgstr "{0, plural, one {# HLAS} few {# HLASY} many {# HLASU} other {# HLASŮ}}"
 
@@ -387,11 +387,11 @@ msgstr "{sessions, plural, one {# TERMÍN} few {# TERMÍNY} many {# TERMÍNU} ot
 msgid "+{0} TO YOUR FORTUNE"
 msgstr "+{0} K TVÉMU JMĚNÍ"
 
-#: components/overlays/challenge-card.tsx:189
+#: components/overlays/challenge-card.tsx:193
 msgid "<0/> challenge starts in"
 msgstr "<0/> začíná za"
 
-#: components/overlays/challenge-card.tsx:315
+#: components/overlays/challenge-card.tsx:319
 msgid "<0/> leads with <1>{leaderFigure}</1>"
 msgstr "<0/> vede s <1>{leaderFigure}</1>"
 
@@ -975,7 +975,7 @@ msgstr "Navazuj zásahy na sebe — série násobí body ×2 → ×4 → ×8. P�
 
 #: components/overlays/admin-session.tsx:207
 #: components/overlays/admin-session.tsx:218
-#: components/overlays/challenge-card.tsx:237
+#: components/overlays/challenge-card.tsx:241
 #: components/overlays/challenge-modal.tsx:124
 #: modes/challenges/define.ts:99
 msgid "CHALLENGE"
@@ -1041,7 +1041,7 @@ msgstr "čas = zbývající čas ÷ kruh"
 #: components/overlays/email-code-modal.tsx:532
 #: components/overlays/modal-card.tsx:267
 #: components/overlays/next-vote-dialog.tsx:36
-#: components/overlays/next-vote-results-dialog.tsx:64
+#: components/overlays/next-vote-results-dialog.tsx:73
 #: components/overlays/share-modal.tsx:125
 msgid "CLOSE"
 msgstr "ZAVŘÍT"
@@ -1537,7 +1537,7 @@ msgstr "Stažení z první křižovatky znamená pád do jícnu a konec hry."
 msgid "GIVE MORE TIME"
 msgstr "PŘIDAT ČAS"
 
-#: components/overlays/challenge-card.tsx:350
+#: components/overlays/challenge-card.tsx:354
 msgid "Given more time."
 msgstr "Dostala víc času."
 
@@ -2253,7 +2253,7 @@ msgstr "[BOARD] nikdo hráči [W] ani jednou nesebral."
 msgid "Nobody got a grip on it — [C] different players took a day of it."
 msgstr "Nikdo ho neuchopil. Různých jmen na jeho dnech: [C]."
 
-#: components/overlays/challenge-card.tsx:295
+#: components/overlays/challenge-card.tsx:299
 msgid "Nobody has played it yet."
 msgstr "Zatím ji nikdo nehrál."
 
@@ -3598,7 +3598,7 @@ msgstr "Tabulka nemá názor. Budete si to muset vyřídit na číselníku."
 msgid "The table leans your way, but it is not nailed down."
 msgstr "Tabulka se kloní k tobě, ale přibitá není."
 
-#: components/overlays/next-vote-results-dialog.tsx:28
+#: components/overlays/next-vote-results-dialog.tsx:29
 msgid "THE VOTE"
 msgstr "HLASOVÁNÍ"
 
@@ -3912,7 +3912,7 @@ msgstr "VESNICE"
 msgid "VISIBILITY"
 msgstr "VIDITELNOST"
 
-#: components/overlays/challenge-card.tsx:150
+#: components/overlays/challenge-card.tsx:154
 msgid "Vote for the next challenge"
 msgstr "Hlasuj pro další výzvu"
 
@@ -4093,6 +4093,10 @@ msgstr "Odvoláváš svůj souhlas. Už se nebudeme dívat na záznamy, abychom 
 msgid "YOU CAME {0}"
 msgstr "SKONČIL JSI {0}."
 
+#: components/overlays/next-vote-results-dialog.tsx:66
+msgid "You can't vote because you didn't play the last challenge."
+msgstr "Hlasovat mohou jen ti, kdo hráli poslední výzvu."
+
 #: lib/winnings-lines.ts:62
 msgid "You finished [DATE] on top of [B] with [S]"
 msgstr "Konec dne [DATE] patřil tobě — [B] se skóre [S]"
@@ -4117,7 +4121,7 @@ msgstr "Tu další vybíráš ty"
 msgid "You took the room and left them the door."
 msgstr "Bereš si celou místnost a soupeři necháváš dveře."
 
-#: components/overlays/challenge-card.tsx:152
+#: components/overlays/challenge-card.tsx:156
 msgid "You voted for <0/> challenge"
 msgstr "Hlasoval jsi pro výzvu <0/>"
 

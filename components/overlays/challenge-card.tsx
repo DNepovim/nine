@@ -50,6 +50,24 @@ const LEADER_FIGURE = {
   (leader: NonNullable<OpenSession['leader']>) => number | string
 >
 
+type VoteProps = {
+  options: readonly VoteOption[]
+  onOpen: () => void
+  onOpenResults: () => void
+}
+
+// What the teaser's vote line needs to know, or null where the teaser is not one of the two
+// on offer. `asking` is whether the player is yet to vote and may: the line then asks and
+// opens the vote; for anyone else it opens the standings, where one who may not vote is
+// told why.
+function voteChoice(vote: VoteProps | undefined, sessionId: string) {
+  const [one, other] = vote?.options ?? []
+  if (vote === undefined || one === undefined || other === undefined) return null
+  if (sessionId !== one.sessionId && sessionId !== other.sessionId) return null
+  const mine = vote.options.find((option) => option.mine)
+  return { ...vote, mine, asking: mine === undefined && one.canVote }
+}
+
 export function ChallengeCard({
   card,
   onPress,
@@ -66,11 +84,7 @@ export function ChallengeCard({
   // **The vote** between the queue's next two challenges, drawn on the teaser only: the
   // sentence asks for a vote or says which way the player voted, and either opens a dialog.
   // Asked for by the intro, which is the only place a teaser stands.
-  vote?: {
-    options: readonly VoteOption[]
-    onOpen: () => void
-    onOpenResults: () => void
-  }
+  vote?: VoteProps
 }) {
   const { t } = useLingui()
   const { state, session } = card
@@ -126,23 +140,18 @@ export function ChallengeCard({
   if (state === 'teaser') {
     // Two options and the teaser is one of them: the next is one or the other, and the
     // clock is the same either way — the first slot is fixed, only who fills it is not.
-    const [one, other] = vote?.options ?? []
-    const choice =
-      one !== undefined && other !== undefined && vote !== undefined
-        ? { one, other, ...vote }
-        : null
-    if (
-      choice !== null &&
-      (session.id === choice.one.sessionId || session.id === choice.other.sessionId)
-    ) {
-      const mine = choice.options.find((option) => option.mine)
+    const choice = voteChoice(vote, session.id)
+    if (choice !== null) {
+      const { mine, asking } = choice
       return (
         // One press target for the sentence and the clock under it, as the plain teaser is.
         // A player who has voted is told which they voted for and taken to the standings;
-        // one who has not is asked, and taken to the vote.
+        // one who has not is asked, and taken to the vote. One who may not vote, because
+        // they did not play the last challenge, is taken to the standings too — where they
+        // are told why.
         <TrackedPressable
-          id={mine === undefined ? 'vote.open' : 'vote.results'}
-          onPress={mine === undefined ? choice.onOpen : choice.onOpenResults}
+          id={asking ? 'vote.open' : 'vote.results'}
+          onPress={asking ? choice.onOpen : choice.onOpenResults}
           className="mx-auto w-full max-w-[270px] items-center gap-1"
         >
           <Text selectable={false} className={cn(TYPE.value, 'text-center text-dim')}>

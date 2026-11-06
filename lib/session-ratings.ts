@@ -39,12 +39,14 @@ export async function remarkSession(
 // ─── The vote ────────────────────────────────────────────────────────────────
 
 // One of the two challenges up for **the vote**: the first two of the queue. `votes` is
-// every player's, `mine` says whether the caller's own vote is on this one.
+// every player's, `mine` says whether the caller's own vote is on this one, and `canVote`
+// whether the caller played the last challenge, which is what a vote takes.
 export type VoteOption = {
   sessionId: string
   modeId: string
   votes: number
   mine: boolean
+  canVote: boolean
 }
 
 type VoteOptionRow = {
@@ -52,6 +54,7 @@ type VoteOptionRow = {
   mode_id: string
   votes: number
   mine: boolean
+  can_vote: boolean
 }
 
 // The two options, in the order they open — an empty list when there is no choice to make,
@@ -65,6 +68,7 @@ export async function loadVoteOptions(): Promise<VoteOption[]> {
     modeId: row.mode_id,
     votes: row.votes,
     mine: row.mine,
+    canVote: row.can_vote,
   }))
 }
 

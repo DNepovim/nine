@@ -16,7 +16,8 @@ const PIE_SIZE = 140
 
 // Where the vote stands: a pie of the two options and a line under it for each, in the
 // slice's colour. Opened from the intro by a player who has already voted, who is the only
-// one the counts are shown to — they would be a bandwagon for somebody still choosing.
+// one choosing the counts are held back from — they would be a bandwagon for somebody
+// still choosing — and by one who may not vote, who is told why under the pie.
 export function NextVoteResultsDialog({
   options,
   onDismiss,
@@ -57,6 +58,14 @@ export function NextVoteResultsDialog({
               </View>
             ))}
           </View>
+          {!(options[0]?.canVote ?? true) && (
+            <Text
+              selectable={false}
+              className={cn(TYPE.proseSm, 'mt-5 text-center text-dim')}
+            >
+              <Trans>You can't vote because you didn't play the last challenge.</Trans>
+            </Text>
+          )}
           <LinkButton
             id="vote.dismiss"
             className="mt-5"
