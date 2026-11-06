@@ -1,8 +1,8 @@
 # Challenge state
 
 Slug: challenge-state
-Stage: review
-Next: /ship challenge-state
+Stage: shipped
+Next: /deploy
 Track: full
 Branch: feat/challenge-state
 Started: 2026-11-06

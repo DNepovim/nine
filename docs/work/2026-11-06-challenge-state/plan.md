@@ -53,3 +53,5 @@ and the house pass, this is what became of them.
 
 **Next.** Two migrations are unpushed (`…_stats_people_dates.sql`, `…_challenge_state.sql`)
 and the code needs both before a deploy. No How to Play change. Nothing here is player-visible.
+
+Shipped: `6693abd` on `main` (migrations `…_stats_people_dates` and `…_challenge_state` pushed to production first); the analytics dates and REFRESH went in beside it as `5a116b4`.
