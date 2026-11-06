@@ -14,7 +14,9 @@ declare
 begin
   select id into v_a from profiles order by id limit 1;
   select id into v_b from profiles order by id offset 1 limit 1;
-  delete from challenge_sessions where opens_at > now();
+  -- The latest session that has opened decides who may vote, so start from none: a local
+  -- stack with the dev fixtures has a running one that would be "the last challenge".
+  delete from challenge_sessions where opens_at > now() or opens_at <= now();
 
   perform set_config('request.jwt.claims', json_build_object('sub', v_a)::text, true);
 

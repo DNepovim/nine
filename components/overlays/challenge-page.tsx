@@ -3,10 +3,12 @@ import { useEffect, useState } from 'react'
 import { ScrollView, Text, View } from 'react-native'
 
 import { AdminScreen } from '@/components/overlays/admin-screen'
+import { AdminSegments } from '@/components/overlays/admin-segments'
 import { ChallengeTitle, WhenBlock } from '@/components/overlays/admin-session-cells'
 import { AdminTable, type AdminTableRow } from '@/components/overlays/admin-table'
 import { washOf } from '@/components/overlays/admin-tile'
 import { ChallengeMark } from '@/components/overlays/challenge-mark'
+import { ChallengeStateDialog } from '@/components/overlays/challenge-state-dialog'
 import { RatingLine } from '@/components/overlays/rating-line'
 import { PrimaryButton } from '@/components/primary-button'
 import { TYPE } from '@/constants/typography'
@@ -17,9 +19,12 @@ import {
   type SessionLogRow,
 } from '@/lib/admin/challenge-page'
 import type { ChallengeRating } from '@/lib/admin/ratings'
+import type { AdminSession } from '@/lib/admin/sessions'
+import type { ChallengeState } from '@/lib/challenge-state'
 import { cn } from '@/lib/cn'
 import { formatDayTime } from '@/lib/format-date'
 import { sessionFigure } from '@/lib/session-figure'
+import type { VoteOption } from '@/lib/session-ratings'
 import { gradientOf } from '@/modes'
 import { challengeInk } from '@/modes/challenges/palette'
 
@@ -32,6 +37,11 @@ import { challengeInk } from '@/modes/challenges/palette'
 // the screen's own title.
 const MARK_SIZE = 32
 
+// The state control's two halves, written the way the planner writes its own pills.
+const STATE_OPTIONS = [
+  { value: 'live', label: 'LIVE' },
+  { value: 'pending', label: 'PENDING' },
+] as const satisfies readonly { value: ChallengeState; label: string }[]
 function RemarkBlock({ remark }: { remark: ChallengeRemark }) {
   const when = formatDayTime(remark.opensAt)
   return (
@@ -51,10 +61,22 @@ function RemarkBlock({ remark }: { remark: ChallengeRemark }) {
 export function ChallengePage({
   modeId,
   rating,
+  state,
+  planned,
+  votes,
+  onState,
   onPlay,
   onBack,
 }: {
   modeId: string
+  // Whether the challenge is held back, the sessions planned for it in the order they
+  // open, and where the vote stands — for the dates and counts under the state.
+  state: ChallengeState
+  planned: readonly AdminSession[]
+  votes: readonly VoteOption[]
+  // Sets the state and answers with the server's refusal, if any. Pending takes the
+  // planned sessions off the queue, which is why a live challenge with some is asked about.
+  onState: (state: ChallengeState) => Promise<{ error: string | null }>
   // The figure the lab has already read for every challenge, so the page does not ask
   // again. Undefined for one nobody rated, and for a tester.
   rating: ChallengeRating | undefined
@@ -68,6 +90,17 @@ export function ChallengePage({
   })
   const [log, setLog] = useState<SessionLogRow[]>([])
   const [loading, setLoading] = useState(true)
+  const [asking, setAsking] = useState(false)
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  const choose = async (next: ChallengeState) => {
+    setBusy(true)
+    const res = await onState(next)
+    setError(res.error)
+    setBusy(false)
+    setAsking(false)
+  }
 
   // Read once on open. Neither read can fail loudly — see lib/admin/challenge-page.ts.
   useEffect(() => {
@@ -109,6 +142,7 @@ export function ChallengePage({
   return (
     <AdminScreen
       wash={washOf(modeId)}
+      error={error}
       heading={
         <View className="flex-row items-center gap-3">
           <ChallengeMark
@@ -134,6 +168,50 @@ export function ChallengePage({
       }
     >
       <ScrollView showsVerticalScrollIndicator={false}>
+        <AdminSegments
+          id="admin.challenge_state"
+          className="mb-3"
+          value={state}
+          onSelect={(next) => {
+            if (busy) return
+            // Only a live challenge with something planned loses anything by it.
+            if (next === 'pending' && planned.length > 0) setAsking(true)
+            else void choose(next)
+          }}
+          options={STATE_OPTIONS}
+        />
+
+        <View className="mb-4">
+          <Text selectable={false} className={cn(TYPE.caption, 'mb-1.5 text-dim')}>
+            <Trans>PLANNED</Trans>
+          </Text>
+          {planned.length === 0 ? (
+            <Text selectable={false} className={cn(TYPE.hint, 'text-dim')}>
+              <Trans>Not planned.</Trans>
+            </Text>
+          ) : (
+            planned.map((session) => {
+              // Only the vote's two have a count; a later one is not yet being voted on.
+              const votesFor = votes.find((option) => option.sessionId === session.id)
+              return (
+                <Text
+                  key={session.id}
+                  selectable={false}
+                  className={cn(TYPE.hint, 'text-dim')}
+                >
+                  {formatDayTime(session.opensAt)}
+                  {votesFor === undefined ? null : (
+                    <>
+                      {' · '}
+                      <Plural value={votesFor.votes} one="# VOTE" other="# VOTES" />
+                    </>
+                  )}
+                </Text>
+              )
+            })
+          )}
+        </View>
+
         <View className="mb-4">
           {rating !== undefined && (
             <Text selectable={false} className={cn(TYPE.hint, 'text-dim')}>
@@ -183,6 +261,19 @@ export function ChallengePage({
           empty={<Trans>No sessions yet.</Trans>}
         />
       </ScrollView>
+
+      {asking && (
+        <ChallengeStateDialog
+          planned={planned.length}
+          busy={busy}
+          onConfirm={() => {
+            void choose('pending')
+          }}
+          onKeep={() => {
+            setAsking(false)
+          }}
+        />
+      )}
     </AdminScreen>
   )
 }

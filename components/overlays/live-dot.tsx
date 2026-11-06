@@ -8,7 +8,8 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated'
 
-import { APP_RED, PLANNED_INK } from '@/constants/colors'
+import { APP_BLUE, APP_RED, PLANNED_INK, PRIMARY_INK } from '@/constants/colors'
+import type { ChallengeDot } from '@/lib/challenge-state'
 
 // The mark beside a live session: a red dot, breathing.
 //
@@ -49,8 +50,23 @@ export function LiveDot({ size = SIZE }: { size?: number }) {
   return <Animated.View style={[dot(size, APP_RED), style]} />
 }
 
-// Its still twin: a challenge with a session in the queue. Still, because nothing is
-// running yet — a second pulse would make the one that matters harder to find.
-export function PlannedDot({ size = SIZE }: { size?: number }) {
-  return <View style={dot(size, PLANNED_INK)} />
+// The colour each kind of dot is drawn in, for the gallery's filter pills to wear: one
+// colour per kind, so a pill reads as the dot it switches.
+export const DOT_COLOR = {
+  running: APP_RED,
+  planned: PLANNED_INK,
+  live: APP_BLUE,
+  pending: PRIMARY_INK,
+} as const satisfies Record<ChallengeDot, string>
+
+// The gallery tile's one dot, for whichever of the four a challenge is. Red and breathing is
+// running now, green and still is booked, blue is live with nothing on yet, black is held
+// back. Only the first moves; the other three are one still dot in `DOT_COLOR`'s colour —
+// the booked twin that used to be its own component is the `planned` entry there.
+export function TileDot({ kind, size = SIZE }: { kind: ChallengeDot; size?: number }) {
+  return kind === 'running' ? (
+    <LiveDot size={size} />
+  ) : (
+    <View style={dot(size, DOT_COLOR[kind])} />
+  )
 }

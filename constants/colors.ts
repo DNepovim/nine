@@ -55,6 +55,10 @@ export const GOLD_INK = '#B8860B'
 // twice as loud, which is the distance that makes a hierarchy.
 export const DIM_INK = '#4E4A43'
 
+// The ink on a pill filled with a colour of its own — white on every one of the gallery
+// filter's four, which are all dark enough to carry it.
+export const ON_TINT_INK = '#FFFFFF'
+
 // The `--color-muted` token as JavaScript, for the same reason DIM_INK is: the dot menu
 // takes its colour as a prop rather than as a class. Never text — this is the hairline
 // weight, well under the contrast a word needs.

@@ -227,6 +227,15 @@ export type ButtonId =
   | 'admin.challenges_tab'
   | 'admin.session'
   | 'admin.session_new'
+  // A challenge's state on its page (LIVE / PENDING) and the dialog that asks before a
+  // live one is held back; the gallery's filter over the four dots; the PLAN SESSION
+  // dialog's two ways out.
+  | 'admin.challenge_state'
+  | 'admin.challenge_state_confirm'
+  | 'admin.challenge_state_keep'
+  | 'admin.challenge_filter'
+  | 'admin.plan_pair_save'
+  | 'admin.plan_pair_cancel'
   | 'admin.session_save'
   | 'admin.session_cancel'
   // One place earlier or later in the queue, on a planned row of the list.
@@ -269,6 +278,7 @@ export type ButtonId =
   | 'admin.role_add'
   // The analytics screen's way out to the PostHog project, for what the database cannot say.
   | 'admin.open_posthog'
+  | 'admin.refresh'
   | 'admin.back'
   | 'admin.done'
 

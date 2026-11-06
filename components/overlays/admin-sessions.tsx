@@ -1,10 +1,12 @@
 import { msg } from '@lingui/core/macro'
-import { Trans, useLingui } from '@lingui/react/macro'
+import { Plural, Trans, useLingui } from '@lingui/react/macro'
 import { isEmptyArray } from 'narrowland'
 import { useEffect, useState, type ReactNode } from 'react'
 import { ScrollView, Text, View } from 'react-native'
 
+import { AdminPair } from '@/components/overlays/admin-pair'
 import { AdminPills } from '@/components/overlays/admin-pills'
+import { AdminPlanPair } from '@/components/overlays/admin-plan-pair'
 import { AdminScreen } from '@/components/overlays/admin-screen'
 import { AdminSession } from '@/components/overlays/admin-session'
 import {
@@ -16,9 +18,10 @@ import { AdminTable, type AdminTableRow } from '@/components/overlays/admin-tabl
 import { PrimaryButton } from '@/components/primary-button'
 import { TYPE } from '@/constants/typography'
 import { refreshOpenSessions } from '@/hooks/use-open-sessions'
+import { listChallengeStates } from '@/lib/admin/challenge-states'
 import {
   listSessions,
-  moveSession,
+  movePair,
   type QueueStep,
   type AdminSession as Session,
 } from '@/lib/admin/sessions'
@@ -31,6 +34,9 @@ import {
 } from '@/lib/challenge-session'
 import { cn } from '@/lib/cn'
 import { formatWindowLength } from '@/lib/duration'
+import { formatDayTime } from '@/lib/format-date'
+import { pairsOf, withVotes, type DrawnPair } from '@/lib/session-pairs'
+import { loadVoteOptions, type VoteOption } from '@/lib/session-ratings'
 
 // When a challenge is on: every session ever planned, newest start first.
 //
@@ -41,11 +47,8 @@ import { formatWindowLength } from '@/lib/duration'
 //
 // The form is state here rather than a screen of its own for the reason `AdminAccess`
 // holds its person and its role: a session is reached from this list and goes back to
-// it, and one BACK has to work for both a new session and an existing one.
-//
-// `'new'` rather than a second flag. The form is one form — plan and edit differ in
-// whether there is a row behind it, and in nothing a reader can see.
-type Editing = Session | 'new' | null
+// it. Planning is a dialog over the list instead — two candidates at once, a **pair**.
+type Editing = Session | null
 
 const TITLE = msg`CHALLENGES`
 
@@ -88,6 +91,13 @@ export function AdminSessions({
   // a second tap lands on a list whose order the first is about to change.
   const [moving, setMoving] = useState(false)
   const [editing, setEditing] = useState<Editing>(null)
+  // The pair whose detail is open: one item of the queue, with its own screen.
+  const [editingPair, setEditingPair] = useState<DrawnPair<Session> | null>(null)
+  // The PLAN SESSION dialog, the challenges held back (which no field offers) and where the
+  // vote stands, for the first pair's counts.
+  const [planning, setPlanning] = useState(false)
+  const [pending, setPending] = useState<ReadonlySet<string>>(new Set())
+  const [votes, setVotes] = useState<readonly VoteOption[]>([])
   const [lit, setLit] = useState<ReadonlySet<SpanStatus>>(() => new Set(LIT_ON_ARRIVAL))
 
   // One counter, the way every other admin list has one: the list is a snapshot, and a
@@ -110,9 +120,19 @@ export function AdminSessions({
   // caller already has — a refused step — which a good read must not wipe. A failed read
   // keeps the rows on screen rather than blanking the planner for a write that landed.
   const load = async (shown: string | null = null) => {
-    const res = await listSessions()
+    const [res, held, options] = await Promise.all([
+      listSessions(),
+      listChallengeStates(),
+      loadVoteOptions(),
+    ])
     setOpenedAt(Date.now())
     if (res.error === null) setRows(res.rows)
+    if (held !== null) {
+      setPending(
+        new Set([...held].flatMap(([id, state]) => (state === 'pending' ? [id] : []))),
+      )
+    }
+    setVotes(options)
     setError(shown ?? res.error)
     setLoading(false)
   }
@@ -138,18 +158,34 @@ export function AdminSessions({
   // already moved.
   const move = async (id: string, delta: QueueStep) => {
     setMoving(true)
-    const step = await moveSession(id, delta)
+    const step = await movePair(id, delta)
     await load(step.error)
     setMoving(false)
     refreshOpenSessions()
   }
 
+  if (editingPair !== null) {
+    return (
+      <AdminPair
+        pair={editingPair}
+        pastRuns={pastRunsByMode(rows, openedAt)}
+        now={openedAt}
+        pending={pending}
+        onChanged={changed}
+        onBack={() => {
+          setEditingPair(null)
+        }}
+      />
+    )
+  }
+
   if (editing !== null) {
     return (
       <AdminSession
-        session={editing === 'new' ? null : editing}
+        session={editing}
         pastRuns={pastRunsByMode(rows, openedAt)}
         now={openedAt}
+        pending={pending}
         onChanged={changed}
         onBack={() => {
           setEditing(null)
@@ -175,11 +211,6 @@ export function AdminSessions({
   // for everything but the queue, and the queue is what this screen is now for.
   const ordered = queueOrder(rows, openedAt)
   const shown = shownByStatus(ordered, lit, openedAt)
-  // The queue's own ends, which have no step past them. Read off every row rather than the
-  // shown ones: a filter hiding nothing in the queue still leaves its ends where they are.
-  const queue = ordered.filter((session) => spanStatus(session, openedAt) === 'upcoming')
-  const firstQueued = queue[0]?.id
-  const lastQueued = queue.at(-1)?.id
 
   // One planned session per row: which challenge, when it opens, how long it runs, and
   // where that span stands against now.
@@ -189,7 +220,8 @@ export function AdminSessions({
   // answer GAME for it and a list of sessions all called GAME is worse than useless.
   // Still pressable: a row booked for a challenge that has been taken out of the catalog
   // is exactly the row somebody needs to open and cancel.
-  const tableRows: readonly AdminTableRow[] = shown.map((session) => {
+  // A live or past row. The queue is drawn as pairs, below.
+  const rowOf = (session: Session): AdminTableRow => {
     const status = spanStatus(session, openedAt)
     return {
       key: session.id,
@@ -204,25 +236,8 @@ export function AdminSessions({
             {formatWindowLength(session.closesAt - session.opensAt)}
           </Text>
         </View>,
-        status === 'upcoming' ? (
-          <QueueMoves
-            busy={moving}
-            onUp={
-              session.id === firstQueued
-                ? null
-                : () => {
-                    void move(session.id, -1)
-                  }
-            }
-            onDown={
-              session.id === lastQueued
-                ? null
-                : () => {
-                    void move(session.id, 1)
-                  }
-            }
-          />
-        ) : null,
+        // The queue's steps live on the pairs below; a live or past row has none.
+        null,
       ],
       onPress: () => {
         setEditing(session)
@@ -231,7 +246,74 @@ export function AdminSessions({
       // name than a mark every row would wear.
       leads: false,
     }
+  }
+
+  // The queue, two at a time. A pair is one item: one door to its detail, one set of steps,
+  // and both challenges in it — the one with more votes on top, and for the first pair, the
+  // vote's two, each one's count.
+  const queuedPairs = pairsOf(
+    shown.filter((session) => spanStatus(session, openedAt) === 'upcoming'),
+  )
+  const pairRows: readonly AdminTableRow[] = queuedPairs.map((pair, index) => {
+    const drawn = withVotes(pair, index === 0 ? votes : [])
+    const lines = [
+      { session: drawn.top, count: drawn.topVotes },
+      { session: drawn.bottom, count: drawn.bottomVotes },
+    ]
+    return {
+      key: pair.first.id,
+      cells: [
+        <WhenBlock at={pair.first.opensAt} live={false} />,
+        <View className="gap-1.5 py-2">
+          {lines.map(({ session, count }) =>
+            session === null ? null : (
+              <View key={session.id}>
+                <ChallengeTitle modeId={session.modeId} />
+                <Text selectable={false} className={cn(TYPE.hint, 'mt-0.5 text-dim')}>
+                  {formatDayTime(session.opensAt)}
+                  {count === null ? null : (
+                    <>
+                      {' · '}
+                      <Plural value={count} one="# VOTE" other="# VOTES" />
+                    </>
+                  )}
+                </Text>
+              </View>
+            ),
+          )}
+        </View>,
+        <QueueMoves
+          busy={moving}
+          onUp={
+            index === 0
+              ? null
+              : () => {
+                  void move(pair.first.id, -1)
+                }
+          }
+          onDown={
+            index === queuedPairs.length - 1
+              ? null
+              : () => {
+                  void move(pair.first.id, 1)
+                }
+          }
+        />,
+      ],
+      onPress: () => {
+        setEditingPair(drawn)
+      },
+      leads: false,
+    }
   })
+
+  // Live first, then the queue as pairs, then the past — the order `queueOrder` laid out.
+  const status = (session: Session) => spanStatus(session, openedAt)
+  const tableRows: readonly AdminTableRow[] = [
+    ...shown.filter((session) => status(session) === 'live').map(rowOf),
+    ...pairRows,
+    ...shown.filter((session) => status(session) === 'expired').map(rowOf),
+  ]
 
   return (
     <AdminScreen
@@ -242,7 +324,7 @@ export function AdminSessions({
           <PrimaryButton
             id="admin.session_new"
             onPress={() => {
-              setEditing('new')
+              setPlanning(true)
             }}
             label={<Trans>PLAN SESSION</Trans>}
           />
@@ -303,6 +385,18 @@ export function AdminSessions({
           }
         />
       </ScrollView>
+
+      {planning && (
+        <AdminPlanPair
+          pastRuns={pastRunsByMode(rows, openedAt)}
+          now={openedAt}
+          pending={pending}
+          onPlanned={changed}
+          onDismiss={() => {
+            setPlanning(false)
+          }}
+        />
+      )}
     </AdminScreen>
   )
 }

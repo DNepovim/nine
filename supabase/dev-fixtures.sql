@@ -110,6 +110,12 @@ begin
     set opens_at = excluded.opens_at, closes_at = excluded.closes_at, measure = excluded.measure;
   perform public.repack_challenge_queue();
 
+  -- One challenge held back, so the CHALLENGES gallery has a black dot to draw beside the
+  -- red (four-keys is running), the green (the two queued) and the blue (everything else).
+  -- Nothing is booked for it, as the server would refuse.
+  insert into public.challenge_states (mode_id, state) values ('challenge/one-key', 'pending')
+  on conflict (mode_id) do update set state = excluded.state;
+
   -- A board on the live one, so the card has a leader to name and the modal is not drawn
   -- in its empty state. `do nothing` rather than `do update`: `session_scores` carries a
   -- no-downgrade trigger, and re-running this file must not look like a player posting

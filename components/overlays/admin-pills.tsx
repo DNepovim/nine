@@ -1,8 +1,10 @@
-import type { ReactNode } from 'react'
+import { Ionicons } from '@expo/vector-icons'
+import type { ComponentProps, ReactNode } from 'react'
 import { Text, View } from 'react-native'
 
 import { TrackedPressable } from '@/components/tracked-pressable'
 import type { ButtonId } from '@/constants/buttons'
+import { DIM_INK, ON_STRONG_INK, ON_TINT_INK } from '@/constants/colors'
 import { TYPE } from '@/constants/typography'
 import { cn } from '@/lib/cn'
 
@@ -37,12 +39,20 @@ export type AdminPill<T> = {
   // Not translated, by and large: these are role labels and database keys, which are rows
   // rather than copy. A caller whose options *are* copy passes nodes.
   label: ReactNode
+  // A colour of the option's own, for a pill that stands for something with one — the
+  // gallery's filter, whose four pills are the four dots. A lit pill is filled with it, an
+  // unlit one keeps only the outline.
+  tint?: string
+  // Drawn before the label in the label's own ink — what lets a compact pill say what it
+  // switches in a glyph and a count where the word would not fit.
+  icon?: ComponentProps<typeof Ionicons>['name']
 }
 
 export function AdminPills<T>({
   id,
   options,
   busy = false,
+  compact = false,
   className,
   ...mode
 }: {
@@ -52,11 +62,14 @@ export function AdminPills<T>({
   // options that are not the current one — the current one is already where the screen
   // says it is, and fading it would read as the choice being lost.
   busy?: boolean
+  // One line of shorter pills sharing the row's width, for a filter that must not take two
+  // rows of a screen. The gallery's asked for it; the planner's stay full height.
+  compact?: boolean
   // Placement only — a margin. Never the shape.
   className?: string
 } & Mode<T>) {
   return (
-    <View className={cn('flex-row flex-wrap gap-2', className)}>
+    <View className={cn('flex-row gap-2', !compact && 'flex-wrap', className)}>
       {options.map((option) => {
         const active =
           mode.mode === 'toggle'
@@ -81,14 +94,44 @@ export function AdminPills<T>({
             // anything a thumb aims at. The pills used to be `py-1` — a 22px target in a
             // wrapping row of them.
             className={cn(
-              'h-10 justify-center rounded-xl border px-3.5',
-              active ? 'border-strong bg-strong' : 'border-muted bg-surface',
+              'justify-center rounded-xl border',
+              compact ? 'h-8 flex-1 items-center px-1.5' : 'h-10 px-3.5',
+              option.icon !== undefined && 'flex-row items-center justify-center gap-1',
+              option.tint === undefined &&
+                (active ? 'border-strong bg-strong' : 'border-muted bg-surface'),
+              option.tint !== undefined && !active && 'bg-surface',
               busy && !active && 'opacity-40',
             )}
+            style={
+              option.tint === undefined
+                ? undefined
+                : {
+                    borderColor: option.tint,
+                    ...(active ? { backgroundColor: option.tint } : null),
+                  }
+            }
           >
+            {option.icon !== undefined && (
+              <Ionicons
+                name={option.icon}
+                size={12}
+                color={
+                  active
+                    ? option.tint === undefined
+                      ? ON_STRONG_INK
+                      : ON_TINT_INK
+                    : DIM_INK
+                }
+              />
+            )}
             <Text
               selectable={false}
-              className={cn(TYPE.buttonSm, active ? 'text-on-strong' : 'text-dim')}
+              numberOfLines={1}
+              className={cn(
+                TYPE.buttonSm,
+                active ? 'text-on-strong' : 'text-dim',
+                option.tint !== undefined && active && 'text-white',
+              )}
             >
               {option.label}
             </Text>

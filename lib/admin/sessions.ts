@@ -83,12 +83,18 @@ export async function listSessions(): Promise<{
 // out in the wrong order.
 const measureArg = (modeId: string) => ({ p_measure: measureOf(modeId) })
 
-// To the end of the **queue**. No span: the server times every queued session onto its
-// noon, so all the planner says is which challenge comes next.
-export async function planSession(modeId: string): Promise<{ error: string | null }> {
-  const res = await supabase.rpc('plan_challenge_session', {
-    p_mode_id: modeId,
-    ...measureArg(modeId),
+// Two candidates at once, to the end of the queue: a **pair**, the next two the players
+// will be asked to choose between. One call, so a refusal on the second leaves neither
+// booked. The server refuses the same challenge twice and a pending one.
+export async function planPair(
+  modeA: string,
+  modeB: string,
+): Promise<{ error: string | null }> {
+  const res = await supabase.rpc('plan_challenge_pair', {
+    p_mode_a: modeA,
+    p_measure_a: measureOf(modeA),
+    p_mode_b: modeB,
+    p_measure_b: measureOf(modeB),
   })
   noteRequest(res.error)
   return { error: res.error?.message ?? null }
@@ -112,15 +118,16 @@ export async function editSession(
   return { error: res.error?.message ?? null }
 }
 
-// One place earlier (-1) or later (1) in the queue. The server swaps it with its
-// neighbour's slot and refuses a row that has opened since the list was read.
+// One place earlier (-1) or later (1) in the queue.
 export type QueueStep = -1 | 1
 
-export async function moveSession(
+// A **pair** one place earlier (-1) or later (1): `id` is the pair's first session. The
+// server swaps it with the neighbouring pair and refuses a session that does not start one.
+export async function movePair(
   id: string,
   delta: QueueStep,
 ): Promise<{ error: string | null }> {
-  const res = await supabase.rpc('move_challenge_session', { p_id: id, p_delta: delta })
+  const res = await supabase.rpc('move_challenge_pair', { p_id: id, p_delta: delta })
   noteRequest(res.error)
   return { error: res.error?.message ?? null }
 }
