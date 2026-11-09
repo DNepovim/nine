@@ -10,11 +10,13 @@ import {
   popupPrimary,
   popupTitle,
 } from '@/components/overlays/popup-card-view'
+import { StepFlow } from '@/components/overlays/step-flow'
 import { PageDots } from '@/components/page-dots'
 import { PrimaryButton } from '@/components/primary-button'
 import { TrackedPressable } from '@/components/tracked-pressable'
 import { DIM_INK } from '@/constants/colors'
 import { TYPE } from '@/constants/typography'
+import { useStepFlow } from '@/hooks/use-step-flow'
 import { useViewport } from '@/hooks/use-viewport'
 import { cn } from '@/lib/cn'
 import type { PopupCard } from '@/types/popup'
@@ -49,14 +51,17 @@ export function WhatsNewOverlay({
 }) {
   const [index, setIndex] = useState(0)
   const { height } = useViewport()
+  // The page on screen trails the one asked for by the length of the fade — see
+  // `useStepFlow`. The page, its title, accent and button are all read from it.
+  const flow = useStepFlow(index)
 
-  const card = cards[index]
+  const card = cards[flow.shown]
   if (card === undefined) return null
 
   const accent = popupAccent(card)
   const primary = popupPrimary(card)
   const isFirst = index === 0
-  const isLast = index === cards.length - 1
+  const isLast = flow.shown === cards.length - 1
   const mark: ButtonMark = primary !== null ? 'accept' : isLast ? 'done' : 'next'
 
   return (
@@ -75,7 +80,9 @@ export function WhatsNewOverlay({
             style={{ flexGrow: 0, flexShrink: 1 }}
             contentContainerStyle={{ paddingVertical: 8 }}
           >
-            <PopupCardView card={card} />
+            <StepFlow flow={flow}>
+              <PopupCardView card={card} />
+            </StepFlow>
           </ScrollView>
 
           {cards.length > 1 && (
@@ -127,6 +134,8 @@ export function WhatsNewOverlay({
             <PrimaryButton
               id={primary?.id ?? 'news.dismiss'}
               onPress={() => {
+                // A press on a page that is already leaving would accept twice.
+                if (flow.leaving) return
                 if (primary !== null) onAccept()
                 if (isLast) close()
                 else setIndex((current) => current + 1)

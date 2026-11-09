@@ -3366,10 +3366,10 @@ export default function GameScreen() {
                 />
               )}
 
-            {/* ── Rating — how was the session the summary just told. Mounted once the
-            popup has unmounted rather than alongside it, so its card rises after the
-            popup's has gone instead of over it. `asking` is only ever set by closing a
-            popup that carried a summary — see `told` in use-session-summaries.ts. ── */}
+            {/* ── Session dialog — the summary of a closed session, then its rating, remark
+            and the vote. Mounted once the popup has unmounted rather than alongside it,
+            so its card rises after the popup's has gone instead of over it. `asking` is
+            the owed summary — see `summary` in use-session-summaries.ts. ── */}
             {onIntro &&
               feedbackReplies.ready &&
               feedbackReplies.reply === null &&

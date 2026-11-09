@@ -67,7 +67,6 @@ import {
   type Period,
 } from '@/lib/announcements'
 import { emptyCareer } from '@/lib/career'
-import type { SessionCard } from '@/lib/challenge-session'
 import {
   NO_CHAMPIONS,
   playerMarks,
@@ -78,7 +77,6 @@ import type { FeedbackQuote } from '@/lib/feedback-reply'
 import { gameOverTitle } from '@/lib/game-over-title'
 import type { Medal, MedalPeriod } from '@/lib/medals'
 import type { ShapeKind } from '@/lib/recap'
-import type { OpenSession } from '@/lib/session-board'
 import { NO_PLACES } from '@/lib/session-places'
 import type { SessionSummary, SummaryPlace } from '@/lib/session-summary'
 import {
@@ -440,23 +438,6 @@ const recap = (kind: ShapeKind): Variant => ({
 // of numbers: the player won it, the player is on the podium but not on top, the player is
 // off it entirely, nobody scored at all, and the whole thing measured by the clock instead
 // of by points.
-// A session to point at, so the named half of the invitation can be read beside the
-// general one. Only the two fields the page touches are real; the rest is a fixture.
-const DEV_INVITE: SessionCard<OpenSession> = {
-  state: 'teaser',
-  session: {
-    id: 'dev-next',
-    modeId: challengeId('habit'),
-    // Three hours out, so the clock under the name has something to count rather than
-    // sitting at nought — the fixture exists to be looked at.
-    opensAt: Date.now() + 3 * 60 * 60 * 1000,
-    closesAt: Date.now() + 27 * 60 * 60 * 1000,
-    extendedAt: null,
-    leader: null,
-    measure: 'score',
-  },
-}
-
 const SUMMARY_PLACES = [
   {
     rank: 1,
@@ -531,42 +512,51 @@ const SUMMARY_CASES = {
   },
 } as const satisfies Record<string, { places: number; mine: SessionSummary['mine'] }>
 
+// Nicknames are three to ten characters (`NICK_MAX`), and the podium has to hold both ends:
+// the shortest, a long set, and ten in every place — the longest a pill can ever be asked to
+// carry, in the largest type on the page.
+const NAME_SETS = {
+  SHORT: ['ABC', 'XYZ', 'JO1'],
+  LONG: ['ALEXANDER', 'BARTHOLO', 'CHRISTIAN'],
+  // Ten of the widest, accented: capitals that fill the box, with the diacritics a
+  // Czech name carries, which are the glyphs a fallback font is most likely to draw wider.
+  LONGEST: ['WÉMÁŽŠŘÝÚM', 'MÁŘÉŠŽÝÚÍW', 'ŽŠČŘÝÁÍÉWM'],
+} as const
+
 const summary = (
   label: keyof typeof SUMMARY_CASES,
   measure: Measure = 'score',
-  // Whether the next session is one the start screen may already name. Both answers are
-  // worth looking at: the invitation is the last line on the page either way, and the
-  // general one is what a player sees whenever nothing is booked.
-  invite: SessionCard<OpenSession> = null,
+  names?: keyof typeof NAME_SETS,
 ): Variant => ({
-  // Every axis the variant varies on, or two of them collide. It was `label` and
-  // `measure` alone, which gave the two OFF THE PODIUM entries — one with a session to
-  // point at, one without — the same key: React treated them as one child, lit both
-  // buttons at once, and made the invited variant unreachable.
-  key: `summary-${label}-${measure}-${invite === null ? 'alone' : invite.session.modeId}`,
-  // And the same axes in the name, so the sidebar can be read as well as clicked.
-  label: [label, measure === 'time' ? 'RACE' : null, invite === null ? null : 'NEXT UP']
+  // Every axis the variant varies on, or two of them collide.
+  key: `summary-${label}-${measure}-${names ?? 'default'}`,
+  label: [label, measure === 'time' ? 'RACE' : null, names ?? null]
     .filter(isNotNull)
     .join(' · '),
+  // The session dialog, which opens on the summary; the steps after it are the rating
+  // variants' to look at.
   render: (close) => (
-    <WhatsNewOverlay
-      cards={[
-        {
-          kind: 'summary',
-          summary: {
-            sessionId: 'dev',
-            modeId: challengeId('four-keys'),
-            closesAt: 0,
-            measure,
-            places: SUMMARY_PLACES.slice(0, SUMMARY_CASES[label].places),
-            players: 23,
-            mine: SUMMARY_CASES[label].mine,
-          },
-          invite,
-        },
-      ]}
+    <RatingOverlay
+      summary={{
+        sessionId: 'dev',
+        modeId: challengeId('four-keys'),
+        closesAt: 0,
+        measure,
+        places: SUMMARY_PLACES.slice(0, SUMMARY_CASES[label].places).map((place, i) => ({
+          ...place,
+          nickname:
+            names === undefined
+              ? place.nickname
+              : (NAME_SETS[names][i] ?? place.nickname),
+        })),
+        players: 23,
+        mine: SUMMARY_CASES[label].mine,
+      }}
+      onSend={() => {}}
+      onRemark={() => {}}
+      options={VOTE_PAIR}
+      onVote={() => {}}
       onDismiss={close}
-      onAccept={close}
     />
   ),
 })
@@ -913,7 +903,14 @@ const SCREENS: Section[] = [
         key: 'splash-held',
         label: 'HELD',
         render: (close) => (
-          <SplashScreen onDone={close} onExit={noop} hold ready onIntroDone={noop} />
+          <SplashScreen
+            onDone={close}
+            onExit={noop}
+            hold
+            ready
+            onIntroDone={noop}
+            rest={false}
+          />
         ),
       },
       {
@@ -926,7 +923,15 @@ const SCREENS: Section[] = [
             hold={false}
             ready
             onIntroDone={noop}
+            rest={false}
           />
+        ),
+      },
+      {
+        key: 'splash-rest',
+        label: 'SUNDAY',
+        render: (close) => (
+          <SplashScreen onDone={close} onExit={noop} hold ready onIntroDone={noop} rest />
         ),
       },
     ],
@@ -1153,7 +1158,10 @@ const SCREENS: Section[] = [
       summary('OFF THE PODIUM'),
       summary('NO NICKNAME'),
       summary('WON', 'time'),
-      summary('OFF THE PODIUM', 'score', DEV_INVITE),
+      summary('WON', 'score', 'SHORT'),
+      summary('WON', 'score', 'LONG'),
+      summary('WON', 'score', 'LONGEST'),
+      summary('SILVER', 'score', 'LONGEST'),
       // The seventh is not a page of its own — it is the app's. The six above are built
       // from fixtures and answer "does it look right"; this one asks the real hook to go
       // and fetch a real summary and put the real dialog up, which answers "does it

@@ -4,16 +4,17 @@ import type { Rating } from '@/lib/session-rating'
 import { rateSession, remarkSession } from '@/lib/session-ratings'
 import type { SessionSummary } from '@/lib/session-summary'
 
-// The **rating** owed after a **summary**: which session to ask about, and the two ways
-// the asking ends.
+// The session's own dialog: the **summary** owed and, on the back of it, the **rating**.
+// Which session it is about, and the ways the asking ends.
 //
 // Rides on the summary's own once-ness rather than keeping a marker of its own. A summary
-// is told once — its watermark has already moved by the time this asks — so the rating
-// offered on the back of that telling is offered once too, and NOT NOW is final without
-// anything written down to make it so.
+// is told once — its watermark moves when the dialog closes, however it closes — so the
+// rating asked on the back of that telling is asked once too, and a player who closes
+// early has declined it without anything written down to make it so.
 export function useSessionRating(
-  told: SessionSummary | null,
-  take: () => void,
+  summary: SessionSummary | null,
+  // Closes the dialog and moves the summary's watermark — `useSessionSummaries.dismiss`.
+  dismiss: () => void,
 ): {
   asking: SessionSummary | null
   send: (rating: Rating) => void
@@ -21,9 +22,9 @@ export function useSessionRating(
   remark: (text: string) => void
   done: () => void
 } {
-  // No gate of its own: whoever is told a summary is asked about it, and only a player
-  // who reaches **challenges** is ever told one.
-  const asking = told
+  // No gate of its own: whoever is owed a summary is asked about it, and only a player
+  // who reaches **challenges** is ever owed one.
+  const asking = summary
 
   // Fire and forget. The dialog closes on the press whether or not the write lands — see
   // `rateSession` — so there is nothing here to wait for.
@@ -44,5 +45,5 @@ export function useSessionRating(
     [asking],
   )
 
-  return { asking, send, remark, done: take }
+  return { asking, send, remark, done: dismiss }
 }

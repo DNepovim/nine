@@ -48,6 +48,14 @@ export const TYPE = {
   // the 18.66px WCAG calls large, so an ink on this role needs 4.5:1 rather than 3:1.
   cardTitleSm: 'font-mono text-[14px] font-black tracking-[1.5px]',
 
+  // A nickname on the summary's podium, set on its place's metal rather than in a row. The
+  // name is what the medal is for, and **it is never cut**: both are sized so that ten
+  // characters (`NICK_MAX`) fit whole. The lead has the card's width to itself; the other
+  // two stand side by side in half of it each, and 18px at 1px is the largest that holds ten
+  // capitals inside that half on a 360px phone. Measure again before making either larger.
+  podiumNameLead: 'font-mono text-[26px] font-black tracking-[2px]',
+  podiumName: 'font-mono text-[18px] font-black tracking-[1px]',
+
   // A heading inside a card: a dialog's own header (drawn by `ModalCard`), and the block
   // headings in its content. Much smaller than a screen title on purpose — a dialog is
   // already framed by its card and its scrim, so the heading does not also have to
@@ -197,4 +205,9 @@ export const GLYPH = {
   '2xl': 'text-[20px]',
   '3xl': 'text-[28px]',
   '4xl': 'text-[44px]',
+  // The summary's podium, where the medal is the ground a name and a figure are set on
+  // rather than a mark beside them.
+  '5xl': 'text-[72px]',
+  '6xl': 'text-[80px]',
+  '7xl': 'text-[96px]',
 } as const

@@ -25,6 +25,7 @@ export function LinkButton({
   icon,
   label,
   disabled = false,
+  light = false,
   className,
 }: {
   id: ButtonId
@@ -33,6 +34,9 @@ export function LinkButton({
   icon: ComponentProps<typeof Ionicons>['name']
   label: ReactNode
   disabled?: boolean
+  // White rather than dim, for a link on a dialog painted in a challenge's gradient — the
+  // rating dialog's, where dim ink would sink into the colour.
+  light?: boolean
   // Placement only — `mt-*`, `self-center`, padding around the hit area. Never the look.
   className?: string
 }) {
@@ -46,8 +50,11 @@ export function LinkButton({
       style={{ opacity: disabled ? DISABLED_OPACITY : 1 }}
     >
       <View className="flex-row items-center justify-center gap-1">
-        <Ionicons name={icon} size={10} color={DIM_INK} />
-        <Text selectable={false} className={cn(TYPE.quietAction, 'text-dim')}>
+        <Ionicons name={icon} size={10} color={light ? '#FFFFFF' : DIM_INK} />
+        <Text
+          selectable={false}
+          className={cn(TYPE.quietAction, light ? 'text-white' : 'text-dim')}
+        >
           {label}
         </Text>
       </View>

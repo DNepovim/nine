@@ -69,7 +69,7 @@ export function AdminSessionVotes({
             size={PIE_SIZE}
             slices={candidates.map(({ modeId }) => ({
               value: votesFor(voters, modeId),
-              color: gradientOf(modeId)[1],
+              colors: gradientOf(modeId),
             }))}
           />
         </View>

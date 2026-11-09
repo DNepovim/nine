@@ -72,6 +72,7 @@ export function Tile({
   corner,
   wash,
   backdrop,
+  clear = false,
   onPress,
 }: {
   id?: ButtonId
@@ -97,6 +98,10 @@ export function Tile({
   // its chosen tile fades a solid fill in, which `wash` — colours, not a node — cannot
   // animate. Nothing in the admin screens passes one.
   backdrop?: ReactNode
+  // No card colour under the tile, for a caller whose `backdrop` paints the whole ground
+  // itself and takes it away — the vote card's chosen tile, which leaves the dialog's own
+  // gradient showing through. Nothing in the admin screens sets it.
+  clear?: boolean
   onPress: () => void
 }) {
   return (
@@ -106,7 +111,10 @@ export function Tile({
       // `aspect-square` rather than a height: the tiles are half the screen wide less the
       // gap, and a fixed height would be wrong on every display but the one it was typed
       // on.
-      className="relative aspect-square w-full justify-between overflow-hidden rounded-2xl bg-card p-3"
+      className={cn(
+        'relative aspect-square w-full justify-between overflow-hidden rounded-2xl p-3',
+        !clear && 'bg-card',
+      )}
     >
       {wash !== undefined && (
         <LinearGradient

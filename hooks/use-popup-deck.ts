@@ -10,19 +10,15 @@ import type { PopupCard } from '@/types/popup'
 
 // Everything the launch popup has to say, in the order it says it.
 //
-// The **summary** leads, because it is the most recent thing that happened and the most
-// specific: a contest the player entered has just finished, and until they know how it went
-// everything else on the deck is the app changing the subject. Winnings follow: about the
-// player rather than about the game, and unlike a release they expire — a day announced is a
-// day gone. The recap is next, being the other thing that expires: it speaks for one week and
-// is never offered again. Releases come last, oldest first, which is the order `useWhatsNew`
-// already hands them over in and the only one of the four that will still be there tomorrow.
+// Winnings lead: about the player rather than about the game, and unlike a release they
+// expire — a day announced is a day gone. The recap is next, being the other thing that
+// expires: it speaks for one week and is never offered again. Releases come last, oldest
+// first, which is the order `useWhatsNew` already hands them over in and the only one of
+// the three that will still be there tomorrow.
 //
-// Three of the four are now about something ending, which is why the order is worth stating:
-// they go from the narrowest window to the widest — one session, the days since the player
-// last accepted, last week — and then to the one page that is about no window at all.
-//
-// `ready` waits on all four, so whatever queues behind the popup — the install prompt — is
+// The session **summary** is not a page of this deck any more: it opens the rating dialog,
+// which `rating` below feeds. It is still read here, because the deck is where the launch's
+// reads are gathered, and `ready` waits on it as on the rest, so whatever queues behind the popup — the install prompt — is
 // not let through while any of them is still deciding whether it has something to say.
 export function usePopupDeck(
   userId: string | null,
@@ -38,22 +34,13 @@ export function usePopupDeck(
   const winnings = useWinnings(userId)
   const recap = useWeeklyRecap(features.has('recap'))
   const summaries = useSessionSummaries(userId, runSessionId, features.has('challenges'))
-  // Not a page of the deck: the **rating** is its own dialog, opened once this one has gone,
-  // about the summary the player has just closed. Here rather than beside the deck because
-  // the summary hook is what knows which session that was.
-  const rating = useSessionRating(summaries.told, summaries.take)
+  // Not a page of the deck: the session's own dialog — summary, rating, remark, vote —
+  // opened once this one has gone. Here rather than beside the deck because the summary
+  // hook is what knows which session it is about.
+  const rating = useSessionRating(summaries.summary, summaries.dismiss)
 
   const cards = useMemo<PopupCard[]>(
     () => [
-      ...(summaries.summary !== null
-        ? [
-            {
-              kind: 'summary' as const,
-              summary: summaries.summary,
-              invite: summaries.invite,
-            },
-          ]
-        : []),
       ...(winnings.blocks.length > 0
         ? [
             {
@@ -68,19 +55,10 @@ export function usePopupDeck(
         : []),
       ...news.unseen.map((item) => ({ kind: 'news' as const, item })),
     ],
-    [
-      summaries.summary,
-      summaries.invite,
-      winnings.blocks,
-      winnings.accepted,
-      recap.facts,
-      recap.from,
-      recap.to,
-      news.unseen,
-    ],
+    [winnings.blocks, winnings.accepted, recap.facts, recap.from, recap.to, news.unseen],
   )
 
-  // All four, always. The dialog is dismissed as a whole, so a page left unread is still a
+  // All three, always. The dialog is dismissed as a whole, so a page left unread is still a
   // page that was shown — and a marker left behind would reopen the dialog next launch.
   //
   // Every one of these empties the state the deck builds its cards from, which is what
@@ -94,11 +72,10 @@ export function usePopupDeck(
   // thing that settles winnings is `accept`, and a player who closes without pressing is
   // offered the same reward next launch.
   const dismiss = useCallback(() => {
-    summaries.dismiss()
     winnings.dismiss()
     recap.dismiss()
     news.dismiss()
-  }, [summaries.dismiss, winnings.dismiss, recap.dismiss, news.dismiss])
+  }, [winnings.dismiss, recap.dismiss, news.dismiss])
 
   return {
     cards,

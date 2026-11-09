@@ -1072,3 +1072,13 @@ export const CASINO = {
   coinEdge: '#B8860B',
   flash: '#FFF3C4',
 } as const
+
+// What a podium place is painted in where it needs a fill rather than an emoji: gold, silver
+// and bronze, light enough to carry a nickname in its own colours and dark ink alike. The
+// metals are the medals' own — `rankMedal` draws the emoji, this is the ground under the
+// name on the same place.
+export const MEDAL_FILL = {
+  1: '#FFD166',
+  2: '#D3D8E0',
+  3: '#DDA16B',
+} as const

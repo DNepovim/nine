@@ -86,7 +86,11 @@ export type ButtonId =
   // are not one funnel.
   | 'news.accept'
 
-  // ── Rating — the dialog after a session's summary ──
+  // ── Rating — the dialog that opens on a session's summary ──
+  // The summary step's own two: the button that takes the player on, CLAIM where a place
+  // paid and NEXT where it did not, and SKIP under it.
+  | 'summary.next'
+  | 'summary.skip'
   | 'rating.key'
   | 'rating.dismiss'
   // Step one's way to the words without a figure, and step two's SEND.

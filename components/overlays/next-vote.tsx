@@ -9,23 +9,19 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated'
 
-import { ChallengeTitle } from '@/components/overlays/admin-session-cells'
-import { Tile, TileGrid, washOf } from '@/components/overlays/admin-tile'
+import { Tile, TileGrid } from '@/components/overlays/admin-tile'
 import { ChallengeMark } from '@/components/overlays/challenge-mark'
 import { TYPE } from '@/constants/typography'
 import { cn } from '@/lib/cn'
 import type { VoteOption } from '@/lib/session-ratings'
-import { descriptionOf, gradientOf, labelOf } from '@/modes'
-import { challengeInk } from '@/modes/challenges/palette'
+import { gradientOf, labelOf } from '@/modes'
 
 // Larger than the admin gallery's 22: on a two-tile card the mark is the first thing read.
 const MARK_SIZE = 34
 
-// The choosing, in beats: the other tile fades and the chosen one's fill comes in; a moment
-// later its ink turns white, once the fill is deep enough to carry it; and it slides to the
-// middle of the grid, where it stays as the card's one tile.
+// The choosing, in beats: the other tile fades and the chosen one slides to the middle of
+// the grid, where it stays as the card's one tile.
 const FADE_MS = 220
-const INK_AT_MS = 120
 const MOVE_MS = 380
 const HOLD_MS = MOVE_MS + 60
 
@@ -40,11 +36,44 @@ export function NextVoteTitle({ settled }: { settled: boolean }) {
 // Whether the card is on its pick or on the tiles to pick from — held by the frame rather
 // than the body, because the frame draws the title and the body the tiles, and the two have
 // to turn together. Starts on the pick for a player who has voted already.
+//
+// It holds the candidate just tapped as well, for a third thing that has to turn with them:
+// the frame's own ground, which takes the picked challenge's gradient the moment it is
+// picked — see `voteFill`.
 export function useVoteView(options: readonly VoteOption[]) {
-  const [picking, setPicking] = useState(!options.some((option) => option.mine))
-  const settled = !picking && options.some((option) => option.mine)
-  return { picking, setPicking, settled }
+  const mineId = options.find((option) => option.mine)?.modeId ?? null
+  const [picking, setPicking] = useState(mineId === null)
+  const [chosen, setChosen] = useState<string | null>(null)
+  // The candidate the player picked on this card, kept once its tile has finished playing.
+  // The settled card and the frame's ground follow *this* rather than the options' `mine`,
+  // which is the server's word and arrives later — or not at all, where the vote was
+  // refused — and a ground that depended on it fell back to the plain surface the moment
+  // the pick's animation ended.
+  const [pick, setPick] = useState<string | null>(null)
+  const settledId = picking ? null : (pick ?? mineId)
+  return {
+    picking,
+    setPicking,
+    chosen,
+    setChosen,
+    setPick,
+    settledId,
+    settled: settledId !== null,
+  }
 }
+
+// The gradient the frame paints itself in once a challenge is picked: the one just tapped,
+// or, on a card that opens on a pick already made, the one that was made. Undefined while
+// the player is still choosing, which leaves the frame in its ordinary colours.
+export const voteFill = (
+  view: ReturnType<typeof useVoteView>,
+): readonly [string, string] | undefined => {
+  const modeId = view.chosen ?? view.settledId
+  return modeId === null ? undefined : gradientOf(modeId)
+}
+
+// What the frame writes in over `voteFill`: white once there is one, else the frame's own.
+export const VOTE_INK = '#FFFFFF'
 
 // One tile, and what it does when a pick is made. Module level so the animated values live
 // as long as the tile does.
@@ -68,32 +97,22 @@ function VoteTile({
   const { t } = useLingui()
   const isChosen = settled || chosen === option.modeId
   const gone = chosen !== null && !isChosen
-  // Whether the ink has turned. Later than the fill so it never reads white on pale.
-  const [inked, setInked] = useState(settled)
-  const fill = useSharedValue(settled ? 1 : 0)
   const fade = useSharedValue(1)
   const shift = useSharedValue(0)
 
   useEffect(() => {
     if (settled || chosen === null) return
     if (isChosen) {
-      fill.value = withTiming(1, { duration: FADE_MS })
       // Half a cell towards the middle: the left tile moves right, the right one left.
       shift.value = withTiming((index === 0 ? 1 : -1) * (gridWidth / 4), {
         duration: MOVE_MS,
         easing: Easing.out(Easing.cubic),
       })
-      const timer = setTimeout(() => {
-        setInked(true)
-      }, INK_AT_MS)
-      return () => {
-        clearTimeout(timer)
-      }
+      return
     }
     fade.value = withTiming(0, { duration: FADE_MS })
   }, [chosen])
 
-  const fillStyle = useAnimatedStyle(() => ({ opacity: fill.value }))
   const cellStyle = useAnimatedStyle(() => ({
     opacity: fade.value,
     transform: [{ translateX: shift.value }],
@@ -104,48 +123,34 @@ function VoteTile({
     <Animated.View style={cellStyle} pointerEvents={gone ? 'none' : 'auto'}>
       <View
         className="overflow-hidden rounded-2xl border-2"
-        style={{ borderColor: colors[1] }}
+        style={{ borderColor: 'rgba(255,255,255,0.7)' }}
       >
         <Tile
           id="vote.option"
-          wash={washOf(option.modeId)}
+          clear
           backdrop={
-            <Animated.View
-              pointerEvents="none"
-              className="absolute inset-0"
-              style={fillStyle}
-            >
+            // The challenge's own gradient, full strength, so the tile is the challenge in
+            // its colours — and keeps it through the pick, the move and the hand-over to
+            // the settled card, so the picked tile only ever moves.
+            <View pointerEvents="none" className="absolute inset-0">
               <LinearGradient
                 colors={[...colors]}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 1 }}
                 className="absolute inset-0"
               />
-            </Animated.View>
+            </View>
           }
-          mark={
-            <ChallengeMark
-              modeId={option.modeId}
-              color={inked ? '#FFFFFF' : challengeInk(colors[1])}
-              size={MARK_SIZE}
-            />
-          }
-          heading={
-            inked ? (
-              <Text selectable={false} className={cn(TYPE.cardTitle, 'text-white')}>
-                {t(labelOf(option.modeId))}
-              </Text>
-            ) : (
-              <ChallengeTitle modeId={option.modeId} className={TYPE.cardTitle} wrap />
-            )
-          }
+          // White throughout, on the challenge's gradient. The mark sits at the top and the
+          // name at the bottom — the tile's `note` slot, with an empty heading to keep the
+          // name out of the top group. The challenge's line is left off: the square was
+          // too small for it, and a description cut off mid-sentence read worse than none —
+          // the name is what the vote is between.
+          mark={<ChallengeMark modeId={option.modeId} color="#FFFFFF" size={MARK_SIZE} />}
+          heading={<View />}
           note={
-            <Text
-              selectable={false}
-              numberOfLines={4}
-              className={cn(TYPE.proseSm, inked ? 'text-white' : 'text-dim')}
-            >
-              {t(descriptionOf(option.modeId))}
+            <Text selectable={false} className={cn(TYPE.cardTitle, 'text-white')}>
+              {t(labelOf(option.modeId))}
             </Text>
           }
           onPress={onPick}
@@ -179,10 +184,9 @@ export function NextVote({
   onClose: () => void
   view: ReturnType<typeof useVoteView>
 }) {
-  const { setPicking, settled } = view
-  // The candidate just tapped, while its tile plays out; the grid's width, to know how far
-  // the middle is; and the pending hand-over to the settled card.
-  const [chosen, setChosen] = useState<string | null>(null)
+  const { setPicking, chosen, setChosen, setPick, settled, settledId } = view
+  // The grid's width, to know how far the middle is; and the pending hand-over to the
+  // settled card. The candidate just tapped lives on `view`, where the frame can see it.
   const [gridWidth, setGridWidth] = useState(0)
   const timer = useRef<ReturnType<typeof setTimeout>>(undefined)
   useEffect(
@@ -194,7 +198,7 @@ export function NextVote({
 
   // Down to the one: the tile the player picked, in the middle. Pressing it closes the card.
   if (settled) {
-    const mine = options.find((option) => option.mine)
+    const mine = options.find((option) => option.modeId === settledId)
     if (mine === undefined) return null
     return (
       <View className="w-full items-center">
@@ -240,6 +244,7 @@ export function NextVote({
               onPick={() => {
                 if (chosen !== null) return
                 setChosen(option.modeId)
+                setPick(option.modeId)
                 if (!option.mine) onVote(option.modeId)
                 timer.current = setTimeout(() => {
                   setPicking(false)

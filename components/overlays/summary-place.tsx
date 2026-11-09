@@ -1,40 +1,67 @@
 import { Text, View } from 'react-native'
 
 import { GradientName } from '@/components/gradient-name'
+import { MEDAL_FILL } from '@/constants/colors'
 import { GLYPH, READOUT, TYPE } from '@/constants/typography'
 import { cn } from '@/lib/cn'
 import { rankMedal } from '@/lib/rank-emoji'
 import { sessionFigure } from '@/lib/session-figure'
 import type { SummaryPlace } from '@/lib/session-summary'
-import type { Measure } from '@/modes'
+import { lerpColor, type Measure } from '@/modes'
 
-// One **place** on a closed session's podium: the medal, the name, the figure.
+// One **place** on a closed session's podium: the medal, the name set over it, the figure
+// under it.
 //
-// Two sizes rather than two components. Gold leads the page and the other two stand under
-// it, which is the podium drawn as a podium — three equal rows would be a table, and a
-// table is what the **session board** already is. The difference is only ever scale: the
-// same three parts in the same order, so the eye reads the shape once.
+// The medal is the ground rather than a mark above the text — drawn large and let through
+// to the challenge's gradient, so the podium reads as three metals before it reads as three
+// names. The name sits on a pill in that place's own metal, in the player's own colours,
+// and the figure is a small line beneath: the name is what the page is for.
+//
+// Three sizes rather than three components. Gold leads the page and the other two stand
+// under it, which is the podium drawn as a podium — three equal rows would be a table, and
+// a table is what the **session board** already is. Silver is a little larger than bronze:
+// second is nearer first. Otherwise the same parts in the same order, so the eye reads the
+// shape once.
 //
 // `rankMedal` rather than three emoji typed here. The podium is shared with the board, the
 // multiplayer results and the game-over screen, and the one place it lives is
 // `lib/rank-emoji.ts` — so the three metals cannot drift apart between the screens that
 // draw them.
 //
-// The name goes through `GradientName`, like every nickname the app writes on its own
-// surface: a player is the same colour here as on a leaderboard row and on their own
-// profile. The averages ride all the way from the RPC for exactly this — see
-// `SummaryPlace`, where they are nullable on purpose.
-
-// What each size is worth, as the roles involved rather than numbers.
-//
 // The figure is the **seven-segment face**, not the app's mono voice. Everywhere else a
 // settled figure is mono and a *live* one is DSEG7 — but this page is a scoreboard being
 // read after the fact, and the podium is the one place on it where three numbers are to be
-// compared down a column. `READOUT` is the role set for that face.
+// compared. `READOUT` is the role set for that face.
 const SIZES = {
-  lead: { medal: GLYPH['4xl'], name: TYPE.cardTitleSm, figure: READOUT.score },
-  rest: { medal: GLYPH['3xl'], name: TYPE.labelSm, figure: READOUT.best },
+  lead: {
+    medal: GLYPH['7xl'],
+    box: 'h-28 w-full',
+    name: TYPE.podiumNameLead,
+    figure: READOUT.best,
+  },
+  second: {
+    medal: GLYPH['6xl'],
+    box: 'h-24 w-full',
+    name: TYPE.podiumName,
+    figure: READOUT.row,
+  },
+  third: {
+    medal: GLYPH['5xl'],
+    box: 'h-24 w-full',
+    name: TYPE.podiumName,
+    figure: READOUT.row,
+  },
 } as const
+
+// How much of the metal comes through the gradient behind it.
+const MEDAL_OPACITY = 0.45
+
+// How far towards white the metal goes for its edge.
+const EDGE_LIGHTEN = 0.6
+
+// The light the name is shadowed in: white, not the metal's own shade, which was too close
+// to the pill to be seen.
+const NAME_SHADOW = 'rgba(255,255,255,0.9)'
 
 export type PlaceSize = keyof typeof SIZES
 
@@ -42,7 +69,6 @@ export function SummaryPlaceRow({
   place,
   measure,
   size,
-  isMine,
   digitFont,
 }: {
   place: SummaryPlace
@@ -50,43 +76,55 @@ export function SummaryPlaceRow({
   // standings were settled on and never both — see `measureOf`.
   measure: Measure
   size: PlaceSize
-  // Whether this place is the reader's own. Drawn as a pill behind the nickname rather
-  // than as a word beside it: a name is already the thing the eye is scanning for, and a
-  // YOU next to it adds a second thing to read to say what a tint says at a glance. It is
-  // also the one mark that cannot collide with a nickname — somebody is called YOU.
-  isMine: boolean
   // DSEG7 once it has loaded, the mono voice until then. Resolved by the card above so
   // every figure on the page changes face in the same commit rather than one at a time.
   digitFont: string
 }) {
   const type = SIZES[size]
   const figure = sessionFigure(measure, place)
+  // A lighter shade of the place's metal, for the border of every pill.
+  const edge = lerpColor(MEDAL_FILL[place.rank], '#FFFFFF', EDGE_LIGHTEN)
 
   return (
-    <View className="items-center gap-0.5">
-      <Text selectable={false} className={type.medal}>
-        {rankMedal(place.rank)}
-      </Text>
-      {/* The pill is always the wrapper and only sometimes painted, so a marked name and
-          an unmarked one sit at exactly the same height — a background that also moved
-          the row would make the podium step whenever the reader was on it.
-
-          `bg-card` is the app's own token for a pill, and one step off the `bg-surface`
-          this dialog is drawn on: enough to find at a glance, not enough to shout over
-          the medal above it. The name keeps its own colours, which is the point — this
-          says *which* of them is yours without repainting it. */}
-      <View className={cn('rounded-lg px-2 py-0.5', isMine && 'bg-card')}>
-        <GradientName
-          nickname={place.nickname}
-          avgAccuracy={place.avgAccuracy}
-          avgSpeed={place.avgSpeed}
-          className={type.name}
-          numberOfLines={1}
-        />
+    <View className="w-full items-center">
+      <View className={cn('items-center justify-center', type.box)}>
+        <Text
+          selectable={false}
+          className={type.medal}
+          style={{ opacity: MEDAL_OPACITY }}
+        >
+          {rankMedal(place.rank)}
+        </Text>
+        <View className="absolute inset-0 items-center justify-center">
+          {/* The pill is the place's own metal, so gold, silver and bronze read even where
+              the medal behind is faint. The name keeps its own colours on it, which is the
+              point — it is the player's, wherever they are written. */}
+          <View
+            className="rounded-xl border-2 px-1.5 py-1"
+            style={{ backgroundColor: MEDAL_FILL[place.rank], borderColor: edge }}
+          >
+            <GradientName
+              nickname={place.nickname}
+              avgAccuracy={place.avgAccuracy}
+              avgSpeed={place.avgSpeed}
+              className={type.name}
+              // No `numberOfLines`: a nickname is shown whole, never cut or ellipsised. The
+              // type roles are sized to hold ten characters — see `podiumName`.
+              // A light shadow round the letters, so the name stays lifted off the metal
+              // whatever its own colours are. React Native has no text stroke; a shadow
+              // with no offset is the nearest thing to an outline.
+              style={{
+                textShadowColor: NAME_SHADOW,
+                textShadowOffset: { width: 0, height: 0 },
+                textShadowRadius: 4,
+              }}
+            />
+          </View>
+        </View>
       </View>
       <Text
         selectable={false}
-        className={cn(type.figure, 'text-score')}
+        className={cn(type.figure, 'text-white')}
         style={{ fontFamily: digitFont }}
       >
         {figure}

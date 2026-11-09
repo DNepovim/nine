@@ -1,13 +1,12 @@
 import { isNonEmptyArray } from 'narrowland'
 
-import { cardSession, type SessionCard, type SessionSpan } from '@/lib/challenge-session'
 import { modeById, type Difficulty, type Measure } from '@/modes'
 
 // A **summary**: what one closed **session** came to.
 //
 // Told once, on the first intro a player reaches after the window shuts, and only to
-// somebody who played it. Its three **places**, where that player themselves came, and an
-// invitation to whatever is on next — then it is gone. A summary is never kept and never
+// somebody who played it. Its three **places** and where that player themselves came —
+// then it is gone. A summary is never kept and never
 // re-opened, which is what it has in common with a **recap** and what keeps it from being
 // a **session board**: the board is a thing you can go and look at, and this is a thing
 // you are told.
@@ -136,18 +135,3 @@ const latest = (rows: readonly SessionSummary[]): SessionSummary | undefined =>
     (best, row) => (best === undefined || row.closesAt > best.closesAt ? row : best),
     undefined,
   )
-
-// What the page invites the player to next, or nothing.
-//
-// `cardSession` itself rather than a rule of its own, and that is the point: it is the
-// function the intro already uses to decide which session it may speak about at all,
-// **teaser** included. Naming one here that the start screen is not yet allowed to name
-// would be the summary announcing a challenge early through a side door.
-//
-// The **card** rather than the session inside it, because the two faces count towards
-// different instants: a teased session is counting to its open, a live one to its close.
-// Dropping the state here would leave the page with a clock and no way to know which.
-export const summaryInvite = <T extends SessionSpan>(
-  sessions: readonly T[],
-  now: number,
-): SessionCard<T> => cardSession(sessions, now)

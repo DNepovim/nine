@@ -1,11 +1,9 @@
 import { describe, expect, it } from 'vitest'
 
-import type { SessionSpan } from '@/lib/challenge-session'
 import { challengeId } from '@/modes'
 
 import {
   SUMMARY_LOOKBACK_MS,
-  summaryInvite,
   summaryOwed,
   summarySince,
   type SessionSummary,
@@ -47,8 +45,6 @@ const summary = (
   players: places.length,
   mine: { rank: null, score: 100, timeMs: null, hits: 9, difficulty: 'hard', bonus: 0 },
 })
-
-const span = (opensAt: number, closesAt: number): SessionSpan => ({ opensAt, closesAt })
 
 describe('summarySince', () => {
   it('asks from the marker when the marker is inside the lookback', () => {
@@ -117,24 +113,5 @@ describe('summaryOwed', () => {
       summary: played,
       through: NOW - HOUR,
     })
-  })
-})
-
-describe('summaryInvite', () => {
-  it('names nothing when nothing is on or coming', () => {
-    expect(summaryInvite([], NOW)).toBeNull()
-  })
-
-  it('names a live session over one still teasing, and says which it is', () => {
-    const live = span(NOW - HOUR, NOW + HOUR)
-    const soon = span(NOW + HOUR, NOW + 3 * HOUR)
-    // The face rides along because the clock under the name counts towards a different
-    // instant for each: a live session towards its close, a teased one towards its open.
-    expect(summaryInvite([soon, live], NOW)).toEqual({ state: 'live', session: live })
-  })
-
-  it('names one still to come, however far off', () => {
-    const teased = span(NOW + 48 * HOUR, NOW + 72 * HOUR)
-    expect(summaryInvite([teased], NOW)).toEqual({ state: 'teaser', session: teased })
   })
 })

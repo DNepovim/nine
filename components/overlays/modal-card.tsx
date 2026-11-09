@@ -2,9 +2,10 @@ import { Trans } from '@lingui/react/macro'
 import { LinearGradient } from 'expo-linear-gradient'
 import type { ReactNode } from 'react'
 import { useEffect, useState } from 'react'
-import { KeyboardAvoidingView, Platform, Pressable, Text, View } from 'react-native'
+import { KeyboardAvoidingView, Platform, Pressable, View } from 'react-native'
 import Animated, {
   Easing,
+  FadeInDown,
   useAnimatedStyle,
   useSharedValue,
   withTiming,
@@ -52,6 +53,7 @@ const EXIT_MS = 160
 export function ModalCard({
   title,
   titleColor,
+  titleKey,
   icon,
   onDismiss,
   maxHeight,
@@ -59,6 +61,7 @@ export function ModalCard({
   avoidKeyboard = false,
   closeButton = true,
   edge,
+  fill,
   held = false,
   children,
 }: {
@@ -69,6 +72,10 @@ export function ModalCard({
   // A dialog that speaks for the run it was opened from wears that mode's colour here;
   // the rest sit back in dim, which is what makes the coloured one read as particular.
   titleColor?: string
+  // A change of this turns the title over: the new one drops in and fades up where the old
+  // one stood. For a dialog whose title says where the player is in it — the rating
+  // dialog's steps and its vote settling — and left off by the rest, which never retitle.
+  titleKey?: string
   // Drawn before the title, for a dialog whose subject has a mark of its own.
   icon?: ReactNode
   // Set by a dialog that opens *underneath* the one it takes the place of — the
@@ -109,6 +116,11 @@ export function ModalCard({
   // speaking, and only this one is about a single mode — this one and the **rating**,
   // which asks about one session of one challenge and wears that challenge's pair too.
   edge?: readonly [string, string]
+  // Two stops to paint the card's *surface* in, in place of the plain one. The rating
+  // dialog asked for it: its summary and its vote sit on the challenge's own gradient. A
+  // dialog that passes one is writing in white on it — the title, via `titleColor`, and
+  // the 5-dot close, which this turns white itself.
+  fill?: readonly [string, string]
   children: (close: () => void) => ReactNode
 }) {
   // The card's own box, for the turning edge below — which is absolutely positioned and
@@ -231,9 +243,27 @@ export function ModalCard({
               )
             )}
             <View
-              className="bg-surface px-5 pb-5 pt-4"
+              className={cn(
+                'px-5 pb-5 pt-4',
+                fill === undefined ? 'bg-surface' : 'overflow-hidden',
+              )}
               style={{ borderRadius: RADIUS - BORDER, flexShrink: 1 }}
             >
+              {fill !== undefined && (
+                <LinearGradient
+                  colors={[...fill]}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 1 }}
+                  pointerEvents="none"
+                  style={{
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                  }}
+                />
+              )}
               <View className="mb-1 flex-row items-center justify-between">
                 {/* Kept even when empty: it is what holds the close button over on the
                     right, and `justify-between` with one child would put it on the left.
@@ -245,18 +275,26 @@ export function ModalCard({
                 <View className="shrink flex-row items-center gap-1.5">
                   {icon}
                   {title !== undefined && (
-                    <Text
+                    <Animated.Text
+                      key={titleKey}
+                      entering={
+                        titleKey === undefined ? undefined : FadeInDown.duration(320)
+                      }
                       selectable={false}
                       className={cn(TYPE.heading, titleColor === undefined && 'text-dim')}
                       style={titleColor === undefined ? undefined : { color: titleColor }}
                     >
                       {title}
-                    </Text>
+                    </Animated.Text>
                   )}
                 </View>
                 {/* The same 5-dot cross the pause screen closes with, unlabelled — a
                     dialog header already reads as one. */}
-                <MenuButton showLabel={false} onToggle={close} color={MUTED_INK} />
+                <MenuButton
+                  showLabel={false}
+                  onToggle={close}
+                  color={fill === undefined ? MUTED_INK : '#FFFFFF'}
+                />
               </View>
               <HoldProvider value={hold.report}>{children(close)}</HoldProvider>
               {closeButton && (

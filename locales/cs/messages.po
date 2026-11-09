@@ -313,14 +313,14 @@ msgid "[W] took the all-time [BOARD] record on [D], and still has it."
 msgstr "[W] vzal [D] historický rekord [BOARD] a pořád ho má."
 
 #. placeholder {0}: session.played
-#: components/overlays/admin-sessions.tsx:210
+#: components/overlays/admin-sessions.tsx:213
 msgid "{0, plural, one {# player} other {# players}}"
 msgstr "{0, plural, one {# hráč} few {# hráči} many {# hráče} other {# hráčů}}"
 
 #. placeholder {0}: session.players
 #. placeholder {0}: summary.players
 #: components/overlays/challenge-page.tsx:135
-#: components/overlays/summary-card.tsx:77
+#: components/overlays/summary-card.tsx:85
 msgid "{0, plural, one {# PLAYER} other {# PLAYERS}}"
 msgstr "{0, plural, one {# HRÁČ} few {# HRÁČI} many {# HRÁČE} other {# HRÁČŮ}}"
 
@@ -338,9 +338,9 @@ msgstr "{0, plural, one {# TERMÍN} few {# TERMÍNY} many {# TERMÍNU} other {# 
 #. placeholder {0}: votesFor(voters, modeId)
 #. placeholder {0}: votesFor.votes
 #: components/overlays/admin-session-votes.tsx:60
-#: components/overlays/admin-sessions.tsx:252
+#: components/overlays/admin-sessions.tsx:255
 #: components/overlays/challenge-page.tsx:208
-#: components/overlays/next-vote-results-dialog.tsx:56
+#: components/overlays/next-vote-results-dialog.tsx:64
 msgid "{0, plural, one {# VOTE} other {# VOTES}}"
 msgstr "{0, plural, one {# HLAS} few {# HLASY} many {# HLASU} other {# HLASŮ}}"
 
@@ -350,7 +350,7 @@ msgid "{0, plural, one {joined a year ago} other {joined # years ago}}"
 msgstr "{0, plural, one {členem už rok} few {členem už # roky} other {členem už # let}}"
 
 #. placeholder {0}: formatCountdown(session.closesAt - openedAt)
-#: components/overlays/admin-sessions.tsx:212
+#: components/overlays/admin-sessions.tsx:215
 msgid "{0} left"
 msgstr "zbývá {0}"
 
@@ -359,7 +359,7 @@ msgstr "zbývá {0}"
 msgid "{0} without a nickname"
 msgstr "{0} bez přezdívky"
 
-#: components/overlays/admin-candidates-dialog.tsx:89
+#: components/overlays/admin-candidates-dialog.tsx:90
 msgid "{asking, plural, one {# vote for the challenge you are replacing will be discarded. Votes for the other stay.} other {# votes for the challenge you are replacing will be discarded. Votes for the other stay.}}"
 msgstr "{asking, plural, one {# hlas pro nahrazovanou výzvu se zahodí. Hlasy pro druhou zůstanou.} few {# hlasy pro nahrazovanou výzvu se zahodí. Hlasy pro druhou zůstanou.} many {# hlasu pro nahrazovanou výzvu se zahodí. Hlasy pro druhou zůstanou.} other {# hlasů pro nahrazovanou výzvu se zahodí. Hlasy pro druhou zůstanou.}}"
 
@@ -420,9 +420,7 @@ msgid "{trimmed, plural, one {# session keeps its date and its other candidate, 
 msgstr "{trimmed, plural, one {# termín si ponechá datum i druhého kandidáta, hlasy pro tuto výzvu se zahodí.} few {# termíny si ponechají datum i druhého kandidáta, hlasy pro tuto výzvu se zahodí.} many {# termínu si ponechá datum i druhého kandidáta, hlasy pro tuto výzvu se zahodí.} other {# termínů si ponechá datum i druhého kandidáta, hlasy pro tuto výzvu se zahodí.}}"
 
 #. placeholder {0}: fortuneOf(score, difficulty)
-#. placeholder {0}: groupDigits(summary.mine.bonus)
 #: components/overlays/game-over-overlay.tsx:370
-#: components/overlays/summary-card.tsx:158
 msgid "+{0} TO YOUR FORTUNE"
 msgstr "+{0} K TVÉMU JMĚNÍ"
 
@@ -699,6 +697,7 @@ msgstr "Přidej si e-mail a ztracený telefon přestane znamenat ztracenou kari�
 msgid "ADD YOUR NICKNAME"
 msgstr "PŘIDEJ PŘEZDÍVKU"
 
+#: components/overlays/summary-card.tsx:171
 #: components/overlays/winnings-card.tsx:91
 msgid "ADDED TO YOUR FORTUNE"
 msgstr "PŘIČTENO K JMĚNÍ"
@@ -787,10 +786,6 @@ msgstr "Sova uslyší myš pod půl metrem sněhu. Ty jsi přesnější — reko
 msgid "ANALYTICS"
 msgstr "ANALYTIKA"
 
-#: components/overlays/summary-card.tsx:171
-msgid "ANOTHER CHALLENGE IS ON ITS WAY"
-msgstr "BRZY PŘIJDE DALŠÍ VÝZVA"
-
 #: components/overlays/admin-messages.tsx:98
 #: components/overlays/admin-messages.tsx:339
 msgid "ANSWER"
@@ -812,7 +807,7 @@ msgstr "Cokoliv — co se rozbilo, co tě štvalo, co by sis přál. Mód, obtí
 msgid "Anything at all — what broke, what annoyed you, what you wish it did. The mode, difficulty and score you are on go with it."
 msgstr "Cokoliv — co se rozbilo, co tě štvalo, co by sis přál. Mód, obtížnost a skóre se pošlou s tím."
 
-#: components/overlays/rating-overlay.tsx:142
+#: components/overlays/rating-overlay.tsx:145
 msgid "ANYTHING TO ADD?"
 msgstr "CHCEŠ NĚCO DODAT?"
 
@@ -875,10 +870,10 @@ msgstr "PRŮM RYCH"
 #: components/overlays/admin-messages.tsx:380
 #: components/overlays/admin-session-live.tsx:151
 #: components/overlays/admin-session-planned.tsx:125
-#: components/overlays/admin-sessions.tsx:308
+#: components/overlays/admin-sessions.tsx:311
 #: components/overlays/admin-stats.tsx:160
 #: components/overlays/challenge-page.tsx:165
-#: components/overlays/whats-new-overlay.tsx:107
+#: components/overlays/whats-new-overlay.tsx:114
 msgid "BACK"
 msgstr "ZPĚT"
 
@@ -989,7 +984,7 @@ msgstr "Tlačítka umí ukázat svou váhu, svůj strop i to, kolik zrovna dáva
 msgid "CAN WE LOOK UNDER YOUR THUMBS?"
 msgstr "MŮŽEME TI KOUKAT POD PRSTY?"
 
-#: components/overlays/admin-candidates-dialog.tsx:158
+#: components/overlays/admin-candidates-dialog.tsx:159
 #: components/overlays/email-modal.tsx:136
 #: components/overlays/join-room-overlay.tsx:87
 #: components/overlays/motto-modal.tsx:138
@@ -1045,11 +1040,11 @@ msgstr "Výzvy se teď hrají ve vlastních světech: v bouři, padajícím sně
 msgid "CHAMPIONS"
 msgstr "ŠAMPIONI"
 
-#: components/overlays/admin-candidates-dialog.tsx:87
+#: components/overlays/admin-candidates-dialog.tsx:88
 msgid "CHANGE A CANDIDATE?"
 msgstr "ZMĚNIT KANDIDÁTA?"
 
-#: components/overlays/admin-candidates-dialog.tsx:103
+#: components/overlays/admin-candidates-dialog.tsx:104
 msgid "CHANGE CANDIDATE"
 msgstr "ZMĚNIT KANDIDÁTA"
 
@@ -1061,8 +1056,8 @@ msgstr "ZMĚNIT E-MAIL"
 msgid "CHANGE YOUR EMAIL"
 msgstr "ZMĚŇ SI E-MAIL"
 
-#: components/overlays/admin-candidates-dialog.tsx:126
-#: components/overlays/admin-candidates-dialog.tsx:137
+#: components/overlays/admin-candidates-dialog.tsx:127
+#: components/overlays/admin-candidates-dialog.tsx:138
 msgid "CHOOSE A CHALLENGE"
 msgstr "VYBER VÝZVU"
 
@@ -1070,7 +1065,8 @@ msgstr "VYBER VÝZVU"
 msgid "Choose Add to Home Screen"
 msgstr "Zvol Přidat na plochu"
 
-#: components/overlays/popup-card-view.tsx:99
+#: components/overlays/popup-card-view.tsx:81
+#: components/overlays/summary-card.tsx:180
 msgid "CLAIM"
 msgstr "VYZVEDNOUT"
 
@@ -1090,9 +1086,10 @@ msgstr "čas = zbývající čas ÷ kruh"
 #: components/overlays/challenge-modal.tsx:301
 #: components/overlays/compare-overlay.tsx:318
 #: components/overlays/email-code-modal.tsx:532
-#: components/overlays/modal-card.tsx:267
-#: components/overlays/next-vote-dialog.tsx:36
-#: components/overlays/next-vote-results-dialog.tsx:73
+#: components/overlays/modal-card.tsx:305
+#: components/overlays/next-vote-dialog.tsx:47
+#: components/overlays/next-vote-results-dialog.tsx:81
+#: components/overlays/rating-overlay.tsx:180
 #: components/overlays/share-modal.tsx:125
 msgid "CLOSE"
 msgstr "ZAVŘÍT"
@@ -1216,7 +1213,6 @@ msgstr "Udělej něco, co nikoho nenapadlo chtít."
 #: components/overlays/admin-person.tsx:187
 #: components/overlays/admin-role.tsx:123
 #: components/overlays/news-archive-overlay.tsx:43
-#: components/overlays/rating-overlay.tsx:131
 msgid "DONE"
 msgstr "HOTOVO"
 
@@ -1490,8 +1486,8 @@ msgstr "Dokončená, skóre > 0 a dělitelné 1 000"
 msgid "Finished, score of 4+ digits that reads the same backwards"
 msgstr "Dokončená, skóre o 4+ číslicích, které se čte stejně pozpátku"
 
-#: components/overlays/admin-candidates-dialog.tsx:122
-#: components/overlays/admin-candidates-dialog.tsx:125
+#: components/overlays/admin-candidates-dialog.tsx:123
+#: components/overlays/admin-candidates-dialog.tsx:126
 msgid "FIRST CANDIDATE"
 msgstr "PRVNÍ KANDIDÁT"
 
@@ -1714,13 +1710,9 @@ msgstr "DRŽÍŠ"
 msgid "HOME"
 msgstr "DOMŮ"
 
-#: components/overlays/popup-card-view.tsx:54
+#: components/overlays/rating-overlay.tsx:141
 msgid "HOW DID IT END?"
 msgstr "JAK TO DOPADLO?"
-
-#: components/overlays/rating-overlay.tsx:186
-msgid "HOW DO YOU LIKE THE CHALLENGE?"
-msgstr "JAK SE TI VÝZVA LÍBÍ?"
 
 #: components/game/arcade-dawn.tsx:127
 #: components/overlays/arcade-teaser.tsx:147
@@ -1731,6 +1723,10 @@ msgstr "Jak daleko to dotáhneš?"
 #: components/overlays/menu-overlay.tsx:711
 msgid "HOW TO PLAY"
 msgstr "JAK HRÁT"
+
+#: components/overlays/rating-overlay.tsx:143
+msgid "HOW WAS IT?"
+msgstr "JAK SE TI LÍBILO?"
 
 #: modes/difficulty.ts:54
 msgid "HRD"
@@ -1850,7 +1846,7 @@ msgstr "6."
 msgid "JUNE"
 msgstr "června"
 
-#: components/overlays/admin-candidates-dialog.tsx:111
+#: components/overlays/admin-candidates-dialog.tsx:112
 msgid "KEEP"
 msgstr "PONECHAT"
 
@@ -1975,7 +1971,7 @@ msgstr "AŤ ZAČNE DOBRODRUŽSTVÍ"
 msgid "Let us watch replays to fix bugs"
 msgstr "Nech nás sledovat záznamy a opravovat chyby"
 
-#: components/overlays/whats-new-overlay.tsx:135
+#: components/overlays/whats-new-overlay.tsx:144
 msgid "LET’S GO"
 msgstr "JDEME NA TO"
 
@@ -1983,7 +1979,7 @@ msgstr "JDEME NA TO"
 msgid "LET'S LEARN THE GAME"
 msgstr "POJĎME SE NAUČIT HRU"
 
-#: components/splash-screen.tsx:225
+#: components/splash-screen.tsx:239
 msgid "Let's multiply"
 msgstr "Pojďme násobit"
 
@@ -2150,17 +2146,14 @@ msgstr "NOVÁČEK VE MĚSTĚ"
 msgid "NEW ROLE"
 msgstr "NOVÁ ROLE"
 
-#: components/overlays/whats-new-overlay.tsx:135
+#: components/overlays/summary-card.tsx:180
+#: components/overlays/whats-new-overlay.tsx:144
 msgid "NEXT"
 msgstr "DALŠÍ"
 
 #: components/overlays/admin-challenges.tsx:258
 msgid "Next {opens}"
 msgstr "Další {opens}"
-
-#: components/overlays/summary-card.tsx:176
-msgid "NEXT UP"
-msgstr "DALŠÍ NA ŘADĚ"
 
 #: components/overlays/score-columns.tsx:101
 msgid "NICK"
@@ -2217,7 +2210,7 @@ msgid "No figures. See the error above."
 msgstr "Žádná čísla. Viz chyba výše."
 
 #: components/overlays/admin-challenges.tsx:318
-#: components/overlays/admin-sessions.tsx:353
+#: components/overlays/admin-sessions.tsx:356
 msgid "No filters are on."
 msgstr "Není zapnutý žádný filtr."
 
@@ -2277,7 +2270,7 @@ msgstr "Žádné běhy, žádné rekordy, žádný spor. Zatím."
 msgid "No sessions have been planned."
 msgstr "Zatím není naplánovaný žádný termín."
 
-#: components/overlays/admin-sessions.tsx:355
+#: components/overlays/admin-sessions.tsx:358
 msgid "No sessions planned yet."
 msgstr "Zatím není naplánovaný žádný termín."
 
@@ -2378,9 +2371,7 @@ msgid "Not much happened. [A] took [N] of the [P] days anyone turned up for."
 msgstr "Nic moc se nedělo. Hrálo se jen [P]× a [N] z toho patřilo hráči [A]."
 
 #: components/game/step-up-toast.tsx:115
-#: components/overlays/rating-overlay.tsx:133
-#: components/overlays/rating-overlay.tsx:175
-#: components/overlays/rating-overlay.tsx:209
+#: components/overlays/rating-overlay.tsx:180
 #: components/overlays/tutorial-done-modal.tsx:114
 #: components/overlays/tutorial-offer-modal.tsx:95
 msgid "NOT NOW"
@@ -2431,7 +2422,7 @@ msgid "Nothing announced yet."
 msgstr "Zatím nic oznámeného."
 
 #: components/overlays/admin-challenges.tsx:320
-#: components/overlays/admin-sessions.tsx:357
+#: components/overlays/admin-sessions.tsx:360
 msgid "Nothing in these states."
 msgstr "V těchto stavech nic není."
 
@@ -2502,10 +2493,6 @@ msgstr "[DATE] ti patřilo třetí místo — [B] se skóre [S]"
 #: components/overlays/how-to-play-overlay.tsx:525
 msgid "On Hard and Extreme, waste too many moves on a hit and you lose a life — the bar is 20% accuracy on Hard, 15% on Extreme. Easy never takes one for it."
 msgstr "Na Těžké a Extrémní, když na zásah promrháš moc tahů, přijdeš o život — laťka je 20 % přesnosti na Těžké a 15 % na Extrémní. Na Lehké o něj kvůli tomu nepřijdeš."
-
-#: components/overlays/summary-card.tsx:176
-msgid "ON NOW"
-msgstr "PRÁVĚ BĚŽÍ"
 
 #: constants/achievements.ts:437
 msgid "ON THE BOARD"
@@ -2628,7 +2615,7 @@ msgid "OPENS IN"
 msgstr "ZAČÍNÁ ZA"
 
 #. placeholder {0}: formatCountdown(session.opensAt - openedAt)
-#: components/overlays/admin-sessions.tsx:259
+#: components/overlays/admin-sessions.tsx:262
 msgid "opens in {0}"
 msgstr "otevírá se za {0}"
 
@@ -2708,7 +2695,7 @@ msgstr "Na úvodní obrazovce zvol „S přáteli“. Založ hru a pošli ostatn
 msgid "Pick ADVENTURE on the start screen. The dial is the same dial — but the targets are not scattered any more. Two to four of them hang at the ends of ways out of the crossroad you are standing on, and the one you dial is the one you walk."
 msgstr "Na úvodní obrazovce zvol VÝPRAVU. Číselník je pořád ten samý — jen cíle už nejsou rozesety po ploše. Dva až čtyři visí na koncích cest, které vedou z křižovatky, na níž stojíš, a vydáš se tou, kterou vytočíš."
 
-#: components/overlays/admin-candidates-dialog.tsx:145
+#: components/overlays/admin-candidates-dialog.tsx:146
 msgid "Pick two different challenges."
 msgstr "Vyber dvě různé výzvy."
 
@@ -2716,8 +2703,8 @@ msgstr "Vyber dvě různé výzvy."
 msgid "PLACED"
 msgstr "NA STUPNÍCH"
 
-#: components/overlays/admin-sessions.tsx:302
-#: components/overlays/admin-sessions.tsx:365
+#: components/overlays/admin-sessions.tsx:305
+#: components/overlays/admin-sessions.tsx:368
 msgid "PLAN SESSION"
 msgstr "NAPLÁNOVAT TERMÍN"
 
@@ -3049,7 +3036,7 @@ msgstr "Sytost"
 msgid "Saturday"
 msgstr "v sobotu"
 
-#: components/overlays/admin-candidates-dialog.tsx:152
+#: components/overlays/admin-candidates-dialog.tsx:153
 #: components/overlays/motto-modal.tsx:156
 msgid "SAVE"
 msgstr "ULOŽIT"
@@ -3119,8 +3106,8 @@ msgstr "Skóre, pro každý mód vlastní žebřík — Přesnost a Rychlost cht
 msgid "SDW"
 msgstr "BOK"
 
-#: components/overlays/admin-candidates-dialog.tsx:133
-#: components/overlays/admin-candidates-dialog.tsx:136
+#: components/overlays/admin-candidates-dialog.tsx:134
+#: components/overlays/admin-candidates-dialog.tsx:137
 msgid "SECOND CANDIDATE"
 msgstr "DRUHÝ KANDIDÁT"
 
@@ -3141,7 +3128,7 @@ msgid "See the better way"
 msgstr "Podívej se na lepší cestu"
 
 #: components/overlays/admin-messages.tsx:151
-#: components/overlays/rating-overlay.tsx:168
+#: components/overlays/rating-overlay.tsx:210
 msgid "SEND"
 msgstr "ODESLAT"
 
@@ -3249,7 +3236,8 @@ msgid "Skill inside a single run: a long streak, the top multiplier, a stretch w
 msgstr "Dovednost v jedné hře: dlouhá série, nejvyšší násobitel, úsek bez ztráty života."
 
 #: components/overlays/nickname-modal.tsx:142
-#: components/overlays/rating-overlay.tsx:215
+#: components/overlays/rating-overlay.tsx:217
+#: components/overlays/rating-overlay.tsx:249
 msgid "SKIP"
 msgstr "PŘESKOČIT"
 
@@ -3407,6 +3395,10 @@ msgstr "ODESLAT"
 #: lib/recap-lines.ts:192
 msgid "Sunday"
 msgstr "v neděli"
+
+#: components/splash-screen.tsx:221
+msgid "Sunday is a day of rest. Turn your phone off and go outside."
+msgstr "Neděle je dnem odpočinku. Vypni telefon a jdi ven."
 
 #: constants/achievements.ts:256
 msgid "SURGEON"
@@ -3691,7 +3683,7 @@ msgstr "Tabulka nemá názor. Budete si to muset vyřídit na číselníku."
 msgid "The table leans your way, but it is not nailed down."
 msgstr "Tabulka se kloní k tobě, ale přibitá není."
 
-#: components/overlays/next-vote-results-dialog.tsx:29
+#: components/overlays/next-vote-results-dialog.tsx:30
 msgid "THE VOTE"
 msgstr "HLASOVÁNÍ"
 
@@ -3723,7 +3715,7 @@ msgstr "Týden patřil hráči [A] bez debat — každý jeho den, a ani jeden z
 msgid "The week went everywhere. [A] took the most of it with [N] days, which was not many."
 msgstr "Týden se rozutekl. Nejvíc z něj vzal [A], [N]× — a to není moc."
 
-#: components/overlays/summary-card.tsx:70
+#: components/overlays/summary-card.tsx:78
 msgid "THE WINDOW HAS CLOSED"
 msgstr "VÝZVA SE ZAVŘELA"
 
@@ -4065,11 +4057,11 @@ msgstr "VÁHA"
 msgid "WEIGHT = ROW ORDER × COLUMN ORDER"
 msgstr "VÁHA = POŘADÍ ŘÁDKU × POŘADÍ SLOUPCE"
 
-#: components/overlays/popup-card-view.tsx:52
+#: components/overlays/popup-card-view.tsx:41
 msgid "WHAT DID YOU PULL OFF?"
 msgstr "CO SE TI POVEDLO?"
 
-#: components/overlays/rating-overlay.tsx:152
+#: components/overlays/rating-overlay.tsx:194
 msgid "What made it good or bad?"
 msgstr "Co se ti líbilo a co ne?"
 
@@ -4078,7 +4070,7 @@ msgstr "Co se ti líbilo a co ne?"
 msgid "WHAT’S NEW"
 msgstr "CO JE NOVÉHO"
 
-#: components/overlays/popup-card-view.tsx:56
+#: components/overlays/popup-card-view.tsx:43
 msgid "WHAT’S NEW IN THE GAME?"
 msgstr "CO JE VE HŘE NOVÉHO?"
 
@@ -4098,7 +4090,7 @@ msgstr "Když čekají dvě výzvy, hlasuj pro tu, která se má otevřít prvn�
 msgid "WHERE CAN WE REACH YOU?"
 msgstr "KAM TI MÁME NAPSAT?"
 
-#: components/overlays/next-vote.tsx:37
+#: components/overlays/next-vote.tsx:35
 msgid "WHICH ONE SHOULD BE NEXT?"
 msgstr "KTERÁ MÁ BÝT DALŠÍ?"
 
@@ -4186,11 +4178,11 @@ msgid "You are withdrawing your consent. We will no longer watch replays to fix 
 msgstr "Odvoláváš svůj souhlas. Už se nebudeme dívat na záznamy, abychom opravovali chyby."
 
 #. placeholder {0}: summary.mine.rank
-#: components/overlays/summary-card.tsx:131
+#: components/overlays/summary-card.tsx:142
 msgid "YOU CAME {0}"
 msgstr "SKONČIL JSI {0}."
 
-#: components/overlays/next-vote-results-dialog.tsx:66
+#: components/overlays/next-vote-results-dialog.tsx:74
 msgid "You can't vote because you didn't play the last challenge."
 msgstr "Hlasovat mohou jen ti, kdo hráli poslední výzvu."
 
@@ -4235,7 +4227,7 @@ msgstr "ty@priklad.cz"
 msgid "YOUR"
 msgstr "TVŮJ"
 
-#: components/overlays/next-vote.tsx:37
+#: components/overlays/next-vote.tsx:35
 msgid "YOUR CHOICE"
 msgstr "TVOJE VOLBA"
 
@@ -4255,7 +4247,7 @@ msgstr "Tvoje jméno se objeví na žebříčku."
 msgid "Your profile could not be loaded."
 msgstr "Tvůj profil se nepodařilo načíst."
 
-#: components/overlays/summary-card.tsx:129
+#: components/overlays/summary-card.tsx:140
 msgid "YOUR SCORE"
 msgstr "TVÉ SKÓRE"
 

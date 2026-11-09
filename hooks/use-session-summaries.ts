@@ -1,20 +1,13 @@
 import AsyncStorage from '@react-native-async-storage/async-storage'
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 
 import { SEEN_SUMMARY_KEY } from '@/constants/storage'
 import { requestAnnouncements } from '@/hooks/use-announcement-request'
 import { useOpenSessions } from '@/hooks/use-open-sessions'
 import { useSummaryRequests } from '@/hooks/use-summary-request'
 import { announcementFor } from '@/lib/announcements'
-import type { SessionCard } from '@/lib/challenge-session'
-import type { OpenSession } from '@/lib/session-board'
 import { loadSessionSummaries } from '@/lib/session-summaries'
-import {
-  summaryInvite,
-  summaryOwed,
-  summarySince,
-  type SessionSummary,
-} from '@/lib/session-summary'
+import { summaryOwed, summarySince, type SessionSummary } from '@/lib/session-summary'
 
 // The **summary** a closed session is owed, and the once-ness of it.
 //
@@ -57,28 +50,12 @@ export function useSessionSummaries(
   canSee: boolean,
 ): {
   summary: SessionSummary | null
-  invite: SessionCard<OpenSession>
   ready: boolean
   dismiss: () => void
-  told: SessionSummary | null
-  take: () => void
 } {
   const sessions = useOpenSessions(canSee)
   const [summary, setSummary] = useState<SessionSummary | null>(null)
   const [ready, setReady] = useState(false)
-  // The summary the player has just been told, kept past its own dismissal for the one
-  // thing that follows it: the **rating** dialog, which asks about that very session and
-  // needs to know which. Set only by `dismiss`, so it means "the player has read it and
-  // closed it" — a summary forced up from the dev sidebar counts too, which is how the
-  // dialog is tested — and emptied by `take` once the rating has had its turn.
-  const [told, setTold] = useState<SessionSummary | null>(null)
-
-  // A different player on this device has nothing to rate on the last one's behalf: the
-  // server would refuse it anyway, as the rating of a session that player never scored on.
-  useEffect(() => {
-    setTold(null)
-  }, [userId])
-
   // Where the marker goes once this has been dismissed — the newest close of everything
   // the read returned, which is **not** the close of the page being shown when the newest
   // session names a challenge this build cannot draw. See `summaryOwed`.
@@ -196,23 +173,6 @@ export function useSessionSummaries(
     void ask(false, true)
   }, [requested, ask])
 
-  // The invitation that goes beside the page, resolved from the rows already in hand.
-  // `summaryInvite` is `cardSession` — the start screen's own rule about which session it
-  // may speak of — so the page can never name one the intro is not yet allowed to.
-  //
-  // **Memoised, and it has to be.** Two separate costs otherwise, and the comment that
-  // used to sit here was wrong about both: `cardSession` builds a fresh `{state, session}`
-  // wrapper every call, so the value changed identity on every render and `usePopupDeck`'s
-  // memo rebuilt the whole deck with it — and this hook lives inside the game screen,
-  // which re-renders on every press of the dial. The `summary === null` guard was written
-  // to stop the filter and sort running during a run; it could not, because the wrapper
-  // was new regardless. Keyed on the rows and on whether there is a page at all, both of
-  // which change about twice a launch.
-  const invite = useMemo(
-    () => (summary === null ? null : summaryInvite(sessions, Date.now())),
-    [summary, sessions],
-  )
-
   // A run on a session has just let go of it, which is the player reaching the intro.
   //
   // The wake alone is not enough for that path. It fires two seconds after the close, and
@@ -233,13 +193,6 @@ export function useSessionSummaries(
   }, [runSessionId, canSee, summary, ask])
 
   const dismiss = useCallback(() => {
-    // A deck dismissed with no summary on it — news or winnings alone — tells nothing,
-    // and leaves whatever was told before it where it was.
-    //
-    // The first summary told keeps the question. A second can only arrive while the rating
-    // is still waiting — a session shutting under the open dialog — and it has been told
-    // once like any other; the rating is about the one the player closed first.
-    if (summary !== null) setTold((current) => current ?? summary)
     setSummary(null)
     const marker = pendingMarker.current
     pendingMarker.current = null
@@ -248,19 +201,12 @@ export function useSessionSummaries(
       // Storage went away between the read and here. The summary has been seen and will
       // be offered once more; one repeat beats losing the marker's meaning.
     })
-  }, [summary])
-
-  const take = useCallback(() => {
-    setTold(null)
   }, [])
 
   return {
     summary,
-    invite,
     ready,
     dismiss,
-    told,
-    take,
   }
 }
 
