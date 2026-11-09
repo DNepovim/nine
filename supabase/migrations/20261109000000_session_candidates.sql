@@ -10,7 +10,8 @@
 -- already run — has both null.
 --
 -- **Voting is in progress** for the first planned session that has two candidates, the one
--- that opens next; the votes stop when it opens. Each vote is one row (player, session,
+-- that opens next — and only while no session is running, so it is the gap between one
+-- closing and the next opening; the votes stop when it opens. Each vote is one row (player, session,
 -- the candidate picked), and after every vote the leader is written into `mode_id`. A tie
 -- goes to the candidate the admin booked first, whichever has been ahead since — so a
 -- tie never depends on the order the votes happened to arrive in.
@@ -126,8 +127,16 @@ create or replace function next_vote_options()
 returns table (session_id uuid, mode_id text, votes int, mine boolean, can_vote boolean)
 language sql stable security definer set search_path = public as $$
   with s as (
+    -- Nothing is voted on while a session is running: the vote is for the gap between one
+    -- session closing and the next opening, so a running session leaves the ballot empty. One
+    -- of a pending challenge does not count: players cannot see it, so for them nothing is on.
     select id, mode_id, alt_mode_id from challenge_sessions
      where opens_at > now()
+       and not exists (
+         select 1 from challenge_sessions r
+          where r.opens_at <= now() and r.closes_at > now()
+            and not challenge_is_pending(r.mode_id)
+       )
      order by opens_at, created_at
      limit 1
   ),

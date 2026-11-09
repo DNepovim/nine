@@ -109,8 +109,10 @@ begin
     (u5, live, 'challenge/glimpse')
   on conflict (user_id, session_id) do update set mode_id = excluded.mode_id;
 
-  -- The next session has two candidates and is the one being voted on, so the planner's list
-  -- shows votes and a clock on it and its detail shows the pie and the voters. FOUR KEYS is
+  -- The next session has two candidates and, once nothing is running, is the one being voted on,
+  -- so the planner's list shows votes and a clock on it and its detail the pie and the voters.
+  -- While the session above is running nothing is voted on — close it early (or move its
+  -- `closes_at` back) to see that state. FOUR KEYS is
   -- booked first and HABIT, a race, second; the votes below put HABIT ahead.
   insert into public.challenge_sessions
     (id, mode_id, measure, alt_mode_id, alt_measure, first_mode_id, opens_at, closes_at) values

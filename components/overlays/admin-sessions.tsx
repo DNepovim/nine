@@ -154,7 +154,10 @@ export function AdminSessions({
   }
 
   // The one session being voted on: the only planned row that shows votes and a clock.
-  const voting = votingSession(rows, openedAt)
+  const voting = votingSession(
+    rows.filter((row) => !pending.has(row.modeId)),
+    openedAt,
+  )
 
   if (editing !== null) {
     return (

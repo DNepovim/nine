@@ -93,6 +93,19 @@ begin
     assert sqlerrm like '%only players%', 'wrong error: ' || sqlerrm;
   end;
   perform set_config('request.jwt.claims', json_build_object('sub', v_admin)::text, true);
+  -- While a session is running nothing is voted on: the ballot is empty and a vote refused.
+  insert into challenge_sessions (mode_id, opens_at, closes_at)
+  values ('challenge/c-running', now() - interval '1 hour', now() + interval '23 hours');
+  assert (select count(*) from next_vote_options()) = 0, 'no vote while a session runs';
+  begin
+    perform vote_next(v_s, 'challenge/c-a');
+    assert false, 'a vote during a running session should be refused';
+  exception when others then
+    assert sqlerrm like '%not up for a vote%', 'wrong error: ' || sqlerrm;
+  end;
+  delete from challenge_sessions where mode_id = 'challenge/c-running';
+  assert (select count(*) from next_vote_options()) = 2, 'the vote is back once it closes';
+
   -- The two tiles keep their order whoever leads.
   assert array(select mode_id from next_vote_options())
        = array['challenge/c-a', 'challenge/c-b'], 'candidates are offered in a fixed order';

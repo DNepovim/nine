@@ -21,6 +21,11 @@ describe('votingSession', () => {
     expect(votingSession(rows, NOW)).toBeNull()
   })
 
+  it('is nothing while another session is running', () => {
+    const rows = [session('live', NOW - 50, null), session('next', NOW + 100, 'x')]
+    expect(votingSession(rows, NOW)).toBeNull()
+  })
+
   it('ignores a session that is running or over', () => {
     const rows = [session('live', NOW - 50, 'x'), session('past', NOW - 500, 'y')]
     expect(votingSession(rows, NOW)).toBeNull()

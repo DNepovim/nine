@@ -330,3 +330,13 @@ Time left is the existing `formatCountdown(ms)` ("5:12:09").
 5. **What the removed RPCs leave behind** (tasks 6, 8): `QueueMoves`, `planPair`, `movePair`,
    `pairsOf`, `AdminPair` have no caller; Knip is the check, and the pills' `compact` is the
    gallery's own component, not a copy.
+
+## Amendment (2026-11-09, after shipping the code)
+
+**No voting while a session is running.** The user: a session must not be in the voting state
+while another is live. `next_vote_options` is empty (and `vote_next` refused) while any session
+is running, except one of a pending challenge — players cannot see it, so for them nothing is on.
+`votingSession` returns null the same way (the planner drops held-back challenges' rows first), so
+the list shows no votes or clock and the detail no pie or voters during a live session. The vote
+is the gap between one session closing and the next opening. Still unpushed: the amendment is in
+`20261109000000_session_candidates.sql` itself.
