@@ -9,7 +9,7 @@
 // code units — the regex below is built from these and, under `u`, its quantifier counts
 // code points, the same unit Postgres's `char_length` counts in.
 export const NICK_MIN = 3
-export const NICK_MAX = 16
+export const NICK_MAX = 10
 
 // Letters, digits and the underscore, in any script: `Ján` and `Ñoño` are names someone
 // is actually called, and a board that cannot spell them is a board that renames people.

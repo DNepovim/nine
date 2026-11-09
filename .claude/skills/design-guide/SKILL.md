@@ -235,6 +235,14 @@ makes one person one colour everywhere the app writes their name. **Always
 `GradientName`** — see `references/components.md`, which has the rule, the two measured
 exceptions, and what to do when the data you are holding has no averages on it.
 
+**Never cut one.** A nickname is drawn whole: no `numberOfLines`, no ellipsis, no
+`shortName`, no `slice`. The longest is `NICK_MAX` — ten characters — so the work is in
+the layout: choose the type role and the box so ten of the widest capitals, accented
+ones included, fit, and look at the dev sidebar's longest-nickname variant (the summary's
+`LONGEST` set is the model) before calling a screen done. A name that does not fit means
+the box or the role is wrong. `shortName` and the announcement bar's cut are existing
+debt, not a pattern to follow.
+
 `NAME_INK` is the pair it interpolates, and it is its own ink rather than two mode stops
 for the reason `GOLD_INK` and `ACHIEVEMENT_INK` are: a scale tuned to _be_ a colour does
 not carry text at 10px.

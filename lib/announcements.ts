@@ -72,9 +72,10 @@ const LOST_ID = {
   today: 'todayLost',
 } as const satisfies Record<Period, AnnouncementId>
 
-// Rival lines carry the other player's name. Nicknames are capped at 16 characters in
-// the UI and unconstrained in the database, so they are cut to this for display —
-// which is also what keeps the rendered line inside the bar.
+// Rival lines carry the other player's name. New nicknames are capped at 10 characters, but
+// the database only checks a name when its row is written, so a longer one from before the
+// cap can still be on a board — they are cut to this for display, which is also what keeps
+// the rendered line inside the bar.
 const NICKNAME_DISPLAY_MAX = 10
 const UNKNOWN_NAME = 'SOMEONE'
 const NAME_TOKEN = '{name}'
