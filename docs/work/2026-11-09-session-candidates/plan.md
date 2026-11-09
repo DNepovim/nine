@@ -138,3 +138,5 @@ spec's review focus and the house pass, this is what became of them.
 production's planned queue before pushing** — it merges and re-times it. No How to Play change.
 The changes made after `verify` (tie rule, tile order, edit read, receipts note, dialog title) were
 re-checked by the SQL tests, `tsc` and the unit suite, not re-driven in the app.
+
+Shipped: `0082b7c` on `main`. The migration `20261109000000_session_candidates.sql` is **not** pushed (the user chose to skip); it merges the planned queue, so read production's queue first, push it, then deploy.

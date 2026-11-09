@@ -1,8 +1,8 @@
 # Session candidates
 
 Slug: session-candidates
-Stage: review
-Next: /ship session-candidates
+Stage: shipped
+Next: push the migration (read production's planned queue first), then /deploy
 Track: full
 Branch: feat/session-candidates
 Started: 2026-11-09
