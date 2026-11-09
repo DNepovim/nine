@@ -17,6 +17,7 @@ import { SPLASH_WORDMARK_GAP, SplashWordmark } from '@/components/splash-wordmar
 import { SPECTRUM } from '@/constants/colors'
 import { LAYER } from '@/constants/layers'
 import { mono } from '@/constants/theme'
+import { TYPE } from '@/constants/typography'
 import { useBarColor } from '@/hooks/use-bar-color'
 import { GLASS_SHADOW } from '@/lib/glass'
 import { SPLASH_TEST_ID } from '@/lib/splash-skip'
@@ -59,6 +60,7 @@ export function SplashScreen({
   hold,
   ready,
   onIntroDone,
+  rest,
 }: {
   onDone: () => void
   // The exit has started: the content is scaling away and the background is about to go
@@ -76,6 +78,9 @@ export function SplashScreen({
   // The intro has landed. Whatever wants to be shown over a finished splash waits
   // for this rather than for a duration of its own.
   onIntroDone: () => void
+  // Sunday: the splash never leaves, and says why where the subtitle would be. `hold`
+  // is what keeps it up; this is only what it says while it does.
+  rest: boolean
 }) {
   useBarColor(SPLASH_BAR)
 
@@ -207,23 +212,33 @@ export function SplashScreen({
         <Animated.View style={[styles.row, nineStyle]}>
           <SplashWordmark />
         </Animated.View>
-        <Animated.Text
-          selectable={false}
-          style={[
-            {
-              fontFamily: mono,
-              fontSize: 13,
-              fontWeight: '700' as const,
-              color: 'rgba(255,255,255,0.85)',
-              letterSpacing: 2,
-              marginTop: 20,
-              ...SUBTITLE_SHADOW,
-            },
-            subtitleStyle,
-          ]}
-        >
-          <Trans>Let's multiply</Trans>
-        </Animated.Text>
+        {rest ? (
+          <Animated.Text
+            selectable={false}
+            className={`${TYPE.prose} mt-5 max-w-[280px] text-center text-white`}
+            style={[SUBTITLE_SHADOW, subtitleStyle]}
+          >
+            <Trans>Sunday is a day of rest. Turn your phone off and go outside.</Trans>
+          </Animated.Text>
+        ) : (
+          <Animated.Text
+            selectable={false}
+            style={[
+              {
+                fontFamily: mono,
+                fontSize: 13,
+                fontWeight: '700' as const,
+                color: 'rgba(255,255,255,0.85)',
+                letterSpacing: 2,
+                marginTop: 20,
+                ...SUBTITLE_SHADOW,
+              },
+              subtitleStyle,
+            ]}
+          >
+            <Trans>Let's multiply</Trans>
+          </Animated.Text>
+        )}
 
         {/* Bottom attribution — inside contentStyle so it fades out with the rest */}
         <Animated.Text

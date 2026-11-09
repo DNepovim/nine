@@ -23,6 +23,7 @@ import { SavedRunProvider, useSavedRun } from '@/hooks/use-saved-run'
 import { SplashProvider, useSplash } from '@/hooks/use-splash'
 import { captureError, initAnalytics } from '@/lib/analytics'
 import { isDesktopViewport } from '@/lib/desktop'
+import { isRestDay } from '@/lib/rest-day'
 import { purgeRetiredStorage } from '@/lib/retired-storage'
 
 // The dev column — the screen gallery's picker, the arcade tools one section of its list —
@@ -101,7 +102,10 @@ function App() {
   // service-worker update ends in.
   const [introDone, setIntroDone] = useState(false)
   // Null rather than 'none', so the popup can only be rendered with something to say.
-  const askInstall = install.target === 'none' ? null : install.target
+  // Sunday the app is shut: the splash is put back whatever skipped it and held for good,
+  // and nothing is asked of a player who is meant to be putting the phone down.
+  const [rest] = useState(() => isRestDay(new Date()))
+  const askInstall = rest || install.target === 'none' ? null : install.target
 
   return (
     <ThemeProvider value={AppTheme}>
@@ -109,9 +113,10 @@ function App() {
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
       </Stack>
       <StatusBar style="dark" />
-      {!splashDone && (
+      {(rest || !splashDone) && (
         <SplashScreen
-          hold={askInstall !== null}
+          rest={rest}
+          hold={rest || askInstall !== null}
           ready={!probingSavedRun}
           onDone={finishSplash}
           onExit={beginSplashExit}
