@@ -235,29 +235,16 @@ begin
 
   perform set_config('request.jwt.claims', json_build_object('sub', v_admin)::text, true);
 
-  -- Untouched: the challenge may still be corrected.
-  perform edit_challenge_session(v_s, 'challenge/edit-you');
-  assert (select mode_id from challenge_sessions where id = v_s) = 'challenge/edit-you',
-    'an unplayed session should still be re-pointable';
-
-  -- Played: it may not.
-  perform set_config('request.jwt.claims', json_build_object('sub', v_u)::text, true);
-  perform submit_session_score(v_s, 700, 5, 'hard', now());
-  perform set_config('request.jwt.claims', json_build_object('sub', v_admin)::text, true);
+  -- A session that has opened keeps its challenge, played or not: it is the one being
+  -- played. (Planned sessions are edited — `session_candidates.sql`.)
   begin
-    perform edit_challenge_session(v_s, 'challenge/somewhere-else');
-    assert false, 'changing the challenge of a played session should have been refused';
+    perform edit_challenge_session(v_s, 'challenge/edit-you');
+    assert false, 'changing the challenge of an opened session should have been refused';
   exception when others then
-    assert sqlerrm like '%cannot change challenge%', 'wrong error: ' || sqlerrm;
+    assert sqlerrm like '%has opened%', 'wrong error: ' || sqlerrm;
   end;
-  assert (select mode_id from challenge_sessions where id = v_s) = 'challenge/edit-you',
+  assert (select mode_id from challenge_sessions where id = v_s) = 'challenge/edit-me',
     'the refused edit should have left the session alone';
-
-  -- There is no span to move any more — the queue times every session, see
-  -- 20261103000000_session_queue.sql — so what is left of the old span assertions is
-  -- that an identical save is still a no-op rather than a refusal: the guard is about a
-  -- rewrite, not about the form being opened.
-  perform edit_challenge_session(v_s, 'challenge/edit-you');
 
   raise notice 'session_scores.sql: the edit guard OK';
 

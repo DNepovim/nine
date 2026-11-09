@@ -234,8 +234,11 @@ export type ButtonId =
   | 'admin.challenge_state_confirm'
   | 'admin.challenge_state_keep'
   | 'admin.challenge_filter'
-  | 'admin.plan_pair_save'
-  | 'admin.plan_pair_cancel'
+  | 'admin.session_candidates_save'
+  | 'admin.session_candidates_cancel'
+  | 'admin.session_edit_candidates'
+  | 'admin.session_edit_confirm'
+  | 'admin.session_edit_keep'
   | 'admin.session_save'
   | 'admin.session_cancel'
   // One place earlier or later in the queue, on a planned row of the list.

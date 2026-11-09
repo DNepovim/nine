@@ -1,12 +1,8 @@
-import { Ionicons } from '@expo/vector-icons'
-import { msg } from '@lingui/core/macro'
 import { Trans, useLingui } from '@lingui/react/macro'
 import { Text, View } from 'react-native'
 
 import { GradientText } from '@/components/gradient-text'
 import { LiveDot } from '@/components/overlays/live-dot'
-import { TrackedPressable } from '@/components/tracked-pressable'
-import { DIM_INK } from '@/constants/colors'
 import { TYPE } from '@/constants/typography'
 import { cn } from '@/lib/cn'
 import { dayAndMonth } from '@/lib/format-date'
@@ -92,61 +88,5 @@ export function ChallengeTitle({
       numberOfLines={wrap ? undefined : 1}
       className={className}
     />
-  )
-}
-
-const MOVE_UP = msg`MOVE UP`
-const MOVE_DOWN = msg`MOVE DOWN`
-
-// One place earlier or later in the **queue**, on a planned row. Either is null at the
-// end it cannot go past, and that end draws an empty lane rather than a dimmed arrow — a
-// step that is never available is not a step that is temporarily off.
-//
-// Inside the row's own press target, which opens the form; the arrows take their own taps
-// first, the way a feature row's visibility button does. Busy is a no-op inside the press
-// rather than `disabled`: a disabled pressable gives the touch up, and it lands on the row
-// underneath, which opens the form instead of ignoring the tap. Stacked, up over down, so
-// the pair is one 40px column the row's own height; each is 20px tall and 40px wide.
-export function QueueMoves({
-  onUp,
-  onDown,
-  busy,
-}: {
-  onUp: (() => void) | null
-  onDown: (() => void) | null
-  busy: boolean
-}) {
-  const { t } = useLingui()
-  return (
-    <View className="items-end">
-      {onUp === null ? (
-        <View className="h-5 w-10" />
-      ) : (
-        <TrackedPressable
-          id="admin.session_move_up"
-          accessibilityLabel={t(MOVE_UP)}
-          onPress={() => {
-            if (!busy) onUp()
-          }}
-          className={cn('h-5 w-10 items-center justify-center', busy && 'opacity-40')}
-        >
-          <Ionicons name="chevron-up" size={16} color={DIM_INK} />
-        </TrackedPressable>
-      )}
-      {onDown === null ? (
-        <View className="h-5 w-10" />
-      ) : (
-        <TrackedPressable
-          id="admin.session_move_down"
-          accessibilityLabel={t(MOVE_DOWN)}
-          onPress={() => {
-            if (!busy) onDown()
-          }}
-          className={cn('h-5 w-10 items-center justify-center', busy && 'opacity-40')}
-        >
-          <Ionicons name="chevron-down" size={16} color={DIM_INK} />
-        </TrackedPressable>
-      )}
-    </View>
   )
 }

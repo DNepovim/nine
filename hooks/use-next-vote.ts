@@ -11,7 +11,8 @@ import { loadVoteOptions, voteNext, type VoteOption } from '@/lib/session-rating
 export function useNextVote(enabled: boolean): {
   options: readonly VoteOption[]
   voted: VoteOption | null
-  vote: (sessionId: string) => void
+  // Votes for a candidate, named by its challenge: both candidates share a session.
+  vote: (modeId: string) => void
 } {
   const [options, setOptions] = useState<readonly VoteOption[]>([])
 
@@ -27,20 +28,22 @@ export function useNextVote(enabled: boolean): {
   // Counted on the screen first so the press answers at once, then replaced by the
   // server's own figures. A refusal reads again and puts back whatever is true.
   const vote = useCallback(
-    (sessionId: string) => {
+    (modeId: string) => {
+      const session = options[0]?.sessionId
+      if (session === undefined) return
       setOptions((prev) =>
         prev.map((option) => ({
           ...option,
-          mine: option.sessionId === sessionId,
+          mine: option.modeId === modeId,
           votes:
             option.votes +
-            (option.sessionId === sessionId && !option.mine ? 1 : 0) -
-            (option.sessionId !== sessionId && option.mine ? 1 : 0),
+            (option.modeId === modeId && !option.mine ? 1 : 0) -
+            (option.modeId !== modeId && option.mine ? 1 : 0),
         })),
       )
-      void voteNext(sessionId).then(read)
+      void voteNext(session, modeId).then(read)
     },
-    [read],
+    [options, read],
   )
 
   return { options, voted: options.find((option) => option.mine) ?? null, vote }

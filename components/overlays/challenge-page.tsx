@@ -192,7 +192,9 @@ export function ChallengePage({
           ) : (
             planned.map((session) => {
               // Only the vote's two have a count; a later one is not yet being voted on.
-              const votesFor = votes.find((option) => option.sessionId === session.id)
+              const votesFor = votes.find(
+                (option) => option.sessionId === session.id && option.modeId === modeId,
+              )
               return (
                 <Text
                   key={session.id}
@@ -264,7 +266,8 @@ export function ChallengePage({
 
       {asking && (
         <ChallengeStateDialog
-          planned={planned.length}
+          removed={planned.filter((session) => session.altModeId === null).length}
+          trimmed={planned.filter((session) => session.altModeId !== null).length}
           busy={busy}
           onConfirm={() => {
             void choose('pending')

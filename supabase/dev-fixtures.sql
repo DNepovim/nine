@@ -94,20 +94,47 @@ begin
   --
   -- Eight hours rather than a day: long enough to not shut mid-session, short enough
   -- that the countdown on the card reads as a clock rather than as a constant.
-  insert into public.challenge_sessions (id, mode_id, opens_at, closes_at) values
-    (live,   'challenge/four-keys', now() - interval '2 hours', now() + interval '6 hours'),
-    (teased, 'challenge/four-keys', now() + interval '1 day',   now() + interval '2 days')
+  insert into public.challenge_sessions
+    (id, mode_id, measure, alt_mode_id, alt_measure, first_mode_id, opens_at, closes_at) values
+    (live, 'challenge/four-keys', 'score', 'challenge/glimpse', 'score', 'challenge/four-keys',
+     now() - interval '2 hours', now() + interval '6 hours')
   on conflict (id) do update
-    set opens_at = excluded.opens_at, closes_at = excluded.closes_at;
+    set mode_id = excluded.mode_id, measure = excluded.measure,
+        alt_mode_id = excluded.alt_mode_id, alt_measure = excluded.alt_measure,
+        first_mode_id = excluded.first_mode_id, opens_at = excluded.opens_at, closes_at = excluded.closes_at;
+  -- It was voted on before it opened: FOUR KEYS took it, two to one over STORM.
+  insert into public.next_votes (user_id, session_id, mode_id) values
+    (u1, live, 'challenge/four-keys'),
+    (u3, live, 'challenge/four-keys'),
+    (u5, live, 'challenge/glimpse')
+  on conflict (user_id, session_id) do update set mode_id = excluded.mode_id;
+
+  -- The next session has two candidates and is the one being voted on, so the planner's list
+  -- shows votes and a clock on it and its detail shows the pie and the voters. FOUR KEYS is
+  -- booked first and HABIT, a race, second; the votes below put HABIT ahead.
+  insert into public.challenge_sessions
+    (id, mode_id, measure, alt_mode_id, alt_measure, first_mode_id, opens_at, closes_at) values
+    (teased, 'challenge/four-keys', 'score', 'challenge/habit', 'time', 'challenge/four-keys',
+     now() + interval '1 day', now() + interval '2 days')
+  on conflict (id) do update
+    set mode_id = excluded.mode_id, measure = excluded.measure,
+        alt_mode_id = excluded.alt_mode_id, alt_measure = excluded.alt_measure,
+        first_mode_id = excluded.first_mode_id, opens_at = excluded.opens_at, closes_at = excluded.closes_at;
 
   -- Two more behind the teased one, so the planner's queue has a first row, a middle and a
   -- last — the three ways its MOVE UP / MOVE DOWN are drawn. The times are placeholders in
   -- the right order; the re-pack lays all three onto the cadence.
-  insert into public.challenge_sessions (id, mode_id, opens_at, closes_at, measure) values
-    (queued_grid, 'challenge/four-by-four', now() + interval '3 days', now() + interval '4 days', 'score'),
-    (queued_slip, 'challenge/no-slip',      now() + interval '5 days', now() + interval '6 days', 'hits')
+  insert into public.challenge_sessions
+    (id, mode_id, measure, alt_mode_id, alt_measure, first_mode_id, opens_at, closes_at) values
+    (queued_grid, 'challenge/four-by-four', 'score', 'challenge/glimpse', 'score',
+     'challenge/four-by-four',
+     now() + interval '3 days', now() + interval '4 days'),
+    (queued_slip, 'challenge/no-slip', 'hits', null, null, null,
+     now() + interval '5 days', now() + interval '6 days')
   on conflict (id) do update
-    set opens_at = excluded.opens_at, closes_at = excluded.closes_at, measure = excluded.measure;
+    set mode_id = excluded.mode_id, measure = excluded.measure,
+        alt_mode_id = excluded.alt_mode_id, alt_measure = excluded.alt_measure,
+        first_mode_id = excluded.first_mode_id, opens_at = excluded.opens_at, closes_at = excluded.closes_at;
   perform public.repack_challenge_queue();
 
   -- One challenge held back, so the CHALLENGES gallery has a black dot to draw beside the
@@ -115,6 +142,15 @@ begin
   -- Nothing is booked for it, as the server would refuse.
   insert into public.challenge_states (mode_id, state) values ('challenge/one-key', 'pending')
   on conflict (mode_id) do update set state = excluded.state;
+
+  -- Three votes on the next session, from players who played the live one (the ballot is
+  -- theirs): two for HABIT and one for FOUR KEYS, then the leader is settled.
+  insert into public.next_votes (user_id, session_id, mode_id) values
+    (u1, teased, 'challenge/habit'),
+    (u3, teased, 'challenge/habit'),
+    (u5, teased, 'challenge/four-keys')
+  on conflict (user_id, session_id) do update set mode_id = excluded.mode_id;
+  perform public.settle_next_vote();
 
   -- A board on the live one, so the card has a leader to name and the modal is not drawn
   -- in its empty state. `do nothing` rather than `do update`: `session_scores` carries a

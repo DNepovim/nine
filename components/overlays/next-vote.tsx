@@ -58,7 +58,7 @@ function VoteTile({
 }: {
   option: VoteOption
   index: number
-  // The session picked, or null while nothing has been.
+  // The candidate picked, by its challenge, or null while nothing has been.
   chosen: string | null
   gridWidth: number
   // Already the picked tile, at rest: filled, white and in the middle, with nothing to play.
@@ -66,7 +66,7 @@ function VoteTile({
   onPick: () => void
 }) {
   const { t } = useLingui()
-  const isChosen = settled || chosen === option.sessionId
+  const isChosen = settled || chosen === option.modeId
   const gone = chosen !== null && !isChosen
   // Whether the ink has turned. Later than the fill so it never reads white on pale.
   const [inked, setInked] = useState(settled)
@@ -173,14 +173,14 @@ export function NextVote({
   view,
 }: {
   options: readonly VoteOption[]
-  onVote: (sessionId: string) => void
+  onVote: (modeId: string) => void
   // Pressing the settled tile closes the card: it is the answer, and the one thing left on
   // screen to press.
   onClose: () => void
   view: ReturnType<typeof useVoteView>
 }) {
   const { setPicking, settled } = view
-  // The session just tapped, while its tile plays out; the grid's width, to know how far
+  // The candidate just tapped, while its tile plays out; the grid's width, to know how far
   // the middle is; and the pending hand-over to the settled card.
   const [chosen, setChosen] = useState<string | null>(null)
   const [gridWidth, setGridWidth] = useState(0)
@@ -207,7 +207,7 @@ export function NextVote({
               <VoteTile
                 option={mine}
                 index={0}
-                chosen={mine.sessionId}
+                chosen={mine.modeId}
                 gridWidth={gridWidth}
                 settled
                 onPick={onClose}
@@ -232,15 +232,15 @@ export function NextVote({
         <TileGrid
           tiles={options.map((option, index) => (
             <VoteTile
-              key={option.sessionId}
+              key={option.modeId}
               option={option}
               index={index}
               chosen={chosen}
               gridWidth={gridWidth}
               onPick={() => {
                 if (chosen !== null) return
-                setChosen(option.sessionId)
-                if (!option.mine) onVote(option.sessionId)
+                setChosen(option.modeId)
+                if (!option.mine) onVote(option.modeId)
                 timer.current = setTimeout(() => {
                   setPicking(false)
                   setChosen(null)

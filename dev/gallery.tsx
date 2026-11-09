@@ -603,9 +603,9 @@ const rating = (slug: string): Variant => ({
 // tally turning on and the pick moving, which is the whole of what the dialog does. The
 // rating variants above carry the same pair, to reach the third step.
 const VOTE_PAIR = [
-  { sessionId: 'a', modeId: challengeId('drift'), votes: 14, mine: false, canVote: true },
+  { sessionId: 's', modeId: challengeId('drift'), votes: 14, mine: false, canVote: true },
   {
-    sessionId: 'b',
+    sessionId: 's',
     modeId: challengeId('one-key'),
     votes: 9,
     mine: false,
@@ -622,8 +622,8 @@ function VoteDemo({ close }: { close: () => void }) {
         setOptions(
           VOTE_PAIR.map((o) => ({
             ...o,
-            mine: o.sessionId === id,
-            votes: o.votes + (o.sessionId === id ? 1 : 0),
+            mine: o.modeId === id,
+            votes: o.votes + (o.modeId === id ? 1 : 0),
           })),
         )
       }}

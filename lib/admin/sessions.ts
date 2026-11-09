@@ -15,6 +15,10 @@ export type AdminSession = {
   // The challenge, by registry id. A plain string rather than `ModeId`: the server has
   // never heard of a mode, so this is whatever the row says — see `inBuild`.
   modeId: string
+  // The other candidate on its ballot, or null for a session booked with one challenge (the
+  // auto-planner's, and every one that has already run). `modeId` is the one *leading* the
+  // vote until the session opens, and what it ran after — see `votingSession`.
+  altModeId: string | null
   opensAt: number
   closesAt: number
   // Whether this build has the challenge the row names. False is a row the server holds
@@ -35,6 +39,7 @@ export type AdminSession = {
 type SessionRow = {
   id: string
   mode_id: string
+  alt_mode_id: string | null
   opens_at: string
   closes_at: string
   extended_at: string | null
@@ -56,7 +61,9 @@ export async function listSessions(): Promise<{
 }> {
   const res = await supabase
     .from('challenge_sessions')
-    .select('id, mode_id, opens_at, closes_at, extended_at, session_scores(count)')
+    .select(
+      'id, mode_id, alt_mode_id, opens_at, closes_at, extended_at, session_scores(count)',
+    )
     .order('opens_at', { ascending: false })
   noteRequest(res.error)
   if (res.error) return { rows: [], error: res.error.message }
@@ -64,6 +71,7 @@ export async function listSessions(): Promise<{
     rows: ((res.data as SessionRow[] | null) ?? []).map((row) => ({
       id: row.id,
       modeId: row.mode_id,
+      altModeId: row.alt_mode_id,
       opensAt: atMs(row.opens_at),
       closesAt: atMs(row.closes_at),
       extendedAt: row.extended_at === null ? null : atMs(row.extended_at),
@@ -80,54 +88,39 @@ export async function listSessions(): Promise<{
 // the planner has nothing to decide and no field for it. Resolved here, in the one place
 // a booking is written, rather than on the form: a second caller that forgot would book
 // a race measured by its score, and nothing would look wrong until the standings came
-// out in the wrong order.
-const measureArg = (modeId: string) => ({ p_measure: measureOf(modeId) })
+// out in the wrong order. Each candidate carries its own, because the one that wins the
+// vote is the one the session is measured by.
+const candidateArgs = (modeA: string, modeB: string | null) => ({
+  p_mode_a: modeA,
+  p_measure_a: measureOf(modeA),
+  p_mode_b: modeB,
+  p_measure_b: modeB === null ? null : measureOf(modeB),
+})
 
-// Two candidates at once, to the end of the queue: a **pair**, the next two the players
-// will be asked to choose between. One call, so a refusal on the second leaves neither
-// booked. The server refuses the same challenge twice and a pending one.
-export async function planPair(
+// One session at the end of the **queue**, with its candidates. No span: the server times
+// every queued session onto its noon, so all the planner says is which challenges the
+// players will choose between. `modeB` null books a single.
+export async function planSession(
   modeA: string,
-  modeB: string,
+  modeB: string | null,
 ): Promise<{ error: string | null }> {
-  const res = await supabase.rpc('plan_challenge_pair', {
-    p_mode_a: modeA,
-    p_measure_a: measureOf(modeA),
-    p_mode_b: modeB,
-    p_measure_b: measureOf(modeB),
-  })
+  const res = await supabase.rpc('plan_challenge_session', candidateArgs(modeA, modeB))
   noteRequest(res.error)
   return { error: res.error?.message ?? null }
 }
 
-// Re-points a booking at another challenge — the one thing about a session the planner
-// still edits, now that the queue owns its times.
+// Re-points a **planned** session's candidates — the one thing about it the planner still
+// edits, now that the queue owns its times. The server refuses a session that has opened
+// (its challenge is the one being played), and a candidate that leaves takes its votes.
 export async function editSession(
   id: string,
-  modeId: string,
+  modeA: string,
+  modeB: string | null,
 ): Promise<{ error: string | null }> {
   const res = await supabase.rpc('edit_challenge_session', {
     p_id: id,
-    p_mode_id: modeId,
-    // Re-pointing a booking at another challenge re-measures it. Only reachable while
-    // nobody has scored — the server refuses a challenge change after that — so a
-    // session's measure cannot move once it means something.
-    ...measureArg(modeId),
+    ...candidateArgs(modeA, modeB),
   })
-  noteRequest(res.error)
-  return { error: res.error?.message ?? null }
-}
-
-// One place earlier (-1) or later (1) in the queue.
-export type QueueStep = -1 | 1
-
-// A **pair** one place earlier (-1) or later (1): `id` is the pair's first session. The
-// server swaps it with the neighbouring pair and refuses a session that does not start one.
-export async function movePair(
-  id: string,
-  delta: QueueStep,
-): Promise<{ error: string | null }> {
-  const res = await supabase.rpc('move_challenge_pair', { p_id: id, p_delta: delta })
   noteRequest(res.error)
   return { error: res.error?.message ?? null }
 }
@@ -146,21 +139,6 @@ export async function cancelSession(id: string): Promise<{ error: string | null 
 // settles the standings of one that is running.
 export async function closeSessionEarly(id: string): Promise<{ error: string | null }> {
   const res = await supabase.rpc('close_challenge_session_early', { p_id: id })
-  noteRequest(res.error)
-  return { error: res.error?.message ?? null }
-}
-
-// Moves a live window's end forward, and marks it as given more time. Minutes, because
-// the dialog asks for hours and minutes and one figure is what the server wants — the
-// screen does that sum, not this.
-export async function extendSession(
-  id: string,
-  minutes: number,
-): Promise<{ error: string | null }> {
-  const res = await supabase.rpc('extend_challenge_session', {
-    p_id: id,
-    p_minutes: minutes,
-  })
   noteRequest(res.error)
   return { error: res.error?.message ?? null }
 }

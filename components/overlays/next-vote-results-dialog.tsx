@@ -41,7 +41,7 @@ export function NextVoteResultsDialog({
           <View className="mt-5 w-full gap-3">
             {options.map((option) => (
               <View
-                key={option.sessionId}
+                key={option.modeId}
                 className="flex-row items-center justify-between gap-3"
               >
                 <View className="shrink flex-row items-center gap-2">

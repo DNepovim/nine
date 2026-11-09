@@ -16,7 +16,7 @@ export function NextVoteDialog({
   onDismiss,
 }: {
   options: readonly VoteOption[]
-  onVote: (sessionId: string) => void
+  onVote: (modeId: string) => void
   onDismiss: () => void
 }) {
   const view = useVoteView(options)

@@ -38,9 +38,10 @@ export async function remarkSession(
 
 // ─── The vote ────────────────────────────────────────────────────────────────
 
-// One of the two challenges up for **the vote**: the first two of the queue. `votes` is
-// every player's, `mine` says whether the caller's own vote is on this one, and `canVote`
-// whether the caller played the last challenge, which is what a vote takes.
+// One of the two **candidates** up for **the vote**: the two challenges on the next
+// session's ballot. Both share one `sessionId` — it is `modeId` that tells them apart.
+// `votes` is every player's, `mine` says whether the caller's own vote is on this one, and
+// `canVote` whether the caller played the last challenge, which is what a vote takes.
 export type VoteOption = {
   sessionId: string
   modeId: string
@@ -75,8 +76,11 @@ export async function loadVoteOptions(): Promise<VoteOption[]> {
 // Casts the vote, or moves it. The error is handed back for the caller to keep the dialog on
 // the choice; the counts come from a fresh `loadVoteOptions` afterwards, because the server
 // has the other players' votes and this side has not.
-export async function voteNext(sessionId: string): Promise<{ error: string | null }> {
-  const res = await supabase.rpc('vote_next', { p_session: sessionId })
+export async function voteNext(
+  sessionId: string,
+  modeId: string,
+): Promise<{ error: string | null }> {
+  const res = await supabase.rpc('vote_next', { p_session: sessionId, p_mode: modeId })
   noteRequest(res.error)
   return { error: res.error ? res.error.message : null }
 }

@@ -157,8 +157,12 @@ export function AdminChallenges({
 
   if (tab === 'planner') return <AdminSessions tabs={tabs} onBack={onBack} />
 
+  // A challenge's sessions: the ones it leads or runs, and the ones it is the other candidate
+  // of. A challenge that is only ever the runner-up is still planned.
   const sessionsOf = (modeId: string) =>
-    sessions.filter((session) => session.modeId === modeId)
+    sessions.filter(
+      (session) => session.modeId === modeId || session.altModeId === modeId,
+    )
 
   if (page !== null) {
     return (
@@ -181,7 +185,12 @@ export function AdminChallenges({
         onPlay={
           canPlay
             ? () => {
-                const shown = shownSession(sessionsOf(page), openedAt)
+                // Only a session it leads: PLAY deals a run of this challenge for that
+                // session's board, and a session it merely stands for would score another.
+                const shown = shownSession(
+                  sessionsOf(page).filter((session) => session.modeId === page),
+                  openedAt,
+                )
                 onOpenChallenge(page, shown === null ? null : asOpenSession(shown))
               }
             : undefined
@@ -199,7 +208,10 @@ export function AdminChallenges({
   // counts and the tiles agree: every challenge is in exactly one pill.
   const drawn = CHALLENGES.map((mode) => {
     const own = sessionsOf(mode.id)
-    const running = own.some((session) => spanStatus(session, openedAt) === 'live')
+    // Running is the session it leads — `modeId` — never one it stood for and lost.
+    const running = own.some(
+      (session) => session.modeId === mode.id && spanStatus(session, openedAt) === 'live',
+    )
     const next = own
       .filter((session) => spanStatus(session, openedAt) === 'upcoming')
       .sort((a, b) => a.opensAt - b.opensAt)[0]

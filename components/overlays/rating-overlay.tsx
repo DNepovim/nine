@@ -86,7 +86,7 @@ export function RatingOverlay({
   // The two challenges up for the vote, empty where there is no choice. Passed in rather
   // than read here so the dialog stays a picture of what it is given.
   options: readonly VoteOption[]
-  onVote: (sessionId: string) => void
+  onVote: (modeId: string) => void
   // Called once the card has gone, however it went — SEND, either NOT NOW or the header
   // close.
   onDismiss: () => void

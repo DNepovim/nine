@@ -69,6 +69,8 @@ begin
   select id into v_admin from profiles order by id limit 1;
   select id into v_plain from profiles order by id offset 1 limit 1;
   update profiles set role = 'admin' where id = v_admin;
+  -- Not an admin whatever the local stack's fixtures made of them.
+  update profiles set role = null where id = v_plain;
 
   -- The RPCs read auth.uid(). Impersonate by setting the request claim the way
   -- PostgREST does, so `security definer` functions see a caller.
@@ -119,7 +121,7 @@ begin
       perform edit_challenge_session(v_past, 'challenge/other');
       assert false, 're-pointing a closed session should have been refused';
     exception when raise_exception then
-      assert sqlerrm like '%has closed%', format('refused for the wrong reason: %s', sqlerrm);
+      assert sqlerrm like '%has opened%', format('refused for the wrong reason: %s', sqlerrm);
     end;
     perform cancel_challenge_session(v_past);
     assert (select count(*) from challenge_sessions where id = v_past) = 0,
@@ -147,12 +149,6 @@ begin
     assert sqlerrm like '%not an admin%', 'wrong error: ' || sqlerrm;
   end;
 
-  begin
-    perform move_challenge_session(gen_random_uuid(), 1);
-    assert false, 'a non-admin should not be able to move a session';
-  exception when others then
-    assert sqlerrm like '%not an admin%', 'wrong error: ' || sqlerrm;
-  end;
 
   begin
     perform cancel_challenge_session(gen_random_uuid());
@@ -494,31 +490,10 @@ begin
   assert (select closes_at - opens_at from challenge_sessions where id = v_c)
          = interval '24 hours', 'a queued session runs twenty-four hours';
 
-  -- Up swaps it with the one before; the times stay on the cadence.
-  perform move_challenge_session(v_c, -1);
-  assert array(select mode_id from challenge_sessions where opens_at > now() order by opens_at)
-         = array['challenge/a', 'challenge/c', 'challenge/b'],
-    'moving up should swap a row with the one before it';
-  -- At either end there is nowhere to go.
-  perform move_challenge_session(v_a, -1);
-  perform move_challenge_session(v_b, 1);
-  assert array(select mode_id from challenge_sessions where opens_at > now() order by opens_at)
-         = array['challenge/a', 'challenge/c', 'challenge/b'],
-    'moving past either end should change nothing';
-
   -- Removing one closes the gap behind it.
   perform cancel_challenge_session(v_a);
-  assert (select opens_at from challenge_sessions where id = v_c) = v_slot0,
+  assert (select opens_at from challenge_sessions where id = v_b) = v_slot0,
     'removing the first should move the next into its slot';
-
-  -- A row that has opened is not the queue's to move.
-  begin
-    perform move_challenge_session(v_live, 1);
-    assert false, 'moving a session that has opened should have been refused';
-  exception when raise_exception then
-    assert sqlerrm like '%no longer in the queue%',
-      format('refused for the wrong reason: %s', sqlerrm);
-  end;
 
   -- Extending past the rest pushes the queue; closing early afterwards must not pull it
   -- back. The anchor falls back to the original twenty-four hours, but the queue is

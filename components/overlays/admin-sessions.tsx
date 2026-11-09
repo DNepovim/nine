@@ -1,28 +1,25 @@
+import { Ionicons } from '@expo/vector-icons'
 import { msg } from '@lingui/core/macro'
 import { Plural, Trans, useLingui } from '@lingui/react/macro'
 import { isEmptyArray } from 'narrowland'
-import { useEffect, useState, type ReactNode } from 'react'
+import { useEffect, useState, type ComponentProps, type ReactNode } from 'react'
 import { ScrollView, Text, View } from 'react-native'
 
-import { AdminPair } from '@/components/overlays/admin-pair'
+import { AdminCandidatesDialog } from '@/components/overlays/admin-candidates-dialog'
 import { AdminPills } from '@/components/overlays/admin-pills'
-import { AdminPlanPair } from '@/components/overlays/admin-plan-pair'
 import { AdminScreen } from '@/components/overlays/admin-screen'
 import { AdminSession } from '@/components/overlays/admin-session'
-import {
-  ChallengeTitle,
-  QueueMoves,
-  WhenBlock,
-} from '@/components/overlays/admin-session-cells'
+import { ChallengeTitle, WhenBlock } from '@/components/overlays/admin-session-cells'
 import { AdminTable, type AdminTableRow } from '@/components/overlays/admin-table'
+import { DOT_COLOR } from '@/components/overlays/live-dot'
 import { PrimaryButton } from '@/components/primary-button'
+import { DIM_INK } from '@/constants/colors'
 import { TYPE } from '@/constants/typography'
 import { refreshOpenSessions } from '@/hooks/use-open-sessions'
 import { listChallengeStates } from '@/lib/admin/challenge-states'
 import {
   listSessions,
-  movePair,
-  type QueueStep,
+  planSession,
   type AdminSession as Session,
 } from '@/lib/admin/sessions'
 import {
@@ -33,10 +30,11 @@ import {
   type SpanStatus,
 } from '@/lib/challenge-session'
 import { cn } from '@/lib/cn'
-import { formatWindowLength } from '@/lib/duration'
-import { formatDayTime } from '@/lib/format-date'
-import { pairsOf, withVotes, type DrawnPair } from '@/lib/session-pairs'
+import { formatCountdown, formatWindowLength } from '@/lib/duration'
+import { loadOpenSessions, type OpenSession } from '@/lib/session-board'
+import { sessionFigure } from '@/lib/session-figure'
 import { loadVoteOptions, type VoteOption } from '@/lib/session-ratings'
+import { votingSession } from '@/lib/session-voting'
 
 // When a challenge is on: every session ever planned, newest start first.
 //
@@ -45,9 +43,15 @@ import { loadVoteOptions, type VoteOption } from '@/lib/session-ratings'
 // session into the rules a run is played under; that is the next phase. What this screen
 // decides is only what the server holds.
 //
+// A session is one row with two **candidates** and one date, and the list says only what
+// that row can say at a glance: a running one its figures, a planned one its candidates —
+// and, for the one being voted on, how the vote stands and how long is left to cast it.
+// The detail is a press away, and there is no reordering: the queue is the order the
+// sessions were booked in.
+//
 // The form is state here rather than a screen of its own for the reason `AdminAccess`
 // holds its person and its role: a session is reached from this list and goes back to
-// it. Planning is a dialog over the list instead — two candidates at once, a **pair**.
+// it. Planning is a dialog over the list instead.
 type Editing = Session | null
 
 const TITLE = msg`CHALLENGES`
@@ -59,20 +63,24 @@ const TITLE = msg`CHALLENGES`
 // toggles it was the union of the other three — a pill that is the sum of its neighbours
 // is not a filter. Lighting all three says what it said, and the pairs it could never
 // say (LIVE and PAST, which is everything except what is still to come) are now sayable.
-
 const FILTERS: readonly SpanStatus[] = ['live', 'upcoming', 'expired']
 
 // What the screen opens on: what is on now and what is coming. The record below them is
 // a press away and is not what somebody opening this screen came to see.
 const LIT_ON_ARRIVAL: readonly SpanStatus[] = ['live', 'upcoming']
 
-// Not translated: these name the state of a database row on a screen whose readers are
-// the people who write the catalog.
-const FILTER_LABEL = {
-  live: 'LIVE',
-  upcoming: 'PLANNED',
-  expired: 'PAST',
-} as const satisfies Record<SpanStatus, string>
+// The pills are the gallery's — a glyph and a count, each in a colour — for the same
+// reason the gallery's are: three words and their counts do not fit a phone's width in
+// one line. Running and booked wear the dots' own colours, so a pill reads as the dot it
+// stands for; what is over is the quiet one.
+const FILTER = {
+  live: { icon: 'flash', tint: DOT_COLOR.running },
+  upcoming: { icon: 'calendar-outline', tint: DOT_COLOR.planned },
+  expired: { icon: 'time-outline', tint: DIM_INK },
+} as const satisfies Record<
+  SpanStatus,
+  { icon: ComponentProps<typeof Ionicons>['name']; tint: string }
+>
 
 export function AdminSessions({
   tabs,
@@ -87,17 +95,13 @@ export function AdminSessions({
   const [rows, setRows] = useState<Session[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  // A step in the queue is in flight. Every arrow waits on it, not only the pressed one:
-  // a second tap lands on a list whose order the first is about to change.
-  const [moving, setMoving] = useState(false)
   const [editing, setEditing] = useState<Editing>(null)
-  // The pair whose detail is open: one item of the queue, with its own screen.
-  const [editingPair, setEditingPair] = useState<DrawnPair<Session> | null>(null)
-  // The PLAN SESSION dialog, the challenges held back (which no field offers) and where the
-  // vote stands, for the first pair's counts.
+  // The PLAN SESSION dialog, the challenges held back (which no field offers), where the
+  // vote stands and the running sessions' leaders, for the rows' figures.
   const [planning, setPlanning] = useState(false)
   const [pending, setPending] = useState<ReadonlySet<string>>(new Set())
   const [votes, setVotes] = useState<readonly VoteOption[]>([])
+  const [leaders, setLeaders] = useState<ReadonlyMap<string, OpenSession>>(new Map())
   const [lit, setLit] = useState<ReadonlySet<SpanStatus>>(() => new Set(LIT_ON_ARRIVAL))
 
   // One counter, the way every other admin list has one: the list is a snapshot, and a
@@ -106,24 +110,22 @@ export function AdminSessions({
 
   // Read once per *read* rather than per render: a window closing on its own while this
   // screen is up must not relabel a row under a thumb already travelling towards it,
-  // which is why this is not a ticker.
+  // which is why this is not a ticker. The countdowns are read against the same moment.
   //
-  // But it is re-seeded with `epoch`, and that is new. CLOSE EARLY and EXTEND let this
-  // screen change a window's status from inside itself, which nothing here could do
-  // before. Frozen at mount, a session closed early reloads with `closes_at` already
-  // behind us and still reads `live` against the old clock — keeping its dot,
-  // still counting under the LIVE filter, and offering EXTEND on a form whose writes the
-  // server now refuses. The clock has to move when the rows do.
+  // It is re-seeded with `epoch`, because a write on the detail can change a window's
+  // status from inside this screen. Frozen at mount, a session closed early reloads with
+  // `closes_at` already behind us and still reads `live` against the old clock — keeping its
+  // dot and still counting under the LIVE filter. The clock has to move when the rows do.
   const [openedAt, setOpenedAt] = useState(() => Date.now())
 
-  // One read, shared by the load below and by a step in the queue. `shown` is an error the
-  // caller already has — a refused step — which a good read must not wipe. A failed read
-  // keeps the rows on screen rather than blanking the planner for a write that landed.
-  const load = async (shown: string | null = null) => {
-    const [res, held, options] = await Promise.all([
+  // A failed read keeps the rows on screen rather than blanking the planner for a write
+  // that landed.
+  const load = async () => {
+    const [res, held, options, open] = await Promise.all([
       listSessions(),
       listChallengeStates(),
       loadVoteOptions(),
+      loadOpenSessions(),
     ])
     setOpenedAt(Date.now())
     if (res.error === null) setRows(res.rows)
@@ -133,7 +135,8 @@ export function AdminSessions({
       )
     }
     setVotes(options)
-    setError(shown ?? res.error)
+    setLeaders(new Map(open.rows.map((row) => [row.id, row])))
+    setError(res.error)
     setLoading(false)
   }
 
@@ -144,45 +147,20 @@ export function AdminSessions({
   }, [epoch])
 
   // After any write: read the list again, and tell the intro's card, which reads its
-  // sessions once a launch — a booking, and now a step in the queue, are the things that
-  // have to reach it without one.
+  // sessions once a launch — a booking is the thing that has to reach it without one.
   const changed = () => {
     setEpoch((n) => n + 1)
     refreshOpenSessions()
   }
 
-  // A step reads the list itself rather than bumping `epoch`, for two reasons the effect
-  // cannot serve. A refused step's error ("no longer in the queue") has to survive the
-  // good read after it. And `moving` has to stay up until the new order is drawn: arrows
-  // that come back over the old order invite a second tap aimed at a row that has
-  // already moved.
-  const move = async (id: string, delta: QueueStep) => {
-    setMoving(true)
-    const step = await movePair(id, delta)
-    await load(step.error)
-    setMoving(false)
-    refreshOpenSessions()
-  }
-
-  if (editingPair !== null) {
-    return (
-      <AdminPair
-        pair={editingPair}
-        pastRuns={pastRunsByMode(rows, openedAt)}
-        now={openedAt}
-        pending={pending}
-        onChanged={changed}
-        onBack={() => {
-          setEditingPair(null)
-        }}
-      />
-    )
-  }
+  // The one session being voted on: the only planned row that shows votes and a clock.
+  const voting = votingSession(rows, openedAt)
 
   if (editing !== null) {
     return (
       <AdminSession
         session={editing}
+        voting={voting?.id === editing.id}
         pastRuns={pastRunsByMode(rows, openedAt)}
         now={openedAt}
         pending={pending}
@@ -209,20 +187,89 @@ export function AdminSessions({
   // Live, then the queue in the order it runs, then the past newest first — see
   // `queueOrder`. The server hands the rows back newest first, which is the right order
   // for everything but the queue, and the queue is what this screen is now for.
-  const ordered = queueOrder(rows, openedAt)
-  const shown = shownByStatus(ordered, lit, openedAt)
+  const shown = shownByStatus(queueOrder(rows, openedAt), lit, openedAt)
+  const votesOf = (modeId: string) =>
+    votes.find((option) => option.modeId === modeId)?.votes
 
-  // One planned session per row: which challenge, when it opens, how long it runs, and
-  // where that span stands against now.
+  // A running session's line: what leads it, who is on it and how long it has left.
+  const liveLine = (session: Session) => {
+    const open = leaders.get(session.id)
+    const leader = open?.leader ?? null
+    const best =
+      open === undefined || leader === null
+        ? '—'
+        : sessionFigure(open.measure, {
+            score: leader.score,
+            hits: leader.hits,
+            timeMs: leader.timeMs,
+          })
+    return (
+      <Text selectable={false} className={cn(TYPE.hint, 'mt-0.5 text-dim')}>
+        {best}
+        {' · '}
+        <Plural value={session.played} one="# player" other="# players" />
+        {' · '}
+        <Trans>{formatCountdown(session.closesAt - openedAt)} left</Trans>
+      </Text>
+    )
+  }
+
+  // One session per row: a date and what is on it.
   //
   // A row whose challenge this build has never heard of is drawn rather than hidden, and
   // drawn as what it is — the raw id and NOT IN THIS BUILD, because `labelOf` would
   // answer GAME for it and a list of sessions all called GAME is worse than useless.
   // Still pressable: a row booked for a challenge that has been taken out of the catalog
   // is exactly the row somebody needs to open and cancel.
-  // A live or past row. The queue is drawn as pairs, below.
-  const rowOf = (session: Session): AdminTableRow => {
+  const tableRows: readonly AdminTableRow[] = shown.map((session) => {
     const status = spanStatus(session, openedAt)
+    const candidates = [
+      session.modeId,
+      ...(session.altModeId === null ? [] : [session.altModeId]),
+    ]
+    const voted = voting?.id === session.id
+    // What the name cell says, by where the session stands: a running one its figures, a
+    // planned one its candidates (with the vote and the clock on the one being voted on),
+    // a finished one how long it ran. A map and not a chain, so a fourth status breaks the
+    // build here instead of falling into the last branch.
+    const nameCell = {
+      live: () => (
+        <View>
+          <ChallengeTitle modeId={session.modeId} />
+          {liveLine(session)}
+        </View>
+      ),
+      upcoming: () => (
+        <View className="gap-1 py-2">
+          {candidates.map((modeId) => (
+            <View
+              key={modeId}
+              className="w-full flex-row items-baseline justify-between gap-3"
+            >
+              <ChallengeTitle modeId={modeId} />
+              {voted && (
+                <Text selectable={false} className={cn(TYPE.hint, 'text-dim')}>
+                  <Plural value={votesOf(modeId) ?? 0} one="# VOTE" other="# VOTES" />
+                </Text>
+              )}
+            </View>
+          ))}
+          {voted && (
+            <Text selectable={false} className={cn(TYPE.hint, 'text-dim')}>
+              <Trans>opens in {formatCountdown(session.opensAt - openedAt)}</Trans>
+            </Text>
+          )}
+        </View>
+      ),
+      expired: () => (
+        <View>
+          <ChallengeTitle modeId={session.modeId} />
+          <Text selectable={false} className={cn(TYPE.hint, 'mt-0.5 text-dim')}>
+            {formatWindowLength(session.closesAt - session.opensAt)}
+          </Text>
+        </View>
+      ),
+    } as const satisfies Record<SpanStatus, () => ReactNode>
     return {
       key: session.id,
       // Dimmed once it is over. An expired session is kept — it is the record of what
@@ -230,14 +277,7 @@ export function AdminSessions({
       faded: status === 'expired',
       cells: [
         <WhenBlock at={session.opensAt} live={status === 'live'} />,
-        <View>
-          <ChallengeTitle modeId={session.modeId} />
-          <Text selectable={false} className={cn(TYPE.hint, 'mt-0.5 text-dim')}>
-            {formatWindowLength(session.closesAt - session.opensAt)}
-          </Text>
-        </View>,
-        // The queue's steps live on the pairs below; a live or past row has none.
-        null,
+        nameCell[status](),
       ],
       onPress: () => {
         setEditing(session)
@@ -246,74 +286,7 @@ export function AdminSessions({
       // name than a mark every row would wear.
       leads: false,
     }
-  }
-
-  // The queue, two at a time. A pair is one item: one door to its detail, one set of steps,
-  // and both challenges in it — the one with more votes on top, and for the first pair, the
-  // vote's two, each one's count.
-  const queuedPairs = pairsOf(
-    shown.filter((session) => spanStatus(session, openedAt) === 'upcoming'),
-  )
-  const pairRows: readonly AdminTableRow[] = queuedPairs.map((pair, index) => {
-    const drawn = withVotes(pair, index === 0 ? votes : [])
-    const lines = [
-      { session: drawn.top, count: drawn.topVotes },
-      { session: drawn.bottom, count: drawn.bottomVotes },
-    ]
-    return {
-      key: pair.first.id,
-      cells: [
-        <WhenBlock at={pair.first.opensAt} live={false} />,
-        <View className="gap-1.5 py-2">
-          {lines.map(({ session, count }) =>
-            session === null ? null : (
-              <View key={session.id}>
-                <ChallengeTitle modeId={session.modeId} />
-                <Text selectable={false} className={cn(TYPE.hint, 'mt-0.5 text-dim')}>
-                  {formatDayTime(session.opensAt)}
-                  {count === null ? null : (
-                    <>
-                      {' · '}
-                      <Plural value={count} one="# VOTE" other="# VOTES" />
-                    </>
-                  )}
-                </Text>
-              </View>
-            ),
-          )}
-        </View>,
-        <QueueMoves
-          busy={moving}
-          onUp={
-            index === 0
-              ? null
-              : () => {
-                  void move(pair.first.id, -1)
-                }
-          }
-          onDown={
-            index === queuedPairs.length - 1
-              ? null
-              : () => {
-                  void move(pair.first.id, 1)
-                }
-          }
-        />,
-      ],
-      onPress: () => {
-        setEditingPair(drawn)
-      },
-      leads: false,
-    }
   })
-
-  // Live first, then the queue as pairs, then the past — the order `queueOrder` laid out.
-  const status = (session: Session) => spanStatus(session, openedAt)
-  const tableRows: readonly AdminTableRow[] = [
-    ...shown.filter((session) => status(session) === 'live').map(rowOf),
-    ...pairRows,
-    ...shown.filter((session) => status(session) === 'expired').map(rowOf),
-  ]
 
   return (
     <AdminScreen
@@ -341,6 +314,7 @@ export function AdminSessions({
       <AdminPills
         id="admin.filter"
         className="mb-2.5"
+        compact
         mode="toggle"
         lit={lit}
         onToggle={(option) => {
@@ -355,7 +329,9 @@ export function AdminSessions({
         }}
         options={FILTERS.map((option) => ({
           value: option,
-          label: `${FILTER_LABEL[option]} ${counts[option]}`,
+          label: String(counts[option]),
+          icon: FILTER[option].icon,
+          tint: FILTER[option].tint,
         }))}
       />
 
@@ -367,8 +343,6 @@ export function AdminSessions({
             // The live dot's lane and the date beside it.
             { width: 47 },
             { label: 'CHALLENGE', tone: 'name' },
-            // The queue's two steps, stacked, on a planned row only.
-            { width: 40, align: 'right' },
           ]}
           rows={tableRows}
           empty={
@@ -387,11 +361,16 @@ export function AdminSessions({
       </ScrollView>
 
       {planning && (
-        <AdminPlanPair
+        <AdminCandidatesDialog
+          title={<Trans>PLAN SESSION</Trans>}
           pastRuns={pastRunsByMode(rows, openedAt)}
           now={openedAt}
           pending={pending}
-          onPlanned={changed}
+          onSave={async (first, second) => {
+            const res = await planSession(first, second)
+            if (res.error === null) changed()
+            return res
+          }}
           onDismiss={() => {
             setPlanning(false)
           }}
