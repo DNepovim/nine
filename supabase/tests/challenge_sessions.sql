@@ -83,8 +83,8 @@ begin
   assert (select count(*) from challenge_sessions where id = v_id) = 1,
     'an admin should be able to plan a session';
   assert (select opens_at from challenge_sessions where id = v_id)
-         = prague_noon_at_or_after(now()),
-    'the first session into an empty queue should open at the next noon';
+         = challenge_slot_at_or_after(now()),
+    'the first session into an empty queue should open at the next slot';
 
   -- Editing re-points the challenge and leaves the times where the queue put them.
   declare
@@ -104,9 +104,12 @@ begin
     v_second := plan_challenge_session('challenge/other');
     assert (select opens_at from challenge_sessions where id = v_second)
            = ((((select opens_at from challenge_sessions where id = v_id)
-                 at time zone 'Europe/Prague')::date + 2) + time '12:00')
+                 at time zone 'Europe/Prague')::date
+               + case extract(isodow from (select opens_at from challenge_sessions
+                                            where id = v_id) at time zone 'Europe/Prague')
+                   when 1 then 3 else 4 end) + time '12:00')
              at time zone 'Europe/Prague',
-      'a second booking should join the queue two noons later';
+      'a second booking should join the queue on the next slot, Monday to Thursday or back';
     perform cancel_challenge_session(v_second);
   end;
 
@@ -444,26 +447,31 @@ declare
   v_b     uuid;
   v_c     uuid;
   v_slot0 timestamptz;
+  v_slot1 timestamptz;
+  v_slot2 timestamptz;
 begin
   -- ── The slot ────────────────────────────────────────────────────────────────
-  -- Noon to noon, a day of rest, noon again: opened on the 2nd, the next is the 4th.
+  -- Monday and Thursday noon (Prague). 2026-11-02 is a Monday, the 3rd a Tuesday.
+  -- A Tuesday-noon close waits for Thursday.
   assert challenge_queue_slot('2026-11-03 11:00+00', '2026-11-03 11:05+00')
-         = '2026-11-04 11:00+00', 'a noon close should rest a day and open the next noon';
-  -- Autumn: opened at noon CEST on the 24th, twenty-four literal hours close it at 11:00
-  -- CET. It must still open on the 26th, not slip to the 27th.
-  assert challenge_queue_slot('2026-10-25 10:00+00', '2026-10-25 10:05+00')
-         = '2026-10-26 11:00+00', 'an autumn daylight-saving close should keep the cadence';
-  -- Spring: the close lands at 13:00 CEST. Twenty-four hours of rest would skip a noon.
-  assert challenge_queue_slot('2027-03-28 11:00+00', '2027-03-28 11:05+00')
-         = '2027-03-29 10:00+00', 'a spring daylight-saving close should keep the cadence';
-  -- An extension of more than the hour of tolerance pushes it a day.
-  assert challenge_queue_slot('2026-11-03 13:00+00', '2026-11-03 13:05+00')
-         = '2026-11-05 11:00+00', 'an end past the tolerance should push to the noon after';
-  -- A close long past falls forward to the next noon to come, and so does no close at all.
+         = '2026-11-05 11:00+00', 'a Tuesday close should open the Thursday noon';
+  -- A Friday-noon close waits over the weekend for Monday.
+  assert challenge_queue_slot('2026-11-06 11:00+00', '2026-11-06 11:05+00')
+         = '2026-11-09 11:00+00', 'a Friday close should open the Monday noon';
+  -- Across the autumn clock change (25 October) Monday is still noon: 11:00 UTC before,
+  -- 11:00 UTC after only because CET is one hour behind CEST's 10:00.
+  assert challenge_queue_slot('2026-10-23 10:00+00', '2026-10-23 10:05+00')
+         = '2026-10-26 11:00+00', 'a slot after the autumn change should be noon Prague';
+  assert challenge_queue_slot('2027-03-26 11:00+00', '2027-03-26 11:05+00')
+         = '2027-03-29 10:00+00', 'a slot after the spring change should be noon Prague';
+  -- An end past a Thursday noon pushes to the Monday after.
+  assert challenge_queue_slot('2026-11-05 13:00+00', '2026-11-05 13:05+00')
+         = '2026-11-09 11:00+00', 'an end past a slot should push to the next one';
+  -- A close long past falls forward to the next slot to come, and so does no close at all.
   assert challenge_queue_slot('2026-01-01 11:00+00', '2026-11-03 13:00+00')
-         = '2026-11-04 11:00+00', 'a stale end should fall forward to the next noon';
-  assert challenge_queue_slot(null, '2026-11-03 09:00+00') = '2026-11-03 11:00+00',
-    'with nothing ever opened the first slot is the next noon';
+         = '2026-11-05 11:00+00', 'a stale end should fall forward to the next slot';
+  assert challenge_queue_slot(null, '2026-11-03 09:00+00') = '2026-11-05 11:00+00',
+    'with nothing ever opened the first slot is the next Monday or Thursday noon';
 
   -- ── The writes ──────────────────────────────────────────────────────────────
   select id, role into v_admin, v_was from profiles order by id limit 1;
@@ -476,6 +484,9 @@ begin
   returning id into v_live;
   v_slot0 := challenge_queue_slot(now() + interval '23 hours', now());
 
+  v_slot1 := challenge_slot_at_or_after(v_slot0 + interval '1 day');
+  v_slot2 := challenge_slot_at_or_after(v_slot1 + interval '1 day');
+
   v_a := plan_challenge_session('challenge/a');
   v_b := plan_challenge_session('challenge/b');
   v_c := plan_challenge_session('challenge/c');
@@ -484,16 +495,20 @@ begin
   assert (select opens_at from challenge_sessions where id = v_a) = v_slot0,
     'the first into the queue should take the first slot';
   assert (select opens_at from challenge_sessions where id = v_c)
-         = (((v_slot0 at time zone 'Europe/Prague')::date + 4) + time '12:00')
+         = v_slot2, 'the third should be two slots after the first';
+  assert (select opens_at from challenge_sessions where id = v_b) = v_slot1,
+    'the second should be the slot after the first';
+  assert (select closes_at from challenge_sessions where id = v_c)
+         = (((v_slot2 at time zone 'Europe/Prague')::date + 1) + time '12:00')
            at time zone 'Europe/Prague',
-    'the third should be two slots after the first';
-  assert (select closes_at - opens_at from challenge_sessions where id = v_c)
-         = interval '24 hours', 'a queued session runs twenty-four hours';
+    'a queued session should close at noon the next day';
 
   -- Removing one closes the gap behind it.
   perform cancel_challenge_session(v_a);
   assert (select opens_at from challenge_sessions where id = v_b) = v_slot0,
     'removing the first should move the next into its slot';
+  assert (select opens_at from challenge_sessions where id = v_c) = v_slot1,
+    'removing the first should move the third up a slot';
 
   -- Extending past the rest pushes the queue; closing early afterwards must not pull it
   -- back. The anchor falls back to the original twenty-four hours, but the queue is
@@ -552,10 +567,9 @@ begin
   assert v_id is not null, 'with nothing live or to come, a session should be booked';
   select * into v_next from challenge_sessions where id = v_id;
 
-  assert v_next.opens_at = '2026-11-04 11:00+00',
-    format('should open at the noon after a day of rest, got %s', v_next.opens_at);
-  assert v_next.closes_at - v_next.opens_at = interval '24 hours',
-    'should run for twenty-four hours';
+  assert v_next.opens_at = '2026-11-05 11:00+00',
+    format('should open at the next Thursday noon, got %s', v_next.opens_at);
+  assert v_next.closes_at = '2026-11-06 11:00+00', 'should close at noon the next day';
   assert v_next.mode_id = 'challenge/habit',
     'should pick the challenge that has gone longest without a session';
   assert v_next.measure = 'time', 'should carry the measure the challenge was booked with';
@@ -567,14 +581,14 @@ begin
   -- Run exactly at the close: still a day of rest before it, not end to end.
   delete from challenge_sessions where id = v_id;
   v_id := plan_next_challenge_session('2026-11-03 11:00+00');
-  assert (select opens_at from challenge_sessions where id = v_id) = '2026-11-04 11:00+00',
-    'a run at the instant of a noon close should still rest a day';
+  assert (select opens_at from challenge_sessions where id = v_id) = '2026-11-05 11:00+00',
+    'a run at the instant of a Tuesday close should open the Thursday noon';
 
   -- A close long past: the next noon to come, counted from the run, not the close.
   delete from challenge_sessions where id = v_id;
   v_id := plan_next_challenge_session('2026-11-20 09:00+00');
-  assert (select opens_at from challenge_sessions where id = v_id) = '2026-11-20 11:00+00',
-    'a stale close should fall forward to the next noon in Prague';
+  assert (select opens_at from challenge_sessions where id = v_id) = '2026-11-23 11:00+00',
+    'a stale close should fall forward to the next slot in Prague';
 
   -- Once anything has been played, a challenge nobody played in sixty days is out of the
   -- pool — habit is the oldest, but only drift and four-keys have scores.
