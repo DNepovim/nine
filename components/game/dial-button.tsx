@@ -447,7 +447,9 @@ export function DialButton({
             { rotateY: `${keySpinDegrees(sweep?.value ?? 1, sweepAt)}deg` },
           ],
         }
-      : {},
+      : // Turned back rather than left out: an animated style that drops a property leaves
+        // the last value on the view, so a key that was mirrored would stay so.
+        { transform: [{ perspective: TURN_PERSPECTIVE }, { rotateY: '0deg' }] },
   )
 
   const fireStyle = useAnimatedStyle(() => ({ opacity: FIRE_WASH * (heat?.value ?? 0) }))
