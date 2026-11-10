@@ -101,6 +101,11 @@ type AuthState = {
   restoreProfile: (code: string, address: string) => Promise<Answer>
 }
 
+// What `my_features` answered, as the set this build can act on. A failed read arrives as
+// no data and is an ordinary player's set, for the reason given in `inspectSession`.
+const featuresFrom = (data: unknown): ReadonlySet<Flag> =>
+  knownFeatures(Array.isArray(data) ? (data as string[]) : [])
+
 // Everything a launch needs to know about the session it found, in one round trip.
 //
 // Reading the nickname doubles as checking the session is real. A stored session outlives
@@ -143,9 +148,7 @@ const inspectSession = async (
     // A failed feature read is an ordinary player, not an error worth a screen: the doors
     // it would have opened are all unfinished work, and showing none of them is the right
     // answer to not knowing.
-    features: knownFeatures(
-      Array.isArray(featureRows.data) ? (featureRows.data as string[]) : [],
-    ),
+    features: featuresFrom(featureRows.data),
   }
 }
 
@@ -239,7 +242,13 @@ export function useSupabaseAuth(): AuthState {
         const { data, error } = await supabase.auth.signInAnonymously()
         // Nothing to read back: `handle_new_user` files the profile row with the signup,
         // and a brand-new player's is empty by definition.
-        if (!error && data.user) uid = data.user.id
+        if (!error && data.user) {
+          uid = data.user.id
+          // A new player's profile is empty, but what they may *reach* is not: a feature
+          // made public reaches everybody, and a first launch that held none of them would
+          // keep the very players it exists for from meeting it until their second.
+          held = featuresFrom((await supabase.rpc('my_features')).data)
+        }
       }
 
       if (uid !== null) {
