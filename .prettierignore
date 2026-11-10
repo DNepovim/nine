@@ -7,3 +7,4 @@ patches
 assets
 pnpm-lock.yaml
 locales/*/messages.ts
+.claude/worktrees

@@ -60,8 +60,8 @@ export function ReplayConsentOverlay({
               className={cn(TYPE.prose, 'mt-2 text-center text-dim')}
             >
               <Trans>
-                Record a replay of your play to help us spot bugs. Text fields are blanked.
-                Change it any time in OPTIONS.
+                Record a replay of your play to help us spot bugs. Text fields are
+                blanked. Change it any time in OPTIONS.
               </Trans>
             </Text>
           </View>

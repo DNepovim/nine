@@ -7,6 +7,8 @@ import tseslint from 'typescript-eslint'
 export default defineConfig(
   globalIgnores([
     '.expo/*',
+    // Other checkouts of this repo, kept by agents: git ignores them, and so should the linter.
+    '.claude/worktrees/*',
     'dist/*',
     'android/*',
     'ios/*',

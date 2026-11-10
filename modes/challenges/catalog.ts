@@ -316,7 +316,6 @@ const HABIT: ChallengeSpec = {
     ],
   },
   base: ACCURACY,
-  from: Date.UTC(2026, 10, 1),
   // A dance floor: honey-oak parquet in a herringbone, the lights coming up and the count given
   // before the run, and the route left on the floor as footprints. See `parquet` in `SCHEMES`.
   // Drawing only — the rules below are what they were.
@@ -324,6 +323,7 @@ const HABIT: ChallengeSpec = {
   scheme: 'parquet',
   // The targets are dancers seen from above: the disc is the head, with shoulders and arms round it.
   targetForm: 'dancers',
+  from: Date.UTC(2026, 10, 1),
   until: Date.UTC(2026, 10, 1) + DAY,
   rules: {
     fixedDifficulty: 'hard',
