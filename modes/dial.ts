@@ -60,6 +60,16 @@ export type DialSpec = {
   // sum, and a row that says again what the key says is a second readout of the same figure.
   // False on every dial but ONE KEY's. Drawing only, as `freeze` and `blackout` are.
   hidesSum: boolean
+  // Whether the keys are **proportional**: one square cut into rows and columns whose sizes
+  // follow what each holds — a row is as tall as its share of the dial's sum, a column as
+  // wide — instead of a grid of equal keys. Drawn as a pencil drawing, with no space between
+  // the keys and the dimensions written round it: see lib/dial-carve.ts and
+  // components/game/dial-sketch.tsx. False on every dial but FOUR KEYS'.
+  //
+  // Drawing and reading only, as `freeze` and `blackout` are: a key is worth what its weight
+  // says and nothing about its size. It does change where a finger is, which is why the
+  // gesture reads it too.
+  proportional: boolean
 }
 
 // Which way up a dial is drawn and read. `sideways` is a quarter turn counter-clockwise,
@@ -103,6 +113,7 @@ export function defineDial({
   mirror = false,
   blackout = false,
   hidesSum = false,
+  proportional = false,
 }: {
   id: string
   rows: number
@@ -115,6 +126,7 @@ export function defineDial({
   mirror?: boolean
   blackout?: boolean
   hidesSum?: boolean
+  proportional?: boolean
 }): DialSpec {
   const cells = rows * cols
   const spread = weights ?? Array.from({ length: cells }, byPosition(cols))
@@ -132,6 +144,7 @@ export function defineDial({
     mirror,
     blackout,
     hidesSum,
+    proportional,
   }
 }
 

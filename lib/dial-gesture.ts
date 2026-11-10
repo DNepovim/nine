@@ -39,6 +39,21 @@ export function cellAt(
   return track(y, metrics, shape.rows) * shape.cols + track(x, metrics, shape.cols)
 }
 
+// The same answer for a key whose middle is not on the grid's pitch — a proportional dial's,
+// where each key is its own size and the caller has already worked out where its centre is.
+export function exitMoveFrom(
+  centreX: number,
+  centreY: number,
+  x: number,
+  y: number,
+): DialMove {
+  'worklet'
+  const dx = x - centreX
+  const dy = y - centreY
+  if (Math.abs(dx) > Math.abs(dy)) return dx < 0 ? 'left' : 'right'
+  return dy < 0 ? 'up' : 'down'
+}
+
 // The side a key was left through, read from where the finger now is against the key's
 // own centre. Not from how far the finger has travelled since it touched down: the
 // player may have wandered over the key, changed their mind twice and come back, and
@@ -55,10 +70,12 @@ export function exitMove(
 ): DialMove {
   'worklet'
   const pitch = metrics.button + metrics.gap
-  const dx = x - (pitch * (cell % cols) + metrics.button / 2)
-  const dy = y - (pitch * Math.floor(cell / cols) + metrics.button / 2)
-  if (Math.abs(dx) > Math.abs(dy)) return dx < 0 ? 'left' : 'right'
-  return dy < 0 ? 'up' : 'down'
+  return exitMoveFrom(
+    pitch * (cell % cols) + metrics.button / 2,
+    pitch * Math.floor(cell / cols) + metrics.button / 2,
+    x,
+    y,
+  )
 }
 
 // Where each move points, as a unit vector on the screen, as the finger made it — before
@@ -76,9 +93,16 @@ const MOVE_DIRECTION = {
 //
 // Taken from the dial it is playing rather than fixed in points, so the bar is the same
 // share of a key whatever size the keys are — a challenge's five-column dial included.
-export function crossReach(metrics: DialMetrics): number {
+//
+// `extent` is how big the key being crossed is, for a dial whose keys are not all the size of
+// `metrics.button` — a proportional dial's, where the bar has to come down with a narrow key
+// or it could never be crossed at all.
+export function crossReach(
+  metrics: DialMetrics,
+  extent: number = metrics.button,
+): number {
   'worklet'
-  return (metrics.button + metrics.gap) * CROSSING_SHARE
+  return (extent + metrics.gap) * CROSSING_SHARE
 }
 
 // How much of a key's width the finger actually spent on it, in the direction it is

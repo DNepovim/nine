@@ -221,6 +221,8 @@ export const OPENING_STARTS_LIT = {
   takeoff: false,
   // The casino is lit from the first frame; the lever is the scene.
   leverPull: false,
+  // The sheet is the board's from the first frame; the drawing of it is the scene.
+  drawingBoard: false,
 } as const satisfies Record<OpeningKind, boolean>
 
 // What the rows above the dial wear under each **scheme**: the same one, except that `glass`
@@ -241,6 +243,8 @@ export const SCHEME_BAR = {
   dos: 'dos',
   glass: 'glassBar',
   glassBar: 'glassBar',
+  drafting: 'draftingBar',
+  draftingBar: 'draftingBar',
 } as const satisfies Record<SchemeKind, SchemeKind>
 
 // Whether those rows, the keys and the sum wait for the opening's switch to turn over, or are in
@@ -257,6 +261,8 @@ export const OPENING_BAR_WAITS = {
   defibrillator: false,
   takeoff: false,
   leverPull: false,
+  // The rows above the dial are in the scheme from the first frame; the scene writes them in.
+  drawingBoard: false,
 } as const satisfies Record<OpeningKind, boolean>
 
 // Whether an opening's remains show the run's figures themselves, so the stat the top bar keeps
@@ -271,6 +277,7 @@ const OPENING_SHOWS_FIGURES = {
   defibrillator: true,
   takeoff: false,
   leverPull: false,
+  drawingBoard: false,
 } as const satisfies Record<OpeningKind, boolean>
 
 export const showsFigures = (id: ModeId): boolean => {

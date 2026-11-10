@@ -1,8 +1,10 @@
+import { useFonts } from 'expo-font'
 import { VariableContextProvider } from 'nativewind'
 import { createContext, useContext, type ReactNode } from 'react'
 import type { TextStyle } from 'react-native'
 
-import { SCHEMES } from '@/constants/colors'
+import ShareTechMonoFont from '@/assets/fonts/ShareTechMono-Regular.ttf'
+import { DRAFTING_LETTERING, SCHEMES } from '@/constants/colors'
 import { readableOn } from '@/lib/contrast'
 import type { SchemeKind } from '@/modes'
 
@@ -58,6 +60,14 @@ function tintedScheme(kind: SchemeKind, ink: string): SchemeValue {
   return scheme as unknown as SchemeValue
 }
 
+// Loads the technical lettering for as long as a drafting scheme is worn, which is what puts it
+// on the screen — the scheme only names it. Rendered by the provider rather than asked for by
+// each screen, so no screen can wear the scheme and forget the font. Draws nothing.
+function DraftingLettering() {
+  useFonts({ [DRAFTING_LETTERING]: ShareTechMonoFont })
+  return null
+}
+
 export function SchemeProvider({
   kind,
   ink = null,
@@ -71,6 +81,7 @@ export function SchemeProvider({
   const scheme = ink === null ? SCHEMES[kind] : tintedScheme(kind, ink)
   return (
     <SchemeContext.Provider value={scheme}>
+      {kind === 'draftingBar' && <DraftingLettering />}
       <VariableContextProvider value={scheme.tokens}>{children}</VariableContextProvider>
     </SchemeContext.Provider>
   )

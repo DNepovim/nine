@@ -1,9 +1,12 @@
 import { Ionicons } from '@expo/vector-icons'
 import { Trans } from '@lingui/react/macro'
 import { Text } from 'react-native'
+import Svg, { Line } from 'react-native-svg'
 
 import { TrackedPressable } from '@/components/tracked-pressable'
+import { SCHEMES } from '@/constants/colors'
 import { TYPE } from '@/constants/typography'
+import { useScheme } from '@/hooks/use-scheme'
 import { cn } from '@/lib/cn'
 
 // The way out of a run, sitting in the top row beside NINE.
@@ -43,7 +46,31 @@ const GLYPH_WIDEN = 1.2
 // edge has to be paid back here by hand.
 const GLYPH_INSET = -3 + (ICON * (GLYPH_WIDEN - 1)) / 2
 
+// The pause bars as the drawing board draws them: two pencil strokes and nothing filled in. Set
+// to the right of its box, with the second stroke's end where the score's last digit ends.
+function PencilPause({ color }: { color: string }) {
+  return (
+    <Svg width={ICON} height={ICON} style={{ marginRight: -3 }}>
+      {[12.5, 19.5].map((x) => (
+        <Line
+          key={x}
+          x1={x}
+          y1={5}
+          x2={x}
+          y2={19}
+          stroke={color}
+          strokeWidth={2.2}
+          strokeLinecap="round"
+        />
+      ))}
+    </Svg>
+  )
+}
+
 export function PauseButton({ color, onPress }: { color: string; onPress: () => void }) {
+  // Drawn as two strokes on the drawing board, where nothing is filled in but the keys and the
+  // targets: the bars are ruled in pencil like the rest of the row.
+  const outlined = useScheme() === SCHEMES.draftingBar
   return (
     <TrackedPressable
       id="game.pause"
@@ -55,15 +82,19 @@ export function PauseButton({ color, onPress }: { color: string; onPress: () => 
       <Text selectable={false} className={cn(TYPE.label, 'text-dim')}>
         <Trans>MENU</Trans>
       </Text>
-      <Ionicons
-        name="pause"
-        size={ICON}
-        color={color}
-        style={{
-          marginRight: GLYPH_INSET,
-          transform: [{ scaleX: GLYPH_WIDEN }],
-        }}
-      />
+      {outlined ? (
+        <PencilPause color={color} />
+      ) : (
+        <Ionicons
+          name="pause"
+          size={ICON}
+          color={color}
+          style={{
+            marginRight: GLYPH_INSET,
+            transform: [{ scaleX: GLYPH_WIDEN }],
+          }}
+        />
+      )}
     </TrackedPressable>
   )
 }

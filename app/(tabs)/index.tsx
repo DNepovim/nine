@@ -19,6 +19,7 @@ import { Confetti } from '@/components/game/confetti'
 import { Dial } from '@/components/game/dial'
 import { AXIS_STRIP } from '@/components/game/dial-axes'
 import { DigitStrip } from '@/components/game/digit-strip'
+import { DraftedSegments } from '@/components/game/drafted-segments'
 import { FloatingLifeLoss } from '@/components/game/floating-life-loss'
 import { FloatingPoints } from '@/components/game/floating-points'
 import { FloatingStat } from '@/components/game/floating-stat'
@@ -32,6 +33,7 @@ import {
   OpeningUnder,
   remainsHoldOf,
 } from '@/components/game/opening-layer'
+import { PencilWipe } from '@/components/game/pencil-wipe'
 import { RunStopwatch } from '@/components/game/run-stopwatch'
 import { RunTopBar } from '@/components/game/run-top-bar'
 import { ScoreDigit } from '@/components/game/score-digit'
@@ -137,6 +139,7 @@ import { useSavedRun } from '@/hooks/use-saved-run'
 import { glowStyle, SchemeProvider } from '@/hooks/use-scheme'
 import { useScoreDirection } from '@/hooks/use-score-direction'
 import { useScoreSubmission } from '@/hooks/use-score-submission'
+import { useSegments } from '@/hooks/use-segments'
 import { useSessionAsk } from '@/hooks/use-session-ask'
 import { usePreviousWinner, useSessionBoard } from '@/hooks/use-session-card'
 import { useSessionPlaces } from '@/hooks/use-session-places'
@@ -166,6 +169,7 @@ import {
 import { currentBoardMedals, sessionMedal, type BoardMedal } from '@/lib/board-medals'
 import { holdsBothBoards, recordScreen, type RecordScreen } from '@/lib/champions'
 import { cn } from '@/lib/cn'
+import { DRAW } from '@/lib/dial-sketch'
 import { drillFor } from '@/lib/drill'
 import { gameSnapshot } from '@/lib/feedback-state'
 import { leaderOf, type LeaderboardRow } from '@/lib/leaderboard'
@@ -557,6 +561,10 @@ const pauseButtonPress = (
 
 // The row of hearts and score on a **mirrored** dial, drawn back to front like the rest of it.
 const MIRRORED_ROW = { transform: [{ scaleX: -1 }] }
+
+// The hearts are laid in a row, a few points apart; a board drawn in wraps them in a box of their
+// own, which has to lay them out the same way.
+const HEARTS_ROW = { flexDirection: 'row', gap: 4 } as const
 
 // What the top bar is painted in.
 //
@@ -1768,9 +1776,21 @@ export default function GameScreen() {
     if (isReady && !nickname) setShowNicknameModal(true)
   }
 
+  // A drawing board is drawn on: a tap on the targets area marks a point, and two make a
+  // segment. Worn by the scheme, not by a mode's name. See lib/segments.ts.
+  const drafting = opening.dialScheme === 'drafting'
+  // How far the board has been drawn, where the rows above the dial are drawn in with it.
+  const barDrawn = drafting ? opening.sweep : null
+  const { drawing, plot } = useSegments(runId, grid)
+
   const targetsShortcuts = useTargetsShortcuts({
     playing: isPlaying,
     tutorial,
+    onPlot: drafting
+      ? (x, y) => {
+          plot({ x, y })
+        }
+      : null,
     onPause: () => {
       pauseRun('double_tap')
     },
@@ -2459,6 +2479,7 @@ export default function GameScreen() {
                             }
                             wordmark={wordmarkFor(mode, difficulty)}
                             mirrored={dial.mirror}
+                            drawn={barDrawn}
                             onPause={pauseButtonPress(isPlaying, opening.held, () => {
                               pauseRun('button')
                             })}
@@ -2490,14 +2511,21 @@ export default function GameScreen() {
                             from="above"
                             className="relative flex-1 flex-row gap-1"
                           >
-                            {rules.lives.count !== Number.POSITIVE_INFINITY &&
-                              Array.from({ length: rules.lives.count }, (_, i) => (
-                                <HeartIcon
-                                  key={i}
-                                  filled={i < lives}
-                                  emptyColor={'#FDFCFA'}
-                                />
-                              ))}
+                            {/* Drawn in after the top line, on a board that is being drawn. */}
+                            <PencilWipe
+                              progress={barDrawn}
+                              window={DRAW.hearts}
+                              style={HEARTS_ROW}
+                            >
+                              {rules.lives.count !== Number.POSITIVE_INFINITY &&
+                                Array.from({ length: rules.lives.count }, (_, i) => (
+                                  <HeartIcon
+                                    key={i}
+                                    filled={i < lives}
+                                    emptyColor={'#FDFCFA'}
+                                  />
+                                ))}
+                            </PencilWipe>
                             {/* Says why, the moment a hit rather than an expiry is what took the
                       heart — Accuracy's wasteful-hit rule is invisible otherwise.
                       Shares the points floats' lifecycle: same `floats` list, same
@@ -2593,31 +2621,33 @@ export default function GameScreen() {
                           >
                             {rules.capabilities.scored && (
                               <>
-                                <View className="flex-row items-baseline gap-1.5">
-                                  <Text
-                                    selectable={false}
-                                    className={cn(READOUT.best, 'text-score')}
-                                    style={[{ fontFamily: digitFont }, barGlow]}
-                                  >
-                                    {displayScore}
-                                  </Text>
-                                  {streak > 0 && (
+                                <PencilWipe progress={barDrawn} window={DRAW.score}>
+                                  <View className="flex-row items-baseline gap-1.5">
                                     <Text
                                       selectable={false}
-                                      className={TYPE.buttonSm}
-                                      style={[
-                                        {
-                                          color:
-                                            opening.barInk ??
-                                            multiplierColor(currentMultiplier),
-                                        },
-                                        barGlow,
-                                      ]}
+                                      className={cn(READOUT.best, 'text-score')}
+                                      style={[{ fontFamily: digitFont }, barGlow]}
                                     >
-                                      {`×${currentMultiplier}`}
+                                      {displayScore}
                                     </Text>
-                                  )}
-                                </View>
+                                    {streak > 0 && (
+                                      <Text
+                                        selectable={false}
+                                        className={TYPE.buttonSm}
+                                        style={[
+                                          {
+                                            color:
+                                              opening.barInk ??
+                                              multiplierColor(currentMultiplier),
+                                          },
+                                          barGlow,
+                                        ]}
+                                      >
+                                        {`×${currentMultiplier}`}
+                                      </Text>
+                                    )}
+                                  </View>
+                                </PencilWipe>
                                 {floats.map((f) => (
                                   <FloatingPoints
                                     key={f.id}
@@ -2745,6 +2775,7 @@ export default function GameScreen() {
                               />
                             ))}
                           </TargetBoard>
+                          {drafting && <DraftedSegments drawing={drawing} />}
                           {/* The lesson's two pointing cards. The first goes beside the target,
                     above or below it as the canvas allows — see lib/tutorial-tip.ts. The
                     second goes at the foot of the canvas with its beak turned down at the

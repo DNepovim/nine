@@ -87,12 +87,26 @@ const FOUR_KEYS: ChallengeSpec = {
     ],
   },
   base: SPEED,
+  // A drawing board: paper, a square ruled in pencil and cut into four, its dimensions written
+  // round it, and the targets circles drawn and coloured in — all of it drawn in before the run. See `drafting` in `SCHEMES`.
+  opening: 'drawingBoard',
+  scheme: 'drafting',
+  targetForm: 'drafted',
   from: Date.UTC(2026, 8, 1),
   until: Date.UTC(2026, 8, 1) + DAY,
   rules: {
     // Targets follow the dial on their own: the range is `0 … maxSum`, and `maxSum` is
     // derived from these weights — 9 × (1 + 2 + 2 + 4) = 81.
-    dial: defineDial({ id: 'four-keys', rows: 2, cols: 2, weights: [1, 2, 2, 4] }),
+    // Cut from one square rather than laid in a grid: a row is as tall as its share of the
+    // sum the dial holds, a column as wide, so the keys stand as the pieces of (1 + 2)² —
+    // 1, 2, 2 and 4 — until the player's own digits move the cuts. See `DialSpec.proportional`.
+    dial: defineDial({
+      id: 'four-keys',
+      rows: 2,
+      cols: 2,
+      weights: [1, 2, 2, 4],
+      proportional: true,
+    }),
     // One rung, so the intro shows no difficulty row at all — `usesDifficulty` is just
     // `fixedDifficulty === null`, and the row, the pause badge and the career stage all
     // read it. Hard is the rung that counts for itself: `scoreWeight` 1, so a point

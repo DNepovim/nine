@@ -9,6 +9,7 @@ import {
   DefibrillatorRemains,
   DefibrillatorUnder,
 } from '@/components/game/openings/defibrillator'
+import { DrawingBoard } from '@/components/game/openings/drawing-board'
 import {
   FrostCreep,
   FrostRemains,
@@ -78,6 +79,7 @@ const OPENINGS = {
   defibrillator: Defibrillator,
   takeoff: Takeoff,
   leverPull: LeverPull,
+  drawingBoard: DrawingBoard,
 } as const satisfies Record<OpeningKind, ComponentType<OpeningSceneProps>>
 
 type Pull = ReturnType<typeof useOpening>['pull']
@@ -128,6 +130,8 @@ const REMAINS: Record<
   defibrillator: { Drawing: DefibrillatorRemains, Over: null },
   takeoff: { Drawing: SkyRemains, Over: PlaneOver },
   leverPull: { Drawing: CasinoRemains, Over: LeverOver },
+  // The drawing is the dial's and the bar's own; the scene leaves nothing behind it.
+  drawingBoard: null,
 }
 
 // How long, in ms, what a kind's remains are still doing needs once a run ends — or null for a
@@ -142,6 +146,7 @@ const HOLDS: Record<OpeningKind, (() => number) | null> = {
   defibrillator: beatsClearIn,
   takeoff: crashFireLeft,
   leverPull: lightsOutLeft,
+  drawingBoard: null,
 }
 
 export const remainsHoldOf = (kind: OpeningKind | null) =>
@@ -198,6 +203,7 @@ const UNDER: Record<OpeningKind, ComponentType<{ sweep: SharedValue<number> }> |
   defibrillator: DefibrillatorUnder,
   takeoff: SkyUnder,
   leverPull: null,
+  drawingBoard: null,
 }
 
 export function OpeningUnder({

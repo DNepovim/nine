@@ -71,6 +71,18 @@ const REEL_STAGGER_MS = 70
 const REEL_SPIN_MS = 450
 const REEL_LAP_MS = 180
 
+// The greys a **sketched** key is filled with where its scheme draws no keys of its own: paper
+// at nought, a soft pencil laid on at nine, and the digit in graphite on either.
+const SKETCH_GREYS = {
+  low: '#EEEDE8',
+  high: '#B4B2AC',
+  text: PRIMARY_INK,
+  peakText: PRIMARY_INK,
+} as const
+
+// How dark the shading under a thumb is on a **sketched** key, which has no fill to squash.
+const SKETCH_WASH = 0.07
+
 // How close the eye is as a **mirrored** key turns over: near enough to see it swing.
 const TURN_PERSPECTIVE = 500
 
@@ -177,6 +189,7 @@ export function DialButton({
   scrambles = 0,
   dark = false,
   mirrored = false,
+  sketched = false,
   digitSize = 30,
   sweep = null,
   sweepAt = 0,
@@ -239,6 +252,13 @@ export function DialButton({
   // is how far the edge has come and `sweepAt` where this key stands. With no `sweep` it
   // simply stands turned.
   mirrored?: boolean
+  // Whether the key is a part of a pencil drawing — a **proportional** dial's. It fills the
+  // box it is put in instead of being a `size` square, since that box is cut to the key and
+  // changes as the dial does; and it has no corners, no shadow and no gradient at nine: the
+  // lines round it are the dial's, and what it adds is a grey that deepens with its digit, a
+  // digit in graphite and a shading under a thumb. `size` is then only what the things measured against a key's size (the
+  // badges, the reel) are drawn for.
+  sketched?: boolean
   // How big the digit is drawn, where a dial wants it other than the nine's: a dial of one key
   // has the whole of the room to itself, and a digit that small would be lost on it.
   digitSize?: number
@@ -250,10 +270,10 @@ export function DialButton({
   // The scheme may draw the keys its own way — `dos` inverts them — and the rim is what
   // keeps a key that matches its ground visible as a key.
   const { keyRim, keys } = useScheme().inks
-  const palette = keys ?? DIAL_COLORS
+  const palette = keys ?? (sketched ? SKETCH_GREYS : DIAL_COLORS)
   const peak = keys?.peak ?? [peakFrom, peakTo]
   const rimmed = dark || keys !== null
-  const keyRadius = keys?.radius ?? 999
+  const keyRadius = sketched ? 0 : (keys?.radius ?? 999)
   const reel = keys !== null && 'reel' in keys && keys.reel
   const scale = useSharedValue(1)
   // The pill's bounce on a flip, along whichever screen axis the dial's vertical lies on.
@@ -433,6 +453,11 @@ export function DialButton({
       : interpolateColor(rampProgress.value, [0, 1], [palette.low, palette.high]),
   }))
 
+  // Where a sketched key shows it is under the thumb: the squash above, read as a shading.
+  const washStyle = useAnimatedStyle(() => ({
+    opacity: (SKETCH_WASH * (1 - scale.value)) / (1 - PRESS_SCALE),
+  }))
+
   // The CTA gradient crossfades in over the ramp — every tint change, including
   // the jump to and from 9, is a timed transition.
   const peakStyle = useAnimatedStyle(() => ({ opacity: peakProgress.value }))
@@ -466,7 +491,11 @@ export function DialButton({
 
   // The digit warms to pale red over the dark 9 gradient.
   const digitStyle = useAnimatedStyle(() => ({
-    color: interpolateColor(peakProgress.value, [0, 1], [palette.text, palette.peakText]),
+    color: interpolateColor(
+      peakProgress.value,
+      [0, 1],
+      [palette.text, sketched ? palette.text : palette.peakText],
+    ),
   }))
 
   // The pill fills its box, so its radius is simply half of it. There used to be 10pt
@@ -501,7 +530,13 @@ export function DialButton({
     // No gesture of its own: nine separate pans could each only ever hear the key the
     // finger landed on, and a drag across the dial has to be heard by all of them. The
     // one pan that is lives on the square above — components/game/dial.tsx.
-    <Animated.View style={[{ width: size, height: size }, liveStyle, turnStyle]}>
+    <Animated.View
+      style={[
+        sketched ? { flex: 1 } : { width: size, height: size },
+        liveStyle,
+        turnStyle,
+      ]}
+    >
       {/* Outside the pill, so it is drawn over the surface between keys rather than
             over a fill this blue would disappear into. */}
       {hinted && <DialPulse />}
@@ -521,13 +556,14 @@ export function DialButton({
             ...(rimmed && { borderWidth: 1.5, borderColor: keyRim }),
             // The shadow is a third colour on a scheme that draws its own keys.
             ...(keys !== null && { shadowOpacity: 0, borderBottomWidth: keys.foot }),
+            ...(sketched && { shadowOpacity: 0, borderWidth: 0, borderBottomWidth: 0 }),
           },
           btnStyle,
         ]}
       >
         {/* Rounded on its own rather than clipped by the pill — `overflow:
               hidden` on the parent would clip away the button's shadow too. */}
-        {!dark && (
+        {!dark && !sketched && (
           <Animated.View
             pointerEvents="none"
             style={[
@@ -560,6 +596,22 @@ export function DialButton({
               style={{ flex: 1, borderRadius: keyRadius }}
             />
           </Animated.View>
+        )}
+        {sketched && (
+          <Animated.View
+            pointerEvents="none"
+            style={[
+              {
+                position: 'absolute',
+                top: 0,
+                right: 0,
+                bottom: 0,
+                left: 0,
+                backgroundColor: PRIMARY_INK,
+              },
+              washStyle,
+            ]}
+          />
         )}
         {reel && !dark && (
           <ReelFace

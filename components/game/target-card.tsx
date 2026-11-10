@@ -35,6 +35,7 @@ export function TargetCard({
   dying = false,
   frozen = false,
   clocked = true,
+  drawn = false,
   spent = false,
   glimpse = null,
   driftStep = null,
@@ -63,6 +64,8 @@ export function TargetCard({
   // target waits as long as it takes and leaves only when it is hit. Not the same thing
   // as `frozen`, which is a clock stopped for a moment; see PieCountdown.
   clocked?: boolean
+  // Whether the disc is drawn in pencil — see `drawn` on `PieCountdown`. The `drafted` form's.
+  drawn?: boolean
   // Whether a card taken on this board **stays** on it, marked, instead of leaving.
   //
   // True for a **drilled** run and nothing else. Its nine are a fixed picture, dealt in
@@ -162,6 +165,7 @@ export function TargetCard({
         value={shown}
         active={!leaving && !frozen}
         clocked={clocked}
+        drawn={drawn}
         duration={duration}
         startProgress={target.startProgress}
         exit={target.exit}

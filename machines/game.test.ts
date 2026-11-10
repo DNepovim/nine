@@ -1197,6 +1197,8 @@ describe('the whole-dial streak', () => {
     actor.start()
     actor.send({ type: 'SET_MODE', mode: 'challenge/four-keys' })
     actor.send({ type: 'START', now: 0, runId: nextRunId() })
+    // Held ready while its opening plays; the run begins when the scene is over.
+    actor.send({ type: 'BEGIN', now: 0 })
     return actor
   }
 

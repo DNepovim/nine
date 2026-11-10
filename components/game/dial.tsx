@@ -1,22 +1,31 @@
-import { useEffect } from 'react'
+import { Fragment, useEffect, type ReactNode } from 'react'
 import { View } from 'react-native'
 import { Gesture, GestureDetector } from 'react-native-gesture-handler'
-import { useSharedValue, type SharedValue } from 'react-native-reanimated'
+import Animated, {
+  Easing,
+  useAnimatedStyle,
+  useSharedValue,
+  withTiming,
+  type SharedValue,
+} from 'react-native-reanimated'
 import { scheduleOnRN } from 'react-native-worklets'
 
 import { Arrival, DIAL_ORDER } from '@/components/game/arrival'
 import { DialAxes } from '@/components/game/dial-axes'
 import { DialButton } from '@/components/game/dial-button'
 import { DialFlames, useBurn } from '@/components/game/dial-flames'
+import { DialSketch } from '@/components/game/dial-sketch'
 import { GestureHint } from '@/components/game/gesture-hint'
 import { DEFAULT_DIAL_CORNERS, type DialCorners } from '@/constants/dial-hints'
 import { useDialMetrics } from '@/hooks/use-dial-metrics'
 import { useViewport } from '@/hooks/use-viewport'
+import { carvedCellAt, carveOf, cellRect } from '@/lib/dial-carve'
 import {
   allowedMove,
   cellAt,
   crossReach,
   exitMove,
+  exitMoveFrom,
   liftMove,
   mirrorMove,
   nextValue,
@@ -26,6 +35,8 @@ import {
   type DialCommand,
   type DialMove,
 } from '@/lib/dial-gesture'
+import type { DialMetrics } from '@/lib/dial-metrics'
+import { DRAW, phaseOf } from '@/lib/dial-sketch'
 import type { DialControl, HandGesture } from '@/machines/tutorial-lesson'
 import { cellsOf, weightAt, type DialSpec } from '@/modes'
 
@@ -38,6 +49,13 @@ const noCommands = (dial: DialSpec): readonly DialCommand[] =>
 
 // No key under the thumb.
 const NONE = -1
+
+// A key's own wrapper, when the box around it is what sets its size.
+const FILL = { flex: 1 } as const
+
+// How long a proportional dial takes to move its cuts to the next position — about as long
+// as a key's tint takes to change, so the two settle together.
+const CARVE_TIMING = { duration: 240, easing: Easing.out(Easing.quad) }
 
 // How big a digit is drawn on a dial of one key, which has the whole of the room to itself.
 const SOLE_DIGIT = 84
@@ -78,6 +96,40 @@ const sweepPlaceOf = (
   const row = Math.floor(index / dial.cols)
   const down = DIAL_MIDDLE + ((row - (dial.rows - 1) / 2) * pitch) / screen.height
   return (across + down) / 2
+}
+
+// The box one key of a proportional dial fills, which moves as the cuts do. Module level, as
+// every animated piece here is, so it is not remounted by the dial drawing again.
+function CarvedSlot({
+  index,
+  dial,
+  metrics,
+  carve,
+  sweep,
+  children,
+}: {
+  index: number
+  dial: DialSpec
+  metrics: DialMetrics
+  carve: SharedValue<number[]>
+  // How far the drawing has been made: the keys come up in grey once the square is ruled and
+  // cut. See `DRAW`.
+  sweep: SharedValue<number>
+  children: ReactNode
+}) {
+  const place = useAnimatedStyle(() => {
+    const rect = cellRect(index, carve.value, metrics, dial)
+    return {
+      opacity: phaseOf(sweep.value, DRAW.keys),
+      left: rect.x,
+      top: rect.y,
+      width: rect.width,
+      height: rect.height,
+    }
+  })
+  return (
+    <Animated.View style={[{ position: 'absolute' }, place]}>{children}</Animated.View>
+  )
 }
 
 export function Dial({
@@ -158,10 +210,23 @@ export function Dial({
   // tutorial's last lesson is the only thing listening.
   onSweep?: () => void
 }) {
-  const metrics = useDialMetrics(dial)
+  const laid = useDialMetrics(dial)
+  // A proportional dial has no space between its keys: they are the parts of one square,
+  // and the lines between them are drawn, not left as a gap.
+  const metrics = dial.proportional ? { ...laid, gap: 0 } : laid
   const viewport = useViewport()
   const burn = useBurn(flame)
   const live = controls ?? allLive(dial)
+
+  // A **proportional** dial's cuts, as the pan and the keys both read them: where the rows
+  // and columns divide the square at this moment, following the digits to their next
+  // position. Held on a dial that is not proportional too, since a hook cannot be skipped;
+  // it is just never read there.
+  const carved = dial.proportional
+  const carve = useSharedValue(carveOf(dial, values))
+  // The drawing is whole unless an opening is making it.
+  const made = useSharedValue(1)
+  const drawn = sweep ?? made
 
   // What the pan has told each key to do, and which key is under the thumb. Read on the
   // UI thread by the nine keys themselves, so each one animates in the frame the finger
@@ -180,6 +245,36 @@ export function Dial({
   // copy above is still ahead. A key's change leaves on the back half of its digit
   // animation, so the pan can be several presses in front of the machine for a moment.
   const inFlight = useSharedValue(0)
+
+  // The cuts follow the digits as they are drawn, which is a beat after the finger — the
+  // keys' own tint and the sum above them turn over on the same beat.
+  useEffect(() => {
+    if (!carved) return
+    carve.value = withTiming(carveOf(dial, values), CARVE_TIMING)
+  }, [values, carved])
+
+  // What the pan asks of the geometry, which is the one place the keys' sizes matter to it:
+  // which key a point is in, which side of it the finger left by, and how far across it the
+  // finger has to get. A proportional dial answers each from the cuts as they stand this
+  // frame, so the key it hears is the key on the screen.
+  const locate = (x: number, y: number) => {
+    'worklet'
+    return carved
+      ? carvedCellAt(x, y, carve.value, metrics, dial)
+      : cellAt(x, y, metrics, dial)
+  }
+  const leave = (cell: number, x: number, y: number) => {
+    'worklet'
+    if (!carved) return exitMove(cell, x, y, metrics, dial.cols)
+    const rect = cellRect(cell, carve.value, metrics, dial)
+    return exitMoveFrom(rect.x + rect.width / 2, rect.y + rect.height / 2, x, y)
+  }
+  const reachOf = (cell: number) => {
+    'worklet'
+    if (!carved) return crossReach(metrics)
+    const rect = cellRect(cell, carve.value, metrics, dial)
+    return crossReach(metrics, Math.min(rect.width, rect.height))
+  }
 
   const active = useSharedValue<number | null>(null)
   // The key the finger came down on, which is the one key a graze cannot happen on.
@@ -217,6 +312,9 @@ export function Dial({
   useEffect(() => {
     commands.value = noCommands(dial)
     held.value = values
+    // Snapped rather than eased: the cut of the dial before has a different number of lanes,
+    // and a timing cannot run between two lists of different lengths.
+    carve.value = carveOf(dial, values)
     // Nothing is in flight to a dial that is not on screen any more. Cleared so the
     // effect below is not held off by a count left over from the run before.
     inFlight.value = 0
@@ -316,22 +414,22 @@ export function Dial({
       interrupted.value = false
       lastCommit.value = NONE
       swept.value = false
-      landed.value = cellAt(e.x, e.y, metrics, dial)
+      landed.value = locate(e.x, e.y)
       enter(landed.value, e.x, e.y)
     })
     .onUpdate((e) => {
       'worklet'
-      const cell = cellAt(e.x, e.y, metrics, dial)
+      const cell = locate(e.x, e.y)
       if (cell === active.value) return
       const left = active.value
       if (left !== null) {
-        const move = exitMove(left, e.x, e.y, metrics, dial.cols)
+        const move = leave(left, e.x, e.y)
         // Still on the key the finger came down on, which takes every exit — and not
         // merely `left === landed.value`, since a finger that wanders off the dial and
         // back onto that key arrived at it like any other.
         const own = left === landed.value && !crossed.value
         const far =
-          travelled(move, e.x - entryX.value, e.y - entryY.value) >= crossReach(metrics)
+          travelled(move, e.x - entryX.value, e.y - entryY.value) >= reachOf(left)
         crossed.value = true
         if (own || far) commit(left, move, false)
       }
@@ -345,7 +443,7 @@ export function Dial({
         e.x - entryX.value,
         e.y - entryY.value,
         crossed.value,
-        crossReach(metrics),
+        reachOf(cell),
       )
       if (move === null) return
       commit(cell, move, true)
@@ -379,56 +477,91 @@ export function Dial({
         points past it — and a box that clipped them would simply eat them. */}
       <View style={{ width: metrics.width, height: metrics.height, overflow: 'visible' }}>
         {/* First, so every key is drawn over every flame. */}
-        {flame !== null && <DialFlames dial={dial} metrics={metrics} burn={burn} />}
+        {flame !== null && (
+          <DialFlames
+            dial={dial}
+            metrics={metrics}
+            burn={burn}
+            carve={carved ? carve : null}
+          />
+        )}
         <GestureDetector gesture={gesture}>
           <View
             style={{ width: metrics.width, height: metrics.height, gap: metrics.gap }}
             className="flex-row flex-wrap"
           >
-            {cellsOf(dial).map((index) => (
+            {cellsOf(dial).map((index) => {
               // The keys come in as a wave down the diagonals, on the game screen's
               // entrance — see components/game/arrival.tsx.
-              <Arrival
-                key={index}
-                order={DIAL_ORDER + Math.floor(index / dial.cols) + (index % dial.cols)}
-                from="below"
-              >
-                <DialButton
+              const arriving = (
+                <Arrival
+                  order={DIAL_ORDER + Math.floor(index / dial.cols) + (index % dial.cols)}
+                  from="below"
+                  style={carved ? FILL : undefined}
+                >
+                  <DialButton
+                    index={index}
+                    value={values[index] ?? 0}
+                    size={metrics.button}
+                    weight={weightAt(dial, index)}
+                    digits={dial.digits}
+                    orientation={dial.orientation}
+                    showSum={showSum}
+                    digitSize={cellsOf(dial).length === 1 ? SOLE_DIGIT : undefined}
+                    trainee={trainee}
+                    bigHints={bigHints}
+                    corners={corners}
+                    control={live[index] ?? 'full'}
+                    hinted={liveKey === index}
+                    heat={flame === null ? null : burn.heat}
+                    scrambles={dial.scramble ? hitSeq : 0}
+                    dark={dial.blackout && opened}
+                    mirrored={dial.mirror}
+                    sketched={carved}
+                    sweep={sweep}
+                    sweepAt={sweepPlaceOf(index, dial, metrics, viewport)}
+                    peakFrom={peakFrom}
+                    peakTo={peakTo}
+                    commands={commands}
+                    pressed={pressed}
+                    inFlight={inFlight}
+                    onDelta={(delta, sweep) => {
+                      onDelta(index, delta, sweep)
+                    }}
+                    onSet={(value, sweep) => {
+                      onSet(index, value, sweep)
+                    }}
+                  />
+                </Arrival>
+              )
+              // A proportional dial puts each key in the box its share of the square
+              // gives it; every other dial lets the keys flow into a grid.
+              return carved ? (
+                <CarvedSlot
+                  key={index}
                   index={index}
-                  value={values[index] ?? 0}
-                  size={metrics.button}
-                  weight={weightAt(dial, index)}
-                  digits={dial.digits}
-                  orientation={dial.orientation}
-                  showSum={showSum}
-                  digitSize={cellsOf(dial).length === 1 ? SOLE_DIGIT : undefined}
-                  trainee={trainee}
-                  bigHints={bigHints}
-                  corners={corners}
-                  control={live[index] ?? 'full'}
-                  hinted={liveKey === index}
-                  heat={flame === null ? null : burn.heat}
-                  scrambles={dial.scramble ? hitSeq : 0}
-                  dark={dial.blackout && opened}
-                  mirrored={dial.mirror}
-                  sweep={sweep}
-                  sweepAt={sweepPlaceOf(index, dial, metrics, viewport)}
-                  peakFrom={peakFrom}
-                  peakTo={peakTo}
-                  commands={commands}
-                  pressed={pressed}
-                  inFlight={inFlight}
-                  onDelta={(delta, sweep) => {
-                    onDelta(index, delta, sweep)
-                  }}
-                  onSet={(value, sweep) => {
-                    onSet(index, value, sweep)
-                  }}
-                />
-              </Arrival>
-            ))}
+                  dial={dial}
+                  metrics={metrics}
+                  carve={carve}
+                  sweep={drawn}
+                >
+                  {arriving}
+                </CarvedSlot>
+              ) : (
+                <Fragment key={index}>{arriving}</Fragment>
+              )
+            })}
           </View>
         </GestureDetector>
+        {carved && (
+          <DialSketch
+            dial={dial}
+            metrics={metrics}
+            carve={carve}
+            values={values}
+            sweep={drawn}
+          />
+        )}
         {axes && <DialAxes dial={dial} metrics={metrics} />}
         {hand !== null && <GestureHint gesture={hand} dial={dial} metrics={metrics} />}
       </View>

@@ -25,6 +25,13 @@ const AnimatedCircle = Animated.createAnimatedComponent(Circle)
 // How thick the clock's arc is under a monochrome scheme.
 const THIN_STROKE = 4
 
+// A **drawn** disc: a circle ruled in pencil and coloured in. How thick its clock's arc is, how
+// far inside the card the circle is kept so the pencil is not cut at the edge, and the second,
+// fainter stroke laid beside the first that makes a ruled line read as pencil.
+const DRAWN_STROKE = 3.5
+const DRAWN_INSET = 3
+const DRAWN_GHOST = { offset: 0.9, opacity: 0.4 } as const
+
 // The arc never covers the whole circle, so a sliver of the band-tinted track shows
 // even on a freshly spawned target. Without this the band cue would grow from nothing
 // as the clock drains — absent exactly when the target is most worth reading.
@@ -61,6 +68,7 @@ export function PieCountdown({
   exit = null,
   startProgress = 1,
   clocked = true,
+  drawn = false,
   settles = false,
   glimpse = null,
   revealed = false,
@@ -87,6 +95,10 @@ export function PieCountdown({
   // disc with the number on it, and nothing on it can run out. The exits below are
   // untouched; a target still collapses under its number when it is hit.
   clocked?: boolean
+  // Whether the disc is **drawn**: a circle ruled in pencil, filled with `backgroundColor`, its
+  // clock a heavier pencil line laid over the circle and running down round it. The `drafted`
+  // target form's. Without it the disc is the ring-and-pie every other form is.
+  drawn?: boolean
   // Whether this target **stays on the board** once it is taken, rather than leaving it.
   //
   // A **drilled** run is the one that does: its nine are a fixed picture the player is
@@ -120,8 +132,12 @@ export function PieCountdown({
   // dark, the disc's own dark ink would leave it standing unseen on the ground it flies out onto.
   const { mono, ground, hit: hitInk } = useScheme().inks
   const thin = mono !== null
-  const stroke = thin ? THIN_STROKE : size / 2
-  const radius = thin ? size / 2 - THIN_STROKE / 2 : size / 4
+  const stroke = drawn ? DRAWN_STROKE : thin ? THIN_STROKE : size / 2
+  const radius = drawn
+    ? size / 2 - DRAWN_INSET
+    : thin
+      ? size / 2 - THIN_STROKE / 2
+      : size / 4
   const circumference = 2 * Math.PI * radius
 
   const progress = useSharedValue(startProgress) // 1 = full, 0 = empty
@@ -150,7 +166,7 @@ export function PieCountdown({
   // What is left of the clock, what has gone, and a lost target's disc and numeral. Under
   // a monochrome scheme the time gone is simply the ground showing through, and a lost
   // target inverts: the disc in the ink, the numeral in the ground.
-  const leftInk = mono ?? APP_BLUE
+  const leftInk = drawn ? PIE_INK : (mono ?? APP_BLUE)
   const goneInk = mono === null ? APP_RED : ground
   const lostDisc = mono ?? APP_RED
   const lostNumeral = mono === null ? '#FFFFFF' : ground
@@ -329,10 +345,32 @@ export function PieCountdown({
             cx={cx}
             cy={cy}
             r={radius}
-            stroke={trackColor}
+            stroke={drawn ? 'none' : trackColor}
             strokeWidth={stroke}
-            fill={thin ? ground : 'none'}
+            fill={drawn ? trackColor : thin ? ground : 'none'}
           />
+          {drawn && (
+            <Circle
+              cx={cx + DRAWN_GHOST.offset}
+              cy={cy + DRAWN_GHOST.offset}
+              r={radius}
+              stroke={PIE_INK}
+              strokeOpacity={DRAWN_GHOST.opacity}
+              strokeWidth={1}
+              fill="none"
+            />
+          )}
+          {drawn && (
+            <Circle
+              cx={cx}
+              cy={cy}
+              r={radius}
+              stroke={PIE_INK}
+              strokeOpacity={0.85}
+              strokeWidth={1.4}
+              fill="none"
+            />
+          )}
           {/* The clock itself, over the band-tinted track: what is left of it in blue,
               what has gone in red. Both are the countdown, so a target with no clock
               draws neither and the track is the whole disc. */}
@@ -349,17 +387,20 @@ export function PieCountdown({
                 animatedProps={animatedProps}
                 transform={`rotate(-90, ${cx}, ${cy})`}
               />
-              <AnimatedCircle
-                cx={cx}
-                cy={cy}
-                r={radius}
-                stroke={goneInk}
-                strokeWidth={stroke}
-                fill="none"
-                strokeDasharray={circumference}
-                animatedProps={redProps}
-                transform={`rotate(-90, ${cx}, ${cy})`}
-              />
+              {/* A drawing has no red for the time gone: the circle under the line is it. */}
+              {!drawn && (
+                <AnimatedCircle
+                  cx={cx}
+                  cy={cy}
+                  r={radius}
+                  stroke={goneInk}
+                  strokeWidth={stroke}
+                  fill="none"
+                  strokeDasharray={circumference}
+                  animatedProps={redProps}
+                  transform={`rotate(-90, ${cx}, ${cy})`}
+                />
+              )}
             </>
           )}
           {/* The disc's edge under a monochrome scheme, which the thin arc runs round.

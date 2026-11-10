@@ -44,6 +44,14 @@ describe('the nine dial', () => {
     expect(defineDial({ id: 'held', rows: 3, cols: 3, freeze: true }).freeze).toBe(true)
   })
 
+  it('lays its keys in a grid unless a dial says they are proportional', () => {
+    expect(NINE_DIAL.proportional).toBe(false)
+    expect(defineDial({ id: 'plain', rows: 2, cols: 2 }).proportional).toBe(false)
+    expect(
+      defineDial({ id: 'cut', rows: 2, cols: 2, proportional: true }).proportional,
+    ).toBe(true)
+  })
+
   it('derives a weight from row order × column order', () => {
     expect(weightAt(NINE_DIAL, 0)).toBe(1)
     expect(weightAt(NINE_DIAL, 4)).toBe(4)

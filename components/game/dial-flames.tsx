@@ -13,6 +13,7 @@ import Svg, { G } from 'react-native-svg'
 
 import { FlameCoat } from '@/components/game/flame-coat'
 import { STRIKE_COLORS } from '@/constants/colors'
+import { cellRect } from '@/lib/dial-carve'
 import type { DialMetrics } from '@/lib/dial-metrics'
 import { cellsOf, type DialSpec } from '@/modes'
 
@@ -124,10 +125,14 @@ export function DialFlames({
   dial,
   metrics,
   burn: { heat, clock },
+  carve = null,
 }: {
   dial: DialSpec
   metrics: DialMetrics
   burn: Burn
+  // The cut of a **proportional** dial, whose keys are not on the grid's pitch: each flame
+  // then follows its own key — see `CarvedFlame`. Null on every dial laid out as a grid.
+  carve?: SharedValue<number[]> | null
 }) {
   const pulse = useDerivedValue(() => EMBER + (1 - EMBER) * heat.value)
   const blaze = useSharedValue(0)
@@ -140,6 +145,39 @@ export function DialFlames({
   const width = metrics.width + margin * 2
   const height = metrics.height + margin * 2
   const pitch = metrics.button + metrics.gap
+
+  if (carve !== null) {
+    return (
+      <Animated.View
+        pointerEvents="none"
+        style={[
+          {
+            position: 'absolute',
+            left: 0,
+            top: 0,
+            width: metrics.width,
+            height: metrics.height,
+          },
+          fade,
+        ]}
+      >
+        {cellsOf(dial).map((index) => (
+          <CarvedFlame
+            key={index}
+            index={index}
+            dial={dial}
+            metrics={metrics}
+            carve={carve}
+            clock={clock}
+            pulse={pulse}
+            blaze={blaze}
+            tail={tail}
+            heat={heat}
+          />
+        ))}
+      </Animated.View>
+    )
+  }
 
   return (
     <Animated.View
@@ -165,6 +203,63 @@ export function DialFlames({
             />
           </G>
         ))}
+      </Svg>
+    </Animated.View>
+  )
+}
+
+// One key's fire on a **proportional** dial: drawn once at the size of a resting key, in a
+// box of its own, and then moved to its key's middle and scaled to its key's smaller side as
+// the cut changes — a flame that stayed the size of a quarter of the dial would swamp the
+// small key and barely reach round the large one.
+function CarvedFlame({
+  index,
+  dial,
+  metrics,
+  carve,
+  clock,
+  pulse,
+  blaze,
+  tail,
+  heat,
+}: {
+  index: number
+  dial: DialSpec
+  metrics: DialMetrics
+  carve: SharedValue<number[]>
+  clock: SharedValue<number>
+  pulse: SharedValue<number>
+  blaze: SharedValue<number>
+  tail: SharedValue<number>
+  heat: SharedValue<number>
+}) {
+  const radius = metrics.button / 2
+  const box = (radius + metrics.button * MARGIN) * 2
+  const place = useAnimatedStyle(() => {
+    const rect = cellRect(index, carve.value, metrics, dial)
+    return {
+      left: rect.x + rect.width / 2 - box / 2,
+      top: rect.y + rect.height / 2 - box / 2,
+      transform: [{ scale: Math.min(rect.width, rect.height) / metrics.button }],
+    }
+  })
+  return (
+    <Animated.View
+      pointerEvents="none"
+      style={[{ position: 'absolute', width: box, height: box }, place]}
+    >
+      <Svg width={box} height={box}>
+        <G transform={`translate(${box / 2}, ${box / 2})`}>
+          <KeyFlame
+            index={index}
+            radius={radius}
+            clock={clock}
+            pulse={pulse}
+            blaze={blaze}
+            tail={tail}
+            speed={heat}
+          />
+        </G>
       </Svg>
     </Animated.View>
   )

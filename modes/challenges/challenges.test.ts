@@ -530,6 +530,25 @@ describe('one key', () => {
   })
 })
 
+describe('four keys', () => {
+  it('is a drawing board, with circles ruled and coloured in for targets', () => {
+    const id = challengeId('four-keys')
+    expect(schemeOf(id)).toBe('drafting')
+    expect(targetFormOf(id)).toBe('drafted')
+    expect(openingOf(id)).toBe('drawingBoard')
+    expect(runRules(id, 'hard').opens).toBe(true)
+  })
+
+  it('is the only dial cut from one square', () => {
+    expect(
+      allModes()
+        .filter((mode) => mode.engine === 'targets')
+        .filter((mode) => runRules(mode.id, 'hard').dial.proportional)
+        .map((mode) => mode.id),
+    ).toEqual([challengeId('four-keys')])
+  })
+})
+
 describe('no slip', () => {
   it('is played on a heart monitor, opened by a shock', () => {
     const id = challengeId('no-slip')
@@ -709,6 +728,7 @@ describe('blackout', () => {
       .filter((mode) => DIFFICULTY_ORDER.some((rung) => runRules(mode.id, rung).opens))
       .map((mode) => mode.id)
     expect(opening).toEqual([
+      challengeId('four-keys'),
       challengeId('glimpse'),
       challengeId('no-slip'),
       challengeId('one-key'),
@@ -733,6 +753,8 @@ describe('blackout', () => {
       challengeId('binary'),
       challengeId('blackout'),
       challengeId('mirror'),
+      // Dressed in its own way: see 'four keys'.
+      challengeId('four-keys'),
     ]
     for (const mode of allModes().filter((m) => !dressed.includes(m.id))) {
       expect(openingOf(mode.id), mode.id).toBeNull()

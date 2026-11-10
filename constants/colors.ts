@@ -354,7 +354,7 @@ export const DOS_WHITE = '#FFFFFF'
 //
 // `day` re-binds nothing. Its tokens are the app's own `@theme`, read where they live
 // rather than copied here, so the two can never disagree.
-type SchemeToken = keyof typeof GOLD_SCREEN_TOKENS | '--color-fortune'
+type SchemeToken = keyof typeof GOLD_SCREEN_TOKENS | '--color-fortune' | '--font-mono'
 
 type SchemeInks = {
   // The top of the score readout's ramp — `SCORE_COLORS.high` on day, which is the text
@@ -427,6 +427,35 @@ const GLASS_TOKENS = {
   '--color-fortune': '#8F2219',
   '--color-dial': '#1B2F3D',
   '--color-factor': '#5E7585',
+  '--color-pie': '#171421',
+}
+
+// The drawing board — FOUR KEYS': paper, graphite, and technical lettering. The figures are
+// the paper's and the graphite's two weights (`ink` for what is drawn, `bar` for the rows
+// above the dial, written lighter), and a pencil red kept for the one figure that is not a
+// drawing's: the fortune.
+const DRAFT_PAPER = '#F4F2EA'
+const DRAFT_INK = '#2B2B30'
+const DRAFT_BAR = '#3B3B40'
+
+// The technical monospace the top bar is lettered in under `draftingBar`: loaded from
+// `assets/fonts/ShareTechMono-Regular.ttf` by `SchemeProvider` while that scheme is worn.
+// Bound to `--font-mono`, so every `font-mono` class under it is set in it.
+export const DRAFTING_LETTERING = 'ShareTechMono'
+
+const DRAFTING_TOKENS = {
+  '--color-surface': DRAFT_PAPER,
+  '--color-card': '#EAE7DD',
+  '--color-elevated': '#FAF8F2',
+  '--color-muted': '#CFCBBE',
+  '--color-dim': '#55555A',
+  '--color-primary': DRAFT_INK,
+  '--color-strong': DRAFT_INK,
+  '--color-on-strong': DRAFT_PAPER,
+  '--color-score': DRAFT_INK,
+  '--color-fortune': '#9A3B32',
+  '--color-dial': DRAFT_INK,
+  '--color-factor': '#6B6A66',
   '--color-pie': '#171421',
 }
 
@@ -944,6 +973,62 @@ export const SCHEMES = {
       wash: ['#D3E2EB', '#D9E6EE', '#DFEAF1', '#D6E4EC'],
       mono: GLASS_BAR,
       bar: GLASS_BAR,
+      hit: null,
+      glow: null,
+      keys: null,
+    },
+  },
+  // `drafting` — a drawing board: paper, and everything on it in pencil. The keys are parts of
+  // a square ruled in graphite and grey by how much they hold — the low end is the paper's own
+  // shade, the high end a soft pencil laid on — with no corners and no rim; the discs keep their
+  // light faces, so the ink on them stays dark.
+  drafting: {
+    tokens: DRAFTING_TOKENS,
+    inks: {
+      score: DRAFT_INK,
+      keyRim: 'transparent',
+      statusBar: 'dark',
+      ground: DRAFT_PAPER,
+      ink: DRAFT_INK,
+      wash: ['#F1EFE6', DRAFT_PAPER, '#F7F5EE', '#F2F0E7'],
+      mono: null,
+      bar: null,
+      hit: null,
+      glow: null,
+      keys: {
+        low: '#EEEDE8',
+        high: '#B4B2AC',
+        text: DRAFT_INK,
+        peakText: DRAFT_INK,
+        peak: ['#B4B2AC', '#B4B2AC'],
+        radius: 0,
+        foot: 0,
+      },
+    },
+  },
+  // `draftingBar` — the rows above a `drafting` dial: **monochrome** in graphite and lettered
+  // in a technical monospace, so the name, NINE, the hearts, the figures and the bests are written, not
+  // printed. Worn from the first frame of the run; see `OPENING_BAR_WAITS`.
+  draftingBar: {
+    tokens: {
+      ...DRAFTING_TOKENS,
+      '--color-dim': DRAFT_BAR,
+      '--color-primary': DRAFT_BAR,
+      '--color-strong': DRAFT_BAR,
+      '--color-score': DRAFT_BAR,
+      '--color-fortune': DRAFT_BAR,
+      '--color-factor': DRAFT_BAR,
+      '--font-mono': DRAFTING_LETTERING,
+    },
+    inks: {
+      score: DRAFT_BAR,
+      keyRim: 'transparent',
+      statusBar: 'dark',
+      ground: DRAFT_PAPER,
+      ink: DRAFT_BAR,
+      wash: ['#F1EFE6', DRAFT_PAPER, '#F7F5EE', '#F2F0E7'],
+      mono: DRAFT_BAR,
+      bar: DRAFT_BAR,
       hit: null,
       glow: null,
       keys: null,

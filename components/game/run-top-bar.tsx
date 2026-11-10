@@ -1,12 +1,14 @@
 import type { ReactNode } from 'react'
 import { Text, View } from 'react-native'
-import Animated, { FadeIn, FadeOut } from 'react-native-reanimated'
+import Animated, { FadeIn, FadeOut, type SharedValue } from 'react-native-reanimated'
 
 import { Arrival } from '@/components/game/arrival'
 import { PauseButton } from '@/components/game/pause-button'
+import { PencilWipe } from '@/components/game/pencil-wipe'
 import { TYPE } from '@/constants/typography'
 import { useGlow, useLegible, useScheme } from '@/hooks/use-scheme'
 import { cn } from '@/lib/cn'
+import { DRAW } from '@/lib/dial-sketch'
 
 // The row every live run is played under: what the run is on the left, the game's name in
 // the middle, and the way to stop on the right.
@@ -22,6 +24,7 @@ export function RunTopBar({
   wordmark,
   onPause = null,
   mirrored = false,
+  drawn = null,
 }: {
   // The run's own colour: the title takes it, and so does the pause button.
   accent: string
@@ -38,6 +41,9 @@ export function RunTopBar({
   // Whether the row is drawn back to front, on a **mirrored** dial. Its presses go with it, so
   // the pause button works where it is drawn.
   mirrored?: boolean
+  // How far an opening has drawn the board, nought to one, where the row is drawn in with it —
+  // each item wiped in from its left, one after another. Null for a row that is simply there.
+  drawn?: SharedValue<number> | null
 }) {
   // Both colours are tuned for the app's light screen; see `useLegible` for a run played
   // under another scheme, which may also draw this whole row in one ink of its own.
@@ -52,33 +58,41 @@ export function RunTopBar({
       style={mirrored ? { transform: [{ scaleX: -1 }] } : undefined}
     >
       <Arrival order={1} from="above" className="flex-1">
-        <Text selectable={false} className={TYPE.button} style={[{ color: shown }, glow]}>
-          {title}
-        </Text>
-        {/* Clipped rather than wrapped: a second line here would push the whole row
-            down. */}
-        {subtitle !== null && (
+        <PencilWipe progress={drawn} window={DRAW.title}>
           <Text
             selectable={false}
-            numberOfLines={1}
-            className={cn(TYPE.label, 'text-dim')}
+            className={TYPE.button}
+            style={[{ color: shown }, glow]}
           >
-            {subtitle}
+            {title}
           </Text>
-        )}
+          {/* Clipped rather than wrapped: a second line here would push the whole row
+            down. */}
+          {subtitle !== null && (
+            <Text
+              selectable={false}
+              numberOfLines={1}
+              className={cn(TYPE.label, 'text-dim')}
+            >
+              {subtitle}
+            </Text>
+          )}
+        </PencilWipe>
       </Arrival>
       {/* The game's name, the one string that is the same in every language. The tracking
           is added after every letter, the E included, so the word sits in a box 8px wider
           than itself on the right. Matching that on the left is what actually centres the
           letters between the two flex-1 columns; without it they hang 4px to the left. */}
       <Arrival order={2} from="above">
-        <Text
-          selectable={false}
-          className="pl-[8px] font-mono text-[24px] font-black tracking-[8px]"
-          style={[{ color: mark }, glow]}
-        >
-          NINE
-        </Text>
+        <PencilWipe progress={drawn} window={DRAW.name}>
+          <Text
+            selectable={false}
+            className="pl-[8px] font-mono text-[24px] font-black tracking-[8px]"
+            style={[{ color: mark }, glow]}
+          >
+            NINE
+          </Text>
+        </PencilWipe>
       </Arrival>
       {/* The way out, balancing the title block on the left. The column keeps its width
           whether the button is there or not, so nothing else in the row moves — and the
@@ -91,7 +105,9 @@ export function RunTopBar({
       >
         {onPause !== null && (
           <Animated.View entering={FadeIn.duration(160)} exiting={FadeOut.duration(160)}>
-            <PauseButton color={shown} onPress={onPause} />
+            <PencilWipe progress={drawn} window={DRAW.menu}>
+              <PauseButton color={shown} onPress={onPause} />
+            </PencilWipe>
           </Animated.View>
         )}
       </Arrival>
