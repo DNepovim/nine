@@ -931,19 +931,19 @@ msgstr "Best scores, up top"
 msgid "BETTER ON YOUR PHONE"
 msgstr "BETTER ON YOUR PHONE"
 
-#: modes/challenges/catalog.ts:840
+#: modes/challenges/catalog.ts:850
 msgid "BIN"
 msgstr "BIN"
 
-#: modes/challenges/catalog.ts:837
+#: modes/challenges/catalog.ts:847
 msgid "BINA­RY"
 msgstr "BINA­RY"
 
-#: modes/challenges/catalog.ts:980
+#: modes/challenges/catalog.ts:990
 msgid "BLACK­OUT"
 msgstr "BLACK­OUT"
 
-#: modes/challenges/catalog.ts:983
+#: modes/challenges/catalog.ts:993
 msgid "BLK"
 msgstr "BLK"
 
@@ -1165,7 +1165,7 @@ msgstr "CONNOISSEUR"
 msgid "CONTINUE"
 msgstr "CONTINUE"
 
-#: app/(tabs)/index.tsx:3014
+#: app/(tabs)/index.tsx:3017
 msgid "Continue the tutorial"
 msgstr "Continue the tutorial"
 
@@ -1267,7 +1267,7 @@ msgstr "Eat the last of them and the empty row starts to pulse: you are starving
 msgid "EDIT CHALLENGE"
 msgstr "EDIT CHALLENGE"
 
-#: modes/challenges/catalog.ts:841
+#: modes/challenges/catalog.ts:851
 msgid "Eight keys, each on or off."
 msgstr "Eight keys, each on or off."
 
@@ -1322,15 +1322,15 @@ msgstr "Every column leans your way. There is nothing here they hold."
 msgid "Every day was [A]’s except [D]. [B] got exactly one, and made it count."
 msgstr "Every day was [A]’s except [D]. [B] got exactly one, and made it count."
 
-#: modes/challenges/catalog.ts:706
+#: modes/challenges/catalog.ts:716
 msgid "Every hit spins the dial."
 msgstr "Every hit spins the dial."
 
-#: modes/challenges/catalog.ts:911
+#: modes/challenges/catalog.ts:921
 msgid "Every move works backwards."
 msgstr "Every move works backwards."
 
-#: modes/challenges/catalog.ts:568
+#: modes/challenges/catalog.ts:578
 msgid "Every number drifts. Catch it before it moves."
 msgstr "Every number drifts. Catch it before it moves."
 
@@ -1543,7 +1543,7 @@ msgstr "Forward a step"
 msgid "Four keys, doubled speed"
 msgstr "Four keys, doubled speed"
 
-#: modes/challenges/catalog.ts:776
+#: modes/challenges/catalog.ts:786
 msgid "FREEZE"
 msgstr "FREEZE"
 
@@ -1551,7 +1551,7 @@ msgstr "FREEZE"
 msgid "Friday"
 msgstr "Friday"
 
-#: modes/challenges/catalog.ts:779
+#: modes/challenges/catalog.ts:789
 msgid "FRZ"
 msgstr "FRZ"
 
@@ -1870,7 +1870,7 @@ msgstr "KEEP RECORDING"
 msgid "KEEP THEM ON"
 msgstr "KEEP THEM ON"
 
-#: modes/challenges/catalog.ts:639
+#: modes/challenges/catalog.ts:649
 msgid "KEY"
 msgstr "KEY"
 
@@ -1947,7 +1947,7 @@ msgstr "last played yesterday"
 msgid "LAST WEEK IN NINE"
 msgstr "LAST WEEK IN NINE"
 
-#: modes/challenges/catalog.ts:564
+#: modes/challenges/catalog.ts:574
 msgid "LAVA"
 msgstr "LAVA"
 
@@ -2011,7 +2011,7 @@ msgstr "LONG HAUL"
 msgid "Lose every life in under ten seconds."
 msgstr "Lose every life in under ten seconds."
 
-#: modes/challenges/catalog.ts:567
+#: modes/challenges/catalog.ts:577
 msgid "LVA"
 msgstr "LVA"
 
@@ -2076,11 +2076,11 @@ msgstr "Messages sent in"
 msgid "MINUTES"
 msgstr "MINUTES"
 
-#: modes/challenges/catalog.ts:910
+#: modes/challenges/catalog.ts:920
 msgid "MIR"
 msgstr "MIR"
 
-#: modes/challenges/catalog.ts:907
+#: modes/challenges/catalog.ts:917
 msgid "MIR­ROR"
 msgstr "MIR­ROR"
 
@@ -2294,7 +2294,7 @@ msgstr "No sessions planned yet."
 msgid "No sessions yet."
 msgstr "No sessions yet."
 
-#: modes/challenges/catalog.ts:424
+#: modes/challenges/catalog.ts:434
 msgid "NO SLIP"
 msgstr "NO SLIP"
 
@@ -2479,7 +2479,7 @@ msgstr "Nov"
 msgid "NOVEMBER"
 msgstr "NOVEMBER"
 
-#: modes/challenges/catalog.ts:427
+#: modes/challenges/catalog.ts:437
 msgid "NSL"
 msgstr "NSL"
 
@@ -2543,11 +2543,11 @@ msgstr "One board did not go along with it: [BOARD] stayed [W]’s throughout."
 msgid "One gesture can move several keys"
 msgstr "One gesture can move several keys"
 
-#: modes/challenges/catalog.ts:636
+#: modes/challenges/catalog.ts:646
 msgid "ONE KEY"
 msgstr "ONE KEY"
 
-#: modes/challenges/catalog.ts:640
+#: modes/challenges/catalog.ts:650
 msgid "One key, one second."
 msgstr "One key, one second."
 
@@ -2555,7 +2555,7 @@ msgstr "One key, one second."
 msgid "One line under your name, for anyone who opens your profile."
 msgstr "One line under your name, for anyone who opens your profile."
 
-#: modes/challenges/catalog.ts:354
+#: modes/challenges/catalog.ts:364
 msgid "One look, then from memory."
 msgstr "One look, then from memory."
 
@@ -2583,7 +2583,7 @@ msgstr "One run ≥ 60 min, any mode"
 msgid "One set of standings, shared by everyone playing it, and it never resets. Your best run is the one that counts. Where the standings are a race against the clock, only a run you finish counts at all — stop early, or let the window close on you, and it is not timed."
 msgstr "One set of standings, shared by everyone playing it, and it never resets. Your best run is the one that counts. Where the standings are a race against the clock, only a run you finish counts at all — stop early, or let the window close on you, and it is not timed."
 
-#: modes/challenges/catalog.ts:428
+#: modes/challenges/catalog.ts:438
 msgid "One slip and it's over."
 msgstr "One slip and it's over."
 
@@ -2924,7 +2924,7 @@ msgstr "Record a replay of your play to help us spot bugs. Text fields are blank
 msgid "Records, celebrated"
 msgstr "Records, celebrated"
 
-#: modes/challenges/catalog.ts:702
+#: modes/challenges/catalog.ts:712
 msgid "REELS"
 msgstr "REELS"
 
@@ -2984,7 +2984,7 @@ msgstr "RING"
 msgid "ring {traineeRing} (player-set), gap = min(ring ÷ 3, {traineeGap})"
 msgstr "ring {traineeRing} (player-set), gap = min(ring ÷ 3, {traineeGap})"
 
-#: modes/challenges/catalog.ts:705
+#: modes/challenges/catalog.ts:715
 msgid "RLS"
 msgstr "RLS"
 
@@ -3147,7 +3147,7 @@ msgstr "Score rewards precision: solve each target in the fewest moves."
 msgid "Scores, one ladder per mode — Accuracy and Speed ask for opposite things, so each has its own rungs to climb."
 msgstr "Scores, one ladder per mode — Accuracy and Speed ask for opposite things, so each has its own rungs to climb."
 
-#: modes/challenges/catalog.ts:502
+#: modes/challenges/catalog.ts:512
 msgid "SDW"
 msgstr "SDW"
 
@@ -3267,7 +3267,7 @@ msgstr "SHOW LESS"
 msgid "SHOW SUM IN BUTTONS"
 msgstr "SHOW SUM IN BUTTONS"
 
-#: modes/challenges/catalog.ts:499
+#: modes/challenges/catalog.ts:509
 msgid "SIDE­WAYS"
 msgstr "SIDE­WAYS"
 
@@ -3290,7 +3290,7 @@ msgstr "Skill inside a single run: a long streak, the top multiplier, a stretch 
 msgid "SKIP"
 msgstr "SKIP"
 
-#: components/game/opening-layer.tsx:292
+#: components/game/opening-layer.tsx:298
 msgid "Skip to the run"
 msgstr "Skip to the run"
 
@@ -3410,7 +3410,7 @@ msgstr "STEP UP TO {rungName}"
 msgid "Sticking with it — targets landed across every run you have ever played, and days played in a row."
 msgstr "Sticking with it — targets landed across every run you have ever played, and days played in a row."
 
-#: modes/challenges/catalog.ts:353
+#: modes/challenges/catalog.ts:363
 msgid "STM"
 msgstr "STM"
 
@@ -3422,7 +3422,7 @@ msgstr "STOP RECORDING"
 msgid "Stop session recording?"
 msgstr "Stop session recording?"
 
-#: modes/challenges/catalog.ts:350
+#: modes/challenges/catalog.ts:360
 msgid "STORM"
 msgstr "STORM"
 
@@ -3643,7 +3643,7 @@ msgstr "The clock keeps tightening as your run goes on, less and less each time.
 msgid "THE CROWN"
 msgstr "THE CROWN"
 
-#: modes/challenges/catalog.ts:503
+#: modes/challenges/catalog.ts:513
 msgid "The dial has fallen on its side."
 msgstr "The dial has fallen on its side."
 
@@ -3690,7 +3690,7 @@ msgstr "The hero halts well short of the gate, with the walls across the top of 
 msgid "The hit that leaves the board empty counts double."
 msgstr "The hit that leaves the board empty counts double."
 
-#: modes/challenges/catalog.ts:984
+#: modes/challenges/catalog.ts:994
 msgid "The keys go dark. Count in your head."
 msgstr "The keys go dark. Count in your head."
 
@@ -3724,7 +3724,7 @@ msgstr "THE PHOENIX"
 msgid "The rules are its own. The keys, the clock, the scoring, how many lives you get — any of it may be different, and the card says what before you start. Unless it says otherwise, it scores like Accuracy: the fewest moves build your streak, and a wasted move never costs a heart."
 msgstr "The rules are its own. The keys, the clock, the scoring, how many lives you get — any of it may be different, and the card says what before you start. Unless it says otherwise, it scores like Accuracy: the fewest moves build your streak, and a wasted move never costs a heart."
 
-#: modes/challenges/catalog.ts:283
+#: modes/challenges/catalog.ts:285
 msgid "The same nine, every run. Be quick."
 msgstr "The same nine, every run. Be quick."
 
@@ -3732,7 +3732,7 @@ msgstr "The same nine, every run. Be quick."
 msgid "The standings stay exactly as they are and the places settle now. This cannot be undone — running it again is a new session, with a board of its own."
 msgstr "The standings stay exactly as they are and the places settle now. This cannot be undone — running it again is a new session, with a board of its own."
 
-#: modes/challenges/catalog.ts:780
+#: modes/challenges/catalog.ts:790
 msgid "The sum only moves when you hit."
 msgstr "The sum only moves when you hit."
 
