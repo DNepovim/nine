@@ -59,6 +59,8 @@ describe('a drilled run', () => {
     actor.start()
     actor.send({ type: 'SET_MODE', mode: HABIT })
     actor.send({ type: 'START', now: 0, runId: nextRunId() })
+    // HABIT opens on a dance floor, so the run is held ready until the count is given.
+    actor.send({ type: 'BEGIN', now: 0 })
     return actor
   }
 
@@ -129,6 +131,7 @@ describe('a drilled run', () => {
     expect(actor.getSnapshot().value).toBe('gameOver')
 
     actor.send({ type: 'RESTART', now: 0, runId: nextRunId() })
+    actor.send({ type: 'BEGIN', now: 0 })
     // The run's own count starts again; the ids do not, and must not.
     expect(actor.getSnapshot().context.dealt).toBe(0)
     expect(actor.getSnapshot().context.nextTargetId).toBeGreaterThanOrEqual(9)
@@ -156,6 +159,7 @@ describe('a drilled run', () => {
     expect(actor.getSnapshot().value).toBe('gameOver')
 
     actor.send({ type: 'RESTART', now: 0, runId: nextRunId() })
+    actor.send({ type: 'BEGIN', now: 0 })
     actor.send({ type: 'ADD_TARGET', value: 1, at: 0 })
     dialTo(actor, 1)
 
@@ -172,6 +176,7 @@ describe('a drilled run', () => {
     actor.start()
     actor.send({ type: 'SET_MODE', mode: HABIT })
     actor.send({ type: 'START', now: 1000, runId: nextRunId() })
+    actor.send({ type: 'BEGIN', now: 1000 })
     for (let value = 1; value <= 9; value++) {
       actor.send({ type: 'ADD_TARGET', value, at: 1000 })
     }

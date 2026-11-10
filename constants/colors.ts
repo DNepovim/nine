@@ -491,6 +491,35 @@ const AZULEJO_TOKENS = {
   '--color-pie': '#171421',
 }
 
+// The parquet — HABIT's dance floor: honey oak laid in a herringbone, everything on it in dark
+// brown, as the ink of a shoe on a polished floor. `seam` is what shows between the planks, `planks`
+// the stains they are cut from, `bar` the one ink the rows above the dial wear, and `lamp` the pale
+// light the opening throws across it.
+export const PARQUET = {
+  floor: '#C58B49',
+  seam: '#B58045',
+  planks: ['#CB9250', '#C0873F', '#D39C5B', '#BA7F3C', '#C78D49'],
+  ink: '#2B1708',
+  bar: '#3A200C',
+  lamp: '#FFE7B3',
+} as const
+
+const PARQUET_TOKENS = {
+  '--color-surface': PARQUET.floor,
+  '--color-card': '#D9A869',
+  '--color-elevated': '#E4B97E',
+  '--color-muted': '#B57E3F',
+  '--color-dim': '#5A3716',
+  '--color-primary': PARQUET.ink,
+  '--color-strong': PARQUET.ink,
+  '--color-on-strong': '#F5E3C0',
+  '--color-score': PARQUET.ink,
+  '--color-fortune': '#8E2B1A',
+  '--color-dial': '#1C1928',
+  '--color-factor': '#6B4520',
+  '--color-pie': '#171421',
+}
+
 // The lava lamp — DRIFT's: a blush-pink glass with wax in it. `cool` and `hot` are the two ends of the
 // scale a lump of wax is coloured on by the number it shows, purple at nothing and pink at the board's
 // ceiling (`waxColor`): 6.6:1 and 3.0:1 against the glass, which is enough for a shape and not for
@@ -1143,6 +1172,51 @@ export const SCHEMES = {
       mono: null,
       bar: null,
       hit: null,
+      glow: null,
+      keys: null,
+    },
+  },
+  // `parquet` — HABIT's dance floor: honey oak, the text in dark brown. The keys and target discs keep
+  // their light faces, which stand out from the wood as they do from `day`'s lilac.
+  parquet: {
+    tokens: PARQUET_TOKENS,
+    inks: {
+      score: PARQUET.ink,
+      keyRim: 'rgba(43, 23, 8, 0.28)',
+      statusBar: 'dark',
+      ground: PARQUET.floor,
+      ink: PARQUET.ink,
+      // Planks of slightly different stain, lighter where the lamps fall.
+      wash: ['#BD843F', PARQUET.floor, '#CF9753', '#C48A47'],
+      mono: null,
+      bar: PARQUET.bar,
+      hit: '#7A1F12',
+      glow: null,
+      keys: null,
+    },
+  },
+  // `parquetBar` — the rows above a `parquet` dial: **monochrome** in one dark brown, as the other
+  // schemes' are. Worn from the first frame of the run; see `OPENING_BAR_WAITS`.
+  parquetBar: {
+    tokens: {
+      ...PARQUET_TOKENS,
+      '--color-dim': PARQUET.bar,
+      '--color-primary': PARQUET.bar,
+      '--color-strong': PARQUET.bar,
+      '--color-score': PARQUET.bar,
+      '--color-fortune': PARQUET.bar,
+      '--color-factor': PARQUET.bar,
+    },
+    inks: {
+      score: PARQUET.bar,
+      keyRim: 'transparent',
+      statusBar: 'dark',
+      ground: PARQUET.floor,
+      ink: PARQUET.bar,
+      wash: ['#BD843F', PARQUET.floor, '#CF9753', '#C48A47'],
+      mono: PARQUET.bar,
+      bar: PARQUET.bar,
+      hit: '#7A1F12',
       glow: null,
       keys: null,
     },

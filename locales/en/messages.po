@@ -1013,6 +1013,16 @@ msgstr "Career hits ≥ 999"
 msgid "CEILING"
 msgstr "CEILING"
 
+#: components/game/openings/ballroom.tsx:145
+#: components/game/openings/ballroom.tsx:146
+#: modes/challenges/catalog.ts:284
+msgid "CHA"
+msgstr "CHA"
+
+#: modes/challenges/catalog.ts:280
+msgid "CHA CHA"
+msgstr "CHA CHA"
+
 #: constants/tips.ts:21
 msgid "Chain your hits — a streak multiplies your points ×2 → ×4 → ×8. Accuracy counts optimal routes, Speed counts hits with most of the ring left."
 msgstr "Chain your hits — a streak multiplies your points ×2 → ×4 → ×8. Accuracy counts optimal routes, Speed counts hits with most of the ring left."
@@ -1614,10 +1624,6 @@ msgstr "GOT IT"
 msgid "GRADUATE"
 msgstr "GRADUATE"
 
-#: modes/challenges/catalog.ts:278
-msgid "HABIT"
-msgstr "HABIT"
-
 #: modes/difficulty.ts:53
 msgid "HARD"
 msgstr "HARD"
@@ -1625,10 +1631,6 @@ msgstr "HARD"
 #: constants/achievements.ts:572
 msgid "HAT TRICK"
 msgstr "HAT TRICK"
-
-#: modes/challenges/catalog.ts:282
-msgid "HBT"
-msgstr "HBT"
 
 #: constants/achievements.ts:566
 msgid "HEADLINER"
@@ -2524,6 +2526,10 @@ msgstr "ON THE BOARD"
 #: components/overlays/admin-stats.tsx:223
 msgid "on the dial"
 msgstr "on the dial"
+
+#: components/game/openings/ballroom.tsx:142
+msgid "ONE"
+msgstr "ONE"
 
 #: lib/recap-lines.ts:142
 msgid "One all-time record fell: [BOARD], on [D]. It is [W]’s now."
@@ -3887,6 +3893,10 @@ msgstr "THIS WEEK"
 msgid "THOUSAND HITS"
 msgstr "THOUSAND HITS"
 
+#: components/game/openings/ballroom.tsx:144
+msgid "THREE"
+msgstr "THREE"
+
 #: components/overlays/step-up-overlay.tsx:64
 msgid "Three lives, and every score reaches the board."
 msgstr "Three lives, and every score reaches the board."
@@ -4015,6 +4025,10 @@ msgstr "Turn on SHOW SUM IN BUTTONS under Options. Each button then reads out wh
 #: constants/tutorial.ts:33
 msgid "TUTORIAL"
 msgstr "TUTORIAL"
+
+#: components/game/openings/ballroom.tsx:143
+msgid "TWO"
+msgstr "TWO"
 
 #: lib/compare-lines.ts:99
 msgid "Two careers, no scores. The dial is right there."

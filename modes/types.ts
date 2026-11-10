@@ -271,7 +271,12 @@ export type Submode = {
 // the one just taken, so a run of exact presses draws the route through the board in the
 // order the player walked it. The first hit of a run has no previous target and fires
 // from the sum row, as the two above always do.
-export type ShotKind = 'sniper' | 'burst' | 'flame' | 'chain'
+//
+// `steps` is the chain's route kept: a pair of footprints from the previous target to this one on
+// **every** hit, not only a strike, which stay on the floor for the run, the oldest fading. A strike
+// is the one that slides on fire. Drawn by `FootprintTrail`, under the cards, so like `flame` the
+// shot layer never sees it — see `useStrikeShots`.
+export type ShotKind = 'sniper' | 'burst' | 'flame' | 'chain' | 'steps'
 
 // What a challenge wears beside its name — one drawing each, in
 // `components/overlays/challenge-mark.tsx`. Named for what is drawn rather than for the
@@ -309,6 +314,7 @@ export type OpeningKind =
   | 'leverPull'
   | 'drawingBoard'
   | 'tilework'
+  | 'ballroom'
   | 'lavaLamp'
 
 // How much of an opening plays. `full` for a run started from the intro, `short` for one
@@ -343,6 +349,8 @@ export type SchemeKind =
   | 'draftingBar'
   | 'azulejo'
   | 'azulejoBar'
+  | 'parquet'
+  | 'parquetBar'
   | 'lava'
   | 'lavaBar'
 
@@ -350,11 +358,19 @@ export type SchemeKind =
 // dealt, each with a ring running down, and are every mode's unless it names another; `lines`
 // are lines of a terminal, each with a bar; `flashlit` are numbers on a dark wall in a
 // flashlight's beam, which reddens and closes in as the clock runs down; `struck` are discs
-// a bolt of lightning hits when their glimpse is over, putting the number out; `beating` are discs that pulse like a heart; `drafted` are circles ruled in pencil and coloured in pastel, on a drawing board; `tiled` are tiles of an azulejo wall, on the keys' own grid; `blobs` are lumps of lava-lamp wax that morph, coloured on a scale from purple to pink by the number they show, and lean the way it drifts. Drawn by `TARGET_FORMS` in
+// a bolt of lightning hits when their glimpse is over, putting the number out; `beating` are discs that pulse like a heart; `drafted` are circles ruled in pencil and coloured in pastel, on a drawing board; `tiled` are tiles of an azulejo wall, on the keys' own grid; `dancers` are dancers seen from above, the disc being the head and the number on it, with shoulders and arms turned a different way for each; `blobs` are lumps of lava-lamp wax that morph, coloured on a scale from purple to pink by the number they show, and lean the way it drifts. Drawn by `TARGET_FORMS` in
 // `components/game/target-forms.tsx`. Drawing only: a hit is decided by the sum, an expiry by
 // the clock, and both are the same in every form.
 export type TargetForm =
-  'discs' | 'lines' | 'flashlit' | 'struck' | 'beating' | 'drafted' | 'tiled' | 'blobs'
+  | 'discs'
+  | 'lines'
+  | 'flashlit'
+  | 'struck'
+  | 'beating'
+  | 'drafted'
+  | 'tiled'
+  | 'blobs'
+  | 'dancers'
 
 // What every mode says about itself, whichever engine runs it.
 type ModeIdentity = {

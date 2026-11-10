@@ -3,6 +3,7 @@ import { useRef, type ComponentType } from 'react'
 import { View } from 'react-native'
 import type { SharedValue } from 'react-native-reanimated'
 
+import { Ballroom, ParquetRemains } from '@/components/game/openings/ballroom'
 import {
   beatsClearIn,
   Defibrillator,
@@ -87,6 +88,7 @@ const OPENINGS = {
   leverPull: LeverPull,
   drawingBoard: DrawingBoard,
   tilework: Tilework,
+  ballroom: Ballroom,
   lavaLamp: LavaLamp,
 } as const satisfies Record<OpeningKind, ComponentType<OpeningSceneProps>>
 
@@ -140,8 +142,10 @@ const REMAINS: Record<
   leverPull: { Drawing: CasinoRemains, Over: LeverOver },
   // The drawing is the dial's and the bar's own; the scene leaves nothing behind it.
   drawingBoard: null,
-  // The wall stays behind the run, under the dial: the keys and the targets are tiles of it.
+  // The wall's faint joints stay behind the run, under the dial.
   tilework: { Drawing: TileworkRemains, Over: null },
+  // The herringbone floor stays behind the run, under the dial, for the footprints to be walked on.
+  ballroom: { Drawing: ParquetRemains, Over: null },
   // Three slow lumps of wax stay behind the run, faint, behind the dial.
   lavaLamp: { Drawing: LavaRemains, Over: null },
 }
@@ -160,6 +164,7 @@ const HOLDS: Record<OpeningKind, (() => number) | null> = {
   leverPull: lightsOutLeft,
   drawingBoard: null,
   tilework: null,
+  ballroom: null,
   lavaLamp: null,
 }
 
@@ -219,6 +224,7 @@ const UNDER: Record<OpeningKind, ComponentType<{ sweep: SharedValue<number> }> |
   leverPull: null,
   drawingBoard: null,
   tilework: TileworkUnder,
+  ballroom: null,
   lavaLamp: null,
 }
 

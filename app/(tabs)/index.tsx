@@ -23,6 +23,7 @@ import { DraftedSegments } from '@/components/game/drafted-segments'
 import { FloatingLifeLoss } from '@/components/game/floating-life-loss'
 import { FloatingPoints } from '@/components/game/floating-points'
 import { FloatingStat } from '@/components/game/floating-stat'
+import { FootprintTrail } from '@/components/game/footprint-trail'
 import { HeartIcon } from '@/components/game/heart-icon'
 import { HitSync } from '@/components/game/hit-sync'
 import { MultiplayerGame } from '@/components/game/multiplayer-game'
@@ -2001,7 +2002,7 @@ export default function GameScreen() {
     }
   }
 
-  const { shots, removeShot, flame } = useStrikeShots({
+  const { shots, removeShot, flame, legs } = useStrikeShots({
     mode,
     runSeq: state.context.runSeq,
     hitBatch,
@@ -2674,6 +2675,8 @@ export default function GameScreen() {
                   <View className="flex-1">
                     {/* Target numbers */}
                     <View className="flex-1">
+                      {/* The footprints of a steps run, on the floor under every card. */}
+                      <FootprintTrail legs={legs} />
                       {/* Trainee's readout — how many targets they have cleared and how the press
                   they just made actually went, which is what a learner wants and a score
                   cannot tell them.

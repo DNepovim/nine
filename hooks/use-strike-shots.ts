@@ -25,8 +25,9 @@ export type ShotAim = {
 // beam chase a card that is no longer where it was hit.
 export type Shot = {
   id: number
-  // Never a flame, which burns under the dial rather than as a shot on this layer.
-  kind: Exclude<ShotKind, 'flame'>
+  // Never a flame, which burns under the dial, nor steps, which are kept on the floor — neither
+  // is a shot on this layer.
+  kind: Exclude<ShotKind, 'flame' | 'steps'>
   from: Point
   to: Point
   // Half the card it was aimed at, fixed with the rest of the geometry the instant the
@@ -36,6 +37,17 @@ export type Shot = {
   sumDigits: number
   // Which rounds of the press's one burst this shot fires — see shareRounds.
   rounds: number[]
+}
+
+// One leg of a **steps** run's trail: the footprints between the target taken before and the one
+// taken now. Fixed, like a shot's geometry, the instant the hit lands.
+export type Leg = {
+  id: number
+  from: Point
+  to: Point
+  radius: number
+  // Whether this leg was a strike, which slides on fire where the others only appear.
+  burning: boolean
 }
 
 // Turns the strikes in a hit batch into shots for the board to draw — or, for a mode
@@ -67,6 +79,9 @@ export function useStrikeShots({
   // struck, not one per strike: a press that takes two cards burns once. Null for every
   // mode whose shot is not a flame.
   const [flame, setFlame] = useState<number | null>(null)
+  // The legs a `steps` run has walked, oldest first. Emptied on a fresh run; empty for every
+  // other shot.
+  const [legs, setLegs] = useState<Leg[]>([])
   const shotId = useRef(0)
   const lastSeq = useRef(hitBatch.seq)
   // Where the last strike landed, which is where the next **chain** beam leaves from.
@@ -82,11 +97,33 @@ export function useStrikeShots({
     if (runSeq !== lastRun.current) {
       lastRun.current = runSeq
       chainFrom.current = null
+      setLegs([])
     }
     if (hitBatch.seq === lastSeq.current) return
     lastSeq.current = hitBatch.seq
     const kind = modeById(mode)?.shot ?? null
     if (kind === null) return
+    if (kind === 'steps') {
+      // Every hit leaves a leg, not only a strike: the route is the thing being learnt, and it
+      // is only whole if no hit of it is missing. A strike is the leg that burns.
+      const walked = hitBatch.hits.flatMap((hit) => {
+        const aimed = aimRef.current(hit.value)
+        if (aimed === null) return []
+        const from = chainFrom.current ?? aimed.from
+        chainFrom.current = aimed.to
+        return [
+          {
+            id: ++shotId.current,
+            from,
+            to: aimed.to,
+            radius: aimed.radius,
+            burning: hit.bonus,
+          },
+        ]
+      })
+      if (isNonEmptyArray(walked)) setLegs((prev) => [...prev, ...walked])
+      return
+    }
     // Never the hit that cost a life: Accuracy only multiplies when every hit in the
     // press was optimal, and an optimal hit is not a wasteful one.
     const strikes = hitBatch.hits.filter((hit) => hit.bonus)
@@ -126,5 +163,5 @@ export function useStrikeShots({
     setShots((prev) => prev.filter((shot) => shot.id !== id))
   }
 
-  return { shots, removeShot, flame }
+  return { shots, removeShot, flame, legs }
 }

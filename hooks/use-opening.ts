@@ -7,6 +7,7 @@ import { setTileInk } from '@/hooks/use-tile-grid'
 import {
   isChallenge,
   OPENING_BAR_WAITS,
+  OPENING_REMAINS_FROM_START,
   OPENING_STARTS_LIT,
   openingOf,
   SCHEME_BAR,
@@ -27,6 +28,17 @@ const barTintOf = (mode: ModeId, barScheme: SchemeKind): string | null =>
 // How long a **peek** keeps the lights on. Long enough to catch a key or two and nowhere
 // near long enough to read the whole dial.
 const PEEK_MS = 200
+
+// The opening whose remains are drawn behind the screen right now. Never on the intro; not while the
+// run is held ready either, except for an opening whose remains are the floor its scene is played on.
+const remainsOf = (
+  kind: OpeningKind | null,
+  held: boolean,
+  inMenu: boolean,
+): OpeningKind | null => {
+  if (inMenu || kind === null) return null
+  return held && !OPENING_REMAINS_FROM_START[kind] ? null : kind
+}
 
 // The game screen's half of a mode's **opening**: whether the run is held **ready** for
 // one, how much of it plays, whether it has reached its switch, and so which **scheme**
@@ -155,7 +167,7 @@ export function useOpening({
   const onScreen = held || name === 'playing'
   return {
     layer: held ? kind : null,
-    remains: held || name === 'menu' ? null : kind,
+    remains: remainsOf(kind, held, name === 'menu'),
     held,
     take,
     opened: !peeked && (!held || switched),

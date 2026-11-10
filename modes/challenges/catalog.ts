@@ -275,22 +275,25 @@ const FOUR_BY_FOUR: ChallengeSpec = {
 //     half a second apart — `cap: 500`, which is below the share of any clock here.
 const HABIT: ChallengeSpec = {
   slug: 'habit',
-  label: msg`HABIT`,
+  // The dance floor's name. The slug is still `habit` — it is what sessions and boards are kept
+  // under — and the player reads CHA CHA, as GLIMPSE's reads STORM.
+  label: msg`CHA CHA`,
   // Its own, rather than Accuracy's `ACC` inherited from the base mode. A challenge
   // takes its base's code unless the variation is the point — and here it is: a row on
   // a profile reading ACC would file this under the board it is not.
-  code: msg`HBT`,
+  code: msg`CHA`,
   description: msg`The same nine, every run. Be quick.`,
   mark: 'route',
   // The streak the challenge is about, and the one rule that rewards knowing the board:
   // the fewest moves is also the fewest presses, so a player who has learnt a route is
   // faster *and* on the multiplier, where a player mashing is neither.
   //
-  // Drawn as a `chain` — the beam runs from the target taken before this one to the one
-  // just taken, so a strike draws the route through the board in the order it was
-  // walked. The shot is the streak made visible, and on a board that never changes the
-  // thing worth seeing is the order.
-  shot: 'chain',
+  // Drawn as `steps` — footprints from the target taken before this one to the one just
+  // taken, on **every** hit, kept on the floor for the run, so after the ninth the dance
+  // is there to read. A strike is the leg that slides on fire. The route is the thing
+  // worth seeing on a board that never changes, and the chain's beam only ever showed it
+  // for a strike, and for under a second.
+  shot: 'steps',
   // Every line about knowing the board rather than about a score, because the contest
   // here is the clock and the thing being claimed is recall.
   claims: {
@@ -314,6 +317,13 @@ const HABIT: ChallengeSpec = {
   },
   base: ACCURACY,
   from: Date.UTC(2026, 10, 1),
+  // A dance floor: honey-oak parquet in a herringbone, the lights coming up and the count given
+  // before the run, and the route left on the floor as footprints. See `parquet` in `SCHEMES`.
+  // Drawing only — the rules below are what they were.
+  opening: 'ballroom',
+  scheme: 'parquet',
+  // The targets are dancers seen from above: the disc is the head, with shoulders and arms round it.
+  targetForm: 'dancers',
   until: Date.UTC(2026, 10, 1) + DAY,
   rules: {
     fixedDifficulty: 'hard',

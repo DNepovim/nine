@@ -399,8 +399,12 @@ describe('habit', () => {
     expect(rules.capabilities.scored).toBe(true)
   })
 
-  it('draws its strike as the route it walked', () => {
-    expect(HABIT?.shot).toBe('chain')
+  it('leaves the route it walked as footprints on a dance floor', () => {
+    expect(HABIT?.shot).toBe('steps')
+    expect(schemeOf(challengeId('habit'))).toBe('parquet')
+    expect(openingOf(challengeId('habit'))).toBe('ballroom')
+    expect(targetFormOf(challengeId('habit'))).toBe('dancers')
+    expect(runRules(challengeId('habit'), 'hard').opens).toBe(true)
   })
 })
 
@@ -741,6 +745,7 @@ describe('blackout', () => {
     expect(opening).toEqual([
       challengeId('four-keys'),
       challengeId('four-by-four'),
+      challengeId('habit'),
       challengeId('glimpse'),
       challengeId('no-slip'),
       challengeId('drift'),
@@ -770,6 +775,8 @@ describe('blackout', () => {
       challengeId('four-keys'),
       // Dressed in its own way: see 'four by four'.
       challengeId('four-by-four'),
+      // Dressed in its own way: see 'habit'.
+      challengeId('habit'),
       // Dressed in its own way: see 'DRIFT'.
       challengeId('drift'),
     ]

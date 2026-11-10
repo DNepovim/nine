@@ -1,6 +1,7 @@
 import type { ComponentProps, ComponentType, ReactNode } from 'react'
 
 import { BlobTarget } from '@/components/game/blob-target'
+import { DancerTarget } from '@/components/game/dancer-target'
 import { DraftedTarget } from '@/components/game/drafted-target'
 import { FlashlitTarget } from '@/components/game/flashlit-target'
 import { HeartTarget } from '@/components/game/heart-target'
@@ -33,6 +34,7 @@ export const TARGET_FORMS = {
   struck: { Board: DealtBoard, Card: StruckTarget },
   beating: { Board: DealtBoard, Card: HeartTarget },
   drafted: { Board: DealtBoard, Card: DraftedTarget },
+  dancers: { Board: DealtBoard, Card: DancerTarget },
   tiled: { Board: TileBoard, Card: TiledTarget },
   blobs: { Board: DealtBoard, Card: BlobTarget },
   lines: { Board: TerminalBoard, Card: TerminalTarget },

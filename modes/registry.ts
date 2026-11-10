@@ -225,7 +225,28 @@ export const OPENING_STARTS_LIT = {
   drawingBoard: false,
   // The wall is the panel's from the first frame; the laying of its tiles is the scene.
   tilework: false,
+  // The floor is the ballroom's from the first frame; the lights coming up on it is the scene.
+  ballroom: false,
   // The glass is the lamp's from the first frame; the wax warming and rising in it is the scene.
+  lavaLamp: false,
+} as const satisfies Record<OpeningKind, boolean>
+
+// Whether an opening's **remains** are already drawn under its scene while the run is held **ready**,
+// rather than arriving once the scene is over. For a floor the scene is played on: the dance floor
+// is the screen the count is given on, not something the count leaves behind.
+export const OPENING_REMAINS_FROM_START = {
+  lightsOut: false,
+  terminal: false,
+  passingEdge: false,
+  stormFront: false,
+  frostCreep: false,
+  defibrillator: false,
+  takeoff: false,
+  leverPull: false,
+  drawingBoard: false,
+  tilework: false,
+  ballroom: true,
+  // The lamp's slow wax is what the scene leaves, so it arrives once the scene is over.
   lavaLamp: false,
 } as const satisfies Record<OpeningKind, boolean>
 
@@ -251,6 +272,8 @@ export const SCHEME_BAR = {
   draftingBar: 'draftingBar',
   azulejo: 'azulejoBar',
   azulejoBar: 'azulejoBar',
+  parquet: 'parquetBar',
+  parquetBar: 'parquetBar',
   lava: 'lavaBar',
   lavaBar: 'lavaBar',
 } as const satisfies Record<SchemeKind, SchemeKind>
@@ -272,6 +295,8 @@ export const OPENING_BAR_WAITS = {
   // The rows above the dial are in the scheme from the first frame; the scene writes them in.
   drawingBoard: false,
   tilework: false,
+  // The rows above the dial are in the scheme from the first frame.
+  ballroom: false,
   lavaLamp: false,
 } as const satisfies Record<OpeningKind, boolean>
 
@@ -289,6 +314,7 @@ const OPENING_SHOWS_FIGURES = {
   leverPull: false,
   drawingBoard: false,
   tilework: false,
+  ballroom: false,
   lavaLamp: false,
 } as const satisfies Record<OpeningKind, boolean>
 

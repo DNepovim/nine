@@ -24,6 +24,12 @@
 //
 // Ordered by altitude rather than alphabetically: the further down, the quieter.
 export const TYPE = {
+  // A word given large, alone, in the middle of the screen, for a moment: the dance floor's count-in,
+  // ONE TWO THREE CHA CHA, one to a beat. Bigger than anything the app prints, because it is the only thing on
+  // screen while it is up and is gone before it can be read as text. The longest word, THREE, holds
+  // at this size with its tracking on a 360px phone.
+  countIn: 'font-mono text-[84px] font-black tracking-[4px]',
+
   // The heading at the top of a full screen — options, the archive, the admin screens,
   // the crash page. One per screen, and the biggest thing on it.
   screenTitle: 'font-mono text-[20px] font-black tracking-[3px]',
