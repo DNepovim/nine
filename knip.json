@@ -9,5 +9,5 @@
   ],
   "project": ["**/*.{ts,tsx}"],
   "ignoreDependencies": ["posthog-js"],
-  "ignore": ["**/*.web.ts", "**/*.web.tsx"]
+  "ignore": ["**/*.web.ts", "**/*.web.tsx", "supabase/functions/*/index.ts"]
 }

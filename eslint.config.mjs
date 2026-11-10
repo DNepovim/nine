@@ -15,6 +15,10 @@ export default defineConfig(
     '*.config.js',
     '*.config.mjs',
     'workbox-config.js',
+    // Served as-is to the browser's service worker scope, not part of the app's TypeScript.
+    'public/*',
+    // Deno: its own imports and globals, which this project's tsconfig does not describe.
+    'supabase/functions/*/index.ts',
     // Compiled message catalogs: build output of `lingui compile`, never edited.
     'locales/*/messages.ts',
   ]),
