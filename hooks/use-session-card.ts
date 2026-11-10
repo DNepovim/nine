@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 
 import { COALESCE_MS, type PeriodBoard } from '@/hooks/use-board'
 import { useFlag } from '@/hooks/use-flags'
-import { useOpenSessions } from '@/hooks/use-open-sessions'
+import { refreshOpenSessions, useOpenSessions } from '@/hooks/use-open-sessions'
 import { subscribeSessions } from '@/lib/board-live'
 import { cardSession, type SessionCard } from '@/lib/challenge-session'
 import type { LeaderboardRow } from '@/lib/leaderboard'
@@ -57,6 +57,14 @@ export function useSessionCard(): {
   // `FlagsProvider` and so can see the answer. See the note on `useOpenSessions`.
   const sessions = useOpenSessions(useFlag('challenges'))
   const [card, setCard] = useState<SessionCard<OpenSession>>(null)
+
+  // The leader moves while the player is away — a run of their own, or anyone else's —
+  // and the launch's single read would show the old one. The intro mounts afresh on every
+  // visit, so asking again here makes each visit show the standings as they are. The
+  // first mount repeats the launch read; the cost is one request.
+  useEffect(() => {
+    refreshOpenSessions()
+  }, [])
 
   // Against the clock as the rows land. Runs once more than it used to — once on the
   // empty list, which resolves to no card, and once when the read answers — and the
