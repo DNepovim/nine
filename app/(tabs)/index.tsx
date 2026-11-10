@@ -3240,6 +3240,7 @@ export default function GameScreen() {
             {/* ── News archive — opened from advanced options ── */}
             {menuOverlay === 'news' && (
               <NewsArchiveOverlay
+                pushHelp={pushConsent.help}
                 onClose={() => {
                   setMenuOverlay('advanced')
                 }}

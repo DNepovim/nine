@@ -6,11 +6,13 @@ import { useLocale } from '@/hooks/use-locale'
 import {
   disablePush,
   enablePush,
+  pushHelp as readPushHelp,
   pushReach as readPushReach,
   refreshPush,
+  watchPushReach,
 } from '@/lib/push'
 import { parsePushConsent, pushStepDue, type PushConsent } from '@/lib/push-consent'
-import type { PushReach } from '@/lib/push-reach'
+import type { PushHelp, PushReach } from '@/lib/push-reach'
 import type { PushRow } from '@/types/push'
 
 // Whether this player has been asked about push, what they said, and what the device can
@@ -45,6 +47,8 @@ export function usePushConsent({
   // The OPTIONS row and its switch: null where there is no row to show.
   row: PushRow | null
   toggle: () => void
+  // What to tell a blocked player: where, on this device, notifications are switched back on.
+  help: PushHelp
 } {
   const { locale } = useLocale()
   const [consent, setConsent] = useState<PushConsent>('unknown')
@@ -53,6 +57,7 @@ export function usePushConsent({
   // Read after mount, never at render: the web export renders this in Node, which has no
   // `navigator` to ask.
   const [reach, setReach] = useState<PushReach>('unsupported')
+  const [help, setHelp] = useState<PushHelp>('browser')
 
   useEffect(() => {
     AsyncStorage.getItem(PUSH_CONSENT_KEY)
@@ -64,16 +69,21 @@ export function usePushConsent({
       })
       .finally(() => {
         setReach(readPushReach())
+        setHelp(readPushHelp())
         setLoaded(true)
       })
   }, [])
+
+  // The browser or the phone can change the answer while the app is open — the player turns
+  // notifications off in settings, or back on after being sent there. The row follows.
+  useEffect(() => watchPushReach(setReach), [])
 
   // A device that said yes saves its address again for whoever is on it now: a restore
   // moves a profile onto a phone, and the server moves the address with the save.
   useEffect(() => {
     if (!held || consent !== 'granted' || userId === null) return
     void refreshPush(locale)
-  }, [held, consent, userId, locale])
+  }, [held, consent, userId, locale, reach])
 
   const answer = useCallback((next: PushConsent) => {
     setConsent(next)
@@ -113,6 +123,7 @@ export function usePushConsent({
       setDismissed(true)
     }, []),
     setOn,
+    help,
     row:
       held && reach !== 'unsupported'
         ? { on: consent === 'granted' && reach === 'ready', reach }

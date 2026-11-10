@@ -1,5 +1,5 @@
 import type { Locale } from '@/lib/i18n/locale'
-import type { PushReach } from '@/lib/push-reach'
+import type { PushHelp, PushReach } from '@/lib/push-reach'
 import type { EnableResult } from '@/types/push'
 
 // Push, from the app's side: whether this device can be pushed to, subscribing it, and
@@ -18,3 +18,13 @@ export const enablePush = (_locale: Locale): Promise<EnableResult> =>
 export const refreshPush = (_locale: Locale): Promise<void> => Promise.resolve()
 
 export const disablePush = (): Promise<void> => Promise.resolve()
+
+// Where a blocked player goes to undo it. Native has no adapter yet.
+export const pushHelp = (): PushHelp => 'browser'
+
+// Calls back whenever the answer to `pushReach` may have changed under the app — the player
+// switched notifications off or on in the browser or the phone's settings. Returns the way
+// to stop listening.
+export const watchPushReach =
+  (_onChange: (reach: PushReach) => void): (() => void) =>
+  () => {}

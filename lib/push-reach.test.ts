@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import { pushReach, type PushEnv } from '@/lib/push-reach'
+import { pushHelp, pushReach, type PushEnv } from '@/lib/push-reach'
 
 const IPHONE =
   'Mozilla/5.0 (iPhone; CPU iPhone OS 17_4 like Mac OS X) AppleWebKit/605.1.15'
@@ -53,5 +53,36 @@ describe('pushReach', () => {
 
   it('is blocked once the browser has refused', () => {
     expect(pushReach(env({ permission: 'denied' }))).toBe('blocked')
+  })
+})
+
+describe('pushHelp', () => {
+  const ANDROID = 'Mozilla/5.0 (Linux; Android 14; Pixel 8) Chrome/120 Mobile'
+
+  it('points an installed iPhone app at the phone settings', () => {
+    expect(pushHelp({ userAgent: IPHONE, maxTouchPoints: 5, standalone: true })).toBe(
+      'ios-app',
+    )
+  })
+
+  it('points an installed Android app at the app settings', () => {
+    expect(pushHelp({ userAgent: ANDROID, maxTouchPoints: 5, standalone: true })).toBe(
+      'android-app',
+    )
+  })
+
+  it('points everything in a browser tab at the site settings', () => {
+    expect(pushHelp({ userAgent: IPHONE, maxTouchPoints: 5, standalone: false })).toBe(
+      'browser',
+    )
+    expect(pushHelp({ userAgent: DESKTOP, maxTouchPoints: 0, standalone: false })).toBe(
+      'browser',
+    )
+  })
+
+  it('treats an installed desktop app as a browser', () => {
+    expect(pushHelp({ userAgent: DESKTOP, maxTouchPoints: 0, standalone: true })).toBe(
+      'browser',
+    )
   })
 })

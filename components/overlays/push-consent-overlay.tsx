@@ -36,7 +36,7 @@ export function PushConsentOverlay({
   return (
     <ModalCard
       closeButton={false}
-      title={<Trans>CAN WE TELL YOU WHEN IT HAPPENS?</Trans>}
+      title={<Trans>SET UP NOTIFICATIONS</Trans>}
       onDismiss={onDismiss}
     >
       {(close) => (
@@ -51,21 +51,9 @@ export function PushConsentOverlay({
 
             <Text
               selectable={false}
-              className={cn(TYPE.cardTitle, 'mt-4 text-center')}
-              style={{ color: APP_VIOLET }}
+              className={cn(TYPE.prose, 'mt-4 text-center text-dim')}
             >
-              <Trans>SOMEONE TOOK YOUR RECORD</Trans>
-            </Text>
-
-            <Text
-              selectable={false}
-              className={cn(TYPE.prose, 'mt-2 text-center text-dim')}
-            >
-              <Trans>
-                With your OK, we'll send a notification when a rival takes a record you
-                hold, even if the game is closed. Nothing else. Your device's address is
-                kept until you switch this off in OPTIONS.
-              </Trans>
+              <Trans>Get a notification when a rival takes your record.</Trans>
             </Text>
 
             {reach === 'install' && (
@@ -74,8 +62,7 @@ export function PushConsentOverlay({
                 className={cn(TYPE.prose, 'mt-3 text-center text-dim')}
               >
                 <Trans>
-                  On iPhone and iPad this works only once nine is on your Home Screen. Add
-                  it from the Share menu, open it from there and you'll be asked again.
+                  Add nine to your Home Screen first, then open it from there.
                 </Trans>
               </Text>
             )}

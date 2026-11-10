@@ -192,6 +192,11 @@ export type ButtonId =
   // On iOS outside the Home Screen the card can only point there; this closes it for the
   // session.
   | 'push_consent.later'
+  // Turning it off again from OPTIONS asks first, like the recording ask beside it.
+  | 'push_withdraw.confirm'
+  | 'push_withdraw.keep'
+  // The browser has refused; this dialog says how to undo that.
+  | 'push_blocked.close'
 
   // ── Challenges, as a player meets them ──
   // The card on the start screen, and the dialog behind it. `challenge.board` is the

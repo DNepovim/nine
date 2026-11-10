@@ -41,3 +41,22 @@ export function pushReach({
   if (permission === 'denied') return 'blocked'
   return 'ready'
 }
+
+// Where a blocked player has to go to undo it, which depends on where nine is running: an
+// installed app has no address bar to find a site's settings from, so the way back is the
+// phone's own settings for it.
+//
+//   ios-app      installed on an iPhone or iPad: Settings → Notifications → nine
+//   android-app  installed on Android: Settings → Apps → nine → Notifications
+//   browser      everywhere else: the site settings behind the address bar
+export type PushHelp = 'ios-app' | 'android-app' | 'browser'
+
+export function pushHelp({
+  userAgent,
+  maxTouchPoints,
+  standalone,
+}: Pick<PushEnv, 'userAgent' | 'maxTouchPoints' | 'standalone'>): PushHelp {
+  if (!standalone) return 'browser'
+  if (isIos({ userAgent, maxTouchPoints })) return 'ios-app'
+  return userAgent.includes('Android') ? 'android-app' : 'browser'
+}

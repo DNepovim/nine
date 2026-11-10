@@ -53,6 +53,12 @@ None of these is run by the build. Each is a production write.
 
 ## Trying it locally
 
+- **Nothing shows without a key.** Generate a pair once (`pnpm dlx web-push generate-vapid-keys`),
+  put the public half in `.env` as `EXPO_PUBLIC_VAPID_PUBLIC_KEY`, and restart the dev server with
+  `expo start --clear` — Metro bakes the value in, so a running server never sees a change. With
+  no key push reads as unsupported: no card, no NOTIFICATIONS row, no error.
+- The feature must be held too: `private` with your role in its stack, or `public`.
+- For sending locally put all three `VAPID_*` values in `supabase/functions/.env` (gitignored).
 - The API is on `127.0.0.1:54399` here (`nine-kong-proxy`), not 54321.
 - `supabase functions serve send-push --env-file <file with the three VAPID_ vars>`, then
   `POST` it with `Authorization: Bearer <local service role key>`. Without the key it answers 401.

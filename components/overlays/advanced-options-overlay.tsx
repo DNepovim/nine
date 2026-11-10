@@ -6,7 +6,8 @@ import { ScrollView, Text, View } from 'react-native'
 import { LocaleToggle } from '@/components/locale-toggle'
 import { ModalCard } from '@/components/overlays/modal-card'
 import { OptionCheckbox } from '@/components/overlays/option-checkbox'
-import { ReplayWithdrawModal } from '@/components/overlays/replay-withdraw-modal'
+import { PushBlockedModal } from '@/components/overlays/push-blocked-modal'
+import { WithdrawModal } from '@/components/overlays/withdraw-modal'
 import { TrackedPressable } from '@/components/tracked-pressable'
 import { DIM_INK } from '@/constants/colors'
 import { TYPE } from '@/constants/typography'
@@ -15,7 +16,7 @@ import type { ReplayConsent } from '@/hooks/use-replay-consent'
 import { useViewport } from '@/hooks/use-viewport'
 import { buildInfo } from '@/lib/build-info'
 import { cn } from '@/lib/cn'
-import type { PushReach } from '@/lib/push-reach'
+import type { PushHelp, PushReach } from '@/lib/push-reach'
 import type { PushRow } from '@/types/push'
 
 // What the NOTIFICATIONS row says under its name, by what the device can do about it. Only
@@ -23,7 +24,7 @@ import type { PushRow } from '@/types/push'
 const PUSH_DESCRIPTION: Record<Exclude<PushReach, 'unsupported'>, ReactNode> = {
   ready: <Trans>Tell me when a rival takes my record</Trans>,
   install: <Trans>Add nine to your Home Screen first</Trans>,
-  blocked: <Trans>Blocked in your browser’s settings</Trans>,
+  blocked: <Trans>Switched off — tap to see how</Trans>,
 }
 
 const noop = () => {}
@@ -68,6 +69,7 @@ export function AdvancedOptionsOverlay({
   replayConsent,
   onToggleReplayConsent,
   push,
+  pushHelp,
   onTogglePush,
   onOpenNews,
   onClose,
@@ -84,6 +86,8 @@ export function AdvancedOptionsOverlay({
   replayConsent: ReplayConsent
   onToggleReplayConsent: () => void
   push: PushRow | null
+  // Where, on this device, notifications are switched back on — for the blocked row.
+  pushHelp: PushHelp
   onTogglePush: () => void
   onOpenNews: () => void
   onClose: () => void
@@ -95,6 +99,8 @@ export function AdvancedOptionsOverlay({
   const { height } = useViewport()
   const build = buildInfo()
   const [confirmingWithdraw, setConfirmingWithdraw] = useState(false)
+  const [confirmingPush, setConfirmingPush] = useState(false)
+  const [pushHelpOpen, setPushHelpOpen] = useState(false)
   // OPTIONS, not ADVANCED: this is the only settings screen there is, and both buttons
   // that open it — on the intro and on the pause screen — say OPTIONS. The identifiers
   // still say advanced.
@@ -145,8 +151,14 @@ export function AdvancedOptionsOverlay({
                 checked={push.on}
                 label={<Trans>NOTIFICATIONS</Trans>}
                 description={PUSH_DESCRIPTION[push.reach]}
-                // Only a device that can be asked has anything to toggle.
-                onToggle={push.reach === 'ready' ? onTogglePush : noop}
+                // Turning it on is one tap, off asks first, and a browser that has already
+                // refused cannot be asked again — the row says how to undo that instead.
+                onToggle={() => {
+                  if (push.reach === 'blocked') setPushHelpOpen(true)
+                  else if (push.reach !== 'ready') noop()
+                  else if (push.on) setConfirmingPush(true)
+                  else onTogglePush()
+                }}
               />
             )}
 
@@ -185,13 +197,49 @@ export function AdvancedOptionsOverlay({
         )}
       </ModalCard>
       {confirmingWithdraw && (
-        <ReplayWithdrawModal
+        <WithdrawModal
+          title={<Trans>Stop session recording?</Trans>}
+          body={
+            <Trans>
+              You are withdrawing your consent. We will no longer watch replays to fix
+              bugs.
+            </Trans>
+          }
+          confirmLabel={<Trans>STOP RECORDING</Trans>}
+          keepLabel={<Trans>KEEP RECORDING</Trans>}
+          confirmId="replay_withdraw.confirm"
+          keepId="replay_withdraw.keep"
           onConfirm={() => {
             setConfirmingWithdraw(false)
             onToggleReplayConsent()
           }}
           onDismiss={() => {
             setConfirmingWithdraw(false)
+          }}
+        />
+      )}
+      {confirmingPush && (
+        <WithdrawModal
+          title={<Trans>Turn off notifications?</Trans>}
+          body={<Trans>You won't hear about it when a rival takes your record.</Trans>}
+          confirmLabel={<Trans>TURN OFF</Trans>}
+          keepLabel={<Trans>KEEP THEM ON</Trans>}
+          confirmId="push_withdraw.confirm"
+          keepId="push_withdraw.keep"
+          onConfirm={() => {
+            setConfirmingPush(false)
+            onTogglePush()
+          }}
+          onDismiss={() => {
+            setConfirmingPush(false)
+          }}
+        />
+      )}
+      {pushHelpOpen && (
+        <PushBlockedModal
+          help={pushHelp}
+          onDismiss={() => {
+            setPushHelpOpen(false)
           }}
         />
       )}

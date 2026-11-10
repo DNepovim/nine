@@ -1,7 +1,13 @@
 import { env } from '@/lib/env'
 import type { Locale } from '@/lib/i18n/locale'
 import { vapidKeyBytes } from '@/lib/push-key'
-import { pushReach as reachOf, type PushReach } from '@/lib/push-reach'
+import {
+  pushHelp as helpOf,
+  pushReach as reachOf,
+  type PushEnv,
+  type PushHelp,
+  type PushReach,
+} from '@/lib/push-reach'
 import { supabase } from '@/lib/supabase'
 import type { EnableResult } from '@/types/push'
 
@@ -9,19 +15,49 @@ import type { EnableResult } from '@/types/push'
 // push manager makes the address, and `save_push_subscription` hands it to the server.
 type StandaloneNavigator = Navigator & { standalone?: boolean }
 
-export function pushReach(): PushReach {
+function readEnv(): PushEnv {
   const nav: StandaloneNavigator = navigator
-  return reachOf({
+  return {
+    // No key means nothing can be signed; `pushReach` asks before anything else.
+    configured: env.EXPO_PUBLIC_VAPID_PUBLIC_KEY !== undefined,
     userAgent: nav.userAgent,
     maxTouchPoints: nav.maxTouchPoints,
     standalone:
       window.matchMedia('(display-mode: standalone)').matches || nav.standalone === true,
-    // No key means nothing can be signed; `pushReach` asks before anything else.
-    configured: env.EXPO_PUBLIC_VAPID_PUBLIC_KEY !== undefined,
     hasPushApi:
       'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window,
     permission: 'Notification' in window ? Notification.permission : 'default',
-  })
+  }
+}
+
+export const pushReach = (): PushReach => reachOf(readEnv())
+
+export const pushHelp = (): PushHelp => helpOf(readEnv())
+
+// The player can undo a permission from outside the app, so the answer is asked again
+// whenever the browser says it changed (where it can say so) and whenever the page comes back
+// into view — which is where a player returns from the settings they were sent to.
+export function watchPushReach(onChange: (reach: PushReach) => void): () => void {
+  const check = () => {
+    onChange(pushReach())
+  }
+  document.addEventListener('visibilitychange', check)
+  window.addEventListener('focus', check)
+  let status: PermissionStatus | undefined
+  navigator.permissions
+    .query({ name: 'notifications' })
+    .then((result) => {
+      status = result
+      status.addEventListener('change', check)
+    })
+    .catch(() => {
+      // Not every browser reports this one; focus and visibility still cover the return.
+    })
+  return () => {
+    document.removeEventListener('visibilitychange', check)
+    window.removeEventListener('focus', check)
+    status?.removeEventListener('change', check)
+  }
 }
 
 // How long to wait for a worker to be active. The production worker registers when the page
