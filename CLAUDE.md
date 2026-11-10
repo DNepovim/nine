@@ -109,6 +109,9 @@ One line each. The full definitions — the reasoning, the edge cases, what each
 | **account**       | The `auth.users` row under a profile. Code word only; the player has a **profile**.                                                               | `auth.users`                                                              |
 | **orientation**   | `upright` or `sideways` dial. Not turn, not tilt.                                                                                                 | `DialSpec.orientation`, `orientMove`                                      |
 | **tilt**          | How far the arcade map lies back (perspective). Arcade only.                                                                                      | `lib/arcade-tilt.ts`                                                      |
+| **push**          | A notification while the app is closed; players read NOTIFICATIONS. One trigger so far: a **takeover**. Behind the `push` feature.                | `lib/push.ts`, `hooks/use-push-consent.ts`, `send-push` function          |
+| **subscription**  | One device's address for a push, belonging to one profile. Not a **session**.                                                                     | `push_subscriptions`, `save_push_subscription`                            |
+| **outbox**        | Pushes owed and not yet sent; one per player, board and day.                                                                                      | `push_outbox`, `drain_push_outbox`                                        |
 
 Three words for three different rewards, and they are not interchangeable:
 
