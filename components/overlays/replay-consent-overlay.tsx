@@ -34,7 +34,7 @@ export function ReplayConsentOverlay({
   return (
     <ModalCard
       closeButton={false}
-      title={<Trans>CAN WE LOOK UNDER YOUR THUMBS?</Trans>}
+      title={<Trans>WATCH YOU PLAY?</Trans>}
       onDismiss={onDismiss}
     >
       {(close) => (
@@ -60,10 +60,8 @@ export function ReplayConsentOverlay({
               className={cn(TYPE.prose, 'mt-2 text-center text-dim')}
             >
               <Trans>
-                With your OK, we'll record a replay of how you play — taps, swipes, what's
-                on screen — so we can see bugs the numbers alone don't show. Every text
-                field, nickname included, is blanked out before it ever leaves your
-                device. Change your mind any time from OPTIONS.
+                Record a replay of your play to help us spot bugs. Text fields are blanked.
+                Change it any time in OPTIONS.
               </Trans>
             </Text>
           </View>

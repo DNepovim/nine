@@ -12,6 +12,7 @@ import { NextVoteDialog } from '@/components/overlays/next-vote-dialog'
 import { NextVoteResultsDialog } from '@/components/overlays/next-vote-results-dialog'
 import { PausedOverlay } from '@/components/overlays/paused-overlay'
 import { RatingOverlay } from '@/components/overlays/rating-overlay'
+import { ReplayConsentOverlay } from '@/components/overlays/replay-consent-overlay'
 import { StepUpOverlay } from '@/components/overlays/step-up-overlay'
 import { TutorialDoneModal } from '@/components/overlays/tutorial-done-modal'
 import { WhatsNewOverlay } from '@/components/overlays/whats-new-overlay'
@@ -1200,6 +1201,20 @@ const SCREENS: Section[] = [
       recap('scattered'),
       recap('quiet'),
       recap('empty'),
+    ],
+  },
+  {
+    // The ask before session recording starts. Both answers only close: the real card
+    // writes the player's stored answer, which a mock must not do to the dev profile.
+    title: 'REPLAY CONSENT',
+    items: [
+      {
+        key: 'replay-consent',
+        label: 'CARD',
+        render: (close) => (
+          <ReplayConsentOverlay onAllow={close} onDecline={close} onDismiss={close} />
+        ),
+      },
     ],
   },
   {

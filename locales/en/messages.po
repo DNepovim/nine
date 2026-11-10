@@ -753,7 +753,7 @@ msgstr "ALL SIX BOARDS"
 msgid "ALL THREE"
 msgstr "ALL THREE"
 
-#: components/overlays/replay-consent-overlay.tsx:94
+#: components/overlays/replay-consent-overlay.tsx:92
 msgid "ALLOW"
 msgstr "ALLOW"
 
@@ -931,19 +931,19 @@ msgstr "Best scores, up top"
 msgid "BETTER ON YOUR PHONE"
 msgstr "BETTER ON YOUR PHONE"
 
-#: modes/challenges/catalog.ts:823
+#: modes/challenges/catalog.ts:834
 msgid "BIN"
 msgstr "BIN"
 
-#: modes/challenges/catalog.ts:820
+#: modes/challenges/catalog.ts:831
 msgid "BINA­RY"
 msgstr "BINA­RY"
 
-#: modes/challenges/catalog.ts:963
+#: modes/challenges/catalog.ts:974
 msgid "BLACK­OUT"
 msgstr "BLACK­OUT"
 
-#: modes/challenges/catalog.ts:966
+#: modes/challenges/catalog.ts:977
 msgid "BLK"
 msgstr "BLK"
 
@@ -987,10 +987,6 @@ msgstr "Builds: Accuracy presses = par; Speed clock ≥ {fastHit}. Breaks: a hit
 #: components/overlays/how-to-play-overlay.tsx:516
 msgid "Buttons can show their weight, their ceiling, and what each is giving right now — pick which from MENU during a run."
 msgstr "Buttons can show their weight, their ceiling, and what each is giving right now — pick which from MENU during a run."
-
-#: components/overlays/replay-consent-overlay.tsx:37
-msgid "CAN WE LOOK UNDER YOUR THUMBS?"
-msgstr "CAN WE LOOK UNDER YOUR THUMBS?"
 
 #: components/overlays/admin-candidates-dialog.tsx:159
 #: components/overlays/email-modal.tsx:136
@@ -1159,7 +1155,7 @@ msgstr "CONNOISSEUR"
 msgid "CONTINUE"
 msgstr "CONTINUE"
 
-#: app/(tabs)/index.tsx:2996
+#: app/(tabs)/index.tsx:3017
 msgid "Continue the tutorial"
 msgstr "Continue the tutorial"
 
@@ -1232,11 +1228,11 @@ msgstr "Double-tap where the targets appear to pause. Hold there for three secon
 msgid "DRAG ACROSS KEYS"
 msgstr "DRAG ACROSS KEYS"
 
-#: modes/challenges/catalog.ts:559
+#: modes/challenges/catalog.ts:570
 msgid "DRF"
 msgstr "DRF"
 
-#: modes/challenges/catalog.ts:556
+#: modes/challenges/catalog.ts:567
 msgid "DRIFT"
 msgstr "DRIFT"
 
@@ -1269,7 +1265,7 @@ msgstr "Eat the last of them and the empty row starts to pulse: you are starving
 msgid "EDIT CHALLENGE"
 msgstr "EDIT CHALLENGE"
 
-#: modes/challenges/catalog.ts:824
+#: modes/challenges/catalog.ts:835
 msgid "Eight keys, each on or off."
 msgstr "Eight keys, each on or off."
 
@@ -1324,15 +1320,15 @@ msgstr "Every column leans your way. There is nothing here they hold."
 msgid "Every day was [A]’s except [D]. [B] got exactly one, and made it count."
 msgstr "Every day was [A]’s except [D]. [B] got exactly one, and made it count."
 
-#: modes/challenges/catalog.ts:689
+#: modes/challenges/catalog.ts:700
 msgid "Every hit spins the dial."
 msgstr "Every hit spins the dial."
 
-#: modes/challenges/catalog.ts:894
+#: modes/challenges/catalog.ts:905
 msgid "Every move works backwards."
 msgstr "Every move works backwards."
 
-#: modes/challenges/catalog.ts:560
+#: modes/challenges/catalog.ts:571
 msgid "Every number drifts. Catch it before it moves."
 msgstr "Every number drifts. Catch it before it moves."
 
@@ -1541,7 +1537,7 @@ msgstr "FORTUNE"
 msgid "Forward a step"
 msgstr "Forward a step"
 
-#: modes/challenges/catalog.ts:159
+#: modes/challenges/catalog.ts:160
 msgid "FOUR BY FOUR"
 msgstr "FOUR BY FOUR"
 
@@ -1553,7 +1549,7 @@ msgstr "FOUR KEYS"
 msgid "Four keys, doubled speed"
 msgstr "Four keys, doubled speed"
 
-#: modes/challenges/catalog.ts:759
+#: modes/challenges/catalog.ts:770
 msgid "FREEZE"
 msgstr "FREEZE"
 
@@ -1561,7 +1557,7 @@ msgstr "FREEZE"
 msgid "Friday"
 msgstr "Friday"
 
-#: modes/challenges/catalog.ts:762
+#: modes/challenges/catalog.ts:773
 msgid "FRZ"
 msgstr "FRZ"
 
@@ -1634,7 +1630,7 @@ msgstr "GOT IT"
 msgid "GRADUATE"
 msgstr "GRADUATE"
 
-#: modes/challenges/catalog.ts:271
+#: modes/challenges/catalog.ts:276
 msgid "HABIT"
 msgstr "HABIT"
 
@@ -1646,7 +1642,7 @@ msgstr "HARD"
 msgid "HAT TRICK"
 msgstr "HAT TRICK"
 
-#: modes/challenges/catalog.ts:275
+#: modes/challenges/catalog.ts:280
 msgid "HBT"
 msgstr "HBT"
 
@@ -1888,7 +1884,7 @@ msgstr "KEEP RECORDING"
 msgid "KEEP THEM ON"
 msgstr "KEEP THEM ON"
 
-#: modes/challenges/catalog.ts:622
+#: modes/challenges/catalog.ts:633
 msgid "KEY"
 msgstr "KEY"
 
@@ -2069,7 +2065,7 @@ msgstr "MECHANICS"
 msgid "MEDALS HELD, EVER"
 msgstr "MEDALS HELD, EVER"
 
-#: components/game/pause-button.tsx:61
+#: components/game/pause-button.tsx:83
 msgid "MENU"
 msgstr "MENU"
 
@@ -2086,11 +2082,11 @@ msgstr "Messages sent in"
 msgid "MINUTES"
 msgstr "MINUTES"
 
-#: modes/challenges/catalog.ts:893
+#: modes/challenges/catalog.ts:904
 msgid "MIR"
 msgstr "MIR"
 
-#: modes/challenges/catalog.ts:890
+#: modes/challenges/catalog.ts:901
 msgid "MIR­ROR"
 msgstr "MIR­ROR"
 
@@ -2300,12 +2296,12 @@ msgstr "No sessions planned yet."
 msgid "No sessions yet."
 msgstr "No sessions yet."
 
-#: modes/challenges/catalog.ts:417
+#: modes/challenges/catalog.ts:428
 msgid "NO SLIP"
 msgstr "NO SLIP"
 
 #: components/overlays/push-consent-overlay.tsx:95
-#: components/overlays/replay-consent-overlay.tsx:81
+#: components/overlays/replay-consent-overlay.tsx:79
 msgid "NO THANKS"
 msgstr "NO THANKS"
 
@@ -2485,7 +2481,7 @@ msgstr "Nov"
 msgid "NOVEMBER"
 msgstr "NOVEMBER"
 
-#: modes/challenges/catalog.ts:420
+#: modes/challenges/catalog.ts:431
 msgid "NSL"
 msgstr "NSL"
 
@@ -2545,11 +2541,11 @@ msgstr "One board did not go along with it: [BOARD] stayed [W]’s throughout."
 msgid "One gesture can move several keys"
 msgstr "One gesture can move several keys"
 
-#: modes/challenges/catalog.ts:619
+#: modes/challenges/catalog.ts:630
 msgid "ONE KEY"
 msgstr "ONE KEY"
 
-#: modes/challenges/catalog.ts:623
+#: modes/challenges/catalog.ts:634
 msgid "One key, one second."
 msgstr "One key, one second."
 
@@ -2557,7 +2553,7 @@ msgstr "One key, one second."
 msgid "One line under your name, for anyone who opens your profile."
 msgstr "One line under your name, for anyone who opens your profile."
 
-#: modes/challenges/catalog.ts:347
+#: modes/challenges/catalog.ts:358
 msgid "One look, then from memory."
 msgstr "One look, then from memory."
 
@@ -2585,7 +2581,7 @@ msgstr "One run ≥ 60 min, any mode"
 msgid "One set of standings, shared by everyone playing it, and it never resets. Your best run is the one that counts. Where the standings are a race against the clock, only a run you finish counts at all — stop early, or let the window close on you, and it is not timed."
 msgstr "One set of standings, shared by everyone playing it, and it never resets. Your best run is the one that counts. Where the standings are a race against the clock, only a run you finish counts at all — stop early, or let the window close on you, and it is not timed."
 
-#: modes/challenges/catalog.ts:421
+#: modes/challenges/catalog.ts:432
 msgid "One slip and it's over."
 msgstr "One slip and it's over."
 
@@ -2918,11 +2914,15 @@ msgstr "READY"
 msgid "Ready to play for real?"
 msgstr "Ready to play for real?"
 
+#: components/overlays/replay-consent-overlay.tsx:62
+msgid "Record a replay of your play to help us spot bugs. Text fields are blanked. Change it any time in OPTIONS."
+msgstr "Record a replay of your play to help us spot bugs. Text fields are blanked. Change it any time in OPTIONS."
+
 #: constants/news.ts:169
 msgid "Records, celebrated"
 msgstr "Records, celebrated"
 
-#: modes/challenges/catalog.ts:685
+#: modes/challenges/catalog.ts:696
 msgid "REELS"
 msgstr "REELS"
 
@@ -2982,7 +2982,7 @@ msgstr "RING"
 msgid "ring {traineeRing} (player-set), gap = min(ring ÷ 3, {traineeGap})"
 msgstr "ring {traineeRing} (player-set), gap = min(ring ÷ 3, {traineeGap})"
 
-#: modes/challenges/catalog.ts:688
+#: modes/challenges/catalog.ts:699
 msgid "RLS"
 msgstr "RLS"
 
@@ -3145,7 +3145,7 @@ msgstr "Score rewards precision: solve each target in the fewest moves."
 msgid "Scores, one ladder per mode — Accuracy and Speed ask for opposite things, so each has its own rungs to climb."
 msgstr "Scores, one ladder per mode — Accuracy and Speed ask for opposite things, so each has its own rungs to climb."
 
-#: modes/challenges/catalog.ts:495
+#: modes/challenges/catalog.ts:506
 msgid "SDW"
 msgstr "SDW"
 
@@ -3265,7 +3265,7 @@ msgstr "SHOW LESS"
 msgid "SHOW SUM IN BUTTONS"
 msgstr "SHOW SUM IN BUTTONS"
 
-#: modes/challenges/catalog.ts:492
+#: modes/challenges/catalog.ts:503
 msgid "SIDE­WAYS"
 msgstr "SIDE­WAYS"
 
@@ -3274,7 +3274,7 @@ msgstr "SIDE­WAYS"
 msgid "SINCE {0}"
 msgstr "SINCE {0}"
 
-#: modes/challenges/catalog.ts:160
+#: modes/challenges/catalog.ts:161
 msgid "Sixteen keys, double time"
 msgstr "Sixteen keys, double time"
 
@@ -3288,7 +3288,7 @@ msgstr "Skill inside a single run: a long streak, the top multiplier, a stretch 
 msgid "SKIP"
 msgstr "SKIP"
 
-#: components/game/opening-layer.tsx:270
+#: components/game/opening-layer.tsx:288
 msgid "Skip to the run"
 msgstr "Skip to the run"
 
@@ -3404,7 +3404,7 @@ msgstr "STEP UP TO {rungName}"
 msgid "Sticking with it — targets landed across every run you have ever played, and days played in a row."
 msgstr "Sticking with it — targets landed across every run you have ever played, and days played in a row."
 
-#: modes/challenges/catalog.ts:346
+#: modes/challenges/catalog.ts:357
 msgid "STM"
 msgstr "STM"
 
@@ -3416,7 +3416,7 @@ msgstr "STOP RECORDING"
 msgid "Stop session recording?"
 msgstr "Stop session recording?"
 
-#: modes/challenges/catalog.ts:343
+#: modes/challenges/catalog.ts:354
 msgid "STORM"
 msgstr "STORM"
 
@@ -3637,7 +3637,7 @@ msgstr "The clock keeps tightening as your run goes on, less and less each time.
 msgid "THE CROWN"
 msgstr "THE CROWN"
 
-#: modes/challenges/catalog.ts:496
+#: modes/challenges/catalog.ts:507
 msgid "The dial has fallen on its side."
 msgstr "The dial has fallen on its side."
 
@@ -3684,7 +3684,7 @@ msgstr "The hero halts well short of the gate, with the walls across the top of 
 msgid "The hit that leaves the board empty counts double."
 msgstr "The hit that leaves the board empty counts double."
 
-#: modes/challenges/catalog.ts:967
+#: modes/challenges/catalog.ts:978
 msgid "The keys go dark. Count in your head."
 msgstr "The keys go dark. Count in your head."
 
@@ -3718,7 +3718,7 @@ msgstr "THE PHOENIX"
 msgid "The rules are its own. The keys, the clock, the scoring, how many lives you get — any of it may be different, and the card says what before you start. Unless it says otherwise, it scores like Accuracy: the fewest moves build your streak, and a wasted move never costs a heart."
 msgstr "The rules are its own. The keys, the clock, the scoring, how many lives you get — any of it may be different, and the card says what before you start. Unless it says otherwise, it scores like Accuracy: the fewest moves build your streak, and a wasted move never costs a heart."
 
-#: modes/challenges/catalog.ts:276
+#: modes/challenges/catalog.ts:281
 msgid "The same nine, every run. Be quick."
 msgstr "The same nine, every run. Be quick."
 
@@ -3726,7 +3726,7 @@ msgstr "The same nine, every run. Be quick."
 msgid "The standings stay exactly as they are and the places settle now. This cannot be undone — running it again is a new session, with a board of its own."
 msgstr "The standings stay exactly as they are and the places settle now. This cannot be undone — running it again is a new session, with a board of its own."
 
-#: modes/challenges/catalog.ts:763
+#: modes/challenges/catalog.ts:774
 msgid "The sum only moves when you hit."
 msgstr "The sum only moves when you hit."
 
@@ -4100,6 +4100,10 @@ msgstr "Warriors leave the gate one at a time, and faster the longer the fight d
 msgid "was"
 msgstr "was"
 
+#: components/overlays/replay-consent-overlay.tsx:37
+msgid "WATCH YOU PLAY?"
+msgstr "WATCH YOU PLAY?"
+
 #: components/overlays/email-code-modal.tsx:448
 msgid "We sent six digits to <0>{address}</0>."
 msgstr "We sent six digits to <0>{address}</0>."
@@ -4200,10 +4204,6 @@ msgstr "winning = score in window × w × period × place"
 #: components/overlays/admin-knowledge.tsx:126
 msgid "WINNINGS"
 msgstr "WINNINGS"
-
-#: components/overlays/replay-consent-overlay.tsx:62
-msgid "With your OK, we'll record a replay of how you play — taps, swipes, what's on screen — so we can see bugs the numbers alone don't show. Every text field, nickname included, is blanked out before it ever leaves your device. Change your mind any time from OPTIONS."
-msgstr "With your OK, we'll record a replay of how you play — taps, swipes, what's on screen — so we can see bugs the numbers alone don't show. Every text field, nickname included, is blanked out before it ever leaves your device. Change your mind any time from OPTIONS."
 
 #: components/overlays/compare-won-row.tsx:43
 msgid "WON"
