@@ -15,6 +15,18 @@ import type { ReplayConsent } from '@/hooks/use-replay-consent'
 import { useViewport } from '@/hooks/use-viewport'
 import { buildInfo } from '@/lib/build-info'
 import { cn } from '@/lib/cn'
+import type { PushReach } from '@/lib/push-reach'
+import type { PushRow } from '@/types/push'
+
+// What the NOTIFICATIONS row says under its name, by what the device can do about it. Only
+// 'ready' is a switch; the other two say why it is not.
+const PUSH_DESCRIPTION: Record<Exclude<PushReach, 'unsupported'>, ReactNode> = {
+  ready: <Trans>Tell me when a rival takes my record</Trans>,
+  install: <Trans>Add nine to your Home Screen first</Trans>,
+  blocked: <Trans>Blocked in your browser’s settings</Trans>,
+}
+
+const noop = () => {}
 
 function AdvancedOption({
   checked,
@@ -55,6 +67,8 @@ export function AdvancedOptionsOverlay({
   onToggleDrag,
   replayConsent,
   onToggleReplayConsent,
+  push,
+  onTogglePush,
   onOpenNews,
   onClose,
 }: {
@@ -69,6 +83,8 @@ export function AdvancedOptionsOverlay({
   // 'granted', unchecked is everything else. See hooks/use-replay-consent.ts.
   replayConsent: ReplayConsent
   onToggleReplayConsent: () => void
+  push: PushRow | null
+  onTogglePush: () => void
   onOpenNews: () => void
   onClose: () => void
 }) {
@@ -123,6 +139,16 @@ export function AdvancedOptionsOverlay({
                 else onToggleReplayConsent()
               }}
             />
+
+            {push !== null && (
+              <AdvancedOption
+                checked={push.on}
+                label={<Trans>NOTIFICATIONS</Trans>}
+                description={PUSH_DESCRIPTION[push.reach]}
+                // Only a device that can be asked has anything to toggle.
+                onToggle={push.reach === 'ready' ? onTogglePush : noop}
+              />
+            )}
 
             {/* Language. The whole row and not a disabled toggle: with Czech gated there
               is one language left, and a two-segment switch with nothing on the other

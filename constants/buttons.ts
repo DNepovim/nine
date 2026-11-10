@@ -67,6 +67,7 @@ export type ButtonId =
   | 'options.toggle'
   | 'options.theme_toggle'
   | 'options.locale_toggle'
+  | 'options.push_toggle'
   | 'options.dial_hint'
   | 'options.whats_new'
   | 'trainee_options.corner'
@@ -184,6 +185,13 @@ export type ButtonId =
   // Turning it off again from OPTIONS asks first.
   | 'replay_withdraw.confirm'
   | 'replay_withdraw.keep'
+
+  // ── Push consent ──
+  | 'push_consent.allow'
+  | 'push_consent.decline'
+  // On iOS outside the Home Screen the card can only point there; this closes it for the
+  // session.
+  | 'push_consent.later'
 
   // ── Challenges, as a player meets them ──
   // The card on the start screen, and the dialog behind it. `challenge.board` is the

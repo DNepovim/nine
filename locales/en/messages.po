@@ -681,6 +681,10 @@ msgstr "ADD MOTTO"
 msgid "ADD NICKNAME"
 msgstr "ADD NICKNAME"
 
+#: components/overlays/advanced-options-overlay.tsx:24
+msgid "Add nine to your Home Screen first"
+msgstr "Add nine to your Home Screen first"
+
 #: components/overlays/install-overlay.tsx:119
 msgid "ADD TO HOME SCREEN"
 msgstr "ADD TO HOME SCREEN"
@@ -939,6 +943,10 @@ msgstr "BLACK­OUT"
 msgid "BLK"
 msgstr "BLK"
 
+#: components/overlays/advanced-options-overlay.tsx:25
+msgid "Blocked in your browser’s settings"
+msgstr "Blocked in your browser’s settings"
+
 #: constants/achievements.ts:360
 msgid "BLUR"
 msgstr "BLUR"
@@ -983,6 +991,10 @@ msgstr "Buttons can show their weight, their ceiling, and what each is giving ri
 #: components/overlays/replay-consent-overlay.tsx:37
 msgid "CAN WE LOOK UNDER YOUR THUMBS?"
 msgstr "CAN WE LOOK UNDER YOUR THUMBS?"
+
+#: components/overlays/push-consent-overlay.tsx:39
+msgid "CAN WE TELL YOU WHEN IT HAPPENS?"
+msgstr "CAN WE TELL YOU WHEN IT HAPPENS?"
 
 #: components/overlays/admin-candidates-dialog.tsx:159
 #: components/overlays/email-modal.tsx:136
@@ -1151,7 +1163,7 @@ msgstr "CONNOISSEUR"
 msgid "CONTINUE"
 msgstr "CONTINUE"
 
-#: app/(tabs)/index.tsx:2927
+#: app/(tabs)/index.tsx:2983
 msgid "Continue the tutorial"
 msgstr "Continue the tutorial"
 
@@ -1200,7 +1212,7 @@ msgstr "DIAL THE GRID · MATCH THE NUMBER"
 msgid "DID IT REACH YOU?"
 msgstr "DID IT REACH YOU?"
 
-#: components/overlays/advanced-options-overlay.tsx:102
+#: components/overlays/advanced-options-overlay.tsx:121
 msgid "Display value × row × column"
 msgstr "Display value × row × column"
 
@@ -1220,7 +1232,7 @@ msgstr "DONE"
 msgid "Double-tap where the targets appear to pause. Hold there for three seconds to start the run over."
 msgstr "Double-tap where the targets appear to pause. Hold there for three seconds to start the run over."
 
-#: components/overlays/advanced-options-overlay.tsx:111
+#: components/overlays/advanced-options-overlay.tsx:130
 msgid "DRAG ACROSS KEYS"
 msgstr "DRAG ACROSS KEYS"
 
@@ -1268,6 +1280,10 @@ msgstr "Eight keys, each on or off."
 #: machines/tutorial-lesson.ts:319
 msgid "EMPTY THE ROW IN ONE DRAG"
 msgstr "EMPTY THE ROW IN ONE DRAG"
+
+#: components/overlays/push-consent-overlay.tsx:102
+msgid "ENABLE"
+msgstr "ENABLE"
 
 #: components/game/arcade-paused.tsx:63
 #: components/overlays/paused-overlay.tsx:280
@@ -1609,6 +1625,7 @@ msgstr "GOOSE EGG"
 #: components/overlays/install-overlay.tsx:25
 #: components/overlays/install-overlay.tsx:26
 #: components/overlays/install-overlay.tsx:27
+#: components/overlays/push-consent-overlay.tsx:92
 msgid "GOT IT"
 msgstr "GOT IT"
 
@@ -1911,7 +1928,7 @@ msgstr "Land your 999th target."
 msgid "Land your first target."
 msgstr "Land your first target."
 
-#: components/overlays/advanced-options-overlay.tsx:133
+#: components/overlays/advanced-options-overlay.tsx:162
 msgid "LANGUAGE"
 msgstr "LANGUAGE"
 
@@ -1967,7 +1984,7 @@ msgstr "Let a target’s ring run out and you lose one too — precision still h
 msgid "LET THE ADVENTURE BEGIN"
 msgstr "LET THE ADVENTURE BEGIN"
 
-#: components/overlays/advanced-options-overlay.tsx:119
+#: components/overlays/advanced-options-overlay.tsx:138
 msgid "Let us watch replays to fix bugs"
 msgstr "Let us watch replays to fix bugs"
 
@@ -2282,6 +2299,7 @@ msgstr "No sessions yet."
 msgid "NO SLIP"
 msgstr "NO SLIP"
 
+#: components/overlays/push-consent-overlay.tsx:108
 #: components/overlays/replay-consent-overlay.tsx:81
 msgid "NO THANKS"
 msgstr "NO THANKS"
@@ -2446,6 +2464,10 @@ msgstr "Nothing to choose between you."
 msgid "Nothing yet — a top three on any board puts a medal here."
 msgstr "Nothing yet — a top three on any board puts a medal here."
 
+#: components/overlays/advanced-options-overlay.tsx:149
+msgid "NOTIFICATIONS"
+msgstr "NOTIFICATIONS"
+
 #: lib/prose.ts:116
 msgid "Nov"
 msgstr "Nov"
@@ -2494,6 +2516,10 @@ msgstr "On [DATE] you took third on [B] with [S]"
 msgid "On Hard and Extreme, waste too many moves on a hit and you lose a life — the bar is 20% accuracy on Hard, 15% on Extreme. Easy never takes one for it."
 msgstr "On Hard and Extreme, waste too many moves on a hit and you lose a life — the bar is 20% accuracy on Hard, 15% on Extreme. Easy never takes one for it."
 
+#: components/overlays/push-consent-overlay.tsx:76
+msgid "On iPhone and iPad this works only once nine is on your Home Screen. Add it from the Share menu, open it from there and you'll be asked again."
+msgstr "On iPhone and iPad this works only once nine is on your Home Screen. Add it from the Share menu, open it from there and you'll be asked again."
+
 #: constants/achievements.ts:437
 msgid "ON THE BOARD"
 msgstr "ON THE BOARD"
@@ -2510,7 +2536,7 @@ msgstr "One all-time record fell: [BOARD], on [D]. It is [W]’s now."
 msgid "One board did not go along with it: [BOARD] stayed [W]’s throughout."
 msgstr "One board did not go along with it: [BOARD] stayed [W]’s throughout."
 
-#: components/overlays/advanced-options-overlay.tsx:112
+#: components/overlays/advanced-options-overlay.tsx:131
 msgid "One gesture can move several keys"
 msgstr "One gesture can move several keys"
 
@@ -2623,7 +2649,7 @@ msgstr "opens in {0}"
 msgid "OPTIMAL PATH"
 msgstr "OPTIMAL PATH"
 
-#: components/overlays/advanced-options-overlay.tsx:88
+#: components/overlays/advanced-options-overlay.tsx:107
 #: components/overlays/menu-overlay.tsx:642
 #: components/overlays/paused-overlay.tsx:286
 msgid "OPTIONS"
@@ -3173,7 +3199,7 @@ msgstr "SESSION"
 msgid "SESSION BONUS"
 msgstr "SESSION BONUS"
 
-#: components/overlays/advanced-options-overlay.tsx:118
+#: components/overlays/advanced-options-overlay.tsx:137
 msgid "SESSION RECORDING"
 msgstr "SESSION RECORDING"
 
@@ -3214,7 +3240,7 @@ msgstr "SHARE NINE"
 msgid "SHOW LESS"
 msgstr "SHOW LESS"
 
-#: components/overlays/advanced-options-overlay.tsx:101
+#: components/overlays/advanced-options-overlay.tsx:120
 msgid "SHOW SUM IN BUTTONS"
 msgstr "SHOW SUM IN BUTTONS"
 
@@ -3256,6 +3282,10 @@ msgstr "So you can get your profile back on another phone."
 #: components/overlays/how-to-play-overlay.tsx:621
 msgid "Some roads have bandits on them, and nothing says so the first time. The hero is stopped partway along and a band of them closes in from every side, each carrying a number — dial one to cut that man down. They come in off the edges of the screen, so the whole band can be read before the nearest of them arrives. Let one reach you and it costs a heart, and you are driven back to the crossroad you set off from. Clear the road and you walk on, and it may be carrying food or a heart for you."
 msgstr "Some roads have bandits on them, and nothing says so the first time. The hero is stopped partway along and a band of them closes in from every side, each carrying a number — dial one to cut that man down. They come in off the edges of the screen, so the whole band can be read before the nearest of them arrives. Let one reach you and it costs a heart, and you are driven back to the crossroad you set off from. Clear the road and you walk on, and it may be carrying food or a heart for you."
+
+#: components/overlays/push-consent-overlay.tsx:57
+msgid "SOMEONE TOOK YOUR RECORD"
+msgstr "SOMEONE TOOK YOUR RECORD"
 
 #: components/crash-screen.tsx:15
 msgid "SOMETHING BROKE"
@@ -3509,6 +3539,10 @@ msgstr "targets met"
 #: constants/news.ts:121
 msgid "Tell me what you think"
 msgstr "Tell me what you think"
+
+#: components/overlays/advanced-options-overlay.tsx:23
+msgid "Tell me when a rival takes my record"
+msgstr "Tell me when a rival takes my record"
 
 #: components/feedback-bookmark.tsx:155
 msgid "TELL US"
@@ -4065,7 +4099,7 @@ msgstr "WHAT DID YOU PULL OFF?"
 msgid "What made it good or bad?"
 msgstr "What made it good or bad?"
 
-#: components/overlays/advanced-options-overlay.tsx:146
+#: components/overlays/advanced-options-overlay.tsx:175
 #: components/overlays/news-archive-overlay.tsx:20
 msgid "WHAT’S NEW"
 msgstr "WHAT’S NEW"
@@ -4090,7 +4124,7 @@ msgstr "When two challenges are waiting, vote for the one you want to open first
 msgid "WHERE CAN WE REACH YOU?"
 msgstr "WHERE CAN WE REACH YOU?"
 
-#: components/overlays/next-vote.tsx:35
+#: components/overlays/next-vote.tsx:33
 msgid "WHICH ONE SHOULD BE NEXT?"
 msgstr "WHICH ONE SHOULD BE NEXT?"
 
@@ -4141,6 +4175,10 @@ msgstr "WINNINGS"
 #: components/overlays/replay-consent-overlay.tsx:62
 msgid "With your OK, we'll record a replay of how you play — taps, swipes, what's on screen — so we can see bugs the numbers alone don't show. Every text field, nickname included, is blanked out before it ever leaves your device. Change your mind any time from OPTIONS."
 msgstr "With your OK, we'll record a replay of how you play — taps, swipes, what's on screen — so we can see bugs the numbers alone don't show. Every text field, nickname included, is blanked out before it ever leaves your device. Change your mind any time from OPTIONS."
+
+#: components/overlays/push-consent-overlay.tsx:64
+msgid "With your OK, we'll send a notification when a rival takes a record you hold, even if the game is closed. Nothing else. Your device's address is kept until you switch this off in OPTIONS."
+msgstr "With your OK, we'll send a notification when a rival takes a record you hold, even if the game is closed. Nothing else. Your device's address is kept until you switch this off in OPTIONS."
 
 #: components/overlays/compare-won-row.tsx:43
 msgid "WON"
@@ -4227,7 +4265,7 @@ msgstr "you@example.com"
 msgid "YOUR"
 msgstr "YOUR"
 
-#: components/overlays/next-vote.tsx:35
+#: components/overlays/next-vote.tsx:33
 msgid "YOUR CHOICE"
 msgstr "YOUR CHOICE"
 

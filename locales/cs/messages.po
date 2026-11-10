@@ -681,6 +681,10 @@ msgstr "PŘIDAT MOTTO"
 msgid "ADD NICKNAME"
 msgstr "PŘIDAT PŘEZDÍVKU"
 
+#: components/overlays/advanced-options-overlay.tsx:24
+msgid "Add nine to your Home Screen first"
+msgstr "Nejdřív si přidej nine na plochu"
+
 #: components/overlays/install-overlay.tsx:119
 msgid "ADD TO HOME SCREEN"
 msgstr "PŘIDAT NA PLOCHU"
@@ -939,6 +943,10 @@ msgstr "TMA"
 msgid "BLK"
 msgstr "TMA"
 
+#: components/overlays/advanced-options-overlay.tsx:25
+msgid "Blocked in your browser’s settings"
+msgstr "Zablokováno v nastavení prohlížeče"
+
 #: constants/achievements.ts:360
 msgid "BLUR"
 msgstr "ROZMAZANĚ"
@@ -983,6 +991,10 @@ msgstr "Tlačítka umí ukázat svou váhu, svůj strop i to, kolik zrovna dáva
 #: components/overlays/replay-consent-overlay.tsx:37
 msgid "CAN WE LOOK UNDER YOUR THUMBS?"
 msgstr "MŮŽEME TI KOUKAT POD PRSTY?"
+
+#: components/overlays/push-consent-overlay.tsx:39
+msgid "CAN WE TELL YOU WHEN IT HAPPENS?"
+msgstr "MŮŽEME TI DÁT VĚDĚT, AŽ SE TO STANE?"
 
 #: components/overlays/admin-candidates-dialog.tsx:159
 #: components/overlays/email-modal.tsx:136
@@ -1151,7 +1163,7 @@ msgstr "ZNALEC"
 msgid "CONTINUE"
 msgstr "POKRAČOVAT"
 
-#: app/(tabs)/index.tsx:2927
+#: app/(tabs)/index.tsx:2983
 msgid "Continue the tutorial"
 msgstr "Pokračovat v tutoriálu"
 
@@ -1200,7 +1212,7 @@ msgstr "NASTAV MŘÍŽKU · TREF ČÍSLO"
 msgid "DID IT REACH YOU?"
 msgstr "PŘIŠEL TI E-MAIL?"
 
-#: components/overlays/advanced-options-overlay.tsx:102
+#: components/overlays/advanced-options-overlay.tsx:121
 msgid "Display value × row × column"
 msgstr "Zobrazit hodnotu × řádek × sloupec"
 
@@ -1220,7 +1232,7 @@ msgstr "HOTOVO"
 msgid "Double-tap where the targets appear to pause. Hold there for three seconds to start the run over."
 msgstr "Dvakrát ťukni tam, kde se objevují cíle, a hra se pozastaví. Podrž tam prst tři vteřiny a začneš znovu."
 
-#: components/overlays/advanced-options-overlay.tsx:111
+#: components/overlays/advanced-options-overlay.tsx:130
 msgid "DRAG ACROSS KEYS"
 msgstr "TAH PŘES TLAČÍTKA"
 
@@ -1268,6 +1280,10 @@ msgstr "Osm kláves, každá zapnutá, nebo vypnutá."
 #: machines/tutorial-lesson.ts:319
 msgid "EMPTY THE ROW IN ONE DRAG"
 msgstr "VYNULUJ ŘADU JEDNÍM TAHEM"
+
+#: components/overlays/push-consent-overlay.tsx:102
+msgid "ENABLE"
+msgstr "ZAPNOUT"
 
 #: components/game/arcade-paused.tsx:63
 #: components/overlays/paused-overlay.tsx:280
@@ -1609,6 +1625,7 @@ msgstr "ČISTÁ NULA"
 #: components/overlays/install-overlay.tsx:25
 #: components/overlays/install-overlay.tsx:26
 #: components/overlays/install-overlay.tsx:27
+#: components/overlays/push-consent-overlay.tsx:92
 msgid "GOT IT"
 msgstr "ROZUMÍM"
 
@@ -1911,7 +1928,7 @@ msgstr "Slož svůj 999. cíl."
 msgid "Land your first target."
 msgstr "Slož svůj první cíl."
 
-#: components/overlays/advanced-options-overlay.tsx:133
+#: components/overlays/advanced-options-overlay.tsx:162
 msgid "LANGUAGE"
 msgstr "JAZYK"
 
@@ -1967,7 +1984,7 @@ msgstr "Když cíli vyprší čas, přijdeš o život i tady — ani preciznost 
 msgid "LET THE ADVENTURE BEGIN"
 msgstr "AŤ ZAČNE DOBRODRUŽSTVÍ"
 
-#: components/overlays/advanced-options-overlay.tsx:119
+#: components/overlays/advanced-options-overlay.tsx:138
 msgid "Let us watch replays to fix bugs"
 msgstr "Nech nás sledovat záznamy a opravovat chyby"
 
@@ -2282,6 +2299,7 @@ msgstr "Zatím žádné termíny."
 msgid "NO SLIP"
 msgstr "BEZ CHYBY"
 
+#: components/overlays/push-consent-overlay.tsx:108
 #: components/overlays/replay-consent-overlay.tsx:81
 msgid "NO THANKS"
 msgstr "NE, DÍKY"
@@ -2446,6 +2464,10 @@ msgstr "Mezi vámi není rozdíl."
 msgid "Nothing yet — a top three on any board puts a medal here."
 msgstr "Zatím nic — stačí se dostat do první trojky na kterémkoli žebříčku."
 
+#: components/overlays/advanced-options-overlay.tsx:149
+msgid "NOTIFICATIONS"
+msgstr "OZNÁMENÍ"
+
 #: lib/prose.ts:116
 msgid "Nov"
 msgstr "11."
@@ -2494,6 +2516,10 @@ msgstr "[DATE] ti patřilo třetí místo — [B] se skóre [S]"
 msgid "On Hard and Extreme, waste too many moves on a hit and you lose a life — the bar is 20% accuracy on Hard, 15% on Extreme. Easy never takes one for it."
 msgstr "Na Těžké a Extrémní, když na zásah promrháš moc tahů, přijdeš o život — laťka je 20 % přesnosti na Těžké a 15 % na Extrémní. Na Lehké o něj kvůli tomu nepřijdeš."
 
+#: components/overlays/push-consent-overlay.tsx:76
+msgid "On iPhone and iPad this works only once nine is on your Home Screen. Add it from the Share menu, open it from there and you'll be asked again."
+msgstr "Na iPhonu a iPadu to funguje, až když je nine na ploše. Přidej ji z nabídky Sdílet, otevři ji odtamtud a zeptáme se znovu."
+
 #: constants/achievements.ts:437
 msgid "ON THE BOARD"
 msgstr "NA ŽEBŘÍČKU"
@@ -2510,7 +2536,7 @@ msgstr "Padl jeden historický rekord: [BOARD], [D]. Teď patří hráči [W]."
 msgid "One board did not go along with it: [BOARD] stayed [W]’s throughout."
 msgstr "Jedna tabulka se tomu vymkla: [BOARD] zůstala celou dobu hráči [W]."
 
-#: components/overlays/advanced-options-overlay.tsx:112
+#: components/overlays/advanced-options-overlay.tsx:131
 msgid "One gesture can move several keys"
 msgstr "Jedno gesto může pohnout několika tlačítky"
 
@@ -2623,7 +2649,7 @@ msgstr "otevírá se za {0}"
 msgid "OPTIMAL PATH"
 msgstr "NEJLEPŠÍ CESTA"
 
-#: components/overlays/advanced-options-overlay.tsx:88
+#: components/overlays/advanced-options-overlay.tsx:107
 #: components/overlays/menu-overlay.tsx:642
 #: components/overlays/paused-overlay.tsx:286
 msgid "OPTIONS"
@@ -3173,7 +3199,7 @@ msgstr "OKNO"
 msgid "SESSION BONUS"
 msgstr "BONUS ZA TERMÍN"
 
-#: components/overlays/advanced-options-overlay.tsx:118
+#: components/overlays/advanced-options-overlay.tsx:137
 msgid "SESSION RECORDING"
 msgstr "ZÁZNAM HRANÍ"
 
@@ -3214,7 +3240,7 @@ msgstr "SDÍLET NINE"
 msgid "SHOW LESS"
 msgstr "ZOBRAZIT MÉNĚ"
 
-#: components/overlays/advanced-options-overlay.tsx:101
+#: components/overlays/advanced-options-overlay.tsx:120
 msgid "SHOW SUM IN BUTTONS"
 msgstr "ZOBRAZIT SOUČET V TLAČÍTKÁCH"
 
@@ -3256,6 +3282,10 @@ msgstr "Ať si svůj profil vrátíš i v jiném telefonu."
 #: components/overlays/how-to-play-overlay.tsx:621
 msgid "Some roads have bandits on them, and nothing says so the first time. The hero is stopped partway along and a band of them closes in from every side, each carrying a number — dial one to cut that man down. They come in off the edges of the screen, so the whole band can be read before the nearest of them arrives. Let one reach you and it costs a heart, and you are driven back to the crossroad you set off from. Clear the road and you walk on, and it may be carrying food or a heart for you."
 msgstr "Na některých cestách číhají lupiči a napoprvé to nic neprozradí. Hrdina se zastaví v půli cesty a banda se k němu stahuje ze všech stran, každý s vlastním číslem — vytoč ho a lupič padne. Přicházejí od okrajů obrazovky, takže si celou bandu přečteš ještě dřív, než k tobě dojde ten nejbližší. Když tě jeden dostihne, stojí tě to život a zahná tě zpátky na křižovatku, ze které jsi vyšel. Vyčisti cestu a půjdeš dál — a možná u sebe měli jídlo nebo život."
+
+#: components/overlays/push-consent-overlay.tsx:57
+msgid "SOMEONE TOOK YOUR RECORD"
+msgstr "NĚKDO TI VZAL REKORD"
 
 #: components/crash-screen.tsx:15
 msgid "SOMETHING BROKE"
@@ -3509,6 +3539,10 @@ msgstr "splněné cíle"
 #: constants/news.ts:121
 msgid "Tell me what you think"
 msgstr "Řekni mi, co si myslíš"
+
+#: components/overlays/advanced-options-overlay.tsx:23
+msgid "Tell me when a rival takes my record"
+msgstr "Řekni mi, když mi soupeř vezme rekord"
 
 #: components/feedback-bookmark.tsx:155
 msgid "TELL US"
@@ -4065,7 +4099,7 @@ msgstr "CO SE TI POVEDLO?"
 msgid "What made it good or bad?"
 msgstr "Co se ti líbilo a co ne?"
 
-#: components/overlays/advanced-options-overlay.tsx:146
+#: components/overlays/advanced-options-overlay.tsx:175
 #: components/overlays/news-archive-overlay.tsx:20
 msgid "WHAT’S NEW"
 msgstr "CO JE NOVÉHO"
@@ -4090,7 +4124,7 @@ msgstr "Když čekají dvě výzvy, hlasuj pro tu, která se má otevřít prvn�
 msgid "WHERE CAN WE REACH YOU?"
 msgstr "KAM TI MÁME NAPSAT?"
 
-#: components/overlays/next-vote.tsx:35
+#: components/overlays/next-vote.tsx:33
 msgid "WHICH ONE SHOULD BE NEXT?"
 msgstr "KTERÁ MÁ BÝT DALŠÍ?"
 
@@ -4141,6 +4175,10 @@ msgstr "VÝHRY"
 #: components/overlays/replay-consent-overlay.tsx:62
 msgid "With your OK, we'll record a replay of how you play — taps, swipes, what's on screen — so we can see bugs the numbers alone don't show. Every text field, nickname included, is blanked out before it ever leaves your device. Change your mind any time from OPTIONS."
 msgstr "S tvým svolením zaznamenáme, jak hraješ — ťuknutí, švihnutí, co je na obrazovce — abychom viděli chyby, které ze samotných čísel nepoznáme. Každé textové pole, přezdívku nevyjímaje, se začerní dřív, než cokoli opustí tvé zařízení. Kdykoli si to můžeš rozmyslet v NASTAVENÍ."
+
+#: components/overlays/push-consent-overlay.tsx:64
+msgid "With your OK, we'll send a notification when a rival takes a record you hold, even if the game is closed. Nothing else. Your device's address is kept until you switch this off in OPTIONS."
+msgstr "S tvým svolením ti pošleme oznámení, když ti soupeř vezme rekord, který držíš, i když je hra zavřená. Nic jiného. Adresa tvého zařízení se uchovává, dokud to nevypneš v NASTAVENÍ."
 
 #: components/overlays/compare-won-row.tsx:43
 msgid "WON"
@@ -4227,7 +4265,7 @@ msgstr "ty@priklad.cz"
 msgid "YOUR"
 msgstr "TVŮJ"
 
-#: components/overlays/next-vote.tsx:35
+#: components/overlays/next-vote.tsx:33
 msgid "YOUR CHOICE"
 msgstr "TVOJE VOLBA"
 

@@ -15,6 +15,10 @@ export const env = createEnv({
     EXPO_PUBLIC_POSTHOG_HOST: z.url().optional(),
     // Which project the analytics screen links to — see lib/posthog-project.ts.
     EXPO_PUBLIC_POSTHOG_PROJECT_ID: z.string().regex(/^\d+$/).optional(),
+    // The public half of the VAPID pair web push is signed with — see docs/push.md. Optional
+    // for the same reason as the analytics key: without it nothing can subscribe, push reads
+    // as unsupported, and a fork or a dev machine runs the app untouched.
+    EXPO_PUBLIC_VAPID_PUBLIC_KEY: z.string().optional(),
   },
   // Explicit mapping required — Metro statically replaces process.env.EXPO_PUBLIC_*
   // and doesn't support dynamic process.env access.
@@ -24,5 +28,6 @@ export const env = createEnv({
     EXPO_PUBLIC_POSTHOG_KEY: process.env.EXPO_PUBLIC_POSTHOG_KEY,
     EXPO_PUBLIC_POSTHOG_HOST: process.env.EXPO_PUBLIC_POSTHOG_HOST,
     EXPO_PUBLIC_POSTHOG_PROJECT_ID: process.env.EXPO_PUBLIC_POSTHOG_PROJECT_ID,
+    EXPO_PUBLIC_VAPID_PUBLIC_KEY: process.env.EXPO_PUBLIC_VAPID_PUBLIC_KEY,
   },
 })

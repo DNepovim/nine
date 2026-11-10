@@ -34,6 +34,10 @@ module.exports = {
   // the app uses; changing this back to true removes it.
   skipWaiting: false,
   navigateFallback: '/index.html',
-  // Avoid precaching the service worker file itself.
-  globIgnores: ['sw.js'],
+  // The push handlers. A script the worker imports is fetched, cached and byte-checked for
+  // updates by the browser itself, so it stays out of the precache below — a revisioned
+  // copy there would only be a second one to go stale.
+  importScripts: ['push-sw.js'],
+  // Avoid precaching the service worker file itself, or the script it imports.
+  globIgnores: ['sw.js', 'push-sw.js'],
 }

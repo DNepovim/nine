@@ -26,7 +26,10 @@ const isIpadPretendingToBeAMac = (userAgent: string, maxTouchPoints: number): bo
 // Every iOS browser, not just Safari: they all run WebKit, they all reach Add to
 // Home Screen through a share menu, and excluding the others only meant a player
 // browsing in Chrome was told nothing at all.
-const isIos = ({ userAgent, maxTouchPoints }: InstallEnv): boolean =>
+export const isIos = ({
+  userAgent,
+  maxTouchPoints,
+}: Pick<InstallEnv, 'userAgent' | 'maxTouchPoints'>): boolean =>
   IOS_DEVICE.test(userAgent) || isIpadPretendingToBeAMac(userAgent, maxTouchPoints)
 
 // Which iOS browser, so the steps can name where Share actually is. Chrome puts

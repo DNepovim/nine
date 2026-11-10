@@ -69,6 +69,7 @@ import { NextVoteDialog } from '@/components/overlays/next-vote-dialog'
 import { NextVoteResultsDialog } from '@/components/overlays/next-vote-results-dialog'
 import { NICKNAME_TITLE, NicknameModal } from '@/components/overlays/nickname-modal'
 import { PausedOverlay } from '@/components/overlays/paused-overlay'
+import { PushConsentOverlay } from '@/components/overlays/push-consent-overlay'
 import { RatingOverlay } from '@/components/overlays/rating-overlay'
 import { ReplayConsentOverlay } from '@/components/overlays/replay-consent-overlay'
 import { ShareModal } from '@/components/overlays/share-modal'
@@ -128,6 +129,7 @@ import { usePersistedRun } from '@/hooks/use-persisted-run'
 import { usePersistedStats } from '@/hooks/use-persisted-stats'
 import { usePopupDeck } from '@/hooks/use-popup-deck'
 import { PlayerProfileProvider } from '@/hooks/use-profile-modal'
+import { usePushConsent } from '@/hooks/use-push-consent'
 import { useReplayConsent } from '@/hooks/use-replay-consent'
 import { useRolePreview } from '@/hooks/use-role-preview'
 import { useRunRival } from '@/hooks/use-run-rival'
@@ -746,6 +748,40 @@ function boardTargetsOf(
   }
 }
 
+// Whether the launch asks ahead of the push card have all had their turn: the same queue
+// the session-recording card waits in, apart from that card itself. Pulled out of the
+// component so the screen's own branching does not carry it.
+const launchAsksClear = ({
+  splashDone,
+  onIntro,
+  repliesReady,
+  hasReply,
+  newsReady,
+  newsVisible,
+  challengeUp,
+  installing,
+  replayVisible,
+}: {
+  splashDone: boolean
+  onIntro: boolean
+  repliesReady: boolean
+  hasReply: boolean
+  newsReady: boolean
+  newsVisible: boolean
+  challengeUp: boolean
+  installing: boolean
+  replayVisible: boolean
+}): boolean =>
+  splashDone &&
+  onIntro &&
+  repliesReady &&
+  !hasReply &&
+  newsReady &&
+  !newsVisible &&
+  !challengeUp &&
+  !installing &&
+  !replayVisible
+
 export default function GameScreen() {
   const { t } = useLingui()
   const [state, send, actor] = useMachine(gameMachine)
@@ -1182,6 +1218,14 @@ export default function GameScreen() {
   // Below `useSupabaseAuth`, which it reads: the winnings half of the deck is per player,
   // and there is nothing to ask the server for until there is a player to ask about.
   const whatsNew = usePopupDeck(userId, runSession, shownFeatures)
+  // The second step of the consent: whether this device may be pushed to. Behind the replay
+  // ask, and resolved from `shownFeatures` for the reason given above.
+  const pushConsent = usePushConsent({
+    held: shownFeatures.has('push'),
+    replay: replayConsent.consent,
+    userId,
+  })
+  const consentUp = replayConsent.visible || pushConsent.visible
   // **The vote** on which of the next two challenges opens first. Lifted to the screen
   // because two things read it that share no parent: the rating dialog's third step and the
   // intro's link, whose dialog is opened here for the scrim's sake.
@@ -2125,6 +2169,18 @@ export default function GameScreen() {
     splashDone,
     welcome.pending,
   )
+  // The push card's turn in the launch queue, right behind the recording card.
+  const pushCardClear = launchAsksClear({
+    splashDone,
+    onIntro,
+    repliesReady: feedbackReplies.ready,
+    hasReply: feedbackReplies.reply !== null,
+    newsReady: whatsNew.ready,
+    newsVisible: launchPopupUp,
+    challengeUp: challengeCard !== undefined,
+    installing: installPrompt.target !== 'none',
+    replayVisible: replayConsent.visible,
+  })
   const menuScreenOpen = isMenuScreen(menuOverlay)
 
   // Putting an address on this profile, and fetching a profile back from one. Below
@@ -2150,7 +2206,7 @@ export default function GameScreen() {
       newsReady: whatsNew.ready,
       newsVisible: launchPopupUp,
       installing: installPrompt.target !== 'none',
-      consentVisible: replayConsent.visible,
+      consentVisible: consentUp,
       challengeUp: sessionAsk.owed !== null || challengeCard !== undefined,
     }),
   })
@@ -2172,7 +2228,7 @@ export default function GameScreen() {
     newsReady: whatsNew.ready,
     newsVisible: launchPopupUp,
     installing: installPrompt.target !== 'none',
-    consentVisible: replayConsent.visible,
+    consentVisible: consentUp,
   })
   useEffect(() => {
     if (owedSession === null || !mayOpenSession) return
@@ -3170,6 +3226,8 @@ export default function GameScreen() {
                   if (replayConsent.consent === 'granted') replayConsent.decline()
                   else replayConsent.allow()
                 }}
+                push={pushConsent.row}
+                onTogglePush={pushConsent.toggle}
                 onOpenNews={() => {
                   setMenuOverlay('news')
                 }}
@@ -3428,6 +3486,18 @@ export default function GameScreen() {
                   onDismiss={replayConsent.dismiss}
                 />
               )}
+
+            {/* ── Push consent ── The second step, behind the replay card above: same
+                turn in the queue, and never up at the same time as it. Answered, or
+                waved off for the session, like the card before it. ── */}
+            {pushConsent.visible && pushCardClear && (
+              <PushConsentOverlay
+                reach={pushConsent.reach}
+                onAllow={pushConsent.allow}
+                onDecline={pushConsent.decline}
+                onDismiss={pushConsent.dismiss}
+              />
+            )}
 
             {/* ── Menu overlay ── */}
             {introDrawn && (

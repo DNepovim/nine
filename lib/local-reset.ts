@@ -18,6 +18,7 @@ import {
   MODE_KEY,
   OPTIONS_KEY,
   PROFILE_MOVED_KEY,
+  PUSH_CONSENT_KEY,
   REPLAY_CONSENT_KEY,
   RUN_KEY,
   RUN_TOTALS_KEY,
@@ -102,6 +103,9 @@ export const KEPT_KEYS = [
   ARCADE_ROSE_KEY,
   LOCALE_KEY,
   REPLAY_CONSENT_KEY,
+  // The same kind of answer: the device's, not a profile's. The subscription follows the
+  // profile — it is saved again at launch — so a restore moves it without asking twice.
+  PUSH_CONSENT_KEY,
   // Things this device has already shown. Clearing these would make a restore replay the
   // release notes and last week's recap at somebody who has read both.
   SEEN_NEWS_KEY,

@@ -48,6 +48,11 @@ export const FLAGS = [
   // — a feature that can leave somebody somewhere wants a switch that is not the door
   // they would use to turn it off.
   'rolePreview',
+  // Push: notifications while the app is closed — the second step of the first-launch
+  // consent, the NOTIFICATIONS row in options, and the subscription calls behind them. One
+  // trigger so far: a board you held being taken. Gates the calls as well as the card — a
+  // player who cannot be asked has no business telling the server where to reach them.
+  'push',
   // The ADMIN link on the intro, and the screen behind it. Protected in the database: it
   // cannot be hidden, it cannot be made public, and nobody can take it from themselves —
   // this is not a feature being tried out, it is the door that decides who sees the

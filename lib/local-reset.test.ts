@@ -45,5 +45,6 @@ describe('the restore lists', () => {
   it('keeps the language and the recording consent, which are the phone owner’s', () => {
     expect(KEPT_KEYS).toContain(STORAGE.LOCALE_KEY)
     expect(KEPT_KEYS).toContain(STORAGE.REPLAY_CONSENT_KEY)
+    expect(KEPT_KEYS).toContain(STORAGE.PUSH_CONSENT_KEY)
   })
 })

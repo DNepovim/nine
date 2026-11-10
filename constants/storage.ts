@@ -108,6 +108,11 @@ export const LOCALE_KEY = 'nine.locale.v1'
 // Absent means unanswered, not declined: recording stays off either way (PostHog's own
 // default), and only an absent key brings the banner back. See hooks/use-replay-consent.ts.
 export const REPLAY_CONSENT_KEY = 'nine.replay-consent.v1'
+// Whether the player has answered the push ask — 'granted' or 'denied'. Absent means
+// unanswered, and only an absent key brings the card back. A device's answer, like the one
+// above; the subscription it leads to belongs to a profile and is saved again at launch.
+// See hooks/use-push-consent.ts.
+export const PUSH_CONSENT_KEY = 'nine.push-consent.v1'
 
 // Whether this player has been asked, once, to put an address on their profile. Set when
 // the one-time card is answered *or* dismissed, because the question has been put either
