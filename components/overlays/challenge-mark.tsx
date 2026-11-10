@@ -47,11 +47,10 @@ const box = (x: number, y: number, w: number, h: number, r: number): string =>
 // Six angles round a centre, for the drawing that is built by turning one stroke about it.
 const SIX = Array.from({ length: 6 }, (_, i) => i * 60)
 
-// DRIFT's two tyre tracks, swinging out of a bend side by side.
-const TRACKS = [
-  'M1.5 16.5 C7 16.5 9.5 10.5 13.5 7.8 C16 6.1 19 5.5 22.5 5.5',
-  'M5 22.5 C11 22.5 14 16.5 17.5 14 C19.3 12.7 21 12.2 23 12.2',
-] as const
+// LAVA's lump of wax: one blob, fuller at the top where it is rising, with a glint on it.
+const BLOB =
+  'M12 3.2 C16.4 3.2 20.4 6.2 20.4 11 C20.4 13.8 18.8 15.2 18.9 17.4 C19 19.8 16.2 21 12.8 20.8 ' +
+  'C9.4 20.6 7.8 19.2 6.2 17.2 C4.6 15.2 3.6 12.8 4.4 9.8 C5.4 6 8.4 3.2 12 3.2 Z'
 
 // BLACKOUT's bulb: the glass, narrowing to the neck the base screws into.
 const BULB =
@@ -175,21 +174,11 @@ const GLYPHS: Record<MarkKind, (color: string) => ReactNode> = {
     </>
   ),
 
-  // DRIFT — two tyres sliding out of a bend, their tread left on the road.
-  drift: (color) => (
+  // LAVA — a single lump of wax, and the glint on it.
+  blob: (color) => (
     <>
-      {TRACKS.map((d) => (
-        <G key={d}>
-          <Path d={d} {...line(color)} strokeWidth={3.6} strokeOpacity={WASH} />
-          <Path
-            d={d}
-            stroke={color}
-            strokeWidth={2.8}
-            strokeDasharray="1 1.2"
-            fill="none"
-          />
-        </G>
-      ))}
+      <Path d={BLOB} {...line(color)} fill={color} fillOpacity={WASH} />
+      <Path d="M8.6 9.2 C9.2 7.6 10.6 6.6 12.2 6.4" {...line(color)} />
     </>
   ),
 

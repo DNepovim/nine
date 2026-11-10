@@ -11,8 +11,9 @@ import {
   BLACK_PAIR,
   CASINO_PAIR,
   DOS_PAIR,
-  LIGHT_BLUE,
   GRAPHITE_PAIR,
+  LAVA_PAIR,
+  LIGHT_BLUE,
   MONITOR_PAIR,
   SKY_PAIR,
   STORM_PAIR,
@@ -539,7 +540,8 @@ const SIDEWAYS: ChallengeSpec = {
   },
 }
 
-// DRIFT: Accuracy Hard, where no number holds still.
+// DRIFT: Accuracy Hard, where no number holds still. The player reads **LAVA** — the lamp it was
+// dressed as took the name — and the code, the slug and the mechanic below keep saying drift.
 //
 // Its one thing is the **drift** — every target's number moves by one each second, up or
 // down, for as long as it stands. A player aims at
@@ -559,12 +561,12 @@ const SIDEWAYS: ChallengeSpec = {
 //     high enough, to stay on it for its whole ring — see `driftRange`.
 const DRIFT: ChallengeSpec = {
   slug: 'drift',
-  label: msg`DRIFT`,
+  label: msg`LAVA`,
   // Its own, as every challenge since HABIT's: a profile row reading ACC would file it
   // under a board it is not.
-  code: msg`DRF`,
+  code: msg`LVA`,
   description: msg`Every number drifts. Catch it before it moves.`,
-  mark: 'drift',
+  mark: 'blob',
   shot: 'burst',
   // Every line about catching a number before it gets away.
   claims: {
@@ -586,6 +588,15 @@ const DRIFT: ChallengeSpec = {
       ['ALL', 'ADRIFT'],
     ],
   },
+  // A lava lamp: wax warming in pink glass, a lump breaking off and rising before the run. Each
+  // target is a lump of it — coloured on a purple-to-pink scale by the number it shows, and leaning
+  // up or down the way that number goes — so the heading is read before the digit.
+  opening: 'lavaLamp',
+  scheme: 'lava',
+  targetForm: 'blobs',
+  // The top bar's aubergine, not the hue the catalog's index would give it: see `LAVA_PAIR`.
+  gradient: LAVA_PAIR,
+  darkGradient: LAVA_PAIR,
   base: ACCURACY,
   from: Date.UTC(2026, 9, 28),
   until: Date.UTC(2026, 9, 28) + DAY,

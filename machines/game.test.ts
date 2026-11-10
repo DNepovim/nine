@@ -1421,6 +1421,8 @@ describe('DRIFT', () => {
     actor.start()
     actor.send({ type: 'SET_MODE', mode: DRIFT })
     actor.send({ type: 'START', now: 0, runId: nextRunId() })
+    // Its lamp is lit before the run, so the run is held ready until BEGIN.
+    actor.send({ type: 'BEGIN', now: 0 })
     return actor
   }
 

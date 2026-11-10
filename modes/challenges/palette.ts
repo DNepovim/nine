@@ -1,4 +1,4 @@
-import { DOS_BLUE, PRIMARY_INK } from '@/constants/colors'
+import { DOS_BLUE, LAVA, PRIMARY_INK } from '@/constants/colors'
 import { contrastRatio } from '@/lib/contrast'
 
 // What a challenge is painted in.
@@ -204,6 +204,13 @@ export const CASINO_PAIR: readonly [string, string] = ['#6B4300', '#A8700A']
 // enough that the second clears the floor on white as the score and meter ink it becomes need.
 // Not `GRAYSCALE`, whose greys mean a record — this one is a colour the challenge wears.
 export const GRAPHITE_PAIR: readonly [string, string] = ['#3A3F4A', '#586070']
+
+// DRIFT's lava-lamp aubergine, in two stops: the ink the rows above its dial are written in
+// (`LAVA.bar`, 14.5:1 on white) and a magenta lifted out of it for the edge, which is also what its
+// score and meter ink become (`scoreInkOf`, `meterInkOf`) and clears the floor on white at 7.0:1.
+// Both pairs the same, so the card's edge and its button are one colour. The first stop is the
+// top bar's own rather than `PRIMARY_INK`, so the card and the screen it opens read as one thing.
+export const LAVA_PAIR: readonly [string, string] = [LAVA.bar, '#9B2A78']
 
 export const challengeGradient = (index: number): readonly [string, string] =>
   challengePairFor(challengeHue(index))

@@ -15,6 +15,7 @@ import {
   FrostRemains,
   FrostUnder,
 } from '@/components/game/openings/frost-creep'
+import { LavaLamp, LavaRemains } from '@/components/game/openings/lava-lamp'
 import {
   CasinoRemains,
   LeverOver,
@@ -86,6 +87,7 @@ const OPENINGS = {
   leverPull: LeverPull,
   drawingBoard: DrawingBoard,
   tilework: Tilework,
+  lavaLamp: LavaLamp,
 } as const satisfies Record<OpeningKind, ComponentType<OpeningSceneProps>>
 
 type Pull = ReturnType<typeof useOpening>['pull']
@@ -140,6 +142,8 @@ const REMAINS: Record<
   drawingBoard: null,
   // The wall stays behind the run, under the dial: the keys and the targets are tiles of it.
   tilework: { Drawing: TileworkRemains, Over: null },
+  // Three slow lumps of wax stay behind the run, faint, behind the dial.
+  lavaLamp: { Drawing: LavaRemains, Over: null },
 }
 
 // How long, in ms, what a kind's remains are still doing needs once a run ends — or null for a
@@ -156,6 +160,7 @@ const HOLDS: Record<OpeningKind, (() => number) | null> = {
   leverPull: lightsOutLeft,
   drawingBoard: null,
   tilework: null,
+  lavaLamp: null,
 }
 
 export const remainsHoldOf = (kind: OpeningKind | null) =>
@@ -214,6 +219,7 @@ const UNDER: Record<OpeningKind, ComponentType<{ sweep: SharedValue<number> }> |
   leverPull: null,
   drawingBoard: null,
   tilework: TileworkUnder,
+  lavaLamp: null,
 }
 
 export function OpeningUnder({

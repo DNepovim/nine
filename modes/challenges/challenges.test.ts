@@ -743,6 +743,7 @@ describe('blackout', () => {
       challengeId('four-by-four'),
       challengeId('glimpse'),
       challengeId('no-slip'),
+      challengeId('drift'),
       challengeId('one-key'),
       challengeId('scramble'),
       challengeId('freeze'),
@@ -769,6 +770,8 @@ describe('blackout', () => {
       challengeId('four-keys'),
       // Dressed in its own way: see 'four by four'.
       challengeId('four-by-four'),
+      // Dressed in its own way: see 'DRIFT'.
+      challengeId('drift'),
     ]
     for (const mode of allModes().filter((m) => !dressed.includes(m.id))) {
       expect(openingOf(mode.id), mode.id).toBeNull()
@@ -967,5 +970,19 @@ describe('DRIFT', () => {
       (mode) => mode.engine === 'targets' && mode.rules.spawn.drift !== null,
     ).map((mode) => mode.id)
     expect(drifting).toEqual([challengeId('drift')])
+  })
+
+  it('is a lava lamp: pink glass, a lump of wax rising before the run, and every target a lump', () => {
+    const id = challengeId('drift')
+    expect(schemeOf(id)).toBe('lava')
+    expect(openingOf(id)).toBe('lavaLamp')
+    expect(targetFormOf(id)).toBe('blobs')
+    expect(runRules(id, 'hard').opens).toBe(true)
+  })
+
+  it('is dressed without touching a rule, so its board stays comparable', () => {
+    expect(rules.scoring.weights).toEqual({ acc: 0, spd: 1 })
+    expect(rules.spawn.drift).toBe(1000)
+    expect(rules.lives.count).toBe(3)
   })
 })

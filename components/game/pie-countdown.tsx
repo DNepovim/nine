@@ -69,6 +69,7 @@ export function PieCountdown({
   startProgress = 1,
   clocked = true,
   drawn = false,
+  bare,
   settles = false,
   glimpse = null,
   revealed = false,
@@ -99,6 +100,11 @@ export function PieCountdown({
   // clock a heavier pencil line laid over the circle and running down round it. The `drafted`
   // target form's. Without it the disc is the ring-and-pie every other form is.
   drawn?: boolean
+  // A number with nothing round it: no disc, no ring, no arcs, only the numeral in `ink`. The clock
+  // still runs under it — it is what expires the target — but is not drawn, so whoever asks for this
+  // shows the time left some other way. The `blobs` form's: the number sits on wax that shrinks as
+  // the clock does.
+  bare?: { ink: string }
   // Whether this target **stays on the board** once it is taken, rather than leaving it.
   //
   // A **drilled** run is the one that does: its nine are a fixed picture the player is
@@ -339,88 +345,90 @@ export function PieCountdown({
 
   return (
     <View style={{ width: size, height: size }}>
-      <Animated.View style={ringStyle}>
-        <Svg width={size} height={size}>
-          <Circle
-            cx={cx}
-            cy={cy}
-            r={radius}
-            stroke={drawn ? 'none' : trackColor}
-            strokeWidth={stroke}
-            fill={drawn ? trackColor : thin ? ground : 'none'}
-          />
-          {drawn && (
-            <Circle
-              cx={cx + DRAWN_GHOST.offset}
-              cy={cy + DRAWN_GHOST.offset}
-              r={radius}
-              stroke={PIE_INK}
-              strokeOpacity={DRAWN_GHOST.opacity}
-              strokeWidth={1}
-              fill="none"
-            />
-          )}
-          {drawn && (
+      {bare === undefined && (
+        <Animated.View style={ringStyle}>
+          <Svg width={size} height={size}>
             <Circle
               cx={cx}
               cy={cy}
               r={radius}
-              stroke={PIE_INK}
-              strokeOpacity={0.85}
-              strokeWidth={1.4}
-              fill="none"
+              stroke={drawn ? 'none' : trackColor}
+              strokeWidth={stroke}
+              fill={drawn ? trackColor : thin ? ground : 'none'}
             />
-          )}
-          {/* The clock itself, over the band-tinted track: what is left of it in blue,
-              what has gone in red. Both are the countdown, so a target with no clock
-              draws neither and the track is the whole disc. */}
-          {clocked && (
-            <>
-              <AnimatedCircle
+            {drawn && (
+              <Circle
+                cx={cx + DRAWN_GHOST.offset}
+                cy={cy + DRAWN_GHOST.offset}
+                r={radius}
+                stroke={PIE_INK}
+                strokeOpacity={DRAWN_GHOST.opacity}
+                strokeWidth={1}
+                fill="none"
+              />
+            )}
+            {drawn && (
+              <Circle
                 cx={cx}
                 cy={cy}
                 r={radius}
-                stroke={leftInk}
-                strokeWidth={stroke}
+                stroke={PIE_INK}
+                strokeOpacity={0.85}
+                strokeWidth={1.4}
                 fill="none"
-                strokeDasharray={circumference}
-                animatedProps={animatedProps}
-                transform={`rotate(-90, ${cx}, ${cy})`}
               />
-              {/* A drawing has no red for the time gone: the circle under the line is it. */}
-              {!drawn && (
+            )}
+            {/* The clock itself, over the band-tinted track: what is left of it in blue,
+              what has gone in red. Both are the countdown, so a target with no clock
+              draws neither and the track is the whole disc. */}
+            {clocked && (
+              <>
                 <AnimatedCircle
                   cx={cx}
                   cy={cy}
                   r={radius}
-                  stroke={goneInk}
+                  stroke={leftInk}
                   strokeWidth={stroke}
                   fill="none"
                   strokeDasharray={circumference}
-                  animatedProps={redProps}
+                  animatedProps={animatedProps}
                   transform={`rotate(-90, ${cx}, ${cy})`}
                 />
-              )}
-            </>
-          )}
-          {/* The disc's edge under a monochrome scheme, which the thin arc runs round.
+                {/* A drawing has no red for the time gone: the circle under the line is it. */}
+                {!drawn && (
+                  <AnimatedCircle
+                    cx={cx}
+                    cy={cy}
+                    r={radius}
+                    stroke={goneInk}
+                    strokeWidth={stroke}
+                    fill="none"
+                    strokeDasharray={circumference}
+                    animatedProps={redProps}
+                    transform={`rotate(-90, ${cx}, ${cy})`}
+                  />
+                )}
+              </>
+            )}
+            {/* The disc's edge under a monochrome scheme, which the thin arc runs round.
               Last, so the time gone never rubs it out. */}
-          {thin && (
-            <Circle
-              cx={cx}
-              cy={cy}
-              r={radius}
-              stroke={mono}
-              strokeWidth={1}
-              fill="none"
-            />
-          )}
-        </Svg>
-        <Animated.View
-          className="absolute inset-0 rounded-full"
-          style={[{ backgroundColor: lostDisc }, failDiscStyle]}
-        />
-      </Animated.View>
+            {thin && (
+              <Circle
+                cx={cx}
+                cy={cy}
+                r={radius}
+                stroke={mono}
+                strokeWidth={1}
+                fill="none"
+              />
+            )}
+          </Svg>
+          <Animated.View
+            className="absolute inset-0 rounded-full"
+            style={[{ backgroundColor: lostDisc }, failDiscStyle]}
+          />
+        </Animated.View>
+      )}
       <Animated.View
         className="absolute inset-0 items-center justify-center"
         style={numberStyle}
@@ -430,11 +438,12 @@ export function PieCountdown({
           numberOfLines={1}
           className={cn(
             'font-mono font-extrabold',
-            !failed && hitInk === null && 'text-pie',
+            !failed && hitInk === null && bare === undefined && 'text-pie',
           )}
           style={[
             { fontSize: fontSizeForDigits(value, scale), includeFontPadding: false },
-            failed && numberColorStyle,
+            bare !== undefined && { color: bare.ink },
+            failed && bare === undefined && numberColorStyle,
             !failed && hitInk !== null && numberHitStyle,
           ]}
         >

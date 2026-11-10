@@ -491,6 +491,40 @@ const AZULEJO_TOKENS = {
   '--color-pie': '#171421',
 }
 
+// The lava lamp — DRIFT's: a blush-pink glass with wax in it. `cool` and `hot` are the two ends of the
+// scale a lump of wax is coloured on by the number it shows, purple at nothing and pink at the board's
+// ceiling (`waxColor`): 6.6:1 and 3.0:1 against the glass, which is enough for a shape and not for
+// text, so a number is never drawn in either — it sits on a pale tint of its lump. `glow` is the
+// light at the lamp's foot, `bar` the one ink the rows above the dial wear.
+export const LAVA = {
+  glass: '#F9CFE2',
+  wash: ['#FBD9E8', '#F9CFE2', '#F5BCD6', '#F7C5DC'],
+  ink: '#3A0B33',
+  bar: '#4A1140',
+  cool: '#5B2A9E',
+  hot: '#D92D86',
+  glow: '#FF8FC4',
+  // A number on the wax: white, 9.6:1 on the purple end and 4.2:1 on the pink end, which a numeral
+  // this big carries.
+  numeral: '#FFFFFF',
+} as const
+
+const LAVA_TOKENS = {
+  '--color-surface': LAVA.glass,
+  '--color-card': '#FCE0EC',
+  '--color-elevated': '#FFF0F6',
+  '--color-muted': '#E7A4C3',
+  '--color-dim': '#6B2A5C',
+  '--color-primary': LAVA.ink,
+  '--color-strong': LAVA.ink,
+  '--color-on-strong': '#FFE9F3',
+  '--color-score': LAVA.ink,
+  '--color-fortune': '#A3124F',
+  '--color-dial': '#1C1928',
+  '--color-factor': '#7A3A6A',
+  '--color-pie': '#171421',
+}
+
 // The one blue everything above the dial wears under `glass` — see `glassBar` in `SCHEMES`.
 const GLASS_BAR = '#1F6A92'
 
@@ -1108,6 +1142,50 @@ export const SCHEMES = {
       wash: ['#F3F1E8', AZULEJO.glaze, '#F9F7F0', '#F4F2EA'],
       mono: null,
       bar: null,
+      hit: null,
+      glow: null,
+      keys: null,
+    },
+  },
+  // `lava` — DRIFT's lamp: pink glass, the text in deep aubergine. The keys and the targets' discs keep
+  // their light faces.
+  lava: {
+    tokens: LAVA_TOKENS,
+    inks: {
+      score: LAVA.ink,
+      keyRim: 'rgba(58, 11, 51, 0.28)',
+      statusBar: 'dark',
+      ground: LAVA.glass,
+      ink: LAVA.ink,
+      wash: LAVA.wash,
+      mono: null,
+      bar: null,
+      hit: null,
+      glow: null,
+      keys: null,
+    },
+  },
+  // `lavaBar` — the rows above a `lava` dial: **monochrome** in one aubergine, as `parquetBar`'s are
+  // in brown.
+  lavaBar: {
+    tokens: {
+      ...LAVA_TOKENS,
+      '--color-dim': LAVA.bar,
+      '--color-primary': LAVA.bar,
+      '--color-strong': LAVA.bar,
+      '--color-score': LAVA.bar,
+      '--color-fortune': LAVA.bar,
+      '--color-factor': LAVA.bar,
+    },
+    inks: {
+      score: LAVA.bar,
+      keyRim: 'transparent',
+      statusBar: 'dark',
+      ground: LAVA.glass,
+      ink: LAVA.bar,
+      wash: LAVA.wash,
+      mono: LAVA.bar,
+      bar: LAVA.bar,
       hit: null,
       glow: null,
       keys: null,
