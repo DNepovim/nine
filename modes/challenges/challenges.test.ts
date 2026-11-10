@@ -530,6 +530,17 @@ describe('one key', () => {
   })
 })
 
+describe('four by four', () => {
+  it('is an azulejo panel: a wall of tiles, keys and targets among them', () => {
+    const id = challengeId('four-by-four')
+    expect(schemeOf(id)).toBe('azulejo')
+    expect(targetFormOf(id)).toBe('tiled')
+    expect(runRules(id, 'hard').dial.flush).toBe(true)
+    expect(openingOf(id)).toBe('tilework')
+    expect(runRules(id, 'hard').opens).toBe(true)
+  })
+})
+
 describe('four keys', () => {
   it('is a drawing board, with circles ruled and coloured in for targets', () => {
     const id = challengeId('four-keys')
@@ -729,6 +740,7 @@ describe('blackout', () => {
       .map((mode) => mode.id)
     expect(opening).toEqual([
       challengeId('four-keys'),
+      challengeId('four-by-four'),
       challengeId('glimpse'),
       challengeId('no-slip'),
       challengeId('one-key'),
@@ -755,6 +767,8 @@ describe('blackout', () => {
       challengeId('mirror'),
       // Dressed in its own way: see 'four keys'.
       challengeId('four-keys'),
+      // Dressed in its own way: see 'four by four'.
+      challengeId('four-by-four'),
     ]
     for (const mode of allModes().filter((m) => !dressed.includes(m.id))) {
       expect(openingOf(mode.id), mode.id).toBeNull()

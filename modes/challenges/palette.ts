@@ -241,6 +241,14 @@ export const TURQUOISE = 190
 // same day would look like siblings.
 export const LIGHT_BLUE = 200
 
+// The light blue of an azulejo's glaze painted in cobalt thinned with water — FOUR BY FOUR's,
+// asked for by the author.
+//
+// The far edge of the sky window, 14° past MIRROR's light blue and 9° past FREEZE's 205, so it is
+// the lightest-looking of the cool blues but still a sibling of them: told apart by its mark and
+// by the tiles it is painted on, not by hue alone.
+export const AZURE = 214
+
 // The challenge's own colour as **text**.
 //
 // Same split the app already makes twice: `GOLD_INK` beside `GOLD_SCALE`, and

@@ -3,6 +3,7 @@ import Svg, { Circle, G, Path } from 'react-native-svg'
 
 import { DialMark } from '@/components/overlays/dial-mark'
 import { SURFACE } from '@/constants/colors'
+import { tileAt, TOP_LEVEL } from '@/lib/tile-motif'
 import { dialOf, markOf, type MarkKind, type ModeId } from '@/modes'
 
 // A challenge's mark: a small drawing of the one thing it is about, beside its name.
@@ -46,12 +47,6 @@ const box = (x: number, y: number, w: number, h: number, r: number): string =>
 // Six angles round a centre, for the drawing that is built by turning one stroke about it.
 const SIX = Array.from({ length: 6 }, (_, i) => i * 60)
 
-// FOUR BY FOUR's sixteen keys, row by row: four shades scattered by hand so no row,
-// column or diagonal repeats a pattern, which is what reads as random at 20pt.
-const GRID_SHADES = [
-  1, 0.25, 0.6, 0.4, 0.4, 0.8, 0.25, 1, 0.25, 1, 0.4, 0.6, 0.6, 0.4, 1, 0.25,
-] as const
-
 // DRIFT's two tyre tracks, swinging out of a bend side by side.
 const TRACKS = [
   'M1.5 16.5 C7 16.5 9.5 10.5 13.5 7.8 C16 6.1 19 5.5 22.5 5.5',
@@ -65,6 +60,9 @@ const BULB =
 
 // FOUR KEYS' bolt, drawn twice: once as its own halo, once filled on top of it.
 const BOLT = 'M15 1.5 L5.5 13.6 H11 L9 22.5 L18.5 10.2 H13 Z'
+
+// The tile FOUR BY FOUR wears: its fullest pattern, the one a key at its top is painted with.
+const TILE = tileAt(8, TOP_LEVEL)
 
 const GLYPHS: Record<MarkKind, (color: string) => ReactNode> = {
   // FOUR KEYS — four keys and the bolt that is their doubled speed.
@@ -93,18 +91,13 @@ const GLYPHS: Record<MarkKind, (color: string) => ReactNode> = {
     </>
   ),
 
-  // FOUR BY FOUR — sixteen keys, lit in scattered shades.
-  crossGrid: (color) => (
-    <>
-      {GRID_SHADES.map((shade, i) => (
-        <Path
-          key={i}
-          d={box(1.8 + (i % 4) * 5.4, 1.8 + Math.floor(i / 4) * 5.4, 4.2, 4.2, 1)}
-          fill={color}
-          fillOpacity={shade}
-        />
-      ))}
-    </>
+  // FOUR BY FOUR — one painted azulejo: the tile's frame and its fullest pattern, in a 100-unit
+  // box drawn at a fifth of the size.
+  tile: (color) => (
+    <G transform="translate(2 2) scale(0.2)">
+      <Path d={TILE.fill} fill={color} />
+      <Path d={TILE.stroke} fill="none" stroke={color} strokeWidth={4.5} />
+    </G>
   ),
 
   // HABIT — the same nine, and the one route through them a player learns by heart.

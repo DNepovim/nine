@@ -3,6 +3,7 @@ import { useSharedValue, type SharedValue } from 'react-native-reanimated'
 import type { StateValue } from 'xstate'
 
 import { APP_RED, SCHEMES } from '@/constants/colors'
+import { setTileInk } from '@/hooks/use-tile-grid'
 import {
   isChallenge,
   OPENING_BAR_WAITS,
@@ -112,6 +113,11 @@ export function useOpening({
 } {
   const name = typeof state === 'string' ? state : ''
   const held = name === 'ready'
+  // The colour a tiled wall is painted in: the challenge's own, for as long as its run is on the
+  // screen. See `useTileGrid`.
+  useEffect(() => {
+    setTileInk(isChallenge(mode) ? scoreInkOf(mode) : null)
+  }, [mode])
   const [previous, setPrevious] = useState(name)
   const [take, setTake] = useState<OpeningTake>('full')
   const [switched, setSwitched] = useState(true)

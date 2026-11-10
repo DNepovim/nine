@@ -45,6 +45,11 @@ import {
   Takeoff,
 } from '@/components/game/openings/takeoff'
 import { Terminal } from '@/components/game/openings/terminal'
+import {
+  Tilework,
+  TileworkRemains,
+  TileworkUnder,
+} from '@/components/game/openings/tilework'
 import { TrackedPressable } from '@/components/tracked-pressable'
 import { LAYER } from '@/constants/layers'
 import type { useOpening } from '@/hooks/use-opening'
@@ -80,6 +85,7 @@ const OPENINGS = {
   takeoff: Takeoff,
   leverPull: LeverPull,
   drawingBoard: DrawingBoard,
+  tilework: Tilework,
 } as const satisfies Record<OpeningKind, ComponentType<OpeningSceneProps>>
 
 type Pull = ReturnType<typeof useOpening>['pull']
@@ -132,6 +138,8 @@ const REMAINS: Record<
   leverPull: { Drawing: CasinoRemains, Over: LeverOver },
   // The drawing is the dial's and the bar's own; the scene leaves nothing behind it.
   drawingBoard: null,
+  // The wall stays behind the run, under the dial: the keys and the targets are tiles of it.
+  tilework: { Drawing: TileworkRemains, Over: null },
 }
 
 // How long, in ms, what a kind's remains are still doing needs once a run ends — or null for a
@@ -147,6 +155,7 @@ const HOLDS: Record<OpeningKind, (() => number) | null> = {
   takeoff: crashFireLeft,
   leverPull: lightsOutLeft,
   drawingBoard: null,
+  tilework: null,
 }
 
 export const remainsHoldOf = (kind: OpeningKind | null) =>
@@ -204,6 +213,7 @@ const UNDER: Record<OpeningKind, ComponentType<{ sweep: SharedValue<number> }> |
   takeoff: SkyUnder,
   leverPull: null,
   drawingBoard: null,
+  tilework: TileworkUnder,
 }
 
 export function OpeningUnder({

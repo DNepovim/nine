@@ -7,6 +7,7 @@ import type { ModeDefinition } from '@/modes/types'
 
 import { defineChallenge, type ChallengeSpec } from './define'
 import {
+  AZURE,
   BLACK_PAIR,
   CASINO_PAIR,
   DOS_PAIR,
@@ -143,7 +144,8 @@ const FOUR_KEYS: ChallengeSpec = {
   },
 }
 
-// The four-keys dial turned inside out: sixteen keys in four rows of four, at twice the
+// MOSAIC, once FOUR BY FOUR (its slug stays, as stored runs name it): the four-keys dial turned
+// inside out, sixteen keys in four rows of four, at twice the
 // pace of the game at rest.
 //
 // Its one thing is the dial. Four rows of four, weighted row order × column order like
@@ -157,14 +159,13 @@ const FOUR_KEYS: ChallengeSpec = {
 // twice the pace.
 const FOUR_BY_FOUR: ChallengeSpec = {
   slug: 'four-by-four',
-  label: msg`FOUR BY FOUR`,
-  description: msg`Sixteen keys, double time`,
-  mark: 'crossGrid',
-  // Nothing named here, so the hue is whatever this entry's place in the catalog works
-  // out to — see `challengeHue`. Index 1 lands on 155°, a jade well clear of four-keys'
-  // turquoise and of every hue the app has spoken for.
-  //
-  // Nothing is drawn when a hit lands, either. A shot is the streak made visible and the
+  label: msg`MOSAIC`,
+  description: msg`Sixteen tiles, double time`,
+  mark: 'tile',
+  // Light blue, rather than the jade its place in the catalog works out to: the colour of the
+  // wall's tiles, and so of everything the challenge is drawn in. See `AZURE`.
+  hue: AZURE,
+  // Nothing is drawn when a hit lands. A shot is the streak made visible and the
   // streak below is about the whole dial, so the honest shot would be a beam per row —
   // which is a new `ShotKind` and a component to draw it, more than a challenge should
   // carry. `flame` is the alternative and sets every *key* alight, which says "the whole
@@ -175,21 +176,21 @@ const FOUR_BY_FOUR: ChallengeSpec = {
   // standings, which is what `board` and `medal` mean for a challenge.
   claims: {
     board: [
-      ['FOUR', 'ROWS'],
-      ['WIDE', 'HAND'],
-      ['ALL', 'ROWS'],
+      ['FULL', 'WALL'],
+      ['WELL', 'LAID'],
+      ['ALL', 'SIXTEEN'],
     ],
     medal: [
       ['NEAR', 'FULL'],
-      ['WIDE', 'MARK'],
+      ['WELL', 'SET'],
     ],
     strong: [
-      ['WIDE', 'WORK'],
-      ['GOOD', 'SPAN'],
+      ['TRUE', 'TILES'],
+      ['GOOD', 'WORK'],
     ],
     cold: [
-      ['COLD', 'ROWS'],
-      ['WIDE', 'DIAL'],
+      ['BARE', 'WALL'],
+      ['COLD', 'TILES'],
     ],
   },
   // Accuracy rather than Speed: the clock below is halved once, flatly, and a mode that
@@ -197,6 +198,11 @@ const FOUR_BY_FOUR: ChallengeSpec = {
   // the player is still reading. The ring is the same from the first target to the last;
   // what ends a run here is the dial.
   base: ACCURACY,
+  // An azulejo panel: a wall of glazed tiles laid in from the corner, cobalt on white, the
+  // sixteen keys tiles of it. See `azulejo` in `SCHEMES`.
+  opening: 'tilework',
+  scheme: 'azulejo',
+  targetForm: 'tiled',
   from: Date.UTC(2026, 9, 1),
   until: Date.UTC(2026, 9, 1) + DAY,
   rules: {
@@ -206,7 +212,7 @@ const FOUR_BY_FOUR: ChallengeSpec = {
     // Reachable throughout: the first key is worth 1, so every number in 0 … 900 can be
     // dialled and the spawner — which never asks — cannot deal an impossible target. See
     // the catalog's own test, which holds this for every challenge rather than for one.
-    dial: defineDial({ id: 'four-by-four', rows: 4, cols: 4 }),
+    dial: defineDial({ id: 'four-by-four', rows: 4, cols: 4, flush: true }),
     // Hard, as four-keys is: the rung that counts for itself, pinned because the choice
     // is being taken away rather than made by the player, and because one session board
     // cannot hold three clocks at once.

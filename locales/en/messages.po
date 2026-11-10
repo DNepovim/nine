@@ -931,19 +931,19 @@ msgstr "Best scores, up top"
 msgid "BETTER ON YOUR PHONE"
 msgstr "BETTER ON YOUR PHONE"
 
-#: modes/challenges/catalog.ts:834
+#: modes/challenges/catalog.ts:836
 msgid "BIN"
 msgstr "BIN"
 
-#: modes/challenges/catalog.ts:831
+#: modes/challenges/catalog.ts:833
 msgid "BINA­RY"
 msgstr "BINA­RY"
 
-#: modes/challenges/catalog.ts:974
+#: modes/challenges/catalog.ts:976
 msgid "BLACK­OUT"
 msgstr "BLACK­OUT"
 
-#: modes/challenges/catalog.ts:977
+#: modes/challenges/catalog.ts:979
 msgid "BLK"
 msgstr "BLK"
 
@@ -1228,11 +1228,11 @@ msgstr "Double-tap where the targets appear to pause. Hold there for three secon
 msgid "DRAG ACROSS KEYS"
 msgstr "DRAG ACROSS KEYS"
 
-#: modes/challenges/catalog.ts:570
+#: modes/challenges/catalog.ts:572
 msgid "DRF"
 msgstr "DRF"
 
-#: modes/challenges/catalog.ts:567
+#: modes/challenges/catalog.ts:569
 msgid "DRIFT"
 msgstr "DRIFT"
 
@@ -1265,7 +1265,7 @@ msgstr "Eat the last of them and the empty row starts to pulse: you are starving
 msgid "EDIT CHALLENGE"
 msgstr "EDIT CHALLENGE"
 
-#: modes/challenges/catalog.ts:835
+#: modes/challenges/catalog.ts:837
 msgid "Eight keys, each on or off."
 msgstr "Eight keys, each on or off."
 
@@ -1320,15 +1320,15 @@ msgstr "Every column leans your way. There is nothing here they hold."
 msgid "Every day was [A]’s except [D]. [B] got exactly one, and made it count."
 msgstr "Every day was [A]’s except [D]. [B] got exactly one, and made it count."
 
-#: modes/challenges/catalog.ts:700
+#: modes/challenges/catalog.ts:702
 msgid "Every hit spins the dial."
 msgstr "Every hit spins the dial."
 
-#: modes/challenges/catalog.ts:905
+#: modes/challenges/catalog.ts:907
 msgid "Every move works backwards."
 msgstr "Every move works backwards."
 
-#: modes/challenges/catalog.ts:571
+#: modes/challenges/catalog.ts:573
 msgid "Every number drifts. Catch it before it moves."
 msgstr "Every number drifts. Catch it before it moves."
 
@@ -1537,19 +1537,15 @@ msgstr "FORTUNE"
 msgid "Forward a step"
 msgstr "Forward a step"
 
-#: modes/challenges/catalog.ts:160
-msgid "FOUR BY FOUR"
-msgstr "FOUR BY FOUR"
-
-#: modes/challenges/catalog.ts:52
+#: modes/challenges/catalog.ts:53
 msgid "FOUR KEYS"
 msgstr "FOUR KEYS"
 
-#: modes/challenges/catalog.ts:53
+#: modes/challenges/catalog.ts:54
 msgid "Four keys, doubled speed"
 msgstr "Four keys, doubled speed"
 
-#: modes/challenges/catalog.ts:770
+#: modes/challenges/catalog.ts:772
 msgid "FREEZE"
 msgstr "FREEZE"
 
@@ -1557,7 +1553,7 @@ msgstr "FREEZE"
 msgid "Friday"
 msgstr "Friday"
 
-#: modes/challenges/catalog.ts:773
+#: modes/challenges/catalog.ts:775
 msgid "FRZ"
 msgstr "FRZ"
 
@@ -1630,7 +1626,7 @@ msgstr "GOT IT"
 msgid "GRADUATE"
 msgstr "GRADUATE"
 
-#: modes/challenges/catalog.ts:276
+#: modes/challenges/catalog.ts:278
 msgid "HABIT"
 msgstr "HABIT"
 
@@ -1642,7 +1638,7 @@ msgstr "HARD"
 msgid "HAT TRICK"
 msgstr "HAT TRICK"
 
-#: modes/challenges/catalog.ts:280
+#: modes/challenges/catalog.ts:282
 msgid "HBT"
 msgstr "HBT"
 
@@ -1884,7 +1880,7 @@ msgstr "KEEP RECORDING"
 msgid "KEEP THEM ON"
 msgstr "KEEP THEM ON"
 
-#: modes/challenges/catalog.ts:633
+#: modes/challenges/catalog.ts:635
 msgid "KEY"
 msgstr "KEY"
 
@@ -2082,11 +2078,11 @@ msgstr "Messages sent in"
 msgid "MINUTES"
 msgstr "MINUTES"
 
-#: modes/challenges/catalog.ts:904
+#: modes/challenges/catalog.ts:906
 msgid "MIR"
 msgstr "MIR"
 
-#: modes/challenges/catalog.ts:901
+#: modes/challenges/catalog.ts:903
 msgid "MIR­ROR"
 msgstr "MIR­ROR"
 
@@ -2113,6 +2109,10 @@ msgstr "More of this is yours than theirs. Not all of it."
 #: constants/news.ts:95
 msgid "More to find"
 msgstr "More to find"
+
+#: modes/challenges/catalog.ts:162
+msgid "MOSAIC"
+msgstr "MOSAIC"
 
 #: lib/strike-rule.ts:28
 msgid "Move at least one key in every row of the dial."
@@ -2296,7 +2296,7 @@ msgstr "No sessions planned yet."
 msgid "No sessions yet."
 msgstr "No sessions yet."
 
-#: modes/challenges/catalog.ts:428
+#: modes/challenges/catalog.ts:430
 msgid "NO SLIP"
 msgstr "NO SLIP"
 
@@ -2481,7 +2481,7 @@ msgstr "Nov"
 msgid "NOVEMBER"
 msgstr "NOVEMBER"
 
-#: modes/challenges/catalog.ts:431
+#: modes/challenges/catalog.ts:433
 msgid "NSL"
 msgstr "NSL"
 
@@ -2541,11 +2541,11 @@ msgstr "One board did not go along with it: [BOARD] stayed [W]’s throughout."
 msgid "One gesture can move several keys"
 msgstr "One gesture can move several keys"
 
-#: modes/challenges/catalog.ts:630
+#: modes/challenges/catalog.ts:632
 msgid "ONE KEY"
 msgstr "ONE KEY"
 
-#: modes/challenges/catalog.ts:634
+#: modes/challenges/catalog.ts:636
 msgid "One key, one second."
 msgstr "One key, one second."
 
@@ -2553,7 +2553,7 @@ msgstr "One key, one second."
 msgid "One line under your name, for anyone who opens your profile."
 msgstr "One line under your name, for anyone who opens your profile."
 
-#: modes/challenges/catalog.ts:358
+#: modes/challenges/catalog.ts:360
 msgid "One look, then from memory."
 msgstr "One look, then from memory."
 
@@ -2581,7 +2581,7 @@ msgstr "One run ≥ 60 min, any mode"
 msgid "One set of standings, shared by everyone playing it, and it never resets. Your best run is the one that counts. Where the standings are a race against the clock, only a run you finish counts at all — stop early, or let the window close on you, and it is not timed."
 msgstr "One set of standings, shared by everyone playing it, and it never resets. Your best run is the one that counts. Where the standings are a race against the clock, only a run you finish counts at all — stop early, or let the window close on you, and it is not timed."
 
-#: modes/challenges/catalog.ts:432
+#: modes/challenges/catalog.ts:434
 msgid "One slip and it's over."
 msgstr "One slip and it's over."
 
@@ -2922,7 +2922,7 @@ msgstr "Record a replay of your play to help us spot bugs. Text fields are blank
 msgid "Records, celebrated"
 msgstr "Records, celebrated"
 
-#: modes/challenges/catalog.ts:696
+#: modes/challenges/catalog.ts:698
 msgid "REELS"
 msgstr "REELS"
 
@@ -2982,7 +2982,7 @@ msgstr "RING"
 msgid "ring {traineeRing} (player-set), gap = min(ring ÷ 3, {traineeGap})"
 msgstr "ring {traineeRing} (player-set), gap = min(ring ÷ 3, {traineeGap})"
 
-#: modes/challenges/catalog.ts:699
+#: modes/challenges/catalog.ts:701
 msgid "RLS"
 msgstr "RLS"
 
@@ -3145,7 +3145,7 @@ msgstr "Score rewards precision: solve each target in the fewest moves."
 msgid "Scores, one ladder per mode — Accuracy and Speed ask for opposite things, so each has its own rungs to climb."
 msgstr "Scores, one ladder per mode — Accuracy and Speed ask for opposite things, so each has its own rungs to climb."
 
-#: modes/challenges/catalog.ts:506
+#: modes/challenges/catalog.ts:508
 msgid "SDW"
 msgstr "SDW"
 
@@ -3265,7 +3265,7 @@ msgstr "SHOW LESS"
 msgid "SHOW SUM IN BUTTONS"
 msgstr "SHOW SUM IN BUTTONS"
 
-#: modes/challenges/catalog.ts:503
+#: modes/challenges/catalog.ts:505
 msgid "SIDE­WAYS"
 msgstr "SIDE­WAYS"
 
@@ -3274,9 +3274,9 @@ msgstr "SIDE­WAYS"
 msgid "SINCE {0}"
 msgstr "SINCE {0}"
 
-#: modes/challenges/catalog.ts:161
-msgid "Sixteen keys, double time"
-msgstr "Sixteen keys, double time"
+#: modes/challenges/catalog.ts:163
+msgid "Sixteen tiles, double time"
+msgstr "Sixteen tiles, double time"
 
 #: components/overlays/how-to-play-overlay.tsx:852
 msgid "Skill inside a single run: a long streak, the top multiplier, a stretch without losing a life."
@@ -3288,7 +3288,7 @@ msgstr "Skill inside a single run: a long streak, the top multiplier, a stretch 
 msgid "SKIP"
 msgstr "SKIP"
 
-#: components/game/opening-layer.tsx:288
+#: components/game/opening-layer.tsx:292
 msgid "Skip to the run"
 msgstr "Skip to the run"
 
@@ -3404,7 +3404,7 @@ msgstr "STEP UP TO {rungName}"
 msgid "Sticking with it — targets landed across every run you have ever played, and days played in a row."
 msgstr "Sticking with it — targets landed across every run you have ever played, and days played in a row."
 
-#: modes/challenges/catalog.ts:357
+#: modes/challenges/catalog.ts:359
 msgid "STM"
 msgstr "STM"
 
@@ -3416,7 +3416,7 @@ msgstr "STOP RECORDING"
 msgid "Stop session recording?"
 msgstr "Stop session recording?"
 
-#: modes/challenges/catalog.ts:354
+#: modes/challenges/catalog.ts:356
 msgid "STORM"
 msgstr "STORM"
 
@@ -3637,7 +3637,7 @@ msgstr "The clock keeps tightening as your run goes on, less and less each time.
 msgid "THE CROWN"
 msgstr "THE CROWN"
 
-#: modes/challenges/catalog.ts:507
+#: modes/challenges/catalog.ts:509
 msgid "The dial has fallen on its side."
 msgstr "The dial has fallen on its side."
 
@@ -3684,7 +3684,7 @@ msgstr "The hero halts well short of the gate, with the walls across the top of 
 msgid "The hit that leaves the board empty counts double."
 msgstr "The hit that leaves the board empty counts double."
 
-#: modes/challenges/catalog.ts:978
+#: modes/challenges/catalog.ts:980
 msgid "The keys go dark. Count in your head."
 msgstr "The keys go dark. Count in your head."
 
@@ -3718,7 +3718,7 @@ msgstr "THE PHOENIX"
 msgid "The rules are its own. The keys, the clock, the scoring, how many lives you get — any of it may be different, and the card says what before you start. Unless it says otherwise, it scores like Accuracy: the fewest moves build your streak, and a wasted move never costs a heart."
 msgstr "The rules are its own. The keys, the clock, the scoring, how many lives you get — any of it may be different, and the card says what before you start. Unless it says otherwise, it scores like Accuracy: the fewest moves build your streak, and a wasted move never costs a heart."
 
-#: modes/challenges/catalog.ts:281
+#: modes/challenges/catalog.ts:283
 msgid "The same nine, every run. Be quick."
 msgstr "The same nine, every run. Be quick."
 
@@ -3726,7 +3726,7 @@ msgstr "The same nine, every run. Be quick."
 msgid "The standings stay exactly as they are and the places settle now. This cannot be undone — running it again is a new session, with a board of its own."
 msgstr "The standings stay exactly as they are and the places settle now. This cannot be undone — running it again is a new session, with a board of its own."
 
-#: modes/challenges/catalog.ts:774
+#: modes/challenges/catalog.ts:776
 msgid "The sum only moves when you hit."
 msgstr "The sum only moves when you hit."
 

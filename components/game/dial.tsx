@@ -1,4 +1,4 @@
-import { Fragment, useEffect, type ReactNode } from 'react'
+import { Fragment, useEffect, useRef, type ReactNode } from 'react'
 import { View } from 'react-native'
 import { Gesture, GestureDetector } from 'react-native-gesture-handler'
 import Animated, {
@@ -18,6 +18,7 @@ import { DialSketch } from '@/components/game/dial-sketch'
 import { GestureHint } from '@/components/game/gesture-hint'
 import { DEFAULT_DIAL_CORNERS, type DialCorners } from '@/constants/dial-hints'
 import { useDialMetrics } from '@/hooks/use-dial-metrics'
+import { reportTileGrid } from '@/hooks/use-tile-grid'
 import { useViewport } from '@/hooks/use-viewport'
 import { carvedCellAt, carveOf, cellRect } from '@/lib/dial-carve'
 import {
@@ -213,7 +214,18 @@ export function Dial({
   const laid = useDialMetrics(dial)
   // A proportional dial has no space between its keys: they are the parts of one square,
   // and the lines between them are drawn, not left as a gap.
-  const metrics = dial.proportional ? { ...laid, gap: 0 } : laid
+  //
+  // A **flush** dial has none either, and spends it on the keys: each is as wide as a key and a
+  // gap were, so the dial takes the room it did and its keys are the tiles of a grid.
+  const flushed = {
+    button: laid.button + laid.gap,
+    gap: 0,
+    width: (laid.button + laid.gap) * dial.cols,
+    height: (laid.button + laid.gap) * dial.rows,
+  }
+  const metrics = dial.proportional ? { ...laid, gap: 0 } : dial.flush ? flushed : laid
+  // Where the keys stand on the window, told to the tiles round them. See `useTileGrid`.
+  const keysBox = useRef<View>(null)
   const viewport = useViewport()
   const burn = useBurn(flame)
   const live = controls ?? allLive(dial)
@@ -475,7 +487,16 @@ export function Dial({
         Not clipped, said out loud: the labels above and to the left are the first things
         in the app drawn properly outside this box — the key halos only ever reach a few
         points past it — and a box that clipped them would simply eat them. */}
-      <View style={{ width: metrics.width, height: metrics.height, overflow: 'visible' }}>
+      <View
+        ref={keysBox}
+        style={{ width: metrics.width, height: metrics.height, overflow: 'visible' }}
+        onLayout={() => {
+          if (!dial.flush) return
+          keysBox.current?.measureInWindow((x, y) => {
+            reportTileGrid({ x, y, size: metrics.button })
+          })
+        }}
+      >
         {/* First, so every key is drawn over every flame. */}
         {flame !== null && (
           <DialFlames

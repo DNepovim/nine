@@ -18,7 +18,14 @@ import { scheduleOnRN } from 'react-native-worklets'
 import { DialBadge } from '@/components/game/dial-badge'
 import { DialPulse } from '@/components/game/dial-pulse'
 import { ReelFace } from '@/components/game/reel-face'
-import { DIAL_COLORS, GRAYSCALE, PRIMARY_INK, STRIKE_COLORS } from '@/constants/colors'
+import { TileFace } from '@/components/game/tile-face'
+import {
+  AZULEJO,
+  DIAL_COLORS,
+  GRAYSCALE,
+  PRIMARY_INK,
+  STRIKE_COLORS,
+} from '@/constants/colors'
 import {
   DEFAULT_DIAL_CORNERS,
   DIAL_CORNERS,
@@ -28,6 +35,7 @@ import {
 import { mono } from '@/constants/theme'
 import { LESSON_DIM, LESSON_DIM_MS } from '@/constants/tutorial'
 import { useScheme } from '@/hooks/use-scheme'
+import { useTileInk } from '@/hooks/use-tile-grid'
 import {
   MOVE_EFFECT,
   NO_COMMAND,
@@ -35,6 +43,8 @@ import {
   type DialMove,
 } from '@/lib/dial-gesture'
 import { keySpinDegrees } from '@/lib/key-spin'
+import { mixHex } from '@/lib/mix-hex'
+import { TOP_LEVEL } from '@/lib/tile-motif'
 import type { DialControl } from '@/machines/tutorial-lesson'
 import type { DialOrientation } from '@/modes'
 
@@ -270,8 +280,13 @@ export function DialButton({
   // The scheme may draw the keys its own way — `dos` inverts them — and the rim is what
   // keeps a key that matches its ground visible as a key.
   const { keyRim, keys } = useScheme().inks
-  const palette = keys ?? (sketched ? SKETCH_GREYS : DIAL_COLORS)
-  const peak = keys?.peak ?? [peakFrom, peakTo]
+  const tileInk = useTileInk()
+  const tiled = keys !== null && 'tile' in keys && keys.tile
+  // A tile is glaze painted in the challenge's own colour, and filled with it at its top.
+  const palette = tiled
+    ? { low: AZULEJO.glaze, high: AZULEJO.glaze, text: tileInk, peakText: AZULEJO.glaze }
+    : (keys ?? (sketched ? SKETCH_GREYS : DIAL_COLORS))
+  const peak = tiled ? [tileInk, tileInk] : (keys?.peak ?? [peakFrom, peakTo])
   const rimmed = dark || keys !== null
   const keyRadius = sketched ? 0 : (keys?.radius ?? 999)
   const reel = keys !== null && 'reel' in keys && keys.reel
@@ -286,6 +301,8 @@ export function DialButton({
   const reelSpin = useSharedValue(0)
   const reelStrip = useSharedValue(0)
   const top = digits - 1
+  // How much of its pattern a tile carries: the digit it shows, spread over the levels.
+  const tileLevel = Math.round((value / Math.max(1, top)) * TOP_LEVEL)
   const rampProgress = useSharedValue(rampOf(value, top))
   const peakProgress = useSharedValue(value === top ? 1 : 0)
   // Starts where the key already stands rather than at full: a key that is dead on its
@@ -461,6 +478,8 @@ export function DialButton({
   // The CTA gradient crossfades in over the ramp — every tint change, including
   // the jump to and from 9, is a timed transition.
   const peakStyle = useAnimatedStyle(() => ({ opacity: peakProgress.value }))
+  // A painted tile's two coats: cobalt on the glaze, glaze on the cobalt a key at its top is.
+  const paintStyle = useAnimatedStyle(() => ({ opacity: 1 - peakProgress.value }))
 
   const liveStyle = useAnimatedStyle(() => ({ opacity: live.value }))
 
@@ -556,6 +575,12 @@ export function DialButton({
             ...(rimmed && { borderWidth: 1.5, borderColor: keyRim }),
             // The shadow is a third colour on a scheme that draws its own keys.
             ...(keys !== null && { shadowOpacity: 0, borderBottomWidth: keys.foot }),
+            ...(tiled && {
+              overflow: 'hidden' as const,
+              borderWidth: 1,
+              borderBottomWidth: 1,
+              borderColor: mixHex(tileInk, AZULEJO.glaze, 0.7),
+            }),
             ...(sketched && { shadowOpacity: 0, borderWidth: 0, borderBottomWidth: 0 }),
           },
           btnStyle,
@@ -613,6 +638,30 @@ export function DialButton({
             ]}
           />
         )}
+        {/* A tile of the panel: the pattern for the digit it shows, in the challenge's ink, over
+              the glaze — and the fullest pattern in glaze over the ink, at the key's top. */}
+        {tiled && !dark && (
+          <>
+            <Animated.View
+              pointerEvents="none"
+              style={[
+                { position: 'absolute', top: 0, right: 0, bottom: 0, left: 0 },
+                paintStyle,
+              ]}
+            >
+              <TileFace index={index} level={tileLevel} ink={tileInk} />
+            </Animated.View>
+            <Animated.View
+              pointerEvents="none"
+              style={[
+                { position: 'absolute', top: 0, right: 0, bottom: 0, left: 0 },
+                peakStyle,
+              ]}
+            >
+              <TileFace index={index} level={TOP_LEVEL} ink={AZULEJO.glaze} />
+            </Animated.View>
+          </>
+        )}
         {reel && !dark && (
           <ReelFace
             value={value}
@@ -629,7 +678,7 @@ export function DialButton({
             selectable={false}
             style={[
               {
-                fontSize: digitSize,
+                fontSize: tiled ? Math.round(size * 0.34) : digitSize,
                 fontFamily: mono,
                 fontWeight: '500' as const,
                 includeFontPadding: false,

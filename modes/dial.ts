@@ -70,6 +70,11 @@ export type DialSpec = {
   // says and nothing about its size. It does change where a finger is, which is why the
   // gesture reads it too.
   proportional: boolean
+  // Whether the keys are **flush**: laid edge to edge with no space between them, each a tile of
+  // one grid that the screen behind the run is tiled on. The key is as wide as a gap and a key
+  // were before, so the dial takes the room it did. False on every dial but FOUR BY FOUR's.
+  // Drawing only, as `proportional` is.
+  flush: boolean
 }
 
 // Which way up a dial is drawn and read. `sideways` is a quarter turn counter-clockwise,
@@ -114,6 +119,7 @@ export function defineDial({
   blackout = false,
   hidesSum = false,
   proportional = false,
+  flush = false,
 }: {
   id: string
   rows: number
@@ -127,6 +133,7 @@ export function defineDial({
   blackout?: boolean
   hidesSum?: boolean
   proportional?: boolean
+  flush?: boolean
 }): DialSpec {
   const cells = rows * cols
   const spread = weights ?? Array.from({ length: cells }, byPosition(cols))
@@ -145,6 +152,7 @@ export function defineDial({
     blackout,
     hidesSum,
     proportional,
+    flush,
   }
 }
 

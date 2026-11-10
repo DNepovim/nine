@@ -406,6 +406,9 @@ type SchemeInks = {
     // digits either side of the one showing peeking in at its top and foot, and a blur of
     // digits as it spins. See `ReelFace`.
     reel?: boolean
+    // Whether each key is a painted tile — a pattern of its own behind the digit, which sits in a
+    // roundel of glaze at its middle. See `TileFace`.
+    tile?: boolean
   } | null
 }
 
@@ -456,6 +459,35 @@ const DRAFTING_TOKENS = {
   '--color-fortune': '#9A3B32',
   '--color-dial': DRAFT_INK,
   '--color-factor': '#6B6A66',
+  '--color-pie': '#171421',
+}
+
+// The azulejo panel — FOUR BY FOUR's: white glaze, and everything on it painted in cobalt. `ink`
+// is the paint for what stands on the wall, `bar` the one blue the rows above the dial wear, and
+// a terracotta, the colour of the clay showing at a chipped edge, is kept for the fortune.
+export const AZULEJO = {
+  glaze: '#F6F4EC',
+  cobalt: '#1F3F8F',
+  joint: '#C9D3EA',
+} as const
+
+// Neutral on purpose: the tiles are painted in the challenge's own colour, which a scheme cannot
+// name, so what is written on the glaze is a deep slate that sits with any of them.
+const AZULEJO_INK = '#1F2A33'
+
+const AZULEJO_TOKENS = {
+  '--color-surface': AZULEJO.glaze,
+  '--color-card': '#F0EFE8',
+  '--color-elevated': '#FBFAF5',
+  '--color-muted': '#CFCFC6',
+  '--color-dim': '#4A5560',
+  '--color-primary': AZULEJO_INK,
+  '--color-strong': AZULEJO_INK,
+  '--color-on-strong': AZULEJO.glaze,
+  '--color-score': AZULEJO_INK,
+  '--color-fortune': '#A9502F',
+  '--color-dial': AZULEJO_INK,
+  '--color-factor': '#66707A',
   '--color-pie': '#171421',
 }
 
@@ -1029,6 +1061,53 @@ export const SCHEMES = {
       wash: ['#F1EFE6', DRAFT_PAPER, '#F7F5EE', '#F2F0E7'],
       mono: DRAFT_BAR,
       bar: DRAFT_BAR,
+      hit: null,
+      glow: null,
+      keys: null,
+    },
+  },
+  // `azulejo` — a wall of glazed tiles: white glaze, cobalt paint. Each key is a tile, glaze at
+  // the low end and cobalt at the high, with a small radius and a hairline of grout for a rim.
+  azulejo: {
+    tokens: AZULEJO_TOKENS,
+    inks: {
+      score: AZULEJO_INK,
+      keyRim: AZULEJO.joint,
+      statusBar: 'dark',
+      ground: AZULEJO.glaze,
+      ink: AZULEJO_INK,
+      wash: ['#F3F1E8', AZULEJO.glaze, '#F9F7F0', '#F4F2EA'],
+      mono: null,
+      bar: null,
+      hit: null,
+      glow: null,
+      keys: {
+        low: '#FBFAF5',
+        high: '#DCE3F3',
+        text: AZULEJO.cobalt,
+        // The digit sits in a glaze roundel on every tile, so it stays cobalt at the top too.
+        peakText: AZULEJO.cobalt,
+        peak: ['#162F73', '#1F3F8F'],
+        radius: 0,
+        foot: 0,
+        tile: true,
+      },
+    },
+  },
+  // `azulejoBar` — the rows above an `azulejo` dial. Not monochrome of its own: a challenge's
+  // top bar is worn in the challenge's colour wherever its scheme has none (`barTint`), which is
+  // what puts the name, NINE, the hearts and the figures in the colour the tiles are painted in.
+  azulejoBar: {
+    tokens: AZULEJO_TOKENS,
+    inks: {
+      score: AZULEJO_INK,
+      keyRim: 'transparent',
+      statusBar: 'dark',
+      ground: AZULEJO.glaze,
+      ink: AZULEJO_INK,
+      wash: ['#F3F1E8', AZULEJO.glaze, '#F9F7F0', '#F4F2EA'],
+      mono: null,
+      bar: null,
       hit: null,
       glow: null,
       keys: null,

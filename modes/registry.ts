@@ -223,6 +223,8 @@ export const OPENING_STARTS_LIT = {
   leverPull: false,
   // The sheet is the board's from the first frame; the drawing of it is the scene.
   drawingBoard: false,
+  // The wall is the panel's from the first frame; the laying of its tiles is the scene.
+  tilework: false,
 } as const satisfies Record<OpeningKind, boolean>
 
 // What the rows above the dial wear under each **scheme**: the same one, except that `glass`
@@ -245,6 +247,8 @@ export const SCHEME_BAR = {
   glassBar: 'glassBar',
   drafting: 'draftingBar',
   draftingBar: 'draftingBar',
+  azulejo: 'azulejoBar',
+  azulejoBar: 'azulejoBar',
 } as const satisfies Record<SchemeKind, SchemeKind>
 
 // Whether those rows, the keys and the sum wait for the opening's switch to turn over, or are in
@@ -263,6 +267,7 @@ export const OPENING_BAR_WAITS = {
   leverPull: false,
   // The rows above the dial are in the scheme from the first frame; the scene writes them in.
   drawingBoard: false,
+  tilework: false,
 } as const satisfies Record<OpeningKind, boolean>
 
 // Whether an opening's remains show the run's figures themselves, so the stat the top bar keeps
@@ -278,6 +283,7 @@ const OPENING_SHOWS_FIGURES = {
   takeoff: false,
   leverPull: false,
   drawingBoard: false,
+  tilework: false,
 } as const satisfies Record<OpeningKind, boolean>
 
 export const showsFigures = (id: ModeId): boolean => {

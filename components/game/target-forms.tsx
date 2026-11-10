@@ -6,6 +6,7 @@ import { HeartTarget } from '@/components/game/heart-target'
 import { StruckTarget } from '@/components/game/struck-target'
 import { TargetCard } from '@/components/game/target-card'
 import { TerminalBoard, TerminalTarget } from '@/components/game/terminal-board'
+import { TileBoard, TiledTarget } from '@/components/game/tiled-target'
 import type { OpeningTake, TargetForm } from '@/modes'
 
 // What a **target form** is drawn with: what stands around the targets, and each target.
@@ -31,6 +32,7 @@ export const TARGET_FORMS = {
   struck: { Board: DealtBoard, Card: StruckTarget },
   beating: { Board: DealtBoard, Card: HeartTarget },
   drafted: { Board: DealtBoard, Card: DraftedTarget },
+  tiled: { Board: TileBoard, Card: TiledTarget },
   lines: { Board: TerminalBoard, Card: TerminalTarget },
 } as const satisfies Record<
   TargetForm,
