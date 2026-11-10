@@ -1,8 +1,8 @@
 # Lava lamp (DRIFT dressing)
 
 Slug: drift-lava-lamp
-Stage: build
-Next: /verify drift-lava-lamp
+Stage: review
+Next: /ship drift-lava-lamp
 Track: small
 Branch: feat/drift-lava-lamp
 Started: 2026-11-10
@@ -38,11 +38,11 @@ The theme is a lava lamp, picked from five costed directions.
     toward the top (teardrop head up); a falling one sinks and stretches down. A target that
     has not drifted yet (its first second, the `fresh` window) sits round and still.
   - **On a step** the blob gives one soft pulse as the digit changes.
-- **Opening `lavaLamp`.** Full take: the screen starts in day colours, the lamp warms — the
-  glass fades to the pink scheme from the base up, a puddle of wax glows at the foot, and the
-  first blob breaks off the base and rises as the first target arrives. The run waits in
-  `ready` until BEGIN. Short take (a run dealt again): the glow only, quickly. Wax and glow
-  stay behind the run as the **remains**, a slow lamp behind the dial.
+- **Opening `lavaLamp`.** Full take: the screen is the lamp's pink glass from the first frame, and the
+  scene is what happens in it — a pool of light comes up at the foot of the targets' area, a puddle of
+  wax swells in it, and a lump breaks off and climbs, purple to pink as it goes, as the first target
+  arrives. The run waits in `ready` until BEGIN. Short take (a run dealt again): the glow and a quick
+  lump. Three faint, slow lumps stay behind the run as the **remains**.
 - **Shot** stays `burst`; **dial buttons** stay at the default.
 
 Areas: `constants/colors.ts` (scheme), `modes/types.ts` + `modes/challenges/catalog.ts`
@@ -137,29 +137,66 @@ device, that the digit reads at both ends of the scale, and the look of the open
 
 ## Verification log
 
-Verdict: stopped. 3 PASS, 5 SKIPPED (2–6): the app could not be driven to a DRIFT run, see below.
+Verdict: 7 PASS, 1 PASS with two parts not exercised (5b). Driven in the real web app against the
+local stack: a LAVA session booked in the local `challenge_sessions` and the `challenges` feature
+made public for the walk, both put back afterwards.
 
-Suite (`pnpm check`): red for two reasons that are not this work. `app/(tabs)/index.tsx:794`
-(`sonarjs/cognitive-complexity` 29 > 20) fails the same way on `HEAD`, and eslint also walks the
-git-ignored `.claude/worktrees/road-bandits` checkout (11 errors there). Prettier flags
-`components/overlays/replay-consent-overlay.tsx`, also as committed. `tsc`, `knip`, `i18n:verify`,
-and all 2363 tests are green, and nothing this work added is flagged.
+Suite (`pnpm check`): red for reasons that are not this work. `app/(tabs)/index.tsx:794`
+(`sonarjs/cognitive-complexity` 29 > 20) fails the same way on `HEAD`; committed `HEAD` also fails
+`tsc` in `index.tsx` (`pushHelp`), whose fix is another session's uncommitted change; Prettier flags
+`replay-consent-overlay.tsx` as committed. `knip`, `i18n:verify` and all tests are green, and nothing
+this work added is flagged.
 
-| #   | Criterion                                         | Result  | Evidence                                                                                                      |
-| --- | ------------------------------------------------- | ------- | ------------------------------------------------------------------------------------------------------------- |
-| 1   | Pink scheme; every other mode/challenge as it was | PASS    | `challenges.test.ts` — DRIFT is `lava`; every undressed mode still `day`, no opening, `discs`                 |
-| 2   | Every target a morphing blob, none in step        | SKIPPED | needs the app; `lib/wax.test.ts` proves two phases give two outlines                                          |
-| 3   | Colour warms as the number rises, clamped         | SKIPPED | `waxColor`/`waxHeat` tested; the card's wiring needs the app                                                  |
-| 4   | Rising leans up, falling down, fresh is still     | SKIPPED | `waxPoints` tested (head up/down, life 0 round and still); the card's `wakeIn` needs the app                  |
-| 5   | The digit reads at both ends of the scale         | SKIPPED | measured: aubergine ink on the card tint is ≥ 8:1 at both ends by construction; needs a look at the real disc |
-| 6   | Full opening ends in `ready`, BEGIN deals; short  | SKIPPED | `runRules(drift).opens` true and the machine tests BEGIN into play; the scene itself needs the app            |
-| 7   | Score, streak, hearts, boards unchanged           | PASS    | `challenges.test.ts` DRIFT block and all 14 `machines/game.test.ts` DRIFT tests pass; no rule file touched    |
-| 8   | `pnpm check` clean                                | PASS*   | *nothing of this work is flagged; the three failures above are on `HEAD`, outside it                          |
+| #   | Criterion                                        | Result | Evidence                                                                                                                                                                       |
+| --- | ------------------------------------------------ | ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| 1   | Pink scheme; every other mode as it was          | PASS   | ran it: pink glass, aubergine top bar; `challenges.test.ts` keeps every other mode `day`/discs                                                                                 |
+| 2   | Every target a morphing blob, none in step       | PASS   | ran it: lumps of different shapes at once, outlines different between frames                                                                                                   |
+| 3   | Colour warms as the number rises, clamped        | PASS   | ran it: 108 violet, 215 magenta, 273 hot pink; `lib/wax.test.ts` for the clamp                                                                                                 |
+| 4   | Rising creeps up, falling down, fresh is still   | PASS   | sampled one bubble per 1.5 s: 267 → 260 moved down 275 → 306 px (≈4 px/s); 201 → 204 moved up. First-second stillness read off `wakeIn`, not timed                             |
+| 5   | Number readable on the wax, no disc              | PASS   | ran it: white numerals read at both ends, no disc or ring drawn                                                                                                                |
+| 5b  | Wax shrinks as ring runs down; expires/hit/lost  | PASS\* | \*expiry and loss seen (hearts drop, "DRIFTED OFF" / "ALL ADRIFT" end screens). A hit was not made (no dial play) and the shrink was not measured; 14 machine tests cover hits |
+| 6   | Full opening ends in `ready`, BEGIN deals; short | PASS   | ran it: glow, puddle, lump rising purple, first targets; PLAY AGAIN's short take was quick                                                                                     |
+| 7   | Score, streak, hearts, boards unchanged          | PASS   | DRIFT rule tests and 14 `machines/game.test.ts` DRIFT tests green; no rule file touched                                                                                        |
+| 8   | `pnpm check` clean                               | PASS\* | \*nothing of this work is flagged; the failures above are on `HEAD`, outside it                                                                                                |
 
-Why 2–6 are skipped: DRIFT's window closed on 28 Oct, and the intro only offers a challenge through a
-live row in `challenge_sessions`, which the local database does not have. Opening the window by hand
-(temporarily, now restored) lets `usePersistedMode` accept `challenge/drift`, but the app kept
-restoring a saved paused run (an Accuracy one, then FOUR KEYS) over the stored mode, four tries in. The
-dev server on :8081 was already running this checkout and picked the new files up (no errors on load).
-What is needed is a live DRIFT session in the local database (book one in the admin planner), or a
-dev-sidebar way into a run of any challenge.
+Seen beyond the criteria: the challenge card, the game-over screens and the top bar all read in
+the aubergine/magenta pair, and the name is LAVA throughout.
+
+## Review
+
+`/code-review` at high over `d1e922a`: 12 findings. House pass: nothing outside `modes/` names the
+challenge, the new files carry no copy and no raw sizes or tracking, no value is picked by a ternary
+chain, `i18n:verify` is clean with the Czech filled in (LÁVA / LÁV).
+
+**Fixed (a real defect in this work):**
+
+- A bare target kept the pie's hit swell and loss squash on its number but lost the ring that carried
+  them, so a hit left a white numeral swelling off the wax onto pale glass, and a loss showed no cue.
+  The wax now leaves with its card: it swells on a hit and sinks on a loss over `TARGET_EXIT_MS`
+  (`EXIT_REACH`), and fades with the card on game over.
+- The wax had its own fade-out that began after the card had gone, so it stood full-strength after
+  its number had vanished. Both ends now run off one clock each; seen in the app: the wax count falls
+  in the same second as the number.
+- Every wax clock ran for ever, redrawing its path each frame through a pause. A card's wax now holds
+  still while its run is paused or it is leaving (`held`).
+- `Date.now()` in render for the first-step stillness: now read once, as the wax is made.
+
+**Kept on purpose:**
+
+- How to Play is untouched. It describes the permanent modes; a challenge's dressing has never edited
+  it, and no rule moved here.
+- The creep is `4 px/s` with no clamp against the board's edge or neighbours: the player asked for it,
+  and overlap is only drawing. If a rising bubble near the top goes under the top bar in play, cap its
+  travel then.
+- The `mark: 'drift'` rename is code-only; no stored or remote data names a mark.
+- The opening's scheme is the lamp's from the first frame; the spec's Shape now says so.
+
+**Worth its own work item:**
+
+- `BlobTarget` and `TargetCard` each read the drifted number (two timers a second per target). A
+  `reading` prop on `TargetCard` would make it one.
+- The first-step stillness (`wakeIn`) is wall-clock, so a pause in the first second lets the wax come
+  alive early. Cosmetic.
+- The three ambient lumps in the remains keep breathing while paused.
+- A dev-sidebar way into a run of any challenge: reaching a closed challenge here took a booked
+  session, a feature flipped and a seen-marker cleared.

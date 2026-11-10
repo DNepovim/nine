@@ -24,10 +24,6 @@ const STRETCH = 0.3
 const BREATH_RATE = 1.1
 const BREATH_SPREAD = 1.9
 
-// How long, in seconds, until every point is breathing as it was: a card's clock runs round this
-// and starts again, so the wax never jumps where it loops.
-export const WAX_LOOP = (2 * Math.PI) / BREATH_RATE
-
 export type WaxPoint = { x: number; y: number }
 
 type WaxShape = {

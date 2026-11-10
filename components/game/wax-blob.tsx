@@ -1,11 +1,11 @@
 import { useEffect } from 'react'
 import Animated, {
+  cancelAnimation,
   Easing,
   useAnimatedProps,
   useAnimatedStyle,
   useSharedValue,
   withDelay,
-  withRepeat,
   withSequence,
   withTiming,
 } from 'react-native-reanimated'
@@ -13,7 +13,7 @@ import Svg, { Path } from 'react-native-svg'
 
 import { LAVA } from '@/constants/colors'
 import type { Drift } from '@/lib/target-drift'
-import { WAX_LOOP, waxColor, waxPath, waxPoints } from '@/lib/wax'
+import { waxColor, waxPath, waxPoints } from '@/lib/wax'
 
 const AnimatedPath = Animated.createAnimatedComponent(Path)
 
@@ -21,6 +21,8 @@ const AnimatedPath = Animated.createAnimatedComponent(Path)
 const WAKE_MS = 700
 const PULSE_MS = 160
 const HEAT_MS = 420
+// How long the breathing clock is set to run in one go, in seconds: longer than any run.
+const RUN_S = 3600
 
 // One lump of lava-lamp wax: the `blobs` target form's drawing, behind the card's own disc. Its
 // outline breathes on the card's own clock and phase (see `waxPoints`), leans the way the number
@@ -38,6 +40,7 @@ export function WaxBlob({
   wakeIn,
   warmMs = HEAT_MS,
   shrink,
+  held = false,
 }: {
   // The side of the square it is drawn in, in px: the lump is round at a little under half of it.
   size: number
@@ -54,17 +57,28 @@ export function WaxBlob({
   // How much of its size it keeps, nought to one, where the lump is a clock — a target's shrinks as
   // its ring runs down. Left out, it keeps all of it.
   shrink?: { readonly value: number }
+  // Whether the wax stands still: its clock stops where it is and goes on from there. A card's does
+  // while its run is paused or it is leaving, so a paused board is not redrawn sixty times a second.
+  held?: boolean
 }) {
   const time = useSharedValue(0)
   const life = useSharedValue(wakeIn > 0 ? 0 : 1)
   const warmth = useSharedValue(heat)
   const pulse = useSharedValue(1)
 
+  // The breathing clock, run on for an hour rather than looped, so a stop and a start again pick up
+  // from where it stood. The wake-up is not held: it is only ever a few seconds.
   useEffect(() => {
-    time.value = withRepeat(
-      withTiming(WAX_LOOP, { duration: WAX_LOOP * 1000, easing: Easing.linear }),
-      -1,
-    )
+    if (held) {
+      cancelAnimation(time)
+      return
+    }
+    time.value = withTiming(time.value + RUN_S, {
+      duration: RUN_S * 1000,
+      easing: Easing.linear,
+    })
+  }, [held])
+  useEffect(() => {
     if (wakeIn > 0) {
       life.value = withDelay(
         wakeIn,
