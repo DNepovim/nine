@@ -175,8 +175,10 @@ import { drillFor } from '@/lib/drill'
 import { gameSnapshot } from '@/lib/feedback-state'
 import { leaderOf, type LeaderboardRow } from '@/lib/leaderboard'
 import type { LocalScore } from '@/lib/local-scores'
+import { multiScreenOf } from '@/lib/multi-screen'
 import { runChallenge } from '@/lib/next-challenge'
 import { heldPeriods, medalPeriods } from '@/lib/record-medals'
+import { averageOf, headingOf } from '@/lib/run-average'
 import { newRunId } from '@/lib/run-id'
 import { countRun } from '@/lib/run-submission'
 import { runKindOf } from '@/lib/run-totals'
@@ -1385,8 +1387,8 @@ export default function GameScreen() {
 
   // Read up here rather than beside the dial they are drawn next to: the achievements ask
   // for both, and a run's average is one of the few things a rule cannot re-derive.
-  const avgAccuracy = hits > 0 ? Math.round((100 * accSum) / hits) : 0
-  const avgSpeed = hits > 0 ? Math.round((100 * spdSum) / hits) : 0
+  const avgAccuracy = averageOf(accSum, hits)
+  const avgSpeed = averageOf(spdSum, hits)
 
   // Every board the player stands on. Read here rather than inside the intro screen,
   // which unmounts for the whole run — the achievements need it while one is going, and
@@ -2036,11 +2038,11 @@ export default function GameScreen() {
     rules.scoring.headline,
   )
 
-  const avgStat = rules.scoring.headline === 'acc' ? avgAccuracy : avgSpeed
+  const avgStat = { acc: avgAccuracy, spd: avgSpeed }[rules.scoring.headline]
   const prevAvgRef = useRef(avgStat)
   const avgDirection = useRef<1 | -1>(1)
   if (avgStat !== prevAvgRef.current) {
-    avgDirection.current = avgStat > prevAvgRef.current ? 1 : -1
+    avgDirection.current = headingOf(avgStat, prevAvgRef.current)
     prevAvgRef.current = avgStat
   }
 
@@ -2162,10 +2164,12 @@ export default function GameScreen() {
   }, [multiRoom.isAdmin, multiRoomId])
 
   // Which multiplayer screen to show.
-  const showMultiWaiting = isNotNull(multiRoom.room) && multiGame.phase === 'waiting'
-  const showMultiGame = isNotNull(multiRoom.room) && multiGame.phase === 'playing'
-  const showMultiResults = isNotNull(multiRoom.room) && multiGame.phase === 'results'
-  const isMultiActive = showMultiWaiting || showMultiGame || showMultiResults
+  const {
+    waiting: showMultiWaiting,
+    playing: showMultiGame,
+    results: showMultiResults,
+    active: isMultiActive,
+  } = multiScreenOf(isNotNull(multiRoom.room), multiGame.phase)
 
   // The intro, but for whatever is stacked over it: the machine is idle, the player is not
   // in a room or on the map, and whether this launch owes the tutorial offer has been
@@ -3261,6 +3265,7 @@ export default function GameScreen() {
                   else replayConsent.allow()
                 }}
                 push={pushConsent.row}
+                pushHelp={pushConsent.help}
                 onTogglePush={pushConsent.toggle}
                 onOpenNews={() => {
                   setMenuOverlay('news')
@@ -3274,7 +3279,6 @@ export default function GameScreen() {
             {/* ── News archive — opened from advanced options ── */}
             {menuOverlay === 'news' && (
               <NewsArchiveOverlay
-                pushHelp={pushConsent.help}
                 onClose={() => {
                   setMenuOverlay('advanced')
                 }}
