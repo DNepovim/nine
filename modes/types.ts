@@ -277,7 +277,7 @@ export type ShotKind = 'sniper' | 'burst' | 'flame' | 'chain'
 // `components/overlays/challenge-mark.tsx`. Named for what is drawn rather than for the
 // challenge, so a later challenge about the same thing may wear the same one.
 export type MarkKind =
-  | 'boltKeys'
+  | 'cutSquare'
   | 'tile'
   | 'route'
   | 'closedEye'

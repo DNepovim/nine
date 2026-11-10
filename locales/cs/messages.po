@@ -1538,8 +1538,8 @@ msgid "Forward a step"
 msgstr "O krok vpřed"
 
 #: modes/challenges/catalog.ts:53
-msgid "FOUR KEYS"
-msgstr "ČTYŘI TLAČÍTKA"
+msgid "SQUA­RED"
+msgstr "ČTVEREC"
 
 #: modes/challenges/catalog.ts:54
 msgid "Four keys, doubled speed"

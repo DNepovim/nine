@@ -12,10 +12,10 @@ import {
   CASINO_PAIR,
   DOS_PAIR,
   LIGHT_BLUE,
+  GRAPHITE_PAIR,
   MONITOR_PAIR,
   SKY_PAIR,
   STORM_PAIR,
-  TURQUOISE,
 } from './palette'
 
 // Every challenge the app has ever carried, each with the window it ran in.
@@ -50,14 +50,13 @@ const DAY = 24 * HOUR
 // because the tests walk it.
 const FOUR_KEYS: ChallengeSpec = {
   slug: 'four-keys',
-  label: msg`FOUR KEYS`,
+  label: msg`SQUA­RED`,
   description: msg`Four keys, doubled speed`,
-  mark: 'boltKeys',
-  // Turquoise at its blue end, rather than the violet its place in the catalog works out
-  // to. The arc never reaches this hue on its own — see `TURQUOISE`, which also records
-  // what naming it costs: its bright stop is too pale to carry a word, so the edge and
-  // the name are two shades of it.
-  hue: TURQUOISE,
+  mark: 'cutSquare',
+  // Pencil graphite: the drafting scheme's own colour, a grey rather than a hue of the arc.
+  // See `GRAPHITE_PAIR`.
+  gradient: GRAPHITE_PAIR,
+  darkGradient: GRAPHITE_PAIR,
   // Every key alight at once, in the strike colours every shot wears — the shot its
   // streak is made of, since a streak hit is one that moved all of them. See `ShotKind`.
   shot: 'flame',
@@ -65,25 +64,25 @@ const FOUR_KEYS: ChallengeSpec = {
   // reaches: a session standing through `board` and `medal`, and the three a run earns
   // on its own merits. The rest fall through to the app's own pools.
   //
-  // Every line is about this dial rather than about a board — FOUR KEYS has no board to
+  // Every line is about this dial rather than about a board — SQUARED has no board to
   // take, and being told it took gold on one would be the screen describing a thing that
   // does not exist.
   claims: {
     board: [
-      ['FOUR', 'KEYS'],
-      ['KEPT', 'FOUR'],
+      ['SQUARE', 'CUT'],
+      ['KEPT', 'SQUARE'],
       ['ALL', 'FOUR'],
     ],
     medal: [
-      ['NEAR', 'FOUR'],
-      ['HELD', 'FOUR'],
+      ['NEAR', 'SQUARE'],
+      ['HELD', 'SQUARE'],
     ],
     strong: [
-      ['GOOD', 'KEYS'],
-      ['SURE', 'FOUR'],
+      ['GOOD', 'CUTS'],
+      ['SURE', 'SQUARE'],
     ],
     cold: [
-      ['FOUR', 'HARD'],
+      ['SQUARE', 'HARD'],
       ['COLD', 'KEYS'],
     ],
   },

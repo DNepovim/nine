@@ -200,6 +200,11 @@ export const SKY_PAIR: readonly [string, string] = ['#2F7FC1', '#1B6FB8']
 // the floor on white as the score and meter ink it becomes need.
 export const CASINO_PAIR: readonly [string, string] = ['#6B4300', '#A8700A']
 
+// SQUARED's pencil graphite, in two stops: the lead of a drafting pencil, a cool grey deepened
+// enough that the second clears the floor on white as the score and meter ink it becomes need.
+// Not `GRAYSCALE`, whose greys mean a record — this one is a colour the challenge wears.
+export const GRAPHITE_PAIR: readonly [string, string] = ['#3A3F4A', '#586070']
+
 export const challengeGradient = (index: number): readonly [string, string] =>
   challengePairFor(challengeHue(index))
 

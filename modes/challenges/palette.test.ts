@@ -14,6 +14,7 @@ import {
   challengeInk,
   challengePairFor,
   challengeTints,
+  GRAPHITE_PAIR,
   hueOf,
   TURQUOISE,
 } from './palette'
@@ -267,8 +268,8 @@ describe('a challenge that names its own hue', () => {
   it('is what four-keys actually wears', () => {
     const fourKeys = CHALLENGES.find((mode) => mode.id === 'challenge/four-keys')
     expect(fourKeys).toBeDefined()
-    expect(fourKeys?.gradient).toEqual(challengePairFor(TURQUOISE))
-    expect(fourKeys?.darkGradient).toEqual(challengeDarkPairFor(TURQUOISE))
+    expect(fourKeys?.gradient).toEqual(GRAPHITE_PAIR)
+    expect(fourKeys?.darkGradient).toEqual(GRAPHITE_PAIR)
   })
 
   it('carries white on its CTA, as every challenge must', () => {

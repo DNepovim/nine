@@ -1538,8 +1538,8 @@ msgid "Forward a step"
 msgstr "Forward a step"
 
 #: modes/challenges/catalog.ts:53
-msgid "FOUR KEYS"
-msgstr "FOUR KEYS"
+msgid "SQUA­RED"
+msgstr "SQUA­RED"
 
 #: modes/challenges/catalog.ts:54
 msgid "Four keys, doubled speed"

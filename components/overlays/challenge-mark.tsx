@@ -58,36 +58,32 @@ const BULB =
   'M12 2.2 C7.7 2.2 5 5.4 5 9.2 C5 11.8 6.3 13.4 7.7 14.8 C8.6 15.7 9 16.5 9 17.6 ' +
   'H15 C15 16.5 15.4 15.7 16.3 14.8 C17.7 13.4 19 11.8 19 9.2 C19 5.4 16.3 2.2 12 2.2 Z'
 
-// FOUR KEYS' bolt, drawn twice: once as its own halo, once filled on top of it.
-const BOLT = 'M15 1.5 L5.5 13.6 H11 L9 22.5 L18.5 10.2 H13 Z'
+// SQUARED's square, cut at a third both ways: the pieces stand 1, 2, 2 and 4, as its dial does.
+const CUT = 2 + 20 / 3
 
 // The tile FOUR BY FOUR wears: its fullest pattern, the one a key at its top is painted with.
 const TILE = tileAt(8, TOP_LEVEL)
 
 const GLYPHS: Record<MarkKind, (color: string) => ReactNode> = {
-  // FOUR KEYS — four keys and the bolt that is their doubled speed.
-  boltKeys: (color) => (
+  // SQUARED — one square cut into the four pieces of its dial.
+  cutSquare: (color) => (
     <>
       {(
         [
-          [2.5, 2.5],
-          [13, 2.5],
-          [2.5, 13],
-          [13, 13],
+          [2, 2, CUT - 2, CUT - 2],
+          [CUT, 2, 22 - CUT, CUT - 2],
+          [2, CUT, CUT - 2, 22 - CUT],
+          [CUT, CUT, 22 - CUT, 22 - CUT],
         ] as const
-      ).map(([x, y]) => (
+      ).map(([x, y, w, h]) => (
         <Path
           key={`${x}-${y}`}
-          d={box(x, y, 8.5, 8.5, 2)}
+          d={box(x, y, w, h, 1)}
           {...line(color)}
           fill={color}
           fillOpacity={WASH}
         />
       ))}
-      {/* Cut out of the keys by a halo in the ground colour, or the bolt is the same ink
-        as the keys under it and disappears into them. */}
-      <Path d={BOLT} stroke={SURFACE} strokeWidth={3} strokeLinejoin="round" />
-      <Path d={BOLT} fill={color} />
     </>
   ),
 
