@@ -257,22 +257,14 @@ const GLYPHS: Record<MarkKind, (color: string) => ReactNode> = {
     </>
   ),
 
-  // MIRROR — a key with a 7 on it, and its reflection across the glass: the same key
-  // turned the other way, fainter, the way a reflection is.
+  // MIRROR — a hand mirror: an oval glass on a short handle, with the glint across it that
+  // says it is glass. A pair of keys read as two cards at this size; this reads as a mirror.
   mirror: (color) => (
     <>
-      <Path d={box(1.5, 5, 9, 14, 2)} {...line(color)} fill={color} fillOpacity={WASH} />
-      <Path d="M4 8.6 H8 L5.6 15.4" {...line(color)} strokeWidth={1.8} />
-      <Path d="M12 2.5 V21.5" {...line(color)} strokeWidth={1} strokeDasharray="1.4 2" />
-      <G opacity={0.5}>
-        <Path
-          d={box(13.5, 5, 9, 14, 2)}
-          {...line(color)}
-          fill={color}
-          fillOpacity={WASH}
-        />
-        <Path d="M20 8.6 H16 L18.4 15.4" {...line(color)} strokeWidth={1.8} />
-      </G>
+      <Circle cx={12} cy={9.5} r={7.5} {...line(color)} fill={color} fillOpacity={WASH} />
+      <Path d="M7.6 9 Q8 6 11 4.8" {...line(color)} strokeWidth={1.8} />
+      <Path d="M12 17 V21.8" {...line(color)} strokeWidth={2.6} />
+      <Path d="M9.6 21.8 H14.4" {...line(color)} />
     </>
   ),
 
