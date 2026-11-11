@@ -23,7 +23,7 @@ export function useTilt(): SharedValue<number> {
   return useDerivedValue(() => {
     const { x: across, y: along } = gravity.sensor.value
     if (Math.hypot(across, along) < FLAT) return withSpring(0, SETTLE)
-    const roll = Math.atan2(across, along)
+    const roll = Math.atan2(-across, along)
     return withSpring(Math.max(-MAX_TILT, Math.min(MAX_TILT, roll)), SETTLE)
   })
 }
