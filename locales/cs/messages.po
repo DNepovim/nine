@@ -166,7 +166,7 @@ msgstr "— CELÝ TÝDEN NIKDO NESTAČIL —"
 msgid "— NOTHING HAS OUTRUN THIS YET —"
 msgstr "— TOHLE JEŠTĚ NIKDO NEPŘEDBĚHL —"
 
-#: components/game/best-scores-line.tsx:636
+#: components/game/best-scores-line.tsx:603
 msgid "— OFFLINE —"
 msgstr "— OFFLINE —"
 
@@ -1033,7 +1033,6 @@ msgstr "Navazuj zásahy na sebe — série násobí body ×2 → ×4 → ×8. P�
 msgid "CHALLENGE"
 msgstr "VÝZVA"
 
-#: components/game/best-scores-line.tsx:598
 #: components/overlays/session-closes.tsx:42
 msgid "CHALLENGE CLOSES IN"
 msgstr "VÝZVA SE ZAVÍRÁ ZA"
@@ -1165,7 +1164,7 @@ msgstr "ZNALEC"
 msgid "CONTINUE"
 msgstr "POKRAČOVAT"
 
-#: app/(tabs)/index.tsx:3017
+#: app/(tabs)/index.tsx:3021
 msgid "Continue the tutorial"
 msgstr "Pokračovat v tutoriálu"
 

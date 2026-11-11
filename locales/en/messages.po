@@ -166,7 +166,7 @@ msgstr "— NOT ONE FAST ENOUGH THIS WEEK —"
 msgid "— NOTHING HAS OUTRUN THIS YET —"
 msgstr "— NOTHING HAS OUTRUN THIS YET —"
 
-#: components/game/best-scores-line.tsx:636
+#: components/game/best-scores-line.tsx:603
 msgid "— OFFLINE —"
 msgstr "— OFFLINE —"
 
@@ -1033,7 +1033,6 @@ msgstr "Chain your hits — a streak multiplies your points ×2 → ×4 → ×8.
 msgid "CHALLENGE"
 msgstr "CHALLENGE"
 
-#: components/game/best-scores-line.tsx:598
 #: components/overlays/session-closes.tsx:42
 msgid "CHALLENGE CLOSES IN"
 msgstr "CHALLENGE CLOSES IN"
@@ -1165,7 +1164,7 @@ msgstr "CONNOISSEUR"
 msgid "CONTINUE"
 msgstr "CONTINUE"
 
-#: app/(tabs)/index.tsx:3017
+#: app/(tabs)/index.tsx:3021
 msgid "Continue the tutorial"
 msgstr "Continue the tutorial"
 

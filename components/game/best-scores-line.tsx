@@ -13,12 +13,7 @@ import Animated, {
 
 import DSEG7Font from '@/assets/fonts/DSEG7Classic-Bold.ttf'
 import { AnnouncementBar } from '@/components/game/announcement-bar'
-import {
-  BEST_CELL_HEIGHT,
-  BestScoreCell,
-  CELL_LINE,
-  CELL_TEXT_SIZE,
-} from '@/components/game/best-score-cell'
+import { BEST_CELL_HEIGHT, BestScoreCell } from '@/components/game/best-score-cell'
 import { ChallengeCountdown } from '@/components/overlays/challenge-countdown'
 import { TrackedPressable } from '@/components/tracked-pressable'
 import type { AchievementId } from '@/constants/achievements'
@@ -137,13 +132,6 @@ const SESSION_WITH_LAST = ['you', 'session', 'last'] as const satisfies readonly
 
 // And what is left when the three server-backed cells cannot be reached.
 const ONLY_YOURS = ['you'] as const satisfies readonly BestKey[]
-
-// How wide the countdown's label is allowed to be, which is what makes it wrap to two
-// lines. Nine characters at this size and tracking come to about forty points, so this
-// is a little over one word's worth — wide enough that a word is never broken across a
-// line, narrow enough that two never fit on one. Czech runs longer and lands on two the
-// same way.
-const LABEL_WIDTH = 46
 
 // Which cells the row draws.
 //
@@ -570,33 +558,7 @@ export function BestScoresLine({
               — see `ChallengeCountdown`, which exists for exactly that reason on the
               intro. */}
           {revealed && session !== null && (
-            // The label **beside** the board rather than over it, which is the one way
-            // both fit: a cell here is 15pt from its label's cap to its holder's foot,
-            // and a caption stacked on a flap board comes to twenty-two. Side by side it
-            // is the board's own height and nothing has to shrink.
-            <View className="flex-row items-center gap-1.5">
-              {/* **Closes**, not ends, and it names what closes. A run ends and a
-                window closes, so the verb already keeps this off the clock beside it —
-                but the subject is cheap here, and a bare CLOSES IN was a label the player
-                had to work out from context. It is also the word the rest of this feature
-                uses: `closesAt`, and the window that has shut.
-
-                Two lines by wrapping rather than by two strings. A translator decides
-                where a phrase breaks, and Czech does not break this one where English
-                does. Built from the cell's own metrics, so the block comes to a cell's
-                height exactly — see `CELL_TEXT_SIZE`. */}
-              <Text
-                selectable={false}
-                numberOfLines={2}
-                className="font-mono font-bold tracking-[0.5px] text-dim"
-                style={{
-                  fontSize: CELL_TEXT_SIZE,
-                  lineHeight: CELL_LINE,
-                  width: LABEL_WIDTH,
-                }}
-              >
-                <Trans>CHALLENGE CLOSES IN</Trans>
-              </Text>
+            <View className="flex-row items-center">
               {/* The same board the intro's banner counts down on — flaps in this
                 challenge's own CTA pair, turning as they change. It was a plain figure
                 here, which made the one thing on this strip that is not a score look
