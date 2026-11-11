@@ -490,7 +490,9 @@ export function PlaneOver({
     }
   }, [floor])
 
-  // A new run starts from where the scene left the plane.
+  // A new run starts from where the scene left the plane. `height` is there because the first
+  // render may be measured at nought (see `useViewport`), which would seed the plane at the top
+  // and leave it there until the next run; a plane already flying is not moved by a resize.
   useEffect(() => {
     crashedAt = 0
     y.value = height * START_AT
@@ -498,6 +500,10 @@ export function PlaneOver({
     down.value = false
     boom.value = 0
   }, [runId])
+
+  useEffect(() => {
+    if (!falling.value) y.value = height * START_AT
+  }, [height])
 
   // A press kicks it up: a little more speed upward than it had.
   const seen = useRef(grid)
