@@ -619,7 +619,7 @@ const DRIFT: ChallengeSpec = {
   },
 }
 
-// ONE KEY: Accuracy Hard on a dial of a single key, with a second to answer each target.
+// LIFTOFF: Accuracy Hard on a dial of a single key, with a second to answer each target.
 //
 // Its one thing is the **key** — one, worth ×1, so every target is a digit from 0 to 9 and
 // the sum row is the key itself. With nothing to choose between, the clock is what makes
@@ -644,7 +644,7 @@ const DRIFT: ChallengeSpec = {
 // remains, and the machine hears of it only as a crash.
 const ONE_KEY: ChallengeSpec = {
   slug: 'one-key',
-  label: msg`ONE KEY`,
+  label: msg`LIFTOFF`,
   // Its own, as every challenge since HABIT's: a profile row reading ACC would file it
   // under a board it is not.
   code: msg`KEY`,
@@ -662,7 +662,7 @@ const ONE_KEY: ChallengeSpec = {
   // Every line about the one key and the one second.
   claims: {
     board: [
-      ['ONE', 'KEY'],
+      ['LIFT', 'OFF'],
       ['LONE', 'KEY'],
       ['SOLE', 'KEY'],
     ],

@@ -58,7 +58,7 @@ export type DialSpec = {
   blackout: boolean
   // Whether the **sum row** over the dial is left out: a dial of one key worth one is its own
   // sum, and a row that says again what the key says is a second readout of the same figure.
-  // False on every dial but ONE KEY's. Drawing only, as `freeze` and `blackout` are.
+  // False on every dial but LIFTOFF's. Drawing only, as `freeze` and `blackout` are.
   hidesSum: boolean
   // Whether the keys are **proportional**: one square cut into rows and columns whose sizes
   // follow what each holds — a row is as tall as its share of the dial's sum, a column as

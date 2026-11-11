@@ -166,7 +166,7 @@ msgstr "— NOT ONE FAST ENOUGH THIS WEEK —"
 msgid "— NOTHING HAS OUTRUN THIS YET —"
 msgstr "— NOTHING HAS OUTRUN THIS YET —"
 
-#: components/game/best-scores-line.tsx:603
+#: components/game/best-scores-line.tsx:599
 msgid "— OFFLINE —"
 msgstr "— OFFLINE —"
 
@@ -399,7 +399,7 @@ msgstr "{lastRunDays, plural, other {last played # days ago}}"
 msgid "{nameless, plural, one {+ # without a nickname} other {+ # without a nickname}}"
 msgstr "{nameless, plural, one {+ # without a nickname} other {+ # without a nickname}}"
 
-#: components/overlays/admin-overlay.tsx:300
+#: components/overlays/admin-overlay.tsx:304
 msgid "{owed} owed an answer"
 msgstr "{owed} owed an answer"
 
@@ -428,7 +428,7 @@ msgstr "+{0} TO YOUR FORTUNE"
 msgid "<0/> challenge starts in"
 msgstr "<0/> challenge starts in"
 
-#: components/overlays/challenge-card.tsx:324
+#: components/overlays/challenge-card.tsx:325
 msgid "<0/> leads with <1>{leaderFigure}</1>"
 msgstr "<0/> leads with <1>{leaderFigure}</1>"
 
@@ -629,7 +629,7 @@ msgstr "Above {fastBand}: clock + {fastBonus} × (clock − {fastBand}) ÷ (1 �
 msgid "ACC"
 msgstr "ACC"
 
-#: components/overlays/challenge-modal.tsx:283
+#: components/overlays/challenge-modal.tsx:284
 msgid "ACCEPT"
 msgstr "ACCEPT"
 
@@ -741,7 +741,7 @@ msgstr "Ahead by a hair — do not breathe out."
 msgid "Ahead on points, and holding."
 msgstr "Ahead on points, and holding."
 
-#: components/overlays/admin-overlay.tsx:298
+#: components/overlays/admin-overlay.tsx:302
 msgid "All answered"
 msgstr "All answered"
 
@@ -913,7 +913,7 @@ msgstr "Behind by a hair. That is nothing."
 msgid "Behind, and within reach — two boards would do it."
 msgstr "Behind, and within reach — two boards would do it."
 
-#: components/game/best-scores-line.tsx:107
+#: components/game/best-scores-line.tsx:102
 #: components/overlays/player-profile-overlay.tsx:536
 #: components/overlays/player-profile-overlay.tsx:550
 msgid "BEST"
@@ -931,19 +931,19 @@ msgstr "Best scores, up top"
 msgid "BETTER ON YOUR PHONE"
 msgstr "BETTER ON YOUR PHONE"
 
-#: modes/challenges/catalog.ts:850
+#: modes/challenges/catalog.ts:851
 msgid "BIN"
 msgstr "BIN"
 
-#: modes/challenges/catalog.ts:847
+#: modes/challenges/catalog.ts:848
 msgid "BINA­RY"
 msgstr "BINA­RY"
 
-#: modes/challenges/catalog.ts:990
+#: modes/challenges/catalog.ts:991
 msgid "BLACK­OUT"
 msgstr "BLACK­OUT"
 
-#: modes/challenges/catalog.ts:993
+#: modes/challenges/catalog.ts:994
 msgid "BLK"
 msgstr "BLK"
 
@@ -1096,7 +1096,7 @@ msgid "clock = time left ÷ ring"
 msgstr "clock = time left ÷ ring"
 
 #: components/overlays/admin-stat-people.tsx:143
-#: components/overlays/challenge-modal.tsx:301
+#: components/overlays/challenge-modal.tsx:302
 #: components/overlays/compare-overlay.tsx:318
 #: components/overlays/email-code-modal.tsx:532
 #: components/overlays/modal-card.tsx:305
@@ -1164,7 +1164,7 @@ msgstr "CONNOISSEUR"
 msgid "CONTINUE"
 msgstr "CONTINUE"
 
-#: app/(tabs)/index.tsx:3021
+#: app/(tabs)/index.tsx:3022
 msgid "Continue the tutorial"
 msgstr "Continue the tutorial"
 
@@ -1266,7 +1266,7 @@ msgstr "Eat the last of them and the empty row starts to pulse: you are starving
 msgid "EDIT CHALLENGE"
 msgstr "EDIT CHALLENGE"
 
-#: modes/challenges/catalog.ts:851
+#: modes/challenges/catalog.ts:852
 msgid "Eight keys, each on or off."
 msgstr "Eight keys, each on or off."
 
@@ -1303,7 +1303,7 @@ msgstr "ETERNAL STUDENT"
 msgid "Even. Perfectly, annoyingly even."
 msgstr "Even. Perfectly, annoyingly even."
 
-#: components/game/best-scores-line.tsx:95
+#: components/game/best-scores-line.tsx:90
 #: components/overlays/board-medals.tsx:18
 #: components/overlays/high-scores.tsx:36
 msgid "EVER"
@@ -1321,15 +1321,15 @@ msgstr "Every column leans your way. There is nothing here they hold."
 msgid "Every day was [A]’s except [D]. [B] got exactly one, and made it count."
 msgstr "Every day was [A]’s except [D]. [B] got exactly one, and made it count."
 
-#: modes/challenges/catalog.ts:716
+#: modes/challenges/catalog.ts:717
 msgid "Every hit spins the dial."
 msgstr "Every hit spins the dial."
 
-#: modes/challenges/catalog.ts:921
+#: modes/challenges/catalog.ts:922
 msgid "Every move works backwards."
 msgstr "Every move works backwards."
 
-#: modes/challenges/catalog.ts:578
+#: modes/challenges/catalog.ts:579
 msgid "Every number drifts. Catch it before it moves."
 msgstr "Every number drifts. Catch it before it moves."
 
@@ -1524,7 +1524,7 @@ msgstr "FLAWLESS TEN"
 msgid "FLOOR"
 msgstr "FLOOR"
 
-#: components/overlays/admin-overlay.tsx:316
+#: components/overlays/admin-overlay.tsx:320
 msgid "Fortune"
 msgstr "Fortune"
 
@@ -1542,7 +1542,7 @@ msgstr "Forward a step"
 msgid "Four keys, doubled speed"
 msgstr "Four keys, doubled speed"
 
-#: modes/challenges/catalog.ts:786
+#: modes/challenges/catalog.ts:787
 msgid "FREEZE"
 msgstr "FREEZE"
 
@@ -1550,7 +1550,7 @@ msgstr "FREEZE"
 msgid "Friday"
 msgstr "Friday"
 
-#: modes/challenges/catalog.ts:789
+#: modes/challenges/catalog.ts:790
 msgid "FRZ"
 msgstr "FRZ"
 
@@ -1586,7 +1586,7 @@ msgstr "Get a notification when a rival takes your record."
 msgid "Get dragged back off the first crossroad and you fall into the mouth, and the run is over."
 msgstr "Get dragged back off the first crossroad and you fall into the mouth, and the run is over."
 
-#: components/overlays/challenge-card.tsx:359
+#: components/overlays/challenge-card.tsx:360
 msgid "Given more time."
 msgstr "Given more time."
 
@@ -1869,7 +1869,7 @@ msgstr "KEEP RECORDING"
 msgid "KEEP THEM ON"
 msgstr "KEEP THEM ON"
 
-#: modes/challenges/catalog.ts:649
+#: modes/challenges/catalog.ts:650
 msgid "KEY"
 msgstr "KEY"
 
@@ -1878,7 +1878,7 @@ msgid "KEY = ROW × COLUMN × DIGIT"
 msgstr "KEY = ROW × COLUMN × DIGIT"
 
 #: components/overlays/admin-knowledge.tsx:51
-#: components/overlays/admin-overlay.tsx:312
+#: components/overlays/admin-overlay.tsx:316
 msgid "KNOWLEDGE"
 msgstr "KNOWLEDGE"
 
@@ -1918,7 +1918,7 @@ msgstr "Land your first target."
 msgid "LANGUAGE"
 msgstr "LANGUAGE"
 
-#: components/game/best-scores-line.tsx:100
+#: components/game/best-scores-line.tsx:95
 msgid "LAST"
 msgstr "LAST"
 
@@ -1946,7 +1946,7 @@ msgstr "last played yesterday"
 msgid "LAST WEEK IN NINE"
 msgstr "LAST WEEK IN NINE"
 
-#: modes/challenges/catalog.ts:574
+#: modes/challenges/catalog.ts:575
 msgid "LAVA"
 msgstr "LAVA"
 
@@ -1962,7 +1962,7 @@ msgstr "LEAVE GAME"
 msgid "Leave the board empty — clear every target standing on it."
 msgstr "Leave the board empty — clear every target standing on it."
 
-#: components/overlays/admin-overlay.tsx:278
+#: components/overlays/admin-overlay.tsx:282
 msgid "left"
 msgstr "left"
 
@@ -1990,6 +1990,10 @@ msgstr "LET'S LEARN THE GAME"
 msgid "Let's multiply"
 msgstr "Let's multiply"
 
+#: modes/challenges/catalog.ts:647
+msgid "LIFTOFF"
+msgstr "LIFTOFF"
+
 #: constants/achievements.ts:306
 msgid "LIGHTNING"
 msgstr "LIGHTNING"
@@ -2010,7 +2014,7 @@ msgstr "LONG HAUL"
 msgid "Lose every life in under ten seconds."
 msgstr "Lose every life in under ten seconds."
 
-#: modes/challenges/catalog.ts:577
+#: modes/challenges/catalog.ts:578
 msgid "LVA"
 msgstr "LVA"
 
@@ -2046,7 +2050,7 @@ msgstr "May"
 msgid "MAY"
 msgstr "MAY"
 
-#: components/overlays/admin-overlay.tsx:318
+#: components/overlays/admin-overlay.tsx:322
 msgid "Mechanics"
 msgstr "Mechanics"
 
@@ -2063,7 +2067,7 @@ msgid "MENU"
 msgstr "MENU"
 
 #: components/overlays/admin-messages.tsx:44
-#: components/overlays/admin-overlay.tsx:292
+#: components/overlays/admin-overlay.tsx:296
 msgid "MESSAGES"
 msgstr "MESSAGES"
 
@@ -2075,11 +2079,11 @@ msgstr "Messages sent in"
 msgid "MINUTES"
 msgstr "MINUTES"
 
-#: modes/challenges/catalog.ts:920
+#: modes/challenges/catalog.ts:921
 msgid "MIR"
 msgstr "MIR"
 
-#: modes/challenges/catalog.ts:917
+#: modes/challenges/catalog.ts:918
 msgid "MIR­ROR"
 msgstr "MIR­ROR"
 
@@ -2293,7 +2297,7 @@ msgstr "No sessions planned yet."
 msgid "No sessions yet."
 msgstr "No sessions yet."
 
-#: modes/challenges/catalog.ts:434
+#: modes/challenges/catalog.ts:435
 msgid "NO SLIP"
 msgstr "NO SLIP"
 
@@ -2318,7 +2322,7 @@ msgstr "Nobody could take [BOARD] off [W] once."
 msgid "Nobody got a grip on it — [C] different players took a day of it."
 msgstr "Nobody got a grip on it — [C] different players took a day of it."
 
-#: components/overlays/challenge-card.tsx:304
+#: components/overlays/challenge-card.tsx:305
 msgid "Nobody has played it yet."
 msgstr "Nobody has played it yet."
 
@@ -2478,7 +2482,7 @@ msgstr "Nov"
 msgid "NOVEMBER"
 msgstr "NOVEMBER"
 
-#: modes/challenges/catalog.ts:437
+#: modes/challenges/catalog.ts:438
 msgid "NSL"
 msgstr "NSL"
 
@@ -2542,11 +2546,7 @@ msgstr "One board did not go along with it: [BOARD] stayed [W]’s throughout."
 msgid "One gesture can move several keys"
 msgstr "One gesture can move several keys"
 
-#: modes/challenges/catalog.ts:646
-msgid "ONE KEY"
-msgstr "ONE KEY"
-
-#: modes/challenges/catalog.ts:650
+#: modes/challenges/catalog.ts:651
 msgid "One key, one second."
 msgstr "One key, one second."
 
@@ -2582,7 +2582,7 @@ msgstr "One run ≥ 60 min, any mode"
 msgid "One set of standings, shared by everyone playing it, and it never resets. Your best run is the one that counts. Where the standings are a race against the clock, only a run you finish counts at all — stop early, or let the window close on you, and it is not timed."
 msgstr "One set of standings, shared by everyone playing it, and it never resets. Your best run is the one that counts. Where the standings are a race against the clock, only a run you finish counts at all — stop early, or let the window close on you, and it is not timed."
 
-#: modes/challenges/catalog.ts:438
+#: modes/challenges/catalog.ts:439
 msgid "One slip and it's over."
 msgstr "One slip and it's over."
 
@@ -2650,7 +2650,7 @@ msgstr "Open your browser's menu"
 msgid "Open your browser's Share menu"
 msgstr "Open your browser's Share menu"
 
-#: components/overlays/challenge-modal.tsx:206
+#: components/overlays/challenge-modal.tsx:207
 msgid "OPENS IN"
 msgstr "OPENS IN"
 
@@ -2923,7 +2923,7 @@ msgstr "Record a replay of your play to help us spot bugs. Text fields are blank
 msgid "Records, celebrated"
 msgstr "Records, celebrated"
 
-#: modes/challenges/catalog.ts:712
+#: modes/challenges/catalog.ts:713
 msgid "REELS"
 msgstr "REELS"
 
@@ -2983,7 +2983,7 @@ msgstr "RING"
 msgid "ring {traineeRing} (player-set), gap = min(ring ÷ 3, {traineeGap})"
 msgstr "ring {traineeRing} (player-set), gap = min(ring ÷ 3, {traineeGap})"
 
-#: modes/challenges/catalog.ts:715
+#: modes/challenges/catalog.ts:716
 msgid "RLS"
 msgstr "RLS"
 
@@ -3146,7 +3146,7 @@ msgstr "Score rewards precision: solve each target in the fewest moves."
 msgid "Scores, one ladder per mode — Accuracy and Speed ask for opposite things, so each has its own rungs to climb."
 msgstr "Scores, one ladder per mode — Accuracy and Speed ask for opposite things, so each has its own rungs to climb."
 
-#: modes/challenges/catalog.ts:512
+#: modes/challenges/catalog.ts:513
 msgid "SDW"
 msgstr "SDW"
 
@@ -3159,7 +3159,7 @@ msgstr "SECOND CANDIDATE"
 msgid "Second, for now."
 msgstr "Second, for now."
 
-#: components/overlays/admin-overlay.tsx:317
+#: components/overlays/admin-overlay.tsx:321
 msgid "Secrets"
 msgstr "Secrets"
 
@@ -3209,7 +3209,7 @@ msgstr "Sep"
 msgid "SEPTEMBER"
 msgstr "SEPTEMBER"
 
-#: components/game/best-scores-line.tsx:98
+#: components/game/best-scores-line.tsx:93
 msgid "SESSION"
 msgstr "SESSION"
 
@@ -3266,7 +3266,7 @@ msgstr "SHOW LESS"
 msgid "SHOW SUM IN BUTTONS"
 msgstr "SHOW SUM IN BUTTONS"
 
-#: modes/challenges/catalog.ts:509
+#: modes/challenges/catalog.ts:510
 msgid "SIDE­WAYS"
 msgstr "SIDE­WAYS"
 
@@ -3431,7 +3431,7 @@ msgstr "Streak — consecutive perfect plays multiply your points ×2 → ×4 �
 
 #: components/game/arcade-strike.tsx:77
 #: components/overlays/admin-knowledge.tsx:273
-#: components/overlays/challenge-modal.tsx:220
+#: components/overlays/challenge-modal.tsx:221
 msgid "STRIKE"
 msgstr "STRIKE"
 
@@ -3642,7 +3642,7 @@ msgstr "The clock keeps tightening as your run goes on, less and less each time.
 msgid "THE CROWN"
 msgstr "THE CROWN"
 
-#: modes/challenges/catalog.ts:513
+#: modes/challenges/catalog.ts:514
 msgid "The dial has fallen on its side."
 msgstr "The dial has fallen on its side."
 
@@ -3689,7 +3689,7 @@ msgstr "The hero halts well short of the gate, with the walls across the top of 
 msgid "The hit that leaves the board empty counts double."
 msgstr "The hit that leaves the board empty counts double."
 
-#: modes/challenges/catalog.ts:994
+#: modes/challenges/catalog.ts:995
 msgid "The keys go dark. Count in your head."
 msgstr "The keys go dark. Count in your head."
 
@@ -3731,7 +3731,7 @@ msgstr "The same nine, every run. Be quick."
 msgid "The standings stay exactly as they are and the places settle now. This cannot be undone — running it again is a new session, with a board of its own."
 msgstr "The standings stay exactly as they are and the places settle now. This cannot be undone — running it again is a new session, with a board of its own."
 
-#: modes/challenges/catalog.ts:790
+#: modes/challenges/catalog.ts:791
 msgid "The sum only moves when you hit."
 msgstr "The sum only moves when you hit."
 
@@ -3932,7 +3932,7 @@ msgstr "TIPS & TRICKS"
 msgid "TO PUBLISH YOUR BESTS"
 msgstr "TO PUBLISH YOUR BESTS"
 
-#: components/game/best-scores-line.tsx:93
+#: components/game/best-scores-line.tsx:88
 #: components/overlays/board-medals.tsx:20
 #: components/overlays/high-scores.tsx:34
 msgid "TODAY"
@@ -4125,7 +4125,7 @@ msgstr "We sent six digits to <0>{address}</0>."
 msgid "Wednesday"
 msgstr "Wednesday"
 
-#: components/game/best-scores-line.tsx:94
+#: components/game/best-scores-line.tsx:89
 msgid "WEEK"
 msgstr "WEEK"
 
@@ -4222,7 +4222,7 @@ msgstr "WINNINGS"
 msgid "WON"
 msgstr "WON"
 
-#: components/game/best-scores-line.tsx:111
+#: components/game/best-scores-line.tsx:106
 #: components/overlays/admin-people.tsx:87
 #: components/overlays/player-tile.tsx:128
 #: components/overlays/tab-panel.tsx:23
@@ -4303,7 +4303,7 @@ msgstr "YOU'RE OFFLINE"
 msgid "you@example.com"
 msgstr "you@example.com"
 
-#: components/game/best-scores-line.tsx:92
+#: components/game/best-scores-line.tsx:87
 msgid "YOUR"
 msgstr "YOUR"
 

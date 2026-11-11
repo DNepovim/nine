@@ -25,7 +25,7 @@ import {
 } from '@/lib/plane'
 import type { OpeningTake } from '@/modes'
 
-// ONE KEY's **opening**: a little plane, as in the arcade games it is an allegory for.
+// LIFTOFF's **opening**: a little plane, as in the arcade games it is an allegory for.
 //
 // The game screen is a light-blue sky from its first frame, with clouds drifting along the top
 // and ground along the foot (`Scenery`, behind the run, for the scene and after it). The plane

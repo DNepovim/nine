@@ -1,4 +1,4 @@
-// How ONE KEY's plane flies, as numbers: what pulls it down and how long a fall takes. The
+// How LIFTOFF's plane flies, as numbers: what pulls it down and how long a fall takes. The
 // plane's frame loop (`components/game/openings/takeoff.tsx`) steps the same law frame by frame;
 // this is the same law run ahead, to say how long until the ground.
 

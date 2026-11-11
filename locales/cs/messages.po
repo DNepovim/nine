@@ -166,7 +166,7 @@ msgstr "— CELÝ TÝDEN NIKDO NESTAČIL —"
 msgid "— NOTHING HAS OUTRUN THIS YET —"
 msgstr "— TOHLE JEŠTĚ NIKDO NEPŘEDBĚHL —"
 
-#: components/game/best-scores-line.tsx:603
+#: components/game/best-scores-line.tsx:599
 msgid "— OFFLINE —"
 msgstr "— OFFLINE —"
 
@@ -399,7 +399,7 @@ msgstr "{lastRunDays, plural, few {naposledy ve hře před # dny} other {naposle
 msgid "{nameless, plural, one {+ # without a nickname} other {+ # without a nickname}}"
 msgstr "{nameless, plural, one {+ # bez přezdívky} few {+ # bez přezdívky} many {+ # bez přezdívky} other {+ # bez přezdívky}}"
 
-#: components/overlays/admin-overlay.tsx:300
+#: components/overlays/admin-overlay.tsx:304
 msgid "{owed} owed an answer"
 msgstr "{owed} čeká na odpověď"
 
@@ -428,7 +428,7 @@ msgstr "+{0} K TVÉMU JMĚNÍ"
 msgid "<0/> challenge starts in"
 msgstr "<0/> začíná za"
 
-#: components/overlays/challenge-card.tsx:324
+#: components/overlays/challenge-card.tsx:325
 msgid "<0/> leads with <1>{leaderFigure}</1>"
 msgstr "<0/> vede s <1>{leaderFigure}</1>"
 
@@ -629,7 +629,7 @@ msgstr "Nad {fastBand}: čas + {fastBonus} × (čas − {fastBand}) ÷ (1 − {f
 msgid "ACC"
 msgstr "PŘES"
 
-#: components/overlays/challenge-modal.tsx:283
+#: components/overlays/challenge-modal.tsx:284
 msgid "ACCEPT"
 msgstr "PŘIJMOUT"
 
@@ -741,7 +741,7 @@ msgstr "Vedeš o vlásek — ještě nevydechni."
 msgid "Ahead on points, and holding."
 msgstr "Vedeš na body a držíš se."
 
-#: components/overlays/admin-overlay.tsx:298
+#: components/overlays/admin-overlay.tsx:302
 msgid "All answered"
 msgstr "Vše odpovězeno"
 
@@ -913,7 +913,7 @@ msgstr "Ztrácíš o vlásek. To nic není."
 msgid "Behind, and within reach — two boards would do it."
 msgstr "Ztrácíš, ale na dosah — stačily by dvě tabulky."
 
-#: components/game/best-scores-line.tsx:107
+#: components/game/best-scores-line.tsx:102
 #: components/overlays/player-profile-overlay.tsx:536
 #: components/overlays/player-profile-overlay.tsx:550
 msgid "BEST"
@@ -931,19 +931,19 @@ msgstr "Nejlepší skóre nahoře"
 msgid "BETTER ON YOUR PHONE"
 msgstr "LEPŠÍ NA TELEFONU"
 
-#: modes/challenges/catalog.ts:850
+#: modes/challenges/catalog.ts:851
 msgid "BIN"
 msgstr "BIN"
 
-#: modes/challenges/catalog.ts:847
+#: modes/challenges/catalog.ts:848
 msgid "BINA­RY"
 msgstr "DVOJ­KOVĚ"
 
-#: modes/challenges/catalog.ts:990
+#: modes/challenges/catalog.ts:991
 msgid "BLACK­OUT"
 msgstr "TMA"
 
-#: modes/challenges/catalog.ts:993
+#: modes/challenges/catalog.ts:994
 msgid "BLK"
 msgstr "TMA"
 
@@ -1096,7 +1096,7 @@ msgid "clock = time left ÷ ring"
 msgstr "čas = zbývající čas ÷ kruh"
 
 #: components/overlays/admin-stat-people.tsx:143
-#: components/overlays/challenge-modal.tsx:301
+#: components/overlays/challenge-modal.tsx:302
 #: components/overlays/compare-overlay.tsx:318
 #: components/overlays/email-code-modal.tsx:532
 #: components/overlays/modal-card.tsx:305
@@ -1164,7 +1164,7 @@ msgstr "ZNALEC"
 msgid "CONTINUE"
 msgstr "POKRAČOVAT"
 
-#: app/(tabs)/index.tsx:3021
+#: app/(tabs)/index.tsx:3022
 msgid "Continue the tutorial"
 msgstr "Pokračovat v tutoriálu"
 
@@ -1266,7 +1266,7 @@ msgstr "Dojež i poslední a prázdná řada začne pulzovat: hladovíš a každ
 msgid "EDIT CHALLENGE"
 msgstr "UPRAVIT VÝZVU"
 
-#: modes/challenges/catalog.ts:851
+#: modes/challenges/catalog.ts:852
 msgid "Eight keys, each on or off."
 msgstr "Osm kláves, každá zapnutá, nebo vypnutá."
 
@@ -1303,7 +1303,7 @@ msgstr "VĚČNÝ STUDENT"
 msgid "Even. Perfectly, annoyingly even."
 msgstr "Nerozhodně. Dokonale, otravně nerozhodně."
 
-#: components/game/best-scores-line.tsx:95
+#: components/game/best-scores-line.tsx:90
 #: components/overlays/board-medals.tsx:18
 #: components/overlays/high-scores.tsx:36
 msgid "EVER"
@@ -1321,15 +1321,15 @@ msgstr "Oba sloupce se kloní k tobě. Soupeř tu nedrží vůbec nic."
 msgid "Every day was [A]’s except [D]. [B] got exactly one, and made it count."
 msgstr "Každý den patřil hráči [A], kromě jednoho: [D] si ho vzal [B], a nenechal si ho ujít."
 
-#: modes/challenges/catalog.ts:716
+#: modes/challenges/catalog.ts:717
 msgid "Every hit spins the dial."
 msgstr "Každý zásah roztočí číselník."
 
-#: modes/challenges/catalog.ts:921
+#: modes/challenges/catalog.ts:922
 msgid "Every move works backwards."
 msgstr "Každý pohyb funguje obráceně."
 
-#: modes/challenges/catalog.ts:578
+#: modes/challenges/catalog.ts:579
 msgid "Every number drifts. Catch it before it moves."
 msgstr "Každé číslo se posouvá. Chyť ho, než se pohne."
 
@@ -1524,7 +1524,7 @@ msgstr "BEZCHYBNÝCH DESET"
 msgid "FLOOR"
 msgstr "PODLAHA"
 
-#: components/overlays/admin-overlay.tsx:316
+#: components/overlays/admin-overlay.tsx:320
 msgid "Fortune"
 msgstr "Jmění"
 
@@ -1542,7 +1542,7 @@ msgstr "O krok vpřed"
 msgid "Four keys, doubled speed"
 msgstr "Čtyři tlačítka, dvojnásobná rychlost"
 
-#: modes/challenges/catalog.ts:786
+#: modes/challenges/catalog.ts:787
 msgid "FREEZE"
 msgstr "MRÁZ"
 
@@ -1550,7 +1550,7 @@ msgstr "MRÁZ"
 msgid "Friday"
 msgstr "v pátek"
 
-#: modes/challenges/catalog.ts:789
+#: modes/challenges/catalog.ts:790
 msgid "FRZ"
 msgstr "MRZ"
 
@@ -1586,7 +1586,7 @@ msgstr "Dáme ti vědět, když ti soupeř vezme rekord."
 msgid "Get dragged back off the first crossroad and you fall into the mouth, and the run is over."
 msgstr "Stažení z první křižovatky znamená pád do jícnu a konec hry."
 
-#: components/overlays/challenge-card.tsx:359
+#: components/overlays/challenge-card.tsx:360
 msgid "Given more time."
 msgstr "Dostala víc času."
 
@@ -1869,7 +1869,7 @@ msgstr "PONECHAT ZÁZNAM"
 msgid "KEEP THEM ON"
 msgstr "NECHAT ZAPNUTÁ"
 
-#: modes/challenges/catalog.ts:649
+#: modes/challenges/catalog.ts:650
 msgid "KEY"
 msgstr "TLA"
 
@@ -1878,7 +1878,7 @@ msgid "KEY = ROW × COLUMN × DIGIT"
 msgstr "TLAČÍTKO = ŘÁDEK × SLOUPEC × ČÍSLICE"
 
 #: components/overlays/admin-knowledge.tsx:51
-#: components/overlays/admin-overlay.tsx:312
+#: components/overlays/admin-overlay.tsx:316
 msgid "KNOWLEDGE"
 msgstr "ZNALOSTI"
 
@@ -1918,7 +1918,7 @@ msgstr "Slož svůj první cíl."
 msgid "LANGUAGE"
 msgstr "JAZYK"
 
-#: components/game/best-scores-line.tsx:100
+#: components/game/best-scores-line.tsx:95
 msgid "LAST"
 msgstr "MINULE"
 
@@ -1946,7 +1946,7 @@ msgstr "naposledy ve hře včera"
 msgid "LAST WEEK IN NINE"
 msgstr "MINULÝ TÝDEN V NINE"
 
-#: modes/challenges/catalog.ts:574
+#: modes/challenges/catalog.ts:575
 msgid "LAVA"
 msgstr "LÁVA"
 
@@ -1962,7 +1962,7 @@ msgstr "OPUSTIT HRU"
 msgid "Leave the board empty — clear every target standing on it."
 msgstr "Nech mřížku prázdnou — sejmi každý cíl, který na ní stojí."
 
-#: components/overlays/admin-overlay.tsx:278
+#: components/overlays/admin-overlay.tsx:282
 msgid "left"
 msgstr "zbývá"
 
@@ -1990,6 +1990,10 @@ msgstr "POJĎME SE NAUČIT HRU"
 msgid "Let's multiply"
 msgstr "Pojďme násobit"
 
+#: modes/challenges/catalog.ts:647
+msgid "LIFTOFF"
+msgstr "VZLET"
+
 #: constants/achievements.ts:306
 msgid "LIGHTNING"
 msgstr "BLESK"
@@ -2010,7 +2014,7 @@ msgstr "DLOUHÁ TRAŤ"
 msgid "Lose every life in under ten seconds."
 msgstr "Ztrať všechny životy do deseti sekund."
 
-#: modes/challenges/catalog.ts:577
+#: modes/challenges/catalog.ts:578
 msgid "LVA"
 msgstr "LÁV"
 
@@ -2046,7 +2050,7 @@ msgstr "5."
 msgid "MAY"
 msgstr "května"
 
-#: components/overlays/admin-overlay.tsx:318
+#: components/overlays/admin-overlay.tsx:322
 msgid "Mechanics"
 msgstr "Mechaniky"
 
@@ -2063,7 +2067,7 @@ msgid "MENU"
 msgstr "MENU"
 
 #: components/overlays/admin-messages.tsx:44
-#: components/overlays/admin-overlay.tsx:292
+#: components/overlays/admin-overlay.tsx:296
 msgid "MESSAGES"
 msgstr "ZPRÁVY"
 
@@ -2075,11 +2079,11 @@ msgstr "Zprávy od hráčů"
 msgid "MINUTES"
 msgstr "MINUTY"
 
-#: modes/challenges/catalog.ts:920
+#: modes/challenges/catalog.ts:921
 msgid "MIR"
 msgstr "ZRC"
 
-#: modes/challenges/catalog.ts:917
+#: modes/challenges/catalog.ts:918
 msgid "MIR­ROR"
 msgstr "ZRCA­DLO"
 
@@ -2293,7 +2297,7 @@ msgstr "Zatím není naplánovaný žádný termín."
 msgid "No sessions yet."
 msgstr "Zatím žádné termíny."
 
-#: modes/challenges/catalog.ts:434
+#: modes/challenges/catalog.ts:435
 msgid "NO SLIP"
 msgstr "BEZ CHYBY"
 
@@ -2318,7 +2322,7 @@ msgstr "[BOARD] nikdo hráči [W] ani jednou nesebral."
 msgid "Nobody got a grip on it — [C] different players took a day of it."
 msgstr "Nikdo ho neuchopil. Různých jmen na jeho dnech: [C]."
 
-#: components/overlays/challenge-card.tsx:304
+#: components/overlays/challenge-card.tsx:305
 msgid "Nobody has played it yet."
 msgstr "Zatím ji nikdo nehrál."
 
@@ -2478,7 +2482,7 @@ msgstr "11."
 msgid "NOVEMBER"
 msgstr "listopadu"
 
-#: modes/challenges/catalog.ts:437
+#: modes/challenges/catalog.ts:438
 msgid "NSL"
 msgstr "BCH"
 
@@ -2542,11 +2546,7 @@ msgstr "Jedna tabulka se tomu vymkla: [BOARD] zůstala celou dobu hráči [W]."
 msgid "One gesture can move several keys"
 msgstr "Jedno gesto může pohnout několika tlačítky"
 
-#: modes/challenges/catalog.ts:646
-msgid "ONE KEY"
-msgstr "JEDNO TLAČÍTKO"
-
-#: modes/challenges/catalog.ts:650
+#: modes/challenges/catalog.ts:651
 msgid "One key, one second."
 msgstr "Jedno tlačítko, jedna sekunda."
 
@@ -2582,7 +2582,7 @@ msgstr "Jedna hra ≥ 60 min, libovolný režim"
 msgid "One set of standings, shared by everyone playing it, and it never resets. Your best run is the one that counts. Where the standings are a race against the clock, only a run you finish counts at all — stop early, or let the window close on you, and it is not timed."
 msgstr "Jedno pořadí pro všechny, kdo ji hrají, a nikdy se nenuluje. Počítá se tvá nejlepší hra. Kde se v pořadí závodí s časem, počítá se jen hra, kterou dohraješ — skončíš dřív nebo ti okno zavře, a čas se nezapíše."
 
-#: modes/challenges/catalog.ts:438
+#: modes/challenges/catalog.ts:439
 msgid "One slip and it's over."
 msgstr "Jedno zaváhání a je konec."
 
@@ -2650,7 +2650,7 @@ msgstr "Otevři nabídku prohlížeče"
 msgid "Open your browser's Share menu"
 msgstr "Otevři v prohlížeči nabídku Sdílet"
 
-#: components/overlays/challenge-modal.tsx:206
+#: components/overlays/challenge-modal.tsx:207
 msgid "OPENS IN"
 msgstr "ZAČÍNÁ ZA"
 
@@ -2923,7 +2923,7 @@ msgstr "Nahrajeme záznam tvé hry, ať najdeme chyby. Textová pole jsou zakryt
 msgid "Records, celebrated"
 msgstr "Rekordy se slaví"
 
-#: modes/challenges/catalog.ts:712
+#: modes/challenges/catalog.ts:713
 msgid "REELS"
 msgstr "VÁLCE"
 
@@ -2983,7 +2983,7 @@ msgstr "KRUH"
 msgid "ring {traineeRing} (player-set), gap = min(ring ÷ 3, {traineeGap})"
 msgstr "kruh {traineeRing} (nastaví hráč), odstup = min(kruh ÷ 3, {traineeGap})"
 
-#: modes/challenges/catalog.ts:715
+#: modes/challenges/catalog.ts:716
 msgid "RLS"
 msgstr "VÁL"
 
@@ -3146,7 +3146,7 @@ msgstr "Skóre odměňuje preciznost: slož každý cíl na co nejmíň tahů."
 msgid "Scores, one ladder per mode — Accuracy and Speed ask for opposite things, so each has its own rungs to climb."
 msgstr "Skóre, pro každý mód vlastní žebřík — Přesnost a Rychlost chtějí opačné věci, takže i příčky má každá své."
 
-#: modes/challenges/catalog.ts:512
+#: modes/challenges/catalog.ts:513
 msgid "SDW"
 msgstr "BOK"
 
@@ -3159,7 +3159,7 @@ msgstr "DRUHÝ KANDIDÁT"
 msgid "Second, for now."
 msgstr "Zatím na druhém místě."
 
-#: components/overlays/admin-overlay.tsx:317
+#: components/overlays/admin-overlay.tsx:321
 msgid "Secrets"
 msgstr "Tajné"
 
@@ -3209,7 +3209,7 @@ msgstr "9."
 msgid "SEPTEMBER"
 msgstr "září"
 
-#: components/game/best-scores-line.tsx:98
+#: components/game/best-scores-line.tsx:93
 msgid "SESSION"
 msgstr "OKNO"
 
@@ -3266,7 +3266,7 @@ msgstr "ZOBRAZIT MÉNĚ"
 msgid "SHOW SUM IN BUTTONS"
 msgstr "ZOBRAZIT SOUČET V TLAČÍTKÁCH"
 
-#: modes/challenges/catalog.ts:509
+#: modes/challenges/catalog.ts:510
 msgid "SIDE­WAYS"
 msgstr "NA BOK"
 
@@ -3431,7 +3431,7 @@ msgstr "Série — dokonalé tahy za sebou násobí body ×2 → ×4 → ×8. St
 
 #: components/game/arcade-strike.tsx:77
 #: components/overlays/admin-knowledge.tsx:273
-#: components/overlays/challenge-modal.tsx:220
+#: components/overlays/challenge-modal.tsx:221
 msgid "STRIKE"
 msgstr "SÉRIE"
 
@@ -3642,7 +3642,7 @@ msgstr "Čas se s postupující hrou zkracuje, pokaždé o něco míň."
 msgid "THE CROWN"
 msgstr "KORUNA"
 
-#: modes/challenges/catalog.ts:513
+#: modes/challenges/catalog.ts:514
 msgid "The dial has fallen on its side."
 msgstr "Číselník spadl na bok."
 
@@ -3689,7 +3689,7 @@ msgstr "Hrdina se zastaví hodně daleko před branou, hradby se táhnou přes h
 msgid "The hit that leaves the board empty counts double."
 msgstr "Zásah, který nechá mřížku prázdnou, se počítá dvakrát."
 
-#: modes/challenges/catalog.ts:994
+#: modes/challenges/catalog.ts:995
 msgid "The keys go dark. Count in your head."
 msgstr "Klávesy zhasnou. Počítej v hlavě."
 
@@ -3731,7 +3731,7 @@ msgstr "Pořád stejná devítka. Buď rychlý."
 msgid "The standings stay exactly as they are and the places settle now. This cannot be undone — running it again is a new session, with a board of its own."
 msgstr "Pořadí zůstane přesně takové, jaké je, a umístění se teď uzavřou. Nejde to vzít zpět — spustit ji znovu znamená nový termín s vlastním pořadím."
 
-#: modes/challenges/catalog.ts:790
+#: modes/challenges/catalog.ts:791
 msgid "The sum only moves when you hit."
 msgstr "Součet se pohne, jen když trefíš."
 
@@ -3932,7 +3932,7 @@ msgstr "TIPY A TRIKY"
 msgid "TO PUBLISH YOUR BESTS"
 msgstr "PRO ZVEŘEJNĚNÍ SVÝCH REKORDŮ"
 
-#: components/game/best-scores-line.tsx:93
+#: components/game/best-scores-line.tsx:88
 #: components/overlays/board-medals.tsx:20
 #: components/overlays/high-scores.tsx:34
 msgid "TODAY"
@@ -4125,7 +4125,7 @@ msgstr "Poslali jsme šest číslic na <0>{address}</0>."
 msgid "Wednesday"
 msgstr "ve středu"
 
-#: components/game/best-scores-line.tsx:94
+#: components/game/best-scores-line.tsx:89
 msgid "WEEK"
 msgstr "TÝDEN"
 
@@ -4222,7 +4222,7 @@ msgstr "VÝHRY"
 msgid "WON"
 msgstr "VYHRÁNO"
 
-#: components/game/best-scores-line.tsx:111
+#: components/game/best-scores-line.tsx:106
 #: components/overlays/admin-people.tsx:87
 #: components/overlays/player-tile.tsx:128
 #: components/overlays/tab-panel.tsx:23
@@ -4303,7 +4303,7 @@ msgstr "JSI OFFLINE"
 msgid "you@example.com"
 msgstr "ty@priklad.cz"
 
-#: components/game/best-scores-line.tsx:92
+#: components/game/best-scores-line.tsx:87
 msgid "YOUR"
 msgstr "TVŮJ"
 
