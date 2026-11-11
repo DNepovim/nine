@@ -1,15 +1,14 @@
 ---
 name: commit
-description: Use when asked to commit — via `/commit` or in plain words ("commit this", "commit my changes") — or when another skill needs work committed. Owns this repo's commit-message conventions, the split-into-separate-commits rule, and the confirm-before-committing gate.
+description: Use when asked to commit — via `/commit` or in plain words ("commit this", "commit my changes") — or when another skill needs work committed. Owns this repo's commit-message conventions, the split-into-separate-commits rule, and the commit-straight-to-the-current-branch rule.
 ---
 
 # Commit
 
-**Never commit without the user's explicit confirmation of the message(s)** — unless
-the **`ship`** skill invoked this one: running `/ship` is that confirmation, so skip
-Step 4's question, commit straight away and print the message(s) afterwards. Otherwise
-use `AskUserQuestion` for the confirmation, never plain text — it keeps the session
-unblocked.
+**Commit without asking.** Running `/commit` (or any request to commit) is the
+confirmation: write the message, commit straight to the **current branch**, and print
+the message and SHA afterwards. Never use `AskUserQuestion` to confirm a message, and
+never switch or create a branch.
 
 ## Step 1 — Know what you're committing
 
@@ -129,18 +128,9 @@ interactive git (`git add -p`, `git add -i`) is unavailable in this environment.
 When two changes share a file, say so and propose a single commit instead of
 pretending the split is available.
 
-## Step 4 — Confirm, then commit
+## Step 4 — Commit
 
-Present the message(s) with **`AskUserQuestion`**:
-
-- **"Ship it"** / **"Commit"** — proceed as-is (Recommended)
-- **"Edit message"** — the user supplies a replacement; use it verbatim
-- **"Cancel"** — stop, commit nothing
-
-If the user picks "Edit" but sends no replacement text, **do not commit** — ask
-again for the copy, offering drafts they can pick from.
-
-Once confirmed, stage per commit and pass the message on stdin so multi-line
+Stage per commit and pass the message on stdin so multi-line
 bodies survive intact:
 
 ```bash
