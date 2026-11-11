@@ -249,6 +249,7 @@ export function ChallengeCard({
             // Always the close: a teaser never reaches this layout now — it is the
             // line above, which counts to the open instead.
             until={session.closesAt}
+            closing
             gradient={darkGradientOf(session.modeId)}
             flip
           />

@@ -172,6 +172,7 @@ export function ChallengeModal({
               </Text>
               <ChallengeCountdown
                 until={session.closesAt}
+                closing
                 gradient={darkGradientOf(modeId)}
                 flip
               />

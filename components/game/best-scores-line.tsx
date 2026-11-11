@@ -571,6 +571,7 @@ export function BestScoresLine({
                   as a gradient that happens to be warm. */}
               <ChallengeCountdown
                 until={session.closesAt}
+                closing
                 gradient={countdownGradient(
                   shutAt === session.closesAt ? SHUT_GRADIENT : darkGradientOf(mode),
                 )}

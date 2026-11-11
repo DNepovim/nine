@@ -2,9 +2,25 @@ import { useEffect, useRef, useState } from 'react'
 import { Text } from 'react-native'
 
 import { FlipClock } from '@/components/overlays/flip-clock'
+import { APP_RED, DIM_INK } from '@/constants/colors'
 import { TYPE } from '@/constants/typography'
 import { cn } from '@/lib/cn'
 import { formatCountdown } from '@/lib/duration'
+import { mixHex } from '@/lib/mix-hex'
+
+// The last stretch of a window, in which its clock warns. Over the final ten minutes the
+// ink drifts towards the app's red; in the final ten seconds it is that red, whole.
+const WARN_MS = 10 * 60_000
+const SHUT_MS = 10_000
+
+// How far a figure `left` ms from closing has gone red: 0 outside the warning, 1 inside
+// the last ten seconds. Capped just short of 1 until then, so the final turn is a step
+// the player can see rather than the end of a ramp they cannot.
+const redness = (left: number): number => {
+  if (left <= SHUT_MS) return 1
+  if (left >= WARN_MS) return 0
+  return 0.85 * (1 - (left - SHUT_MS) / (WARN_MS - SHUT_MS))
+}
 
 // The time left of a session, ticking.
 //
@@ -25,6 +41,7 @@ export function ChallengeCountdown({
   gradient,
   large = false,
   onArrive,
+  closing = false,
 }: {
   // The instant being counted towards, ms since the epoch.
   until: number
@@ -53,6 +70,9 @@ export function ChallengeCountdown({
   // into a parent would be sixty an hour of the gradient worklet, the paging panel, the
   // viewport measurement and the four lists.
   onArrive?: () => void
+  // The instant is the close of a window, so the clock warns as it nears: see `redness`.
+  // Left off for a teaser, which counts towards an opening and has nothing to warn of.
+  closing?: boolean
 }) {
   const [now, setNow] = useState(() => Date.now())
 
@@ -105,15 +125,25 @@ export function ChallengeCountdown({
   // that slept through an hour comes back with the right answer rather than an hour of
   // missed ticks.
   const text = formatCountdown(until - now)
+  const red = closing ? redness(until - now) : 0
 
   if (flip && gradient !== undefined) {
-    return (
-      <FlipClock text={text} gradient={gradient} large={large} className={className} />
-    )
+    const warned =
+      red === 0
+        ? gradient
+        : ([
+            mixHex(gradient[0], APP_RED, red),
+            mixHex(gradient[1], APP_RED, red),
+          ] as const)
+    return <FlipClock text={text} gradient={warned} large={large} className={className} />
   }
 
   return (
-    <Text selectable={false} className={cn(TYPE.figure, className)}>
+    <Text
+      selectable={false}
+      className={cn(TYPE.figure, className)}
+      style={red === 0 ? undefined : { color: mixHex(DIM_INK, APP_RED, red) }}
+    >
       {text}
     </Text>
   )

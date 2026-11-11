@@ -273,7 +273,7 @@ export function AdminOverlay({
                       </Text>
                     </View>
                     <View className="flex-row items-center gap-1">
-                      <ChallengeCountdown until={live.closesAt} className="text-dim" />
+                      <ChallengeCountdown until={live.closesAt} className="text-dim" closing />
                       <Text selectable={false} className={cn(TYPE.prose, 'text-dim')}>
                         <Trans>left</Trans>
                       </Text>

@@ -45,7 +45,7 @@ export function SessionCloses({
           when a window shuts is the strip's own boundary, and a second caller firing the
           same event from a screen the run has already left is exactly the bug that put
           `TIME GONE` over a run which ended on its lives. */}
-      <ChallengeCountdown until={closesAt} gradient={darkGradientOf(mode)} flip />
+      <ChallengeCountdown until={closesAt} closing gradient={darkGradientOf(mode)} flip />
     </View>
   )
 }
