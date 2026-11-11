@@ -371,8 +371,9 @@ const GLIMPSE: ChallengeSpec = {
   targetForm: 'struck',
   gradient: STORM_PAIR,
   darkGradient: STORM_PAIR,
-  // No `shot`: Accuracy's sniper, inherited. A single held beam is a chain of exact
-  // routes made visible, which is what the streak here is made of.
+  // A flash of lightning from the sum to the target, where Accuracy's sniper would draw a beam:
+  // one line for an exact route, as the sniper is, struck the way this storm strikes.
+  shot: 'bolt',
   //
   // Every line about seeing and holding on to what was seen, as four-keys' are about
   // its keys. No board tier can be about a board, because there is none.

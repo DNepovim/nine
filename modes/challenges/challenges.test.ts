@@ -444,8 +444,8 @@ describe('glimpse', () => {
     expect(rules.lives.expiryCosts).toBe(true)
   })
 
-  it('fires Accuracy’s sniper and names its own claims for every tier it can reach', () => {
-    expect(GLIMPSE?.shot).toBe('sniper')
+  it('flashes a bolt from the sum and names its own claims for every tier it can reach', () => {
+    expect(GLIMPSE?.shot).toBe('bolt')
     // The tiers, not the words: the copy is the catalog's to change, and a test that
     // restated it would fail on every rewording and on nothing else.
     expect(Object.keys(GLIMPSE?.claims ?? {})).toEqual([

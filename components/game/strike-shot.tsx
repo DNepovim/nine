@@ -3,6 +3,7 @@ import { View } from 'react-native'
 
 import { BurstRound } from '@/components/game/burst-round'
 import { StrikeBeam } from '@/components/game/strike-beam'
+import { StrikeBolt } from '@/components/game/strike-bolt'
 import type { Shot } from '@/hooks/use-strike-shots'
 import {
   BEAM_END_CLEARANCE,
@@ -27,6 +28,7 @@ const SHOT_MS = {
   // as long. One timing rather than two within ten milliseconds of each other: nobody can
   // see the difference and a second constant is a second thing to keep true.
   chain: SNIPER_MS,
+  bolt: SNIPER_MS,
 } as const satisfies Record<Kind, number>
 
 // One strike's shot, from the sum row to the target it took. Positions the anchor both
@@ -41,6 +43,7 @@ export function StrikeShot({
   radius,
   sumDigits,
   rounds,
+  seed,
   onDone,
 }: {
   kind: Kind
@@ -55,6 +58,8 @@ export function StrikeShot({
   // Which rounds of the press's one burst this target gets. Empty for a sniper, which
   // fires one beam and nothing else.
   rounds: readonly number[]
+  // What a bolt's zigzag is drawn from, so a flash is the same flash on every render.
+  seed: number
   onDone: () => void
 }) {
   useEffect(() => {
@@ -84,7 +89,13 @@ export function StrikeShot({
       pointerEvents="none"
       style={{ position: 'absolute', left: from.x, top: from.y }}
     >
-      {kind !== 'burst' ? (
+      {kind === 'bolt' ? (
+        <StrikeBolt
+          seed={seed}
+          {...insetLine(ray.length, sniperStartGap(ray.angle, sumDigits), endGap)}
+          angle={ray.angle}
+        />
+      ) : kind !== 'burst' ? (
         // The beam is aimed at the target's middle but drawn short of it at both ends:
         // clear of the digits it leaves, and clear of the rim it is aimed at.
         <StrikeBeam angle={ray.angle} {...insetLine(ray.length, startGap, endGap)} />

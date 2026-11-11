@@ -272,11 +272,14 @@ export type Submode = {
 // order the player walked it. The first hit of a run has no previous target and fires
 // from the sum row, as the two above always do.
 //
+// `bolt` is STORM's: a jagged flash of lightning from the sum to the target, in the place of the
+// sniper's beam.
+//
 // `steps` is the chain's route kept: a pair of footprints from the previous target to this one on
 // **every** hit, not only a strike, which stay on the floor for the run, the oldest fading. A strike
 // is the one that slides on fire. Drawn by `FootprintTrail`, under the cards, so like `flame` the
 // shot layer never sees it — see `useStrikeShots`.
-export type ShotKind = 'sniper' | 'burst' | 'flame' | 'chain' | 'steps'
+export type ShotKind = 'sniper' | 'burst' | 'flame' | 'chain' | 'steps' | 'bolt'
 
 // What a challenge wears beside its name — one drawing each, in
 // `components/overlays/challenge-mark.tsx`. Named for what is drawn rather than for the

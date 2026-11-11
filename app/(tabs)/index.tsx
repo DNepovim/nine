@@ -2917,6 +2917,7 @@ export default function GameScreen() {
                           radius={shot.radius}
                           sumDigits={shot.sumDigits}
                           rounds={shot.rounds}
+                          seed={shot.id}
                           onDone={() => {
                             removeShot(shot.id)
                           }}

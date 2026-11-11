@@ -12,6 +12,7 @@ import Animated, {
 import Svg, { Circle, Defs, Polyline, RadialGradient, Stop } from 'react-native-svg'
 import { scheduleOnRN } from 'react-native-worklets'
 
+import { TARGET_EXIT_MS } from '@/components/game/pie-countdown'
 import { TargetCard } from '@/components/game/target-card'
 import { STORM } from '@/constants/colors'
 import { PIE_SIZE } from '@/constants/game'
@@ -31,6 +32,9 @@ import { glimpseLeft } from '@/lib/target-clock'
 const BOLT_WIDTH = 120
 // How far the glow around the foot of the bolt spreads, against the disc.
 const GLOW_RATIO = 3.2
+// A disc that is hit burns out: charred black with an ember rim, there at once and gone with the card.
+const CHAR = '#1A1008'
+const EMBER = '#FF8A3D'
 const STRIKE_STEPS = [
   { to: 1, ms: 40 },
   { to: 0.25, ms: 70 },
@@ -44,6 +48,20 @@ export function StruckTarget(props: ComponentProps<typeof TargetCard>) {
   // Whatever of the glimpse is left to wait for, counted the way the card counts it.
   const wait = glimpseLeft(glimpse, target.startProgress, target.duration)
   const strike = useSharedValue(0)
+  const burn = useSharedValue(0)
+  const burnt = target.exit === 'hit'
+
+  // A taken disc is scorched as it goes: blackened in a flicker, then faded out with the card.
+  useEffect(() => {
+    if (!burnt) return
+    burn.value = withSequence(
+      withTiming(0.95, { duration: 60 }),
+      withTiming(0.6, { duration: 60 }),
+      withTiming(0.9, { duration: 60 }),
+      withTiming(0, { duration: TARGET_EXIT_MS }),
+    )
+  }, [burnt])
+  const burnStyle = useAnimatedStyle(() => ({ opacity: burn.value }))
   const held = useSharedValue(wait ?? 0)
   const active = !leaving && !frozen
 
@@ -95,6 +113,22 @@ export function StruckTarget(props: ComponentProps<typeof TargetCard>) {
           height: size,
         }}
       >
+        <Animated.View
+          style={[
+            {
+              position: 'absolute',
+              left: 0,
+              top: 0,
+              width: size,
+              height: size,
+              borderRadius: size / 2,
+              backgroundColor: CHAR,
+              borderWidth: 3,
+              borderColor: EMBER,
+            },
+            burnStyle,
+          ]}
+        />
         <Animated.View
           style={[
             {
