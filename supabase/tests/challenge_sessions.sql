@@ -574,6 +574,9 @@ begin
     'should pick the challenge that has gone longest without a session';
   assert v_next.measure = 'time', 'should carry the measure the challenge was booked with';
   assert v_next.created_by is null, 'nobody planned it, and the row should say so';
+  assert v_next.alt_mode_id = 'challenge/drift' and v_next.alt_measure = 'score',
+    'should fill the second candidate with the next longest unseen challenge';
+  assert v_next.first_mode_id = 'challenge/habit', 'the first candidate should lead the ballot';
 
   assert plan_next_challenge_session('2026-11-03 11:10+00') is null,
     'the session just booked is planned, so a second run should book nothing';
@@ -600,6 +603,8 @@ begin
   v_id := plan_next_challenge_session('2026-11-03 11:05+00');
   assert (select mode_id from challenge_sessions where id = v_id) = 'challenge/drift',
     'a challenge unplayed in sixty days should drop out while others are played';
+  assert (select alt_mode_id from challenge_sessions where id = v_id) = 'challenge/four-keys',
+    'the second candidate should come from the same pool';
 
   raise notice 'challenge_sessions.sql: next session booked on its own OK';
 end;
