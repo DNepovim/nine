@@ -3104,6 +3104,10 @@ export default function GameScreen() {
               hits={state.context.hits}
               gameTimeMs={state.context.elapsedMs}
               strikes={state.context.strikes}
+              bestScore={personalBar(
+                bestOn(stats, mode, difficulty).score,
+                board.forever.myBest,
+              )}
               medals={runMedals}
               podium={runPodium}
               screen={runScreen}

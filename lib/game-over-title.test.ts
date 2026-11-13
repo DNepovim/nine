@@ -175,4 +175,12 @@ describe('a window that shut under the run', () => {
   it('is absent on every ordinary run', () => {
     expect(run({ medals: ['ever'] })).not.toEqual(['TIME', 'GONE'])
   })
+
+  it('raises the cold bar with the player’s own best', () => {
+    // 400 clears the Easy floor, so a newcomer is not told it was cold…
+    expect(run({ score: 400 })).not.toEqual(['COLD', 'DIAL'])
+    // …but a player whose best is 5000 is, since 400 is under 30% of it.
+    expect(run({ score: 400, best: 5000 })).toEqual(['COLD', 'DIAL'])
+    expect(run({ score: 2000, best: 5000 })).not.toEqual(['COLD', 'DIAL'])
+  })
 })

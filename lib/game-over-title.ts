@@ -123,6 +123,17 @@ const COLD_BELOW = {
   extreme: 90,
 } as const satisfies Record<Difficulty, number>
 
+// What share of the player's own best a run must reach to not be cold. `COLD_BELOW` is
+// the floor for a player with no history; past it the bar follows the player, so someone
+// whose best is 5000 is told the run was cold at 1500 rather than being congratulated for
+// clearing a number set for beginners. Under a record by construction — a run that beat
+// the best never gets this far — so the bar can never sit above anything the player has
+// not already passed.
+const COLD_SHARE = 0.3
+
+export const coldBelow = (difficulty: Difficulty, best: number): number =>
+  Math.max(COLD_BELOW[difficulty], Math.round(best * COLD_SHARE))
+
 // Read top down and stop at the first that holds — a run that took a board record
 // almost always beat the player's own best too, and the bigger claim is the one worth
 // putting on screen.
@@ -134,6 +145,7 @@ const tierFor = ({
   personalBest,
   difficulty,
   score,
+  best = 0,
   hits,
   strikes,
   sessionRank = null,
@@ -154,6 +166,9 @@ const tierFor = ({
   personalBest: boolean
   difficulty: Difficulty
   score: number
+  // The player's best on this board before the run, 0 for a board never played. Moves the
+  // cold bar up with the player — see `coldBelow`.
+  best?: number
   hits: number
   strikes: number
   // Where the run came on its **session**, for a challenge — which keeps no board, so
@@ -189,7 +204,7 @@ const tierFor = ({
   if (sessionRank === 2 || sessionRank === 3) return 'medal'
   if (podium) return 'medal'
   if (personalBest) return 'personal'
-  if (score < COLD_BELOW[difficulty]) return 'cold'
+  if (score < coldBelow(difficulty, best)) return 'cold'
   // The same bar the challenge button uses: a run with real streaks in it went well
   // even when it set no record, and the two should never disagree about that.
   if (earnedChallenge(hits, strikes)) return 'strong'

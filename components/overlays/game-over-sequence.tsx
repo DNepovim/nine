@@ -49,6 +49,7 @@ export function GameOverSequence({
   podium,
   screen,
   personalBest,
+  bestScore,
   titleRoll,
   avgAccuracy,
   avgSpeed,
@@ -90,6 +91,8 @@ export function GameOverSequence({
   screen: RecordScreen
   // Whether the run beat the player's own stored best — the title's second tier.
   personalBest: boolean
+  // The player's best on this board before the run — the title's cold bar scales with it.
+  bestScore: number
   // Which of the tier's three lines to use, drawn once per game over upstream.
   titleRoll: number
   avgAccuracy: number
@@ -137,6 +140,7 @@ export function GameOverSequence({
       personalBest,
       difficulty,
       score,
+      best: bestScore,
       hits,
       strikes,
       sessionRank,
