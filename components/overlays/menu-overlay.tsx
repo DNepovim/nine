@@ -347,13 +347,12 @@ export function MenuOverlay({
               the line is the one word that is theirs. */}
           <Text selectable={false} className={cn(TYPE.figure, 'mb-2 text-dim')}>
             {isNonEmptyString(nickname) ? (
-              <>
-                {`Hi `}
-                <GradientName nickname={nickname} {...myFactors(userId)} />
-                {`, let's multiply`}
-              </>
+              <Trans>
+                Hi <GradientName nickname={nickname} {...myFactors(userId)} />, let's
+                multiply
+              </Trans>
             ) : (
-              `Let's multiply`
+              <Trans>Let's multiply</Trans>
             )}
           </Text>
 

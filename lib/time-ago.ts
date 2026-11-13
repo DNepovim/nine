@@ -16,6 +16,9 @@
 // behind them is an aside. NOT PUBLISHED keeps its capitals in the same slot for exactly
 // that reason: it is a warning, not an aside.
 
+import type { MessageDescriptor } from '@lingui/core'
+import { msg, plural } from '@lingui/core/macro'
+
 const MINUTE = 60_000
 const HOUR = 60 * MINUTE
 const DAY = 24 * HOUR
@@ -41,6 +44,20 @@ const UNITS = [
 // ahead of the server must not produce "in 3 seconds" on a record that already exists.
 const JUST_NOW = 'now'
 
+// The same buckets as a message, for a surface the player reads. `timeAgo` stays English
+// for the admin screens, which are never translated; the board rows say it in the
+// player's language, where `hrs ago` becomes `před 5 h`.
+const SAYINGS = {
+  yr: (count: number) => msg`${plural(count, { one: '# yr ago', other: '# yrs ago' })}`,
+  mth: (count: number) =>
+    msg`${plural(count, { one: '# mth ago', other: '# mths ago' })}`,
+  wk: (count: number) => msg`${plural(count, { one: '# wk ago', other: '# wks ago' })}`,
+  day: (count: number) =>
+    msg`${plural(count, { one: '# day ago', other: '# days ago' })}`,
+  hr: (count: number) => msg`${plural(count, { one: '# hr ago', other: '# hrs ago' })}`,
+  min: (count: number) => msg`${plural(count, { other: '# min ago' })}`,
+} as const
+
 // `at` is an ISO timestamp from the server, or epoch milliseconds — the challenge picker
 // has a session's `closesAt` already parsed. `now` is passed in rather than read, so this
 // stays pure and a test can pin the clock.
@@ -54,4 +71,16 @@ export function timeAgo(at: string | number, now: number): string | null {
 
   const count = Math.floor(gap / unit.ms)
   return `${count} ${count === 1 ? unit.one : unit.many} ago`
+}
+
+// `timeAgo`, as a descriptor the caller translates with `i18n._` / `t`.
+export function ageOf(at: string | number, now: number): MessageDescriptor | null {
+  const then = typeof at === 'number' ? at : Date.parse(at)
+  if (Number.isNaN(then)) return null
+
+  const gap = now - then
+  const unit = UNITS.find(({ ms }) => gap >= ms)
+  if (unit === undefined) return msg`now`
+
+  return SAYINGS[unit.one](Math.floor(gap / unit.ms))
 }

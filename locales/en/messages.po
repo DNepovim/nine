@@ -363,9 +363,33 @@ msgstr "{0} without a nickname"
 msgid "{asking, plural, one {# vote for the challenge you are replacing will be discarded. Votes for the other stay.} other {# votes for the challenge you are replacing will be discarded. Votes for the other stay.}}"
 msgstr "{asking, plural, one {# vote for the challenge you are replacing will be discarded. Votes for the other stay.} other {# votes for the challenge you are replacing will be discarded. Votes for the other stay.}}"
 
+#: lib/time-ago.ts:54
+msgid "{count, plural, one {# day ago} other {# days ago}}"
+msgstr "{count, plural, one {# day ago} other {# days ago}}"
+
+#: lib/time-ago.ts:55
+msgid "{count, plural, one {# hr ago} other {# hrs ago}}"
+msgstr "{count, plural, one {# hr ago} other {# hrs ago}}"
+
+#: lib/time-ago.ts:52
+msgid "{count, plural, one {# mth ago} other {# mths ago}}"
+msgstr "{count, plural, one {# mth ago} other {# mths ago}}"
+
 #: components/overlays/admin-challenges.tsx:264
 msgid "{count, plural, one {# session} other {# sessions}}"
 msgstr "{count, plural, one {# session} other {# sessions}}"
+
+#: lib/time-ago.ts:53
+msgid "{count, plural, one {# wk ago} other {# wks ago}}"
+msgstr "{count, plural, one {# wk ago} other {# wks ago}}"
+
+#: lib/time-ago.ts:51
+msgid "{count, plural, one {# yr ago} other {# yrs ago}}"
+msgstr "{count, plural, one {# yr ago} other {# yrs ago}}"
+
+#: lib/time-ago.ts:56
+msgid "{count, plural, other {# min ago}}"
+msgstr "{count, plural, other {# min ago}}"
 
 #: lib/prose.ts:131
 msgid "{day} {month}"
@@ -715,7 +739,7 @@ msgid "Address confirmed."
 msgstr "Address confirmed."
 
 #: components/overlays/admin-overlay.tsx:54
-#: components/overlays/menu-overlay.tsx:725
+#: components/overlays/menu-overlay.tsx:724
 msgid "ADMIN"
 msgstr "ADMIN"
 
@@ -1150,7 +1174,7 @@ msgstr "CONFIRMED"
 msgid "CONFIRMING…"
 msgstr "CONFIRMING…"
 
-#: components/overlays/menu-overlay.tsx:590
+#: components/overlays/menu-overlay.tsx:589
 msgid "CONNECT TO THE INTERNET TO PLAY WITH FRIENDS"
 msgstr "CONNECT TO THE INTERNET TO PLAY WITH FRIENDS"
 
@@ -1176,7 +1200,7 @@ msgstr "CONTROLS"
 msgid "CREATE"
 msgstr "CREATE"
 
-#: components/overlays/menu-overlay.tsx:554
+#: components/overlays/menu-overlay.tsx:553
 msgid "CREATE ROOM"
 msgstr "CREATE ROOM"
 
@@ -1655,6 +1679,10 @@ msgstr "HELD SPEED"
 msgid "HELP US SEE THE ROUGH EDGES"
 msgstr "HELP US SEE THE ROUGH EDGES"
 
+#: components/overlays/menu-overlay.tsx:350
+msgid "Hi <0/>, let's multiply"
+msgstr "Hi <0/>, let's multiply"
+
 #: components/overlays/admin-overlay.tsx:138
 msgid "hidden"
 msgstr "hidden"
@@ -1719,7 +1747,7 @@ msgid "How far can you go?"
 msgstr "How far can you go?"
 
 #: components/overlays/how-to-play-overlay.tsx:435
-#: components/overlays/menu-overlay.tsx:711
+#: components/overlays/menu-overlay.tsx:710
 msgid "HOW TO PLAY"
 msgstr "HOW TO PLAY"
 
@@ -1809,7 +1837,7 @@ msgid "JANUARY"
 msgstr "JANUARY"
 
 #: components/overlays/join-room-overlay.tsx:75
-#: components/overlays/menu-overlay.tsx:573
+#: components/overlays/menu-overlay.tsx:572
 msgid "JOIN ROOM"
 msgstr "JOIN ROOM"
 
@@ -1986,6 +2014,7 @@ msgstr "LET’S GO"
 msgid "LET'S LEARN THE GAME"
 msgstr "LET'S LEARN THE GAME"
 
+#: components/overlays/menu-overlay.tsx:355
 #: components/splash-screen.tsx:239
 msgid "Let's multiply"
 msgstr "Let's multiply"
@@ -2132,7 +2161,7 @@ msgstr "Move more than one key in a single swipe."
 msgid "MULTIPLAYER"
 msgstr "MULTIPLAYER"
 
-#: components/overlays/menu-overlay.tsx:657
+#: components/overlays/menu-overlay.tsx:656
 msgid "My best at Nine is {bestScore} — {board}. Think you can beat it?"
 msgstr "My best at Nine is {bestScore} — {board}. Think you can beat it?"
 
@@ -2182,7 +2211,7 @@ msgstr "NICK"
 msgid "NIGHT SHIFT"
 msgstr "NIGHT SHIFT"
 
-#: components/overlays/menu-overlay.tsx:658
+#: components/overlays/menu-overlay.tsx:657
 msgid "Nine buttons, one number to hit. Come take a run at it."
 msgstr "Nine buttons, one number to hit. Come take a run at it."
 
@@ -2482,6 +2511,10 @@ msgstr "Nov"
 msgid "NOVEMBER"
 msgstr "NOVEMBER"
 
+#: lib/time-ago.ts:81
+msgid "now"
+msgstr "now"
+
 #: modes/challenges/catalog.ts:438
 msgid "NSL"
 msgstr "NSL"
@@ -2664,7 +2697,7 @@ msgid "OPTIMAL PATH"
 msgstr "OPTIMAL PATH"
 
 #: components/overlays/advanced-options-overlay.tsx:110
-#: components/overlays/menu-overlay.tsx:642
+#: components/overlays/menu-overlay.tsx:641
 #: components/overlays/paused-overlay.tsx:286
 msgid "OPTIONS"
 msgstr "OPTIONS"
@@ -2779,7 +2812,7 @@ msgstr "PLAY AGAIN"
 msgid "Play five runs with friends and win none of them."
 msgstr "Play five runs with friends and win none of them."
 
-#: components/overlays/menu-overlay.tsx:627
+#: components/overlays/menu-overlay.tsx:626
 msgid "PLAY GAME"
 msgstr "PLAY GAME"
 
@@ -2847,7 +2880,7 @@ msgstr "PREVIEW AS"
 msgid "private"
 msgstr "private"
 
-#: components/overlays/menu-overlay.tsx:690
+#: components/overlays/menu-overlay.tsx:689
 msgid "PROFILE"
 msgstr "PROFILE"
 
@@ -3249,7 +3282,7 @@ msgstr "Seven days, one name. [A] had the week from Monday and never let go."
 msgid "Seven seconds a target — the clock everyone races."
 msgstr "Seven seconds a target — the clock everyone races."
 
-#: components/overlays/menu-overlay.tsx:666
+#: components/overlays/menu-overlay.tsx:665
 #: components/overlays/multiplayer-waiting.tsx:120
 msgid "SHARE"
 msgstr "SHARE"
@@ -4294,7 +4327,7 @@ msgstr "You voted for <0/> challenge"
 msgid "You won't hear about it when a rival takes your record."
 msgstr "You won't hear about it when a rival takes your record."
 
-#: components/overlays/menu-overlay.tsx:584
+#: components/overlays/menu-overlay.tsx:583
 #: components/overlays/offline-notice.tsx:17
 msgid "YOU'RE OFFLINE"
 msgstr "YOU'RE OFFLINE"

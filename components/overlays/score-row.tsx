@@ -1,3 +1,4 @@
+import { useLingui } from '@lingui/react/macro'
 import { isNonEmptyArray, isNonEmptyString } from 'narrowland'
 import { Text, View } from 'react-native'
 
@@ -17,7 +18,7 @@ import { cn } from '@/lib/cn'
 import { rankEmoji, rankMark } from '@/lib/rank-emoji'
 import type { RankMark } from '@/lib/rank-emoji'
 import { sessionFigure } from '@/lib/session-figure'
-import { timeAgo } from '@/lib/time-ago'
+import { ageOf } from '@/lib/time-ago'
 import type { Measure } from '@/modes'
 
 // A fixed line height on all three keeps a row the same height whichever mark it
@@ -82,6 +83,7 @@ export function ScoreRow({
   // Set on the gold game-over screen: these rows sit straight on the celebration.
   halo?: boolean
 }) {
+  const { t } = useLingui()
   const openProfile = useOpenProfile()
   // Every server row carries an id; only the local unpublished row does not.
   const profileId = isNonEmptyString(entry.userId) ? entry.userId : null
@@ -94,8 +96,8 @@ export function ScoreRow({
   const emoji = rankEmoji(entry.rank)
   // Read once per render rather than ticking: the board is a glance, and a row that
   // re-rendered every minute to turn 4M into 5M would buy nothing for the cost.
-  const age =
-    entry.achievedAt === undefined ? null : timeAgo(entry.achievedAt, Date.now())
+  const aged = entry.achievedAt === undefined ? null : ageOf(entry.achievedAt, Date.now())
+  const age = aged === null ? null : t(aged)
   const note = entry.note ?? age
   return (
     <TrackedPressable
