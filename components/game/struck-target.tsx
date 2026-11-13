@@ -14,7 +14,7 @@ import { scheduleOnRN } from 'react-native-worklets'
 
 import { TARGET_EXIT_MS } from '@/components/game/pie-countdown'
 import { TargetCard } from '@/components/game/target-card'
-import { STORM } from '@/constants/colors'
+import { STORM, STORM_ORB } from '@/constants/colors'
 import { PIE_SIZE } from '@/constants/game'
 import { boltPath, boltPoints } from '@/lib/storm'
 import { glimpseLeft } from '@/lib/target-clock'
@@ -102,7 +102,7 @@ export function StruckTarget(props: ComponentProps<typeof TargetCard>) {
 
   return (
     <>
-      <TargetCard {...props} />
+      <TargetCard orb={STORM_ORB} {...props} />
       <View
         pointerEvents="none"
         style={{

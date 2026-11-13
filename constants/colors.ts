@@ -615,7 +615,7 @@ const MONITOR_TOKENS = {
 
 const MONITOR_BAR = '#6DEBA0'
 
-// ONE KEY's sky, shared with `skyBar`: a light blue day, the text in a deep navy, and the one
+// LIFTOFF's sky, shared with `skyBar`: a light blue day, the text in a deep navy, and the one
 // ink everything above its dial wears.
 const SKY_TOKENS = {
   '--color-surface': '#CDE9FA',
@@ -869,7 +869,7 @@ export const SCHEMES = {
       keys: null,
     },
   },
-  // `sky` — ONE KEY's little plane: a light blue day, deeper at the top and paling to the
+  // `sky` — LIFTOFF's little plane: a light blue day, deeper at the top and paling to the
   // horizon. The one key is a white disc with a navy digit that fills to a bright
   // blue as it climbs to nine.
   sky: {
@@ -1323,6 +1323,15 @@ export const STORM = {
   splash: 'rgba(200, 224, 255, 0.9)',
 } as const
 
+// STORM's target: a charged orb — a dark navy disc, an electric-blue rim and charge, the number in
+// the night's cold white. See `orb` on `PieCountdown`.
+export const STORM_ORB = {
+  ground: '#0E1A33',
+  rim: '#4F7DFF',
+  charge: '#6FA2FF',
+  ink: '#EAF2FF',
+} as const
+
 // FREEZE's snow globe (`components/game/openings/frost-creep.tsx`, `snow.tsx`). Ice is white
 // at its edge and a cold cyan in its body; snow is white with a cold edge, so a flake reads
 // on the pale ground too.
@@ -1346,7 +1355,7 @@ export const MONITOR = {
   shock: '#F2FFF8',
 } as const
 
-// ONE KEY's sky (`components/game/openings/takeoff.tsx`): the plane, the clouds, the ground,
+// LIFTOFF's sky (`components/game/openings/takeoff.tsx`): the plane, the clouds, the ground,
 // and the fire when the plane meets it.
 export const SKY = {
   cloud: 'rgba(255, 255, 255, 0.92)',

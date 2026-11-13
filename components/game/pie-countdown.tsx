@@ -51,6 +51,23 @@ const HIT_NUMBER_SCALE = 1.7
 const FAIL_COLOR_MS = 100
 const FAIL_SQUASH = 0.06
 
+// What the disc is inked in: an orb's own colours where it has them, the scheme's where it is
+// monochrome, and none where it is the ordinary band-tinted disc.
+const discInks = (
+  orb: { ground: string; rim: string; charge: string } | undefined,
+  mono: string | null,
+  ground: string,
+) => ({
+  thin: mono !== null || orb !== undefined,
+  discInk: orb?.charge ?? mono,
+  discGround: orb?.ground ?? ground,
+  rim: orb?.rim ?? mono ?? undefined,
+})
+
+// An orb's number is in its own ink until the target is lost, which turns it as it does any disc.
+const orbInk = (orb: { ink: string } | undefined, failed: boolean) =>
+  orb !== undefined && !failed ? { color: orb.ink } : undefined
+
 export const fontSizeForDigits = (value: number, scale: number): number => {
   const digits = String(value).length
   const base = digits >= 3 ? 36 : digits === 2 ? 50 : 58
@@ -70,6 +87,7 @@ export function PieCountdown({
   clocked = true,
   drawn = false,
   bare,
+  orb,
   settles = false,
   glimpse = null,
   revealed = false,
@@ -105,6 +123,10 @@ export function PieCountdown({
   // shows the time left some other way. The `blobs` form's: the number sits on wax that shrinks as
   // the clock does.
   bare?: { ink: string }
+  // A disc dressed as an **orb**: a dark `ground`, a thin `rim`, the clock as an arc of `charge` running
+  // round it and the number in `ink` — the way a monochrome scheme draws a disc, in colours of its own
+  // rather than the scheme's. The `struck` form's.
+  orb?: { ground: string; rim: string; charge: string; ink: string }
   // Whether this target **stays on the board** once it is taken, rather than leaving it.
   //
   // A **drilled** run is the one that does: its nine are a fixed picture the player is
@@ -137,7 +159,7 @@ export function PieCountdown({
   // `hit` is the ink a taken number turns to as it leaves the ring: on a screen whose ground is
   // dark, the disc's own dark ink would leave it standing unseen on the ground it flies out onto.
   const { mono, ground, hit: hitInk } = useScheme().inks
-  const thin = mono !== null
+  const { thin, discInk, discGround, rim } = discInks(orb, mono, ground)
   const stroke = drawn ? DRAWN_STROKE : thin ? THIN_STROKE : size / 2
   const radius = drawn
     ? size / 2 - DRAWN_INSET
@@ -166,16 +188,16 @@ export function PieCountdown({
   const running = active && clocked
   // The multiplayer hit-flash owns the track while it lasts, so the band yields to it.
   const trackColor =
-    mono === null
+    discInk === null
       ? (backgroundColor ?? TARGET_BAND_TRACK[targetBand(value, maxValue)])
-      : ground
+      : discGround
   // What is left of the clock, what has gone, and a lost target's disc and numeral. Under
   // a monochrome scheme the time gone is simply the ground showing through, and a lost
   // target inverts: the disc in the ink, the numeral in the ground.
-  const leftInk = drawn ? PIE_INK : (mono ?? APP_BLUE)
-  const goneInk = mono === null ? APP_RED : ground
-  const lostDisc = mono ?? APP_RED
-  const lostNumeral = mono === null ? '#FFFFFF' : ground
+  const leftInk = drawn ? PIE_INK : (discInk ?? APP_BLUE)
+  const goneInk = discInk === null ? APP_RED : discGround
+  const lostDisc = discInk ?? APP_RED
+  const lostNumeral = discInk === null ? '#FFFFFF' : discGround
 
   // One effect for starting, stopping and starting again, because they are the same
   // thing: the clock always runs from wherever the arc currently stands.
@@ -322,7 +344,11 @@ export function PieCountdown({
   }))
 
   const numberHitStyle = useAnimatedStyle(() => ({
-    color: interpolateColor(hitColor.value, [0, 1], [PIE_INK, hitInk ?? PIE_INK]),
+    color: interpolateColor(
+      hitColor.value,
+      [0, 1],
+      [orb?.ink ?? PIE_INK, hitInk ?? PIE_INK],
+    ),
   }))
 
   const ringStyle = useAnimatedStyle(() => ({
@@ -354,7 +380,7 @@ export function PieCountdown({
               r={radius}
               stroke={drawn ? 'none' : trackColor}
               strokeWidth={stroke}
-              fill={drawn ? trackColor : thin ? ground : 'none'}
+              fill={drawn ? trackColor : thin ? discGround : 'none'}
             />
             {drawn && (
               <Circle
@@ -417,7 +443,7 @@ export function PieCountdown({
                 cx={cx}
                 cy={cy}
                 r={radius}
-                stroke={mono}
+                stroke={rim}
                 strokeWidth={1}
                 fill="none"
               />
@@ -443,6 +469,7 @@ export function PieCountdown({
           style={[
             { fontSize: fontSizeForDigits(value, scale), includeFontPadding: false },
             bare !== undefined && { color: bare.ink },
+            orbInk(orb, failed),
             failed && bare === undefined && numberColorStyle,
             !failed && hitInk !== null && numberHitStyle,
           ]}

@@ -37,6 +37,7 @@ export function TargetCard({
   clocked = true,
   drawn = false,
   bare,
+  orb,
   spent = false,
   glimpse = null,
   driftStep = null,
@@ -69,6 +70,8 @@ export function TargetCard({
   drawn?: boolean
   // Whether the card is only its number — see `bare` on `PieCountdown`. The `blobs` form's.
   bare?: { ink: string }
+  // Whether the disc is an orb — see `orb` on `PieCountdown`. The `struck` form's.
+  orb?: { ground: string; rim: string; charge: string; ink: string }
   // Whether a card taken on this board **stays** on it, marked, instead of leaving.
   //
   // True for a **drilled** run and nothing else. Its nine are a fixed picture, dealt in
@@ -170,6 +173,7 @@ export function TargetCard({
         clocked={clocked}
         drawn={drawn}
         bare={bare}
+        orb={orb}
         duration={duration}
         startProgress={target.startProgress}
         exit={target.exit}
