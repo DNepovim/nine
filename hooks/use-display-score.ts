@@ -2,9 +2,12 @@ import { useEffect, useRef, useState } from 'react'
 
 // Counts the displayed score up to the machine's Score as floating "+points"
 // merge in; jumps immediately when the target drops (e.g. new game).
+//
+// Starts at the figure it is mounted with: a readout that mounts mid-run shows the score
+// standing rather than counting up to it again.
 export function useDisplayScore(target: number): number {
-  const [displayScore, setDisplayScore] = useState(0)
-  const displayScoreRef = useRef(0)
+  const [displayScore, setDisplayScore] = useState(target)
+  const displayScoreRef = useRef(target)
 
   useEffect(() => {
     const from = displayScoreRef.current

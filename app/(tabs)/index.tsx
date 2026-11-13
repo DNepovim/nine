@@ -38,6 +38,7 @@ import { PencilWipe } from '@/components/game/pencil-wipe'
 import { RunStopwatch } from '@/components/game/run-stopwatch'
 import { RunTopBar } from '@/components/game/run-top-bar'
 import { ScoreDigit } from '@/components/game/score-digit'
+import { ScoreReadout } from '@/components/game/score-readout'
 import { StepUpToast } from '@/components/game/step-up-toast'
 import { StrikeShot } from '@/components/game/strike-shot'
 import { SumHush } from '@/components/game/sum-hush'
@@ -90,7 +91,7 @@ import { DEFAULT_DIAL_CORNERS } from '@/constants/dial-hints'
 import { PIE_SIZE } from '@/constants/game'
 import { mono } from '@/constants/theme'
 import { TUTORIAL_BANNER_HEIGHT } from '@/constants/tutorial'
-import { READOUT, TYPE } from '@/constants/typography'
+import { TYPE } from '@/constants/typography'
 import { useAccountEmail } from '@/hooks/use-account-email'
 import { useAchievementQueue, useAchievements } from '@/hooks/use-achievements'
 import { useAnnouncements } from '@/hooks/use-announcements'
@@ -100,7 +101,6 @@ import { BoardProvider, useBoard, type PeriodBoard } from '@/hooks/use-board'
 import { ChampionsProvider, useChampions } from '@/hooks/use-champions'
 import { SUM_ROW_HEIGHT } from '@/hooks/use-dial-metrics'
 import { useDisplayOptions } from '@/hooks/use-display-options'
-import { useDisplayScore } from '@/hooks/use-display-score'
 import { useDisplayedTargets } from '@/hooks/use-displayed-targets'
 import { useDriftTicks } from '@/hooks/use-drift-ticks'
 import { useDyingSequence, type DyingPhase } from '@/hooks/use-dying-sequence'
@@ -169,7 +169,6 @@ import {
 } from '@/lib/announcements'
 import { currentBoardMedals, sessionMedal, type BoardMedal } from '@/lib/board-medals'
 import { holdsBothBoards, recordScreen, type RecordScreen } from '@/lib/champions'
-import { cn } from '@/lib/cn'
 import { DRAW } from '@/lib/dial-sketch'
 import { drillFor } from '@/lib/drill'
 import { gameSnapshot } from '@/lib/feedback-state'
@@ -1817,7 +1816,6 @@ export default function GameScreen() {
     key: `${runId}:${hitBatch.seq}`,
   })
   const direction = useScoreDirection(shownSum)
-  const displayScore = useDisplayScore(state.context.score)
 
   // The **drill** this run deals from, where it has one — see `drillFor`.
   const drill = drillFor(rules, mode, runSession)
@@ -2628,13 +2626,11 @@ export default function GameScreen() {
                               <>
                                 <PencilWipe progress={barDrawn} window={DRAW.score}>
                                   <View className="flex-row items-baseline gap-1.5">
-                                    <Text
-                                      selectable={false}
-                                      className={cn(READOUT.best, 'text-score')}
-                                      style={[{ fontFamily: digitFont }, barGlow]}
-                                    >
-                                      {displayScore}
-                                    </Text>
+                                    <ScoreReadout
+                                      score={state.context.score}
+                                      digitFont={digitFont}
+                                      glow={barGlow}
+                                    />
                                     {streak > 0 && (
                                       <Text
                                         selectable={false}
@@ -3104,14 +3100,14 @@ export default function GameScreen() {
               hits={state.context.hits}
               gameTimeMs={state.context.elapsedMs}
               strikes={state.context.strikes}
-              bestScore={personalBar(
-                bestOn(stats, mode, difficulty).score,
-                board.forever.myBest,
-              )}
               medals={runMedals}
               podium={runPodium}
               screen={runScreen}
               personalBest={crossed.includes('record')}
+              bestScore={personalBar(
+                bestOn(stats, mode, difficulty).score,
+                board.forever.myBest,
+              )}
               titleRoll={titleRoll}
               avgAccuracy={avgAccuracy}
               avgSpeed={avgSpeed}
