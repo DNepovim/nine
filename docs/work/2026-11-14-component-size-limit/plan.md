@@ -5,8 +5,8 @@ Spec: docs/work/2026-11-14-component-size-limit/spec.md
 ## Tasks
 
 - [x] 1. `eslint.config.mjs` — both rules at 300 as `warn`; confirm exactly the 17 files warn
-- [ ] 2. Tests first: `lib/*.test.ts` for the GameScreen helpers, written against today's code (import from the screen temporarily, or move each helper and its test together)
-- [ ] 3. Move GameScreen's module-level helpers to `lib/intro-standing.ts`, `lib/launch-asks.ts`, `lib/feedback-bookmark.ts`, `lib/board-targets.ts`, `lib/announcements.ts`
+- [x] 2. Tests first: `lib/*.test.ts` for the GameScreen helpers, written against today's code (import from the screen temporarily, or move each helper and its test together)
+- [x] 3. Move GameScreen's module-level helpers to `lib/intro-standing.ts`, `lib/launch-asks.ts`, `lib/feedback-bookmark.ts`, `lib/board-targets.ts`, `lib/announcements.ts` — also `lib/run-session.ts` (the session-bests family) and `lib/run-title.ts` (accent, wordmark, subtitle); `announcementsReady` went to `lib/session-announcements.ts` instead, beside `SessionTargets`, since that file already imports announcements.ts. Helpers moved and tested together (identical code, so the same as testing first).
 - [ ] 4. File-only splits: `siege-blow`, `admin-knowledge`, `admin-messages`, `admin-stats`
 - [ ] 5. File-only splits: `openings/takeoff`, `openings/lever-pull`
 - [ ] 6. File-only splits: `email-code-modal`, `dial`, `best-scores-line`, `pie-countdown`, `game-over-overlay`

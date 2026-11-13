@@ -1,4 +1,3 @@
-import type { MessageDescriptor } from '@lingui/core'
 import { useLingui } from '@lingui/react/macro'
 import { useMachine } from '@xstate/react'
 import { useFonts } from 'expo-font'
@@ -14,7 +13,7 @@ import { FeedbackBookmark } from '@/components/feedback-bookmark'
 import { AnnouncementEffect } from '@/components/game/announcement-effect'
 import { ArcadeGame } from '@/components/game/arcade-game'
 import { Arrival, ArrivalStage } from '@/components/game/arrival'
-import { BestScoresLine, type SessionBests } from '@/components/game/best-scores-line'
+import { BestScoresLine } from '@/components/game/best-scores-line'
 import { Confetti } from '@/components/game/confetti'
 import { Dial } from '@/components/game/dial'
 import { AXIS_STRIP } from '@/components/game/dial-axes'
@@ -47,7 +46,6 @@ import { TraineeStats } from '@/components/game/trainee-stats'
 import { TutorialCard } from '@/components/game/tutorial-card'
 import { TutorialIntro } from '@/components/game/tutorial-intro'
 import { TutorialStepper } from '@/components/game/tutorial-stepper'
-import type { AccountNoticeKind } from '@/components/overlays/account-notice'
 import { AchievementDetail } from '@/components/overlays/achievement-detail'
 import { AchievementsOverlay } from '@/components/overlays/achievements-overlay'
 import { AdminOverlay } from '@/components/overlays/admin-overlay'
@@ -97,7 +95,7 @@ import { useAchievementQueue, useAchievements } from '@/hooks/use-achievements'
 import { useAnnouncements } from '@/hooks/use-announcements'
 import { useAppUpdate } from '@/hooks/use-app-update'
 import { useBarColor } from '@/hooks/use-bar-color'
-import { BoardProvider, useBoard, type PeriodBoard } from '@/hooks/use-board'
+import { BoardProvider, useBoard } from '@/hooks/use-board'
 import { ChampionsProvider, useChampions } from '@/hooks/use-champions'
 import { SUM_ROW_HEIGHT } from '@/hooks/use-dial-metrics'
 import { useDisplayOptions } from '@/hooks/use-display-options'
@@ -159,41 +157,46 @@ import { idsOf, latestAchievement } from '@/lib/achievement-store'
 import { achievementCard } from '@/lib/achievements'
 import { identify, setAdminOptOut, track } from '@/lib/analytics'
 import type { AnalyticsEvents } from '@/lib/analytics-events'
-import type { SessionRun } from '@/lib/announcement-run'
-import {
-  barFor,
-  isOpenable,
-  personalBar,
-  type Leaders,
-  type Period,
-} from '@/lib/announcements'
-import { currentBoardMedals, sessionMedal, type BoardMedal } from '@/lib/board-medals'
+import { personalBar, type Leaders, type Period } from '@/lib/announcements'
+import { currentBoardMedals } from '@/lib/board-medals'
+import { boardTargetsOf } from '@/lib/board-targets'
 import { holdsBothBoards, recordScreen, type RecordScreen } from '@/lib/champions'
 import { DRAW } from '@/lib/dial-sketch'
 import { drillFor } from '@/lib/drill'
-import { gameSnapshot } from '@/lib/feedback-state'
-import { leaderOf, type LeaderboardRow } from '@/lib/leaderboard'
-import type { LocalScore } from '@/lib/local-scores'
+import { feedbackGameState, showFeedbackBookmark } from '@/lib/feedback-bookmark'
+import {
+  introStanding,
+  isMenuScreen,
+  OVERLAY_SCREENS,
+  welcomeStanding,
+  type MenuOverlayName,
+} from '@/lib/intro-standing'
+import {
+  accountNoticeFor,
+  launchAsksClear,
+  mayAskForEmail,
+  mayOpenSessionAsk,
+} from '@/lib/launch-asks'
+import { leaderOf } from '@/lib/leaderboard'
 import { multiScreenOf } from '@/lib/multi-screen'
 import { runChallenge } from '@/lib/next-challenge'
 import { heldPeriods, medalPeriods } from '@/lib/record-medals'
 import { averageOf, headingOf } from '@/lib/run-average'
 import { newRunId } from '@/lib/run-id'
+import {
+  restoredSessionOf,
+  runSessionMedalsOf,
+  savedSessionOf,
+  sessionBestsOf,
+  sessionClockOf,
+  sessionRunOf,
+  sessionTargetsFor,
+} from '@/lib/run-session'
 import { countRun } from '@/lib/run-submission'
+import { accentFor, subtitleFor, wordmarkFor } from '@/lib/run-title'
 import { runKindOf } from '@/lib/run-totals'
-import {
-  restoreRun,
-  savedPositions,
-  type RunSession,
-  type SavedRun,
-} from '@/lib/saved-run'
-import {
-  deviceBestOf,
-  sessionTargetsOf,
-  type SessionTargets,
-} from '@/lib/session-announcements'
-import type { PreviousWinner } from '@/lib/session-board'
-import type { SessionFigures } from '@/lib/session-order'
+import { restoreRun, savedPositions } from '@/lib/saved-run'
+import { announcementsReady } from '@/lib/session-announcements'
 import { STEP_UP_BOARD } from '@/lib/step-up'
 import { multiplierColor } from '@/lib/streak-badge'
 import { tipForTarget } from '@/lib/tutorial-tip'
@@ -204,13 +207,9 @@ import { computePar } from '@/machines/scoring'
 import { keyControl, type LessonVoice } from '@/machines/tutorial-lesson'
 import {
   cellsOf,
-  CHALLENGE_WORD,
   darkGradientOf,
-  DIFFICULTIES,
   DIFFICULTY_ORDER,
-  getDifficultyColor,
   gradientOf,
-  isChallenge,
   isMode,
   MODE_ORDER,
   runLabel,
@@ -221,12 +220,9 @@ import {
   streakMultiplier,
   sumOf,
   targetFormOf,
-  type Difficulty,
-  type Measure,
   type Mode,
-  type ModeId,
 } from '@/modes'
-import { challengeInk, challengeTints, hueOf } from '@/modes/challenges/palette'
+import { challengeTints, hueOf } from '@/modes/challenges/palette'
 import type { DisplayTarget, Position } from '@/types/game'
 import type { MultiMode } from '@/types/multiplayer'
 
@@ -273,58 +269,6 @@ const BOOKMARK_REVEAL_DELAY_MS = 500
 // so the dial is inert for the beat rather than only looking it.
 const RESUME_DELAY_MS = 500
 
-// The menu-level overlays, one open at a time. 'none' means the screen under them —
-// the intro or the pause screen — is what shows. Feedback is not here: it is a
-// dialog over whatever is showing, not a screen of its own.
-type MenuOverlayName = 'none' | 'advanced' | 'howToPlay' | 'news' | 'joinRoom' | 'admin'
-
-// Which of them are dialogs rather than screens. Options and the guide are cards over
-// whatever asked for them, so the screen underneath has to stay drawn: a scrim over
-// nothing is just a darker game grid, and a player who opened Options from the intro was
-// being shown the board instead of the screen they had come from. The rest replace what
-// opened them and take it down.
-const MENU_DIALOGS = [
-  'advanced',
-  'howToPlay',
-] as const satisfies readonly MenuOverlayName[]
-
-// Whether this overlay replaces the screen it was opened from rather than covering it,
-// and so whether that screen comes down for it.
-function isMenuScreen(overlay: MenuOverlayName): boolean {
-  return overlay !== 'none' && !isOneOf(overlay, MENU_DIALOGS)
-}
-
-// Where the player stands on the start screen: whether it is drawn, and whether it is the
-// only thing between them and the game.
-//
-// Two answers because a dialog leaves the intro drawn but not alone, and that is exactly
-// the difference between painting it and interrupting it — the start screen is painted on
-// `drawn`, and everything that would interrupt it waits on `alone`.
-function introStanding(
-  // Everything about being at the intro except what is stacked over it.
-  atIntro: boolean,
-  menuOverlay: MenuOverlayName,
-): { drawn: boolean; alone: boolean } {
-  const drawn = atIntro && !isMenuScreen(menuOverlay)
-  return { drawn, alone: drawn && menuOverlay === 'none' }
-}
-
-// The first launch's tutorial offer, and what it holds back.
-//
-// The offer goes ahead of every other launch ask: it is the one question a player with
-// nothing on the device needs answered before any of the others mean anything. Every ask
-// waits on `free`, so holding that while the offer is owed is what queues them behind it.
-function welcomeStanding(
-  introAlone: boolean,
-  splashDone: boolean,
-  welcomePending: boolean,
-): { offer: boolean; free: boolean } {
-  return {
-    offer: introAlone && splashDone && welcomePending,
-    free: introAlone && !welcomePending,
-  }
-}
-
 // The two dialogs behind the line under the title: everything the player holds, and
 // everything there is to achieve. Not `menuOverlay`, even though two of those are dialogs
 // as well: these belong to the intro and nothing else opens them, whereas every name on
@@ -336,193 +280,6 @@ type TitleDialog = 'none' | 'medals' | 'achievements'
 // board; what the door decides is what the funnel is told — and 'dev' is told nothing. The
 // two a player can reach are the `from` values `run_started` already names.
 type TutorialDoor = 'welcome' | 'guide' | 'dev'
-
-// Overlay names → the screen names the warehouse knows, so the event table stays the
-// only place that spells them. 'none' has no row: it is a closing, not an opening.
-const OVERLAY_SCREENS = {
-  advanced: 'options',
-  howToPlay: 'how_to_play',
-  news: 'news',
-  joinRoom: 'join_room',
-  admin: 'admin',
-} as const satisfies Record<
-  Exclude<MenuOverlayName, 'none'>,
-  AnalyticsEvents['screen_opened']['screen']
->
-
-// A record measured against a board that cannot be trusted — offline, reading
-// whatever it last managed to load — is not a record worth telling the player
-// about, so nothing freezes until both the board and the connection are good.
-//
-// A session run waits for its session board instead: the board it would otherwise wait
-// for is the challenge mode's own, which is empty and says nothing true.
-function announcementsReady(
-  runSession: string | null,
-  boardLoaded: boolean,
-  sessionTargets: SessionTargets | null,
-  online: boolean,
-): boolean {
-  const loaded = runSession === null ? boardLoaded : sessionTargets !== null
-  return loaded && online
-}
-
-// What the bar measures a session run by, or null for an ordinary run.
-const sessionRunOf = (
-  targets: SessionTargets | null,
-  figures: SessionFigures,
-  userId: string | null,
-): SessionRun | null => (targets === null ? null : { targets, figures, userId })
-
-// The run as the machine holds it, for a message written from the pause screen — see
-// lib/feedback-state.ts. Nothing from the intro or the game over screen: neither has a
-// run in flight to describe, and a snapshot of the menu would only make a report look
-// like it carried something.
-//
-// Asked of the state value itself rather than handed a flag, so the one thing that knows
-// a run is paused is the machine.
-function feedbackGameState(
-  value: string | Readonly<Record<string, unknown>>,
-  context: Readonly<Record<string, unknown>>,
-): unknown {
-  return value === 'paused' ? gameSnapshot(value, context) : null
-}
-
-// Every screen but a live run gets the bookmark — except game over, which holds it
-// back until the death cinematic has actually landed (see gameOverBookmarkReady).
-//
-// The archive keeps its DONE button exactly where the bookmark would land, so it takes
-// the tab away for as long as it is up.
-//
-// `resuming` counts as a live run: the board is already back, and a tab appearing for
-// half a second and then leaving again is worse than one that never came.
-function showFeedbackBookmark({
-  isPlaying,
-  resuming,
-  showMultiGame,
-  inArcade,
-  feedbackOpen,
-  isGameOver,
-  gameOverBookmarkReady,
-  inArchive,
-}: {
-  isPlaying: boolean
-  resuming: boolean
-  showMultiGame: boolean
-  // An arcade run is a live run too, and the one screen in the app a stray tab could be
-  // grazed on is a dial somebody is dialling.
-  inArcade: boolean
-  feedbackOpen: boolean
-  isGameOver: boolean
-  gameOverBookmarkReady: boolean
-  inArchive: boolean
-}): boolean {
-  if (isPlaying || resuming || showMultiGame || inArcade || feedbackOpen || inArchive) {
-    return false
-  }
-  return !isGameOver || gameOverBookmarkReady
-}
-
-// What the intro has to say about this player's address, if anything.
-//
-// The two can never both be true — a device told its profile moved was signed out and
-// handed a fresh anonymous account, which has no address pending on it — so the order
-// below is a statement about which matters, not a tie-break.
-//
-// CONFIRM YOUR EMAIL is any address waiting on its code, including one on a profile that
-// already has a confirmed address beside it — which is every change in flight.
-//
-// It was read as "no address yet" for a while, and that was a worse answer to a real
-// problem. The problem: a restore hands the new phone a session carrying whatever was
-// parked in `email_change` on the profile it brought over, so a change somebody started
-// on another handset nags here, every launch, about an inbox this player may not have.
-// The cost of answering it this way: a player who starts a change and closes the dialog
-// loses the only door back to the six digits — no line here, and their own card offering
-// to change an address they had just changed. Stranding somebody mid-task is the worse of
-// the two, and the nag at least opens on a card that can resend, re-point or finish.
-//
-// Putting a change *down* is the piece neither version has: nothing in the app clears
-// `email_change`, because GoTrue has no call for it. That is the fix this is waiting on.
-function accountNoticeFor({
-  moved,
-  pendingEmail,
-}: {
-  moved: boolean
-  pendingEmail: string | null
-}): AccountNoticeKind | null {
-  if (moved) return 'moved'
-  if (pendingEmail !== null) return 'confirm'
-  return null
-}
-
-// Whether the intro may be interrupted to ask, once, for an address.
-//
-// Last in the queue of launch asks: a reply written to this player, the news, the install
-// prompt and the recording ask all come first, and none of them is ever up at the same
-// time as this. The nickname card is on the list too — it is the card this one *follows*,
-// and the two stacked would be two dialogs deep before the player has agreed to either.
-function mayAskForEmail({
-  splashDone,
-  onIntro,
-  titleDialogOpen,
-  nicknameOpen,
-  repliesReady,
-  hasReply,
-  newsReady,
-  newsVisible,
-  installing,
-  consentVisible,
-  challengeUp,
-}: {
-  splashDone: boolean
-  onIntro: boolean
-  titleDialogOpen: boolean
-  nicknameOpen: boolean
-  repliesReady: boolean
-  hasReply: boolean
-  newsReady: boolean
-  newsVisible: boolean
-  installing: boolean
-  consentVisible: boolean
-  // A challenge's dialog, open or owed by the launch — see `useSessionAsk`.
-  challengeUp: boolean
-}): boolean {
-  if (!splashDone || !onIntro || titleDialogOpen || nicknameOpen) return false
-  if (!repliesReady || hasReply) return false
-  if (!newsReady || newsVisible) return false
-  return !installing && !consentVisible && !challengeUp
-}
-
-// Whether the launch may open a live challenge's dialog by itself — see `useSessionAsk`.
-//
-// The same queue the email ask reads, one place ahead of it: the reply, the popup and its
-// rating, the install prompt and the recording ask all go first, and the email ask waits
-// on this. Never over a dialog already up, the player's own or the email ask's.
-function mayOpenSessionAsk({
-  splashDone,
-  onIntro,
-  otherDialogUp,
-  repliesReady,
-  hasReply,
-  newsReady,
-  newsVisible,
-  installing,
-  consentVisible,
-}: {
-  splashDone: boolean
-  onIntro: boolean
-  otherDialogUp: boolean
-  repliesReady: boolean
-  hasReply: boolean
-  newsReady: boolean
-  newsVisible: boolean
-  installing: boolean
-  consentVisible: boolean
-}): boolean {
-  if (!splashDone || !onIntro || otherDialogUp) return false
-  if (!repliesReady || hasReply) return false
-  if (!newsReady || newsVisible) return false
-  return !installing && !consentVisible
-}
 
 // What the board draws, given what the lesson is saying.
 //
@@ -568,229 +325,10 @@ const MIRRORED_ROW = { transform: [{ scaleX: -1 }] }
 // own, which has to lay them out the same way.
 const HEARTS_ROW = { flexDirection: 'row', gap: 4 } as const
 
-// What the top bar is painted in.
-//
-// Every permanent mode opens on its own first stop. A **challenge**'s first stop is the
-// near-black every challenge shares, so taking it would make every challenge's top bar
-// identical and leave the name as the only thing saying which one this is. Its second
-// stop is the challenge's own, and `challengeInk` is the shade of that which carries a
-// word on the surface.
-const accentFor = (mode: ModeId): string =>
-  isChallenge(mode) ? challengeInk(gradientOf(mode)[1]) : gradientOf(mode)[0]
-
-// NINE's own colour on that bar. A challenge takes the same ink as the rest of the row
-// rather than a point along its pair: `getDifficultyColor` lerps between the two stops by
-// rung, and a challenge pins its rung — so the lerp returns the same blend of near-black
-// and hue on every run, which is a colour neither stop is.
-const wordmarkFor = (mode: ModeId, difficulty: Difficulty): string =>
-  isChallenge(mode) ? accentFor(mode) : getDifficultyColor(mode, difficulty)
-
 // The beat between the countdown going red and the run ending. Long enough that the red is
 // read as the reason rather than as a flicker on the way to the game-over screen, and short
 // enough that it cannot be mistaken for time the player still has.
 const EXPIRED_GRACE_MS = 1000
-
-// What the title is, under the title.
-//
-// A scored run says its rung. A **challenge** says that it is one — the name above it is
-// a mode nobody has seen before and will not see again, so the line that would carry a
-// rung is the only place left to say what kind of thing is being played. A challenge pins
-// its own rung and so has none to report, which is exactly what leaves the line free.
-//
-// The descriptor rather than the string, so the one caller lower-cases it the same way it
-// lower-cases a rung — that casing is the top bar's voice, not this decision's.
-const subtitleFor = (
-  mode: ModeId,
-  usesDifficulty: boolean,
-  difficulty: Difficulty,
-): MessageDescriptor | null => {
-  if (isChallenge(mode)) return CHALLENGE_WORD
-  return usesDifficulty ? DIFFICULTIES[difficulty].label : null
-}
-
-// The standings a run belongs to, as the score bar wants them — or null for an ordinary
-// run, and for a session run whose two halves are not both in hand yet.
-//
-// Both are needed: the close time came off the card the run was started from, the
-// standings off the server. Until the read lands there is nothing honest to draw, and the
-// strip falls back to its blank height rather than showing a session whose best is a
-// guess.
-//
-// On a race the two figures are times rather than scores, and on a hits session they are
-// hits. The board's rows come ordered by the session's **measure**, so the top row is
-// still the record — it is only which column of it the strip reads that changes.
-//
-// The figure each measure other than the score reads off a run. The score is read off
-// the board itself, which already knows the record and the player's own best.
-const RANKED_OF = {
-  time: (run) => run.timeMs ?? 0,
-  hits: (run) => run.hits,
-} as const satisfies Record<Exclude<Measure, 'score'>, (run: SessionFigures) => number>
-
-const figuresOf = (row: LeaderboardRow): SessionFigures => ({
-  score: row.best_score,
-  hits: row.hits,
-  timeMs: row.time_ms ?? null,
-})
-
-const sessionBestsOf = (
-  id: string | null,
-  closesAt: number | null,
-  board: PeriodBoard | null,
-  measure: Measure,
-  userId: string | null,
-  previous: PreviousWinner | null,
-): SessionBests | null => {
-  if (id === null || closesAt === null || board === null) return null
-  const mine = board.rows.find((row) => row.user_id === userId)
-  const top = board.rows[0]
-  const ranked = measure === 'score' ? null : RANKED_OF[measure]
-  const figure = (row: LeaderboardRow | undefined) =>
-    row === undefined || ranked === null ? 0 : ranked(figuresOf(row))
-  return {
-    measure,
-    best: ranked === null ? (board.record ?? 0) : figure(top),
-    holder: board.recordHolder,
-    mine: board.recordIsMine,
-    myBest: ranked === null ? board.myBest : figure(mine),
-    // Left off rather than drawn as 0.0 where a race's winner has no time — an untimed
-    // row from an older build, which would read as a record nobody could beat.
-    last:
-      previous === null || (measure === 'time' && previous.timeMs === null)
-        ? null
-        : {
-            holder: previous,
-            value: ranked === null ? previous.score : ranked(previous),
-            mine: previous.userId === userId,
-          },
-    closesAt,
-  }
-}
-
-// The instant a run's **session** shuts, for the two screens a stopped run lands on, or
-// null for an ordinary run.
-//
-// Out here beside `sessionBestsOf` rather than inline at the two call sites, and for the
-// same reason that one is: both halves have to be in hand for the answer to mean anything
-// — a close time left over from a finished run is a figure nothing should draw — and a
-// screen component is not the place to keep remembering that.
-const sessionClockOf = (
-  sessionId: string | null,
-  closesAt: number | null,
-): number | null => (sessionId === null ? null : closesAt)
-
-// The run's session as the saved run keeps it, or null for an ordinary run — both halves
-// or neither, for the reason `sessionBestsOf` gives.
-const savedSessionOf = (
-  sessionId: string | null,
-  closesAt: number | null,
-): RunSession | null =>
-  sessionId === null || closesAt === null ? null : { id: sessionId, closesAt }
-
-// The other way: what a restored run puts back, null on both halves for an ordinary run.
-const restoredSessionOf = (
-  saved: SavedRun,
-): { id: string | null; closesAt: number | null } => ({
-  id: saved.session?.id ?? null,
-  closesAt: saved.session?.closesAt ?? null,
-})
-
-// Where a finished run came on its session, as a medal — asked once, at game over, of the
-// board already held for the score bar, and handed to both the title and the screen
-// under it so the two cannot answer differently. Empty for an ordinary run, and for a
-// session run still being played, which the caller says by passing no session.
-const runSessionMedalsOf = (
-  session: string | null,
-  board: PeriodBoard | null,
-  figures: SessionFigures,
-  measure: Measure,
-  userId: string | null,
-): BoardMedal[] =>
-  session === null ? [] : sessionMedal(board?.rows ?? [], figures, measure, userId)
-
-// A session run's targets, once its standings have been read. A read that failed is not
-// one: its empty rows would freeze as "nobody leads, and we can't say it's empty", and a
-// frozen target is never replaced, so the run would go the whole way in silence. Null
-// waits for the next good read, and `stepRun` catches up on the score reached by then.
-const sessionTargetsFor = (
-  runSession: string | null,
-  board: PeriodBoard | null,
-  measure: Measure,
-  userId: string | null,
-  localScores: LocalScore[],
-): SessionTargets | null =>
-  runSession === null || board?.error !== null
-    ? null
-    : sessionTargetsOf({
-        measure,
-        rows: board.rows,
-        empty: board.empty,
-        userId,
-        device: deviceBestOf(localScores, runSession, measure),
-      })
-
-// What the bar measures an ordinary run against on the boards — or, on a session run,
-// nothing at all. A challenge keeps no board, and the leaderboard its mode id reads is
-// empty, so asking it would have every challenge run told it had opened today's. Zeroed
-// rather than merely left unasked, so nothing could be crossed even if it were.
-const NO_BOARD_TARGETS = {
-  storedBest: 0,
-  todayBest: null,
-  weekBest: null,
-  everBest: null,
-  todayEmpty: false,
-  weekEmpty: false,
-} as const
-
-function boardTargetsOf(
-  runSession: string | null,
-  storedBest: number,
-  board: Record<'today' | 'week' | 'forever', PeriodBoard>,
-) {
-  if (runSession !== null) return NO_BOARD_TARGETS
-  return {
-    storedBest,
-    todayBest: barFor(board.today.record, board.today.myBest),
-    weekBest: barFor(board.week.record, board.week.myBest),
-    everBest: barFor(board.forever.record, board.forever.myBest),
-    todayEmpty: isOpenable(board.today.empty, board.today.myBest),
-    weekEmpty: isOpenable(board.week.empty, board.week.myBest),
-  }
-}
-
-// Whether the launch asks ahead of the push card have all had their turn: the same queue
-// the session-recording card waits in, apart from that card itself. Pulled out of the
-// component so the screen's own branching does not carry it.
-const launchAsksClear = ({
-  splashDone,
-  onIntro,
-  repliesReady,
-  hasReply,
-  newsReady,
-  newsVisible,
-  challengeUp,
-  installing,
-  replayVisible,
-}: {
-  splashDone: boolean
-  onIntro: boolean
-  repliesReady: boolean
-  hasReply: boolean
-  newsReady: boolean
-  newsVisible: boolean
-  challengeUp: boolean
-  installing: boolean
-  replayVisible: boolean
-}): boolean =>
-  splashDone &&
-  onIntro &&
-  repliesReady &&
-  !hasReply &&
-  newsReady &&
-  !newsVisible &&
-  !challengeUp &&
-  !installing &&
-  !replayVisible
 
 export default function GameScreen() {
   const { t } = useLingui()

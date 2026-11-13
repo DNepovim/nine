@@ -198,3 +198,19 @@ export function sessionRivalChange(
   if (after.userId === myUserId) return null
   return { id: 'sessionLost', name: displayName(after.nickname) }
 }
+
+// A record measured against a board that cannot be trusted — offline, reading
+// whatever it last managed to load — is not a record worth telling the player
+// about, so nothing freezes until both the board and the connection are good.
+//
+// A session run waits for its session board instead: the board it would otherwise wait
+// for is the challenge mode's own, which is empty and says nothing true.
+export function announcementsReady(
+  runSession: string | null,
+  boardLoaded: boolean,
+  sessionTargets: SessionTargets | null,
+  online: boolean,
+): boolean {
+  const loaded = runSession === null ? boardLoaded : sessionTargets !== null
+  return loaded && online
+}

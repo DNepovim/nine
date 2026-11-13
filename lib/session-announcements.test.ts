@@ -5,6 +5,7 @@ import type { LocalScore } from '@/lib/local-scores'
 
 import {
   abandonedBest,
+  announcementsReady,
   crossedSession,
   deviceBestOf,
   leadKept,
@@ -255,5 +256,27 @@ describe('sessionRivalChange', () => {
   it('stays quiet with no baseline', () => {
     expect(sessionRivalChange(null, leader(RIVAL, 200), ME)).toBeNull()
     expect(sessionRivalChange(leader(ME, 100), leader(RIVAL, 200), null)).toBeNull()
+  })
+})
+
+describe('announcementsReady', () => {
+  const targets = sessionTargetsOf({
+    measure: 'score',
+    rows: [],
+    empty: true,
+    userId: 'u1',
+    device: null,
+  })
+
+  it('waits on an ordinary run for its board and the connection', () => {
+    expect(announcementsReady(null, true, null, true)).toBe(true)
+    expect(announcementsReady(null, false, null, true)).toBe(false)
+    expect(announcementsReady(null, true, null, false)).toBe(false)
+  })
+
+  it('waits on a session run for the session board, not the mode’s', () => {
+    expect(announcementsReady('s', true, null, true)).toBe(false)
+    expect(announcementsReady('s', false, targets, true)).toBe(true)
+    expect(announcementsReady('s', false, targets, false)).toBe(false)
   })
 })
