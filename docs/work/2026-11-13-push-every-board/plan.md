@@ -91,3 +91,5 @@ násobit", line-number churn): commit the push strings with `--only`.
 
 **Next brainstorm:** the same takeover pushes on native once `expo-notifications` is wired in; the consent
 version above; a per-player daily cap if volume complains.
+
+Shipped: e58124c on main. Migration pushed to production.

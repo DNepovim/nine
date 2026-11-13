@@ -1,8 +1,8 @@
 # Push on every board
 
 Slug: push-every-board
-Stage: review
-Next: /ship push-every-board
+Stage: shipped
+Next: /deploy (send-push function; migration already pushed)
 Track: full
 Branch: feat/push-every-board
 Started: 2026-11-13
