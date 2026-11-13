@@ -8,7 +8,7 @@ Spec: docs/work/2026-11-14-component-size-limit/spec.md
 - [x] 2. Tests first: `lib/*.test.ts` for the GameScreen helpers, written against today's code (import from the screen temporarily, or move each helper and its test together)
 - [x] 3. Move GameScreen's module-level helpers to `lib/intro-standing.ts`, `lib/launch-asks.ts`, `lib/feedback-bookmark.ts`, `lib/board-targets.ts`, `lib/announcements.ts` — also `lib/run-session.ts` (the session-bests family) and `lib/run-title.ts` (accent, wordmark, subtitle); `announcementsReady` went to `lib/session-announcements.ts` instead, beside `SessionTargets`, since that file already imports announcements.ts. Helpers moved and tested together (identical code, so the same as testing first).
 - [x] 4. File-only splits: `siege-blow`, `admin-knowledge`, `admin-messages`, `admin-stats` — siege parts → `siege-shot/mote/falling`; knowledge pages and their Section/Formula/Note → `knowledge-*`, `useBoardLabel` hook, `lib/admin/knowledge-figures`; `AdminAnswerDialog`; stats: `AdminStatsModes` + `lib/admin/stat-figures` (the table-row builder stayed: it closes over `t` and the file was under without it)
-- [ ] 5. File-only splits: `openings/takeoff`, `openings/lever-pull`
+- [x] 5. File-only splits: `openings/takeoff`, `openings/lever-pull` — flat siblings (`takeoff-*.tsx`, `lever-*.tsx`) rather than subfolders: a `takeoff/` folder beside `takeoff.tsx` reads as two homes for one scene. `SkyUnder`/`SkyRemains` now import from `takeoff-sky`
 - [ ] 6. File-only splits: `email-code-modal`, `dial`, `best-scores-line`, `pie-countdown`, `game-over-overlay`
 - [ ] 7. `dial-button` — gesture hook + face pieces
 - [ ] 8. `player-profile-overlay` — sections

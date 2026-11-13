@@ -39,13 +39,8 @@ import {
   StormRemains,
   StormUnder,
 } from '@/components/game/openings/storm-front'
-import {
-  crashFireLeft,
-  PlaneOver,
-  SkyRemains,
-  SkyUnder,
-  Takeoff,
-} from '@/components/game/openings/takeoff'
+import { crashFireLeft, PlaneOver, Takeoff } from '@/components/game/openings/takeoff'
+import { SkyRemains, SkyUnder } from '@/components/game/openings/takeoff-sky'
 import { Terminal } from '@/components/game/openings/terminal'
 import {
   Tilework,
