@@ -16,8 +16,8 @@ import type { PushReach } from '@/lib/push-reach'
 // card is shown behind it — see `pushStepDue`.
 //
 // What it asks for is narrow and the copy says so: one kind of notification, a rival taking
-// a record, and nothing else. Closing with the dot answers neither way, as the replay card
-// does; NO THANKS is a no worth keeping and never asks again. Revisited from OPTIONS.
+// a record (on any board, in any period) or the lead of a challenge, and nothing else.
+// Closing with the dot answers neither way, as the replay card does; NO THANKS is a no worth keeping and never asks again. Revisited from OPTIONS.
 //
 // `install` is the one variant: iOS only grants push to a web app on the Home Screen, so
 // from a tab the card cannot ask and instead says where to go. That is why it has no
@@ -53,7 +53,9 @@ export function PushConsentOverlay({
               selectable={false}
               className={cn(TYPE.prose, 'mt-4 text-center text-dim')}
             >
-              <Trans>Get a notification when a rival takes your record.</Trans>
+              <Trans>
+                Get a notification when a rival takes your record or your lead.
+              </Trans>
             </Text>
 
             {reach === 'install' && (

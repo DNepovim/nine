@@ -1,19 +1,21 @@
 # Push
 
 Notifications while the app is closed. Web only so far; the table already carries a
-`platform` column for native. One trigger: a board you held was taken. Behind the `push`
-feature, hidden until it is made public from the admin screen.
+`platform` column for native. Two triggers: a board you held was taken (today, this week or
+ever, on any mode and difficulty), and the lead of a live challenge session board was passed.
+Behind the `push` feature, hidden until it is made public from the admin screen.
 
 ## How it fits together
 
 ```
-board_reigns insert ──trigger──▶ push_outbox ──every minute──▶ send-push ──▶ push service ──▶ device
+board_reigns insert   ┐
+daily_scores write   ├─trigger──▶ push_outbox ──every minute──▶ send-push ──▶ push service ──▶ device
                                   (one row per player,           (claims a batch,       (Apple / Google /
                                    board and Prague day)          writes the text)       Mozilla)
 ```
 
 - `push_subscriptions` — one row per device, saved by the app through `save_push_subscription`.
-- `push_outbox` — pushes owed. The unique `(user, board, day)` is the throttle.
+- `push_outbox` — pushes owed. The throttle is one takeover per `(user, board, period, day)` — and one score taking day, week and ever owes only the widest — and one `passed` per `(user, session)`.
 - `supabase/functions/send-push` — drains the outbox. Text in `message.ts`, en and cs.
 - `public/push-sw.js` — the browser's `push` and `notificationclick` handlers, pulled into the
   generated service worker by `importScripts` in `workbox-config.js`.
@@ -30,9 +32,14 @@ None of these is run by the build. Each is a production write.
 3. **The public key in the web build**: set `EXPO_PUBLIC_VAPID_PUBLIC_KEY` wherever
    `EXPO_PUBLIC_SUPABASE_*` is set (EAS and the GitHub secrets). Without it push reads as
    unsupported and nothing shows.
-4. **Schema first** — migrations are not applied by CI: `pnpm db:push`, then check the
-   migration list for `push_subscriptions` and `push_feature`.
+4. **Schema** — migrations are not applied by CI: `pnpm db:push`, then check the
+   migration list for `push_subscriptions`, `push_feature` and `push_every_board`.
 5. **Deploy the function**: `supabase functions deploy send-push`.
+
+   **Order, when the function is already live (the `push_every_board` migration):** deploy the
+   function **first**, then `db:push`. The new function reads an old schema fine; the old one
+   would send a `passed` row as a takeover with a raw challenge id and mark it sent.
+
 6. **Schedule it.** Needs `pg_cron` and `pg_net` enabled, and the service key kept in the vault:
 
    ```sql
@@ -69,4 +76,4 @@ None of these is run by the build. Each is a production write.
 ## Not done yet
 
 Native iOS/Android (`expo-notifications`, Expo's push service — `send-push` skips non-web
-rows), challenge session boards as a trigger, and any second kind of push.
+rows) and any third kind of push.

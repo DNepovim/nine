@@ -8,13 +8,21 @@
 import { createClient } from 'npm:@supabase/supabase-js@2.45.4'
 import webpush from 'npm:web-push@3.6.7'
 
-import { takeoverMessage, type PushLocale } from './message.ts'
+import {
+  passedMessage,
+  takeoverMessage,
+  type PushLocale,
+  type Takeover,
+} from './message.ts'
 
 type Claimed = {
   outbox_id: number
-  kind: 'takeover'
+  kind: 'takeover' | 'passed'
+  // The board's mode for a takeover; the challenge's id for a passed.
   mode: string
   difficulty: string
+  // Set for a takeover, null for a passed.
+  period: Takeover['period'] | null
   by_nickname: string
   endpoint: string
   platform: 'web' | 'ios' | 'android'
@@ -47,17 +55,23 @@ const isGone = (error: unknown): boolean => {
 async function deliver(row: Claimed): Promise<'sent' | 'gone' | 'failed' | 'skipped'> {
   // Native tokens go through Expo's push service, which is not wired in yet.
   if (row.platform !== 'web' || !row.p256dh || !row.auth) return 'skipped'
-  const message = takeoverMessage(row.locale, {
-    mode: row.mode,
-    difficulty: row.difficulty,
-    byNickname: row.by_nickname,
-  })
+  // A takeover with no period is a row from before the column existed; the migration
+  // backfilled them all to the all-time board, so this is only a type's worth of caution.
+  const message =
+    row.kind === 'passed'
+      ? passedMessage(row.locale, { challenge: row.mode, byNickname: row.by_nickname })
+      : takeoverMessage(row.locale, {
+          mode: row.mode,
+          difficulty: row.difficulty,
+          period: row.period ?? 'ever',
+          byNickname: row.by_nickname,
+        })
   try {
     await webpush.sendNotification(
       { endpoint: row.endpoint, keys: { p256dh: row.p256dh, auth: row.auth } },
       JSON.stringify(message),
-      // A takeover is stale after a day; better dropped than delivered after the player has
-      // already looked.
+      // A takeover or a lost lead is stale after a day; better dropped than delivered after
+      // the player has already looked.
       { TTL: 60 * 60 * 24 },
     )
     return 'sent'

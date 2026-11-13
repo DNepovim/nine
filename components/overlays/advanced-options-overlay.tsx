@@ -22,7 +22,7 @@ import type { PushRow } from '@/types/push'
 // What the NOTIFICATIONS row says under its name, by what the device can do about it. Only
 // 'ready' is a switch; the other two say why it is not.
 const PUSH_DESCRIPTION: Record<Exclude<PushReach, 'unsupported'>, ReactNode> = {
-  ready: <Trans>Tell me when a rival takes my record</Trans>,
+  ready: <Trans>Tell me when a rival takes my record or lead</Trans>,
   install: <Trans>Add nine to your Home Screen first</Trans>,
   blocked: <Trans>Switched off — tap to see how</Trans>,
 }

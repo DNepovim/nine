@@ -363,15 +363,15 @@ msgstr "{0} without a nickname"
 msgid "{asking, plural, one {# vote for the challenge you are replacing will be discarded. Votes for the other stay.} other {# votes for the challenge you are replacing will be discarded. Votes for the other stay.}}"
 msgstr "{asking, plural, one {# vote for the challenge you are replacing will be discarded. Votes for the other stay.} other {# votes for the challenge you are replacing will be discarded. Votes for the other stay.}}"
 
-#: lib/time-ago.ts:54
+#: lib/time-ago.ts:56
 msgid "{count, plural, one {# day ago} other {# days ago}}"
 msgstr "{count, plural, one {# day ago} other {# days ago}}"
 
-#: lib/time-ago.ts:55
+#: lib/time-ago.ts:57
 msgid "{count, plural, one {# hr ago} other {# hrs ago}}"
 msgstr "{count, plural, one {# hr ago} other {# hrs ago}}"
 
-#: lib/time-ago.ts:52
+#: lib/time-ago.ts:53
 msgid "{count, plural, one {# mth ago} other {# mths ago}}"
 msgstr "{count, plural, one {# mth ago} other {# mths ago}}"
 
@@ -379,7 +379,7 @@ msgstr "{count, plural, one {# mth ago} other {# mths ago}}"
 msgid "{count, plural, one {# session} other {# sessions}}"
 msgstr "{count, plural, one {# session} other {# sessions}}"
 
-#: lib/time-ago.ts:53
+#: lib/time-ago.ts:54
 msgid "{count, plural, one {# wk ago} other {# wks ago}}"
 msgstr "{count, plural, one {# wk ago} other {# wks ago}}"
 
@@ -387,7 +387,7 @@ msgstr "{count, plural, one {# wk ago} other {# wks ago}}"
 msgid "{count, plural, one {# yr ago} other {# yrs ago}}"
 msgstr "{count, plural, one {# yr ago} other {# yrs ago}}"
 
-#: lib/time-ago.ts:56
+#: lib/time-ago.ts:58
 msgid "{count, plural, other {# min ago}}"
 msgstr "{count, plural, other {# min ago}}"
 
@@ -1603,8 +1603,8 @@ msgid "GAP"
 msgstr "GAP"
 
 #: components/overlays/push-consent-overlay.tsx:56
-msgid "Get a notification when a rival takes your record."
-msgstr "Get a notification when a rival takes your record."
+msgid "Get a notification when a rival takes your record or your lead."
+msgstr "Get a notification when a rival takes your record or your lead."
 
 #: components/overlays/how-to-play-overlay.tsx:669
 msgid "Get dragged back off the first crossroad and you fall into the mouth, and the run is over."
@@ -2511,7 +2511,7 @@ msgstr "Nov"
 msgid "NOVEMBER"
 msgstr "NOVEMBER"
 
-#: lib/time-ago.ts:81
+#: lib/time-ago.ts:83
 msgid "now"
 msgstr "now"
 
@@ -3600,8 +3600,8 @@ msgid "Tell me what you think"
 msgstr "Tell me what you think"
 
 #: components/overlays/advanced-options-overlay.tsx:25
-msgid "Tell me when a rival takes my record"
-msgstr "Tell me when a rival takes my record"
+msgid "Tell me when a rival takes my record or lead"
+msgstr "Tell me when a rival takes my record or lead"
 
 #: components/feedback-bookmark.tsx:155
 msgid "TELL US"
