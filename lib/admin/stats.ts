@@ -18,7 +18,7 @@ type StatsDay = {
   players: number
 }
 
-type StatsBoard = {
+export type StatsBoard = {
   mode: string
   difficulty: string
   runs: number

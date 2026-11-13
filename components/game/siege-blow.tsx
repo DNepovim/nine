@@ -1,24 +1,11 @@
 import { useEffect } from 'react'
-import { Text } from 'react-native'
-import Animated, {
-  Easing,
-  useAnimatedStyle,
-  useSharedValue,
-  withTiming,
-  type SharedValue,
-} from 'react-native-reanimated'
+import Animated, { Easing, useSharedValue, withTiming } from 'react-native-reanimated'
 import Svg, { Path } from 'react-native-svg'
 
-import { SiegeSoldier } from '@/components/game/siege-soldier'
-import {
-  ARROW_MS,
-  BLOOD_MS,
-  BLOW_MS,
-  DUST_MS,
-  STONE_MS,
-  WARRIOR_SIZE,
-} from '@/constants/siege'
-import { mapLabel } from '@/constants/theme'
+import { SiegeFalling } from '@/components/game/siege-falling'
+import { SiegeMote } from '@/components/game/siege-mote'
+import { SiegeShot } from '@/components/game/siege-shot'
+import { ARROW_MS, BLOOD_MS, BLOW_MS, DUST_MS, STONE_MS } from '@/constants/siege'
 import { wobble } from '@/lib/map-marks'
 import type { Blow } from '@/machines/siege'
 
@@ -67,185 +54,9 @@ const DUST_FAR = 18
 const DROPS = 7
 const BLOOD_FAR = 13
 
-// How long the man stands after the arrow reaches him before he goes. Short — he is dead
-// when it lands, and this is the beat it takes to fall rather than a stagger.
-const FALL_MS = 180
+// The parts — the shot, its dust or blood, the man going down — are each a file of their
+// own beside this one: `SiegeShot`, `SiegeMote`, `SiegeFalling`.
 
-// ── the parts ───────────────────────────────────────────────────────────────
-
-// One puff of dust, or one drop of blood: a disc thrown out of the point of impact, growing
-// as it goes and gone by the time it stops.
-//
-// Module level, like every animated sub-component in this app — one defined inside a render
-// is remounted on every frame its parent draws.
-function Mote({
-  clock,
-  from,
-  to,
-  angle,
-  reach,
-  rise,
-  size,
-  grow,
-  color,
-  opacity,
-}: {
-  // The blow's own clock, nought to one over `BLOW_MS`.
-  clock: SharedValue<number>
-  // The stretch of that clock this mote lives over.
-  from: number
-  to: number
-  angle: number
-  reach: number
-  // How far the mote drifts up the sheet as it goes, over and above its own direction. Dust
-  // rises; blood does not.
-  rise: number
-  size: number
-  grow: number
-  color: string
-  opacity: number
-}) {
-  const drifting = useAnimatedStyle(() => {
-    const k = Math.min(1, Math.max(0, (clock.value - from) / (to - from)))
-    // Out fast and then slowing, which is what a thrown thing does.
-    const out = 1 - (1 - k) * (1 - k)
-    return {
-      opacity: k <= 0 || k >= 1 ? 0 : opacity * (1 - k * k),
-      transform: [
-        { translateX: Math.cos(angle) * reach * out },
-        { translateY: Math.sin(angle) * reach * out - rise * out },
-        { scale: 0.35 + grow * out },
-      ],
-    }
-  })
-
-  return (
-    <Animated.View
-      pointerEvents="none"
-      style={[
-        {
-          position: 'absolute',
-          left: -size / 2,
-          top: -size / 2,
-          width: size,
-          height: size,
-          borderRadius: size / 2,
-          backgroundColor: color,
-        },
-        drifting,
-      ]}
-    />
-  )
-}
-
-// The shot crossing the ground: a stone lobbed in an arc, or an arrow sent flat and fast.
-//
-// Both travel from the hero to wherever the blow landed, and both are gone the moment they
-// arrive — what is left behind is the dust or the blood, which is a part of its own.
-function Shot({
-  clock,
-  span,
-  toX,
-  toY,
-  fromY,
-  arc,
-  turn,
-  children,
-}: {
-  clock: SharedValue<number>
-  // The stretch of the blow's clock the flight takes.
-  span: number
-  toX: number
-  toY: number
-  fromY: number
-  arc: number
-  // Whether the shot turns to point the way it is going. A stone tumbles; an arrow does not.
-  turn: boolean
-  children: React.ReactNode
-}) {
-  const flying = useAnimatedStyle(() => {
-    const k = Math.min(1, Math.max(0, clock.value / span))
-    const x = toX * k
-    const y = fromY + (toY - fromY) * k - Math.sin(k * Math.PI) * arc
-    // The angle of the line the shot is actually on right now, which for an arrow is the
-    // way it points and for a stone is the way it spins.
-    const lean = turn
-      ? Math.atan2(toY - fromY - Math.cos(k * Math.PI) * Math.PI * arc, toX)
-      : k * 7
-    return {
-      // Gone as it arrives rather than at the moment it does: what takes over is the dust
-      // or the blood, and a shot that blinked out would read as a frame dropped.
-      opacity: Math.min(1, (1 - k) * 8),
-      transform: [{ translateX: x }, { translateY: y }, { rotate: `${lean}rad` }],
-    }
-  })
-
-  return (
-    <Animated.View
-      pointerEvents="none"
-      style={[{ position: 'absolute', left: 0, top: 0, width: 0, height: 0 }, flying]}
-    >
-      {children}
-    </Animated.View>
-  )
-}
-
-// The man, for as long as it takes him to fall.
-//
-// He is already out of the fight — his number stopped answering the instant the press
-// landed — so this is a drawing of someone who is no longer there. It has to be: without it
-// he would vanish on the key and the arrow would arrive at open ground.
-function Falling({
-  clock,
-  value,
-  ink,
-  line,
-  face,
-}: {
-  clock: SharedValue<number>
-  value: number
-  ink: string
-  line: string
-  face: string
-}) {
-  const hold = ARROW_MS / BLOW_MS
-  const gone = (ARROW_MS + FALL_MS) / BLOW_MS
-
-  const falling = useAnimatedStyle(() => {
-    const k = Math.min(1, Math.max(0, (clock.value - hold) / (gone - hold)))
-    return {
-      opacity: 1 - k,
-      transform: [{ scale: 1 + k * 0.4 }],
-    }
-  })
-
-  return (
-    <Animated.View
-      pointerEvents="none"
-      className="absolute items-center justify-center"
-      style={[
-        {
-          left: -WARRIOR_SIZE / 2,
-          top: -WARRIOR_SIZE / 2,
-          width: WARRIOR_SIZE,
-          height: WARRIOR_SIZE,
-        },
-        falling,
-      ]}
-    >
-      <SiegeSoldier line={line} face={face} />
-      <Text
-        selectable={false}
-        className="font-semibold"
-        style={{ fontFamily: mapLabel, color: ink, fontSize: 6.5 }}
-      >
-        {value}
-      </Text>
-    </Animated.View>
-  )
-}
-
-// ── the blow ────────────────────────────────────────────────────────────────
 
 export function SiegeBlow({
   blow,
@@ -314,7 +125,7 @@ export function SiegeBlow({
       style={{ position: 'absolute', left: 0, top: 0, width: 0, height: 0 }}
     >
       {/* The shot, from the hero to the point of impact. */}
-      <Shot
+      <SiegeShot
         clock={clock}
         span={parts.land}
         toX={x}
@@ -374,7 +185,7 @@ export function SiegeBlow({
             />
           </Svg>
         )}
-      </Shot>
+      </SiegeShot>
 
       {/* And what it left where it landed. */}
       <Animated.View
@@ -382,7 +193,7 @@ export function SiegeBlow({
         style={{ position: 'absolute', left: x, top: y, width: 0, height: 0 }}
       >
         {blow.warrior !== null && (
-          <Falling
+          <SiegeFalling
             clock={clock}
             value={blow.warrior.value}
             ink={ink}
@@ -391,7 +202,7 @@ export function SiegeBlow({
           />
         )}
         {Array.from({ length: parts.motes }, (_, i) => (
-          <Mote
+          <SiegeMote
             key={i}
             clock={clock}
             // Spread across the settling rather than loosed as one batch, so the dust

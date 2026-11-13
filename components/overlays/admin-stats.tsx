@@ -5,21 +5,23 @@ import { useEffect, useState } from 'react'
 import { Linking, ScrollView, Text, View } from 'react-native'
 
 import { LinkButton } from '@/components/link-button'
-import { DayBars, MeterRow, StatTile } from '@/components/overlays/admin-chart'
+import { DayBars, StatTile } from '@/components/overlays/admin-chart'
 import { AdminScreen } from '@/components/overlays/admin-screen'
 import { AdminSegments } from '@/components/overlays/admin-segments'
 import { AdminStatPeople } from '@/components/overlays/admin-stat-people'
+import { AdminStatsModes } from '@/components/overlays/admin-stats-modes'
 import { AdminChip, AdminTable } from '@/components/overlays/admin-table'
 import { PrimaryButton } from '@/components/primary-button'
-import { ARCADE_INK, DIM_INK } from '@/constants/colors'
+import { ARCADE_INK } from '@/constants/colors'
 import { TYPE } from '@/constants/typography'
+import { against } from '@/lib/admin/stat-figures'
 import { type StatTileKey } from '@/lib/admin/stat-people'
 import { loadStats, type AdminStats } from '@/lib/admin/stats'
 import { cn } from '@/lib/cn'
 import { formatShortDay } from '@/lib/format-date'
 import { POSTHOG_PROJECT_URL } from '@/lib/posthog-project'
 import { type StatsWindow } from '@/lib/stats-window'
-import { DIFFICULTIES, isModeId, labelOf, meterInkOf, type Difficulty } from '@/modes'
+import { isModeId, labelOf } from '@/modes'
 
 // How the app is doing: the third door off the admin hub, and the only one that reads
 // without writing anything.
@@ -63,24 +65,6 @@ const WINDOWS: readonly StatsWindow[] = ['today', 'yesterday', 'week', 'month']
 // own: what the window before came to, and how many messages are still owed an answer.
 const WAS = msg`was`
 const OWED = msg`OWED`
-
-// The arrow that says which way a figure moved against the window before it. A glyph and
-// not a colour: the direction has to be legible on its own — and *fewer runs than last
-// week* is information rather than an alarm, which is what a red figure would make it.
-const arrow = (now: number, before: number): string =>
-  now === before ? '·' : now > before ? '▲' : '▼'
-
-// The whole of a tile's second line: which way it moved, and what it moved from. Takes
-// the word already translated, because a pure helper has no access to the catalog.
-const against = (now: number, before: number, was: string): string =>
-  `${arrow(now, before)} ${was} ${String(before)}`
-
-// The rung a receipt was played on, narrowed. `run_receipts.difficulty` is a column with
-// a check constraint on it rather than an enum this build owns, and the group-by coalesces
-// a null to 'unknown' — so the one honest thing to do with a value none of the three names
-// is to print it and colour it dim.
-const rungOf = (value: string): Difficulty | null =>
-  value === 'easy' || value === 'hard' || value === 'extreme' ? value : null
 
 export function AdminStats({
   // How many messages are owed an answer, handed down from the hub rather than read
@@ -126,10 +110,6 @@ export function AdminStats({
 
   const peak =
     stats === null ? 0 : stats.series.reduce((high, day) => Math.max(high, day.runs), 0)
-  const mostPlayed =
-    stats === null
-      ? 0
-      : stats.boards.reduce((high, board) => Math.max(high, board.runs), 0)
 
   return (
     <AdminScreen
@@ -265,46 +245,7 @@ export function AdminStats({
             </View>
           </View>
 
-          {/* ── Which mode ──
-              Mode and rung together. For Accuracy and Speed that pairing is what this app
-              calls a board; a challenge is not one — its runs belong to a session — which
-              is why the heading says mode since challenge runs were counted here. Each bar
-              wears its mode's own colour — the hue says which mode and the shade says
-              which rung, exactly as the selectors on the intro do — and the name on the
-              bar is what actually identifies it. See `MeterRow`. */}
-          <Text selectable={false} className={cn(TYPE.caption, 'mb-1.5 text-dim')}>
-            <Trans>RUNS BY MODE</Trans>
-          </Text>
-          <View className="mb-3 rounded-xl bg-card px-2.5 pb-1 pt-2.5">
-            {stats.boards.length === 0 ? (
-              <Text selectable={false} className={cn(TYPE.value, 'mb-2 text-dim')}>
-                <Trans>No runs in this window.</Trans>
-              </Text>
-            ) : (
-              stats.boards.map((board) => {
-                const rung = rungOf(board.difficulty)
-                const known = isModeId(board.mode) && rung !== null
-                return (
-                  <MeterRow
-                    key={`${board.mode}-${board.difficulty}`}
-                    label={`${isModeId(board.mode) ? t(labelOf(board.mode)) : board.mode} · ${
-                      rung === null ? board.difficulty : t(DIFFICULTIES[rung].label)
-                    }`}
-                    // Runs, then the players who played them. Two figures because one
-                    // player having a long evening and twenty players having a go are the
-                    // same bar otherwise.
-                    value={`${board.runs} · ${board.players}`}
-                    share={mostPlayed === 0 ? 0 : board.runs / mostPlayed}
-                    // A board this build cannot name has no colour to wear either — it is
-                    // a row the server holds and the code does not, the same case the
-                    // sessions list draws in red. Dim, rather than a hue borrowed from a
-                    // mode it is not.
-                    color={known ? meterInkOf(board.mode, rung) : DIM_INK}
-                  />
-                )
-              })
-            )}
-          </View>
+          <AdminStatsModes boards={stats.boards} />
 
           {/* ── The challenges that ran ──
               The five most recent sessions whatever the window, because a session is its
