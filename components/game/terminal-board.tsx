@@ -16,9 +16,9 @@ import Animated, {
   type SharedValue,
 } from 'react-native-reanimated'
 
-import { TARGET_EXIT_MS } from '@/components/game/pie-countdown'
 import type { TargetCard } from '@/components/game/target-card'
 import { DOS_BLUE, DOS_WHITE } from '@/constants/colors'
+import { TARGET_EXIT_MS } from '@/constants/game'
 import { TYPE } from '@/constants/typography'
 import { useDriftedValue } from '@/hooks/use-drifted-value'
 import { useTargetClock } from '@/hooks/use-target-clock'

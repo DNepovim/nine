@@ -11,10 +11,10 @@ import Animated, {
 import Svg, { Circle, Defs, RadialGradient, Stop } from 'react-native-svg'
 import { scheduleOnRN } from 'react-native-worklets'
 
-import { fontSizeForDigits, TARGET_EXIT_MS } from '@/components/game/pie-countdown'
+import { fontSizeForDigits } from '@/components/game/pie-countdown'
 import type { TargetCard } from '@/components/game/target-card'
 import { LIGHTS_OUT } from '@/constants/colors'
-import { CARD_ENTER_MS, PIE_SIZE } from '@/constants/game'
+import { CARD_ENTER_MS, PIE_SIZE, TARGET_EXIT_MS } from '@/constants/game'
 import { useDriftedValue } from '@/hooks/use-drifted-value'
 import { useTargetClock } from '@/hooks/use-target-clock'
 import { beamColour, beamStep } from '@/lib/beam-colour'

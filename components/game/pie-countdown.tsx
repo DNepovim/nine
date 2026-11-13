@@ -3,18 +3,18 @@ import { View } from 'react-native'
 import Animated, {
   cancelAnimation,
   Easing,
-  interpolateColor,
   useAnimatedProps,
   useAnimatedStyle,
   useSharedValue,
-  withSequence,
   withTiming,
 } from 'react-native-reanimated'
 import Svg, { Circle } from 'react-native-svg'
 import { scheduleOnRN } from 'react-native-worklets'
 
 import { APP_BLUE, APP_RED, PIE_INK, TARGET_BAND_TRACK } from '@/constants/colors'
-import { GLIMPSE_FADE_MS, PIE_SIZE } from '@/constants/game'
+import { PIE_SIZE } from '@/constants/game'
+import { usePieExit } from '@/hooks/use-pie-exit'
+import { usePieGlimpse } from '@/hooks/use-pie-glimpse'
 import { useScheme } from '@/hooks/use-scheme'
 import { cn } from '@/lib/cn'
 import { targetBand } from '@/lib/target-band'
@@ -36,20 +36,6 @@ const DRAWN_GHOST = { offset: 0.9, opacity: 0.4 } as const
 // even on a freshly spawned target. Without this the band cue would grow from nothing
 // as the clock drains — absent exactly when the target is most worth reading.
 const ARC_MAX = 0.9
-
-// How long a target takes to leave, hit or lost. Both exits run on this one clock —
-// and the card fades on it too — so the whole thing lands at once, and so a loss is
-// never the quicker way off the board.
-export const TARGET_EXIT_MS = 500
-
-// The hit: the ring collapses under the number while the number swells out of it.
-const HIT_RING_SCALE = 0.35
-const HIT_NUMBER_SCALE = 1.7
-
-// The loss: the colours go first — one quick beat in which the whole pie turns red and
-// the numeral turns white — and only then is the number pressed flat into it.
-const FAIL_COLOR_MS = 100
-const FAIL_SQUASH = 0.06
 
 // What the disc is inked in: an orb's own colours where it has them, the scheme's where it is
 // monochrome, and none where it is the ordinary band-tinted disc.
@@ -169,20 +155,6 @@ export function PieCountdown({
   const circumference = 2 * Math.PI * radius
 
   const progress = useSharedValue(startProgress) // 1 = full, 0 = empty
-  const ringScale = useSharedValue(1)
-  const ringOpacity = useSharedValue(1)
-  const numberScale = useSharedValue(1)
-  const numberSquash = useSharedValue(1)
-  // 0 = the clock's own colours, 1 = the red disc a lost target turns into.
-  const failColor = useSharedValue(0)
-  // 0 = the disc's ink, 1 = the scheme's `hit` ink, for a number taken.
-  const hitColor = useSharedValue(0)
-  // The numeral alone, so a glimpse never has to touch the swell, the squash or the
-  // colour the exits drive.
-  const numberOpacity = useSharedValue(glimpse === 0 ? 0 : 1)
-  // What is left of the glimpse, in ms — run down like `progress`, so it stops where it
-  // stands when the run pauses and goes on from there.
-  const glimpseHeld = useSharedValue(glimpse ?? 0)
   const failed = exit === 'failed'
   // A clock has to be both running and there in the first place.
   const running = active && clocked
@@ -225,101 +197,15 @@ export function PieCountdown({
     )
   }, [running])
 
-  // The glimpse, run the way the clock is run: down while the card is live, held where it
-  // stands while it is not. A pause is the case that asks for it — the glimpse is the one
-  // look the player gets, and a pause just after an arrival would otherwise spend it behind
-  // the pause screen, where nobody can see anything. Pausing costs nothing and gives
-  // nothing, here as on the ring.
-  //
-  // Keyed on `active` rather than `running`: a glimpse is about the card being on screen,
-  // not about whether it has a clock. And nothing is scheduled without one, so a mode
-  // that hides no number pays for none of this.
-  useEffect(() => {
-    if (glimpse === null || glimpse === 0) return
-    if (!active) {
-      cancelAnimation(glimpseHeld)
-      return
-    }
-    if (glimpseHeld.value <= 0) return
-    glimpseHeld.value = withTiming(
-      0,
-      { duration: glimpseHeld.value, easing: Easing.linear },
-      (finished) => {
-        if (!finished) return
-        numberOpacity.value = withTiming(0, {
-          duration: GLIMPSE_FADE_MS,
-          easing: Easing.in(Easing.quad),
-        })
-      },
-    )
-  }, [active])
-
-  // Whatever was hidden comes back to be seen leaving. The hold is cancelled first, so a
-  // card taken inside its glimpse never has a fade land after this and blank it on the
-  // way out — and assigning the opacity a new animation replaces one already in flight.
-  useEffect(() => {
-    if (!revealed || glimpse === null) return
-    cancelAnimation(glimpseHeld)
-    numberOpacity.value = withTiming(1, {
-      duration: GLIMPSE_FADE_MS,
-      easing: Easing.out(Easing.quad),
-    })
-  }, [revealed])
-
-  // The two exits are the same length and opposite in every other way. A hit lets the
-  // number out of the ring that was timing it; a loss buries it in one — the clock's
-  // colours go, the disc turns red, and the number is pressed flat into it.
-  useEffect(() => {
-    if (exit === null) return
-    if (exit === 'hit') {
-      if (hitInk !== null) {
-        hitColor.value = withTiming(1, {
-          duration: TARGET_EXIT_MS / 2,
-          easing: Easing.out(Easing.quad),
-        })
-      }
-      // A card that settles keeps its disc: collapsing it would throw away the one
-      // thing a drilled board is read by. A card that leaves collapses as it always
-      // has — the ring going in is what makes the number come out.
-      if (!settles) {
-        ringScale.value = withTiming(HIT_RING_SCALE, {
-          duration: TARGET_EXIT_MS,
-          easing: Easing.in(Easing.quad),
-        })
-      }
-      numberScale.value = settles
-        ? // Out and back, in the same time the leaving card takes to go — so a hit
-          // reads as the same beat whether the card stays or not. Held at 1.7 it would
-          // be a numeral standing over its neighbours for the rest of the run.
-          withSequence(
-            withTiming(HIT_NUMBER_SCALE, {
-              duration: TARGET_EXIT_MS / 2,
-              easing: Easing.out(Easing.quad),
-            }),
-            withTiming(1, {
-              duration: TARGET_EXIT_MS / 2,
-              easing: Easing.inOut(Easing.quad),
-            }),
-          )
-        : withTiming(HIT_NUMBER_SCALE, {
-            duration: TARGET_EXIT_MS,
-            easing: Easing.out(Easing.quad),
-          })
-      return
-    }
-    failColor.value = withTiming(1, {
-      duration: FAIL_COLOR_MS,
-      easing: Easing.out(Easing.quad),
-    })
-    ringOpacity.value = withTiming(0, {
-      duration: TARGET_EXIT_MS,
-      easing: Easing.in(Easing.quad),
-    })
-    numberSquash.value = withTiming(FAIL_SQUASH, {
-      duration: TARGET_EXIT_MS,
-      easing: Easing.in(Easing.quad),
-    })
-  }, [exit])
+  const numberOpacity = usePieGlimpse({ glimpse, active, revealed })
+  const {
+    numberScale,
+    numberSquash,
+    failDiscStyle,
+    numberColorStyle,
+    numberHitStyle,
+    ringStyle,
+  } = usePieExit({ exit, settles, hitInk, lostNumeral, orbInk: orb?.ink })
 
   const animatedProps = useAnimatedProps(() => ({
     strokeDashoffset: circumference * (1 - progress.value * ARC_MAX),
@@ -328,32 +214,6 @@ export function PieCountdown({
   const redProps = useAnimatedProps(() => ({
     strokeDashoffset: circumference * (1 - progress.value * ARC_MAX),
     opacity: 1 - progress.value,
-  }))
-
-  // The red comes over the pie rather than through it: one disc the exact size of the
-  // ring, fading in across the track and both arcs at once, so what is left is a plain
-  // red circle however much clock the target had on it.
-  const failDiscStyle = useAnimatedStyle(() => ({
-    opacity: failColor.value,
-  }))
-
-  // Only taken over once the target is lost — until then the `pie` token paints the
-  // numeral, so a screen that retints the token still gets its way.
-  const numberColorStyle = useAnimatedStyle(() => ({
-    color: interpolateColor(failColor.value, [0, 1], [PIE_INK, lostNumeral]),
-  }))
-
-  const numberHitStyle = useAnimatedStyle(() => ({
-    color: interpolateColor(
-      hitColor.value,
-      [0, 1],
-      [orb?.ink ?? PIE_INK, hitInk ?? PIE_INK],
-    ),
-  }))
-
-  const ringStyle = useAnimatedStyle(() => ({
-    opacity: ringOpacity.value,
-    transform: [{ scale: ringScale.value }],
   }))
 
   // Squashed on its own axis rather than through `scale`, so the press reads as the

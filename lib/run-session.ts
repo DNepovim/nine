@@ -2,9 +2,9 @@
 // draws, the targets announcements measure against, the medal it finished on, and the
 // two halves a saved run keeps.
 
-import type { SessionBests } from '@/components/game/best-scores-line'
 import type { PeriodBoard } from '@/hooks/use-board'
 import type { SessionRun } from '@/lib/announcement-run'
+import type { SessionBests } from '@/lib/best-scores'
 import { sessionMedal, type BoardMedal } from '@/lib/board-medals'
 import type { LeaderboardRow } from '@/lib/leaderboard'
 import type { LocalScore } from '@/lib/local-scores'

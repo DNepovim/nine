@@ -8,11 +8,10 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated'
 
-import { TARGET_EXIT_MS } from '@/components/game/pie-countdown'
 import { TargetCard } from '@/components/game/target-card'
 import { WaxBlob } from '@/components/game/wax-blob'
 import { LAVA } from '@/constants/colors'
-import { PIE_SIZE } from '@/constants/game'
+import { PIE_SIZE, TARGET_EXIT_MS } from '@/constants/game'
 import { useDriftedValue } from '@/hooks/use-drifted-value'
 import { isFresh, msToNextStep } from '@/lib/target-drift'
 import { waxHeat } from '@/lib/wax'

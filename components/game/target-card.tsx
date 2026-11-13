@@ -9,8 +9,8 @@ import Animated, {
 } from 'react-native-reanimated'
 import { scheduleOnRN } from 'react-native-worklets'
 
-import { PieCountdown, TARGET_EXIT_MS } from '@/components/game/pie-countdown'
-import { CARD_ENTER_MS } from '@/constants/game'
+import { PieCountdown } from '@/components/game/pie-countdown'
+import { CARD_ENTER_MS, TARGET_EXIT_MS } from '@/constants/game'
 import { mono } from '@/constants/theme'
 import { useDriftedValue } from '@/hooks/use-drifted-value'
 import { useLegible, useScheme } from '@/hooks/use-scheme'

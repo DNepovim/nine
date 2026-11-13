@@ -30,3 +30,8 @@ export const CARD_ENTER_MS = 180
 // is the edge of it rather than more of it. Also the least of a glimpse worth showing —
 // a card left with less than this would only flash its number to fade it again.
 export const GLIMPSE_FADE_MS = 150
+
+// How long a target takes to leave, hit or lost. Both exits run on this one clock —
+// and the card fades on it too — so the whole thing lands at once, and so a loss is
+// never the quicker way off the board.
+export const TARGET_EXIT_MS = 500

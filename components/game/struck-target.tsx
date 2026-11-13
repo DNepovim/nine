@@ -12,10 +12,9 @@ import Animated, {
 import Svg, { Circle, Defs, Polyline, RadialGradient, Stop } from 'react-native-svg'
 import { scheduleOnRN } from 'react-native-worklets'
 
-import { TARGET_EXIT_MS } from '@/components/game/pie-countdown'
 import { TargetCard } from '@/components/game/target-card'
 import { STORM, STORM_ORB } from '@/constants/colors'
-import { PIE_SIZE } from '@/constants/game'
+import { PIE_SIZE, TARGET_EXIT_MS } from '@/constants/game'
 import { boltPath, boltPoints } from '@/lib/storm'
 import { glimpseLeft } from '@/lib/target-clock'
 

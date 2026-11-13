@@ -1,4 +1,3 @@
-import { Ionicons } from '@expo/vector-icons'
 import { Trans, useLingui } from '@lingui/react/macro'
 import { isOneOf } from 'narrowland'
 import { useEffect, useRef } from 'react'
@@ -10,13 +9,9 @@ import Animated, {
   withSpring,
 } from 'react-native-reanimated'
 
-import { TrackedPressable } from '@/components/tracked-pressable'
-import {
-  DIM_INK,
-  GOLD_DIM_INK,
-  GOLD_SCREEN_TOKENS,
-  MODE_SCREEN_TOKENS,
-} from '@/constants/colors'
+import { GameOverChallenge } from '@/components/overlays/game-over-challenge'
+import { GameOverHome } from '@/components/overlays/game-over-home'
+import { GOLD_SCREEN_TOKENS, MODE_SCREEN_TOKENS } from '@/constants/colors'
 import { CROWN_CORONA, ON_GOLD_LABEL_SHADOW } from '@/constants/theme'
 import { GLYPH, TYPE } from '@/constants/typography'
 import { useBarColor } from '@/hooks/use-bar-color'
@@ -28,7 +23,7 @@ import { currentBoardMedals, type BoardMedal } from '@/lib/board-medals'
 import type { RecordScreen } from '@/lib/champions'
 import { cn } from '@/lib/cn'
 import type { TitleWords } from '@/lib/game-over-title'
-import { runChallenge, type Challenge } from '@/lib/next-challenge'
+import { runChallenge } from '@/lib/next-challenge'
 import { fortuneOf } from '@/lib/player-profile'
 import { runStats } from '@/lib/run-stats'
 import {
@@ -48,7 +43,7 @@ import { GameOverTitle } from './game-over-title'
 import { HighScores } from './high-scores'
 import { barColorOf, RecordBackdrop } from './record-backdrop'
 import { runHeadline } from './run-headline'
-import { CardButton, RunScreen } from './run-screen'
+import { RunScreen } from './run-screen'
 import { SessionCloses } from './session-closes'
 import { SessionStandings } from './session-standings'
 
@@ -64,72 +59,6 @@ const EMBLEM = {
 // The score's glow on the gold screen — the crown's white, so the two read as one
 // pair of lights rather than two different ideas.
 const WHITE_GLOW = 'rgba(255, 255, 255, 0.95)'
-
-// The dare the screen offers next to playing again: the same run one rung harder, one
-// rung easier, or the other mode at the same rung. A component of its own because the
-// words are a rung or a mode name dropped into a sentence, and which half a sentence puts
-// first is the translation's business.
-function ChallengeCta({
-  challenge,
-  rungName,
-  modeName,
-  onChallenge,
-}: {
-  challenge: Challenge
-  rungName: string
-  modeName: string
-  onChallenge: (mode: ModeId, difficulty: Difficulty) => void
-}) {
-  return (
-    <CardButton
-      onPress={() => {
-        onChallenge(challenge.mode, challenge.difficulty)
-      }}
-      label={
-        challenge.kind === 'stepUp' ? (
-          <Trans>STEP UP TO {rungName}</Trans>
-        ) : challenge.kind === 'stepDown' ? (
-          <Trans>STEP DOWN TO {rungName}</Trans>
-        ) : (
-          <Trans>TRY {modeName}</Trans>
-        )
-      }
-    />
-  )
-}
-
-// The way home. Not `RunExit`, which the pause screen uses: this one has the painted
-// screens to answer for, and its icon's colour is computed rather than a class so the
-// gold screen's re-bound tokens cannot reach it — it takes the gold dim directly or it
-// stays a theme grey on a gold background.
-function HomeExit({
-  onGold,
-  painted,
-  onPress,
-}: {
-  onGold: boolean
-  painted: boolean
-  onPress: () => void
-}) {
-  return (
-    <TrackedPressable id="game_over.home" onPress={onPress} hitSlop={10}>
-      <View className="flex-row items-center gap-1">
-        <Ionicons
-          name="home-outline"
-          size={10}
-          color={onGold ? GOLD_DIM_INK : painted ? '#FFFFFF' : DIM_INK}
-        />
-        <Text
-          selectable={false}
-          className={cn(TYPE.quietAction, 'text-dim')}
-          style={painted ? ON_GOLD_LABEL_SHADOW : null}
-        >
-          <Trans>HOME</Trans>
-        </Text>
-      </View>
-    </TrackedPressable>
-  )
-}
 
 export function GameOverOverlay({
   gameMode,
@@ -435,7 +364,7 @@ export function GameOverOverlay({
       }}
       alsoCta={
         challenge === null ? null : (
-          <ChallengeCta
+          <GameOverChallenge
             challenge={challenge}
             rungName={rungName}
             modeName={modeName}
@@ -443,7 +372,7 @@ export function GameOverOverlay({
           />
         )
       }
-      exits={<HomeExit onGold={onGold} painted={painted} onPress={onMenu} />}
+      exits={<GameOverHome onGold={onGold} painted={painted} onPress={onMenu} />}
     />
   )
 }

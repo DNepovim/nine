@@ -1,15 +1,8 @@
-import type { MessageDescriptor } from '@lingui/core'
-import { msg } from '@lingui/core/macro'
 import { Trans, useLingui } from '@lingui/react/macro'
 import { useFonts } from 'expo-font'
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useState } from 'react'
 import { Text, View } from 'react-native'
-import Animated, {
-  Easing,
-  useAnimatedStyle,
-  useSharedValue,
-  withTiming,
-} from 'react-native-reanimated'
+import Animated from 'react-native-reanimated'
 
 import DSEG7Font from '@/assets/fonts/DSEG7Classic-Bold.ttf'
 import { AnnouncementBar } from '@/components/game/announcement-bar'
@@ -17,158 +10,31 @@ import { BEST_CELL_HEIGHT, BestScoreCell } from '@/components/game/best-score-ce
 import { ChallengeCountdown } from '@/components/overlays/challenge-countdown'
 import { TrackedPressable } from '@/components/tracked-pressable'
 import type { AchievementId } from '@/constants/achievements'
-import { APP_RED, GOLD_INK, SPECTRUM } from '@/constants/colors'
+import { APP_RED, GOLD_INK } from '@/constants/colors'
 import { mono } from '@/constants/theme'
 import { TYPE } from '@/constants/typography'
+import { useBestsReveal } from '@/hooks/use-bests-reveal'
 import type { RecordHolder } from '@/hooks/use-board'
 import { useOnline } from '@/hooks/use-online'
+import { usePinnedAnnouncement } from '@/hooks/use-pinned-announcement'
 import { useOpenProfile } from '@/hooks/use-profile-modal'
 import { useLegible, useScheme } from '@/hooks/use-scheme'
 import { announcementStyle } from '@/lib/announcement-style'
-import { RUN_SETTLE_MS, type Announcement } from '@/lib/announcements'
+import { type Announcement } from '@/lib/announcements'
+import {
+  BEST_LABELS,
+  BestKey,
+  cellColor,
+  HELD_BY_ME,
+  keysFor,
+  ShownBest,
+  YOUR_BEST,
+  type SessionBests,
+} from '@/lib/best-scores'
 import { cn } from '@/lib/cn'
 import { formatRunClock } from '@/lib/duration'
 import { nearestRecord } from '@/lib/near-record'
-import {
-  darkGradientOf,
-  gradientOf,
-  isChallenge,
-  traitsOf,
-  type Measure,
-  type ModeId,
-} from '@/modes'
-import { challengeInk } from '@/modes/challenges/palette'
-
-// The four periods of a board, plus the one a **session** has instead of them. Never
-// both: a mode either keeps a board or belongs to a session, and `traitsOf(mode).board`
-// is the question that decides which face this strip wears.
-type BestKey = 'you' | 'today' | 'week' | 'ever' | 'session' | 'last'
-
-// What a run that belongs to a session knows about it.
-export type SessionBests = {
-  // What the two figures below are: scores, or on a race the times the standings are
-  // ordered by — in which case both are ms, and 0 still means nobody has posted one.
-  measure: Measure
-  // The top score on the session board, or 0 where nobody has posted one yet — the same
-  // answer an untouched board gives, and drawn the same way.
-  best: number
-  // Who holds it, or null where the read has not landed or nobody holds it.
-  holder: RecordHolder | null
-  // Whether that top score is the player's own, which the cell says as YOU rather than
-  // by printing the name they already know.
-  mine: boolean
-  // The player's own best in this session, or 0 before they have posted one. What the
-  // YOUR BEST cell shows on a session run: the device's per-board bests are keyed by mode
-  // and difficulty, and a challenge keeps no board, so read from there it was always 0.
-  myBest: number
-  // Who won this challenge the last time it was aired, with the figure they won it on —
-  // ms on a race, like the two above, and a score everywhere else. Null on its first
-  // airing, which draws no third cell rather than an empty one.
-  last: { holder: RecordHolder; value: number; mine: boolean } | null
-  // When the window shuts, ms since the epoch. The one figure on this strip that is not
-  // a score.
-  closesAt: number
-}
-
-// A score that survived the "is there anything to show?" filter, with whatever goes on
-// the line under it: a player to name, or a word where a name would be the wrong thing
-// to write. Never both, and never neither — see `secondLine`.
-type ShownBest = {
-  key: BestKey
-  value: number | string
-  mine: boolean
-  holder: RecordHolder | null
-  sub: string | null
-  // Whose profile this cell opens, or null where there is nobody behind it to read.
-  profileId: string | null
-}
-
-const BEST_LABELS = {
-  you: msg`YOUR`,
-  today: msg`TODAY`,
-  week: msg`WEEK`,
-  ever: msg`EVER`,
-  // Not THIS CHALLENGE: the top bar two rows up already names the challenge, and the
-  // cell has one short line to say which of the two scores beside it this is.
-  session: msg`SESSION`,
-  // The previous airing of the same challenge, whose winner sits under it.
-  last: msg`LAST`,
-} as const satisfies Record<BestKey, MessageDescriptor>
-
-// The player's own cell is one phrase across the cell's two lines — YOUR / BEST — where
-// the other three are a period over the player holding it. It reads as a label rather
-// than as a name because that is what it is: the one score on this row that is not a
-// record anybody holds, just the best the device remembers.
-const YOUR_BEST = msg`BEST`
-
-// A record the player holds names them as YOU. Their own nickname would be the board
-// telling them who they are, and it is the only name on the row they already know.
-const HELD_BY_ME = msg`YOU`
-
-// One step along the game spectrum per score, coolest to hottest: your own best,
-// then the day, the week, and all time.
-const BEST_COLORS = {
-  you: SPECTRUM[0],
-  today: SPECTRUM[1],
-  week: SPECTRUM[2],
-  ever: SPECTRUM[3],
-  // Overridden per challenge — see `cellColor`. The entry is here so the table stays
-  // exhaustive over `BestKey`, and the stop is the one the four-cell row ends on, which
-  // is what a lone second cell would want if a challenge ever had no colour of its own.
-  session: SPECTRUM[3],
-  // Also overridden per challenge: it is the same contest, aired before.
-  last: SPECTRUM[3],
-} as const satisfies Record<BestKey, string>
-
-const BEST_ORDER = ['you', 'today', 'week', 'ever'] as const satisfies readonly BestKey[]
-
-// What a session run shows instead: what the player has done, and what the session has.
-// Two cells and not four, because a session has no day, week or all time to be the best
-// of — it is its own window, which is the whole of why it needs none of the three.
-const SESSION_ORDER = ['you', 'session'] as const satisfies readonly BestKey[]
-
-// And with the last airing's winner beside them, where the challenge has had one.
-const SESSION_WITH_LAST = ['you', 'session', 'last'] as const satisfies readonly BestKey[]
-
-// And what is left when the three server-backed cells cannot be reached.
-const ONLY_YOURS = ['you'] as const satisfies readonly BestKey[]
-
-// Which cells the row draws.
-//
-// A session run shows its own two whether or not the device is online: `you` is off the
-// device and the session's best was read before the run was dealt, so neither is a thing
-// the connection can take away mid-run. A board run offline drops the three that are the
-// server's — a 0 there would misreport an empty board rather than an unreachable one.
-const keysFor = (session: SessionBests | null, online: boolean): readonly BestKey[] => {
-  if (session !== null) return session.last === null ? SESSION_ORDER : SESSION_WITH_LAST
-  return online ? BEST_ORDER : ONLY_YOURS
-}
-
-// What a cell is painted in.
-//
-// The session cell wears the challenge's own colour rather than a stop off the game
-// spectrum: the rest of the row is the app's scale, and this one cell is about the thing
-// the run belongs to. `challengeInk` is the shade of that colour which carries a word.
-const cellColor = (key: BestKey, mode: ModeId): string =>
-  (key === 'session' || key === 'last') && isChallenge(mode)
-    ? challengeInk(gradientOf(mode)[1])
-    : BEST_COLORS[key]
-
-// The bar starts empty and reveals its scores a second and a half into a run, so the
-// first thing a player sees is the game rather than a row of other people's numbers.
-// They drop in from above as they fade up. If the board is still loading by then the
-// reveal waits for it, rather than dropping in a row of zeroes and correcting itself a
-// moment later — but never past REVEAL_MAX_MS, so a request that hangs cannot keep the
-// strip empty for a whole run. The countdown is tied to the run and not to mount: this
-// component lives inside the always-mounted game Screen, so a mount timer would expire
-// while the player was still on the menu overlay.
-//
-// The delay is the run's settling beat, shared with the announcements that cover this
-// same row: the numbers arriving and the bar finding its voice are one moment, not two.
-const REVEAL_DELAY_MS = RUN_SETTLE_MS
-const REVEAL_MAX_MS = 5000
-const REVEAL_MS = 400
-const DROP_FROM = -6
+import { darkGradientOf, traitsOf, type ModeId } from '@/modes'
 
 // What the whole strip occupies: a hairline, the gap under it, the row of cells, the gap
 // above the second hairline, that rule itself, and the margin below. The row is one cell
@@ -289,81 +155,8 @@ export function BestScoresLine({
   const openProfile = useOpenProfile()
   const online = useOnline()
   const [dsegLoaded] = useFonts({ DSEG7: DSEG7Font })
-  const [delayDone, setDelayDone] = useState(false)
-  const [waitedOut, setWaitedOut] = useState(false)
-  const opacity = useSharedValue(0)
-  const translateY = useSharedValue(DROP_FROM)
-
-  // Past the delay the scores wait on the board; past the cap they show regardless.
-  const revealed = waitedOut || (delayDone && loaded)
-
-  useEffect(() => {
-    if (!inRun) {
-      // Back to the menu or game over — reset so the next run reveals afresh.
-      setDelayDone(false)
-      setWaitedOut(false)
-      opacity.value = 0
-      translateY.value = DROP_FROM
-      return
-    }
-    const delay = setTimeout(() => {
-      setDelayDone(true)
-    }, REVEAL_DELAY_MS)
-    const cap = setTimeout(() => {
-      setWaitedOut(true)
-    }, REVEAL_MAX_MS)
-    return () => {
-      clearTimeout(delay)
-      clearTimeout(cap)
-    }
-  }, [inRun, opacity, translateY])
-
-  useEffect(() => {
-    if (!revealed) return
-    const timing = { duration: REVEAL_MS, easing: Easing.out(Easing.cubic) }
-    opacity.value = withTiming(1, timing)
-    translateY.value = withTiming(0, timing)
-  }, [revealed, opacity, translateY])
-
-  // The bar has to outlive the announcement: when it clears, the last one stays on
-  // screen in `shown` while its sweep wipes it away, and is dropped on onExited.
-  const [pinned, setPinned] = useState<Announcement | null>(null)
-  const [leaving, setLeaving] = useState(false)
-
-  useEffect(() => {
-    if (announcement !== null) {
-      setPinned(announcement)
-      setLeaving(false)
-      return
-    }
-    setLeaving(true)
-  }, [announcement])
-
-  // The next announcement is timed to take the bar exactly as this one's wipe lands, so
-  // the two can arrive in either order by a frame. Read through a ref because the bar
-  // holds this callback for the length of an animation, and a stale closure here would
-  // drop a pin that had already been replaced.
-  const announcementRef = useRef(announcement)
-  announcementRef.current = announcement
-
-  // Stable identity: the bar restarts its wipe whenever this changes, and an inline
-  // arrow would hand it a new one on every render — which is every score change.
-  const handleExited = useCallback(() => {
-    // Something took the bar while this one was leaving. Unpinning now would throw it
-    // away unshown, and nothing would put it back.
-    if (announcementRef.current !== null) return
-    setPinned(null)
-    setLeaving(false)
-  }, [])
-
-  const revealStyle = useAnimatedStyle(() => ({
-    opacity: opacity.value,
-    transform: [{ translateY: translateY.value }],
-  }))
-
-  // The rules fade in with the scores but hold still — a hairline sliding into
-  // place reads as a glitch, where the numbers dropping in reads as motion.
-  const ruleStyle = useAnimatedStyle(() => ({ opacity: opacity.value }))
+  const { revealed, revealStyle, ruleStyle } = useBestsReveal({ inRun, loaded })
+  const { pinned, leaving, handleExited } = usePinnedAnnouncement(announcement)
 
   // The player's own figure: the session's row for them on a session run, the device's
   // best on this board otherwise — see `myBest` on `SessionBests`.
