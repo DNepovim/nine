@@ -121,4 +121,20 @@ export default defineConfig(
       ],
     },
   },
+  // A component is at most 300 lines of code, and so is the file it lives in. Counted
+  // without comments or blank lines: this repo explains itself at length in comments,
+  // and a limit that counted them would be a limit on explaining.
+  //
+  // **A warning while the tree is brought under it** — see
+  // docs/work/2026-11-14-component-size-limit. It becomes `error` when the last file is.
+  {
+    files: ['app/**/*.{ts,tsx}', 'components/**/*.{ts,tsx}'],
+    rules: {
+      'max-lines': ['warn', { max: 300, skipComments: true, skipBlankLines: true }],
+      'max-lines-per-function': [
+        'warn',
+        { max: 300, skipComments: true, skipBlankLines: true },
+      ],
+    },
+  },
 )
