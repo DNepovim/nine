@@ -24,12 +24,9 @@ import { shortName } from '@/lib/short-name'
 // slack inside the two boxes is what separates them. They are a pair read together — a
 // label in one size over a name in another read as one thing said and a second thing
 // added, which is not what a cell is.
-// Exported because the strip's countdown stacks its own two lines beside the cells and
-// has to come to the same height — see `best-scores-line.tsx`. Shared rather than
-// retyped: these are three numbers below every role in the type scale, chosen for this
-// row alone, and a second copy of them is a second thing to keep in step.
-export const CELL_TEXT_SIZE = 6
-export const CELL_LINE = 7
+// These are three numbers below every role in the type scale, chosen for this row alone.
+const CELL_TEXT_SIZE = 6
+const CELL_LINE = 7
 const LABEL_LINE = 8
 export const BEST_CELL_HEIGHT = LABEL_LINE + CELL_LINE
 
