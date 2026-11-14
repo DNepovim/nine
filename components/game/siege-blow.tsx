@@ -57,7 +57,6 @@ const BLOOD_FAR = 13
 // The parts — the shot, its dust or blood, the man going down — are each a file of their
 // own beside this one: `SiegeShot`, `SiegeMote`, `SiegeFalling`.
 
-
 export function SiegeBlow({
   blow,
   x,

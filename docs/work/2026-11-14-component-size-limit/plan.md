@@ -53,4 +53,28 @@ Spec: docs/work/2026-11-14-component-size-limit/spec.md
 
 ## Verification log
 
-_(verify fills this in)_
+**Verdict: criteria 1–5 and 13 PASS. Criteria 6–12 are PENDING, for the user to walk on a
+device, as decided at spec — verify did not drive the app.** One suite failure predates this
+work (Knip, below).
+
+Suite: `pnpm check` — i18n verify, lint (0 errors; the 79 typography warnings this work
+started with), Prettier (after formatting `siege-blow.tsx`, a comment edit from task 4),
+types, 2464 tests. **Knip fails** on `coldBelow`, exported in `lib/game-over-title.ts` and used
+only in that file. It came in with `ae0417f` from another session, before this work's first
+commit, in a file this work never touched. It is not fixed here.
+
+| #   | Criterion                                    | Result  | Evidence                                                                                                                                                                                                                                    |
+| --- | -------------------------------------------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | Both rules `error` at 300, none reported     | PASS    | config at `eslint.config.mjs:133`; 0 size problems over `app/`+`components/`; a 305-line probe component errors on both rules                                                                                                               |
+| 2   | Created hooks and `lib/` files under 300     | PASS    | both rules run as errors over the 35 created files: 0                                                                                                                                                                                       |
+| 3   | One named component per created file         | PASS    | compiler pass over the 71 created component files: each has 1 top-level component, none nested                                                                                                                                              |
+| 4   | `pnpm check` green; no msgid added/removed   | PASS*   | everything green but the Knip failure above; `git diff 6e97a12~1 HEAD -- locales` changes no `msgid`; 1021 messages before and after                                                                                                        |
+| 5   | Every earlier test passes, plus the new ones | PASS    | 2464 pass (2378 this morning, + the spec's helper tests); two source-reading tests repointed to the files their subject moved to (build notes)                                                                                              |
+| 6   | Scored run unchanged                         | PENDING | user, on a device                                                                                                                                                                                                                           |
+| 7   | Tutorial unchanged                           | PENDING | user, on a device                                                                                                                                                                                                                           |
+| 8   | Challenge with an opening unchanged          | PENDING | user, on a device                                                                                                                                                                                                                           |
+| 9   | ADVENTURE run unchanged                      | PENDING | user, on a device                                                                                                                                                                                                                           |
+| 10  | Intro dialogs and the bookmark unchanged     | PENDING | user, on a device                                                                                                                                                                                                                           |
+| 11  | Restore mid-run unchanged                    | PENDING | user, on a device                                                                                                                                                                                                                           |
+| 12  | Multiplayer unchanged                        | PENDING | user, on a device                                                                                                                                                                                                                           |
+| 13  | _(added)_ The web bundle builds              | PASS    | `expo export --platform web` exports all four routes; every module in the game route evaluates (no import cycle breaks it). The static render is the splash only, so this does **not** prove the game screen renders — that stays with 6–12 |
