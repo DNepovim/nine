@@ -25,8 +25,9 @@ const RUN_SCREENS = [
 // Every screen a live run is played on.
 const RUN_SCREENS_LIVE = ['app/(tabs)/index.tsx', 'components/game/arcade-game.tsx']
 
-// Everything that owns a run's clock, and so has a run to stop.
-const ENGINES = ['app/(tabs)/index.tsx', 'hooks/use-arcade-run.ts']
+// Everything that owns a run's clock, and so has a run to stop. The game machine's run is
+// driven from `useRunControl`, which the game screen calls.
+const ENGINES = ['hooks/use-run-control.tsx', 'hooks/use-arcade-run.ts']
 
 const read = (path: string): string => readFileSync(path, 'utf8')
 

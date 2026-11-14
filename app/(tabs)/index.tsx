@@ -1,14 +1,11 @@
 import { useLingui } from '@lingui/react/macro'
-import { useMachine } from '@xstate/react'
-import { useFonts } from 'expo-font'
 import { StatusBar } from 'expo-status-bar'
 import { isOneOf } from 'narrowland'
-import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { AppState, Text, View, type LayoutChangeEvent } from 'react-native'
+import { lazy, Suspense } from 'react'
+import { Text, View } from 'react-native'
 import { GestureDetector } from 'react-native-gesture-handler'
-import Animated, { useAnimatedStyle } from 'react-native-reanimated'
+import Animated from 'react-native-reanimated'
 
-import DSEG7Font from '@/assets/fonts/DSEG7Classic-Bold.ttf'
 import { FeedbackBookmark } from '@/components/feedback-bookmark'
 import { AnnouncementEffect } from '@/components/game/announcement-effect'
 import { ArcadeGame } from '@/components/game/arcade-game'
@@ -32,7 +29,6 @@ import {
   OpeningOver,
   OpeningRemains,
   OpeningUnder,
-  remainsHoldOf,
 } from '@/components/game/opening-layer'
 import { PencilWipe } from '@/components/game/pencil-wipe'
 import { RunStopwatch } from '@/components/game/run-stopwatch'
@@ -41,7 +37,6 @@ import { ScoreDigit } from '@/components/game/score-digit'
 import { StepUpToast } from '@/components/game/step-up-toast'
 import { StrikeShot } from '@/components/game/strike-shot'
 import { SumHush } from '@/components/game/sum-hush'
-import { TARGET_FORMS } from '@/components/game/target-forms'
 import { TraineeStats } from '@/components/game/trainee-stats'
 import { TutorialCard } from '@/components/game/tutorial-card'
 import { TutorialIntro } from '@/components/game/tutorial-intro'
@@ -50,10 +45,7 @@ import { AchievementDetail } from '@/components/overlays/achievement-detail'
 import { AchievementsOverlay } from '@/components/overlays/achievements-overlay'
 import { AdminOverlay } from '@/components/overlays/admin-overlay'
 import { AdvancedOptionsOverlay } from '@/components/overlays/advanced-options-overlay'
-import {
-  ChallengeModal,
-  type ChallengeModalCard,
-} from '@/components/overlays/challenge-modal'
+import { ChallengeModal } from '@/components/overlays/challenge-modal'
 import { FeedbackOverlay } from '@/components/overlays/feedback-overlay'
 import { FeedbackReplyOverlay } from '@/components/overlays/feedback-reply-overlay'
 import { GameOverSequence } from '@/components/overlays/game-over-sequence'
@@ -83,145 +75,50 @@ import { RolePreviewBadge } from '@/components/role-preview-badge'
 import { Screen } from '@/components/screen'
 import { SurfaceWash } from '@/components/surface-wash'
 import { TrackedPressable } from '@/components/tracked-pressable'
-import type { AchievementId } from '@/constants/achievements'
-import { PRIMARY_INK, SCHEMES } from '@/constants/colors'
+import { PRIMARY_INK } from '@/constants/colors'
 import { DEFAULT_DIAL_CORNERS } from '@/constants/dial-hints'
-import { PIE_SIZE } from '@/constants/game'
-import { mono } from '@/constants/theme'
 import { TUTORIAL_BANNER_HEIGHT } from '@/constants/tutorial'
 import { TYPE } from '@/constants/typography'
-import { useAccountEmail } from '@/hooks/use-account-email'
-import { useAchievementQueue, useAchievements } from '@/hooks/use-achievements'
-import { useAnnouncements } from '@/hooks/use-announcements'
-import { useAppUpdate } from '@/hooks/use-app-update'
-import { useBarColor } from '@/hooks/use-bar-color'
-import { BoardProvider, useBoard } from '@/hooks/use-board'
-import { ChampionsProvider, useChampions } from '@/hooks/use-champions'
+import { BoardProvider } from '@/hooks/use-board'
+import { ChampionsProvider } from '@/hooks/use-champions'
 import { SUM_ROW_HEIGHT } from '@/hooks/use-dial-metrics'
-import { useDisplayOptions } from '@/hooks/use-display-options'
-import { useDisplayedTargets } from '@/hooks/use-displayed-targets'
-import { useDriftTicks } from '@/hooks/use-drift-ticks'
-import { useDyingSequence, type DyingPhase } from '@/hooks/use-dying-sequence'
-import { useFeedbackAnswered } from '@/hooks/use-feedback-answered'
-import { useFeedbackReplies } from '@/hooks/use-feedback-replies'
 import { FlagsProvider } from '@/hooks/use-flags'
-import { useFloatingPoints } from '@/hooks/use-floating-points'
-import { useFloatingStat } from '@/hooks/use-floating-stat'
-import { useHeldSum } from '@/hooks/use-held-sum'
-import { useHitCelebration } from '@/hooks/use-hit-celebration'
-import { useHowToPlay } from '@/hooks/use-how-to-play'
-import { useInstall } from '@/hooks/use-install'
-import { useLocalScores } from '@/hooks/use-local-scores'
+import { useIntroStanding } from '@/hooks/use-intro-standing'
+import { useLaunchAsks } from '@/hooks/use-launch-asks'
+import { useLifeLoss } from '@/hooks/use-life-loss'
 import { LocaleGate } from '@/hooks/use-locale'
-import { useLostMarks } from '@/hooks/use-lost-marks'
-import { useLostMedals } from '@/hooks/use-lost-medals'
-import { useMedalHistory } from '@/hooks/use-medal-history'
-import { useMultiplayerScreens } from '@/hooks/use-multiplayer-screens'
-import { useMyMedals } from '@/hooks/use-my-medals'
-import { useNextVote } from '@/hooks/use-next-vote'
-import { useOnline } from '@/hooks/use-online'
-import { useOpening } from '@/hooks/use-opening'
-import { usePauseOnBlur } from '@/hooks/use-pause-on-blur'
-import { usePersistedArcadeFocus } from '@/hooks/use-persisted-arcade-focus'
-import { usePersistedDifficulty } from '@/hooks/use-persisted-difficulty'
-import { usePersistedMode } from '@/hooks/use-persisted-mode'
-import { usePersistedRun } from '@/hooks/use-persisted-run'
-import { usePersistedStats } from '@/hooks/use-persisted-stats'
-import { usePopupDeck } from '@/hooks/use-popup-deck'
+import { usePlayField } from '@/hooks/use-play-field'
+import { usePlayerAccount } from '@/hooks/use-player-account'
 import { PlayerProfileProvider } from '@/hooks/use-profile-modal'
-import { usePushConsent } from '@/hooks/use-push-consent'
-import { useReplayConsent } from '@/hooks/use-replay-consent'
-import { useRolePreview } from '@/hooks/use-role-preview'
-import { useRunRival } from '@/hooks/use-run-rival'
-import { useSavedRun } from '@/hooks/use-saved-run'
-import { glowStyle, SchemeProvider } from '@/hooks/use-scheme'
-import { useScoreDirection } from '@/hooks/use-score-direction'
-import { useScoreSubmission } from '@/hooks/use-score-submission'
-import { useSegments } from '@/hooks/use-segments'
-import { useSessionAsk } from '@/hooks/use-session-ask'
-import { usePreviousWinner, useSessionBoard } from '@/hooks/use-session-card'
-import { useSessionPlaces } from '@/hooks/use-session-places'
-import { useSplash } from '@/hooks/use-splash'
-import { useStepUp } from '@/hooks/use-step-up'
-import { useStrikeShots, type ShotAim } from '@/hooks/use-strike-shots'
-import { useSupabaseAuth } from '@/hooks/use-supabase-auth'
-import { useTargetSpawner } from '@/hooks/use-target-spawner'
-import { useTargetsShortcuts } from '@/hooks/use-targets-shortcuts'
-import { useTaughtOffer } from '@/hooks/use-taught-offer'
-import { useTraineeCoach } from '@/hooks/use-trainee-coach'
-import { useTutorialLesson } from '@/hooks/use-tutorial-lesson'
-import { useTutorialRequests } from '@/hooks/use-tutorial-request'
-import { useWelcome } from '@/hooks/use-welcome'
+import { useRunAnnouncements } from '@/hooks/use-run-announcements'
+import { useRunBoards } from '@/hooks/use-run-boards'
+import { useRunControl } from '@/hooks/use-run-control'
+import { useRunEnding } from '@/hooks/use-run-ending'
+import { useRunSession } from '@/hooks/use-run-session'
+import { SchemeProvider } from '@/hooks/use-scheme'
+import { useScreenDialogs } from '@/hooks/use-screen-dialogs'
 import { idsOf, latestAchievement } from '@/lib/achievement-store'
 import { achievementCard } from '@/lib/achievements'
-import { identify, setAdminOptOut, track } from '@/lib/analytics'
-import type { AnalyticsEvents } from '@/lib/analytics-events'
-import { personalBar, type Leaders, type Period } from '@/lib/announcements'
-import { currentBoardMedals } from '@/lib/board-medals'
-import { boardTargetsOf } from '@/lib/board-targets'
-import { holdsBothBoards, recordScreen, type RecordScreen } from '@/lib/champions'
+import { track } from '@/lib/analytics'
+import { personalBar } from '@/lib/announcements'
 import { DRAW } from '@/lib/dial-sketch'
-import { drillFor } from '@/lib/drill'
 import { feedbackGameState, showFeedbackBookmark } from '@/lib/feedback-bookmark'
-import {
-  introStanding,
-  isMenuScreen,
-  OVERLAY_SCREENS,
-  welcomeStanding,
-  type MenuOverlayName,
-} from '@/lib/intro-standing'
-import {
-  accountNoticeFor,
-  launchAsksClear,
-  mayAskForEmail,
-  mayOpenSessionAsk,
-} from '@/lib/launch-asks'
-import { leaderOf } from '@/lib/leaderboard'
-import { runChallenge } from '@/lib/next-challenge'
-import { heldPeriods, medalPeriods } from '@/lib/record-medals'
-import { averageOf, headingOf } from '@/lib/run-average'
 import { newRunId } from '@/lib/run-id'
-import {
-  restoredSessionOf,
-  runSessionMedalsOf,
-  savedSessionOf,
-  sessionBestsOf,
-  sessionClockOf,
-  sessionRunOf,
-  sessionTargetsFor,
-} from '@/lib/run-session'
-import { countRun } from '@/lib/run-submission'
-import { accentFor, subtitleFor, wordmarkFor } from '@/lib/run-title'
-import { runKindOf } from '@/lib/run-totals'
-import { restoreRun, savedPositions } from '@/lib/saved-run'
-import { announcementsReady } from '@/lib/session-announcements'
+import { sessionBestsOf, sessionClockOf } from '@/lib/run-session'
+import { wordmarkFor } from '@/lib/run-title'
 import { STEP_UP_BOARD } from '@/lib/step-up'
 import { multiplierColor } from '@/lib/streak-badge'
-import { tipForTarget } from '@/lib/tutorial-tip'
 import { valueProgress } from '@/lib/value-progress'
-import { WELCOME_BOARD } from '@/lib/welcome'
-import { bestOn, claimedTime, gameMachine, type GameSend } from '@/machines/game'
+import { bestOn } from '@/machines/game'
 import { computePar } from '@/machines/scoring'
-import { keyControl, type LessonVoice } from '@/machines/tutorial-lesson'
 import {
-  cellsOf,
   darkGradientOf,
-  DIFFICULTY_ORDER,
   gradientOf,
   isMode,
-  MODE_ORDER,
   runLabel,
-  runRules,
-  runSubmode,
   SCORED_MODES,
   showsFigures,
-  streakMultiplier,
-  sumOf,
-  targetFormOf,
-  type Mode,
 } from '@/modes'
-import { challengeTints, hueOf } from '@/modes/challenges/palette'
-import type { DisplayTarget, Position } from '@/types/game'
 
 // The screen gallery's stage, in development only — the screen being looked at, drawn
 // inside the app so it sees the real board store, champions, fonts and theme. Its picker
@@ -248,61 +145,6 @@ const GalleryStage = __DEV__
 // hit-by-hit sprinkle borrowing it made the two read as the same event.
 const TRAINEE_CONFETTI = [gradientOf('trainee')[0]] as const
 
-// How long the intro has to stand undisturbed before a waiting new version is allowed
-// to swap itself in. Not zero: a player who has just come back from a run would be
-// reloaded on the spot, and an app that restarts the instant you reach the menu reads as
-// a crash. Anything they start inside the window cancels it.
-const UPDATE_SETTLE_MS = 2500
-
-// How long the feedback bookmark waits after the game-over cinematic lands before
-// sliding its label into view. The player's eyes are still on the title the instant
-// the sequence hits `done` — a beat lets that settle before something else moves.
-const BOOKMARK_REVEAL_DELAY_MS = 500
-
-// How long the board stands still after CONTINUE before the run picks up again. The
-// pause screen goes at once, so the player gets the grid, the targets and their frozen
-// clocks back with a beat to read them in — coming straight back to a running clock is
-// what made resuming cost a life. The machine ignores presses while it is still paused,
-// so the dial is inert for the beat rather than only looking it.
-const RESUME_DELAY_MS = 500
-
-// The two dialogs behind the line under the title: everything the player holds, and
-// everything there is to achieve. Not `menuOverlay`, even though two of those are dialogs
-// as well: these belong to the intro and nothing else opens them, whereas every name on
-// that list is reachable from the pause screen too.
-type TitleDialog = 'none' | 'medals' | 'achievements'
-
-// The three ways into the tutorial: the first launch's offer over the intro, TRY IT at
-// the end of the guide, and the dev sidebar. All three deal the same run straight onto the
-// board; what the door decides is what the funnel is told — and 'dev' is told nothing. The
-// two a player can reach are the `from` values `run_started` already names.
-type TutorialDoor = 'welcome' | 'guide' | 'dev'
-
-// What the board draws, given what the lesson is saying.
-//
-// Everything standing on it, except behind the lesson's first word — which is set in the
-// middle of the board and is the only thing on it until the word's own clock runs out.
-//
-// Held back on the way out rather than dealt late: the machine opens a tutorial with its
-// target already standing, which is right — the run is the run from the moment it starts,
-// and a target that arrived a beat after it would be a second kind of opening to get wrong.
-// So this is a target not yet drawn, and it springs in as the words fade.
-const drawnTargets = (
-  voice: LessonVoice,
-  placed: readonly DisplayTarget[],
-): readonly DisplayTarget[] => (voice === 'opening' ? [] : placed)
-
-// The phone's bar, in the colour of the run's **scheme** for as long as that is what fills the
-// screen: through play, and on through the last-life cinematic, which runs over the game screen
-// until the game-over screen has landed. The screens over a run are drawn light, so they leave
-// the bar to the app.
-const systemBarOf = (
-  color: string | null,
-  inPlay: boolean,
-  dying: DyingPhase,
-): string | null =>
-  inPlay || dying === 'waiting' || dying === 'dying' || dying === 'blend' ? color : null
-
 // What the pause button does, or null where it is not drawn. It stands through a held run's
 // opening too, so the top bar is whole from the first frame: a tap there is the opening's skip,
 // which lies over the bar, and so this one is never heard.
@@ -322,1442 +164,234 @@ const MIRRORED_ROW = { transform: [{ scaleX: -1 }] }
 // own, which has to lay them out the same way.
 const HEARTS_ROW = { flexDirection: 'row', gap: 4 } as const
 
-// The beat between the countdown going red and the run ending. Long enough that the red is
-// read as the reason rather than as a flicker on the way to the game-over screen, and short
-// enough that it cannot be mistaken for time the player still has.
-const EXPIRED_GRACE_MS = 1000
-
 export default function GameScreen() {
   const { t } = useLingui()
-  const [state, send, actor] = useMachine(gameMachine)
-
-  // Seven-segment font for the digital score readout.
-  const [dsegLoaded] = useFonts({ DSEG7: DSEG7Font })
-  // The seven-segment face, or the mono voice until it has loaded. Resolved once: every
-  // readout on this screen takes the same answer, and a figure in the wrong face for a
-  // frame beats a row that is not there.
-  const digitFont = dsegLoaded ? 'DSEG7' : mono
-
-  const {
-    grid,
-    lives,
-    targets,
-    mode,
-    difficulty,
-    stats,
-    hitBatch,
-    streak,
-    maxStreak,
-    strikes,
-    accSum,
-    spdSum,
-    hits,
-    elapsedMs,
-    runId,
-    tutorial,
-  } = state.context
-  // What this run is governed by: the board under it, the clock, the lives, the streak
-  // rule, and the four capability flags the screen used to ask `mode === 'trainee'` for.
-  // One lookup rather than a branch at each reader, and the only thing on this screen
-  // that knows a mode has rules at all.
-  const rules = runRules(mode, difficulty, tutorial)
-  const runAccent = accentFor(mode)
-  const runSubtitle = subtitleFor(mode, rules.usesDifficulty, difficulty)
-  const submode = runSubmode(tutorial)
-  // The dial this run is played on. `board` on this screen is already the leaderboard.
-  const dial = rules.dial
-  // What this run is placed on its session's standings by — the medal on the game-over
-  // screen and the title above it both ask, and both have to ask what the write posts.
-  const runFigures = {
-    score: state.context.score,
-    hits: state.context.hits,
-    timeMs: claimedTime(state.context, rules),
-  }
-
-  const isPlaying = state.matches('playing')
-  const isMenu = state.matches('menu')
-  const isPaused = state.matches('paused')
-  const isGameOver = state.matches('gameOver')
-  // The run's **opening**, if its mode has one: whether the run is held **ready** for it,
-  // the take, the switch and the **scheme** the game screen is drawn in — see `useOpening`
-  // and `ready` in machines/game.ts. A held run is not `inRun`: nothing is being played
-  // yet, so nothing is saved, celebrated or raced against.
-  const opening = useOpening({ state: state.value, mode })
-  // The neon corona the rows above the dial are lit with, where their scheme has one.
-  const barGlow = glowStyle(SCHEMES[opening.barScheme].inks.glow)
-  // The rows above the dial, as lit as the opening has them: dark until a scene switches them on.
-  const barLightStyle = useAnimatedStyle(() => ({ opacity: opening.barLight.value }))
-  const { Board: TargetBoard, Card: TargetView } = TARGET_FORMS[targetFormOf(mode)]
-
-  // The one way a pause is asked for, so that every caller has to say what stopped the
-  // run and the event below can tell a tap from a phone call. The reporting half is here
-  // rather than in an effect on `isPaused` because the figure worth sending is only
-  // correct before PAUSE lands: `elapsedMs` is banked on the way out of `playing`, so the
-  // stretch still being played has to be added by hand either way, and doing it here
-  // keeps the reason and the numbers in one place.
-  //
-  // Nothing is reported for a pause that finds no live run — the dev screen sends PAUSE
-  // blind, to put down whatever is standing before it deals a tutorial.
-  const pauseRun = (source: AnalyticsEvents['run_paused']['source']) => {
-    const now = Date.now()
-    if (isPlaying) {
-      const { score, hits, strikes, elapsedMs, playingSince } = state.context
-      track('run_paused', {
-        mode,
-        difficulty,
-        source,
-        score,
-        hits,
-        strikes,
-        elapsed_ms: elapsedMs + (playingSince === null ? 0 : now - playingSince),
-      })
-    }
-    send({ type: 'PAUSE', now })
-  }
-
-  // A run left behind — the app switched away from, the phone locked — comes back
-  // paused rather than still running.
-  usePauseOnBlur(isPlaying, () => {
-    pauseRun('focus_lost')
+  const control = useRunControl()
+  const session = useRunSession({ control })
+  const dialogs = useScreenDialogs({ control })
+  const account = usePlayerAccount()
+  const asks = useLaunchAsks({ control, dialogs, account })
+  const boards = useRunBoards({ control, account })
+  const announcements = useRunAnnouncements({
+    control,
+    session,
+    dialogs,
+    account,
+    asks,
+    boards,
   })
-
-  // The beat between CONTINUE and the run picking up again — see RESUME_DELAY_MS. The
-  // pause screen is gone for it, the machine is still paused through it.
-  const [resuming, setResuming] = useState(false)
-  // Read out here rather than inside the effect: it is set once on the way into the pause
-  // and does not move again, so it can sit in the dependency list without the whole
-  // machine context dragging the timer along with it.
-  const pausedAt = state.context.pausedAt
-  useEffect(() => {
-    if (!resuming) return
-    const timer = setTimeout(() => {
-      setResuming(false)
-      const now = Date.now()
-      // Reported here and not at the tap, because the tap is not yet a resume — going
-      // away cancels the beat and leaves the run paused, and an event sent on the tap
-      // would have claimed otherwise.
-      track('run_resumed', {
-        mode,
-        difficulty,
-        away_ms: pausedAt === null ? 0 : now - pausedAt,
-      })
-      send({ type: 'RESUME', now })
-    }, RESUME_DELAY_MS)
-    // The beat only runs while the app is on screen. A resume landing in a hidden tab
-    // would put the run back on a wall clock with nobody watching it — the very thing
-    // usePauseOnBlur exists to prevent, and out of its reach here because the run is not
-    // playing yet. Going away cancels it instead, leaving the pause screen where it was.
-    const subscription = AppState.addEventListener('change', (next) => {
-      if (next !== 'active') setResuming(false)
-    })
-    return () => {
-      clearTimeout(timer)
-      subscription.remove()
-    }
-  }, [resuming, send, pausedAt, mode, difficulty])
-  // Any other way out of the pause — HOME, END RUN, a restored run landing — drops the
-  // pending resume instead of firing it into whatever took its place.
-  useEffect(() => {
-    if (!isPaused) setResuming(false)
-  }, [isPaused])
-
-  usePersistedStats(stats, send)
-  usePersistedDifficulty(difficulty, send)
-  usePersistedMode(mode, send)
-
-  // The run the app was last closed on. Put back paused, before anything else this
-  // launch does with the machine: RESTORE carries the board it was played on, so a
-  // persisted mode landing either side of it cannot deal the run somewhere else.
-  //
-  // `taken` first, in the same commit as the send, so the intro is never painted in the
-  // gap between storage answering and the machine holding the run — see `onIntro`.
-  const savedRun = useSavedRun()
-  // Where the restored run's targets were sitting when the app was closed. State rather
-  // than a ref because the display list reads it as it places them, which happens in the
-  // render RESTORE causes — and both are set here, in one commit.
-  const [restoredPositions, setRestoredPositions] = useState<
-    ReadonlyMap<number, Position>
-  >(() => new Map())
-  useEffect(() => {
-    if (savedRun.pending === null || !isMenu) return
-    // One reading of the clock for both: the ages are laid back down against it, and it
-    // is the moment the restored board has been standing still since.
-    const now = Date.now()
-    setRestoredPositions(savedPositions(savedRun.pending))
-    // The session it was posting to, put back with it — or cleared, for an ordinary run.
-    // Before the run is dealt, for the reason the challenge dialog sets it before START:
-    // the drill and the first record post both read it.
-    const session = restoredSessionOf(savedRun.pending)
-    setRunSession(session.id)
-    setRunSessionClosesAt(session.closesAt)
-    setWindowShut(false)
-    savedRun.taken()
-    send({ type: 'RESTORE', run: restoreRun(savedRun.pending, now, newRunId()), now })
-  }, [savedRun, isMenu, send])
-  const {
-    showSum,
-    toggleSum,
-    showPar,
-    togglePar,
-    showStats,
-    toggleStats,
-    showRoute,
-    toggleRoute,
-    drag,
-    toggleDrag,
-    playerClockMs,
-    setPlayerClockMs,
-    corners,
-    setCorner,
-  } = useDisplayOptions()
-
-  // The machine spawns targets with it, so the setting has to reach the context — on
-  // hydration and on every change after. Mid-run is fine: the targets already in flight
-  // are moved onto the new clock keeping the share of it they had left, which is what
-  // makes changing it from a pause show its effect on the target you are looking at.
-  useEffect(() => {
-    send({ type: 'SET_PLAYER_CLOCK', ms: playerClockMs, now: Date.now() })
-  }, [playerClockMs, send])
-  // Which menu-level overlay is open. Only one shows at a time, and the menu
-  // itself is hidden while any of them is open — a single source of truth avoids
-  // z-order/gating clashes between separate booleans.
-  const [menuOverlay, setMenuOverlay] = useState<MenuOverlayName>('none')
-  // Whether the challenge lab was opened from the admin hub, so closing it goes back
-  // there rather than all the way out to the intro.
-  // The challenge card the player pressed, and the dialog it opened. Held here rather
-  // than in `menu-overlay.tsx`: a `ModalCard` mounted inside the paging panel would
-  // scrim the panel rather than the screen.
-  const [challengeCard, setChallengeCard] = useState<ChallengeModalCard>()
-  // The invite SHARE on the intro would send, while its dialog is up.
-  const [shareInvite, setShareInvite] = useState<string>()
-  // Which **session** the live run belongs to, or null for an ordinary run.
-  //
-  // Beside the run rather than on the machine's context. A session is not a rule — the
-  // engine resolves `RunRules` and has no business knowing when a mode is being offered
-  // — so putting it there would be the first thing in that neighbourhood that is not
-  // one. The cost is that a run put back from storage mid-session loses it and posts to
-  // no standings; the ten-minute grace on the write makes that a near miss rather than
-  // a loss, and a run interrupted by the app dying is already an edge.
-  const [runSession, setRunSession] = useState<string | null>(null)
-  // Bumped as a session run ends, to read the player's places and firsts again — see
-  // useSessionPlaces.
-  const [placesAsked, setPlacesAsked] = useState(0)
-
-  // When the run's session shuts, for the countdown on the score bar.
-  //
-  // Beside `runSession` rather than folded into it, which keeps the id a plain string
-  // for the handful of places that pass it on. **Never cleared**, and it does not need
-  // to be: every reader below is already behind `runSession !== null`, so a figure left
-  // over from a finished run is a value nothing asks for.
-  //
-  // Taken from the card the run was started from rather than fetched. The session was
-  // read once at launch and the dialog was looking at it a moment ago; asking the server
-  // again for a timestamp the screen is already holding would be a round trip to learn
-  // something it knows.
-  const [runSessionClosesAt, setRunSessionClosesAt] = useState<number | null>(null)
-
-  // Whether the run's session shut under it. Set by the strip, which holds the clock that
-  // reaches the boundary, and read for one frame's worth of red before the run ends.
-  //
-  // Beside `runSessionClosesAt` rather than on the machine's context, and for the reason
-  // the note above gives about that one: the machine has never heard of a session and
-  // does not learn about one here. What it is told, a second later, is that this run is
-  // over — see the `EXPIRE` send below.
-  const [windowShut, setWindowShut] = useState(false)
-
-  // The strip reaching the boundary. One setter, so the colour and the end are two readers
-  // of one moment rather than two clocks that could disagree.
-  const handleWindowShut = useCallback(() => {
-    setWindowShut(true)
-  }, [])
-
-  // Red, then over. The strip fires the boundary and this is the second half of it.
-  //
-  // Guarded on `isPlaying` rather than merely on the flag, because the strip announces on
-  // a mount that is already past the close — a run resumed after the window shut does
-  // exactly that — and because the machine ignores `EXPIRE` anywhere but `playing`, a send
-  // that arrives while paused is dropped and has to arrive again on the resume. The timer
-  // is cleared on unmount so it cannot land in a run that has since restarted.
-  useEffect(() => {
-    if (!windowShut || !isPlaying) return
-    const timer = setTimeout(() => {
-      send({ type: 'EXPIRE', now: Date.now() })
-    }, EXPIRED_GRACE_MS)
-    return () => {
-      clearTimeout(timer)
-    }
-  }, [windowShut, isPlaying, send])
-
-  // The mode the player was on before a challenge interrupted it, so the intro can be
-  // put back the way they left it. Null whenever the machine is already on one of its
-  // own modes, which is every moment but a challenge run.
-  const [modeBeforeSession, setModeBeforeSession] = useState<Mode | null>(null)
-
-  // Reaching the intro ends a run's claim on its session, and puts the machine back on a
-  // mode the intro actually offers.
-  //
-  // The second half is not tidiness. Challenges left the pill row when they got a card of
-  // their own, so after a challenge run `mode` is a name `ModeSelector` cannot find: the
-  // highlight stays on whichever pill it last lit, the difficulty row and the board
-  // vanish — `usesDifficulty` and `SCORED_MODES` are both false for a challenge — and
-  // PLAY GAME, which reads the machine's mode, deals *another* challenge run belonging to
-  // no session at all. `isMode` is the registry's own word for "one of the three the
-  // intro lists", so this asks the question rather than guessing at a name.
-  //
-  // The doors that start a fresh run in the same breath clear the session themselves — a
-  // value the next run reads has to be right before that run is dealt, not a render later
-  // — and this is the backstop for every other way out, including ones nobody has
-  // written yet. Guarded on the values already being settled, since `isMenu` is true for
-  // the whole time the player stands on the intro.
-  useEffect(() => {
-    if (!isMenu) return
-    if (runSession !== null) {
-      setRunSession(null)
-      // The run just posted to its session, and may have been the first score there.
-      setPlacesAsked((asked) => asked + 1)
-    }
-    // A shut window belongs to the run it shut on. Reaching the intro is the end of that
-    // run's claim on it, exactly as it is the end of its claim on the session itself.
-    if (windowShut) setWindowShut(false)
-    // Where they were, or the first pill the intro lists. `MODE_ORDER` rather than a
-    // name typed here: nothing outside `modes/` gets to decide which mode is the default.
-    const back = modeBeforeSession ?? MODE_ORDER[0]
-    if (!isMode(mode) && back !== undefined) send({ type: 'SET_MODE', mode: back })
-  }, [isMenu, runSession, windowShut, mode, modeBeforeSession, send])
-  // Whether an arcade run is up. Its own boolean rather than a state of the game machine:
-  // arcade is not that machine's run — no score, no lives, no board — and the screen it
-  // puts up is mounted over the intro the way a multiplayer game is.
-  const [arcadeOpen, setArcadeOpen] = useState(false)
-  const [titleDialog, setTitleDialog] = useState<TitleDialog>('none')
-  // The feedback dialog floats over whatever is showing rather than replacing it, so
-  // it is its own boolean instead of a member of the overlay union above.
-  const [feedbackOpen, setFeedbackOpen] = useState(false)
-  // Whether the feedback bookmark is showing its label. Lives up here, not inside
-  // the bookmark, because the bookmark unmounts while the dialog it opens is on
-  // screen — an internal flag would forget a swipe-to-collapse the moment the
-  // player closed that dialog. Paused brings it back on its own; game over does
-  // the same once its cinematic lands, further down. Menu is the reset: whichever
-  // screen sent the player back there, the bookmark should wait behind the edge
-  // again next time it matters.
-  const [bookmarkRevealed, setBookmarkRevealed] = useState(false)
-  useEffect(() => {
-    if (isPaused) setBookmarkRevealed(true)
-  }, [isPaused])
-  useEffect(() => {
-    if (isMenu) setBookmarkRevealed(false)
-  }, [isMenu])
-  // One event per overlay actually opened. 'none' is a closing, not an opening.
-  useEffect(() => {
-    if (menuOverlay === 'none') return
-    track('screen_opened', { screen: OVERLAY_SCREENS[menuOverlay] })
-  }, [menuOverlay])
-  const installPrompt = useInstall()
-  // Whether session replay may run, and the two ways to change it — the banner below on
-  // a first ask, the toggle inside OPTIONS on every ask after. See
-  // hooks/use-replay-consent.ts for why there are not two stores for this.
-  const replayConsent = useReplayConsent()
-  const { done: splashDone } = useSplash()
-  const { ready: updateReady, apply: applyUpdate } = useAppUpdate()
-
-  // Close advanced options whenever the game starts or resumes so that pausing
-  // again always shows the pause screen, not the advanced options overlay.
-  useEffect(() => {
-    if (isPlaying) setMenuOverlay('none')
-  }, [isPlaying])
-
-  // Whether the guide has been read, for the one achievement that asks.
-  const howToPlay = useHowToPlay()
-  const feedbackAnswered = useFeedbackAnswered()
-
-  // Deals the tutorial on its own board. Shared by the three doors into it — the welcome, the
-  // guide's TRY IT, and the dev sidebar — so all three agree on the board it is played on.
-  //
-  // The board is sent again here rather than trusted from wherever the caller left it: these
-  // are the two events START reads, and a persisted mode landing in between — the hydration
-  // hooks send the same events — would otherwise deal the run somewhere else.
-  const startTutorial = useCallback(
-    // Which door it came through. 'dev' is reported nowhere: a run dealt from the dev
-    // sidebar would otherwise show up in the funnel as a player taking the tutorial.
-    (from: TutorialDoor) => {
-      send({ type: 'SET_MODE', mode: WELCOME_BOARD.mode })
-      send({ type: 'SET_DIFFICULTY', difficulty: WELCOME_BOARD.difficulty })
-      send({ type: 'START', now: Date.now(), runId: newRunId(), tutorial: true })
-      if (from !== 'dev') track('run_started', { ...WELCOME_BOARD, from })
-    },
-    [send],
-  )
-
-  // The dev sidebar's way in — see hooks/use-tutorial-request.ts. Zero in a production
-  // build, where nothing ever asks.
-  const tutorialsAsked = useTutorialRequests()
-  const tutorialsDealt = useRef(tutorialsAsked)
-  useEffect(() => {
-    if (tutorialsAsked === tutorialsDealt.current) return
-    tutorialsDealt.current = tutorialsAsked
-    // START is only accepted on the intro, so the run standing — if there is one — has to be
-    // put down first. All three go whatever state the machine is in: a state with no handler
-    // for one of them drops it, and the ones that land still walk playing → paused → menu.
-    //
-    // The run being replaced is abandoned rather than ended: no score is submitted on the way
-    // out, where END RUN would have. That is the right trade for a dev button and the wrong
-    // one for anything a player can press.
-    pauseRun('dev')
-    send({ type: 'MENU' })
-    setMenuOverlay('none')
-    startTutorial('dev')
-  }, [tutorialsAsked, send, startTutorial])
-
-  // A device nobody has played on opens on the intro with one card over it, offering the
-  // tutorial — Trainee with its clock, its cadence and its options taken off. See
-  // constants/tutorial.ts. The card itself is drawn below, on `welcomeOffer`.
-  const welcome = useWelcome()
+  const ending = useRunEnding({ control, account, asks, boards, announcements })
+  const field = usePlayField({ control, boards, announcements, ending })
+  const dying = useLifeLoss({ control, dialogs, field })
+  const intro = useIntroStanding({ control, dialogs, account, asks, announcements })
 
   const {
-    userId,
-    nickname,
-    features,
-    isReady,
-    updateNickname,
-    email,
-    pendingEmail,
-    moved,
     dismissMoved,
-    sendCode,
-    confirmEmail,
-    restoreProfile,
-  } = useSupabaseAuth()
-
-  // An admin borrowing a role, so they can see what a stack came to without holding it.
-  // Below `useSupabaseAuth` because it stands beside its answer rather than replacing it:
-  // `features` stays what this person actually reaches — the analytics opt-out just below
-  // reads it, and an admin looking at the app as a player must not start being tracked —
-  // and only what the tree is *drawn* from is swapped, at the provider.
-  const rolePreview = useRolePreview()
-
-  // What this player is actually shown — their own set, or the one an admin is previewing.
-  //
-  // Resolved **here, in the body**, and not only at the provider below. `FlagsProvider` is
-  // rendered in this component's own JSX, which means it is not above this component's own
-  // hooks: anything called up here that asks `useFlag` gets the default context and the
-  // answer false, forever. The launch popup's pages were gated that way and two of them —
-  // the **summary** and the **recap** — never appeared at all. Hooks above the provider ask
-  // this set directly, the way the analytics opt-out just below already does; everything
-  // rendered *inside* the provider goes on using `useFlag`.
-  const shownFeatures = rolePreview.preview?.features ?? features
-
-  // Analytics reuses the identity the boards already rank — the anonymous Supabase user
-  // id — so an event can be read next to the score it produced. Re-runs when the
-  // nickname lands or changes, which just refreshes the person's properties.
-  //
-  // The opt-out runs first: whoever reaches the `admin` feature is kept out of the data
-  // entirely rather than filtered out of it afterwards, and ordering this ahead of
-  // `identify` is what keeps an admin's own playing from ever becoming a person in the
-  // project in the first place. The question is the feature rather than the role,
-  // because a custom role granting `admin` opens the same screen.
-  useEffect(() => {
-    if (userId === null) return
-    setAdminOptOut(features.has('admin'))
-    identify(userId, nickname)
-  }, [userId, nickname, features])
-
-  // Below `useSupabaseAuth`, which it reads: the winnings half of the deck is per player,
-  // and there is nothing to ask the server for until there is a player to ask about.
-  const whatsNew = usePopupDeck(userId, runSession, shownFeatures)
-  // The second step of the consent: whether this device may be pushed to. Behind the replay
-  // ask, and resolved from `shownFeatures` for the reason given above.
-  const pushConsent = usePushConsent({
-    held: shownFeatures.has('push'),
-    replay: replayConsent.consent,
-    userId,
-  })
-  const consentUp = replayConsent.visible || pushConsent.visible
-  // **The vote** on which of the next two challenges opens first. Lifted to the screen
-  // because two things read it that share no parent: the rating dialog's third step and the
-  // intro's link, whose dialog is opened here for the scrim's sake.
-  const nextVote = useNextVote(shownFeatures.has('challenges') && userId !== null)
-  const [voteOpen, setVoteOpen] = useState(false)
-  const [voteResultsOpen, setVoteResultsOpen] = useState(false)
-  // Whether the launch popup *or the rating that follows it* is up. Everything that waits
-  // its turn behind the popup — the email ask, the install prompt, the session-recording
-  // ask — waits behind the rating too: it is the popup's last word, opened only once the
-  // popup has gone, and a prompt landing in the gap between the two would stack on it.
-  const launchPopupUp = whatsNew.visible || whatsNew.rating.asking !== null
-
-  // A live session this player has not been shown, opened over the intro once the launch
-  // asks ahead of it have had their turn — see the effect below `accountEmail`.
-  const sessionAsk = useSessionAsk(shownFeatures.has('challenges'))
-
-  const { submit: submitScore } = useScoreSubmission(userId, nickname, isReady)
-
-  // Answers to messages the player sent, asked for once the session is known. Shown on
-  // the intro, ahead of the news — a reply written to you personally outranks a release
-  // note.
-  const feedbackReplies = useFeedbackReplies(userId, isReady)
-
-  const [showNicknameModal, setShowNicknameModal] = useState(false)
-
-  // The one board store. Every surface that shows a score reads it — the strip above
-  // the top bar, the intro, the pause screen and the game over screen — so they cannot
-  // answer the same question differently. Trainee has no board and it stays quiet.
-  const board = useBoard(mode, difficulty, userId)
-  // The run's session standings, for the score bar's SESSION cell. Null for an ordinary
-  // run, which `useSessionBoard` answers without asking the server.
-  //
-  // The one read of them: the strip, the pause screen and game over all draw this, so the
-  // place in the title and the table under it cannot disagree. Read again as the run
-  // pauses and resumes, and once the final score has landed.
-  const { board: runSessionBoard, refresh: refreshSessionBoard } = useSessionBoard(
-    runSession,
-    userId,
-    isPaused,
-  )
-  const runSessionMedals = runSessionMedalsOf(
-    isGameOver ? runSession : null,
-    runSessionBoard,
-    runFigures,
-    rules.scoring.measure,
-    userId,
-  )
-  // Who won this challenge the last time it was aired, for the strip's third cell.
-  const previousWinner = usePreviousWinner(runSession, isPaused)
-  // Who holds each mode's Extreme all-time board, and who took the last challenge —
-  // read wherever a name is drawn, and by the game-over screen to tell a reign from a
-  // single record. The id is passed so the dev sidebar can pin the phoenix on this player.
-  const champions = useChampions(userId, shownFeatures.has('challenges'))
-  const refreshBoard = board.refresh
-  const bestToday = board.today.record
-  const bestWeek = board.week.record
-  const bestEver = board.forever.record
-  // Memoised on the fetched rows so the rival watcher only wakes when a fetch actually
-  // lands, not on every render of the game screen.
-  const leaders: Leaders = useMemo(
-    () => ({
-      today: leaderOf(board.today.rows),
-      week: leaderOf(board.week.rows),
-      ever: leaderOf(board.forever.rows),
-    }),
-    [board.today.rows, board.week.rows, board.forever.rows],
-  )
-
-  const inRun = isPlaying || isPaused
-  const measure = rules.scoring.measure
-  const rival = useRunRival({
-    inRun,
-    runSession,
-    mode,
-    difficulty,
-    userId,
-    leaders,
-    sessionBoard: runSessionBoard,
-    measure,
-    figures: runFigures,
-    runSeq: state.context.runSeq,
-  })
-  // What a session run is measured against on the bar: the session board, by the
-  // session's **measure**, with the player's own row reconciled against what the device
-  // holds for the session. Null on an ordinary run, and while the standings are still
-  // being read — `ready` below waits for them, so a null here is never frozen.
-  const localScores = useLocalScores()
-  const sessionTargets = useMemo(
-    () => sessionTargetsFor(runSession, runSessionBoard, measure, userId, localScores),
-    [runSession, runSessionBoard, measure, userId, localScores],
-  )
-  const celebration = useHitCelebration(inRun, rules.capabilities.coached, hitBatch)
-
-  // Trainee's invitation to a scored board. Offered only to a player who has never
-  // posted one: the point is introducing the boards to someone who has not found them.
-  const playedScored = SCORED_MODES.some((scored) =>
-    DIFFICULTY_ORDER.some((level) => bestOn(stats, scored, level).score > 0),
-  )
-  const stepUp = useStepUp({
-    inRun,
-    // Not during the tutorial, which makes the same offer itself the moment the lesson
-    // runs out — see `useTaughtOffer` below. Two invitations to the one board, one of
-    // them arriving while a script is still talking, is the nagging the offer is
-    // rationed to once a run to avoid.
-    coached: rules.capabilities.coached && !tutorial,
-    batch: hitBatch,
-    hits,
-    playedScored,
-    fromWelcome: welcome.welcomed,
-  })
-  // Which achievement the announcement bar was tapped for, or null. The run is paused
-  // behind the card rather than running on under it: an achievement is worth stopping for,
-  // and reading one while targets expire is how a player loses a life to their own
-  // curiosity. Dismissing leaves them on the pause screen, which carries the same row.
-  const [askedAchievement, setAskedAchievement] = useState<AchievementId | null>(null)
-
-  // Open while the transitional screen is up. The run is paused behind it rather than
-  // abandoned, so backing out through the intro leaves nothing half-finished.
-  const [stepUpOpen, setStepUpOpen] = useState(false)
-  // The toast appearing is the offer being made; latched on its rising edge so the
-  // withdraw-and-reoffer dance inside one run cannot double-count.
-  const stepUpOfferedRef = useRef(false)
-  useEffect(() => {
-    const offered = stepUp.message !== null
-    if (offered && !stepUpOfferedRef.current) {
-      track('challenge_offered', {
-        mode,
-        difficulty,
-        to_mode: STEP_UP_BOARD.mode,
-        to: STEP_UP_BOARD.difficulty,
-      })
-    }
-    stepUpOfferedRef.current = offered
-  }, [stepUp.message, mode, difficulty])
-  const coach = useTraineeCoach({
-    inRun,
-    rules,
-    grid,
-    targets,
-    batch: hitBatch,
-    // Muted for the whole of a tutorial run as well as while a celebration owns the line:
-    // the stat block its line is drawn in is not on screen there, and a coach whose lines
-    // go nowhere is a route solved on every press for nothing.
-    muted: celebration.message !== null || tutorial,
-  })
-
-  const online = useOnline()
-
-  // Read up here rather than beside the dial they are drawn next to: the achievements ask
-  // for both, and a run's average is one of the few things a rule cannot re-derive.
-  const avgAccuracy = averageOf(accSum, hits)
-  const avgSpeed = averageOf(spdSum, hits)
-
-  // Every board the player stands on. Read here rather than inside the intro screen,
-  // which unmounts for the whole run — the achievements need it while one is going, and
-  // one request answers for both.
-  const { medals, standings, reigns, loaded: medalsLoaded } = useMyMedals(userId)
-
-  // What rivals took off that line while nobody was looking. Held here rather than in the
-  // intro screen, which unmounts for the whole run: the news has to survive being shown
-  // once and not come back at the end of every run — see useLostMedals.
-  const lostMedals = useLostMedals({ standings, loaded: medalsLoaded, userId })
-  // What the week took off the player, for the list behind the medal line. Written by the
-  // diff above at launch; read here so the list is standing by the time it is opened.
-  const medalHistory = useMedalHistory()
-
-  // Shared by the two hooks below, and declared above both because each needs something
-  // from the other: the bar reads the queue, and the achievements read the bar's own
-  // `crossed` to answer the board-shaped ones.
-  const achievementQueue = useAchievementQueue(inRun)
-
-  const { announcement, crossed } = useAnnouncements({
-    inRun,
-    // Nothing is frozen until the board has answered and the connection is good —
-    // see announcementsReady. A run that started first gets its targets the moment
-    // they land, and the score already reached is measured against them — which is
-    // what a run begun on a cold start used to lose entirely.
-    ready: announcementsReady(runSession, board.loaded, sessionTargets, online),
-    score: state.context.score,
-    runSeq: state.context.runSeq,
-    // Measured against everything the app knows the player has scored here, not the
-    // device's memory alone — the boards outlive a reinstall, a second device and a
-    // hydrate that threw, and they are on this same screen. Trainee's entry stays at
-    // zero on both sides, so this needs no special case to stay quiet there.
-    //
-    // None of it on a session run — see `boardTargetsOf`.
-    ...boardTargetsOf(
-      runSession,
-      personalBar(bestOn(stats, mode, difficulty).score, board.forever.myBest),
-      board,
-    ),
-    // The run's place on its session board, by the session's measure. `runFigures` is the
-    // same three numbers game over places the run by, so the bar and the medal agree.
-    session: sessionRunOf(sessionTargets, runFigures, userId),
-    rival,
-    achievements: achievementQueue.queue,
-    onAchievementAnnounced: achievementQueue.announced,
-    // Send the score the moment a board record falls rather than waiting for game
-    // over: the write is what wakes every other player's bar, so delaying it is
-    // what made rivals hear about a record minutes after it happened. The score
-    // only climbs within a run, and the database refuses downgrades, so an early
-    // write can never spoil the final one.
-    onBoardRecord: () => {
-      void submitScore(
-        mode,
-        rules.difficulty,
-        state.context.score,
-        state.context.hits,
-        runSession,
-      )
-      // The counters go with it. A record is what takes a run's score public, and a run
-      // whose score is on the board while its counters are still on the device is how a
-      // profile came to show a best no career of its own could account for. Not final:
-      // the run is still being played, and the post that closes it comes at game over.
-      //
-      // `elapsedMs` is short by the stretch being played right now — the machine only
-      // banks it on leaving `playing` — which costs nothing, because the server keeps
-      // the highest figure a run has ever posted and the last post carries the lot.
-      //
-      // A session run posts its receipt here too, beside its session score — see
-      // `runKindOf`.
-      const counted = runKindOf(mode, rules.difficulty, runSession)
-      if (counted !== null) {
-        void countRun(userId, {
-          ...counted,
-          runId,
-          score: state.context.score,
-          hits: state.context.hits,
-          accSum: state.context.accSum,
-          spdSum: state.context.spdSum,
-          elapsedMs: state.context.elapsedMs,
-          final: false,
-        })
-      }
-    },
-  })
-
-  // What the player has earned, and what this run just added to it.
-  //
-  // Declared after the bar because it reads what the run has crossed: opening a day's
-  // board and beating your own best are both things the bar has already worked out, and
-  // working them out a second time here is how the two would come to disagree.
-  const sessionPlaces = useSessionPlaces(userId, placesAsked)
-  // The run a drag last moved more than one key in, landed a hit in, and landed a strike
-  // in. Kept as the run's number rather than a flag, so the next run reads false without
-  // anything having to clear it.
-  const [sweptIn, setSweptIn] = useState({ gesture: -1, hit: -1, strike: -1 })
-  // A press the dial says was part of a drag, sent and then read back: the machine
-  // resolves a press synchronously, so a new hit batch straight after it is that press's.
-  // Asked here rather than of `hitBatch` in an effect, since one drag can send several
-  // presses inside a single render and only the last of them would still be on screen.
-  const sendDialed = (
-    event: Extract<Parameters<GameSend>[0], { type: 'PRESS' | 'SET_CELL' }>,
-    sweep: boolean,
-  ) => {
-    const before = actor.getSnapshot().context.hitBatch.seq
-    send(event)
-    if (!sweep) return
-    const { hitBatch: after, runSeq } = actor.getSnapshot().context
-    if (after.seq === before) return
-    setSweptIn((held) => ({
-      ...held,
-      hit: runSeq,
-      strike: after.hits.some((hit) => hit.bonus) ? runSeq : held.strike,
-    }))
-  }
-  const achievements = useAchievements({
-    // Game over is part of the run here, unlike everywhere else `inRun` is used. The
-    // pass that answers "did this run finish on nothing" happens at game over, and
-    // `stepAchievements` drops any pass made outside a run — so a hook told the run was
-    // already over threw away the one evaluation that could see `finished`.
-    inRun: inRun || isGameOver,
-    // Which run this is. `inRun` above cannot mark the boundary between two of them —
-    // PLAY AGAIN goes straight from game over back into playing — so the machine's own
-    // count is what tells the hook a new run has started.
-    runSeq: state.context.runSeq,
-    finished: isGameOver,
-    mode,
-    difficulty,
-    score: state.context.score,
-    hits,
-    lives,
-    maxStreak,
-    strikes,
-    elapsedMs,
-    avgAccuracy,
-    avgSpeed,
-    personalBest: crossed.includes('record'),
-    swept: sweptIn.gesture === state.context.runSeq,
-    sweptHit: sweptIn.hit === state.context.runSeq,
-    sweptStrike: sweptIn.strike === state.context.runSeq,
-    batch: hitBatch,
-    stats,
-    standings,
-    standingsLoaded: medalsLoaded,
-    reigns,
-    // UNTOUCHABLE is both Extreme all-time boards at once — the same reign the game-over
-    // screen pays out for, read from the same two ids. Deliberately not the **crown**,
-    // which took the phoenix in alongside them; see `holdsBothBoards`.
-    crown: holdsBothBoards(userId, champions),
-    crossed,
-    guideRead: howToPlay.read,
-    feedbackAnswered: feedbackAnswered.answered,
-    sessionPlaces,
-    userId,
-    onUnlocked: (awards) => {
-      for (const award of awards) {
-        track('achievement_unlocked', { id: award.id, stage: award.stage })
-      }
-      achievementQueue.push(awards)
-    },
-  })
-  const recordMultiplayer = achievements.recordMultiplayer
-
-  // The boards the run ended on top of, latched on the game-over edge below. What the
-  // bar announced is the starting point — by game over the player's own score is the
-  // record, so asking the board what this run took would say yes to every run — and
-  // each claim is then checked against the board as it stands, so a rival who went past
-  // mid-run takes the medal with them. Latched rather than derived because the title
-  // tier reads it while flying up from the board, and a medal that moved under it would
-  // change the letters mid-flight.
-  const [runMedals, setRunMedals] = useState<readonly Period[]>([])
-  // Latched beside the medals and for the same reason: the title reads it while flying
-  // up from the board, and a rival taking the other mode's Extreme board mid-screen
-  // must not turn a crown into a bird under the player.
-  const [runScreen, setRunScreen] = useState<RecordScreen>('plain')
-  // Whether this run landed on the podium at all — gold, silver or bronze, on any
-  // period — latched for the same reason as the two above. A superset of `runMedals`,
-  // which only tracks the top spot: this is what keeps a low-scoring run that still
-  // took second or third off the title's cold/plain fallbacks.
-  const [runPodium, setRunPodium] = useState(false)
-
-  // Which of a title tier's three lines this run gets. Drawn once per game over, not
-  // per render: the title flies up from the board and hands off to the overlay, so a
-  // roll taken during render would change the letters mid-flight.
-  const [titleRoll, setTitleRoll] = useState(Math.random())
-
-  // Trigger score submission on each game-over transition.
-  const prevIsGameOverRef = useRef(false)
-  useEffect(() => {
-    if (isGameOver === prevIsGameOverRef.current) return
-    prevIsGameOverRef.current = isGameOver
-    if (isGameOver) {
-      setTitleRoll(Math.random())
-      // The boards have been kept live all run by Realtime, so what they hold now is
-      // what a rival left behind if they passed us while we were playing.
-      const taken = heldPeriods(medalPeriods(crossed), state.context.score, {
-        today: bestToday,
-        week: bestWeek,
-        ever: bestEver,
-      })
-      const screen = isOneOf(mode, SCORED_MODES)
-        ? recordScreen({
-            record: taken[0] ?? null,
-            mode,
-            difficulty,
-            userId,
-            champions,
-          })
-        : 'plain'
-      setRunMedals(taken)
-      setRunScreen(screen)
-      setRunPodium(
-        isOneOf(mode, SCORED_MODES) &&
-          currentBoardMedals(board, state.context.score, userId).length > 0,
-      )
-      track('run_finished', {
-        mode,
-        difficulty,
-        score: state.context.score,
-        hits: state.context.hits,
-        strikes: state.context.strikes,
-        records: taken,
-        screen,
-        personal_best: crossed.includes('record'),
-      })
-      // Mirrors the game-over screen's own decision — see game-over-overlay.tsx, which
-      // computes the same offer from the same run, up or down. Offered here, accepted
-      // in onChallenge.
-      const offer = runChallenge(
-        mode,
-        difficulty,
-        state.context.hits,
-        state.context.strikes,
-      )
-      if (offer !== null) {
-        track('challenge_offered', {
-          mode,
-          difficulty,
-          to_mode: offer.mode,
-          to: offer.difficulty,
-        })
-      }
-    }
-    // Refresh on both edges of game over so other players' runs appear. Our own score
-    // no longer depends on this landing: it is recorded on the device as it is
-    // submitted, and the board store folds that in without asking the server.
-    void refreshBoard()
-    if (isGameOver && (isOneOf(mode, SCORED_MODES) || runSession !== null)) {
-      void submitScore(
-        mode,
-        rules.difficulty,
-        state.context.score,
-        state.context.hits,
-        runSession,
-        // The run is over, so `elapsedMs` has stopped moving — see `stopClock`.
-        // `submitScore` keeps it only where the measure is the clock; the mid-run
-        // record post above sends none, a run still being played having no time to
-        // claim. Nor does a drilled run its window shut on before the ninth target
-        // fell: only a finished race has a time, and without one a race posts nothing.
-        claimedTime(state.context, rules) ?? undefined,
-        // Then the standings again, so the table on the game-over screen has this run on
-        // it. Read before the write landed, it showed the session as it was before the
-        // run — empty, on a session nobody else had played yet. Asks nothing of the
-        // server on an ordinary run, which has no session to read.
-      ).then(refreshSessionBoard)
-      if (isReady && !nickname && state.context.score > 0) setShowNicknameModal(true)
-    }
-  }, [
-    isGameOver,
-    isReady,
+    email,
     nickname,
-    mode,
-    difficulty,
-    state.context.score,
-    state.context.hits,
-    state.context.strikes,
-    crossed,
+    pendingEmail,
+    rolePreview,
+    shownFeatures,
+    updateNickname,
+    userId,
+  } = account
+  const {
+    bestEver,
     bestToday,
     bestWeek,
-    bestEver,
-    submitScore,
-    refreshBoard,
-  ])
-
-  // The post that closes the run. Its counters have been going up with every board
-  // record it set (see `onBoardRecord`); this is the last word on them, and the server
-  // takes nothing under this run's name afterwards.
-  //
-  // The ref is what keeps it to one: this effect's inputs settle over a few renders
-  // after game over, and only the first of them is the run. A repeat would be harmless —
-  // the server would find the run already closed and do nothing — but it is a round trip
-  // to be told so.
-  //
-  // A run played in a session closes its receipt the same way, which is what puts a
-  // challenge run on the analytics screen — see `runKindOf`.
-  const countedRunRef = useRef(false)
-  useEffect(() => {
-    if (!isGameOver) {
-      countedRunRef.current = false
-      return
-    }
-    const counted = runKindOf(mode, rules.difficulty, runSession)
-    if (countedRunRef.current || counted === null) return
-    countedRunRef.current = true
-    void countRun(userId, {
-      ...counted,
-      runId,
-      score: state.context.score,
-      hits,
-      accSum,
-      spdSum,
-      elapsedMs,
-      final: true,
-    })
-  }, [
-    isGameOver,
-    mode,
-    rules.difficulty,
-    runSession,
-    state.context.score,
-    hits,
-    accSum,
-    spdSum,
-    elapsedMs,
-    runId,
-    userId,
-  ])
-
-  // Ending a run yourself from the pause menu still counts: submit the score and ask
-  // for a nickname exactly as running out of lives does. The game-over effect below
-  // only fires on the gameOver transition, so without this the run would be lost.
-  const endRunEarly = (reason: AnalyticsEvents['run_ended']['reason']) => {
-    // Ahead of the scored-mode guard below, and on purpose: a Trainee run the player
-    // walked out of is still a run that ended, and the question this answers — how many
-    // runs are abandoned rather than played out — is not a question about leaderboards.
-    //
-    // The pause screen's callers find the stretch already banked, with `playingSince`
-    // cleared; a hold on the targets area ends a run that is still being played, so its
-    // open stretch is added by hand the way the machine's `stopClock` would.
-    const now = Date.now()
-    const ranMs = elapsedMs + now - (state.context.playingSince ?? now)
-    track('run_ended', {
-      mode,
-      difficulty,
-      reason,
-      score: state.context.score,
-      hits: state.context.hits,
-      strikes,
-      elapsed_ms: ranMs,
-      accuracy: avgAccuracy,
-      speed: avgSpeed,
-      max_streak: maxStreak,
-    })
-    // A session run leaves here too, even though its mode keeps no board: the bar below
-    // is about `scores`, and a session's standings are not that table. Without this, END
-    // RUN and RESTART RUN were the two ways to finish a challenge run that threw the
-    // score away entirely — not posted, and not even queued on the device.
-    const onBoard = isOneOf(mode, SCORED_MODES)
-    if (!onBoard && runSession === null) return
-    const { score, hits } = state.context
-    // Counted before the score guard below: a run that scored nothing is still a run
-    // the player played, and "how many runs" is not "how many went well".
-    //
-    // A board run moves `player_totals`, which is keyed by mode × difficulty — a board.
-    // A session run leaves only a receipt, for the analytics: its figures belong to the
-    // session it was played in and reach the player's fortune from there. `runKindOf`
-    // tells the two apart, and the type keeps the second away from the first's counters.
-    const counted = runKindOf(mode, rules.difficulty, runSession)
-    if (counted !== null && !countedRunRef.current) {
-      countedRunRef.current = true
-      void countRun(userId, {
-        ...counted,
-        runId,
-        score,
-        hits,
-        accSum,
-        spdSum,
-        elapsedMs: ranMs,
-        final: true,
-      })
-    }
-    if (score <= 0) return
-    // No time goes up with it. A run left before its drill was spent did not finish the
-    // race, and the clock it stopped on is not a time it set: one hit and END RUN posted
-    // 3.1″, which beat every run that went the distance. Without one, `submitScore`
-    // drops a race's post entirely and keeps a score-measured session's as it was.
-    void submitScore(mode, rules.difficulty, score, hits, runSession)
-    void refreshBoard()
-    if (isReady && !nickname) setShowNicknameModal(true)
-  }
-
-  // A drawing board is drawn on: a tap on the targets area marks a point, and two make a
-  // segment. Worn by the scheme, not by a mode's name. See lib/segments.ts.
-  const drafting = opening.dialScheme === 'drafting'
-  // How far the board has been drawn, where the rows above the dial are drawn in with it.
-  const barDrawn = drafting ? opening.sweep : null
-  const { drawing, plot } = useSegments(runId, grid)
-
-  const targetsShortcuts = useTargetsShortcuts({
-    playing: isPlaying,
-    tutorial,
-    onPlot: drafting
-      ? (x, y) => {
-          plot({ x, y })
-        }
-      : null,
-    onPause: () => {
-      pauseRun('double_tap')
-    },
-    onRestart: () => {
-      endRunEarly('restart')
-      send({ type: 'RESTART', now: Date.now(), runId: newRunId() })
-      track('run_started', { mode, difficulty, from: 'hold' })
-    },
-  })
-
-  // The dial sum drives the score above the dial; the machine's composite score
-  // drives the digital HUD readout.
-  const sum = sumOf(dial, grid)
-  // What the sum row shows, which is `sum` on every dial but a **freezing** one: there it
-  // is the sum the last hit left, taken again only when a hit lands or a run starts — the
-  // run's id changes on START, RESTART and RESTORE alike. The row's digits, their flip and
-  // their tint all read it, so none of them gives the real sum away. Everything else —
-  // the spawner above all — reads the real one.
-  const shownSum = useHeldSum(sum, {
-    freeze: dial.freeze,
-    key: `${runId}:${hitBatch.seq}`,
-  })
-  const direction = useScoreDirection(shownSum)
-
-  // The **drill** this run deals from, where it has one — see `drillFor`.
-  const drill = drillFor(rules, mode, runSession)
-  // One pale tint per card, out of this challenge's own hue. Stable across runs because
-  // nothing about it is rolled — the nth card of a drill is the nth tint — and null for
-  // every mode that rolls its targets, whose discs are tinted by the hundreds instead.
-  const drillTints = useMemo(
-    () =>
-      drill === null ? null : challengeTints(hueOf(gradientOf(mode)[1]), drill.count),
-    [drill === null, drill?.count, mode],
-  )
-
-  // A drifting number arriving on the dialled sum is a hit — see `TICK`.
-  useDriftTicks({ isPlaying, targets, step: rules.spawn.drift, send })
-
-  useTargetSpawner({
-    isPlaying,
-    targetCount: targets.length,
-    // What a **drill** is indexed by: arrivals this run, not hits and not ids.
-    // `nextTargetId` climbs for the life of the machine and never restarts — see the
-    // note on it — so a second run of a drilled mode indexed by it starts past the end
-    // of the drill and deals nothing at all. `dealt` restarts with the run, and
-    // survives the run being put away and brought back.
-    dealt: state.context.dealt,
-    drill,
-    rules,
-    submode,
-    hits,
-    playerClockMs: state.context.playerClockMs,
-    currentSum: sum,
-    standing: targets,
-    send,
-  })
-  const { floats, removeFloat } = useFloatingPoints(hitBatch)
-  // How far into the lesson the player has got, and how many times the stepper has put
-  // them back.
-  //
-  // `furthest` is a high-water mark rather than a stored step: raised by play, never by
-  // the stepper, and seeded from the run's own hit count — so a tutorial put back from
-  // storage mid-run arrives with everything it had already played behind it, and nothing
-  // extra has to be persisted for that.
-  const [furthestStep, setFurthestStep] = useState(0)
-  // Only ever climbs, and nobody reads the number itself — the lesson and the display
-  // list both want to know that a rewind happened, not which one. Declared above the two
-  // hooks that take it, which is why it sits ahead of the board rather than beside the
-  // stepper that raises it.
-  const [rewindSeq, setRewindSeq] = useState(0)
-  // How many times the player has shuffled the dial by hand, which the dial counts with the hits:
-  // a shuffle is a scramble it did not see arrive with a hit.
-  const [shuffles, setShuffles] = useState(0)
-  const shuffleDial = () => {
-    send({ type: 'SHUFFLE', now: Date.now() })
-    setShuffles((count) => count + 1)
-  }
-
-  const { displayedTargets, removeDisplayed, onContainerLayout, canvas, drillCards } =
-    useDisplayedTargets({
-      machineTargets: targets,
-      hitBatch,
-      runSeq: state.context.runSeq,
-      rewindSeq,
-      restoredPositions,
-      drill,
-    })
-
-  // Raised by play alone. A rewind drops `hits`, and the max is what makes that drop
-  // invisible here: ground covered stays covered.
-  useEffect(() => {
-    setFurthestStep((reached) => Math.max(reached, hits))
-  }, [hits])
-
-  // A fresh run starts the mark over, seeded from the hit count that run arrived with —
-  // nought for a run just dealt, and whatever it had already played for one put back from
-  // storage. Read through a ref rather than depended on, for the reason the lesson does
-  // the same: `hits` moves inside a run, and an effect watching it would reset the mark
-  // on the first hit of the very run it was tracking.
-  const hitsRef = useRef(hits)
-  hitsRef.current = hits
-  useEffect(() => {
-    setFurthestStep(hitsRef.current)
-  }, [state.context.runSeq])
-
-  // The tutorial's lesson: what it is saying, and how much of the dial it is holding while
-  // it says it. Silent and inert in every run that is not a tutorial, and in a tutorial put
-  // back from storage with hits already on it.
-  const lesson = useTutorialLesson({
-    tutorial,
-    isPlaying,
-    runSeq: state.context.runSeq,
-    rewindSeq,
-    hits,
-    batch: hitBatch,
-    grid,
-    targets,
-  })
-
-  // The tutorial's own end: the lesson is over and a stretch of rolled targets has gone
-  // down after it, so the run asks whether they would rather play a real one.
-  const taught = useTaughtOffer({
-    tutorial,
-    isPlaying,
-    taught: lesson.taught,
-    hits,
-    playedScored,
-    runSeq: state.context.runSeq,
-  })
-  // Opened once per run and never reopened by a dismissal, so the rising edge is the
-  // offer being made — the same thing the toast's own latch above counts.
-  useEffect(() => {
-    if (!taught.open) return
-    track('challenge_offered', {
-      mode,
-      difficulty,
-      to_mode: STEP_UP_BOARD.mode,
-      to: STEP_UP_BOARD.difficulty,
-    })
-  }, [taught.open, mode, difficulty])
-
-  // Where the lesson's card goes while it is pointing at the target, and which way its beak
-  // turns — beside the target, on whichever side of it the canvas has room for. The
-  // tutorial holds one target, so there is never a question of which.
-  const lessonTarget = displayedTargets[0]
-  const tip =
-    lessonTarget === undefined
-      ? null
-      : tipForTarget(lessonTarget.position, canvas.height, TUTORIAL_BANNER_HEIGHT)
-
-  const boardTargets = drawnTargets(lesson.voice, displayedTargets)
-
-  // Where the board and the sum row sit inside the effect layer over them. A shot needs
-  // the board's origin as well as its size: a target's position is measured from the
-  // board, and the sum row the shot leaves from is measured from the box holding both.
-  //
-  // Only the board's size comes from its own layout event. Its origin is read off the
-  // sum row, which follows it directly: on web a layout event's x/y are measured from
-  // the view's DOM parent, and the board's parent is the `display: contents` wrapper
-  // its GestureDetector draws — a box with no place of its own, so the board came back
-  // measured from the page and every shot landed a top bar's height too low, under the
-  // dial. The sum row is a plain child of the box the shot layer covers.
-  const boardSize = useRef({ width: 0, height: 0 })
-  const noteBoardSize = (event: LayoutChangeEvent) => {
-    const { width, height } = event.nativeEvent.layout
-    boardSize.current = { width, height }
-  }
-  const sumRowRect = useRef({ x: 0, y: 0, width: 0 })
-  const noteSumRowRect = (event: LayoutChangeEvent) => {
-    const { x, y, width } = event.nativeEvent.layout
-    sumRowRect.current = { x, y, width }
-  }
-
-  // Where a strike fires from and what it is aimed at. The muzzle is the middle of the
-  // sum row; the board sits on top of that row, as wide as it, so its origin is the
-  // row's top edge less the board's height.
-  // How wide the card for this target is drawn — the drill's own answer where there is
-  // one, and the size every other mode draws otherwise.
-  const sizeOfCard = (seq: number): number => drillCards?.[seq]?.size ?? PIE_SIZE
-
-  const aimShot = (value: number): ShotAim | null => {
-    const size = boardSize.current
-    const row = sumRowRect.current
-    if (size.width === 0 || row.width === 0) return null
-    const board = {
-      x: row.x + (row.width - size.width) / 2,
-      y: row.y - size.height,
-    }
-    // Live targets never share a value, so the hit carrying this one names one card.
-    const target = displayedTargets.find((entry) => entry.value === value)
-    if (target === undefined) return null
-    return {
-      from: {
-        x: row.x + row.width / 2,
-        y: row.y + SUM_ROW_HEIGHT / 2,
-      },
-      to: {
-        // The middle of this card, which is not the middle of every card: a drilled run
-        // draws its nine at nine different sizes.
-        x: board.x + target.position.x + sizeOfCard(target.seq) / 2,
-        y: board.y + target.position.y + sizeOfCard(target.seq) / 2,
-      },
-      radius: sizeOfCard(target.seq) / 2,
-      // A hit is the sum landing on the target's value, so this is the number standing
-      // in the sum row as the shot leaves it.
-      sumDigits: String(value).length,
-    }
-  }
-
-  const { shots, removeShot, flame, legs } = useStrikeShots({
-    mode,
-    runSeq: state.context.runSeq,
-    hitBatch,
-    aim: aimShot,
-  })
-
-  // Keeps the device's copy of the run in step with this one, so closing the app on it
-  // is not losing it. Below the display list because it writes the board down as the
-  // player sees it — targets and the spots they are sitting in — and only the list
-  // knows the second half.
-  usePersistedRun({
+    board,
+    champions,
     inRun,
-    isPaused,
-    run: state.context,
-    placed: displayedTargets,
-    session: savedSessionOf(runSession, runSessionClosesAt),
-    settled: savedRun.settled,
-  })
-
-  // What each of the nine keys will take. `full` throughout every run but a guided
-  // tutorial route, where the lesson lights one key and shuts the other eight.
-  const dialControls = useMemo(
-    () => cellsOf(dial).map((index) => keyControl(lesson.dial, lesson.liveKey, index)),
-    [lesson.dial, lesson.liveKey],
-  )
-
-  const currentMultiplier = streakMultiplier(streak)
-
-  const { floatStats, removeFloatStat } = useFloatingStat(
-    hitBatch,
-    rules.scoring.headline,
-  )
-
-  const avgStat = { acc: avgAccuracy, spd: avgSpeed }[rules.scoring.headline]
-  const prevAvgRef = useRef(avgStat)
-  const avgDirection = useRef<1 | -1>(1)
-  if (avgStat !== prevAvgRef.current) {
-    avgDirection.current = headingOf(avgStat, prevAvgRef.current)
-    prevAvgRef.current = avgStat
-  }
-
-  // ── Life-loss & dying sequence ──────────────────────────────────────────────
-
+    previousWinner,
+    runSessionBoard,
+    runSessionMedals,
+  } = boards
   const {
-    phase: dyingPhase,
-    flashStyle,
-    titleStyle,
-    overlayStyle,
-    overlayOpacity,
-    targetsAreaRef,
-    setOverlayTitleY,
-  } = useDyingSequence({ isGameOver, lives, hold: remainsHoldOf(opening.remains) })
-  useBarColor(systemBarOf(opening.systemBar, opening.inPlay, dyingPhase))
-  const lostMarks = useLostMarks({
-    runId,
-    targets: boardTargets,
-    lives,
-    boardRef: targetsAreaRef,
-  })
-
-  // The bookmark stays off the game-over screen entirely until the cinematic has
-  // actually landed — not just hidden-then-revealed, mounted the instant it's
-  // allowed to and already showing its label, so there is no icon sitting there
-  // mid-flight and no separate step where the label slides out after it.
-  const [gameOverBookmarkReady, setGameOverBookmarkReady] = useState(false)
-  useEffect(() => {
-    if (dyingPhase !== 'done') {
-      setGameOverBookmarkReady(false)
-      return
-    }
-    const timer = setTimeout(() => {
-      setGameOverBookmarkReady(true)
-      setBookmarkRevealed(true)
-    }, BOOKMARK_REVEAL_DELAY_MS)
-    return () => {
-      clearTimeout(timer)
-    }
-  }, [dyingPhase])
-
-  // ── Multiplayer ────────────────────────────────────────────────────────────
-
-  const {
-    multiRoom,
-    multiGame,
-    pendingMultiAction,
-    setPendingMultiAction,
+    accountEmail,
+    accountNotice,
     executeMultiAction,
+    handleAdminStartGame,
     handleCreateRoom,
     handleJoinRoom,
-    handleAdminStartGame,
-    showMultiWaiting,
-    showMultiGame,
-    showMultiResults,
+    introDrawn,
     isMultiActive,
-  } = useMultiplayerScreens({
-    userId,
-    nickname,
-    askNickname: () => {
-      setShowNicknameModal(true)
-    },
-    recordMultiplayer,
-  })
-
-  const [showMultiMenu, setShowMultiMenu] = useState(false)
-  const [menuInitialTab, setMenuInitialTab] = useState<'alone' | 'friends'>('alone')
-  // Whether the start screen was left on the ARCADE pill, across launches as well as
-  // across screens. Only that one bit, rather than the focused pill itself: the three
-  // modes are the machine's own `mode` and come back from there, and a second copy of them
-  // here would be free to drift from it the moment anything else changed the mode.
-  const { onArcade: menuOnArcade, setOnArcade: setMenuOnArcade } =
-    usePersistedArcadeFocus()
-
-  // The intro, but for whatever is stacked over it: the machine is idle, the player is not
-  // in a room or on the map, and whether this launch owes the tutorial offer has been
-  // decided. Read through the two answers
-  // below rather than directly, so nothing in the tree can decide for itself what counts
-  // as being at the start screen.
-  const atIntro =
-    isMenu &&
-    !isMultiActive &&
-    !arcadeOpen &&
-    welcome.decided &&
-    // A run the app was closed on is still being asked about, or is on its way into the
-    // machine. Either way the player is about to be looking at a pause screen, and the
-    // start screen has no business flashing up in front of it.
-    savedRun.settled
-
-  // `introDrawn` paints the start screen; `onIntro` is the stricter answer — a question
-  // put over a card the player opened themselves is an interruption, not a launch ask.
-  const { drawn: introDrawn, alone: introAlone } = introStanding(atIntro, menuOverlay)
-  const { offer: welcomeOffer, free: onIntro } = welcomeStanding(
-    introAlone,
-    splashDone,
-    welcome.pending,
-  )
-  // The push card's turn in the launch queue, right behind the recording card.
-  const pushCardClear = launchAsksClear({
-    splashDone,
+    markSessionSeen,
+    menuInitialTab,
+    menuOnArcade,
+    menuScreenOpen,
+    multiGame,
+    multiRoom,
     onIntro,
-    repliesReady: feedbackReplies.ready,
-    hasReply: feedbackReplies.reply !== null,
-    newsReady: whatsNew.ready,
-    newsVisible: launchPopupUp,
-    challengeUp: challengeCard !== undefined,
-    installing: installPrompt.target !== 'none',
-    replayVisible: replayConsent.visible,
-  })
-  const menuScreenOpen = isMenuScreen(menuOverlay)
-
-  // Putting an address on this profile, and fetching a profile back from one. Below
-  // `onIntro`, which it reads: the one-time ask is a launch ask like the three above it
-  // and waits its turn behind every one of them.
-  const accountEmail = useAccountEmail({
-    account: {
-      ready: isReady,
-      email,
-      pendingEmail,
-      sendCode,
-      confirmEmail,
-      restoreProfile,
-    },
-    nickname,
-    canPrompt: mayAskForEmail({
-      splashDone,
-      onIntro,
-      titleDialogOpen: titleDialog !== 'none',
-      nicknameOpen: showNicknameModal,
-      repliesReady: feedbackReplies.ready,
-      hasReply: feedbackReplies.reply !== null,
-      newsReady: whatsNew.ready,
-      newsVisible: launchPopupUp,
-      installing: installPrompt.target !== 'none',
-      consentVisible: consentUp,
-      challengeUp: sessionAsk.owed !== null || challengeCard !== undefined,
-    }),
-  })
-
-  // A challenge gone live since this player last looked, opened for them the first time
-  // they reach the intro while it runs and nothing else is asking — see `mayOpenSessionAsk`.
-  const owedSession = sessionAsk.owed
-  const markSessionSeen = sessionAsk.seen
-  const mayOpenSession = mayOpenSessionAsk({
+    pendingMultiAction,
+    pushCardClear,
+    setMenuInitialTab,
+    setMenuOnArcade,
+    setPendingMultiAction,
+    setShowMultiMenu,
+    showMultiGame,
+    showMultiMenu,
+    showMultiResults,
+    showMultiWaiting,
+    welcomeOffer,
+  } = intro
+  const {
+    TargetBoard,
+    TargetView,
+    barGlow,
+    barLightStyle,
+    corners,
+    dial,
+    difficulty,
+    digitFont,
+    drag,
+    elapsedMs,
+    grid,
+    hitBatch,
+    hits,
+    isGameOver,
+    isMenu,
+    isPaused,
+    isPlaying,
+    lives,
+    mode,
+    opening,
+    pauseRun,
+    playerClockMs,
+    resuming,
+    rules,
+    runAccent,
+    runId,
+    runSession,
+    runSessionClosesAt,
+    runSubtitle,
+    send,
+    setCorner,
+    setPlayerClockMs,
+    setResuming,
+    setRunSession,
+    setRunSessionClosesAt,
+    setWindowShut,
+    showPar,
+    showRoute,
+    showStats,
+    showSum,
+    state,
+    stats,
+    streak,
+    strikes,
+    submode,
+    toggleDrag,
+    togglePar,
+    toggleRoute,
+    toggleStats,
+    toggleSum,
+    tutorial,
+    windowShut,
+  } = control
+  const {
+    achievements,
+    announcement,
+    askedAchievement,
+    avgAccuracy,
+    avgSpeed,
+    celebration,
+    coach,
+    crossed,
+    lostMedals,
+    medalHistory,
+    medals,
+    sendDialed,
+    setAskedAchievement,
+    setStepUpOpen,
+    setSweptIn,
+    standings,
+    stepUp,
+    stepUpOpen,
+  } = announcements
+  const {
+    avgDirection,
+    avgStat,
+    barDrawn,
+    boardTargets,
+    currentMultiplier,
+    dialControls,
+    direction,
+    drafting,
+    drawing,
+    drill,
+    drillCards,
+    drillTints,
+    flame,
+    floatStats,
+    floats,
+    furthestStep,
+    legs,
+    lesson,
+    noteBoardSize,
+    noteSumRowRect,
+    onContainerLayout,
+    removeDisplayed,
+    removeFloat,
+    removeFloatStat,
+    removeShot,
+    setRewindSeq,
+    shots,
+    shownSum,
+    shuffleDial,
+    shuffles,
+    targetsShortcuts,
+    taught,
+    tip,
+  } = field
+  const { handleWindowShut, setModeBeforeSession } = session
+  const {
+    dyingPhase,
+    flashStyle,
+    gameOverBookmarkReady,
+    lostMarks,
+    overlayOpacity,
+    overlayStyle,
+    setOverlayTitleY,
+    targetsAreaRef,
+    titleStyle,
+  } = dying
+  const { endRunEarly, runMedals, runPodium, runScreen, titleRoll } = ending
+  const {
+    arcadeOpen,
+    bookmarkRevealed,
+    challengeCard,
+    feedbackAnswered,
+    feedbackOpen,
+    howToPlay,
+    installPrompt,
+    menuOverlay,
+    replayConsent,
+    setArcadeOpen,
+    setBookmarkRevealed,
+    setChallengeCard,
+    setFeedbackOpen,
+    setMenuOverlay,
+    setShareInvite,
+    setTitleDialog,
+    shareInvite,
     splashDone,
-    onIntro,
-    otherDialogUp:
-      titleDialog !== 'none' ||
-      showNicknameModal ||
-      challengeCard !== undefined ||
-      accountEmail.card !== null,
-    repliesReady: feedbackReplies.ready,
-    hasReply: feedbackReplies.reply !== null,
-    newsReady: whatsNew.ready,
-    newsVisible: launchPopupUp,
-    installing: installPrompt.target !== 'none',
-    consentVisible: consentUp,
-  })
-  useEffect(() => {
-    if (owedSession === null || !mayOpenSession) return
-    // Seen as it opens rather than as it closes: closing the app on it is still having
-    // been shown it, and a dialog that waits to be answered comes back every launch.
-    markSessionSeen(owedSession.session.id)
-    setChallengeCard(owedSession)
-  }, [owedSession, mayOpenSession, markSessionSeen])
-
-  const accountNotice = accountNoticeFor({ moved, pendingEmail })
-
-  // A new build waits on the device until the app lets it through, because the swap ends
-  // in a reload. The intro with nothing open over it is the only place that costs
-  // nothing: mid-run it would throw the run away, over an overlay it would lose whatever
-  // was being typed, and in a multiplayer room it would drop the player out of it.
-  useEffect(() => {
-    if (!updateReady || !onIntro || showNicknameModal) return
-    // The intro is still underneath these two, but a reload while the player is reading
-    // the catalogue is the same lost place as a reload over any other open thing.
-    if (titleDialog !== 'none' || challengeCard !== undefined) return
-    const timer = setTimeout(applyUpdate, UPDATE_SETTLE_MS)
-    return () => {
-      clearTimeout(timer)
-    }
-  }, [updateReady, applyUpdate, onIntro, showNicknameModal, titleDialog, challengeCard])
+    startTutorial,
+    titleDialog,
+    welcome,
+  } = dialogs
+  const {
+    feedbackReplies,
+    launchPopupUp,
+    nextVote,
+    pushConsent,
+    setShowNicknameModal,
+    setVoteOpen,
+    setVoteResultsOpen,
+    showNicknameModal,
+    voteOpen,
+    voteResultsOpen,
+    whatsNew,
+  } = asks
 
   return (
     // Outermost, because what a player may be shown decides whether a door is drawn at
