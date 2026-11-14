@@ -13,6 +13,7 @@ import { FeedbackBookmark } from '@/components/feedback-bookmark'
 import { AnnouncementEffect } from '@/components/game/announcement-effect'
 import { ArcadeGame } from '@/components/game/arcade-game'
 import { Arrival, ArrivalStage } from '@/components/game/arrival'
+import { BarScore } from '@/components/game/bar-score'
 import { BestScoresLine } from '@/components/game/best-scores-line'
 import { Confetti } from '@/components/game/confetti'
 import { Dial } from '@/components/game/dial'
@@ -37,7 +38,6 @@ import { PencilWipe } from '@/components/game/pencil-wipe'
 import { RunStopwatch } from '@/components/game/run-stopwatch'
 import { RunTopBar } from '@/components/game/run-top-bar'
 import { ScoreDigit } from '@/components/game/score-digit'
-import { ScoreReadout } from '@/components/game/score-readout'
 import { StepUpToast } from '@/components/game/step-up-toast'
 import { StrikeShot } from '@/components/game/strike-shot'
 import { SumHush } from '@/components/game/sum-hush'
@@ -2164,7 +2164,7 @@ export default function GameScreen() {
                               <>
                                 <PencilWipe progress={barDrawn} window={DRAW.score}>
                                   <View className="flex-row items-baseline gap-1.5">
-                                    <ScoreReadout
+                                    <BarScore
                                       score={state.context.score}
                                       digitFont={digitFont}
                                       glow={barGlow}
