@@ -134,3 +134,5 @@ hooks' bodies in their old order.
 - The three hooks still over 300: `use-arcade-run`, `use-multiplayer-game`,
   `use-achievements`. Then widen the lint to `hooks/`.
 - The `shadowRadius: 12` shadow, copied across ten files (a sweep; it is the user's call).
+
+Shipped to `main` at `9d12ef6` (pushed `bc3a13e..9d12ef6`), not deployed: criteria 6–12 are still to be walked on a device.

@@ -1,8 +1,8 @@
 # Every component under 300 lines
 
 Slug: component-size-limit
-Stage: review
-Next: /ship component-size-limit
+Stage: shipped
+Next: walk criteria 6–12 on a device, then /deploy
 Track: full
 Branch: refactor/component-size-limit
 Started: 2026-11-14
