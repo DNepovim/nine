@@ -1,12 +1,9 @@
 import Ionicons from '@expo/vector-icons/Ionicons'
-import type { MessageDescriptor } from '@lingui/core'
-import { msg } from '@lingui/core/macro'
-import { Plural, Trans, useLingui } from '@lingui/react/macro'
+import { Trans, useLingui } from '@lingui/react/macro'
 import { useFonts } from 'expo-font'
 import { isEmptyArray, isNonEmptyArray, isNonEmptyString } from 'narrowland'
 import { useState } from 'react'
 import { ScrollView, Text, View } from 'react-native'
-import Animated, { FadeInDown } from 'react-native-reanimated'
 
 import DSEG7Font from '@/assets/fonts/DSEG7Classic-Bold.ttf'
 import { CardModal } from '@/components/overlays/card-modal'
@@ -15,20 +12,20 @@ import { MedalLine } from '@/components/overlays/medal-line'
 import { ModalCard } from '@/components/overlays/modal-card'
 import { MottoModal } from '@/components/overlays/motto-modal'
 import { NicknameModal } from '@/components/overlays/nickname-modal'
-import { BOARD_COLUMNS, ProfileBoardRow } from '@/components/overlays/profile-board-row'
+import { ProfileBoards } from '@/components/overlays/profile-boards'
 import { ProfileEmail } from '@/components/overlays/profile-email'
 import { ProfileMotto } from '@/components/overlays/profile-motto'
 import { ProfileName } from '@/components/overlays/profile-name'
 import { ProfilePlaceRow } from '@/components/overlays/profile-place-row'
-import { ProfileReignRow } from '@/components/overlays/profile-reign-row'
+import { ProfileReigns } from '@/components/overlays/profile-reigns'
 import { ProfileScore } from '@/components/overlays/profile-score'
 import { ProfileSkeleton } from '@/components/overlays/profile-skeleton'
-import { ShowMore } from '@/components/overlays/show-more'
-import { StatCell } from '@/components/overlays/stat-cell'
+import { ProfileStatCells } from '@/components/overlays/profile-stat-cells'
+import { ProfileTenure } from '@/components/overlays/profile-tenure'
 import { TitleMark } from '@/components/overlays/title-mark'
 import { TrackedPressable } from '@/components/tracked-pressable'
 import { ACHIEVEMENT_COUNT } from '@/constants/achievements'
-import { ACHIEVEMENT_INK, DIM_INK } from '@/constants/colors'
+import { DIM_INK } from '@/constants/colors'
 import { mono } from '@/constants/theme'
 import { TYPE } from '@/constants/typography'
 import { useChampionsContext } from '@/hooks/use-champions'
@@ -36,8 +33,6 @@ import { usePlayerProfile } from '@/hooks/use-player-profile'
 import { useViewport } from '@/hooks/use-viewport'
 import { playerMarks } from '@/lib/champions'
 import { cn } from '@/lib/cn'
-import { compactText } from '@/lib/compact-number'
-import { formatCareerTime } from '@/lib/duration'
 import { daysSince, formatShortDate, monthsSince } from '@/lib/format-date'
 import { saveMotto } from '@/lib/leaderboard'
 import { NO_FACTORS } from '@/lib/name-gradient'
@@ -47,7 +42,6 @@ import {
   nameFactorsOf,
   type PlayerProfile,
 } from '@/lib/player-profile'
-import { codeOf, gradientOf, headlineOf, SCORED_MODES, type Headline } from '@/modes'
 
 // The day the player joined. No profile carries a real join date yet, so every one of
 // them reads the same day — the day profiles shipped — until the RPC can answer for it.
@@ -55,83 +49,10 @@ import { codeOf, gradientOf, headlineOf, SCORED_MODES, type Headline } from '@/m
 // been at this a while should not read as someone who turned up this morning.
 const JOINED_ON = '2026-09-22'
 
-// How many stretches the MEDALS HELD, EVER list opens on. A prolific winner carries up to
-// twenty of them — day boards mostly, one per day — and a table that long buries the
-// BOARDS table above it under a scroll the reader has to climb back out of. Seven is the
-// last week of them, which is what a glance at this list is asking about; the rest is a
-// tap away.
-const SHOWN_REIGNS = 7
-
-// How the revealed tail arrives — the comparison table's own step and fade, so a list
-// unfolding here beats at the rate a table assembling there does.
-const STEP_MS = 18
-const FADE_MS = 200
-
 // The mark over the name, a little larger than the intro draws it over the title. The
 // intro's has four glass letters under it to be read against; here it is the first thing
 // on the card, with only 12px caps below, so the same size would read as a stray emoji.
 const MARK_SIZE = 30
-
-// Past this many months the line counts years instead. A profile two years old that said
-// "joined 24 months ago" would be asking the reader to do the division.
-const MONTHS_IN_YEAR = 12
-
-// Past this many days the last-run line names the day instead. "6 days ago" is still a
-// glance; "23 days ago" is a sum, and the date answers it directly.
-const DAYS_IN_WEEK = 7
-
-// What each mode is judged on — the second line of both of its factor columns, the
-// average and the best alike.
-//
-// Keyed by the factor and read through `headlineOf`, rather than keyed by the mode. The
-// two coincide today only because both scored modes are named after the thing they
-// measure; a mode scored on the route but called something else would still want ACC in
-// this column. Which is also why it is not `codeOf` — a board code names the board, and
-// this names the question the column is asking.
-const FACTOR_CODE = {
-  acc: msg`ACC`,
-  spd: msg`SPD`,
-} as const satisfies Record<Headline, MessageDescriptor>
-
-// One column heading over the per-board table, stacked rather than spelled across.
-//
-// Two words on two lines for the same reason `StatCell` puts its label under its number:
-// stacked, a column is as wide as its widest word instead of as wide as both put
-// together. Four columns and a spelled difficulty is what a 320pt phone holds, and
-// `BEST SCORE` on one line is the thing that does not fit in it.
-//
-// Bottom-aligned by the row, so a one-word heading sits on the same line as the second
-// word of a two-word one and the headings read as a single band rather than as four
-// labels at four heights.
-function ColumnHead({
-  width,
-  top,
-  bottom,
-}: {
-  // One of `BOARD_COLUMNS` — the widths are declared beside the row that has to match
-  // them, never picked again here.
-  width: string
-  // Absent on a heading that is one word, which is then simply the only line.
-  top?: string
-  bottom: string
-}) {
-  return (
-    <View className={cn(width, 'items-end')}>
-      {top !== undefined && (
-        <Text
-          selectable={false}
-          numberOfLines={1}
-          className={cn(TYPE.caption, 'text-dim')}
-        >
-          {top}
-        </Text>
-      )}
-      <Text selectable={false} numberOfLines={1} className={cn(TYPE.caption, 'text-dim')}>
-        {bottom}
-      </Text>
-    </View>
-  )
-}
 
 // One player, as every board in the app already knows them plus everything no board
 // could say. Opened by tapping a name — on a leaderboard, the winners stripe, a
@@ -186,7 +107,6 @@ export function PlayerProfileOverlay({
   const { profile, loading, error, reload, patch } = usePlayerProfile(userId)
   const [editingMotto, setEditingMotto] = useState(false)
   const [editingName, setEditingName] = useState(false)
-  const [showAllReigns, setShowAllReigns] = useState(false)
   // The one thing this modal does differently for the player holding the phone. Every
   // number on it still reads the same either way — a profile is public data, and that it
   // is yours changes nothing about what it says, only about what you may rewrite.
@@ -201,17 +121,10 @@ export function PlayerProfileOverlay({
       ? null
       : lifetimeOf(profile.totals, profile.winnings, profile.sessions)
   const rows = profile === null ? [] : boardRows(profile)
-  // Newest first already, so the opening slice is the most recent stretches — the ones a
-  // player is most likely to still be holding, and the open one is the headline of the
-  // list.
-  const reigns = profile === null ? [] : profile.reigns
-  const shownReigns = showAllReigns ? reigns : reigns.slice(0, SHOWN_REIGNS)
-  const hiddenReigns = reigns.length - shownReigns.length
   // Both factors over every hit the player has landed, in either mode — the same pair
   // the game over screen shows for a single run, and the pair the name above is drawn in.
   const { avgAccuracy, avgSpeed } =
     lifetime === null ? NO_FACTORS : nameFactorsOf(lifetime)
-  const percent = (value: number | null): string => (value === null ? '—' : `${value}%`)
   // A device running ahead of this build can hold an achievement this one has never heard
   // of, and the server counts what it was sent. Held to the catalogue so the pair always
   // reads as a fraction — this build cannot name more than it knows.
@@ -321,51 +234,11 @@ export function PlayerProfileOverlay({
                 player chose; this one is the app's footnote to the name, and the two
                 sitting at the same weight would read as two mottos. */}
               {profile !== null && (
-                <View className="gap-1">
-                  {joinedMonths !== null && (
-                    <Text
-                      selectable={false}
-                      className={cn(TYPE.footnote, 'text-center text-dim')}
-                    >
-                      {joinedMonths < 1 ? (
-                        <Trans>joined this month</Trans>
-                      ) : joinedMonths < MONTHS_IN_YEAR ? (
-                        <Plural
-                          value={joinedMonths}
-                          one="joined a month ago"
-                          other="joined # months ago"
-                        />
-                      ) : (
-                        <Plural
-                          value={Math.floor(joinedMonths / MONTHS_IN_YEAR)}
-                          one="joined a year ago"
-                          other="joined # years ago"
-                        />
-                      )}
-                    </Text>
-                  )}
-                  {/* When they last played, under how long they have been at it — the
-                    other half of the same question, whether this is someone who is still
-                    here. Relative for the first week, then the day itself. Left off for a
-                    player with no runs rather than saying "never", which a profile with a
-                    name on a board cannot honestly be. */}
-                  {lastRunDays !== null && (
-                    <Text
-                      selectable={false}
-                      className={cn(TYPE.footnote, 'text-center text-dim')}
-                    >
-                      {lastRunDays === 0 ? (
-                        <Trans>last played today</Trans>
-                      ) : lastRunDays === 1 ? (
-                        <Trans>last played yesterday</Trans>
-                      ) : lastRunDays < DAYS_IN_WEEK ? (
-                        <Plural value={lastRunDays} other="last played # days ago" />
-                      ) : (
-                        <Trans>last played on {lastRunDay}</Trans>
-                      )}
-                    </Text>
-                  )}
-                </View>
+                <ProfileTenure
+                  joinedMonths={joinedMonths}
+                  lastRunDays={lastRunDays}
+                  lastRunDay={lastRunDay}
+                />
               )}
               {/* Under the name, the way the intro screen puts it under the title — same
                 component, same one-per-mode reduction, so a player's medals read the
@@ -409,209 +282,19 @@ export function PlayerProfileOverlay({
                     two numbers are not meant to add up to each other. */}
                   <ProfileScore score={lifetime.fortune} digitFont={digitFont} />
 
-                  {/* Five cells rather than four, so the gap comes in a step: RUNS and
-                    HITS count what happened, TIME says over how long, and the two
-                    averages say how well. Which of the two a cell is comes off its own
-                    kicker line rather than out of its label, so the labels are five bare
-                    codes and the row reads as the two groups it is.
+                  <ProfileStatCells
+                    lifetime={lifetime}
+                    avgAccuracy={avgAccuracy}
+                    avgSpeed={avgSpeed}
+                    shownAchievements={shownAchievements}
+                  />
 
-                    Back at the run stats' gap-5 now the labels have shed a word. It was
-                    cut to gap-4 for the Czech, where PRŮM PŘES and PRŮM RYCH sat side by
-                    side and ran the row out of room on a narrow phone; PŘES and RYCH
-                    under a shared PRŮM are a third of that, and CELKEM over HRY is no
-                    wider than ZÁSAHY already was. */}
-                  <View className="w-full flex-row items-start justify-center gap-5">
-                    {/* Shortened past a thousand, the way the fortune above them
-                      already is: a career of 6 214 runs and 58 900 hits written out in
-                      full would make those two cells several times as wide as the three
-                      beside them, and the row is laid out to fit five. A lifetime total
-                      is read for its size, not its last three digits. */}
-                    <StatCell
-                      label={t`RUNS`}
-                      kicker={t`TOTAL`}
-                      value={compactText(lifetime.runs)}
-                    />
-                    <StatCell
-                      label={t`HITS`}
-                      kicker={t`TOTAL`}
-                      value={compactText(lifetime.hits)}
-                    />
-                    {/* A career with nothing counted says 0, not 0″. On the pause and
-                      game over screens a duration of zero seconds is a real answer about
-                      a real run; here it means no run has been timed yet, and a unit mark
-                      on it dresses an absence as a measurement. The overhang goes with
-                      the mark — a bare 0 has nothing hanging out, and pulling it left
-                      anyway would sit it off centre over its own label.
-
-                      Coarse, not the run stats' format: the largest unit a career has
-                      reached and the one under it — 10ᵈ07ʰ — because nobody reads the
-                      seconds of 247ʰ38′12″ and a figure that long would be what sizes
-                      the row. Two units and not one, so the cell says something that
-                      moves between two visits rather than the same word for a day. */}
-                    <StatCell
-                      label={t`TIME`}
-                      kicker={t`TOTAL`}
-                      value={
-                        lifetime.timeMs > 0 ? formatCareerTime(lifetime.timeMs) : '0'
-                      }
-                      overhang={lifetime.timeMs > 0}
-                    />
-                    {/* The same ACC and SPD the per-board table heads its factor
-                      columns with, now that the kicker carries the AVG — one word for
-                      what both of them are, said once above them. */}
-                    <StatCell
-                      label={t(FACTOR_CODE.acc)}
-                      kicker={t`AVG`}
-                      value={percent(avgAccuracy)}
-                    />
-                    <StatCell
-                      label={t(FACTOR_CODE.spd)}
-                      kicker={t`AVG`}
-                      value={percent(avgSpeed)}
-                    />
-                  </View>
-
-                  {/* Counted against the whole catalogue, the way the player's own
-                    achievements screen counts it — and in the green nothing but an
-                    achievement wears, so the one number here that cannot be taken away
-                    does not read as another board stat. The server's count, even on your
-                    own profile: what a device has earned but not yet synced is the
-                    achievements screen's business, and a profile is what anyone tapping
-                    the name would see. */}
-                  <Text
-                    selectable={false}
-                    className={cn(TYPE.caption, 'text-center text-dim')}
-                  >
-                    <Trans>
-                      <Text style={{ color: ACHIEVEMENT_INK }}>{shownAchievements}</Text>{' '}
-                      OF {ACHIEVEMENT_COUNT} ACHIEVEMENTS
-                    </Trans>
-                  </Text>
-
-                  {/* Both boards on one card, the way the comparison draws its own two
-                    blocks: a mode heading and three difficulties under it is a table, and
-                    two tables with nothing behind them read as six loose rows with a
-                    coloured word every fourth. The tile is what says where one table ends.
-
-                    One tile rather than two, because the heading inside each already names
-                    its mode — a card apiece would be drawing the same boundary twice. */}
-                  <CardSection label={t`BOARDS`}>
-                    {SCORED_MODES.map((mode) => (
-                      <View key={mode}>
-                        {/* Taller than the rows under it, because these headings are two
-                          lines where a row is one. */}
-                        <View className="h-9 flex-row items-end">
-                          {/* The board code rather than the mode spelled out. The
-                            rows under it are the thing being read, and the four columns
-                            of figures they need are what a narrow phone has room for —
-                            ACC over them says as much as ACCURACY did, in the register
-                            the medal line and the reign rows already name a board in.
-
-                            Three points over the difficulty codes under it, which is
-                            what makes it read as the head of them rather than as a
-                            fourth row of the same list. Two codes a point apart in the
-                            same weight is two rows; three points apart is a heading and
-                            its rows. The colour was already saying mode where they say
-                            difficulty — this says which of the two is being announced.
-
-                            Its own width, with the slack pushed into the spacer beside
-                            it, rather than a `flex-1` cell. Stretched across the gap the
-                            code was the one thing in this row that could be asked to
-                            give way, and a clipped board code is three letters short of
-                            unreadable — it has no second half to guess the rest from the
-                            way a spelled word does. Everything right of it is a fixed
-                            width, so the slack has to live somewhere, and a spacer is
-                            the one place it cannot cost anything. */}
-                          <Text
-                            selectable={false}
-                            className={TYPE.button}
-                            style={{ color: gradientOf(mode)[0] }}
-                          >
-                            {t(codeOf(mode))}
-                          </Text>
-                          <View className="flex-1" />
-                          <ColumnHead width={BOARD_COLUMNS.runs} bottom={t`RUNS`} />
-                          <ColumnHead
-                            width={BOARD_COLUMNS.best}
-                            top={t`BEST`}
-                            bottom={t`SCORE`}
-                          />
-                          {/* The mode's own factor twice: how it usually goes, then
-                            the once it all landed. Both second lines come from the same
-                            message, so the pair can never end up asking about two
-                            different things. */}
-                          <ColumnHead
-                            width={BOARD_COLUMNS.average}
-                            top={t`AVG`}
-                            bottom={t(FACTOR_CODE[headlineOf(mode)])}
-                          />
-                          <ColumnHead
-                            width={BOARD_COLUMNS.bestFactor}
-                            top={t`BEST`}
-                            bottom={t(FACTOR_CODE[headlineOf(mode)])}
-                          />
-                        </View>
-                        {rows
-                          .filter((row) => row.mode === mode)
-                          .map((row) => (
-                            <ProfileBoardRow
-                              key={row.difficulty}
-                              mode={row.mode}
-                              difficulty={row.difficulty}
-                              runs={row.runs}
-                              best={row.best}
-                              average={row.average}
-                              bestFactor={row.bestFactor}
-                              medals={row.medals}
-                            />
-                          ))}
-                      </View>
-                    ))}
-                  </CardSection>
+                  <ProfileBoards rows={rows} />
 
                   {/* Omitted rather than shown empty: a heading over nothing reads as
                     something the player lost, which is exactly what it is not. */}
                   {isNonEmptyArray(profile.reigns) && (
-                    <CardSection label={t`MEDALS HELD, EVER`}>
-                      {shownReigns.map((held, index) => (
-                        <Animated.View
-                          key={`${held.period}:${held.mode}:${held.difficulty}:${held.from}`}
-                          // Only what the toggle reveals arrives on an animation: the
-                          // rows the card opens on come up with the card, and playing
-                          // them in a second time underneath it would read as the list
-                          // rebuilding itself. The delay counts from the first revealed
-                          // row so the tail drops in one after another rather than as a
-                          // block.
-                          entering={
-                            index < SHOWN_REIGNS
-                              ? undefined
-                              : FadeInDown.delay(
-                                  (index - SHOWN_REIGNS) * STEP_MS,
-                                ).duration(FADE_MS)
-                          }
-                        >
-                          <ProfileReignRow
-                            mode={held.mode}
-                            difficulty={held.difficulty}
-                            period={held.period}
-                            from={held.from}
-                            to={held.to}
-                          />
-                        </Animated.View>
-                      ))}
-
-                      {/* The way into the rest of the career, and back out of it. */}
-                      {(hiddenReigns > 0 || showAllReigns) && (
-                        <ShowMore
-                          id="profile.show_more"
-                          hidden={hiddenReigns}
-                          expanded={showAllReigns}
-                          onToggle={() => {
-                            setShowAllReigns(!showAllReigns)
-                          }}
-                        />
-                      )}
-                    </CardSection>
+                    <ProfileReigns reigns={profile.reigns} />
                   )}
 
                   {/* The challenges' podiums, under the boards' reigns: the other half of
