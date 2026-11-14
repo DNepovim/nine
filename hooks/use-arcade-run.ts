@@ -1471,3 +1471,6 @@ export function useArcadeRun() {
     },
   }
 }
+
+// The run as every part of ADVENTURE's screen reads it.
+export type ArcadeRun = ReturnType<typeof useArcadeRun>
