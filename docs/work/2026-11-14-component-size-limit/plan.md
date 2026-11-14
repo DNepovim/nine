@@ -13,7 +13,7 @@ Spec: docs/work/2026-11-14-component-size-limit/spec.md
 - [x] 7. `dial-button` — gesture hook + face pieces — `useKeyMotion` (flip, arrival, tap, squash, the press owed), `useKeyTint`, `DialKeyBadges`, `DialKeyCoats`; tint hook called before motion, as their effects were declared
 - [x] 8. `player-profile-overlay` — sections — `ProfileTenure`, `ProfileStatCells`, `ProfileBoards` (with `FACTOR_CODE`), `ProfileColumnHead`, `ProfileReigns` (owns the show-more state now)
 - [x] 9. `menu-overlay` — Alone / With friends panels, pickers, state hook — `IntroAlonePanel` (owns the challenge card's `useSessionCard` and the pills' items), `IntroFriendsPanel`, `IntroLinks`, `IntroCta` (PLAY GAME and CREATE ROOM were the same gradient button; one component now, owning the shadow both used), `useTitleGradient`, `useIntroPaging`
-- [ ] 10. `how-to-play-overlay` — one file per section
+- [x] 10. `how-to-play-overlay` — one file per section — `how-to-play-<section>.tsx` ×10, the building blocks as `HowToPlayBody/Card/Bullet/SectionHeader/Contents/TryIt/WeightGrid/ControlsDiagram/ModeCard`, and the section table + `sectionOrder` in `lib/how-to-play-sections.ts`. Each section's lead comment stayed at its call site in the overlay. Catalog unchanged (1021).
 - [ ] 11. `arcade-game` — frame-loop hook + map / hero / HUD pieces
 - [ ] 12. GameScreen logic, leaves first: `use-multiplayer-screens`, `use-launch-asks`, `use-screen-dialogs`
 - [ ] 13. GameScreen logic: `use-run-boards`, `use-run-announcements`, `use-run-session`
