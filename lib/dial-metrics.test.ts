@@ -22,8 +22,12 @@ import { NINE_DIAL } from '@/modes'
 // of the guarantee below than two files agreeing ever was.
 const DRAWS_A_DIAL = ['components/game/dial.tsx']
 
-// The screens that stack the sum row above that dial.
-const SITS_ABOVE_A_DIAL = ['app/(tabs)/index.tsx', 'components/game/multiplayer-game.tsx']
+// The screens that stack the sum row above that dial. The game screen's is its own band,
+// drawn by `GameLayer`.
+const SITS_ABOVE_A_DIAL = [
+  'components/game/run-sum-row.tsx',
+  'components/game/multiplayer-game.tsx',
+]
 
 const read = (path: string): string => readFileSync(path, 'utf8')
 const hook = () => read('hooks/use-dial-metrics.ts')

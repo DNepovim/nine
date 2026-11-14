@@ -243,3 +243,5 @@ export function useIntroStanding({
     welcomeOffer,
   }
 }
+
+export type ScreenIntro = ReturnType<typeof useIntroStanding>

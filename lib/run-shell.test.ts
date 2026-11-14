@@ -22,8 +22,12 @@ const RUN_SCREENS = [
   'components/game/arcade-over.tsx',
 ]
 
-// Every screen a live run is played on.
-const RUN_SCREENS_LIVE = ['app/(tabs)/index.tsx', 'components/game/arcade-game.tsx']
+// Every screen a live run is played on. The game screen's top bar is drawn by its own band,
+// `RunBar`, inside `GameLayer`.
+const RUN_SCREENS_LIVE = [
+  'components/game/run-bar.tsx',
+  'components/game/arcade-game.tsx',
+]
 
 // Everything that owns a run's clock, and so has a run to stop. The game machine's run is
 // driven from `useRunControl`, which the game screen calls.

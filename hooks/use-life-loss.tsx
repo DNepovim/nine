@@ -87,3 +87,5 @@ export function useLifeLoss({
     titleStyle,
   }
 }
+
+export type ScreenLifeLoss = ReturnType<typeof useLifeLoss>
