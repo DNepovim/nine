@@ -29,6 +29,7 @@ Style and pattern reference for the Nine codebase. Consult before writing or rev
 - Destructure props in the function signature
 - Pass primitives over objects where possible (`name={item.name}` not `item={item}`)
 - Keep components small; extract sub-components when a section has its own state or animation logic
+- **At most 300 lines of code per component and per file** — comments and blank lines not counted. ESLint errors past it (`max-lines`, `max-lines-per-function`, over `app/` and `components/`). One component owns one piece of logic and its markup: when one grows past the limit, move its state and effects into a hook and its markup into sub-components that take only what they draw — never by deleting comments. Hooks are not linted for it, but a hook you write should stay under the same 300.
 - **Every named component must live in its own file** — no inline sub-components inside another component's file. Even if a component is only used in one place, it gets its own file.
 - Define animated sub-components at **module level**, not inside the parent function — nesting them causes remount on every parent render, resetting all shared values
 

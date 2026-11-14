@@ -20,10 +20,36 @@ Spec: docs/work/2026-11-14-component-size-limit/spec.md
 - [x] 14. GameScreen logic: `use-run-control`, `use-run-ending`, `use-play-field` — 12–14 landed together, as eleven **consecutive slices** of the body, each a hook called where its slice sat (so every effect keeps its place in the order) and taking the earlier slices' results (`Screen*` = `ReturnType` of each). Boundaries and interfaces computed by a TS-compiler scope pass, not by hand. Also `use-player-account`, `use-life-loss`, `use-intro-standing`. Three `useState`s hoisted (session ids above the restore effect that writes them; menu overlay state down beside the other dialogs) — hooks with no effects, so order-free. `lib/run-shell.test.ts` now finds `usePauseOnBlur(` in `use-run-control`.
 - [x] 15. GameScreen markup: `screen-providers`, `run-celebrations`, `run-overlays`, `title-dialogs`, `launch-asks-layer`, `menu-screens`, `multiplayer-screens` — as eight layers cut whole from the tree in place (so z-order is unchanged), each taking the `Screen*` objects it reads: `RunCelebrations`, `GameLayer`, `RunOverlays`, `MenuDialogs` (was `menu-screens`), `LaunchAsksLayer`, `IntroMenuLayer`, `TitleDialogs`, `MultiplayerScreens`. The provider stack stayed in `GameScreen` (13 lines; a component of its own would only wrap them).
 - [x] 16. GameScreen markup: `game-layer` with `run-bar`, `target-area`, `dial-area`; `index.tsx` under 300 — `RunBar`, `RunTargets`, `RunSumRow`, `RunDial`. `index.tsx` is 178 code lines. `lib/run-shell.test.ts` and `lib/dial-metrics.test.ts` read the bar and the sum row from `run-bar.tsx` / `run-sum-row.tsx` now.
-- [ ] 17. Rules to `error`; code-guide Components and CLAUDE.md Rules gain the 300-line bullet; `pnpm check`
+- [x] 17. Rules to `error`; code-guide Components and CLAUDE.md Rules gain the 300-line bullet; `pnpm check`
 
 `pnpm typecheck && pnpm lint && pnpm test` after every task; each task is its own commit
 (`git commit --only`), so a regression bisects to one split.
+
+## Build notes
+
+- **How the big two were split.** `GameScreen` and the files that would not come under by
+  moving pieces were split by a TypeScript-compiler scope pass rather than by eye: a
+  block's inputs and outputs are computed, so a hook takes exactly what it reads and
+  returns exactly what is read after it. `GameScreen`'s logic became eleven **consecutive**
+  slices called in their old order, which is what keeps every effect where it was (the
+  review-focus risk); its markup became layers cut whole from the tree, so nothing draws in
+  a different order.
+- **Off-spec, decided in the build.** Flat sibling files for the openings instead of
+  subfolders; `MenuDialogs` for the spec's `menu-screens`; no `screen-providers`
+  component (13 lines, nothing to own); `RunBar`/`RunTargets`/`RunSumRow`/`RunDial` for
+  `run-bar`/`target-area`/`dial-area`; `TARGET_EXIT_MS` to `constants/game.ts`;
+  `announcementsReady` to `lib/session-announcements.ts`; `lib/` files take a few types
+  from `hooks/` and `components/` as `import type` (erased at runtime).
+- **Two tests re-pointed, not loosened.** `lib/run-shell.test.ts` and
+  `lib/dial-metrics.test.ts` read source files to assert the shared top bar, the pause on
+  blur and the reserved sum row; they now read the files those moved to.
+- **Found on the way.** This morning's `ScoreReadout` (the bar's count-up) shared a name with
+  the pause/game-over `ScoreReadout`; renamed `BarScore` in its own commit. `IntroCta` merges
+  PLAY GAME and CREATE ROOM, which were the same button twice. `RunTopBar` stays drawn in
+  `ArcadeGame` so the shell test keeps its teeth.
+- **Not touched.** The three hooks over the limit (`use-arcade-run`, `use-multiplayer-game`,
+  `use-achievements`), the 79 typography warnings, the shadow copied across ten files.
+- **Dev data:** none — no table, column or screen reading the database changed.
 
 ## Verification log
 

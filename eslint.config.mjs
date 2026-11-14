@@ -125,14 +125,14 @@ export default defineConfig(
   // without comments or blank lines: this repo explains itself at length in comments,
   // and a limit that counted them would be a limit on explaining.
   //
-  // **A warning while the tree is brought under it** — see
-  // docs/work/2026-11-14-component-size-limit. It becomes `error` when the last file is.
+  // Past it, split by concern — state and effects into a hook, markup into a component
+  // that takes only what it draws. See docs/work/2026-11-14-component-size-limit.
   {
     files: ['app/**/*.{ts,tsx}', 'components/**/*.{ts,tsx}'],
     rules: {
-      'max-lines': ['warn', { max: 300, skipComments: true, skipBlankLines: true }],
+      'max-lines': ['error', { max: 300, skipComments: true, skipBlankLines: true }],
       'max-lines-per-function': [
-        'warn',
+        'error',
         { max: 300, skipComments: true, skipBlankLines: true },
       ],
     },

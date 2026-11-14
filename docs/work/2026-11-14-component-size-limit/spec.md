@@ -1,8 +1,8 @@
 # Every component under 300 lines
 
 Slug: component-size-limit
-Stage: spec
-Next: /build component-size-limit
+Stage: build
+Next: /verify component-size-limit
 Track: full
 Branch: refactor/component-size-limit
 Started: 2026-11-14
