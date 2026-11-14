@@ -1,85 +1,26 @@
-import { LinearGradient } from 'expo-linear-gradient'
-import { useEffect, useRef } from 'react'
 import Animated, {
-  Easing,
   interpolateColor,
-  useAnimatedReaction,
   useAnimatedStyle,
-  useSharedValue,
-  withDelay,
-  withRepeat,
-  withSequence,
-  withSpring,
-  withTiming,
   type SharedValue,
 } from 'react-native-reanimated'
-import { scheduleOnRN } from 'react-native-worklets'
 
-import { DialBadge } from '@/components/game/dial-badge'
+import { DialKeyBadges } from '@/components/game/dial-key-badges'
+import { DialKeyCoats } from '@/components/game/dial-key-coats'
 import { DialPulse } from '@/components/game/dial-pulse'
 import { ReelFace } from '@/components/game/reel-face'
-import { TileFace } from '@/components/game/tile-face'
-import {
-  AZULEJO,
-  DIAL_COLORS,
-  GRAYSCALE,
-  PRIMARY_INK,
-  STRIKE_COLORS,
-} from '@/constants/colors'
-import {
-  DEFAULT_DIAL_CORNERS,
-  DIAL_CORNERS,
-  type DialCorners,
-  type DialHint,
-} from '@/constants/dial-hints'
+import { AZULEJO, DIAL_COLORS, PRIMARY_INK } from '@/constants/colors'
+import { DEFAULT_DIAL_CORNERS, type DialCorners } from '@/constants/dial-hints'
 import { mono } from '@/constants/theme'
-import { LESSON_DIM, LESSON_DIM_MS } from '@/constants/tutorial'
+import { useKeyMotion } from '@/hooks/use-key-motion'
+import { useKeyTint } from '@/hooks/use-key-tint'
 import { useScheme } from '@/hooks/use-scheme'
 import { useTileInk } from '@/hooks/use-tile-grid'
-import {
-  MOVE_EFFECT,
-  NO_COMMAND,
-  type DialCommand,
-  type DialMove,
-} from '@/lib/dial-gesture'
+import { type DialCommand } from '@/lib/dial-gesture'
 import { keySpinDegrees } from '@/lib/key-spin'
 import { mixHex } from '@/lib/mix-hex'
 import { TOP_LEVEL } from '@/lib/tile-motif'
 import type { DialControl } from '@/machines/tutorial-lesson'
 import type { DialOrientation } from '@/modes'
-
-// The badges' ring, constant regardless of mode or theme — a mode-coloured border
-// tied it to whichever pair a button happened to be animating through, which read
-// as noise next to the badge's own fill. Lightest of the greyscale: legible on both
-// surfaces without competing with the digit it is labelling.
-const BADGE_BORDER_COLOR = GRAYSCALE[3]
-
-// Every value below a key's top rides the low → high tint ramp; the top is the mode's CTA
-// gradient. The top is the dial's to say — 9 on every ten-digit dial, 1 on BINARY's —
-// so a key that only counts to one is lit by its 1 rather than left a pale step short
-// of a 9 it can never reach.
-const rampOf = (value: number, top: number): number =>
-  top > 1 ? Math.min(value, top - 1) / (top - 1) : 0
-const TINT_TIMING = { duration: 260, easing: Easing.out(Easing.quad) }
-
-// How far a key dims while the tutorial has it shut, and how long it takes either way.
-//
-// The depth is LESSON_DIM, shared with the sum — everything the lesson takes out of the
-// player's hands steps back by the same amount. The clock is the tint's above, because the
-// two land together: the moment the lesson hands the dial back, eight keys brighten and the
-// ninth loses its halo, and two speeds there would read as two separate events. Eased out
-// on the way up and in on the way down, the app's rule for anything arriving and leaving.
-const DIM = LESSON_DIM
-const DIM_UP = { duration: LESSON_DIM_MS, easing: Easing.out(Easing.quad) }
-const DIM_DOWN = { duration: LESSON_DIM_MS, easing: Easing.in(Easing.quad) }
-
-// How far a digit comes from as a scrambled dial's key stops, and how long each key waits for the
-// one before it: a row of reels coming to rest.
-const REEL_DROP = 40
-const REEL_STAGGER_MS = 70
-// How long a reel's blur runs before it stops, and how long one lap of it takes.
-const REEL_SPIN_MS = 450
-const REEL_LAP_MS = 180
 
 // The greys a **sketched** key is filled with where its scheme draws no keys of its own: paper
 // at nought, a soft pencil laid on at nine, and the digit in graphite on either.
@@ -90,73 +31,8 @@ const SKETCH_GREYS = {
   peakText: PRIMARY_INK,
 } as const
 
-// How dark the shading under a thumb is on a **sketched** key, which has no fill to squash.
-const SKETCH_WASH = 0.07
-
 // How close the eye is as a **mirrored** key turns over: near enough to see it swing.
 const TURN_PERSPECTIVE = 500
-
-// How far a key warms under a strike's flame — see `heat`. Short of the full colour, so the
-// key still reads as itself turning hot rather than as a different key.
-const FIRE_WASH = 0.75
-
-// Trainee's weight and max badges — small discs riding the pill's own rim rather
-// than text stacked inside it, so they read off a chip built for contrast instead
-// of fighting the pill's own animated fill colour.
-//
-// MIN still has to hold up on the smallest phones the dial ships on — an 81pt cell
-// there, going by useDialMetrics, and the pill now fills all of it rather than 61pt of
-// it — so a MIN-sized badge keeps well clear of the digit, and raising the floor along
-// with the ratio makes every device's badge bigger rather than only the roomy ones.
-const BADGE_MIN = 22
-const BADGE_MAX = 34
-const BADGE_RATIO = 0.28
-const BADGE_FONT_SIZE = 12
-const BADGE_BORDER = 1
-
-// The same discs on the dial a lesson is given on, drawn larger.
-//
-// Not a second opinion about the badge: it is the same chip, and the lesson is asking a
-// different thing of it. In a practice run the corner numbers are a reference beside a
-// game the player is already playing, and small is right — in the tutorial they *are* the
-// lesson, and the player is being asked to read them before they know what they mean.
-// A notch under half the key, which is as far as a disc can grow before it starts
-// crowding the digit it is labelling.
-const TAUGHT_BADGE_MIN = 28
-const TAUGHT_BADGE_MAX = 44
-const TAUGHT_BADGE_RATIO = 0.36
-const TAUGHT_BADGE_FONT_SIZE = 16
-
-// Which way the digit leaves for each move. Up and right raise the key, so the old
-// digit is pushed off the top; down and left lower it, so it drops off the bottom.
-// A tap has no flip at all — it pops the digit in place — so it is not in here.
-const FLIP_DIR = {
-  up: -1,
-  right: -1,
-  down: 1,
-  left: 1,
-} as const satisfies Record<Exclude<DialMove, 'tap'>, 1 | -1>
-
-// The squash under a thumb and its release. Stiffer going in than coming out: arriving
-// under the finger should read as instant, leaving as settling.
-const PRESS_SCALE = 0.94
-const PRESS_IN = { damping: 20, stiffness: 260 }
-const PRESS_OUT = { damping: 16, stiffness: 140 }
-
-// What each hint prints. The weight wears its × so it cannot be mistaken for one of the
-// three sums around it — those are all in the same units as the target, and this one is
-// not. `room` and `giving` always add up to `ceiling`, which is the whole lesson.
-const HINT_LABEL = {
-  weight: (_value, weight) => `${weight}×`,
-  ceiling: (_value, weight, top) => `${top * weight}`,
-  giving: (value, weight) => `${value * weight}`,
-  room: (value, weight, top) => `${(top - value) * weight}`,
-} as const satisfies Record<
-  DialHint,
-  // `top` is the highest digit the key takes, which is the board's to say — a dial whose
-  // keys only count to five has a different ceiling and a different room left.
-  (value: number, weight: number, top: number) => string
->
 
 // How a key's flip is drawn, by the dial's orientation: how far the digit is turned, and
 // which screen axis the pill's bounce runs along. The flip itself — the digit's lift and
@@ -290,175 +166,25 @@ export function DialButton({
   const rimmed = dark || keys !== null
   const keyRadius = sketched ? 0 : (keys?.radius ?? 999)
   const reel = keys !== null && 'reel' in keys && keys.reel
-  const scale = useSharedValue(1)
-  // The pill's bounce on a flip, along whichever screen axis the dial's vertical lies on.
-  const bounce = useSharedValue(0)
   const frame = FLIP_FRAME[orientation]
-  const numTranslateY = useSharedValue(0)
-  const numOpacity = useSharedValue(1)
-  const numScale = useSharedValue(1)
-  // Whether this key is a reel and it is spinning, and how far round a lap of its blur it has got.
-  const reelSpin = useSharedValue(0)
-  const reelStrip = useSharedValue(0)
   const top = digits - 1
   // How much of its pattern a tile carries: the digit it shows, spread over the levels.
   const tileLevel = Math.round((value / Math.max(1, top)) * TOP_LEVEL)
-  const rampProgress = useSharedValue(rampOf(value, top))
-  const peakProgress = useSharedValue(value === top ? 1 : 0)
-  // Starts where the key already stands rather than at full: a key that is dead on its
-  // first render — every key but one, the moment a tutorial's guided route begins — should
-  // be dim from the first frame, not fade down into it.
-  const live = useSharedValue(control === 'off' ? DIM : 1)
+  const { rampProgress, peakProgress, live } = useKeyTint({ value, top, control })
 
-  useEffect(() => {
-    const waking = control !== 'off'
-    live.value = withTiming(waking ? 1 : DIM, waking ? DIM_UP : DIM_DOWN)
-  }, [control])
-
-  // Animate the button tint whenever its value changes.
-  useEffect(() => {
-    // At the top the gradient covers the pill, so the ramp underneath holds its
-    // previous color: animating it up to `high` would flash a lighter blue
-    // through the fading-in gradient — visible when swiping right from a low
-    // value straight to 9.
-    if (value !== top) rampProgress.value = withTiming(rampOf(value, top), TINT_TIMING)
-    peakProgress.value = withTiming(value === top ? 1 : 0, TINT_TIMING)
-  }, [value, top])
-
-  // What this key owes the machine: a change whose digit has flown out but not yet flown
-  // back in. The event is sent on the way back, so the digit and the sum above the dial
-  // turn over together — but a finger crossing this key again before then cancels that
-  // animation, and the event would go with it. So a new move pays off the old one first,
-  // and a scrub the animation cannot keep up with loses frames rather than presses.
-  const owed = useSharedValue<DialCommand | null>(null)
-
-  const fire = ({ move, sweep }: DialCommand) => {
-    'worklet'
-    inFlight.value -= 1
-    const { step, set } = MOVE_EFFECT[move]
-    // `set` names an end of the key's range rather than a digit — how high a key goes is
-    // the board's business — so the end is turned into a value here.
-    if (step === null) scheduleOnRN(onSet, set === 'floor' ? 0 : digits - 1, sweep)
-    else scheduleOnRN(onDelta, step, sweep)
-  }
-
-  const settle = () => {
-    'worklet'
-    const command = owed.value
-    if (command === null) return
-    owed.value = null
-    fire(command)
-  }
-
-  // The digit leaves the way the finger sent it and comes back from the other side.
-  const animateFlip = (dir: 1 | -1) => {
-    'worklet'
-    bounce.value = withSequence(
-      withTiming(dir * 7, { duration: 100 }),
-      withSpring(0, { damping: 18, stiffness: 120, mass: 0.8 }),
-    )
-
-    numOpacity.value = withTiming(0, { duration: 110 })
-    numTranslateY.value = withTiming(dir * 18, { duration: 110 }, (finished) => {
-      if (!finished) return
-      settle()
-      numTranslateY.value = dir * -18
-      numTranslateY.value = withSpring(0, { damping: 22, stiffness: 160 })
-      numOpacity.value = withTiming(1, { duration: 130 })
+  const { scale, bounce, numTranslateY, numOpacity, numScale, reelSpin, reelStrip } =
+    useKeyMotion({
+      index,
+      value,
+      digits,
+      scrambles,
+      reel,
+      commands,
+      pressed,
+      inFlight,
+      onDelta,
+      onSet,
     })
-  }
-
-  // A **scramble**: the digit has already changed under the key, so there is no flight to
-  // be owed across and nothing to send — only the new digit arriving, from below when it
-  // rose and from above when it fell, the way a swipe would have brought it in. It arrives like
-  // a reel stopping: from further off, and each key a beat after the one before it, so the dial
-  // comes to rest key by key rather than all at once.
-  const animateArrival = (dir: 1 | -1) => {
-    'worklet'
-    const wait = index * REEL_STAGGER_MS
-    // A reel spins — a blur of digits — until it stops on the digit; any other key drops it in.
-    const stop = reel ? wait + REEL_SPIN_MS : wait
-    if (reel) {
-      reelSpin.value = 1
-      reelStrip.value = 0
-      reelStrip.value = withRepeat(
-        withTiming(1, { duration: REEL_LAP_MS, easing: Easing.linear }),
-        Math.ceil(stop / REEL_LAP_MS) + 1,
-      )
-      reelSpin.value = withDelay(stop, withTiming(0, { duration: 90 }))
-    }
-    bounce.value = withDelay(
-      stop,
-      withSequence(
-        withTiming(dir * 7, { duration: 100 }),
-        withSpring(0, { damping: 18, stiffness: 120, mass: 0.8 }),
-      ),
-    )
-    numOpacity.value = 0
-    numTranslateY.value = dir * -REEL_DROP
-    numTranslateY.value = withDelay(stop, withSpring(0, { damping: 22, stiffness: 160 }))
-    numOpacity.value = withDelay(stop, withTiming(1, { duration: 130 }))
-  }
-
-  // What this key last showed, and under which scramble — so a value arriving with a new
-  // count can be told from one the player's own press brought, which has had its flip.
-  //
-  // A key with a flip still in the air is left to finish it. The flip comes back in with
-  // whatever digit the key shows by then, which is the scrambled one, and its own callback
-  // is what sends the press it owes: an arrival drawn over it would cancel that callback,
-  // and the press would never reach the machine.
-  const seen = useRef({ value, scrambles })
-  useEffect(() => {
-    const was = seen.current
-    seen.current = { value, scrambles }
-    if (scrambles === was.scrambles || value === was.value) return
-    if (owed.value !== null) return
-    animateArrival(value > was.value ? 1 : -1)
-  }, [value, scrambles])
-
-  const animateTap = () => {
-    'worklet'
-    numScale.value = withSequence(
-      withTiming(1.15, { duration: 90 }),
-      withSpring(1, { damping: 18, stiffness: 160 }),
-    )
-  }
-
-  const run = (command: DialCommand) => {
-    'worklet'
-    settle()
-    // A tap has nothing to wait for: the digit pops where it stands rather than leaving,
-    // so there is no flight for the press to be owed across.
-    if (command.move === 'tap') {
-      animateTap()
-      fire(command)
-      return
-    }
-    owed.value = command
-    animateFlip(FLIP_DIR[command.move])
-  }
-
-  // The squash follows the thumb rather than belonging to a press. One gesture crosses
-  // several keys now, and each takes the squash as the finger arrives and gives it up as
-  // it leaves — so what is under the finger is always the key that is about to change.
-  useAnimatedReaction(
-    () => pressed.value === index,
-    (down, was) => {
-      if (down === was) return
-      scale.value = withSpring(down ? PRESS_SCALE : 1, down ? PRESS_IN : PRESS_OUT)
-    },
-  )
-
-  // How a key hears that the pan just left it. Keyed on the counter rather than the move:
-  // leaving the same key the same way twice running is two changes, and comparing the
-  // moves would see one.
-  useAnimatedReaction(
-    () => commands.value[index] ?? NO_COMMAND,
-    (command, previous) => {
-      if (previous === null || command.seq === previous.seq) return
-      run(command)
-    },
-  )
 
   const btnStyle = useAnimatedStyle(() => ({
     transform: [
@@ -469,17 +195,6 @@ export function DialButton({
       ? PRIMARY_INK
       : interpolateColor(rampProgress.value, [0, 1], [palette.low, palette.high]),
   }))
-
-  // Where a sketched key shows it is under the thumb: the squash above, read as a shading.
-  const washStyle = useAnimatedStyle(() => ({
-    opacity: (SKETCH_WASH * (1 - scale.value)) / (1 - PRESS_SCALE),
-  }))
-
-  // The CTA gradient crossfades in over the ramp — every tint change, including
-  // the jump to and from 9, is a timed transition.
-  const peakStyle = useAnimatedStyle(() => ({ opacity: peakProgress.value }))
-  // A painted tile's two coats: cobalt on the glaze, glaze on the cobalt a key at its top is.
-  const paintStyle = useAnimatedStyle(() => ({ opacity: 1 - peakProgress.value }))
 
   const liveStyle = useAnimatedStyle(() => ({ opacity: live.value }))
 
@@ -495,8 +210,6 @@ export function DialButton({
         // the last value on the view, so a key that was mirrored would stay so.
         { transform: [{ perspective: TURN_PERSPECTIVE }, { rotateY: '0deg' }] },
   )
-
-  const fireStyle = useAnimatedStyle(() => ({ opacity: FIRE_WASH * (heat?.value ?? 0) }))
 
   const numStyle = useAnimatedStyle(() => ({
     // Turned before it lifts, so the lift runs along the turned digit's own vertical.
@@ -516,29 +229,6 @@ export function DialButton({
       [palette.text, sketched ? palette.text : palette.peakText],
     ),
   }))
-
-  // The pill fills its box, so its radius is simply half of it. There used to be 10pt
-  // of padding here, reserving room for the shadow and for the badges to straddle. It
-  // also sat inside every button, which put 20pt on top of the 12pt gap the dial lays
-  // out — the space between two pills read as 32, and the gap in the layout was not
-  // the gap on the screen.
-  const radius = size / 2
-  const badgeSize = bigHints
-    ? Math.min(
-        TAUGHT_BADGE_MAX,
-        Math.max(TAUGHT_BADGE_MIN, Math.round(size * TAUGHT_BADGE_RATIO)),
-      )
-    : Math.min(BADGE_MAX, Math.max(BADGE_MIN, Math.round(size * BADGE_RATIO)))
-  // Where a badge centred on the pill's rim, on the diagonal toward a corner, lands:
-  // the distance from that corner in to the circle — a circle's closest approach to its
-  // bounding square's corner is radius short of it on both axes, by Math.SQRT1_2
-  // (cos/sin 45°). Expressed as a top/left (or, mirrored, bottom/right) offset from the
-  // box so the badge's own centre, not its corner, sits exactly on the rim. It stays
-  // positive at every size the dial produces for the small badge — and can go a little
-  // negative for the lesson's larger one, where the disc is wide enough that its centre on
-  // the rim would put its edge outside the box. Held at the corner there instead, which
-  // rests the badge a hair outside the rim rather than hanging it off the key.
-  const badgeOffset = Math.max(0, radius * (1 - Math.SQRT1_2) - badgeSize / 2)
 
   return (
     // Explicit pixel size (not w-1/3 + aspect-square): iOS WebKit fails to derive height
@@ -586,82 +276,19 @@ export function DialButton({
           btnStyle,
         ]}
       >
-        {/* Rounded on its own rather than clipped by the pill — `overflow:
-              hidden` on the parent would clip away the button's shadow too. */}
-        {!dark && !sketched && (
-          <Animated.View
-            pointerEvents="none"
-            style={[
-              { position: 'absolute', top: 0, right: 0, bottom: 0, left: 0 },
-              peakStyle,
-            ]}
-          >
-            <LinearGradient
-              colors={[peak[0], peak[1]]}
-              start={{ x: 0, y: 0.5 }}
-              end={{ x: 1, y: 0.5 }}
-              style={{ flex: 1, borderRadius: keyRadius }}
-            />
-          </Animated.View>
-        )}
-        {/* The key turning hot under a strike: red at the crown, gold at the base where a
-              fire burns hottest. Over the fill and under the digit, like the peak above. */}
-        {heat !== null && (
-          <Animated.View
-            pointerEvents="none"
-            style={[
-              { position: 'absolute', top: 0, right: 0, bottom: 0, left: 0 },
-              fireStyle,
-            ]}
-          >
-            <LinearGradient
-              colors={[STRIKE_COLORS.cool, STRIKE_COLORS.hot]}
-              start={{ x: 0.5, y: 0 }}
-              end={{ x: 0.5, y: 1 }}
-              style={{ flex: 1, borderRadius: keyRadius }}
-            />
-          </Animated.View>
-        )}
-        {sketched && (
-          <Animated.View
-            pointerEvents="none"
-            style={[
-              {
-                position: 'absolute',
-                top: 0,
-                right: 0,
-                bottom: 0,
-                left: 0,
-                backgroundColor: PRIMARY_INK,
-              },
-              washStyle,
-            ]}
-          />
-        )}
-        {/* A tile of the panel: the pattern for the digit it shows, in the challenge's ink, over
-              the glaze — and the fullest pattern in glaze over the ink, at the key's top. */}
-        {tiled && !dark && (
-          <>
-            <Animated.View
-              pointerEvents="none"
-              style={[
-                { position: 'absolute', top: 0, right: 0, bottom: 0, left: 0 },
-                paintStyle,
-              ]}
-            >
-              <TileFace index={index} level={tileLevel} ink={tileInk} />
-            </Animated.View>
-            <Animated.View
-              pointerEvents="none"
-              style={[
-                { position: 'absolute', top: 0, right: 0, bottom: 0, left: 0 },
-                peakStyle,
-              ]}
-            >
-              <TileFace index={index} level={TOP_LEVEL} ink={AZULEJO.glaze} />
-            </Animated.View>
-          </>
-        )}
+        <DialKeyCoats
+          index={index}
+          dark={dark}
+          sketched={sketched}
+          tiled={tiled}
+          keyRadius={keyRadius}
+          peak={peak}
+          tileLevel={tileLevel}
+          tileInk={tileInk}
+          peakProgress={peakProgress}
+          scale={scale}
+          heat={heat}
+        />
         {reel && !dark && (
           <ReelFace
             value={value}
@@ -692,35 +319,21 @@ export function DialButton({
         )}
       </Animated.View>
 
-      {/* The corner numbers, as facts pinned to the pill's rim rather than stacked
-            with the digit. Each rides the corner it is about: what the key is worth
-            top-left, what it could still add top-right, what it gives now bottom-left,
-            and its ceiling bottom-right, on the corner the value climbs toward. */}
-      {trainee &&
-        DIAL_CORNERS.flatMap((corner) => {
-          const hint = corners[corner]
-          return hint === null ? [] : [{ corner, hint }]
-        }).map(({ corner, hint }) => (
-          <DialBadge
-            key={corner}
-            label={HINT_LABEL[hint](value, weight, digits - 1)}
-            size={badgeSize}
-            fontSize={bigHints ? TAUGHT_BADGE_FONT_SIZE : BADGE_FONT_SIZE}
-            offset={badgeOffset}
-            corner={corner}
-            low={DIAL_COLORS.low}
-            high={DIAL_COLORS.high}
-            text={DIAL_COLORS.text}
-            peakText={DIAL_COLORS.peakText}
-            peakFrom={peakFrom}
-            peakTo={peakTo}
-            borderColor={BADGE_BORDER_COLOR}
-            borderWidth={BADGE_BORDER}
-            rampProgress={rampProgress}
-            peakProgress={peakProgress}
-            scale={scale}
-          />
-        ))}
+      {trainee && (
+        <DialKeyBadges
+          value={value}
+          weight={weight}
+          digits={digits}
+          size={size}
+          bigHints={bigHints}
+          corners={corners}
+          peakFrom={peakFrom}
+          peakTo={peakTo}
+          rampProgress={rampProgress}
+          peakProgress={peakProgress}
+          scale={scale}
+        />
+      )}
     </Animated.View>
   )
 }
