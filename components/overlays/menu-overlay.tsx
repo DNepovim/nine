@@ -1,53 +1,35 @@
-import { Ionicons } from '@expo/vector-icons'
-import { Trans, useLingui } from '@lingui/react/macro'
-import { LinearGradient } from 'expo-linear-gradient'
-import { isNonEmptyString, isOneOf } from 'narrowland'
-import { useEffect, useMemo, useState } from 'react'
+import { Trans } from '@lingui/react/macro'
+import { isNonEmptyString } from 'narrowland'
+import { useEffect, useState } from 'react'
 import { Text, View } from 'react-native'
-import Animated, {
-  Easing,
-  useAnimatedStyle,
-  useSharedValue,
-  withRepeat,
-  withTiming,
-} from 'react-native-reanimated'
+import Animated from 'react-native-reanimated'
 
 import { GradientName } from '@/components/gradient-name'
-import { ChallengeCard } from '@/components/overlays/challenge-card'
-import { UnreadDot } from '@/components/overlays/unread-dot'
+import { IntroAlonePanel } from '@/components/overlays/intro-alone-panel'
+import { IntroCta } from '@/components/overlays/intro-cta'
+import { IntroFriendsPanel } from '@/components/overlays/intro-friends-panel'
+import { IntroLinks } from '@/components/overlays/intro-links'
 import { Screen } from '@/components/screen'
-import { TrackedPressable } from '@/components/tracked-pressable'
 import type { AchievementId } from '@/constants/achievements'
-import { DIM_INK } from '@/constants/colors'
 import { TYPE } from '@/constants/typography'
 import { useChampionsContext } from '@/hooks/use-champions'
-import { useFeedbackOwed } from '@/hooks/use-feedback-owed'
 import { useFlag } from '@/hooks/use-flags'
+import { useIntroPaging } from '@/hooks/use-intro-paging'
 import type { LostMedalNews } from '@/hooks/use-lost-medals'
 import { useOnline } from '@/hooks/use-online'
 import { EMPTY_IDS, usePlayerFactors } from '@/hooks/use-player-factors'
-import { useOpenProfile } from '@/hooks/use-profile-modal'
-import { useSessionCard } from '@/hooks/use-session-card'
-import { useViewport } from '@/hooks/use-viewport'
+import { useTitleGradient } from '@/hooks/use-title-gradient'
 import type { SessionCard } from '@/lib/challenge-session'
 import { playerMarks } from '@/lib/champions'
 import { cn } from '@/lib/cn'
-import { boardName, shouldBoast } from '@/lib/invite-message'
 import type { Medal } from '@/lib/medals'
 import type { OpenSession } from '@/lib/session-board'
 import type { VoteOption } from '@/lib/session-ratings'
 import {
-  ARCADE_TEASER,
-  DARK_MULTIPLAYER_GRADIENT,
   darkGradientOf,
-  DIFFICULTIES,
   gradientOf,
-  labelOf,
   lerpColor,
-  MODE_ORDER,
   MULTIPLAYER_GRADIENT,
-  SCORED_MODES,
-  traitsOf,
   type Difficulty,
   type ModeId,
 } from '@/modes'
@@ -55,40 +37,9 @@ import {
 import { AccountNotice, type AccountNoticeKind } from './account-notice'
 import { AchievementProgress } from './achievement-progress'
 import { AnimatedLetter } from './animated-letter'
-import { ArcadeTeaser } from './arcade-teaser'
-import { DifficultySelector } from './difficulty-selector'
-import { HighScores } from './high-scores'
-import { ModeSelector } from './mode-selector'
-import { ModeTips } from './mode-tips'
 import { PlayModeTab, type PlayMode } from './play-mode-tab'
-import { RecentWinners } from './recent-winners'
 import { TitleMark } from './title-mark'
 import { TitleSlot } from './title-slot'
-
-const shadow = {
-  shadowColor: '#000',
-  shadowOpacity: 0.3,
-  shadowOffset: { width: 0, height: 6 },
-  shadowRadius: 12,
-}
-
-// The mode pills this screen shows, in order: the player's three, then ARCADE.
-//
-// ARCADE is last and is everyone's. For whoever holds the `arcade` flag it is a door; for
-// everyone else it is a teaser wearing SOON, with PLAY GAME dead under it and a card in
-// the slot below saying what is coming — see ArcadeTeaser. It was hidden from everyone
-// else for a while, on the grounds that a tab which does nothing is the first row to cut.
-// A tab that *says* something is not that tab: the promise was already made the first time
-// a player saw the badge, and answering it is cheaper than withdrawing it.
-//
-// **No challenges.** They used to join this row, read off the registry, each wearing a
-// 24H badge. They have their own card above the pills now — see `ChallengeCard` — and
-// two doors to one thing on one screen is the drift that gets a feature built twice:
-// the pill skipped the description and the standings, which is most of what there is to
-// say about a challenge. It also buys something structural, which is that `openModes`
-// stays a synchronous read of a compiled registry: a session lives on the server, and a
-// pill driven by one would have made this list wait on a request.
-const introModes = (): ModeId[] => [...MODE_ORDER, 'arcade']
 
 export function MenuOverlay({
   gameMode,
@@ -208,7 +159,6 @@ export function MenuOverlay({
   onShare: (invite: string) => void
   onOpenAdmin: () => void
 }) {
-  const { t } = useLingui()
   // The same marks the leaderboard, the pause screen and a room wear beside this
   // player's name — worn here over the title itself, since the title is this
   // player's too.
@@ -220,23 +170,8 @@ export function MenuOverlay({
   // Creating or joining a room is a Supabase round trip either way, so both are
   // dead ends with no connection — disabled rather than left to fail after a tap.
   const online = useOnline()
-  // The same function every name on a board calls. This screen's PROFILE link is the one
-  // caller that does not open somebody else — it opens whoever is holding the phone.
-  const openProfile = useOpenProfile()
   const showMultiplayer = useFlag('multiplayer')
   const showArcade = useFlag('arcade')
-  // Held in a const so the press handler below closes over a narrowed value rather than
-  // re-reading something it cannot narrow.
-  // `reckon` goes down to the card, which hands it to its own clock: a teaser that runs
-  // out becomes the live card on that tick rather than on the next launch. One re-render
-  // of this screen, at the boundary — see the note on `ChallengeCountdown`, which is the
-  // reason the clock lives in a component of its own.
-  const { card: challenge, reckon: reckonChallenge } = useSessionCard()
-  const showAdmin = useFlag('admin')
-  // How many messages are waiting for an answer, which puts a dot on the link below.
-  // Asked only of a launch that holds `admin` — the hook sees to that — because the
-  // function behind it refuses anybody else.
-  const feedbackOwed = useFeedbackOwed()
   // A stored ARCADE focus is only honoured by a reader who can actually *open* it. The
   // pill is everyone's now, so this is no longer about a tab that is not there — it is
   // about where a launch lands: opening every time on a pill whose PLAY GAME is dead
@@ -245,18 +180,13 @@ export function MenuOverlay({
   const [focused, setFocused] = useState<ModeId>(
     initialFocus === 'arcade' && !showArcade ? gameMode : initialFocus,
   )
-  const modeItems = useMemo(() => introModes(), [])
-  const badges: Partial<Record<string, string>> = useMemo(
-    () => ({ arcade: showArcade ? ARCADE_TEASER.devTag : ARCADE_TEASER.tag }),
-    [showArcade],
-  )
-
   const [playMode, setPlayMode] = useState<PlayMode>(initialPlayMode)
-  const [panelWidth, setPanelWidth] = useState(0)
-  const panelOffset = useSharedValue(0)
-  const { width: windowWidth } = useViewport()
-  // Screen has px-4 on each side (32px total); use as fallback before onLayout fires.
-  const effectivePanelWidth = panelWidth > 0 ? panelWidth : windowWidth - 32
+  const {
+    width: effectivePanelWidth,
+    panelStyle,
+    slideTo,
+    onLayout: onPanelsLayout,
+  } = useIntroPaging(playMode)
 
   // The title and the WITH FRIENDS pill read multiplayer's own pair while that tab is
   // open, rather than whichever singleplayer mode `focused` last was — pinned to
@@ -266,22 +196,7 @@ export function MenuOverlay({
   const activeGradient =
     playMode === 'friends' ? MULTIPLAYER_GRADIENT.accuracy : gradientOf(focused)
 
-  const gradPhase = useSharedValue(0)
-  const gradStartSv = useSharedValue<string>(activeGradient[0])
-  const gradEndSv = useSharedValue<string>(activeGradient[1])
-
-  useEffect(() => {
-    gradPhase.value = withRepeat(
-      withTiming(1, { duration: 2000, easing: Easing.linear }),
-      -1,
-      false,
-    )
-  }, [gradPhase])
-
-  useEffect(() => {
-    gradStartSv.value = activeGradient[0]
-    gradEndSv.value = activeGradient[1]
-  }, [activeGradient, gradStartSv, gradEndSv])
+  const { gradPhase, gradStartSv, gradEndSv } = useTitleGradient(activeGradient)
 
   // Highlight the remembered pill. `focused` is seeded at mount, before either half of
   // what the player was last on has landed — the machine's `mode` hydrates out of storage,
@@ -308,18 +223,20 @@ export function MenuOverlay({
     })
   }, [gameMode, initialFocus, showArcade])
 
-  const panelStyle = useAnimatedStyle(() => ({
-    transform: [{ translateX: panelOffset.value }],
-  }))
+  const handleFocus = (m: ModeId) => {
+    setFocused(m)
+    onFocusChange?.(m)
+    // ARCADE is the one pill whose choice is committed nowhere: it is a
+    // door rather than a mode of this machine's. Everything else — the
+    // three, and whichever challenges are open — is a run this machine
+    // deals, so it is the mode from here on.
+    if (m !== 'arcade') onSetMode(m)
+  }
 
   const handlePlayModeSelect = (pm: PlayMode) => {
     setPlayMode(pm)
     onPlayModeChange?.(pm)
-    const index = pm === 'alone' ? 0 : 1
-    panelOffset.value = withTiming(-index * effectivePanelWidth, {
-      duration: 280,
-      easing: Easing.inOut(Easing.ease),
-    })
+    slideTo(pm)
   }
 
   return (
@@ -420,177 +337,39 @@ export function MenuOverlay({
 
           {/* Horizontally paging content panels — translateX avoids the Safari
               scrollTo-on-overflow:hidden bug that breaks the tab switch on web */}
-          <View
-            className="w-full overflow-hidden"
-            onLayout={(e) => {
-              const w = e.nativeEvent.layout.width
-              setPanelWidth(w)
-              // Snap to current panel instantly on layout (no animation)
-              const index = playMode === 'alone' ? 0 : 1
-              panelOffset.value = -index * w
-            }}
-          >
+          <View className="w-full overflow-hidden" onLayout={onPanelsLayout}>
             <Animated.View
               style={[
                 { flexDirection: 'row', width: effectivePanelWidth * 2 },
                 panelStyle,
               ]}
             >
-              {/* Panel 0: ALONE */}
-              {/* overflow: 'hidden' of its own — the shared row's clip only bounds the
-                  two panels together, so ARCADE's SOON badge, which deliberately hangs
-                  past its own tab (see CornerBadge), was free to cross from this panel's
-                  space into WITH FRIENDS' once this one slid off to make room for it. */}
-              {/* One gap between every row of this panel, rather than each row
-                  carrying a bottom margin of its own — the rows come and go with the
-                  focused mode, and spacing that lives on the parent cannot leave a
-                  margin behind under whichever row happens to be last. */}
-              <View
-                className="gap-2"
-                style={{ width: effectivePanelWidth, overflow: 'hidden' }}
-              >
-                {/* A challenge that is on, or opens tomorrow. First row of the panel:
-                    it is the thing that goes away, and the pills below it are not. Draws
-                    nothing at all most days, and the panel's own `gap-2` is what means
-                    its absence leaves no hole. */}
-                {challenge !== null && (
-                  <ChallengeCard
-                    card={challenge}
-                    onArrive={reckonChallenge}
-                    vote={{
-                      options: nextVote,
-                      onOpen: onOpenVote,
-                      onOpenResults: onOpenVoteResults,
-                    }}
-                    onPress={() => {
-                      onOpenChallenge(challenge)
-                    }}
-                  />
-                )}
-                <ModeSelector
-                  focused={focused}
-                  items={modeItems}
-                  gradPhase={gradPhase}
-                  badges={badges}
-                  onSelect={(m) => {
-                    setFocused(m)
-                    onFocusChange?.(m)
-                    // ARCADE is the one pill whose choice is committed nowhere: it is a
-                    // door rather than a mode of this machine's. Everything else — the
-                    // three, and whichever challenges are open — is a run this machine
-                    // deals, so it is the mode from here on.
-                    if (m !== 'arcade') onSetMode(m)
-                  }}
-                />
-                {/* Arcade shows no difficulty. It tightens as a run climbs, which is a
-                    difficulty that moves rather than one picked up front — and asking for
-                    a three-way choice before the player has any idea what the mode is was
-                    a dial set in the dark. */}
-                {traitsOf(focused).usesDifficulty && (
-                  <DifficultySelector
-                    gameMode={focused}
-                    difficulty={difficulty}
-                    gradPhase={gradPhase}
-                    onSetDifficulty={onSetDifficulty}
-                  />
-                )}
-                {/* Trainee's half of this slot: no board to show, so it teaches
-                    instead. Arcade fills the same slot, but only for a player who cannot
-                    open it yet — for whoever holds the flag it stays empty, because a
-                    crossroad explains itself and they are two taps from one. */}
-                {traitsOf(focused).coached && <ModeTips />}
-                {focused === 'arcade' && !showArcade && <ArcadeTeaser />}
-                {/* Who has been taking this board lately, then where it stands now —
-                    both about the board the pills above just picked. */}
-                {isOneOf(focused, SCORED_MODES) && (
-                  <>
-                    <RecentWinners gameMode={gameMode} difficulty={difficulty} />
-                    <HighScores
-                      gameMode={gameMode}
-                      difficulty={difficulty}
-                      userId={userId}
-                      nickname={nickname}
-                      onAddNickname={onAddNickname}
-                      onRestoreProfile={onRestoreProfile}
-                    />
-                  </>
-                )}
-              </View>
+              <IntroAlonePanel
+                width={effectivePanelWidth}
+                focused={focused}
+                onFocus={handleFocus}
+                gradPhase={gradPhase}
+                showArcade={showArcade}
+                gameMode={gameMode}
+                difficulty={difficulty}
+                onSetDifficulty={onSetDifficulty}
+                userId={userId}
+                nickname={nickname}
+                onAddNickname={onAddNickname}
+                onRestoreProfile={onRestoreProfile}
+                onOpenChallenge={onOpenChallenge}
+                nextVote={nextVote}
+                onOpenVote={onOpenVote}
+                onOpenVoteResults={onOpenVoteResults}
+              />
 
               {/* Panel 1: WITH FRIENDS */}
-              <View
-                style={{ width: effectivePanelWidth, overflow: 'hidden' }}
-                className="relative items-center"
-              >
-                {/* Just the two doors in: start a room, or walk into one that
-                    already exists. The code and its keyboard used to live right
-                    here — they get their own screen now, past JOIN ROOM, so this
-                    tab is a choice rather than a form. */}
-                <View className="items-center gap-4 py-10">
-                  {/* Fixed to accuracy's pair rather than `focused`: onCreateRoom
-                      always creates an accuracy room (`app/(tabs)/index.tsx`),
-                      regardless of which singleplayer mode this tab inherited. */}
-                  <TrackedPressable
-                    id="menu.create_room"
-                    onPress={onCreateRoom}
-                    disabled={!online}
-                    className={cn(
-                      'w-56 overflow-hidden rounded-2xl',
-                      !online && 'opacity-40',
-                    )}
-                    style={shadow}
-                  >
-                    <LinearGradient
-                      colors={[...DARK_MULTIPLAYER_GRADIENT.accuracy]}
-                      start={{ x: 0, y: 0.5 }}
-                      end={{ x: 1, y: 0.5 }}
-                      className="items-center py-4"
-                    >
-                      <Text
-                        selectable={false}
-                        className={cn(TYPE.button, 'text-on-strong')}
-                      >
-                        <Trans>CREATE ROOM</Trans>
-                      </Text>
-                    </LinearGradient>
-                  </TrackedPressable>
-                  <TrackedPressable
-                    id="menu.join_room"
-                    onPress={onOpenJoinRoom}
-                    disabled={!online}
-                    className={cn(
-                      'w-56 items-center rounded-2xl border-2 py-[14px]',
-                      !online && 'opacity-40',
-                    )}
-                    style={{ borderColor: MULTIPLAYER_GRADIENT.accuracy[0] }}
-                  >
-                    <Text
-                      selectable={false}
-                      className={TYPE.button}
-                      style={{ color: MULTIPLAYER_GRADIENT.accuracy[0] }}
-                    >
-                      <Trans>JOIN ROOM</Trans>
-                    </Text>
-                  </TrackedPressable>
-                </View>
-                {/* Covers both buttons rather than disabling them piece by piece —
-                    creating or joining a room is a Supabase round trip either way, so
-                    nothing under here can do anything useful without a connection. */}
-                {!online && (
-                  <View className="absolute inset-0 items-center justify-center gap-3 bg-surface px-6">
-                    <Ionicons name="cloud-offline-outline" size={32} color={DIM_INK} />
-                    <Text selectable={false} className={cn(TYPE.heading, 'text-dim')}>
-                      <Trans>YOU'RE OFFLINE</Trans>
-                    </Text>
-                    <Text
-                      selectable={false}
-                      className={cn(TYPE.value, 'text-center leading-[16px] text-dim')}
-                    >
-                      <Trans>CONNECT TO THE INTERNET TO PLAY WITH FRIENDS</Trans>
-                    </Text>
-                  </View>
-                )}
-              </View>
+              <IntroFriendsPanel
+                width={effectivePanelWidth}
+                online={online}
+                onCreateRoom={onCreateRoom}
+                onOpenJoinRoom={onOpenJoinRoom}
+              />
             </Animated.View>
           </View>
         </View>
@@ -603,132 +382,28 @@ export function MenuOverlay({
             since there are two doors in rather than one PLAY. */}
         <View className="mt-4 items-center gap-8">
           {playMode === 'alone' && (
-            <TrackedPressable
+            <IntroCta
               id="menu.play"
               onPress={focused === 'arcade' ? onPlayArcade : onPlay}
               // Arcade is pressable now for whoever can see it, and still dead for
               // everyone else — the badge on the pill above says SOON, and the button
               // under it has to agree.
               disabled={focused === 'arcade' && !showArcade}
-              className={cn(
-                'w-56 overflow-hidden rounded-2xl',
-                focused === 'arcade' && !showArcade && 'opacity-40',
-              )}
-              style={shadow}
-            >
-              <LinearGradient
-                colors={[...darkGradientOf(focused)]}
-                start={{ x: 0, y: 0.5 }}
-                end={{ x: 1, y: 0.5 }}
-                className="items-center py-4"
-              >
-                <Text selectable={false} className={cn(TYPE.button, 'text-on-strong')}>
-                  <Trans>PLAY GAME</Trans>
-                </Text>
-              </LinearGradient>
-            </TrackedPressable>
+              colors={darkGradientOf(focused)}
+              label={<Trans>PLAY GAME</Trans>}
+            />
           )}
 
-          {/* The two link rows are one block, and the air between them is a fraction of
-              what separates the pair from PLAY GAME: they are the same footer read twice
-              over, not two things the screen offers. */}
-          <View className="items-center gap-3">
-            <View className="flex-row flex-wrap items-center justify-center gap-x-5 gap-y-2">
-              <TrackedPressable id="menu.options" onPress={onOpenAdvanced} hitSlop={10}>
-                <View className="flex-row items-center gap-1">
-                  <Ionicons name="settings-outline" size={10} color={DIM_INK} />
-                  <Text selectable={false} className={cn(TYPE.quietAction, 'text-dim')}>
-                    <Trans>OPTIONS</Trans>
-                  </Text>
-                </View>
-              </TrackedPressable>
-              <TrackedPressable
-                id="menu.board"
-                onPress={() => {
-                  // The sentence lives here rather than in lib/ because it is the
-                  // one place that knows the active language; lib/ keeps the
-                  // decision and the board name, which are what a test can pin.
-                  const board = boardName(
-                    t(labelOf(gameMode)),
-                    t(DIFFICULTIES[difficulty].label),
-                  )
-                  const invite = shouldBoast(gameMode, bestScore)
-                    ? t`My best at Nine is ${bestScore} — ${board}. Think you can beat it?`
-                    : t`Nine buttons, one number to hit. Come take a run at it.`
-                  onShare(invite)
-                }}
-                hitSlop={10}
-              >
-                <View className="flex-row items-center gap-1">
-                  <Ionicons name="share-outline" size={10} color={DIM_INK} />
-                  <Text selectable={false} className={cn(TYPE.quietAction, 'text-dim')}>
-                    <Trans>SHARE</Trans>
-                  </Text>
-                </View>
-              </TrackedPressable>
-              {/* The player's own card, from the screen they spend the most time on — the
-                one place it was not reachable from, since every other door onto a profile
-                is a name on a board and your own name is only there once you are on it.
-                Last in the row: it is about the player rather than about the run, which
-                is what the other two are.
-
-                Only once the sign-in has landed. Before that there is no id to open, and
-                a link that does nothing for the first second of a launch is worse than
-                one that arrives a moment late. */}
-              {userId !== null && (
-                <TrackedPressable
-                  id="menu.profile"
-                  onPress={() => {
-                    openProfile(userId)
-                  }}
-                  hitSlop={10}
-                >
-                  <View className="flex-row items-center gap-1">
-                    <Ionicons name="person-outline" size={10} color={DIM_INK} />
-                    <Text selectable={false} className={cn(TYPE.quietAction, 'text-dim')}>
-                      <Trans>PROFILE</Trans>
-                    </Text>
-                  </View>
-                </TrackedPressable>
-              )}
-            </View>
-
-            {/* A second row, under the one every player reads. HOW TO PLAY leads it and the
-              admin link follows: the guide is not one of the three things the row above
-              offers — those are about this screen, and it is about the game — and a row
-              of its own is what stops the first one wrapping on a narrow phone now that
-              it carries four.
-
-              ADMIN is not for the player this screen otherwise addresses, and asks for
-              its own feature — see constants/features.ts. The challenges lab, which had
-              a DEV link of its own here, is reached from the admin hub. */}
-            <View className="flex-row flex-wrap items-center justify-center gap-x-5 gap-y-2">
-              <TrackedPressable id="menu.how_to_play" onPress={onHowToPlay} hitSlop={10}>
-                <View className="flex-row items-center gap-1">
-                  <Ionicons name="help-circle-outline" size={11} color={DIM_INK} />
-                  <Text selectable={false} className={cn(TYPE.quietAction, 'text-dim')}>
-                    <Trans>HOW TO PLAY</Trans>
-                  </Text>
-                </View>
-              </TrackedPressable>
-              {showAdmin && (
-                <TrackedPressable id="menu.admin" onPress={onOpenAdmin} hitSlop={10}>
-                  {/* `relative`, for the badge: messages players sent in that nobody has
-                      answered, counted, and this link is the only route to them. The one
-                      thing on the intro that is a task rather than a door — see
-                      `UnreadDot`, and `useFeedbackOwed`, which asks nothing at all of a
-                      launch that does not hold this key. */}
-                  <View className="relative flex-row items-center gap-1">
-                    <Ionicons name="shield-outline" size={10} color={DIM_INK} />
-                    <Text selectable={false} className={cn(TYPE.quietAction, 'text-dim')}>
-                      <Trans>ADMIN</Trans>
-                    </Text>
-                    {feedbackOwed > 0 && <UnreadDot count={feedbackOwed} />}
-                  </View>
-                </TrackedPressable>
-              )}
-            </View>
-          </View>
+          <IntroLinks
+            userId={userId}
+            gameMode={gameMode}
+            difficulty={difficulty}
+            bestScore={bestScore}
+            onOpenAdvanced={onOpenAdvanced}
+            onShare={onShare}
+            onHowToPlay={onHowToPlay}
+            onOpenAdmin={onOpenAdmin}
+          />
         </View>
       </View>
     </Screen>
