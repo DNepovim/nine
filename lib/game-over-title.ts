@@ -131,7 +131,7 @@ const COLD_BELOW = {
 // not already passed.
 const COLD_SHARE = 0.3
 
-export const coldBelow = (difficulty: Difficulty, best: number): number =>
+const coldBelow = (difficulty: Difficulty, best: number): number =>
   Math.max(COLD_BELOW[difficulty], Math.round(best * COLD_SHARE))
 
 // Read top down and stop at the first that holds — a run that took a board record
