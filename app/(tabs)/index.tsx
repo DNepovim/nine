@@ -2,7 +2,7 @@ import { useLingui } from '@lingui/react/macro'
 import { useMachine } from '@xstate/react'
 import { useFonts } from 'expo-font'
 import { StatusBar } from 'expo-status-bar'
-import { isNotNull, isOneOf } from 'narrowland'
+import { isOneOf } from 'narrowland'
 import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { AppState, Text, View, type LayoutChangeEvent } from 'react-native'
 import { GestureDetector } from 'react-native-gesture-handler'
@@ -116,8 +116,7 @@ import { LocaleGate } from '@/hooks/use-locale'
 import { useLostMarks } from '@/hooks/use-lost-marks'
 import { useLostMedals } from '@/hooks/use-lost-medals'
 import { useMedalHistory } from '@/hooks/use-medal-history'
-import { useMultiplayerGame } from '@/hooks/use-multiplayer-game'
-import { useMultiplayerRoom } from '@/hooks/use-multiplayer-room'
+import { useMultiplayerScreens } from '@/hooks/use-multiplayer-screens'
 import { useMyMedals } from '@/hooks/use-my-medals'
 import { useNextVote } from '@/hooks/use-next-vote'
 import { useOnline } from '@/hooks/use-online'
@@ -178,7 +177,6 @@ import {
   mayOpenSessionAsk,
 } from '@/lib/launch-asks'
 import { leaderOf } from '@/lib/leaderboard'
-import { multiScreenOf } from '@/lib/multi-screen'
 import { runChallenge } from '@/lib/next-challenge'
 import { heldPeriods, medalPeriods } from '@/lib/record-medals'
 import { averageOf, headingOf } from '@/lib/run-average'
@@ -224,7 +222,6 @@ import {
 } from '@/modes'
 import { challengeTints, hueOf } from '@/modes/challenges/palette'
 import type { DisplayTarget, Position } from '@/types/game'
-import type { MultiMode } from '@/types/multiplayer'
 
 // The screen gallery's stage, in development only — the screen being looked at, drawn
 // inside the app so it sees the real board store, champions, fonts and theme. Its picker
@@ -1622,29 +1619,27 @@ export default function GameScreen() {
 
   // ── Multiplayer ────────────────────────────────────────────────────────────
 
-  const multiRoom = useMultiplayerRoom(userId)
-  const multiGame = useMultiplayerGame({
-    gameChannel: multiRoom.gameChannel,
+  const {
+    multiRoom,
+    multiGame,
+    pendingMultiAction,
+    setPendingMultiAction,
+    executeMultiAction,
+    handleCreateRoom,
+    handleJoinRoom,
+    handleAdminStartGame,
+    showMultiWaiting,
+    showMultiGame,
+    showMultiResults,
+    isMultiActive,
+  } = useMultiplayerScreens({
     userId,
-    isAdmin: multiRoom.isAdmin,
-    initialPlayers: multiRoom.players,
-  })
-
-  // Pending action when user tries to create/join without a nickname.
-  const [pendingMultiAction, setPendingMultiAction] = useState<
-    { type: 'create'; mode: MultiMode } | { type: 'join'; code: string } | null
-  >(null)
-
-  const executeMultiAction = useCallback(
-    (action: { type: 'create'; mode: MultiMode } | { type: 'join'; code: string }) => {
-      if (action.type === 'create') {
-        void multiRoom.create('accuracy')
-      } else {
-        void multiRoom.join(action.code)
-      }
+    nickname,
+    askNickname: () => {
+      setShowNicknameModal(true)
     },
-    [multiRoom],
-  )
+    recordMultiplayer,
+  })
 
   const [showMultiMenu, setShowMultiMenu] = useState(false)
   const [menuInitialTab, setMenuInitialTab] = useState<'alone' | 'friends'>('alone')
@@ -1654,58 +1649,6 @@ export default function GameScreen() {
   // here would be free to drift from it the moment anything else changed the mode.
   const { onArcade: menuOnArcade, setOnArcade: setMenuOnArcade } =
     usePersistedArcadeFocus()
-
-  const handleCreateRoom = useCallback(() => {
-    if (!nickname) {
-      setPendingMultiAction({ type: 'create', mode: 'accuracy' })
-      setShowNicknameModal(true)
-      return
-    }
-    void multiRoom.create('accuracy')
-  }, [nickname, multiRoom])
-
-  const handleJoinRoom = useCallback(
-    (code: string) => {
-      if (!nickname) {
-        setPendingMultiAction({ type: 'join', code })
-        setShowNicknameModal(true)
-        return
-      }
-      void multiRoom.join(code)
-    },
-    [nickname, multiRoom],
-  )
-
-  const handleAdminStartGame = useCallback(() => {
-    const playerOrder = multiRoom.players.map((p) => p.user_id)
-    const roomMode = multiRoom.room?.mode ?? 'accuracy'
-    multiRoom.startGame(playerOrder)
-    multiGame.applyGameStart(roomMode, playerOrder)
-  }, [multiRoom, multiGame])
-
-  // Destroy room when admin backgrounds the app.
-  const multiLeaveRef = useRef(multiRoom.leave)
-  useEffect(() => {
-    multiLeaveRef.current = multiRoom.leave
-  }, [multiRoom.leave])
-  const multiRoomId = multiRoom.room?.id ?? null
-  useEffect(() => {
-    if (!multiRoom.isAdmin || !multiRoomId) return
-    const sub = AppState.addEventListener('change', (next) => {
-      if (next === 'background') void multiLeaveRef.current()
-    })
-    return () => {
-      sub.remove()
-    }
-  }, [multiRoom.isAdmin, multiRoomId])
-
-  // Which multiplayer screen to show.
-  const {
-    waiting: showMultiWaiting,
-    playing: showMultiGame,
-    results: showMultiResults,
-    active: isMultiActive,
-  } = multiScreenOf(isNotNull(multiRoom.room), multiGame.phase)
 
   // The intro, but for whatever is stacked over it: the machine is idle, the player is not
   // in a room or on the map, and whether this launch owes the tutorial offer has been
@@ -1800,35 +1743,6 @@ export default function GameScreen() {
   }, [owedSession, mayOpenSession, markSessionSeen])
 
   const accountNotice = accountNoticeFor({ moved, pendingEmail })
-
-  // A shared run reaching its results screen is the run finishing, and the roster at
-  // that moment is who was in it. Edge-latched: the screen stays up while everyone
-  // reads it, and one run is one event.
-  const multiFinishedRef = useRef(false)
-  useEffect(() => {
-    if (showMultiResults && !multiFinishedRef.current) {
-      const players = multiRoom.players.length
-      track('multiplayer_room', { action: 'finished', players })
-      // A room has no board of its own, sets no personal best and keeps no stats, so all
-      // a shared run contributes is that it happened, how it went and how full the room
-      // was. Won outright: a tie is shared, and there is nothing to be proud of in
-      // beating nobody, so a room of one never counts.
-      const best = Math.max(...multiGame.players.map((player) => player.score), 0)
-      const mine = multiGame.players.find((player) => player.userId === userId)
-      const won =
-        players > 1 &&
-        mine?.score === best &&
-        multiGame.players.filter((player) => player.score === best).length === 1
-      recordMultiplayer(won, players)
-    }
-    multiFinishedRef.current = showMultiResults
-  }, [
-    showMultiResults,
-    multiRoom.players.length,
-    multiGame.players,
-    userId,
-    recordMultiplayer,
-  ])
 
   // A new build waits on the device until the app lets it through, because the swap ends
   // in a reload. The intro with nothing open over it is the only place that costs
