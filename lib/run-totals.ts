@@ -46,7 +46,7 @@ export type RunPost = RunFigures & RunKind
 
 // Which of the two a run is posted as, or null for a run that is counted nowhere — a
 // Trainee run, and a challenge run that lost its session on the way back from storage
-// (see `runSession` in app/(tabs)/index.tsx). The second must stay null rather than fall
+// (see `runSession` in hooks/use-run-control.ts). The second must stay null rather than fall
 // through to a board: a challenge's figures have no board to go to.
 //
 // A board first, though no mode is both: a challenge is a mode of its own and never one

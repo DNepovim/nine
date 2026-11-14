@@ -98,7 +98,7 @@ export function MenuOverlay({
   onLostMedalsSeen: () => void
   // The one thing the intro says about this player's address, or null for the ordinary
   // case where there is nothing to say. Decided by the caller, which is the only place
-  // that knows both halves — see app/(tabs)/index.tsx.
+  // that knows both halves — see hooks/use-intro-standing.ts.
   accountNotice: AccountNoticeKind | null
   onAccountNotice: () => void
   // How many of the catalogue the player holds.

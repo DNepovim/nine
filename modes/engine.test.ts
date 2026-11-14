@@ -22,6 +22,10 @@ const ENGINE = [
   'hooks/use-target-spawner.ts',
   'hooks/use-trainee-coach.ts',
   'components/game/dial.tsx',
+  // The dial's pan and each key's motion and tint, which `Dial` and `DialButton` hand to hooks.
+  'hooks/use-dial-pan.ts',
+  'hooks/use-key-motion.ts',
+  'hooks/use-key-tint.ts',
   'lib/dial-gesture.ts',
   'lib/dial-metrics.ts',
 ]

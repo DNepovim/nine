@@ -13,7 +13,7 @@ import type { ScreenAnnouncements } from '@/hooks/use-run-announcements'
 import type { ScreenControl } from '@/hooks/use-run-control'
 import { computePar } from '@/machines/scoring'
 
-// The run's targets, drawn in the run's **target form** on the board between the bar and
+// The run's targets, drawn in the run's **target form** in the space between the bar and
 // the dial — with the footprints, the lesson's words and the taps a drawing board takes.
 export function RunTargets({
   control,

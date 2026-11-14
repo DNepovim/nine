@@ -98,7 +98,7 @@ function App() {
   // The splash holds at the end of its intro for as long as there is something to ask,
   // so the popup lands on a still screen; answering it clears the target, which lets
   // the exit play and the game start. The intro screen keeps its own copy of the popup
-  // (app/(tabs)/index.tsx) for the launch that has no splash to hold: the reload a
+  // (components/overlays/launch-asks-layer.tsx) for the launch that has no splash to hold: the reload a
   // service-worker update ends in.
   const [introDone, setIntroDone] = useState(false)
   // Null rather than 'none', so the popup can only be rendered with something to say.

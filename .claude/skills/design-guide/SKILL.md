@@ -267,7 +267,7 @@ The name is always drawn as the pair: `GradientText` from
 as much as in a title. The single lifted hue, `challengeInk(gradientOf(id)[1])`, is for
 what is not the name: an accent, a border, a legend. `challenge-card.tsx` and
 `ChallengeTitle` are the reference implementations, and the same formula appears as
-`scoreInkOf` in `modes/palette.ts` and `accentFor` in `app/(tabs)/index.tsx`.
+`scoreInkOf` in `modes/palette.ts` and `accentFor` in `lib/run-title.ts`.
 If you need it a fourth time, that is the sweep telling you it wants a home.
 
 ### The two exceptions, and they already recur

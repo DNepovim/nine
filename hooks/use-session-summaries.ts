@@ -37,7 +37,7 @@ export function useSessionSummaries(
   // The session the current run belongs to, or null. The one thing this hook cannot work
   // out for itself, and it needs it for one decision only: a window shutting on the run
   // being played is not news to announce, it is a run about to end — see the send in
-  // `app/(tabs)/index.tsx`. Telling the player on the bar and then taking the screen away
+  // `hooks/use-run-session.ts`. Telling the player on the bar and then taking the screen away
   // a second later would be the app talking over itself.
   runSessionId: string | null,
   // Whether this player reaches **challenges**, handed in rather than asked for.

@@ -19,7 +19,7 @@ export function knownFeatures(keys: readonly string[]): Set<Flag> {
 
 // Returns true when the two sets spell the same thing, so a caller can keep the set it
 // already has rather than swap in a new object saying the same thing. React effects key
-// on identity, not contents, and the analytics opt-out in app/(tabs)/index.tsx runs in
+// on identity, not contents, and the analytics opt-out in hooks/use-player-account.ts runs in
 // one of them — a set rebuilt on every render would leave that effect never settling.
 export function sameFeatures(
   previous: ReadonlySet<Flag>,

@@ -104,7 +104,7 @@ export const scriptedTarget = (hits: number): number | null =>
 //
 // A tap anywhere takes it early, and that is what makes three seconds safe rather than
 // slow: the dial is shut while the word is up, so the whole viewport is the lesson's to be
-// tapped through — see `dismissedByTap` and the tap-through in app/(tabs)/index.tsx. A
+// tapped through — see `dismissedByTap` and the tap-through in components/game/game-layer.tsx. A
 // player who has read it is one press from the board; a player still reading is not
 // holding anything up.
 export const TUTORIAL_WELCOME_MS = 3000

@@ -69,7 +69,7 @@ type AuthState = {
   // a stack moves everybody, and each device picks it up on its next start.
   //
   // Referentially stable while the keys do not change — see `sameFeatures`. The
-  // analytics opt-out in app/(tabs)/index.tsx keys an effect on this value, and a set
+  // analytics opt-out in hooks/use-player-account.ts keys an effect on this value, and a set
   // rebuilt per render would leave that effect never settling.
   features: ReadonlySet<Flag>
   isReady: boolean
@@ -84,7 +84,7 @@ type AuthState = {
   //
   // Not on its own the intro's confirm line, which it used to be: an account that already
   // has a confirmed address can carry a parked change too, and that is not a profile
-  // waiting to be reachable. See `accountNoticeFor` in app/(tabs)/index.tsx.
+  // waiting to be reachable. See `accountNoticeFor` in lib/launch-asks.ts.
   pendingEmail: string | null
   // This device's session was refused rather than merely unreachable, which happens for
   // exactly one reason: somebody restored this profile onto another phone.

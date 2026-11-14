@@ -29,9 +29,24 @@ const RUN_SCREENS_LIVE = [
   'components/game/arcade-game.tsx',
 ]
 
+// Every file a live run is drawn from. The game screen is drawn by several now, and a second
+// way to stop could be added to any of them.
+const RUN_SCREEN_FILES = [
+  'app/(tabs)/index.tsx',
+  'components/game/game-layer.tsx',
+  'components/game/run-bar.tsx',
+  'components/game/run-targets.tsx',
+  'components/game/run-sum-row.tsx',
+  'components/game/run-dial.tsx',
+  'components/game/run-celebrations.tsx',
+  'components/game/run-overlays.tsx',
+  'components/game/arcade-game.tsx',
+  'components/game/arcade-sheet.tsx',
+]
+
 // Everything that owns a run's clock, and so has a run to stop. The game machine's run is
 // driven from `useRunControl`, which the game screen calls.
-const ENGINES = ['hooks/use-run-control.tsx', 'hooks/use-arcade-run.ts']
+const ENGINES = ['hooks/use-run-control.ts', 'hooks/use-arcade-run.ts']
 
 const read = (path: string): string => readFileSync(path, 'utf8')
 
@@ -70,7 +85,7 @@ describe('the bar a run is played under', () => {
 
   it('is the only thing that draws the way to stop', () => {
     // A second pause button is a second answer to where the way out lives.
-    for (const path of RUN_SCREENS_LIVE) {
+    for (const path of RUN_SCREEN_FILES) {
       expect(read(path), path).not.toContain('<PauseButton')
     }
   })

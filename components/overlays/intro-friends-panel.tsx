@@ -31,7 +31,7 @@ export function IntroFriendsPanel({
           tab is a choice rather than a form. */}
       <View className="items-center gap-4 py-10">
         {/* Fixed to accuracy's pair rather than `focused`: onCreateRoom
-            always creates an accuracy room (`app/(tabs)/index.tsx`),
+            always creates an accuracy room (`useMultiplayerScreens`),
             regardless of which singleplayer mode this tab inherited. */}
         <IntroCta
           id="menu.create_room"

@@ -43,7 +43,7 @@ import { labelOf, modeById } from '@/modes'
 // this key — and the alternative is four screens somebody has to go into to find out
 // whether there was anything in them.
 //
-// This file keeps its name and its export so `app/(tabs)/index.tsx` is untouched: what
+// This file keeps its name and its export so `menu-dialogs.tsx` is untouched: what
 // opens ADMIN has no business knowing the screen behind it grew a fork.
 //
 // CHALLENGES holds what were two tiles, the planner and the lab, as two tabs — see

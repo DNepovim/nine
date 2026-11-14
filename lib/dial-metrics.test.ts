@@ -29,6 +29,14 @@ const SITS_ABOVE_A_DIAL = [
   'components/game/multiplayer-game.tsx',
 ]
 
+// Every file a screen's dial is placed from: the game screen's own band, the layer that
+// holds it, and the shared run's screen.
+const LAYS_OUT_A_DIAL = [
+  'components/game/run-dial.tsx',
+  'components/game/game-layer.tsx',
+  'components/game/multiplayer-game.tsx',
+]
+
 const read = (path: string): string => readFileSync(path, 'utf8')
 const hook = () => read('hooks/use-dial-metrics.ts')
 
@@ -72,7 +80,7 @@ describe('the dial button is one size everywhere', () => {
   it('leaves the keys to the one component that lays them out', () => {
     // A screen reaching for a key directly is a screen laying out its own dial, and
     // the gesture that spans all nine only exists on the square they share.
-    for (const path of SITS_ABOVE_A_DIAL) {
+    for (const path of LAYS_OUT_A_DIAL) {
       expect(read(path), path).not.toContain('DialButton')
     }
   })

@@ -70,7 +70,7 @@ const openSessions = (): Promise<readonly OpenSession[]> => {
 // answer false. Taking the answer as an argument is what lets each caller ask the question
 // where it can actually be answered: `useSessionCard` is below the provider and passes
 // `useFlag('challenges')`, and the summary's side is handed the set the provider itself is
-// fed. It is the rule `app/(tabs)/index.tsx` already follows with `features.has('admin')`.
+// fed. It is the rule `hooks/use-player-account.ts` already follows with `features.has('admin')`.
 export function useOpenSessions(canSee: boolean): readonly OpenSession[] {
   const [sessions, setSessions] = useState<readonly OpenSession[]>(NOTHING)
   // Bumped by `refreshOpenSessions`, which is what re-runs the read below.

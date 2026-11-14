@@ -15,7 +15,7 @@ import { type Difficulty, type ModeId } from '@/modes'
 // The table is the only place a message goes. Nothing here reports to analytics: the
 // text would then sit in two stores with different retention, and in PostHog it would
 // arrive attached to a person carrying the player's nickname (`identify` in
-// app/(tabs)/index.tsx). One copy, in the database we own, behind RLS.
+// hooks/use-player-account.ts). One copy, in the database we own, behind RLS.
 //
 // `user_id` is deliberately absent from the row: the column defaults to `auth.uid()`
 // (supabase/migrations/20260819000000_feedback.sql), so the identity comes from the

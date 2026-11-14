@@ -78,3 +78,59 @@ commit, in a file this work never touched. It is not fixed here.
 | 11  | Restore mid-run unchanged                    | PENDING | user, on a device                                                                                                                                                                                                                           |
 | 12  | Multiplayer unchanged                        | PENDING | user, on a device                                                                                                                                                                                                                           |
 | 13  | _(added)_ The web bundle builds              | PASS    | `expo export --platform web` exports all four routes; every module in the game route evaluates (no import cycle breaks it). The static render is the splash only, so this does **not** prove the game screen renders — that stays with 6–12 |
+
+## Review
+
+`/code-review high` over `6e97a12~1..HEAD` (17 commits, 151 files): **no runtime defects.** It
+compared token streams and found every layer's JSX identical to the old screen's, and the
+hooks' bodies in their old order.
+
+**Fixed in review**
+
+- Three source-reading guards had quietly narrowed when their subject moved out of the file
+  they read: `modes/engine.test.ts` now scans `use-dial-pan`, `use-key-motion` and
+  `use-key-tint`; `lib/run-shell.test.ts` checks for a second `<PauseButton` across every
+  file the live screen is drawn from; `lib/dial-metrics.test.ts` checks for `DialButton`
+  where the dial is laid out. Each was probed: a planted `<PauseButton` and an `index % 3`
+  both fail now.
+- Eleven slice hooks were `.tsx` with no JSX, so they are `.ts` now.
+- Stale pointers into `app/(tabs)/index.tsx` in twelve comments, `CLAUDE.md`'s
+  `useMachine` line and the design guide's `accentFor`, rewritten to where the code is.
+- `RunTargets`' header said "board" for the targets area. A board is a leaderboard.
+
+**Review focus, confirmed**
+
+1. Effect order. The slices are consecutive and called in order; the three hoisted
+   declarations are `useState` (no effect). Elsewhere: carve effect before the pan, tint
+   before motion, clock, then glimpse, then exit; reveal before pin; camera before land. The
+   one move is `useHoldsDialogOpen` after the code field's effects, which touch disjoint state.
+2. Fresh identities. The layers re-render with `GameScreen`, as the inline tree did: no
+   regression, and no isolation either (see below). `BarScore` still keeps the count-up to
+   itself.
+3. Module level. Every animated piece is a module-level component in its own file, and every
+   shared value is still created once per mount.
+4. Refs. Each lives in the hook that writes it; `boardSize`/`sumRowRect` reach the layers as
+   the same ref objects.
+5. Lingui. Every translating component calls `useLingui()` itself; 1021 msgids unchanged.
+
+**Left, deliberately**
+
+- **The layers take the hook results whole** (`control`, `field`, …). They are new objects
+  on every render, so a layer re-renders whenever the screen does, exactly as before the
+  split. The size limit is met, but the code-guide's "take only what they draw" is not yet,
+  for the game screen's layers. Narrowing each layer to the props it reads is a design job,
+  not a move.
+- The `.po` origin comments still point at old line numbers. `i18n:extract` would rewrite a
+  catalog that carries another session's uncommitted Czech; the msgids are unchanged.
+- Knip's `coldBelow` (another session's, `ae0417f`).
+
+**Worth their own items**
+
+- Narrow the game screen's layers to their real props, so a run's machine tick stops
+  re-rendering the intro, the dialogs and the overlays. This is the performance half the
+  split made possible.
+- `lib/arcade-canvas.ts` has no test. It moved verbatim, and its input is the arcade hook's
+  whole run, so it needs a fixture first.
+- The three hooks still over 300: `use-arcade-run`, `use-multiplayer-game`,
+  `use-achievements`. Then widen the lint to `hooks/`.
+- The `shadowRadius: 12` shadow, copied across ten files (a sweep; it is the user's call).
