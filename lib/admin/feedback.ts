@@ -16,6 +16,11 @@ export { stateOf, type MessageState } from '@/lib/admin/message-state'
 
 export type AdminMessage = {
   id: string
+  // What it is about. A `message` is TELL US — about a run, with the mode, difficulty and
+  // score it was written on. A `remark` is the written half of a rating — about one
+  // session of a challenge, and `mode` is then the challenge's id. See
+  // supabase/migrations/20261118000000_remark_answers.sql.
+  kind: 'message' | 'remark'
   // Who wrote it, for the one thing the screen needs it for: a nickname goes through
   // `GradientName`, which colours it by that player's own lifetime averages and is fed by
   // id. Null only if the profile row was deleted by hand in the database — the app has no
@@ -28,10 +33,13 @@ export type AdminMessage = {
   nickname: string | null
   message: string
   mode: string
-  difficulty: string
-  score: number
-  build: string
+  // Null on a remark, which is not written during a run: no difficulty, score or build.
+  difficulty: string | null
+  score: number | null
+  build: string | null
   sentAt: number
+  // A remark's session and what the player gave it. Null on a message.
+  session: { id: string; opensAt: number; rating: number | null } | null
   // Null is a message still owed an answer, which is the whole of what the filter above
   // the list sorts by.
   answer: string | null
@@ -46,13 +54,16 @@ export type AdminMessage = {
 
 type MessageRow = {
   id: string
+  // Absent from a server that has not had 20261118000000 pushed to it — everything it
+  // returns is a message.
+  kind: 'message' | 'remark' | undefined
   user_id: string | null
   nickname: string | null
   message: string
   mode: string
-  difficulty: string
-  score: number
-  build: string
+  difficulty: string | null
+  score: number | null
+  build: string | null
   created_at: string
   answer: string | null
   answered_at: string | null
@@ -60,6 +71,9 @@ type MessageRow = {
   // Absent, rather than null, from a server that has not had 20261016000000 pushed to it
   // yet — see `atMs` below, which is where that is handled.
   dismissed_at: string | null | undefined
+  session_id: string | null | undefined
+  session_opens_at: string | null | undefined
+  rating: number | null | undefined
 }
 
 // The columns hold `timestamptz`, which arrives as an ISO string; everything above this
@@ -83,6 +97,7 @@ export async function listMessages(): Promise<{
   return {
     rows: ((res.data as MessageRow[] | null) ?? []).map((row) => ({
       id: row.id,
+      kind: row.kind ?? 'message',
       authorId: row.user_id,
       nickname: row.nickname,
       message: row.message,
@@ -91,6 +106,14 @@ export async function listMessages(): Promise<{
       score: row.score,
       build: row.build,
       sentAt: new Date(row.created_at).getTime(),
+      session:
+        row.session_id && row.session_opens_at
+          ? {
+              id: row.session_id,
+              opensAt: new Date(row.session_opens_at).getTime(),
+              rating: row.rating ?? null,
+            }
+          : null,
       answer: row.answer,
       answeredAt: atMs(row.answered_at),
       seenAt: atMs(row.answer_seen_at),

@@ -5,6 +5,7 @@ import { ScrollView, Text, View } from 'react-native'
 
 import { GradientName } from '@/components/gradient-name'
 import { AdminAnswerDialog } from '@/components/overlays/admin-answer-dialog'
+import { MessageContext } from '@/components/overlays/admin-message-context'
 import { AdminScreen } from '@/components/overlays/admin-screen'
 import { AdminSegments } from '@/components/overlays/admin-segments'
 import {
@@ -174,6 +175,11 @@ export function AdminMessages({
               className={cn(TYPE.prose, 'shrink')}
             />
           )}
+          {message.kind === 'remark' && (
+            // A remark is about a challenge's session rather than a run, and the row
+            // would otherwise read as a message with a score missing.
+            <AdminChip label={t(msg`REMARK`)} tone="quiet" />
+          )}
           {state === 'owed' ? (
             <AdminChip label={t(msg`OWED`)} tone="danger" />
           ) : state === 'dismissed' ? (
@@ -206,12 +212,9 @@ export function AdminMessages({
           </Text>
           {open === message.id && (
             <View className="mt-1.5 gap-1.5">
-              {/* What the player was looking at when they wrote it, and which build they
-                  were on — the two facts that turn a complaint into something
-                  reproducible. */}
-              <Text selectable className={cn(TYPE.hint, 'text-dim')}>
-                {message.mode} · {message.difficulty} · {message.score} · {message.build}
-              </Text>
+              {/* What it was about: the run the player was on, or the session of a
+                  challenge they were remarking on. */}
+              <MessageContext message={message} />
               {/* The row id. Still printed, and still selectable, because the other way
                   to answer one of these is `/answer-feedback <row id>` — the considered
                   reply, written from a machine that knows which build carries the fix. */}

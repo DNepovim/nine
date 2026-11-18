@@ -248,6 +248,51 @@ begin
 end;
 $$;
 
+-- ─── A remark is answered from the messages pile ─────────────────────────────
+do $$
+declare
+  v_a    uuid;
+  v_shut uuid;
+  v_id   uuid;
+begin
+  select id into v_a from profiles order by id limit 1;
+  update profiles set role = 'admin' where id = v_a;
+
+  insert into challenge_sessions (mode_id, opens_at, closes_at)
+  values ('challenge/answered', now() - interval '2 hours', now() - interval '5 minutes')
+  returning id into v_shut;
+
+  perform set_config('request.jwt.claims', json_build_object('sub', v_a)::text, true);
+  perform submit_session_score(v_shut, 800, 6, 'hard', now());
+  perform rate_session(v_shut, 7);
+  perform remark_session(v_shut, 'needs a bigger dial');
+  select id into v_id from session_ratings where session_id = v_shut and user_id = v_a;
+
+  assert exists (select 1 from admin_feedback()
+                  where id = v_id and kind = 'remark' and mode = 'challenge/answered'
+                    and rating = 7 and session_id = v_shut),
+    'a remark should be listed with its challenge, session and figure';
+
+  perform admin_dismiss_feedback(v_id, true);
+  assert (select dismissed_at from session_ratings where id = v_id) is not null,
+    'a remark should be possible to set aside';
+  perform admin_dismiss_feedback(v_id, false);
+
+  perform admin_answer_feedback(v_id, 'thanks, noted');
+  assert (select answered_at from session_ratings where id = v_id) is not null,
+    'answering should stamp the remark';
+  assert exists (select 1 from my_feedback_replies('999999.9999')
+                  where id = v_id and answer = 'thanks, noted' and message = 'needs a bigger dial'),
+    'the player should be handed the answer with their remark quoted';
+
+  perform mark_feedback_reply_seen(v_id);
+  assert not exists (select 1 from my_feedback_replies('999999.9999') where id = v_id),
+    'a seen answer should not come back';
+
+  delete from challenge_sessions where id = v_shut;
+end;
+$$;
+
 -- `set role`, not `set local role` — see session_scores.sql.
 set role anon;
 do $$
