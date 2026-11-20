@@ -1332,6 +1332,17 @@ export const STORM_ORB = {
   ink: '#EAF2FF',
 } as const
 
+// REELS' target: a casino chip — a deep red disc, a gold rim and charge, the number in the
+// marquee's cream, and the notches (`notch`) a chip's edge is cut with. See `orb` on `PieCountdown`
+// and `components/game/chip-target.tsx`.
+export const CASINO_CHIP = {
+  ground: '#7A1620',
+  rim: '#FFD76A',
+  charge: '#FFD76A',
+  ink: '#FFF3C4',
+  notch: '#FFF3C4',
+} as const
+
 // FREEZE's snow globe (`components/game/openings/frost-creep.tsx`, `snow.tsx`). Ice is white
 // at its edge and a cold cyan in its body; snow is white with a cold edge, so a flake reads
 // on the pale ground too.
@@ -1386,7 +1397,11 @@ export const CASINO = {
   bulb: '#FFD76A',
   bulbGlow: 'rgba(255, 215, 106, 0.35)',
   rod: '#C9A25A',
+  rodDark: '#7A5A22',
+  rodLight: '#FFE9A8',
   knob: '#E5322D',
+  knobLight: '#FF7A6B',
+  knobDark: '#8F1414',
   knobRim: '#FFB3A8',
   bulbOff: '#5A2A1E',
   bulbRim: '#8A5A2B',

@@ -13,7 +13,7 @@ export function LeverBulbs({
   height,
   lit,
 }: {
-  bulbs: readonly { x: number; y: number }[]
+  bulbs: readonly { x: number; y: number; corner?: boolean }[]
   width: number
   height: number
   lit: boolean
@@ -28,15 +28,21 @@ export function LeverBulbs({
         </RadialGradient>
       </Defs>
       {lit &&
-        bulbs.map(({ x, y }) => (
-          <Circle key={`h-${x}-${y}`} cx={x} cy={y} r={14} fill={`url(#${HALO_ID})`} />
+        bulbs.map(({ x, y, corner }) => (
+          <Circle
+            key={`h-${x}-${y}`}
+            cx={x}
+            cy={y}
+            r={corner ? 19 : 13}
+            fill={`url(#${HALO_ID})`}
+          />
         ))}
-      {bulbs.map(({ x, y }) => (
+      {bulbs.map(({ x, y, corner }) => (
         <Circle
           key={`b-${x}-${y}`}
           cx={x}
           cy={y}
-          r={4.4}
+          r={corner ? 6 : 4}
           fill={lit ? CASINO.flash : CASINO.bulbOff}
           stroke={lit ? CASINO.bulb : CASINO.bulbRim}
           strokeWidth={1.6}

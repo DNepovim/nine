@@ -14,48 +14,46 @@ import { LeverBulbs } from '@/components/game/openings/lever-bulbs'
 import { LeverRunner, RUNNER_GROUPS } from '@/components/game/openings/lever-runner'
 import { useViewport } from '@/hooks/use-viewport'
 
-// The marquee: how far apart the bulbs are, how far in from the edge, and how fast the chase
-// goes, as how long one lit stretch holds.
+// The marquee: how far in from the edge the frame of bulbs stands, about how far apart the bulbs
+// are, and how fast the chase goes, as how long one lit stretch holds.
 const SPACING = 24
 
-const INSET = 8
+const INSET = 9
 
 const CHASE_MS = 450
 
-// How far round the screen's edge, clockwise from the top-left, a bulb on that edge stands.
-function perimeterAt(
-  { x, y }: { x: number; y: number },
-  width: number,
-  height: number,
-): number {
-  if (y <= INSET) return x
-  if (x >= width - INSET) return width + y
-  if (y >= height - INSET) return width + height + (width - x)
-  return 2 * width + height + (height - y)
-}
-
 // The bulbs round the edge of the screen, split into two sets that take it in turns to shine.
+// A bulb stands in every corner, and each side is divided evenly between its corners, so the
+// frame closes without a gap or a doubled bulb; the corner bulbs are drawn larger. The count
+// round the circle is even, so odd and even run on unbroken across the seam at the top-left.
 function useBulbs() {
   const { width, height } = useViewport()
   return useMemo(() => {
-    const first: { x: number; y: number }[] = []
-    const second: { x: number; y: number }[] = []
-    const place = (x: number, y: number, at: number) => {
-      ;(at % 2 === 0 ? first : second).push({ x, y })
+    const w = Math.max(0, width - 2 * INSET)
+    const h = Math.max(0, height - 2 * INSET)
+    const across = Math.max(1, Math.round(w / SPACING))
+    const down = Math.max(1, Math.round(h / SPACING))
+    const all: { x: number; y: number; corner: boolean }[] = []
+    for (let i = 0; i < across; i++) {
+      all.push({ x: INSET + (w * i) / across, y: INSET, corner: i === 0 })
     }
-    let at = 0
-    for (let x = INSET; x <= width - INSET; x += SPACING) place(x, INSET, at++)
-    for (let y = INSET + SPACING; y <= height - INSET; y += SPACING) {
-      place(width - INSET, y, at++)
+    for (let i = 0; i < down; i++) {
+      all.push({ x: INSET + w, y: INSET + (h * i) / down, corner: i === 0 })
     }
-    for (let x = width - INSET - SPACING; x >= INSET; x -= SPACING) {
-      place(x, height - INSET, at++)
+    for (let i = 0; i < across; i++) {
+      all.push({ x: INSET + w - (w * i) / across, y: INSET + h, corner: i === 0 })
     }
-    for (let y = height - INSET - SPACING; y > INSET; y -= SPACING) place(INSET, y, at++)
-    const ordered = [...first, ...second].sort(
-      (a, b) => perimeterAt(a, width, height) - perimeterAt(b, width, height),
-    )
-    return { first, second, ordered, width, height }
+    for (let i = 0; i < down; i++) {
+      all.push({ x: INSET, y: INSET + h - (h * i) / down, corner: i === 0 })
+    }
+    const ordered = all.length % 2 === 0 ? all : all.slice(0, -1)
+    return {
+      first: ordered.filter((_bulb, at) => at % 2 === 0),
+      second: ordered.filter((_bulb, at) => at % 2 === 1),
+      ordered,
+      width,
+      height,
+    }
   }, [width, height])
 }
 
