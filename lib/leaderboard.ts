@@ -180,7 +180,7 @@ export async function fetchPlayerProfile(
   // All at once: the places and the last run are their own RPCs (see `places` and
   // `lastRunAt` on `PlayerProfile`), and a second round trip after the first would be a
   // profile that draws, then grows a section.
-  const [res, placesRes, lastRunRes] = await Promise.all([
+  const [res, placesRes, lastRunRes, joinedRes] = await Promise.all([
     supabase.rpc('player_profile', {
       p_user_id: userId,
       p_today: today,
@@ -188,6 +188,7 @@ export async function fetchPlayerProfile(
     }),
     supabase.rpc('player_session_places', { p_user_id: userId }),
     supabase.rpc('player_last_run', { p_user_id: userId }),
+    supabase.rpc('player_joined_on', { p_user_id: userId }),
   ])
   noteRequest(res.error)
   if (res.error) return { profile: null, error: res.error.message }
@@ -207,7 +208,13 @@ export async function fetchPlayerProfile(
     lastRunRes.error === null && typeof lastRunRes.data === 'string'
       ? lastRunRes.data
       : null
-  return { profile: { ...shapeProfile(raw), places, lastRunAt }, error: null }
+  // And for the join day: no answer leaves the line off.
+  const joinedOn =
+    joinedRes.error === null && typeof joinedRes.data === 'string' ? joinedRes.data : null
+  return {
+    profile: { ...shapeProfile(raw), places, lastRunAt, joinedOn },
+    error: null,
+  }
 }
 
 // Every podium place this player is owed for: the windows that closed after the day their

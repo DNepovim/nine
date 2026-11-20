@@ -133,6 +133,10 @@ export type PlayerProfile = {
   // Null for a player with no runs, and against a server that predates `player_last_run`.
   // Filled in by `fetchPlayerProfile` beside `places`, for the same reason.
   lastRunAt: string | null
+  // The Prague day they joined, as 'YYYY-MM-DD'. Null against a server that predates
+  // `player_joined_on`, where the profile leaves the line off rather than guess.
+  // Filled in by `fetchPlayerProfile` beside `lastRunAt`, for the same reason.
+  joinedOn: string | null
 }
 
 // One podium a player took on a **session board**: which challenge, when its window shut,
@@ -554,6 +558,7 @@ export function shapeProfile(raw: PlayerProfileResponse): PlayerProfile {
     ),
     // Not on this wire — see `places` and `lastRunAt` on the type.
     places: [],
+    joinedOn: null,
     lastRunAt: null,
   }
 }
@@ -608,4 +613,5 @@ export const EMPTY_PROFILE: PlayerProfile = {
   sessions: [],
   places: [],
   lastRunAt: null,
+  joinedOn: null,
 }

@@ -43,12 +43,6 @@ import {
   type PlayerProfile,
 } from '@/lib/player-profile'
 
-// The day the player joined. No profile carries a real join date yet, so every one of
-// them reads the same day — the day profiles shipped — until the RPC can answer for it.
-// The line is here for the same reason the counters' start date was: a player who has
-// been at this a while should not read as someone who turned up this morning.
-const JOINED_ON = '2026-09-22'
-
 // The mark over the name, a little larger than the intro draws it over the title. The
 // intro's has four glass letters under it to be read against; here it is the first thing
 // on the card, with only 12px caps below, so the same size would read as a stray emoji.
@@ -135,7 +129,9 @@ export function PlayerProfileOverlay({
   // a month, so nothing is lost by freezing it, and a clock read mid-render is a value
   // the compiler is free to take at a different moment than you meant.
   const [openedAt] = useState(() => new Date())
-  const [joinedMonths] = useState(() => monthsSince(JOINED_ON, openedAt))
+  // Against the same frozen moment; the join day arrives with the profile.
+  const joinedMonths =
+    profile?.joinedOn == null ? null : monthsSince(profile.joinedOn, openedAt)
   // Against the same frozen moment, but worked out on render: the last run arrives with
   // the profile, after the modal has opened.
   const lastRunDays =
