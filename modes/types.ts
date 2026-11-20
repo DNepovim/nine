@@ -361,7 +361,7 @@ export type SchemeKind =
 // dealt, each with a ring running down, and are every mode's unless it names another; `lines`
 // are lines of a terminal, each with a bar; `flashlit` are numbers on a dark wall in a
 // flashlight's beam, which reddens and closes in as the clock runs down; `struck` are discs
-// a bolt of lightning hits when their glimpse is over, putting the number out; `beating` are discs that pulse like a heart; `drafted` are circles ruled in pencil and coloured in pastel, on a drawing board; `tiled` are tiles of an azulejo wall, on the keys' own grid; `dancers` are dancers seen from above, the disc being the head and the number on it, with shoulders and arms turned a different way for each; `blobs` are lumps of lava-lamp wax that morph, coloured on a scale from purple to pink by the number they show, and lean the way it drifts. Drawn by `TARGET_FORMS` in
+// a bolt of lightning hits when their glimpse is over, putting the number out; `beating` are discs that pulse like a heart; `drafted` are circles ruled in pencil and coloured in pastel, on a drawing board; `tiled` are tiles of an azulejo wall, on the keys' own grid; `dancers` are dancers seen from above, the disc being the head and the number on it, with shoulders and arms turned a different way for each; `blobs` are lumps of lava-lamp wax that morph, coloured on a scale from purple to pink by the number they show, and lean the way it drifts; `chips` are casino chips, a red disc with a gold rim and notched edge, whose number is a row of slot-machine drums that spin to rest as the chip arrives and when it is hit. Drawn by `TARGET_FORMS` in
 // `components/game/target-forms.tsx`. Drawing only: a hit is decided by the sum, an expiry by
 // the clock, and both are the same in every form.
 export type TargetForm =
@@ -374,6 +374,7 @@ export type TargetForm =
   | 'tiled'
   | 'blobs'
   | 'dancers'
+  | 'chips'
 
 // What every mode says about itself, whichever engine runs it.
 type ModeIdentity = {

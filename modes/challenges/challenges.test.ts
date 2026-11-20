@@ -513,6 +513,7 @@ describe('scramble', () => {
     const id = challengeId('scramble')
     expect(openingOf(id)).toBe('leverPull')
     expect(schemeOf(id)).toBe('casino')
+    expect(targetFormOf(id)).toBe('chips')
   })
 })
 

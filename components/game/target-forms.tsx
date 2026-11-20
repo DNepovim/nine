@@ -1,6 +1,7 @@
 import type { ComponentProps, ComponentType, ReactNode } from 'react'
 
 import { BlobTarget } from '@/components/game/blob-target'
+import { ChipTarget } from '@/components/game/chip-target'
 import { DancerTarget } from '@/components/game/dancer-target'
 import { DraftedTarget } from '@/components/game/drafted-target'
 import { FlashlitTarget } from '@/components/game/flashlit-target'
@@ -23,7 +24,7 @@ type BoardProps = {
   children: ReactNode
 }
 
-// Discs, struck, beating, drafted, blobs and flashlit numbers stand wherever they were dealt, with nothing around them.
+// Discs, chips, struck, beating, drafted, blobs and flashlit numbers stand wherever they were dealt, with nothing around them.
 function DealtBoard({ children }: BoardProps) {
   return <>{children}</>
 }
@@ -34,6 +35,7 @@ export const TARGET_FORMS = {
   struck: { Board: DealtBoard, Card: StruckTarget },
   beating: { Board: DealtBoard, Card: HeartTarget },
   drafted: { Board: DealtBoard, Card: DraftedTarget },
+  chips: { Board: DealtBoard, Card: ChipTarget },
   dancers: { Board: DealtBoard, Card: DancerTarget },
   tiled: { Board: TileBoard, Card: TiledTarget },
   blobs: { Board: DealtBoard, Card: BlobTarget },

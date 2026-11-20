@@ -721,6 +721,8 @@ const SCRAMBLE: ChallengeSpec = {
   // `OpeningKind` and `SchemeKind`.
   opening: 'leverPull',
   scheme: 'casino',
+  // The targets are casino chips, and the number is a row of drums that spin to rest on arrival and on a hit.
+  targetForm: 'chips',
   gradient: CASINO_PAIR,
   darkGradient: CASINO_PAIR,
   // No `shot`: the sniper's beam Accuracy gives a streak is taken off, so a streak here is
